@@ -35,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * @author matt
  * @version 1.2
  */
+@SuppressWarnings("ImmutableEnumChecker")
 public enum AlsoEnergyGranularity {
 
 	/** Raw data. */

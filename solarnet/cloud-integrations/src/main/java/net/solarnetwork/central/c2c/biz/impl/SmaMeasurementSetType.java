@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.c2c.biz.impl.SmaMeasurementType.indexedNumberType;
 import static net.solarnetwork.central.c2c.biz.impl.SmaMeasurementType.numberType;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.SequencedMap;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("ImmutableEnumChecker")
 public enum SmaMeasurementSetType {
 
 	/** Energy and power battery. */
@@ -195,7 +197,7 @@ public enum SmaMeasurementSetType {
 				types.put("windSpeed", numberType("windSpeed", "Wind speed for the sensor in m/s."));
 				break;
 		}
-		return types;
+		return Collections.unmodifiableSequencedMap(types);
 	}
 
 	/**

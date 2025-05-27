@@ -37,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * @author matt
  * @version 1.1
  */
+@SuppressWarnings("ImmutableEnumChecker")
 public enum EnphaseGranularity {
 
 	/** Fifteen minutes. */
