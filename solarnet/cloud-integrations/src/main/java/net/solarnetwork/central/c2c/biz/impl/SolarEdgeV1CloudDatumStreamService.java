@@ -1426,6 +1426,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			return map;
 		}
 
+		@SuppressWarnings("EnumOrdinal")
 		private static void populateComponentIndexMap(
 				final Map<SolarEdgeDeviceType, Map<String, Integer>> map, final int[] indexes,
 				final CloudDataValue v) {
