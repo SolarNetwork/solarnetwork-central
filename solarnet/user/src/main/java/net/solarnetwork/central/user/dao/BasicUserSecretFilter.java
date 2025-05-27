@@ -48,7 +48,10 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	}
 
 	/**
+	 * Copy constructor.
+	 * 
 	 * @param criteria
+	 *        the criteria to copy from
 	 */
 	public BasicUserSecretFilter(PaginationCriteria criteria) {
 		super(criteria);

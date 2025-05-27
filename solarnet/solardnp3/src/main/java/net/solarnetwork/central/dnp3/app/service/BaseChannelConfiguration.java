@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseChannelConfiguration.java - 21/02/2019 8:34:15 pm
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,7 +27,7 @@ import com.automatak.dnp3.LogMasks;
 
 /**
  * A basic set of configuration options for a DNP3 channel.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -48,7 +48,7 @@ public class BaseChannelConfiguration {
 
 	/**
 	 * Get the log levels.
-	 * 
+	 *
 	 * @return the log levels
 	 */
 	public int getLogLevels() {
@@ -57,8 +57,8 @@ public class BaseChannelConfiguration {
 
 	/**
 	 * Set the DNP3 log levels bitmask.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param logLevels
 	 *        the log levels value to set
 	 * @see com.automatak.dnp3.LogLevels
@@ -70,7 +70,7 @@ public class BaseChannelConfiguration {
 
 	/**
 	 * Get the minimum retry delay.
-	 * 
+	 *
 	 * @return the minimum retry delay
 	 */
 	public Duration getMinRetryDelay() {
@@ -79,8 +79,9 @@ public class BaseChannelConfiguration {
 
 	/**
 	 * Set the minimum retry delay.
-	 * 
+	 *
 	 * @param minRetryDelay
+	 *        the minimum delay
 	 */
 	public void setMinRetryDelay(Duration minRetryDelay) {
 		this.minRetryDelay = minRetryDelay;
@@ -88,7 +89,7 @@ public class BaseChannelConfiguration {
 
 	/**
 	 * Get the maximum retry delay.
-	 * 
+	 *
 	 * @return the maximum delay
 	 */
 	public Duration getMaxRetryDelay() {
@@ -97,7 +98,7 @@ public class BaseChannelConfiguration {
 
 	/**
 	 * Set the maximum retry delay.
-	 * 
+	 *
 	 * @param maxRetryDelay
 	 *        the maximum delay
 	 */
@@ -107,7 +108,7 @@ public class BaseChannelConfiguration {
 
 	/**
 	 * Get the minimum retry delay as a number of seconds.
-	 * 
+	 *
 	 * @return the number of seconds
 	 */
 	public int getMinRetryDelaySecs() {
@@ -117,7 +118,7 @@ public class BaseChannelConfiguration {
 
 	/**
 	 * Set the minimum retry delay as a number of seconds.
-	 * 
+	 *
 	 * @param minRetryDelaySecs
 	 *        the number of seconds
 	 */
@@ -127,7 +128,7 @@ public class BaseChannelConfiguration {
 
 	/**
 	 * Get the maximum retry delay as a number of seconds.
-	 * 
+	 *
 	 * @return the number of seconds
 	 */
 	public int getMaxRetryDelaySecs() {
@@ -137,7 +138,7 @@ public class BaseChannelConfiguration {
 
 	/**
 	 * Set the maximum retry delay as a number of seconds.
-	 * 
+	 *
 	 * @param maxRetryDelaySecs
 	 *        the number of seconds
 	 */

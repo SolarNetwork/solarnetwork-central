@@ -75,7 +75,7 @@ public class OscpV20MqttConfig {
 	/**
 	 * The MQTT statistics to use.
 	 *
-	 * @return
+	 * @return the tracker
 	 */
 	@Qualifier(OSCP_V20)
 	@Bean
