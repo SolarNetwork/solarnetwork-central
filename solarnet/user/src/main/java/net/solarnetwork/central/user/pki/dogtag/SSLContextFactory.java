@@ -164,6 +164,7 @@ public class SSLContextFactory implements PingTest {
 		return 1000;
 	}
 
+	@SuppressWarnings("JavaUtilDate")
 	@Override
 	public PingTest.Result performPingTest() throws Exception {
 		if ( cachedResult != null && cachedResult.isValid() ) {
