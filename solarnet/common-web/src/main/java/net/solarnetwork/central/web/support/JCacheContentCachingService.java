@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web.support;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -73,7 +74,7 @@ import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
  * Caching service backed by a {@link javax.cache.Cache}.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class JCacheContentCachingService
 		implements ContentCachingService, PingTest, CacheEntryCreatedListener<String, CachedContent>,
@@ -215,7 +216,7 @@ public class JCacheContentCachingService
 			};
 		}
 		if ( m != null && m.find() ) {
-			digest.update(m.group(1).getBytes());
+			digest.update(m.group(1).getBytes(UTF_8));
 			digest.update((byte) '@');
 		}
 	}
@@ -251,18 +252,18 @@ public class JCacheContentCachingService
 					} else {
 						digest.update((byte) '&');
 					}
-					digest.update(key.getBytes());
+					digest.update(key.getBytes(UTF_8));
 					digest.update((byte) '=');
-					digest.update(val.getBytes());
+					digest.update(val.getBytes(UTF_8));
 				}
 			}
 		}
 	}
 
 	private static final MediaType CSV_MEDIA_TYPE = MediaType.parseMediaType("text/csv");
-	private static final byte[] CSV_MEDIA_TYPE_COMPONENT = "+csv".getBytes();
-	private static final byte[] JSON_MEDIA_TYPE_COMPONENT = "+json".getBytes();
-	private static final byte[] XML_MEDIA_TYPE_COMPONENT = "+xml".getBytes();
+	private static final byte[] CSV_MEDIA_TYPE_COMPONENT = "+csv".getBytes(UTF_8);
+	private static final byte[] JSON_MEDIA_TYPE_COMPONENT = "+json".getBytes(UTF_8);
+	private static final byte[] XML_MEDIA_TYPE_COMPONENT = "+xml".getBytes(UTF_8);
 
 	public List<MediaType> getAccept(HttpServletRequest request) {
 		Enumeration<String> acceptHeader = request.getHeaders(HttpHeaders.ACCEPT);
@@ -298,9 +299,9 @@ public class JCacheContentCachingService
 				return;
 			} else {
 				digest.update((byte) '+');
-				digest.update(type.getType().getBytes());
+				digest.update(type.getType().getBytes(UTF_8));
 				digest.update((byte) '/');
-				digest.update(type.getSubtype().getBytes());
+				digest.update(type.getSubtype().getBytes(UTF_8));
 			}
 		}
 	}
@@ -326,8 +327,8 @@ public class JCacheContentCachingService
 	public String keyForRequest(HttpServletRequest request) {
 		MessageDigest digest = org.apache.commons.codec.digest.DigestUtils.getMd5Digest();
 		addAuthorization(request, digest);
-		digest.update(request.getMethod().getBytes());
-		digest.update(request.getRequestURI().getBytes());
+		digest.update(request.getMethod().getBytes(UTF_8));
+		digest.update(request.getRequestURI().getBytes(UTF_8));
 		addNormalizedQueryParameters(request, digest);
 		addNormalizedAccept(request, digest);
 		return HexFormat.of().formatHex(digest.digest());

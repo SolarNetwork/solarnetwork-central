@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.pki.dev;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -62,7 +63,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Developer implementation of {@link NodePKIBiz}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 
@@ -358,7 +359,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 		File pwFile = new File(baseDir, PASSWORD_FILE);
 		if ( pwFile.canRead() ) {
 			try {
-				return new String(FileCopyUtils.copyToByteArray(pwFile), StandardCharsets.US_ASCII);
+				return new String(FileCopyUtils.copyToByteArray(pwFile), US_ASCII);
 			} catch ( UnsupportedEncodingException e ) {
 				throw new CertificateException(
 						"Error decoding keystore secret file " + pwFile.getAbsolutePath(), e);
@@ -374,7 +375,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 			baseDir.mkdirs();
 		}
 		try {
-			FileCopyUtils.copy(pw.getBytes(), pwFile);
+			FileCopyUtils.copy(pw.getBytes(US_ASCII), pwFile);
 		} catch ( IOException e ) {
 			throw new CertificateException(
 					"Unable to save keystore secret file " + pwFile.getAbsolutePath(), e);

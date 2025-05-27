@@ -28,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -115,7 +116,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO-based implementation of {@link RegistrationBiz}.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class DaoRegistrationBiz implements RegistrationBiz {
 
@@ -359,7 +360,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 				}
 			}
 		}
-		return byos.toString();
+		return byos.toString(StandardCharsets.US_ASCII);
 	}
 
 	@Override
