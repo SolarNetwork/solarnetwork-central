@@ -113,6 +113,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 		entity.setScale(scale);
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public boolean isSameAs(CloudDatumStreamPropertyConfiguration other) {
 		boolean result = super.isSameAs(other);

@@ -67,6 +67,7 @@ public abstract class BaseAssetDatumConfiguration {
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isSameAs(BaseAssetDatumConfiguration other) {
 		// @formatter:off
 		return (Arrays.equals(this.propertyNames, other.propertyNames)

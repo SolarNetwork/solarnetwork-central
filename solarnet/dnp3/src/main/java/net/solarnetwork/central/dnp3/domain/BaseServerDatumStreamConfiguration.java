@@ -94,6 +94,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public boolean isSameAs(C other) {
 		boolean result = super.isSameAs(other);
