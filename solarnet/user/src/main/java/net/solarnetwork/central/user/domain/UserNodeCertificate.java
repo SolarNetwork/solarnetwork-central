@@ -298,8 +298,8 @@ public class UserNodeCertificate
 		return requestId;
 	}
 
-	public void setRequestId(String requestID) {
-		this.requestId = requestID;
+	public void setRequestId(String requestId) {
+		this.requestId = requestId;
 	}
 
 	@Override
