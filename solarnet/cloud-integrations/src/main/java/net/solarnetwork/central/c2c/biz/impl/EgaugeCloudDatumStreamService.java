@@ -239,6 +239,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		return result;
 	}
 
+	@SuppressWarnings("BadInstanceof")
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
 			Map<String, ?> filters) {
