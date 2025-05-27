@@ -52,6 +52,7 @@ import net.solarnetwork.util.StringUtils;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("ArrayRecordComponent")
 public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSystemConfiguration<?> src,
 		BaseOscpExternalSystemConfiguration<?> dest, CapacityGroupConfiguration group,
 		DatumPublishSettings settings, Collection<OwnedGeneralNodeDatum> datum, KeyValuePair... params) {

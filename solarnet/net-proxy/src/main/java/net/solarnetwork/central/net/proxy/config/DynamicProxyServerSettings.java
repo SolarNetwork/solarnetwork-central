@@ -24,6 +24,7 @@ package net.solarnetwork.central.net.proxy.config;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -39,10 +40,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param tls
  *        the TLS server settings
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ConfigurationProperties(prefix = "app.proxy.server")
-public record DynamicProxyServerSettings(String[] bindAddresses, Integer port,
+public record DynamicProxyServerSettings(List<String> bindAddresses, Integer port,
 		Boolean wireLoggingEnabled, TlsServerSettings tls) {
 
 	/** The default port value. */
@@ -54,12 +55,12 @@ public record DynamicProxyServerSettings(String[] bindAddresses, Integer port,
 	 * @return the socket addresses
 	 */
 	public SocketAddress[] bindSocketAddresses() {
-		if ( bindAddresses == null ) {
+		if ( bindAddresses == null || bindAddresses.isEmpty() ) {
 			return null;
 		}
-		SocketAddress[] result = new SocketAddress[bindAddresses.length];
+		SocketAddress[] result = new SocketAddress[bindAddresses.size()];
 		for ( int i = 0; i < result.length; i++ ) {
-			String name = bindAddresses[i];
+			String name = bindAddresses.get(i);
 			int port = (this.port != null ? this.port : DEFAULT_PORT);
 			result[i] = new InetSocketAddress(name, port);
 		}
