@@ -109,7 +109,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -254,7 +254,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		List<SnfInvoiceItem> items = new ArrayList<>(usages.size());
 
 		for ( NodeUsage usage : usages ) {
-			if ( usage.getTotalCost().compareTo(BigDecimal.ZERO) < 1 ) {
+			if ( usage.getTotalCost().compareTo(BigDecimal.ZERO) < 0 ) {
 				// no cost for this node
 				log.debug("No usage cost for node {} invoice date {}", usage.getId(), startDate);
 				continue;
