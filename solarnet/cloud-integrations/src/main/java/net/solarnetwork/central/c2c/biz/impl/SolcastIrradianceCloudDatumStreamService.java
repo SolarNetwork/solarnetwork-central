@@ -92,7 +92,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.solcast.irr";
 
 	/** The maximum duration allowed for queries. */
-	public static final Duration MAX_QUERY_DURATION = Duration.ofHours(168);
+	public static final Duration MAX_QUERY_DURATION = Duration.ofDays(7);
 
 	/**
 	 * The maximum offset from the current time allowed for "live" date range
