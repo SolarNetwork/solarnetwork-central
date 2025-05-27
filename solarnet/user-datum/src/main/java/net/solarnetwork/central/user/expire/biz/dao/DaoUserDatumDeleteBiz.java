@@ -404,7 +404,9 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 			if ( progressExecutor == null ) {
 				progressExecutor = Executors.newSingleThreadExecutor();
 			}
-			progressExecutor.submit(new ProgressUpdater(info.getId(), amountComplete, resultCount));
+			@SuppressWarnings("unused")
+			var unused = progressExecutor
+					.submit(new ProgressUpdater(info.getId(), amountComplete, resultCount));
 			postJobStatusChangedEvent(this, info);
 		}
 

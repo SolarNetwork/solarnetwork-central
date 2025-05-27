@@ -74,6 +74,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 		super();
 	}
 
+	@SuppressWarnings("FutureReturnValueIgnored")
 	@Override
 	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 		if ( evt instanceof SslHandshakeCompletionEvent hs && hs.isSuccess() ) {
@@ -122,6 +123,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 		inboundChannel.read(); // to start TLS handshake
 	}
 
+	@SuppressWarnings("FutureReturnValueIgnored")
 	@Override
 	public void channelRead(final ChannelHandlerContext ctx, Object msg) {
 		if ( outboundChannel != null && outboundChannel.isActive() ) {

@@ -58,7 +58,8 @@ public class JobSchedulerConfig {
 		SimpleSchedulerManager manager = new SimpleSchedulerManager(taskScheduler);
 		for ( ManagedJob job : managedJobs ) {
 			Trigger trigger = triggerForExpression(job.getSchedule(), TimeUnit.MILLISECONDS, false);
-			manager.scheduleJob(job.getGroupId(), job.getId(), job, trigger);
+			@SuppressWarnings("unused")
+			var unused = manager.scheduleJob(job.getGroupId(), job.getId(), job, trigger);
 		}
 		return manager;
 	}

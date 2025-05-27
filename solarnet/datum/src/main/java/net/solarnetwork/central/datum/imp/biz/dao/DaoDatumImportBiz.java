@@ -769,7 +769,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				info.setCompleted(completionDate);
 			}
 			postJobStatusChangedEvent(this, info);
-			progressExecutor().submit(new StatusUpdater((DatumImportJobInfo) info.clone()));
+			@SuppressWarnings("unused")
+			var unused = progressExecutor().submit(new StatusUpdater((DatumImportJobInfo) info.clone()));
 		}
 
 		@Override
@@ -886,7 +887,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					info.getUserId(), amountComplete);
 			// update progress in different thread, so state updated outside import transaction
 			DatumImportJobInfo info = this.info;
-			progressExecutor()
+			@SuppressWarnings("unused")
+			var unused = progressExecutor()
 					.submit(new ProgressUpdater(info.getId(), amountComplete, getLoadedCount()));
 			info.setPercentComplete(amountComplete);
 			postJobStatusChangedEvent(this, info);

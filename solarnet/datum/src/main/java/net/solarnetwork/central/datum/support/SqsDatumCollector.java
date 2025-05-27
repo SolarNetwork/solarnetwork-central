@@ -539,7 +539,8 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 				}
 			}
 		} else {
-			sendToSqs(entity, f);
+			@SuppressWarnings("unused")
+			var unused = sendToSqs(entity, f);
 		}
 		try {
 			f.get();
@@ -567,7 +568,8 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 			SendMessageRequest sendMsgRequest = SendMessageRequest.builder().queueUrl(sqsQueueUrl)
 					.messageBody(json).build();
 
-			sqsClient.sendMessage(sendMsgRequest).handle((resp, ex) -> {
+			@SuppressWarnings("unused")
+			var unused = sqsClient.sendMessage(sendMsgRequest).handle((resp, ex) -> {
 				if ( ex == null ) {
 					stats.increment(BasicCount.SqsQueueAdds);
 					f.complete(resp);
@@ -713,7 +715,8 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 			DeleteMessageBatchRequest deleteRequest = DeleteMessageBatchRequest.builder()
 					.queueUrl(sqsQueueUrl).entries(entries).build();
 
-			sqsClient.deleteMessageBatch(deleteRequest).handle((resp, ex) -> {
+			@SuppressWarnings("unused")
+			var unused = sqsClient.deleteMessageBatch(deleteRequest).handle((resp, ex) -> {
 				if ( ex == null ) {
 					if ( resp != null ) {
 						if ( resp.hasFailed() ) {
@@ -782,7 +785,8 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 									CompletableFuture<Object> f = new CompletableFuture<Object>();
 									if ( queue.offer(new WorkItem(o, f)) ) {
 										stats.increment(BasicCount.WorkQueueAdds);
-										f.thenAccept(r -> {
+										@SuppressWarnings("unused")
+										var unused = f.thenAccept(r -> {
 											sqsDeleteMessage(msg.receiptHandle());
 										});
 										accepted++;
@@ -796,7 +800,8 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 							}
 						} finally {
 							if ( !rejectedReceiptHandles.isEmpty() ) {
-								sqsClient.changeMessageVisibilityBatch(changeVizReq -> {
+								@SuppressWarnings("unused")
+								var unused = sqsClient.changeMessageVisibilityBatch(changeVizReq -> {
 									List<ChangeMessageVisibilityBatchRequestEntry> entries = rejectedReceiptHandles
 											.stream().map(id -> {
 												return ChangeMessageVisibilityBatchRequestEntry.builder()

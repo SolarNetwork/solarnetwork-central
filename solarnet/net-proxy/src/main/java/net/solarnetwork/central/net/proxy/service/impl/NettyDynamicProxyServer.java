@@ -217,6 +217,7 @@ public class NettyDynamicProxyServer
 		}
 	}
 
+	@SuppressWarnings("FutureReturnValueIgnored")
 	private synchronized void stopProxyServer() {
 		try {
 			bossGroup.shutdownGracefully();
