@@ -333,6 +333,7 @@ public class UserInstructionInputController {
 			@JsonProperty(value = "instructionResults",
 					required = false) List<TransformInstructionResults> instructionResults) {
 
+		@SuppressWarnings("MixedMutabilityReturnType")
 		private Map<String, String> queryParameters() {
 			if ( query != null && !query.isBlank() ) {
 				try {

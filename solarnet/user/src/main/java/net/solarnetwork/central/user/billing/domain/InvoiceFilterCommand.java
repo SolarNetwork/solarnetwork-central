@@ -24,7 +24,6 @@ package net.solarnetwork.central.user.billing.domain;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import net.solarnetwork.central.support.FilterSupport;
 import net.solarnetwork.domain.MutableSortDescriptor;
@@ -34,7 +33,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Filter support for invoice actions.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter {
 
@@ -123,7 +122,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 */
 	public List<SortDescriptor> getSortDescriptors() {
 		if ( sorts == null ) {
-			return Collections.emptyList();
+			return new ArrayList<>(2);
 		}
 		return new ArrayList<>(sorts);
 	}

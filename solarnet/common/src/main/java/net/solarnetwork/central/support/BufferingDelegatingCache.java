@@ -81,7 +81,7 @@ import net.solarnetwork.util.UnionIterator;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.2
  */
 public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
@@ -228,7 +228,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 				result.put(k, v);
 			}
 		}
-		return result;
+		return Collections.unmodifiableMap(result);
 	}
 
 	@Override

@@ -35,7 +35,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Filter API for user auth token entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserAuthTokenFilter
 		extends UserCriteria, ActiveCriteria, IdentifierCriteria, PaginationCriteria {
@@ -89,7 +89,7 @@ public interface UserAuthTokenFilter
 				// ignore
 			}
 		}
-		return result;
+		return Collections.unmodifiableSet(result);
 	}
 
 	/**

@@ -249,6 +249,7 @@ public class UserDatumInputController {
 			@JsonProperty("data") String data, @JsonProperty("query") String query,
 			@JsonProperty(value = "parameters", required = false) Map<String, Object> parameters) {
 
+		@SuppressWarnings("MixedMutabilityReturnType")
 		private Map<String, String> queryParameters() {
 			if ( query != null && !query.isBlank() ) {
 				try {

@@ -75,7 +75,7 @@ import net.solarnetwork.domain.datum.DatumId;
  * DAO implementation of {@link DatumInputEndpointBiz}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralDinUserEvents {
 
@@ -320,7 +320,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 				}
 			}
 		}
-		return result;
+		return result != null ? Collections.unmodifiableList(result) : null;
 	}
 
 	/**

@@ -351,6 +351,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		}
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseSystems(JsonNode json) {
 		if ( json == null ) {
 			return Collections.emptyList();
@@ -441,6 +442,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return List.of(intermediateDataValue(List.of(id), name, meta, children));
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseSystemDevices(final JsonNode json, final String systemId) {
 		/*- EXAMPLE JSON:
 		{

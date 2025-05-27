@@ -359,6 +359,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				res -> parseDeviceRegisters(deviceId, res.getBody()));
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseDeviceRegisters(String deviceId, JsonNode json) {
 		if ( json == null ) {
 			return Collections.emptyList();
@@ -589,6 +590,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		return Instant.ofEpochSecond(secs.longValue(), nanos.longValue());
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<GeneralDatum> parseDatum(JsonNode json,
 			CloudDatumStreamConfiguration datumStream, Map<String, List<ValueRef>> refsByRegisterName) {
 		if ( json == null ) {

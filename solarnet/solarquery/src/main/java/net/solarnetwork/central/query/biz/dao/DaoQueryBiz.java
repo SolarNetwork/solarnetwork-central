@@ -204,9 +204,10 @@ public class DaoQueryBiz implements QueryBiz {
 			return Collections.emptySet();
 		}
 		Iterable<ObjectDatumStreamMetadataId> results = metaDao.findDatumStreamMetadataIds(c);
-		return stream(results.spliterator(), false)
+		Set<NodeSourcePK> result = stream(results.spliterator(), false)
 				.map(e -> new NodeSourcePK(e.getObjectId(), e.getSourceId()))
 				.collect(toCollection(LinkedHashSet::new));
+		return Collections.unmodifiableSet(result);
 	}
 
 	@Override

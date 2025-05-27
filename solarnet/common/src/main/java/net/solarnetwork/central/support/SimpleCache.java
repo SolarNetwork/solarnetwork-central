@@ -57,7 +57,7 @@ import net.solarnetwork.util.CachedResult;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SimpleCache<K, V> implements Cache<K, V> {
 
@@ -168,7 +168,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 				result.put(key, v);
 			}
 		}
-		return result;
+		return Collections.unmodifiableMap(result);
 	}
 
 	@Override

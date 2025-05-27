@@ -389,6 +389,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		return ((int) (mins / 60) + (mins % 60 > 0 ? 1 : 0));
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private List<GeneralDatum> parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream,
 			Map<String, ValueRef> refsByFieldName, Duration resolution, Instant minDate,
 			Instant maxDate) {

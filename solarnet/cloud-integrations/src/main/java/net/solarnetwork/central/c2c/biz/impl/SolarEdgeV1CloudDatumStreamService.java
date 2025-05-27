@@ -359,6 +359,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		};
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseSites(JsonNode json) {
 		if ( json == null ) {
 			return Collections.emptyList();
@@ -433,6 +434,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		return result;
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseSiteInventory(JsonNode json, Map<String, ?> filters) {
 		if ( json == null ) {
 			return Collections.emptyList();
@@ -891,6 +893,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		});
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<GeneralDatum> parseInverterDatum(JsonNode json, SiteQueryPlan queryPlan,
 			String inverterId, CloudDatumStreamConfiguration datumStream,
 			Map<String, String> sourceIdMap, DateTimeFormatter timestampFmt) {
@@ -1102,6 +1105,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		return result.values().stream().filter(d -> !d.isEmpty()).toList();
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<GeneralDatum> parseBatteryDatum(JsonNode json, SiteQueryPlan queryPlan,
 			CloudDatumStreamConfiguration datumStream, Map<String, String> sourceIdMap,
 			DateTimeFormatter timestampFmt) {

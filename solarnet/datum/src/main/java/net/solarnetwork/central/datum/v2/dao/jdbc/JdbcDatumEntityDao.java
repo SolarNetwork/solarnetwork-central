@@ -148,7 +148,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  *
  * @author matt
- * @version 2.10
+ * @version 2.11
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -564,7 +564,7 @@ public class JdbcDatumEntityDao
 		}
 
 		if ( queryList.isEmpty() ) {
-			return result;
+			return Collections.unmodifiableMap(result);
 		}
 
 		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
@@ -588,7 +588,7 @@ public class JdbcDatumEntityDao
 
 			return null;
 		});
-		return result;
+		return Collections.unmodifiableMap(result);
 	}
 
 	@Override

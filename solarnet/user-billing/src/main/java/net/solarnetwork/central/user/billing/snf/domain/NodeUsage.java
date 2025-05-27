@@ -562,6 +562,7 @@ public class NodeUsage extends BasicLongEntity
 		return ints;
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<NamedCost> tiersCostBreakdown(BigInteger[] counts, NodeUsageCost[] costsTiers,
 			Function<NodeUsageCost, BigDecimal> f) {
 		if ( counts == null || counts.length < 1 ) {

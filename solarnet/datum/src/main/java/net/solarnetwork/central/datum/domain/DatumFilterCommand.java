@@ -28,7 +28,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,7 +53,7 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  *
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
 		"partialAggregation", "partialAggregationKey", "readingType", "combiningType",
@@ -448,7 +447,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	@JsonIgnore
 	public List<SortDescriptor> getSortDescriptors() {
 		if ( sorts == null ) {
-			return Collections.emptyList();
+			return new ArrayList<>(2);
 		}
 		return new ArrayList<>(sorts);
 	}

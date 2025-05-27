@@ -24,7 +24,6 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.BasicUserMetadataFilter;
@@ -37,7 +36,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Filter support for user actions.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 1.23
  */
 public class UserFilterCommand extends FilterSupport implements UserFilter {
@@ -78,7 +77,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 
 	public List<SortDescriptor> getSortDescriptors() {
 		if ( sorts == null ) {
-			return Collections.emptyList();
+			return new ArrayList<>(2);
 		}
 		return new ArrayList<>(sorts);
 	}

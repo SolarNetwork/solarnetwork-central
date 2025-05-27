@@ -36,7 +36,7 @@ import org.springframework.util.StringUtils;
  * Convert JWT scopes to Instruction Input authorities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JwtScopeGrantedAuthoritiesConverter
 		implements Converter<Jwt, Collection<GrantedAuthority>> {
@@ -58,7 +58,7 @@ public class JwtScopeGrantedAuthoritiesConverter
 			};
 			auths.add(new SimpleGrantedAuthority(auth));
 		}
-		return auths;
+		return Collections.unmodifiableList(auths);
 	}
 
 }
