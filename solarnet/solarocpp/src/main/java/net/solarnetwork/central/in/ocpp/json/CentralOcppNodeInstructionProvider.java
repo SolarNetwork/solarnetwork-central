@@ -155,7 +155,7 @@ public class CentralOcppNodeInstructionProvider extends
 			case OcppAppEvents.EVENT_TOPIC_CHARGE_POINT_DISCONNECTED -> cancelAsyncProcessItem(
 					new DelayedChargePointIdentifier(identity));
 			default -> {
-				break;
+				// nothing
 			}
 		}
 	}
