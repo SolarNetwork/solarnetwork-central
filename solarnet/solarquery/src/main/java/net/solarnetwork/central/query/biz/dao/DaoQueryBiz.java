@@ -24,6 +24,7 @@
 
 package net.solarnetwork.central.query.biz.dao;
 
+import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -34,7 +35,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Period;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
@@ -102,7 +102,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Implementation of {@link QueryBiz}.
  *
  * @author matt
- * @version 4.5
+ * @version 4.6
  */
 @Securable
 public class DaoQueryBiz implements QueryBiz {
@@ -275,7 +275,7 @@ public class DaoQueryBiz implements QueryBiz {
 			LocalDateTime s = f.getLocalStartDate();
 			LocalDateTime e = f.getLocalEndDate();
 			if ( e == null ) {
-				e = LocalDateTime.now();
+				e = LocalDateTime.now(UTC);
 			}
 			startDate = s;
 			endDate = e;
@@ -285,7 +285,7 @@ public class DaoQueryBiz implements QueryBiz {
 			Instant e = filter.getEndDate();
 			if ( s == null && e != null ) {
 				// treat start date as SolarNetwork epoch (may want to make epoch configurable)
-				s = LocalDateTime.of(2008, 1, 1, 0, 0, 0).toInstant(ZoneOffset.UTC);
+				s = LocalDateTime.of(2008, 1, 1, 0, 0, 0).toInstant(UTC);
 			} else if ( s != null && e == null ) {
 				// treat end date as now for purposes of this calculating query range
 				e = Instant.now();

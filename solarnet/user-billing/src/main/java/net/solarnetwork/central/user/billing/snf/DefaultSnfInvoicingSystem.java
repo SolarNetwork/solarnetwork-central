@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf;
 
 import static java.lang.String.format;
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.user.billing.snf.SnfBillingUtils.invoiceForSnfInvoice;
 import static net.solarnetwork.central.user.billing.snf.SnfBillingUtils.usageMetadata;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
@@ -108,7 +109,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -597,7 +598,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 		LocalDate date = invoice.getStartDate();
 		if ( date == null ) {
-			date = LocalDate.now();
+			date = LocalDate.now(UTC);
 		}
 		filter.setDate(date.atStartOfDay(tz).toInstant());
 		return filter;

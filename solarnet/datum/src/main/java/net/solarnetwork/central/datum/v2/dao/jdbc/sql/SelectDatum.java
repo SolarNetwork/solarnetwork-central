@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.lang.String.format;
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.timeColumnName;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -46,7 +47,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  * @since 3.8
  */
 public final class SelectDatum
@@ -394,8 +395,8 @@ public final class SelectDatum
 		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, combine, con, stmt, p);
 		if ( isDefaultLocalDateRange() ) {
 			// currently this implies a DOW/HOD style query; default date range will be the past 2 years
-			stmt.setObject(++p, LocalDate.now().minusYears(2).atStartOfDay(), Types.TIMESTAMP);
-			stmt.setObject(++p, LocalDate.now().plusDays(1).atStartOfDay(), Types.TIMESTAMP);
+			stmt.setObject(++p, LocalDate.now(UTC).minusYears(2).atStartOfDay(), Types.TIMESTAMP);
+			stmt.setObject(++p, LocalDate.now(UTC).plusDays(1).atStartOfDay(), Types.TIMESTAMP);
 		} else if ( filter.hasLocalDate() ) {
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
 		} else {

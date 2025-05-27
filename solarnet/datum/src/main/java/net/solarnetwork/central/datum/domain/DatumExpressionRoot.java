@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.ZoneOffset.UTC;
 import static java.util.Collections.emptyList;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -51,7 +52,7 @@ import net.solarnetwork.util.ObjectUtils;
  * {@link DatumMetadataOperations}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 		implements DatumCollectionFunctions, DatumHttpFunctions {
@@ -244,7 +245,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @since 1.3
 	 */
 	public BigDecimal resolveTariffScheduleRate(DatumMetadataOperations meta, String path) {
-		return resolveTariffScheduleRate(meta, path, LocalDateTime.now(), null);
+		return resolveTariffScheduleRate(meta, path, LocalDateTime.now(UTC), null);
 	}
 
 	/**
