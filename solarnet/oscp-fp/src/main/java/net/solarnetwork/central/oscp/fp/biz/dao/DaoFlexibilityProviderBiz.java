@@ -29,6 +29,7 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.oscp.dao.BasicConfigurationFilter.filterForUsers;
 import static net.solarnetwork.central.oscp.domain.DatumPublishEvent.FORECAST_TYPE_PARAM;
+import static net.solarnetwork.central.oscp.domain.DatumPublishSettings.shouldPublishForSettings;
 import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityOptimizer;
 import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityProvider;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
@@ -441,8 +442,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			BaseOscpExternalSystemConfiguration<?> dest, CapacityGroupConfiguration group,
 			DatumPublishSettings settings, Supplier<Collection<OwnedGeneralNodeDatum>> datumSupplier,
 			KeyValuePair... sourceIdParameters) {
-		if ( !DatumPublishSettings.shouldPublish(settings)
-				|| (fluxPublisher == null && datumDao == null) ) {
+		if ( !shouldPublishForSettings(settings) || (fluxPublisher == null && datumDao == null) ) {
 			return null;
 		}
 		Long nodeId = settings.getNodeId();
