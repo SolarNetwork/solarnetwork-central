@@ -33,12 +33,10 @@ To build all applications:
 ./gradlew.bat build
 ```
 
-## Enabling ErrorProne
+## ErrorProne
 
-Pass `-P errorProneEnabled=true` to the build command to enable ErrorProne warnings when compiling
-sources, and `-P errorProneEnabledTest=true` to enable warnings when compiling test sources. Tests
-are disabled by default for now until all sources have been updated to fix their initial
-ErrorProne warnings.
+Pass `-P errorProneDisabled=true` to the build command to disable ErrorProne warnings when compiling
+sources, and `-P errorProneEnabledTest=true` to enable warnings when compiling test sources.
 
 # Testing
 

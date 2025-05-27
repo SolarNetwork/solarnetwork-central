@@ -55,7 +55,7 @@ subprojects {
 	}
 	
 	compileJava {
-		it.options.errorprone.enabled = (rootProject.hasProperty('errorProneEnabled') && rootProject.errorProneEnabled.toBoolean());
+		it.options.errorprone.enabled = !(rootProject.hasProperty('errorProneDisabled') && rootProject.errorProneDisabled.toBoolean());
 	}
 
 	compileTestJava {
