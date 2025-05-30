@@ -33,10 +33,9 @@ import net.solarnetwork.central.domain.SolarNodeGroupCapability;
  * Simple implementation of {@link NodeGroupInformation}.
  *
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public class SimpleNodeGroupInformation extends BaseIdentity<SimpleNodeGroupInformation>
-		implements NodeGroupInformation {
+public class SimpleNodeGroupInformation extends BaseIdentity implements NodeGroupInformation {
 
 	@Serial
 	private static final long serialVersionUID = -1983417976743765775L;

@@ -31,21 +31,19 @@ import net.solarnetwork.domain.Identity;
  * Base implementation of a Long-based {@link net.solarnetwork.domain.Identity}.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public abstract class BaseIdentity<T extends BaseIdentity<T>>
-		implements Cloneable, Serializable, Identity<T, Long> {
+public abstract class BaseIdentity implements Cloneable, Serializable, Identity<Long> {
 
 	@Serial
 	private static final long serialVersionUID = -5979349641482303093L;
 
 	private Long id = null;
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public T clone() {
+	public BaseIdentity clone() {
 		try {
-			return (T) super.clone();
+			return (BaseIdentity) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);
@@ -72,8 +70,7 @@ public abstract class BaseIdentity<T extends BaseIdentity<T>>
 		if ( (obj == null) || (getClass() != obj.getClass()) ) {
 			return false;
 		}
-		@SuppressWarnings("unchecked")
-		T other = (T) obj;
+		BaseIdentity other = (BaseIdentity) obj;
 		return Objects.equals(id, other.getId());
 	}
 

@@ -37,8 +37,8 @@ import net.solarnetwork.central.user.domain.UserNodePK;
  * @version 2.0
  * @since 2.1
  */
-public interface UserNodeRelatedEntity<T extends UserNodeRelatedEntity<T, K>, K extends Comparable<K> & Serializable>
-		extends UserRelatedEntity<T, K>, NodeIdRelated {
+public interface UserNodeRelatedEntity<K extends Comparable<K> & Serializable>
+		extends UserRelatedEntity<K>, NodeIdRelated {
 
 	/**
 	 * Get the user and node key that this entity relates to.

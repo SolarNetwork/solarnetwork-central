@@ -37,7 +37,7 @@ import net.solarnetwork.dao.Entity;
  * @version 2.0
  * @since 1.43
  */
-public interface BulkLoadingDao<T extends Entity<T, K>, K extends Comparable<K> & Serializable> {
+public interface BulkLoadingDao<T extends Entity<K>, K extends Serializable & Comparable<K>> {
 
 	/**
 	 * Batch loading transaction mode.
@@ -107,7 +107,7 @@ public interface BulkLoadingDao<T extends Entity<T, K>, K extends Comparable<K> 
 	 * @param <K>
 	 *        the primary key type
 	 */
-	interface LoadingExceptionHandler<T extends Entity<T, K>, K extends Comparable<K> & Serializable> {
+	interface LoadingExceptionHandler<T extends Entity<K>, K extends Serializable & Comparable<K>> {
 
 		/**
 		 * Handle a loading exception.
@@ -132,7 +132,7 @@ public interface BulkLoadingDao<T extends Entity<T, K>, K extends Comparable<K> 
 	 * @param <K>
 	 *        the primary key type
 	 */
-	interface LoadingContext<T extends Entity<T, K>, K extends Comparable<K> & Serializable>
+	interface LoadingContext<T extends Entity<K>, K extends Serializable & Comparable<K>>
 			extends AutoCloseable {
 
 		/**

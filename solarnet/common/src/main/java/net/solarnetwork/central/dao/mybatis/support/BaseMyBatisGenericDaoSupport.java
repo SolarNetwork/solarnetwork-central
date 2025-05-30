@@ -44,7 +44,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @version 2.0
  * @since 2.1
  */
-public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<T, K>, K extends Comparable<K> & Serializable>
+public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K extends Comparable<K> & Serializable>
 		extends BaseMyBatisDao implements GenericDao<T, K> {
 
 	/** Error code to report that a named query was not found. */

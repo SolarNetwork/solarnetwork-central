@@ -30,15 +30,20 @@ import net.solarnetwork.central.dao.BaseEntity;
  * A set of capabilities.
  *
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public class SolarCapability extends BaseEntity<SolarCapability> implements Cloneable, Serializable {
+public class SolarCapability extends BaseEntity implements Cloneable, Serializable {
 
 	@Serial
 	private static final long serialVersionUID = 1449569875028595935L;
 
 	private Long generationCapacityWatts;
 	private Long storageCapacityWattHours;
+
+	@Override
+	public SolarCapability clone() {
+		return (SolarCapability) super.clone();
+	}
 
 	public Long getGenerationCapacityWatts() {
 		return generationCapacityWatts;

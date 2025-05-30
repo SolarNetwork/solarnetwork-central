@@ -31,9 +31,9 @@ import net.solarnetwork.dao.Entity;
  * API for an invoice.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.3
  */
-public interface Invoice extends Entity<Invoice, String> {
+public interface Invoice extends Entity<String> {
 
 	/**
 	 * The invoice ID used for dry-run (draft) invoice generation.

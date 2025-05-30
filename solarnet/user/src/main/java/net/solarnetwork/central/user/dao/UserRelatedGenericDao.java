@@ -40,7 +40,7 @@ import net.solarnetwork.dao.GenericDao;
  * @author matt
  * @version 2.0
  */
-public interface UserRelatedGenericDao<T extends UserRelatedEntity<T, K>, K extends Comparable<K> & Serializable>
+public interface UserRelatedGenericDao<T extends UserRelatedEntity<K>, K extends Comparable<K> & Serializable>
 		extends GenericDao<T, K> {
 
 	/**

@@ -55,8 +55,7 @@ import net.solarnetwork.domain.datum.DatumId;
  */
 @JsonPropertyOrder({ "ts", "userId", "service", "aggregation", "count" })
 @JsonIgnoreProperties("id")
-public final class AuditUserServiceEntity
-		extends BasicSerializableIdentity<AuditUserServiceEntity, DatumId> implements
+public class AuditUserServiceEntity extends BasicSerializableIdentity<DatumId> implements
 		AuditUserServiceValue, Cloneable, Serializable, Differentiable<AuditUserServiceValue> {
 
 	@Serial
@@ -155,7 +154,7 @@ public final class AuditUserServiceEntity
 
 	@Override
 	public AuditUserServiceEntity clone() {
-		return super.clone();
+		return (AuditUserServiceEntity) super.clone();
 	}
 
 	@Override

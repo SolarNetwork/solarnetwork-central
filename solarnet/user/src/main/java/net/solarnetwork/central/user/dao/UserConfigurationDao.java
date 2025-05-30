@@ -32,7 +32,7 @@ import net.solarnetwork.central.dao.UserRelatedEntity;
  * @author matt
  * @version 2.0
  */
-public interface UserConfigurationDao<T extends UserRelatedEntity<T, K>, K extends Comparable<K> & Serializable> {
+public interface UserConfigurationDao<T extends UserRelatedEntity<K>, K extends Comparable<K> & Serializable> {
 
 	/**
 	 * Get a set of all configuration entities for a user.

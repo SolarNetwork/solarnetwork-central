@@ -42,7 +42,7 @@ import net.solarnetwork.domain.Unique;
  * @version 1.1
  * @since 2.7
  */
-public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<T, K>, K extends Comparable<K> & Serializable, M extends Unique<K>, F extends PaginationCriteria>
+public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K extends Comparable<K> & Serializable, M extends Unique<K>, F extends PaginationCriteria>
 		extends BaseMyBatisGenericDaoSupport<T, K>
 		implements FilterableDao<M, K, F>, FilterResultsFactory<M, K, F> {
 

@@ -102,7 +102,7 @@ public class BulkLoadingDaoSupportTests extends AbstractJUnit5JdbcDaoTestSupport
 		});
 	}
 
-	private static class BulkLoadThingy extends BasicLongEntity<BulkLoadThingy> {
+	private static class BulkLoadThingy extends BasicLongEntity {
 
 		private static final long serialVersionUID = 4184939958330559933L;
 

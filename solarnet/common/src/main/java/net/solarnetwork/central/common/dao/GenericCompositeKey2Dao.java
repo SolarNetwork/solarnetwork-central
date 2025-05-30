@@ -44,7 +44,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @author matt
  * @version 2.0
  */
-public interface GenericCompositeKey2Dao<T extends Entity<T, K>, K extends Comparable<K> & Serializable & CompositeKey2<K1, K2>, K1, K2>
+public interface GenericCompositeKey2Dao<T extends Entity<K>, K extends Comparable<K> & Serializable & CompositeKey2<K1, K2>, K1, K2>
 		extends GenericDao<T, K>, GenericCompositeKeyFilterableDao<T, K> {
 
 	/**

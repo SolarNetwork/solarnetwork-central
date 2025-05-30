@@ -47,7 +47,7 @@ import net.solarnetwork.util.ObjectUtils;
  * @author matt
  * @version 2.0
  */
-public class CachingGenericDao<T extends Entity<T, K>, K extends Comparable<K> & Serializable, D extends GenericDao<T, K>>
+public class CachingGenericDao<T extends Entity<K>, K extends Comparable<K> & Serializable, D extends GenericDao<T, K>>
 		implements GenericDao<T, K> {
 
 	/** The delegate DAO. */

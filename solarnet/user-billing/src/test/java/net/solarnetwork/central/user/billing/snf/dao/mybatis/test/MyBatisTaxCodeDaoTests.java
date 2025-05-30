@@ -140,7 +140,7 @@ public class MyBatisTaxCodeDaoTests extends AbstractMyBatisDaoTestSupport {
 		return codes;
 	}
 
-	private <T extends Identity<K>, K> List<T> assertFilterResults(String prefix,
+	private <T extends Identity<K>, K extends Comparable<K>> List<T> assertFilterResults(String prefix,
 			FilterResults<T, K> results, int returnedResultCount) {
 		assertThat(prefix + " results not null", results, notNullValue());
 		assertThat(prefix + " returned result count", results.getReturnedResultCount(),

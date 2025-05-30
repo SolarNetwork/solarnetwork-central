@@ -47,8 +47,8 @@ import net.solarnetwork.service.CertificateException;
  * @version 3.0
  */
 @JsonIgnoreProperties({ "id", "node", "user" })
-public class UserNodeCertificate extends BaseObjectEntity<UserNodeCertificate, UserNodePK>
-		implements UserRelatedEntity<UserNodeCertificate, UserNodePK> {
+public class UserNodeCertificate extends BaseObjectEntity<UserNodePK>
+		implements UserRelatedEntity<UserNodePK> {
 
 	@Serial
 	private static final long serialVersionUID = 3070315335910395052L;

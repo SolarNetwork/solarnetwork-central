@@ -33,16 +33,12 @@ import net.solarnetwork.dao.BasicEntity;
  * Base immutable user-related entity, where the first component of its primary
  * key is a Long user ID.
  * 
- * @param <T>
- *        the identity type
- * @param <K>
- *        the key type
  * @author matt
- * @version 2.0
+ * @version 1.0
  * @see BaseUserModifiableEntity
  */
-public abstract class BasicUserEntity<T extends BasicUserEntity<T, K>, K extends UserRelatedCompositeKey<K>>
-		extends BasicEntity<T, K> implements UserRelatedStdEntity<T, K> {
+public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends UserRelatedCompositeKey<K>>
+		extends BasicEntity<K> implements UserRelatedStdEntity<C, K> {
 
 	@Serial
 	private static final long serialVersionUID = 1520924063897057459L;
@@ -79,6 +75,12 @@ public abstract class BasicUserEntity<T extends BasicUserEntity<T, K>, K extends
 		this.modified = requireNonNullArgument(modified, "modified");
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public C clone() {
+		return (C) super.clone();
+	}
+
 	/**
 	 * Test if this entity has the same property values as another.
 	 *
@@ -92,15 +94,15 @@ public abstract class BasicUserEntity<T extends BasicUserEntity<T, K>, K extends
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
-	public abstract boolean isSameAs(T other);
+	public abstract boolean isSameAs(C other);
 
 	@Override
-	public boolean differsFrom(T other) {
+	public boolean differsFrom(C other) {
 		return !isSameAs(other);
 	}
 
 	@Override
-	public void copyTo(T entity) {
+	public void copyTo(C entity) {
 		throw new UnsupportedOperationException();
 	}
 

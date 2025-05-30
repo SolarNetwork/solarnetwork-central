@@ -37,8 +37,8 @@ import net.solarnetwork.domain.SerializeIgnore;
  * @author matt
  * @version 3.0
  */
-public class UserNodeTransfer extends BaseObjectEntity<UserNodeTransfer, UserNodePK>
-		implements UserRelatedEntity<UserNodeTransfer, UserNodePK> {
+public class UserNodeTransfer extends BaseObjectEntity<UserNodePK>
+		implements UserRelatedEntity<UserNodePK> {
 
 	@Serial
 	private static final long serialVersionUID = -1316805739552206861L;

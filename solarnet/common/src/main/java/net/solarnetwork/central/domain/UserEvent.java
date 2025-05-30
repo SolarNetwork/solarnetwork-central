@@ -46,9 +46,8 @@ import net.solarnetwork.util.UuidUtils;
  * @author matt
  * @version 2.0
  */
-public final class UserEvent extends BasicSerializableIdentity<UserEvent, UserUuidPK>
-		implements Entity<UserEvent, UserUuidPK>, UserRelatedEntity<UserEvent, UserUuidPK>, Serializable,
-		Cloneable {
+public final class UserEvent extends BasicSerializableIdentity<UserUuidPK>
+		implements Entity<UserUuidPK>, UserRelatedEntity<UserUuidPK>, Serializable, Cloneable {
 
 	@Serial
 	private static final long serialVersionUID = -2418940464038903514L;
@@ -132,7 +131,7 @@ public final class UserEvent extends BasicSerializableIdentity<UserEvent, UserUu
 
 	@Override
 	public UserEvent clone() {
-		return super.clone();
+		return (UserEvent) super.clone();
 	}
 
 	@Override

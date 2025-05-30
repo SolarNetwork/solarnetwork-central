@@ -30,12 +30,20 @@ import net.solarnetwork.central.dao.BaseObjectEntity;
 /**
  * Abstract implementation support for {@link ClaimableJob}.
  *
+ * @param <C>
+ *        the job configuration type
+ * @param <R>
+ *        the job result type
+ * @param <S>
+ *        the job state type
+ * @param <K>
+ *        the job entity primary key type
  * @author matt
  * @version 3.0
  * @since 1.44
  */
-public abstract class BaseClaimableJob<T extends BaseClaimableJob<T, C, R, S, PK>, C, R, S extends ClaimableJobState, PK extends Comparable<PK> & Serializable>
-		extends BaseObjectEntity<T, PK> implements ClaimableJob<T, C, R, S, PK> {
+public abstract class BaseClaimableJob<C, R, S extends ClaimableJobState, K extends Comparable<K> & Serializable>
+		extends BaseObjectEntity<K> implements ClaimableJob<C, R, S, K> {
 
 	@Serial
 	private static final long serialVersionUID = 6518967007802666051L;

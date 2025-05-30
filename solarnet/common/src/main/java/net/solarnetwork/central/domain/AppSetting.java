@@ -35,7 +35,7 @@ import net.solarnetwork.dao.BasicEntity;
  * @version 2.0
  */
 @JsonIgnoreProperties("id")
-public final class AppSetting extends BasicEntity<AppSetting, KeyTypePK> {
+public final class AppSetting extends BasicEntity<KeyTypePK> {
 
 	@Serial
 	private static final long serialVersionUID = -7907835439616081294L;

@@ -38,9 +38,9 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A user domain object.
  *
  * @author matt
- * @version 3.0
+ * @version 2.1
  */
-public class User extends BaseEntity<User> implements UserInfo {
+public class User extends BaseEntity implements UserInfo {
 
 	@Serial
 	private static final long serialVersionUID = -1968822608256484455L;
@@ -76,6 +76,11 @@ public class User extends BaseEntity<User> implements UserInfo {
 		super();
 		setId(userId);
 		setEmail(email);
+	}
+
+	@Override
+	public User clone() {
+		return (User) super.clone();
 	}
 
 	@Override

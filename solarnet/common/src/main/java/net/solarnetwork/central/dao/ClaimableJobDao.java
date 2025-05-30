@@ -45,7 +45,7 @@ import net.solarnetwork.central.domain.ClaimableJobState;
  * @version 2.0
  * @since 1.44
  */
-public interface ClaimableJobDao<C, R, S extends ClaimableJobState, T extends ClaimableJob<T, C, R, S, K>, K extends Comparable<K> & Serializable> {
+public interface ClaimableJobDao<C, R, S extends ClaimableJobState, T extends ClaimableJob<C, R, S, K>, K extends Comparable<K> & Serializable> {
 
 	/**
 	 * Claim a queued job.

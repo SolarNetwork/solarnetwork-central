@@ -40,9 +40,9 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Domain object for an individual instruction.
  *
  * @author matt
- * @version 3.0
+ * @version 2.5
  */
-public class Instruction extends BaseEntity<Instruction> {
+public class Instruction extends BaseEntity {
 
 	@Serial
 	private static final long serialVersionUID = -1424063634197303751L;
@@ -93,6 +93,11 @@ public class Instruction extends BaseEntity<Instruction> {
 		setResultParameters(other.getResultParameters());
 		setState(other.getState());
 		setExpirationDate(other.getExpirationDate());
+	}
+
+	@Override
+	public Instruction clone() {
+		return (Instruction) super.clone();
 	}
 
 	/**

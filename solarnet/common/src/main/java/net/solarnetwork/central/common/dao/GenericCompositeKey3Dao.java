@@ -47,7 +47,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @author matt
  * @version 2.0
  */
-public interface GenericCompositeKey3Dao<T extends Entity<T, K>, K extends Comparable<K> & Serializable & CompositeKey3<K1, K2, K3>, K1, K2, K3>
+public interface GenericCompositeKey3Dao<T extends Entity<K>, K extends Comparable<K> & Serializable & CompositeKey3<K1, K2, K3>, K1, K2, K3>
 		extends GenericDao<T, K>, GenericCompositeKeyFilterableDao<T, K> {
 
 	/**

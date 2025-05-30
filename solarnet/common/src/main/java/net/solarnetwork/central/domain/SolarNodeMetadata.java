@@ -45,13 +45,12 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * </p>
  *
  * @author matt
- * @version 3.0
+ * @version 2.1
  * @since 1.32
  */
 @JsonIgnoreProperties("id")
 @JsonPropertyOrder({ "nodeId", "created", "updated" })
-public class SolarNodeMetadata extends BaseEntity<SolarNodeMetadata>
-		implements NodeMetadata, Cloneable, Serializable {
+public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Cloneable, Serializable {
 
 	@Serial
 	private static final long serialVersionUID = 7366747359583724835L;
@@ -76,6 +75,11 @@ public class SolarNodeMetadata extends BaseEntity<SolarNodeMetadata>
 	public SolarNodeMetadata(Long id) {
 		super();
 		setId(id);
+	}
+
+	@Override
+	public SolarNodeMetadata clone() {
+		return (SolarNodeMetadata) super.clone();
 	}
 
 	/**

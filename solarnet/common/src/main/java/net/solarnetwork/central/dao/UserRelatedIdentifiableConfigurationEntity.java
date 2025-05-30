@@ -34,6 +34,6 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * @version 2.0
  */
 public interface UserRelatedIdentifiableConfigurationEntity<T extends UserRelatedIdentifiableConfigurationEntity<T, K>, K extends Comparable<K> & Serializable>
-		extends IdentifiableConfiguration, UserRelatedEntity<T, K> {
+		extends IdentifiableConfiguration, UserRelatedEntity<K> {
 
 }

@@ -40,7 +40,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @author matt
  * @version 2.0
  */
-public abstract class BaseMyBatisFilterableDao<T extends Entity<T, K>, M extends FilterMatch<K>, F extends Filter, K extends Comparable<K> & Serializable>
+public abstract class BaseMyBatisFilterableDao<T extends Entity<K>, M extends FilterMatch<K>, F extends Filter, K extends Comparable<K> & Serializable>
 		extends BaseMyBatisGenericDao<T, K> implements FilterableDao<M, K, F> {
 
 	/** A query property for a general Filter object value. */

@@ -38,10 +38,9 @@ import net.solarnetwork.central.dao.BaseEntity;
  * </p>
  *
  * @author matt
- * @version 3.0
+ * @version 2.0
  */
-public final class SolarNodeGroup extends BaseEntity<SolarNodeGroup>
-		implements Cloneable, Serializable, NodeGroupIdentity {
+public class SolarNodeGroup extends BaseEntity implements Cloneable, Serializable, NodeGroupIdentity {
 
 	@Serial
 	private static final long serialVersionUID = 1843734913796373879L;
@@ -76,7 +75,7 @@ public final class SolarNodeGroup extends BaseEntity<SolarNodeGroup>
 
 	@Override
 	public SolarNodeGroup clone() {
-		return super.clone();
+		return (SolarNodeGroup) super.clone();
 	}
 
 	/**

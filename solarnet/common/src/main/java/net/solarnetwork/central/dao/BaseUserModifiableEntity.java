@@ -41,7 +41,7 @@ import net.solarnetwork.dao.BasicEntity;
  * @version 2.0
  */
 public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntity<T, K>, K extends UserRelatedCompositeKey<K>>
-		extends BasicEntity<T, K> implements UserRelatedStdEntity<T, K> {
+		extends BasicEntity<K> implements UserRelatedStdEntity<T, K> {
 
 	@Serial
 	private static final long serialVersionUID = -8201311252309117005L;
@@ -74,6 +74,12 @@ public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntit
 	 */
 	public BaseUserModifiableEntity(K id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public BaseUserModifiableEntity<T, K> clone() {
+		return (BaseUserModifiableEntity<T, K>) super.clone();
 	}
 
 	@Override

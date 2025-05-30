@@ -213,11 +213,6 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	}
 
 	@Override
-	public int compareTo(Invoice o) {
-		return invoice.compareTo(o);
-	}
-
-	@Override
 	public List<InvoiceItem> getInvoiceItems() {
 		return invoice.getInvoiceItems();
 	}

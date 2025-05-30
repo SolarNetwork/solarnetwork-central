@@ -55,7 +55,7 @@ import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
  * @version 2.0
  * @since 1.11
  */
-public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEntity<T, K>, K extends Comparable<K> & Serializable>
+public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEntity<K>, K extends Comparable<K> & Serializable>
 		extends BaseMyBatisGenericDao<T, K> implements UserRelatedGenericDao<T, K> {
 
 	/**

@@ -40,7 +40,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicEntity;
-import net.solarnetwork.dao.BasicIdentity;
 import net.solarnetwork.domain.Differentiable;
 
 /**
@@ -294,7 +293,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 		if ( items == null ) {
 			return Collections.emptyMap();
 		}
-		return items.stream().collect(Collectors.toMap(BasicIdentity::getId, e -> e));
+		return items.stream().collect(Collectors.toMap(SnfInvoiceItem::getId, e -> e));
 	}
 
 	/**

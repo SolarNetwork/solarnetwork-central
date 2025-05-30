@@ -39,7 +39,7 @@ import net.solarnetwork.domain.InstructionStatus;
  * @version 3.0
  */
 @JsonSerialize(using = NodeInstructionSerializer.class)
-public class NodeInstruction extends BaseEntity<NodeInstruction> implements EntityMatch {
+public class NodeInstruction extends BaseEntity implements EntityMatch {
 
 	@Serial
 	private static final long serialVersionUID = 4904518821205446583L;
@@ -99,6 +99,11 @@ public class NodeInstruction extends BaseEntity<NodeInstruction> implements Enti
 		super();
 		setInstruction(new Instruction());
 		other.copyTo(this);
+	}
+
+	@Override
+	public NodeInstruction clone() {
+		return (NodeInstruction) super.clone();
 	}
 
 	/**

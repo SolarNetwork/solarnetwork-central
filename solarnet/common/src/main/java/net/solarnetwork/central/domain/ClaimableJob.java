@@ -36,14 +36,14 @@ import net.solarnetwork.dao.Entity;
  *        the job result type
  * @param <S>
  *        the job state type
- * @param <PK>
+ * @param <K>
  *        the job entity primary key type
  * @author matt
  * @version 3.0
  * @since 1.44
  */
-public interface ClaimableJob<T extends ClaimableJob<T, C, R, S, PK>, C, R, S extends ClaimableJobState, PK extends Comparable<PK> & Serializable>
-		extends Entity<T, PK> {
+public interface ClaimableJob<C, R, S extends ClaimableJobState, K extends Comparable<K> & Serializable>
+		extends Entity<K> {
 
 	/**
 	 * Get the job configuration details.

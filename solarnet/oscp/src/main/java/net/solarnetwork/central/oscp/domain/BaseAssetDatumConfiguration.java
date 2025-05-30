@@ -25,12 +25,13 @@ package net.solarnetwork.central.oscp.domain;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Objects;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Base datum configuration for assets.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseAssetDatumConfiguration {
 
@@ -72,8 +73,7 @@ public abstract class BaseAssetDatumConfiguration {
 		// @formatter:off
 		return (Arrays.equals(this.propertyNames, other.propertyNames)
 				&& Objects.equals(this.unit, other.unit)
-				&& (this.multiplier == other.multiplier
-					|| (this.multiplier != null && other.multiplier != null && this.multiplier.compareTo(other.multiplier) == 0))
+				&& ObjectUtils.comparativelyEqual(this.multiplier, other.multiplier)
 				&& Objects.equals(this.statisticType, other.statisticType));
 		// @formatter:on
 	}

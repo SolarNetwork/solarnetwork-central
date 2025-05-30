@@ -31,24 +31,20 @@ import net.solarnetwork.domain.Identity;
  * Base implementation of a String-based
  * {@link net.solarnetwork.domain.Identity}.
  *
- * @param <T>
- *        the identity type
  * @author matt
  * @version 2.0
  */
-public abstract class BaseStringIdentity<T extends BaseStringIdentity<T>>
-		implements Cloneable, Serializable, Identity<T, String> {
+public abstract class BaseStringIdentity implements Cloneable, Serializable, Identity<String> {
 
 	@Serial
 	private static final long serialVersionUID = -2979855366308936650L;
 
 	private String id = null;
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public T clone() {
+	public BaseStringIdentity clone() {
 		try {
-			return (T) super.clone();
+			return (BaseStringIdentity) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);
@@ -76,8 +72,7 @@ public abstract class BaseStringIdentity<T extends BaseStringIdentity<T>>
 		if ( (obj == null) || (getClass() != obj.getClass()) ) {
 			return false;
 		}
-		@SuppressWarnings("unchecked")
-		T other = (T) obj;
+		BaseStringIdentity other = (BaseStringIdentity) obj;
 		return Objects.equals(id, other.getId());
 	}
 

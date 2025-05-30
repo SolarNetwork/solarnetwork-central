@@ -38,8 +38,8 @@ import net.solarnetwork.dao.Entity;
  * @version 2.0
  * @since 2.0
  */
-public interface UserRelatedEntity<T extends UserRelatedEntity<T, K>, K extends Comparable<K> & Serializable>
-		extends Entity<T, K>, UserIdRelated {
+public interface UserRelatedEntity<K extends Comparable<K> & Serializable>
+		extends Entity<K>, UserIdRelated {
 
 	/**
 	 * Mask any sensitive information.

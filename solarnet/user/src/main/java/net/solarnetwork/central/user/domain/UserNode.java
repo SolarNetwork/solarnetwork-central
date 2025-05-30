@@ -38,9 +38,9 @@ import net.solarnetwork.central.domain.SolarNode;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 1.4
  */
-public class UserNode extends BaseEntity<UserNode> implements UserRelatedEntity<UserNode, Long> {
+public class UserNode extends BaseEntity implements UserRelatedEntity<Long> {
 
 	@Serial
 	private static final long serialVersionUID = -3247965742224565205L;

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serializable;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.datum.DatumSamplesContainer;
 
@@ -29,9 +30,9 @@ import net.solarnetwork.domain.datum.DatumSamplesContainer;
  * API for a general object/source/timestamp primary key style entity.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public interface GeneralObjectDatum<K extends GeneralObjectDatumKey>
+public interface GeneralObjectDatum<K extends Comparable<K> & Serializable & GeneralObjectDatumKey>
 		extends Entity<K>, DatumSamplesContainer {
 
 }

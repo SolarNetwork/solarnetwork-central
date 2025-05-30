@@ -44,7 +44,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 @JsonPropertyOrder({ "created", "updated", "nodeId", "sourceId", "m", "t" })
 public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable, Serializable {
@@ -65,20 +65,6 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 		} catch ( CloneNotSupportedException e ) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	@Override
-	public int compareTo(NodeSourcePK o) {
-		if ( id == null && o == null ) {
-			return 0;
-		}
-		if ( id == null ) {
-			return -1;
-		}
-		if ( o == null ) {
-			return 1;
-		}
-		return id.compareTo(o);
 	}
 
 	@Override

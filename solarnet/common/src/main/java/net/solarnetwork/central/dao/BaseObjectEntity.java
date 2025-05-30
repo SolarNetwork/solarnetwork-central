@@ -36,8 +36,8 @@ import net.solarnetwork.dao.Entity;
  * @version 3.0
  * @since 1.34
  */
-public class BaseObjectEntity<T extends BaseObjectEntity<T, PK>, PK extends Comparable<PK> & Serializable>
-		extends BaseObjectIdentity<T, PK> implements Cloneable, Serializable, Entity<T, PK> {
+public class BaseObjectEntity<K extends Comparable<K> & Serializable> extends BaseObjectIdentity<K>
+		implements Cloneable, Serializable, Entity<K> {
 
 	@Serial
 	private static final long serialVersionUID = 3752078598919814010L;

@@ -32,7 +32,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.dao.BasicLongEntity;
 import net.solarnetwork.domain.SerializeIgnore;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
@@ -45,12 +44,12 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * </p>
  *
  * @author matt
- * @version 3.0
+ * @version 2.0
  * @since 1.23
  */
 @JsonIgnoreProperties("id")
 @JsonPropertyOrder({ "userId", "created", "updated" })
-public final class UserMetadataEntity extends BasicLongEntity<UserMetadataEntity>
+public class UserMetadataEntity extends net.solarnetwork.dao.BasicEntity<Long>
 		implements UserMetadata, Cloneable, Serializable {
 
 	@Serial
@@ -76,7 +75,7 @@ public final class UserMetadataEntity extends BasicLongEntity<UserMetadataEntity
 
 	@Override
 	public UserMetadataEntity clone() {
-		return super.clone();
+		return (UserMetadataEntity) super.clone();
 	}
 
 	/**

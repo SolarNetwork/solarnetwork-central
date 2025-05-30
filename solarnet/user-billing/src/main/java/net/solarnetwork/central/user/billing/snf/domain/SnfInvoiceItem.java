@@ -34,6 +34,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * SNF invoice item entity.
@@ -242,8 +243,8 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 		return Objects.equals(invoiceId, other.invoiceId)
 				&& Objects.equals(key, other.key)
 				&& Objects.equals(itemType, other.itemType)
-				&& ((quantity == other.quantity) || (quantity != null && other.quantity != null && quantity.compareTo(other.quantity) == 0))
-				&& ((amount == other.amount) || (amount != null && other.amount != null && amount.compareTo(other.amount) == 0))
+				&& ObjectUtils.comparativelyEqual(this.quantity, other.quantity)
+				&& ObjectUtils.comparativelyEqual(this.amount, other.amount)
 				&& Objects.equals(metadata, other.metadata);
 		// @formatter:on
 	}

@@ -34,13 +34,17 @@ import net.solarnetwork.dao.Entity;
  * @author matt
  * @version 2.0
  */
-public abstract class BaseEntity<T extends BaseEntity<T>> extends BaseIdentity<T>
-		implements Entity<T, Long>, Cloneable, Serializable {
+public abstract class BaseEntity extends BaseIdentity implements Entity<Long>, Cloneable, Serializable {
 
 	@Serial
 	private static final long serialVersionUID = 6006487859490874703L;
 
 	private Instant created = null;
+
+	@Override
+	public BaseEntity clone() {
+		return (BaseEntity) super.clone();
+	}
 
 	@Override
 	public Instant getCreated() {

@@ -35,19 +35,19 @@ import net.solarnetwork.domain.Identity;
  * @version 2.0
  * @since 1.34
  */
-public class BaseObjectIdentity<T extends BaseObjectIdentity<T, PK>, PK extends Comparable<PK> & Serializable>
-		implements Cloneable, Serializable, Identity<T, PK> {
+public class BaseObjectIdentity<K extends Comparable<K> & Serializable>
+		implements Cloneable, Serializable, Identity<K> {
 
 	@Serial
 	private static final long serialVersionUID = -2183771061512318513L;
 
-	private PK id = null;
+	private K id = null;
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public T clone() {
+	public BaseObjectIdentity<K> clone() {
 		try {
-			return (T) super.clone();
+			return (BaseObjectIdentity<K>) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);
@@ -76,7 +76,7 @@ public class BaseObjectIdentity<T extends BaseObjectIdentity<T, PK>, PK extends 
 			return false;
 		}
 		@SuppressWarnings("unchecked")
-		T other = (T) obj;
+		BaseObjectIdentity<K> other = (BaseObjectIdentity<K>) obj;
 		return Objects.equals(id, other.getId());
 	}
 
@@ -86,7 +86,7 @@ public class BaseObjectIdentity<T extends BaseObjectIdentity<T, PK>, PK extends 
 	 * @return the id
 	 */
 	@Override
-	public PK getId() {
+	public K getId() {
 		return id;
 	}
 
@@ -96,7 +96,7 @@ public class BaseObjectIdentity<T extends BaseObjectIdentity<T, PK>, PK extends 
 	 * @param id
 	 *        the id to set
 	 */
-	public void setId(PK id) {
+	public void setId(K id) {
 		this.id = id;
 	}
 

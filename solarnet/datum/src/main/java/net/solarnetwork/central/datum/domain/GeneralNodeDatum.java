@@ -46,7 +46,7 @@ import net.solarnetwork.domain.datum.DatumSamples;
  * </p>
  *
  * @author matt
- * @version 2.2
+ * @version 3.0
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId" })
 public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable,
@@ -149,20 +149,6 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 			// should never get here
 			throw new RuntimeException(e);
 		}
-	}
-
-	@Override
-	public int compareTo(GeneralNodeDatumPK o) {
-		if ( id == null && o == null ) {
-			return 0;
-		}
-		if ( id == null ) {
-			return -1;
-		}
-		if ( o == null ) {
-			return 1;
-		}
-		return id.compareTo(o);
 	}
 
 	@Override

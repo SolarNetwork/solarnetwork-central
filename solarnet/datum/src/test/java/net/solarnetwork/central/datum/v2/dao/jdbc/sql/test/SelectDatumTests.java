@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -966,8 +967,8 @@ public class SelectDatumTests {
 		stmt.setArray(2, sourceIdsArray);
 		sourceIdsArray.free();
 
-		stmt.setObject(3, LocalDate.now().minusYears(2).atStartOfDay(), Types.TIMESTAMP);
-		stmt.setObject(4, LocalDate.now().plusDays(1).atStartOfDay(), Types.TIMESTAMP);
+		stmt.setObject(3, LocalDate.now(UTC).minusYears(2).atStartOfDay(), Types.TIMESTAMP);
+		stmt.setObject(4, LocalDate.now(UTC).plusDays(1).atStartOfDay(), Types.TIMESTAMP);
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray, sourceIdsArray);

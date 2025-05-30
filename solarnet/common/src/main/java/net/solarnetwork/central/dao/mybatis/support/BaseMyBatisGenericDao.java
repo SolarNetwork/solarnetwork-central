@@ -137,7 +137,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @author matt
  * @version 3.0
  */
-public abstract class BaseMyBatisGenericDao<T extends Entity<T, K>, K extends Comparable<K> & Serializable>
+public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Comparable<K> & Serializable>
 		extends BaseMyBatisDao implements GenericDao<T, K> {
 
 	/** Error code to report that a named query was not found. */
@@ -507,7 +507,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<T, K>, K extends Co
 	 * @param additionalProperties
 	 *        optional properties to pass to all queries
 	 */
-	protected <E extends Identity<E, Long>> void handleRelation(Long parentId, E newObject,
+	protected <E extends Identity<Long>> void handleRelation(Long parentId, E newObject,
 			Class<? extends E> relationClass, Map<String, ?> additionalProperties) {
 		if ( parentId == null ) {
 			return;
@@ -579,7 +579,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<T, K>, K extends Co
 	 *        the Class of the related object
 	 * @return the child entity's primary key
 	 */
-	protected <E extends Identity<E, Long>> Long handleChildRelation(T parent, E child,
+	protected <E extends Identity<Long>> Long handleChildRelation(T parent, E child,
 			Class<? extends E> relationClass) {
 		if ( parent == null ) {
 			return null;

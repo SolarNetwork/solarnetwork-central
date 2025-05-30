@@ -39,9 +39,9 @@ import net.solarnetwork.dao.Entity;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 1.3
  */
-public interface InvoiceItem extends Entity<InvoiceItem, String> {
+public interface InvoiceItem extends Entity<String> {
 
 	/**
 	 * The invoice item type for tax items.

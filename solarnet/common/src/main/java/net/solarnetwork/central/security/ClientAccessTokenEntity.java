@@ -91,6 +91,11 @@ public class ClientAccessTokenEntity
 	}
 
 	@Override
+	public ClientAccessTokenEntity clone() {
+		return (ClientAccessTokenEntity) super.clone();
+	}
+
+	@Override
 	public ClientAccessTokenEntity copyWithId(UserStringStringCompositePK id) {
 		var copy = new ClientAccessTokenEntity(id, getCreated());
 		copyTo(copy);

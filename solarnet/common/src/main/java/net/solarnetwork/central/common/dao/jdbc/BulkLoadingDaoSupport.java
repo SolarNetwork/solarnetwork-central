@@ -108,7 +108,7 @@ public class BulkLoadingDaoSupport {
 	 * @param <K>
 	 *        the primary key type
 	 */
-	public abstract class BulkLoadingContext<T extends Entity<T, K>, K extends Comparable<K> & Serializable>
+	public abstract class BulkLoadingContext<T extends Entity<K>, K extends Comparable<K> & Serializable>
 			implements BulkLoadingDao.LoadingContext<T, K> {
 
 		private final LoadingOptions options;
