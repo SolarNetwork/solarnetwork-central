@@ -22,23 +22,18 @@
 
 package net.solarnetwork.central.dao;
 
+import java.io.Serializable;
 import net.solarnetwork.service.IdentifiableConfiguration;
 
 /**
  * User specific entity for identifiable configuration.
  *
+ * @param <T>
+ *        the identity type
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface UserRelatedIdentifiableConfigurationEntity<PK>
-		extends IdentifiableConfiguration, UserRelatedEntity<PK> {
-
-	/**
-	 * Get the user ID associated with this configuration.
-	 *
-	 * @return the user ID
-	 */
-	@Override
-	Long getUserId();
+public interface UserRelatedIdentifiableConfigurationEntity<T extends UserRelatedIdentifiableConfigurationEntity<T, K>, K extends Comparable<K> & Serializable>
+		extends IdentifiableConfiguration, UserRelatedEntity<T, K> {
 
 }

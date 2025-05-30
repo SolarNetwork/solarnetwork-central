@@ -26,18 +26,17 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serial;
-import java.io.Serializable;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import net.solarnetwork.central.dao.BaseObjectEntity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.SerializeIgnore;
 import net.solarnetwork.service.CertificateException;
 
@@ -45,10 +44,11 @@ import net.solarnetwork.service.CertificateException;
  * A user node certificate. The certificate is expected to be in X.509 format.
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
-public class UserNodeCertificate
-		implements Entity<UserNodePK>, Cloneable, Serializable, UserRelatedEntity<UserNodePK> {
+@JsonIgnoreProperties({ "id", "node", "user" })
+public class UserNodeCertificate extends BaseObjectEntity<UserNodeCertificate, UserNodePK>
+		implements UserRelatedEntity<UserNodeCertificate, UserNodePK> {
 
 	@Serial
 	private static final long serialVersionUID = 3070315335910395052L;
@@ -59,14 +59,17 @@ public class UserNodeCertificate
 	/** The alias of the node certificate in the keystore. */
 	public static final String KEYSTORE_NODE_ALIAS = "node";
 
-	private UserNodePK id = new UserNodePK();
-	private Instant created;
 	private byte[] keystoreData;
 	private UserNodeCertificateStatus status;
 	private String requestId;
 
 	private User user;
 	private SolarNode node;
+
+	public UserNodeCertificate() {
+		super();
+		setId(new UserNodePK());
+	}
 
 	/**
 	 * Get the node certificate from a keystore. The certificate is expected to
@@ -157,6 +160,7 @@ public class UserNodeCertificate
 	 * @return the nodeId
 	 */
 	public Long getNodeId() {
+		UserNodePK id = getId();
 		return (id == null ? null : id.getNodeId());
 	}
 
@@ -167,8 +171,10 @@ public class UserNodeCertificate
 	 *        the nodeId to set
 	 */
 	public void setNodeId(Long nodeId) {
+		UserNodePK id = getId();
 		if ( id == null ) {
 			id = new UserNodePK();
+			setId(id);
 		}
 		id.setNodeId(nodeId);
 	}
@@ -180,6 +186,7 @@ public class UserNodeCertificate
 	 */
 	@Override
 	public Long getUserId() {
+		UserNodePK id = getId();
 		return (id == null ? null : id.getUserId());
 	}
 
@@ -190,8 +197,10 @@ public class UserNodeCertificate
 	 *        the userId to set
 	 */
 	public void setUserId(Long userId) {
+		UserNodePK id = getId();
 		if ( id == null ) {
 			id = new UserNodePK();
+			setId(id);
 		}
 		id.setUserId(userId);
 	}
@@ -200,53 +209,12 @@ public class UserNodeCertificate
 	@SerializeIgnore
 	@Override
 	public UserNodePK getId() {
-		return id;
-	}
-
-	public void setId(UserNodePK id) {
-		this.id = id;
-	}
-
-	@Override
-	public int compareTo(UserNodePK o) {
-		return id.compareTo(o);
-	}
-
-	@Override
-	public UserNodeCertificate clone() {
-		try {
-			return (UserNodeCertificate) super.clone();
-		} catch ( CloneNotSupportedException e ) {
-			// should not get here
-			return null;
-		}
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if ( this == obj ) {
-			return true;
-		}
-		if ( !(obj instanceof UserNodeCertificate other) ) {
-			return false;
-		}
-		if ( id == null ) {
-			return other.id == null;
-		}
-		return id.equals(other.id);
+		return super.getId();
 	}
 
 	@Override
 	public String toString() {
-		return "UserNodeCertificate{" + id + "}";
+		return "UserNodeCertificate{" + getId() + "}";
 	}
 
 	@JsonIgnore
@@ -300,15 +268,6 @@ public class UserNodeCertificate
 
 	public void setRequestId(String requestId) {
 		this.requestId = requestId;
-	}
-
-	@Override
-	public Instant getCreated() {
-		return created;
-	}
-
-	public void setCreated(Instant created) {
-		this.created = created;
 	}
 
 }

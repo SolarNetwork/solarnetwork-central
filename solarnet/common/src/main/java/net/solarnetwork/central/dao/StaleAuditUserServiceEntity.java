@@ -43,9 +43,10 @@ import net.solarnetwork.domain.datum.DatumId;
  * refers to a <b>user</b> entity.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public class StaleAuditUserServiceEntity extends BasicEntity<AggregateDatumId> implements
+public class StaleAuditUserServiceEntity
+		extends BasicEntity<StaleAuditUserServiceEntity, AggregateDatumId> implements
 		StaleAuditUserServiceValue, Cloneable, Serializable, Differentiable<StaleAuditUserServiceValue> {
 
 	@Serial
@@ -61,11 +62,6 @@ public class StaleAuditUserServiceEntity extends BasicEntity<AggregateDatumId> i
 	 */
 	public StaleAuditUserServiceEntity(AggregateDatumId id, Instant created) {
 		super(id, created);
-	}
-
-	@Override
-	public StaleAuditUserServiceEntity clone() {
-		return (StaleAuditUserServiceEntity) super.clone();
 	}
 
 	/**

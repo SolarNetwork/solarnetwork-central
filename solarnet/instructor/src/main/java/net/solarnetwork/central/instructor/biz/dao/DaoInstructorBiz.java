@@ -135,8 +135,9 @@ public class DaoInstructorBiz implements InstructorBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	public NodeInstruction queueInstruction(Long nodeId, Instruction instruction) {
 		log.debug("Received node {} instruction {}", nodeId, instruction.getTopic());
-		NodeInstruction instr = new NodeInstruction(instruction.getTopic(),
+		NodeInstruction nodeInstruction = new NodeInstruction(instruction.getTopic(),
 				instruction.getInstructionDate(), nodeId);
+		final Instruction instr = nodeInstruction.getInstruction();
 		if ( instr.getInstructionDate() == null ) {
 			instr.setInstructionDate(Instant.now());
 		}
@@ -157,8 +158,8 @@ public class DaoInstructorBiz implements InstructorBiz {
 				}
 			}
 		}
-		if ( instruction instanceof NodeInstruction ni && ni.getExpirationDate() != null ) {
-			instr.setExpirationDate(ni.getExpirationDate());
+		if ( instruction.getExpirationDate() != null ) {
+			instr.setExpirationDate(instruction.getExpirationDate());
 		}
 		if ( log.isTraceEnabled() ) {
 			log.trace("Processing instruction {} with {} hooks", instr.getId(), queueHooks.size());
@@ -167,14 +168,14 @@ public class DaoInstructorBiz implements InstructorBiz {
 			nodeServiceAuditor.auditNodeService(nodeId, INSTRUCTION_ADDED_AUDIT_SERVICE, 1);
 		}
 		for ( NodeInstructionQueueHook hook : queueHooks ) {
-			instr = hook.willQueueNodeInstruction(instr);
-			if ( instr == null ) {
+			nodeInstruction = hook.willQueueNodeInstruction(nodeInstruction);
+			if ( nodeInstruction == null ) {
 				return null;
 			}
 		}
-		Long id = nodeInstructionDao.save(instr);
+		Long id = nodeInstructionDao.save(nodeInstruction);
 		for ( NodeInstructionQueueHook hook : queueHooks ) {
-			hook.didQueueNodeInstruction(instr, id);
+			hook.didQueueNodeInstruction(nodeInstruction, id);
 		}
 		return nodeInstructionDao.get(id);
 	}
@@ -184,10 +185,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	public List<NodeInstruction> queueInstructions(Set<Long> nodeIds, Instruction instruction) {
 		List<NodeInstruction> results = new ArrayList<>(nodeIds.size());
 		for ( Long nodeId : nodeIds ) {
-			NodeInstruction copy = new NodeInstruction(instruction.getTopic(),
-					instruction.getInstructionDate(), nodeId);
-			copy.setParameters(instruction.getParameters());
-			NodeInstruction instr = queueInstruction(nodeId, copy);
+			NodeInstruction instr = queueInstruction(nodeId, instruction);
 			results.add(instr);
 		}
 		return results;
@@ -196,12 +194,17 @@ public class DaoInstructorBiz implements InstructorBiz {
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED)
 	public void updateInstructionState(Long instructionId, InstructionState state) {
-		NodeInstruction instr = nodeInstructionDao.get(instructionId);
-		if ( instr != null ) {
-			if ( !state.equals(instr.getState()) ) {
-				instr.setState(state);
-				nodeInstructionDao.save(instr);
-			}
+		final NodeInstruction nodeInstruction = nodeInstructionDao.get(instructionId);
+		if ( nodeInstruction == null ) {
+			return;
+		}
+		final Instruction instr = nodeInstruction.getInstruction();
+		if ( instr == null ) {
+			return;
+		}
+		if ( !state.equals(instr.getState()) ) {
+			instr.setState(state);
+			nodeInstructionDao.save(nodeInstruction);
 		}
 	}
 
@@ -217,20 +220,25 @@ public class DaoInstructorBiz implements InstructorBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	public void updateInstructionState(Long instructionId, InstructionState state,
 			Map<String, ?> resultParameters) {
-		NodeInstruction instr = nodeInstructionDao.get(instructionId);
-		if ( instr != null ) {
-			if ( !state.equals(instr.getState()) ) {
-				instr.setState(state);
-				if ( resultParameters != null ) {
-					Map<String, Object> params = instr.getResultParameters();
-					if ( params == null ) {
-						params = new LinkedHashMap<>();
-					}
-					params.putAll(resultParameters);
-					instr.setResultParameters(params);
+		final NodeInstruction nodeInstruction = nodeInstructionDao.get(instructionId);
+		if ( nodeInstruction == null ) {
+			return;
+		}
+		final Instruction instr = nodeInstruction.getInstruction();
+		if ( instr == null ) {
+			return;
+		}
+		if ( !state.equals(instr.getState()) ) {
+			instr.setState(state);
+			if ( resultParameters != null ) {
+				Map<String, Object> params = instr.getResultParameters();
+				if ( params == null ) {
+					params = new LinkedHashMap<>();
 				}
-				nodeInstructionDao.save(instr);
+				params.putAll(resultParameters);
+				instr.setResultParameters(params);
 			}
+			nodeInstructionDao.save(nodeInstruction);
 		}
 	}
 

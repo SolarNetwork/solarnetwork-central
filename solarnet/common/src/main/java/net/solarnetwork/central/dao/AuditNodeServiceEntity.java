@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.AuditNodeServiceValue;
-import net.solarnetwork.dao.BasicIdentity;
+import net.solarnetwork.domain.BasicSerializableIdentity;
 import net.solarnetwork.domain.Differentiable;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumId;
@@ -44,12 +44,13 @@ import net.solarnetwork.domain.datum.DatumId;
  * Audit node service entity.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @JsonPropertyOrder({ "ts", "nodeId", "service", "aggregation", "count" })
 @JsonIgnoreProperties("id")
-public class AuditNodeServiceEntity extends BasicIdentity<DatumId> implements AuditNodeServiceValue,
-		Cloneable, Serializable, Differentiable<AuditNodeServiceValue> {
+public final class AuditNodeServiceEntity
+		extends BasicSerializableIdentity<AuditNodeServiceEntity, DatumId> implements
+		AuditNodeServiceValue, Cloneable, Serializable, Differentiable<AuditNodeServiceValue> {
 
 	@Serial
 	private static final long serialVersionUID = 8906783581107973754L;
@@ -147,7 +148,7 @@ public class AuditNodeServiceEntity extends BasicIdentity<DatumId> implements Au
 
 	@Override
 	public AuditNodeServiceEntity clone() {
-		return (AuditNodeServiceEntity) super.clone();
+		return super.clone();
 	}
 
 	@Override

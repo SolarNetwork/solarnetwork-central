@@ -24,6 +24,8 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
+import net.solarnetwork.domain.Identity;
 
 /**
  * Base implementation of a Long-based {@link net.solarnetwork.domain.Identity}.
@@ -31,18 +33,19 @@ import java.io.Serializable;
  * @author matt
  * @version 1.1
  */
-public abstract class BaseIdentity
-		implements Cloneable, Serializable, net.solarnetwork.domain.Identity<Long> {
+public abstract class BaseIdentity<T extends BaseIdentity<T>>
+		implements Cloneable, Serializable, Identity<T, Long> {
 
 	@Serial
 	private static final long serialVersionUID = -5979349641482303093L;
 
 	private Long id = null;
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BaseIdentity clone() {
+	public T clone() {
 		try {
-			return (BaseIdentity) super.clone();
+			return (T) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);
@@ -69,29 +72,9 @@ public abstract class BaseIdentity
 		if ( (obj == null) || (getClass() != obj.getClass()) ) {
 			return false;
 		}
-		BaseIdentity other = (BaseIdentity) obj;
-		if ( id == null ) {
-			return other.id == null;
-		}
-		return id.equals(other.id);
-	}
-
-	/**
-	 * Compare based on the primary key, with {@literal null} values ordered
-	 * before non-null values.
-	 */
-	@Override
-	public int compareTo(Long o) {
-		if ( id == null && o == null ) {
-			return 0;
-		}
-		if ( id == null ) {
-			return -1;
-		}
-		if ( o == null ) {
-			return 1;
-		}
-		return id.compareTo(o);
+		@SuppressWarnings("unchecked")
+		T other = (T) obj;
+		return Objects.equals(id, other.getId());
 	}
 
 	/**

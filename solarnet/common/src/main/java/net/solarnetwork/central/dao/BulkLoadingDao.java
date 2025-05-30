@@ -31,13 +31,13 @@ import net.solarnetwork.dao.Entity;
  *
  * @param <T>
  *        the domain object type
- * @param <PK>
+ * @param <K>
  *        the primary key type
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 1.43
  */
-public interface BulkLoadingDao<T extends Entity<PK>, PK extends Serializable> {
+public interface BulkLoadingDao<T extends Entity<T, K>, K extends Comparable<K> & Serializable> {
 
 	/**
 	 * Batch loading transaction mode.
@@ -104,10 +104,10 @@ public interface BulkLoadingDao<T extends Entity<PK>, PK extends Serializable> {
 	 *
 	 * @param <T>
 	 *        the entity type
-	 * @param <PK>
+	 * @param <K>
 	 *        the primary key type
 	 */
-	interface LoadingExceptionHandler<T extends Entity<PK>, PK extends Serializable> {
+	interface LoadingExceptionHandler<T extends Entity<T, K>, K extends Comparable<K> & Serializable> {
 
 		/**
 		 * Handle a loading exception.
@@ -117,7 +117,7 @@ public interface BulkLoadingDao<T extends Entity<PK>, PK extends Serializable> {
 		 * @param context
 		 *        the context
 		 */
-		void handleLoadingException(Throwable t, LoadingContext<T, PK> context);
+		void handleLoadingException(Throwable t, LoadingContext<T, K> context);
 
 	}
 
@@ -129,10 +129,11 @@ public interface BulkLoadingDao<T extends Entity<PK>, PK extends Serializable> {
 	 *
 	 * @param <T>
 	 *        the entity type
-	 * @param <PK>
+	 * @param <K>
 	 *        the primary key type
 	 */
-	interface LoadingContext<T extends Entity<PK>, PK extends Serializable> extends AutoCloseable {
+	interface LoadingContext<T extends Entity<T, K>, K extends Comparable<K> & Serializable>
+			extends AutoCloseable {
 
 		/**
 		 * Get the loading options used to create the context.
@@ -272,7 +273,7 @@ public interface BulkLoadingDao<T extends Entity<PK>, PK extends Serializable> {
 	 *        an exception handler
 	 * @return the bulk loading context
 	 */
-	LoadingContext<T, PK> createBulkLoadingContext(LoadingOptions options,
-			LoadingExceptionHandler<T, PK> exceptionHandler);
+	LoadingContext<T, K> createBulkLoadingContext(LoadingOptions options,
+			LoadingExceptionHandler<T, K> exceptionHandler);
 
 }

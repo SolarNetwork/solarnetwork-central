@@ -35,9 +35,10 @@ import net.solarnetwork.domain.Differentiable;
  * Stale audit node service entity.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public class StaleAuditNodeServiceEntity extends BasicEntity<AggregateDatumId> implements
+public class StaleAuditNodeServiceEntity
+		extends BasicEntity<StaleAuditNodeServiceEntity, AggregateDatumId> implements
 		StaleAuditNodeServiceValue, Cloneable, Serializable, Differentiable<StaleAuditNodeServiceValue> {
 
 	@Serial
@@ -53,11 +54,6 @@ public class StaleAuditNodeServiceEntity extends BasicEntity<AggregateDatumId> i
 	 */
 	public StaleAuditNodeServiceEntity(AggregateDatumId id, Instant created) {
 		super(id, created);
-	}
-
-	@Override
-	public StaleAuditNodeServiceEntity clone() {
-		return (StaleAuditNodeServiceEntity) super.clone();
 	}
 
 	/**

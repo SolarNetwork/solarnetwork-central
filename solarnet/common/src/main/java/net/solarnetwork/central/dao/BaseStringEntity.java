@@ -31,21 +31,18 @@ import net.solarnetwork.dao.Entity;
 /**
  * Base class for SolarNetwork entities using string primary keys.
  *
+ * @param <T>
+ *        the identity type
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
-public class BaseStringEntity extends BaseStringIdentity
-		implements Entity<String>, Cloneable, Serializable {
+public abstract class BaseStringEntity<T extends BaseStringEntity<T>> extends BaseStringIdentity<T>
+		implements Entity<T, String>, Cloneable, Serializable {
 
 	@Serial
 	private static final long serialVersionUID = 5907827905456392556L;
 
 	private Instant created = null;
-
-	@Override
-	public BaseStringEntity clone() {
-		return (BaseStringEntity) super.clone();
-	}
 
 	@Override
 	public Instant getCreated() {

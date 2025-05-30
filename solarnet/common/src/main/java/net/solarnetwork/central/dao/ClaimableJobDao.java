@@ -39,13 +39,13 @@ import net.solarnetwork.central.domain.ClaimableJobState;
  *        the job state type
  * @param <T>
  *        the job entity type
- * @param <PK>
+ * @param <K>
  *        the job entity primary key type
  * @author matt
  * @version 2.0
  * @since 1.44
  */
-public interface ClaimableJobDao<C, R, S extends ClaimableJobState, T extends ClaimableJob<C, R, S, PK>, PK extends Serializable> {
+public interface ClaimableJobDao<C, R, S extends ClaimableJobState, T extends ClaimableJob<T, C, R, S, K>, K extends Comparable<K> & Serializable> {
 
 	/**
 	 * Claim a queued job.
@@ -88,7 +88,7 @@ public interface ClaimableJobDao<C, R, S extends ClaimableJobState, T extends Cl
 	 *        current state of the job does not matter
 	 * @return {@literal true} if the job state was changed
 	 */
-	boolean updateJobState(PK id, S desiredState, Set<S> expectedStates);
+	boolean updateJobState(K id, S desiredState, Set<S> expectedStates);
 
 	/**
 	 * Update the configuration for a specific job.
@@ -105,7 +105,7 @@ public interface ClaimableJobDao<C, R, S extends ClaimableJobState, T extends Cl
 	 *        existing configuration
 	 * @return {@literal true} if the job configuration was changed
 	 */
-	boolean updateJobConfiguration(PK id, C configuration);
+	boolean updateJobConfiguration(K id, C configuration);
 
 	/**
 	 * Update the progress of a specific job.
@@ -118,5 +118,5 @@ public interface ClaimableJobDao<C, R, S extends ClaimableJobState, T extends Cl
 	 *        the result
 	 * @return {@literal true} if the job progress was updated
 	 */
-	boolean updateJobProgress(PK id, double percentComplete, R result);
+	boolean updateJobProgress(K id, double percentComplete, R result);
 }

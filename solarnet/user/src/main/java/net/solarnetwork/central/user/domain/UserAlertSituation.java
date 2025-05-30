@@ -38,7 +38,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * @author matt
  * @version 2.0
  */
-public class UserAlertSituation extends BaseEntity {
+public class UserAlertSituation extends BaseEntity<UserAlertSituation> {
 
 	@Serial
 	private static final long serialVersionUID = -6858352050110675205L;

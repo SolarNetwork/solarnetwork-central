@@ -42,9 +42,10 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A user authorization token.
  *
  * @author matt
- * @version 2.3
+ * @version 3.0
  */
-public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity<String>, SecurityToken {
+public class UserAuthToken extends BaseStringEntity<UserAuthToken>
+		implements UserRelatedEntity<UserAuthToken, String>, SecurityToken {
 
 	@Serial
 	private static final long serialVersionUID = -4544594854807498756L;

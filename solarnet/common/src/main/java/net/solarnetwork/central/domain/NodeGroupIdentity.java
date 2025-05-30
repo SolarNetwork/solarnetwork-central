@@ -22,12 +22,14 @@
 
 package net.solarnetwork.central.domain;
 
+import net.solarnetwork.domain.Unique;
+
 /**
  * Node group identity information.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public interface NodeGroupIdentity extends net.solarnetwork.domain.Identity<Long> {
+public interface NodeGroupIdentity extends Unique<Long> {
 
 }

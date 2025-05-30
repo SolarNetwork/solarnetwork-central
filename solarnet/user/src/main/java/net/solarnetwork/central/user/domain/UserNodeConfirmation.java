@@ -33,9 +33,10 @@ import net.solarnetwork.central.dao.UserRelatedEntity;
  * UserNode entity is created.
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
-public class UserNodeConfirmation extends BaseEntity implements UserRelatedEntity<Long> {
+public class UserNodeConfirmation extends BaseEntity<UserNodeConfirmation>
+		implements UserRelatedEntity<UserNodeConfirmation, Long> {
 
 	@Serial
 	private static final long serialVersionUID = -3535047613550046877L;

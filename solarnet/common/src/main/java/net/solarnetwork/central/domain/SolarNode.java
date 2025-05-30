@@ -38,7 +38,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * @author matt
  * @version 2.0
  */
-public class SolarNode extends BaseEntity implements Cloneable, Serializable, NodeIdentity {
+public class SolarNode extends BaseEntity<SolarNode> implements Cloneable, Serializable, NodeIdentity {
 
 	@Serial
 	private static final long serialVersionUID = 531103294940393083L;
@@ -70,11 +70,6 @@ public class SolarNode extends BaseEntity implements Cloneable, Serializable, No
 		setId(id);
 		setCreated(Instant.now());
 		setLocationId(locationId);
-	}
-
-	@Override
-	public SolarNode clone() {
-		return (SolarNode) super.clone();
 	}
 
 	@Override

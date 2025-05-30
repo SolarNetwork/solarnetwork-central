@@ -23,7 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.time.Instant;
-import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.Unique;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
@@ -31,9 +31,9 @@ import net.solarnetwork.domain.datum.Aggregation;
  * time for a specific audit level that needs to be computed.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface StaleAuditUserServiceValue extends Identity<AggregateDatumId>, UserIdRelated {
+public interface StaleAuditUserServiceValue extends Unique<AggregateDatumId>, UserIdRelated {
 
 	/**
 	 * Get the user ID this audit value is part of.

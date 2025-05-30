@@ -38,9 +38,9 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A location entity.
  *
  * @author matt
- * @version 2.1
+ * @version 3.0
  */
-public class SolarLocation extends BaseEntity
+public class SolarLocation extends BaseEntity<SolarLocation>
 		implements Cloneable, Serializable, Location, LocationMatch {
 
 	@Serial
@@ -88,7 +88,7 @@ public class SolarLocation extends BaseEntity
 
 	@Override
 	public SolarLocation clone() {
-		return (SolarLocation) super.clone();
+		return super.clone();
 	}
 
 	/**

@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
 import net.solarnetwork.domain.Identity;
 
 /**
@@ -31,11 +32,11 @@ import net.solarnetwork.domain.Identity;
  * Comparable, Serializable primary key.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  * @since 1.34
  */
-public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
-		implements Cloneable, Serializable, Identity<PK> {
+public class BaseObjectIdentity<T extends BaseObjectIdentity<T, PK>, PK extends Comparable<PK> & Serializable>
+		implements Cloneable, Serializable, Identity<T, PK> {
 
 	@Serial
 	private static final long serialVersionUID = -2183771061512318513L;
@@ -44,9 +45,9 @@ public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public BaseObjectIdentity<PK> clone() {
+	public T clone() {
 		try {
-			return (BaseObjectIdentity<PK>) super.clone();
+			return (T) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);
@@ -75,29 +76,8 @@ public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
 			return false;
 		}
 		@SuppressWarnings("unchecked")
-		BaseObjectIdentity<PK> other = (BaseObjectIdentity<PK>) obj;
-		if ( id == null ) {
-			return other.id == null;
-		}
-		return id.equals(other.id);
-	}
-
-	/**
-	 * Compare based on the primary key, with {@literal null} values ordered
-	 * before non-{@literal null} values.
-	 */
-	@Override
-	public int compareTo(PK o) {
-		if ( id == null && o == null ) {
-			return 0;
-		}
-		if ( id == null ) {
-			return -1;
-		}
-		if ( o == null ) {
-			return 1;
-		}
-		return id.compareTo(o);
+		T other = (T) obj;
+		return Objects.equals(id, other.getId());
 	}
 
 	/**

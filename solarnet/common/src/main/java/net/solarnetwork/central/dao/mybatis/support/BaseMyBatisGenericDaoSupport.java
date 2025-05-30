@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dao.mybatis.support;
 
 import static java.util.Collections.singletonMap;
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -40,16 +41,16 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link SqlSessionDaoSupport}.
  *
  * @author matt
- * @version 1.4
+ * @version 2.0
  * @since 2.1
  */
-public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> extends BaseMyBatisDao
-		implements GenericDao<T, K> {
+public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<T, K>, K extends Comparable<K> & Serializable>
+		extends BaseMyBatisDao implements GenericDao<T, K> {
 
 	/** Error code to report that a named query was not found. */
 	public static final int ERROR_CODE_INVALID_QUERY = 1101;
 
-	/** The query name used for {@link GenericDao#get(Object)}. */
+	/** The query name used for {@link GenericDao#get(Comparable)}. */
 	public static final String QUERY_FOR_ID = "get-%s-for-id";
 
 	/** The query name used for {@link GenericDao#getAll(List)}. */

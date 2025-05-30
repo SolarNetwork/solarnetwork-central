@@ -31,7 +31,7 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * Extension of {@link UserRelatedIdentifiableConfigurationEntity} that supports
  * {@link UserRelatedStdEntity}.
  *
- * @param <C>
+ * @param <T>
  *        the entity type
  * @param <K>
  *        the key type
@@ -39,9 +39,9 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * @author matt
  * @version 1.1
  */
-public interface UserRelatedStdIdentifiableConfigurationEntity<C extends UserRelatedStdIdentifiableConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>>
-		extends UserRelatedStdEntity<C, K>, UserRelatedIdentifiableConfigurationEntity<K>, Serializable,
-		Cloneable {
+public interface UserRelatedStdIdentifiableConfigurationEntity<T extends UserRelatedStdIdentifiableConfigurationEntity<T, K>, K extends UserRelatedCompositeKey<K>>
+		extends UserRelatedStdEntity<T, K>, UserRelatedIdentifiableConfigurationEntity<T, K>,
+		Serializable, Cloneable {
 
 	/**
 	 * Erase any sensitive credentials.
@@ -59,7 +59,7 @@ public interface UserRelatedStdIdentifiableConfigurationEntity<C extends UserRel
 	 * @return this object for method chaining
 	 * @since 1.1
 	 */
-	default UserRelatedStdIdentifiableConfigurationEntity<C, K> digestSensitiveInformation(
+	default UserRelatedStdIdentifiableConfigurationEntity<T, K> digestSensitiveInformation(
 			Function<String, Set<String>> sensitiveKeyProvider) {
 		return this;
 	}

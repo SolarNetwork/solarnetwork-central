@@ -26,7 +26,7 @@ import java.io.Serial;
 import java.util.List;
 import net.solarnetwork.central.cloud.domain.VirtualMachine;
 import net.solarnetwork.central.cloud.domain.VirtualMachineState;
-import net.solarnetwork.central.dao.BaseObjectEntity;
+import net.solarnetwork.domain.BasicUnique;
 import software.amazon.awssdk.services.ec2.model.Instance;
 import software.amazon.awssdk.services.ec2.model.InstanceState;
 import software.amazon.awssdk.services.ec2.model.Tag;
@@ -35,9 +35,9 @@ import software.amazon.awssdk.services.ec2.model.Tag;
  * EC2 implementation of {@link VirtualMachine}.
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
-public final class Ec2VirtualMachine extends BaseObjectEntity<String> implements VirtualMachine {
+public final class Ec2VirtualMachine extends BasicUnique<String> implements VirtualMachine {
 
 	@Serial
 	private static final long serialVersionUID = -4700896078284783343L;
@@ -54,8 +54,7 @@ public final class Ec2VirtualMachine extends BaseObjectEntity<String> implements
 	 *        the display name
 	 */
 	public Ec2VirtualMachine(String instanceId, String displayName) {
-		super();
-		setId(instanceId);
+		super(instanceId);
 		this.displayName = displayName;
 	}
 

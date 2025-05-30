@@ -33,11 +33,15 @@ import net.solarnetwork.dao.BasicEntity;
  * Base mutable user-related configuration entity, where the first component of
  * its primary key is a Long user ID.
  *
+ * @param <T>
+ *        the identity type
+ * @param <K>
+ *        the key type
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
-public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntity<C, K>, K extends UserRelatedCompositeKey<K>>
-		extends BasicEntity<K> implements UserRelatedStdEntity<C, K> {
+public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntity<T, K>, K extends UserRelatedCompositeKey<K>>
+		extends BasicEntity<T, K> implements UserRelatedStdEntity<T, K> {
 
 	@Serial
 	private static final long serialVersionUID = -8201311252309117005L;
@@ -72,14 +76,8 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public C clone() {
-		return (C) super.clone();
-	}
-
-	@Override
-	public void copyTo(C entity) {
+	public void copyTo(T entity) {
 		entity.setModified(modified);
 		entity.setEnabled(enabled);
 	}
@@ -97,12 +95,12 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
-	public boolean isSameAs(C other) {
+	public boolean isSameAs(T other) {
 		return (this.enabled == other.isEnabled());
 	}
 
 	@Override
-	public boolean differsFrom(C other) {
+	public boolean differsFrom(T other) {
 		return !isSameAs(other);
 	}
 

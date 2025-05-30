@@ -44,7 +44,7 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemUsageRec
  * Localized version of {@link InvoiceItem}.
  * 
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemInfo {
 
@@ -206,7 +206,7 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	}
 
 	@Override
-	public int compareTo(String o) {
+	public int compareTo(InvoiceItem o) {
 		return item.compareTo(o);
 	}
 

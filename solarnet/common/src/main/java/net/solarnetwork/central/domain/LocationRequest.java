@@ -33,11 +33,11 @@ import net.solarnetwork.dao.BasicLongEntity;
  * Entity for location requests.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 1.3
  */
 @JsonPropertyOrder({ "id", "created", "modified", "userId", "status", "locationId", "message", "data" })
-public class LocationRequest extends BasicLongEntity {
+public final class LocationRequest extends BasicLongEntity<LocationRequest> {
 
 	@Serial
 	private static final long serialVersionUID = 7700770585486402946L;
@@ -70,7 +70,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	@Override
 	public LocationRequest clone() {
-		return (LocationRequest) super.clone();
+		return super.clone();
 	}
 
 	/**

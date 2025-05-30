@@ -52,10 +52,10 @@ import net.solarnetwork.domain.SerializeIgnore;
  * </ul>
  *
  * @author matt
- * @version 2.2
+ * @version 3.0
  */
 @JsonPropertyOrder({ "id", "created", "userId", "nodeId", "type", "status", "validTo", "options" })
-public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
+public class UserAlert extends BaseEntity<UserAlert> implements UserRelatedEntity<UserAlert, Long> {
 
 	@Serial
 	private static final long serialVersionUID = -912662853889560214L;

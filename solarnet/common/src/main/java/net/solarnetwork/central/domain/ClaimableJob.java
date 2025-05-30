@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.domain;
 
+import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import net.solarnetwork.dao.Entity;
@@ -38,10 +39,11 @@ import net.solarnetwork.dao.Entity;
  * @param <PK>
  *        the job entity primary key type
  * @author matt
- * @version 2.1
+ * @version 3.0
  * @since 1.44
  */
-public interface ClaimableJob<C, R, S extends ClaimableJobState, PK> extends Entity<PK> {
+public interface ClaimableJob<T extends ClaimableJob<T, C, R, S, PK>, C, R, S extends ClaimableJobState, PK extends Comparable<PK> & Serializable>
+		extends Entity<T, PK> {
 
 	/**
 	 * Get the job configuration details.

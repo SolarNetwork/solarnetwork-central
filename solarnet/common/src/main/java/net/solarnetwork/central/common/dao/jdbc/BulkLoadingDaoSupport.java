@@ -58,7 +58,7 @@ import net.solarnetwork.dao.Entity;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class BulkLoadingDaoSupport {
 
@@ -105,14 +105,14 @@ public class BulkLoadingDaoSupport {
 	 * 
 	 * @param <T>
 	 *        the entity type
-	 * @param <PK>
+	 * @param <K>
 	 *        the primary key type
 	 */
-	public abstract class BulkLoadingContext<T extends Entity<PK>, PK extends Serializable>
-			implements BulkLoadingDao.LoadingContext<T, PK> {
+	public abstract class BulkLoadingContext<T extends Entity<T, K>, K extends Comparable<K> & Serializable>
+			implements BulkLoadingDao.LoadingContext<T, K> {
 
 		private final LoadingOptions options;
-		private final LoadingExceptionHandler<T, PK> exceptionHandler;
+		private final LoadingExceptionHandler<T, K> exceptionHandler;
 		private final int batchSize;
 		private long numLoaded;
 		private long numCommitted;
@@ -123,8 +123,8 @@ public class BulkLoadingDaoSupport {
 		private CountAwareCheckpoint transactionCheckpoint;
 		private T lastLoadedEntity;
 
-		public BulkLoadingContext(LoadingOptions options,
-				LoadingExceptionHandler<T, PK> exceptionHandler) throws SQLException {
+		public BulkLoadingContext(LoadingOptions options, LoadingExceptionHandler<T, K> exceptionHandler)
+				throws SQLException {
 			super();
 			this.options = requireNonNullArgument(options, "options");
 			this.exceptionHandler = exceptionHandler;

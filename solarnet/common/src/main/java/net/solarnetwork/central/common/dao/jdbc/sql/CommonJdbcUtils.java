@@ -47,13 +47,13 @@ import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.CodedValue;
-import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.Unique;
 
 /**
  * Common JDBC utilities.
  *
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 public final class CommonJdbcUtils {
 
@@ -168,7 +168,7 @@ public final class CommonJdbcUtils {
 	 *        the row mapper to use
 	 * @return the results, never {@literal null}
 	 */
-	public static <M extends Identity<K>, K> FilterResults<M, K> executeFilterQuery(
+	public static <M extends Unique<K>, K extends Comparable<K>> FilterResults<M, K> executeFilterQuery(
 			JdbcOperations jdbcTemplate, PaginationCriteria filter, PreparedStatementCreator sql,
 			RowMapper<M> mapper) {
 		Long totalCount = null;

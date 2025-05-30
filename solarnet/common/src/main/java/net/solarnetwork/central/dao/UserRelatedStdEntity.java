@@ -36,9 +36,10 @@ import net.solarnetwork.domain.Differentiable;
  * @param <K>
  *        the key type
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public interface UserRelatedStdEntity<C extends UserRelatedStdEntity<C, K>, K extends UserRelatedCompositeKey<K>>
-		extends UserRelatedEntity<K>, CopyingIdentity<K, C>, Differentiable<C>, Serializable, Cloneable {
+		extends UserRelatedEntity<C, K>, CopyingIdentity<C, K>, Differentiable<C>, Serializable,
+		Cloneable {
 
 }

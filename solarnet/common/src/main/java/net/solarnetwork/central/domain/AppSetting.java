@@ -24,26 +24,22 @@ package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
-import java.io.Serializable;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import net.solarnetwork.dao.Entity;
-import net.solarnetwork.domain.BasicIdentity;
+import net.solarnetwork.dao.BasicEntity;
 
 /**
  * An application setting.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @JsonIgnoreProperties("id")
-public class AppSetting extends BasicIdentity<KeyTypePK>
-		implements Entity<KeyTypePK>, Cloneable, Serializable {
+public final class AppSetting extends BasicEntity<AppSetting, KeyTypePK> {
 
 	@Serial
 	private static final long serialVersionUID = -7907835439616081294L;
 
-	private final Instant created;
 	private final Instant modified;
 	private final String value;
 
@@ -79,8 +75,7 @@ public class AppSetting extends BasicIdentity<KeyTypePK>
 	 *         if {@code id} is {@literal null}
 	 */
 	public AppSetting(KeyTypePK id, Instant created, Instant modified, String value) {
-		super(requireNonNullArgument(id, "id"));
-		this.created = created;
+		super(requireNonNullArgument(id, "id"), created);
 		this.modified = modified;
 		this.value = value;
 	}
@@ -117,11 +112,6 @@ public class AppSetting extends BasicIdentity<KeyTypePK>
 	}
 
 	@Override
-	public AppSetting clone() {
-		return (AppSetting) super.clone();
-	}
-
-	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("AppSetting{");
@@ -134,19 +124,14 @@ public class AppSetting extends BasicIdentity<KeyTypePK>
 		if ( value != null ) {
 			builder.append("value=").append(value).append(", ");
 		}
-		if ( created != null ) {
-			builder.append("created=").append(created).append(", ");
+		if ( getCreated() != null ) {
+			builder.append("created=").append(getCreated()).append(", ");
 		}
 		if ( modified != null ) {
 			builder.append("modified=").append(modified);
 		}
 		builder.append("}");
 		return builder.toString();
-	}
-
-	@Override
-	public Instant getCreated() {
-		return created;
 	}
 
 	/**

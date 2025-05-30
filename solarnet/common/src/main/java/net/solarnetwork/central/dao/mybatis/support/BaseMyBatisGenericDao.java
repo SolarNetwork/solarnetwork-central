@@ -132,18 +132,18 @@ import net.solarnetwork.domain.SortDescriptor;
  *
  * @param <T>
  *        The entity type this DAO supports.
- * @param <PK>
+ * @param <K>
  *        The primary key type this DAO supports.
  * @author matt
- * @version 2.2
+ * @version 3.0
  */
-public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Serializable>
-		extends BaseMyBatisDao implements GenericDao<T, PK> {
+public abstract class BaseMyBatisGenericDao<T extends Entity<T, K>, K extends Comparable<K> & Serializable>
+		extends BaseMyBatisDao implements GenericDao<T, K> {
 
 	/** Error code to report that a named query was not found. */
 	public static final int ERROR_CODE_INVALID_QUERY = 1101;
 
-	/** The query name used for {@link #get(Serializable)}. */
+	/** The query name used for {@link #get(Comparable)}. */
 	public static final String QUERY_FOR_ID = "get-%s-for-id";
 
 	/** The query name used for {@link #getAll(List)}. */
@@ -184,7 +184,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	public static final String CHILD_DELETE = "delete-";
 
 	private final Class<? extends T> domainClass;
-	private final Class<? extends PK> pkClass;
+	private final Class<? extends K> pkClass;
 	private String queryForId;
 	private String queryForAll;
 	private String insert;
@@ -209,7 +209,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * @param pkClass
 	 *        the primary key class
 	 */
-	public BaseMyBatisGenericDao(Class<? extends T> domainClass, Class<? extends PK> pkClass) {
+	public BaseMyBatisGenericDao(Class<? extends T> domainClass, Class<? extends K> pkClass) {
 		super();
 
 		final String domainName = domainClass.getSimpleName();
@@ -243,12 +243,12 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *
 	 * @return the primary key type
 	 */
-	public Class<? extends PK> getPrimaryKeyType() {
+	public Class<? extends K> getPrimaryKeyType() {
 		return this.pkClass;
 	}
 
 	@Override
-	public T get(PK id) {
+	public T get(K id) {
 		return getSqlSession().selectOne(this.queryForId, id);
 	}
 
@@ -266,8 +266,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	}
 
 	@Override
-	public PK save(T datum) {
-		final PK id = datum.getId();
+	public K save(T datum) {
+		final K id = datum.getId();
 		if ( (id instanceof CompositeKey ck && ck.allKeyComponentsAreAssigned())
 				|| (!(id instanceof CompositeKey) && datum.getId() != null) ) {
 			return handleUpdate(datum);
@@ -291,7 +291,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *        the datum to store
 	 * @return the primary key
 	 */
-	protected PK handleAssignedPrimaryKeyStore(T datum) {
+	protected K handleAssignedPrimaryKeyStore(T datum) {
 		// try update, then insert if that fails
 		if ( getSqlSession().update(getUpdate(), datum) == 0 ) {
 			preprocessInsert(datum);
@@ -333,7 +333,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *        the datum to update
 	 * @return {@link T#getId()}
 	 */
-	protected PK handleUpdate(T datum) {
+	protected K handleUpdate(T datum) {
 		getSqlSession().update(this.update, datum);
 		return datum.getId();
 	}
@@ -350,7 +350,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *        the datum to insert
 	 * @return the result of the insert statement
 	 */
-	protected PK handleInsert(T datum) {
+	protected K handleInsert(T datum) {
 		int updated = getSqlSession().insert(this.insert, datum);
 		log.debug("Insert of {} updated {} rows", datum, updated);
 		return datum.getId();
@@ -507,7 +507,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * @param additionalProperties
 	 *        optional properties to pass to all queries
 	 */
-	protected <E extends Identity<Long>> void handleRelation(Long parentId, E newObject,
+	protected <E extends Identity<E, Long>> void handleRelation(Long parentId, E newObject,
 			Class<? extends E> relationClass, Map<String, ?> additionalProperties) {
 		if ( parentId == null ) {
 			return;
@@ -579,8 +579,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *        the Class of the related object
 	 * @return the child entity's primary key
 	 */
-	protected <E extends net.solarnetwork.domain.Identity<Long>> Long handleChildRelation(T parent,
-			E child, Class<? extends E> relationClass) {
+	protected <E extends Identity<E, Long>> Long handleChildRelation(T parent, E child,
+			Class<? extends E> relationClass) {
 		if ( parent == null ) {
 			return null;
 		}

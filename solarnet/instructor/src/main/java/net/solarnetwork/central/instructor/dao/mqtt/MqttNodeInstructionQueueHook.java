@@ -51,7 +51,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 		implements NodeInstructionQueueHook {
@@ -97,9 +97,9 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	@Override
 	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
 		if ( instruction != null && instruction.getNodeId() != null
-				&& InstructionState.Queued == instruction.getState() ) {
+				&& InstructionState.Queued == instruction.getInstruction().getState() ) {
 			// we will change this state to Queuing so batch processing does not pick up
-			instruction.setState(InstructionState.Queuing);
+			instruction.getInstruction().setState(InstructionState.Queuing);
 		}
 		return instruction;
 	}
@@ -107,7 +107,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	@Override
 	public void didQueueNodeInstruction(NodeInstruction instruction, Long instructionId) {
 		if ( instruction != null && instruction.getNodeId() != null && instructionId != null
-				&& InstructionState.Queuing == instruction.getState() ) {
+				&& InstructionState.Queuing == instruction.getInstruction().getState() ) {
 			try {
 				executor.execute(new PublishNodeInstructionTask(instruction, instructionId));
 			} catch ( JsonProcessingException e ) {

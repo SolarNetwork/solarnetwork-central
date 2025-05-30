@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import net.solarnetwork.central.domain.CompositeKey;
@@ -33,9 +34,9 @@ import net.solarnetwork.domain.SortDescriptor;
  * API for a DAO that can filter by composite key components.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface GenericCompositeKeyFilterableDao<T extends Entity<K>, K extends CompositeKey>
+public interface GenericCompositeKeyFilterableDao<T extends Entity<T, K>, K extends Comparable<K> & Serializable & CompositeKey>
 		extends GenericDao<T, K> {
 
 	/**

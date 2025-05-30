@@ -32,9 +32,10 @@ import net.solarnetwork.central.domain.SolarNodeCapability;
  * Simple implementation of {@link NodeInformation}.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public class SimpleNodeInformation extends BaseIdentity implements NodeInformation {
+public class SimpleNodeInformation extends BaseIdentity<SimpleNodeInformation>
+		implements NodeInformation {
 
 	@Serial
 	private static final long serialVersionUID = -7130984585644772072L;
