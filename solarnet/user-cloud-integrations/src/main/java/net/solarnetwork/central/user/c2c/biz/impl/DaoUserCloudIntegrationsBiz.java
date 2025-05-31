@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.c2c.biz.impl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.now;
+import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
@@ -190,11 +191,13 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
 		this.integrationServices = Collections
 				.unmodifiableMap(requireNonNullArgument(integrationServices, "integrationServices")
-						.stream().sorted().collect(Collectors.toMap(CloudIntegrationService::getId,
-								Function.identity(), (l, r) -> l, LinkedHashMap::new)));
+						.stream().sorted(comparing(CloudIntegrationService::getId))
+						.collect(Collectors.toMap(CloudIntegrationService::getId, Function.identity(),
+								(l, r) -> l, LinkedHashMap::new)));
 		this.datumStreamServices = Collections.unmodifiableMap(integrationServices.stream()
 				.flatMap(s -> StreamSupport.stream(s.datumStreamServices().spliterator(), false))
-				.sorted().collect(Collectors.toMap(CloudDatumStreamService::getId, Function.identity(),
+				.sorted(comparing(CloudDatumStreamService::getId))
+				.collect(Collectors.toMap(CloudDatumStreamService::getId, Function.identity(),
 						(l, r) -> l, LinkedHashMap::new)));
 
 		// create a map of all services to their corresponding secure keys
