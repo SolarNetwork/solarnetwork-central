@@ -722,12 +722,13 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		throw new UnsupportedOperationException("Configuration type %s not supported.".formatted(clazz));
 	}
 
+	@SuppressWarnings("unchecked")
 	private <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C digestSensitiveInformation(
 			C entity) {
 		if ( entity == null ) {
 			return entity;
 		}
-		if ( entity instanceof UserRelatedStdIdentifiableConfigurationEntity<?, ?> u ) {
+		if ( entity instanceof UserRelatedStdIdentifiableConfigurationEntity u ) {
 			u.digestSensitiveInformation(serviceSecureKeys::get);
 		}
 		return entity;
