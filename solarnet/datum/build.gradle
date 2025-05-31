@@ -53,8 +53,8 @@ dependencies {
 	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 	
 	// SolarNetwork
-	api 'net.solarnetwork.common:net.solarnetwork.common.s3:3.2.0'
-	api 'net.solarnetwork.common:net.solarnetwork.common.s3.sdk2:1.0.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common.s3:4.0.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common.s3.sdk2:2.0.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
