@@ -147,7 +147,7 @@ public class NodeInstructionSerializer_CborTests {
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
 		instr.getInstruction().setState(InstructionState.Completed);
-		instr.setExpirationDate(TEST_DATE);
+		instr.getInstruction().setExpirationDate(TEST_DATE);
 		instr.getInstruction()
 				.setParameters(Arrays.asList(new InstructionParameter[] {
 						new InstructionParameter("a", UUID.randomUUID().toString()),

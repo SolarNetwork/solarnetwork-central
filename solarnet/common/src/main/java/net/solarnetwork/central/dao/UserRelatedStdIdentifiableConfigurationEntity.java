@@ -40,8 +40,8 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * @version 1.1
  */
 public interface UserRelatedStdIdentifiableConfigurationEntity<T extends UserRelatedStdIdentifiableConfigurationEntity<T, K>, K extends UserRelatedCompositeKey<K>>
-		extends UserRelatedStdEntity<T, K>, UserRelatedIdentifiableConfigurationEntity<T, K>,
-		Serializable, Cloneable {
+		extends UserRelatedStdEntity<T, K>, UserRelatedIdentifiableConfigurationEntity<K>, Serializable,
+		Cloneable {
 
 	/**
 	 * Erase any sensitive credentials.

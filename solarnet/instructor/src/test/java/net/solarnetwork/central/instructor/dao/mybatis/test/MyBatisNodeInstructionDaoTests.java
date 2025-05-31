@@ -195,7 +195,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	public void storeNew_withExpiration() {
 		// GIVEN
 		lastDatum = storeNewInstruction(TEST_NODE_ID, Instant.now(), null, instr -> {
-			instr.setExpirationDate(Instant.now().truncatedTo(HOURS).plus(1, HOURS));
+			instr.getInstruction().setExpirationDate(Instant.now().truncatedTo(HOURS).plus(1, HOURS));
 		});
 
 		// THEN
@@ -208,7 +208,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 			.as("ID persisted")
 			.containsEntry("id", lastDatum.getId())
 			.as("Expiration date persisted")
-			.containsEntry("expire_date", Timestamp.from(lastDatum.getExpirationDate()))
+			.containsEntry("expire_date", Timestamp.from(lastDatum.getInstruction().getExpirationDate()))
 			;
 		// @formatter:on
 	}
@@ -481,7 +481,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		storeNewInstruction(TEST_NODE_ID, ts2);
 		final Instant ts3 = Instant.now().truncatedTo(MINUTES).plus(1, HOURS);
 		storeNewInstruction(TEST_NODE_ID, ts3, null, instr -> {
-			instr.setExpirationDate(Instant.now().truncatedTo(HOURS).plus(1, HOURS));
+			instr.getInstruction().setExpirationDate(Instant.now().truncatedTo(HOURS).plus(1, HOURS));
 		});
 
 		// WHEN
@@ -887,7 +887,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 		// WHEN
 		var criteria = new NodeInstruction();
-		criteria.setExpirationDate(expirationDate);
+		criteria.getInstruction().setExpirationDate(expirationDate);
 		criteria.getInstruction().setState(InstructionState.Declined);
 		criteria.getInstruction().setResultParameters(Map.of("message", randomString()));
 		int result = dao.transitionExpiredInstructions(criteria);
@@ -896,7 +896,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		Set<InstructionState> statesToTransition = EnumSet
 				.complementOf(EnumSet.of(InstructionState.Completed, InstructionState.Declined));
 		List<NodeInstruction> expectedToTransition = instructions.stream()
-				.filter(instr -> instr.getExpirationDate().isBefore(expirationDate)
+				.filter(instr -> instr.getInstruction().getExpirationDate().isBefore(expirationDate)
 						&& statesToTransition.contains(instr.getInstruction().getState()))
 				.toList();
 		Set<Long> expectedToTransitionIds = expectedToTransition.stream().map(NodeInstruction::getId)
@@ -952,12 +952,12 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		final NodeInstruction instruction = storeNewInstruction(TEST_NODE_ID, Instant.now(),
 				Map.of("foo", "bar"), instr -> {
 					instr.getInstruction().setState(InstructionState.Queued);
-					instr.setExpirationDate(expirationDate.minusSeconds(1));
+					instr.getInstruction().setExpirationDate(expirationDate.minusSeconds(1));
 				});
 
 		// WHEN
 		var criteria = new NodeInstruction();
-		criteria.setExpirationDate(expirationDate);
+		criteria.getInstruction().setExpirationDate(expirationDate);
 		criteria.getInstruction().setState(InstructionState.Declined);
 		criteria.getInstruction().setResultParameters(Map.of("message", randomString()));
 		int result = dao.transitionExpiredInstructions(criteria);
@@ -1003,7 +1003,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		final NodeInstruction ni2 = storeNewInstruction(TEST_NODE_ID, ts2);
 		final Instant ts3 = Instant.now().truncatedTo(MINUTES).plus(1, HOURS);
 		storeNewInstruction(TEST_NODE_ID, ts3, null, instr -> {
-			instr.setExpirationDate(Instant.now().truncatedTo(HOURS).plus(1, HOURS));
+			instr.getInstruction().setExpirationDate(Instant.now().truncatedTo(HOURS).plus(1, HOURS));
 		});
 
 		// WHEN

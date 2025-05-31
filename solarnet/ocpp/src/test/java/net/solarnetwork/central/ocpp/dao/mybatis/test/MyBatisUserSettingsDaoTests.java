@@ -32,7 +32,7 @@ import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -156,13 +156,7 @@ public class MyBatisUserSettingsDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		Collection<UserSettings> results = dao.getAll(null);
 		List<UserSettings> expected = Arrays.asList(obj1, obj2);
-		expected.sort(new Comparator<UserSettings>() {
-
-			@Override
-			public int compare(UserSettings o1, UserSettings o2) {
-				return o1.compareTo(o2.getId());
-			}
-		});
+		Collections.sort(expected);
 		assertThat("Results found in order", results, contains(expected.toArray()));
 	}
 

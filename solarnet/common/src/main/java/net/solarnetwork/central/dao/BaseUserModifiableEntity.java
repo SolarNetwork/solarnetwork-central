@@ -78,8 +78,8 @@ public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntit
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public BaseUserModifiableEntity<T, K> clone() {
-		return (BaseUserModifiableEntity<T, K>) super.clone();
+	public T clone() {
+		return (T) super.clone();
 	}
 
 	@Override

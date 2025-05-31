@@ -35,10 +35,10 @@ import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceIn
  * No-operation implementation of {@link UserNodeEventHookService}.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public class NoopUserNodeEventHookService extends
-		BaseSettingsSpecifierLocalizedServiceInfoProvider<String> implements UserNodeEventHookService {
+public class NoopUserNodeEventHookService extends BaseSettingsSpecifierLocalizedServiceInfoProvider
+		implements UserNodeEventHookService {
 
 	/**
 	 * Constructor.

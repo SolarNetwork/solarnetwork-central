@@ -43,15 +43,17 @@ import net.solarnetwork.util.ObjectUtils;
 /**
  * Base OSCP configuration entity.
  *
+ * @param <T>
+ *        the identity type
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "name", "enabled", "serviceProps" })
-public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfigurationEntity<C>>
+public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfigurationEntity<T>>
 		extends BasicEntity<UserLongCompositePK>
 		implements Entity<UserLongCompositePK>, UserRelatedEntity<UserLongCompositePK>,
-		CopyingIdentity<UserLongCompositePK, C>, Differentiable<C>, Serializable, Cloneable {
+		CopyingIdentity<T, UserLongCompositePK>, Differentiable<T>, Serializable, Cloneable {
 
 	@Serial
 	private static final long serialVersionUID = -4040376195754476954L;
@@ -93,12 +95,12 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public BaseOscpConfigurationEntity<C> clone() {
-		return (BaseOscpConfigurationEntity<C>) super.clone();
+	public BaseOscpConfigurationEntity<T> clone() {
+		return (BaseOscpConfigurationEntity<T>) super.clone();
 	}
 
 	@Override
-	public void copyTo(C entity) {
+	public void copyTo(T entity) {
 		entity.setEnabled(enabled);
 		entity.setModified(modified);
 		entity.setName(name);
@@ -120,7 +122,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
-	public boolean isSameAs(C other) {
+	public boolean isSameAs(T other) {
 		// @formatter:off
 		return (this.enabled == other.isEnabled()
 				&& Objects.equals(this.name, other.getName())
@@ -129,7 +131,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 	}
 
 	@Override
-	public boolean differsFrom(C other) {
+	public boolean differsFrom(T other) {
 		return !isSameAs(other);
 	}
 

@@ -28,12 +28,12 @@ import net.solarnetwork.service.IdentifiableConfiguration;
 /**
  * User specific entity for identifiable configuration.
  *
- * @param <T>
- *        the identity type
+ * @param <K>
+ *        the primary key type
  * @author matt
  * @version 2.0
  */
-public interface UserRelatedIdentifiableConfigurationEntity<T extends UserRelatedIdentifiableConfigurationEntity<T, K>, K extends Comparable<K> & Serializable>
+public interface UserRelatedIdentifiableConfigurationEntity<K extends Comparable<K> & Serializable>
 		extends IdentifiableConfiguration, UserRelatedEntity<K> {
 
 }

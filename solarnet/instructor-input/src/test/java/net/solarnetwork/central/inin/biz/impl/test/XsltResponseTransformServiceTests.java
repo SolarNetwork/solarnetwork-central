@@ -113,10 +113,10 @@ public class XsltResponseTransformServiceTests {
 		// GIVEN
 		List<NodeInstruction> instructions = new ArrayList<>();
 		NodeInstruction instr1 = new NodeInstruction("LatestDatum", Instant.now().minusSeconds(1), 123L);
-		instr1.setParams(Map.of("foo", "bar", "bim", "bam"));
-		instr1.setState(InstructionState.Completed);
-		instr1.setStatusDate(Instant.now());
-		instr1.setResultParametersJson("""
+		instr1.getInstruction().setParams(Map.of("foo", "bar", "bim", "bam"));
+		instr1.getInstruction().setState(InstructionState.Completed);
+		instr1.getInstruction().setStatusDate(Instant.now());
+		instr1.getInstruction().setResultParametersJson("""
 				{"datum": [
 					{
 						"sourceId": "test/1",

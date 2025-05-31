@@ -1,7 +1,7 @@
 /* ==================================================================
- * NodeInstructionSerializerTests.java - 17/01/2023 3:46:11 pm
+ * NodeInstructionDeserializerTests.java - 31/05/2025 9:36:21 am
  * 
- * Copyright 2023 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,9 +22,7 @@
 
 package net.solarnetwork.central.instructor.support.test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -38,17 +36,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
+import net.solarnetwork.central.instructor.support.NodeInstructionDeserializer;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
- * Test cases for the {@link NodeInstructionSerializer} class.
+ * Test cases for the {@link NodeInstructionDeserializer} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public class NodeInstructionSerializerTests {
+public class NodeInstructionDeserializerTests {
 
 	private static final Instant TEST_DATE = LocalDateTime
 			.of(2021, 8, 11, 16, 45, 1, (int) TimeUnit.MICROSECONDS.toNanos(234567))
@@ -60,7 +58,7 @@ public class NodeInstructionSerializerTests {
 	private ObjectMapper createObjectMapper() {
 		ObjectMapper m = JsonUtils.newObjectMapper();
 		SimpleModule mod = new SimpleModule("Test");
-		mod.addSerializer(NodeInstruction.class, NodeInstructionSerializer.INSTANCE);
+		mod.addDeserializer(NodeInstruction.class, NodeInstructionDeserializer.INSTANCE);
 		m.registerModule(mod);
 		return m;
 	}
@@ -71,13 +69,12 @@ public class NodeInstructionSerializerTests {
 	}
 
 	@Test
-	public void serialize_typical() throws IOException {
+	public void deserialize_typical() throws IOException {
 		// GIVEN
 		final Long id = UUID.randomUUID().getMostSignificantBits();
 		final Long nodeId = UUID.randomUUID().getMostSignificantBits();
 		final String topic = UUID.randomUUID().toString();
 
-		// WHEN
 		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
@@ -86,11 +83,10 @@ public class NodeInstructionSerializerTests {
 				.setParameters(Arrays.asList(new InstructionParameter[] {
 						new InstructionParameter("a", UUID.randomUUID().toString()),
 						new InstructionParameter("b", UUID.randomUUID().toString()) }));
-		String json = mapper.writeValueAsString(instr);
 
-		// THEN
+		// WHEN
 		// @formatter:off
-		final String expectedJson = "{\"id\":" + id						
+		final String json = "{\"id\":" + id						
 				+ ",\"created\":\"" + TEST_DATE_STRING + "\""
 				+ ",\"nodeId\":" + nodeId
 				+ ",\"topic\":\"" + topic + "\""
@@ -101,27 +97,79 @@ public class NodeInstructionSerializerTests {
 					+",{\"name\":\"b\",\"value\":\"" + instr.getInstruction().getParameters().get(1).getValue() +"\"}"
 				+ "]}";
 		// @formatter:on
-		assertThat("JSON", json, is(equalTo(expectedJson)));
+
+		NodeInstruction result = mapper.readValue(json, NodeInstruction.class);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("JSON parsed into instance")
+			.isNotNull()
+			.usingRecursiveComparison()
+			.isEqualTo(instr)
+			;
+		// @formatter:on
 	}
 
 	@Test
-	public void serialize_withResultParameters() throws IOException {
+	public void deserialize_paramsMap() throws IOException {
 		// GIVEN
 		final Long id = UUID.randomUUID().getMostSignificantBits();
 		final Long nodeId = UUID.randomUUID().getMostSignificantBits();
 		final String topic = UUID.randomUUID().toString();
 
+		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
+		instr.setId(id);
+		instr.setCreated(TEST_DATE);
+		instr.getInstruction().setState(InstructionState.Completed);
+		instr.getInstruction()
+				.setParameters(Arrays.asList(new InstructionParameter[] {
+						new InstructionParameter("a", UUID.randomUUID().toString()),
+						new InstructionParameter("b", UUID.randomUUID().toString()) }));
+
 		// WHEN
+		// @formatter:off
+		final String json = "{\"id\":" + id						
+				+ ",\"created\":\"" + TEST_DATE_STRING + "\""
+				+ ",\"nodeId\":" + nodeId
+				+ ",\"topic\":\"" + topic + "\""
+				+ ",\"instructionDate\":\"" + TEST_DATE_STRING + "\""
+				+ ",\"state\":\"" + InstructionState.Completed.name() + "\""
+				+ ",\"params\":{"
+					 +"\"a\":\"" + instr.getInstruction().getParameters().get(0).getValue() +"\","
+					 +"\"b\":\"" + instr.getInstruction().getParameters().get(1).getValue() +"\""
+				+ "}}";
+		// @formatter:on
+
+		NodeInstruction result = mapper.readValue(json, NodeInstruction.class);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("JSON parsed into instance")
+			.isNotNull()
+			.usingRecursiveComparison()
+			.isEqualTo(instr)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void deserialize_withResultParameters() throws IOException {
+		// GIVEN
+		final Long id = UUID.randomUUID().getMostSignificantBits();
+		final Long nodeId = UUID.randomUUID().getMostSignificantBits();
+		final String topic = UUID.randomUUID().toString();
+
 		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
 		instr.getInstruction().setState(InstructionState.Completed);
 		instr.getInstruction().setResultParametersJson("{\"message\":\"Hello\"}");
-		String json = mapper.writeValueAsString(instr);
 
-		// THEN
+		// WHEN
 		// @formatter:off
-		final String expectedJson = "{\"id\":" + id						
+		final String json = "{\"id\":" + id						
 				+ ",\"created\":\"" + TEST_DATE_STRING + "\""
 				+ ",\"nodeId\":" + nodeId
 				+ ",\"topic\":\"" + topic + "\""
@@ -130,17 +178,27 @@ public class NodeInstructionSerializerTests {
 				+ ",\"resultParameters\":" +instr.getInstruction().getResultParametersJson()
 				+ "}";
 		// @formatter:on
-		assertThat("JSON", json, is(equalTo(expectedJson)));
+
+		NodeInstruction result = mapper.readValue(json, NodeInstruction.class);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("JSON parsed into instance")
+			.isNotNull()
+			.usingRecursiveComparison()
+			.isEqualTo(instr)
+			;
+		// @formatter:on
 	}
 
 	@Test
-	public void serialize_withStatusDate() throws IOException {
+	public void deserialize_withStatusDate() throws IOException {
 		// GIVEN
 		final Long id = UUID.randomUUID().getMostSignificantBits();
 		final Long nodeId = UUID.randomUUID().getMostSignificantBits();
 		final String topic = UUID.randomUUID().toString();
 
-		// WHEN
 		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
@@ -150,11 +208,10 @@ public class NodeInstructionSerializerTests {
 				.setParameters(Arrays.asList(new InstructionParameter[] {
 						new InstructionParameter("a", UUID.randomUUID().toString()),
 						new InstructionParameter("b", UUID.randomUUID().toString()) }));
-		String json = mapper.writeValueAsString(instr);
 
-		// THEN
+		// WHEN
 		// @formatter:off
-		final String expectedJson = "{\"id\":" + id						
+		final String json = "{\"id\":" + id						
 				+ ",\"created\":\"" + TEST_DATE_STRING + "\""
 				+ ",\"nodeId\":" + nodeId
 				+ ",\"topic\":\"" + topic + "\""
@@ -166,17 +223,28 @@ public class NodeInstructionSerializerTests {
 					+",{\"name\":\"b\",\"value\":\"" + instr.getInstruction().getParameters().get(1).getValue() +"\"}"
 				+ "]}";
 		// @formatter:on
-		assertThat("JSON", json, is(equalTo(expectedJson)));
+
+		NodeInstruction result = mapper.readValue(json, NodeInstruction.class);
+
+		// THEN
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("JSON parsed into instance")
+			.isNotNull()
+			.usingRecursiveComparison()
+			.isEqualTo(instr)
+			;
+		// @formatter:on
 	}
 
 	@Test
-	public void serialize_withExpirationDate() throws IOException {
+	public void deserialize_withExpirationDate() throws IOException {
 		// GIVEN
 		final Long id = UUID.randomUUID().getMostSignificantBits();
 		final Long nodeId = UUID.randomUUID().getMostSignificantBits();
 		final String topic = UUID.randomUUID().toString();
 
-		// WHEN
 		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
@@ -186,11 +254,10 @@ public class NodeInstructionSerializerTests {
 				.setParameters(Arrays.asList(new InstructionParameter[] {
 						new InstructionParameter("a", UUID.randomUUID().toString()),
 						new InstructionParameter("b", UUID.randomUUID().toString()) }));
-		String json = mapper.writeValueAsString(instr);
 
-		// THEN
+		// WHEN
 		// @formatter:off
-		final String expectedJson = "{\"id\":" + id						
+		final String json = "{\"id\":" + id						
 				+ ",\"created\":\"" + TEST_DATE_STRING + "\""
 				+ ",\"nodeId\":" + nodeId
 				+ ",\"topic\":\"" + topic + "\""
@@ -202,7 +269,17 @@ public class NodeInstructionSerializerTests {
 					+",{\"name\":\"b\",\"value\":\"" + instr.getInstruction().getParameters().get(1).getValue() +"\"}"
 				+ "]}";
 		// @formatter:on
-		assertThat("JSON", json, is(equalTo(expectedJson)));
-	}
 
+		NodeInstruction result = mapper.readValue(json, NodeInstruction.class);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("JSON parsed into instance")
+			.isNotNull()
+			.usingRecursiveComparison()
+			.isEqualTo(instr)
+			;
+		// @formatter:on
+	}
 }

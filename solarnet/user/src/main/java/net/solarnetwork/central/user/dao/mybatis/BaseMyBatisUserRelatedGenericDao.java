@@ -41,8 +41,8 @@ import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
  * </p>
  *
  * <ol>
- * <li>The {@link #get(Serializable)} method will throw an
- * {@link UnsupportedOperationException}. The {@link #get(Serializable, Long)}
+ * <li>The {@link #get(Comparable)} method will throw an
+ * {@link UnsupportedOperationException}. The {@link #get(Comparable, Long)}
  * method will use the same named SQL query defined by {@link #getQueryForId()}
  * but will pass it a map object with {@code id} and {@code userId} properties
  * (instead of just the primary key {@code K}).</li>

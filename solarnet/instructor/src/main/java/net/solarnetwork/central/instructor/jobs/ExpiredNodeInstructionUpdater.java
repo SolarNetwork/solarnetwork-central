@@ -84,7 +84,7 @@ public class ExpiredNodeInstructionUpdater extends JobSupport {
 	public void run() {
 		Instant date = clock.instant().truncatedTo(ChronoUnit.SECONDS);
 		NodeInstruction criteria = new NodeInstruction();
-		criteria.setExpirationDate(date);
+		criteria.getInstruction().setExpirationDate(date);
 		criteria.getInstruction().setState(resultState);
 		criteria.getInstruction().setResultParameters(resultParameters);
 		long result = dao.transitionExpiredInstructions(criteria);

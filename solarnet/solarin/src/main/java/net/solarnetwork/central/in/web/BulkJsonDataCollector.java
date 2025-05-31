@@ -239,7 +239,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 
 				@Override
 				public void handleResultItem(NodeInstruction resultItem) throws IOException {
-					instructions.add(resultItem);
+					instructions.add(resultItem.getInstruction());
 					if ( instructions.size() >= 100 ) {
 						throw new TooManyStreamedResultsException();
 					}

@@ -102,7 +102,6 @@ import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.settings.SettingSpecifierProvider;
@@ -112,7 +111,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
@@ -191,13 +190,11 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
 		this.integrationServices = Collections
 				.unmodifiableMap(requireNonNullArgument(integrationServices, "integrationServices")
-						.stream().sorted(Identity.sortByIdentity())
-						.collect(Collectors.toMap(CloudIntegrationService::getId, Function.identity(),
-								(l, r) -> l, LinkedHashMap::new)));
+						.stream().sorted().collect(Collectors.toMap(CloudIntegrationService::getId,
+								Function.identity(), (l, r) -> l, LinkedHashMap::new)));
 		this.datumStreamServices = Collections.unmodifiableMap(integrationServices.stream()
 				.flatMap(s -> StreamSupport.stream(s.datumStreamServices().spliterator(), false))
-				.sorted(Identity.sortByIdentity())
-				.collect(Collectors.toMap(CloudDatumStreamService::getId, Function.identity(),
+				.sorted().collect(Collectors.toMap(CloudDatumStreamService::getId, Function.identity(),
 						(l, r) -> l, LinkedHashMap::new)));
 
 		// create a map of all services to their corresponding secure keys

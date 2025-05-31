@@ -204,10 +204,11 @@ public class OcppControllerTests {
 		Long nodeId = randomUUID().getMostSignificantBits();
 		NodeInstruction instruction = new NodeInstruction(OCPP_V16_TOPIC, Instant.now(), nodeId);
 		String chargerIdentity = randomUUID().toString();
-		instruction.addParameter(OCPP_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
-		instruction.addParameter(OCPP_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
-		instruction.addParameter("connectorId", "1");
-		instruction.addParameter("type", AvailabilityType.INOPERATIVE.value());
+		instruction.getInstruction().addParameter(OCPP_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
+		instruction.getInstruction().addParameter(OCPP_ACTION_PARAM,
+				ChargePointAction.ChangeAvailability.getName());
+		instruction.getInstruction().addParameter("connectorId", "1");
+		instruction.getInstruction().addParameter("type", AvailabilityType.INOPERATIVE.value());
 		Long instructionId = randomUUID().getMostSignificantBits();
 
 		UserNode userNode = new UserNode(
@@ -255,8 +256,9 @@ public class OcppControllerTests {
 		controller.didQueueNodeInstruction(instr, instructionId);
 
 		// THEN
-		log.debug("Instruction result parameters: {}", instr.getResultParameters());
-		assertThat("Instruction executing", instr.getState(), equalTo(InstructionState.Executing));
+		log.debug("Instruction result parameters: {}", instr.getInstruction().getResultParameters());
+		assertThat("Instruction executing", instr.getInstruction().getState(),
+				equalTo(InstructionState.Executing));
 		assertThat("Result parameters has accepted result", resultParamsCaptor.getValue(),
 				hasEntry("status", AvailabilityStatus.ACCEPTED.value()));
 	}
@@ -267,10 +269,11 @@ public class OcppControllerTests {
 		Long nodeId = randomUUID().getMostSignificantBits();
 		NodeInstruction instruction = new NodeInstruction(OCPP_V16_TOPIC, Instant.now(), nodeId);
 		String chargerIdentity = randomUUID().toString();
-		instruction.addParameter(OCPP_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
-		instruction.addParameter(OCPP_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
-		instruction.addParameter(OCPP_MESSAGE_PARAM, String.format("{\"connectorId\":1,\"type\":\"%s\"}",
-				AvailabilityType.INOPERATIVE.value()));
+		instruction.getInstruction().addParameter(OCPP_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
+		instruction.getInstruction().addParameter(OCPP_ACTION_PARAM,
+				ChargePointAction.ChangeAvailability.getName());
+		instruction.getInstruction().addParameter(OCPP_MESSAGE_PARAM, String
+				.format("{\"connectorId\":1,\"type\":\"%s\"}", AvailabilityType.INOPERATIVE.value()));
 		Long instructionId = randomUUID().getMostSignificantBits();
 
 		UserNode userNode = new UserNode(
@@ -318,8 +321,9 @@ public class OcppControllerTests {
 		controller.didQueueNodeInstruction(instr, instructionId);
 
 		// THEN
-		log.debug("Instruction result parameters: {}", instr.getResultParameters());
-		assertThat("Instruction executing", instr.getState(), equalTo(InstructionState.Executing));
+		log.debug("Instruction result parameters: {}", instr.getInstruction().getResultParameters());
+		assertThat("Instruction executing", instr.getInstruction().getState(),
+				equalTo(InstructionState.Executing));
 		assertThat("Result parameters has accepted result", resultParamsCaptor.getValue(),
 				hasEntry("status", AvailabilityStatus.ACCEPTED.value()));
 	}
@@ -331,10 +335,11 @@ public class OcppControllerTests {
 		Long nodeId = randomUUID().getMostSignificantBits();
 		NodeInstruction instruction = new NodeInstruction(OCPP_V16_TOPIC, Instant.now(), nodeId);
 		String chargerIdentity = randomUUID().toString();
-		instruction.addParameter(OCPP_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
-		instruction.addParameter(OCPP_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
-		instruction.addParameter("connectorId", "1");
-		instruction.addParameter("type", AvailabilityType.INOPERATIVE.value());
+		instruction.getInstruction().addParameter(OCPP_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
+		instruction.getInstruction().addParameter(OCPP_ACTION_PARAM,
+				ChargePointAction.ChangeAvailability.getName());
+		instruction.getInstruction().addParameter("connectorId", "1");
+		instruction.getInstruction().addParameter("type", AvailabilityType.INOPERATIVE.value());
 		Long instructionId = randomUUID().getMostSignificantBits();
 
 		UserNode userNode = new UserNode(
@@ -358,8 +363,9 @@ public class OcppControllerTests {
 		handlerCaptor.getValue().handleActionMessageResult(messageCaptor.getValue(), null, null);
 
 		// THEN
-		log.debug("Instruction result parameters: {}", instr.getResultParameters());
-		assertThat("Instruction received", instr.getState(), equalTo(InstructionState.Received));
+		log.debug("Instruction result parameters: {}", instr.getInstruction().getResultParameters());
+		assertThat("Instruction received", instr.getInstruction().getState(),
+				equalTo(InstructionState.Received));
 		ActionMessage<JsonNode> message = messageCaptor.getValue();
 		assertThat("Message action", message.getAction(), equalTo(ChargePointAction.ChangeAvailability));
 		assertThat("Message ID is instruction ID", message.getMessageId(),

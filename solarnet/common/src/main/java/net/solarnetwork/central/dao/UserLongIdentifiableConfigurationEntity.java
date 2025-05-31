@@ -32,8 +32,8 @@ import net.solarnetwork.central.domain.CompositeKey2;
  * @author matt
  * @version 2.0
  */
-public interface UserLongIdentifiableConfigurationEntity<T extends UserRelatedIdentifiableConfigurationEntity<T, K>, K extends Comparable<K> & Serializable & CompositeKey2<Long, Long>>
-		extends UserRelatedIdentifiableConfigurationEntity<T, K> {
+public interface UserLongIdentifiableConfigurationEntity<K extends Comparable<K> & Serializable & CompositeKey2<Long, Long>>
+		extends UserRelatedIdentifiableConfigurationEntity<K> {
 
 	// nothing else
 

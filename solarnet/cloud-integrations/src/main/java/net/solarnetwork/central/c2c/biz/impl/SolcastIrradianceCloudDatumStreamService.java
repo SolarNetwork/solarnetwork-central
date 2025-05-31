@@ -69,7 +69,6 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
@@ -84,7 +83,7 @@ import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
  * irradiance API.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDatumStreamService {
 
@@ -307,7 +306,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 					integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-					r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+					r.stream().sorted().map(Datum.class::cast).toList());
 		});
 	}
 
@@ -444,7 +443,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		}
 
 		// Solcast API returns data in reverse time order, so reverse it now
-		result.sort(Identity.sortByIdentity());
+		Collections.sort(result);
 
 		return result;
 	}

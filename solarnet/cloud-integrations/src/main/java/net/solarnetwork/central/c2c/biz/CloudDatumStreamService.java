@@ -30,8 +30,8 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.Unique;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.service.LocalizedServiceInfoProvider;
 import net.solarnetwork.settings.SettingSpecifierProvider;
@@ -40,10 +40,10 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud datum stream service.
  *
  * @author matt
- * @version 1.5
+ * @version 2.0
  */
 public interface CloudDatumStreamService
-		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
+		extends Unique<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
 
 	/**
 	 * A standard setting for either a map or comma-delimited mapping list of

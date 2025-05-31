@@ -26,9 +26,11 @@ import java.io.Serial;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.central.dao.EntityMatch;
+import net.solarnetwork.central.instructor.support.NodeInstructionDeserializer;
 import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
 import net.solarnetwork.domain.InstructionStatus;
 
@@ -39,6 +41,7 @@ import net.solarnetwork.domain.InstructionStatus;
  * @version 3.0
  */
 @JsonSerialize(using = NodeInstructionSerializer.class)
+@JsonDeserialize(using = NodeInstructionDeserializer.class)
 public class NodeInstruction extends BaseEntity implements EntityMatch {
 
 	@Serial
@@ -243,31 +246,6 @@ public class NodeInstruction extends BaseEntity implements EntityMatch {
 	 */
 	public final void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
-	}
-
-	/**
-	 * Get the expiration date.
-	 * 
-	 * @return the expiration date
-	 */
-	public Instant getExpirationDate() {
-		return instruction.getExpirationDate();
-	}
-
-	/**
-	 * Set the expiration date.
-	 * 
-	 * <p>
-	 * This date represents the point in time that a "pending" instruction can
-	 * be automatically transitioned to the {@code Declined} state, adding an
-	 * appropriate {@code message} result property.
-	 * </p>
-	 * 
-	 * @param expirationDate
-	 *        the expiration date to set
-	 */
-	public void setExpirationDate(Instant expirationDate) {
-		instruction.setExpirationDate(expirationDate);
 	}
 
 	/**

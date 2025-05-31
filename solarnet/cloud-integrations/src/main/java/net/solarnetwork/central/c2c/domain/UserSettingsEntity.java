@@ -41,13 +41,13 @@ import net.solarnetwork.domain.Differentiable;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "created", "modified", "publishToSolarIn", "publishToSolarFlux" })
 public final class UserSettingsEntity extends BasicLongEntity
 		implements Differentiable<UserSettingsEntity>, UserRelatedEntity<Long>,
-		CopyingIdentity<Long, UserSettingsEntity>, Serializable, Cloneable, CloudDatumStreamSettings {
+		CopyingIdentity<UserSettingsEntity, Long>, Serializable, Cloneable, CloudDatumStreamSettings {
 
 	@Serial
 	private static final long serialVersionUID = 2463852724878062639L;
