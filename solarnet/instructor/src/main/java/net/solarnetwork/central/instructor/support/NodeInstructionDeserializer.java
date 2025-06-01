@@ -85,8 +85,7 @@ public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction
 			while ( (f = p.nextFieldName()) != null ) {
 				switch (f) {
 					case "id":
-						p.nextToken();
-						id = p.getLongValue();
+						id = JsonUtils.parseLong(p);
 						break;
 
 					case "created":
@@ -95,8 +94,7 @@ public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction
 						break;
 
 					case "nodeId":
-						p.nextToken();
-						nodeId = p.getLongValue();
+						nodeId = JsonUtils.parseLong(p);
 						break;
 
 					case "topic":

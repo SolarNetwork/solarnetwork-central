@@ -112,6 +112,42 @@ public class NodeInstructionDeserializerTests {
 	}
 
 	@Test
+	public void deserialize_stringIds() throws IOException {
+		// GIVEN
+		final Long id = UUID.randomUUID().getMostSignificantBits();
+		final Long nodeId = UUID.randomUUID().getMostSignificantBits();
+		final String topic = UUID.randomUUID().toString();
+
+		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
+		instr.setId(id);
+		instr.setCreated(TEST_DATE);
+		instr.getInstruction().setState(InstructionState.Completed);
+
+		// WHEN
+		// @formatter:off
+		final String json = "{\"id\":\"" + id + "\""
+				+ ",\"created\":\"" + TEST_DATE_STRING + "\""
+				+ ",\"nodeId\":\"" + nodeId +"\""
+				+ ",\"topic\":\"" + topic + "\""
+				+ ",\"instructionDate\":\"" + TEST_DATE_STRING + "\""
+				+ ",\"state\":\"" + InstructionState.Completed.name() + "\""
+				+ "}";
+		// @formatter:on
+
+		NodeInstruction result = mapper.readValue(json, NodeInstruction.class);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("JSON parsed into instance")
+			.isNotNull()
+			.usingRecursiveComparison()
+			.isEqualTo(instr)
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void deserialize_paramsMap() throws IOException {
 		// GIVEN
 		final Long id = UUID.randomUUID().getMostSignificantBits();
