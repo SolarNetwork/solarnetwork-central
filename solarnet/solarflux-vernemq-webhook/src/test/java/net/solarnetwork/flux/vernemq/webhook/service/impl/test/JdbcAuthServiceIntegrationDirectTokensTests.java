@@ -21,11 +21,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,51 +29,32 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
-import org.springframework.util.FileCopyUtils;
 
 import net.solarnetwork.flux.vernemq.webhook.domain.Response;
 import net.solarnetwork.flux.vernemq.webhook.domain.ResponseStatus;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.RegisterRequest;
 import net.solarnetwork.flux.vernemq.webhook.test.DbUtils;
-import net.solarnetwork.io.RFC1924OutputStream;
 
 /**
  * JDBC integration tests.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringJUnitConfig
 @JdbcTest
 @AutoConfigureTestDatabase(replace = Replace.NONE)
 public class JdbcAuthServiceIntegrationDirectTokensTests extends JdbcAuthServiceIntegrationTests {
 
-  private SecureRandom rng;
-
   @Override
   @BeforeEach
   public void setup() {
     super.setup();
     authService.setAllowDirectTokenAuthentication(true);
-    try {
-      rng = SecureRandom.getInstanceStrong();
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
-    }
   }
 
-  private String generateTokenSecret(SecureRandom rng, int byteCount) {
-    try {
-      byte[] randomBytes = new byte[byteCount];
-      rng.nextBytes(randomBytes);
-      ByteArrayOutputStream byos = new ByteArrayOutputStream((int) Math.ceil(byteCount * 1.25));
-      FileCopyUtils.copy(randomBytes, new RFC1924OutputStream(byos));
-      return byos.toString("US-ASCII");
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  private String generateTokenSecret() {
+    return UUID.randomUUID().toString().substring(0, 16);
   }
 
   @Test
@@ -86,7 +63,7 @@ public class JdbcAuthServiceIntegrationDirectTokensTests extends JdbcAuthService
     final Long userId = 123L;
     DbUtils.createUser(jdbcOps, userId);
     final String tokenId = "test.token";
-    final String tokenSecret = generateTokenSecret(rng, 16);
+    final String tokenSecret = generateTokenSecret();
     DbUtils.createToken(jdbcOps, tokenId, tokenSecret, userId, true,
         DbUtils.READ_NODE_DATA_TOKEN_TYPE, null);
 
@@ -107,7 +84,7 @@ public class JdbcAuthServiceIntegrationDirectTokensTests extends JdbcAuthService
     final Long userId = 123L;
     DbUtils.createUser(jdbcOps, userId);
     final String tokenId = "test.token";
-    final String tokenSecret = generateTokenSecret(rng, 16);
+    final String tokenSecret = generateTokenSecret();
     DbUtils.createToken(jdbcOps, tokenId, tokenSecret, userId, true,
         DbUtils.READ_NODE_DATA_TOKEN_TYPE, null);
 
