@@ -101,7 +101,7 @@ import net.solarnetwork.util.StringUtils;
  * Enphase implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -1052,7 +1052,9 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 								count++;
 							}
 						}
-						propVal = totPower.divide(new BigDecimal(count), RoundingMode.DOWN);
+						if ( count > 0 ) {
+							propVal = totPower.divide(new BigDecimal(count), RoundingMode.DOWN);
+						}
 					} else {
 						String fieldName = ref.fieldName.substring(0, ref.fieldName.length() - 1);
 						int desiredChannel = switch (ref.fieldName.charAt(fieldName.length())) {
