@@ -55,7 +55,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImportInputFormatService {
 
@@ -216,7 +216,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 			private Iterator<Datum> listDatumForBatchRange() {
 				var results = service.datum(datumStream, filter);
 				var nextFilter = results.getNextQueryFilter();
-				if ( nextFilter != null ) {
+				if ( nextFilter != null && nextFilter.getStartDate().isAfter(filter.getStartDate()) ) {
 					filter = BasicQueryFilter.copyOf(nextFilter, config.getServiceProperties());
 					filter.setEndDate(endDate); // keep importing to end date
 				} else {
