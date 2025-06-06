@@ -1422,4 +1422,181 @@ public class EnphaseCloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
+	@Test
+	public void datum_systemOnly_meter_nullMeterIntervalData() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String apiKey = randomString();
+		final String clientId = randomString();
+		final String clientSecret = randomString();
+		final String accessToken = randomString();
+		final String refreshToken = randomString();
+		final Long systemId = randomLong();
+
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				API_KEY_SETTING, apiKey,
+				OAUTH_CLIENT_ID_SETTING, clientId,
+				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
+				OAUTH_REFRESH_TOKEN_SETTING, refreshToken
+			));
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// NOTE: CLIENT_CREDENTIALS used even though auth-code is technically used, with access/refresh tokens provided
+		final ClientRegistration oauthClientReg = ClientRegistration
+			.withRegistrationId(integration.systemIdentifier())
+			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+			.clientId(clientId)
+			.clientSecret(clientSecret)
+			.tokenUri(tokenUri)
+			.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final String fieldName1 = "W";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		prop1.setEnabled(true);
+		prop1.setPropertyType(DatumSamplesType.Instantaneous);
+		prop1.setPropertyName("watts");
+		prop1.setScale(0);
+		prop1.setValueType(CloudDatumStreamValueType.Reference);
+		prop1.setValueReference(systemComponentValueRef(systemId, Meter, fieldName1));
+
+		final String fieldName2 = "WhExp";
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		prop2.setEnabled(true);
+		prop2.setPropertyType(DatumSamplesType.Instantaneous);
+		prop2.setPropertyName("wh");
+		prop2.setScale(0);
+		prop2.setValueType(CloudDatumStreamValueType.Reference);
+		prop2.setValueReference(systemComponentValueRef(systemId, Meter, fieldName2));
+
+		final String fieldName3 = "PWA";
+		final CloudDatumStreamPropertyConfiguration prop3 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		prop3.setEnabled(true);
+		prop3.setPropertyType(DatumSamplesType.Instantaneous);
+		prop3.setPropertyName("watts_a");
+		prop3.setScale(0);
+		prop3.setValueType(CloudDatumStreamValueType.Reference);
+		prop3.setValueReference(systemComponentValueRef(systemId, Meter, fieldName3));
+
+		final String fieldName4 = "PWB";
+		final CloudDatumStreamPropertyConfiguration prop4 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		prop4.setEnabled(true);
+		prop4.setPropertyType(DatumSamplesType.Instantaneous);
+		prop4.setPropertyName("watts_b");
+		prop4.setScale(0);
+		prop4.setValueType(CloudDatumStreamValueType.Reference);
+		prop4.setValueReference(systemComponentValueRef(systemId, Meter, fieldName4));
+
+		final String fieldName5 = "PWC";
+		final CloudDatumStreamPropertyConfiguration prop5 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		prop5.setEnabled(true);
+		prop5.setPropertyType(DatumSamplesType.Instantaneous);
+		prop5.setPropertyName("watts_c");
+		prop5.setScale(0);
+		prop5.setValueType(CloudDatumStreamValueType.Reference);
+		prop5.setValueReference(systemComponentValueRef(systemId, Meter, fieldName5));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2, prop3, prop4, prop5));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+
+		final JsonNode resJson = getObjectFromJSON(
+				utf8StringResource("enphase-system-telemetry-rgm-02.json", getClass()),
+				ObjectNode.class);
+		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+		BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(Instant.ofEpochSecond(1741087800L));
+		filter.setEndDate(Instant.ofEpochSecond(1741118400L));
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+
+		// request inverter data
+		final URI listSystemInverterTelemetry = UriComponentsBuilder
+				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
+				.path(EnphaseCloudDatumStreamService.RGM_TELEMETRY_PATH_TEMPLATE)
+				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
+				.queryParam(START_AT_PARAM, FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
+				.queryParam(END_AT_PARAM, FifteenMinute.tickStart(filter.getEndDate(), UTC).getEpochSecond())
+				.buildAndExpand(systemId).toUri();
+
+		and.then(uriCaptor.getValue())
+			.as("Request URI for RGM telemetry")
+			.isEqualTo(listSystemInverterTelemetry)
+			;
+
+		and.then(httpEntityCaptor.getValue().getHeaders())
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			;
+
+		String expectedSourceId = datumStream.getSourceId() + "/%d/%s/%s".formatted(systemId, Meter.getKey(), SYSTEM_DEVICE_ID);
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(286)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream configuration")
+					.returns(expectedSourceId, from(Datum::getSourceId))
+					;
+			})
+			.satisfies(list -> {
+				DatumSamples expectedSamples1 = new DatumSamples();
+				expectedSamples1.putInstantaneousSampleValue("wh", 183);
+
+				and.then(list)
+					.last()
+					.as("Datum timestampfrom JSON response")
+					.returns(Instant.ofEpochSecond(1747913400L), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples1, from(Datum::asSampleOperations))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
 }

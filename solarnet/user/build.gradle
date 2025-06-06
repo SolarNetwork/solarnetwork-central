@@ -16,7 +16,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: User'
-version = '2.8.0'
+version = '2.9.0'
 
 base {
 	archivesName = 'solarnet-user'
