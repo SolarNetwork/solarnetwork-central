@@ -2,8 +2,12 @@ buildscript {
 	repositories {
 		mavenLocal()
 		mavenCentral()
-		maven { url "https://plugins.gradle.org/m2/" }
+		maven { url = "https://plugins.gradle.org/m2/" }
 	}
+}
+
+plugins {
+	id 'net.ltgt.errorprone' version '4.2.0' apply false
 }
 
 ext {
@@ -12,7 +16,8 @@ ext {
 }
 
 subprojects {
-	apply plugin: "java"
+	apply plugin: 'java'
+	apply plugin: 'net.ltgt.errorprone'
 
 	group = "net.solarnetwork.central"
 
@@ -46,6 +51,11 @@ subprojects {
 		if (rootProject.hasProperty('failOnWarnings') && rootProject.failOnWarnings.toBoolean()) {
 			it.options.compilerArgs += ["-Werror"]
 		}
+		it.options.errorprone.disable("InlineMeSuggester")
+	}
+	
+	compileJava {
+		it.options.errorprone.enabled = !(rootProject.hasProperty('errorProneDisabled') && rootProject.errorProneDisabled.toBoolean());
 	}
 
 	compileTestJava {
@@ -54,6 +64,8 @@ subprojects {
             "-Xlint:-static",
 			"-Xlint:-this-escape"
 		]
+		options.errorprone.disable("BadImport", "CheckReturnValue")
+		it.options.errorprone.enabled = (rootProject.hasProperty('errorProneEnabledTest') && rootProject.errorProneEnabledTest.toBoolean());
 	}
 
 	jar.manifest {
@@ -66,7 +78,7 @@ subprojects {
 	javadoc.options {
 		encoding = 'UTF-8'
 		use = true
-		links 'https://docs.oracle.com/en/java/javase/21/docs/api/'
+		links = ['https://docs.oracle.com/en/java/javase/21/docs/api/']
 		source = "21"
 	}
 
@@ -122,6 +134,8 @@ subprojects {
 				libraries.mockitoJupiter,
 				libraries.easymock,
 				'org.junit.platform:junit-platform-launcher'
+		
+		errorprone 'com.google.errorprone:error_prone_core:2.38.0'
 	}
 
 	configurations {
@@ -131,14 +145,14 @@ subprojects {
 				// the following are to pick up security fixes in transitive dependencies
 				force "commons-io:commons-io:${commonsIoVersion}"
 		  	}
-		  	resolutionStrategy.eachDependency {
-		  		if (it.requested.group == 'software.amazon.awssdk') {
-		  			it.useVersion "${awsSdk2Version}"
+		  	resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+		  		if (details.requested.group == 'software.amazon.awssdk') {
+		  			details.useVersion "${awsSdk2Version}"
 		  		}
 			}
 		}
 	}
-
+	
 	// Disable JavaDoc doclint on Java 8. It's annoying.
 	// For jdk10+ we must explicitly choose between html4 and html5, otherwise we get a warning
 	allprojects {
@@ -151,7 +165,7 @@ subprojects {
     pluginManager.withPlugin('eclipse') { 
 		eclipse {
 			jdt {
-				javaRuntimeName 'JavaSE-21'
+				javaRuntimeName = 'JavaSE-21'
 				file {
 					withProperties { properties ->
 						// set properties for the file org.eclipse.jdt.core.prefs to enable -parameters for Spring 6
@@ -169,9 +183,9 @@ subprojects {
 		useJUnitPlatform()
 		testLogging {
 			exceptionFormat = 'full'
-			showExceptions true
-			showCauses true
-			showStackTraces true
+			showExceptions = true
+			showCauses = true
+			showStackTraces = true
 		}
 		maxHeapSize = '1500m'
 	}
@@ -179,7 +193,7 @@ subprojects {
 }
 
 task testReport(type: TestReport) {
-	destinationDir = file("$buildDir/reports/all-tests")
+	destinationDirectory = file("$buildDir/reports/all-tests")
 	// Combine all 'test' task results into a single HTML report
-	reportOn subprojects.collect { it.tasks.withType(Test) }
+	testResults.from(subprojects*.test*.binaryResultsDirectory)
 }

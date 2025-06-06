@@ -69,8 +69,8 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 			setStartDate(c.getStartDate());
 			setEndDate(c.getEndDate());
 		} else {
-			if ( criteria instanceof TagCriteria ) {
-				setTags(((TagCriteria) criteria).getTags());
+			if ( criteria instanceof TagCriteria c ) {
+				setTags(c.getTags());
 			}
 			if ( criteria instanceof DateRangeCriteria c ) {
 				setStartDate(c.getStartDate());

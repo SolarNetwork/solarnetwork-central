@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
+import static java.time.ZoneOffset.UTC;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
 import java.time.LocalDate;
@@ -38,7 +39,7 @@ import net.solarnetwork.central.user.billing.snf.domain.UsageTiers;
  * MyBatis implementation of {@link NodeUsageDao}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage, Long>
 		implements NodeUsageDao {
@@ -104,7 +105,7 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 	@Override
 	public UsageTiers effectiveUsageTiers(LocalDate date) {
 		if ( date == null ) {
-			date = LocalDate.now();
+			date = LocalDate.now(UTC);
 		}
 		List<UsageTier> results = selectList(QueryName.FindEffectiveUsageTierForDate.getQueryName(),
 				date, null, null);
@@ -125,7 +126,7 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 		Map<String, Object> params = new LinkedHashMap<>(2);
 		params.put("userId", userId);
 		params.put("startDate", startDate);
-		params.put("endDate", startDate.plusMonths(1));
+		params.put("endDate", endDate);
 		return selectList(queryName, params, null, null);
 	}
 

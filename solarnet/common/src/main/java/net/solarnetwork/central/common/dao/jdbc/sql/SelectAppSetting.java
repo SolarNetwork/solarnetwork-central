@@ -204,7 +204,7 @@ public final class SelectAppSetting implements PreparedStatementCreator, SqlProv
 		PreparedStatement stmt = CommonSqlUtils.createPreparedStatement(con, getSql(), forUpdate);
 		int p = 0;
 		p = prepareOptimizedArrayParameter(con, stmt, p, keys);
-		p = prepareOptimizedArrayParameter(con, stmt, p, types);
+		prepareOptimizedArrayParameter(con, stmt, p, types);
 		return stmt;
 	}
 

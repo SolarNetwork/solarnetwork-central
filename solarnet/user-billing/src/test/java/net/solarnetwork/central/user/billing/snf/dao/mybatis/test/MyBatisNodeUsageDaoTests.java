@@ -668,7 +668,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 						.setScale(3)
 						));
 				assertThat("Datum out cost tiers", datumOutTiersCost, contains(
-						NamedCost.forTier(4, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
+						NamedCost.forTier(1, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
 
 				assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
 								new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
@@ -697,7 +697,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				assertThat("OSCP Capacity Groups cost tiers", oscpCapacityGroupsTiersCost, contains(
 						NamedCost.forTier(1, "30",  new BigDecimal("30") .multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(0).getCost()).toString()),
 						NamedCost.forTier(2, "70",  new BigDecimal("70") .multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(1).getCost()).toString()),
-						NamedCost.forTier(2, "100", new BigDecimal("100").multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(2).getCost()).toString())
+						NamedCost.forTier(3, "100", new BigDecimal("100").multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(2).getCost()).toString())
 						));
 				// @formatter:on
 			}
@@ -868,7 +868,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 						.setScale(3)
 						));
 				assertThat("Datum out cost tiers", datumOutTiersCost, contains(
-						NamedCost.forTier(4, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
+						NamedCost.forTier(1, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
 
 				assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
 								new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
@@ -1033,7 +1033,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 						.setScale(3)
 						));
 				assertThat("Datum out cost tiers", datumOutTiersCost, contains(
-						NamedCost.forTier(4, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
+						NamedCost.forTier(1, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
 
 				assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
 								new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
@@ -1222,7 +1222,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 						.setScale(3)
 						));
 				assertThat("Datum out cost tiers", datumOutTiersCost, contains(
-						NamedCost.forTier(4, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
+						NamedCost.forTier(1, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
 
 				assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
 								new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
@@ -1368,7 +1368,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 						.setScale(3)
 						));
 				assertThat("Datum out cost tiers", datumOutTiersCost, contains(
-						NamedCost.forTier(4, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
+						NamedCost.forTier(1, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
 
 				assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
 								new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
@@ -1461,7 +1461,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 							.contains(
 								  forTier(1, "1000000000", new BigDecimal("1000000000").multiply(
 										  tierMap.get(CLOUD_INTEGRATIONS_DATA_KEY).get(0).getCost()).toString())
-								, forTier(1, "5552500000", new BigDecimal("5552500000").multiply(
+								, forTier(2, "5552500000", new BigDecimal("5552500000").multiply(
 										  tierMap.get(CLOUD_INTEGRATIONS_DATA_KEY).get(1).getCost()).toString())
 							)
 							;

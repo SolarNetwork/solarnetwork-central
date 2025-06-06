@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.util;
 
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -36,7 +37,7 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
  * API for system tasks.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 
@@ -66,14 +67,14 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *
 	 * @return the error tags
 	 */
-	String[] errorEventTags();
+	List<String> errorEventTags();
 
 	/**
 	 * Get event tags to use for success events.
 	 *
 	 * @return the success tags
 	 */
-	String[] successEventTags();
+	List<String> successEventTags();
 
 	/**
 	 * The configuration DAO.

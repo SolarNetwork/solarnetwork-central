@@ -270,6 +270,7 @@ public class JdbcAuditService implements AuditService {
       return Objects.hash(objectId, sourceId, timestamp);
     }
 
+    @SuppressWarnings("EqualsUnsafeCast")
     @Override
     public boolean equals(Object obj) {
       if (this == obj) {
@@ -281,6 +282,7 @@ public class JdbcAuditService implements AuditService {
           && Objects.equals(timestamp, other.timestamp);
     }
 
+    @SuppressWarnings("ReferenceEquality")
     @Override
     public int compareTo(Delayed o) {
       // not bothering to check instanceof for performance
@@ -426,8 +428,8 @@ public class JdbcAuditService implements AuditService {
     } catch (Exception e) {
       addCount(key, count);
       RuntimeException re;
-      if (e instanceof RuntimeException) {
-        re = (RuntimeException) e;
+      if (e instanceof RuntimeException runtime) {
+        re = runtime;
       } else {
         re = new RuntimeException("Exception flushing node source audit data", e);
       }
@@ -454,13 +456,14 @@ public class JdbcAuditService implements AuditService {
    */
   public synchronized void enableWriting() {
     if (writerThread == null || !writerThread.isGoing()) {
-      writerThread = new WriterThread();
-      writerThread.setName("JdbcMqttAuditorWriter");
-      synchronized (writerThread) {
-        writerThread.start();
-        while (!writerThread.hasStarted()) {
+      WriterThread t = new WriterThread();
+      t.setName("JdbcMqttAuditorWriter");
+      this.writerThread = t;
+      synchronized (t) {
+        t.start();
+        while (!t.hasStarted()) {
           try {
-            writerThread.wait(5000L);
+            t.wait(5000L);
           } catch (InterruptedException e) {
             // ignore
           }

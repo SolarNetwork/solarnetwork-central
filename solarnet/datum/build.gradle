@@ -16,7 +16,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Datum'
-version = '2.31.0'
+version = '2.32.0'
 
 base {
 	archivesName = 'solarnet-datum'
@@ -106,7 +106,7 @@ publishing {
 	repositories {
 		maven {
 			name = "OSSRH"
-			url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+			url = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
 			credentials {
 				username = ossrhUsername
 				password = ossrhPassword

@@ -16,7 +16,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Commons Multipart'
-version = '1.1.0'
+version = '1.1.1'
 
 base {
 	archivesName = 'solarnet-commons-multipart'
@@ -86,7 +86,7 @@ publishing {
 	repositories {
 		maven {
 			name = "OSSRH"
-			url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+			url = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
 			credentials {
 				username = ossrhUsername
 				password = ossrhPassword

@@ -191,7 +191,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
@@ -241,7 +242,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
@@ -294,7 +296,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
@@ -353,7 +356,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
@@ -418,7 +422,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
@@ -483,7 +488,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
@@ -556,7 +562,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
@@ -638,7 +645,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_IN_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_IN_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
@@ -742,7 +750,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_IN_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_IN_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,

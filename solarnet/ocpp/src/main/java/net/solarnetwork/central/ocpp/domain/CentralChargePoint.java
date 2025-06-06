@@ -178,12 +178,11 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 
 	@Override
 	public boolean isSameAs(ChargePoint other) {
-		if ( !(other instanceof CentralChargePoint) ) {
+		if ( !(other instanceof CentralChargePoint ccp) ) {
 			return false;
 		}
 		boolean result = super.isSameAs(other);
 		if ( result ) {
-			CentralChargePoint ccp = (CentralChargePoint) other;
 			result = Objects.equals(this.userId, ccp.userId) && Objects.equals(this.nodeId, ccp.nodeId);
 		}
 		return result;

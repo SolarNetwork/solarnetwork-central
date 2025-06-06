@@ -167,6 +167,7 @@ public final class WebServiceControllerSupport {
 	 *        the request
 	 * @return the description
 	 */
+	@SuppressWarnings("RedundantControlFlow")
 	public static String requestDescription(WebRequest request) {
 		StringBuilder buf = new StringBuilder(request.getDescription(false));
 		Map<String, String[]> params = request.getParameterMap();
@@ -193,7 +194,6 @@ public final class WebServiceControllerSupport {
 						buf.append(vals[i]);
 					}
 				}
-
 			}
 		}
 		return buf.toString();
@@ -361,10 +361,10 @@ public final class WebServiceControllerSupport {
 	public Result<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException e,
 			WebRequest request) {
 		Throwable t = e.getMostSpecificCause();
-		if ( t instanceof JsonProcessingException ) {
-			return handleJsonParseException((JsonProcessingException) t, request);
-		} else if ( t instanceof DateTimeParseException ) {
-			return handleDateTimeParseException((DateTimeParseException) t, request);
+		if ( t instanceof JsonProcessingException ex ) {
+			return handleJsonParseException(ex, request);
+		} else if ( t instanceof DateTimeParseException ex ) {
+			return handleDateTimeParseException(ex, request);
 		}
 		log.warn("HttpMessageNotReadableException in request {}: {}", requestDescription(request),
 				e.toString());

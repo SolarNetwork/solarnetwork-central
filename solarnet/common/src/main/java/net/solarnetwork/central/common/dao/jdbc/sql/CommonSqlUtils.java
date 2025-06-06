@@ -953,7 +953,7 @@ public final class CommonSqlUtils {
 	 * @param values
 	 *        the values to set
 	 * @param setNull
-	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@literal true} to set a NULL parameter if {@code values} is
 	 *        {@literal null} and {@literal defaultValue} is {@literal null}, or
 	 *        {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset

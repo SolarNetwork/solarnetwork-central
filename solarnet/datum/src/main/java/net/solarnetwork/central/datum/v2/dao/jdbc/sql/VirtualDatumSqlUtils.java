@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.lang.String.format;
-import java.util.HashMap;
 import java.util.Map;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.service.support.TextResourceCache;
@@ -129,30 +128,19 @@ public final class VirtualDatumSqlUtils {
 	 *         if {@code type} is not supported
 	 */
 	public static String combineCteSql(CombiningType type) {
-		Map<String, String> templates = new HashMap<>(2);
-		switch (type) {
-			case Average:
-				templates.put(PROPERTY_COMBINE_CALC_PARAM_NAME, DEFAULT_PROPERTY_COMBINE_AVG_SQL);
-				templates.put(READING_DIFF_COMBINE_CALC_PARAM_NAME,
-						DEFAULT_READING_DIFF_COMBINE_AVG_SQL);
-				break;
+		Map<String, String> templates = switch (type) {
+			case Average -> Map.of(PROPERTY_COMBINE_CALC_PARAM_NAME, DEFAULT_PROPERTY_COMBINE_AVG_SQL,
+					READING_DIFF_COMBINE_CALC_PARAM_NAME, DEFAULT_READING_DIFF_COMBINE_AVG_SQL);
 
-			case Difference:
-				templates.put(PROPERTY_COMBINE_CALC_PARAM_NAME, DEFAULT_PROPERTY_COMBINE_SUB_SQL);
-				templates.put(READING_DIFF_COMBINE_CALC_PARAM_NAME,
-						DEFAULT_READING_DIFF_COMBINE_SUB_SQL);
-				break;
+			case Difference -> Map.of(PROPERTY_COMBINE_CALC_PARAM_NAME, DEFAULT_PROPERTY_COMBINE_SUB_SQL,
+					READING_DIFF_COMBINE_CALC_PARAM_NAME, DEFAULT_READING_DIFF_COMBINE_SUB_SQL);
 
-			case Sum:
-				templates.put(PROPERTY_COMBINE_CALC_PARAM_NAME, DEFAULT_PROPERTY_COMBINE_SUM_SQL);
-				templates.put(READING_DIFF_COMBINE_CALC_PARAM_NAME,
-						DEFAULT_READING_DIFF_COMBINE_SUM_SQL);
-				break;
+			case Sum -> Map.of(PROPERTY_COMBINE_CALC_PARAM_NAME, DEFAULT_PROPERTY_COMBINE_SUM_SQL,
+					READING_DIFF_COMBINE_CALC_PARAM_NAME, DEFAULT_READING_DIFF_COMBINE_SUM_SQL);
 
-			default:
-				throw new IllegalArgumentException(
-						format("The CombiningType %s is not supported.", type));
-		}
+			default -> throw new IllegalArgumentException(
+					format("The CombiningType %s is not supported.", type));
+		};
 		return TextResourceCache.INSTANCE.getResourceAsString("datum-combine-cte.sql",
 				VirtualDatumSqlUtils.class, DatumSqlUtils.SQL_COMMENT, templates);
 	}

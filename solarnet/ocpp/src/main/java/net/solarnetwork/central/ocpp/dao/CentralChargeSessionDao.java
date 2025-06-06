@@ -93,6 +93,7 @@ public interface CentralChargeSessionDao
 	 * @return the next transaction ID
 	 * @since 1.3
 	 */
+	@Override
 	int nextTransactionId();
 
 }

@@ -571,7 +571,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 		}
 
 		@Override
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({ "unchecked", "AssignmentExpression" })
 		public E next() {
 			if ( cursor >= array.length ) {
 				throw new NoSuchElementException();

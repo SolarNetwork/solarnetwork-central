@@ -248,7 +248,7 @@ public class ServerConfigurationsCsvParser {
 			// keep trying
 		}
 		// try without "Control" prefix
-		if ( s.toLowerCase().startsWith(CONTROL_PREFIX) ) {
+		if ( s.toLowerCase(Locale.ENGLISH).startsWith(CONTROL_PREFIX) ) {
 			try {
 				return ControlType.valueOf(s.substring(CONTROL_PREFIX.length()));
 			} catch ( IllegalArgumentException e ) {

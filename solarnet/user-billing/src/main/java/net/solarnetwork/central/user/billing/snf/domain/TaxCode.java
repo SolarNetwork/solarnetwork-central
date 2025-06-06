@@ -154,6 +154,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isSameAs(TaxCode other) {
 		if ( other == null ) {
 			return false;
@@ -161,7 +162,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 		// @formatter:off
 		return Objects.equals(code, other.code)
 				&& Objects.equals(itemKey, other.itemKey)
-				&& (rate == other.rate) || (rate != null && rate.compareTo(other.rate) == 0)
+				&& ((rate == other.rate) || (rate != null && rate.compareTo(other.rate) == 0))
 				&& Objects.equals(validFrom, other.validFrom)
 				&& Objects.equals(validTo, other.validTo);
 		// @formatter:on

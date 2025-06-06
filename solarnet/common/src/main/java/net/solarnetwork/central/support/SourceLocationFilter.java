@@ -25,7 +25,6 @@ package net.solarnetwork.central.support;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +39,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Criteria for location data tied to a source.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SourceLocationFilter implements Serializable, SourceLocation {
 
@@ -151,7 +150,7 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 
 	public List<SortDescriptor> getSortDescriptors() {
 		if ( sorts == null ) {
-			return Collections.emptyList();
+			return new ArrayList<>(2);
 		}
 		return new ArrayList<>(sorts);
 	}

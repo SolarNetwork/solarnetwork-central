@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security.web.support;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,7 +37,7 @@ import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
  * {@link UserDetailsService} to access token data.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.10
  */
 public class UserDetailsAuthenticationTokenService implements AuthenticationTokenService {
@@ -53,7 +54,7 @@ public class UserDetailsAuthenticationTokenService implements AuthenticationToke
 			Map<String, ?> properties) {
 		UserDetails user = userDetailsService.loadUserByUsername(token.getToken());
 		return switch (scheme) {
-			case V1 -> user.getPassword().getBytes();
+			case V1 -> user.getPassword().getBytes(StandardCharsets.UTF_8);
 			case V2 -> {
 				if ( !(properties.get(SIGN_DATE_PROP) instanceof Instant ts) ) {
 					throw new IllegalArgumentException(

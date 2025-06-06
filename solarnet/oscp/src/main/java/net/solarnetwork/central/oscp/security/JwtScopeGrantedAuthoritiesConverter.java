@@ -62,7 +62,7 @@ public class JwtScopeGrantedAuthoritiesConverter
 			};
 			auths.add(new SimpleGrantedAuthority(auth));
 		}
-		return auths;
+		return Collections.unmodifiableList(auths);
 	}
 
 }

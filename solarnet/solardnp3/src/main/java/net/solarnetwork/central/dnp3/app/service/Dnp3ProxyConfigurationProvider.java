@@ -1,21 +1,21 @@
 /* ==================================================================
  * Dnp3ProxyConfigurationProvider.java - 8/08/2023 3:50:33 pm
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -76,9 +76,9 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * DNP3 proxy configuration provider.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvider, Dnp3UserEvents {
 
@@ -103,7 +103,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param manager
 	 *        the manager to use
 	 * @param instructorBiz
@@ -157,14 +157,14 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	@Override
 	public ProxyConnectionSettings authorize(ProxyConnectionRequest request)
 			throws AuthorizationException {
-		final X509Certificate[] clientIdentity = requireNonNullArgument(request, "request")
+		final List<X509Certificate> clientIdentity = requireNonNullArgument(request, "request")
 				.principalIdentity();
 		// assume client certificate is first
-		if ( clientIdentity.length < 1 ) {
+		if ( clientIdentity.isEmpty() ) {
 			return null;
 		}
 
-		final String clientSubjectDn = CertificateUtils.canonicalSubjectDn(clientIdentity[0]);
+		final String clientSubjectDn = CertificateUtils.canonicalSubjectDn(clientIdentity.getFirst());
 		final ServerAuthConfiguration auth = requireNonNullObject(
 				serverAuthDao.findForIdentifier(clientSubjectDn), clientSubjectDn);
 
@@ -178,7 +178,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 		// validate certificate
 		try {
 			PKIXCertPathValidatorResult vr = CertificateUtils.validateCertificateChain(trustStore,
-					clientIdentity);
+					clientIdentity.toArray(X509Certificate[]::new));
 			if ( log.isInfoEnabled() ) {
 				TrustAnchor ta = vr.getTrustAnchor();
 				log.info("Validated connection authorization request identity [{}], trusted by [{}]",
@@ -227,7 +227,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	 * {@link ProxyConnectionSettings} that also implements
 	 * {@link ServiceLifecycleObserver} and resolves a dynamic unused port when
 	 * {@link #serviceDidStartup()} is invoked.
-	 * 
+	 *
 	 * <p>
 	 * This class extends {@link BasicStreamDatumFilteredResultsProcessor} for
 	 * convenience, to support the initial data load of the DNP3 server.
@@ -401,7 +401,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 
 	/**
 	 * Get the task executor.
-	 * 
+	 *
 	 * @return the taskExecutor
 	 */
 	public Executor getTaskExecutor() {
@@ -410,7 +410,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 
 	/**
 	 * Set the task executor.
-	 * 
+	 *
 	 * @param taskExecutor
 	 *        the taskExecutor to set
 	 */
@@ -420,7 +420,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 
 	/**
 	 * Get the user trust store cache.
-	 * 
+	 *
 	 * @return the cache
 	 */
 	public Cache<Long, KeyStore> getUserTrustStoreCache() {
@@ -429,7 +429,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 
 	/**
 	 * Set the user trust store cache.
-	 * 
+	 *
 	 * @param userTrustStoreCache
 	 *        the userTrustStoreCache to set
 	 */

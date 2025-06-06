@@ -29,6 +29,7 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.oscp.dao.BasicConfigurationFilter.filterForUsers;
 import static net.solarnetwork.central.oscp.domain.DatumPublishEvent.FORECAST_TYPE_PARAM;
+import static net.solarnetwork.central.oscp.domain.DatumPublishSettings.shouldPublishForSettings;
 import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityOptimizer;
 import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityProvider;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
@@ -119,7 +120,7 @@ import oscp.v20.VersionUrl;
  * DAO based implementation of {@link FlexibilityProviderBiz}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
@@ -441,8 +442,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			BaseOscpExternalSystemConfiguration<?> dest, CapacityGroupConfiguration group,
 			DatumPublishSettings settings, Supplier<Collection<OwnedGeneralNodeDatum>> datumSupplier,
 			KeyValuePair... sourceIdParameters) {
-		if ( !DatumPublishSettings.shouldPublish(settings)
-				|| (fluxPublisher == null && datumDao == null) ) {
+		if ( !shouldPublishForSettings(settings) || (fluxPublisher == null && datumDao == null) ) {
 			return null;
 		}
 		Long nodeId = settings.getNodeId();
@@ -602,6 +602,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			doWork20(config);
 		}
 
+		@SuppressWarnings("UnusedVariable")
 		private void doWork20(CapacityProviderConfiguration conf) {
 			GroupCapacityComplianceError msg = new GroupCapacityComplianceError(message);
 			if ( blocks != null ) {
@@ -635,6 +636,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			doWork20(config);
 		}
 
+		@SuppressWarnings("UnusedVariable")
 		private void doWork20(CapacityProviderConfiguration conf) {
 			AdjustGroupCapacityForecast msg = forecast.toOscp20AdjustGroupCapacityValue(groupIdentifier);
 			post(ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH, msg);
@@ -685,8 +687,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		}
 
 		@Override
-		protected SystemTaskContext<CapacityOptimizerConfiguration> context(String... extraErrorTags) {
-			SystemTaskContext<CapacityOptimizerConfiguration> ctx = super.context(extraErrorTags);
+		protected SystemTaskContext<CapacityOptimizerConfiguration> context() {
+			SystemTaskContext<CapacityOptimizerConfiguration> ctx = super.context();
 
 			// if we have a publish event, then add the source ID as an extra HTTP header parameter
 			final DatumPublishEvent evt = this.publishEvent;
@@ -708,6 +710,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			return ctx;
 		}
 
+		@SuppressWarnings("UnusedVariable")
 		private void doWork20(CapacityOptimizerConfiguration conf) {
 			UpdateGroupCapacityForecast msg = forecast
 					.toOscp20UpdateGroupCapacityValue(group.getIdentifier());
@@ -780,6 +783,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			doWork20(config);
 		}
 
+		@SuppressWarnings("UnusedVariable")
 		private void doWork20(C conf) {
 			HandshakeAcknowledge ack = new HandshakeAcknowledge();
 			if ( settings != null ) {

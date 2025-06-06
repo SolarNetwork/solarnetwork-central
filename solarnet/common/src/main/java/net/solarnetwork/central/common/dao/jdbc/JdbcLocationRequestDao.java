@@ -86,7 +86,7 @@ public class JdbcLocationRequestDao implements LocationRequestDao {
 			jdbcOps.update(sql, keyHolder);
 			Map<String, Object> keys = keyHolder.getKeys();
 			Object id = keys != null ? keys.get("id") : null;
-			result = (id instanceof Long ? (Long) id : null);
+			result = (id instanceof Long n ? n : null);
 		} else {
 			final UpdateLocationRequest sql = new UpdateLocationRequest(entity);
 			int count = jdbcOps.update(sql);

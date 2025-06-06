@@ -24,7 +24,6 @@ package net.solarnetwork.central.ocpp.v201.service;
 
 import static net.solarnetwork.ocpp.domain.ChargePointConnectorKey.keyFor;
 import java.util.function.Function;
-import java.util.function.ToIntFunction;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import ocpp.v201.EVSE;
 import ocpp.v201.MeterValuesRequest;
@@ -35,11 +34,13 @@ import ocpp.v201.TransactionEventRequest;
  * Extract a connector key from OCPP v2.0.1 request messages.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ConnectorKeyExtractor implements Function<Object, ChargePointConnectorKey> {
 
-	private static final ToIntFunction<Number> INT_OR_ZERO = (n) -> n != null ? n.intValue() : 0;
+	private static final int intOrZero(Number n) {
+		return n != null ? n.intValue() : 0;
+	}
 
 	@Override
 	public ChargePointConnectorKey apply(Object o) {
@@ -48,16 +49,14 @@ public class ConnectorKeyExtractor implements Function<Object, ChargePointConnec
 		}
 		EVSE evse = null;
 		if ( o instanceof MeterValuesRequest r ) {
-			return keyFor(INT_OR_ZERO.applyAsInt(r.getEvseId()), 0);
+			return keyFor(intOrZero(r.getEvseId()), 0);
 		} else if ( o instanceof StatusNotificationRequest r ) {
-			return keyFor(0, INT_OR_ZERO.applyAsInt(r.getEvseId()),
-					INT_OR_ZERO.applyAsInt(r.getConnectorId()));
+			return keyFor(0, intOrZero(r.getEvseId()), intOrZero(r.getConnectorId()));
 		} else if ( o instanceof TransactionEventRequest r ) {
 			evse = r.getEvse();
 		}
 		if ( evse != null ) {
-			return keyFor(0, INT_OR_ZERO.applyAsInt(evse.getId()),
-					INT_OR_ZERO.applyAsInt(evse.getConnectorId()));
+			return keyFor(0, intOrZero(evse.getId()), intOrZero(evse.getConnectorId()));
 		}
 		return null;
 	}

@@ -48,7 +48,10 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	}
 
 	/**
+	 * Copy constructor.
+	 * 
 	 * @param criteria
+	 *        the criteria to copy from
 	 */
 	public BasicUserSecretFilter(PaginationCriteria criteria) {
 		super(criteria);
@@ -87,10 +90,9 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 		if ( !super.equals(obj) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicUserSecretFilter) ) {
+		if ( !(obj instanceof BasicUserSecretFilter other) ) {
 			return false;
 		}
-		BasicUserSecretFilter other = (BasicUserSecretFilter) obj;
 		return Arrays.equals(topics, topics) && Arrays.equals(keys, other.keys);
 	}
 

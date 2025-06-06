@@ -106,6 +106,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 * @param tag
 	 *        the tag
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setTag(String tag) {
 		this.tags = (tag == null ? null : new String[] { tag });
@@ -140,6 +141,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 * @param userId
 	 *        the ID of the user
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setUserId(Long userId) {
 		this.userIds = (userId == null ? null : new Long[] { userId });
@@ -155,6 +157,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 *
 	 * @return the first user ID, or {@literal null}
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonIgnore
 	public Long getUserId() {
 		return (this.userIds == null || this.userIds.length < 1 ? null : this.userIds[0]);

@@ -34,6 +34,7 @@ import java.util.Objects;
  * @version 2.0
  * @since 1.39
  */
+@SuppressWarnings("MissingImplementsComparable")
 public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializable, Cloneable {
 
 	@Serial

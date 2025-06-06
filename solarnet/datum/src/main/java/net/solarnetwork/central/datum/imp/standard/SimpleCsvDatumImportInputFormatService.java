@@ -55,7 +55,7 @@ import net.solarnetwork.util.StringUtils;
  * classification mapping settings.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputFormatServiceSupport {
 
@@ -114,8 +114,7 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 		return (result.isEmpty() ? null : result);
 	}
 
-	private static Set<String> parseSetColumns(List<String> headerRow, List<String> row,
-			IntRangeSet columns) {
+	private static Set<String> parseSetColumns(List<String> row, IntRangeSet columns) {
 		if ( columns == null ) {
 			return null;
 		}
@@ -192,7 +191,7 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 				s.setInstantaneous(parseNumberColumns(headerRow, row, instantaneousColumns));
 				s.setAccumulating(parseNumberColumns(headerRow, row, accumulatingColumns));
 				s.setStatus(parseObjectColumns(headerRow, row, statusColumns));
-				s.setTags(parseSetColumns(headerRow, row, tagColumns));
+				s.setTags(parseSetColumns(row, tagColumns));
 
 				if ( s.getInstantaneous() != null || s.getAccumulating() != null
 						|| s.getStatus() != null ) {

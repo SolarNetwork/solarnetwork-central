@@ -34,6 +34,7 @@ import net.solarnetwork.central.domain.BasePK;
  * @version 1.0
  * @since 1.39
  */
+@SuppressWarnings("MissingImplementsComparable")
 public class BasicNodeSourcePK extends BasePK implements Serializable, Cloneable {
 
 	@Serial

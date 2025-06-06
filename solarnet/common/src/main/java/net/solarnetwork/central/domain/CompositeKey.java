@@ -128,6 +128,7 @@ public interface CompositeKey {
 	 *         of range of the key component length
 	 * @since 1.2
 	 */
+	@SuppressWarnings("TypeParameterUnusedInFormals")
 	<T> T keyComponentValue(int index, Object val);
 
 	/**

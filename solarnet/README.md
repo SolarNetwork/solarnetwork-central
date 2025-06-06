@@ -33,6 +33,11 @@ To build all applications:
 ./gradlew.bat build
 ```
 
+## ErrorProne
+
+Pass `-P errorProneDisabled=true` to the build command to disable ErrorProne warnings when compiling
+sources, and `-P errorProneEnabledTest=true` to enable warnings when compiling test sources.
+
 # Testing
 
 You can run all subproject unit/integration tests and produce a single HTML report at

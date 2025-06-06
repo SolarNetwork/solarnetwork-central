@@ -79,7 +79,6 @@ import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
@@ -572,8 +571,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
 
 			var resultDatum = new ArrayList<GeneralDatum>();
-			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(integration, ds,
-					sourceIdMap, valueProps);
+			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(ds, sourceIdMap,
+					valueProps);
 
 			// for each system, find last import date and query for latest
 			for ( Entry<String, SystemQueryPlan> planEntry : queryPlans.entrySet() ) {
@@ -586,8 +585,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				filter.setParameters(Map.of(SYSTEM_ID_FILTER, systemId));
 				filter.setMax(1);
 
-				fetchDatumForSystem(filter, ms, datumStream, mapping, integration, valueProps, exprProps,
-						sourceIdMap, planEntry.getValue(), resultDatum);
+				fetchDatumForSystem(filter, datumStream, integration, sourceIdMap, planEntry.getValue(),
+						resultDatum);
 			}
 
 			// evaluate expressions on merged datum
@@ -637,8 +636,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
 
 			final var resultDatum = new ArrayList<GeneralDatum>();
-			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(integration, ds,
-					sourceIdMap, valueProps);
+			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(ds, sourceIdMap,
+					valueProps);
 
 			// we can only query for at most MAX_QUERY_TIME_RANGE per request, so have to iterate over time
 			final var queryFilter = new BasicQueryFilter();
@@ -653,8 +652,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					var systemId = planEntry.getKey();
 					queryFilter.setParameters(Map.of(SYSTEM_ID_FILTER, systemId));
 
-					fetchDatumForSystem(queryFilter, ms, datumStream, mapping, integration, valueProps,
-							exprProps, sourceIdMap, planEntry.getValue(), resultDatum);
+					fetchDatumForSystem(queryFilter, datumStream, integration, sourceIdMap,
+							planEntry.getValue(), resultDatum);
 				}
 				queryFilter.setStartDate(queryFilter.getEndDate());
 				queryFilter.setEndDate(queryFilter.getStartDate().plus(MAX_QUERY_TIME_RANGE));
@@ -673,11 +672,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		});
 	}
 
-	private void fetchDatumForSystem(BasicQueryFilter filter, MessageSource ms,
-			CloudDatumStreamConfiguration datumStream, CloudDatumStreamMappingConfiguration mapping,
-			CloudIntegrationConfiguration integration,
-			List<CloudDatumStreamPropertyConfiguration> valueProps,
-			List<CloudDatumStreamPropertyConfiguration> exprProps, Map<String, String> sourceIdMap,
+	private void fetchDatumForSystem(BasicQueryFilter filter, CloudDatumStreamConfiguration datumStream,
+			CloudIntegrationConfiguration integration, Map<String, String> sourceIdMap,
 			SystemQueryPlan queryPlan, List<GeneralDatum> resultDatum) {
 		if ( queryPlan.deviceValueRefs == null ) {
 			return;
@@ -688,7 +684,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			final var pageFilter = BasicQueryFilter.copyOf(filter);
 			pageFilter.setOffset(0L);
 			final var links = new Links();
-			while ( links.hasMore(pageFilter.getOffset(), limit) ) {
+			while ( links.hasMore(pageFilter.getOffset()) ) {
 				List<GeneralDatum> datum = restOpsHelper.httpGet("List device data", integration,
 						JsonNode.class, req -> {
 							var b = fromUri(resolveBaseUrl(integration, BASE_URI))
@@ -701,8 +697,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 						}, res -> {
 							JsonNode json = res.getBody();
 							links.parseJson(json);
-							return parseDeviceDatum(json, queryPlan.systemId, deviceId,
-									deviceEntry.getValue(), datumStream, sourceIdMap, pageFilter);
+							return parseDeviceDatum(json, deviceEntry.getValue(), datumStream,
+									sourceIdMap, pageFilter);
 						});
 				if ( datum != null ) {
 					resultDatum.addAll(datum);
@@ -741,13 +737,13 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			}
 		}
 
-		private boolean hasMore(long offset, int limit) {
+		private boolean hasMore(long offset) {
 			return count < 0 || (offset < count && next != null);
 		}
 	}
 
-	private List<GeneralDatum> parseDeviceDatum(JsonNode json, String systemId, String deviceId,
-			List<ValueRef> refs, CloudDatumStreamConfiguration ds, Map<String, String> sourceIdMap,
+	private List<GeneralDatum> parseDeviceDatum(JsonNode json, List<ValueRef> refs,
+			CloudDatumStreamConfiguration ds, Map<String, String> sourceIdMap,
 			CloudDatumStreamQueryFilter filter) {
 		/*- EXAMPLE JSON:
 			{
@@ -835,15 +831,15 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
 		if ( ucSourceId != null && ucSourceId ) {
-			result = result.toUpperCase();
+			result = result.toUpperCase(Locale.ENGLISH);
 		}
 
 		return result;
 	}
 
 	private Map<String, SystemQueryPlan> resolveSystemQueryPlans(
-			CloudIntegrationConfiguration integration, CloudDatumStreamConfiguration datumStream,
-			Map<String, String> sourceIdMap, List<CloudDatumStreamPropertyConfiguration> propConfigs) {
+			CloudDatumStreamConfiguration datumStream, Map<String, String> sourceIdMap,
+			List<CloudDatumStreamPropertyConfiguration> propConfigs) {
 		final var result = new LinkedHashMap<String, SystemQueryPlan>(2);
 		@SuppressWarnings("unchecked")
 		List<Map<String, ?>> placeholderSets = resolvePlaceholderSets(

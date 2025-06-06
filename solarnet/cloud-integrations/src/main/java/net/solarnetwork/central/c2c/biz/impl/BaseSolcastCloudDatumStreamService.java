@@ -136,7 +136,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 		Map<String, String> resolutionMenuValues = new LinkedHashMap<>(SUPPORTED_RESOLUTIONS.size());
 		for ( Duration d : SUPPORTED_RESOLUTIONS ) {
 			String key = d.toString();
-			resolutionMenuValues.put(key, (d.getSeconds() / 60) + " minute");
+			resolutionMenuValues.put(key, (d.toSeconds() / 60) + " minute");
 		}
 		resolutionSpec.setValueTitles(resolutionMenuValues);
 		RESOLUTION_SETTING_SPECIFIER = resolutionSpec;

@@ -25,7 +25,6 @@ package net.solarnetwork.central.c2c.config;
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import java.time.Clock;
 import java.util.Collection;
-import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +55,6 @@ import net.solarnetwork.central.c2c.http.CachableRequestEntity;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -111,10 +109,6 @@ public class FroniusConfig implements SolarNetCloudIntegrationsConfiguration {
 
 	@Autowired(required = false)
 	private QueryAuditor queryAuditor;
-
-	@Autowired(required = false)
-	@Qualifier(CLOUD_INTEGRATIONS_INTEGRATION_LOCKS)
-	private Cache<UserLongCompositePK, Lock> integrationLocksCache;
 
 	@Autowired
 	private DatumStreamMetadataDao datumStreamMetadataDao;

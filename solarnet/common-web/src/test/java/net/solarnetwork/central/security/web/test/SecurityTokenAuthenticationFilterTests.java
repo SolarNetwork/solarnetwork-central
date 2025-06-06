@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security.web.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV1Value;
@@ -427,13 +428,13 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String contentMD5 = "9bb58f26192e4ba00f01e2e7b136bbd8";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV1Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
@@ -450,13 +451,13 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String contentMD5 = "9bb58f26192e4ba00f01e2e7b136bbd8";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
@@ -473,13 +474,13 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String contentMD5 = "9bb58f26192e4ba00f01e2e7b136bbFF";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV1Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		validateUnauthorizedResponse(AuthenticationScheme.V1, "Content md5 digest value mismatch");
@@ -493,13 +494,13 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String contentMD5 = "9bb58f26192e4ba00f01e2e7b136bbFF";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		validateUnauthorizedResponse(AuthenticationScheme.V2, "Content md5 digest value mismatch");
@@ -513,7 +514,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String contentMD5 = "m7WPJhkuS6APAeLnsTa72A==";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
@@ -535,13 +536,13 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String contentMD5 = "m7WPJhkuS6APAeLnsTa72A==";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
@@ -558,13 +559,13 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String digestSHA256 = "eji/gfOD9pQzrW6QDTWz4jhVk/dqe3q11DVbi6Qe4ks=";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Digest", "sha-256=" + digestSHA256);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
@@ -581,13 +582,13 @@ public class SecurityTokenAuthenticationFilterTests {
 		final String digestSHA256 = "Ix2SImWvBXHmqXTuPAaDHz16KeaOlIokZObv6cU+Ie8=";
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
 		request.setContentType(contentType);
-		request.setContent(content.getBytes("UTF-8"));
+		request.setContent(content.getBytes(UTF_8));
 		request.addHeader("Digest", "sha-256=" + digestSHA256);
 		final Date now = new Date();
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
-		request.setContent(content.getBytes("UTF-8")); // reset InputStream
+		request.setContent(content.getBytes(UTF_8)); // reset InputStream
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		validateUnauthorizedResponse(AuthenticationScheme.V2, "Content sha-256 digest value mismatch");

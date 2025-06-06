@@ -26,6 +26,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import org.springframework.util.StringUtils;
@@ -147,7 +148,7 @@ public class SolarLocation extends BaseEntity
 			if ( country.length() > 2 ) {
 				country = country.substring(0, 2);
 			}
-			norm.setCountry(country.toUpperCase());
+			norm.setCountry(country.toUpperCase(Locale.ENGLISH));
 		}
 		if ( loc.getTimeZoneId() != null ) {
 			TimeZone tz = TimeZone.getTimeZone(loc.getTimeZoneId());
@@ -174,7 +175,7 @@ public class SolarLocation extends BaseEntity
 			}
 		}
 		if ( loc.getPostalCode() != null ) {
-			String postalCode = loc.getPostalCode().trim().toUpperCase();
+			String postalCode = loc.getPostalCode().trim().toUpperCase(Locale.ENGLISH);
 			if ( !postalCode.isEmpty() ) {
 				norm.setPostalCode(postalCode);
 			}

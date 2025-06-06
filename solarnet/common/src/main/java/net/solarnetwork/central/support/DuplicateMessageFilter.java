@@ -109,6 +109,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 		}
 	}
 
+	@SuppressWarnings("ArrayRecordComponent")
 	private static record MessageEntry(String format, Object[] params) {
 
 		@Override

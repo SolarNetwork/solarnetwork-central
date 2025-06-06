@@ -27,6 +27,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.security.core.authority.AuthorityUtils.createAuthorityList;
 import java.io.Serial;
 import java.util.Collection;
+import java.util.Locale;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import net.solarnetwork.central.oscp.domain.AuthRoleContainer;
@@ -60,7 +61,8 @@ public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 	 *         if any argument is {@literal null}
 	 */
 	public OscpAuthenticatedToken(AuthRoleInfo info) {
-		this(info, createAuthorityList(format("ROLE_%s", info.role().toString().toUpperCase())));
+		this(info, createAuthorityList(
+				format("ROLE_%s", info.role().toString().toUpperCase(Locale.ENGLISH))));
 	}
 
 	/**

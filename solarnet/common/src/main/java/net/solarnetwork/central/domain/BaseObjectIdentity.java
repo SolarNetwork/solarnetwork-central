@@ -65,6 +65,7 @@ public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
 	 * Test if two BaseObjectIdentity objects have the same {@link #getId()}
 	 * value.
 	 */
+	@SuppressWarnings("EqualsGetClass")
 	@Override
 	public boolean equals(Object obj) {
 		if ( this == obj ) {

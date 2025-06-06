@@ -38,7 +38,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.common.config.VersionedQualifier;
-import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
@@ -104,10 +103,6 @@ public class OcppV201ServiceConfig {
 	@Autowired
 	@Qualifier(OCPP_V201)
 	private ActionPayloadDecoder ocppChargePointActionPayloadDecoder;
-
-	@Autowired(required = false)
-	@Qualifier("solarflux")
-	private DatumProcessor fluxPublisher;
 
 	@Autowired(required = false)
 	@VersionedQualifier(value = OCPP_INSTRUCTION, version = OCPP_V201)

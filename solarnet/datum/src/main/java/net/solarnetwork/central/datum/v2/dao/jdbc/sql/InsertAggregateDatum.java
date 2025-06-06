@@ -63,36 +63,23 @@ public final class InsertAggregateDatum implements PreparedStatementCreator, Sql
 		if ( datum.getAggregation() == null ) {
 			throw new IllegalArgumentException("The datum aggreation must not be null.");
 		}
-		switch (datum.getAggregation()) {
-			case Hour:
-			case Day:
-			case Month:
-				this.aggregation = datum.getAggregation();
-				break;
+		this.aggregation = switch (datum.getAggregation()) {
+			case Hour, Day, Month -> datum.getAggregation();
 
-			default:
-				throw new IllegalArgumentException(
-						"The " + datum.getAggregation() + " aggreation is not supported.");
-		}
+			default -> throw new IllegalArgumentException(
+					"The " + datum.getAggregation() + " aggreation is not supported.");
+		};
 	}
 
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
 		buf.append("INSERT INTO solardatm.agg_datm_");
-		switch (aggregation) {
-			case Day:
-				buf.append("daily");
-				break;
-
-			case Month:
-				buf.append("monthly");
-				break;
-
-			default:
-				buf.append("hourly");
-				break;
-		}
+		buf.append(switch (aggregation) {
+			case Day -> "daily";
+			case Month -> "monthly";
+			default -> "hourly";
+		});
 		buf.append(" (stream_id,ts_start,data_i,data_a,data_s,data_t,stat_i,read_a) ");
 		buf.append(
 				"VALUES (?::uuid,?,?::numeric[],?::numeric[],?::text[],?::text[],?::numeric[][],?::numeric[][])\n");

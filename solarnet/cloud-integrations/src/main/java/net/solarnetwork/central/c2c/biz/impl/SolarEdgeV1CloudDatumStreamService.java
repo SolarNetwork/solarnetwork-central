@@ -359,6 +359,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		};
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseSites(JsonNode json) {
 		if ( json == null ) {
 			return Collections.emptyList();
@@ -433,6 +434,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		return result;
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseSiteInventory(JsonNode json, Map<String, ?> filters) {
 		if ( json == null ) {
 			return Collections.emptyList();
@@ -891,6 +893,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		});
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<GeneralDatum> parseInverterDatum(JsonNode json, SiteQueryPlan queryPlan,
 			String inverterId, CloudDatumStreamConfiguration datumStream,
 			Map<String, String> sourceIdMap, DateTimeFormatter timestampFmt) {
@@ -1048,6 +1051,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		final Map<String, List<ValueRef>> componentRefs = queryPlan.meterRefs;
 		Map<DatumId, GeneralDatum> result = new TreeMap<>();
 		for ( JsonNode json : new JsonNode[] { powerJson, energyJson } ) {
+			@SuppressWarnings("ReferenceEquality")
 			final boolean power = (json == powerJson);
 			for ( JsonNode meterNode : json.findValue("meters") ) {
 				String meterId = nonEmptyString(
@@ -1101,6 +1105,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		return result.values().stream().filter(d -> !d.isEmpty()).toList();
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<GeneralDatum> parseBatteryDatum(JsonNode json, SiteQueryPlan queryPlan,
 			CloudDatumStreamConfiguration datumStream, Map<String, String> sourceIdMap,
 			DateTimeFormatter timestampFmt) {
@@ -1209,7 +1214,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		String devType = deviceType.getKey();
 		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
 		if ( ucSourceId != null && ucSourceId ) {
-			devType = devType.toUpperCase();
+			devType = devType.toUpperCase(Locale.ENGLISH);
 		}
 
 		String compId = componentId;
@@ -1421,6 +1426,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			return map;
 		}
 
+		@SuppressWarnings("EnumOrdinal")
 		private static void populateComponentIndexMap(
 				final Map<SolarEdgeDeviceType, Map<String, Integer>> map, final int[] indexes,
 				final CloudDataValue v) {

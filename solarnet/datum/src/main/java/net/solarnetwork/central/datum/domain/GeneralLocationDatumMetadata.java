@@ -97,10 +97,9 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 		if ( this == obj ) {
 			return true;
 		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
+		if ( !(obj instanceof GeneralLocationDatumMetadata other) ) {
 			return false;
 		}
-		GeneralLocationDatumMetadata other = (GeneralLocationDatumMetadata) obj;
 		if ( id == null ) {
 			return other.id == null;
 		}

@@ -16,7 +16,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '3.8.0'
+version = '3.9.0'
 
 base {
 	archivesName = 'solarnet-common'
@@ -98,7 +98,7 @@ dependencies {
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
 	
 	// SolarNetwork
-	api 'commons-beanutils:commons-beanutils:1.10.0'
+	api 'commons-beanutils:commons-beanutils:1.11.0'
 	api "com.cronutils:cron-utils:${cronUtilsVersion}"
 	api 'org.apache.commons:commons-compress:1.27.1'
 	api "net.solarnetwork.common:net.solarnetwork.common:${snCommonVersion}"
@@ -148,7 +148,7 @@ publishing {
 	repositories {
 		maven {
 			name = "OSSRH"
-			url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+			url = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
 			credentials {
 				username = ossrhUsername
 				password = ossrhPassword

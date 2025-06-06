@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserAuthTokenController.java - Dec 12, 2012 11:51:19 AM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -49,7 +49,7 @@ import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Controller for user authorization ticket management.
- * 
+ *
  * @author matt
  * @version 2.4
  */
@@ -61,7 +61,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userBiz
 	 *        the user service to use
 	 */
@@ -73,7 +73,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Get the available policy aggregations.
-	 * 
+	 *
 	 * @return the available policy aggregation types
 	 */
 	@ModelAttribute("policyAggregations")
@@ -85,11 +85,12 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Generate the model for the main view.
-	 * 
+	 *
 	 * @param model
 	 *        the model to populate
 	 * @return the view name
 	 */
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	public String view(Model model) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
@@ -117,7 +118,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Generate a user token.
-	 * 
+	 *
 	 * @param name
 	 *        an optional name
 	 * @param description
@@ -178,7 +179,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Delete a token.
-	 * 
+	 *
 	 * @param tokenId
 	 *        the ID of the token to delete
 	 * @return the result status
@@ -193,7 +194,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Change the status of a token.
-	 * 
+	 *
 	 * @param tokenId
 	 *        the ID of the token to change
 	 * @param status
@@ -211,7 +212,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Generate a data token.
-	 * 
+	 *
 	 * @param name
 	 *        an optional name
 	 * @param description
@@ -263,7 +264,7 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	/**
 	 * Update token info.
-	 * 
+	 *
 	 * @param tokenId
 	 *        the ID of the token to update
 	 * @param name

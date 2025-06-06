@@ -25,8 +25,6 @@ package net.solarnetwork.central.c2c.domain;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import net.solarnetwork.central.common.dao.ParameterCriteria;
-import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.SimplePagination;
 
@@ -34,7 +32,7 @@ import net.solarnetwork.domain.SimplePagination;
  * Basic implementation of {@link CloudDatumStreamQueryFilter}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class BasicQueryFilter extends SimplePagination
 		implements CloudDatumStreamQueryFilter, PaginationCriteria {
@@ -96,13 +94,12 @@ public final class BasicQueryFilter extends SimplePagination
 				copy.setParameters(new LinkedHashMap<>(f.getParameters()));
 			}
 		} else {
-			if ( filter instanceof DateRangeCriteria f ) {
-				copy.setStartDate(f.getStartDate());
-				copy.setEndDate(f.getEndDate());
-			}
-			if ( filter instanceof ParameterCriteria f ) {
-				copy.setParameters(new LinkedHashMap<>(f.getParameters()));
-			}
+			// DateRangeCriteria
+			copy.setStartDate(filter.getStartDate());
+			copy.setEndDate(filter.getEndDate());
+
+			// ParameterCriteria
+			copy.setParameters(new LinkedHashMap<>(filter.getParameters()));
 		}
 		if ( parameters != null ) {
 			copy.setParameters(parameters);

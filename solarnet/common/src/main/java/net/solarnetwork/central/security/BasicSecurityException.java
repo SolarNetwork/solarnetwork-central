@@ -1,5 +1,5 @@
 /* ==================================================================
- * SecurityException.java - Dec 18, 2009 4:31:14 PM
+ * BasicSecurityException.java - Dec 18, 2009 4:31:14 PM
  *
  * Copyright 2007-2009 SolarNetwork.net Dev Team
  *
@@ -28,26 +28,26 @@ import java.io.Serial;
  * Exception for security errors.
  *
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
-public class SecurityException extends RuntimeException {
+public class BasicSecurityException extends RuntimeException {
 
 	@Serial
 	private static final long serialVersionUID = 4715317846353024503L;
 
-	public SecurityException() {
+	public BasicSecurityException() {
 		super();
 	}
 
-	public SecurityException(String msg, Throwable t) {
+	public BasicSecurityException(String msg, Throwable t) {
 		super(msg, t);
 	}
 
-	public SecurityException(String msg) {
+	public BasicSecurityException(String msg) {
 		super(msg);
 	}
 
-	public SecurityException(Throwable t) {
+	public BasicSecurityException(Throwable t) {
 		super(t);
 	}
 

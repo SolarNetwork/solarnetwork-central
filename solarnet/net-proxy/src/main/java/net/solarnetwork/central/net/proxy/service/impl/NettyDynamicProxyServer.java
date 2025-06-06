@@ -40,6 +40,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
@@ -73,7 +74,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Netty implementation of {@link DynamicProxyServer}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class NettyDynamicProxyServer
 		implements DynamicProxyServer, ServiceLifecycleObserver, X509KeyManager {
@@ -216,6 +217,7 @@ public class NettyDynamicProxyServer
 		}
 	}
 
+	@SuppressWarnings("FutureReturnValueIgnored")
 	private synchronized void stopProxyServer() {
 		try {
 			bossGroup.shutdownGracefully();
@@ -345,7 +347,8 @@ public class NettyDynamicProxyServer
 			log.debug("Validating client trust using {}: {}", authType, canonicalSubjectDn(chain[0]));
 			chain[0].checkValidity();
 			for ( ProxyConfigurationProvider provider : providers ) {
-				ProxyConnectionRequest req = new SimpleProxyConnectionRequest(null, chain);
+				ProxyConnectionRequest req = new SimpleProxyConnectionRequest(null,
+						Arrays.asList(chain));
 				try {
 					ProxyConnectionSettings settings = provider.authorize(req);
 					if ( settings != null ) {

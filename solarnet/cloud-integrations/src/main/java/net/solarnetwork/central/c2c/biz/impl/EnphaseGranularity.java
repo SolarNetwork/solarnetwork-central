@@ -37,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * @author matt
  * @version 1.1
  */
+@SuppressWarnings("ImmutableEnumChecker")
 public enum EnphaseGranularity {
 
 	/** Fifteen minutes. */
@@ -155,6 +156,7 @@ public enum EnphaseGranularity {
 	 *        the ending date
 	 * @return the granularity to use, never {@code null}
 	 */
+	@SuppressWarnings("JavaPeriodGetDays")
 	public static EnphaseGranularity forQueryDateRange(Instant from, Instant to) {
 		final long mins = Duration.between(from, to).get(ChronoUnit.SECONDS);
 		for ( EnphaseGranularity g : EnphaseGranularity.values() ) {

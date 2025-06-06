@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.BDDMockito.given;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -87,7 +88,7 @@ public class SnTokenDetailsRowMapperTests extends TestSupport {
         .willReturn(tokenType);
 
     given(resultSet.getString(SnTokenDetailsRowMapper.DEFAULT_POLICY_COL))
-        .willReturn(classResourceAsString("security-policy-01.json", "UTF-8"));
+        .willReturn(classResourceAsString("security-policy-01.json", StandardCharsets.UTF_8));
 
     final String tokenId = UUID.randomUUID().toString();
 

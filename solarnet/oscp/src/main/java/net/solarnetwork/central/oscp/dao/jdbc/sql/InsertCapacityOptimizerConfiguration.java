@@ -40,7 +40,7 @@ import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
  * Insert {@link CapacityOptimizerConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class InsertCapacityOptimizerConfiguration
 		implements PreparedStatementCreator, SqlProvider {
@@ -100,7 +100,7 @@ public final class InsertCapacityOptimizerConfiguration
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getBaseUrl());
 
-		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
+		CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		return stmt;
 	}

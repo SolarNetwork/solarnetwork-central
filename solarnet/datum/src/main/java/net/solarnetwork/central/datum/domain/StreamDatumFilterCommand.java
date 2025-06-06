@@ -27,7 +27,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -55,7 +54,7 @@ import net.solarnetwork.util.StringUtils;
  * Implementation of {@link StreamDatumFilter}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.3
  */
 @JsonPropertyOrder({ "streamIds", "kind", "objectIds", "sourceIds", "userIds", "aggregation",
@@ -349,6 +348,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param streamId
 	 *        the stream ID
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setStreamId(UUID streamId) {
 		this.streamIds = (streamId == null ? null : new UUID[] { streamId });
@@ -389,6 +389,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param objectId
 	 *        the object ID
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setObjectId(Long objectId) {
 		this.objectIds = (objectId == null ? null : new Long[] { objectId });
@@ -473,6 +474,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param sourceId
 	 *        the source ID
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setSourceId(String sourceId) {
 		this.sourceIds = (sourceId == null ? null : new String[] { sourceId });
@@ -531,7 +533,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	@JsonIgnore
 	public List<SortDescriptor> getSortDescriptors() {
 		if ( sorts == null ) {
-			return Collections.emptyList();
+			return new ArrayList<>(2);
 		}
 		return new ArrayList<>(sorts);
 	}

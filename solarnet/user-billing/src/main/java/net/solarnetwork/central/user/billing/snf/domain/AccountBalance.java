@@ -135,17 +135,18 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isSameAs(AccountBalance other) {
 		if ( other == null ) {
 			return false;
 		}
 		// @formatter:off
-		return (chargeTotal == other.chargeTotal)
-					|| (chargeTotal != null && chargeTotal.compareTo(other.chargeTotal) == 0)
-				&& (paymentTotal == other.paymentTotal)
-					|| (paymentTotal != null && paymentTotal.compareTo(other.paymentTotal) == 0)
-				&& (availableCredit == other.availableCredit)
-					|| (availableCredit != null && availableCredit.compareTo(other.availableCredit) == 0);
+		return ((chargeTotal == other.chargeTotal)
+					|| (chargeTotal != null && chargeTotal.compareTo(other.chargeTotal) == 0))
+				&& ((paymentTotal == other.paymentTotal)
+					|| (paymentTotal != null && paymentTotal.compareTo(other.paymentTotal) == 0))
+				&& ((availableCredit == other.availableCredit)
+					|| (availableCredit != null && availableCredit.compareTo(other.availableCredit) == 0));
 		// @formatter:on
 	}
 

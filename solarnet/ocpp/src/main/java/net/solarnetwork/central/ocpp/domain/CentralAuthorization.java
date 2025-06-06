@@ -111,18 +111,17 @@ public class CentralAuthorization extends Authorization implements UserRelatedEn
 	 */
 	public CentralAuthorization(Authorization other) {
 		super(other);
-		this.userId = (other instanceof CentralAuthorization ? ((CentralAuthorization) other).userId
-				: null);
+		this.userId = (other instanceof CentralAuthorization u ? u.userId : null);
 	}
 
 	@Override
 	public boolean isSameAs(Authorization other) {
-		if ( !(other instanceof CentralAuthorization) ) {
+		if ( !(other instanceof CentralAuthorization u) ) {
 			return false;
 		}
 		boolean result = super.isSameAs(other);
 		if ( result ) {
-			result = Objects.equals(this.userId, ((CentralAuthorization) other).userId);
+			result = Objects.equals(this.userId, u.userId);
 		}
 		return result;
 	}

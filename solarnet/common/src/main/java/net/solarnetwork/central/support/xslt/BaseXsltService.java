@@ -240,6 +240,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 *        the optional settings
 	 * @return the TTL, in seconds
 	 */
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	protected long templatesCacheTtlSeconds(IdentifiableConfiguration config) {
 		Map<String, ?> props = (config != null ? config.getServiceProperties() : null);
 		Object val = (props != null ? props.get(SETTING_XSLT_CACHE_DURATION) : null);

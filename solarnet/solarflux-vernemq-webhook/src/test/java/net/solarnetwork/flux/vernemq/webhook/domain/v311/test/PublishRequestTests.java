@@ -21,6 +21,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +54,7 @@ public class PublishRequestTests extends TestSupport {
         PublishRequest.class);
     assertThat("client_id", req.getClientId(), equalTo("clientid"));
     assertThat("mountpoint", req.getMountpoint(), equalTo(""));
-    assertThat("payload", Arrays.equals(req.getPayload(), "hello".getBytes("UTF-8")),
+    assertThat("payload", Arrays.equals(req.getPayload(), "hello".getBytes(StandardCharsets.UTF_8)),
         equalTo(true));
     assertThat("qos", req.getQos(), equalTo(Qos.AtLeastOnce));
     assertThat("retain", req.getRetain(), equalTo(false));

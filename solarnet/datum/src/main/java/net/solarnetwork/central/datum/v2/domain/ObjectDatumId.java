@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.EXISTING_PROPERTY;
+import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
@@ -32,10 +34,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
-import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
@@ -46,11 +45,12 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @version 1.2
  */
 @JsonPropertyOrder({ "kind", "streamId", "objectId", "sourceId", "timestamp", "aggregation" })
-@JsonTypeInfo(use = Id.NAME, include = As.EXISTING_PROPERTY, property = "kind",
+@JsonTypeInfo(use = NAME, include = EXISTING_PROPERTY, property = "kind",
 		defaultImpl = ObjectDatumId.NodeDatumId.class)
-@JsonSubTypes({ @Type(names = { "l", "Location" }, value = ObjectDatumId.LocationDatumId.class),
-		@Type(names = { "n", "Node" }, value = ObjectDatumId.NodeDatumId.class),
-		@Type(value = ObjectDatumId.NodeDatumId.class) })
+@JsonSubTypes({
+		@JsonSubTypes.Type(names = { "l", "Location" }, value = ObjectDatumId.LocationDatumId.class),
+		@JsonSubTypes.Type(names = { "n", "Node" }, value = ObjectDatumId.NodeDatumId.class),
+		@JsonSubTypes.Type(value = ObjectDatumId.NodeDatumId.class) })
 public sealed class ObjectDatumId implements Cloneable, Serializable
 		permits ObjectDatumId.LocationDatumId, ObjectDatumId.NodeDatumId {
 
@@ -378,12 +378,14 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 	 *         instance
 	 * @since 1.2
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isEquivalent(ObjectDatumId other) {
 		if ( this == other ) {
 			return true;
 		}
 		return aggregation == other.aggregation && kind == other.kind
-				&& (streamId != null && other.streamId != null ? Objects.equals(streamId, other.streamId)
+				&& ((streamId != null && other.streamId != null)
+						? Objects.equals(streamId, other.streamId)
 						: Objects.equals(objectId, other.objectId)
 								&& Objects.equals(sourceId, other.sourceId))
 				&& Objects.equals(timestamp, other.timestamp);

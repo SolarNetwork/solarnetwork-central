@@ -91,6 +91,7 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 		this.queryBiz = queryBiz;
 	}
 
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	private void populateMostRecentImplicitStartDate(final DatumFilterCommand cmd) {
 		if ( mostRecentStartPeriod != null && cmd.isMostRecent() && cmd.getStartDate() == null
 				&& cmd.getLocalStartDate() == null ) {

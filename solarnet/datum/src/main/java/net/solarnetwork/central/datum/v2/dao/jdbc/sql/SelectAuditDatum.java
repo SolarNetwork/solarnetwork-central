@@ -51,6 +51,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	protected final AuditDatumCriteria filter;
 	protected final Aggregation aggregation;
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private static Aggregation aggregation(AuditDatumCriteria filter) {
 		// limit aggregation to specific supported ones
 		Aggregation aggregation = Aggregation.Day;
@@ -277,6 +278,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 		}
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private void sqlRollupGroup(StringBuilder buf) {
 		if ( filter.hasDatumRollupCriteria() && !filter.hasDatumRollupType(DatumRollupType.All) ) {
 			StringBuilder group = new StringBuilder();

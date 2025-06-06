@@ -23,12 +23,13 @@
 package net.solarnetwork.central.domain;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Standard log event info.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class LogEventInfo {
 
@@ -66,6 +67,78 @@ public class LogEventInfo {
 			tags = baseTags;
 		} else if ( hasExtraTags ) {
 			tags = extraTags;
+		}
+		return new LogEventInfo(tags, message, data);
+	}
+
+	/**
+	 * Create a new event.
+	 * 
+	 * <p>
+	 * This method will merge the base and extra tags into the resulting event.
+	 * </p>
+	 * 
+	 * @param baseTags
+	 *        the base tags
+	 * @param message
+	 *        the message
+	 * @param data
+	 *        the data
+	 * @param extraTags
+	 *        optional extra tags
+	 * @return the event
+	 * @since 1.1
+	 */
+	public static LogEventInfo event(List<String> baseTags, String message, String data,
+			String... extraTags) {
+		String[] tags = null;
+		boolean hasBaseTags = (baseTags != null && !baseTags.isEmpty());
+		boolean hasExtraTags = (extraTags != null && extraTags.length > 0);
+		if ( hasBaseTags && hasExtraTags ) {
+			tags = new String[baseTags.size() + extraTags.length];
+			tags = baseTags.toArray(tags);
+			System.arraycopy(extraTags, 0, tags, baseTags.size(), extraTags.length);
+		} else if ( hasBaseTags ) {
+			tags = baseTags.toArray(new String[baseTags.size()]);
+		} else if ( hasExtraTags ) {
+			tags = extraTags;
+		}
+		return new LogEventInfo(tags, message, data);
+	}
+
+	/**
+	 * Create a new event.
+	 * 
+	 * <p>
+	 * This method will merge the base and extra tags into the resulting event.
+	 * </p>
+	 * 
+	 * @param baseTags
+	 *        the base tags
+	 * @param message
+	 *        the message
+	 * @param data
+	 *        the data
+	 * @param extraTags
+	 *        optional extra tags
+	 * @return the event
+	 * @since 1.1
+	 */
+	public static LogEventInfo event(List<String> baseTags, String message, String data,
+			List<String> extraTags) {
+		String[] tags = null;
+		boolean hasBaseTags = (baseTags != null && !baseTags.isEmpty());
+		boolean hasExtraTags = (extraTags != null && !extraTags.isEmpty());
+		if ( hasBaseTags && hasExtraTags ) {
+			tags = new String[baseTags.size() + extraTags.size()];
+			tags = baseTags.toArray(tags);
+			System.arraycopy(extraTags.toArray(new String[extraTags.size()]), 0, tags, baseTags.size(),
+					extraTags.size());
+		} else if ( hasBaseTags ) {
+			tags = baseTags.toArray(new String[baseTags.size()]);
+		} else if ( hasExtraTags ) {
+			tags = extraTags.toArray(new String[extraTags.size()]);
+			;
 		}
 		return new LogEventInfo(tags, message, data);
 	}

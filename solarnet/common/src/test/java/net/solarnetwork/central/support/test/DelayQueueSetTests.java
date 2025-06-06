@@ -99,10 +99,9 @@ public class DelayQueueSetTests {
 			if ( this == obj ) {
 				return true;
 			}
-			if ( !(obj instanceof DelayedInteger) ) {
+			if ( !(obj instanceof DelayedInteger other) ) {
 				return false;
 			}
-			DelayedInteger other = (DelayedInteger) obj;
 			return i == other.i;
 		}
 

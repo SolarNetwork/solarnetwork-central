@@ -138,10 +138,9 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 		if ( this == obj ) {
 			return true;
 		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
+		if ( !(obj instanceof UserLongPK other) ) {
 			return false;
 		}
-		UserLongPK other = (UserLongPK) obj;
 		if ( id == null ) {
 			if ( other.id != null ) {
 				return false;
@@ -165,7 +164,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
 	public <T> T keyComponentValue(int index, Object val) {
 		try {
@@ -205,6 +204,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 		return id;
 	}
 
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
 		return switch (index) {

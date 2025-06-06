@@ -35,7 +35,7 @@ import net.solarnetwork.central.domain.CompositeKey;
  * Update the enabled status based on a primary key filter.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class UpdateEnabledIdFilter implements PreparedStatementCreator, SqlProvider {
 
@@ -102,11 +102,11 @@ public final class UpdateEnabledIdFilter implements PreparedStatementCreator, Sq
 		int p = 0;
 		stmt.setBoolean(++p, enabled);
 
-		p = prepareWhere(con, stmt, p);
+		prepareWhere(stmt, p);
 		return stmt;
 	}
 
-	private int prepareWhere(Connection con, PreparedStatement stmt, int p) throws SQLException {
+	private int prepareWhere(PreparedStatement stmt, int p) throws SQLException {
 		final int componentCount = filter.keyComponentLength();
 		for ( int i = 0; i < componentCount && i < idColumnNames.length; i++ ) {
 			if ( filter.keyComponentIsAssigned(i) ) {

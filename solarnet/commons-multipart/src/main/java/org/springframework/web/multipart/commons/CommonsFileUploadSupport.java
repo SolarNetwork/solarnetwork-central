@@ -320,8 +320,7 @@ public abstract class CommonsFileUploadSupport {
 	protected void cleanupFileItems(MultiValueMap<String, MultipartFile> multipartFiles) {
 		for (List<MultipartFile> files : multipartFiles.values()) {
 			for (MultipartFile file : files) {
-				if (file instanceof CommonsMultipartFile) {
-					CommonsMultipartFile cmf = (CommonsMultipartFile) file;
+				if (file instanceof CommonsMultipartFile cmf) {
 					cmf.getFileItem().delete();
 					LogFormatUtils.traceDebug(logger, traceOn ->
 							"Cleaning up part '" + cmf.getName() +

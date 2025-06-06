@@ -126,7 +126,7 @@ public final class CommonTestUtils {
 	 * @return the integer
 	 */
 	public static Integer randomInt() {
-		return Math.abs(RNG.nextInt());
+		return RNG.nextInt(1, Integer.MAX_VALUE);
 	}
 
 	/**
@@ -135,7 +135,7 @@ public final class CommonTestUtils {
 	 * @return the long
 	 */
 	public static Long randomLong() {
-		return Math.abs(RNG.nextLong());
+		return RNG.nextLong(1, Long.MAX_VALUE);
 	}
 
 	/**

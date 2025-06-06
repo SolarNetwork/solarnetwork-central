@@ -33,13 +33,12 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.io.Serial;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.JsonSchemaFactory;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -78,12 +77,10 @@ import oscp.v20.AdjustGroupCapacityForecast;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		implements NodeInstructionQueueHook, OscpUserEvents, OscpMqttInstructions {
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final UserNodeDao userNodeDao;
 	private final CapacityGroupConfigurationDao capacityGroupDao;
@@ -354,13 +351,13 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 
 	}
 
-	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
 		}
-		String dataStr = (data instanceof String ? (String) data : JsonUtils.getJSONString(data, null));
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+		String dataStr = (data instanceof String s ? s : JsonUtils.getJSONString(data, null));
+		LogEventInfo event = LogEventInfo.event(tags, message, dataStr);
 		biz.addEvent(userId, event);
 	}
 

@@ -112,6 +112,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 		}
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private BasicDatumAppEvent extractAppEvent(ResultSet rs) throws SQLException {
 		ObjectDatumId id = ObjectDatumIdRowMapper.INSTANCE.mapRow(rs, 1);
 		if ( id == null || !id.isValidAggregateObjectId(ObjectDatumKind.Node) ) {

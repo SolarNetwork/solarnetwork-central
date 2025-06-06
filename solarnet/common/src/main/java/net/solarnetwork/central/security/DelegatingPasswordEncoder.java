@@ -39,7 +39,7 @@ import net.solarnetwork.util.ObjectUtils;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DelegatingPasswordEncoder
 		implements PasswordEncoder, org.springframework.security.crypto.password.PasswordEncoder {
@@ -67,7 +67,7 @@ public class DelegatingPasswordEncoder
 		}
 		for ( String prefix : encoders.keySet() ) {
 			if ( password.length() > prefix.length()
-					&& password.subSequence(0, prefix.length()).equals(prefix) ) {
+					&& password.subSequence(0, prefix.length()).toString().equals(prefix) ) {
 				return true;
 			}
 		}

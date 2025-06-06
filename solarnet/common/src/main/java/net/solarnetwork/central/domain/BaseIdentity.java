@@ -60,6 +60,7 @@ public abstract class BaseIdentity
 	/**
 	 * Test if two BaseEntity objects have the same {@link #getId()} value.
 	 */
+	@SuppressWarnings("EqualsGetClass")
 	@Override
 	public boolean equals(Object obj) {
 		if ( this == obj ) {
@@ -94,6 +95,8 @@ public abstract class BaseIdentity
 	}
 
 	/**
+	 * Get the ID.
+	 * 
 	 * @return the id
 	 */
 	@Override
@@ -102,6 +105,8 @@ public abstract class BaseIdentity
 	}
 
 	/**
+	 * Set the ID.
+	 * 
 	 * @param id
 	 *        the id to set
 	 */

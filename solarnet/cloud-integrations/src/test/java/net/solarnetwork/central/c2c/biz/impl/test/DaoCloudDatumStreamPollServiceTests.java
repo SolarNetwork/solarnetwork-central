@@ -25,6 +25,7 @@ package net.solarnetwork.central.c2c.biz.impl.test;
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.impl.DaoCloudDatumStreamPollService.DEFAULT_DATUM_STREAM_SETTINGS;
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.INTEGRATION_POLL_TAGS;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Claimed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
@@ -311,7 +312,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.as("Task start event generated")
 					.isNotNull()
 					.as("Poll tags provided in event")
-					.returns(CloudIntegrationsUserEvents.INTEGRATION_POLL_TAGS, from(LogEventInfo::getTags))
+					.returns(INTEGRATION_POLL_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							"configId", datumStream.getConfigId(),
@@ -326,7 +327,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.as("Task success reset event generated")
 					.isNotNull()
 					.as("Poll tags provided in event")
-					.returns(CloudIntegrationsUserEvents.INTEGRATION_POLL_TAGS, from(LogEventInfo::getTags))
+					.returns(INTEGRATION_POLL_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							"configId", datumStream.getConfigId(),

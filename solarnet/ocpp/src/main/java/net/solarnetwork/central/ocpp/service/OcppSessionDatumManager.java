@@ -446,6 +446,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		return datum(sourceId, chargePoint, chargePointSettings, sess, reading);
 	}
 
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	private Datum datum(String sourceId, CentralChargePoint chargePoint,
 			ChargePointSettings chargePointSettings, ChargeSession sess, SampledValue reading) {
 		Datum d = new Datum(chargePointSettings);
@@ -654,8 +655,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			return;
 		}
 		BigDecimal num;
-		if ( value instanceof Number ) {
-			num = NumberUtils.bigDecimalForNumber((Number) value);
+		if ( value instanceof Number n ) {
+			num = NumberUtils.bigDecimalForNumber(n);
 		} else {
 			try {
 				num = new BigDecimal(value.toString());
@@ -676,35 +677,29 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		if ( unit == null ) {
 			return num;
 		}
-		switch (unit) {
-			case Fahrenheit: {
+		return switch (unit) {
+			case Fahrenheit -> {
 				// convert to C
 				BigDecimal celsius = num.subtract(new BigDecimal("32")).multiply(new BigDecimal("5"))
 						.divide(new BigDecimal("9"), 6, RoundingMode.HALF_UP);
 				if ( maxTemperatureScale >= 0 && celsius.scale() > maxTemperatureScale ) {
 					celsius = celsius.setScale(maxTemperatureScale, RoundingMode.HALF_UP);
 				}
-				return celsius;
+				yield celsius;
 			}
 
-			case K: {
+			case K -> {
 				BigDecimal celsius = num.subtract(new BigDecimal("273.15"));
 				if ( maxTemperatureScale >= 0 && celsius.scale() > maxTemperatureScale ) {
 					celsius = celsius.setScale(maxTemperatureScale, RoundingMode.HALF_UP);
 				}
-				return celsius;
+				yield celsius;
 			}
 
-			case kVA:
-			case kvar:
-			case kvarh:
-			case kW:
-			case kWh:
-				return num.movePointRight(3);
+			case kVA, kvar, kvarh, kW, kWh -> num.movePointRight(3);
 
-			default:
-				return num;
-		}
+			default -> num;
+		};
 	}
 
 	private DatumSamplesType propertyType(Measurand measurand) {
@@ -714,6 +709,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		};
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private String propertyName(Measurand measurand, Phase phase) {
 		if ( phase == null || phase == Phase.Unknown ) {
 			return propertyName(measurand);

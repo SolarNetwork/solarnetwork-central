@@ -106,9 +106,8 @@ public class MockMailSender implements MailSender, JavaMailSender {
 			throws MessagingException, IOException {
 		if ( content instanceof String ) {
 			buf.append(content);
-		} else if ( content instanceof InputStream ) {
-			buf.append(FileCopyUtils
-					.copyToString(new InputStreamReader((InputStream) content, StandardCharsets.UTF_8)));
+		} else if ( content instanceof InputStream is ) {
+			buf.append(FileCopyUtils.copyToString(new InputStreamReader(is, StandardCharsets.UTF_8)));
 		} else if ( content instanceof MimeMultipart multi ) {
 			for ( int i = 0; i < multi.getCount(); i++ ) {
 				BodyPart part = multi.getBodyPart(i);

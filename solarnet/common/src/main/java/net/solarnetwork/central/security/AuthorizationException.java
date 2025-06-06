@@ -31,7 +31,7 @@ import java.util.Arrays;
  * @author matt
  * @version 1.3
  */
-public class AuthorizationException extends SecurityException {
+public class AuthorizationException extends BasicSecurityException {
 
 	@Serial
 	private static final long serialVersionUID = -7269908721527606492L;

@@ -49,7 +49,7 @@ import net.solarnetwork.util.ObjectUtils;
  * </ol>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class SelectSolarNodeMetadata implements PreparedStatementCreator, SqlProvider {
 
@@ -106,8 +106,7 @@ public final class SelectSolarNodeMetadata implements PreparedStatementCreator, 
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		int p = 0;
-		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());
+		prepareOptimizedArrayParameter(con, stmt, 0, filter.getNodeIds());
 		return stmt;
 	}
 

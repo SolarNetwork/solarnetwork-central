@@ -136,7 +136,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 *        The policy enforcer.
 	 * @return A new wrapped object.
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	public static <T> T createSecurityPolicyProxy(SecurityPolicyEnforcer enforcer) {
 		Class<?>[] interfaces = ClassUtils.getAllInterfaces(enforcer.getDelegate());
 		return (T) Proxy.newProxyInstance(enforcer.getDelegate().getClass().getClassLoader(), interfaces,
@@ -421,20 +421,13 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 
 	private GeneralDatumMetadata verifyMetadata(final GeneralDatumMetadata meta,
 			final boolean cacheResults) {
-		final Set<String> policyMetadataPaths;
-		switch (metadataType) {
-			case Node:
-				policyMetadataPaths = policy.getNodeMetadataPaths();
-				break;
+		final Set<String> policyMetadataPaths = switch (metadataType) {
+			case Node -> policy.getNodeMetadataPaths();
 
-			case User:
-				policyMetadataPaths = policy.getUserMetadataPaths();
-				break;
+			case User -> policy.getUserMetadataPaths();
 
-			default:
-				policyMetadataPaths = Collections.emptySet();
-				break;
-		}
+			default -> Collections.emptySet();
+		};
 
 		// verify metadata
 		if ( meta == null || policyMetadataPaths == null || policyMetadataPaths.isEmpty() ) {

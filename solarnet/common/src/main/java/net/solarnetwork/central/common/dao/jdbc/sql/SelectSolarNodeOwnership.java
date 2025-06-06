@@ -49,7 +49,7 @@ import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
  * </ol>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlProvider {
 
@@ -171,7 +171,7 @@ public final class SelectSolarNodeOwnership implements PreparedStatementCreator,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = 0;
 		p = prepareOptimizedArrayParameter(con, stmt, p, nodeIds);
-		p = prepareOptimizedArrayParameter(con, stmt, p, userIds);
+		prepareOptimizedArrayParameter(con, stmt, p, userIds);
 		return stmt;
 	}
 

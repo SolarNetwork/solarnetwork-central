@@ -24,6 +24,7 @@ package net.solarnetwork.central.in.ocpp.json;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,7 +49,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Extension of {@link OcppWebSocketHandshakeInterceptor} for SolarNet.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHandshakeInterceptor
 		implements CentralOcppUserEvents {
@@ -57,9 +58,9 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 			.getLogger(CentralOcppWebSocketHandshakeInterceptor.class);
 
 	/** User event kind for OCPP connection forbidden events. */
-	public static final String[] CHARGE_POINT_AUTHENTICATION_FAILURE_TAGS = new String[] {
+	public static final List<String> CHARGE_POINT_AUTHENTICATION_FAILURE_TAGS = List.of(
 			CentralOcppWebSocketHandler.OCPP_EVENT_TAG, CentralOcppWebSocketHandler.CHARGER_EVENT_TAG,
-			"forbidden" };
+			"forbidden");
 
 	private final UserSettingsDao userSettingsDao;
 	private final Pattern pathCredentialsRegex;
@@ -182,13 +183,13 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 		}
 	}
 
-	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
 		}
-		String dataStr = (data instanceof String ? (String) data : JsonUtils.getJSONString(data, null));
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+		String dataStr = (data instanceof String s ? s : JsonUtils.getJSONString(data, null));
+		LogEventInfo event = LogEventInfo.event(tags, message, dataStr);
 		biz.addEvent(userId, event);
 	}
 

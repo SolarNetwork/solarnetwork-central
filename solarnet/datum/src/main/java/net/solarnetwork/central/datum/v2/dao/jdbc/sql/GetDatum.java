@@ -74,6 +74,7 @@ public final class GetDatum implements PreparedStatementCreator, SqlProvider {
 		this.aggregation = aggregation(aggregation);
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private static Aggregation aggregation(Aggregation aggregation) {
 		// limit aggregation to specific supported ones
 		Aggregation result = Aggregation.None;
@@ -114,22 +115,12 @@ public final class GetDatum implements PreparedStatementCreator, SqlProvider {
 
 	private void sqlFrom(StringBuilder buf) {
 		buf.append("FROM ");
-		switch (aggregation) {
-			case Hour:
-				buf.append("solardatm.da_datm_hourly");
-				break;
-
-			case Day:
-				buf.append("solardatm.da_datm_daily");
-				break;
-
-			case Month:
-				buf.append("solardatm.da_datm_monthly");
-				break;
-
-			default:
-				buf.append("solardatm.da_datm");
-		}
+		buf.append(switch (aggregation) {
+			case Hour -> "solardatm.da_datm_hourly";
+			case Day -> "solardatm.da_datm_daily";
+			case Month -> "solardatm.da_datm_monthly";
+			default -> "solardatm.da_datm";
+		});
 		buf.append(" datum\n");
 	}
 

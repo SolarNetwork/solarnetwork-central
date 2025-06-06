@@ -168,6 +168,7 @@ public class DatumStreamController {
 		return processor;
 	}
 
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	private void populateMostRecentImplicitStartDate(final StreamDatumFilterCommand cmd) {
 		if ( mostRecentStartPeriod != null && cmd.isMostRecent() && cmd.getStartDate() == null
 				&& cmd.getLocalStartDate() == null ) {

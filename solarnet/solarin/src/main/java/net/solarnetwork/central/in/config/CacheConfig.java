@@ -50,12 +50,11 @@ public class CacheConfig {
 	@Bean
 	public CacheManager jCacheManager() {
 		CachingProvider cachingProvider = Caching.getCachingProvider();
-		if ( cachingProvider instanceof EhcacheCachingProvider ) {
+		if ( cachingProvider instanceof EhcacheCachingProvider eh ) {
 			DefaultConfiguration configuration = new DefaultConfiguration(
 					cachingProvider.getDefaultClassLoader(),
 					new DefaultPersistenceConfiguration(persistencePath.toFile()));
-			return ((EhcacheCachingProvider) cachingProvider)
-					.getCacheManager(cachingProvider.getDefaultURI(), configuration);
+			return eh.getCacheManager(cachingProvider.getDefaultURI(), configuration);
 		} else {
 			return cachingProvider.getCacheManager();
 		}

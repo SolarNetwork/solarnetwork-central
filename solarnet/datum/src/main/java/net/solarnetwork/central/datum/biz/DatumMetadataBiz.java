@@ -168,7 +168,7 @@ public interface DatumMetadataBiz {
 	 * <p>
 	 * The metadata filter must be expressed in LDAP search filter style, using
 	 * JSON pointer style paths for keys, for example {@code (/m/foo=bar)},
-	 * {@code (t=foo)}, or {@code (&(&#47;**&#47;foo=bar)(t=special))}.
+	 * {@code (t=foo)}, or <code>(&amp;(&#47;**&#47;foo=bar)(t=special))</code>.
 	 * </p>
 	 *
 	 * @param nodeIds
@@ -187,7 +187,7 @@ public interface DatumMetadataBiz {
 	 * <p>
 	 * The metadata filter must be expressed in LDAP search filter style, using
 	 * JSON pointer style paths for keys, for example {@code (/m/foo=bar)},
-	 * {@code (t=foo)}, or {@code (&(&#47;**&#47;foo=bar)(t=special))}.
+	 * {@code (t=foo)}, or <code>(&amp;(&#47;**&#47;foo=bar)(t=special))</code>.
 	 * </p>
 	 *
 	 * @param locationIds

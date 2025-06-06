@@ -246,6 +246,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param chargePointId
 	 *        the ID of the charge point
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setChargePointId(Long chargePointId) {
 		this.chargePointIds = (chargePointId == null ? null : new Long[] { chargePointId });
@@ -288,6 +289,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 *        the ID of the EVSE
 	 * @since 1.2
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setEvseId(Integer evseId) {
 		this.evseIds = (evseId == null ? null : new Integer[] { evseId });
@@ -329,6 +331,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param connectorId
 	 *        the ID of the charge point
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setConnectorId(Integer connectorId) {
 		this.connectorIds = (connectorId == null ? null : new Integer[] { connectorId });
@@ -369,6 +372,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param identifier
 	 *        the identifier to set
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setIdentifier(String identifier) {
 		this.identifiers = (identifier == null ? null : new String[] { identifier });
@@ -409,6 +413,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param action
 	 *        the action to set
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setAction(String action) {
 		this.actions = (action == null ? null : new String[] { action });
@@ -486,6 +491,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param chargeSessionId
 	 *        the ID of the charge session
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setChargeSessionId(UUID chargeSessionId) {
 		this.chargeSessionIds = (chargeSessionId == null ? null : new UUID[] { chargeSessionId });
@@ -527,6 +533,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param transactionId
 	 *        the ID of the transaction
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setTransactionId(String transactionId) {
 		this.transactionIds = (transactionId == null ? null : new String[] { transactionId });
@@ -567,6 +574,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param endReason
 	 *        the end reason
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setEndReason(ChargeSessionEndReason endReason) {
 		this.endReasons = (endReason == null ? null : new ChargeSessionEndReason[] { endReason });

@@ -180,6 +180,7 @@ public class UserStringStringCompositePK extends BasePK implements
 		return entityId;
 	}
 
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
 		return switch (index) {
@@ -210,7 +211,7 @@ public class UserStringStringCompositePK extends BasePK implements
 		return keyComponentIsAssigned(2);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
 	public <T> T keyComponentValue(int index, Object val) {
 		try {

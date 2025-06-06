@@ -148,7 +148,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  *
  * @author matt
- * @version 2.10
+ * @version 2.11
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -235,7 +235,7 @@ public class JdbcDatumEntityDao
 
 	private static UUID uuidFromCall(CallableStatement call, int parameterIndex) throws SQLException {
 		Object streamId = call.getObject(parameterIndex);
-		return (streamId instanceof UUID ? (UUID) streamId
+		return (streamId instanceof UUID uuid ? uuid
 				: streamId != null ? UUID.fromString(streamId.toString()) : null);
 	}
 
@@ -362,10 +362,9 @@ public class JdbcDatumEntityDao
 
 		FilterResults<Datum, DatumPK> results = executeFilterQuery(jdbcTemplate, filter, sql, mapper);
 
-		if ( mapper instanceof ObjectDatumStreamMetadataProvider ) {
+		if ( mapper instanceof ObjectDatumStreamMetadataProvider p ) {
 			// virtual streams use this
-			return new ProviderObjectDatumStreamFilterResults<>(
-					(ObjectDatumStreamMetadataProvider) mapper, results.getResults(),
+			return new ProviderObjectDatumStreamFilterResults<>(p, results.getResults(),
 					results.getTotalResults(), results.getStartingOffset(),
 					results.getReturnedResultCount());
 		}
@@ -399,8 +398,8 @@ public class JdbcDatumEntityDao
 		final RowMapper<Datum> mapper = mapper(filter);
 
 		ObjectDatumStreamMetadataProvider metadataProvider = null;
-		if ( mapper instanceof ObjectDatumStreamMetadataProvider ) {
-			metadataProvider = (ObjectDatumStreamMetadataProvider) mapper;
+		if ( mapper instanceof ObjectDatumStreamMetadataProvider p ) {
+			metadataProvider = p;
 		} else if ( filter.getStreamIds() != null && filter.getStreamIds().length == 1 ) {
 			ObjectDatumStreamMetadata meta = findStreamMetadata(filter);
 			if ( meta != null ) {
@@ -565,7 +564,7 @@ public class JdbcDatumEntityDao
 		}
 
 		if ( queryList.isEmpty() ) {
-			return result;
+			return Collections.unmodifiableMap(result);
 		}
 
 		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
@@ -589,16 +588,16 @@ public class JdbcDatumEntityDao
 
 			return null;
 		});
-		return result;
+		return Collections.unmodifiableMap(result);
 	}
 
 	@Override
 	public void replaceJsonMeta(ObjectSourcePK id, String json) {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setSourceId(id.getSourceId());
-		if ( id instanceof LocationSourcePK ) {
+		if ( id instanceof LocationSourcePK pk ) {
 			filter.setObjectKind(ObjectDatumKind.Location);
-			filter.setLocationId(((LocationSourcePK) id).getLocationId());
+			filter.setLocationId(pk.getLocationId());
 		} else {
 			filter.setObjectKind(ObjectDatumKind.Node);
 			filter.setNodeId(((NodeSourcePK) id).getNodeId());
@@ -755,7 +754,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-		
+
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/
@@ -772,9 +771,8 @@ public class JdbcDatumEntityDao
 				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
 				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
 				&& agg != Aggregation.RunningTotal
-				&& (sql instanceof CountPreparedStatementCreatorProvider) ) {
-			totalCount = executeCountQuery(jdbcTemplate,
-					((CountPreparedStatementCreatorProvider) sql).countPreparedStatementCreator());
+				&& (sql instanceof CountPreparedStatementCreatorProvider c) ) {
+			totalCount = executeCountQuery(jdbcTemplate, c.countPreparedStatementCreator());
 		}
 
 		callback.didBegin(totalCount);

@@ -1,21 +1,21 @@
 /* ==================================================================
  * ObjectDatumStreamMetadataRowMapper.java - 6/11/2020 3:38:49 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -33,11 +33,11 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 /**
  * Map object datum stream metadata rows into
  * {@link ObjectDatumStreamMetadataId} instances.
- * 
+ *
  * <p>
  * The expected column order in the SQL results is:
  * </p>
- * 
+ *
  * <ol>
  * <li>stream_id</li>
  * <li>obj_id</li>
@@ -66,7 +66,7 @@ public class ObjectDatumStreamMetadataIdRowMapper implements RowMapper<ObjectDat
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param kind
 	 *        the type of metadata to parse; if {@link MetadataKind#Dynamic}
 	 *        then an extra {@literal kind} row must be provided by the query
@@ -89,19 +89,11 @@ public class ObjectDatumStreamMetadataIdRowMapper implements RowMapper<ObjectDat
 			k = ("l".equalsIgnoreCase(kindStr) ? MetadataKind.Location : MetadataKind.Node);
 		}
 
-		ObjectDatumKind objKind = null;
-		switch (k) {
-			case Node:
-				objKind = ObjectDatumKind.Node;
-				break;
-
-			case Location:
-				objKind = ObjectDatumKind.Location;
-				break;
-
-			default:
-				// ignore
-		}
+		ObjectDatumKind objKind = switch (k) {
+			case Node -> ObjectDatumKind.Node;
+			case Location -> ObjectDatumKind.Location;
+			default -> null;
+		};
 
 		return new ObjectDatumStreamMetadataId(streamId, objKind, objId, sourceId);
 	}

@@ -45,7 +45,7 @@ import net.solarnetwork.central.mail.MessageDataSource;
  * for sending mail.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DefaultMailService implements MailService {
 
@@ -92,7 +92,7 @@ public class DefaultMailService implements MailService {
 				if ( wrapColumn > 0 ) {
 					// WordUtils doesn't preserve paragraphs, so first split text into paragraph strings and wrap each of those
 					StringBuilder buf = new StringBuilder();
-					String[] paragraphs = msgText.split("\n{2,}");
+					String[] paragraphs = msgText.split("\n{2,}", -1);
 					for ( String para : paragraphs ) {
 						if ( !buf.isEmpty() ) {
 							buf.append("\n\n");
@@ -112,7 +112,7 @@ public class DefaultMailService implements MailService {
 		final Iterator<Resource> attachments = (messageDataSource.getAttachments() != null
 				? messageDataSource.getAttachments().iterator()
 				: null);
-		if ( html || attachments != null && attachments.hasNext() ) {
+		if ( html || (attachments != null && attachments.hasNext()) ) {
 			// need JavaMailSender to send attachments
 			if ( !(mailSender instanceof JavaMailSender sender) ) {
 				throw new RuntimeException("Cannot send mail attachments without a JavaMailSender.");

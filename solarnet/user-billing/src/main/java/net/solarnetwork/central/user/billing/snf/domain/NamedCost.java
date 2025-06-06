@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import net.solarnetwork.domain.Differentiable;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A named resource with associated cost.
@@ -112,7 +113,7 @@ public class NamedCost
 	 *
 	 * @param namedCost
 	 *        the named cost Map, whose keys match the properties of this class
-	 * @return the named cost, or {@literal null} if {@code namedCosts} is
+	 * @return the named cost, or {@literal null} if {@code namedCost} is
 	 *         {@literal null} or does not contain valid property values
 	 */
 	public static NamedCost of(Map<String, ?> namedCost) {
@@ -148,10 +149,7 @@ public class NamedCost
 	 */
 	public NamedCost(String name, BigInteger quantity, BigDecimal cost) {
 		super();
-		if ( name == null ) {
-			throw new IllegalArgumentException("The name argument must be provided.");
-		}
-		this.name = name;
+		this.name = ObjectUtils.requireNonNullArgument(name, "name");
 		this.quantity = quantity != null ? quantity : BigInteger.ZERO;
 		this.cost = cost != null ? cost : BigDecimal.ZERO;
 	}
@@ -206,6 +204,7 @@ public class NamedCost
 		return Objects.hash(cost, name, quantity);
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public boolean equals(Object obj) {
 		if ( this == obj ) {
@@ -215,7 +214,7 @@ public class NamedCost
 			return false;
 		}
 		return Objects.equals(name, other.name) && Objects.equals(quantity, other.quantity)
-				&& (cost == other.cost) || (cost != null && cost.compareTo(other.cost) == 0);
+				&& (cost == other.cost || cost.compareTo(other.cost) == 0);
 	}
 
 	@Override

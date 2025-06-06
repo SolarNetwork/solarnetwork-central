@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -128,8 +129,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		final SecurityPolicy policy = getActiveSecurityPolicy();
 
 		if ( policy != null && policy.getSourceIds() != null && !policy.getSourceIds().isEmpty()
-				&& filter instanceof GeneralNodeDatumFilter
-				&& ((GeneralNodeDatumFilter) filter).getSourceId() == null ) {
+				&& filter instanceof GeneralNodeDatumFilter g && g.getSourceId() == null ) {
 			// no source IDs provided, but policy restricts source IDs.
 			// restrict the filter to the available source IDs if using a DatumFilterCommand,
 			// and let call to userNodeAccessCheck later on filter out restricted values
@@ -152,16 +152,15 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		// to findFilteredAggregateGeneralNodeDatum. This _could_ break the calling code if
 		// it is expecting a specific result type, but in many cases it is simply returning
 		// the result as JSON to some HTTP client and the difference does not matter.
-		if ( isQueryBiz && f instanceof AggregateGeneralNodeDatumFilter
-				&& ((AggregateGeneralNodeDatumFilter) f).getAggregation() != null
+		if ( isQueryBiz && f instanceof AggregateGeneralNodeDatumFilter g && g.getAggregation() != null
 				&& pjp.getSignature().getName().equals("findFilteredGeneralNodeDatum") ) {
 			// redirect this to findFilteredAggregateGeneralNodeDatum
 			QueryBiz target = (QueryBiz) pjp.getTarget();
 			Object[] args = pjp.getArgs();
 			@SuppressWarnings("unchecked")
 			List<SortDescriptor> sorts = (List<SortDescriptor>) args[1];
-			return target.findFilteredAggregateGeneralNodeDatum((AggregateGeneralNodeDatumFilter) f,
-					sorts, (Long) args[2], (Integer) args[3]);
+			return target.findFilteredAggregateGeneralNodeDatum(g, sorts, (Long) args[2],
+					(Integer) args[3]);
 		}
 		Object[] args = pjp.getArgs();
 		args[0] = f;
@@ -465,7 +464,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	 */
 	private boolean isNodeIdRequired(DatumFilter filter) {
 		final String type = (filter == null || filter.getType() == null ? null
-				: filter.getType().toLowerCase());
+				: filter.getType().toLowerCase(Locale.ENGLISH));
 		return (nodeIdNotRequiredSet == null || !nodeIdNotRequiredSet.contains(type));
 	}
 
@@ -473,10 +472,10 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		Long[] result = null;
 		if ( map.containsKey(key) ) {
 			Object o = map.get(key);
-			if ( o instanceof Long[] ) {
-				result = (Long[]) o;
-			} else if ( o instanceof Long ) {
-				result = new Long[] { (Long) o };
+			if ( o instanceof Long[] a ) {
+				result = a;
+			} else if ( o instanceof Long n ) {
+				result = new Long[] { n };
 			}
 		}
 		return result;

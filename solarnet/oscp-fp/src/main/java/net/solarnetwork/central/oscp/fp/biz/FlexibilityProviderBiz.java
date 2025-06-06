@@ -37,83 +37,83 @@ import net.solarnetwork.domain.KeyValuePair;
  * Business service API for Flexibility Provider.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface FlexibilityProviderBiz extends OscpUserEvents {
 
 	/** User event tags for Capacity Provider registration events. */
-	String[] CAPACITY_PROVIDER_REGISTER_TAGS = new String[] { OSCP_TAG, CAPACITY_PROVIDER_TAG,
-			REGISTER_TAG };
+	List<String> CAPACITY_PROVIDER_REGISTER_TAGS = List.of(OSCP_TAG, CAPACITY_PROVIDER_TAG,
+			REGISTER_TAG);
 
 	/** User event tags for Capacity Provider registration error events. */
-	String[] CAPACITY_PROVIDER_REGISTER_ERROR_TAGS = new String[] { OSCP_TAG, CAPACITY_PROVIDER_TAG,
-			REGISTER_TAG, ERROR_TAG };
+	List<String> CAPACITY_PROVIDER_REGISTER_ERROR_TAGS = List.of(OSCP_TAG, CAPACITY_PROVIDER_TAG,
+			REGISTER_TAG, ERROR_TAG);
 
 	/** User event tags for Capacity Provider heartbeat events. */
-	String[] CAPACITY_PROVIDER_HEARTBEAT_TAGS = new String[] { OSCP_TAG, CAPACITY_PROVIDER_TAG,
-			HEARTBEAT_TAG };
+	List<String> CAPACITY_PROVIDER_HEARTBEAT_TAGS = List.of(OSCP_TAG, CAPACITY_PROVIDER_TAG,
+			HEARTBEAT_TAG);
 
 	/** User event tags for Capacity Provider heartbeat error events. */
-	String[] CAPACITY_PROVIDER_HEARTBEAT_ERROR_TAGS = new String[] { OSCP_TAG, CAPACITY_PROVIDER_TAG,
-			HEARTBEAT_TAG, ERROR_TAG };
+	List<String> CAPACITY_PROVIDER_HEARTBEAT_ERROR_TAGS = List.of(OSCP_TAG, CAPACITY_PROVIDER_TAG,
+			HEARTBEAT_TAG, ERROR_TAG);
 
 	/** User event tags for Capacity Provider handshake events. */
-	String[] CAPACITY_PROVIDER_HANDSHAKE_TAGS = new String[] { OSCP_TAG, CAPACITY_PROVIDER_TAG,
-			HANDSHAKE_TAG };
+	List<String> CAPACITY_PROVIDER_HANDSHAKE_TAGS = List.of(OSCP_TAG, CAPACITY_PROVIDER_TAG,
+			HANDSHAKE_TAG);
 
 	/** User event tags for Capacity Provider handshake error events. */
-	String[] CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS = new String[] { OSCP_TAG, CAPACITY_PROVIDER_TAG,
-			HANDSHAKE_TAG, ERROR_TAG };
+	List<String> CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS = List.of(OSCP_TAG, CAPACITY_PROVIDER_TAG,
+			HANDSHAKE_TAG, ERROR_TAG);
 
 	/**
 	 * User event tags for Capacity Provider update group capacity forecast
 	 * events.
 	 */
-	String[] CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS = new String[] { OSCP_TAG,
-			CAPACITY_PROVIDER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG };
+	List<String> CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS = List.of(OSCP_TAG,
+			CAPACITY_PROVIDER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG);
 
 	/**
 	 * User event tags for Capacity Provider update group capacity forecast
 	 * error events.
 	 */
-	String[] CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS = new String[] { OSCP_TAG,
-			CAPACITY_PROVIDER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG };
+	List<String> CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS = List.of(OSCP_TAG,
+			CAPACITY_PROVIDER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG);
 
 	/** User event tags for Capacity Optimizer heartbeat events. */
-	String[] CAPACITY_OPTIMIZER_HEARTBEAT_TAGS = new String[] { OSCP_TAG, CAPACITY_OPTIMIZER_TAG,
-			HEARTBEAT_TAG };
+	List<String> CAPACITY_OPTIMIZER_HEARTBEAT_TAGS = List.of(OSCP_TAG, CAPACITY_OPTIMIZER_TAG,
+			HEARTBEAT_TAG);
 
 	/** User event tags for Capacity Optimizer heartbeat error events. */
-	String[] CAPACITY_OPTIMIZER_HEARTBEAT_ERROR_TAGS = new String[] { OSCP_TAG, CAPACITY_OPTIMIZER_TAG,
-			HEARTBEAT_TAG, ERROR_TAG };
+	List<String> CAPACITY_OPTIMIZER_HEARTBEAT_ERROR_TAGS = List.of(OSCP_TAG, CAPACITY_OPTIMIZER_TAG,
+			HEARTBEAT_TAG, ERROR_TAG);
 
 	/**
 	 * User event tags for Capacity Optimizer adjust group capacity forecast
 	 * events.
 	 */
-	String[] CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_TAGS = new String[] { OSCP_TAG,
-			CAPACITY_OPTIMIZER_TAG, ADJUST_GROUP_CAPACITY_FORECAST_TAG };
+	List<String> CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_TAGS = List.of(OSCP_TAG,
+			CAPACITY_OPTIMIZER_TAG, ADJUST_GROUP_CAPACITY_FORECAST_TAG);
 
 	/**
 	 * User event tags for Capacity Optimizer adjust group capacity forecast
 	 * error events.
 	 */
-	String[] CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_ERROR_TAGS = new String[] { OSCP_TAG,
-			CAPACITY_OPTIMIZER_TAG, ADJUST_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG };
+	List<String> CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_ERROR_TAGS = List.of(OSCP_TAG,
+			CAPACITY_OPTIMIZER_TAG, ADJUST_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG);
 
 	/**
 	 * User event tags for Capacity Optimizer group capacity compliance error
 	 * events.
 	 */
-	String[] CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS = new String[] { OSCP_TAG,
-			CAPACITY_OPTIMIZER_TAG, GROUP_CAPACITY_COMPLIANCE_ERROR_TAG };
+	List<String> CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS = List.of(OSCP_TAG,
+			CAPACITY_OPTIMIZER_TAG, GROUP_CAPACITY_COMPLIANCE_ERROR_TAG);
 
 	/**
 	 * User event tags for Capacity Optimizer group capacity compliance error
 	 * events.
 	 */
-	String[] CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS_ERROR_TAGS = new String[] { OSCP_TAG,
-			CAPACITY_OPTIMIZER_TAG, GROUP_CAPACITY_COMPLIANCE_ERROR_TAG, ERROR_TAG };
+	List<String> CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS_ERROR_TAGS = List.of(OSCP_TAG,
+			CAPACITY_OPTIMIZER_TAG, GROUP_CAPACITY_COMPLIANCE_ERROR_TAG, ERROR_TAG);
 
 	/**
 	 * Register an external system using an authorization token created in

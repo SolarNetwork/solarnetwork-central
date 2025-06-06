@@ -44,7 +44,7 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * authentication.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SolcastRestOperationsHelper extends RestOperationsHelper {
 
@@ -69,7 +69,7 @@ public class SolcastRestOperationsHelper extends RestOperationsHelper {
 	 *         if any argument is {@literal null}
 	 */
 	public SolcastRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
+			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, Set<String>> sensitiveKeyProvider) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
 	}

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf;
 
 import static java.lang.String.format;
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.user.billing.snf.SnfBillingUtils.invoiceForSnfInvoice;
 import static net.solarnetwork.central.user.billing.snf.SnfBillingUtils.usageMetadata;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
@@ -108,7 +109,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 1.7
+ * @version 1.9
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -253,7 +254,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		List<SnfInvoiceItem> items = new ArrayList<>(usages.size());
 
 		for ( NodeUsage usage : usages ) {
-			if ( usage.getTotalCost().compareTo(BigDecimal.ZERO) < 1 ) {
+			if ( usage.getTotalCost().compareTo(BigDecimal.ZERO) < 0 ) {
 				// no cost for this node
 				log.debug("No usage cost for node {} invoice date {}", usage.getId(), startDate);
 				continue;
@@ -443,7 +444,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId);
 		}
 
-		SnfInvoiceDeliverer deliverer = invoiceDeliverer(invoice.getUserId());
+		SnfInvoiceDeliverer deliverer = invoiceDeliverer();
 		if ( deliverer == null ) {
 			String msg = format("No invoice delivery service available to delivery invoice %d",
 					invoiceId.getId());
@@ -479,7 +480,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		}
 	}
 
-	private SnfInvoiceDeliverer invoiceDeliverer(Long userId) {
+	private SnfInvoiceDeliverer invoiceDeliverer() {
 		Iterable<SnfInvoiceDeliverer> iterable = getDeliveryServices();
 		Iterator<SnfInvoiceDeliverer> itr = (iterable != null ? iterable.iterator() : null);
 		return (itr != null && itr.hasNext() ? itr.next() : null);
@@ -597,7 +598,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 		LocalDate date = invoice.getStartDate();
 		if ( date == null ) {
-			date = LocalDate.now();
+			date = LocalDate.now(UTC);
 		}
 		filter.setDate(date.atStartOfDay(tz).toInstant());
 		return filter;

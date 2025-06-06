@@ -24,6 +24,7 @@
 
 package net.solarnetwork.central.query.biz.dao;
 
+import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -34,7 +35,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Period;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
@@ -102,7 +102,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Implementation of {@link QueryBiz}.
  *
  * @author matt
- * @version 4.5
+ * @version 4.6
  */
 @Securable
 public class DaoQueryBiz implements QueryBiz {
@@ -194,29 +194,30 @@ public class DaoQueryBiz implements QueryBiz {
 			c = new BasicDatumCriteria();
 		}
 		c.setObjectKind(ObjectDatumKind.Node);
-		if ( actor instanceof SecurityNode ) {
-			Long nodeId = ((SecurityNode) actor).getNodeId();
+		if ( actor instanceof SecurityNode a ) {
+			Long nodeId = a.getNodeId();
 			c.setNodeId(nodeId);
-		} else if ( actor instanceof SecurityToken ) {
-			String tokenId = ((SecurityToken) actor).getToken();
+		} else if ( actor instanceof SecurityToken a ) {
+			String tokenId = a.getToken();
 			c.setTokenId(tokenId);
 		} else {
 			return Collections.emptySet();
 		}
 		Iterable<ObjectDatumStreamMetadataId> results = metaDao.findDatumStreamMetadataIds(c);
-		return stream(results.spliterator(), false)
+		Set<NodeSourcePK> result = stream(results.spliterator(), false)
 				.map(e -> new NodeSourcePK(e.getObjectId(), e.getSourceId()))
 				.collect(toCollection(LinkedHashSet::new));
+		return Collections.unmodifiableSet(result);
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<Long> findAvailableNodes(SecurityActor actor) {
 		Set<Long> nodeIds = null;
-		if ( actor instanceof SecurityNode ) {
-			nodeIds = Collections.singleton(((SecurityNode) actor).getNodeId());
-		} else if ( actor instanceof SecurityToken ) {
-			String tokenId = ((SecurityToken) actor).getToken();
+		if ( actor instanceof SecurityNode a ) {
+			nodeIds = Collections.singleton(a.getNodeId());
+		} else if ( actor instanceof SecurityToken a ) {
+			String tokenId = a.getToken();
 			Long[] ids = nodeOwnershipDao.nonArchivedNodeIdsForToken(tokenId);
 			nodeIds = (ids != null ? new LinkedHashSet<>(Arrays.asList(ids)) : null);
 		}
@@ -270,12 +271,11 @@ public class DaoQueryBiz implements QueryBiz {
 		Object startDate;
 		Object endDate;
 		long diffDays;
-		if ( filter instanceof LocalDateRangeFilter
-				&& ((LocalDateRangeFilter) filter).getLocalStartDate() != null ) {
-			LocalDateTime s = ((LocalDateRangeFilter) filter).getLocalStartDate();
-			LocalDateTime e = ((LocalDateRangeFilter) filter).getLocalEndDate();
+		if ( filter instanceof LocalDateRangeFilter f && f.getLocalStartDate() != null ) {
+			LocalDateTime s = f.getLocalStartDate();
+			LocalDateTime e = f.getLocalEndDate();
 			if ( e == null ) {
-				e = LocalDateTime.now();
+				e = LocalDateTime.now(UTC);
 			}
 			startDate = s;
 			endDate = e;
@@ -285,7 +285,7 @@ public class DaoQueryBiz implements QueryBiz {
 			Instant e = filter.getEndDate();
 			if ( s == null && e != null ) {
 				// treat start date as SolarNetwork epoch (may want to make epoch configurable)
-				s = LocalDateTime.of(2008, 1, 1, 0, 0, 0).toInstant(ZoneOffset.UTC);
+				s = LocalDateTime.of(2008, 1, 1, 0, 0, 0).toInstant(UTC);
 			} else if ( s != null && e == null ) {
 				// treat end date as now for purposes of this calculating query range
 				e = Instant.now();

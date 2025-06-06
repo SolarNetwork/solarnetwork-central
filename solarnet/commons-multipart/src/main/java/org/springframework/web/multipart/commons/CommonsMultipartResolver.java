@@ -223,8 +223,8 @@ public class CommonsMultipartResolver extends CommonsFileUploadSupport
 
 	@Override
 	public void cleanupMultipart(MultipartHttpServletRequest request) {
-		if (!(request instanceof AbstractMultipartHttpServletRequest) ||
-				((AbstractMultipartHttpServletRequest) request).isResolved()) {
+		if (!(request instanceof AbstractMultipartHttpServletRequest r) ||
+				r.isResolved()) {
 			try {
 				cleanupFileItems(request.getMultiFileMap());
 			}

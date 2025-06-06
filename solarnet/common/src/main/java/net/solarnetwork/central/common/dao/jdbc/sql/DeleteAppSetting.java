@@ -35,7 +35,7 @@ import net.solarnetwork.central.domain.AppSetting;
  * Delete {@link AppSetting} instances.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.0
  */
 public final class DeleteAppSetting implements PreparedStatementCreator, SqlProvider {
@@ -130,7 +130,7 @@ public final class DeleteAppSetting implements PreparedStatementCreator, SqlProv
 		PreparedStatement stmt = con.prepareStatement(getSql());
 		int p = 0;
 		p = prepareOptimizedArrayParameter(con, stmt, p, keys);
-		p = prepareOptimizedArrayParameter(con, stmt, p, types);
+		prepareOptimizedArrayParameter(con, stmt, p, types);
 		return stmt;
 	}
 

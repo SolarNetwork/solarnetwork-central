@@ -162,6 +162,7 @@ public final class RsaKeyHelper {
 		}
 	}
 
+	@SuppressWarnings("ByteBufferBackingArray")
 	private static byte[] base64Decode(String string) {
 		try {
 			ByteBuffer bytes = UTF8.newEncoder().encode(CharBuffer.wrap(string));

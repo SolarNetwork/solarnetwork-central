@@ -52,7 +52,7 @@ import net.solarnetwork.util.StringUtils;
  * Simple proxy configuration provider designed for testing.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvider {
 
@@ -102,14 +102,14 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 		if ( log.isDebugEnabled() ) {
 			log.debug("Connection authorization request received for: [{}]", ident);
 		}
-		final X509Certificate[] clientChain = request.principalIdentity();
+		final List<X509Certificate> clientChain = request.principalIdentity();
 
 		for ( SimplePrincipalMapping mapping : userMappings ) {
 			if ( mapping.subjectUserMapping().containsKey(ident) ) {
 				KeyStore trustStore = mapping.trustStore();
 				try {
-					PKIXCertPathValidatorResult vr = CertificateUtils
-							.validateCertificateChain(trustStore, clientChain);
+					PKIXCertPathValidatorResult vr = CertificateUtils.validateCertificateChain(
+							trustStore, clientChain.toArray(X509Certificate[]::new));
 					if ( log.isInfoEnabled() ) {
 						TrustAnchor ta = vr.getTrustAnchor();
 						log.info(
@@ -127,8 +127,8 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 	}
 
 	private String requestIdentity(ProxyConnectionRequest request) {
-		return request.principalIdentity() != null && request.principalIdentity().length > 0
-				? canonicalSubjectDn(request.principalIdentity()[0])
+		return request.principalIdentity() != null && !request.principalIdentity().isEmpty()
+				? canonicalSubjectDn(request.principalIdentity().getFirst())
 				: request.principal();
 	}
 

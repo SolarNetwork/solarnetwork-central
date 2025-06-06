@@ -56,7 +56,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	private Duration readSleepMin = Duration.ofMillis(SqsDatumCollector.DEFAULT_READ_SLEEP_MIN_MS);
 	private Duration readSleepMax = Duration.ofMillis(SqsDatumCollector.DEFAULT_READ_SLEEP_MAX_MS);
 	private Duration readSleepThrottleStep = Duration
-			.ofMillis(SqsDatumCollector.DEFAULT_READ_SLEEP_THROTTLE_MS);
+			.ofMillis(SqsDatumCollector.DEFAULT_READ_SLEEP_THROTTLE_STEP_MS);
 
 	private Duration shutdownWait;
 
@@ -297,7 +297,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * decrease after successfully offering all messages to the work queue.
 	 *
 	 * @return the step amount, in milliseconds; defaults to
-	 *         {@link SqsDatumCollector#DEFAULT_READ_SLEEP_THROTTLE_MS}
+	 *         {@link SqsDatumCollector#DEFAULT_READ_SLEEP_THROTTLE_STEP_MS}
 	 */
 	public Duration getReadSleepThrottleStep() {
 		return readSleepThrottleStep;
@@ -308,7 +308,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * each received message that is rejected from the work queue, or to
 	 * decrease after successfully offering all messages to the work queue.
 	 *
-	 * @param readSleepThrottleStepMs
+	 * @param readSleepThrottleStep
 	 *        the step amount to set
 	 */
 	public void setReadRejectionSleepStep(Duration readSleepThrottleStep) {

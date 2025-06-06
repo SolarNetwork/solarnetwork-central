@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.support.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.central.datum.v2.support.DatumCsvUtils.ISO_DATE_OPT_TIME_ALT_HOUR_OFFSET;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -58,7 +59,7 @@ public class DatumCsvUtilsTests {
 	public void parseMetadata() throws IOException {
 		// GIVEN
 		InputStreamReader r = new InputStreamReader(
-				getClass().getResourceAsStream("mock-energy-meta-01.csv"), "UTF-8");
+				getClass().getResourceAsStream("mock-energy-meta-01.csv"), UTF_8);
 
 		// WHEN
 		List<ObjectDatumStreamMetadata> result = DatumCsvUtils.parseMetadata(r, ObjectDatumKind.Node,
@@ -80,7 +81,7 @@ public class DatumCsvUtilsTests {
 	public void parseAggregateDatum_hour() throws IOException {
 		// GIVEN
 		InputStreamReader r = new InputStreamReader(
-				getClass().getResourceAsStream("mock-energy-hour-01.csv"), "UTF-8");
+				getClass().getResourceAsStream("mock-energy-hour-01.csv"), UTF_8);
 
 		// WHEN
 		List<AggregateDatum> result = DatumCsvUtils.parseAggregateDatum(r, Aggregation.Hour);

@@ -35,11 +35,11 @@ import net.solarnetwork.domain.CodedValue;
  * Base entity for datum stream related configuration.
  *
  * @param <C>
- * 		the configuration type
+ *        the configuration type
  * @param <T>
- * 		the enum type
+ *        the enum type
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDatumStreamConfiguration<C, T>, T extends Enum<? extends CodedValue>>
 		extends BaseUserModifiableEntity<C, UserLongIntegerCompositePK> {
@@ -59,11 +59,11 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Constructor.
 	 *
 	 * @param id
-	 * 		the ID
+	 *        the ID
 	 * @param created
-	 * 		the creation date
+	 *        the creation date
 	 * @throws IllegalArgumentException
-	 * 		if any argument is {@literal null}
+	 *         if any argument is {@literal null}
 	 */
 	public BaseServerDatumStreamConfiguration(UserLongIntegerCompositePK id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
@@ -85,13 +85,16 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Test if this entity has the same property values as another.
 	 *
 	 * <p>
-	 * The {@code id}, {@code created}, and {@code modified} properties are not compared.
+	 * The {@code id}, {@code created}, and {@code modified} properties are not
+	 * compared.
 	 * </p>
 	 *
 	 * @param other
-	 * 		the entity to compare to
-	 * @return {@literal true} if the properties of this entity are equal to the other's
+	 *        the entity to compare to
+	 * @return {@literal true} if the properties of this entity are equal to the
+	 *         other's
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public boolean isSameAs(C other) {
 		boolean result = super.isSameAs(other);
@@ -103,8 +106,10 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 				&& Objects.equals(this.sourceId, other.getSourceId())
 				&& Objects.equals(this.property, other.getProperty())
 				&& Objects.equals(this.type, other.getType())
-				&& Objects.equals(this.multiplier, other.getMultiplier())
-				&& Objects.equals(this.offset, other.getOffset())
+				&& (this.multiplier == other.getMultiplier()
+					|| (this.multiplier != null && other.getMultiplier() != null && this.multiplier.compareTo(other.getMultiplier()) == 0))
+				&& (this.offset == other.getOffset()
+					|| (this.offset != null && other.getOffset() != null && this.offset.compareTo(other.getOffset()) == 0))
 				&& Objects.equals(this.scale, other.getScale())
 				;
 		// @formatter:on
@@ -114,7 +119,8 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Test if this configuration is valid.
 	 *
 	 * <p>
-	 * This only checks the existence and non-blankness of the fields necessary to configure in DNP3.
+	 * This only checks the existence and non-blankness of the fields necessary
+	 * to configure in DNP3.
 	 * </p>
 	 *
 	 * @return {@literal true} if the configuration is valid
@@ -124,7 +130,8 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 		final String sourceId = getSourceId();
 		final String property = getProperty();
 		final T type = getType();
-		return (nodeId != null && sourceId != null && property != null && type != null && !sourceId.isBlank() && !property.isBlank());
+		return (nodeId != null && sourceId != null && property != null && type != null
+				&& !sourceId.isBlank() && !property.isBlank());
 	}
 
 	@Override
@@ -221,7 +228,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Set the datum node ID.
 	 *
 	 * @param nodeId
-	 * 		the nodeId to set
+	 *        the nodeId to set
 	 */
 	public void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
@@ -240,7 +247,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Set the datum source ID.
 	 *
 	 * @param sourceId
-	 * 		the sourceId to set
+	 *        the sourceId to set
 	 */
 	public void setSourceId(String sourceId) {
 		this.sourceId = sourceId;
@@ -259,7 +266,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Set the datum property name.
 	 *
 	 * @param property
-	 * 		the property to set
+	 *        the property to set
 	 */
 	public void setProperty(String property) {
 		this.property = property;
@@ -278,7 +285,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Get the type.
 	 *
 	 * @param type
-	 * 		the type to set
+	 *        the type to set
 	 */
 	public void setType(T type) {
 		this.type = type;
@@ -297,7 +304,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Set the decimal multiplier.
 	 *
 	 * @param multiplier
-	 * 		the multiplier to set
+	 *        the multiplier to set
 	 */
 	public void setMultiplier(BigDecimal multiplier) {
 		this.multiplier = multiplier;
@@ -316,7 +323,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Set the decimal offset.
 	 *
 	 * @param offset
-	 * 		the offset to set
+	 *        the offset to set
 	 */
 	public void setOffset(BigDecimal offset) {
 		this.offset = offset;
@@ -335,7 +342,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * Set the decimal scale.
 	 *
 	 * @param scale
-	 * 		the scale to set
+	 *        the scale to set
 	 */
 	public void setScale(Integer scale) {
 		this.scale = scale;

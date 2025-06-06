@@ -50,7 +50,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestOperations;
 import org.w3c.dom.Node;
-import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
@@ -176,7 +176,7 @@ public class DogtagPKIBiz
 
 	@Override
 	public String submitCSR(final X509Certificate certificate, final PrivateKey privateKey)
-			throws net.solarnetwork.central.security.SecurityException {
+			throws net.solarnetwork.central.security.BasicSecurityException {
 		final SecurityUser requestor = SecurityUtils.getCurrentUser();
 		String csr = certificateService.generatePKCS10CertificateRequestString(certificate, privateKey);
 
@@ -219,7 +219,7 @@ public class DogtagPKIBiz
 
 	@SuppressWarnings("deprecation")
 	@Override
-	public String submitRenewalRequest(X509Certificate certificate) throws SecurityException {
+	public String submitRenewalRequest(X509Certificate certificate) throws BasicSecurityException {
 		BigInteger serialNumber = certificate.getSerialNumber();
 
 		Object req;

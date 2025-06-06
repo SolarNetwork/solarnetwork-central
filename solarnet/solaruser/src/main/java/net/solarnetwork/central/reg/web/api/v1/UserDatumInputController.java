@@ -233,7 +233,7 @@ public class UserDatumInputController {
 		final MediaType mediaType = MediaType.parseMediaType(contentType);
 
 		InputStream input = in;
-		if ( encoding != null && encoding.toLowerCase().contains("gzip") ) {
+		if ( encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip") ) {
 			input = new GZIPInputStream(in);
 		}
 
@@ -249,6 +249,7 @@ public class UserDatumInputController {
 			@JsonProperty("data") String data, @JsonProperty("query") String query,
 			@JsonProperty(value = "parameters", required = false) Map<String, Object> parameters) {
 
+		@SuppressWarnings("MixedMutabilityReturnType")
 		private Map<String, String> queryParameters() {
 			if ( query != null && !query.isBlank() ) {
 				try {

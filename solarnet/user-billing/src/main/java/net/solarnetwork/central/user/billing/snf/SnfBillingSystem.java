@@ -249,7 +249,7 @@ public class SnfBillingSystem implements BillingSystem {
 	public Invoice getPreviewInvoice(Long userId,
 			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
 			Locale locale) {
-		SnfInvoice invoice = createPreviewInvoice(userId, options, locale);
+		SnfInvoice invoice = createPreviewInvoice(userId, options);
 		if ( invoice == null ) {
 			return null;
 		}
@@ -262,7 +262,7 @@ public class SnfBillingSystem implements BillingSystem {
 	public Resource previewInvoice(Long userId,
 			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
 			MimeType outputType, Locale locale) {
-		SnfInvoice invoice = createPreviewInvoice(userId, options, locale);
+		SnfInvoice invoice = createPreviewInvoice(userId, options);
 		if ( invoice == null ) {
 			return null;
 		}
@@ -270,8 +270,7 @@ public class SnfBillingSystem implements BillingSystem {
 	}
 
 	private SnfInvoice createPreviewInvoice(Long userId,
-			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
-			Locale locale) {
+			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options) {
 		Account account = accountDao.getForUser(userId);
 		if ( account == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);

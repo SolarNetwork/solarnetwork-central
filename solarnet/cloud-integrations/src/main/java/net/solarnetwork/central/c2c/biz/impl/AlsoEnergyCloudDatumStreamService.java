@@ -413,6 +413,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				res -> parseSiteHardware(res.getBody(), filters));
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseSites(JsonNode json) {
 		if ( json == null ) {
 			return Collections.emptyList();
@@ -438,6 +439,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return result;
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseSiteHardware(JsonNode json, Map<String, ?> filters) {
 		if ( json == null ) {
 			return Collections.emptyList();

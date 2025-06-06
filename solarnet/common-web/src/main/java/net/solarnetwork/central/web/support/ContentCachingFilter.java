@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -271,7 +272,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 		final String requestUri = origRequest.getRequestURI();
 		final Long requestId = requestCounter.incrementAndGet();
 
-		final String method = origRequest.getMethod().toUpperCase();
+		final String method = origRequest.getMethod().toUpperCase(Locale.ENGLISH);
 		if ( !methodsToCache.contains(method) ) {
 			log.debug("{} [{}] HTTP method {} not supported; caching disabled", requestId, requestUri,
 					method);

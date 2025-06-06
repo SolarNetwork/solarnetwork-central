@@ -93,9 +93,8 @@ public class LocationLookupController {
 		public void validate(Object target, Errors errors) {
 			if ( target instanceof SourceLocationFilter filter ) {
 				boolean sourceRequired = filter.getId() == null
-						&& (!(target instanceof GenericSourceLocationFilter)
-								|| ((GenericSourceLocationFilter) target)
-										.getType() != GenericSourceLocationFilter.LocationType.Basic);
+						&& (!(target instanceof GenericSourceLocationFilter g)
+								|| g.getType() != GenericSourceLocationFilter.LocationType.Basic);
 				if ( sourceRequired ) {
 					if ( !StringUtils.hasText(filter.getSourceName()) ) {
 						errors.rejectValue("sourceName", "error.field.required",

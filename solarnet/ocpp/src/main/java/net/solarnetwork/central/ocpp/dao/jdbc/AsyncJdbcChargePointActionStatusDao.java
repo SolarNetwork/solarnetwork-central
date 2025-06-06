@@ -255,8 +255,8 @@ public class AsyncJdbcChargePointActionStatusDao
 				} catch ( Exception e ) {
 					stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
 					RuntimeException re;
-					if ( e instanceof RuntimeException ) {
-						re = (RuntimeException) e;
+					if ( e instanceof RuntimeException runtime ) {
+						re = runtime;
 					} else {
 						re = new RuntimeException("Exception flushing OCPP charge point action status",
 								e);
@@ -285,13 +285,14 @@ public class AsyncJdbcChargePointActionStatusDao
 	 */
 	public synchronized void enableWriting() {
 		if ( writerThread == null || !writerThread.isGoing() ) {
-			writerThread = new WriterThread();
-			writerThread.setName("OcppChargePointActionStatusUpdater");
-			synchronized ( writerThread ) {
-				writerThread.start();
-				while ( !writerThread.hasStarted() ) {
+			WriterThread t = new WriterThread();
+			t.setName("OcppChargePointActionStatusUpdater");
+			this.writerThread = t;
+			synchronized ( t ) {
+				t.start();
+				while ( !t.hasStarted() ) {
 					try {
-						writerThread.wait(5000L);
+						t.wait(5000L);
 					} catch ( InterruptedException e ) {
 						// ignore
 					}
@@ -345,8 +346,8 @@ public class AsyncJdbcChargePointActionStatusDao
 		// verify buffer removals does not lag additions
 		final long addCount = statMap
 				.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsAdded.name(), 0L);
-		final long removeLag = addCount - (statMap
-				.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name(), 0L));
+		final long removeLag = addCount
+				- statMap.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name(), 0L);
 		final WriterThread t = this.writerThread;
 		final boolean writerRunning = t != null && t.isAlive();
 		if ( removeLag > bufferRemovalLagAlertThreshold ) {

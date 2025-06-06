@@ -116,10 +116,9 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 		if ( !super.equals(obj) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicUserAuthTokenFilter) ) {
+		if ( !(obj instanceof BasicUserAuthTokenFilter other) ) {
 			return false;
 		}
-		BasicUserAuthTokenFilter other = (BasicUserAuthTokenFilter) obj;
 		return Objects.equals(active, other.active) && Arrays.equals(identifiers, other.identifiers)
 				&& Arrays.equals(tokenTypes, other.tokenTypes);
 	}

@@ -125,10 +125,9 @@ public final class UserUuidPK extends BasePK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof UserUuidPK) ) {
+		if ( !(obj instanceof UserUuidPK other) ) {
 			return false;
 		}
-		UserUuidPK other = (UserUuidPK) obj;
 		return Objects.equals(userId, other.userId) && Objects.equals(uuid, other.uuid);
 	}
 
@@ -151,6 +150,7 @@ public final class UserUuidPK extends BasePK
 		return uuid;
 	}
 
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public boolean keyComponentIsAssigned(int index) {
 		return switch (index) {
@@ -170,7 +170,7 @@ public final class UserUuidPK extends BasePK
 		return keyComponentIsAssigned(1);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
 	public <T> T keyComponentValue(int index, Object val) {
 		try {

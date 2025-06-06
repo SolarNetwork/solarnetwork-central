@@ -76,7 +76,7 @@ public final class CommonJdbcUtils {
 	 * @throws ClassCastException
 	 *         if a casting error occurs
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	public static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
 		Array a = rs.getArray(colNum);
 		if ( a == null ) {
@@ -97,7 +97,7 @@ public final class CommonJdbcUtils {
 	 * @throws ClassCastException
 	 *         if a casting error occurs
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	public static <T> T arrayValue(Object o) {
 		if ( o instanceof Array a ) {
 			try {
@@ -132,7 +132,7 @@ public final class CommonJdbcUtils {
 	 */
 	public static UUID getUuid(ResultSet rs, int column) throws SQLException {
 		Object sid = rs.getObject(column);
-		return (sid instanceof UUID ? (UUID) sid : sid != null ? UUID.fromString(sid.toString()) : null);
+		return (sid instanceof UUID uuid ? uuid : sid != null ? UUID.fromString(sid.toString()) : null);
 	}
 
 	/**
@@ -172,11 +172,10 @@ public final class CommonJdbcUtils {
 			JdbcOperations jdbcTemplate, PaginationCriteria filter, PreparedStatementCreator sql,
 			RowMapper<M> mapper) {
 		Long totalCount = null;
-		if ( filter.getMax() != null && sql instanceof CountPreparedStatementCreatorProvider
-				&& !(filter instanceof OptimizedQueryCriteria
-						&& ((OptimizedQueryCriteria) filter).isWithoutTotalResultsCount()) ) {
-			totalCount = executeCountQuery(jdbcTemplate,
-					((CountPreparedStatementCreatorProvider) sql).countPreparedStatementCreator());
+		if ( filter.getMax() != null && sql instanceof CountPreparedStatementCreatorProvider c
+				&& !(filter instanceof OptimizedQueryCriteria oqc
+						&& oqc.isWithoutTotalResultsCount()) ) {
+			totalCount = executeCountQuery(jdbcTemplate, c.countPreparedStatementCreator());
 		}
 
 		List<M> results = jdbcTemplate.query(sql, mapper);
@@ -283,7 +282,7 @@ public final class CommonJdbcUtils {
 		jdbcTemplate.update(sql, keyHolder);
 		Map<String, Object> keys = keyHolder.getKeys();
 		Object id = keys != null ? keys.get(keyColumnName) : null;
-		return (id instanceof Long ? (Long) id : null);
+		return (id instanceof Long n ? n : null);
 	}
 
 	/**

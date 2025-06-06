@@ -28,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -80,7 +81,7 @@ import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
-import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
@@ -115,7 +116,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO-based implementation of {@link RegistrationBiz}.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class DaoRegistrationBiz implements RegistrationBiz {
 
@@ -359,7 +360,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 				}
 			}
 		}
-		return byos.toString();
+		return byos.toString(StandardCharsets.US_ASCII);
 	}
 
 	@Override
@@ -605,7 +606,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		} catch ( TimeoutException e ) {
 			log.debug("Timeout waiting for {} cert renewal approval", certSubjectDN);
 			// save to DB when we do get our reply
-			executorService.submit(() -> {
+			@SuppressWarnings("unused")
+			var unused = executorService.submit(() -> {
 				try {
 					UserNodeCertificate renewedCert = approval.get();
 					cert.setStatus(renewedCert.getStatus());
@@ -907,7 +909,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			// we must become the User now for CSR to be generated (if we are a node or token actor)
 			try {
 				SecurityUtils.getCurrentUser();
-			} catch ( SecurityException e ) {
+			} catch ( BasicSecurityException e ) {
 				SecurityUtils.becomeUser(user.getEmail(), user.getName(), user.getId());
 			}
 
@@ -929,7 +931,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			} catch ( TimeoutException e ) {
 				log.warn("Timeout waiting for {} CSR approval", certSubjectDN);
 				// save to DB when we do get our reply
-				executorService.submit(() -> {
+				@SuppressWarnings("unused")
+				var unused = executorService.submit(() -> {
 					try {
 						UserNodeCertificate approvedCert = approval.get();
 						userNodeCertificateDao.save(approvedCert);

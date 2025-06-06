@@ -211,6 +211,7 @@ public class XsltTransformService extends BaseXsltService implements TransformSe
 				parameters != null ? parameters.get(PARAM_CONFIGURATION_CACHE_KEY) : null);
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private List<Datum> parseDatumList(String json) throws IOException {
 		JsonNode root = objectMapper.readTree(json);
 		if ( root.isObject() ) {

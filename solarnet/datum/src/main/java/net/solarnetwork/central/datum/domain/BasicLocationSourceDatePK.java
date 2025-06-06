@@ -34,6 +34,7 @@ import java.util.Objects;
  * @version 2.0
  * @since 2.2
  */
+@SuppressWarnings("MissingImplementsComparable")
 public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements Serializable, Cloneable {
 
 	@Serial

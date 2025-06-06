@@ -344,16 +344,12 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public Long saveConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
-		if ( configuration instanceof UserDataConfiguration ) {
-			return dataConfigDao.save(mergeServiceProperties((UserDataConfiguration) configuration))
-					.getEntityId();
-		} else if ( configuration instanceof UserDestinationConfiguration ) {
-			return destinationConfigDao
-					.save(mergeServiceProperties((UserDestinationConfiguration) configuration))
-					.getEntityId();
-		} else if ( configuration instanceof UserOutputConfiguration ) {
-			return outputConfigDao.save(mergeServiceProperties((UserOutputConfiguration) configuration))
-					.getEntityId();
+		if ( configuration instanceof UserDataConfiguration c ) {
+			return dataConfigDao.save(mergeServiceProperties(c)).getEntityId();
+		} else if ( configuration instanceof UserDestinationConfiguration c ) {
+			return destinationConfigDao.save(mergeServiceProperties(c)).getEntityId();
+		} else if ( configuration instanceof UserOutputConfiguration c ) {
+			return outputConfigDao.save(mergeServiceProperties(c)).getEntityId();
 		}
 		throw new IllegalArgumentException("Unsupported configuration: " + configuration);
 	}

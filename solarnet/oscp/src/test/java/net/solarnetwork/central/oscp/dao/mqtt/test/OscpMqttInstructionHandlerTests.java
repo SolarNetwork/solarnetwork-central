@@ -285,7 +285,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -344,7 +345,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -407,7 +409,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -476,7 +479,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -549,7 +553,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -625,7 +630,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -701,7 +707,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
 		LogEventInfo event = eventCaptor.getValue();
 		log.debug("Got event: {}", event);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -792,7 +799,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		log.debug("Got events: {}", events);
 
 		LogEventInfo event = events.get(0);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_TAGS.toArray(String[]::new))));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
@@ -808,7 +816,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 				hasEntry(CORRELATION_ID_DATA_KEY, correlationId));
 
 		event = events.get(1);
-		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_OUT_TAGS)));
+		assertThat("Event tags", event.getTags(),
+				is(arrayContaining(OSCP_INSTRUCTION_OUT_TAGS.toArray(String[]::new))));
 		eventData = JsonUtils.getStringMap(event.getData());
 		assertThat("Event data instruction ID", eventData,
 				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));

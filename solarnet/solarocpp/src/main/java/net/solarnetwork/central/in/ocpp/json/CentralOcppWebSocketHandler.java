@@ -29,6 +29,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -65,7 +66,7 @@ import net.solarnetwork.util.StatTracker;
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
  * 
  * @author matt
- * @version 2.8
+ * @version 2.9
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
@@ -401,7 +402,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		}
 	}
 
-	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
 		// bump to executor to not block processor thread
 		executor.execute(() -> {
 			final UserEventAppenderBiz biz = getUserEventAppenderBiz();
@@ -410,12 +411,11 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			}
 			String dataStr;
 			try {
-				dataStr = (data instanceof String ? (String) data
-						: getObjectMapper().writeValueAsString(data));
+				dataStr = (data instanceof String s ? s : getObjectMapper().writeValueAsString(data));
 			} catch ( JsonProcessingException e ) {
 				dataStr = null;
 			}
-			LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+			LogEventInfo event = LogEventInfo.event(tags, message, dataStr);
 			biz.addEvent(userId, event);
 		});
 	}

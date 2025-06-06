@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.export.standard.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
@@ -117,7 +118,7 @@ public class JsonDatumExportOutpuFormatServiceTests {
 		assertThat("Temp file exists", tempFile.exists(), equalTo(true));
 		assertThat("Temp file extension", tempFile.getName(), endsWith(".json"));
 		assertThat("Content type", r.getContentType(), equalTo(service.getExportContentType()));
-		String csv = FileCopyUtils.copyToString(new InputStreamReader(r.getInputStream(), "UTF-8"));
+		String csv = FileCopyUtils.copyToString(new InputStreamReader(r.getInputStream(), UTF_8));
 		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));
 		assertThat("Generated JSON", csv, equalTo(
 				"[{\"created\":\"2018-04-23 11:19:00Z\",\"nodeId\":-1,\"sourceId\":\"test.source\""
@@ -181,7 +182,7 @@ public class JsonDatumExportOutpuFormatServiceTests {
 		assertThat("Content type", r.getContentType(),
 				equalTo(OutputCompressionType.GZIP.getContentType()));
 		String json = FileCopyUtils
-				.copyToString(new InputStreamReader(new GZIPInputStream(r.getInputStream()), "UTF-8"));
+				.copyToString(new InputStreamReader(new GZIPInputStream(r.getInputStream()), UTF_8));
 		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));
 
 		StringBuilder buf = new StringBuilder("[");

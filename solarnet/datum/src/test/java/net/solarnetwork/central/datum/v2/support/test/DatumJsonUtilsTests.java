@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.support.test;
 
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
@@ -38,7 +39,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -500,7 +500,7 @@ public class DatumJsonUtilsTests {
 		List<AggregateDatum> result = new ArrayList<>();
 		int row = 0;
 		try (BufferedReader r = new BufferedReader(
-				new InputStreamReader(clazz.getResourceAsStream(resource), Charset.forName("UTF-8")))) {
+				new InputStreamReader(clazz.getResourceAsStream(resource), UTF_8))) {
 			while ( true ) {
 				String line = r.readLine();
 				if ( line == null ) {

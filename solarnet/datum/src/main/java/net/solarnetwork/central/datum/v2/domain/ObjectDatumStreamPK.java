@@ -214,6 +214,7 @@ public class ObjectDatumStreamPK extends BasePK
 		}
 	}
 
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public int compareTo(ObjectDatumStreamPK o) {
 		if ( this == o ) {

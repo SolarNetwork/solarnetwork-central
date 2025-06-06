@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.pki.dev;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -49,7 +50,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
-import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
@@ -62,7 +63,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Developer implementation of {@link NodePKIBiz}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 
@@ -224,7 +225,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 
 	@Override
 	public String submitCSR(X509Certificate certificate, PrivateKey privateKey)
-			throws SecurityException {
+			throws BasicSecurityException {
 		final SecurityUser requestor = SecurityUtils.getCurrentUser(); // mimic Dogtag
 		log.info("Submitting CSR for user {} - {} <{}>", requestor.getUserId(),
 				requestor.getDisplayName(), requestor.getEmail());
@@ -249,7 +250,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 	}
 
 	@Override
-	public String submitRenewalRequest(X509Certificate certificate) throws SecurityException {
+	public String submitRenewalRequest(X509Certificate certificate) throws BasicSecurityException {
 		final String csr = certificateService
 				.generatePKCS7CertificateChainString(new X509Certificate[] { certificate });
 		final String csrID = DigestUtils.md5Hex(csr);
@@ -358,7 +359,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 		File pwFile = new File(baseDir, PASSWORD_FILE);
 		if ( pwFile.canRead() ) {
 			try {
-				return new String(FileCopyUtils.copyToByteArray(pwFile), StandardCharsets.US_ASCII);
+				return new String(FileCopyUtils.copyToByteArray(pwFile), US_ASCII);
 			} catch ( UnsupportedEncodingException e ) {
 				throw new CertificateException(
 						"Error decoding keystore secret file " + pwFile.getAbsolutePath(), e);
@@ -374,7 +375,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 			baseDir.mkdirs();
 		}
 		try {
-			FileCopyUtils.copy(pw.getBytes(), pwFile);
+			FileCopyUtils.copy(pw.getBytes(US_ASCII), pwFile);
 		} catch ( IOException e ) {
 			throw new CertificateException(
 					"Unable to save keystore secret file " + pwFile.getAbsolutePath(), e);

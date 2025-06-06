@@ -205,6 +205,7 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 				parameters != null ? parameters.get(PARAM_CONFIGURATION_CACHE_KEY) : null);
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private List<NodeInstruction> parseNodeInstructionList(String json) throws IOException {
 		JsonNode root = objectMapper.readTree(json);
 		if ( root.isObject() ) {

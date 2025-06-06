@@ -154,6 +154,7 @@ public class DaoCloudDatumStreamPollService
 		// nothing
 	}
 
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	@Override
 	public void serviceDidShutdown() {
 		try {

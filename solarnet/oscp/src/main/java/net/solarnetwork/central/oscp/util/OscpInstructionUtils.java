@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.util;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -74,7 +75,8 @@ public final class OscpInstructionUtils {
 			return null;
 		}
 		return "http://www.openchargealliance.org/schemas/oscp/2.0/"
-				+ OSCP_ACTION_KEBAB_CASE_REPLACE.matcher(s).replaceAll("-$1").toLowerCase() + ".json";
+				+ OSCP_ACTION_KEBAB_CASE_REPLACE.matcher(s).replaceAll("-$1").toLowerCase(Locale.ENGLISH)
+				+ ".json";
 	};
 
 	private static final ObjectMapper OBJECT_MAPPER = JsonUtils.newObjectMapper();
@@ -123,8 +125,8 @@ public final class OscpInstructionUtils {
 				JsonNode jsonNode = OBJECT_MAPPER.readTree(msgString);
 				if ( jsonNode.isNull() ) {
 					jsonPayload = null;
-				} else if ( jsonNode instanceof ObjectNode ) {
-					jsonPayload = (ObjectNode) jsonNode;
+				} else if ( jsonNode instanceof ObjectNode on ) {
+					jsonPayload = on;
 				} else {
 					throw new IOException(
 							"OSCP " + OSCP_MESSAGE_PARAM + " parameter must be a JSON object.");

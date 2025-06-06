@@ -40,7 +40,8 @@ public class RateLimitExceededException extends RuntimeException {
 	 *
 	 * @param key
 	 *        the rate limit key
-	 * @pram id the rate limit ID
+	 * @param id
+	 *        the rate limit ID
 	 */
 	public RateLimitExceededException(String key, Long id) {
 		super();

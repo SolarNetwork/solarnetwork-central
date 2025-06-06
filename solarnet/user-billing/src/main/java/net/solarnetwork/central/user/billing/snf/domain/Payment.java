@@ -153,13 +153,14 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isSameAs(Payment other) {
 		if ( other == null ) {
 			return false;
 		}
 		// @formatter:off
 		return Objects.equals(accountId, other.accountId)
-				&& (amount == other.amount) || (amount != null && amount.compareTo(other.amount) == 0)
+				&& ((amount == other.amount) || (amount != null && amount.compareTo(other.amount) == 0))
 				&& Objects.equals(currencyCode, other.currencyCode)
 				&& Objects.equals(externalKey, other.externalKey)
 				&& Objects.equals(paymentType, other.paymentType)

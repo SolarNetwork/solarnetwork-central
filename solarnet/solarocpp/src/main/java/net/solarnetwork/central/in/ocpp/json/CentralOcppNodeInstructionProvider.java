@@ -33,6 +33,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -75,7 +76,7 @@ import net.solarnetwork.util.StatTracker;
  * connect.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class CentralOcppNodeInstructionProvider extends
 		DelayedOccasionalProcessor<CentralOcppNodeInstructionProvider.DelayedChargePointIdentifier>
@@ -154,7 +155,7 @@ public class CentralOcppNodeInstructionProvider extends
 			case OcppAppEvents.EVENT_TOPIC_CHARGE_POINT_DISCONNECTED -> cancelAsyncProcessItem(
 					new DelayedChargePointIdentifier(identity));
 			default -> {
-				break;
+				// nothing
 			}
 		}
 	}
@@ -178,8 +179,8 @@ public class CentralOcppNodeInstructionProvider extends
 					null);
 			for ( EntityMatch match : matches ) {
 				Instruction instruction;
-				if ( match instanceof Instruction ) {
-					instruction = (Instruction) match;
+				if ( match instanceof Instruction ins ) {
+					instruction = ins;
 				} else {
 					instruction = instructionDao.get(match.getId());
 				}
@@ -311,18 +312,18 @@ public class CentralOcppNodeInstructionProvider extends
 				});
 	}
 
-	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
 		}
 		String dataStr;
 		try {
-			dataStr = (data instanceof String ? (String) data : objectMapper.writeValueAsString(data));
+			dataStr = (data instanceof String s ? s : objectMapper.writeValueAsString(data));
 		} catch ( JsonProcessingException e ) {
 			dataStr = null;
 		}
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+		LogEventInfo event = LogEventInfo.event(tags, message, dataStr);
 		biz.addEvent(userId, event);
 	}
 

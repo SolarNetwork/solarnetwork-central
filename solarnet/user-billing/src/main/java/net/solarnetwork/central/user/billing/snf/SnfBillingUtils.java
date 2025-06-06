@@ -118,8 +118,7 @@ public final class SnfBillingUtils {
 					if ( e.getItemType() == InvoiceItemType.Credit && e.getMetadata() != null
 							&& e.getMetadata().containsKey(META_AVAILABLE_CREDIT) ) {
 						Object availCreditVal = e.getMetadata().get(META_AVAILABLE_CREDIT);
-						BigDecimal availCredit = (availCreditVal instanceof BigDecimal
-								? (BigDecimal) availCreditVal
+						BigDecimal availCredit = (availCreditVal instanceof BigDecimal d ? d
 								: new BigDecimal(availCreditVal.toString()));
 						e.getMetadata().put("localizedAvailableCredit",
 								MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale,

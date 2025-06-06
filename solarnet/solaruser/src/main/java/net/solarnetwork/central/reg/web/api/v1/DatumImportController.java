@@ -252,8 +252,8 @@ public class DatumImportController {
 								"Import not allowed for node " + ae.getId());
 					}
 				}
-				if ( t instanceof Exception ) {
-					throw (Exception) t;
+				if ( t instanceof Exception ex ) {
+					throw ex;
 				}
 				throw e;
 			}

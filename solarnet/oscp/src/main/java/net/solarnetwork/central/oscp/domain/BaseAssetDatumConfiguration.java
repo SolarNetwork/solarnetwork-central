@@ -30,7 +30,7 @@ import java.util.Objects;
  * Base datum configuration for assets.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseAssetDatumConfiguration {
 
@@ -67,11 +67,13 @@ public abstract class BaseAssetDatumConfiguration {
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isSameAs(BaseAssetDatumConfiguration other) {
 		// @formatter:off
 		return (Arrays.equals(this.propertyNames, other.propertyNames)
 				&& Objects.equals(this.unit, other.unit)
-				&& Objects.equals(this.multiplier, other.multiplier)
+				&& (this.multiplier == other.multiplier
+					|| (this.multiplier != null && other.multiplier != null && this.multiplier.compareTo(other.multiplier) == 0))
 				&& Objects.equals(this.statisticType, other.statisticType));
 		// @formatter:on
 	}

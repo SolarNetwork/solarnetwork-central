@@ -262,8 +262,8 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 
 	private List<LocalizedInvoiceItemInfo> localizedItems(Stream<InvoiceItem> items) {
 		return items.map(item -> {
-			if ( item instanceof LocalizedInvoiceItemInfo ) {
-				return (LocalizedInvoiceItemInfo) item;
+			if ( item instanceof LocalizedInvoiceItemInfo li ) {
+				return li;
 			}
 			return new LocalizedInvoiceItem(item, locale);
 		}).collect(Collectors.toList());

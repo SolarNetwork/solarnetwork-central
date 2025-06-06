@@ -63,6 +63,7 @@ public final class SelectDatumAvailableTimeRange implements PreparedStatementCre
 		this.kind = filter.getObjectKind() != null ? filter.getObjectKind() : ObjectDatumKind.Node;
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private static Aggregation aggregation(AggregationCriteria filter) {
 		Aggregation agg = Aggregation.None;
 		if ( filter.getAggregation() != null ) {

@@ -207,8 +207,8 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 			return;
 		}
 
-		if ( user instanceof SecurityToken ) {
-			SecurityPolicy policy = ((SecurityToken) user).getPolicy();
+		if ( user instanceof SecurityToken token ) {
+			SecurityPolicy policy = token.getPolicy();
 			if ( policy != null && !policy.isValidAt(Instant.now()) ) {
 				fail(request, res, new CredentialsExpiredException("Expired token"));
 				return;

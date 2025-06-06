@@ -242,10 +242,10 @@ public class UserAlertController extends ControllerSupport {
 					options.put(UserAlertOptions.AGE_THRESHOLD, Math.round(minutes * 60.0));
 				} else if ( UserAlertOptions.EMAIL_TOS.equalsIgnoreCase(me.getKey()) ) {
 					Object val = me.getValue();
-					if ( val instanceof String[] ) {
-						options.put(UserAlertOptions.EMAIL_TOS, Arrays.asList((String[]) val));
-					} else if ( val instanceof List<?> ) {
-						options.put(UserAlertOptions.EMAIL_TOS, val);
+					if ( val instanceof String[] a ) {
+						options.put(UserAlertOptions.EMAIL_TOS, Arrays.asList(a));
+					} else if ( val instanceof List<?> l ) {
+						options.put(UserAlertOptions.EMAIL_TOS, l);
 					} else {
 						Set<String> emails = StringUtils.commaDelimitedStringToSet(val.toString());
 						if ( emails != null ) {

@@ -128,7 +128,7 @@ public class UserDatumExportConfiguration
 		// @formatter:off
 		return Objects.equals(this.name, other.getName())
 				&& Objects.equals(this.schedule, other.getSchedule())
-				&& Objects.equals(this.hourDelayOffset, other.getHourDelayOffset())
+				&& this.hourDelayOffset == other.getHourDelayOffset()
 				&& Objects.equals(this.userDataConfiguration, other.getUserDataConfiguration())
 				&& Objects.equals(this.userOutputConfiguration, other.getOutputConfiguration())
 				&& Objects.equals(this.userDestinationConfiguration, other.getUserDestinationConfiguration())

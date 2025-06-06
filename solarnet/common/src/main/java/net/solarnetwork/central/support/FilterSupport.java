@@ -115,6 +115,7 @@ public class FilterSupport extends BaseFilterSupport
 	 * @param nodeId
 	 *        the ID of the node
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setNodeId(Long nodeId) {
 		this.nodeIds = new Long[] { nodeId };
@@ -155,6 +156,7 @@ public class FilterSupport extends BaseFilterSupport
 	 * @param sourceId
 	 *        the source ID
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setSourceId(String sourceId) {
 		this.sourceIds = (sourceId == null ? null : new String[] { sourceId });
@@ -170,6 +172,7 @@ public class FilterSupport extends BaseFilterSupport
 	 *
 	 * @return the first source ID, or {@literal null}
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonIgnore
 	public String getSourceId() {
 		return (this.sourceIds == null || this.sourceIds.length < 1 ? null : this.sourceIds[0]);
@@ -208,6 +211,7 @@ public class FilterSupport extends BaseFilterSupport
 	 * @param locationId
 	 *        the ID of the location
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setLocationId(Long locationId) {
 		this.locationIds = (locationId == null ? null : new Long[] { locationId });

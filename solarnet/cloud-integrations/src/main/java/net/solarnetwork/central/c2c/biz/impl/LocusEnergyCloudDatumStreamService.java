@@ -276,6 +276,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				res -> parseSites(res.getBody()));
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseSites(ObjectNode json) {
 		if ( json == null ) {
 			return Collections.emptyList();
@@ -338,6 +339,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				res -> parseComponents(res.getBody()));
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseComponents(ObjectNode json) {
 		if ( json == null ) {
 			return Collections.emptyList();
@@ -402,6 +404,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				res -> parseNodes(res.getBody(), filters));
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseNodes(ObjectNode json, Map<String, ?> filters) {
 		assert filters != null && filters.containsKey(SITE_ID_FILTER)
 				&& filters.containsKey(COMPONENT_ID_FILTER);

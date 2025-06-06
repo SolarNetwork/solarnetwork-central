@@ -116,7 +116,7 @@ import net.solarnetwork.util.StringUtils;
  * however.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -239,6 +239,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		return result;
 	}
 
+	@SuppressWarnings("BadInstanceof")
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
 			Map<String, ?> filters) {
@@ -280,6 +281,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		return result.getResults();
 	}
 
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	@Override
 	public CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
@@ -339,7 +341,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 							.path(REGISTER_URL_PATH).queryParam("raw").queryParam("virtual", "value")
 							.queryParam("reg", queryRegisters).queryParam("time", queryTimeRange)
 							.buildAndExpand(deviceId).toUri(),
-					res -> parseDatum(res.getBody(), ds, deviceId, refsByRegisterName));
+					res -> parseDatum(res.getBody(), ds, refsByRegisterName));
 
 			// evaluate expressions on final datum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
@@ -358,6 +360,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				res -> parseDeviceRegisters(deviceId, res.getBody()));
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseDeviceRegisters(String deviceId, JsonNode json) {
 		if ( json == null ) {
 			return Collections.emptyList();
@@ -588,9 +591,9 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		return Instant.ofEpochSecond(secs.longValue(), nanos.longValue());
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<GeneralDatum> parseDatum(JsonNode json,
-			CloudDatumStreamConfiguration datumStream, String deviceId,
-			Map<String, List<ValueRef>> refsByRegisterName) {
+			CloudDatumStreamConfiguration datumStream, Map<String, List<ValueRef>> refsByRegisterName) {
 		if ( json == null ) {
 			return Collections.emptyList();
 		}

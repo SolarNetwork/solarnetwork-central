@@ -102,6 +102,7 @@ public class StreamKindPK extends StreamPK implements Serializable, Cloneable, C
 		return Objects.equals(kind, other.kind);
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public int compareTo(StreamKindPK o) {
 		int result = super.compareWith(o);

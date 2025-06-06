@@ -366,8 +366,8 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 					val = editor.getAsText();
 				}
 			}
-			if ( val instanceof Enum<?> || javaBeanTreatAsStringValues != null
-					&& javaBeanTreatAsStringValues.contains(val.getClass()) ) {
+			if ( val instanceof Enum<?> || (javaBeanTreatAsStringValues != null
+					&& javaBeanTreatAsStringValues.contains(val.getClass())) ) {
 				val = val.toString();
 			}
 		}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.jobs;
 
+import static java.time.ZoneOffset.UTC;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -49,7 +50,7 @@ import net.solarnetwork.dao.FilterResults;
  * generated.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class InvoiceGenerationTaskCreator {
 
@@ -88,7 +89,7 @@ public class InvoiceGenerationTaskCreator {
 	 */
 	public void createTasks() {
 		// get the invoice end date, which is the start of the current month (exclusive)
-		final LocalDate endDate = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1)
+		final LocalDate endDate = LocalDateTime.now(UTC).truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1)
 				.toLocalDate();
 		createTasks(endDate);
 	}

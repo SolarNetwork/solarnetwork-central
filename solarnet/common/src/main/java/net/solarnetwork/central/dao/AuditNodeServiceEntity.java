@@ -183,7 +183,7 @@ public class AuditNodeServiceEntity extends BasicIdentity<DatumId> implements Au
 		// @formatter:off
 		return Objects.equals(getId(), other.getId())
 				&& Objects.equals(aggregation, other.getAggregation())
-				&& Objects.equals(count, other.getCount());
+				&& count == other.getCount();
 		// @formatter:on
 	}
 

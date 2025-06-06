@@ -30,6 +30,7 @@ import java.io.Serializable;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("ComparableType")
 public interface UserRelatedCompositeKey<K extends UserIdRelated & CompositeKey & Comparable<K> & Serializable>
 		extends UserIdRelated, CompositeKey, Comparable<K>, Serializable {
 

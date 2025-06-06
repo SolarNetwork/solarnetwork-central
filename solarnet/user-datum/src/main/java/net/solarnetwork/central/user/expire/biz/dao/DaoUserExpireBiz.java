@@ -101,8 +101,8 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
-		if ( configuration instanceof ExpireUserDataConfiguration ) {
-			dataConfigDao.delete((ExpireUserDataConfiguration) configuration);
+		if ( configuration instanceof ExpireUserDataConfiguration c ) {
+			dataConfigDao.delete(c);
 		} else {
 			throw new IllegalArgumentException("Unsupported configuration type: " + configuration);
 		}
@@ -122,8 +122,8 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public Long saveConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
-		if ( configuration instanceof ExpireUserDataConfiguration ) {
-			return dataConfigDao.save((ExpireUserDataConfiguration) configuration);
+		if ( configuration instanceof ExpireUserDataConfiguration c ) {
+			return dataConfigDao.save(c);
 		}
 		throw new IllegalArgumentException("Unsupported configuration: " + configuration);
 	}

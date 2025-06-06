@@ -29,6 +29,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -55,7 +56,7 @@ import net.solarnetwork.central.oscp.http.ExternalSystemClient;
  * Abstract {@link Runnable} to help with OSCP system related task execution.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>
 		implements Runnable {
@@ -101,8 +102,8 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	protected final TaskScheduler taskScheduler;
 	protected final TransactionTemplate txTemplate;
 
-	private String[] errorTags;
-	private String[] successTags;
+	private List<String> errorTags;
+	private List<String> successTags;
 	private long conditionTimeout = DEFAULT_CONDITION_TIMEOUT;
 	private long startDelay = DEFAULT_START_DELAY;
 	private long startDelayRandomness = DEFAULT_START_DELAY_RANDOMNESS;
@@ -223,7 +224,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 *        the user event tags to use for an error event
 	 * @return this instance, for method chaining
 	 */
-	public DeferredSystemTask<C> withErrorEventTags(String[] errorTags) {
+	public DeferredSystemTask<C> withErrorEventTags(List<String> errorTags) {
 		this.errorTags = errorTags;
 		return this;
 	}
@@ -235,7 +236,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 *        the user event tags to use for a success event
 	 * @return this instance, for method chaining
 	 */
-	public DeferredSystemTask<C> withSuccessEventTags(String[] successTags) {
+	public DeferredSystemTask<C> withSuccessEventTags(List<String> successTags) {
 		this.successTags = successTags;
 		return this;
 	}
@@ -313,7 +314,8 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 					userEventAppenderBiz.addEvent(configId.getUserId(), event);
 				}
 				if ( taskScheduler != null && retryDelay > 0 ) {
-					taskScheduler.schedule(() -> executor.execute(DeferredSystemTask.this),
+					@SuppressWarnings("unused")
+					var unused = taskScheduler.schedule(() -> executor.execute(DeferredSystemTask.this),
 							Instant.now().plusMillis(tries * retryDelay));
 				} else {
 					executor.execute(this);
@@ -425,13 +427,11 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	/**
 	 * Get the task context.
 	 *
-	 * @param extraErrorTags
-	 *        error tags to include in a user event if an error occurs
 	 * @return the context
 	 * @throws ExternalSystemConfigurationException
 	 *         if the configuration is not found
 	 */
-	protected SystemTaskContext<C> context(String... extraErrorTags) {
+	protected SystemTaskContext<C> context() {
 		if ( this.context != null ) {
 			return context;
 		}
@@ -448,11 +448,9 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 *        the URL path
 	 * @param body
 	 *        the HTTP post body
-	 * @param extraErrorTags
-	 *        error tags to include in a user event if an error occurs
 	 */
-	protected void post(String path, Object body, String... extraErrorTags) {
-		SystemTaskContext<C> ctx = context(extraErrorTags);
+	protected void post(String path, Object body) {
+		SystemTaskContext<C> ctx = context();
 		client.systemExchange(ctx, HttpMethod.POST, () -> ctx.config().customUrlPath(name, path), body);
 	}
 

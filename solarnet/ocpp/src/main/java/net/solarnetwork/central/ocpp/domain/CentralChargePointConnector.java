@@ -195,9 +195,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 */
 	public CentralChargePointConnector(ChargePointConnector other) {
 		super(other);
-		this.userId = (other instanceof CentralChargePointConnector
-				? ((CentralChargePointConnector) other).userId
-				: null);
+		this.userId = (other instanceof CentralChargePointConnector c ? c.userId : null);
 	}
 
 	@Override
