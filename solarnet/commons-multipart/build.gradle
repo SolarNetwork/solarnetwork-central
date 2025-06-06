@@ -16,7 +16,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Commons Multipart'
-version = '1.1.0'
+version = '1.1.1'
 
 base {
 	archivesName = 'solarnet-commons-multipart'
