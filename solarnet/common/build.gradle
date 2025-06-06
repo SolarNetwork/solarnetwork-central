@@ -98,7 +98,7 @@ dependencies {
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
 	
 	// SolarNetwork
-	api 'commons-beanutils:commons-beanutils:1.10.0'
+	api 'commons-beanutils:commons-beanutils:1.11.0'
 	api "com.cronutils:cron-utils:${cronUtilsVersion}"
 	api 'org.apache.commons:commons-compress:1.27.1'
 	api "net.solarnetwork.common:net.solarnetwork.common:${snCommonVersion}"
