@@ -52,7 +52,7 @@ import net.solarnetwork.util.ObjectUtils;
  * {@link DatumMetadataOperations}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 		implements DatumCollectionFunctions, DatumHttpFunctions {
@@ -716,6 +716,84 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 */
 	public boolean hasLatest(String sourceId, Instant timestamp) {
 		return hasOffset(sourceId, 0, timestamp);
+	}
+
+	/**
+	 * Get a datum matching a specific source ID at a specific timestamp.
+	 *
+	 * @param sourceId
+	 *        the source ID to find the datum for
+	 * @param timestamp
+	 *        the timestamp to find the datum for
+	 * @return the matching datum, or {@literal null} if not available
+	 * @since 1.6
+	 */
+	public DatumExpressionRoot datumAt(String sourceId, Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+			return null;
+		}
+		Datum d = datumStreamsAccessor.at(datumKind(), datumObjectId(), sourceId, timestamp);
+		return (d != null ? copyWith(d) : null);
+	}
+
+	/**
+	 * Test if a datum matching a specific source ID at a specific timestamp
+	 * exists.
+	 *
+	 * @param sourceId
+	 *        the source ID to find the datum for
+	 * @param timestamp
+	 *        the timestamp to find the datum for
+	 * @return {@code true} if a matching datum exists
+	 * @since 1.6
+	 */
+	public boolean hasDatumAt(String sourceId, Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+			return false;
+		}
+		Datum d = datumStreamsAccessor.at(datumKind(), datumObjectId(), sourceId, timestamp);
+		return (d != null);
+	}
+
+	/**
+	 * Get a datum matching a specific source ID at a specific timestamp.
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param timestamp
+	 *        the timestamp to find the datum for
+	 * @return the matching datum, never {@literal null}
+	 * @since 1.6
+	 */
+	public Collection<DatumExpressionRoot> datumAtMatching(String sourceIdPattern, Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
+			return null;
+		}
+		Collection<Datum> found = datumStreamsAccessor.atMatching(datumKind(), datumObjectId(),
+				sourceIdPattern, timestamp);
+		if ( found == null || found.isEmpty() ) {
+			return emptyList();
+		}
+		return found.stream().map(this::copyWith).toList();
+	}
+
+	/**
+	 * Get a datum matching a specific source ID at a specific timestamp.
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param timestamp
+	 *        the timestamp to find the datum for
+	 * @return the matching datum, never {@literal null}
+	 * @since 1.6
+	 */
+	public boolean hasDatumAtMatching(String sourceIdPattern, Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
+			return false;
+		}
+		Collection<Datum> found = datumStreamsAccessor.atMatching(datumKind(), datumObjectId(),
+				sourceIdPattern, timestamp);
+		return (found != null && !found.isEmpty());
 	}
 
 	/**

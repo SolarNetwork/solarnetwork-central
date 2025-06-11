@@ -70,7 +70,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * Test cases for the {@link DatumExpressionRoot} class.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -530,6 +530,68 @@ public class DatumExpressionRootTests {
 			.isEqualTo(new String(secretValue, UTF_8))
 			;
 		// @formatter:on
+	}
+
+	@Test
+	public void datumAt() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final String otherSourceId = randomString();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		final GeneralDatum datum = GeneralDatum.nodeDatum(nodeId, otherSourceId,
+				Instant.now().plusSeconds(1), new DatumSamples(Map.of("foo", randomInt()), null, null));
+		given(datumStreamsAccessor.at(Node, nodeId, otherSourceId, root.getTimestamp()))
+				.willReturn(datum);
+
+		// WHEN
+		Boolean hasResult = expressionService.evaluateExpression(
+				"hasDatumAt('%s', timestamp)".formatted(otherSourceId), null, root, null, Boolean.class);
+
+		Integer result = expressionService.evaluateExpression(
+				"datumAt('%s', timestamp)?.foo".formatted(otherSourceId), null, root, null,
+				Integer.class);
+
+		// THEN
+		and.then(hasResult).as("Does have result").isTrue();
+
+		and.then(result).as("Datum evaluated").isEqualTo(datum.getSampleInteger(Instantaneous, "foo"));
+	}
+
+	@Test
+	public void datumAtMatching() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		final Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, randomString(), now,
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		final GeneralDatum d2 = GeneralDatum.nodeDatum(nodeId, randomString(), now.minusSeconds(1),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		given(datumStreamsAccessor.atMatching(Node, nodeId, "foo/*", root.getTimestamp()))
+				.willReturn(List.of(d1, d2));
+
+		// WHEN
+		Boolean hasResult = expressionService.evaluateExpression(
+				"hasDatumAtMatching('%s', timestamp)".formatted("foo/*"), null, root, null,
+				Boolean.class);
+
+		Integer result = expressionService.evaluateExpression(
+				"sum(datumAtMatching('%s', timestamp).![foo])".formatted("foo/*"), null, root, null,
+				Integer.class);
+
+		// THEN
+		and.then(hasResult).as("Does have result").isTrue();
+
+		and.then(result).as("Datum matching evaluated").isEqualTo(
+				d1.getSampleLong(Instantaneous, "foo") + d2.getSampleLong(Instantaneous, "foo"));
 	}
 
 }
