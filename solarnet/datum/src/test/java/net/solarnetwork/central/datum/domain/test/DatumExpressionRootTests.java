@@ -35,6 +35,7 @@ import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -583,15 +584,194 @@ public class DatumExpressionRootTests {
 				"hasDatumAtMatching('%s', timestamp)".formatted("foo/*"), null, root, null,
 				Boolean.class);
 
-		Integer result = expressionService.evaluateExpression(
+		BigDecimal result = expressionService.evaluateExpression(
 				"sum(datumAtMatching('%s', timestamp).![foo])".formatted("foo/*"), null, root, null,
-				Integer.class);
+				BigDecimal.class);
 
 		// THEN
 		and.then(hasResult).as("Does have result").isTrue();
 
-		and.then(result).as("Datum matching evaluated").isEqualTo(
-				d1.getSampleLong(Instantaneous, "foo") + d2.getSampleLong(Instantaneous, "foo"));
+		and.then(result).as("Datum matching evaluated")
+				.isEqualByComparingTo(d1.getSampleBigDecimal(Instantaneous, "foo")
+						.add(d2.getSampleBigDecimal(Instantaneous, "foo")));
+	}
+
+	@Test
+	public void deltaAt() {
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, sourceId, root.getTimestamp(),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, sourceId,
+				d.getTimestamp().minusSeconds(1),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+
+		// get end datum
+		given(datumStreamsAccessor.at(Node, nodeId, sourceId, root.getTimestamp())).willReturn(d);
+
+		// get offset earlier datum
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, root.getTimestamp(), 1))
+				.willReturn(d1);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(
+				"deltaAt('%s', timestamp, 'foo')".formatted(sourceId), null, root, null, Long.class);
+
+		and.then(result).as("Delta evaluated").isEqualTo(
+				d.getSampleLong(Instantaneous, "foo") - d1.getSampleLong(Instantaneous, "foo"));
+	}
+
+	@Test
+	public void deltaAt_notFound() {
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		// get end datum
+		given(datumStreamsAccessor.at(Node, nodeId, sourceId, root.getTimestamp())).willReturn(null);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(
+				"deltaAt('%s', timestamp, 'foo')".formatted(sourceId), null, root, null, Long.class);
+
+		and.then(result).as("Delta evaluated to zero when no datum found").isEqualTo(0L);
+	}
+
+	@Test
+	public void deltaAt_propNotFound() {
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, sourceId, root.getTimestamp(),
+				new DatumSamples(Map.of("not", randomInt()), null, null));
+
+		// get end datum
+		given(datumStreamsAccessor.at(Node, nodeId, sourceId, root.getTimestamp())).willReturn(d);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(
+				"deltaAt('%s', timestamp, 'foo')".formatted(sourceId), null, root, null, Long.class);
+
+		and.then(result).as("Delta evaluated to zero when datum property not found").isEqualTo(0L);
+	}
+
+	@Test
+	public void deltaAt_fallback() {
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, sourceId, root.getTimestamp(),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+
+		// get end datum
+		given(datumStreamsAccessor.at(Node, nodeId, sourceId, root.getTimestamp())).willReturn(d);
+
+		// get offset earlier datum
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, root.getTimestamp(), 1))
+				.willReturn(null);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(
+				"deltaAt('%s', timestamp, 'foo')".formatted(sourceId), null, root, null, Long.class);
+
+		and.then(result).as("Delta evaluated").isEqualTo(d.getSampleLong(Instantaneous, "foo"));
+	}
+
+	@Test
+	public void deltaAt_fallbackToZero() {
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, sourceId, root.getTimestamp(),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+
+		// get end datum
+		given(datumStreamsAccessor.at(Node, nodeId, sourceId, root.getTimestamp())).willReturn(d);
+
+		// get offset earlier datum
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, root.getTimestamp(), 1))
+				.willReturn(null);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(
+				"deltaAt('%s', timestamp, 'foo', true)".formatted(sourceId), null, root, null,
+				Long.class);
+
+		and.then(result).as("Delta evaluated").isEqualTo(0L);
+	}
+
+	@Test
+	public void deltaAt_deltaPropNotFound_fallback() {
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, sourceId, root.getTimestamp(),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, sourceId,
+				d.getTimestamp().minusSeconds(1),
+				new DatumSamples(Map.of("not", randomInt()), null, null));
+
+		// get end datum
+		given(datumStreamsAccessor.at(Node, nodeId, sourceId, root.getTimestamp())).willReturn(d);
+
+		// get offset earlier datum
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, root.getTimestamp(), 1))
+				.willReturn(d1);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(
+				"deltaAt('%s', timestamp, 'foo')".formatted(sourceId), null, root, null, Long.class);
+
+		and.then(result).as("Delta evaluated as fallback when offset property not available")
+				.isEqualTo(d.getSampleLong(Instantaneous, "foo"));
+	}
+
+	@Test
+	public void deltaAt_deltaPropNotFound_fallbackToZero() {
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, sourceId, root.getTimestamp(),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, sourceId,
+				d.getTimestamp().minusSeconds(1),
+				new DatumSamples(Map.of("not", randomInt()), null, null));
+
+		// get end datum
+		given(datumStreamsAccessor.at(Node, nodeId, sourceId, root.getTimestamp())).willReturn(d);
+
+		// get offset earlier datum
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, root.getTimestamp(), 1))
+				.willReturn(d1);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(
+				"deltaAt('%s', timestamp, 'foo', true)".formatted(sourceId), null, root, null,
+				Long.class);
+
+		and.then(result).as("Delta evaluated as fallback when offset property not available")
+				.isEqualTo(0L);
 	}
 
 }
