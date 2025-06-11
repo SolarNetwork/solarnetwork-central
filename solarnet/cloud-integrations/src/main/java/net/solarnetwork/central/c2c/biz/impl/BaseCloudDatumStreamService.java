@@ -45,7 +45,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.SequencedCollection;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -104,7 +103,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.16
+ * @version 1.17
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -428,33 +427,22 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			params = tmp;
 		}
 
+		final var placeholders = servicePropertyStringMap(datumStream, PLACEHOLDERS_SERVICE_PROPERTY);
+
 		final List<String> virtualSourceIds = servicePropertyStringList(datumStream,
 				VIRTUAL_SOURCE_IDS_SETTING);
 		final SortedMap<Instant, List<GeneralDatum>> virtualDatum = (virtualSourceIds != null
 				&& !virtualSourceIds.isEmpty() ? new TreeMap<>() : null);
+		final boolean generateVirtualDatum = virtualDatum != null && virtualDatum.isEmpty();
 
-		// assume all configurations owned by the same user; extract the user ID from the first one
-		final Long userId = configurations.iterator().next().getUserId();
-
-		final var datumStreamsAccessor = (datumDao != null
-				? new QueryingDatumStreamsAccessor(expressionService.sourceIdPathMatcher(), datum,
-						userId, clock, datumDao, queryAuditor)
-				: new BasicDatumStreamsAccessor(expressionService.sourceIdPathMatcher(), datum));
-
-		// assuming all property configurations from same mapping
-		final var expressionVars = Map.of("userId", (Object) datumStream.getUserId(),
-				"datumStreamMappingId", configurations.getFirst().getDatumStreamMappingId());
-
-		final var placeholders = servicePropertyStringMap(datumStream, PLACEHOLDERS_SERVICE_PROPERTY);
-
-		for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
-			if ( !config.getValueType().isExpression() ) {
-				continue;
-			}
-			final Expression expression = expression(datumStream, config);
-			final boolean generateVirtualDatum = virtualDatum != null && virtualDatum.isEmpty();
-			for ( MutableDatum d : datum ) {
-				if ( generateVirtualDatum ) {
+		final Collection<GeneralDatum> expressionDatum;
+		if ( generateVirtualDatum ) {
+			// combine real datum and virtual datum so expressions have access to both
+			for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
+				if ( !config.getValueType().isExpression() ) {
+					continue;
+				}
+				for ( MutableDatum d : datum ) {
 					virtualDatum.computeIfAbsent(d.getTimestamp(), k -> {
 						var l = new ArrayList<GeneralDatum>(virtualSourceIds.size());
 						for ( String virtualSourceId : virtualSourceIds ) {
@@ -466,33 +454,42 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 						return l;
 					});
 				}
-				evaluateExpression(integrationId, params, userId, datumStreamsAccessor, config,
-						expressionVars, expression, d);
 			}
+
+			List<GeneralDatum> allDatum = new ArrayList<>(datum);
+			for ( List<GeneralDatum> virtDatum : virtualDatum.values() ) {
+				allDatum.addAll(virtDatum);
+			}
+			expressionDatum = allDatum;
+		} else {
+			expressionDatum = datum;
 		}
 
-		if ( virtualDatum == null ) {
-			return datum;
-		}
+		// assume all configurations owned by the same user; extract the user ID from the first one
+		final Long userId = configurations.iterator().next().getUserId();
+
+		final var datumStreamsAccessor = (datumDao != null
+				? new QueryingDatumStreamsAccessor(expressionService.sourceIdPathMatcher(),
+						expressionDatum, userId, clock, datumDao, queryAuditor)
+				: new BasicDatumStreamsAccessor(expressionService.sourceIdPathMatcher(),
+						expressionDatum));
+
+		// assuming all property configurations from same mapping
+		final var expressionVars = Map.of("userId", (Object) datumStream.getUserId(),
+				"datumStreamMappingId", configurations.getFirst().getDatumStreamMappingId());
+
 		for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
 			if ( !config.getValueType().isExpression() ) {
 				continue;
 			}
 			final Expression expression = expression(datumStream, config);
-			for ( Entry<Instant, List<GeneralDatum>> e : virtualDatum.entrySet() ) {
-				for ( GeneralDatum d : e.getValue() ) {
-					evaluateExpression(integrationId, params, userId, datumStreamsAccessor, config,
-							expressionVars, expression, d);
-				}
+			for ( MutableDatum d : expressionDatum ) {
+				evaluateExpression(integrationId, params, userId, datumStreamsAccessor, config,
+						expressionVars, expression, d);
 			}
 		}
-		List<GeneralDatum> result = new ArrayList<>(
-				datum.size() + (virtualSourceIds.size() * virtualDatum.size()));
-		result.addAll(datum);
-		for ( Entry<Instant, List<GeneralDatum>> e : virtualDatum.entrySet() ) {
-			result.addAll(e.getValue());
-		}
-		return result;
+
+		return expressionDatum;
 	}
 
 	private Expression expression(CloudDatumStreamConfiguration datumStream,
