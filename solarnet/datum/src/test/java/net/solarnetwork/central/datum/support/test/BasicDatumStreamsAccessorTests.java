@@ -44,7 +44,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
  * Test cases for the {@link BasicDatumStreamsAccessor} class.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class BasicDatumStreamsAccessorTests {
 
@@ -268,6 +268,153 @@ public class BasicDatumStreamsAccessorTests {
 		then(result)
 			.as("Offset %d from %s for source returned", offset, now.minusSeconds(offset))
 			.hasSameElementsAs(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void at() {
+		// GIVEN
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final int sourceIdx = RNG.nextInt(sourceCount);
+		final String sourceId = "test/%d".formatted(sourceIdx);
+		final int timeOffset = RNG.nextInt(datumCount);
+		final Instant ts = now.minusSeconds(timeOffset);
+		Datum result = accessor.at(Node, nodeId, sourceId, ts);
+
+		// THEN
+		// @formatter:off
+		Datum expected = data.get((sourceIdx * sourceCount) + (datumCount - timeOffset - 1));
+		then(result)
+			.as("Timestamp %s for source returned", ts)
+			.isEqualTo(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void at_notFoundForTimestamp() {
+		// GIVEN
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final int sourceIdx = RNG.nextInt(sourceCount);
+		final String sourceId = "test/%d".formatted(sourceIdx);
+		final Instant ts = now.plusSeconds(1);
+		Datum result = accessor.at(Node, nodeId, sourceId, ts);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Datum for timestamp %s does not exist", ts)
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void at_notFoundForSourceId() {
+		// GIVEN
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final String sourceId = "test/does/not/exist";
+		final Instant ts = now;
+		Datum result = accessor.at(Node, nodeId, sourceId, ts);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Datum for sourceId %s does not exist", sourceId)
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void atMatching() {
+		// GIVEN
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final String sourceIdPath = "test/*";
+		final int timeOffset = RNG.nextInt(datumCount);
+		final Instant ts = now.minusSeconds(timeOffset);
+		Collection<Datum> result = accessor.atMatching(Node, nodeId, sourceIdPath, ts);
+
+		// THEN
+		// @formatter:off
+		List<Datum> expected = new ArrayList<>(sourceCount);
+		for ( int sourceIdx = 0; sourceIdx < sourceCount; sourceIdx++)  {
+			expected.add(data.get((sourceIdx * sourceCount) + (datumCount - timeOffset - 1)));
+		}
+		then(result)
+			.as("Timestamp %s for source returned", ts)
+			.hasSameElementsAs(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void atMatching_notFoundForTimestamp() {
+		// GIVEN
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final String sourceIdPath = "test/*";
+		final Instant ts = now.plusSeconds(1);
+		Collection<Datum> result = accessor.atMatching(Node, nodeId, sourceIdPath, ts);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Timestamp %s not found", ts)
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void atMatching_notFoundForSourceId() {
+		// GIVEN
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final String sourceIdPath = "none/*";
+		final Instant ts = now.plusSeconds(1);
+		Collection<Datum> result = accessor.atMatching(Node, nodeId, sourceIdPath, ts);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Source %s not found", sourceIdPath)
+			.isEmpty()
 			;
 		// @formatter:on
 	}

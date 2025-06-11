@@ -50,7 +50,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * "missing" datum using a {@link DatumEntityDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 
@@ -191,6 +191,49 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 			}
 			list.add(d);
 		}
+	}
+
+	@Override
+	protected Datum atMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
+			Instant timestamp, int referenceIndex) {
+		BasicDatumCriteria c = new BasicDatumCriteria();
+		c.setObjectKind(kind);
+		if ( kind == ObjectDatumKind.Node ) {
+			c.setNodeId(objectId);
+		} else {
+			c.setLocationId(objectId);
+		}
+		c.setSourceId(sourceId);
+		c.setUserId(userId);
+		c.setStartDate(timestamp);
+		c.setEndDate(timestamp.plusMillis(1));
+		c.setMax(1);
+
+		ObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK> daoResults = datumDao
+				.findFiltered(c);
+
+		log.debug("Query user {} node {} source [{}] for {} at {} found {}", userId, objectId, sourceId,
+				c.getMax(), c.getStartDate(), daoResults.getReturnedResultCount());
+
+		if ( daoResults.getReturnedResultCount() < 1 ) {
+			return null;
+		}
+
+		final QueryAuditor auditor = (kind == ObjectDatumKind.Node ? this.auditor : null);
+
+		var daoDatum = daoResults.iterator().next();
+		ObjectDatumStreamMetadata meta = daoResults.metadataForStreamId(daoDatum.getStreamId());
+		var d = ObjectDatum.forStreamDatum(daoDatum, userId,
+				new DatumId(kind, objectId, sourceId, daoDatum.getTimestamp()), meta);
+		if ( auditor != null ) {
+			auditor.auditNodeDatum(d);
+		}
+		if ( referenceIndex >= list.size() ) {
+			list.add(d);
+		} else {
+			list.add(referenceIndex, d);
+		}
+		return d;
 	}
 
 	/**
