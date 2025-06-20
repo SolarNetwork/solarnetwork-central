@@ -126,7 +126,6 @@ public class QueryingDatumStreamsAccessor_ExpressionTests {
 		// THEN
 		and.then(result).as("Delta evaluated").isEqualByComparingTo(
 				new BigDecimal(12476432001L).add(new BigDecimal(1500L)).add(new BigDecimal(25L)));
-
 	}
 
 	@Test
@@ -152,7 +151,6 @@ public class QueryingDatumStreamsAccessor_ExpressionTests {
 		// THEN
 		and.then(result).as("Delta evaluated")
 				.isEqualByComparingTo(new BigDecimal(12476432707L).add(new BigDecimal(500L)));
-
 	}
 
 }
