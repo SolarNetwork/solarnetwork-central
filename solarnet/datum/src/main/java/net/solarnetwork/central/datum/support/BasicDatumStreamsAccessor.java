@@ -49,7 +49,7 @@ import net.solarnetwork.util.ObjectUtils;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 
@@ -125,6 +125,31 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 		}
 		final var maps = sortedDatumStreams();
 		return maps.getOrDefault(kind, new HashMap<>(2)).getOrDefault(objectId, new HashMap<>());
+	}
+
+	@Override
+	public Datum at(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp) {
+		final var map = sortedDatumStreams(kind, objectId);
+		final List<Datum> list = map.computeIfAbsent(sourceId, k -> new ArrayList<>(2));
+		return at(kind, objectId, sourceId, list, timestamp);
+	}
+
+	@Override
+	public Collection<Datum> atMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
+			Instant timestamp) {
+		final var map = sortedDatumStreams(kind, objectId);
+		final var result = new ArrayList<Datum>(map.size());
+		for ( Entry<String, List<Datum>> e : map.entrySet() ) {
+			if ( sourceIdPattern == null || sourceIdPattern.isEmpty()
+					|| pathMatcher.match(sourceIdPattern, e.getKey()) ) {
+				List<Datum> list = e.getValue();
+				Datum d = at(kind, objectId, sourceIdPattern, list, timestamp);
+				if ( d != null ) {
+					result.add(d);
+				}
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -223,6 +248,48 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	protected Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
 			Instant timestamp, int offset, int referenceIndex) {
 		return null;
+	}
+
+	/**
+	 * Hook to handle an exact timestamp "miss", to resolve a datum.
+	 *
+	 * @param kind
+	 *        the datum stream kind
+	 * @param objectId
+	 *        the datum object ID
+	 * @param sourceId
+	 *        the datum source ID
+	 * @param list
+	 *        the list of available datum
+	 * @param timestamp
+	 *        the datum timestamp to offset from
+	 * @param referenceIndex
+	 *        the index within {@code list} the resolved datum should be
+	 *        inserted at
+	 * @return the resolved datum, or {@literal null}
+	 * @since 2.1
+	 */
+	protected Datum atMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
+			Instant timestamp, int referenceIndex) {
+		return null;
+	}
+
+	private Datum at(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
+			Instant timestamp) {
+		assert list != null;
+		if ( timestamp == null ) {
+			return null;
+		}
+		for ( int idx = 0, len = list.size(); idx < len; idx++ ) {
+			Datum d = list.get(idx);
+			int cmp = timestamp.compareTo(d.getTimestamp());
+			if ( cmp > 0 ) {
+				return atMiss(kind, objectId, sourceId, list, timestamp, idx);
+			} else if ( cmp == 0 ) {
+				return d;
+			}
+		}
+		return atMiss(kind, objectId, sourceId, list, timestamp, list.size());
 	}
 
 	private Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,

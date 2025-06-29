@@ -37,9 +37,44 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface DatumStreamsAccessor {
+
+	/**
+	 * Get a datum at exactly a given timestamp matching a specific source ID.
+	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the datum for
+	 * @param sourceId
+	 *        the source ID to find the datum for
+	 * @param timestamp
+	 *        the timestamp to find the datum for
+	 * @return the matching datum, or {@literal null} if not available
+	 * @since 2.1
+	 */
+	Datum at(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp);
+
+	/**
+	 * Get all datum at exactly a given timestamp, optionally matching a source
+	 * ID pattern.
+	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the datum for
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by; use
+	 *        {@code null} to return all available sources
+	 * @param timestamp
+	 *        the timestamp to find the datum for
+	 * @return the matching datum, never {@code null}
+	 * @since 2.1
+	 */
+	Collection<Datum> atMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
+			Instant timestamp);
 
 	/**
 	 * Get an earlier offset from the latest available datum per source ID.

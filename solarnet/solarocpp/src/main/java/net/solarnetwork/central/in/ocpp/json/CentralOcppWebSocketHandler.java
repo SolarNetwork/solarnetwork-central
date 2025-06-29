@@ -54,6 +54,7 @@ import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ErrorCode;
+import net.solarnetwork.ocpp.domain.ErrorCodeException;
 import net.solarnetwork.ocpp.domain.PendingActionMessage;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageQueue;
@@ -346,6 +347,14 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			data.put(MESSAGE_ID_DATA_KEY, msg.getMessage().getMessageId());
 			data.put(ACTION_DATA_KEY, msg.getMessage().getAction());
 			data.put(MESSAGE_DATA_KEY, payload);
+			if ( exception != null ) {
+				data.put(ERROR_DATA_KEY, exception.getMessage());
+				if ( exception instanceof ErrorCodeException err ) {
+					data.put("errorCode", err.getErrorCode());
+					data.put("errorDescription", err.getErrorDescription());
+					data.put("errorDetails", err.getErrorDetails());
+				}
+			}
 			generateUserEvent(userId, CHARGE_POINT_MESSAGE_RECEIVED_TAGS, null, data);
 		}
 	}

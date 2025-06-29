@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.domain;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Collections.emptyList;
+import static net.solarnetwork.util.NumberUtils.bigDecimalForNumber;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -45,6 +46,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.tariff.Tariff;
 import net.solarnetwork.domain.tariff.TariffSchedule;
+import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.ObjectUtils;
 
 /**
@@ -52,7 +54,7 @@ import net.solarnetwork.util.ObjectUtils;
  * {@link DatumMetadataOperations}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 		implements DatumCollectionFunctions, DatumHttpFunctions {
@@ -716,6 +718,158 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 */
 	public boolean hasLatest(String sourceId, Instant timestamp) {
 		return hasOffset(sourceId, 0, timestamp);
+	}
+
+	/**
+	 * Get a datum matching a specific source ID at a specific timestamp.
+	 *
+	 * @param sourceId
+	 *        the source ID to find the datum for
+	 * @param timestamp
+	 *        the timestamp to find the datum for
+	 * @return the matching datum, or {@literal null} if not available
+	 * @since 1.6
+	 */
+	public DatumExpressionRoot datumAt(String sourceId, Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+			return null;
+		}
+		Datum d = datumStreamsAccessor.at(datumKind(), datumObjectId(), sourceId, timestamp);
+		return (d != null ? copyWith(d) : null);
+	}
+
+	/**
+	 * Test if a datum matching a specific source ID at a specific timestamp
+	 * exists.
+	 *
+	 * @param sourceId
+	 *        the source ID to find the datum for
+	 * @param timestamp
+	 *        the timestamp to find the datum for
+	 * @return {@code true} if a matching datum exists
+	 * @since 1.6
+	 */
+	public boolean hasDatumAt(String sourceId, Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+			return false;
+		}
+		Datum d = datumStreamsAccessor.at(datumKind(), datumObjectId(), sourceId, timestamp);
+		return (d != null);
+	}
+
+	/**
+	 * Get a datum matching a specific source ID at a specific timestamp.
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param timestamp
+	 *        the timestamp to find the datum for
+	 * @return the matching datum, never {@literal null}
+	 * @since 1.6
+	 */
+	public Collection<DatumExpressionRoot> datumAtMatching(String sourceIdPattern, Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
+			return null;
+		}
+		Collection<Datum> found = datumStreamsAccessor.atMatching(datumKind(), datumObjectId(),
+				sourceIdPattern, timestamp);
+		if ( found == null || found.isEmpty() ) {
+			return emptyList();
+		}
+		return found.stream().map(this::copyWith).toList();
+	}
+
+	/**
+	 * Get a datum matching a specific source ID at a specific timestamp.
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param timestamp
+	 *        the timestamp to find the datum for
+	 * @return the matching datum, never {@literal null}
+	 * @since 1.6
+	 */
+	public boolean hasDatumAtMatching(String sourceIdPattern, Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
+			return false;
+		}
+		Collection<Datum> found = datumStreamsAccessor.atMatching(datumKind(), datumObjectId(),
+				sourceIdPattern, timestamp);
+		return (found != null && !found.isEmpty());
+	}
+
+	/**
+	 * Calculate the difference of a datum property value between a given date
+	 * and the next earlier date, falling back to the property value at the
+	 * given date if no earlier datum is available.
+	 *
+	 * @param sourceId
+	 *        the source ID of the datum stream
+	 * @param timestamp
+	 *        the exact ending timestamp of the datum within the stream
+	 * @param key
+	 *        the datum property name to calculate the difference for
+	 * @return the calculated property value difference
+	 * @see #deltaAt(String, Instant, String, boolean)
+	 * @since 1.6
+	 */
+	public Number deltaAt(String sourceId, Instant timestamp, String key) {
+		return deltaAt(sourceId, timestamp, key, false);
+	}
+
+	/**
+	 * Calculate the difference of a datum property value between a given date
+	 * and the next earlier date.
+	 *
+	 * <p>
+	 * Assuming a datum {@code d} is found for the given timestamp, and an
+	 * earlier datum {@code d1} is also found, then the returned value is
+	 * {@code d[key] - d1[key]}. Put another way, the returned value is the
+	 * <i>end</i> property value minus the <i>next earlier</i> property value.
+	 * </p>
+	 *
+	 * @param sourceId
+	 *        the source ID of the datum stream
+	 * @param timestamp
+	 *        the exact ending timestamp of the datum within the stream
+	 * @param key
+	 *        the datum property name to calculate the difference for
+	 * @param fallbackToZero
+	 *        if no earlier datum is available, then when {@literal true} return
+	 *        {@code 0} otherwise return the end datum's {@code key} property
+	 *        value
+	 * @return the calculated property value difference
+	 * @since 1.6
+	 */
+	public Number deltaAt(String sourceId, Instant timestamp, String key, boolean fallbackToZero) {
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+			return null;
+		}
+		Datum d = datumStreamsAccessor.at(datumKind(), datumObjectId(), sourceId, timestamp);
+		if ( d == null || !d.asSampleOperations().hasSampleValue(key) ) {
+			return 0;
+		}
+		Datum d1 = datumStreamsAccessor.offset(datumKind(), datumObjectId(), sourceId, timestamp, 1);
+		if ( d1 == null || !d1.asSampleOperations().hasSampleValue(key) ) {
+			if ( fallbackToZero ) {
+				return 0;
+			}
+			return numberPropertyValue(d, key, 0);
+		}
+
+		BigDecimal n = bigDecimalForNumber(numberPropertyValue(d, key, BigDecimal.ZERO));
+		BigDecimal n1 = bigDecimalForNumber(numberPropertyValue(d1, key, BigDecimal.ZERO));
+		return n.subtract(n1);
+	}
+
+	private Number numberPropertyValue(Datum d, String key, Number defaultValue) {
+		Object val = d.asSampleOperations().findSampleValue(key);
+		return switch (val) {
+			case Number num -> num;
+			case String s -> NumberUtils.parseNumber(s);
+			case null -> defaultValue;
+			default -> defaultValue;
+		};
 	}
 
 	/**
