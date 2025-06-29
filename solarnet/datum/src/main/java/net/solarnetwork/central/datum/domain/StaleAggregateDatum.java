@@ -32,7 +32,7 @@ import net.solarnetwork.central.dao.BaseObjectEntity;
  * A "stale" aggregate datum record.
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  * @since 1.39
  */
 @JsonIgnoreProperties({ "id", "modified" })

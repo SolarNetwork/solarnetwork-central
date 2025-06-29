@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import net.solarnetwork.central.domain.CompositeKey3;
@@ -44,9 +45,9 @@ import net.solarnetwork.domain.SortDescriptor;
  *        the primary key's third component
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface GenericCompositeKey3Dao<T extends Entity<K>, K extends CompositeKey3<K1, K2, K3>, K1, K2, K3>
+public interface GenericCompositeKey3Dao<T extends Entity<K>, K extends Comparable<K> & Serializable & CompositeKey3<K1, K2, K3>, K1, K2, K3>
 		extends GenericDao<T, K>, GenericCompositeKeyFilterableDao<T, K> {
 
 	/**

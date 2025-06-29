@@ -76,7 +76,7 @@ import ocpp.v16.jakarta.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  *
  * @author matt
- * @version 2.9
+ * @version 2.10
  */
 public class OcppController extends BaseOcppController {
 
@@ -191,7 +191,7 @@ public class OcppController extends BaseOcppController {
 
 	@Override
 	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
-		final String topic = instruction.getTopic();
+		final String topic = instruction.getInstruction().getTopic();
 		final Long nodeId = instruction.getNodeId();
 		log.trace("Inspecting {} instruction for node {}", topic, nodeId);
 		if ( !OcppInstructionUtils.OCPP_V16_TOPIC.equals(topic) || nodeId == null ) {
@@ -205,8 +205,8 @@ public class OcppController extends BaseOcppController {
 		Map<String, String> params = instructionParameterMap(instruction);
 		CentralChargePoint cp = chargePointForParameters(userNode, params);
 		if ( cp == null ) {
-			instruction.setState(InstructionState.Declined);
-			instruction.setResultParameters(
+			instruction.getInstruction().setState(InstructionState.Declined);
+			instruction.getInstruction().setResultParameters(
 					Collections.singletonMap("error", "ChargePoint not specified or not available."));
 			return instruction;
 		}
@@ -214,8 +214,8 @@ public class OcppController extends BaseOcppController {
 		try {
 			action = ChargePointAction.valueOf(params.remove(OcppInstructionUtils.OCPP_ACTION_PARAM));
 		} catch ( IllegalArgumentException | NullPointerException e ) {
-			instruction.setState(InstructionState.Declined);
-			instruction.setResultParameters(
+			instruction.getInstruction().setState(InstructionState.Declined);
+			instruction.getInstruction().setResultParameters(
 					Collections.singletonMap("error", "OCPP action parameter missing."));
 			return instruction;
 		}
@@ -226,8 +226,8 @@ public class OcppController extends BaseOcppController {
 						while ( root.getCause() != null ) {
 							root = root.getCause();
 						}
-						instruction.setState(InstructionState.Declined);
-						instruction.setResultParameters(singletonMap("error",
+						instruction.getInstruction().setState(InstructionState.Declined);
+						instruction.getInstruction().setResultParameters(singletonMap("error",
 								"Error decoding OCPP action message: " + root.getMessage()));
 						return instruction;
 					}
@@ -261,7 +261,7 @@ public class OcppController extends BaseOcppController {
 					Map<String, Object> data = singletonMap(ERROR_DATA_KEY, format(
 							"Error handling OCPP action %s: %s", instr.action, root.getMessage()));
 					instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
-							instr.getState(), InstructionState.Declined, data);
+							instr.getInstruction().getState(), InstructionState.Declined, data);
 					if ( userId != null ) {
 						generateUserEvent(userId, CHARGE_POINT_INSTRUCTION_ERROR_TAGS, "Failed to send",
 								data);
@@ -303,7 +303,7 @@ public class OcppController extends BaseOcppController {
 				Map<String, Object> data = singletonMap("error",
 						"Error handling OCPP action: " + root.getMessage());
 				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
-						instr.getState(), InstructionState.Declined, data);
+						instr.getInstruction().getState(), InstructionState.Declined, data);
 				if ( userId != null ) {
 					generateUserEvent(userId, CHARGE_POINT_INSTRUCTION_ERROR_TAGS, "Failed to send",
 							data);
@@ -315,7 +315,7 @@ public class OcppController extends BaseOcppController {
 				}
 				log.info("Sent OCPPv16 {} to charge point {}", instr.action, instr.chargePointIdentity);
 				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
-						instr.getState(), InstructionState.Completed, resultParameters);
+						instr.getInstruction().getState(), InstructionState.Completed, resultParameters);
 				if ( userId != null ) {
 					Map<String, Object> data = new HashMap<>(4);
 					data.put(ACTION_DATA_KEY, instr.action);
@@ -342,7 +342,7 @@ public class OcppController extends BaseOcppController {
 				ChargePointIdentity chargePointIdentity, ChargePointAction action,
 				ObjectNode jsonPayload, Object payload) {
 			super(instruction);
-			setState(state);
+			getInstruction().setState(state);
 			this.chargePointIdentity = chargePointIdentity;
 			this.action = action;
 			this.jsonPayload = jsonPayload;

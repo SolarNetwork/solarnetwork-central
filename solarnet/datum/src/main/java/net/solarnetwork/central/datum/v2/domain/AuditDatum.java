@@ -24,17 +24,17 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import java.time.Instant;
 import java.util.UUID;
-import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.Unique;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * API for an audit record count of datum properties.
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  * @since 2.8
  */
-public interface AuditDatum extends Identity<DatumPK>, DatumRecordCounts {
+public interface AuditDatum extends Unique<DatumPK>, DatumRecordCounts {
 
 	/**
 	 * Get the unique ID of the stream this audit datum is a part of.

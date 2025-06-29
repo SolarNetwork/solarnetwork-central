@@ -30,6 +30,7 @@ import java.util.Objects;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.domain.CodedValue;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Base entity for datum stream related configuration.
@@ -39,7 +40,7 @@ import net.solarnetwork.domain.CodedValue;
  * @param <T>
  *        the enum type
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDatumStreamConfiguration<C, T>, T extends Enum<? extends CodedValue>>
 		extends BaseUserModifiableEntity<C, UserLongIntegerCompositePK> {
@@ -106,10 +107,8 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 				&& Objects.equals(this.sourceId, other.getSourceId())
 				&& Objects.equals(this.property, other.getProperty())
 				&& Objects.equals(this.type, other.getType())
-				&& (this.multiplier == other.getMultiplier()
-					|| (this.multiplier != null && other.getMultiplier() != null && this.multiplier.compareTo(other.getMultiplier()) == 0))
-				&& (this.offset == other.getOffset()
-					|| (this.offset != null && other.getOffset() != null && this.offset.compareTo(other.getOffset()) == 0))
+				&& ObjectUtils.comparativelyEqual(this.multiplier, other.getMultiplier())
+				&& ObjectUtils.comparativelyEqual(this.offset, other.getOffset())
 				&& Objects.equals(this.scale, other.getScale())
 				;
 		// @formatter:on

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.domain;
 
+import net.solarnetwork.domain.Unique;
+
 /**
  * API for capability information for some identifiable object, such as a node,
  * node group, etc.
@@ -31,12 +33,12 @@ package net.solarnetwork.central.domain;
  * measurements, depending on the context it is used in.
  * </p>
  * 
- * @param <PK>
+ * @param <K>
  *        the identity type
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public interface SolarCapabilityInformation<PK> extends net.solarnetwork.domain.Identity<PK> {
+public interface SolarCapabilityInformation<K> extends Unique<K> {
 
 	/**
 	 * Get the name of the object.

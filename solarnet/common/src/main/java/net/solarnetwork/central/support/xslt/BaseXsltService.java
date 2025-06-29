@@ -57,9 +57,9 @@ import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceIn
  * Base service class for XSLT support.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
+public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServiceInfoProvider
 		implements EntityResolver {
 
 	/** The setting key for the XSLT stylesheet. */

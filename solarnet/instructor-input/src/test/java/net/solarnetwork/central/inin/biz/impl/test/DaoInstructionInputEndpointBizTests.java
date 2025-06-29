@@ -182,8 +182,9 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		// enqueue instruction
 		final NodeInstruction queuedInstruction = xformOutput.clone();
 		queuedInstruction.setId(randomLong());
-		queuedInstruction.setState(InstructionState.Queuing);
-		given(instructor.queueInstruction(eq(nodeId), same(xformOutput))).willReturn(queuedInstruction);
+		queuedInstruction.getInstruction().setState(InstructionState.Queuing);
+		given(instructor.queueInstruction(eq(nodeId), same(xformOutput.getInstruction())))
+				.willReturn(queuedInstruction);
 
 		// WHEN
 		Map<String, String> params = Map.of("foo", "bar", "bim", "bam");
@@ -290,8 +291,9 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		// enqueue instruction
 		final NodeInstruction queuedInstruction = xformOutput.clone();
 		queuedInstruction.setId(randomLong());
-		queuedInstruction.setState(InstructionState.Queuing);
-		given(instructor.queueInstruction(eq(nodeId), same(xformOutput))).willReturn(queuedInstruction);
+		queuedInstruction.getInstruction().setState(InstructionState.Queuing);
+		given(instructor.queueInstruction(eq(nodeId), same(xformOutput.getInstruction())))
+				.willReturn(queuedInstruction);
 
 		// WHEN
 		Map<String, String> params = Map.of("foo", "bar", "bim", "bam");
@@ -382,12 +384,12 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 
 		final var instruction = new NodeInstruction(randomString(), Instant.now(), nodeId);
 		instruction.setId(randomLong());
-		instruction.setState(InstructionState.Queuing);
+		instruction.getInstruction().setState(InstructionState.Queuing);
 
 		// lookup instruction result
 		final var finishedInstruction = instruction.clone();
-		finishedInstruction.setState(InstructionState.Completed);
-		finishedInstruction.setResultParameters(Map.of("all", "done"));
+		finishedInstruction.getInstruction().setState(InstructionState.Completed);
+		finishedInstruction.getInstruction().setResultParameters(Map.of("all", "done"));
 		given(instructor.getInstruction(instruction.getId())).willReturn(finishedInstruction);
 
 		// WHEN
@@ -455,7 +457,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 							.as("Event data instruction has ID")
 							.containsEntry("id", finishedInstruction.getId())
 							.as("Event data instruction state from finished instance")
-							.containsEntry("state", finishedInstruction.getState().toString())
+							.containsEntry("state", finishedInstruction.getInstruction().getState().toString())
 							;
 					})
 					;
@@ -507,12 +509,12 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 
 		final var instruction = new NodeInstruction(randomString(), Instant.now(), nodeId);
 		instruction.setId(randomLong());
-		instruction.setState(InstructionState.Queuing);
+		instruction.getInstruction().setState(InstructionState.Queuing);
 
 		// lookup instruction result
 		final var finishedInstruction = instruction.clone();
-		finishedInstruction.setState(InstructionState.Completed);
-		finishedInstruction.setResultParameters(Map.of("all", "done"));
+		finishedInstruction.getInstruction().setState(InstructionState.Completed);
+		finishedInstruction.getInstruction().setResultParameters(Map.of("all", "done"));
 		given(instructor.getInstruction(instruction.getId())).willReturn(finishedInstruction);
 
 		// WHEN
@@ -582,7 +584,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 							.as("Event data instruction has ID")
 							.containsEntry("id", finishedInstruction.getId())
 							.as("Event data instruction state from finished instance")
-							.containsEntry("state", finishedInstruction.getState().toString())
+							.containsEntry("state", finishedInstruction.getInstruction().getState().toString())
 							;
 					})
 					;
@@ -637,8 +639,9 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		// enqueue instruction
 		final NodeInstruction queuedInstruction = xformOutput.clone();
 		queuedInstruction.setId(randomLong());
-		queuedInstruction.setState(InstructionState.Queuing);
-		given(instructor.queueInstruction(eq(nodeId), same(xformOutput))).willReturn(queuedInstruction);
+		queuedInstruction.getInstruction().setState(InstructionState.Queuing);
+		given(instructor.queueInstruction(eq(nodeId), same(xformOutput.getInstruction())))
+				.willReturn(queuedInstruction);
 
 		// WHEN
 		// post application/json type but use endpoint foo/bar type
@@ -729,12 +732,12 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 
 		final var instruction = new NodeInstruction(randomString(), Instant.now(), nodeId);
 		instruction.setId(randomLong());
-		instruction.setState(InstructionState.Queuing);
+		instruction.getInstruction().setState(InstructionState.Queuing);
 
 		// lookup instruction result
 		final var finishedInstruction = instruction.clone();
-		finishedInstruction.setState(InstructionState.Completed);
-		finishedInstruction.setResultParameters(Map.of("all", "done"));
+		finishedInstruction.getInstruction().setState(InstructionState.Completed);
+		finishedInstruction.getInstruction().setResultParameters(Map.of("all", "done"));
 		given(instructor.getInstruction(instruction.getId())).willReturn(finishedInstruction);
 
 		// WHEN
@@ -804,7 +807,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 							.as("Event data instruction has ID")
 							.containsEntry("id", finishedInstruction.getId())
 							.as("Event data instruction state from finished instance")
-							.containsEntry("state", finishedInstruction.getState().toString())
+							.containsEntry("state", finishedInstruction.getInstruction().getState().toString())
 							;
 					})
 					;

@@ -143,7 +143,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		// GIVEN
 		final NodeInstruction instruction = new NodeInstruction("something/else", Instant.now(),
 				TEST_NODE_ID);
-		instruction.setState(Unknown);
+		instruction.getInstruction().setState(Unknown);
 
 		// WHEN
 		hook.onMqttServerConnectionEstablished(conn, false);
@@ -154,7 +154,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(conn).shouldHaveNoInteractions();
 
 		assertThat("Result is same instance", result, is(sameInstance(instruction)));
-		assertThat("Instruction status unchanged for unknown topic", result.getState(),
+		assertThat("Instruction status unchanged for unknown topic", result.getInstruction().getState(),
 				is(equalTo(Unknown)));
 	}
 
@@ -170,7 +170,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
 		// @formatter:off
-		instruction.setParams(Map.of(
+		instruction.getInstruction().setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
 				OSCP_CAPACITY_OPTIMIZER_ID_PARAM, TEST_CO_ID.toString(),
 				OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM, TEST_CG_IDENT,
@@ -203,7 +203,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(conn).shouldHaveNoInteractions();
 
 		assertThat("Result is same instance", result, is(sameInstance(instruction)));
-		assertThat("Instruction status updated for error", result.getState(), is(equalTo(Declined)));
+		assertThat("Instruction status updated for error", result.getInstruction().getState(),
+				is(equalTo(Declined)));
 	}
 
 	@Test
@@ -218,7 +219,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
 		// @formatter:off
-		instruction.setParams(Map.of(
+		instruction.getInstruction().setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
 				OSCP_CAPACITY_OPTIMIZER_ID_PARAM, TEST_CO_ID.toString(),
 				OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM, TEST_CG_IDENT,
@@ -254,7 +255,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(conn).shouldHaveNoInteractions();
 
 		assertThat("Result is same instance", result, is(sameInstance(instruction)));
-		assertThat("Instruction status updated for error", result.getState(), is(equalTo(Declined)));
+		assertThat("Instruction status updated for error", result.getInstruction().getState(),
+				is(equalTo(Declined)));
 	}
 
 	@Test
@@ -269,7 +271,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
 		// @formatter:off
-		instruction.setParams(Map.of(
+		instruction.getInstruction().setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
 				OSCP_CAPACITY_OPTIMIZER_ID_PARAM, TEST_CO_ID.toString(),
 				OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM, TEST_CG_IDENT,
@@ -308,7 +310,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(conn).shouldHaveNoInteractions();
 
 		assertThat("Result is same instance", result, is(sameInstance(instruction)));
-		assertThat("Instruction status updated for error", result.getState(), is(equalTo(Declined)));
+		assertThat("Instruction status updated for error", result.getInstruction().getState(),
+				is(equalTo(Declined)));
 	}
 
 	@Test
@@ -323,7 +326,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
 		// @formatter:off
-		instruction.setParams(Map.of(
+		instruction.getInstruction().setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
 				OSCP_CAPACITY_OPTIMIZER_ID_PARAM, TEST_CO_ID.toString(),
 				OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM, TEST_CG_IDENT,
@@ -368,7 +371,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(conn).shouldHaveNoInteractions();
 
 		assertThat("Result is same instance", result, is(sameInstance(instruction)));
-		assertThat("Instruction status updated for error", result.getState(), is(equalTo(Declined)));
+		assertThat("Instruction status updated for error", result.getInstruction().getState(),
+				is(equalTo(Declined)));
 	}
 
 	@Test
@@ -383,7 +387,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
 		// @formatter:off
-		instruction.setParams(Map.of(
+		instruction.getInstruction().setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
 				OSCP_CAPACITY_OPTIMIZER_ID_PARAM, TEST_CO_ID.toString(),
 				OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM, TEST_CG_IDENT,
@@ -434,7 +438,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(conn).shouldHaveNoInteractions();
 
 		assertThat("Result is same instance", result, is(sameInstance(instruction)));
-		assertThat("Instruction status updated for error", result.getState(), is(equalTo(Declined)));
+		assertThat("Instruction status updated for error", result.getInstruction().getState(),
+				is(equalTo(Declined)));
 	}
 
 	@Test
@@ -449,7 +454,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
 		// @formatter:off
-		instruction.setParams(Map.of(
+		instruction.getInstruction().setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
 				OSCP_CAPACITY_OPTIMIZER_ID_PARAM, TEST_CO_ID.toString(),
 				OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM, TEST_CG_IDENT,
@@ -500,7 +505,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(conn).shouldHaveNoInteractions();
 
 		assertThat("Result is same instance", result, is(sameInstance(instruction)));
-		assertThat("Instruction status updated for error", result.getState(), is(equalTo(Declined)));
+		assertThat("Instruction status updated for error", result.getInstruction().getState(),
+				is(equalTo(Declined)));
 	}
 
 	@Test
@@ -523,7 +529,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
 		// @formatter:off
-		instruction.setParams(Map.of(
+		instruction.getInstruction().setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
 				OSCP_CAPACITY_OPTIMIZER_ID_PARAM, TEST_CO_ID.toString(),
 				OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM, TEST_CG_IDENT,
@@ -576,7 +582,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		then(conn).shouldHaveNoInteractions();
 
 		assertThat("Result is same instance", result, is(sameInstance(instruction)));
-		assertThat("Instruction status updated for execution", result.getState(), is(equalTo(Declined)));
+		assertThat("Instruction status updated for execution", result.getInstruction().getState(),
+				is(equalTo(Declined)));
 	}
 
 	@Test
@@ -600,7 +607,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
 		// @formatter:off
-		instruction.setParams(Map.of(
+		instruction.getInstruction().setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
 				OSCP_CAPACITY_OPTIMIZER_ID_PARAM, TEST_CO_ID.toString(),
 				OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM, TEST_CG_IDENT,
@@ -680,7 +687,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 				hasEntry(OSCP_MESSAGE_PARAM, expectedMsgBody));
 
 		assertThat("Result is NOT same instance", result, is(not(sameInstance(instruction))));
-		assertThat("Instruction status updated for queue", result.getState(), is(equalTo(Queuing)));
+		assertThat("Instruction status updated for queue", result.getInstruction().getState(),
+				is(equalTo(Queuing)));
 	}
 
 	@Test
@@ -705,7 +713,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
 		// @formatter:off
-		instruction.setParams(Map.of(
+		instruction.getInstruction().setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
 				OSCP_CAPACITY_OPTIMIZER_ID_PARAM, TEST_CO_ID.toString(),
 				OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM, TEST_CG_IDENT,
@@ -784,7 +792,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 				hasEntry(OSCP_MESSAGE_PARAM, expectedMsgBody));
 
 		assertThat("Result is NOT same instance", result, is(not(sameInstance(instruction))));
-		assertThat("Instruction status updated for queue", result.getState(), is(equalTo(Queuing)));
+		assertThat("Instruction status updated for queue", result.getInstruction().getState(),
+				is(equalTo(Queuing)));
 	}
 
 }

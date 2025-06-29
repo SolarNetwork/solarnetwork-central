@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import net.solarnetwork.central.domain.CompositeKey2;
@@ -41,9 +42,9 @@ import net.solarnetwork.domain.SortDescriptor;
  * @param <K2>
  *        the primary key's second component
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface GenericCompositeKey2Dao<T extends Entity<K>, K extends CompositeKey2<K1, K2>, K1, K2>
+public interface GenericCompositeKey2Dao<T extends Entity<K>, K extends Comparable<K> & Serializable & CompositeKey2<K1, K2>, K1, K2>
 		extends GenericDao<T, K>, GenericCompositeKeyFilterableDao<T, K> {
 
 	/**

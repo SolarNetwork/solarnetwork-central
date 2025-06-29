@@ -42,7 +42,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * before/after samples at a specific point in time for a node data stream.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  * @since 1.35
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId", "type", "updated", "notes", "final", "start",
@@ -203,20 +203,6 @@ public class GeneralNodeDatumAuxiliary
 			// should never get here
 			throw new RuntimeException(e);
 		}
-	}
-
-	@Override
-	public int compareTo(GeneralNodeDatumAuxiliaryPK o) {
-		if ( id == null && o == null ) {
-			return 0;
-		}
-		if ( id == null ) {
-			return -1;
-		}
-		if ( o == null ) {
-			return 1;
-		}
-		return id.compareTo(o);
 	}
 
 	@Override

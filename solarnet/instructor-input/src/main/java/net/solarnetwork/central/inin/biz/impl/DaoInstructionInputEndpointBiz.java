@@ -77,7 +77,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * DAO implementation of {@link InstructionInputEndpointBiz}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DaoInstructionInputEndpointBiz
 		implements InstructionInputEndpointBiz, CentralInstructionInputUserEvents {
@@ -288,7 +288,8 @@ public class DaoInstructionInputEndpointBiz
 
 		var result = new ArrayList<NodeInstruction>(instructionCount);
 		for ( NodeInstruction instruction : instructions ) {
-			var queued = instructor.queueInstruction(instruction.getNodeId(), instruction);
+			var queued = instructor.queueInstruction(instruction.getNodeId(),
+					instruction.getInstruction());
 			if ( queued != null ) {
 				addUserEvent(userEventAppenderBiz, userId, importEvent(null, endpoint, xform, null,
 						contentType, null, parameters, queued, INSTRUCTION_IMPORTED_TAG));
@@ -365,8 +366,8 @@ public class DaoInstructionInputEndpointBiz
 							addUserEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint,
 									null, xform, null, resType, parameters));
 							throw new IllegalStateException(msg);
-						} else if ( instr.getState() == InstructionState.Completed
-								|| instr.getState() == InstructionState.Declined ) {
+						} else if ( instr.getInstruction().getState() == InstructionState.Completed
+								|| instr.getInstruction().getState() == InstructionState.Declined ) {
 							addUserEvent(userEventAppenderBiz, userId, importEvent(null, endpoint, null,
 									xform, null, resType, parameters, instr, INSTRUCTION_EXECUTED_TAG));
 							results.put(instruction.getId(), instr);
@@ -391,7 +392,7 @@ public class DaoInstructionInputEndpointBiz
 				instr = updated;
 			} else {
 				instr = instr.clone();
-				instr.setResultParameters(INSTRUCTION_EXEC_TIMEOUT_MESSAGE);
+				instr.getInstruction().setResultParameters(INSTRUCTION_EXEC_TIMEOUT_MESSAGE);
 				String msg = "Timeout waiting for instruction [%d] to complete."
 						.formatted(instr.getId());
 				addUserEvent(userEventAppenderBiz, userId,

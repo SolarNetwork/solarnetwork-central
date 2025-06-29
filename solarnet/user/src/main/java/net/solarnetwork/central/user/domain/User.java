@@ -38,7 +38,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A user domain object.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class User extends BaseEntity implements UserInfo {
 
@@ -76,6 +76,11 @@ public class User extends BaseEntity implements UserInfo {
 		super();
 		setId(userId);
 		setEmail(email);
+	}
+
+	@Override
+	public User clone() {
+		return (User) super.clone();
 	}
 
 	@Override

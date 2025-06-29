@@ -112,7 +112,7 @@ public class MyBatisNodeInstructionDao
 	@Override
 	protected Long handleInsert(NodeInstruction datum) {
 		Long result = super.handleInsert(datum);
-		handleRelation(result, datum.getParameters(), InstructionParameter.class, null);
+		handleRelation(result, datum.getInstruction().getParameters(), InstructionParameter.class, null);
 		return result;
 	}
 

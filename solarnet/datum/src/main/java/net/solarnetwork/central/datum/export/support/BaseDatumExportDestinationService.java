@@ -30,12 +30,11 @@ import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceIn
  * {@link DatumExportDestinationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 1.23
  */
-public abstract class BaseDatumExportDestinationService
-		extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
-		implements DatumExportDestinationService {
+public abstract class BaseDatumExportDestinationService extends
+		BaseSettingsSpecifierLocalizedServiceInfoProvider implements DatumExportDestinationService {
 
 	/**
 	 * Constructor.

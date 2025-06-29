@@ -35,11 +35,13 @@ import net.solarnetwork.service.CertificateException;
 /**
  * Base user-related certificate entity.
  *
+ * @param <T>
+ *        the identity type
  * @author matt
  * @version 1.0
  */
-public abstract class BaseUserCertificate<C extends BaseUserCertificate<C>>
-		extends BaseUserModifiableEntity<C, UserStringCompositePK> {
+public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
+		extends BaseUserModifiableEntity<T, UserStringCompositePK> {
 
 	@Serial
 	private static final long serialVersionUID = -8325998663783331582L;
@@ -98,7 +100,7 @@ public abstract class BaseUserCertificate<C extends BaseUserCertificate<C>>
 	}
 
 	@Override
-	public void copyTo(C entity) {
+	public void copyTo(T entity) {
 		super.copyTo(entity);
 		entity.setCertificate(certificate);
 	}
@@ -117,7 +119,7 @@ public abstract class BaseUserCertificate<C extends BaseUserCertificate<C>>
 	 *         other's
 	 */
 	@Override
-	public boolean isSameAs(C other) {
+	public boolean isSameAs(T other) {
 		return (super.isSameAs(other) && Objects.equals(this.certificate, other.getCertificate()));
 	}
 

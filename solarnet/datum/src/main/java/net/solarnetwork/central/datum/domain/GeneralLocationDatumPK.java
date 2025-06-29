@@ -31,7 +31,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Primary key for a general location datum.
  *
  * @author matt
- * @version 2.1
+ * @version 2.0
  */
 public class GeneralLocationDatumPK extends BasicLocationSourceDatePK
 		implements Serializable, Cloneable, Comparable<GeneralLocationDatumPK>, GeneralObjectDatumKey {

@@ -35,7 +35,7 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceMatchInfo;
  * Localized version of {@link InvoiceMatch}.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatchInfo {
 
@@ -129,11 +129,6 @@ public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatc
 	@Override
 	public String getCurrencyCode() {
 		return match.getCurrencyCode();
-	}
-
-	@Override
-	public int compareTo(String o) {
-		return match.compareTo(o);
 	}
 
 }

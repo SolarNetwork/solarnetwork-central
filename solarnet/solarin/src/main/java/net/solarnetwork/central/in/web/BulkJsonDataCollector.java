@@ -69,7 +69,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * JSON implementation of bulk upload service.
  *
  * @author matt
- * @version 3.6
+ * @version 3.7
  */
 @Controller
 @RequestMapping(value = { "/solarin/bulkCollector.do", "/solarin/u/bulkCollector.do" },
@@ -231,7 +231,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		// add instructions for the node
 		final InstructorBiz instructorBiz = getInstructorBiz();
 		if ( instructorBiz != null ) {
-			List<Instruction> instructions = new ArrayList<>(2);
+			List<NodeInstruction> instructions = new ArrayList<>(2);
 			var filter = new SimpleInstructionFilter();
 			filter.setNodeId(authNode.getNodeId());
 			filter.setState(InstructionState.Queued);

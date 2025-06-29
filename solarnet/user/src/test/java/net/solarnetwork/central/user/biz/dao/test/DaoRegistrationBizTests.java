@@ -197,7 +197,7 @@ public class DaoRegistrationBizTests {
 	@Test
 	public void registerNewUser() {
 		final String encodedPass = "encrypted.password";
-		final User newUser = (User) testUser.clone();
+		final User newUser = testUser.clone();
 		newUser.setId(-2L);
 		newUser.setEmail("unconfirmed@" + TEST_EMAIL);
 
@@ -220,7 +220,7 @@ public class DaoRegistrationBizTests {
 	@Test
 	public void registerDuplicateNewUser() {
 		final String encodedPass = "encrypted.password";
-		final User existingUser = (User) testUser.clone();
+		final User existingUser = testUser.clone();
 		existingUser.setId(-2L);
 		existingUser.setEmail(TEST_EMAIL);
 
@@ -1185,10 +1185,10 @@ public class DaoRegistrationBizTests {
 		NodeInstruction instr = new NodeInstruction(
 				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, Instant.now(), userNode.getId());
 		instr.setId(TEST_INSTRUCTION_ID);
-		instr.setState(InstructionState.Queued);
-		instr.addParameter(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE, "1");
-		instr.addParameter(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE, "2");
-		instr.addParameter(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE, "3");
+		instr.getInstruction().setState(InstructionState.Queued);
+		instr.getInstruction().addParameter(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE, "1");
+		instr.getInstruction().addParameter(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE, "2");
+		instr.getInstruction().addParameter(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE, "3");
 
 		expect(instructorBiz.getInstruction(TEST_INSTRUCTION_ID)).andReturn(instr);
 
@@ -1218,7 +1218,7 @@ public class DaoRegistrationBizTests {
 		NodeInstruction instr = new NodeInstruction(
 				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, Instant.now(), userNode.getId());
 		instr.setId(TEST_INSTRUCTION_ID);
-		instr.setState(InstructionState.Received);
+		instr.getInstruction().setState(InstructionState.Received);
 
 		expect(instructorBiz.getInstruction(TEST_INSTRUCTION_ID)).andReturn(instr);
 
@@ -1247,7 +1247,7 @@ public class DaoRegistrationBizTests {
 		NodeInstruction instr = new NodeInstruction(
 				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, Instant.now(), userNode.getId());
 		instr.setId(TEST_INSTRUCTION_ID);
-		instr.setState(InstructionState.Executing);
+		instr.getInstruction().setState(InstructionState.Executing);
 
 		expect(instructorBiz.getInstruction(TEST_INSTRUCTION_ID)).andReturn(instr);
 
@@ -1276,7 +1276,7 @@ public class DaoRegistrationBizTests {
 		NodeInstruction instr = new NodeInstruction(
 				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, Instant.now(), userNode.getId());
 		instr.setId(TEST_INSTRUCTION_ID);
-		instr.setState(InstructionState.Completed);
+		instr.getInstruction().setState(InstructionState.Completed);
 
 		expect(instructorBiz.getInstruction(TEST_INSTRUCTION_ID)).andReturn(instr);
 
@@ -1304,7 +1304,7 @@ public class DaoRegistrationBizTests {
 		NodeInstruction instr = new NodeInstruction(
 				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, Instant.now(), userNode.getId());
 		instr.setId(TEST_INSTRUCTION_ID);
-		instr.setState(InstructionState.Declined);
+		instr.getInstruction().setState(InstructionState.Declined);
 
 		expect(instructorBiz.getInstruction(TEST_INSTRUCTION_ID)).andReturn(instr);
 

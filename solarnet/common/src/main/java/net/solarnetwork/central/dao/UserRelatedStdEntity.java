@@ -31,14 +31,14 @@ import net.solarnetwork.domain.Differentiable;
  * Extension of {@link UserRelatedEntity} that supports {@link CopyingIdentity}
  * and {@link Differentiable}.
  *
- * @param <C>
+ * @param <T>
  *        the entity type
  * @param <K>
  *        the key type
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface UserRelatedStdEntity<C extends UserRelatedStdEntity<C, K>, K extends UserRelatedCompositeKey<K>>
-		extends UserRelatedEntity<K>, CopyingIdentity<K, C>, Differentiable<C>, Serializable, Cloneable {
+public interface UserRelatedStdEntity<T extends UserRelatedStdEntity<T, K>, K extends UserRelatedCompositeKey<K>>
+		extends UserRelatedEntity<K>, CopyingIdentity<T, K>, Differentiable<T>, Serializable, Cloneable {
 
 }

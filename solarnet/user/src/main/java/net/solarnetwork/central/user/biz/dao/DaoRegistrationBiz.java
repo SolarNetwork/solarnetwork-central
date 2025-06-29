@@ -116,7 +116,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO-based implementation of {@link RegistrationBiz}.
  *
  * @author matt
- * @version 2.5
+ * @version 3.0
  */
 public class DaoRegistrationBiz implements RegistrationBiz {
 
@@ -224,7 +224,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			}
 		}
 
-		User clone = (User) user.clone();
+		User clone = user.clone();
 
 		// store user
 		prepareUserForStorage(clone);
@@ -596,7 +596,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		final Future<UserNodeCertificate> approval = approveCSR(certSubjectDN, keystorePassword, user,
 				cert);
-		Instruction installInstruction = null;
+		NodeInstruction installInstruction = null;
 		try {
 			UserNodeCertificate renewedCert = approval.get(approveCsrMaximumWaitSecs, TimeUnit.SECONDS);
 			cert.setStatus(renewedCert.getStatus());
@@ -672,8 +672,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		if ( nodeId == null && userNode.getNode() != null ) {
 			nodeId = userNode.getNode().getId();
 		}
-		if ( !(instruction.getNodeId().equals(nodeId)
-				&& INSTRUCTION_TOPIC_RENEW_CERTIFICATE.equals(instruction.getTopic())) ) {
+		if ( !(instruction.getNodeId().equals(nodeId) && INSTRUCTION_TOPIC_RENEW_CERTIFICATE
+				.equals(instruction.getInstruction().getTopic())) ) {
 			return null;
 		}
 
@@ -681,7 +681,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		details.setNetworkId(userNode.getId());
 		details.setConfirmationKey(instructionId.toString());
 
-		UserNodeCertificateInstallationStatus installStatus = switch (instruction.getState()) {
+		UserNodeCertificateInstallationStatus installStatus = switch (instruction.getInstruction()
+				.getState()) {
 			case Queued -> UserNodeCertificateInstallationStatus.RequestQueued;
 			case Received, Executing -> UserNodeCertificateInstallationStatus.RequestReceived;
 			case Completed -> UserNodeCertificateInstallationStatus.Installed;
@@ -691,9 +692,9 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		details.setInstallationStatus(installStatus);
 
-		if ( instruction.getParameters() != null ) {
+		if ( instruction.getInstruction().getParameters() != null ) {
 			StringBuilder buf = new StringBuilder();
-			for ( InstructionParameter param : instruction.getParameters() ) {
+			for ( InstructionParameter param : instruction.getInstruction().getParameters() ) {
 				if ( INSTRUCTION_PARAM_CERTIFICATE.equals(param.getName()) ) {
 					buf.append(param.getValue());
 				}
@@ -715,7 +716,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	 * @param keystorePassword
 	 *        The password to read the keystore with.
 	 */
-	private Instruction queueRenewedNodeCertificateInstruction(final UserNodeCertificate cert,
+	private NodeInstruction queueRenewedNodeCertificateInstruction(final UserNodeCertificate cert,
 			final String keystorePassword) {
 		final InstructorBiz instructor = instructorBiz;
 		final CertificateService certService = certificateService;

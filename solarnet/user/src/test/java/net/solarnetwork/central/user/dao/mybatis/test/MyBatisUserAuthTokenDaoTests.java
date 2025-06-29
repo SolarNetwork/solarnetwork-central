@@ -26,7 +26,6 @@ import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomBoolean;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
-import static net.solarnetwork.domain.Identity.sortByIdentity;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -366,7 +365,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 			.as("All results for user %d returned in order", randomUserId)
 			.containsExactlyElementsOf(entities.stream()
 					.filter(t -> randomUserId.equals(t.getUserId()))
-					.sorted(sortByIdentity())
+					.sorted()
 					.toList())
 			;
 		
@@ -381,7 +380,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 					.filter(t -> randomUserId.equals(t.getUserId())
 							&& t.getStatus() == (randomActive 
 									? SecurityTokenStatus.Active : SecurityTokenStatus.Disabled))
-					.sorted(sortByIdentity())
+					.sorted()
 					.toList())
 			;
 
@@ -390,7 +389,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 			.containsExactlyElementsOf(entities.stream()
 					.filter(t -> randomUserId.equals(t.getUserId())
 							&& randomType == t.getType())
-					.sorted(sortByIdentity())
+					.sorted()
 					.toList())
 			;
 	

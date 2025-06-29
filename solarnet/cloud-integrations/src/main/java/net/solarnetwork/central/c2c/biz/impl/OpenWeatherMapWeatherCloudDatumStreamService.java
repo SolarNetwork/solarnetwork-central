@@ -41,7 +41,6 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DayDatum;
 import net.solarnetwork.domain.datum.GeneralDatum;
@@ -53,7 +52,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * weather API.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class OpenWeatherMapWeatherCloudDatumStreamService
 		extends BaseOpenWeatherMapCloudDatumStreamService {
@@ -136,7 +135,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
-			return r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList();
+			return r.stream().sorted().map(Datum.class::cast).toList();
 		});
 	}
 

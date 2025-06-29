@@ -38,10 +38,10 @@ import net.solarnetwork.dao.GenericDao;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public interface UserRelatedGenericDao<T extends UserRelatedEntity<PK>, PK extends Serializable>
-		extends GenericDao<T, PK> {
+public interface UserRelatedGenericDao<T extends UserRelatedEntity<K>, K extends Comparable<K> & Serializable>
+		extends GenericDao<T, K> {
 
 	/**
 	 * Get a persisted domain object by its primary key and the owner's user ID.
@@ -52,6 +52,6 @@ public interface UserRelatedGenericDao<T extends UserRelatedEntity<PK>, PK exten
 	 *        the ID of the owner
 	 * @return the domain object
 	 */
-	T get(PK id, Long userId);
+	T get(K id, Long userId);
 
 }

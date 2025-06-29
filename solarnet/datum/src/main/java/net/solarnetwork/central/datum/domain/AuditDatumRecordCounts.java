@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -40,12 +41,13 @@ import net.solarnetwork.domain.SerializeIgnore;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 @JsonPropertyOrder({ "ts", "nodeId", "sourceId", "processed", "datumTotalCount", "datumCount",
 		"datumHourlyCount", "datumDailyCount", "datumMonthlyCount", "datumPropertyPostedCount",
 		"datumPostedCount", "datumQueryCount" })
-public class AuditDatumRecordCounts implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable {
+public final class AuditDatumRecordCounts
+		implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable {
 
 	@Serial
 	private static final long serialVersionUID = -1393664537620448888L;
@@ -127,27 +129,13 @@ public class AuditDatumRecordCounts implements Entity<GeneralNodeDatumPK>, Clone
 	}
 
 	@Override
-	public Object clone() {
+	public AuditDatumRecordCounts clone() {
 		try {
-			return super.clone();
+			return (AuditDatumRecordCounts) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);
 		}
-	}
-
-	@Override
-	public int compareTo(GeneralNodeDatumPK o) {
-		if ( id == null && o == null ) {
-			return 0;
-		}
-		if ( id == null ) {
-			return -1;
-		}
-		if ( o == null ) {
-			return 1;
-		}
-		return id.compareTo(o);
 	}
 
 	@Override
@@ -166,10 +154,7 @@ public class AuditDatumRecordCounts implements Entity<GeneralNodeDatumPK>, Clone
 		if ( !(obj instanceof AuditDatumRecordCounts other) ) {
 			return false;
 		}
-		if ( id == null ) {
-			return other.id == null;
-		}
-		return id.equals(other.id);
+		return Objects.equals(id, other.id);
 	}
 
 	/**

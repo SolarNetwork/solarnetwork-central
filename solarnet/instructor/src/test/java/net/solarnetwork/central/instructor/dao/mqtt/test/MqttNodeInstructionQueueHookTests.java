@@ -61,7 +61,7 @@ import net.solarnetwork.util.StatTracker;
  * Test cases for the {@link MqttNodeInstructionQueueHook} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 
@@ -123,7 +123,7 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 		// GIVEN
 		Instant now = Instant.now();
 		NodeInstruction input = new NodeInstruction(TEST_INSTRUCTION_TOPIC, now, TEST_NODE_ID);
-		input.setState(InstructionState.Queued);
+		input.getInstruction().setState(InstructionState.Queued);
 
 		// WHEN
 		NodeInstruction instr = service.willQueueNodeInstruction(input);
@@ -132,8 +132,10 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 
 		// THEN
 		assertThat("Same instance", instr, sameInstance(input));
-		assertThat("State changed", instr.getState(), equalTo(InstructionState.Queuing));
-		assertThat("Topic unchanged", instr.getTopic(), equalTo(TEST_INSTRUCTION_TOPIC));
+		assertThat("State changed", instr.getInstruction().getState(),
+				equalTo(InstructionState.Queuing));
+		assertThat("Topic unchanged", instr.getInstruction().getTopic(),
+				equalTo(TEST_INSTRUCTION_TOPIC));
 		assertThat("Node ID unchanged", instr.getNodeId(), equalTo(TEST_NODE_ID));
 	}
 
@@ -142,7 +144,7 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 		// GIVEN
 		Instant now = Instant.now();
 		NodeInstruction input = new NodeInstruction(TEST_INSTRUCTION_TOPIC, now, TEST_NODE_ID);
-		input.setState(InstructionState.Queuing);
+		input.getInstruction().setState(InstructionState.Queuing);
 
 		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
 
@@ -182,7 +184,7 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 		// GIVEN
 		Instant now = Instant.now();
 		NodeInstruction input = new NodeInstruction(TEST_INSTRUCTION_TOPIC, now, TEST_NODE_ID);
-		input.setState(InstructionState.Queuing);
+		input.getInstruction().setState(InstructionState.Queuing);
 
 		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
 

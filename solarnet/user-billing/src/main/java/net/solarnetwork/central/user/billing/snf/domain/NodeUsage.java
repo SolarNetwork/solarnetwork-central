@@ -29,7 +29,6 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,19 +56,13 @@ import net.solarnetwork.util.ArrayUtils;
  * </p>
  *
  * @author matt
- * @version 2.7
+ * @version 3.0
  */
 public class NodeUsage extends BasicLongEntity
 		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage>, NodeUsages {
 
 	@Serial
 	private static final long serialVersionUID = 6848689122993706234L;
-
-	/**
-	 * Comparator that sorts {@link NodeUsage} objects by {@code id} in
-	 * ascending order.
-	 */
-	public static final Comparator<NodeUsage> SORT_BY_NODE_ID = new NodeUsageNodeIdComparator();
 
 	private String description;
 	private BigInteger datumPropertiesIn;
@@ -100,18 +93,6 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger[] oauthClientCredentialsTiers;
 	private BigInteger[] cloudIntegrationsDataTiers;
 	private NodeUsageCost[] costsTiers;
-
-	/**
-	 * Compare {@link NodeUsage} instances by node ID in ascending order.
-	 */
-	public static final class NodeUsageNodeIdComparator implements Comparator<NodeUsage> {
-
-		@Override
-		public int compare(NodeUsage o1, NodeUsage o2) {
-			return o1.compareTo(o2.getId());
-		}
-
-	}
 
 	/**
 	 * Constructor.

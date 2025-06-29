@@ -29,6 +29,7 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.codec.JsonUtils;
@@ -37,7 +38,7 @@ import net.solarnetwork.codec.JsonUtils;
  * Serializer for {@link NodeInstruction} objects.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 
@@ -52,12 +53,14 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 	}
 
 	@Override
-	public void serialize(NodeInstruction instr, JsonGenerator generator, SerializerProvider provider)
-			throws IOException, JsonGenerationException {
-		if ( instr == null ) {
+	public void serialize(NodeInstruction nodeInstruction, JsonGenerator generator,
+			SerializerProvider provider) throws IOException, JsonGenerationException {
+		if ( nodeInstruction == null ) {
 			generator.writeNull();
 			return;
 		}
+
+		final Instruction instr = nodeInstruction.getInstruction();
 
 		final boolean hasParameters = instr.getParameters() != null && !instr.getParameters().isEmpty();
 		final String resultParamsJson = instr.getResultParametersJson();
@@ -65,9 +68,9 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 
 		// @formatter:off
 		int size =
-				  (instr.getId() != null ? 1 : 0)
-				+ (instr.getCreated() != null ? 1 : 0)
-				+ (instr.getNodeId() != null ? 1 : 0)
+				  (nodeInstruction.getId() != null ? 1 : 0)
+				+ (nodeInstruction.getCreated() != null ? 1 : 0)
+				+ (nodeInstruction.getNodeId() != null ? 1 : 0)
 				+ (instr.getTopic() != null ? 1 : 0)
 				+ (instr.getInstructionDate() != null ? 1 : 0)
 				+ (instr.getState() != null ? 1 : 0)
@@ -78,14 +81,14 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 				;
 		// @formatter:on
 		generator.writeStartObject(instr, size);
-		if ( instr.getId() != null ) {
-			generator.writeNumberField("id", instr.getId());
+		if ( nodeInstruction.getId() != null ) {
+			generator.writeNumberField("id", nodeInstruction.getId());
 		}
-		if ( instr.getCreated() != null ) {
-			generator.writeObjectField("created", instr.getCreated());
+		if ( nodeInstruction.getCreated() != null ) {
+			generator.writeObjectField("created", nodeInstruction.getCreated());
 		}
-		if ( instr.getNodeId() != null ) {
-			generator.writeNumberField("nodeId", instr.getNodeId());
+		if ( nodeInstruction.getNodeId() != null ) {
+			generator.writeNumberField("nodeId", nodeInstruction.getNodeId());
 		}
 		if ( instr.getTopic() != null ) {
 			generator.writeStringField("topic", instr.getTopic());

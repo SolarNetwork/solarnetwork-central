@@ -36,11 +36,10 @@ import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceIn
  * cloud integration services.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public abstract class BaseCloudIntegrationsIdentifiableService
-		extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
-		implements CloudIntegrationsUserEvents {
+public abstract class BaseCloudIntegrationsIdentifiableService extends
+		BaseSettingsSpecifierLocalizedServiceInfoProvider implements CloudIntegrationsUserEvents {
 
 	/** The display name. */
 	protected final String displayName;

@@ -28,7 +28,7 @@ import net.solarnetwork.central.domain.FilterMatch;
  * Basic entity filter match result.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public interface EntityMatch extends FilterMatch<Long> {
 

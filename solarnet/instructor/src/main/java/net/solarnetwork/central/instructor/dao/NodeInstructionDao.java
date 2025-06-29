@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
 import net.solarnetwork.central.dao.EntityMatch;
+import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
@@ -69,11 +70,11 @@ public interface NodeInstructionDao
 	 * Transition instructions that have expired to a new state.
 	 * 
 	 * <p>
-	 * The {@link NodeInstruction#getExpirationDate()} will be used as the date
+	 * The {@link Instruction#getExpirationDate()} will be used as the date
 	 * before which expired instructions should be transitioned. The
-	 * {@link NodeInstruction#getState()} will be the state the matching
+	 * {@link Instruction#getState()} will be the state the matching
 	 * instructions are transitioned to. The
-	 * {@link NodeInstruction#getResultParameters()} will be persisted as well.
+	 * {@link Instruction#getResultParameters()} will be persisted as well.
 	 * </p>
 	 * 
 	 * @param criteria

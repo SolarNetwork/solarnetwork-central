@@ -22,12 +22,16 @@
 
 package net.solarnetwork.central.domain;
 
+import net.solarnetwork.domain.Unique;
+
 /**
  * A filter result instance, e.g. search result.
  * 
+ * @param <K>
+ *        the primary key type
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public interface FilterMatch<PK> extends net.solarnetwork.domain.Identity<PK> {
+public interface FilterMatch<K> extends Unique<K> {
 
 }

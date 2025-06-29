@@ -180,10 +180,10 @@ public class DatumExportController {
 			dataConfigs = exportBiz.configurationsForUser(userId, UserDataConfiguration.class);
 			destConfigs = maskConfigurations(
 					exportBiz.configurationsForUser(userId, UserDestinationConfiguration.class),
-					serviceSettings, (unused) -> exportBiz.availableDestinationServices());
+					serviceSettings, exportBiz::availableDestinationServices);
 			outputConfigs = maskConfigurations(
 					exportBiz.configurationsForUser(userId, UserOutputConfiguration.class),
-					serviceSettings, (unused) -> exportBiz.availableOutputFormatServices());
+					serviceSettings, exportBiz::availableOutputFormatServices);
 		}
 		return success(
 				new DatumExportFullConfigurations(configs, dataConfigs, destConfigs, outputConfigs));
@@ -318,7 +318,7 @@ public class DatumExportController {
 			if ( id != null ) {
 				return success(maskConfiguration(
 						config.copyWithId(new UserLongCompositePK(config.getUserId(), id)),
-						serviceSettings, (unused) -> exportBiz.availableOutputFormatServices()));
+						serviceSettings, exportBiz::availableOutputFormatServices));
 			}
 		}
 		return error();
@@ -350,7 +350,7 @@ public class DatumExportController {
 			if ( id != null ) {
 				return success(maskConfiguration(
 						config.copyWithId(new UserLongCompositePK(config.getUserId(), id)),
-						serviceSettings, (unused) -> exportBiz.availableDestinationServices()));
+						serviceSettings, exportBiz::availableDestinationServices));
 			}
 		}
 		return error();
@@ -508,7 +508,7 @@ public class DatumExportController {
 						? (BasicDestinationConfiguration) respConfig.getDestinationConfiguration()
 						: new BasicDestinationConfiguration(respConfig.getDestinationConfiguration()));
 		respDestConfig = maskConfiguration(respDestConfig, serviceSettings,
-				(unused) -> exportBiz.availableDestinationServices());
+				exportBiz::availableDestinationServices);
 		respConfig.setDestinationConfiguration(respDestConfig);
 		return respConfig;
 	}
