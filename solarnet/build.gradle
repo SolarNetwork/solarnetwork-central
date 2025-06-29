@@ -95,7 +95,7 @@ subprojects {
 		okhttp3Mockwebserver = '4.12.0'
 		saxonVersion = '12.5'
 		snCommonVersion = '4.0.0'
-		snCommonExprSpelVersion = '4.0.0'
+		snCommonExprSpelVersion = '4.1.0'
 		snCommonMqttVersion = '5.0.0'
 		snCommonMqttNettyVersion = '5.0.0'
 		snCommonOcppVersion = '5.0.0'
