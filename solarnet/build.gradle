@@ -127,7 +127,9 @@ subprojects {
 			mockitoJupiter: 'org.mockito:mockito-junit-jupiter'
 		]
 	}
-	
+		
+	ext['netty.version'] = '4.2.2.Final'
+
 	dependencies {
 		testImplementation libraries.hamcrest,
 				libraries.mockito,
