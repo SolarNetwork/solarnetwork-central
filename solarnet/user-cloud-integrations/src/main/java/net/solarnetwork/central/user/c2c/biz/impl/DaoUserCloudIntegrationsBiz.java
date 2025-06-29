@@ -725,7 +725,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		throw new UnsupportedOperationException("Configuration type %s not supported.".formatted(clazz));
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C digestSensitiveInformation(
 			C entity) {
 		if ( entity == null ) {
