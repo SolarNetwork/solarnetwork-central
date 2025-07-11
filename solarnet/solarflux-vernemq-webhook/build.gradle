@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.5.0'
+	id 'org.springframework.boot' version '3.5.3'
 }
 
 apply plugin: 'java'
@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarFlux VerneMQ Webhook'
-version = '2.5.0'
+version = '3.0.0'
 
 configurations {
 	all*.exclude group: 'commons-logging'

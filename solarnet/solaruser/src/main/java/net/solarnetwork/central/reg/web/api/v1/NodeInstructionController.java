@@ -55,7 +55,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
@@ -73,7 +72,7 @@ import net.solarnetwork.domain.Result;
  * Controller for node instruction web service API.
  *
  * @author matt
- * @version 2.7
+ * @version 2.8
  */
 @GlobalExceptionRestController
 @Controller("v1nodeInstructionController")
@@ -137,8 +136,8 @@ public class NodeInstructionController {
 	 */
 	@RequestMapping(value = "/view", method = RequestMethod.GET, params = "!ids")
 	@ResponseBody
-	public Result<Instruction> viewInstruction(@RequestParam("id") Long instructionId) {
-		Instruction instruction = instructorBiz.getInstruction(instructionId);
+	public Result<NodeInstruction> viewInstruction(@RequestParam("id") Long instructionId) {
+		var instruction = instructorBiz.getInstruction(instructionId);
 		return success(instruction);
 	}
 
@@ -275,7 +274,8 @@ public class NodeInstructionController {
 	@ResponseBody
 	public Result<NodeInstruction> queueInstruction(NodeInstruction input) {
 		validateInstruction(input);
-		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(), input);
+		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(),
+				input.getInstruction());
 		return success(instr);
 	}
 
@@ -291,7 +291,8 @@ public class NodeInstructionController {
 	@ResponseBody
 	public Result<NodeInstruction> queueInstructionBody(@RequestBody NodeInstruction input) {
 		validateInstruction(input);
-		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(), input);
+		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(),
+				input.getInstruction());
 		return success(instr);
 	}
 
@@ -315,7 +316,7 @@ public class NodeInstructionController {
 	@ResponseBody
 	public Result<NodeInstruction> queueInstruction(@PathVariable("topic") String topic,
 			NodeInstruction input) {
-		input.setTopic(topic);
+		input.getInstruction().setTopic(topic);
 		return queueInstruction(input);
 	}
 
@@ -339,7 +340,7 @@ public class NodeInstructionController {
 	@ResponseBody
 	public Result<NodeInstruction> queueInstructionBody(@PathVariable("topic") String topic,
 			@RequestBody NodeInstruction input) {
-		input.setTopic(topic);
+		input.getInstruction().setTopic(topic);
 		validateInstruction(input);
 		return queueInstruction(input);
 	}
@@ -360,7 +361,7 @@ public class NodeInstructionController {
 	public Result<List<NodeInstruction>> queueInstruction(@RequestParam("nodeIds") Set<Long> nodeIds,
 			NodeInstruction input) {
 		validateInstruction(input, nodeIds);
-		List<NodeInstruction> results = instructorBiz.queueInstructions(nodeIds, input);
+		List<NodeInstruction> results = instructorBiz.queueInstructions(nodeIds, input.getInstruction());
 		return success(results);
 	}
 
@@ -386,7 +387,7 @@ public class NodeInstructionController {
 	@ResponseBody
 	public Result<List<NodeInstruction>> queueInstruction(@PathVariable("topic") String topic,
 			@RequestParam("nodeIds") Set<Long> nodeIds, NodeInstruction input) {
-		input.setTopic(topic);
+		input.getInstruction().setTopic(topic);
 		return queueInstruction(nodeIds, input);
 	}
 
@@ -398,7 +399,7 @@ public class NodeInstructionController {
 		if ( (nodeIds == null && instr.getNodeId() == null) || (nodeIds != null && nodeIds.isEmpty()) ) {
 			throw new IllegalArgumentException("The nodeId parameter is required.");
 		}
-		if ( instr.getTopic() == null || instr.getTopic().isEmpty() ) {
+		if ( instr.getInstruction().getTopic() == null || instr.getInstruction().getTopic().isEmpty() ) {
 			throw new IllegalArgumentException("The topic parameter is required.");
 		}
 	}
@@ -452,7 +453,8 @@ public class NodeInstructionController {
 	@ResponseBody
 	public Result<Collection<Long>> updateInstructionsState(final SimpleInstructionFilter filter,
 			@RequestParam("state") InstructionState state) {
-		return success(instructorBiz.updateInstructionsStateForUser(getCurrentActorUserId(), filter, state));
+		return success(
+				instructorBiz.updateInstructionsStateForUser(getCurrentActorUserId(), filter, state));
 	}
 
 	/**
@@ -497,7 +499,8 @@ public class NodeInstructionController {
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
 			NodeInstruction input) {
 		validateInstruction(input);
-		return handleAsyncResult(instructorBiz.queueInstruction(input.getNodeId(), input), maxWaitMs);
+		return handleAsyncResult(
+				instructorBiz.queueInstruction(input.getNodeId(), input.getInstruction()), maxWaitMs);
 	}
 
 	/**
@@ -517,7 +520,8 @@ public class NodeInstructionController {
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
 			@RequestBody NodeInstruction input) {
 		validateInstruction(input);
-		return handleAsyncResult(instructorBiz.queueInstruction(input.getNodeId(), input), maxWaitMs);
+		return handleAsyncResult(
+				instructorBiz.queueInstruction(input.getNodeId(), input.getInstruction()), maxWaitMs);
 	}
 
 	/**
@@ -543,7 +547,7 @@ public class NodeInstructionController {
 	public DeferredResult<Result<NodeInstruction>> execInstruction(@PathVariable("topic") String topic,
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
 			NodeInstruction input) {
-		input.setTopic(topic);
+		input.getInstruction().setTopic(topic);
 		return execInstruction(maxWaitMs, input);
 	}
 
@@ -571,7 +575,7 @@ public class NodeInstructionController {
 			@PathVariable("topic") String topic,
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
 			@RequestBody NodeInstruction input) {
-		input.setTopic(topic);
+		input.getInstruction().setTopic(topic);
 		validateInstruction(input);
 		return execInstruction(maxWaitMs, input);
 	}
@@ -596,7 +600,8 @@ public class NodeInstructionController {
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
 			NodeInstruction input) {
 		validateInstruction(input, nodeIds);
-		return handleAsyncResult(instructorBiz.queueInstructions(nodeIds, input), maxWaitMs);
+		return handleAsyncResult(instructorBiz.queueInstructions(nodeIds, input.getInstruction()),
+				maxWaitMs);
 	}
 
 	/**
@@ -625,7 +630,7 @@ public class NodeInstructionController {
 			@PathVariable("topic") String topic, @RequestParam("nodeIds") Set<Long> nodeIds,
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
 			NodeInstruction input) {
-		input.setTopic(topic);
+		input.getInstruction().setTopic(topic);
 		return execInstruction(nodeIds, maxWaitMs, input);
 	}
 
@@ -712,8 +717,8 @@ public class NodeInstructionController {
 						if ( instr == null ) {
 							String msg = "Instruction [%d] not found".formatted(instruction.getId());
 							throw new IllegalStateException(msg);
-						} else if ( instr.getState() == InstructionState.Completed
-								|| instr.getState() == InstructionState.Declined ) {
+						} else if ( instr.getInstruction().getState() == InstructionState.Completed
+								|| instr.getInstruction().getState() == InstructionState.Declined ) {
 							results.put(instruction.getId(), instr);
 						}
 					} finally {
@@ -736,7 +741,7 @@ public class NodeInstructionController {
 				instr = updated;
 			} else {
 				instr = instr.clone();
-				instr.setResultParameters(INSTRUCTION_EXEC_TIMEOUT_MESSAGE);
+				instr.getInstruction().setResultParameters(INSTRUCTION_EXEC_TIMEOUT_MESSAGE);
 			}
 			finalInstructions.add(instr);
 		}

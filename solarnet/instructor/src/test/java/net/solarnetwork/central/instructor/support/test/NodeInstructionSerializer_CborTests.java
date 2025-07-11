@@ -82,9 +82,10 @@ public class NodeInstructionSerializer_CborTests {
 		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
-		instr.setState(InstructionState.Completed);
-		instr.setParameters(Arrays.asList(
-				new InstructionParameter[] { new InstructionParameter("a", UUID.randomUUID().toString()),
+		instr.getInstruction().setState(InstructionState.Completed);
+		instr.getInstruction()
+				.setParameters(Arrays.asList(new InstructionParameter[] {
+						new InstructionParameter("a", UUID.randomUUID().toString()),
 						new InstructionParameter("b", UUID.randomUUID().toString()) }));
 		Byte[] cbor = objectArray(mapper.writeValueAsBytes(instr));
 
@@ -103,8 +104,8 @@ public class NodeInstructionSerializer_CborTests {
 		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
-		instr.setState(InstructionState.Completed);
-		instr.setResultParametersJson("{\"message\":\"Hello\"}");
+		instr.getInstruction().setState(InstructionState.Completed);
+		instr.getInstruction().setResultParametersJson("{\"message\":\"Hello\"}");
 		Byte[] cbor = objectArray(mapper.writeValueAsBytes(instr));
 
 		// THEN
@@ -122,10 +123,11 @@ public class NodeInstructionSerializer_CborTests {
 		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
-		instr.setState(InstructionState.Completed);
-		instr.setStatusDate(TEST_DATE);
-		instr.setParameters(Arrays.asList(
-				new InstructionParameter[] { new InstructionParameter("a", UUID.randomUUID().toString()),
+		instr.getInstruction().setState(InstructionState.Completed);
+		instr.getInstruction().setStatusDate(TEST_DATE);
+		instr.getInstruction()
+				.setParameters(Arrays.asList(new InstructionParameter[] {
+						new InstructionParameter("a", UUID.randomUUID().toString()),
 						new InstructionParameter("b", UUID.randomUUID().toString()) }));
 		Byte[] cbor = objectArray(mapper.writeValueAsBytes(instr));
 
@@ -144,10 +146,11 @@ public class NodeInstructionSerializer_CborTests {
 		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
 		instr.setId(id);
 		instr.setCreated(TEST_DATE);
-		instr.setState(InstructionState.Completed);
-		instr.setExpirationDate(TEST_DATE);
-		instr.setParameters(Arrays.asList(
-				new InstructionParameter[] { new InstructionParameter("a", UUID.randomUUID().toString()),
+		instr.getInstruction().setState(InstructionState.Completed);
+		instr.getInstruction().setExpirationDate(TEST_DATE);
+		instr.getInstruction()
+				.setParameters(Arrays.asList(new InstructionParameter[] {
+						new InstructionParameter("a", UUID.randomUUID().toString()),
 						new InstructionParameter("b", UUID.randomUUID().toString()) }));
 		Byte[] cbor = objectArray(mapper.writeValueAsBytes(instr));
 

@@ -27,8 +27,8 @@ import java.util.Locale;
 import java.util.Map;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.HttpRequestInfo;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.Unique;
 import net.solarnetwork.service.LocalizedServiceInfoProvider;
 import net.solarnetwork.settings.SettingSpecifierProvider;
 
@@ -36,10 +36,10 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud integration service.
  *
  * @author matt
- * @version 1.5
+ * @version 2.0
  */
 public interface CloudIntegrationService
-		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
+		extends Unique<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
 
 	/** An API "base" URL to the external service API. */
 	String API_BASE_WELL_KNOWN_URL = "baseUrl";

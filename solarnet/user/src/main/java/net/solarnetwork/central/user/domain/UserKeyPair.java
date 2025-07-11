@@ -26,15 +26,15 @@ import java.security.KeyPair;
 import java.time.Instant;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.domain.UserStringCompositePK;
-import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.Unique;
 
 /**
  * API for a user key pair.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface UserKeyPair extends Identity<UserStringCompositePK>, UserIdRelated {
+public interface UserKeyPair extends Unique<UserStringCompositePK>, UserIdRelated {
 
 	/**
 	 * A template pattern for {@link net.solarnetwork.central.biz.SecretsBiz}

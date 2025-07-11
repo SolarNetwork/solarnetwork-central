@@ -68,8 +68,8 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
@@ -84,7 +84,7 @@ import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
  * irradiance API.
  *
  * @author matt
- * @version 1.6
+ * @version 1.8
  */
 public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDatumStreamService {
 
@@ -96,11 +96,19 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 	/**
 	 * The maximum offset from the current time allowed for "live" date range
+	 * queries, in hours.
+	 *
+	 * @since 1.8
+	 */
+	public static final int MAX_LIVE_API_OFFSET_HOURS = 168;
+
+	/**
+	 * The maximum offset from the current time allowed for "live" date range
 	 * queries.
 	 *
 	 * @since 1.2
 	 */
-	public static final Duration MAX_LIVE_API_OFFSET = Duration.ofHours(36);
+	public static final Duration MAX_LIVE_API_OFFSET = Duration.ofHours(MAX_LIVE_API_OFFSET_HOURS);
 
 	/**
 	 * The URL path for historic radiation and weather data.
@@ -254,61 +262,82 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 			usedQueryFilter.setStartDate(startDate);
 			usedQueryFilter.setEndDate(endDate);
 
+			final Instant now = clock.instant();
+
 			// use the live API if requested or if query start near current date
 			final boolean useLiveApi = filter.hasParameter(QUERY_PARAM_USE_LIVE_DATA)
 					|| (ds.hasServiceProperty(DISALLOW_HISTORIC_API_SETTING, Boolean.class)
 							&& ds.serviceProperty(DISALLOW_HISTORIC_API_SETTING, Boolean.class))
-					|| Duration.between(startDate, clock.instant()).compareTo(MAX_LIVE_API_OFFSET) < 0;
+					|| Duration.between(startDate, now).compareTo(MAX_LIVE_API_OFFSET) < 0;
 
-			// @formatter:off
-			final UriComponentsBuilder uriBuilder = UriComponentsBuilder
-					.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
-					.path(useLiveApi
-							? SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH
-							: HISTORIC_RADIATION_URL_PATH)
-					.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, latitude)
-					.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, longitude)
+			Collection<GeneralDatum> r = null;
 
-					.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, resolution.toString())
-					.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
-							resolveOutputParametersValue(refsByFieldName.values()))
-					;
-			// @formatter:on
-
-			if ( useLiveApi ) {
-				uriBuilder.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
-						resolveHours(startDate, endDate));
+			if ( !useLiveApi && Duration.between(endDate, now).compareTo(MAX_LIVE_API_OFFSET) < 0 ) {
+				// need to request historic data only up to MAX_LIVE_API_OFFSET, then live for range after that
+				Instant splitDate = CloudIntegrationsUtils.truncateDate(now.minus(MAX_LIVE_API_OFFSET),
+						resolution, UTC);
+				var rHistoric = executeRequest(ds, integration, latitude, longitude, resolution,
+						refsByFieldName, startDate, splitDate, false, now);
+				var rLive = executeRequest(ds, integration, latitude, longitude, resolution,
+						refsByFieldName, splitDate, endDate, true, now);
+				r = new ArrayList<>(rHistoric);
+				r.addAll(rLive);
 			} else {
-				uriBuilder.queryParam(SolcastCloudIntegrationService.START_DATE_PARAM,
-						startDate.toString());
-				uriBuilder.queryParam(SolcastCloudIntegrationService.END_DATE_PARAM, endDate.toString());
+				r = executeRequest(ds, integration, latitude, longitude, resolution, refsByFieldName,
+						startDate, endDate, useLiveApi, now);
 			}
-
-			String azimuth = nonEmptyString(ds.serviceProperty(AZIMUTH_SETTING, String.class));
-			if ( azimuth != null ) {
-				uriBuilder.queryParam(SolcastCloudIntegrationService.AZIMUTH_PARAM, azimuth);
-			}
-			String tilt = nonEmptyString(ds.serviceProperty(TILT_SETTING, String.class));
-			if ( tilt != null ) {
-				uriBuilder.queryParam(SolcastCloudIntegrationService.TILT_PARAM, tilt);
-			}
-			String arrayType = nonEmptyString(ds.serviceProperty(ARRAY_TYPE_SETTING, String.class));
-			if ( tilt != null ) {
-				uriBuilder.queryParam(SolcastCloudIntegrationService.ARRAY_TYPE_PARAM, arrayType);
-			}
-
-			final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("List irradiance data",
-					integration, JsonNode.class, req -> uriBuilder.buildAndExpand().toUri(),
-					res -> parseDatum(res.getBody(), ds, refsByFieldName, resolution,
-							usedQueryFilter.getStartDate(), usedQueryFilter.getEndDate()));
 
 			// evaluate expressions on merged datum
-			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
-					integration.getConfigId());
+			r = evaluateExpressions(ds, exprProps, r, mapping.getConfigId(), integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-					r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+					r.stream().sorted().map(Datum.class::cast).toList());
 		});
+	}
+
+	private Collection<GeneralDatum> executeRequest(CloudDatumStreamConfiguration datumStream,
+			CloudIntegrationConfiguration integration, final String latitude, final String longitude,
+			final Duration resolution, final Map<String, ValueRef> refsByFieldName, Instant startDate,
+			Instant endDate, final boolean useLiveApi, final Instant now) {
+		// @formatter:off
+		final UriComponentsBuilder uriBuilder = UriComponentsBuilder
+				.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
+				.path(useLiveApi
+						? SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH
+						: HISTORIC_RADIATION_URL_PATH)
+				.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, latitude)
+				.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, longitude)
+
+				.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, resolution.toString())
+				.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
+						resolveOutputParametersValue(refsByFieldName.values()))
+				;
+		// @formatter:on
+
+		if ( useLiveApi ) {
+			uriBuilder.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
+					resolveHours(startDate, now));
+		} else {
+			uriBuilder.queryParam(SolcastCloudIntegrationService.START_DATE_PARAM, startDate.toString());
+			uriBuilder.queryParam(SolcastCloudIntegrationService.END_DATE_PARAM, endDate.toString());
+		}
+
+		String azimuth = nonEmptyString(datumStream.serviceProperty(AZIMUTH_SETTING, String.class));
+		if ( azimuth != null ) {
+			uriBuilder.queryParam(SolcastCloudIntegrationService.AZIMUTH_PARAM, azimuth);
+		}
+		String tilt = nonEmptyString(datumStream.serviceProperty(TILT_SETTING, String.class));
+		if ( tilt != null ) {
+			uriBuilder.queryParam(SolcastCloudIntegrationService.TILT_PARAM, tilt);
+		}
+		String arrayType = nonEmptyString(datumStream.serviceProperty(ARRAY_TYPE_SETTING, String.class));
+		if ( tilt != null ) {
+			uriBuilder.queryParam(SolcastCloudIntegrationService.ARRAY_TYPE_PARAM, arrayType);
+		}
+
+		return restOpsHelper.httpGet("List irradiance data", integration, JsonNode.class,
+				req -> uriBuilder.buildAndExpand().toUri(), res -> parseDatum(res.getBody(), datumStream,
+						refsByFieldName, resolution, startDate, endDate));
 	}
 
 	/**
@@ -386,7 +415,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	private int resolveHours(Instant from, Instant to) {
 		Duration d = Duration.between(from, to);
 		long mins = d.toMinutes();
-		return ((int) (mins / 60) + (mins % 60 > 0 ? 1 : 0));
+		return Math.min(MAX_LIVE_API_OFFSET_HOURS, ((int) (mins / 60) + (mins % 60 > 0 ? 1 : 0)));
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
@@ -444,7 +473,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		}
 
 		// Solcast API returns data in reverse time order, so reverse it now
-		result.sort(Identity.sortByIdentity());
+		Collections.sort(result);
 
 		return result;
 	}

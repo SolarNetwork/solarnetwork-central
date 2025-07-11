@@ -52,7 +52,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * </ul>
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @JsonPropertyOrder({ "id", "created", "userId", "nodeId", "type", "status", "validTo", "options" })
 public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
@@ -70,6 +70,18 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 
 	// transient
 	private UserAlertSituation situation;
+
+	/**
+	 * Constructor.
+	 */
+	public UserAlert() {
+		super();
+	}
+
+	@Override
+	public UserAlert clone() {
+		return (UserAlert) super.clone();
+	}
 
 	/**
 	 * Get the options object as a JSON string.

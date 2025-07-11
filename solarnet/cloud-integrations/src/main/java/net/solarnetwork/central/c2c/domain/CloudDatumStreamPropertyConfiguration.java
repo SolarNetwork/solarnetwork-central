@@ -34,6 +34,7 @@ import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.util.NumberUtils;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A cloud datum stream property configuration entity.
@@ -44,7 +45,7 @@ import net.solarnetwork.util.NumberUtils;
  * </p>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @JsonIgnoreProperties({ "id", "fullyConfigured" })
 @JsonPropertyOrder({ "userId", "datumStreamMappingId", "index", "created", "modified", "enabled",
@@ -125,8 +126,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 				&& Objects.equals(this.propertyName, other.propertyName)
 				&& Objects.equals(this.valueType, other.valueType)
 				&& Objects.equals(this.valueReference, other.valueReference)
-				&& (this.multiplier == other.multiplier
-					|| (this.multiplier != null && other.multiplier != null && this.multiplier.compareTo(other.multiplier) == 0))
+				&& ObjectUtils.comparativelyEqual(this.multiplier, other.multiplier)
 				&& Objects.equals(this.scale, other.scale)
 				;
 		// @formatter:on

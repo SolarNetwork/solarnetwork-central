@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao.mybatis.support;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,14 +39,14 @@ import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.dao.SortCriteria;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.Unique;
 
 /**
  * Base DAO support for MyBatis implementations
  *
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 
@@ -192,7 +193,8 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 *      FilterResultsFactory)
 	 * @since 1.3
 	 */
-	protected <M extends Identity<K>, K, F> FilterResults<M, K> selectFiltered(String query, F filter) {
+	protected <M extends Unique<K>, K extends Comparable<K> & Serializable, F> FilterResults<M, K> selectFiltered(
+			String query, F filter) {
 		return selectFiltered(query, filter, null, null, null, null, null);
 	}
 
@@ -220,8 +222,8 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 *      FilterResultsFactory)
 	 * @since 1.3
 	 */
-	protected <M extends Identity<K>, K, F> FilterResults<M, K> selectFiltered(String query, F filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+	protected <M extends Unique<K>, K extends Comparable<K> & Serializable, F> FilterResults<M, K> selectFiltered(
+			String query, F filter, List<SortDescriptor> sorts, Long offset, Integer max) {
 		return selectFiltered(query, filter, sorts, offset, max, null, null);
 	}
 
@@ -251,8 +253,8 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 *      FilterResultsFactory)
 	 * @since 1.3
 	 */
-	protected <M extends Identity<K>, K, F> FilterResults<M, K> selectFiltered(String query, F filter,
-			List<SortDescriptor> sorts, Long offset, Integer max,
+	protected <M extends Unique<K>, K extends Comparable<K> & Serializable, F> FilterResults<M, K> selectFiltered(
+			String query, F filter, List<SortDescriptor> sorts, Long offset, Integer max,
 			BiConsumer<F, Map<String, Object>> propertyProcessor) {
 		return selectFiltered(query, filter, sorts, offset, max, propertyProcessor, null);
 	}
@@ -309,8 +311,8 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 * @return the results
 	 * @since 1.3
 	 */
-	protected <M extends Identity<K>, K, F> FilterResults<M, K> selectFiltered(final String query,
-			F filter, List<SortDescriptor> sorts, Long offset, Integer max,
+	protected <M extends Unique<K>, K extends Comparable<K> & Serializable, F> FilterResults<M, K> selectFiltered(
+			final String query, F filter, List<SortDescriptor> sorts, Long offset, Integer max,
 			BiConsumer<F, Map<String, Object>> propertyProcessor,
 			FilterResultsFactory<M, K, F> resultsFactory) {
 		Map<String, Object> sqlProps = new HashMap<>(1);

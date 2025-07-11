@@ -246,7 +246,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 *
 	 * @param parameters
 	 *        the parameters, provided to the {@link SystemTaskContext} returned
-	 *        from {@link #context(String...)}
+	 *        from {@link #context()}
 	 * @return this instance, for method chaining
 	 */
 	public DeferredSystemTask<C> withParameters(Map<String, ?> parameters) {

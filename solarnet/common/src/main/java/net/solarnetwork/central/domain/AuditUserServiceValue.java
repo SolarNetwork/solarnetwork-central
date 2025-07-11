@@ -23,7 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.time.Instant;
-import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.Unique;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumId;
 
@@ -37,9 +37,9 @@ import net.solarnetwork.domain.datum.DatumId;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface AuditUserServiceValue extends Identity<DatumId>, UserIdRelated {
+public interface AuditUserServiceValue extends Unique<DatumId>, UserIdRelated {
 
 	/**
 	 * Get the user ID this audit value is part of.

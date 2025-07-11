@@ -43,12 +43,12 @@ import net.solarnetwork.domain.Differentiable;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "created", "publishToSolarIn", "publishToSolarFlux", "nodeId",
 		"sourceIdTemplate" })
-public class UserSettings extends BasicLongEntity implements CopyingIdentity<Long, UserSettings>,
+public class UserSettings extends BasicLongEntity implements CopyingIdentity<UserSettings, Long>,
 		Differentiable<UserSettings>, UserRelatedEntity<Long>, DatumPublishSettings {
 
 	@Serial

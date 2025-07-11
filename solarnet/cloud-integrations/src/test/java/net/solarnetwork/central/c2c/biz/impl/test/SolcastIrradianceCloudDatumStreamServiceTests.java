@@ -93,7 +93,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link SolcastIrradianceCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -743,7 +743,9 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 				.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
 				.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
 						"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
-				.queryParam(SolcastCloudIntegrationService.HOURS_PARAM, 1).buildAndExpand().toUri();
+				.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
+						SolcastIrradianceCloudDatumStreamService.MAX_LIVE_API_OFFSET_HOURS)
+				.buildAndExpand().toUri();
 		final JsonNode dataJson = objectMapper
 				.readTree(utf8StringResource("solcast-irradiance-data-01.json", getClass()));
 		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
@@ -762,6 +764,167 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("No datum parsed from HTTP response because 'live' data outside requested date range.")
 			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * Validate that when the .datum() requested date range that starts in the
+	 * "historic" time period but ends in the "live" time period that we make 2
+	 * requests, one for historic up to the "split" time, and another for live
+	 * after that time.
+	 *
+	 * @throws IOException
+	 *         if an IO error occurs
+	 */
+	@Test
+	public void datum_crossHistoricLiveThreshold() throws IOException {
+		// GIVEN
+		final String apiKey = randomString();
+		final BigDecimal lat = new BigDecimal(randomLong());
+		final BigDecimal lon = new BigDecimal(randomLong());
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				SolcastCloudIntegrationService.API_KEY_SETTING, apiKey
+		));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		c1p1.setEnabled(true);
+		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
+		c1p1.setPropertyName("irradiance");
+		c1p1.setValueType(CloudDatumStreamValueType.Reference);
+		c1p1.setValueReference(componentValueRef(GHI));
+
+		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		c1p2.setEnabled(true);
+		c1p2.setPropertyType(DatumSamplesType.Instantaneous);
+		c1p2.setPropertyName("temp");
+		c1p2.setValueType(CloudDatumStreamValueType.Reference);
+		c1p2.setValueReference(componentValueRef(Temp));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(c1p1, c1p2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+		// @formatter:off
+		datumStream.setServiceProps(Map.of(
+				BaseSolcastCloudDatumStreamService.LATITUDE_SETTING, lat.toPlainString(),
+				BaseSolcastCloudDatumStreamService.LONGITUDE_SETTING, lon.toPlainString(),
+				BaseSolcastCloudDatumStreamService.RESOLUTION_SETTING, "1800"
+		));
+		// @formatter:on
+
+		clock.setInstant(Instant.parse("2024-10-29T20:00:00Z"));
+		final Instant endDate = clock.instant().minus(6, ChronoUnit.DAYS);
+		final Instant startDate = endDate.minus(2, ChronoUnit.DAYS);
+
+		final Instant splitDate = clock.instant()
+				.minus(SolcastIrradianceCloudDatumStreamService.MAX_LIVE_API_OFFSET);
+
+		// request HISTORIC register data
+		final URI dataUri = UriComponentsBuilder
+				.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
+				.path(SolcastIrradianceCloudDatumStreamService.HISTORIC_RADIATION_URL_PATH)
+				.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
+				.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
+				.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
+				.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
+						"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
+				.queryParam(SolcastCloudIntegrationService.START_DATE_PARAM, startDate.toString())
+				.queryParam(SolcastCloudIntegrationService.END_DATE_PARAM, splitDate.toString())
+				.buildAndExpand().toUri();
+		final JsonNode dataJson = objectMapper
+				.readTree(utf8StringResource("solcast-historic-irradiance-data-02.json", getClass()));
+		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
+		given(restOps.exchange(eq(dataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
+				.willReturn(dataRes);
+
+		// request LIVE register data
+		final URI dataUriLive = UriComponentsBuilder
+				.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
+				.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
+				.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
+				.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
+				.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
+				.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
+						"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
+				.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
+						ChronoUnit.HOURS.between(splitDate, clock.instant()))
+				.buildAndExpand().toUri();
+		final JsonNode dataJsonLive = objectMapper
+				.readTree(utf8StringResource("solcast-irradiance-data-02.json", getClass()));
+		final var dataResLive = new ResponseEntity<JsonNode>(dataJsonLive, HttpStatus.OK);
+		given(restOps.exchange(eq(dataUriLive), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
+				.willReturn(dataResLive);
+
+		// WHEN
+		final BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(startDate);
+		filter.setEndDate(endDate);
+		Iterable<Datum> result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+
+		and.then(result)
+			.as("Datum parsed from HTTP response (ignoring datum outside date range)")
+			.hasSize(2)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), Datum::getKind)
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), Datum::getObjectId)
+					.as("Datum source ID is from DatumStream configuration")
+					.returns(datumStream.getSourceId(), Datum::getSourceId)
+					;
+			})
+			.satisfies(list -> {
+				and.then(list).element(0)
+					.as("Timestamp from data delta difference, leading value")
+					.returns(startDate, from(Datum::getTimestamp))
+					.as("Datum samples from register data")
+					.returns(new DatumSamples(Map.of(
+								  "irradiance", 898
+								, "temp", 23
+							),null , null),
+						Datum::asSampleOperations)
+					;
+				and.then(list).element(1)
+					.as("Timestamp from data delta difference, leading value")
+					.returns(Instant.parse("2024-10-22T20:00:00.0000000Z"), from(Datum::getTimestamp))
+					.as("Datum samples from register data")
+					.returns(new DatumSamples(Map.of(
+								  "irradiance", 0
+								, "temp", 16
+							),null , null),
+						Datum::asSampleOperations)
+					;
+			})
 			;
 		// @formatter:on
 	}

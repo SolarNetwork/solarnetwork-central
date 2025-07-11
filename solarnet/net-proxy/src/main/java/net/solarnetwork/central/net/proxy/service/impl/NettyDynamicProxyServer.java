@@ -56,7 +56,8 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
@@ -74,7 +75,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Netty implementation of {@link DynamicProxyServer}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class NettyDynamicProxyServer
 		implements DynamicProxyServer, ServiceLifecycleObserver, X509KeyManager {
@@ -150,8 +151,8 @@ public class NettyDynamicProxyServer
 	public NettyDynamicProxyServer(SocketAddress[] bindAddresses) {
 		super();
 		this.bindAddresses = requireNonEmptyArgument(bindAddresses, "bindAddresses");
-		this.bossGroup = new NioEventLoopGroup(1);
-		this.workerGroup = new NioEventLoopGroup();
+		this.bossGroup = new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());
+		this.workerGroup = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
 	}
 
 	@Override

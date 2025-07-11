@@ -67,7 +67,6 @@ import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.util.StatTracker;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidGenerator;
@@ -76,7 +75,7 @@ import net.solarnetwork.util.UuidGenerator;
  * Test cases for the {@link AsyncDaoUserEventAppenderBiz}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class AsyncDaoUserEventAppenderBizTests {
 
@@ -234,10 +233,10 @@ public class AsyncDaoUserEventAppenderBizTests {
 				is(equalTo((long) taskCount)));
 
 		UserEvent[] added = events.toArray(UserEvent[]::new);
-		sort(added, Identity.sortByIdentity());
+		sort(added);
 
 		UserEvent[] stored = eventsCaptor.getValues().toArray(UserEvent[]::new);
-		sort(stored, Identity.sortByIdentity());
+		sort(stored);
 
 		assertThat("Added and stored the same", stored, arrayContaining(added));
 	}

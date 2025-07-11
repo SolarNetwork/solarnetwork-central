@@ -37,10 +37,10 @@ import net.solarnetwork.util.ObjectUtils;
  * A system configuration entity.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class SystemConfiguration extends BasicUuidEntity
-		implements Cloneable, CopyingIdentity<UUID, SystemConfiguration> {
+		implements Cloneable, CopyingIdentity<SystemConfiguration, UUID> {
 
 	@Serial
 	private static final long serialVersionUID = 7911753153368818260L;

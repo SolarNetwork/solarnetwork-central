@@ -22,15 +22,15 @@
 
 package net.solarnetwork.central.cloud.domain;
 
-import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.Unique;
 
 /**
  * A virtual machine.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface VirtualMachine extends Entity<String> {
+public interface VirtualMachine extends Unique<String> {
 
 	/**
 	 * Get a name for this machine.

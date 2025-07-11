@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao.mybatis.support;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
@@ -30,8 +31,8 @@ import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.Unique;
 
 /**
  * Base implementation of {@link FilterableDao} using MyBatis via
@@ -41,7 +42,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @version 1.1
  * @since 2.7
  */
-public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M extends Identity<K>, F extends PaginationCriteria>
+public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K extends Comparable<K> & Serializable, M extends Unique<K>, F extends PaginationCriteria>
 		extends BaseMyBatisGenericDaoSupport<T, K>
 		implements FilterableDao<M, K, F>, FilterResultsFactory<M, K, F> {
 

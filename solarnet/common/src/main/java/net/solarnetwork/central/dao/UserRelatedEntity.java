@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao;
 
+import java.io.Serializable;
 import java.util.Set;
 import java.util.function.Function;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -31,21 +32,14 @@ import net.solarnetwork.dao.Entity;
 /**
  * API for an entity associated with a user ID.
  *
- * @param <PK>
+ * @param <K>
  *        the primary key type
  * @author matt
- * @version 1.2
+ * @version 2.0
  * @since 2.0
  */
-public interface UserRelatedEntity<PK> extends Entity<PK>, UserIdRelated {
-
-	/**
-	 * Get the user ID this entity relates to.
-	 *
-	 * @return the user ID
-	 */
-	@Override
-	Long getUserId();
+public interface UserRelatedEntity<K extends Comparable<K> & Serializable>
+		extends Entity<K>, UserIdRelated {
 
 	/**
 	 * Mask any sensitive information.

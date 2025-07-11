@@ -29,7 +29,7 @@ import net.solarnetwork.central.dao.EntityMatch;
  * API for Location search results.
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public interface LocationMatch extends EntityMatch {
 

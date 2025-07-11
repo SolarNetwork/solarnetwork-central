@@ -44,13 +44,13 @@ import net.solarnetwork.domain.Differentiable;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "groupId", "userId", "created", "publishToSolarIn", "publishToSolarFlux", "nodeId",
 		"sourceIdTemplate" })
 public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
-		implements CopyingIdentity<UserLongCompositePK, CapacityGroupSettings>,
+		implements CopyingIdentity<CapacityGroupSettings, UserLongCompositePK>,
 		Differentiable<CapacityGroupSettings>, UserRelatedEntity<UserLongCompositePK>,
 		DatumPublishSettings {
 

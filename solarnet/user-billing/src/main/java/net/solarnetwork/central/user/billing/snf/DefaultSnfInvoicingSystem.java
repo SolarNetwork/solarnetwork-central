@@ -407,7 +407,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 		// populate node usages
 		if ( nodeUsages != null ) {
-			nodeUsages.sort(NodeUsage.SORT_BY_NODE_ID);
+			Collections.sort(nodeUsages);
 			List<SnfInvoiceNodeUsage> invoiceNodeUsages = new ArrayList<>(nodeUsages.size());
 			for ( NodeUsage nodeUsage : nodeUsages ) {
 				SnfInvoiceNodeUsage u = new SnfInvoiceNodeUsage(invoiceId.getId(), nodeUsage.getId(),

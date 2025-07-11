@@ -51,6 +51,7 @@ import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
@@ -76,7 +77,7 @@ import net.solarnetwork.util.StatTracker;
  * connect.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class CentralOcppNodeInstructionProvider extends
 		DelayedOccasionalProcessor<CentralOcppNodeInstructionProvider.DelayedChargePointIdentifier>
@@ -178,13 +179,13 @@ public class CentralOcppNodeInstructionProvider extends
 			FilterResults<EntityMatch, Long> matches = instructionDao.findFiltered(filter, null, null,
 					null);
 			for ( EntityMatch match : matches ) {
-				Instruction instruction;
-				if ( match instanceof Instruction ins ) {
+				NodeInstruction instruction;
+				if ( match instanceof NodeInstruction ins ) {
 					instruction = ins;
 				} else {
 					instruction = instructionDao.get(match.getId());
 				}
-				if ( instruction != null && topic.equals(instruction.getTopic()) ) {
+				if ( instruction != null && topic.equals(instruction.getInstruction().getTopic()) ) {
 					processInstruction(instruction, identity, cp);
 				}
 			}
@@ -203,9 +204,9 @@ public class CentralOcppNodeInstructionProvider extends
 		return (params != null ? params : new HashMap<>(0));
 	}
 
-	private void processInstruction(final Instruction instruction, final ChargePointIdentity identity,
-			CentralChargePoint cp) {
-		Map<String, String> params = instructionParameterMap(instruction);
+	private void processInstruction(final NodeInstruction instruction,
+			final ChargePointIdentity identity, CentralChargePoint cp) {
+		Map<String, String> params = instructionParameterMap(instruction.getInstruction());
 		Action action = actionResolver.apply(params.remove(OCPP_ACTION_PARAM));
 		if ( action == null ) {
 			Map<String, Object> data = singletonMap(ERROR_DATA_KEY,

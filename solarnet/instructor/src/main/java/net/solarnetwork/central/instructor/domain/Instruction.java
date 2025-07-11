@@ -40,12 +40,12 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Domain object for an individual instruction.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class Instruction extends BaseEntity {
 
 	@Serial
-	private static final long serialVersionUID = -7005343646718912195L;
+	private static final long serialVersionUID = -1424063634197303751L;
 
 	private String topic;
 	private Instant instructionDate;
@@ -53,6 +53,7 @@ public class Instruction extends BaseEntity {
 	private InstructionState state = InstructionState.Unknown;
 	private List<InstructionParameter> parameters;
 	private Map<String, Object> resultParameters;
+	private Instant expirationDate;
 
 	private String resultParametersJson;
 
@@ -67,9 +68,9 @@ public class Instruction extends BaseEntity {
 	 * Construct with data.
 	 *
 	 * @param topic
-	 * 		the topic
+	 *        the topic
 	 * @param instructionDate
-	 * 		the instruction date
+	 *        the instruction date
 	 */
 	public Instruction(String topic, Instant instructionDate) {
 		super();
@@ -81,7 +82,7 @@ public class Instruction extends BaseEntity {
 	 * Copy constructor.
 	 *
 	 * @param other
-	 * 		the instance to copy
+	 *        the instance to copy
 	 * @since 1.2
 	 */
 	public Instruction(Instruction other) {
@@ -91,6 +92,7 @@ public class Instruction extends BaseEntity {
 		setParameters(other.getParameters());
 		setResultParameters(other.getResultParameters());
 		setState(other.getState());
+		setExpirationDate(other.getExpirationDate());
 	}
 
 	@Override
@@ -109,9 +111,9 @@ public class Instruction extends BaseEntity {
 	 * Add a parameter value.
 	 *
 	 * @param key
-	 * 		the key
+	 *        the key
 	 * @param value
-	 * 		the value
+	 *        the value
 	 */
 	public void addParameter(String key, String value) {
 		if ( parameters == null ) {
@@ -124,9 +126,9 @@ public class Instruction extends BaseEntity {
 	 * Set a result parameter value.
 	 *
 	 * @param key
-	 * 		the key
+	 *        the key
 	 * @param value
-	 * 		the value
+	 *        the value
 	 */
 	public void putResultParameter(String key, Object value) {
 		Map<String, Object> map = resultParameters;
@@ -150,7 +152,7 @@ public class Instruction extends BaseEntity {
 	 * Set the topic.
 	 *
 	 * @param topic
-	 * 		the topic to set
+	 *        the topic to set
 	 */
 	public final void setTopic(String topic) {
 		this.topic = topic;
@@ -169,7 +171,7 @@ public class Instruction extends BaseEntity {
 	 * Set the instruction date.
 	 *
 	 * @param instructionDate
-	 * 		the date to set
+	 *        the date to set
 	 */
 	public final void setInstructionDate(Instant instructionDate) {
 		this.instructionDate = instructionDate;
@@ -188,7 +190,7 @@ public class Instruction extends BaseEntity {
 	 * Set the status date.
 	 *
 	 * @param statusDate
-	 * 		the date to set
+	 *        the date to set
 	 */
 	public final void setStatusDate(Instant statusDate) {
 		this.statusDate = statusDate;
@@ -207,7 +209,7 @@ public class Instruction extends BaseEntity {
 	 * Set the state.
 	 *
 	 * @param state
-	 * 		the state to set
+	 *        the state to set
 	 */
 	public final void setState(InstructionState state) {
 		this.state = state;
@@ -226,7 +228,7 @@ public class Instruction extends BaseEntity {
 	 * Set the parameters.
 	 *
 	 * @param parameters
-	 * 		the parameters to set
+	 *        the parameters to set
 	 */
 	public final void setParameters(List<InstructionParameter> parameters) {
 		this.parameters = parameters;
@@ -235,7 +237,8 @@ public class Instruction extends BaseEntity {
 	/**
 	 * Get the instruction parameters as a single-valued map.
 	 *
-	 * @return the parameters as a map, or {@literal null} if {@link #getParameters()} is {@literal null}
+	 * @return the parameters as a map, or {@literal null} if
+	 *         {@link #getParameters()} is {@literal null}
 	 * @since 1.3
 	 */
 	@JsonIgnore
@@ -257,11 +260,12 @@ public class Instruction extends BaseEntity {
 	 * Set the instruction parameters as a single-valued map.
 	 *
 	 * <p>
-	 * This completely replaces any existing parameters set via {@link #setParameters(List)}.
+	 * This completely replaces any existing parameters set via
+	 * {@link #setParameters(List)}.
 	 * </p>
 	 *
 	 * @param params
-	 * 		the parameters to set
+	 *        the parameters to set
 	 * @since 1.3
 	 */
 	@JsonSetter("params")
@@ -302,7 +306,7 @@ public class Instruction extends BaseEntity {
 	 * Set the result parameters.
 	 *
 	 * @param resultParameters
-	 * 		the parameters to set
+	 *        the parameters to set
 	 */
 	@JsonIgnore
 	public void setResultParameters(Map<String, Object> resultParameters) {
@@ -334,12 +338,12 @@ public class Instruction extends BaseEntity {
 	 * Set the result parameters object via a JSON string.
 	 *
 	 * <p>
-	 * This method will remove any previously created result parameters and replace it with the values
-	 * parsed from the JSON.
+	 * This method will remove any previously created result parameters and
+	 * replace it with the values parsed from the JSON.
 	 * </p>
 	 *
 	 * @param json
-	 * 		the JSON to set
+	 *        the JSON to set
 	 */
 	@JsonSetter("resultParameters")
 	@JsonRawValue
@@ -361,6 +365,31 @@ public class Instruction extends BaseEntity {
 		builder.append(parameters);
 		builder.append("}");
 		return builder.toString();
+	}
+
+	/**
+	 * Get the expiration date.
+	 * 
+	 * @return the expiration date
+	 */
+	public Instant getExpirationDate() {
+		return expirationDate;
+	}
+
+	/**
+	 * Set the expiration date.
+	 * 
+	 * <p>
+	 * This date represents the point in time that a "pending" instruction can
+	 * be automatically transitioned to the {@code Declined} state, adding an
+	 * appropriate {@code message} result property.
+	 * </p>
+	 * 
+	 * @param expirationDate
+	 *        the expiration date to set
+	 */
+	public void setExpirationDate(Instant expirationDate) {
+		this.expirationDate = expirationDate;
 	}
 
 }

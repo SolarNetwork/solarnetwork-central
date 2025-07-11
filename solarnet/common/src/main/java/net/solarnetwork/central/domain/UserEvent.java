@@ -30,8 +30,8 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.dao.BasicIdentity;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.BasicSerializableIdentity;
 import net.solarnetwork.util.UuidUtils;
 
 /**
@@ -44,9 +44,9 @@ import net.solarnetwork.util.UuidUtils;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public class UserEvent extends BasicIdentity<UserUuidPK>
+public final class UserEvent extends BasicSerializableIdentity<UserUuidPK>
 		implements Entity<UserUuidPK>, UserRelatedEntity<UserUuidPK>, Serializable, Cloneable {
 
 	@Serial

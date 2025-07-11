@@ -25,15 +25,15 @@ package net.solarnetwork.central.user.domain;
 import java.time.Instant;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
-import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.Unique;
 
 /**
  * API for a user secret.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface UserSecret extends Identity<UserStringStringCompositePK>, UserIdRelated {
+public interface UserSecret extends Unique<UserStringStringCompositePK>, UserIdRelated {
 
 	/**
 	 * Get the user ID.

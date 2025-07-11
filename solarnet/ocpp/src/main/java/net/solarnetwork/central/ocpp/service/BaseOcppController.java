@@ -74,7 +74,7 @@ import net.solarnetwork.service.support.BasicIdentifiable;
  * Base OCPP controller support.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseOcppController extends BasicIdentifiable
 		implements ChargePointManager, NodeInstructionQueueHook, CentralOcppUserEvents {
@@ -214,7 +214,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	}
 
 	protected static Map<String, String> instructionParameterMap(NodeInstruction instruction) {
-		Map<String, String> params = instruction.getParams();
+		Map<String, String> params = instruction.getInstruction().getParams();
 		return (params != null ? params : new HashMap<>(0));
 	}
 

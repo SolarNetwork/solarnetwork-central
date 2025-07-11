@@ -87,7 +87,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based implementation of {@link UserInstructionInputBiz}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 
@@ -352,10 +352,11 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 						if ( xformResult != null ) {
 							NodeInstruction copy = instr.clone();
 							if ( xformResult.state() != null ) {
-								copy.setState(xformResult.state());
+								copy.getInstruction().setState(xformResult.state());
 							}
 							if ( xformResult.resultParameters() != null ) {
-								copy.setResultParameters(xformResult.resultParameters());
+								copy.getInstruction()
+										.setResultParameters(xformResult.resultParameters());
 							}
 							nodeInstructions.add(copy);
 						} else {

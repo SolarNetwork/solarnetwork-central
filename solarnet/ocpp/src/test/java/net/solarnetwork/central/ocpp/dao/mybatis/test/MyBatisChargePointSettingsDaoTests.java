@@ -31,7 +31,7 @@ import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -187,13 +187,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 
 		Collection<ChargePointSettings> results = dao.getAll(null);
 		List<ChargePointSettings> expected = Arrays.asList(obj1, obj2);
-		expected.sort(new Comparator<ChargePointSettings>() {
-
-			@Override
-			public int compare(ChargePointSettings o1, ChargePointSettings o2) {
-				return o1.compareTo(o2.getId());
-			}
-		});
+		Collections.sort(expected);
 		assertThat("Results found in order", results, contains(expected.toArray()));
 	}
 
@@ -223,13 +217,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 
 		Collection<ChargePointSettings> results = dao.findAllForOwner(userId);
 		List<ChargePointSettings> expected = Arrays.asList(obj1, obj2);
-		expected.sort(new Comparator<ChargePointSettings>() {
-
-			@Override
-			public int compare(ChargePointSettings o1, ChargePointSettings o2) {
-				return o1.compareTo(o2.getId());
-			}
-		});
+		Collections.sort(expected);
 		assertThat("Results found in order", results, contains(expected.toArray()));
 	}
 

@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.c2c.biz.impl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.now;
+import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
@@ -102,7 +103,6 @@ import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.settings.SettingSpecifierProvider;
@@ -112,7 +112,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
@@ -191,12 +191,12 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
 		this.integrationServices = Collections
 				.unmodifiableMap(requireNonNullArgument(integrationServices, "integrationServices")
-						.stream().sorted(Identity.sortByIdentity())
+						.stream().sorted(comparing(CloudIntegrationService::getId))
 						.collect(Collectors.toMap(CloudIntegrationService::getId, Function.identity(),
 								(l, r) -> l, LinkedHashMap::new)));
 		this.datumStreamServices = Collections.unmodifiableMap(integrationServices.stream()
 				.flatMap(s -> StreamSupport.stream(s.datumStreamServices().spliterator(), false))
-				.sorted(Identity.sortByIdentity())
+				.sorted(comparing(CloudDatumStreamService::getId))
 				.collect(Collectors.toMap(CloudDatumStreamService::getId, Function.identity(),
 						(l, r) -> l, LinkedHashMap::new)));
 
@@ -725,12 +725,13 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		throw new UnsupportedOperationException("Configuration type %s not supported.".formatted(clazz));
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C digestSensitiveInformation(
 			C entity) {
 		if ( entity == null ) {
 			return entity;
 		}
-		if ( entity instanceof UserRelatedStdIdentifiableConfigurationEntity<?, ?> u ) {
+		if ( entity instanceof UserRelatedStdIdentifiableConfigurationEntity u ) {
 			u.digestSensitiveInformation(serviceSecureKeys::get);
 		}
 		return entity;

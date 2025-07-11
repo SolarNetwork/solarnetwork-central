@@ -46,7 +46,7 @@ import net.solarnetwork.domain.datum.DatumSamples;
  * </p>
  *
  * @author matt
- * @version 2.2
+ * @version 3.0
  */
 @JsonPropertyOrder({ "created", "locationId", "sourceId" })
 public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Cloneable, Serializable,
@@ -145,27 +145,13 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	}
 
 	@Override
-	public Object clone() {
+	public GeneralLocationDatum clone() {
 		try {
-			return super.clone();
+			return (GeneralLocationDatum) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);
 		}
-	}
-
-	@Override
-	public int compareTo(GeneralLocationDatumPK o) {
-		if ( id == null && o == null ) {
-			return 0;
-		}
-		if ( id == null ) {
-			return -1;
-		}
-		if ( o == null ) {
-			return 1;
-		}
-		return id.compareTo(o);
 	}
 
 	@Override

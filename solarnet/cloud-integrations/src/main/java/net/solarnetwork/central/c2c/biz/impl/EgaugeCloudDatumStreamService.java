@@ -77,7 +77,6 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
@@ -116,7 +115,7 @@ import net.solarnetwork.util.StringUtils;
  * however.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -348,7 +347,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 					integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-					r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+					r.stream().sorted().map(Datum.class::cast).toList());
 		});
 	}
 

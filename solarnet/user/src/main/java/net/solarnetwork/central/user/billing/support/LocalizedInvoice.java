@@ -51,7 +51,7 @@ import net.solarnetwork.domain.Identity;
  * Localized version of {@link Invoice}.
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 
@@ -210,11 +210,6 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	@Override
 	public String getCurrencyCode() {
 		return invoice.getCurrencyCode();
-	}
-
-	@Override
-	public int compareTo(String o) {
-		return invoice.compareTo(o);
 	}
 
 	@Override

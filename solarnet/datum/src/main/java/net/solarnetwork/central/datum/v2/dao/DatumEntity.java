@@ -29,8 +29,8 @@ import java.util.Arrays;
 import java.util.UUID;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.dao.BasicIdentity;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.BasicSerializableIdentity;
 import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
@@ -43,10 +43,10 @@ import net.solarnetwork.domain.datum.DatumProperties;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  * @since 2.8
  */
-public class DatumEntity extends BasicIdentity<DatumPK>
+public class DatumEntity extends BasicSerializableIdentity<DatumPK>
 		implements Datum, Entity<DatumPK>, Cloneable, Serializable {
 
 	@Serial

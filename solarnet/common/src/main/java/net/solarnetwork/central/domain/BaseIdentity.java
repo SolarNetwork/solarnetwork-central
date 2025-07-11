@@ -24,15 +24,16 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
+import net.solarnetwork.domain.Identity;
 
 /**
  * Base implementation of a Long-based {@link net.solarnetwork.domain.Identity}.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public abstract class BaseIdentity
-		implements Cloneable, Serializable, net.solarnetwork.domain.Identity<Long> {
+public abstract class BaseIdentity implements Cloneable, Serializable, Identity<Long> {
 
 	@Serial
 	private static final long serialVersionUID = -5979349641482303093L;
@@ -70,28 +71,7 @@ public abstract class BaseIdentity
 			return false;
 		}
 		BaseIdentity other = (BaseIdentity) obj;
-		if ( id == null ) {
-			return other.id == null;
-		}
-		return id.equals(other.id);
-	}
-
-	/**
-	 * Compare based on the primary key, with {@literal null} values ordered
-	 * before non-null values.
-	 */
-	@Override
-	public int compareTo(Long o) {
-		if ( id == null && o == null ) {
-			return 0;
-		}
-		if ( id == null ) {
-			return -1;
-		}
-		if ( o == null ) {
-			return 1;
-		}
-		return id.compareTo(o);
+		return Objects.equals(id, other.getId());
 	}
 
 	/**

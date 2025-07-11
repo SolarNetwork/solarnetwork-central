@@ -158,11 +158,6 @@ public class HtmlToPdfInvoiceTests {
 		return new TemplateRenderer() {
 
 			@Override
-			public int compareTo(String o) {
-				return 0;
-			}
-
-			@Override
 			public String getId() {
 				return "test";
 			}

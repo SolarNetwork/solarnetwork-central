@@ -34,10 +34,10 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * {@link ObjectDatumStreamMetadataProvider} for metadata information.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  * @since 2.8
  */
-public class ProviderObjectDatumStreamFilterResults<M extends Identity<K>, K>
+public class ProviderObjectDatumStreamFilterResults<M extends Identity<K>, K extends Comparable<K>>
 		extends BasicFilterResults<M, K>
 		implements ObjectDatumStreamFilterResults<M, K>, ObjectDatumStreamMetadataProvider {
 

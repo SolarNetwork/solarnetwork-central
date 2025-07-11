@@ -38,12 +38,11 @@ import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceIn
  * {@link DatumExportOutputFormatService}.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 1.23
  */
-public abstract class BaseDatumExportOutputFormatService
-		extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
-		implements DatumExportOutputFormatService {
+public abstract class BaseDatumExportOutputFormatService extends
+		BaseSettingsSpecifierLocalizedServiceInfoProvider implements DatumExportOutputFormatService {
 
 	private File temporaryDir;
 

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -44,9 +45,9 @@ import net.solarnetwork.util.ObjectUtils;
  * @param <D>
  *        the delegate DAO type
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public class CachingGenericDao<T extends Entity<K>, K, D extends GenericDao<T, K>>
+public class CachingGenericDao<T extends Entity<K>, K extends Comparable<K> & Serializable, D extends GenericDao<T, K>>
 		implements GenericDao<T, K> {
 
 	/** The delegate DAO. */

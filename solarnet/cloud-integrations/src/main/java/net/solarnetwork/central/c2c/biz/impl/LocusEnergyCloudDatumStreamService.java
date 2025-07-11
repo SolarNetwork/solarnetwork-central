@@ -98,7 +98,6 @@ import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -136,7 +135,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.15
+ * @version 1.16
  */
 public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -721,7 +720,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 			}
 
 			return new BasicCloudDatumStreamQueryResult(null, nextQueryFilter,
-					r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+					r.stream().sorted().map(Datum.class::cast).toList());
 		});
 	}
 }

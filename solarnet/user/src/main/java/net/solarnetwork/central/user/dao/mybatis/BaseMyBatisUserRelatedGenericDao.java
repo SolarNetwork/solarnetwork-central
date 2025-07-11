@@ -41,22 +41,22 @@ import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
  * </p>
  *
  * <ol>
- * <li>The {@link #get(Serializable)} method will throw an
- * {@link UnsupportedOperationException}. The {@link #get(Serializable, Long)}
+ * <li>The {@link #get(Comparable)} method will throw an
+ * {@link UnsupportedOperationException}. The {@link #get(Comparable, Long)}
  * method will use the same named SQL query defined by {@link #getQueryForId()}
  * but will pass it a map object with {@code id} and {@code userId} properties
- * (instead of just the primary key {@code PK}).</li>
+ * (instead of just the primary key {@code K}).</li>
  * <li>The {@link #delete(UserRelatedEntity)} method will use the same named SQL
  * query defined by {@link #getDelete()} but will pass it the actual domain
- * object {@code T} (instead of just the primary key {@code PK}).</li>
+ * object {@code T} (instead of just the primary key {@code K}).</li>
  * </ol>
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  * @since 1.11
  */
-public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEntity<PK>, PK extends Serializable>
-		extends BaseMyBatisGenericDao<T, PK> implements UserRelatedGenericDao<T, PK> {
+public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEntity<K>, K extends Comparable<K> & Serializable>
+		extends BaseMyBatisGenericDao<T, K> implements UserRelatedGenericDao<T, K> {
 
 	/**
 	 * Constructor.
@@ -66,13 +66,12 @@ public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEnti
 	 * @param pkClass
 	 *        the primary key class
 	 */
-	public BaseMyBatisUserRelatedGenericDao(Class<? extends T> domainClass,
-			Class<? extends PK> pkClass) {
+	public BaseMyBatisUserRelatedGenericDao(Class<? extends T> domainClass, Class<? extends K> pkClass) {
 		super(domainClass, pkClass);
 	}
 
 	@Override
-	public T get(PK id, Long userId) {
+	public T get(K id, Long userId) {
 		Map<String, Object> params = new HashMap<>(2);
 		if ( id instanceof CompositeKey2<?, ?> pk && userId.equals(pk.keyComponent1()) ) {
 			// automatically unwrap secondary key component as userId parameter provided directly below
@@ -85,8 +84,8 @@ public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEnti
 	}
 
 	@Override
-	public T get(PK id) {
-		throw new UnsupportedOperationException("The get(PK,Long) method must be used");
+	public T get(K id) {
+		throw new UnsupportedOperationException("The get(K,Long) method must be used");
 	}
 
 	@Override

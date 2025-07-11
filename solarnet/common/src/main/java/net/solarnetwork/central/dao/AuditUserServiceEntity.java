@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.AuditUserServiceValue;
-import net.solarnetwork.dao.BasicIdentity;
+import net.solarnetwork.domain.BasicSerializableIdentity;
 import net.solarnetwork.domain.Differentiable;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumId;
@@ -51,12 +51,12 @@ import net.solarnetwork.domain.datum.DatumId;
  * refers to a <b>user</b> entity.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @JsonPropertyOrder({ "ts", "userId", "service", "aggregation", "count" })
 @JsonIgnoreProperties("id")
-public class AuditUserServiceEntity extends BasicIdentity<DatumId> implements AuditUserServiceValue,
-		Cloneable, Serializable, Differentiable<AuditUserServiceValue> {
+public class AuditUserServiceEntity extends BasicSerializableIdentity<DatumId> implements
+		AuditUserServiceValue, Cloneable, Serializable, Differentiable<AuditUserServiceValue> {
 
 	@Serial
 	private static final long serialVersionUID = 8620718545151038544L;

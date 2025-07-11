@@ -52,10 +52,10 @@ import software.amazon.awssdk.services.sqs.model.QueueDoesNotExistException;
  * SQS implementation of {@link UserNodeEventHookService}.
  *
  * @author matt
- * @version 2.1
+ * @version 3.0
  */
-public class SqsUserNodeEventHookService extends
-		BaseSettingsSpecifierLocalizedServiceInfoProvider<String> implements UserNodeEventHookService {
+public class SqsUserNodeEventHookService extends BaseSettingsSpecifierLocalizedServiceInfoProvider
+		implements UserNodeEventHookService {
 
 	private final SqsStats sqsStats;
 	private Cache<String, SqsDestination> destinationCache;

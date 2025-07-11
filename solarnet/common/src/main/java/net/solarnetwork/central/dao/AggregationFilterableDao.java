@@ -25,8 +25,8 @@ package net.solarnetwork.central.dao;
 import java.util.List;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.Unique;
 
 /**
  * API for DAOs that support filtered queries of aggregate data.
@@ -39,9 +39,9 @@ import net.solarnetwork.domain.SortDescriptor;
  *        the filter type
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public interface AggregationFilterableDao<M extends Identity<K>, K, F extends AggregationFilter> {
+public interface AggregationFilterableDao<M extends Unique<K>, K extends Comparable<K>, F extends AggregationFilter> {
 
 	/**
 	 * API for querying for a filtered set of aggregated results from all

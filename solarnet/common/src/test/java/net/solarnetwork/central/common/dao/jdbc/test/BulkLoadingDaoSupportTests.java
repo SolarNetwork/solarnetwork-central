@@ -28,6 +28,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,13 +38,13 @@ import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.PlatformTransactionManager;
 import net.solarnetwork.central.common.dao.jdbc.BulkLoadingDaoSupport;
-import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingOptions;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
+import net.solarnetwork.dao.BasicLongEntity;
 
 /**
  * Test cases for the {@link BulkLoadingDaoSupport} class.
@@ -54,7 +55,7 @@ import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class BulkLoadingDaoSupportTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -101,13 +102,12 @@ public class BulkLoadingDaoSupportTests extends AbstractJUnit5JdbcDaoTestSupport
 		});
 	}
 
-	private static class BulkLoadThingy extends BaseEntity {
+	private static class BulkLoadThingy extends BasicLongEntity {
 
 		private static final long serialVersionUID = 4184939958330559933L;
 
 		private BulkLoadThingy(long id) {
-			super();
-			setId(id);
+			super(id, Instant.now());
 		}
 	}
 
