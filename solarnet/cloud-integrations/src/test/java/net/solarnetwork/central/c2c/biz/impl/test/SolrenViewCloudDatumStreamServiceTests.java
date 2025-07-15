@@ -36,10 +36,12 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.net.URI;
 import java.time.Instant;
@@ -74,6 +76,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
@@ -162,7 +165,131 @@ public class SolrenViewCloudDatumStreamServiceTests {
 	}
 
 	@Test
+	public void dataValues() {
+		dataValues("solrenview-site-data-01.xml");
+	}
+
+	@Test
+	public void dataValues_mulitpleDataNodes() {
+		dataValues("solrenview-site-data-02.xml");
+	}
+
+	private void dataValues(String xmlResource) {
+		// GIVEN
+		final Long siteId = randomLong();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// request data
+		final String resXml = utf8StringResource(xmlResource, getClass());
+		final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class))).willReturn(res);
+
+		// WHEN
+		Iterable<CloudDataValue> results = service.dataValues(integration.getId(),
+				Map.of("siteId", siteId));
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(uriCaptor.capture(), eq(GET), httpEntityCaptor.capture(), eq(String.class));
+
+		// expected date range is clock-aligned
+		Instant expectedEndDate = clock.instant();
+		Instant expectedStartDate = expectedEndDate.minus(SolrenViewGranularity.FiveMinute.getTickDuration());
+
+		and.then(uriCaptor.getValue())
+			.as("Request URI")
+			.isEqualTo(fromUri(BASE_URI)
+					.path(XML_FEED_PATH)
+					.queryParam(XML_FEED_USE_UTC_PARAM)
+					.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
+					.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
+					.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
+					.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
+					.buildAndExpand(siteId, expectedStartDate, expectedEndDate)
+					.toUri()
+			)
+			;
+
+		and.then(results)
+			.as("Results provided")
+			.hasSize(1)
+			.element(0)
+			.satisfies(site -> {
+				and.then(site)
+					.returns(siteId.toString(), from(CloudDataValue::getName))
+					.extracting(CloudDataValue::getChildren, list(CloudDataValue.class))
+					.as("Site has 9 devices")
+					.hasSize(9)
+					.satisfies(devices -> {
+						and.then(devices).element(0)
+							.as("Name from response")
+							.returns("1013811710134", from(CloudDataValue::getName))
+							.as("Identifiers from response")
+							.returns(List.of(siteId.toString(), "1013811710134"), from(CloudDataValue::getIdentifiers))
+							.extracting(CloudDataValue::getChildren, list(CloudDataValue.class))
+							.as("Site has 8 properties")
+							.hasSize(8)
+							.satisfies(props -> {
+								and.then(props).element(0)
+									.as("Name from response")
+									.returns("WH", from(CloudDataValue::getName))
+									.as("Identifiers from response")
+									.returns(List.of(siteId.toString(), "1013811710134", "WH"), from(CloudDataValue::getIdentifiers))
+									;
+								and.then(props).element(7)
+									.as("Name from response")
+									.returns("A", from(CloudDataValue::getName))
+									.as("Identifiers from response")
+									.returns(List.of(siteId.toString(), "1013811710134", "A"), from(CloudDataValue::getIdentifiers))
+									;
+							})
+							;
+						and.then(devices).element(8)
+							.as("Name from response")
+							.returns("1013811821088", from(CloudDataValue::getName))
+							.as("Identifiers from response")
+							.returns(List.of(siteId.toString(), "1013811821088"), from(CloudDataValue::getIdentifiers))
+							.extracting(CloudDataValue::getChildren, list(CloudDataValue.class))
+							.as("Site has 8 properties")
+							.hasSize(8)
+							.satisfies(props -> {
+								and.then(props).element(0)
+									.as("Name from response")
+									.returns("WH", from(CloudDataValue::getName))
+									.as("Identifiers from response")
+									.returns(List.of(siteId.toString(), "1013811821088", "WH"), from(CloudDataValue::getIdentifiers))
+									;
+								and.then(props).element(7)
+									.as("Name from response")
+									.returns("A", from(CloudDataValue::getName))
+									.as("Identifiers from response")
+									.returns(List.of(siteId.toString(), "1013811821088", "A"), from(CloudDataValue::getIdentifiers))
+									;
+							})
+							;
+						})
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void requestLatest() {
+		requestLatest("solrenview-site-data-01.xml");
+	}
+
+	@Test
+	public void requestLatest_multipleDataNodes() {
+		requestLatest("solrenview-site-data-02.xml");
+	}
+
+	private void requestLatest(String xmlResource) {
 		// GIVEN
 		final Long siteId = randomLong();
 		final String componentId1 = "1013811710134";
@@ -237,7 +364,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		// @formatter:on
 
 		// request data
-		final String resXml = utf8StringResource("solrenview-site-data-01.xml", getClass());
+		final String resXml = utf8StringResource(xmlResource, getClass());
 		final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
 		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class))).willReturn(res);
 

@@ -609,32 +609,30 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			}
 		}
 
-		Node dataNode = null;
 		if ( sunspecData != null && sunspecData.hasChildNodes() ) {
 			n = sunspecData.getFirstChild();
-			while ( dataNode == null && n != null ) {
-				if ( "d".equals(n.getLocalName()) ) {
-					dataNode = n;
-				} else {
-					n = n.getNextSibling();
+			while ( n != null ) {
+				if ( "d".equals(n.getLocalName()) && n.hasChildNodes() ) {
+					processDataNode(siteId, n, components);
 				}
-			}
-		}
-
-		if ( dataNode != null && dataNode.hasChildNodes() ) {
-			NodeList elements = dataNode.getChildNodes();
-			for ( int i = 0, len = elements.getLength(); i < len; i++ ) {
-				n = elements.item(i);
-				if ( "m".equals(n.getLocalName()) && n.hasAttributes() && n.hasChildNodes() ) {
-					var component = componentValue(n, siteId);
-					if ( component != null ) {
-						components.add(component);
-					}
-				}
+				n = n.getNextSibling();
 			}
 		}
 
 		return result;
+	}
+
+	private void processDataNode(Object siteId, Node dataNode, List<CloudDataValue> components) {
+		NodeList elements = dataNode.getChildNodes();
+		for ( int i = 0, len = elements.getLength(); i < len; i++ ) {
+			Node n = elements.item(i);
+			if ( "m".equals(n.getLocalName()) && n.hasAttributes() && n.hasChildNodes() ) {
+				var component = componentValue(n, siteId);
+				if ( component != null ) {
+					components.add(component);
+				}
+			}
+		}
 	}
 
 	private CloudDataValue plantValue(Node plant, Object siteId,
