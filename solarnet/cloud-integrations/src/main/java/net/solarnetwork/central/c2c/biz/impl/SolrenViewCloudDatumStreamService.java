@@ -195,7 +195,7 @@ import net.solarnetwork.util.IntRange;
  * </ul>
  *
  * @author matt
- * @version 1.11
+ * @version 1.12
  */
 public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -797,7 +797,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		assert refs != null;
 
 		final Map<String, ValueRef> refsByField = refs.stream()
-				.collect(toMap(r -> r.fieldName, identity()));
+				.collect(toMap(r -> r.fieldName, identity(), (l, r) -> l));
 
 		NodeList nodeList = componentNode.getChildNodes();
 		for ( int i = 0, len = nodeList.getLength(); i < len; i++ ) {
