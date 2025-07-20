@@ -25,6 +25,7 @@ package net.solarnetwork.central.web;
 import static org.apache.commons.lang3.StringUtils.splitByCharacterTypeCamelCase;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Map.Entry;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.core.converter.ResolvedSchema;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.tags.Tag;
@@ -44,8 +46,29 @@ import net.solarnetwork.dao.FilterResults;
 /**
  * Swagger documentation utilities.
  *
+ * <p>
+ * When using Springdoc, the sorters provided here can be used like this:
+ * </p>
+ *
+ * <pre>{@code
+ *
+ * @Bean
+ * public OpenApiCustomizer sortTagsAndPaths() {
+ * 	return (api) -> {
+ * 		if ( api.getTags() != null ) {
+ * 			api.setTags(api.getTags().stream().sorted(new SwaggerUtils.ApiTagSorter()).toList());
+ * 		}
+ * 		if ( api.getPaths() != null ) {
+ * 			api.setPaths(api.getPaths().entrySet().stream().sorted(new SwaggerUtils.PathsSorter())
+ * 					.collect(toMap(e -> e.getKey(), e -> e.getValue(), (l, r) -> l, Paths::new)));
+ * 		}
+ * 	};
+ * }
+ *
+ * }</pre>
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SwaggerUtils {
 
@@ -63,23 +86,65 @@ public class SwaggerUtils {
 
 		@Override
 		public int compare(Tag a, Tag b) {
-			var ac = a.getName().split("-", 0);
-			var bc = b.getName().split("-", 0);
-			var acLen = ac.length;
-			var bcLen = bc.length;
-			for ( int i = 0, len = Math.min(acLen, bcLen); i < len; i += 1 ) {
-				int res = ac[i].compareToIgnoreCase(bc[i]);
-				if ( res != 0 ) {
-					return res;
-				} else if ( i + 1 == acLen ) {
-					return -1;
-				} else if ( i + 1 == bcLen ) {
-					return 1;
-				}
-			}
-			return 0;
+			return compareComponentsIgnoreCase(a.getName(), b.getName(), "-");
 		}
 
+	}
+
+	/**
+	 * Sort API paths by name.
+	 *
+	 * <p>
+	 * Paths are split on the {@code /} character, and each component compared
+	 * in order, with shorter paths coming before longer paths.
+	 * </p>
+	 *
+	 * @since 1.2
+	 */
+	public static class PathsSorter implements Comparator<Entry<String, PathItem>> {
+
+		@Override
+		public int compare(Entry<String, PathItem> a, Entry<String, PathItem> b) {
+			return compareComponentsIgnoreCase(a.getKey(), b.getKey(), "/");
+		}
+
+	}
+
+	/**
+	 * Perform a case-insensitive array components comparison with shorter items
+	 * coming before longer ones.
+	 *
+	 * <p>
+	 * Each string is first split using the given {@code split} pattern into
+	 * arrays. Then each component of those arrays are compared in a
+	 * case-insensitive manner.
+	 * </p>
+	 *
+	 * @param l
+	 *        the first string
+	 * @param r
+	 *        the second string
+	 * @param split
+	 *        the pattern to split each string by
+	 * @return the compare result
+	 */
+	// TODO: use StringUtils 1.17 compareComponentsIgnoreCase
+	public static int compareComponentsIgnoreCase(String l, String r, String split) {
+		var ac = l.split(split, 0);
+		var bc = r.split(split, 0);
+		var acLen = ac.length;
+		var bcLen = bc.length;
+		for ( int i = 0, len = Math.min(acLen, bcLen); i < len; i += 1 ) {
+			int res = ac[i].compareToIgnoreCase(bc[i]);
+			if ( res != 0 ) {
+				return res;
+			} else if ( i + 1 == acLen ) {
+				return -1;
+			} else if ( i + 1 == bcLen ) {
+				return 1;
+			}
+		}
+		return 0;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
