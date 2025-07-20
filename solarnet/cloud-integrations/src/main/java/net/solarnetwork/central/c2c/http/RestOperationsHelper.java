@@ -56,13 +56,14 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.central.web.support.ContentLengthTrackingClientHttpRequestInterceptor;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.service.RemoteServiceException;
 
 /**
  * Helper for HTTP interactions using {@link RestOperations}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 
@@ -223,9 +224,13 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 			final var headers = new HttpHeaders();
 			final var req = new HttpEntity<>(body, headers);
 			uri = setup.apply(headers);
+
+			final Map<String, Object> eventData = (body != null
+					? Map.of("method", method.toString(), "uri", uri.toString(), "body",
+							(body instanceof String s ? s : JsonUtils.getTreeFromObject(body)))
+					: Map.of("method", method.toString(), "uri", uri.toString()));
 			userEventAppenderBiz.addEvent(configuration.getUserId(),
-					eventForConfiguration(configuration.getId(), eventTags, description,
-							Map.of("method", method.toString(), "uri", uri.toString())));
+					eventForConfiguration(configuration.getId(), eventTags, description, eventData));
 
 			final ResponseEntity<R> res = restOps.exchange(uri, method, req, responseType);
 			return handler.apply(res);
