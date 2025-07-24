@@ -38,8 +38,8 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
- * Store a {@link GeneralNodeDatum} via the {@code solardatm.store_datum} stored
- * procedure.
+ * Store a {@link GeneralNodeDatum} via the {@code solardatm.store_stream_datum}
+ * stored procedure.
  *
  * <p>
  * The statement registers an output parameter of type {@code OTHER} at index
