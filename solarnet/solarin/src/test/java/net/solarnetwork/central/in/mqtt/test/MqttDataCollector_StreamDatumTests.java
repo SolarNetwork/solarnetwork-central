@@ -67,7 +67,7 @@ import net.solarnetwork.util.StatTracker;
  * @author matt
  * @version 2.0
  */
-public class MqttDataCollectorTests_StreamDatum {
+public class MqttDataCollector_StreamDatumTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 

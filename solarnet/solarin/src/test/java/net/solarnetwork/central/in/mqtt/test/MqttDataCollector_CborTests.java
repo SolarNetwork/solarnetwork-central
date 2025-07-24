@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.in.mqtt.test;
 
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.capture;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -29,6 +31,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
@@ -63,9 +66,9 @@ import net.solarnetwork.util.StatTracker;
  * Test cases for the {@link MqttDataCollector} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
-public class MqttDataCollectorTests_CBOR {
+public class MqttDataCollector_CborTests {
 
 	private static final Long TEST_NODE_ID = 123L;
 	private ObjectMapper objectMapper;
@@ -224,6 +227,52 @@ public class MqttDataCollectorTests_CBOR {
 		assertThat("_v2 tag should have been removed, leaving bar tag",
 				postedDatum.getSamples().getTags(), containsInAnyOrder("bar"));
 
+	}
+
+	@Test
+	public void processGeneralNodeDatum_Infinity() throws IOException {
+		DatumSamples s = new DatumSamples();
+		s.putInstantaneousSampleValue("a", Double.POSITIVE_INFINITY);
+		s.addTag(MqttDataCollector.TAG_V2);
+		s.addTag("bar");
+
+		GeneralDatum datum = new GeneralDatum(TEST_NODE_ID, "/DE/G2/GM/GEN/1",
+				Instant.ofEpochMilli(1576472400000L), s);
+
+		final byte[] data = objectMapper.writeValueAsBytes(datum);
+		Capture<Iterable<GeneralNodeDatum>> postDatumCaptor = new Capture<>();
+		dataCollectorBiz.postGeneralNodeDatum(capture(postDatumCaptor));
+
+		// WHEN
+		replayAll();
+		String topic = datumTopic(TEST_NODE_ID);
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce, data);
+		service.onMqttMessage(msg);
+
+		// THEN
+		// @formatter:off
+		then(postDatumCaptor.getValue())
+			.as("1 datum is posted")
+			.hasSize(1)
+			.first()
+			.as("Posted datum ID from message")
+			.returns(new GeneralNodeDatumPK(datum.getObjectId(), datum.getTimestamp(), datum.getSourceId()), from(GeneralNodeDatum::getId))
+			.extracting(GeneralNodeDatum::getSamples)
+			.satisfies(samples -> {
+				then(samples.getInstantaneous())
+					.as("Parsed input instantaneous properties")
+					.hasSize(1)
+					.as("Parsed Infinity instantaneous property value")
+					.containsEntry("a", Double.POSITIVE_INFINITY)
+					;
+				
+				then(samples.getTags())
+					.as("_v2 tag should have been removed, leaving bar tag")
+					.containsExactlyInAnyOrder("bar")
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 }
