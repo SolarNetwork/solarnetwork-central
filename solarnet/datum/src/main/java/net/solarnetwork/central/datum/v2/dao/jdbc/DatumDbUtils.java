@@ -102,7 +102,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * </p>
  *
  * @author matt
- * @version 2.5
+ * @version 2.6
  * @since 3.8
  */
 public final class DatumDbUtils {
@@ -686,19 +686,39 @@ public final class DatumDbUtils {
 
 	}
 
-	private static String insertMetaStmt(String kind) {
-		StringBuilder buf = new StringBuilder();
-		buf.append("insert into solardatm.da_");
-		buf.append(kind);
-		buf.append("_meta (stream_id,");
-		if ( kind.startsWith("loc") ) {
-			buf.append("loc_id");
-		} else {
-			buf.append("node_id");
-		}
-		buf.append(",source_id,names_i,names_a,names_s,jdata) ");
-		buf.append("VALUES (?::uuid,?,?,?::text[],?::text[],?::text[],?::jsonb)");
-		return buf.toString();
+	/**
+	 * Get a SQL INSERT statement for the {@code solardatm.da_*_meta} table.
+	 *
+	 * <p>
+	 * The order of columns is:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li>stream_id (string as UUID)</li>
+	 * <li>object_id (bigint)</li>
+	 * <li>source_id (text)</li>
+	 * <li>names_i (text[])</li>
+	 * <li>names_a (text[])</li>
+	 * <li>names_s (text[])</li>
+	 * <li>jdata (string as JSONB)</li>
+	 * </ol>
+	 *
+	 * @param kind
+	 *        the meta kind
+	 * @return the SQL
+	 * @since 2.6
+	 */
+	public static String insertDatumMetaSql(ObjectDatumKind kind) {
+		return """
+				INSERT INTO solardatm.%s (stream_id,%s,source_id,names_i,names_a,names_s,jdata)
+				VALUES (?::uuid,?,?,?::text[],?::text[],?::text[],?::jsonb)
+				""".formatted(switch (kind) {
+			case Location -> "da_loc_datm_meta";
+			default -> "da_datm_meta";
+		}, switch (kind) {
+			case Location -> "loc_id";
+			default -> "node_id";
+		});
 	}
 
 	/**
@@ -733,8 +753,10 @@ public final class DatumDbUtils {
 	 */
 	public static void insertObjectDatumStreamMetadata(Logger log, Connection con,
 			Iterable<? extends ObjectDatumStreamMetadata> metas) throws SQLException {
-		try (PreparedStatement nodeMetaStmt = con.prepareStatement(insertMetaStmt("datm"));
-				PreparedStatement locMetaStmt = con.prepareStatement(insertMetaStmt("loc_datm"))) {
+		try (PreparedStatement nodeMetaStmt = con
+				.prepareStatement(insertDatumMetaSql(ObjectDatumKind.Node));
+				PreparedStatement locMetaStmt = con
+						.prepareStatement(insertDatumMetaSql(ObjectDatumKind.Location))) {
 			for ( ObjectDatumStreamMetadata meta : metas ) {
 				if ( log != null ) {
 					log.debug("Inserting ObjectDatumStreamMetadata {}", meta);
@@ -823,7 +845,7 @@ public final class DatumDbUtils {
 					Object id = datumStmt.getObject(1);
 					UUID streamId = (id instanceof UUID uuid ? uuid
 							: id != null ? UUID.fromString(id.toString()) : null);
-					result.computeIfAbsent(nspk, k -> createMetadata(streamId, timeZoneId, datums, k));
+					result.computeIfAbsent(nspk, k -> streamMetadata(jdbcTemplate, streamId));
 				}
 			}
 			return null;
@@ -898,7 +920,7 @@ public final class DatumDbUtils {
 	 */
 	public static void insertDatum(Logger log, JdbcOperations jdbcTemplate, Iterable<Datum> datums) {
 		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
-			try (PreparedStatement datumStmt = con.prepareStatement(insertDatumStmt())) {
+			try (PreparedStatement datumStmt = con.prepareStatement(insertDatumSql())) {
 				final Timestamp now = Timestamp.from(Instant.now());
 				for ( Datum d : datums ) {
 					if ( log != null ) {
@@ -946,26 +968,67 @@ public final class DatumDbUtils {
 		});
 	}
 
-	private static String insertDatumStmt() {
-		StringBuilder buf = new StringBuilder();
-		buf.append("INSERT INTO solardatm.da_datm ");
-		buf.append("(stream_id,ts,data_i,data_a,data_s,data_t,received) VALUES ");
-		buf.append("(?::uuid,?,?::numeric[],?::numeric[],?::text[],?::text[],?)");
-		return buf.toString();
+	/**
+	 * Get the SQL to insert into the {@code solardatm.da_datm} table.
+	 *
+	 * <p>
+	 * The column order is:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li>stream_id (string)</li>
+	 * <li>ts (timestamp)</li>
+	 * <li>data_i (numeric[])</li>
+	 * <li>data_a (numeric[])</li>
+	 * <li>data_s (text[])</li>
+	 * <li>data_t (text[])</li>
+	 * <li>received (timestamp)</li>
+	 * </ol>
+	 *
+	 * @return the insert SQL
+	 * @since 2.6
+	 */
+	public static String insertDatumSql() {
+		return """
+				INSERT INTO solardatm.da_datm (stream_id,ts,data_i,data_a,data_s,data_t,received)
+				VALUES (?::uuid,?,?::numeric[],?::numeric[],?::text[],?::text[],?)
+				""";
 	}
 
-	private static String insertAggStmt(Aggregation kind) {
-		StringBuilder buf = new StringBuilder();
-		buf.append("insert into solardatm.agg_datm_");
-		buf.append(switch (kind) {
-			case Day -> "daily";
-			case Month -> "monthly";
-			default -> "hourly";
-		});
-		buf.append(" (stream_id,ts_start,data_i,data_a,data_s,data_t,stat_i,read_a) ");
-		buf.append(
-				"VALUES (?::uuid,?,?::numeric[],?::numeric[],?::text[],?::text[],?::numeric[][],?::numeric[][])");
-		return buf.toString();
+	/**
+	 * Get the SQL to insert into a {@code solardatm.agg_datm_*} table.
+	 *
+	 * <p>
+	 * The column order is:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li>stream_id (string)</li>
+	 * <li>ts_start (timestamp)</li>
+	 * <li>data_i (numeric[])</li>
+	 * <li>data_a (numeric[])</li>
+	 * <li>data_s (text[])</li>
+	 * <li>data_t (text[])</li>
+	 * <li>stat_i (numeric[][])</li>
+	 * <li>read_a (numeric[][])</li>
+	 * </ol>
+	 *
+	 * @param kind
+	 *        the aggregation kind; only {@code Hour}, {@code Day}, and
+	 *        {@code Month} are supported
+	 * @return the insert SQL
+	 * @since 2.6
+	 */
+	public static String insertAggDatumSql(Aggregation kind) {
+		return """
+				INSERT INTO solardatm.agg_datm_%s (stream_id,ts_start,data_i,data_a,data_s,data_t,stat_i,read_a)
+				VALUES (?::uuid,?,?::numeric[],?::numeric[],?::text[],?::text[],?::numeric[][],?::numeric[][])
+				"""
+				.formatted(switch (kind) {
+					case Day -> "daily";
+					case Month -> "monthly";
+					default -> "hourly";
+				});
 	}
 
 	/**
@@ -986,11 +1049,12 @@ public final class DatumDbUtils {
 	public static void insertAggregateDatum(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<AggregateDatum> datums) {
 		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
-			try (PreparedStatement rawStmt = con.prepareStatement(insertDatumStmt());
-					PreparedStatement hourStmt = con.prepareStatement(insertAggStmt(Aggregation.Hour));
-					PreparedStatement dayStmt = con.prepareStatement(insertAggStmt(Aggregation.Day));
+			try (PreparedStatement rawStmt = con.prepareStatement(insertDatumSql());
+					PreparedStatement hourStmt = con
+							.prepareStatement(insertAggDatumSql(Aggregation.Hour));
+					PreparedStatement dayStmt = con.prepareStatement(insertAggDatumSql(Aggregation.Day));
 					PreparedStatement monthStmt = con
-							.prepareStatement(insertAggStmt(Aggregation.Month))) {
+							.prepareStatement(insertAggDatumSql(Aggregation.Month))) {
 				final Timestamp now = Timestamp.from(Instant.now());
 				for ( AggregateDatum d : datums ) {
 					Aggregation kind = (d.getAggregation() != null ? d.getAggregation()

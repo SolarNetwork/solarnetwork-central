@@ -23,11 +23,14 @@
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -53,7 +56,7 @@ import net.solarnetwork.domain.Unique;
  * Common JDBC utilities.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public final class CommonJdbcUtils {
 
@@ -63,6 +66,21 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Get an array result column value.
+	 * 
+	 * <p>
+	 * For {@link BigDecimal} values specially handling is included for
+	 * non-finite values returned from the database. If an exception is thrown
+	 * by {@link Array#getArray()} and the {@link Array#getBaseType()} is
+	 * {@code NUMERIC} or {@code DECIMAL}, then special processing happens to
+	 * try to extract 1- or 2-dimensional arrays of {@link BigDecimal}, by
+	 * iterating over the {@link Array#getResultSet()}. If an individual
+	 * {@code ResultSet} row value throws an exception when attempting to read
+	 * the value as a {@link BigDecimal}, it will be inspected as a nested array
+	 * value, and processed as a nested array. If the row value is not an array,
+	 * it is inspected as a string value, and if equal to {@code "Infinity"} or
+	 * {@code "-Infinity"} or {@code "NaN"} then {@code null} will be used
+	 * instead, and processing will continue.
+	 * </p>
 	 *
 	 * @param <T>
 	 *        the expected array type
@@ -82,7 +100,65 @@ public final class CommonJdbcUtils {
 		if ( a == null ) {
 			return null;
 		}
-		return (T) a.getArray();
+		try {
+			return (T) a.getArray();
+		} catch ( SQLException e ) {
+			try {
+				int type = a.getBaseType();
+				if ( type == Types.NUMERIC || type == Types.DECIMAL ) {
+					// if failed reading as BigDecimal, assume we have non-finite values and try to re-map those into null
+					List<Object> result = parseBigDecimalArray(a);
+					boolean twoDee = false;
+					for ( Object o : result ) {
+						if ( o != null ) {
+							if ( o.getClass().isArray() ) {
+								twoDee = true;
+							}
+							break;
+						}
+					}
+					return (T) (result != null
+							? result.toArray(twoDee ? BigDecimal[][]::new : BigDecimal[]::new)
+							: null);
+				}
+			} catch ( SQLException e2 ) {
+				// give up
+			}
+			throw e;
+		}
+	}
+
+	private static List<Object> parseBigDecimalArray(Array a) throws SQLException {
+		List<Object> result = new ArrayList<>();
+
+		try (ResultSet arrayResultSet = a.getResultSet()) {
+			while ( arrayResultSet.next() ) {
+				int idx = arrayResultSet.getInt(1) - 1;
+				while ( result.size() < idx ) {
+					result.add(null);
+				}
+				try {
+					result.add(arrayResultSet.getBigDecimal(2));
+				} catch ( SQLException e ) {
+					// try as 2d-array
+					try {
+						Array a2 = arrayResultSet.getArray(2);
+						List<Object> nested = parseBigDecimalArray(a2);
+						result.add(nested != null ? nested.toArray(BigDecimal[]::new) : null);
+					} catch ( SQLException e2 ) {
+						// try as a string instead
+						String s = arrayResultSet.getString(2);
+						if ( "Infinity".equals(s) || "-Infinity".equals(s) || "NaN".equals(s) ) {
+							result.add(null);
+						} else {
+							throw e;
+						}
+					}
+				}
+			}
+		}
+
+		return result;
 	}
 
 	/**

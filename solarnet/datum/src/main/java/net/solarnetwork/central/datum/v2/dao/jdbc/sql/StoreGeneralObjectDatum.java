@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
+import java.util.Map.Entry;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
@@ -39,8 +40,15 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 /**
  * Store a {@link GeneralObjectDatum}.
  *
+ * <p>
+ * Note that non-finite number values will be dropped from the JSON string
+ * generated for the sample properties. This is because they cannot be handled
+ * as {@code java.math.BigDecimal} values when later read back from the
+ * database.
+ * </p>
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class StoreGeneralObjectDatum implements CallableStatementCreator, SqlProvider {
 
@@ -80,11 +88,79 @@ public final class StoreGeneralObjectDatum implements CallableStatementCreator, 
 		stmt.setString(4, datum.getId().getSourceId());
 		stmt.setTimestamp(5, Timestamp.from(Instant.now()));
 
-		final DatumSamples s = datum.getSamples();
+		final DatumSamples s = samplesWithOnlyFiniteNumbers(datum.getSamples());
+
 		String json = JsonUtils.getJSONString(s, null);
 		stmt.setString(6, json);
 
 		return stmt;
+	}
+
+	/**
+	 * Remove all non-finite numbers because they are not supported by
+	 * BigDecimal when read back from DB.
+	 *
+	 * @param s
+	 *        the samples to inspect
+	 * @return {@code samples} or a copy with non-finite numbers removed
+	 */
+	private DatumSamples samplesWithOnlyFiniteNumbers(DatumSamples s) {
+		if ( s == null ) {
+			return null;
+		}
+		DatumSamples copy = null;
+		if ( s.getInstantaneous() != null ) {
+			for ( Entry<String, Number> e : s.getInstantaneous().entrySet() ) {
+				Number n = e.getValue();
+				if ( !numberIsFinite(n) ) {
+					if ( copy == null ) {
+						copy = new DatumSamples(s);
+					}
+					copy.putInstantaneousSampleValue(e.getKey(), null);
+				}
+			}
+			if ( copy != null && copy.getInstantaneous().isEmpty() ) {
+				copy.setInstantaneous(null);
+			}
+		}
+		if ( s.getAccumulating() != null ) {
+			for ( Entry<String, Number> e : s.getAccumulating().entrySet() ) {
+				Number n = e.getValue();
+				if ( !numberIsFinite(n) ) {
+					if ( copy == null ) {
+						copy = new DatumSamples(s);
+					}
+					copy.putAccumulatingSampleValue(e.getKey(), null);
+				}
+			}
+			if ( copy != null && copy.getAccumulating().isEmpty() ) {
+				copy.setAccumulating(null);
+			}
+		}
+		if ( s.getStatus() != null ) {
+			for ( Entry<String, Object> e : s.getStatus().entrySet() ) {
+				Object o = e.getValue();
+				if ( o instanceof Number n && !numberIsFinite(n) ) {
+					if ( copy == null ) {
+						copy = new DatumSamples(s);
+					}
+					copy.putStatusSampleValue(e.getKey(), null);
+				}
+			}
+			if ( copy != null && copy.getStatus().isEmpty() ) {
+				copy.setStatus(null);
+			}
+		}
+		return (copy != null ? copy : s);
+	}
+
+	private boolean numberIsFinite(Number n) {
+		return switch (n) {
+			case Float f -> Float.isFinite(f);
+			case Double d -> Double.isFinite(d);
+			case null -> true;
+			default -> true;
+		};
 	}
 
 	/**
