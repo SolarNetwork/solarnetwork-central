@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.query.config;
 
+import static java.util.stream.Collectors.toMap;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.info.Info;
 import net.solarnetwork.central.web.SwaggerUtils;
 import net.solarnetwork.dao.FilterResults;
@@ -35,7 +37,7 @@ import net.solarnetwork.dao.FilterResults;
  * Configuration for Springdoc OpenAPI v3 generation.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 public class SpringdocConfig {
@@ -52,11 +54,16 @@ public class SpringdocConfig {
 	}
 
 	@Bean
-	public OpenApiCustomizer sortTagsAlphabetically() {
+	public OpenApiCustomizer sortTagsAndPaths() {
 		return (api) -> {
 			if ( api.getTags() != null ) {
 				api.setTags(api.getTags().stream().sorted(new SwaggerUtils.ApiTagSorter()).toList());
 			}
+			if ( api.getPaths() != null ) {
+				api.setPaths(api.getPaths().entrySet().stream().sorted(new SwaggerUtils.PathsSorter())
+						.collect(toMap(e -> e.getKey(), e -> e.getValue(), (l, r) -> l, Paths::new)));
+			}
+
 		};
 	}
 
