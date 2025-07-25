@@ -1013,8 +1013,8 @@ public final class DatumDbUtils {
 	 * <li>read_a (numeric[][])</li>
 	 * </ol>
 	 *
-	 * @param the
-	 *        aggregation kind; only {@code Hour}, {@code Day}, and
+	 * @param kind
+	 *        the aggregation kind; only {@code Hour}, {@code Day}, and
 	 *        {@code Month} are supported
 	 * @return the insert SQL
 	 * @since 2.6
