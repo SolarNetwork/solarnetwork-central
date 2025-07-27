@@ -71,7 +71,7 @@ import net.solarnetwork.central.web.support.RateLimitingFilter;
  * Test cases for the {@link RateLimitingFilter} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -216,6 +216,11 @@ public class RateLimitingFilterTests extends AbstractJUnit5JdbcDaoTestSupport {
 			.returns(idForString(tokenId), from(RateLimitExceededException::getId))
 			;
 
+		and.then(res.getHeader(RateLimitingFilter.X_SN_RATE_LIMIT_RETRY_AFTER))
+			.as("Retry after header provided")
+			.isNotNull()
+			;
+
 		List<Map<String, Object>> rows = CommonDbTestUtils.allTableData(log, jdbcTemplate,
 				"solarcommon.bucket", "id");
 
@@ -264,6 +269,11 @@ public class RateLimitingFilterTests extends AbstractJUnit5JdbcDaoTestSupport {
 		and.then(res)
 			.as("Too many requests status returned")
 			.returns(HttpStatus.TOO_MANY_REQUESTS.value(), from(MockHttpServletResponse::getStatus))
+			;
+
+		and.then(res.getHeader(RateLimitingFilter.X_SN_RATE_LIMIT_RETRY_AFTER))
+			.as("Retry after header provided")
+			.isNotNull()
 			;
 
 		List<Map<String, Object>> rows = CommonDbTestUtils.allTableData(log, jdbcTemplate,

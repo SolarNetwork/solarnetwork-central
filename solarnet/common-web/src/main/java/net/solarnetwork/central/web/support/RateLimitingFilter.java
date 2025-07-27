@@ -48,7 +48,7 @@ import net.solarnetwork.central.web.RateLimitExceededException;
  * Filter for rate-limiting HTTP requests.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class RateLimitingFilter extends OncePerRequestFilter implements Filter {
 
@@ -160,7 +160,6 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 			response.addIntHeader(X_SN_RATE_LIMIT_REMAINING_HEADER, (int) probe.getRemainingTokens());
 			filterChain.doFilter(request, response);
 		} else {
-			response.addHeader(key, key);
 			final int waitMs = (int) TimeUnit.NANOSECONDS.toMillis(probe.getNanosToWaitForRefill());
 			response.setHeader(X_SN_RATE_LIMIT_RETRY_AFTER,
 					String.valueOf(System.currentTimeMillis() + waitMs));
