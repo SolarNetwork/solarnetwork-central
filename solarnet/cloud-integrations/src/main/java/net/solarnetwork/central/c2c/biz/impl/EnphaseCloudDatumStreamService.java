@@ -101,7 +101,7 @@ import net.solarnetwork.util.StringUtils;
  * Enphase implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -663,8 +663,14 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		// track the minimum "last report date" value in a response, to adjust "next start" query value
 		long jsonLastReportAt = json.path("meta").path("last_report_at").longValue();
 		if ( jsonLastReportAt > 0 ) {
-			if ( jsonLastReportAt < date.getValue() ) {
+			if ( jsonLastReportAt < date.longValue() ) {
 				date.setValue(jsonLastReportAt);
+			}
+		}
+		long jsonLastEnergyAt = json.path("meta").path("last_energy_at").longValue();
+		if ( jsonLastEnergyAt > 0 ) {
+			if ( jsonLastEnergyAt < date.longValue() ) {
+				date.setValue(jsonLastEnergyAt);
 			}
 		}
 	}
@@ -719,6 +725,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			final Map<Long, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(ds, sourceIdMap,
 					valueProps);
 
+			// track the earliest reported "data valid as of" date, as an epoch second
 			final var lastReportDate = new MutableLong(endDate.getEpochSecond());
 
 			for ( SystemQueryPlan queryPlan : queryPlans.values() ) {
@@ -775,12 +782,16 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				}
 			}
 
+			// tick-align lastReportDate value
+			lastReportDate.setValue(FifteenMinute
+					.tickStart(Instant.ofEpochSecond(lastReportDate.longValue()), UTC).getEpochSecond());
+
 			if ( lastReportDate.getValue() < endDate.getEpochSecond() ) {
 				// data drop out? adjust next start date
 				if ( nextQueryFilter == null ) {
 					nextQueryFilter = new BasicQueryFilter();
 				}
-				nextQueryFilter.setStartDate(Instant.ofEpochSecond(lastReportDate.getValue()));
+				nextQueryFilter.setStartDate(Instant.ofEpochSecond(lastReportDate.longValue()));
 			}
 
 			// evaluate expressions on merged datum
