@@ -904,6 +904,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *         {@link #getDatumRollupTypes()} or {@code null}
 	 * @since 2.7
 	 */
+	@JsonIgnore
 	public DatumRollupType getRollupType() {
 		final DatumRollupType[] types = getDatumRollupTypes();
 		return (types != null && types.length > 0 ? types[0] : null);
@@ -917,6 +918,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        value
 	 * @since 2.7
 	 */
+	@JsonSetter
 	public void setRollupType(DatumRollupType datumRollupType) {
 		setDatumRollupTypes(datumRollupType == null ? null : new DatumRollupType[] { datumRollupType });
 	}
