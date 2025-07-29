@@ -55,7 +55,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Test cases for the {@link InsertStaleAggregateDatumSelect} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class InsertStaleAggregateDatumSelectTests {
 
@@ -134,6 +134,12 @@ public class InsertStaleAggregateDatumSelectTests {
 		Capture<Timestamp> endCaptor = new Capture<>();
 		stmt.setTimestamp(eq(4), capture(endCaptor));
 
+		Capture<Timestamp> startCaptor2 = new Capture<>();
+		stmt.setTimestamp(eq(5), capture(startCaptor2));
+
+		Capture<Timestamp> endCaptor2 = new Capture<>();
+		stmt.setTimestamp(eq(6), capture(endCaptor2));
+
 		// WHEN
 		replay(con, stmt, nodeArray, sourceArray);
 		PreparedStatement result = sql.createPreparedStatement(con);
@@ -143,6 +149,10 @@ public class InsertStaleAggregateDatumSelectTests {
 		assertThat("Start prarameter", startCaptor.getValue(),
 				equalTo(Timestamp.from(filter.getStartDate())));
 		assertThat("End prarameter", endCaptor.getValue(), equalTo(Timestamp.from(filter.getEndDate())));
+		assertThat("Start prarameter 2", startCaptor2.getValue(),
+				equalTo(Timestamp.from(filter.getStartDate())));
+		assertThat("End praramete 2", endCaptor2.getValue(),
+				equalTo(Timestamp.from(filter.getEndDate())));
 		verify(con, stmt, nodeArray, sourceArray);
 	}
 
