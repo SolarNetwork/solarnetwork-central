@@ -919,6 +919,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 2.7
 	 */
 	@JsonSetter
+	@SuppressWarnings("InvalidParam")
 	public void setRollupType(DatumRollupType datumRollupType) {
 		setDatumRollupTypes(datumRollupType == null ? null : new DatumRollupType[] { datumRollupType });
 	}
@@ -948,6 +949,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @param types
 	 *        the types to set
 	 * @see #setDatumRollupTypes(DatumRollupType[])
+	 * @since 2.8
 	 */
 	public void setRollupTypes(DatumRollupType[] types) {
 		setDatumRollupTypes(types);

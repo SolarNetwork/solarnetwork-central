@@ -36,7 +36,6 @@ import java.util.Set;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.AggregationFilter;
@@ -877,7 +876,12 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		return datumRollupTypes != null && datumRollupTypes.length > 0 ? datumRollupTypes[0] : null;
 	}
 
-	@JsonProperty("rollupTypes")
+	/**
+	 * Get the datum rollup types.
+	 *
+	 * @return the rollup types
+	 */
+	@JsonIgnore
 	@Override
 	public DatumRollupType[] getDatumRollupTypes() {
 		return datumRollupTypes;
@@ -889,7 +893,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param datumRollupTypes
 	 *        the rollup types
 	 */
-	@JsonProperty("rollupTypes")
+	@JsonIgnore
 	public void setDatumRollupTypes(DatumRollupType[] datumRollupTypes) {
 		this.datumRollupTypes = datumRollupTypes;
 	}
@@ -936,7 +940,40 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @since 1.4
 	 */
 	@JsonSetter
+	@SuppressWarnings("InvalidParam")
 	public void setRollupType(DatumRollupType datumRollupType) {
 		setDatumRollupTypes(datumRollupType == null ? null : new DatumRollupType[] { datumRollupType });
 	}
+
+	/**
+	 * Get the datum rollup types.
+	 *
+	 * <p>
+	 * This is an alias for {@link #getDatumRollupTypes()}.
+	 * </p>
+	 *
+	 * @return the datum rollup types
+	 * @see #getDatumRollupTypes()
+	 * @since 1.5
+	 */
+	public DatumRollupType[] getRollupTypes() {
+		return getDatumRollupTypes();
+	}
+
+	/**
+	 * Set the datum rollup types.
+	 *
+	 * <p>
+	 * This is an alias for {@link #setDatumRollupTypes(DatumRollupType[])}.
+	 * </p>
+	 *
+	 * @param types
+	 *        the types to set
+	 * @see #setDatumRollupTypes(DatumRollupType[])
+	 * @since 1.5
+	 */
+	public void setRollupTypes(DatumRollupType[] types) {
+		setDatumRollupTypes(types);
+	}
+
 }
