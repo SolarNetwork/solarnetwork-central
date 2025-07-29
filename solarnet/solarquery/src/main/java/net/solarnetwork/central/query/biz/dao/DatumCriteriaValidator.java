@@ -63,6 +63,11 @@ public class DatumCriteriaValidator implements Validator {
 			}
 		}
 
+		// virtual nodes/sources are not supported with rollup
+		if ( c.hasCombiningTypeCriteria() && c.hasDatumRollupCriteria() ) {
+			errors.reject("error.filter.virtualRollup.invalid", "Virtual rollup is not supported.");
+		}
+
 		Aggregation agg = c.getAggregation();
 		DatumReadingType readingType = c.getReadingType();
 		if ( readingType != null ) {
