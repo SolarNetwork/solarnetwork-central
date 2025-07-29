@@ -53,7 +53,7 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  *
  * @author matt
- * @version 2.6
+ * @version 2.7
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
 		"partialAggregation", "partialAggregationKey", "readingType", "combiningType",
@@ -865,6 +865,18 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	}
 
 	/**
+	 * Set the datum rollup types to use.
+	 *
+	 * @param datumRollupTypes
+	 *        the rollup types
+	 * @since 1.11
+	 */
+	@JsonProperty("rollupTypes")
+	public void setDatumRollupTypes(DatumRollupType[] datumRollupTypes) {
+		this.datumRollupTypes = datumRollupTypes;
+	}
+
+	/**
 	 * Get the datum rollups as key values.
 	 *
 	 * @return the datum rollup type key values, or {@literal null} if not
@@ -886,15 +898,27 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	}
 
 	/**
-	 * Set the datum rollup types to use.
+	 * Get a single datum rollup type.
 	 *
-	 * @param datumRollupTypes
-	 *        the rollup types
-	 * @since 1.11
+	 * @return the type to use; will return the first available value from
+	 *         {@link #getDatumRollupTypes()} or {@code null}
+	 * @since 2.7
 	 */
-	@JsonProperty("rollupTypes")
-	public void setDatumRollupTypes(DatumRollupType[] datumRollupTypes) {
-		this.datumRollupTypes = datumRollupTypes;
+	public DatumRollupType getRollupType() {
+		final DatumRollupType[] types = getDatumRollupTypes();
+		return (types != null && types.length > 0 ? types[0] : null);
+	}
+
+	/**
+	 * Set a single datum rollup type to use.
+	 *
+	 * @param datumRollupType
+	 *        the rollup type; completely replaces the {@code datumRollupTypes}
+	 *        value
+	 * @since 2.7
+	 */
+	public void setRollupType(DatumRollupType datumRollupType) {
+		setDatumRollupTypes(datumRollupType == null ? null : new DatumRollupType[] { datumRollupType });
 	}
 
 	@Override
