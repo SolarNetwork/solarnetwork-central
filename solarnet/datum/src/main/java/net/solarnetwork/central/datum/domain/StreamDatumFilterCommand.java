@@ -54,7 +54,7 @@ import net.solarnetwork.util.StringUtils;
  * Implementation of {@link StreamDatumFilter}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 1.3
  */
 @JsonPropertyOrder({ "streamIds", "kind", "objectIds", "sourceIds", "userIds", "aggregation",
@@ -914,4 +914,29 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		return keys;
 	}
 
+	/**
+	 * Get a single datum rollup type.
+	 *
+	 * @return the type to use; will return the first available value from
+	 *         {@link #getDatumRollupTypes()} or {@code null}
+	 * @since 1.4
+	 */
+	@JsonIgnore
+	public DatumRollupType getRollupType() {
+		final DatumRollupType[] types = getDatumRollupTypes();
+		return (types != null && types.length > 0 ? types[0] : null);
+	}
+
+	/**
+	 * Set a single datum rollup type to use.
+	 *
+	 * @param datumRollupType
+	 *        the rollup type; completely replaces the {@code datumRollupTypes}
+	 *        value
+	 * @since 1.4
+	 */
+	@JsonSetter
+	public void setRollupType(DatumRollupType datumRollupType) {
+		setDatumRollupTypes(datumRollupType == null ? null : new DatumRollupType[] { datumRollupType });
+	}
 }
