@@ -15,7 +15,7 @@ $$
 		FROM solardatm.agg_datm_hourly
 		WHERE stream_id = sid
 			AND ts_start >= start_ts
-			AND ts_start <= end_ts
+			AND ts_start < end_ts
 	)
 	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING
 $$;
