@@ -2,6 +2,7 @@
 *.log
 *.orig
 *.swp
+*.tmp.*
 .gradle/
 bin/
 build/
