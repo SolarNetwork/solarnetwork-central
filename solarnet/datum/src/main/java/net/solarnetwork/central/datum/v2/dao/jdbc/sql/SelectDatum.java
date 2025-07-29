@@ -116,10 +116,13 @@ public final class SelectDatum
 
 		// support the All rollup
 		if ( filter.hasDatumRollupCriteria() ) {
+			if ( this.combine != null ) {
+				throw new IllegalArgumentException("Virtual combinations are not suported with rollup.");
+			}
 			if ( filter.getDatumRollupType() == DatumRollupType.All ) {
 				this.rollup = filter.getDatumRollupType();
 			} else {
-				throw new IllegalArgumentException("Only the `All` DatumRollupType is supported");
+				throw new IllegalArgumentException("Only the `All` DatumRollupType is supported.");
 			}
 		} else {
 			this.rollup = null;
@@ -175,17 +178,17 @@ public final class SelectDatum
 	private void sqlSelect(StringBuilder buf) {
 		if ( rollup != null ) {
 			buf.append("""
-					SELECT datum.stream_id
-						, MIN(datum.ts) AS ts_start
-						, MAX(datum.ts) AS ts_end
+					SELECT rlp.stream_id
+						, MIN(rlp.ts) AS ts_start
+						, MAX(rlp.ts) AS ts_end
 						, (solardatm.rollup_agg_data(
-								(datum.data_i
-								, datum.data_a
-								, datum.data_s
-								, datum.data_t
-								, datum.stat_i
-								, datum.read_a)::solardatm.agg_data
-							ORDER BY datum.ts)).*
+								(rlp.data_i
+								, rlp.data_a
+								, rlp.data_s
+								, rlp.data_t
+								, rlp.stat_i
+								, rlp.read_a)::solardatm.agg_data
+							ORDER BY rlp.ts)).*
 					FROM (
 					""");
 		}
@@ -418,9 +421,9 @@ public final class SelectDatum
 		sqlOrderByJoins(buf);
 		if ( rollup != null ) {
 			buf.append("""
-					) datum
-					GROUP BY datum.stream_id
-					ORDER BY datum.stream_id
+					) rlp
+					GROUP BY rlp.stream_id
+					ORDER BY rlp.stream_id
 					""");
 		} else {
 			sqlOrderBy(buf);
