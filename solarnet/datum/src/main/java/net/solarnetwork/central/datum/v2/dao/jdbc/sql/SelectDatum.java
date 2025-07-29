@@ -37,6 +37,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
+import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
@@ -47,7 +48,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  * @since 3.8
  */
 public final class SelectDatum
@@ -63,6 +64,7 @@ public final class SelectDatum
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
 	private final CombiningConfig combine;
+	private final DatumRollupType rollup;
 	private final int fetchSize;
 
 	/**
@@ -111,6 +113,18 @@ public final class SelectDatum
 					format("A date range must be specified for aggregation %s.", aggregation));
 		}
 		this.combine = CombiningConfig.configFromCriteria(filter);
+
+		// support the All rollup
+		if ( filter.hasDatumRollupCriteria() ) {
+			if ( filter.getDatumRollupType() == DatumRollupType.All ) {
+				this.rollup = filter.getDatumRollupType();
+			} else {
+				throw new IllegalArgumentException("Only the `All` DatumRollupType is supported");
+			}
+		} else {
+			this.rollup = null;
+		}
+
 		this.fetchSize = fetchSize;
 	}
 
@@ -159,6 +173,22 @@ public final class SelectDatum
 	}
 
 	private void sqlSelect(StringBuilder buf) {
+		if ( rollup != null ) {
+			buf.append("""
+					SELECT datum.stream_id
+						, MIN(datum.ts) AS ts_start
+						, MAX(datum.ts) AS ts_end
+						, (solardatm.rollup_agg_data(
+								(datum.data_i
+								, datum.data_a
+								, datum.data_s
+								, datum.data_t
+								, datum.stat_i
+								, datum.read_a)::solardatm.agg_data
+							ORDER BY datum.ts)).*
+					FROM (
+					""");
+		}
 		buf.append("SELECT ");
 		if ( combine != null ) {
 			buf.append("s.vstream_id AS stream_id,\n");
@@ -386,7 +416,15 @@ public final class SelectDatum
 		StringBuilder buf = new StringBuilder();
 		sqlCore(buf);
 		sqlOrderByJoins(buf);
-		sqlOrderBy(buf);
+		if ( rollup != null ) {
+			buf.append("""
+					) datum
+					GROUP BY datum.stream_id
+					ORDER BY datum.stream_id
+					""");
+		} else {
+			sqlOrderBy(buf);
+		}
 		CommonSqlUtils.limitOffset(filter, buf);
 		return buf.toString();
 	}
