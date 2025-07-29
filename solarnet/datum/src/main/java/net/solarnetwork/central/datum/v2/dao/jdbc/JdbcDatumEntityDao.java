@@ -314,7 +314,10 @@ public class JdbcDatumEntityDao
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static RowMapper<Datum> mapper(DatumCriteria filter) {
-		if ( filter.getReadingType() == DatumReadingType.CalculatedAt ) {
+		if ( filter.hasDatumRollupCriteria() ) {
+			return (RowMapper) readingMapper(filter.getAggregation());
+		} else if ( filter.getReadingType() == DatumReadingType.CalculatedAt
+				|| filter.hasDatumRollupCriteria() ) {
 			return DatumEntityRowMapper.INSTANCE;
 		} else if ( filter.hasIdMappings() ) {
 			return (RowMapper) new VirtualAggregateDatumEntityRowMapper(filter.getAggregation(),
@@ -754,7 +757,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-
+		
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/

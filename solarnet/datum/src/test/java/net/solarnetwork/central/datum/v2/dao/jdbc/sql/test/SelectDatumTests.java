@@ -60,6 +60,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.domain.CombiningType;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
+import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.domain.SimpleSortDescriptor;
@@ -70,7 +72,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link SelectDatum} class.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SelectDatumTests {
 
@@ -1041,6 +1043,31 @@ public class SelectDatumTests {
 		log.info("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql,
 				equalToTextResource("select-datum-node-source-user-time-reverse-limit.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_reading_month_rollup_all() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.Difference);
+		filter.setAggregation(Aggregation.Month);
+		filter.setDatumRollupType(DatumRollupType.All);
+		filter.setObjectKind(ObjectDatumKind.Node);
+		filter.setNodeId(randomLong());
+		filter.setSourceId(randomString());
+		filter.setSorts(List.of(new SimpleSortDescriptor("time", true)));
+		filter.setUserId(randomLong());
+		filter.setStartDate(Instant.now().minusSeconds(1));
+		filter.setEndDate(filter.getStartDate().plusSeconds(1));
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.info("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-reading-node-source-user-time-month-rollup.sql",
 						TestSqlResources.class, SQL_COMMENT));
 	}
 
