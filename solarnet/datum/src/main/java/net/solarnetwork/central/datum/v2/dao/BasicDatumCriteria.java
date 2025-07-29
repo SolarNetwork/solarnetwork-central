@@ -46,7 +46,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Basic implementation of {@link DatumCriteria}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 2.8
  */
 public class BasicDatumCriteria extends BasicCoreCriteria
@@ -445,10 +445,31 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		this.partialAggregation = partialAggregation;
 	}
 
+	@JsonIgnore
 	@Override
 	public DatumRollupType getDatumRollupType() {
 		DatumRollupType[] types = getDatumRollupTypes();
 		return types != null && types.length > 0 ? types[0] : null;
+	}
+
+	/**
+	 * Set a single datum rollup type.
+	 *
+	 * <p>
+	 * This is a convenience method for requests that use a single rollup type
+	 * at a time. The type is still stored on the {@code datumRollupTypes}
+	 * array, as the first value. Calling this method replaces any existing
+	 * {@code datumRollupTypes} value with a new array containing just the value
+	 * passed into this method.
+	 * </p>
+	 *
+	 * @param type
+	 *        the type to set
+	 * @since 1.3
+	 */
+	@JsonSetter
+	public void setDatumRollupType(DatumRollupType type) {
+		setDatumRollupTypes(type == null ? null : new DatumRollupType[] { type });
 	}
 
 	@Override

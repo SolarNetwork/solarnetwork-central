@@ -53,7 +53,7 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  *
  * @author matt
- * @version 2.6
+ * @version 2.8
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
 		"partialAggregation", "partialAggregationKey", "readingType", "combiningType",
@@ -858,10 +858,22 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		return datumRollupTypes != null && datumRollupTypes.length > 0 ? datumRollupTypes[0] : null;
 	}
 
-	@JsonProperty("rollupTypes")
+	@JsonIgnore
 	@Override
 	public DatumRollupType[] getDatumRollupTypes() {
 		return datumRollupTypes;
+	}
+
+	/**
+	 * Set the datum rollup types to use.
+	 *
+	 * @param datumRollupTypes
+	 *        the rollup types
+	 * @since 1.11
+	 */
+	@JsonIgnore
+	public void setDatumRollupTypes(DatumRollupType[] datumRollupTypes) {
+		this.datumRollupTypes = datumRollupTypes;
 	}
 
 	/**
@@ -886,15 +898,61 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	}
 
 	/**
-	 * Set the datum rollup types to use.
+	 * Get a single datum rollup type.
 	 *
-	 * @param datumRollupTypes
-	 *        the rollup types
-	 * @since 1.11
+	 * @return the type to use; will return the first available value from
+	 *         {@link #getDatumRollupTypes()} or {@code null}
+	 * @since 2.7
 	 */
-	@JsonProperty("rollupTypes")
-	public void setDatumRollupTypes(DatumRollupType[] datumRollupTypes) {
-		this.datumRollupTypes = datumRollupTypes;
+	@JsonIgnore
+	public DatumRollupType getRollupType() {
+		final DatumRollupType[] types = getDatumRollupTypes();
+		return (types != null && types.length > 0 ? types[0] : null);
+	}
+
+	/**
+	 * Set a single datum rollup type to use.
+	 *
+	 * @param datumRollupType
+	 *        the rollup type; completely replaces the {@code datumRollupTypes}
+	 *        value
+	 * @since 2.7
+	 */
+	@JsonSetter
+	@SuppressWarnings("InvalidParam")
+	public void setRollupType(DatumRollupType datumRollupType) {
+		setDatumRollupTypes(datumRollupType == null ? null : new DatumRollupType[] { datumRollupType });
+	}
+
+	/**
+	 * Get the datum rollup types.
+	 *
+	 * <p>
+	 * This is an alias for {@link #getDatumRollupTypes()}.
+	 * </p>
+	 *
+	 * @return the datum rollup types
+	 * @see #getDatumRollupTypes()
+	 * @since 2.8
+	 */
+	public DatumRollupType[] getRollupTypes() {
+		return getDatumRollupTypes();
+	}
+
+	/**
+	 * Set the datum rollup types.
+	 *
+	 * <p>
+	 * This is an alias for {@link #setDatumRollupTypes(DatumRollupType[])}.
+	 * </p>
+	 *
+	 * @param types
+	 *        the types to set
+	 * @see #setDatumRollupTypes(DatumRollupType[])
+	 * @since 2.8
+	 */
+	public void setRollupTypes(DatumRollupType[] types) {
+		setDatumRollupTypes(types);
 	}
 
 	@Override

@@ -36,10 +36,12 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
+import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.domain.LocalDateInterval;
 import net.solarnetwork.central.datum.v2.domain.PartialAggregationInterval;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -55,7 +57,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public final class SelectDatumPartialAggregate
@@ -64,6 +66,7 @@ public final class SelectDatumPartialAggregate
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
 	private final CombiningConfig combine;
+	private final DatumRollupType rollup;
 	private final List<DatumCriteria> intervalFilters;
 
 	/**
@@ -121,12 +124,34 @@ public final class SelectDatumPartialAggregate
 					"%s partial aggregation is too small to use with Year aggregation.", partial));
 		}
 		this.combine = CombiningConfig.configFromCriteria(filter);
-		PartialAggregationInterval partialInterval = new PartialAggregationInterval(aggregation, partial,
-				start, end);
-		if ( partialInterval.getIntervals().isEmpty() ) {
-			throw new IllegalArgumentException("Invalid date range for partial aggregation.");
+
+		// support the All rollup
+		if ( filter.hasDatumRollupCriteria() ) {
+			if ( this.combine != null ) {
+				throw new IllegalArgumentException("Virtual combinations are not suported with rollup.");
+			}
+			if ( filter.getDatumRollupType() == DatumRollupType.All ) {
+				this.rollup = filter.getDatumRollupType();
+			} else {
+				throw new IllegalArgumentException("Only the `All` DatumRollupType is supported.");
+			}
+		} else {
+			this.rollup = null;
 		}
-		this.intervalFilters = partialInterval.getIntervals().stream().map(e -> {
+
+		List<LocalDateInterval> intervals;
+		if ( this.rollup != null && this.aggregation == Aggregation.Year ) {
+			// this works out to a simple query across months
+			intervals = List.of(new LocalDateInterval(start, end, Aggregation.Month));
+		} else {
+			PartialAggregationInterval partialInterval = new PartialAggregationInterval(aggregation,
+					partial, start, end);
+			if ( partialInterval.getIntervals().isEmpty() ) {
+				throw new IllegalArgumentException("Invalid date range for partial aggregation.");
+			}
+			intervals = partialInterval.getIntervals();
+		}
+		this.intervalFilters = intervals.stream().map(e -> {
 			BasicDatumCriteria f = BasicDatumCriteria.copy(filter);
 			f.setAggregation(e.getAggregation());
 			f.setLocalStartDate(e.getStart());
@@ -182,7 +207,8 @@ public final class SelectDatumPartialAggregate
 		} else {
 			buf.append("datum.stream_id,\n");
 		}
-		if ( filter.getAggregation() == aggregation && aggregation != Aggregation.Year ) {
+		if ( rollup != null
+				|| (filter.getAggregation() == aggregation && aggregation != Aggregation.Year) ) {
 			// main agg: direct results
 			buf.append("	datum.ts_start AS ts,\n");
 			buf.append("	datum.data_i,\n");
@@ -205,9 +231,11 @@ public final class SelectDatumPartialAggregate
 				buf.append("INNER JOIN (\n");
 				buf.append("	SELECT datum.stream_id,\n");
 			}
-			buf.append("	date_trunc('").append(sqlAgg(aggregation)).append(
-					"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,\n");
-			DatumSqlUtils.rollupAggDataSql(buf);
+			if ( rollup == null ) {
+				buf.append("	date_trunc('").append(sqlAgg(aggregation)).append(
+						"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,\n");
+				DatumSqlUtils.rollupAggDataSql(buf);
+			}
 		}
 	}
 
@@ -232,10 +260,12 @@ public final class SelectDatumPartialAggregate
 				DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where);
 		buf.append("WHERE").append(where.substring(4));
 		if ( filter.getAggregation() != aggregation || aggregation == Aggregation.Year ) {
-			buf.append("GROUP BY datum.stream_id, date_trunc('").append(sqlAgg(aggregation))
-					.append("', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone\n");
-			// partial aggregation can produce NULL output; omit those
-			buf.append("HAVING COUNT(*) > 0\n");
+			if ( rollup == null ) {
+				buf.append("GROUP BY datum.stream_id, date_trunc('").append(sqlAgg(aggregation)).append(
+						"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone\n");
+				// partial aggregation can produce NULL output; omit those
+				buf.append("HAVING COUNT(*) > 0\n");
+			}
 			if ( combine != null ) {
 				buf.append(") AS ds ON ds.stream_id = s.stream_id\n");
 			}
@@ -261,8 +291,28 @@ public final class SelectDatumPartialAggregate
 	private void sqlCore(StringBuilder buf) {
 		sqlCte(buf);
 
+		// overall rollup
+		if ( rollup != null ) {
+			buf.append("""
+					SELECT rlp.stream_id
+						, MIN(rlp.ts) AS ts_start
+						, MAX(rlp.ts) AS ts_end
+						, (solardatm.rollup_agg_data(
+								(rlp.data_i
+								, rlp.data_a
+								, rlp.data_s
+								, rlp.data_t
+								, rlp.stat_i
+								, rlp.read_a)::solardatm.agg_data
+							ORDER BY rlp.ts)).*
+					FROM (
+					""");
+		}
+
 		// write main queries in CTE
-		buf.append(", ").append(combine != null ? "d" : "datum").append(" AS (\n");
+		if ( rollup == null ) {
+			buf.append(", ").append(combine != null ? "d" : "datum").append(" AS (\n");
+		}
 
 		boolean multi = false;
 		for ( DatumCriteria intervalFilter : intervalFilters ) {
@@ -274,19 +324,24 @@ public final class SelectDatumPartialAggregate
 			sqlWhere(intervalFilter, buf);
 			multi = true;
 		}
-
-		buf.append(")\n");
+		if ( rollup == null ) {
+			buf.append(")\n");
+		}
 		if ( combine != null ) {
 			buf.append(VirtualDatumSqlUtils.combineCteSql(combine.getType())).append("\n");
 		}
-		buf.append("SELECT datum.*");
+		if ( rollup == null ) {
+			buf.append("SELECT datum.*");
+		}
 		if ( combine != null ) {
 			buf.append(", vs.")
 					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
 					.append(", vs.source_id");
 
 		}
-		buf.append("\nFROM datum\n");
+		if ( rollup == null ) {
+			buf.append("\nFROM datum\n");
+		}
 	}
 
 	private void sqlOrderByJoins(StringBuilder buf) {
@@ -307,7 +362,15 @@ public final class SelectDatumPartialAggregate
 		StringBuilder buf = new StringBuilder();
 		sqlCore(buf);
 		sqlOrderByJoins(buf);
-		sqlOrderBy(buf);
+		if ( rollup != null ) {
+			buf.append("""
+					) rlp
+					GROUP BY rlp.stream_id
+					ORDER BY rlp.stream_id
+					""");
+		} else {
+			sqlOrderBy(buf);
+		}
 		CommonSqlUtils.limitOffset(filter, buf);
 		return buf.toString();
 	}
