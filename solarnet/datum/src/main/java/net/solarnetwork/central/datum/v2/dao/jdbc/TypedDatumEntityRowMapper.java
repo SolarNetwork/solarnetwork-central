@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getArray;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.math.BigDecimal;
-import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -51,22 +51,13 @@ import net.solarnetwork.domain.datum.DatumProperties;
  * </ol>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class TypedDatumEntityRowMapper implements RowMapper<TypedDatumEntity> {
 
 	/** A default instance for null aggregates. */
 	public static final RowMapper<TypedDatumEntity> INSTANCE = new TypedDatumEntityRowMapper();
-
-	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
-	private static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
-		Array a = rs.getArray(colNum);
-		if ( a == null ) {
-			return null;
-		}
-		return (T) a.getArray();
-	}
 
 	@Override
 	public TypedDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {

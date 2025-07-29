@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getArray;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.math.BigDecimal;
-import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -56,7 +56,7 @@ import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
  * </ol>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 3.8
  */
 public class ReadingDatumEntityRowMapper implements RowMapper<ReadingDatum> {
@@ -87,15 +87,6 @@ public class ReadingDatumEntityRowMapper implements RowMapper<ReadingDatum> {
 	public ReadingDatumEntityRowMapper(Aggregation aggregation) {
 		super();
 		this.aggregation = aggregation;
-	}
-
-	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
-	private static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
-		Array a = rs.getArray(colNum);
-		if ( a == null ) {
-			return null;
-		}
-		return (T) a.getArray();
 	}
 
 	@Override
