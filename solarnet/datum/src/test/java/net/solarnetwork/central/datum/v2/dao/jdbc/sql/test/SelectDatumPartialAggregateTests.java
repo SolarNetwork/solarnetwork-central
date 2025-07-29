@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
+import static java.time.temporal.TemporalAdjusters.firstDayOfMonth;
+import static java.time.temporal.TemporalAdjusters.firstDayOfNextMonth;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
@@ -48,6 +50,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.domain.CombiningType;
+import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumPartialAggregate;
 import net.solarnetwork.domain.datum.Aggregation;
@@ -56,7 +59,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Test cases for the {@link SelectDatumPartialAggregate} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SelectDatumPartialAggregateTests {
 
@@ -702,6 +705,96 @@ public class SelectDatumPartialAggregateTests {
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
 				"select-datum-pagg-day-hour-full-nodes.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray);
+	}
+
+	@Test
+	public void prep_find_nodes_Month_Day_rollup_All() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Month);
+		filter.setPartialAggregation(Aggregation.Day);
+		filter.setDatumRollupType(DatumRollupType.All);
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setLocalStartDate(LocalDateTime.of(2021, 1, 15, 0, 0));
+		filter.setLocalEndDate(LocalDateTime.of(2021, 12, 15, 0, 0));
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		// set metadata parameters
+		Array nodeIdsArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		// partial leading date parameters
+		stmt.setObject(2, filter.getLocalStartDate(), Types.TIMESTAMP);
+		stmt.setObject(3, filter.getLocalStartDate().with(firstDayOfNextMonth()), Types.TIMESTAMP);
+
+		// main date parameters
+		stmt.setObject(4, filter.getLocalStartDate().with(firstDayOfNextMonth()), Types.TIMESTAMP);
+		stmt.setObject(5, filter.getLocalEndDate().with(firstDayOfMonth()), Types.TIMESTAMP);
+
+		// partial trailing date parameters
+		stmt.setObject(6, filter.getLocalEndDate().with(firstDayOfMonth()), Types.TIMESTAMP);
+		stmt.setObject(7, filter.getLocalEndDate(), Types.TIMESTAMP);
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray);
+		PreparedStatement result = new SelectDatumPartialAggregate(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(),
+				equalToTextResource("select-datum-pagg-month-day-nodes-rollup-all.sql",
+						TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray);
+	}
+
+	@Test
+	public void prep_find_nodes_Year_Month_rollup_All() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Year);
+		filter.setPartialAggregation(Aggregation.Month);
+		filter.setDatumRollupType(DatumRollupType.All);
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setLocalStartDate(LocalDateTime.of(2020, 3, 1, 0, 0));
+		filter.setLocalEndDate(LocalDateTime.of(2023, 3, 1, 0, 0));
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		// set metadata parameters
+		Array nodeIdsArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		// partial single month-range date parameters
+		stmt.setObject(2, filter.getLocalStartDate(), Types.TIMESTAMP);
+		stmt.setObject(3, filter.getLocalEndDate(), Types.TIMESTAMP);
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray);
+		PreparedStatement result = new SelectDatumPartialAggregate(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(),
+				equalToTextResource("select-datum-pagg-year-month-nodes-rollup-all.sql",
+						TestSqlResources.class, SQL_COMMENT));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		verify(con, stmt, nodeIdsArray);
 	}
