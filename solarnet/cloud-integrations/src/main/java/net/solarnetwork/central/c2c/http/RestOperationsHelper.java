@@ -31,6 +31,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,9 +64,12 @@ import net.solarnetwork.service.RemoteServiceException;
  * Helper for HTTP interactions using {@link RestOperations}.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class RestOperationsHelper implements CloudIntegrationsUserEvents {
+
+	/** A maximum error response body length to include in user events. */
+	private static final int USER_EVENT_MAX_ERROR_RESPONSE_BODY_LENGTH = 4096;
 
 	/** The logger. */
 	protected final Logger log;
@@ -219,16 +223,22 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 		if ( responseLengthTracker != null ) {
 			responseLengthTracker.get().set(0);
 		}
+
+		// create event data here so exceptions can reference in error events
+		final Map<String, Object> eventData = new LinkedHashMap<>(3);
+		eventData.put("method", method.toString());
+
 		URI uri = null;
 		try {
 			final var headers = new HttpHeaders();
 			final var req = new HttpEntity<>(body, headers);
 			uri = setup.apply(headers);
 
-			final Map<String, Object> eventData = (body != null
-					? Map.of("method", method.toString(), "uri", uri.toString(), "body",
-							(body instanceof String s ? s : JsonUtils.getTreeFromObject(body)))
-					: Map.of("method", method.toString(), "uri", uri.toString()));
+			eventData.put("uri", uri);
+			if ( body != null ) {
+				eventData.put("body", body instanceof String s ? s : JsonUtils.getTreeFromObject(body));
+			}
+
 			userEventAppenderBiz.addEvent(configuration.getUserId(),
 					eventForConfiguration(configuration.getId(), eventTags, description, eventData));
 
@@ -238,16 +248,32 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 			log.warn("[{}] for {} {} failed at [{}] because of a communication error: {}", description,
 					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
 					e.getMessage());
-			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(configuration,
-					errorEventTags, format("Communication error: %s", e.getMessage())));
+			userEventAppenderBiz.addEvent(configuration.getUserId(),
+					eventForConfiguration(configuration.getId(), errorEventTags,
+							format("Communication error: %s", e.getMessage()), eventData));
 			throw new RemoteServiceException("%s failed because of a communication error: %s"
 					.formatted(description, e.getMessage()), e);
 		} catch ( RestClientResponseException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because the HTTP status {} was returned.",
 					description, configuration.getClass().getSimpleName(), configuration.getId().ident(),
 					uri, e.getStatusCode());
-			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(configuration,
-					errorEventTags, format("Invalid HTTP status returned: %s", e.getStatusCode())));
+
+			// try to capture response body
+			if ( e.getResponseBodyAsByteArray() != null ) {
+				try {
+					String respBody = e.getResponseBodyAsString();
+					if ( respBody.length() > USER_EVENT_MAX_ERROR_RESPONSE_BODY_LENGTH ) {
+						respBody = respBody.substring(0, USER_EVENT_MAX_ERROR_RESPONSE_BODY_LENGTH);
+					}
+					eventData.put("responseBody", respBody);
+				} catch ( Exception e2 ) {
+					// forget it, we don't need the drama
+				}
+			}
+
+			userEventAppenderBiz.addEvent(configuration.getUserId(),
+					eventForConfiguration(configuration.getId(), errorEventTags,
+							format("Invalid HTTP status returned: %s", e.getStatusCode()), eventData));
 			throw new RemoteServiceException("%s failed because an invalid HTTP status was returned: %s"
 					.formatted(description, e.getStatusCode()), e);
 		} catch ( UnknownContentTypeException e ) {
@@ -259,8 +285,9 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 						description, configuration.getClass().getSimpleName(),
 						configuration.getId().ident(), uri, e.getStatusCode(), e.getContentType());
 				userEventAppenderBiz.addEvent(configuration.getUserId(),
-						eventForConfiguration(configuration, errorEventTags,
-								format("Invalid HTTP status returned: %s", e.getStatusCode())));
+						eventForConfiguration(configuration.getId(), errorEventTags, format(
+								"Invalid HTTP status returned (with unexpected Content-Type [{}]): %s",
+								e.getContentType(), e.getStatusCode()), eventData));
 				throw new RemoteServiceException(
 						"%s failed because an invalid HTTP status (with unexpected Content-Type [%s]) was returned: %s"
 								.formatted(description, e.getContentType(), e.getStatusCode()),
@@ -272,8 +299,9 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 						description, configuration.getClass().getSimpleName(),
 						configuration.getId().ident(), uri, e.getContentType());
 				userEventAppenderBiz.addEvent(configuration.getUserId(),
-						eventForConfiguration(configuration, errorEventTags,
-								format("Invalid HTTP Content-Type returned: %s", e.getContentType())));
+						eventForConfiguration(configuration.getId(), errorEventTags,
+								format("Invalid HTTP Content-Type returned: %s", e.getContentType()),
+								eventData));
 				throw new RemoteServiceException(
 						"%s failed because the respones Content-Type is not supported: %s"
 								.formatted(description, e.getContentType()),
@@ -283,8 +311,9 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 			log.warn("[{}] for {} {} failed at [{}] because of an OAuth error: {}", description,
 					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
 					e.getMessage());
-			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(configuration,
-					errorEventTags, format("OAuth error: %s", e.getMessage())));
+			userEventAppenderBiz.addEvent(configuration.getUserId(),
+					eventForConfiguration(configuration.getId(), errorEventTags,
+							format("OAuth error: %s", e.getMessage()), eventData));
 			throw new RemoteServiceException("%s failed because of an authorization error: %s"
 					.formatted(description, e.getMessage()), e);
 		} catch ( RemoteServiceException e ) {
@@ -294,8 +323,8 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 			log.warn("[{}] for {} {} failed at [{}] because of an unknown error: {}", description,
 					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
 					e.toString(), e);
-			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(configuration,
-					errorEventTags, format("Unknown error: %s", e)));
+			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(
+					configuration.getId(), errorEventTags, format("Unknown error: %s", e), eventData));
 			throw e;
 		} finally {
 			if ( responseLengthTracker != null ) {
@@ -332,16 +361,25 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 		if ( responseLengthTracker != null && userId != null ) {
 			responseLengthTracker.get().set(0);
 		}
+
+		final Map<String, Object> eventData = new LinkedHashMap<>(3);
+		eventData.put("method", req.getMethod().toString());
+		eventData.put("uri", req.getUrl().toString());
+		if ( req.getBody() != null ) {
+			eventData.put("body",
+					req.getBody() instanceof String s ? s : JsonUtils.getTreeFromObject(req.getBody()));
+		}
+
 		if ( userId != null ) {
-			userEventAppenderBiz.addEvent(userId, event(eventTags, "HTTP request", getJSONString(
-					Map.of("method", req.getMethod().toString(), "uri", req.getUrl().toString()))));
+			userEventAppenderBiz.addEvent(userId,
+					event(eventTags, "HTTP request", getJSONString(eventData)));
 		}
 		try {
 			return restOps.exchange(req, responseType);
 		} catch ( RuntimeException e ) {
 			if ( userId != null ) {
-				userEventAppenderBiz.addEvent(userId,
-						event(errorEventTags, format("HTTP request error: %s", e), null));
+				userEventAppenderBiz.addEvent(userId, event(errorEventTags,
+						format("HTTP request error: %s", e), getJSONString(eventData)));
 			}
 			throw e;
 		} finally {
