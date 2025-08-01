@@ -286,7 +286,7 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 						configuration.getId().ident(), uri, e.getStatusCode(), e.getContentType());
 				userEventAppenderBiz.addEvent(configuration.getUserId(),
 						eventForConfiguration(configuration.getId(), errorEventTags, format(
-								"Invalid HTTP status returned (with unexpected Content-Type [{}]): %s",
+								"Invalid HTTP status returned (with unexpected Content-Type [%s]): %s",
 								e.getContentType(), e.getStatusCode()), eventData));
 				throw new RemoteServiceException(
 						"%s failed because an invalid HTTP status (with unexpected Content-Type [%s]) was returned: %s"
