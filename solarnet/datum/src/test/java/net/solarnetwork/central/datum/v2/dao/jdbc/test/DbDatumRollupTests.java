@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
@@ -67,7 +68,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Tests for the database rollup stored procedures.
  *
  * @author matt
- * @version 2.1
+ * @version 2.0
  */
 public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
@@ -1228,77 +1229,4 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		});
 	}
 
-	/*- TODO enable after NET-469 fixed
-	private ObjectDatumStreamMetadata load_net469() {
-		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
-				ObjectDatumKind.Node, 1L, "A", new String[] { "i" }, new String[] { "val" }, null);
-		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-08-net469.csv",
-				staticProvider(singleton(meta)));
-		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
-	
-		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
-		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
-	
-		return meta;
-	}
-	
-	@Test
-	public void net469_rawGapPerfectHourStart() throws IOException {
-		// GIVEN
-		ObjectDatumStreamMetadata meta = load_net469();
-	
-		// WHEN
-		final List<AggregateDatum> hourResults = new ArrayList<>();
-		final ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 12, 0, 0, 0, ZoneOffset.UTC);
-		final ZonedDateTime end = start.plusHours(5);
-		for ( ZonedDateTime hour = start; hour.isBefore(end); hour = hour.plusHours(1) ) {
-			final ZonedDateTime curr = hour;
-			rollup(meta.getStreamId(), hour, hour.plusHours(1), new RollupCallback() {
-	
-				@Override
-				public void doWithStream(List<GeneralNodeDatum> datums,
-						Map<NodeSourcePK, ObjectDatumStreamMetadata> metas, UUID sid,
-						List<AggregateDatum> results) {
-					if ( results.isEmpty() ) {
-						return;
-					}
-					AggregateDatum result = results.get(0);
-					log.debug("Got result: {}", result);
-					assertThat("Stream ID matches", result.getStreamId(), equalTo(meta.getStreamId()));
-					assertThat("Agg timestamp is hour", result.getTimestamp(),
-							equalTo(curr.toInstant()));
-	
-					hourResults.add(results.get(0));
-				}
-			});
-		}
-	
-		// THEN
-		assertThat("3 aggregate hours generated: 12, 15, 16", hourResults, hasSize(3));
-	
-		AggregateDatum h1 = hourResults.get(0);
-		assertThat("Agg 1 is for hour 12", h1.getTimestamp(), is(equalTo(start.toInstant())));
-		assertThat("Agg 1 instantaneous is average", h1.getProperties().getInstantaneous(),
-				arrayContaining(decimalArray("2.5")));
-		assertThat("Agg 1 instantaneous stats", h1.getStatistics().getInstantaneous(),
-				arrayContaining(new BigDecimal[][] { decimalArray("2", "2", "3") }));
-		assertThat("Agg 1 accumulating is diff", h1.getProperties().getAccumulating(),
-				arrayContaining(decimalArray("1")));
-		assertThat("Agg 1 accumulating stats", h1.getStatistics().getInstantaneous(),
-				arrayContaining(new BigDecimal[][] { decimalArray("1", "100", "101") }));
-	
-		AggregateDatum h3 = hourResults.get(2);
-		assertThat("Agg 3 is for hour 16", h3.getTimestamp(),
-				is(equalTo(start.plusHours(4).toInstant())));
-		assertThat("Agg 3 instantaneous is average", h1.getProperties().getInstantaneous(),
-				arrayContaining(decimalArray("4.5")));
-		assertThat("Agg 3 instantaneous stats", h3.getStatistics().getInstantaneous(),
-				arrayContaining(new BigDecimal[][] { decimalArray("2", "4", "5") }));
-		assertThat("Agg 3 accumulating is diff", h3.getProperties().getAccumulating(),
-				arrayContaining(decimalArray("2")));
-		assertThat("Agg 3 accumulating stats", h3.getStatistics().getInstantaneous(),
-				arrayContaining(new BigDecimal[][] { decimalArray("2", "103", "105") }));
-	}
-	*/
 }
