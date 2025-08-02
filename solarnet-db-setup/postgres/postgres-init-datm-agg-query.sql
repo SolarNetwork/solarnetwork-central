@@ -506,8 +506,8 @@ CREATE OR REPLACE FUNCTION solardatm.rollup_datm_for_time_span(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE,
-		tolerance_clock INTERVAL DEFAULT interval '1 hour',
-		tolerance_read 	INTERVAL DEFAULT interval '3 months'
+		tolerance_clock INTERVAL DEFAULT INTERVAL 'PT1H',
+		tolerance_read 	INTERVAL DEFAULT INTERVAL 'P1Y'
 	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 500 AS
 $$
 	WITH m AS (
