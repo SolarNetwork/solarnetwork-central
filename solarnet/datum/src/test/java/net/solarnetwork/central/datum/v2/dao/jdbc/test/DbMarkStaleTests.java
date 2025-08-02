@@ -140,11 +140,11 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		List<StaleAggregateDatum> stales = listStaleAggregateDatum(jdbcTemplate);
-		assertThat("All matching hours marked stale", stales, hasSize(2));
+		assertThat("All matching hours marked stale, plus previous hour", stales, hasSize(3));
 		Set<Instant> staleDates = stales.stream().map(StaleAggregateDatum::getTimestamp)
 				.collect(Collectors.toSet());
-		assertThat("Stale hours from data", staleDates,
-				containsInAnyOrder(start.toInstant(), start.plusHours(1).toInstant()));
+		assertThat("Stale hours from data", staleDates, containsInAnyOrder(
+				start.minusHours(1).toInstant(), start.toInstant(), start.plusHours(1).toInstant()));
 	}
 
 	@Test
@@ -180,8 +180,8 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		List<StaleAggregateDatum> stales = listStaleAggregateDatum(jdbcTemplate);
 		Set<Instant> staleDates = stales.stream().map(StaleAggregateDatum::getTimestamp)
 				.collect(Collectors.toSet());
-		assertThat("All matching hours marked stale (including removed hour)", staleDates,
-				containsInAnyOrder(start.toInstant(), start.plusHours(1).toInstant(),
-						start.plusHours(2).toInstant()));
+		assertThat("All matching hours marked stale (including removed hour and previous hour)",
+				staleDates, containsInAnyOrder(start.minusHours(1).toInstant(), start.toInstant(),
+						start.plusHours(1).toInstant(), start.plusHours(2).toInstant()));
 	}
 }

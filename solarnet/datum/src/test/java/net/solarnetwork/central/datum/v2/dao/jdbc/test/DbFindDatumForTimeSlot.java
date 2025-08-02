@@ -1,21 +1,21 @@
 /* ==================================================================
  * DbFindDatumForTimeSlot.java - 15/12/2022 2:02:00 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -44,7 +44,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
@@ -57,7 +56,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the "find datum for time span" database stored procedures.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -304,7 +303,11 @@ public class DbFindDatumForTimeSlot extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		log.debug("Got result: {}", result);
-		assertThat("No rows in range", result, hasSize(0));
+		assertThat("First before gap + perfect end hour returned", result, hasSize(2));
+		assertThat("First result is one before start date", result.get(0).getTimestamp(),
+				is(equalTo(DateTimeFormatter.ISO_INSTANT.parse("2022-11-09T02:59:00Z", Instant::from))));
+		assertThat("Last result is exact end date", result.get(1).getTimestamp(),
+				is(equalTo(DateTimeFormatter.ISO_INSTANT.parse("2022-11-09T19:00:00Z", Instant::from))));
 	}
 
 	@Test
@@ -319,9 +322,9 @@ public class DbFindDatumForTimeSlot extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		log.debug("Got result: {}", result);
-		assertThat("Expected count returned", result, hasSize(57));
-		assertThat("First result is one before start date", result.get(0).getTimestamp(),
-				is(equalTo(DateTimeFormatter.ISO_INSTANT.parse("2022-11-09T02:59:00Z", Instant::from))));
+		assertThat("Expected count returned", result, hasSize(56));
+		assertThat("First result is exact start date", result.get(0).getTimestamp(),
+				is(equalTo(DateTimeFormatter.ISO_INSTANT.parse("2022-11-09T19:00:00Z", Instant::from))));
 		assertThat("Last result is exact end date", result.get(result.size() - 1).getTimestamp(),
 				is(equalTo(DateTimeFormatter.ISO_INSTANT.parse("2022-11-09T20:00:00Z", Instant::from))));
 	}

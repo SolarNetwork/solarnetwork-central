@@ -1,21 +1,21 @@
 /* ==================================================================
  * DbDatumRollup_Raw06Tests.java - 22/12/2022 11:43:59 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
@@ -53,7 +52,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for datum rollup on the sample-raw-data-06 data set.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -158,7 +157,17 @@ public class DbDatumRollup_Raw06Tests extends BaseDatumJdbcTestSupport {
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, ObjectDatumStreamMetadata> metas, UUID sid,
 					List<AggregateDatum> results) {
-				assertThat("No data in range", results, hasSize(0));
+				assertThat("Agg result returned for adjacent earlier hour", results, hasSize(1));
+
+				AggregateDatum result = results.get(0);
+				log.debug("Got result: {}", result);
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(meta.getStreamId()));
+				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+
+				assertThat("Pick up accumulation from previous gap:",
+						result.getStatistics().getAccumulating(),
+						arrayContaining(decimalArray("123", "45813", "45936"),
+								decimalArray("125", "41012", "41137")));
 			}
 		});
 	}
@@ -183,10 +192,9 @@ public class DbDatumRollup_Raw06Tests extends BaseDatumJdbcTestSupport {
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(meta.getStreamId()));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
 
-				assertThat("Pick up accumulation in >hour gap:",
-						result.getStatistics().getAccumulating(),
-						arrayContaining(decimalArray("124", "45813", "45937"),
-								decimalArray("130", "41012", "41142")));
+				assertThat("Hour with perfect start:", result.getStatistics().getAccumulating(),
+						arrayContaining(decimalArray("1", "45936", "45937"),
+								decimalArray("5", "41137", "41142")));
 			}
 		});
 	}
