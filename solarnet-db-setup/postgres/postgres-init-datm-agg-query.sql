@@ -323,7 +323,9 @@ CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_slot(
 		target_agg 	INTERVAL DEFAULT INTERVAL 'PT1H'
 	) RETURNS SETOF solardatm.datm_rec LANGUAGE SQL STABLE ROWS 200 AS
 $$
-	-- find min/max datum date within slot; if no actual data in this slot we get NULL
+	-- Find min/max datum date within slot; if no actual data in this slot we get NULL.
+	-- Note that an INCLUSIVE end date it used to pick up a "gap" slot that could occur
+	-- leading up to the end time slot (see NET-469).
 	WITH drange AS (
 		SELECT (
 			-- find minimum datum date within slot
@@ -331,7 +333,7 @@ $$
 			FROM solardatm.da_datm
 			WHERE stream_id = sid
 				AND ts >= start_ts
-				AND ts < end_ts
+				AND ts <= end_ts
 			ORDER BY stream_id, ts
 			LIMIT 1
 		) AS min_ts
@@ -341,7 +343,7 @@ $$
 			FROM solardatm.da_datm
 			WHERE stream_id = sid
 				AND ts >= start_ts
-				AND ts < end_ts
+				AND ts <= end_ts
 			ORDER BY stream_id, ts DESC
 			LIMIT 1
 		) AS max_ts
@@ -352,19 +354,21 @@ $$
 		SELECT COALESCE(t.min_ts, drange.min_ts) AS min_ts, COALESCE(t.max_ts, drange.max_ts) AS max_ts
 		FROM drange, (
 			SELECT (
-				-- find prior datum date before minimum within slot
+				-- find prior datum date before minimum within slot (or exact start of slot)
 				SELECT CASE
 					WHEN d.ts IS NULL THEN drange.min_ts
-					-- when the prior ts is exactly the start of the proir agg slot, use the datum min instead
-					-- because that value would actually be in the previous slot
-					WHEN drange.min_ts = start_ts AND d.ts = start_ts - target_agg THEN drange.min_ts
+					WHEN drange.min_ts = start_ts THEN drange.min_ts
 					ELSE d.ts
 				END
 				FROM drange, solardatm.find_time_before(sid, drange.min_ts, start_ts - tolerance) AS d(ts)
 			) AS min_ts
 			, (
-				-- find next datum date after maximum within slot
-				SELECT d.ts
+				-- find next datum date after maximum within slot (or exact end of slot)
+				SELECT CASE
+					WHEN d.ts IS NULL THEN drange.max_ts
+					WHEN drange.max_ts = end_ts THEN drange.max_ts
+					ELSE d.ts
+				END
 				FROM drange, solardatm.find_time_after(sid, drange.max_ts, end_ts + tolerance)  AS d(ts)
 			) AS max_ts
 		) t
