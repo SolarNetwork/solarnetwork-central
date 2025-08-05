@@ -129,7 +129,7 @@ public class HttpClientConfig {
 		ThreadLocal<AtomicLong> tl = ThreadLocal.withInitial(AtomicLong::new);
 		RestTemplate debugTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(reqFactory));
 		debugTemplate.setInterceptors(List.of(new ContentLengthTrackingClientHttpRequestInterceptor(tl),
-				new LoggingHttpRequestInterceptor()));
+				new LoggingHttpRequestInterceptor(true)));
 		return debugTemplate;
 	}
 

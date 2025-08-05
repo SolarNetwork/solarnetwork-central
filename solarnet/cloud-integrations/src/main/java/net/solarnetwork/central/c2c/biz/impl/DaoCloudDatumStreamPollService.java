@@ -32,7 +32,9 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -71,6 +73,7 @@ import net.solarnetwork.central.scheduler.SchedulerUtils;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
+import net.solarnetwork.util.StringNaturalSortComparator;
 
 /**
  * DAO based implementation of {@link CloudDatumStreamPollService}.
@@ -473,8 +476,36 @@ public class DaoCloudDatumStreamPollService
 						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 			} else {
 				var msg = "Reset task state";
-				var data = Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
-						taskInfo.getStartAt());
+				var data = new LinkedHashMap<String, Object>(4);
+				data.put("executeAt", taskInfo.getExecuteAt());
+				data.put("startAt", taskInfo.getStartAt());
+				data.put("datumImportCount", polledDatum != null ? polledDatum.size() : 0);
+				if ( lastDatumDate != null ) {
+					data.put("datumLastDate", lastDatumDate);
+				}
+				if ( polledDatum != null && !polledDatum.isEmpty() ) {
+					data.put("datumImportCount", polledDatum.size());
+					Map<String, Integer> sourceCounts = new TreeMap<>(
+							StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT);
+					Map<String, Instant> lastDates = new TreeMap<>(
+							StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT);
+					for ( var datum : polledDatum ) {
+						sourceCounts.compute(datum.getSourceId(), (k, old) -> {
+							if ( old == null ) {
+								return 1;
+							}
+							return old + 1;
+						});
+						lastDates.compute(datum.getSourceId(), (k, old) -> {
+							if ( old == null ) {
+								return datum.getTimestamp();
+							}
+							return datum.getTimestamp().isAfter(old) ? datum.getTimestamp() : old;
+						});
+					}
+					data.put("datumImportCountBySource", sourceCounts);
+					data.put("datumLastDateBySource", lastDates);
+				}
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForConfiguration(datumStream.getId(), INTEGRATION_POLL_TAGS, msg, data));
 			}
