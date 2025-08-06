@@ -706,7 +706,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the configuration to extract the mapping from
 	 * @param key
 	 *        the service property key to extract
-	 * @param default
+	 * @param defaultResult
 	 *        the default duration to return if the property is not available
 	 * @return the mapping, or {@literal null}
 	 * @since 1.18
