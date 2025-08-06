@@ -94,6 +94,8 @@ import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.TextFieldSettingSpecifier;
+import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
 
@@ -101,7 +103,7 @@ import net.solarnetwork.util.StringUtils;
  * Enphase implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -165,11 +167,44 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	/** The epoch end date query parameter name. */
 	public static final String GRANULARITY_PARAM = "granularity";
 
+	/**
+	 * The setting for a "devices reporting" maximum lag, when less than the
+	 * "total devices" available.
+	 *
+	 * <p>
+	 * The value can be an ISO duration like {@code PT2H} for "2 hours" or an
+	 * integer number of seconds.
+	 * </p>
+	 *
+	 * @since 1.7
+	 */
+	public static final String DEVICE_REPORTING_MAXIMUM_LAG_SETTING = "deviceReportingMaximumLag";
+
+	/**
+	 * A setting specifier for the {@code UPPER_CASE_SOURCE_ID_SETTING}.
+	 *
+	 * @since 1.7
+	 */
+	public static final TextFieldSettingSpecifier DEVICE_REPORTING_MAXIMUM_LAG_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			DEVICE_REPORTING_MAXIMUM_LAG_SETTING, null);
+
+	/**
+	 * The default duration used if the
+	 * {@link #DEVICE_REPORTING_MAXIMUM_LAG_SETTING} is not defined.
+	 */
+	public static final Duration DEFAULT_DEVICE_REPORTING_MAXIMUM_LAG = Duration.ofHours(3);
+
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		SETTINGS = List.of(UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER, SOURCE_ID_MAP_SETTING_SPECIFIER,
-				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
+		// @formatter:off
+		SETTINGS = List.of(
+				DEVICE_REPORTING_MAXIMUM_LAG_SETTING_SPECIFIER,
+				UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER,
+				SOURCE_ID_MAP_SETTING_SPECIFIER,
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
+				);
+		// @formatter:on
 	}
 
 	/** The supported placeholder keys. */
@@ -181,6 +216,20 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 	/** The maximum period of time to request data for in one request. */
 	private static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);
+
+	/**
+	 * An internal datum property to hold the "devices reporting" integer value.
+	 *
+	 * @since 1.7
+	 */
+	public static final String INTERNAL_DEVICES_REPORTING_PROPERTY = "__DevicesReporting";
+
+	/**
+	 * An internal datum property to hold the "total devices" integer value.
+	 *
+	 * @since 1.7
+	 */
+	public static final String INTERNAL_TOTAL_DEVICES_PROPERTY = "__TotalDevices";
 
 	/**
 	 * Constructor.
@@ -517,6 +566,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		 */
 		// @formatter:off
 		return Arrays.asList(
+				dataValue(List.of(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID, "DevicesReporting"), "Devices reporting"),
+
 				dataValue(List.of(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID, "W"), "Active power"),
 				dataValue(List.of(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID, "Wh"), "Active energy")
 				);
@@ -555,6 +606,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		 */
 		// @formatter:off
 		return Arrays.asList(
+				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "DevicesReporting"), "Devices reporting"),
+
 				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "W"), "Active power"),
 				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "WhExp"), "Active energy exported"),
 
@@ -659,7 +712,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return result.getResults();
 	}
 
-	private static void updateLastReportDate(MutableLong date, JsonNode json) {
+	private static void updateLastReportDate(Duration maxLag, MutableLong date, JsonNode json,
+			Instant now, List<GeneralDatum> datum) {
 		// track the minimum "last report date" value in a response, to adjust "next start" query value
 		long jsonLastReportAt = json.path("meta").path("last_report_at").longValue();
 		if ( jsonLastReportAt > 0 ) {
@@ -671,6 +725,33 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		if ( jsonLastEnergyAt > 0 ) {
 			if ( jsonLastEnergyAt < date.longValue() ) {
 				date.setValue(jsonLastEnergyAt);
+			}
+		}
+
+		for ( GeneralDatum d : datum ) {
+			DatumSamples s = d.getSamples();
+			Map<String, Object> status = s.getStatus();
+			if ( status == null ) {
+				continue;
+			}
+
+			// get (and remove) the internal device count properties
+			Integer totalCount = (Integer) status.remove(INTERNAL_TOTAL_DEVICES_PROPERTY);
+			Integer reportingCount = (Integer) status.remove(INTERNAL_DEVICES_REPORTING_PROPERTY);
+			if ( status.isEmpty() ) {
+				s.setStatus(null);
+			}
+
+			if ( totalCount != null && reportingCount != null && reportingCount < totalCount ) {
+				Duration lag = Duration.between(d.getTimestamp(), now);
+				if ( lag.compareTo(maxLag) <= 0 ) {
+					// reporting count is less than total count, and datum is within "max lag" setting,
+					// so adjust date to this datum's time
+					long datumEpoch = d.getTimestamp().getEpochSecond();
+					if ( datumEpoch < date.longValue() ) {
+						date.setValue(datumEpoch);
+					}
+				}
 			}
 		}
 	}
@@ -691,6 +772,9 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 			final var decryptedIntegration = integration.copyWithId(integration.getId());
 			decryptedIntegration.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
+
+			final Duration deviceReportingMaxLag = servicePropertyDuration(datumStream,
+					DEVICE_REPORTING_MAXIMUM_LAG_SETTING, DEFAULT_DEVICE_REPORTING_MAXIMUM_LAG);
 
 			final Instant filterStartDate = requireNonNullArgument(filter.getStartDate(),
 					"filter.startDate");
@@ -747,7 +831,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 							res -> {
 								var result = parseSiteInverterDatum(res.getBody(), systemInvRefs, ds,
 										sourceIdMap, usedQueryFilter);
-								updateLastReportDate(lastReportDate, res.getBody());
+								updateLastReportDate(deviceReportingMaxLag, lastReportDate,
+										res.getBody(), clock.instant(), result);
 								return result;
 							});
 					if ( datum != null ) {
@@ -773,7 +858,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 							res -> {
 								var result = parseSiteMeterDatum(res.getBody(), systemMetRefs, ds,
 										sourceIdMap);
-								updateLastReportDate(lastReportDate, res.getBody());
+								updateLastReportDate(deviceReportingMaxLag, lastReportDate,
+										res.getBody(), clock.instant(), result);
 								return result;
 							});
 					if ( datum != null ) {
@@ -892,6 +978,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			return List.of();
 		}
 
+		final Integer totalDeviceCount = json.path("total_devices").intValue();
+
 		final List<GeneralDatum> result = new ArrayList<>(16);
 
 		// only need to compute the source ID once, as the same for all site inverter data
@@ -915,6 +1003,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					}
 				}
 				JsonNode fieldNode = switch (ref.fieldName) {
+					case "DevicesReporting" -> telem.path("devices_reporting");
 					case "W" -> telem.path("powr");
 					case "Wh" -> telem.path("enwh");
 					default -> null;
@@ -934,6 +1023,11 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			if ( s.isEmpty() ) {
 				continue;
 			}
+
+			// add internal device count props
+			int reportingDeviceCount = telem.path("devices_reporting").intValue();
+			s.putStatusSampleValue(INTERNAL_TOTAL_DEVICES_PROPERTY, totalDeviceCount);
+			s.putStatusSampleValue(INTERNAL_DEVICES_REPORTING_PROPERTY, reportingDeviceCount);
 
 			result.add(new GeneralDatum(
 					new DatumId(ds.getKind(), ds.getObjectId(), sourceId, ofEpochSecond(ts)), s));
@@ -1005,6 +1099,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			return List.of();
 		}
 
+		final Integer totalDeviceCount = json.path("total_devices").intValue();
+
 		final List<GeneralDatum> result = new ArrayList<>(16);
 
 		// only need to compute the source ID once, as the same for all site meter data
@@ -1040,7 +1136,9 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					}
 				}
 				Object propVal = null;
-				if ( "WhExp".equals(ref.fieldName) ) {
+				if ( "DevicesReporting".equals(ref.fieldName) ) {
+					propVal = telem.path("devices_reporting").intValue();
+				} else if ( "WhExp".equals(ref.fieldName) ) {
 					JsonNode fieldNode = telem.path("wh_del");
 					if ( fieldNode == null || fieldNode.isNull() || fieldNode.isMissingNode() ) {
 						continue;
@@ -1099,6 +1197,11 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			if ( s.isEmpty() ) {
 				continue;
 			}
+
+			// add internal device count props
+			int reportingDeviceCount = telem.path("devices_reporting").intValue();
+			s.putStatusSampleValue(INTERNAL_TOTAL_DEVICES_PROPERTY, totalDeviceCount);
+			s.putStatusSampleValue(INTERNAL_DEVICES_REPORTING_PROPERTY, reportingDeviceCount);
 
 			result.add(new GeneralDatum(new DatumId(ds.getKind(), ds.getObjectId(), sourceId, date), s));
 		}

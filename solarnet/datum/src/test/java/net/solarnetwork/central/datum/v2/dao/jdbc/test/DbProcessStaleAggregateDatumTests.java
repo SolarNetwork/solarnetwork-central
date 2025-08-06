@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.lang.String.valueOf;
+import static java.time.Instant.now;
+import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.TemporalAdjusters.firstDayOfMonth;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -36,11 +38,18 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listStaleF
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.datumResourceToList;
+import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.domain.datum.Aggregation.Day;
+import static net.solarnetwork.domain.datum.Aggregation.Hour;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
@@ -67,7 +76,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
@@ -81,9 +89,12 @@ import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
+import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
@@ -94,7 +105,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Test cases for DB stored procedures that process stale aggregate datum.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport {
 
@@ -630,4 +641,75 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 				arrayContaining(decimalArray("2400", "4900", "7300")));
 	}
 
+	// See NET-472
+	@Test
+	public void markStale_dstShift() throws IOException {
+		final ZoneId zone = ZoneId.of("America/New_York");
+		setupTestLocation(1L, zone.getId());
+		setupTestNode(10L, 1L);
+		final UUID streamId = UUID.randomUUID();
+		final ZonedDateTime start = Instant.parse("2019-11-03T04:00:00Z").atZone(zone);
+
+		final ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, zone.getId(),
+				Node, 10L, "A", new String[] { "watts" }, new String[] { "wattHours" }, null);
+		final List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		allTableData(log, jdbcTemplate, "solardatm.da_datm", "stream_id,ts");
+		allTableData(log, jdbcTemplate, "solardatm.agg_stale_datm", "stream_id,ts_start");
+
+		// generate hourly aggs
+		// @formatter:off
+		insertStaleAggregateDatum(log, jdbcTemplate, asList(
+				  new StaleAggregateDatumEntity(meta.getStreamId(), start.toInstant(), Hour, now())
+				, new StaleAggregateDatumEntity(meta.getStreamId(), start.plusHours(1).toInstant(), Hour, now())
+				, new StaleAggregateDatumEntity(meta.getStreamId(), start.plusHours(2).toInstant(), Hour, now())
+				));
+		// @formatter:on
+
+		allTableData(log, jdbcTemplate, "solardatm.agg_datm_hourly", "stream_id,ts_start");
+
+		// WHEN
+		processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Hour));
+
+		// THEN
+		// @formatter:off
+		List<StaleAggregateDatum> stales = listStaleAggregateDatum(jdbcTemplate);
+		then(stales)
+			.as("One Day stale record available after processing stale hours")
+			.hasSize(1)
+			.element(0)
+			.as("Stale record for day")
+			.returns(Day, from(StaleAggregateDatum::getKind))
+			.as("Stale ID is for same stream at stream-local start of day that contains processed hour")
+			.returns(new StreamKindPK(streamId, start.truncatedTo(DAYS).toInstant(), "d"),
+					from(StaleAggregateDatum::getId))
+			;
+
+		List<AggregateDatum> hourly = aggDatum(Hour);
+		then(hourly)
+			.as("Hourly datum created by processing stale hours")
+			.hasSize(3)
+			.element(0)
+			.returns(new DatumPK(meta.getStreamId(), start.toInstant()), from(AggregateDatum::getId))
+			.extracting(AggregateDatum::getStatistics)
+			.as("Wh reading for hour 0")
+			.returns(new BigDecimal[][] {decimalArray("0", "137952251", "137952251")}, DatumPropertiesStatistics::getAccumulating)
+			;
+		then(hourly).element(1)
+			.returns(new DatumPK(meta.getStreamId(), start.plusHours(1).toInstant()), from(AggregateDatum::getId))
+			.extracting(AggregateDatum::getStatistics)
+			.as("Wh reading for hour 1")
+			.returns(new BigDecimal[][] {decimalArray("1", "137952251", "137952252")}, DatumPropertiesStatistics::getAccumulating)
+			;
+		then(hourly).element(2)
+			.returns(new DatumPK(meta.getStreamId(), start.plusHours(2).toInstant()), from(AggregateDatum::getId))
+			.extracting(AggregateDatum::getStatistics)
+			.as("Wh reading for hour 1")
+			.returns(new BigDecimal[][] {decimalArray("0", "137952252", "137952252")}, DatumPropertiesStatistics::getAccumulating)
+			;
+		// @formatter:on
+	}
 }
