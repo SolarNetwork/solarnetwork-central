@@ -744,7 +744,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 			if ( totalCount != null && reportingCount != null && reportingCount < totalCount ) {
 				Duration lag = Duration.between(d.getTimestamp(), now);
-				if ( lag.compareTo(maxLag) < 1 ) {
+				if ( lag.compareTo(maxLag) <= 0 ) {
 					// reporting count is less than total count, and datum is within "max lag" setting,
 					// so adjust date to this datum's time
 					long datumEpoch = d.getTimestamp().getEpochSecond();
