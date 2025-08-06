@@ -35,6 +35,7 @@ import static org.springframework.util.StringUtils.commaDelimitedListToStringArr
 import static org.springframework.util.StringUtils.delimitedListToStringArray;
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -103,7 +104,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.17
+ * @version 1.18
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -689,6 +690,46 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		if ( n != null ) {
 			map.put(key, NumberUtils.narrow(n, 2));
 		}
+	}
+
+	/**
+	 * Resolve a {@link Duration} from a setting on a configuration.
+	 *
+	 * <p>
+	 * The property value can be a number value, which will be treated as
+	 * seconds, or an ISO duration suitable for passing to
+	 * {@link Duration#parse(CharSequence)} (for example {@code PT2H} for "2
+	 * hours").
+	 * </p>
+	 *
+	 * @param configuration
+	 *        the configuration to extract the mapping from
+	 * @param key
+	 *        the service property key to extract
+	 * @param default
+	 *        the default duration to return if the property is not available
+	 * @return the mapping, or {@literal null}
+	 * @since 1.18
+	 */
+	public static Duration servicePropertyDuration(IdentifiableConfiguration configuration, String key,
+			Duration defaultResult) {
+		if ( configuration == null ) {
+			return defaultResult;
+		}
+		final Object propVal = configuration.serviceProperty(key, Object.class);
+		if ( propVal instanceof Duration d ) {
+			return d;
+		} else if ( propVal instanceof Number n ) {
+			return Duration.ofSeconds(n.longValue());
+		} else if ( propVal != null ) {
+			String s = propVal.toString();
+			try {
+				return Duration.parse(s);
+			} catch ( DateTimeParseException e ) {
+				// not parsable...
+			}
+		}
+		return defaultResult;
 	}
 
 	/**

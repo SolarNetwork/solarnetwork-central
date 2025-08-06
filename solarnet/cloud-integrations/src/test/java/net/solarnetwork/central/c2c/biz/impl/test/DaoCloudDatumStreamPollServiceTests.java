@@ -332,7 +332,16 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.returns(Map.of(
 							"configId", datumStream.getConfigId(),
 							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt().plusSeconds(300)),
-							"startAt", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp())
+							"startAt", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp()),
+							"datumImportCount", 2,
+							"datumImportCountBySource", Map.of(
+									datumStream.getSourceId(), 2
+									),
+							"datumLastDate", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp()),
+							"datumLastDateBySource", Map.of(
+									datumStream.getSourceId(), ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp())
+									)
+
 						), from(e -> JsonUtils.getStringMap(e.getData())))
 					;
 			})
