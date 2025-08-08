@@ -65,7 +65,9 @@ public enum NodeUsageType implements NodeUsages {
 	OAuthClientCredentials(11, OAUTH_CLIENT_CREDENTIALS_KEY),
 
 	/** Cloud Integrations data usage. */
-	CloudIntegrationsData(12, CLOUD_INTEGRATIONS_DATA_KEY),;
+	CloudIntegrationsData(12, CLOUD_INTEGRATIONS_DATA_KEY),
+
+	;
 
 	private final int order;
 	private final String key;
