@@ -65,7 +65,7 @@ import net.solarnetwork.util.ByteUtils;
  * class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 
@@ -142,7 +142,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 				Aggregation.Hour,
 				propertiesOf(
 						decimalArray("1.23", "2.34"),
-						decimalArray("30"),
+						decimalArray("3"),
 						new String[] {"foo"},
 						new String[] {"wham", "bam"}),
 				statisticsOf(new BigDecimal[][] {
@@ -171,7 +171,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		assertThat("Aggregate JSON", json, is(format("{\"success\":true,\"meta\":[{\"streamId\":\"%s\",",
 				meta.getStreamId()) + "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
 				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],\"data\":["
-				+ "[0,[1651197060000,null],[1.23,10,1.0,2.0],[2.34,10,2.0,3.0],[30,100,130],\"foo\",\"wham\",\"bam\"]"
+				+ "[0,[1651197060000,null],[1.23,10,1.0,2.0],[2.34,10,2.0,3.0],[3,100,130],\"foo\",\"wham\",\"bam\"]"
 				+ "]}"));
 	}
 
@@ -188,7 +188,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 				null, start.plusHours(1).minusMinutes(1).toInstant(),
 				propertiesOf(
 						decimalArray("1.23", "2.34"),
-						decimalArray("30"), null, null),
+						decimalArray("3"), null, null),
 				statisticsOf(new BigDecimal[][] {
 					decimalArray("10", "1.0", "2.0"),
 					decimalArray("10", "2.0", "3.0")
