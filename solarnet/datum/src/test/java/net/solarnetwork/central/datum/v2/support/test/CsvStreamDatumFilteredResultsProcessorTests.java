@@ -60,7 +60,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * Test cases for the {@link CsvStreamDatumFilteredResultsProcessor} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class CsvStreamDatumFilteredResultsProcessorTests {
 
@@ -247,7 +247,7 @@ public class CsvStreamDatumFilteredResultsProcessorTests {
 				Aggregation.Hour,
 				propertiesOf(
 						decimalArray("1.23", "2.34"),
-						decimalArray("30"),
+						decimalArray("3"),
 						new String[] {"foo"},
 						new String[] {"wham", "bam"}),
 				statisticsOf(new BigDecimal[][] {
@@ -275,7 +275,7 @@ public class CsvStreamDatumFilteredResultsProcessorTests {
 		assertThat("Aggregate CSV", csv,
 				is("""
 						ts_start,ts_end,streamId,objectId,sourceId,a,a_count,a_min,a_max,b,b_count,b_min,b_max,c,c_start,c_end,d,tags\r
-						2022-04-29T01:00:00Z,,%1$s,123,test/source,1.23,10,1.0,2.0,2.34,10,2.0,3.0,30,100,130,foo,"wham,bam"\r
+						2022-04-29T01:00:00Z,,%1$s,123,test/source,1.23,10,1.0,2.0,2.34,10,2.0,3.0,3,100,130,foo,"wham,bam"\r
 						"""
 						.formatted(meta.getStreamId())));
 	}
@@ -293,7 +293,7 @@ public class CsvStreamDatumFilteredResultsProcessorTests {
 				null, start.plusHours(1).toInstant(),
 				propertiesOf(
 						decimalArray("1.23", "2.34"),
-						decimalArray("30"), null, null),
+						decimalArray("3"), null, null),
 				statisticsOf(new BigDecimal[][] {
 					decimalArray("10", "1.0", "2.0"),
 					decimalArray("10", "2.0", "3.0")

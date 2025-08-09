@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.support;
 
+import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Status;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
 import java.io.IOException;
@@ -164,7 +167,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * }</pre>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.11
  */
 public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilteredResultsProcessor {
@@ -240,7 +243,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 				for ( UUID streamId : streamIds ) {
 					ObjectDatumStreamMetadata meta = metadataProvider.metadataForStreamId(streamId);
 					if ( meta != null ) {
-						String[] propNames = meta.propertyNamesForType(DatumSamplesType.Instantaneous);
+						String[] propNames = meta.propertyNamesForType(Instantaneous);
 						if ( propNames != null ) {
 							for ( String propName : propNames ) {
 								if ( streamColumnIndexes.putIfAbsent(propName, colIndex) == null ) {
@@ -256,7 +259,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 								}
 							}
 						}
-						propNames = meta.propertyNamesForType(DatumSamplesType.Accumulating);
+						propNames = meta.propertyNamesForType(Accumulating);
 						if ( propNames != null ) {
 							for ( String propName : propNames ) {
 								if ( streamColumnIndexes.putIfAbsent(propName, colIndex) == null ) {
@@ -270,7 +273,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 								}
 							}
 						}
-						propNames = meta.propertyNamesForType(DatumSamplesType.Status);
+						propNames = meta.propertyNamesForType(Status);
 						if ( propNames != null ) {
 							for ( String propName : propNames ) {
 								if ( streamColumnIndexes.putIfAbsent(propName, colIndex) == null ) {
@@ -319,15 +322,15 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 		}
 		Arrays.fill(row, metaColumnCount, row.length, "");
 
-		populateRow(meta, resultItem, agg, DatumSamplesType.Instantaneous, row);
-		populateRow(meta, resultItem, agg, DatumSamplesType.Accumulating, row);
-		populateRow(meta, resultItem, agg, DatumSamplesType.Status, row);
+		populateRow(meta, resultItem, agg, reading, Instantaneous, row);
+		populateRow(meta, resultItem, agg, reading, Accumulating, row);
+		populateRow(meta, resultItem, agg, reading, Status, row);
 		row[row.length - 1] = arrayToCommaDelimitedString(resultItem.getProperties().getTags());
 		writer.write(row);
 	}
 
 	private void populateRow(ObjectDatumStreamMetadata meta, StreamDatum resultItem, final boolean agg,
-			final DatumSamplesType type, final String[] row) {
+			final boolean reading, final DatumSamplesType type, final String[] row) {
 		final DatumProperties props = resultItem.getProperties();
 		final String[] propNames = meta.propertyNamesForType(type);
 		if ( propNames != null ) {
@@ -349,15 +352,21 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 				if ( idx >= row.length ) {
 					continue;
 				}
-				row[idx] = (type == DatumSamplesType.Status ? formatObject(propVals[i])
-						: formatDecimal((BigDecimal) propVals[i]));
 
-				if ( agg && type == DatumSamplesType.Instantaneous ) {
+				// for Reading datum Accumulating type, show AccumulatingDifference from stats,
+				// otherwise the normal property value
+				row[idx] = (type == Status ? formatObject(propVals[i])
+						: formatDecimal(reading && type == Accumulating
+								? ((ReadingDatum) resultItem).getStatistics()
+										.getAccumulatingDifference(i)
+								: (BigDecimal) propVals[i]));
+
+				if ( agg && type == Instantaneous ) {
 					DatumPropertiesStatistics stats = ((AggregateDatum) resultItem).getStatistics();
 					row[idx + 1] = formatDecimal(stats.getInstantaneousCount(i));
 					row[idx + 2] = formatDecimal(stats.getInstantaneousMinimum(i));
 					row[idx + 3] = formatDecimal(stats.getInstantaneousMaximum(i));
-				} else if ( agg && type == DatumSamplesType.Accumulating ) {
+				} else if ( agg && type == Accumulating ) {
 					DatumPropertiesStatistics stats = ((AggregateDatum) resultItem).getStatistics();
 					row[idx + 1] = formatDecimal(stats.getAccumulatingStart(i));
 					row[idx + 2] = formatDecimal(stats.getAccumulatingEnd(i));
