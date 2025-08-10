@@ -37,6 +37,9 @@ import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,13 +49,14 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Test cases for the {@link DatumSqlUtils} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -688,4 +692,207 @@ public class DatumSqlUtilsTests {
 				equalTo(true));
 	}
 
+	@Test
+	public void joinStreamMetadataExtremeDatumSql_noDateRange_latest() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm",
+				Aggregation.None, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, true, buf);
+
+		// THEN
+		and.then(result).as("No parameters generated").isZero();
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.da_datm datum
+					WHERE datum.stream_id = s.stream_id
+					ORDER BY datum.ts DESC
+					LIMIT 1
+				) late ON late.stream_id = s.stream_id
+				""");
+	}
+
+	@Test
+	public void joinStreamMetadataExtremeDatumSql_noDateRange_earliest() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm",
+				Aggregation.None, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, false, buf);
+
+		// THEN
+		and.then(result).as("No parameters generated").isZero();
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.da_datm datum
+					WHERE datum.stream_id = s.stream_id
+					ORDER BY datum.ts
+					LIMIT 1
+				) early ON early.stream_id = s.stream_id
+				""");
+	}
+
+	@Test
+	public void joinStreamMetadataExtremeDatumSql_dateRange_latest() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm",
+				Aggregation.None, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, true, buf);
+
+		// THEN
+		and.then(result).as("Start/date parameters generated").isEqualTo(2);
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.da_datm datum
+					WHERE datum.stream_id = s.stream_id
+						AND datum.ts >= ?
+						AND datum.ts < ?
+					ORDER BY datum.ts DESC
+					LIMIT 1
+				) late ON late.stream_id = s.stream_id
+				""");
+	}
+
+	@Test
+	public void joinStreamMetadataExtremeDatumSql_dateRange_earliest() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm",
+				Aggregation.None, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, false, buf);
+
+		// THEN
+		and.then(result).as("Start/date parameters generated").isEqualTo(2);
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.da_datm datum
+					WHERE datum.stream_id = s.stream_id
+						AND datum.ts >= ?
+						AND datum.ts < ?
+					ORDER BY datum.ts
+					LIMIT 1
+				) early ON early.stream_id = s.stream_id
+				""");
+	}
+
+	@Test
+	public void joinStreamMetadataExtremeDatumSql_localDateRange_latest() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setLocalStartDate(LocalDateTime.now());
+		filter.setLocalEndDate(filter.getLocalStartDate().plusHours(1));
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm",
+				Aggregation.None, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, true, buf);
+
+		// THEN
+		and.then(result).as("Local start/date parameters generated").isEqualTo(2);
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.da_datm datum
+					WHERE datum.stream_id = s.stream_id
+						AND datum.ts >= ? AT TIME ZONE s.time_zone
+						AND datum.ts < ? AT TIME ZONE s.time_zone
+					ORDER BY datum.ts DESC
+					LIMIT 1
+				) late ON late.stream_id = s.stream_id
+				""");
+	}
+
+	@Test
+	public void joinStreamMetadataExtremeDatumSql_localDateRange_earliest() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setLocalStartDate(LocalDateTime.now());
+		filter.setLocalEndDate(filter.getLocalStartDate().plusHours(1));
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm",
+				Aggregation.None, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, false, buf);
+
+		// THEN
+		and.then(result).as("Local start/date parameters generated").isEqualTo(2);
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.da_datm datum
+					WHERE datum.stream_id = s.stream_id
+						AND datum.ts >= ? AT TIME ZONE s.time_zone
+						AND datum.ts < ? AT TIME ZONE s.time_zone
+					ORDER BY datum.ts
+					LIMIT 1
+				) early ON early.stream_id = s.stream_id
+				""");
+	}
+
+	@Test
+	public void joinStreamMetadataExtremeDatumSql_agg_hourly_latest() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.agg_datm_hourly",
+				Aggregation.Hour, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, true, buf);
+
+		// THEN
+		and.then(result).as("No parameters generated").isZero();
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.agg_datm_hourly datum
+					WHERE datum.stream_id = s.stream_id
+					ORDER BY datum.ts_start DESC
+					LIMIT 1
+				) late ON late.stream_id = s.stream_id
+				""");
+	}
+
+	@Test
+	public void joinStreamMetadataExtremeDatumSql_agg_hourly_dateRange_latest() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.agg_datm_hourly",
+				Aggregation.Hour, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, true, buf);
+
+		// THEN
+		and.then(result).as("Start/date parameters generated").isEqualTo(2);
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.agg_datm_hourly datum
+					WHERE datum.stream_id = s.stream_id
+						AND datum.ts_start >= ?
+						AND datum.ts_start < ?
+					ORDER BY datum.ts_start DESC
+					LIMIT 1
+				) late ON late.stream_id = s.stream_id
+				""");
+	}
 }

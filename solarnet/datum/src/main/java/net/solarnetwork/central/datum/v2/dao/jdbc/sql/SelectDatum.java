@@ -439,7 +439,7 @@ public final class SelectDatum
 			stmt.setObject(++p, LocalDate.now(UTC).minusYears(2).atStartOfDay(), Types.TIMESTAMP);
 			stmt.setObject(++p, LocalDate.now(UTC).plusDays(1).atStartOfDay(), Types.TIMESTAMP);
 		} else if ( filter.hasLocalDate() ) {
-			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p);
 		} else {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
 		}

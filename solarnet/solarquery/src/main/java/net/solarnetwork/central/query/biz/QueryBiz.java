@@ -59,7 +59,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * API for querying business logic.
  *
  * @author matt
- * @version 4.2
+ * @version 4.3
  */
 public interface QueryBiz {
 
@@ -86,6 +86,30 @@ public interface QueryBiz {
 	 *         available
 	 */
 	ReportableInterval getReportableInterval(Long nodeId, String sourceId);
+
+	/**
+	 * Get a date interval of available data for a node, optionally limited to a
+	 * source ID.
+	 *
+	 * <p>
+	 * This method can be used to find the earliest and latest dates data is
+	 * available for a set of given {@link GeneralNodeDatum}. This could be
+	 * useful for reporting UIs that want to display a view of the complete
+	 * range of data available.
+	 * </p>
+	 * <p>
+	 * Exactly one node ID and source ID must be provided by the filter. An
+	 * optional date or local date range can also be provided to restrict the
+	 * desired time period.
+	 * </p>
+	 *
+	 * @param filter
+	 *        the node, source, and optional date range to search for
+	 * @return ReadableInterval instance, or {@literal null} if no data
+	 *         available
+	 * @since 4.3
+	 */
+	ReportableInterval findReportableInterval(GeneralNodeDatumFilter filter);
 
 	/**
 	 * Get the available source IDs for a given filter.

@@ -39,7 +39,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Select time ranges for datum streams.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public final class SelectDatumAvailableTimeRange implements PreparedStatementCreator, SqlProvider {
@@ -119,8 +119,10 @@ public final class SelectDatumAvailableTimeRange implements PreparedStatementCre
 
 	private void sqlFrom(StringBuilder buf) {
 		buf.append("FROM s\n");
-		DatumSqlUtils.joinStreamMetadataExtremeDatumSql("solardatm.da_datm", "ts", false, buf);
-		DatumSqlUtils.joinStreamMetadataExtremeDatumSql("solardatm.da_datm", "ts", true, buf);
+		DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm", Aggregation.None,
+				DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, false, buf);
+		DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm", Aggregation.None,
+				DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, true, buf);
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
@@ -152,6 +154,13 @@ public final class SelectDatumAvailableTimeRange implements PreparedStatementCre
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
+		if ( filter.hasLocalDate() ) {
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p); // early
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p); // late
+		} else if ( filter.hasDate() ) {
+			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p); // early
+			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p); // late
+		}
 		DatumSqlUtils.preparePaginationFilter(filter, con, stmt, p);
 		return stmt;
 	}

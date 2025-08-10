@@ -90,7 +90,7 @@ public final class DeleteDatum implements PreparedStatementCreator, SqlProvider 
 		PreparedStatement stmt = con.prepareStatement(getSql());
 		int p = 0;
 		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
-		DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
+		DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p);
 		return stmt;
 	}
 

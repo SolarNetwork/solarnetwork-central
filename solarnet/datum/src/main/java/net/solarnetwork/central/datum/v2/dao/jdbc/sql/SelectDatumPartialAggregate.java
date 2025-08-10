@@ -378,7 +378,7 @@ public final class SelectDatumPartialAggregate
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, combine, con, stmt, p);
 		for ( DatumCriteria intervalFilter : intervalFilters ) {
-			p = DatumSqlUtils.prepareLocalDateRangeFilter(intervalFilter, con, stmt, p);
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(intervalFilter, stmt, p);
 		}
 		return p;
 	}
