@@ -66,7 +66,7 @@ import net.solarnetwork.util.ArrayUtils;
  * Security enforcing AOP aspect for {@link QueryBiz}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Aspect
 @Component
@@ -412,9 +412,6 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		if ( filter.getNodeIds() == null || filter.getNodeIds().length != 1 ) {
 			throw new IllegalArgumentException("Exactly 1 node ID required.");
 		}
-		if ( filter.getSourceIds() == null && filter.getSourceIds().length != 1 ) {
-			throw new IllegalArgumentException("Exactly 1 source ID required.");
-		}
 
 		// verify node ID
 		requireNodeReadAccess(filter.getNodeId());
@@ -429,7 +426,13 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		if ( allowedSourceIds != null && !allowedSourceIds.isEmpty() ) {
 			Authentication authentication = SecurityUtils.getCurrentAuthentication();
 			Object principal = (authentication != null ? authentication.getPrincipal() : null);
-			if ( !allowedSourceIds.contains(filter.getSourceId()) ) {
+			if ( filter.getSourceId() == null && filter instanceof DatumFilterCommand c ) {
+				// force the first allowed source ID
+				String sourceId = allowedSourceIds.iterator().next();
+				log.info("Access RESTRICTED to source {} for {}", sourceId, principal);
+				c.setSourceId(sourceId);
+			} else if ( filter.getSourceId() == null
+					|| !allowedSourceIds.contains(filter.getSourceId()) ) {
 				log.warn("Access DENIED to source {} for {}", filter.getSourceId(), principal);
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
 						filter.getSourceId());
