@@ -145,7 +145,7 @@ public final class SelectDatumAuxiliary
 			stmt.setString(++p, filter.getDatumAuxiliaryType().name());
 		}
 		if ( filter.hasLocalDateRange() ) {
-			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p);
 		} else {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
 		}

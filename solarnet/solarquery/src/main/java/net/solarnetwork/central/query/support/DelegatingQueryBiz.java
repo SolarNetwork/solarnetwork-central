@@ -54,7 +54,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 4.2
+ * @version 4.3
  */
 public class DelegatingQueryBiz implements QueryBiz {
 
@@ -74,6 +74,11 @@ public class DelegatingQueryBiz implements QueryBiz {
 	@Override
 	public ReportableInterval getReportableInterval(Long nodeId, String sourceId) {
 		return delegate.getReportableInterval(nodeId, sourceId);
+	}
+
+	@Override
+	public ReportableInterval findReportableInterval(GeneralNodeDatumFilter filter) {
+		return delegate.findReportableInterval(filter);
 	}
 
 	@Override

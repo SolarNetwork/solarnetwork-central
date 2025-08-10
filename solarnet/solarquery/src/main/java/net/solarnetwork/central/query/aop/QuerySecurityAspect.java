@@ -103,6 +103,10 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public void nodeReportableInterval(Long nodeId, String sourceId) {
 	}
 
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.findReportableInterval(..)) && args(filter) && @target(net.solarnetwork.central.domain.Securable)")
+	public void nodesReportableInterval(GeneralNodeDatumFilter filter) {
+	}
+
 	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(nodeId,..) && @target(net.solarnetwork.central.domain.Securable)")
 	public void nodeReportableSources(Long nodeId) {
 	}
@@ -384,6 +388,53 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		}
 
 		return pjp.proceed();
+	}
+
+	/**
+	 * Enforce node ID and source ID policy restrictions when requesting a
+	 * reportable interval with a filter.
+	 *
+	 * <p>
+	 * If the active policy has source ID restrictions, then if no
+	 * {@code sourceId} is provided fill in the first available value from the
+	 * policy. Otherwise, if {@code sourceId} is provided, check that value is
+	 * allowed by the policy.
+	 * </p>
+	 *
+	 * @param filter
+	 *        the filter
+	 * @return The reportable interval.
+	 * @throws Throwable
+	 *         If any error occurs.
+	 */
+	@Before(value = "nodesReportableInterval(filter)", argNames = "filter")
+	public void reportableIntervalFilterAccessCheck(GeneralNodeDatumFilter filter) throws Throwable {
+		if ( filter.getNodeIds() == null || filter.getNodeIds().length != 1 ) {
+			throw new IllegalArgumentException("Exactly 1 node ID required.");
+		}
+		if ( filter.getSourceIds() == null && filter.getSourceIds().length != 1 ) {
+			throw new IllegalArgumentException("Exactly 1 source ID required.");
+		}
+
+		// verify node ID
+		requireNodeReadAccess(filter.getNodeId());
+
+		// now verify source ID
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return;
+		}
+
+		Set<String> allowedSourceIds = policy.getSourceIds();
+		if ( allowedSourceIds != null && !allowedSourceIds.isEmpty() ) {
+			Authentication authentication = SecurityUtils.getCurrentAuthentication();
+			Object principal = (authentication != null ? authentication.getPrincipal() : null);
+			if ( !allowedSourceIds.contains(filter.getSourceId()) ) {
+				log.warn("Access DENIED to source {} for {}", filter.getSourceId(), principal);
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
+						filter.getSourceId());
+			}
+		}
 	}
 
 	/**

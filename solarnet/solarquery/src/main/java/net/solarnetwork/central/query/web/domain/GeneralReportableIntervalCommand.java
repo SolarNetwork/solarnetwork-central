@@ -23,13 +23,14 @@
 package net.solarnetwork.central.query.web.domain;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 
 /**
  * Command for general reportable interval queries.
  * 
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 public class GeneralReportableIntervalCommand {
 
@@ -37,6 +38,8 @@ public class GeneralReportableIntervalCommand {
 	private Long[] nodeIds;
 	private String sourceId;
 	private Instant startDate;
+	private LocalDateTime localStartDate;
+	private LocalDateTime localEndDate;
 	private Instant endDate;
 	private String metadataFilter;
 	private boolean withNodeIds;
@@ -183,6 +186,48 @@ public class GeneralReportableIntervalCommand {
 	 */
 	public void setEndDate(Instant endDate) {
 		this.endDate = endDate;
+	}
+
+	/**
+	 * Get the local start date.
+	 * 
+	 * @return the local start date
+	 * @since 3.2
+	 */
+	public LocalDateTime getLocalStartDate() {
+		return localStartDate;
+	}
+
+	/**
+	 * Set the local start date.
+	 * 
+	 * @param localStartDate
+	 *        the date to set
+	 * @since 3.2
+	 */
+	public void setLocalStartDate(LocalDateTime localStartDate) {
+		this.localStartDate = localStartDate;
+	}
+
+	/**
+	 * Get the local end date.
+	 * 
+	 * @return the local end date
+	 * @since 3.2
+	 */
+	public LocalDateTime getLocalEndDate() {
+		return localEndDate;
+	}
+
+	/**
+	 * Set the local end date.
+	 * 
+	 * @param localEndDate
+	 *        the date to set
+	 * @since 3.2
+	 */
+	public void setLocalEndDate(LocalDateTime localEndDate) {
+		this.localEndDate = localEndDate;
 	}
 
 	public Long getLocationId() {

@@ -163,9 +163,18 @@ public class ReportableIntervalController {
 	@RequestMapping(value = "/interval", method = RequestMethod.GET)
 	public Result<ReportableInterval> getReportableInterval(final HttpServletRequest req,
 			final GeneralReportableIntervalCommand criteria) {
+		final DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(criteria.getNodeId());
+		filter.setSourceId(criteria.getSourceId());
+		if ( criteria.getLocalStartDate() != null || criteria.getLocalEndDate() != null ) {
+			filter.setLocalStartDate(criteria.getLocalStartDate());
+			filter.setLocalEndDate(criteria.getLocalEndDate());
+		} else {
+			filter.setStartDate(criteria.getStartDate());
+			filter.setEndDate(criteria.getEndDate());
+		}
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			ReportableInterval data = queryBiz.getReportableInterval(criteria.getNodeId(),
-					criteria.getSourceId());
+			ReportableInterval data = queryBiz.findReportableInterval(filter);
 			return success(data);
 		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}

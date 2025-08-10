@@ -70,7 +70,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  *
  * @author matt
- * @version 2.7
+ * @version 2.8
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -967,7 +967,10 @@ public final class DatumSqlUtils {
 	 *        and a join table name of {@literal early}
 	 * @param buf
 	 *        the buffer to append the SQL to
+	 * @deprecated since 2.8, use
+	 *             {@link #joinStreamMetadataExtremeDatumSql(ObjectStreamCriteria, String, Aggregation, String, boolean, StringBuilder)}
 	 */
+	@Deprecated
 	public static void joinStreamMetadataExtremeDatumSql(String tableName, String timeColumnName,
 			boolean latest, StringBuilder buf) {
 		buf.append("INNER JOIN LATERAL (\n");
@@ -982,6 +985,50 @@ public final class DatumSqlUtils {
 		buf.append("		LIMIT 1\n");
 		buf.append("	) ").append(latest ? "late" : "early").append(" ON ")
 				.append(latest ? "late" : "early").append(".stream_id = s.stream_id\n");
+	}
+
+	/**
+	 * Generate SQL {@code INNER JOIN} clause for stream metadata to a datum
+	 * table on the most extreme datum available (earliest or latest).
+	 *
+	 * @param filter
+	 *        the filter whose date or local date range to use
+	 * @param tableName
+	 *        the datum table name
+	 * @param aggregation
+	 *        the aggregation level of the datum table name to determine the SQL
+	 *        column name
+	 * @param zoneClause
+	 *        the time zone clause to use for local date ranges (e.g.
+	 *        {@link #SQL_AT_STREAM_METADATA_TIME_ZONE}
+	 * @param latest
+	 *        {@literal true} for the highest time value and a join table name
+	 *        of {@literal late}, {@literal false} for the smallest time value
+	 *        and a join table name of {@literal early}
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @since 2.8
+	 */
+	public static int joinStreamMetadataExtremeDatumSql(ObjectStreamCriteria filter, String tableName,
+			Aggregation aggregation, String zoneClause, boolean latest, StringBuilder buf) {
+		StringBuilder where = new StringBuilder();
+		int paramCount = filter.hasLocalDate()
+				? DatumSqlUtils.whereLocalDateRange(filter, aggregation, zoneClause, where)
+				: DatumSqlUtils.whereDateRange(filter, aggregation, where);
+		buf.append("INNER JOIN LATERAL (\n");
+		buf.append("		SELECT datum.*\n");
+		buf.append("		FROM ").append(tableName).append(" datum\n");
+		buf.append("		WHERE datum.stream_id = s.stream_id\n");
+		buf.append(where);
+		buf.append("		ORDER BY datum.").append(timeColumnName(aggregation));
+		if ( latest ) {
+			buf.append(" DESC");
+		}
+		buf.append("\n");
+		buf.append("		LIMIT 1\n");
+		buf.append("	) ").append(latest ? "late" : "early").append(" ON ")
+				.append(latest ? "late" : "early").append(".stream_id = s.stream_id\n");
+		return paramCount;
 	}
 
 	/**
@@ -1724,8 +1771,6 @@ public final class DatumSqlUtils {
 	 *
 	 * @param filter
 	 *        the search criteria
-	 * @param con
-	 *        the JDBC connection
 	 * @param stmt
 	 *        the JDBC statement
 	 * @param parameterOffset
@@ -1734,8 +1779,8 @@ public final class DatumSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareLocalDateRangeFilter(LocalDateRangeCriteria filter, Connection con,
-			PreparedStatement stmt, int parameterOffset) throws SQLException {
+	public static int prepareLocalDateRangeFilter(LocalDateRangeCriteria filter, PreparedStatement stmt,
+			int parameterOffset) throws SQLException {
 		if ( filter.getLocalStartDate() != null ) {
 			stmt.setObject(++parameterOffset, filter.getLocalStartDate(), Types.TIMESTAMP);
 		}

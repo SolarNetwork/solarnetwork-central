@@ -37,6 +37,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.Test;
@@ -50,7 +55,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link SelectDatumAvailableTimeRange} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SelectDatumAvailableTimeRangeTests {
 
@@ -132,6 +137,82 @@ public class SelectDatumAvailableTimeRangeTests {
 		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql,
 				equalToTextResource("select-datum-avail-locs.sql", TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void prep_find_nodes_dateRange() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		stmt.setTimestamp(2, Timestamp.from(filter.getStartDate()));
+		stmt.setTimestamp(3, Timestamp.from(filter.getEndDate()));
+		stmt.setTimestamp(4, Timestamp.from(filter.getStartDate()));
+		stmt.setTimestamp(5, Timestamp.from(filter.getEndDate()));
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray);
+		PreparedStatement result = new SelectDatumAvailableTimeRange(filter)
+				.createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(),
+				equalToTextResource("select-datum-avail-nodes-dateRange.sql", TestSqlResources.class));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray);
+	}
+
+	@Test
+	public void prep_find_nodes_localDateRange() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setLocalStartDate(LocalDateTime.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setLocalEndDate(filter.getLocalStartDate().plusHours(1));
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		stmt.setObject(2, filter.getLocalStartDate(), Types.TIMESTAMP);
+		stmt.setObject(3, filter.getLocalEndDate(), Types.TIMESTAMP);
+		stmt.setObject(4, filter.getLocalStartDate(), Types.TIMESTAMP);
+		stmt.setObject(5, filter.getLocalEndDate(), Types.TIMESTAMP);
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray);
+		PreparedStatement result = new SelectDatumAvailableTimeRange(filter)
+				.createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"select-datum-avail-nodes-localDateRange.sql", TestSqlResources.class));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray);
 	}
 
 }

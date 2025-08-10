@@ -102,7 +102,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Implementation of {@link QueryBiz}.
  *
  * @author matt
- * @version 4.6
+ * @version 4.7
  */
 @Securable
 public class DaoQueryBiz implements QueryBiz {
@@ -154,6 +154,18 @@ public class DaoQueryBiz implements QueryBiz {
 		BasicDatumCriteria c = new BasicDatumCriteria();
 		c.setNodeId(nodeId);
 		c.setSourceId(sourceId);
+		c.setObjectKind(ObjectDatumKind.Node);
+		validateDatumCriteria(c);
+		Iterable<DatumDateInterval> results = datumDao.findAvailableInterval(c);
+		for ( DatumDateInterval interval : results ) {
+			return new ReportableInterval(interval.getStart(), interval.getEnd(), interval.getZone());
+		}
+		return null;
+	}
+
+	@Override
+	public ReportableInterval findReportableInterval(GeneralNodeDatumFilter filter) {
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
 		c.setObjectKind(ObjectDatumKind.Node);
 		validateDatumCriteria(c);
 		Iterable<DatumDateInterval> results = datumDao.findAvailableInterval(c);

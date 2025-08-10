@@ -179,7 +179,7 @@ public final class SelectDatumRunningTotal implements PreparedStatementCreator, 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
 		if ( filter.hasLocalDateRange() ) {
-			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p);
 		} else if ( filter.hasDateRange() ) {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
 		} else {

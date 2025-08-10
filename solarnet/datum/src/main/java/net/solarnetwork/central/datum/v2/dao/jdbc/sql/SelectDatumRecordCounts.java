@@ -141,7 +141,7 @@ public final class SelectDatumRecordCounts implements PreparedStatementCreator, 
 		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
 		for ( int i = 0; i < 4; i++ ) {
 			if ( filter.hasLocalDate() ) {
-				p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
+				p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, stmt, p);
 			} else {
 				p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
 			}

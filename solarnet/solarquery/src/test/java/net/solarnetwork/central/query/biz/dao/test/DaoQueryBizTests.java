@@ -32,6 +32,8 @@ import static net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -101,7 +103,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Unit test for the {@link DaoQueryBiz} class.
  * 
  * @author matt
- * @version 4.1
+ * @version 4.2
  */
 public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 
@@ -180,6 +182,47 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		DatumStreamCriteria c = filterCaptor.getValue();
 		assertThat("Query for node IDs", c.getNodeIds(), arrayContaining(TEST_NODE_ID));
 		assertThat("Query for node kind", c.getObjectKind(), equalTo(ObjectDatumKind.Node));
+	}
+
+	@Test
+	public void findReportableInterval_node_one() {
+		// GIVEN
+		DatumDateInterval range = DatumDateInterval.streamInterval(
+				Instant.now().truncatedTo(ChronoUnit.HOURS), Instant.now(), "UTC", ObjectDatumKind.Node,
+				UUID.randomUUID(), TEST_NODE_ID, TEST_SOURCE_ID);
+
+		Capture<DatumStreamCriteria> filterCaptor = new Capture<>();
+		expect(datumDao.findAvailableInterval(capture(filterCaptor))).andReturn(singleton(range));
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+
+		ReportableInterval result = biz.findReportableInterval(filter);
+
+		// THEN
+		assertThat("Result available", result, notNullValue());
+		assertConverted("Range", result, range);
+
+		// @formatter:off
+		DatumStreamCriteria c = filterCaptor.getValue();
+		then(c)
+			.as("Query for node type")
+			.returns(ObjectDatumKind.Node, from(DatumStreamCriteria::getObjectKind))
+			.as("Query for node IDs from filter")
+			.returns(filter.getNodeIds(), from(DatumStreamCriteria::getNodeIds))
+			.as("Query for source IDs from filter")
+			.returns(filter.getSourceIds(), from(DatumStreamCriteria::getSourceIds))
+			.as("Query for start date from filter")
+			.returns(filter.getStartDate(), from(DatumStreamCriteria::getStartDate))
+			.as("Query for end date from filter")
+			.returns(filter.getEndDate(), from(DatumStreamCriteria::getEndDate))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -578,7 +621,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 				hasEntry("i2", props.getInstantaneous()[1]),
 				hasEntry("a1", props.getAccumulating()[0])
 				// @formatter:on
-		));
+				));
 	}
 
 	@Test
