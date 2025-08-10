@@ -29,6 +29,9 @@ import static net.solarnetwork.codec.BasicObjectDatumStreamDataSetSerializer.STA
 import static net.solarnetwork.codec.BasicObjectDatumStreamDataSetSerializer.TOTAL_RESULT_COUNT_FIELD_NAME;
 import static net.solarnetwork.codec.JsonUtils.writeDecimalArrayValues;
 import static net.solarnetwork.codec.JsonUtils.writeStringArrayValues;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Status;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -152,7 +155,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </pre>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.3
  */
 public final class ObjectMapperStreamDatumFilteredResultsProcessor
@@ -251,15 +254,16 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			throw new JsonMappingException(generator, String.format(
 					"Metadata for stream %s not available for datum %d", d.getStreamId(), resultIndex));
 		}
-		final String[] iNames = meta.propertyNamesForType(DatumSamplesType.Instantaneous);
-		final String[] aNames = meta.propertyNamesForType(DatumSamplesType.Accumulating);
-		final String[] sNames = meta.propertyNamesForType(DatumSamplesType.Status);
+		final String[] iNames = meta.propertyNamesForType(Instantaneous);
+		final String[] aNames = meta.propertyNamesForType(Accumulating);
+		final String[] sNames = meta.propertyNamesForType(Status);
 		final int iLen = (iNames != null ? iNames.length : 0);
 		final int aLen = (aNames != null ? aNames.length : 0);
 		final int sLen = (sNames != null ? sNames.length : 0);
 		final int baseLen = (1 + iLen + aLen + sLen);
 		final DatumProperties p = d.getProperties();
 		final long ts = (d.getTimestamp() != null ? d.getTimestamp().toEpochMilli() : 0);
+		final boolean reading = d instanceof ReadingDatum;
 		int tLen = (p != null ? p.getTagsLength() : 0);
 		int totalLen = 1 + baseLen + tLen;
 
@@ -277,10 +281,10 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 
 			DatumPropertiesStatistics stats = agg.getStatistics();
 			if ( stats != null && p != null ) {
-				writeAggregateProperty(generator, DatumSamplesType.Instantaneous, iLen,
-						p.getInstantaneous(), stats.getInstantaneous());
-				writeAggregateProperty(generator, DatumSamplesType.Accumulating, aLen,
-						p.getAccumulating(), stats.getAccumulating());
+				writeAggregateProperty(generator, Instantaneous, reading, iLen, p.getInstantaneous(),
+						stats.getInstantaneous());
+				writeAggregateProperty(generator, Accumulating, reading, aLen, p.getAccumulating(),
+						stats.getAccumulating());
 				writeStringArrayValues(generator, p.getStatus(), sLen);
 				writeStringArrayValues(generator, p.getTags(), tLen);
 			} else {
@@ -298,17 +302,17 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	}
 
 	private static void writeAggregateProperty(final JsonGenerator generator,
-			final DatumSamplesType type, final int len, final BigDecimal[] values,
+			final DatumSamplesType type, final boolean reading, final int len, final BigDecimal[] values,
 			final BigDecimal[][] statValues) throws IOException {
 		for ( int i = 0; i < len; i++ ) {
 			BigDecimal[] sv = (statValues != null && statValues.length > i ? statValues[i] : null);
 			int arrayLen = (sv != null ? sv.length : 0);
-			if ( type == DatumSamplesType.Instantaneous && values != null && values.length > i ) {
+			if ( type == Instantaneous && values != null && values.length > i ) {
 				arrayLen++;
 			}
 			if ( arrayLen > 0 ) {
 				generator.writeStartArray(sv, arrayLen);
-				if ( type == DatumSamplesType.Instantaneous && values != null ) {
+				if ( (type == Instantaneous || (!reading && type == Accumulating)) && values != null ) {
 					BigDecimal v = values[i];
 					if ( v != null ) {
 						generator.writeNumber(v);
@@ -317,7 +321,12 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 					}
 				}
 				if ( sv != null ) {
+					int vIdx = 0;
 					for ( BigDecimal v : sv ) {
+						if ( vIdx++ == 0 && !reading && type == Accumulating ) {
+							// we already wrote the non-reading accumulating value
+							continue;
+						}
 						if ( v != null ) {
 							generator.writeNumber(v);
 						} else {
