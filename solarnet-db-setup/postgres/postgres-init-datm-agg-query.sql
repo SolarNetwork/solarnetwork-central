@@ -323,11 +323,11 @@ CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_slot(
 		target_agg 	INTERVAL DEFAULT INTERVAL 'PT1H'
 	) RETURNS SETOF solardatm.datm_rec LANGUAGE SQL STABLE ROWS 200 AS
 $$
-	-- Find min/max datum date within slot; if no actual data in this slot we get NULL.
-	-- Note that an INCLUSIVE end date it used to pick up a "gap" slot that could occur
-	-- leading up to the end time slot (see NET-469).
+	-- Find min/max datum date within slot; if no actual data in this slot we coalesce to the
+	-- start_ts - end_ts input range. Note that an INCLUSIVE end date is used to pick up a "gap"
+	-- slot that could occur leading up to the end time slot (see NET-469).
 	WITH drange AS (
-		SELECT (
+		SELECT COALESCE((
 			-- find minimum datum date within slot
 			SELECT ts
 			FROM solardatm.da_datm
@@ -336,8 +336,8 @@ $$
 				AND ts <= end_ts
 			ORDER BY stream_id, ts
 			LIMIT 1
-		) AS min_ts
-		, (
+		), start_ts) AS min_ts
+		, COALESCE((
 			-- find maximum datum date within slot
 			SELECT ts
 			FROM solardatm.da_datm
@@ -346,7 +346,7 @@ $$
 				AND ts <= end_ts
 			ORDER BY stream_id, ts DESC
 			LIMIT 1
-		) AS max_ts
+		), end_ts) AS max_ts
 	)
 
 	-- find prior/next datum date range to provide for clock and reading input
@@ -381,13 +381,11 @@ $$
 		WHERE aux.atype = 'Reset'::solardatm.da_datm_aux_type
 			AND aux.stream_id = sid
 			AND aux.ts >= CASE
-					WHEN srange.min_ts <= start_ts
-					THEN srange.min_ts
+					WHEN srange.min_ts <= start_ts THEN srange.min_ts
 					ELSE start_ts - tolerance
 				END
 			AND aux.ts <= CASE
-				WHEN srange.max_ts >= end_ts
-				THEN srange.max_ts
+				WHEN srange.max_ts >= end_ts THEN srange.max_ts
 				ELSE end_ts + tolerance
 			END
 	)
