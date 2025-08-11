@@ -32,7 +32,7 @@ import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
  * Job to delete datum for user defined expire policies.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class ExpireDatumJob extends JobSupport {
 
@@ -63,11 +63,18 @@ public class ExpireDatumJob extends JobSupport {
 				continue;
 			}
 			long start = System.currentTimeMillis();
-			long count = configDao.deleteExpiredDataForConfiguration(config);
-			if ( count > 0 && log.isInfoEnabled() ) {
-				log.info("Deleted {} datum in {}s for user {} older than {} days matching policy {}",
-						count, (System.currentTimeMillis() - start) / 1000, config.getUserId(),
-						config.getExpireDays(), config.getFilterJson());
+			try {
+				long count = configDao.deleteExpiredDataForConfiguration(config);
+				if ( count > 0 && log.isInfoEnabled() ) {
+					log.info("Deleted {} datum in {}s for user {} older than {} days matching policy {}",
+							count, (System.currentTimeMillis() - start) / 1000, config.getUserId(),
+							config.getExpireDays(), config.getFilterJson());
+				}
+			} catch ( RuntimeException e ) {
+				log.error(
+						"Exception deleting datum after {}s for user {} older than {} days matching policy {}: {}",
+						(System.currentTimeMillis() - start) / 1000, config.getUserId(),
+						config.getExpireDays(), config.getFilterJson(), e.toString(), e.getCause());
 			}
 		}
 	}
