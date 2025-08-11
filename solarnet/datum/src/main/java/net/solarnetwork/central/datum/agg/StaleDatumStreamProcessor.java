@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.agg;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.List;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -53,7 +54,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  * @since 1.14
  */
 public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordProcessor {
@@ -77,15 +78,30 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	}
 
 	@Override
-	protected void processResultRow(final ResultSet rs) throws SQLException {
+	protected void processResultRow(final ResultSet rs, Duration duration) throws SQLException {
+		final Duration warnThresholdTime = getWarnThresholdTime();
+		final boolean warnSlow = warnThresholdTime != null && duration.compareTo(warnThresholdTime) >= 0;
+
 		final List<DatumAppEventAcceptor> services = getDatumAppEventAcceptors();
+		if ( !warnSlow && (services == null || services.isEmpty()) ) {
+			return;
+		}
+
+		final ObjectDatumId id = ObjectDatumIdRowMapper.INSTANCE.mapRow(rs, 1);
+		if ( warnSlow ) {
+			log.warn("Slow {} aggregate processed in {}s: {}", getAggregateProcessType(),
+					duration.toSeconds(), id);
+		}
+
 		if ( services == null || services.isEmpty() ) {
 			return;
 		}
-		final BasicDatumAppEvent event = extractAppEvent(rs);
+
+		final BasicDatumAppEvent event = extractAppEvent(id);
 		if ( event == null ) {
 			return;
 		}
+
 		final AsyncTaskExecutor executor = getParallelTaskExecutor();
 		Runnable task = () -> {
 			for ( DatumAppEventAcceptor acceptor : services ) {
@@ -113,8 +129,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	}
 
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	private BasicDatumAppEvent extractAppEvent(ResultSet rs) throws SQLException {
-		ObjectDatumId id = ObjectDatumIdRowMapper.INSTANCE.mapRow(rs, 1);
+	private BasicDatumAppEvent extractAppEvent(ObjectDatumId id) {
 		if ( id == null || !id.isValidAggregateObjectId(ObjectDatumKind.Node) ) {
 			return null;
 		}

@@ -37,6 +37,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -65,7 +66,7 @@ import net.solarnetwork.test.Assertion;
  * Test cases for the [@link StaleDatumStreamProcessor} class.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class StaleDatumStreamProcessorTests {
 
@@ -318,6 +319,101 @@ public class StaleDatumStreamProcessorTests {
 
 		// WHEN
 		replayAll(acceptor, con, stmt, resultSet1, resultSet2);
+		job.run();
+		job.executor.setAwaitTerminationSeconds(10);
+		job.executor.shutdown();
+
+		// THEN
+		ZonedDateTime date = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
+		DatumAppEvent event = eventCaptor.getValue();
+		assertThat("DatumAppEvent published", event, notNullValue());
+		assertThat("DatumAppEvent node ID matches", event.getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("DatumAppEvent source ID matches", event.getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("DatumAppEvent properties available", event.getEventProperties(), notNullValue());
+		assertThat("DatumAppEvent prop agg key", event.getEventProperties(),
+				hasEntry("aggregationKey", Aggregation.Hour.getKey()));
+		assertThat("DatumAppEvent prop agg timestamp", event.getEventProperties(),
+				hasEntry("timestamp", date.toInstant().toEpochMilli()));
+
+		AggregateUpdatedEventInfo info = getObjectFromJSON(
+				getJSONString(event.getEventProperties(), null), AggregateUpdatedEventInfo.class);
+		assertThat("AggregateUpdatedEventInfo info available", info, notNullValue());
+		assertThat("Info aggregation", info.getAggregation(), equalTo(Aggregation.Hour));
+		assertThat("Info aggregation", info.getTimeStart(), equalTo(date.toInstant()));
+	}
+
+	@Test
+	public void emaitSlowWarningLog() throws Exception {
+		// GIVEN
+		DatumAppEventAcceptor acceptor = EasyMock.createMock(DatumAppEventAcceptor.class);
+		job.setDatumAppEventAcceptors(singletonList(acceptor));
+
+		Connection con = EasyMock.createMock(Connection.class);
+		CallableStatement stmt = EasyMock.createMock(CallableStatement.class);
+
+		int[] cbResult = new int[] { -1 };
+		expect(jdbcTemplate.execute(assertWith(new Assertion<ConnectionCallback<Integer>>() {
+
+			@Override
+			public void check(ConnectionCallback<Integer> cb) throws Throwable {
+				Integer res = cb.doInConnection(con);
+				if ( res != null ) {
+					cbResult[0] = res.intValue();
+				}
+			}
+
+		}))).andAnswer(new IAnswer<Integer>() {
+
+			@Override
+			public Integer answer() throws Throwable {
+				return cbResult[0];
+			}
+		});
+
+		con.setAutoCommit(true);
+		expectLastCall().anyTimes();
+
+		// execute call & indicate a ResultSet is available (with delay)
+		expect(con.prepareCall(StaleDatumStreamProcessor.DEFAULT_SQL)).andReturn(stmt);
+		stmt.setString(1, Aggregation.Hour.getKey());
+		expect(stmt.execute()).andAnswer(() -> {
+			Thread.sleep(150);
+			return true;
+		}).andAnswer(() -> {
+			Thread.sleep(150);
+			return true;
+		});
+
+		// give one result row back first time, none second
+		ResultSet resultSet1 = EasyMock.createMock(ResultSet.class);
+		expect(stmt.getResultSet()).andReturn(resultSet1);
+		expect(resultSet1.next()).andReturn(true);
+
+		// extract AppEvent data from ResultSet
+		final NodeDatumId rowId = new NodeDatumId(UUID.randomUUID(), TEST_NODE_ID, TEST_SOURCE_ID,
+				ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour);
+
+		expect(resultSet1.getObject(1)).andReturn(rowId.getStreamId());
+		expect(resultSet1.getTimestamp(2)).andReturn(Timestamp.from(rowId.getTimestamp()));
+		expect(resultSet1.getString(3)).andReturn(rowId.getAggregation().getKey());
+		expect(resultSet1.getObject(4)).andReturn(rowId.getObjectId());
+		expect(resultSet1.getString(5)).andReturn(rowId.getSourceId());
+		expect(resultSet1.getString(6)).andReturn(Character.toString(rowId.getKind().getKey()));
+		resultSet1.close();
+
+		ResultSet resultSet2 = EasyMock.createMock(ResultSet.class);
+		expect(stmt.getResultSet()).andReturn(resultSet2);
+		expect(resultSet2.next()).andReturn(false);
+		resultSet2.close();
+
+		stmt.close();
+
+		Capture<DatumAppEvent> eventCaptor = new Capture<>();
+		acceptor.offerDatumEvent(capture(eventCaptor));
+
+		// WHEN
+		replayAll(acceptor, con, stmt, resultSet1, resultSet2);
+		job.setWarnThresholdTime(Duration.ofMillis(100));
 		job.run();
 		job.executor.setAwaitTerminationSeconds(10);
 		job.executor.shutdown();
