@@ -323,10 +323,15 @@ CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_slot(
 		target_agg 	INTERVAL DEFAULT INTERVAL 'PT1H'
 	) RETURNS SETOF solardatm.datm_rec LANGUAGE SQL STABLE ROWS 200 AS
 $$
+	-- find if stream even has accumulating properties, to avoid costly scan
+	WITH meta AS (
+		SELECT COALESCE(CARDINALITY(names_a) = 0, TRUE) AS has_no_a
+ 		FROM solardatm.find_metadata_for_stream(sid)
+	)
 	-- Find min/max datum date within slot; if no actual data in this slot we get NULL.
 	-- Note that an INCLUSIVE end date it used to pick up a "gap" slot that could occur
 	-- leading up to the end time slot (see NET-469).
-	WITH drange AS (
+	, drange AS (
 		SELECT (
 			-- find minimum datum date within slot
 			SELECT ts
@@ -334,7 +339,7 @@ $$
 			WHERE stream_id = sid
 				AND ts >= start_ts
 				AND ts <= end_ts
-			ORDER BY stream_id, ts
+			ORDER BY ts
 			LIMIT 1
 		) AS min_ts
 		, (
@@ -344,7 +349,7 @@ $$
 			WHERE stream_id = sid
 				AND ts >= start_ts
 				AND ts <= end_ts
-			ORDER BY stream_id, ts DESC
+			ORDER BY ts DESC
 			LIMIT 1
 		) AS max_ts
 	)
@@ -360,7 +365,7 @@ $$
 					WHEN drange.min_ts = start_ts THEN drange.min_ts
 					ELSE d.ts
 				END
-				FROM drange, solardatm.find_time_before(sid, drange.min_ts, start_ts - tolerance) AS d(ts)
+				FROM meta, drange, solardatm.find_time_before_ts(sid, drange.min_ts, start_ts - tolerance, TRUE, meta.has_no_a) AS d(ts)
 			) AS min_ts
 			, (
 				-- find next datum date after maximum within slot (or exact end of slot)

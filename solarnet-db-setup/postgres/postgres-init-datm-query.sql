@@ -237,11 +237,15 @@ $$;
  * @param sid 				the stream ID of the datm stream to search
  * @param ts_at				the date of the datum to find adjacent datm for
  * @param cutoff 			the maximum time to look backward for adjacent datm
+ * @param must_a			if TRUE then only consider rows where data_a is not NULL
+ * @param has_no_a			TRUE if the stream can be assumed NOT to have accumulating properties
  */
-CREATE OR REPLACE FUNCTION solardatm.find_time_before(
-	sid UUID,
-	ts_at TIMESTAMP WITH TIME ZONE,
-	cutoff TIMESTAMP WITH TIME ZONE
+CREATE OR REPLACE FUNCTION solardatm.find_time_before_ts(
+	sid 		UUID,
+	ts_at 		TIMESTAMP WITH TIME ZONE,
+	cutoff 		TIMESTAMP WITH TIME ZONE,
+	must_a		BOOLEAN DEFAULT FALSE,
+	has_no_a 	BOOLEAN DEFAULT FALSE
 ) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
 $$
 	SELECT ts
@@ -249,8 +253,28 @@ $$
 	WHERE stream_id = sid
 		AND ts < ts_at
 		AND ts >= cutoff
+		AND NOT(must_a AND (has_no_a OR data_a IS NULL))
 	ORDER BY ts DESC
 	LIMIT 1
+$$;
+
+/**
+ * Find a datum time immediately earlier in time a given instance, within a cutoff.
+ *
+ * This function can be used for performance reasons in other functions, to force the query planner
+ * to use a full date constraint in the query.
+ *
+ * @param sid 				the stream ID of the datm stream to search
+ * @param ts_at				the date of the datum to find adjacent datm for
+ * @param cutoff 			the maximum time to look backward for adjacent datm
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_time_before(
+	sid UUID,
+	ts_at TIMESTAMP WITH TIME ZONE,
+	cutoff TIMESTAMP WITH TIME ZONE
+) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
+$$
+	SELECT * FROM solardatm.find_time_before_ts(sid, ts_at, cutoff, FALSE, FALSE);
 $$;
 
 
