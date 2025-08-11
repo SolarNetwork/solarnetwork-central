@@ -33,6 +33,8 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.arr
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.datumResourceToList;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.arrayContaining;
@@ -41,13 +43,16 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -60,6 +65,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
@@ -149,6 +155,8 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 				AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
 				Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()));
 
+		findDatumForTimeSlot(log, jdbcTemplate, streamId, aggStart.toInstant(), aggEnd.toInstant());
+
 		callback.doWithStream(datum, meta, streamId, results);
 	}
 
@@ -156,6 +164,16 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			ZonedDateTime aggStart, ZonedDateTime aggEnd, CsvRollupCallback callback) {
 		loadCsvStreamAndRollup(log, jdbcTemplate, getClass(), resource, meta, aggStart, aggEnd,
 				callback);
+	}
+
+	public static List<Map<String, Object>> findDatumForTimeSlot(Logger log, JdbcOperations jdbcTemplate,
+			UUID streamId, Instant start, Instant end) {
+		List<Map<String, Object>> rawRollupData = jdbcTemplate.queryForList(
+				"select * from solardatm.find_datm_for_time_slot(?::uuid, ?, ?, INTERVAL 'P1Y') order by ts",
+				streamId.toString(), Timestamp.from(start), Timestamp.from(end));
+		log.info("Raw rollup data: [{}]", rawRollupData.stream().map(Object::toString)
+				.collect(Collectors.joining(",\n\t", "\n\t", "\n")));
+		return rawRollupData;
 	}
 
 	/**
@@ -192,6 +210,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					"select * from solardatm.rollup_datm_for_time_span(?::uuid,?,?)",
 					AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
 					Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()));
+			findDatumForTimeSlot(log, jdbcTemplate, streamId, aggStart.toInstant(), aggEnd.toInstant());
 		}
 		callback.doWithStream(datums, meta, streamId, results);
 	}
@@ -215,19 +234,21 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 	 * @param callback
 	 *        the callback
 	 */
-	public static void rollup(JdbcOperations jdbcTemplate, UUID streamId, ZonedDateTime aggStart,
-			ZonedDateTime aggEnd, RollupCallback callback) {
+	public static void rollup(Logger log, JdbcOperations jdbcTemplate, UUID streamId,
+			ZonedDateTime aggStart, ZonedDateTime aggEnd, RollupCallback callback) {
 		List<AggregateDatum> results = Collections.emptyList();
 		results = jdbcTemplate.query("select * from solardatm.rollup_datm_for_time_span(?::uuid,?,?)",
 				AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
 				Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()));
+
+		findDatumForTimeSlot(log, jdbcTemplate, streamId, aggStart.toInstant(), aggEnd.toInstant());
 
 		callback.doWithStream(null, null, streamId, results);
 	}
 
 	private void rollup(UUID streamId, ZonedDateTime aggStart, ZonedDateTime aggEnd,
 			RollupCallback callback) {
-		rollup(jdbcTemplate, streamId, aggStart, aggEnd, callback);
+		rollup(log, jdbcTemplate, streamId, aggStart, aggEnd, callback);
 	}
 
 	private void loadStreamWithAuxiliaryAndRollup(String resource, ZonedDateTime aggStart,
@@ -249,6 +270,8 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					"select * from solardatm.rollup_datm_for_time_span(?::uuid,?,?)",
 					AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
 					Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()));
+
+			findDatumForTimeSlot(log, jdbcTemplate, streamId, aggStart.toInstant(), aggEnd.toInstant());
 		}
 		callback.doWithStream(datums, meta, streamId, results);
 	}
@@ -1150,7 +1173,18 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, ObjectDatumStreamMetadata> metas, UUID sid,
 					List<AggregateDatum> results) {
-				assertThat("No data in range", results, hasSize(0));
+				// @formatter:off
+				then(results)
+					.as("One agg result because reading range starts on prev hour")
+					.hasSize(1)
+					.element(0)
+					.extracting(AggregateDatum::getStatistics)
+					.returns(new BigDecimal[][] {
+							decimalArray("0", "45804", "45804"),
+							decimalArray("0", "41005", "41005")
+						}, from(DatumPropertiesStatistics::getAccumulating))
+					;
+				// @formatter:on
 			}
 		});
 	}

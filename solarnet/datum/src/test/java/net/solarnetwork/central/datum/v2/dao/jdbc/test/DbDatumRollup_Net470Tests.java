@@ -86,7 +86,7 @@ public class DbDatumRollup_Net470Tests extends BaseDatumJdbcTestSupport {
 		final ZonedDateTime end = start.plusHours(1);
 		for ( ZonedDateTime hour = start; hour.isBefore(end); hour = hour.plusHours(1) ) {
 			final ZonedDateTime curr = hour;
-			rollup(jdbcTemplate, meta.getStreamId(), hour, hour.plusHours(1), new RollupCallback() {
+			rollup(log, jdbcTemplate, meta.getStreamId(), hour, hour.plusHours(1), new RollupCallback() {
 
 				@Override
 				public void doWithStream(List<GeneralNodeDatum> datums,
