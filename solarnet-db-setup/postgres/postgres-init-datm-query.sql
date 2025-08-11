@@ -109,16 +109,25 @@ $$;
  * Otherwise up to two datum will be returned, one immediately before and one immediately after
  * the given timestamp.
  *
+ * The has_no_a argument can be calculated like:
+ *
+ * ```
+ * SELECT COALESCE(CARDINALITY(names_a) = 0, TRUE)
+ * FROM solardatm.find_metadata_for_stream(sid)
+ * ```
+ *
  * @param sid 				the stream ID of the datum that has been changed (inserted, deleted)
  * @param ts_at				the date of the datum to find adjacent datm for
  * @param tolerance 		the maximum time to look forward/backward for adjacent datm
  * @param must_a			if TRUE then only consider rows where data_a is not NULL
+ * @param has_no_a			TRUE if the stream can be assumed NOT to have accumulating properties
  */
-CREATE OR REPLACE FUNCTION solardatm.find_datm_around(
+CREATE OR REPLACE FUNCTION solardatm.find_datm_around_ts(
 		sid 		UUID,
 		ts_at 		TIMESTAMP WITH TIME ZONE,
 		tolerance 	INTERVAL DEFAULT interval '1 months',
-		must_a		BOOLEAN DEFAULT FALSE
+		must_a		BOOLEAN DEFAULT FALSE,
+		has_no_a 	BOOLEAN DEFAULT FALSE
 	) RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE ROWS 2 AS
 $$
 	WITH b AS (
@@ -128,7 +137,7 @@ $$
 			FROM solardatm.da_datm d
 			WHERE d.stream_id = sid
 				AND d.ts = ts_at
-				AND (NOT must_a OR d.data_a IS NOT NULL)
+				AND NOT(must_a AND (has_no_a OR d.data_a IS NULL))
 		)
 		UNION ALL
 		-- prev
@@ -138,7 +147,7 @@ $$
 			WHERE d.stream_id = sid
 				AND d.ts < ts_at
 				AND d.ts > ts_at - tolerance
-				AND (NOT must_a OR d.data_a IS NOT NULL)
+				AND NOT(must_a AND (has_no_a OR d.data_a IS NULL))
 			ORDER BY d.stream_id, d.ts DESC
 			LIMIT 1
 		)
@@ -150,7 +159,7 @@ $$
 			WHERE d.stream_id = sid
 				AND d.ts > ts_at
 				AND d.ts < ts_at + tolerance
-				AND (NOT must_a OR d.data_a IS NOT NULL)
+				AND NOT(must_a AND (has_no_a OR d.data_a IS NULL))
 			ORDER BY d.stream_id, d.ts
 			LIMIT 1
 		)
@@ -168,6 +177,31 @@ $$
 	SELECT stream_id, ts, received, data_i, data_a, data_s, data_t
 	FROM d
 	WHERE inc
+$$;
+
+
+/**
+ * Find the datum that exist immediately before and after a point in time for a stream, within a
+ * time tolerance.
+ *
+ * If a datum exists exactly at the given timestamp, that datum alone will be returned.
+ * Otherwise up to two datum will be returned, one immediately before and one immediately after
+ * the given timestamp.
+ *
+ * @param sid 				the stream ID of the datum that has been changed (inserted, deleted)
+ * @param ts_at				the date of the datum to find adjacent datm for
+ * @param tolerance 		the maximum time to look forward/backward for adjacent datm
+ * @param must_a			if TRUE then only consider rows where data_a is not NULL
+ * @see solardatm.find_datm_around_ts
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_datm_around(
+		sid 		UUID,
+		ts_at 		TIMESTAMP WITH TIME ZONE,
+		tolerance 	INTERVAL DEFAULT interval '1 months',
+		must_a		BOOLEAN DEFAULT FALSE
+	) RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE ROWS 2 AS
+$$
+	SELECT * FROM solardatm.find_datm_around_ts(sid, ts_at, tolerance, must_a, FALSE);
 $$;
 
 
