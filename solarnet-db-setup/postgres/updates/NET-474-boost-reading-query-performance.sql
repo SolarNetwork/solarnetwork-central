@@ -22,7 +22,7 @@
 CREATE OR REPLACE FUNCTION solardatm.find_datm_around_ts(
 		sid 		UUID,
 		ts_at 		TIMESTAMP WITH TIME ZONE,
-		tolerance 	INTERVAL DEFAULT interval '1 months',
+		tolerance 	INTERVAL DEFAULT interval 'P1M',
 		must_a		BOOLEAN DEFAULT FALSE,
 		has_no_a 	BOOLEAN DEFAULT FALSE
 	) RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE ROWS 2 AS
@@ -80,7 +80,7 @@ $$;
 CREATE OR REPLACE FUNCTION solardatm.find_datm_around(
 		sid 		UUID,
 		ts_at 		TIMESTAMP WITH TIME ZONE,
-		tolerance 	INTERVAL DEFAULT interval '1 months',
+		tolerance 	INTERVAL DEFAULT interval 'P1M',
 		must_a		BOOLEAN DEFAULT FALSE
 	) RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE ROWS 2 AS
 $$
@@ -93,7 +93,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_datm_diff_near_rows(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE,
-		tolerance 		INTERVAL DEFAULT INTERVAL '3 months'
+		tolerance 		INTERVAL DEFAULT INTERVAL 'P3M'
 	) RETURNS SETOF solardatm.datm_rec LANGUAGE SQL STABLE ROWS 10 AS
 $$
 	-- find if stream even has accumulating properties, to avoid costly scan
