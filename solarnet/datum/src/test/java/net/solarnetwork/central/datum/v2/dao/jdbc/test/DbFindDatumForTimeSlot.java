@@ -26,8 +26,6 @@ import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.datumResourceToList;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
-import static org.assertj.core.api.BDDAssertions.from;
-import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -202,14 +200,7 @@ public class DbFindDatumForTimeSlot extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		log.debug("Got result: {}", result);
-		// @formatter:off
-		then(result)
-			.as("One result for reading value within tolerance range")
-			.hasSize(1)
-			.element(0)
-			.returns(Instant.parse("2022-10-31T11:28:00Z"), from(Datum::getTimestamp))
-			;
-		// @formatter:on
+		assertThat("No rows in range", result, hasSize(0));
 	}
 
 	@Test
@@ -224,14 +215,7 @@ public class DbFindDatumForTimeSlot extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		log.debug("Got result: {}", result);
-		// @formatter:off
-		then(result)
-			.as("One result for reading value within tolerance range")
-			.hasSize(1)
-			.element(0)
-			.returns(Instant.parse("2022-10-31T11:28:00Z"), from(Datum::getTimestamp))
-			;
-		// @formatter:on
+		assertThat("No rows in range", result, hasSize(0));
 	}
 
 	@Test
@@ -304,14 +288,7 @@ public class DbFindDatumForTimeSlot extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		log.debug("Got result: {}", result);
-		// @formatter:off
-		then(result)
-			.as("One result for reading value within tolerance range")
-			.hasSize(1)
-			.element(0)
-			.returns(Instant.parse("2022-11-09T02:59:00Z"), from(Datum::getTimestamp))
-			;
-		// @formatter:on
+		assertThat("No rows in range", result, hasSize(0));
 	}
 
 	@Test

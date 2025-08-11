@@ -28,14 +28,11 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.dat
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DbDatumRollupTests.rollup;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
-import static org.assertj.core.api.BDDAssertions.from;
-import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -50,7 +47,6 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.test.DbDatumRollupTests.Rollup
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
@@ -84,7 +80,7 @@ public class DbDatumRollup_Raw06Tests extends BaseDatumJdbcTestSupport {
 
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 1, 0, 0, 0, ZoneOffset.UTC);
-		rollup(log, jdbcTemplate, meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
+		rollup(jdbcTemplate, meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
@@ -110,7 +106,7 @@ public class DbDatumRollup_Raw06Tests extends BaseDatumJdbcTestSupport {
 
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 2, 0, 0, 0, ZoneOffset.UTC);
-		rollup(log, jdbcTemplate, meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
+		rollup(jdbcTemplate, meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
@@ -137,24 +133,13 @@ public class DbDatumRollup_Raw06Tests extends BaseDatumJdbcTestSupport {
 
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 3, 0, 0, 0, ZoneOffset.UTC);
-		rollup(log, jdbcTemplate, meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
+		rollup(jdbcTemplate, meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, ObjectDatumStreamMetadata> metas, UUID sid,
 					List<AggregateDatum> results) {
-				// @formatter:off
-				then(results)
-					.as("One agg result because reading range starts on prev hour")
-					.hasSize(1)
-					.element(0)
-					.extracting(AggregateDatum::getStatistics)
-					.returns(new BigDecimal[][] {
-							decimalArray("0", "45813", "45813"),
-							decimalArray("0", "41012", "41012")
-						}, from(DatumPropertiesStatistics::getAccumulating))
-					;
-				// @formatter:on
+				assertThat("No data in range", results, hasSize(0));
 			}
 		});
 	}
@@ -166,7 +151,7 @@ public class DbDatumRollup_Raw06Tests extends BaseDatumJdbcTestSupport {
 
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 18, 0, 0, 0, ZoneOffset.UTC);
-		rollup(log, jdbcTemplate, meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
+		rollup(jdbcTemplate, meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
@@ -194,7 +179,7 @@ public class DbDatumRollup_Raw06Tests extends BaseDatumJdbcTestSupport {
 
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 19, 0, 0, 0, ZoneOffset.UTC);
-		rollup(log, jdbcTemplate, meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
+		rollup(jdbcTemplate, meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
@@ -221,7 +206,7 @@ public class DbDatumRollup_Raw06Tests extends BaseDatumJdbcTestSupport {
 
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 20, 0, 0, 0, ZoneOffset.UTC);
-		rollup(log, jdbcTemplate, meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
+		rollup(jdbcTemplate, meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,

@@ -87,8 +87,7 @@ public class DbDatumRollup_Net469Tests extends BaseDatumJdbcTestSupport {
 		final ZonedDateTime end = start.plusHours(5);
 		for ( ZonedDateTime hour = start; hour.isBefore(end); hour = hour.plusHours(1) ) {
 			final ZonedDateTime curr = hour;
-			log.debug("Rollup hour {}", hour);
-			rollup(log, jdbcTemplate, meta.getStreamId(), hour, hour.plusHours(1), new RollupCallback() {
+			rollup(jdbcTemplate, meta.getStreamId(), hour, hour.plusHours(1), new RollupCallback() {
 
 				@Override
 				public void doWithStream(List<GeneralNodeDatum> datums,
@@ -109,43 +108,43 @@ public class DbDatumRollup_Net469Tests extends BaseDatumJdbcTestSupport {
 		}
 
 		// THEN
-		assertThat("Aggregate hours generated: 12, 13, 14, 15, 16", hourResults, hasSize(5));
+		assertThat("3 aggregate hours generated: 12, 15, 16", hourResults, hasSize(3));
 
-		AggregateDatum startHour = hourResults.get(0);
-		assertThat("Agg 1 is for hour 12", startHour.getTimestamp(), is(equalTo(start.toInstant())));
-		assertThat("Agg 1 instantaneous is average", startHour.getProperties().getInstantaneous(),
+		AggregateDatum h1 = hourResults.get(0);
+		assertThat("Agg 1 is for hour 12", h1.getTimestamp(), is(equalTo(start.toInstant())));
+		assertThat("Agg 1 instantaneous is average", h1.getProperties().getInstantaneous(),
 				arrayContaining(decimalArray("2.5")));
-		assertThat("Agg 1 instantaneous stats", startHour.getStatistics().getInstantaneous(),
+		assertThat("Agg 1 instantaneous stats", h1.getStatistics().getInstantaneous(),
 				arrayContaining(new BigDecimal[][] { decimalArray("2", "2", "3") }));
-		assertThat("Agg 1 accumulating is diff", startHour.getProperties().getAccumulating(),
+		assertThat("Agg 1 accumulating is diff", h1.getProperties().getAccumulating(),
 				arrayContaining(decimalArray("1")));
-		assertThat("Agg 1 accumulating reading", startHour.getStatistics().getAccumulating(),
+		assertThat("Agg 1 accumulating reading", h1.getStatistics().getAccumulating(),
 				arrayContaining(new BigDecimal[][] { decimalArray("1", "100", "101") }));
 
 		// add 2 for "gap hour" has no instantaneous data, but we attribute accumulation
 		// to this hour because of the perfect hour datum starting on the NEXT hour
-		AggregateDatum gapHour = hourResults.get(3);
-		assertThat("Agg 4 is for hour 15", gapHour.getTimestamp(),
+		AggregateDatum h2 = hourResults.get(1);
+		assertThat("Agg 2 is for hour 15", h2.getTimestamp(),
 				is(equalTo(start.plusHours(3).toInstant())));
-		assertThat("Agg 4 instantaneous is empty", gapHour.getProperties().getInstantaneous(),
+		assertThat("Agg 2 instantaneous is empty", h2.getProperties().getInstantaneous(),
 				is(nullValue()));
-		assertThat("Agg 4 instantaneous stats is empty", gapHour.getStatistics().getInstantaneous(),
+		assertThat("Agg 2 instantaneous stats is empty", h2.getStatistics().getInstantaneous(),
 				is(nullValue()));
-		assertThat("Agg 4 accumulating is 0", gapHour.getProperties().getAccumulating(),
+		assertThat("Agg 2 accumulating is 0", h2.getProperties().getAccumulating(),
 				arrayContaining(decimalArray("0")));
-		assertThat("Agg 4 accumulating reading picks up diff", gapHour.getStatistics().getAccumulating(),
+		assertThat("Agg 2 accumulating reading picks up diff", h2.getStatistics().getAccumulating(),
 				arrayContaining(new BigDecimal[][] { decimalArray("2", "101", "103") }));
 
-		AggregateDatum finalHour = hourResults.get(4);
-		assertThat("Agg 5 is for hour 16", finalHour.getTimestamp(),
+		AggregateDatum h3 = hourResults.get(2);
+		assertThat("Agg 3 is for hour 16", h3.getTimestamp(),
 				is(equalTo(start.plusHours(4).toInstant())));
-		assertThat("Agg 5 instantaneous is average", finalHour.getProperties().getInstantaneous(),
+		assertThat("Agg 3 instantaneous is average", h3.getProperties().getInstantaneous(),
 				arrayContaining(decimalArray("4.5")));
-		assertThat("Agg 5 instantaneous stats", finalHour.getStatistics().getInstantaneous(),
+		assertThat("Agg 3 instantaneous stats", h3.getStatistics().getInstantaneous(),
 				arrayContaining(new BigDecimal[][] { decimalArray("2", "4", "5") }));
-		assertThat("Agg 5 accumulating is diff", finalHour.getProperties().getAccumulating(),
+		assertThat("Agg 3 accumulating is diff", h3.getProperties().getAccumulating(),
 				arrayContaining(decimalArray("2")));
-		assertThat("Agg 5 accumulating reading", finalHour.getStatistics().getAccumulating(),
+		assertThat("Agg 3 accumulating reading", h3.getStatistics().getAccumulating(),
 				arrayContaining(new BigDecimal[][] { decimalArray("2", "103", "105") }));
 	}
 
