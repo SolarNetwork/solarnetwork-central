@@ -122,7 +122,8 @@
 	</select>
 	
 	<!--  Note this is called as a SELECT to a procedure that performs the delete -->
-	<select id="delete-expired-data-for-ExpireUserDataConfiguration" parameterType="net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration" resultType="long">
+	<select id="delete-expired-data-for-ExpireUserDataConfiguration" parameterType="net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration" 
+			resultType="long" timeout="1800">
 		SELECT solaruser.expire_datum_for_policy(
 			#{userId}, CAST(#{filterJson} AS jsonb), make_interval(days => #{expireDays}))
 	</select>
