@@ -358,14 +358,27 @@ $$
 	, srange AS (
 		SELECT COALESCE(t.min_ts, drange.min_ts) AS min_ts, COALESCE(t.max_ts, drange.max_ts) AS max_ts
 		FROM drange, (
-			SELECT (
-				-- find prior datum date before minimum within slot (or exact start of slot)
-				SELECT CASE
-					WHEN d.ts IS NULL THEN drange.min_ts
-					WHEN drange.min_ts = start_ts THEN drange.min_ts
-					ELSE d.ts
-				END
-				FROM meta, drange, solardatm.find_time_before_ts(sid, drange.min_ts, start_ts - tolerance, TRUE, meta.has_no_a) AS d(ts)
+			SELECT COALESCE(
+				(
+					-- find prior datum date before minimum within slot (or exact start of slot) REQUIRING accumulating
+					-- but use forced shorter tolerance because REQUIRING accumulating too expensive
+					SELECT CASE
+						WHEN d.ts IS NULL THEN drange.min_ts
+						WHEN drange.min_ts = start_ts THEN drange.min_ts
+						ELSE d.ts
+					END
+					FROM meta, drange, solardatm.find_time_before_ts(sid, drange.min_ts, start_ts - LEAST(tolerance, INTERVAL 'P14D'), TRUE, meta.has_no_a) AS d(ts)
+				),
+				(
+					-- find prior datum date before minimum within slot (or exact start of slot) NOT REQUIRING accumulating
+					-- using full tolerance because index-only scan possible and thus fast enough
+					SELECT CASE
+						WHEN d.ts IS NULL THEN drange.min_ts
+						WHEN drange.min_ts = start_ts THEN drange.min_ts
+						ELSE d.ts
+					END
+					FROM meta, drange, solardatm.find_time_before_ts(sid, drange.min_ts, start_ts - tolerance, FALSE, meta.has_no_a) AS d(ts)
+				)
 			) AS min_ts
 			, (
 				-- find next datum date after maximum within slot (or exact end of slot)
