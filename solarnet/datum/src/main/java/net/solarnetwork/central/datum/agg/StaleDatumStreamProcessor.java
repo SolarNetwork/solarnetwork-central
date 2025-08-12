@@ -89,8 +89,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 
 		final ObjectDatumId id = ObjectDatumIdRowMapper.INSTANCE.mapRow(rs, 1);
 		if ( warnSlow ) {
-			log.warn("Slow {} aggregate processed in {}s: {}", getAggregateProcessType(),
-					duration.toSeconds(), id);
+			log.warn("Slow aggregate processed in {}s: {}", duration.toSeconds(), id);
 		}
 
 		if ( services == null || services.isEmpty() ) {
