@@ -356,7 +356,7 @@ $$
 
 	-- find prior/next datum date range to provide for clock and reading input
 	, srange AS (
-		SELECT COALESCE(t.min_ts, drange.min_ts) AS min_ts, COALESCE(t.max_ts, drange.max_ts) AS max_ts
+		SELECT COALESCE(t.min_ts, drange.min_ts, start_ts) AS min_ts, COALESCE(t.max_ts, drange.max_ts, end_ts) AS max_ts
 		FROM drange, (
 			SELECT COALESCE(
 				(
