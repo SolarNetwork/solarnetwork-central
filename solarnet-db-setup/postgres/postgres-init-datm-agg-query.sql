@@ -328,21 +328,27 @@ $$
 		SELECT COALESCE(CARDINALITY(names_a) = 0, TRUE) AS has_no_a
  		FROM solardatm.find_metadata_for_stream(sid)
 	)
-	-- Find min/max datum date within slot; if no actual data in this slot we get NULL.
+	-- Find min/max datum date within slot; if no actual data in this slot we get a
+	-- result row with NULL values.
 	-- Note that an INCLUSIVE end date it used to pick up a "gap" slot that could occur
 	-- leading up to the end time slot (see NET-469).
 	, drange AS (
-		SELECT (
+		SELECT *
+		FROM (
+			-- force a result row
+			VALUES (TRUE)
+		) AS c(t)
+		LEFT OUTER JOIN (
 			-- find minimum datum date within slot
-			SELECT ts
+			SELECT ts, COALESCE(CARDINALITY(data_a) > 0, FALSE)
 			FROM solardatm.da_datm
 			WHERE stream_id = sid
 				AND ts >= start_ts
 				AND ts <= end_ts
 			ORDER BY ts
 			LIMIT 1
-		) AS min_ts
-		, (
+		) AS l(min_ts, min_has_a) ON TRUE
+		LEFT OUTER JOIN (
 			-- find maximum datum date within slot
 			SELECT ts
 			FROM solardatm.da_datm
@@ -351,7 +357,7 @@ $$
 				AND ts <= end_ts
 			ORDER BY ts DESC
 			LIMIT 1
-		) AS max_ts
+		) AS r(max_ts) ON TRUE
 	)
 
 	-- find prior/next datum date range to provide for clock and reading input
@@ -364,7 +370,7 @@ $$
 					-- but use forced shorter tolerance because REQUIRING accumulating too expensive
 					SELECT CASE
 						WHEN d.ts IS NULL THEN drange.min_ts
-						WHEN drange.min_ts = start_ts THEN drange.min_ts
+						WHEN drange.min_ts = start_ts AND drange.min_has_a THEN drange.min_ts
 						ELSE d.ts
 					END
 					FROM meta, drange, solardatm.find_time_before_ts(sid, drange.min_ts, start_ts - LEAST(tolerance, INTERVAL 'P14D'), TRUE, meta.has_no_a) AS d(ts)
@@ -374,7 +380,7 @@ $$
 					-- using full tolerance because index-only scan possible and thus fast enough
 					SELECT CASE
 						WHEN d.ts IS NULL THEN drange.min_ts
-						WHEN drange.min_ts = start_ts THEN drange.min_ts
+						WHEN drange.min_ts = start_ts AND drange.min_has_a THEN drange.min_ts
 						ELSE d.ts
 					END
 					FROM meta, drange, solardatm.find_time_before_ts(sid, drange.min_ts, start_ts - tolerance, FALSE, meta.has_no_a) AS d(ts)
@@ -415,6 +421,7 @@ $$
 				-- one agg slot away; otherwise that datum will be included in prior slot
 				WHEN t.min_ts IS NULL OR (
 						drange.min_ts = start_ts
+						AND drange.min_has_a
 						AND (start_ts - t.min_ts) < target_agg
 					)
 					THEN drange.min_ts
