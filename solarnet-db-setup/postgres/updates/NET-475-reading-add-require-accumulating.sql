@@ -146,7 +146,7 @@ $$
 						WHEN drange.min_ts = start_ts AND drange.min_has_a THEN drange.min_ts
 						ELSE d.ts
 					END
-					FROM meta, drange, solardatm.find_time_before_ts(sid, drange.min_ts, start_ts - LEAST(tolerance, INTERVAL 'P14D'), TRUE, meta.has_no_a) AS d(ts)
+					FROM meta, drange, solardatm.find_time_before_ts(sid, COALESCE(drange.min_ts, start_ts), start_ts - LEAST(tolerance, INTERVAL 'P14D'), TRUE, meta.has_no_a) AS d(ts)
 				),
 				(
 					-- find prior datum date before minimum within slot (or exact start of slot) NOT REQUIRING accumulating
@@ -156,7 +156,7 @@ $$
 						WHEN drange.min_ts = start_ts AND drange.min_has_a THEN drange.min_ts
 						ELSE d.ts
 					END
-					FROM meta, drange, solardatm.find_time_before_ts(sid, drange.min_ts, start_ts - tolerance, FALSE, meta.has_no_a) AS d(ts)
+					FROM meta, drange, solardatm.find_time_before_ts(sid, COALESCE(drange.min_ts, start_ts), start_ts - tolerance, FALSE, meta.has_no_a) AS d(ts)
 				)
 			) AS min_ts
 			, (
@@ -216,8 +216,13 @@ $$
 						AND reset_range.min_ts <= start_ts
 						THEN reset_range.min_ts
 
-					-- no datum: reset is min
-					WHEN srange.min_ts IS NULL THEN reset_range.min_ts
+					-- no datum but reset: reset is min
+					WHEN drange.min_ts IS NULL 
+						AND reset_range.min_ts IS NOT NULL
+						THEN LEAST(srange.min_ts, reset_range.min_ts)
+						
+					-- no datum
+					WHEN drange.min_ts IS NULL THEN start_ts
 
 					-- otherwise: datum is min (or null)
 					ELSE srange.min_ts
@@ -233,13 +238,18 @@ $$
 						AND reset_range.max_ts >= end_ts
 						THEN reset_range.max_ts
 
-					-- no datum: reset is max (or null)
-					WHEN srange.max_ts IS NULL THEN reset_range.max_ts
+					-- no datum but reset: reset is max (or null)
+					WHEN drange.max_ts IS NULL
+						AND reset_range.max_ts IS NOT NULL
+						THEN LEAST(srange.max_ts, reset_range.max_ts)
+					
+					-- no datum
+					WHEN drange.max_ts IS NULL THEN end_ts
 
 					-- otherwise: datum is max (or null)
 					ELSE srange.max_ts
 				END AS max_ts
-			FROM srange, reset_range
+			FROM drange, srange, reset_range
 		) t
 	)
 
