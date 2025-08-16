@@ -93,6 +93,32 @@ $$
 	SELECT * FROM solardatm.find_time_after_ts(sid, ts_at, cutoff, FALSE, FALSE);
 $$;
 
+/**
+ * Find if a datum has accumualting properties at a specific timestamp.
+ *
+ * This function can be used for performance reasons in other functions, to force the query planner
+ * to use a full date constraint in the query.
+ *
+ * @param sid 				the stream ID of the datm stream to search
+ * @param ts_at				the date of the datum to find adjacent datm for
+ */
+CREATE OR REPLACE FUNCTION solardatm.datm_has_accumulating_at(
+		sid 		UUID,
+		ts_at 		TIMESTAMP WITH TIME ZONE
+	) RETURNS TABLE (
+		ts 			TIMESTAMP WITH TIME ZONE,
+		has_a 		BOOLEAN
+	) LANGUAGE plpgsql STABLE ROWS 1 AS
+$$
+BEGIN
+	RETURN QUERY
+	SELECT d.ts, COALESCE(CARDINALITY(d.data_a) > 0, FALSE) AS has_a
+	FROM solardatm.da_datm d
+	WHERE d.stream_id = sid
+	AND d.ts = ts_at;
+END
+$$;
+
 
 CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_slot(
 		sid 		UUID,
