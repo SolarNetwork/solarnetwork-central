@@ -522,10 +522,7 @@ $$
 		, d.data_s
 		, d.data_t
 		, 0::SMALLINT AS rtype
-	FROM combined_srange, solardatm.da_datm d
-	WHERE d.stream_id = sid
-		AND d.ts >= combined_srange.min_ts
-		AND d.ts <= combined_srange.max_ts
+	FROM combined_srange, solardatm.find_datm_between(sid, combined_srange.min_ts, combined_srange.max_ts) d
 
 	UNION ALL
 

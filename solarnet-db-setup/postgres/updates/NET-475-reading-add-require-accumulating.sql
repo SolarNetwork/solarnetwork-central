@@ -120,6 +120,33 @@ END
 $$;
 
 
+/**
+ * Find datum between two dates, like BETWEEN (inclusive start and end).
+ *
+ * This function can be used for performance reasons in other functions, to force the query planner
+ * to use a full date constraint in the query.
+ *
+ * @param sid 				the stream ID of the datm stream to search
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (inclusive)
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_datm_between(
+	sid 		UUID,
+	start_ts 	TIMESTAMP WITH TIME ZONE,
+	end_ts 		TIMESTAMP WITH TIME ZONE
+) RETURNS SETOF solardatm.da_datm LANGUAGE plpgsql STABLE ROWS 500 AS
+$$
+BEGIN
+	RETURN QUERY
+	SELECT *
+	FROM solardatm.da_datm
+	WHERE stream_id = sid
+		AND ts >= start_ts
+		AND ts <= end_ts;
+END
+$$;
+
+
 CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_slot(
 		sid 		UUID,
 		start_ts 	TIMESTAMP WITH TIME ZONE,
@@ -327,10 +354,7 @@ $$
 		, d.data_s
 		, d.data_t
 		, 0::SMALLINT AS rtype
-	FROM combined_srange, solardatm.da_datm d
-	WHERE d.stream_id = sid
-		AND d.ts >= combined_srange.min_ts
-		AND d.ts <= combined_srange.max_ts
+	FROM combined_srange, solardatm.find_datm_between(sid, combined_srange.min_ts, combined_srange.max_ts) d
 
 	UNION ALL
 
