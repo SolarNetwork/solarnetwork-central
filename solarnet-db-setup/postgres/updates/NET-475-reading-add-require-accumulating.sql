@@ -181,14 +181,48 @@ $$
 					FROM meta, drange, solardatm.find_time_before_ts(sid, COALESCE(drange.min_ts, start_ts), start_ts - LEAST(tolerance, INTERVAL 'P14D'), TRUE, meta.has_no_a) AS d(ts)
 				),
 				(
+					-- expand search past 14d slow search:
 					-- find prior datum date before minimum within slot (or exact start of slot) NOT REQUIRING accumulating
 					-- using full tolerance because index-only scan possible and thus fast enough
-					SELECT CASE
-						WHEN d.ts IS NULL THEN drange.min_ts
-						WHEN drange.min_ts = start_ts AND drange.min_has_a THEN drange.min_ts
-						ELSE d.ts
-					END
-					FROM meta, drange, solardatm.find_time_before_ts(sid, COALESCE(drange.min_ts, start_ts), start_ts - tolerance, FALSE, meta.has_no_a) AS d(ts)
+					WITH way_back AS (
+						SELECT CASE
+							WHEN d.ts IS NULL THEN drange.min_ts
+							WHEN drange.min_ts = start_ts AND drange.min_has_a THEN drange.min_ts
+							ELSE d.ts
+						END
+						FROM meta, drange, solardatm.find_time_before_ts(
+							  sid
+							, CASE WHEN drange.min_has_a THEN drange.min_ts ELSE start_ts END - LEAST(tolerance, INTERVAL 'P14D')
+							, start_ts - tolerance
+							, FALSE
+							, meta.has_no_a
+							) AS d(ts)
+					)
+					-- find datum with way_back time, to see if has accumulating properties
+					, way_back_d AS (
+						SELECT d.ts, d.has_a
+						FROM way_back, solardatm.datm_has_accumulating_at(sid, way_back.ts) AS d
+						WHERE d.has_a = TRUE
+					)
+					SELECT COALESCE(
+						(
+							-- if way-back datum has accumulating properties, use it
+							SELECT ts
+							FROM way_back_d
+							WHERE has_a
+						),
+						(
+							-- try short slow search near found time for accumulating properties
+							SELECT d.ts
+							FROM meta, way_back_d, solardatm.find_time_before_ts(
+								  sid
+								, way_back_d.ts
+								, way_back_d.ts - LEAST(tolerance, INTERVAL 'P14D')
+								, TRUE
+								, meta.has_no_a
+							) AS d(ts)
+						)
+					)
 				)
 			) AS min_ts
 			, (
@@ -198,7 +232,7 @@ $$
 					WHEN drange.max_ts = end_ts THEN drange.max_ts
 					ELSE d.ts
 				END
-				FROM drange, solardatm.find_time_after(sid, drange.max_ts, end_ts + tolerance)  AS d(ts)
+				FROM drange, solardatm.find_time_after_ts(sid, drange.max_ts, end_ts + tolerance, FALSE, FALSE) AS d(ts)
 			) AS max_ts
 		) t
 	)
@@ -249,10 +283,10 @@ $$
 						THEN reset_range.min_ts
 
 					-- no datum but reset: reset is min
-					WHEN drange.min_ts IS NULL 
+					WHEN drange.min_ts IS NULL
 						AND reset_range.min_ts IS NOT NULL
 						THEN LEAST(srange.min_ts, reset_range.min_ts)
-						
+
 					-- no datum
 					WHEN drange.min_ts IS NULL THEN start_ts
 
@@ -274,7 +308,7 @@ $$
 					WHEN drange.max_ts IS NULL
 						AND reset_range.max_ts IS NOT NULL
 						THEN LEAST(srange.max_ts, reset_range.max_ts)
-					
+
 					-- no datum
 					WHEN drange.max_ts IS NULL THEN end_ts
 
@@ -345,12 +379,46 @@ $$
 				FROM meta, solardatm.find_time_before_ts(sid, ts_at, ts_at - LEAST(tolerance, INTERVAL 'P14D'), must_a, meta.has_no_a) AS d(ts)
 			),
 			(
+				-- expand search past 14d slow search:
 				-- find prior datum date before ts NOT REQUIRING accumulating
 				-- using full tolerance because index-only scan possible and thus fast enough
 				-- but then join back to solardatm.da_datm to restrict on must_a
-				WITH t AS (
+				WITH way_back AS (
 					SELECT d.ts
-					FROM meta, solardatm.find_time_before_ts(sid, ts_at, ts_at - tolerance, FALSE, meta.has_no_a) AS d(ts)
+					FROM meta, solardatm.find_time_before_ts(
+						  sid
+						, ts_at - LEAST(tolerance, INTERVAL 'P14D')
+						, ts_at - tolerance
+						, FALSE
+						, meta.has_no_a
+						) AS d(ts)
+				)
+				-- find datum with way_back time, to see if has accumulating properties
+				, way_back_d AS (
+					SELECT d.ts, d.has_a
+					FROM way_back, solardatm.datm_has_accumulating_at(sid, way_back.ts) AS d
+					WHERE d.has_a = TRUE
+				)
+				, t AS (
+					SELECT COALESCE(
+						(
+							-- if way-back datum has accumulating properties, use it
+							SELECT ts
+							FROM way_back_d
+							WHERE has_a
+						),
+						(
+							-- try short slow search near found time for accumulating properties
+							SELECT d.ts
+							FROM meta, way_back_d, solardatm.find_time_before_ts(
+								  sid
+								, way_back_d.ts
+								, way_back_d.ts - LEAST(tolerance, INTERVAL 'P14D')
+								, TRUE
+								, meta.has_no_a
+							) AS d(ts)
+						)
+					) AS ts
 				)
 				SELECT t.ts
 				FROM t
