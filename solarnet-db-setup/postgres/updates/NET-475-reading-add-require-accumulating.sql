@@ -16,8 +16,10 @@ CREATE OR REPLACE FUNCTION solardatm.find_time_before_ts(
 	cutoff 		TIMESTAMP WITH TIME ZONE,
 	must_a		BOOLEAN DEFAULT FALSE,
 	has_no_a 	BOOLEAN DEFAULT FALSE
-) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
+) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE plpgsql STABLE ROWS 1 AS
 $$
+BEGIN
+	RETURN QUERY
 	SELECT ts
 	FROM solardatm.da_datm
 	WHERE stream_id = sid
@@ -25,7 +27,8 @@ $$
 		AND ts >= cutoff
 		AND NOT(must_a AND (has_no_a OR data_a IS NULL))
 	ORDER BY ts DESC
-	LIMIT 1
+	LIMIT 1;
+END
 $$;
 
 -- update to use solardatm.find_time_before_ts
@@ -62,8 +65,10 @@ CREATE OR REPLACE FUNCTION solardatm.find_time_after_ts(
 	cutoff 		TIMESTAMP WITH TIME ZONE,
 	must_a		BOOLEAN DEFAULT FALSE,
 	has_no_a 	BOOLEAN DEFAULT FALSE
-) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
+) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE plpgsql STABLE ROWS 1 AS
 $$
+BEGIN
+	RETURN QUERY
 	SELECT ts
 	FROM solardatm.da_datm
 	WHERE stream_id = sid
@@ -71,7 +76,8 @@ $$
 		AND ts <= cutoff
 		AND NOT(must_a AND (has_no_a OR data_a IS NULL))
 	ORDER BY ts
-	LIMIT 1
+	LIMIT 1;
+END
 $$;
 
 DROP FUNCTION solardatm.find_time_after(
