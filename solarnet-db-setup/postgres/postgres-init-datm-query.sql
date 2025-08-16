@@ -119,8 +119,10 @@ CREATE OR REPLACE FUNCTION solardatm.find_time_before_ts(
 	cutoff 		TIMESTAMP WITH TIME ZONE,
 	must_a		BOOLEAN DEFAULT FALSE,
 	has_no_a 	BOOLEAN DEFAULT FALSE
-) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
+) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE plpgsql STABLE ROWS 1 AS
 $$
+BEGIN
+	RETURN QUERY
 	SELECT ts
 	FROM solardatm.da_datm
 	WHERE stream_id = sid
@@ -128,7 +130,8 @@ $$
 		AND ts >= cutoff
 		AND NOT(must_a AND (has_no_a OR data_a IS NULL))
 	ORDER BY ts DESC
-	LIMIT 1
+	LIMIT 1;
+END
 $$;
 
 /**
@@ -169,8 +172,10 @@ CREATE OR REPLACE FUNCTION solardatm.find_time_after_ts(
 	cutoff 		TIMESTAMP WITH TIME ZONE,
 	must_a		BOOLEAN DEFAULT FALSE,
 	has_no_a 	BOOLEAN DEFAULT FALSE
-) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
+) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE plpgsql STABLE ROWS 1 AS
 $$
+BEGIN
+	RETURN QUERY
 	SELECT ts
 	FROM solardatm.da_datm
 	WHERE stream_id = sid
@@ -178,7 +183,8 @@ $$
 		AND ts <= cutoff
 		AND NOT(must_a AND (has_no_a OR data_a IS NULL))
 	ORDER BY ts
-	LIMIT 1
+	LIMIT 1;
+END
 $$;
 
 
@@ -199,6 +205,33 @@ CREATE OR REPLACE FUNCTION solardatm.find_time_after(
 ) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
 $$
 	SELECT * FROM solardatm.find_time_after_ts(sid, ts_at, cutoff, FALSE, FALSE);
+$$;
+
+
+/**
+ * Find if a datum has accumualting properties at a specific timestamp.
+ *
+ * This function can be used for performance reasons in other functions, to force the query planner
+ * to use a full date constraint in the query.
+ *
+ * @param sid 				the stream ID of the datm stream to search
+ * @param ts_at				the date of the datum to find adjacent datm for
+ */
+CREATE OR REPLACE FUNCTION solardatm.datm_has_accumulating_at(
+		sid 		UUID,
+		ts_at 		TIMESTAMP WITH TIME ZONE
+	) RETURNS TABLE (
+		ts 			TIMESTAMP WITH TIME ZONE,
+		has_a 		BOOLEAN
+	) LANGUAGE plpgsql STABLE ROWS 1 AS
+$$
+BEGIN
+	RETURN QUERY
+	SELECT d.ts, COALESCE(CARDINALITY(d.data_a) > 0, FALSE) AS has_a
+	FROM solardatm.da_datm d
+	WHERE d.stream_id = sid
+	AND d.ts = ts_at;
+END
 $$;
 
 
@@ -252,12 +285,46 @@ $$
 				FROM meta, solardatm.find_time_before_ts(sid, ts_at, ts_at - LEAST(tolerance, INTERVAL 'P14D'), must_a, meta.has_no_a) AS d(ts)
 			),
 			(
+				-- expand search past 14d slow search:
 				-- find prior datum date before ts NOT REQUIRING accumulating
 				-- using full tolerance because index-only scan possible and thus fast enough
 				-- but then join back to solardatm.da_datm to restrict on must_a
-				WITH t AS (
+				WITH way_back AS (
 					SELECT d.ts
-					FROM meta, solardatm.find_time_before_ts(sid, ts_at, ts_at - tolerance, FALSE, meta.has_no_a) AS d(ts)
+					FROM meta, solardatm.find_time_before_ts(
+						  sid
+						, ts_at - LEAST(tolerance, INTERVAL 'P14D')
+						, ts_at - tolerance
+						, FALSE
+						, meta.has_no_a
+						) AS d(ts)
+				)
+				-- find datum with way_back time, to see if has accumulating properties
+				, way_back_d AS (
+					SELECT d.ts, d.has_a
+					FROM way_back, solardatm.datm_has_accumulating_at(sid, way_back.ts) AS d
+					WHERE d.has_a = TRUE
+				)
+				, t AS (
+					SELECT COALESCE(
+						(
+							-- if way-back datum has accumulating properties, use it
+							SELECT ts
+							FROM way_back_d
+							WHERE has_a
+						),
+						(
+							-- try short slow search near found time for accumulating properties
+							SELECT d.ts
+							FROM meta, way_back_d, solardatm.find_time_before_ts(
+								  sid
+								, way_back_d.ts
+								, way_back_d.ts - LEAST(tolerance, INTERVAL 'P14D')
+								, TRUE
+								, meta.has_no_a
+							) AS d(ts)
+						)
+					) AS ts
 				)
 				SELECT t.ts
 				FROM t
