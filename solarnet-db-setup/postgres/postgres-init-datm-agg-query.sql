@@ -321,7 +321,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_slot(
 		end_ts 		TIMESTAMP WITH TIME ZONE,
 		tolerance 	INTERVAL DEFAULT INTERVAL 'P3M',
 		target_agg 	INTERVAL DEFAULT INTERVAL 'PT1H'
-	) RETURNS SETOF solardatm.datm_rec LANGUAGE SQL STABLE ROWS 200 AS
+	) RETURNS SETOF solardatm.datm_rec LANGUAGE SQL STRICT STABLE ROWS 200 AS
 $$
 	-- find if stream even has accumulating properties, to avoid costly scan
 	WITH meta AS (
