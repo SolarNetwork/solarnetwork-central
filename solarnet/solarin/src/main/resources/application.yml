@@ -93,8 +93,8 @@ app:
       read-max-message-count: 10
       read-max-wait-time: "20s"
       read-sleep-min: "0s"
-      read-sleep-max: "30s"
-      read-sleep-throttle-step: "1s"
+      read-sleep-max: "10s"
+      read-sleep-throttle-step: "100ms"
       shutdown-wait: "30s"
       stat-frequency: 200
   solarqueue:

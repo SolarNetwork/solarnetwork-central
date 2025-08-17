@@ -16,8 +16,10 @@ CREATE OR REPLACE FUNCTION solardatm.find_time_before_ts(
 	cutoff 		TIMESTAMP WITH TIME ZONE,
 	must_a		BOOLEAN DEFAULT FALSE,
 	has_no_a 	BOOLEAN DEFAULT FALSE
-) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
+) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE plpgsql STABLE ROWS 1 AS
 $$
+BEGIN
+	RETURN QUERY
 	SELECT ts
 	FROM solardatm.da_datm
 	WHERE stream_id = sid
@@ -25,7 +27,8 @@ $$
 		AND ts >= cutoff
 		AND NOT(must_a AND (has_no_a OR data_a IS NULL))
 	ORDER BY ts DESC
-	LIMIT 1
+	LIMIT 1;
+END
 $$;
 
 -- update to use solardatm.find_time_before_ts
@@ -43,6 +46,107 @@ $$
 $$;
 
 
+
+/**
+ * Find a datum time immediately later in time a given instance, within a cutoff.
+ *
+ * This function can be used for performance reasons in other functions, to force the query planner
+ * to use a full date constraint in the query.
+ *
+ * @param sid 				the stream ID of the datm stream to search
+ * @param ts_at				the date of the datum to find adjacent datm for
+ * @param cutoff 			the maximum time to look forward for adjacent datm
+ * @param must_a			if TRUE then only consider rows where data_a is not NULL
+ * @param has_no_a			TRUE if the stream can be assumed NOT to have accumulating properties
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_time_after_ts(
+	sid 		UUID,
+	ts_at 		TIMESTAMP WITH TIME ZONE,
+	cutoff 		TIMESTAMP WITH TIME ZONE,
+	must_a		BOOLEAN DEFAULT FALSE,
+	has_no_a 	BOOLEAN DEFAULT FALSE
+) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE plpgsql STABLE ROWS 1 AS
+$$
+BEGIN
+	RETURN QUERY
+	SELECT ts
+	FROM solardatm.da_datm
+	WHERE stream_id = sid
+		AND ts > ts_at
+		AND ts <= cutoff
+		AND NOT(must_a AND (has_no_a OR data_a IS NULL))
+	ORDER BY ts
+	LIMIT 1;
+END
+$$;
+
+DROP FUNCTION solardatm.find_time_after(
+	UUID,
+	TIMESTAMP WITH TIME ZONE,
+	TIMESTAMP WITH TIME ZONE);
+CREATE OR REPLACE FUNCTION solardatm.find_time_after(
+	sid UUID,
+	ts_at TIMESTAMP WITH TIME ZONE,
+	cutoff TIMESTAMP WITH TIME ZONE
+) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
+$$
+	SELECT * FROM solardatm.find_time_after_ts(sid, ts_at, cutoff, FALSE, FALSE);
+$$;
+
+/**
+ * Find if a datum has accumualting properties at a specific timestamp.
+ *
+ * This function can be used for performance reasons in other functions, to force the query planner
+ * to use a full date constraint in the query.
+ *
+ * @param sid 				the stream ID of the datm stream to search
+ * @param ts_at				the date of the datum to find adjacent datm for
+ */
+CREATE OR REPLACE FUNCTION solardatm.datm_has_accumulating_at(
+		sid 		UUID,
+		ts_at 		TIMESTAMP WITH TIME ZONE
+	) RETURNS TABLE (
+		ts 			TIMESTAMP WITH TIME ZONE,
+		has_a 		BOOLEAN
+	) LANGUAGE plpgsql STABLE ROWS 1 AS
+$$
+BEGIN
+	RETURN QUERY
+	SELECT d.ts, COALESCE(CARDINALITY(d.data_a) > 0, FALSE) AS has_a
+	FROM solardatm.da_datm d
+	WHERE d.stream_id = sid
+	AND d.ts = ts_at;
+END
+$$;
+
+
+/**
+ * Find datum between two dates, like BETWEEN (inclusive start and end).
+ *
+ * This function can be used for performance reasons in other functions, to force the query planner
+ * to use a full date constraint in the query.
+ *
+ * @param sid 				the stream ID of the datm stream to search
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (inclusive)
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_datm_between(
+	sid 		UUID,
+	start_ts 	TIMESTAMP WITH TIME ZONE,
+	end_ts 		TIMESTAMP WITH TIME ZONE
+) RETURNS SETOF solardatm.da_datm LANGUAGE plpgsql STABLE ROWS 500 AS
+$$
+BEGIN
+	RETURN QUERY
+	SELECT *
+	FROM solardatm.da_datm
+	WHERE stream_id = sid
+		AND ts >= start_ts
+		AND ts <= end_ts;
+END
+$$;
+
+
 CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_slot(
 		sid 		UUID,
 		start_ts 	TIMESTAMP WITH TIME ZONE,
@@ -56,21 +160,27 @@ $$
 		SELECT COALESCE(CARDINALITY(names_a) = 0, TRUE) AS has_no_a
  		FROM solardatm.find_metadata_for_stream(sid)
 	)
-	-- Find min/max datum date within slot; if no actual data in this slot we get NULL.
+	-- Find min/max datum date within slot; if no actual data in this slot we get a
+	-- result row with NULL values.
 	-- Note that an INCLUSIVE end date it used to pick up a "gap" slot that could occur
 	-- leading up to the end time slot (see NET-469).
 	, drange AS (
-		SELECT (
+		SELECT *
+		FROM (
+			-- force a result row
+			VALUES (TRUE)
+		) AS c(t)
+		LEFT OUTER JOIN (
 			-- find minimum datum date within slot
-			SELECT ts
+			SELECT ts, COALESCE(CARDINALITY(data_a) > 0, FALSE)
 			FROM solardatm.da_datm
 			WHERE stream_id = sid
 				AND ts >= start_ts
 				AND ts <= end_ts
 			ORDER BY ts
 			LIMIT 1
-		) AS min_ts
-		, (
+		) AS l(min_ts, min_has_a) ON TRUE
+		LEFT OUTER JOIN (
 			-- find maximum datum date within slot
 			SELECT ts
 			FROM solardatm.da_datm
@@ -79,21 +189,68 @@ $$
 				AND ts <= end_ts
 			ORDER BY ts DESC
 			LIMIT 1
-		) AS max_ts
+		) AS r(max_ts) ON TRUE
 	)
 
 	-- find prior/next datum date range to provide for clock and reading input
 	, srange AS (
-		SELECT COALESCE(t.min_ts, drange.min_ts) AS min_ts, COALESCE(t.max_ts, drange.max_ts) AS max_ts
+		SELECT COALESCE(t.min_ts, drange.min_ts, start_ts) AS min_ts, COALESCE(t.max_ts, drange.max_ts, end_ts) AS max_ts
 		FROM drange, (
-			SELECT (
-				-- find prior datum date before minimum within slot (or exact start of slot)
-				SELECT CASE
-					WHEN d.ts IS NULL THEN drange.min_ts
-					WHEN drange.min_ts = start_ts THEN drange.min_ts
-					ELSE d.ts
-				END
-				FROM meta, drange, solardatm.find_time_before_ts(sid, drange.min_ts, start_ts - tolerance, TRUE, meta.has_no_a) AS d(ts)
+			SELECT COALESCE(
+				(
+					-- find prior datum date before minimum within slot (or exact start of slot) REQUIRING accumulating
+					-- but use forced shorter tolerance because REQUIRING accumulating too expensive
+					SELECT CASE
+						WHEN d.ts IS NULL THEN drange.min_ts
+						WHEN drange.min_ts = start_ts AND drange.min_has_a THEN drange.min_ts
+						ELSE d.ts
+					END
+					FROM meta, drange, solardatm.find_time_before_ts(sid, COALESCE(drange.min_ts, start_ts), start_ts - LEAST(tolerance, INTERVAL 'P14D'), TRUE, meta.has_no_a) AS d(ts)
+				),
+				(
+					-- expand search past 14d slow search:
+					-- find prior datum date before minimum within slot (or exact start of slot) NOT REQUIRING accumulating
+					-- using full tolerance because index-only scan possible and thus fast enough
+					WITH way_back AS (
+						SELECT CASE
+							WHEN d.ts IS NULL THEN drange.min_ts
+							WHEN drange.min_ts = start_ts AND drange.min_has_a THEN drange.min_ts
+							ELSE d.ts
+						END
+						FROM meta, drange, solardatm.find_time_before_ts(
+							  sid
+							, CASE WHEN drange.min_has_a THEN drange.min_ts ELSE start_ts END - LEAST(tolerance, INTERVAL 'P14D')
+							, start_ts - tolerance
+							, FALSE
+							, meta.has_no_a
+							) AS d(ts)
+					)
+					-- find datum with way_back time, to see if has accumulating properties
+					, way_back_d AS (
+						SELECT d.ts, d.has_a
+						FROM way_back, solardatm.datm_has_accumulating_at(sid, way_back.ts) AS d
+						WHERE d.has_a = TRUE
+					)
+					SELECT COALESCE(
+						(
+							-- if way-back datum has accumulating properties, use it
+							SELECT ts
+							FROM way_back_d
+							WHERE has_a
+						),
+						(
+							-- try short slow search near found time for accumulating properties
+							SELECT d.ts
+							FROM meta, way_back_d, solardatm.find_time_before_ts(
+								  sid
+								, way_back_d.ts
+								, way_back_d.ts - LEAST(tolerance, INTERVAL 'P14D')
+								, TRUE
+								, meta.has_no_a
+							) AS d(ts)
+						)
+					)
+				)
 			) AS min_ts
 			, (
 				-- find next datum date after maximum within slot (or exact end of slot)
@@ -102,7 +259,7 @@ $$
 					WHEN drange.max_ts = end_ts THEN drange.max_ts
 					ELSE d.ts
 				END
-				FROM drange, solardatm.find_time_after(sid, drange.max_ts, end_ts + tolerance)  AS d(ts)
+				FROM drange, solardatm.find_time_after_ts(sid, drange.max_ts, end_ts + tolerance, FALSE, FALSE) AS d(ts)
 			) AS max_ts
 		) t
 	)
@@ -130,6 +287,7 @@ $$
 				-- one agg slot away; otherwise that datum will be included in prior slot
 				WHEN t.min_ts IS NULL OR (
 						drange.min_ts = start_ts
+						AND drange.min_has_a
 						AND (start_ts - t.min_ts) < target_agg
 					)
 					THEN drange.min_ts
@@ -151,8 +309,13 @@ $$
 						AND reset_range.min_ts <= start_ts
 						THEN reset_range.min_ts
 
-					-- no datum: reset is min
-					WHEN srange.min_ts IS NULL THEN reset_range.min_ts
+					-- no datum but reset: reset is min
+					WHEN drange.min_ts IS NULL
+						AND reset_range.min_ts IS NOT NULL
+						THEN LEAST(srange.min_ts, reset_range.min_ts)
+
+					-- no datum
+					WHEN drange.min_ts IS NULL THEN start_ts
 
 					-- otherwise: datum is min (or null)
 					ELSE srange.min_ts
@@ -168,13 +331,18 @@ $$
 						AND reset_range.max_ts >= end_ts
 						THEN reset_range.max_ts
 
-					-- no datum: reset is max (or null)
-					WHEN srange.max_ts IS NULL THEN reset_range.max_ts
+					-- no datum but reset: reset is max (or null)
+					WHEN drange.max_ts IS NULL
+						AND reset_range.max_ts IS NOT NULL
+						THEN LEAST(srange.max_ts, reset_range.max_ts)
+
+					-- no datum
+					WHEN drange.max_ts IS NULL THEN end_ts
 
 					-- otherwise: datum is max (or null)
 					ELSE srange.max_ts
 				END AS max_ts
-			FROM srange, reset_range
+			FROM drange, srange, reset_range
 		) t
 	)
 
@@ -186,10 +354,7 @@ $$
 		, d.data_s
 		, d.data_t
 		, 0::SMALLINT AS rtype
-	FROM combined_srange, solardatm.da_datm d
-	WHERE d.stream_id = sid
-		AND d.ts >= combined_srange.min_ts
-		AND d.ts <= combined_srange.max_ts
+	FROM combined_srange, solardatm.find_datm_between(sid, combined_srange.min_ts, combined_srange.max_ts) d
 
 	UNION ALL
 
@@ -206,4 +371,131 @@ $$
 		combined_srange.min_ts,
 		combined_srange.max_ts
 	) aux
+$$;
+
+-- align with logic above
+CREATE OR REPLACE FUNCTION solardatm.find_datm_around_ts(
+		sid 		UUID,
+		ts_at 		TIMESTAMP WITH TIME ZONE,
+		tolerance 	INTERVAL DEFAULT interval 'P1M',
+		must_a		BOOLEAN DEFAULT FALSE,
+		has_no_a 	BOOLEAN DEFAULT FALSE
+	) RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE ROWS 2 AS
+$$
+	-- find if stream even has accumulating properties, to avoid costly scan
+	WITH meta AS (
+		SELECT COALESCE(CARDINALITY(names_a) = 0, TRUE) AS has_no_a
+ 		FROM solardatm.find_metadata_for_stream(sid)
+	)
+	, exact AS (
+		SELECT d.*
+		FROM solardatm.da_datm d
+		WHERE d.stream_id = sid
+			AND d.ts = ts_at
+			AND NOT(must_a AND (has_no_a OR d.data_a IS NULL))
+	)
+	, srange AS (
+		SELECT COALESCE(
+			(
+				-- find prior datum date before ts REQUIRING accumulating
+				-- but use forced shorter tolerance because REQUIRING accumulating too expensive
+				SELECT d.ts
+				FROM meta, solardatm.find_time_before_ts(sid, ts_at, ts_at - LEAST(tolerance, INTERVAL 'P14D'), must_a, meta.has_no_a) AS d(ts)
+			),
+			(
+				-- expand search past 14d slow search:
+				-- find prior datum date before ts NOT REQUIRING accumulating
+				-- using full tolerance because index-only scan possible and thus fast enough
+				-- but then join back to solardatm.da_datm to restrict on must_a
+				WITH way_back AS (
+					SELECT d.ts
+					FROM meta, solardatm.find_time_before_ts(
+						  sid
+						, ts_at - LEAST(tolerance, INTERVAL 'P14D')
+						, ts_at - tolerance
+						, FALSE
+						, meta.has_no_a
+						) AS d(ts)
+				)
+				-- find datum with way_back time, to see if has accumulating properties
+				, way_back_d AS (
+					SELECT d.ts, d.has_a
+					FROM way_back, solardatm.datm_has_accumulating_at(sid, way_back.ts) AS d
+					WHERE d.has_a = TRUE
+				)
+				, t AS (
+					SELECT COALESCE(
+						(
+							-- if way-back datum has accumulating properties, use it
+							SELECT ts
+							FROM way_back_d
+							WHERE has_a
+						),
+						(
+							-- try short slow search near found time for accumulating properties
+							SELECT d.ts
+							FROM meta, way_back_d, solardatm.find_time_before_ts(
+								  sid
+								, way_back_d.ts
+								, way_back_d.ts - LEAST(tolerance, INTERVAL 'P14D')
+								, TRUE
+								, meta.has_no_a
+							) AS d(ts)
+						)
+					) AS ts
+				)
+				SELECT t.ts
+				FROM t
+				INNER JOIN solardatm.da_datm d ON d.stream_id = sid AND d.ts = t.ts
+				WHERE (NOT must_a OR d.data_a IS NOT NULL)
+			)
+		) AS ts
+
+		UNION ALL
+
+		SELECT COALESCE(
+			(
+				-- find next datum date after ts REQUIRING accumulating
+				-- but use forced shorter tolerance because REQUIRING accumulating too expensive
+				SELECT d.ts
+				FROM meta, solardatm.find_time_after_ts(sid, ts_at, ts_at + LEAST(tolerance, INTERVAL 'P14D'), must_a, meta.has_no_a) AS d(ts)
+			),
+			(
+				-- find next datum date after ts NOT REQUIRING accumulating
+				-- using full tolerance because index-only scan possible and thus fast enough
+				-- but then join back to solardatm.da_datm to restrict on must_a
+				WITH t AS (
+					SELECT d.ts
+					FROM meta, solardatm.find_time_after_ts(sid, ts_at, ts_at + tolerance, FALSE, meta.has_no_a) AS d(ts)
+				)
+				SELECT t.ts
+				FROM t
+				INNER JOIN solardatm.da_datm d ON d.stream_id = sid AND d.ts = t.ts
+				WHERE (NOT must_a OR d.data_a IS NOT NULL)
+			)
+		) AS ts
+	)
+	, b AS (
+		SELECT d.*, 0 AS rtype
+		FROM exact d
+
+		UNION ALL
+
+		SELECT d.*, 1 AS rtype
+		FROM srange
+		INNER JOIN solardatm.da_datm d ON d.stream_id = sid AND d.ts = srange.ts
+	)
+	, d AS (
+		-- choose exact if available, fall back to before/after otherwise
+		SELECT b.*
+			, CASE
+				WHEN rtype = 0 THEN TRUE
+				WHEN rtype = 1 AND rank() OVER (ORDER BY rtype) = 1 THEN TRUE
+				ELSE FALSE
+				END AS inc
+		FROM b
+	)
+	SELECT stream_id, ts, received, data_i, data_a, data_s, data_t
+	FROM d
+	WHERE inc
 $$;

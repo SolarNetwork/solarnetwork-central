@@ -111,7 +111,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLifecycleObserver {
 
@@ -824,8 +824,13 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 								});
 							}
 							int rejected = msgs.size() - accepted;
+							double rejectedRatio = (rejected > 0
+									? ((double) rejected / (double) msgs.size())
+									: 0.0);
 							if ( rejected > 0 && sleep < readSleepMaxMs ) {
-								sleep = Math.min(sleep + readSleepThrottleStepMs, readSleepMaxMs);
+								sleep = Math.min(
+										sleep + (long) (readSleepThrottleStepMs * rejectedRatio),
+										readSleepMaxMs);
 								log.info(
 										"Increased read throttle from SQS queue to {}ms after {} work queue rejections.",
 										sleep, rejected);
