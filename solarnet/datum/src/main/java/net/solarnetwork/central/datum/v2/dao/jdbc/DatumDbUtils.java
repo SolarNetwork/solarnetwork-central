@@ -570,7 +570,8 @@ public final class DatumDbUtils {
 					datumStmt.setTimestamp(3, now);
 
 					String[] iNames = meta.propertyNamesForType(DatumSamplesType.Instantaneous);
-					if ( iNames == null || iNames.length < 1 ) {
+					if ( iNames == null || iNames.length < 1 || s.getInstantaneous() == null
+							|| s.getInstantaneous().isEmpty() ) {
 						datumStmt.setNull(4, Types.OTHER);
 					} else {
 						BigDecimal[] numbers = new BigDecimal[iNames.length];
@@ -582,7 +583,8 @@ public final class DatumDbUtils {
 					}
 
 					String[] aNames = meta.propertyNamesForType(DatumSamplesType.Accumulating);
-					if ( aNames == null || aNames.length < 1 ) {
+					if ( aNames == null || aNames.length < 1 || s.getAccumulating() == null
+							|| s.getAccumulating().isEmpty() ) {
 						datumStmt.setNull(5, Types.OTHER);
 					} else {
 						BigDecimal[] numbers = new BigDecimal[aNames.length];
@@ -594,7 +596,8 @@ public final class DatumDbUtils {
 					}
 
 					String[] sNames = meta.propertyNamesForType(DatumSamplesType.Status);
-					if ( sNames == null || sNames.length < 1 ) {
+					if ( sNames == null || sNames.length < 1 || s.getStatus() == null
+							|| s.getStatus().isEmpty() ) {
 						datumStmt.setNull(6, Types.OTHER);
 					} else {
 						String[] strings = new String[sNames.length];

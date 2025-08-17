@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.scheduler;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -46,7 +47,7 @@ import org.springframework.core.task.AsyncTaskExecutor;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public abstract class JobSupport implements ManagedJob {
 
@@ -76,6 +77,7 @@ public abstract class JobSupport implements ManagedJob {
 	private int maximumIterations = DEFAULT_MAX_ITERATIONS;
 	private int parallelism = 1;
 	private long jitter = DEFAULT_JITTER;
+	private Duration warnThresholdTime;
 
 	private AsyncTaskExecutor taskExecutorForParallelTasks() {
 		AsyncTaskExecutor s = getParallelTaskExecutor();
@@ -412,6 +414,29 @@ public abstract class JobSupport implements ManagedJob {
 			jitter = 0;
 		}
 		this.jitter = jitter;
+	}
+
+	/**
+	 * Get the warning threshold time.
+	 *
+	 * @return the optional threshold time; iterations that take longer than
+	 *         this will generate a warning log
+	 * @since 2.1
+	 */
+	public Duration getWarnThresholdTime() {
+		return warnThresholdTime;
+	}
+
+	/**
+	 * Set the warning threshold time.
+	 *
+	 * @param warnThresholdTime
+	 *        the threshold time to set; iterations that take longer than this
+	 *        will generate a warning log
+	 * @since 2.1
+	 */
+	public void setWarnThresholdTime(Duration warnThresholdTime) {
+		this.warnThresholdTime = warnThresholdTime;
 	}
 
 }

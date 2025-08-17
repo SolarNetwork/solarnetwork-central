@@ -155,16 +155,19 @@ app:
           maximum-wait-ms: 59000
           parallelism: 4
           schedule: "15 0/1 * * * *"
+          warn-threshold-time: "2s"
         daily:
           maximum-iterations: 10000
           maximum-wait-ms: 299000
           parallelism: 4
           schedule: "30 0/5 * * * *"
+          warn-threshold-time: "2s"
         monthly:
           maximum-iterations: 10000
           maximum-wait-ms: 299000
           parallelism: 4
           schedule: "45 1/5 * * * *"
+          warn-threshold-time: "2s"
         flux:
           maximum-iterations: 10000
           maximum-wait-ms: 59000

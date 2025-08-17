@@ -28,6 +28,8 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -91,10 +93,18 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 						con.setAutoCommit(true); // we want every execution of our loop to commit immediately
 						int resultCount = 0;
 						do {
-							if ( call.execute() ) {
+							final Instant start = Instant.now();
+							Duration elapsed = null;
+							final boolean hasResultSet;
+							try {
+								hasResultSet = call.execute();
+							} finally {
+								elapsed = Duration.between(start, Instant.now());
+							}
+							if ( hasResultSet ) {
 								try (ResultSet rs = call.getResultSet()) {
 									if ( rs.next() ) {
-										processResultRow(rs);
+										processResultRow(rs, elapsed);
 										resultCount = 1;
 									} else {
 										resultCount = 0;
@@ -132,20 +142,22 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 	 * </p>
 	 * 
 	 * @param rs
-	 *        the result set
+	 *        the result set positioned on the next result row
+	 * @param duration
+	 *        the execution duration
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	protected void processResultRow(ResultSet rs) throws SQLException {
+	protected void processResultRow(ResultSet rs, Duration duration) throws SQLException {
 		// extending classes can override
-		if ( log.isDebugEnabled() ) {
+		if ( rs != null && log.isDebugEnabled() ) {
 			ResultSetMetaData meta = rs.getMetaData();
 			final int colCount = meta.getColumnCount();
 			Map<String, Object> row = new LinkedHashMap<>(colCount);
 			for ( int i = 1; i <= colCount; i++ ) {
 				row.put(meta.getColumnName(i), rs.getObject(i));
 			}
-			log.debug("Processed stale row: {}", row);
+			log.debug("Processed stale row in {}: {}", duration, row);
 		}
 	}
 }
