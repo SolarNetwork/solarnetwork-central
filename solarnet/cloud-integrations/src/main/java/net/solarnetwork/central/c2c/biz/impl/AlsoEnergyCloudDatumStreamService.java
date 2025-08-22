@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -90,6 +91,7 @@ import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
@@ -100,7 +102,7 @@ import net.solarnetwork.util.StringUtils;
  * AlsoEnergy implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -150,9 +152,15 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 						() -> new LinkedHashMap<>(LocusEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
 
-		var tzSpec = new BasicTextFieldSettingSpecifier(TIME_ZONE_SETTING, null);
-		SETTINGS = List.of(granularitySpec, tzSpec, SOURCE_ID_MAP_SETTING_SPECIFIER,
-				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
+		// @formatter:off
+		SETTINGS = List.of(
+				  granularitySpec
+				, new BasicTextFieldSettingSpecifier(TIME_ZONE_SETTING, null)
+				, SOURCE_ID_MAP_SETTING_SPECIFIER
+				, VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
+				, MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER
+			);
+		// @formatter:on
 	}
 
 	/** The supported placeholder keys. */
@@ -365,21 +373,41 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 						}, res -> parseDatum(res.getBody(), e.getValue(), ds, sourceIdMap, dataMap));
 			}
 
-			List<GeneralDatum> resultDatum = dataMap.entrySet().stream()
-					.filter(e -> !e.getValue().isEmpty())
-					.map(e -> new GeneralDatum(e.getKey(), e.getValue())).toList();
+			// generate a map of the latest-available timestamp per stream; afterwards the earliest
+			// value overall can be used as the resolved "latest datum" date
+			Map<ObjectDatumStreamMetadataId, Instant> greatestTimestampPerStream = new HashMap<>(4);
+			List<GeneralDatum> resultDatum = dataMap.entrySet().stream().filter(e -> {
+				if ( e.getValue().isEmpty() ) {
+					return false;
+				}
+				ObjectDatumStreamMetadataId streamPk = new ObjectDatumStreamMetadataId(
+						e.getKey().getKind(), e.getKey().getObjectId(), e.getKey().getSourceId());
+				Instant ts = e.getKey().getTimestamp();
+				greatestTimestampPerStream.compute(streamPk,
+						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+				return true;
+			}).map(e -> new GeneralDatum(e.getKey(), e.getValue())).toList();
 
-			// latest datum might not have been reported yet; check latest datum date, and if
+			// latest datum might not have been reported yet; check latest datum date (per stream), and if
 			// less than expected date make that the next query start date
-			if ( !resultDatum.isEmpty() ) {
-				Instant lastTimestamp = resultDatum.getLast().getTimestamp();
+			if ( !greatestTimestampPerStream.isEmpty() ) {
+				Instant leastGreatestTimestampPerStream = greatestTimestampPerStream.values().stream()
+						.min(Instant::compareTo).get();
+				Instant greatestTimestampAcrossStreams = greatestTimestampPerStream.values().stream()
+						.max(Instant::compareTo).get();
+				Instant greatestDatumTimestamp = (leastGreatestTimestampPerStream
+						.isBefore(greatestTimestampAcrossStreams)
+						&& Duration.between(leastGreatestTimestampPerStream, clock.instant())
+								.compareTo(multiStreamMaximumLag(datumStream)) < 0
+										? leastGreatestTimestampPerStream
+										: greatestTimestampAcrossStreams);
 				Instant expectedLastTimestamp = resolution.prevTickStart(endDate, zone);
-				if ( lastTimestamp.isBefore(expectedLastTimestamp) ) {
+				if ( greatestDatumTimestamp.isBefore(expectedLastTimestamp) ) {
 					if ( nextQueryFilter == null ) {
 						nextQueryFilter = new BasicQueryFilter();
 						nextQueryFilter.setEndDate(resolution.tickStart(filterEndDate, zone));
 					}
-					nextQueryFilter.setStartDate(resolution.nextTickStart(lastTimestamp, zone));
+					nextQueryFilter.setStartDate(resolution.nextTickStart(greatestDatumTimestamp, zone));
 				}
 			}
 
