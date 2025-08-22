@@ -103,7 +103,7 @@ import net.solarnetwork.util.StringUtils;
  * Enphase implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -168,6 +168,14 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	public static final String GRANULARITY_PARAM = "granularity";
 
 	/**
+	 * The default duration used if the
+	 * {@link #DEVICE_REPORTING_MAXIMUM_LAG_SETTING} is not defined.
+	 *
+	 * @since 1.7
+	 */
+	public static final Duration DEFAULT_DEVICE_REPORTING_MAXIMUM_LAG = Duration.ofHours(3);
+
+	/**
 	 * The setting for a "devices reporting" maximum lag, when less than the
 	 * "total devices" available.
 	 *
@@ -181,18 +189,12 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	public static final String DEVICE_REPORTING_MAXIMUM_LAG_SETTING = "deviceReportingMaximumLag";
 
 	/**
-	 * A setting specifier for the {@code UPPER_CASE_SOURCE_ID_SETTING}.
+	 * A setting specifier for the {@code DEVICE_REPORTING_MAXIMUM_LAG_SETTING}.
 	 *
 	 * @since 1.7
 	 */
 	public static final TextFieldSettingSpecifier DEVICE_REPORTING_MAXIMUM_LAG_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
-			DEVICE_REPORTING_MAXIMUM_LAG_SETTING, null);
-
-	/**
-	 * The default duration used if the
-	 * {@link #DEVICE_REPORTING_MAXIMUM_LAG_SETTING} is not defined.
-	 */
-	public static final Duration DEFAULT_DEVICE_REPORTING_MAXIMUM_LAG = Duration.ofHours(3);
+			DEVICE_REPORTING_MAXIMUM_LAG_SETTING, DEFAULT_DEVICE_REPORTING_MAXIMUM_LAG.toString());
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
