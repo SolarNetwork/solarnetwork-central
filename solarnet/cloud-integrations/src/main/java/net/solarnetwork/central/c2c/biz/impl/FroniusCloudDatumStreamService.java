@@ -50,6 +50,7 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -90,6 +91,7 @@ import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
@@ -98,7 +100,7 @@ import net.solarnetwork.util.StringUtils;
  * Fronius implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -144,8 +146,14 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		SETTINGS = List.of(UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER, SOURCE_ID_MAP_SETTING_SPECIFIER,
-				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
+		// @formatter:off
+		SETTINGS = List.of(
+				UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER,
+				SOURCE_ID_MAP_SETTING_SPECIFIER,
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER,
+				MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER
+				);
+		// @formatter:on
 	}
 
 	/** The supported placeholder keys. */
@@ -663,12 +671,39 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
+			Map<ObjectDatumStreamMetadataId, Instant> greatestTimestampPerStream = new HashMap<>(4);
+			List<Datum> finalResult = new ArrayList<>(r.size());
+			for ( GeneralDatum d : r ) {
+				ObjectDatumStreamMetadataId streamPk = new ObjectDatumStreamMetadataId(d.getKind(),
+						d.getObjectId(), d.getSourceId());
+				Instant ts = d.getTimestamp();
+				greatestTimestampPerStream.compute(streamPk,
+						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+				finalResult.add(d);
+			}
+
+			// latest datum might not have been reported yet; check latest datum date (per stream), and if
+			// less than expected date make that the next query start date
+			if ( greatestTimestampPerStream.size() > 1 ) {
+				Instant leastGreatestTimestampPerStream = greatestTimestampPerStream.values().stream()
+						.min(Instant::compareTo).get();
+				Instant greatestTimestampAcrossStreams = greatestTimestampPerStream.values().stream()
+						.max(Instant::compareTo).get();
+				if ( leastGreatestTimestampPerStream.isBefore(greatestTimestampAcrossStreams)
+						&& Duration.between(leastGreatestTimestampPerStream, clock.instant())
+								.compareTo(multiStreamMaximumLag(datumStream)) < 0 ) {
+					if ( nextQueryFilter == null ) {
+						nextQueryFilter = new BasicQueryFilter();
+					}
+					nextQueryFilter.setStartDate(leastGreatestTimestampPerStream);
+				}
+			}
+
 			var usedFilter = new BasicQueryFilter();
 			usedFilter.setStartDate(startDate);
 			usedFilter.setEndDate(endDate);
 
-			return new BasicCloudDatumStreamQueryResult(usedFilter, nextQueryFilter,
-					r.stream().map(Datum.class::cast).toList());
+			return new BasicCloudDatumStreamQueryResult(usedFilter, nextQueryFilter, finalResult);
 		});
 	}
 
