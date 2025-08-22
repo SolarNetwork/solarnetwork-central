@@ -660,15 +660,15 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					var systemId = planEntry.getKey();
 					queryFilter.setParameters(Map.of(SYSTEM_ID_FILTER, systemId));
 
-					fetchDatumForSystem(queryFilter, datumStream, integration, sourceIdMap,
-							planEntry.getValue(), resultDatum);
+					fetchDatumForSystem(queryFilter, ds, integration, sourceIdMap, planEntry.getValue(),
+							resultDatum);
 				}
 				queryFilter.setStartDate(queryFilter.getEndDate());
 				queryFilter.setEndDate(queryFilter.getStartDate().plus(MAX_QUERY_TIME_RANGE));
 			}
 
 			// evaluate expressions on merged datum
-			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
+			var r = evaluateExpressions(ds, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
 			Map<ObjectDatumStreamMetadataId, Instant> greatestTimestampPerStream = new HashMap<>(4);
@@ -691,7 +691,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 						.max(Instant::compareTo).get();
 				if ( leastGreatestTimestampPerStream.isBefore(greatestTimestampAcrossStreams)
 						&& Duration.between(leastGreatestTimestampPerStream, clock.instant())
-								.compareTo(multiStreamMaximumLag(datumStream)) < 0 ) {
+								.compareTo(multiStreamMaximumLag(ds)) < 0 ) {
 					if ( nextQueryFilter == null ) {
 						nextQueryFilter = new BasicQueryFilter();
 					}
