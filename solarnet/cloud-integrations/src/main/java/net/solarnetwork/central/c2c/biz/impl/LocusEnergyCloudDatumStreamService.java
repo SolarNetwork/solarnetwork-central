@@ -728,14 +728,16 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 
 			// latest datum might not have been reported yet; check latest datum date (per stream), and if
 			// less than expected date make that the next query start date
-			if ( greatestTimestampPerComponent.size() > 1 ) {
+			final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
+			if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0
+					&& greatestTimestampPerComponent.size() > 1 ) {
 				Instant leastGreatestTimestampPerStream = greatestTimestampPerComponent.values().stream()
 						.min(Instant::compareTo).get();
 				Instant greatestTimestampAcrossStreams = greatestTimestampPerComponent.values().stream()
 						.max(Instant::compareTo).get();
 				if ( leastGreatestTimestampPerStream.isBefore(greatestTimestampAcrossStreams)
 						&& Duration.between(leastGreatestTimestampPerStream, clock.instant())
-								.compareTo(multiStreamMaximumLag(datumStream)) < 0 ) {
+								.compareTo(multiStreamMaximumLag) < 0 ) {
 					if ( nextQueryFilter == null ) {
 						nextQueryFilter = new BasicQueryFilter();
 					}
