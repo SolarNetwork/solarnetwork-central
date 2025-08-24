@@ -104,7 +104,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.18
+ * @version 1.19
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -132,6 +132,35 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	public static final TextFieldSettingSpecifier VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
 			VIRTUAL_SOURCE_IDS_SETTING, null);
+
+	/**
+	 * The default duration used if the
+	 * {@link #MULTI_STREAM_MAXIMUM_LAG_SETTING} is not defined.
+	 *
+	 * @since 1.19
+	 */
+	public static final Duration DEFAULT_MULTI_STREAM_MAXIMUM_LAG = Duration.ofHours(3);
+
+	/**
+	 * The setting for a "multiple datum stream" maximum lag, when a stream
+	 * within a set of multiple streams lags behind the others.
+	 *
+	 * <p>
+	 * The value can be an ISO duration like {@code PT2H} for "2 hours" or an
+	 * integer number of seconds.
+	 * </p>
+	 *
+	 * @since 1.19
+	 */
+	public static final String MULTI_STREAM_MAXIMUM_LAG_SETTING = "multiStreamMaximumLag";
+
+	/**
+	 * A setting specifier for the {@code MULTI_STREAM_MAXIMUM_LAG_SETTING}.
+	 *
+	 * @since 1.19
+	 */
+	public static final TextFieldSettingSpecifier MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			MULTI_STREAM_MAXIMUM_LAG_SETTING, DEFAULT_MULTI_STREAM_MAXIMUM_LAG.toString());
 
 	/** A clock to use. */
 	protected final Clock clock;
@@ -982,6 +1011,19 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			placeholderSets = Collections.singletonList(Collections.emptyMap());
 		}
 		return placeholderSets;
+	}
+
+	/**
+	 * Get the "multiple datum stream" maximum lag setting for a datum stream.
+	 *
+	 * @param datumStream
+	 *        the datum stream to get the maximum lag value for
+	 * @return the duration, never {@code null}
+	 * @since 1.19
+	 */
+	public static Duration multiStreamMaximumLag(CloudDatumStreamConfiguration datumStream) {
+		return servicePropertyDuration(datumStream, MULTI_STREAM_MAXIMUM_LAG_SETTING,
+				DEFAULT_MULTI_STREAM_MAXIMUM_LAG);
 	}
 
 	/**

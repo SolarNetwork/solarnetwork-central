@@ -38,10 +38,12 @@ import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.http.HttpMethod.POST;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
@@ -89,9 +91,12 @@ import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
@@ -166,6 +171,10 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 	private static String componentValueRef(Long siteId, Long hardwareId, String fieldName, String fn) {
 		return "/%d/%d/%s/%s".formatted(siteId, hardwareId, fieldName, fn);
+	}
+
+	private static String componentValueRef(String fieldName, String fn) {
+		return "/{siteId}/{hardwareId}/%s/%s".formatted(fieldName, fn);
 	}
 
 	@Test
@@ -908,6 +917,337 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 					;
 			})
 			;
+
+		and.then(result)
+			.asInstanceOf(type(CloudDatumStreamQueryResult.class))
+			.extracting(CloudDatumStreamQueryResult::getNextQueryFilter)
+			.as("Next query filter returned")
+			.isNotNull()
+			.as("21:54 returned, as +1min after the latest timestamps in the stream")
+			.returns(Instant.parse("2024-12-30T21:54:00Z"), from(CloudDatumStreamQueryFilter::getStartDate))
+			;
+
+		// @formatter:on
+	}
+
+	@Test
+	public void requestList_startAtLeastGreatestTimestampPerStream_withinLag() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String clientId = randomString();
+		final String username = randomString();
+		final String password = randomString();
+		final Long siteId1 = randomLong();
+		final Long hardwareId1 = randomLong();
+		final Long siteId2 = randomLong();
+		final Long hardwareId2 = randomLong();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				AlsoEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				AlsoEnergyCloudIntegrationService.PASSWORD_SETTING, password
+			));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final String fieldName1 = "KW";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		prop1.setEnabled(true);
+		prop1.setPropertyType(DatumSamplesType.Instantaneous);
+		prop1.setPropertyName("watts");
+		prop1.setValueType(CloudDatumStreamValueType.Reference);
+		prop1.setValueReference(componentValueRef(fieldName1, Avg.name()));
+
+		final String fieldName2 = "KWh";
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		prop2.setEnabled(true);
+		prop2.setPropertyType(DatumSamplesType.Accumulating);
+		prop2.setPropertyName("wattHours");
+		prop2.setValueType(CloudDatumStreamValueType.Reference);
+		prop2.setValueReference(componentValueRef(fieldName2, Last.name()));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+		// @formatter:off
+		datumStream.setServiceProps(JsonUtils.getStringMap("""
+						{
+						  "sourceIdMap": {
+						    "/%s/%s":  "inv/1",
+						    "/%s/%s": "inv/2"
+						  }
+						}
+						""".formatted(siteId1, hardwareId1, siteId2, hardwareId2)));
+		// @formatter:on
+
+		// @formatter:off
+		@SuppressWarnings("removal")
+		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
+				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.clientId(randomString())
+				.clientSecret(randomString())
+				.tokenUri(tokenUri)
+				.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// request data streams
+		final JsonNode resJson1 = getObjectFromJSON(
+				utf8StringResource("alsoenergy-bindata-03.json", getClass()), ObjectNode.class);
+		final var res1 = new ResponseEntity<JsonNode>(resJson1, HttpStatus.OK);
+		final JsonNode resJson2 = getObjectFromJSON(
+				utf8StringResource("alsoenergy-bindata-04.json", getClass()), ObjectNode.class);
+		final var res2 = new ResponseEntity<JsonNode>(resJson2, HttpStatus.OK);
+		// @formatter:off
+		given(restOps.exchange(any(), eq(POST), any(), eq(JsonNode.class)))
+			.willReturn(res1)
+			.willReturn(res2);
+		// @formatter:on
+
+		// WHEN
+		// set clock to near data request, to work with maximum lag setting (default 3h)
+		clock.setInstant(Instant.parse("2024-12-30T22:00:00Z"));
+
+		var filter = new BasicQueryFilter();
+		filter.setStartDate(clock.instant().minus(10, MINUTES));
+		filter.setEndDate(clock.instant());
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(5)
+			.satisfies(list -> {
+				DatumSamples expectedSamples1 = new DatumSamples();
+				expectedSamples1.putInstantaneousSampleValue("watts", 123);
+				expectedSamples1.putAccumulatingSampleValue("wattHours", 100);
+
+				and.then(list).element(0)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-12-30T21:51:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples1, from(Datum::asSampleOperations))
+					;
+
+				DatumSamples expectedSamples2 = new DatumSamples();
+				expectedSamples2.putInstantaneousSampleValue("watts", 124);
+				expectedSamples2.putAccumulatingSampleValue("wattHours", 101);
+
+				and.then(list).element(1)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-12-30T21:52:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples2, from(Datum::asSampleOperations))
+					;
+
+				DatumSamples expectedSamples3 = new DatumSamples();
+				expectedSamples3.putInstantaneousSampleValue("watts", 122);
+				expectedSamples3.putAccumulatingSampleValue("wattHours", 102);
+
+				and.then(list).element(2)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-12-30T21:53:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples3, from(Datum::asSampleOperations))
+					;
+
+				DatumSamples expectedSamples4 = new DatumSamples();
+				expectedSamples4.putInstantaneousSampleValue("watts", 1123);
+				expectedSamples4.putAccumulatingSampleValue("wattHours", 1100);
+
+				and.then(list).element(3)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-12-30T21:51:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples4, from(Datum::asSampleOperations))
+					;
+
+				DatumSamples expectedSamples5 = new DatumSamples();
+				expectedSamples5.putInstantaneousSampleValue("watts", 1124);
+				expectedSamples5.putAccumulatingSampleValue("wattHours", 1101);
+
+				and.then(list).element(4)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-12-30T21:52:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples5, from(Datum::asSampleOperations))
+					;
+
+			})
+			;
+
+		and.then(result)
+			.asInstanceOf(type(CloudDatumStreamQueryResult.class))
+			.extracting(CloudDatumStreamQueryResult::getNextQueryFilter)
+			.as("Next query filter returned")
+			.isNotNull()
+			.as("21:53 returned, as +1min after the least timestamp out of the greatest timestamps per stream")
+			.returns(Instant.parse("2024-12-30T21:53:00Z"), from(CloudDatumStreamQueryFilter::getStartDate))
+			;
+
+		// @formatter:on
+	}
+
+	@Test
+	public void requestList_startAtLeastGreatestTimestampPerStream_outsideLag() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String clientId = randomString();
+		final String username = randomString();
+		final String password = randomString();
+		final Long siteId1 = randomLong();
+		final Long hardwareId1 = randomLong();
+		final Long siteId2 = randomLong();
+		final Long hardwareId2 = randomLong();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				AlsoEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				AlsoEnergyCloudIntegrationService.PASSWORD_SETTING, password
+			));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final String fieldName1 = "KW";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		prop1.setEnabled(true);
+		prop1.setPropertyType(DatumSamplesType.Instantaneous);
+		prop1.setPropertyName("watts");
+		prop1.setValueType(CloudDatumStreamValueType.Reference);
+		prop1.setValueReference(componentValueRef(fieldName1, Avg.name()));
+
+		final String fieldName2 = "KWh";
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		prop2.setEnabled(true);
+		prop2.setPropertyType(DatumSamplesType.Accumulating);
+		prop2.setPropertyName("wattHours");
+		prop2.setValueType(CloudDatumStreamValueType.Reference);
+		prop2.setValueReference(componentValueRef(fieldName2, Last.name()));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+		// @formatter:off
+		datumStream.setServiceProps(JsonUtils.getStringMap("""
+						{
+						  "sourceIdMap": {
+						    "/%s/%s":  "inv/1",
+						    "/%s/%s": "inv/2"
+						  }
+						}
+						""".formatted(siteId1, hardwareId1, siteId2, hardwareId2)));
+		// @formatter:on
+
+		// @formatter:off
+		@SuppressWarnings("removal")
+		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
+				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.clientId(randomString())
+				.clientSecret(randomString())
+				.tokenUri(tokenUri)
+				.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// request data streams
+		final JsonNode resJson1 = getObjectFromJSON(
+				utf8StringResource("alsoenergy-bindata-03.json", getClass()), ObjectNode.class);
+		final var res1 = new ResponseEntity<JsonNode>(resJson1, HttpStatus.OK);
+		final JsonNode resJson2 = getObjectFromJSON(
+				utf8StringResource("alsoenergy-bindata-04.json", getClass()), ObjectNode.class);
+		final var res2 = new ResponseEntity<JsonNode>(resJson2, HttpStatus.OK);
+		// @formatter:off
+		given(restOps.exchange(any(), eq(POST), any(), eq(JsonNode.class)))
+			.willReturn(res1)
+			.willReturn(res2);
+		// @formatter:on
+
+		// WHEN
+		// set clock to 1y past data date, to exceed maximum lag setting (default 3h)
+		clock.setInstant(Instant.parse("2025-12-30T00:00:00Z"));
+
+		var filter = new BasicQueryFilter();
+		filter.setStartDate(clock.instant().minus(10, MINUTES));
+		filter.setEndDate(clock.instant());
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(5)
+			;
+
+		and.then(result)
+			.asInstanceOf(type(CloudDatumStreamQueryResult.class))
+			.extracting(CloudDatumStreamQueryResult::getNextQueryFilter)
+			.as("Next query filter returned")
+			.isNotNull()
+			.as("21:54 returned, as +1min after the greatest timestamp across all streams")
+			.returns(Instant.parse("2024-12-30T21:54:00Z"), from(CloudDatumStreamQueryFilter::getStartDate))
+			;
+
 		// @formatter:on
 	}
 

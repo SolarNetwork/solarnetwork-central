@@ -45,13 +45,13 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.StringUtils.collectionToCommaDelimitedString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -59,6 +59,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
@@ -135,7 +137,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.16
+ * @version 1.17
  */
 public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -163,7 +165,13 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 						() -> new LinkedHashMap<>(LocusEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
 
-		SETTINGS = List.of(granularitySpec, VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
+		// @formatter:off
+		SETTINGS = List.of(
+				granularitySpec,
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER,
+				MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER
+				);
+		// @formatter:on
 	}
 
 	/**
@@ -608,10 +616,13 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				throw new ValidationException(msg, errors, ms);
 			}
 
-			List<List<Map<String, JsonNode>>> data = new ArrayList<>(fieldNamesByComponent.size());
+			final ConcurrentMap<String, Instant> greatestTimestampPerComponent = new ConcurrentHashMap<>(
+					fieldNamesByComponent.size(), 0.9f, 2);
+			final ConcurrentMap<Instant, GeneralDatum> datumByTime = new ConcurrentHashMap<>(
+					fieldNamesByComponent.size(), 0.9f, 2);
+
 			try {
-				List<Future<List<Map<String, JsonNode>>>> futures = new ArrayList<>(
-						fieldNamesByComponent.size());
+				List<Future<Void>> futures = new ArrayList<>(fieldNamesByComponent.size());
 				for ( Entry<String, Set<String>> reqEntry : fieldNamesByComponent.entrySet() ) {
 					Set<String> fieldNames = reqEntry.getValue();
 					futures.add(executor.submit(() -> {
@@ -636,27 +647,52 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 											Map.of(COMPONENT_ID_FILTER, reqEntry.getKey())).toUri();
 
 								}, HttpEntity::getBody);
-						List<Map<String, JsonNode>> datumValuesList = new ArrayList<>();
+
 						for ( JsonNode dataNode : json.path("data") ) {
 							if ( dataNode instanceof ObjectNode o && o.has("ts") ) {
-								Map<String, JsonNode> datumValues = new LinkedHashMap<>(
-										fieldNames.size());
-								for ( Entry<String, JsonNode> e : o.properties() ) {
-									if ( "ts".equals(e.getKey()) || fieldNames.contains(e.getKey()) ) {
-										datumValues.put(e.getKey(), e.getValue());
-									}
+
+								final Instant ts;
+								try {
+									ts = Instant.parse(o.get("ts").asText());
+								} catch ( DateTimeParseException dtpe ) {
+									// ignore and continue
+									continue;
 								}
-								// if did not find ts + at least one property, ignore
-								if ( datumValues.size() > 1 ) {
-									datumValuesList.add(datumValues);
+
+								final GeneralDatum datum = datumByTime.computeIfAbsent(ts,
+										k -> new GeneralDatum(ds.datumId(k), new DatumSamples()));
+								final DatumSamples samples = datum.getSamples();
+
+								boolean foundProp = false;
+								for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
+									String fieldName = fieldNamesByProperty.get(property.getId());
+									JsonNode val = o.get(fieldName);
+									if ( val != null ) {
+										DatumSamplesType propType = property.getPropertyType();
+										Object propVal = parseJsonDatumPropertyValue(val, propType);
+										propVal = property.applyValueTransforms(propVal);
+										if ( propVal != null ) {
+											synchronized ( samples ) {
+												samples.putSampleValue(propType,
+														property.getPropertyName(), propVal);
+											}
+											if ( !foundProp ) {
+												foundProp = true;
+												// track the greatest timestamp per component to support multi-stream lag
+												greatestTimestampPerComponent.compute(reqEntry.getKey(),
+														(k, v) -> v == null || ts.compareTo(v) > 0 ? ts
+																: v);
+											}
+										}
+									}
 								}
 							}
 						}
-						return datumValuesList;
+						return null;
 					}));
 				}
 				for ( var f : futures ) {
-					data.add(f.get());
+					f.get();
 				}
 			} catch ( Exception e ) {
 				String msg = "Error requesting data.";
@@ -669,38 +705,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				throw new ValidationException(msg, errors, ms, t);
 			}
 
-			// merge multiple streams based on timestamp
-			final Map<Instant, GeneralDatum> result = new HashMap<>(data.size());
-			for ( List<Map<String, JsonNode>> datumValuesList : data ) {
-				for ( Map<String, JsonNode> datumValues : datumValuesList ) {
-					final Instant ts;
-					try {
-						ts = Instant.parse(datumValues.get("ts").asText());
-					} catch ( DateTimeParseException dtpe ) {
-						// ignore and continue
-						continue;
-					}
-
-					final GeneralDatum datum = result.computeIfAbsent(ts,
-							k -> new GeneralDatum(ds.datumId(k), new DatumSamples()));
-					final DatumSamples samples = datum.getSamples();
-
-					for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
-						String fieldName = fieldNamesByProperty.get(property.getId());
-						JsonNode val = datumValues.get(fieldName);
-						if ( val != null ) {
-							DatumSamplesType propType = property.getPropertyType();
-							Object propVal = parseJsonDatumPropertyValue(val, propType);
-							propVal = property.applyValueTransforms(propVal);
-							samples.putSampleValue(propType, property.getPropertyName(), propVal);
-						}
-					}
-				}
-			}
-
 			// evaluate expressions on merged datum
-			var r = evaluateExpressions(datumStream, exprProps, result.values(), mapping.getConfigId(),
-					integration.getConfigId());
+			var r = evaluateExpressions(datumStream, exprProps, datumByTime.values(),
+					mapping.getConfigId(), integration.getConfigId());
 
 			BasicQueryFilter nextQueryFilter = null;
 			if ( granularity != LocusEnergyGranularity.Latest && endDate.isBefore(filterEndDate) ) {
@@ -717,6 +724,25 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 					}
 				}
 				nextQueryFilter.setEndDate(end);
+			}
+
+			// latest datum might not have been reported yet; check latest datum date (per stream), and if
+			// less than expected date make that the next query start date
+			final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
+			if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0
+					&& greatestTimestampPerComponent.size() > 1 ) {
+				Instant leastGreatestTimestampPerStream = greatestTimestampPerComponent.values().stream()
+						.min(Instant::compareTo).get();
+				Instant greatestTimestampAcrossStreams = greatestTimestampPerComponent.values().stream()
+						.max(Instant::compareTo).get();
+				if ( leastGreatestTimestampPerStream.isBefore(greatestTimestampAcrossStreams)
+						&& Duration.between(leastGreatestTimestampPerStream, clock.instant())
+								.compareTo(multiStreamMaximumLag) < 0 ) {
+					if ( nextQueryFilter == null ) {
+						nextQueryFilter = new BasicQueryFilter();
+					}
+					nextQueryFilter.setStartDate(leastGreatestTimestampPerStream);
+				}
 			}
 
 			return new BasicCloudDatumStreamQueryResult(null, nextQueryFilter,

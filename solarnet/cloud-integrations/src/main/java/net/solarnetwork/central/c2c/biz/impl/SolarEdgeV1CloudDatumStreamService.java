@@ -41,7 +41,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METAD
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.WILDCARD_IDENTIFIER;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
-import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.resolvePlaceholders;
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
@@ -58,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -100,6 +101,7 @@ import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
@@ -111,7 +113,7 @@ import net.solarnetwork.util.StringUtils;
  * SolarEdge implementation of {@link CloudDatumStreamService} using the V1 API.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -149,9 +151,6 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		var ibSourceIdSpec = new BasicToggleSettingSpecifier(INDEX_BASED_SOURCE_ID_SETTING,
-				Boolean.FALSE);
-
 		// menu for granularity
 		var resolutionSpec = new BasicMultiValueSettingSpecifier(RESOLUTION_SETTING,
 				SolarEdgeResolution.FifteenMinute.getKey());
@@ -160,8 +159,15 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 						(l, r) -> r, () -> new LinkedHashMap<>(SolarEdgeResolution.values().length))));
 		resolutionSpec.setValueTitles(resolutionTitles);
 
-		SETTINGS = List.of(UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER, ibSourceIdSpec, resolutionSpec,
-				SOURCE_ID_MAP_SETTING_SPECIFIER, VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
+		// @formatter:off
+		SETTINGS = List.of(
+				UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER,
+				new BasicToggleSettingSpecifier(INDEX_BASED_SOURCE_ID_SETTING, Boolean.FALSE),
+				resolutionSpec,
+				SOURCE_ID_MAP_SETTING_SPECIFIER,
+				MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER,
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
+		// @formatter:on
 	}
 
 	/**
@@ -219,7 +225,8 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	public static final String STORAGE_DATA_URL_TEMPLATE = "/site/{siteId}/storageData";
 
 	/** The supported placeholder keys. */
-	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of(SITE_ID_FILTER);
+	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of(SITE_ID_FILTER, DEVICE_TYPE_FILTER,
+			COMPONENT_ID_FILTER);
 
 	/** The supported data value wildcard levels. */
 	public static final List<Integer> SUPPORTED_DATA_VALUE_WILDCARD_LEVELS = List.of(2);
@@ -888,8 +895,39 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
-			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-					r.stream().map(Datum.class::cast).toList());
+			Map<ObjectDatumStreamMetadataId, Instant> greatestTimestampPerStream = new HashMap<>(4);
+			List<Datum> finalResult = new ArrayList<>(r.size());
+			for ( GeneralDatum d : r ) {
+				ObjectDatumStreamMetadataId streamPk = new ObjectDatumStreamMetadataId(d.getKind(),
+						d.getObjectId(), d.getSourceId());
+				Instant ts = d.getTimestamp();
+				greatestTimestampPerStream.compute(streamPk,
+						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+				finalResult.add(d);
+			}
+			Collections.sort(finalResult, null);
+
+			// latest datum might not have been reported yet; check latest datum date (per stream), and if
+			// less than expected date make that the next query start date
+			final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
+			if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0
+					&& greatestTimestampPerStream.size() > 1 ) {
+				Instant leastGreatestTimestampPerStream = greatestTimestampPerStream.values().stream()
+						.min(Instant::compareTo).get();
+				Instant greatestTimestampAcrossStreams = greatestTimestampPerStream.values().stream()
+						.max(Instant::compareTo).get();
+				if ( leastGreatestTimestampPerStream.isBefore(greatestTimestampAcrossStreams)
+						&& Duration.between(leastGreatestTimestampPerStream, clock.instant())
+								.compareTo(multiStreamMaximumLag) < 0 ) {
+					if ( nextQueryFilter == null ) {
+						nextQueryFilter = new BasicQueryFilter();
+					}
+					nextQueryFilter
+							.setStartDate(resolution.truncateDate(leastGreatestTimestampPerStream));
+				}
+			}
+
+			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter, finalResult);
 		});
 	}
 
@@ -1464,60 +1502,68 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			List<CloudDatumStreamPropertyConfiguration> propConfigs) {
 		final var result = new LinkedHashMap<Long, SiteQueryPlan>(2);
 		final boolean useIndexBasedSourceIds = useIndexBasedSourceIds(datumStream, sourceIdMap);
+
+		@SuppressWarnings("unchecked")
+		List<Map<String, ?>> placeholderSets = resolvePlaceholderSets(
+				datumStream.serviceProperty(PLACEHOLDERS_SERVICE_PROPERTY, Map.class),
+				(sourceIdMap != null ? sourceIdMap.keySet() : null));
+
 		for ( CloudDatumStreamPropertyConfiguration config : propConfigs ) {
-			String ref = resolvePlaceholders(config.getValueReference(), datumStream);
-			Matcher m = VALUE_REF_PATTERN.matcher(ref);
-			if ( !m.matches() ) {
-				continue;
-			}
-			// groups: 1 = siteId, 2 = deviceType, 3 = componentId, 4 = field
-			Long siteId = Long.valueOf(m.group(1));
-			String deviceTypeKey = m.group(2);
-			String componentId = m.group(3);
-			String fieldName = m.group(4);
-
-			SolarEdgeDeviceType deviceType;
-			try {
-				deviceType = SolarEdgeDeviceType.fromValue(deviceTypeKey);
-			} catch ( IllegalArgumentException e ) {
-				// ignore and continue
-				continue;
-			}
-
-			SiteQueryPlan plan = result.computeIfAbsent(siteId, id -> {
-				ZoneId zone = resolveSiteTimeZone(integration, id);
-				return new SiteQueryPlan(siteId, zone);
-			});
-
-			ValueRef valueRef = new ValueRef(siteId, deviceType, componentId, fieldName, config);
-			Map<String, List<ValueRef>> valueRefMap = null;
-
-			if ( deviceType == SolarEdgeDeviceType.Battery ) {
-				plan.includeBatteries = true;
-				if ( plan.batteryRefs == null ) {
-					plan.batteryRefs = new LinkedHashMap<>(8);
+			for ( Map<String, ?> ph : placeholderSets ) {
+				String ref = StringUtils.expandTemplateString(config.getValueReference(), ph);
+				Matcher m = VALUE_REF_PATTERN.matcher(ref);
+				if ( !m.matches() ) {
+					continue;
 				}
-				valueRefMap = plan.batteryRefs;
-			} else if ( deviceType == SolarEdgeDeviceType.Meter ) {
-				plan.includeMeters = true;
-				if ( plan.meterRefs == null ) {
-					plan.meterRefs = new LinkedHashMap<>(8);
-				}
-				valueRefMap = plan.meterRefs;
-			} else if ( deviceType == SolarEdgeDeviceType.Inverter ) {
-				if ( plan.inverterIds == null ) {
-					plan.inverterIds = new LinkedHashSet<>(8);
-				}
-				plan.inverterIds.add(componentId);
-				if ( plan.inverterRefs == null ) {
-					plan.inverterRefs = new LinkedHashMap<>(8);
-				}
-				valueRefMap = plan.inverterRefs;
-			}
-			if ( valueRefMap != null ) {
-				valueRefMap.computeIfAbsent(valueRef.componentId, id -> new ArrayList<>(8))
-						.add(valueRef);
+				// groups: 1 = siteId, 2 = deviceType, 3 = componentId, 4 = field
+				Long siteId = Long.valueOf(m.group(1));
+				String deviceTypeKey = m.group(2);
+				String componentId = m.group(3);
+				String fieldName = m.group(4);
 
+				SolarEdgeDeviceType deviceType;
+				try {
+					deviceType = SolarEdgeDeviceType.fromValue(deviceTypeKey);
+				} catch ( IllegalArgumentException e ) {
+					// ignore and continue
+					continue;
+				}
+
+				SiteQueryPlan plan = result.computeIfAbsent(siteId, id -> {
+					ZoneId zone = resolveSiteTimeZone(integration, id);
+					return new SiteQueryPlan(siteId, zone);
+				});
+
+				ValueRef valueRef = new ValueRef(siteId, deviceType, componentId, fieldName, config);
+				Map<String, List<ValueRef>> valueRefMap = null;
+
+				if ( deviceType == SolarEdgeDeviceType.Battery ) {
+					plan.includeBatteries = true;
+					if ( plan.batteryRefs == null ) {
+						plan.batteryRefs = new LinkedHashMap<>(8);
+					}
+					valueRefMap = plan.batteryRefs;
+				} else if ( deviceType == SolarEdgeDeviceType.Meter ) {
+					plan.includeMeters = true;
+					if ( plan.meterRefs == null ) {
+						plan.meterRefs = new LinkedHashMap<>(8);
+					}
+					valueRefMap = plan.meterRefs;
+				} else if ( deviceType == SolarEdgeDeviceType.Inverter ) {
+					if ( plan.inverterIds == null ) {
+						plan.inverterIds = new LinkedHashSet<>(8);
+					}
+					plan.inverterIds.add(componentId);
+					if ( plan.inverterRefs == null ) {
+						plan.inverterRefs = new LinkedHashMap<>(8);
+					}
+					valueRefMap = plan.inverterRefs;
+				}
+				if ( valueRefMap != null ) {
+					valueRefMap.computeIfAbsent(valueRef.componentId, id -> new ArrayList<>(8))
+							.add(valueRef);
+
+				}
 			}
 		}
 
