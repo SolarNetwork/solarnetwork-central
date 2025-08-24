@@ -616,14 +616,16 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		// latest datum might not have been reported yet; check latest datum date (per stream), and if
 		// less than expected date make that the next query start date
-		if ( greatestTimestampPerStream.size() > 1 ) {
+		final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
+		if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0
+				&& greatestTimestampPerStream.size() > 1 ) {
 			Instant leastGreatestTimestampPerStream = greatestTimestampPerStream.values().stream()
 					.min(Instant::compareTo).get();
 			Instant greatestTimestampAcrossStreams = greatestTimestampPerStream.values().stream()
 					.max(Instant::compareTo).get();
 			if ( leastGreatestTimestampPerStream.isBefore(greatestTimestampAcrossStreams)
 					&& Duration.between(leastGreatestTimestampPerStream, clock.instant())
-							.compareTo(multiStreamMaximumLag(ds)) < 0 ) {
+							.compareTo(multiStreamMaximumLag) < 0 ) {
 				if ( nextQueryFilter == null ) {
 					nextQueryFilter = new BasicQueryFilter();
 				}

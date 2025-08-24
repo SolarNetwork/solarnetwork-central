@@ -390,7 +390,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 			// latest datum might not have been reported yet; check latest datum date (per stream), and if
 			// less than expected date make that the next query start date
-			if ( !greatestTimestampPerStream.isEmpty() ) {
+			final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
+			if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0
+					&& !greatestTimestampPerStream.isEmpty() ) {
 				Instant leastGreatestTimestampPerStream = greatestTimestampPerStream.values().stream()
 						.min(Instant::compareTo).get();
 				Instant greatestTimestampAcrossStreams = greatestTimestampPerStream.values().stream()
@@ -398,8 +400,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				Instant greatestDatumTimestamp = (leastGreatestTimestampPerStream
 						.isBefore(greatestTimestampAcrossStreams)
 						&& Duration.between(leastGreatestTimestampPerStream, clock.instant())
-								.compareTo(multiStreamMaximumLag(datumStream)) < 0
-										? leastGreatestTimestampPerStream
+								.compareTo(multiStreamMaximumLag) < 0 ? leastGreatestTimestampPerStream
 										: greatestTimestampAcrossStreams);
 				Instant expectedLastTimestamp = resolution.prevTickStart(endDate, zone);
 				if ( greatestDatumTimestamp.isBefore(expectedLastTimestamp) ) {
