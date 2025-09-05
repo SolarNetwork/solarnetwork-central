@@ -1,21 +1,21 @@
 /* ==================================================================
  * ResetPasswordControllerTests.java - 1/05/2023 7:25:04 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -42,6 +42,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import java.util.Arrays;
 import javax.cache.Cache;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,8 +50,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.MimeMailMessage;
 import org.springframework.test.web.servlet.MockMvc;
+import jakarta.mail.Message.RecipientType;
 import net.solarnetwork.central.mail.mock.MockMailSender;
 import net.solarnetwork.central.reg.web.ResetPasswordController;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
@@ -60,7 +62,7 @@ import net.solarnetwork.domain.RegistrationReceipt;
 
 /**
  * Test cases for the {@link ResetPasswordController}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -102,7 +104,7 @@ public class ResetPasswordControllerTests extends AbstractJUnit5CentralTransacti
 			.andExpect(model().attribute("receipt", hasProperty("usernameURLComponent", equalTo("foo%2Bbar%40localhost"))))
 			.andExpect(model().attribute("receipt", hasProperty("confirmationCode", not(emptyOrNullString()))))
 			;
-		
+
 		// @formatter:on
 
 		String expectedLinkRegex = "(?s).*" + quote("http://localhost/u/resetPassword/confirm?c=")
@@ -110,10 +112,13 @@ public class ResetPasswordControllerTests extends AbstractJUnit5CentralTransacti
 				+ quote("&m=" + encode(getUrlEncoder().encodeToString(email.getBytes(UTF_8)), UTF_8))
 				+ ".*";
 
-		SimpleMailMessage msg = (SimpleMailMessage) mailSender.getSent().poll();
-		assertThat("Email sent to reset email", msg.getTo(), is(arrayContaining(email)));
-		assertThat("Email body contains link with Base64 encoded email parameter", msg.getText(),
-				matchesRegex(expectedLinkRegex));
+		MimeMailMessage msg = (MimeMailMessage) mailSender.getSent().poll();
+		assertThat("Email sent to reset email",
+				Arrays.stream(msg.getMimeMessage().getRecipients(RecipientType.TO))
+						.map(a -> a.toString()).toArray(String[]::new),
+				is(arrayContaining(email)));
+		assertThat("Email body contains link with Base64 encoded email parameter",
+				msg.getMimeMessage().getContent().toString(), matchesRegex(expectedLinkRegex));
 	}
 
 	@Test
@@ -138,7 +143,7 @@ public class ResetPasswordControllerTests extends AbstractJUnit5CentralTransacti
 			.andExpect(model().attribute("form", hasProperty("username", equalTo(email))))
 			.andExpect(model().attribute("form", hasProperty("confirmationCode", equalTo(receipt.getConfirmationCode()))))
 			;
-		
+
 		// @formatter:on
 	}
 

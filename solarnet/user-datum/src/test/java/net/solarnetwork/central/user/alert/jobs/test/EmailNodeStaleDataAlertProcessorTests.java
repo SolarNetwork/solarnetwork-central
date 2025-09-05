@@ -58,7 +58,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.mail.MailMessage;
-import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.MimeMailMessage;
+import jakarta.mail.Message.RecipientType;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
@@ -251,7 +252,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 	}
 
 	@Test
-	public void processOneAlertTrigger() {
+	public void processOneAlertTrigger() throws Exception {
 		final Instant batchTime = Instant.now();
 
 		List<UserAlert> pendingAlerts = Arrays.asList(newUserAlertInstance());
@@ -291,15 +292,18 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 		assertThat("Next staring ID is last processed alert ID", startingId,
 				is(pendingAlerts.get(0).getId()));
 		assertThat("Mail sent", MailSender.getSent().size(), is(1));
-		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
-		assertThat("Mail sent to owner address", sentMail.getTo(),
-				is(arrayContaining(String.format("\"%s\" <%s>", TEST_USER_NAME, TEST_USER_EMAIL))));
-		assertThat("Mail subject", sentMail.getSubject(),
+		MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		assertThat("Mail sent to owner address",
+				Arrays.stream(sentMail.getMimeMessage().getRecipients(RecipientType.TO))
+						.map(a -> a.toString()).toArray(String[]::new),
+				is(arrayContaining(String.format("%s <%s>", TEST_USER_NAME, TEST_USER_EMAIL))));
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
 				is("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale"));
-		assertThat("Mail has source ID", sentMail.getText(),
+		assertThat("Mail has source ID", sentMail.getMimeMessage().getContent().toString(),
 				containsString("source \"" + TEST_SOURCE_ID));
-		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
-				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Mail has formatted datum date", sentMail.getMimeMessage().getContent().toString(),
+				containsString(
+						"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
 		then(newSituation.hasCaptured()).as("Situation created").isTrue();
 		then(newSituation.getValue().getAlert()).isEqualTo(pendingAlerts.get(0));
 		then(newSituation.getValue().getStatus()).isEqualTo(UserAlertSituationStatus.Active);
@@ -309,7 +313,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 	}
 
 	@Test
-	public void processOneAlertTrigger_customEmail() {
+	public void processOneAlertTrigger_customEmail() throws Exception {
 		final Instant batchTime = Instant.now();
 
 		final String alertEmailTo = "custom@localhost";
@@ -352,14 +356,18 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 		assertThat("Next staring ID is last processed alert ID", startingId,
 				is(pendingAlerts.get(0).getId()));
 		assertThat("Mail sent", MailSender.getSent().size(), is(1));
-		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
-		assertThat("Mail sent to custom address", sentMail.getTo(), is(arrayContaining(alertEmailTo)));
-		assertThat("Mail subject", sentMail.getSubject(),
+		MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		assertThat("Mail sent to custom address",
+				Arrays.stream(sentMail.getMimeMessage().getRecipients(RecipientType.TO))
+						.map(a -> a.toString()).toArray(String[]::new),
+				is(arrayContaining(alertEmailTo)));
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
 				is(equalTo("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale")));
-		assertThat("Mail has source ID", sentMail.getText(),
+		assertThat("Mail has source ID", sentMail.getMimeMessage().getContent().toString(),
 				containsString("source \"" + TEST_SOURCE_ID));
-		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
-				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Mail has formatted datum date", sentMail.getMimeMessage().getContent().toString(),
+				containsString(
+						"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
 		assertThat("Situation created", newSituation.hasCaptured(), is(true));
 		assertThat(newSituation.getValue().getAlert(), is(equalTo(pendingAlerts.get(0))));
 		assertThat(newSituation.getValue().getStatus(), is(equalTo(UserAlertSituationStatus.Active)));
@@ -369,7 +377,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 	}
 
 	@Test
-	public void processOneAlertTrigger_sourceIdFilter() {
+	public void processOneAlertTrigger_sourceIdFilter() throws Exception {
 		final Instant batchTime = Instant.now();
 
 		final List<String> sourceIdPatterns = Arrays.asList("foo", TEST_SOURCE_ID);
@@ -412,15 +420,18 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 		assertThat("Next staring ID is last processed alert ID", startingId,
 				is(pendingAlerts.get(0).getId()));
 		assertThat("Mail sent", MailSender.getSent().size(), is(1));
-		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
-		assertThat("Mail sent to owner address", sentMail.getTo(),
-				is(arrayContaining(String.format("\"%s\" <%s>", TEST_USER_NAME, TEST_USER_EMAIL))));
-		assertThat("Mail subject", sentMail.getSubject(),
+		MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		assertThat("Mail sent to owner address",
+				Arrays.stream(sentMail.getMimeMessage().getRecipients(RecipientType.TO))
+						.map(a -> a.toString()).toArray(String[]::new),
+				is(arrayContaining(String.format("%s <%s>", TEST_USER_NAME, TEST_USER_EMAIL))));
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
 				is(equalTo("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale")));
-		assertThat("Mail has source ID", sentMail.getText(),
+		assertThat("Mail has source ID", sentMail.getMimeMessage().getContent().toString(),
 				containsString("source \"" + TEST_SOURCE_ID));
-		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
-				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Mail has formatted datum date", sentMail.getMimeMessage().getContent().toString(),
+				containsString(
+						"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
 		assertThat("Situation created", newSituation.hasCaptured(), is(true));
 		assertThat(newSituation.getValue().getAlert(), is(equalTo(pendingAlerts.get(0))));
 		assertThat(newSituation.getValue().getStatus(), is(equalTo(UserAlertSituationStatus.Active)));
@@ -430,7 +441,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 	}
 
 	@Test
-	public void processOneAlertTrigger_sourceIdPatternFilter() {
+	public void processOneAlertTrigger_sourceIdPatternFilter() throws Exception {
 		final Instant batchTime = Instant.now();
 
 		final List<String> sourceIdPatterns = Arrays.asList("test.*");
@@ -473,15 +484,18 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 		assertThat("Next staring ID is last processed alert ID", startingId,
 				is(pendingAlerts.get(0).getId()));
 		assertThat("Mail sent", MailSender.getSent().size(), is(1));
-		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
-		assertThat("Mail sent to owner address", sentMail.getTo(),
-				is(arrayContaining(String.format("\"%s\" <%s>", TEST_USER_NAME, TEST_USER_EMAIL))));
-		assertThat("Mail subject", sentMail.getSubject(),
+		MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		assertThat("Mail sent to owner address",
+				Arrays.stream(sentMail.getMimeMessage().getRecipients(RecipientType.TO))
+						.map(a -> a.toString()).toArray(String[]::new),
+				is(arrayContaining(String.format("%s <%s>", TEST_USER_NAME, TEST_USER_EMAIL))));
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
 				is(equalTo("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale")));
-		assertThat("Mail has source ID", sentMail.getText(),
+		assertThat("Mail has source ID", sentMail.getMimeMessage().getContent().toString(),
 				containsString("source \"" + TEST_SOURCE_ID));
-		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
-				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Mail has formatted datum date", sentMail.getMimeMessage().getContent().toString(),
+				containsString(
+						"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
 		assertThat("Situation created", newSituation.hasCaptured(), is(true));
 		assertThat(newSituation.getValue().getAlert(), is(equalTo(pendingAlerts.get(0))));
 		assertThat(newSituation.getValue().getStatus(), is(equalTo(UserAlertSituationStatus.Active)));
@@ -544,7 +558,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 	}
 
 	@Test
-	public void processOneAlertTriggerForUser() {
+	public void processOneAlertTriggerForUser() throws Exception {
 		final Instant batchTime = Instant.now();
 
 		final UserAlert pendingAlert = newUserAlertInstance();
@@ -597,13 +611,14 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 		Long startingId = service.processAlerts(null, batchTime);
 		assertThat("Next staring ID is last processed alert ID", startingId, is(pendingAlert.getId()));
 		assertThat("Mail sent", MailSender.getSent().size(), is(1));
-		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
-		assertThat("Mail subject", sentMail.getSubject(),
+		MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
 				is("SolarNetwork alert: SolarNode " + TEST_NODE_ID_2 + " data is stale"));
-		assertThat("Mail has source ID", sentMail.getText(),
+		assertThat("Mail has source ID", sentMail.getMimeMessage().getContent().toString(),
 				containsString("source \"" + TEST_SOURCE_ID));
-		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
-				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Mail has formatted datum date", sentMail.getMimeMessage().getContent().toString(),
+				containsString(
+						"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
 
 		then(newSituation.hasCaptured()).as("Situation created").isTrue();
 		then(newSituation.getValue().getAlert()).isEqualTo(pendingAlerts.get(0));
@@ -675,7 +690,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 	}
 
 	@Test
-	public void processOneAlertTriggerForUserWithinTimeWindow() {
+	public void processOneAlertTriggerForUserWithinTimeWindow() throws Exception {
 		final ZoneId nodeTZ = testNode.getTimeZone().toZoneId();
 		final Instant batchTime = ZonedDateTime.of(2016, 4, 1, 9, 0, 1, 0, nodeTZ).toInstant();
 		service.setSystemTime(batchTime);
@@ -731,13 +746,14 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 		Long startingId = service.processAlerts(null, batchTime);
 		assertThat("Next staring ID is last processed alert ID", startingId, is(pendingAlert.getId()));
 		assertThat("Mail sent", MailSender.getSent().size(), is(1));
-		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
-		assertThat("Mail subject", sentMail.getSubject(),
+		MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
 				is("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale"));
-		assertThat("Mail has source ID", sentMail.getText(),
+		assertThat("Mail has source ID", sentMail.getMimeMessage().getContent().toString(),
 				containsString("source \"" + TEST_SOURCE_ID));
-		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
-				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Mail has formatted datum date", sentMail.getMimeMessage().getContent().toString(),
+				containsString(
+						"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
 
 		then(newSituation.hasCaptured()).as("Situation created").isTrue();
 		then(newSituation.getValue().getAlert()).isEqualTo(pendingAlerts.get(0));
@@ -754,7 +770,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 	}
 
 	@Test
-	public void processBatchAlertsTrigger() {
+	public void processBatchAlertsTrigger() throws Exception {
 		final Instant batchTime = Instant.now();
 
 		// add 10 alerts, so we can test batching
@@ -863,12 +879,13 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 						.isEqualTo(pendingAlerts.get((i * 5) + batchSize - 1).getId());
 				then(MailSender.getSent()).as("Mail sent").hasSize(batchSize);
 				for ( MailMessage sent : MailSender.getSent() ) {
-					SimpleMailMessage sentMail = (SimpleMailMessage) sent;
-					assertThat("Mail subject", sentMail.getSubject(),
+					MimeMailMessage sentMail = (MimeMailMessage) sent;
+					assertThat("Mail subject", sentMail.getMimeMessage().getSubject(),
 							is("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale"));
-					assertThat("Mail has source ID", sentMail.getText(),
+					assertThat("Mail has source ID", sentMail.getMimeMessage().getContent().toString(),
 							containsString("source \"" + TEST_SOURCE_ID));
-					assertThat("Mail has formatted datum date", sentMail.getText(),
+					assertThat("Mail has formatted datum date",
+							sentMail.getMimeMessage().getContent().toString(),
 							containsString("since " + mailFormattedDate(dataTimestamp.toInstant())));
 				}
 			}
@@ -877,7 +894,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 	}
 
 	@Test
-	public void processOneAlertResolved() {
+	public void processOneAlertResolved() throws Exception {
 		final Instant batchTime = Instant.now();
 
 		List<UserAlert> pendingAlerts = Arrays.asList(newUserAlertInstance());
@@ -924,13 +941,14 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 		assertThat("Next staring ID is last processed alert ID", startingId,
 				is(pendingAlerts.get(0).getId()));
 		assertThat("Mail sent", MailSender.getSent().size(), is(1));
-		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
-		assertThat("Mail subject", sentMail.getSubject(), is(
+		MimeMailMessage sentMail = (MimeMailMessage) MailSender.getSent().element();
+		assertThat("Mail subject", sentMail.getMimeMessage().getSubject(), is(
 				"SolarNetwork alert resolved: SolarNode " + TEST_NODE_ID + " data is no longer stale"));
-		assertThat("Mail has source ID", sentMail.getText(),
+		assertThat("Mail has source ID", sentMail.getMimeMessage().getContent().toString(),
 				containsString("source \"" + TEST_SOURCE_ID));
-		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
-				"on " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Mail has formatted datum date", sentMail.getMimeMessage().getContent().toString(),
+				containsString(
+						"on " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
 		then(activeSituation.getStatus()).isEqualTo(UserAlertSituationStatus.Resolved);
 		then(activeSituation.getNotified()).isNotNull();
 		then(pendingAlerts.get(0).getValidTo()).as("Saved alert validTo increased")

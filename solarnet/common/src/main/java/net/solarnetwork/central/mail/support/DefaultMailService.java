@@ -25,17 +25,20 @@ package net.solarnetwork.central.mail.support;
 import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import org.apache.commons.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
-import org.springframework.mail.MailMessage;
+import org.springframework.mail.MailParseException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMailMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import net.solarnetwork.central.mail.MailAddress;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.MessageDataSource;
@@ -45,14 +48,15 @@ import net.solarnetwork.central.mail.MessageDataSource;
  * for sending mail.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DefaultMailService implements MailService {
 
-	private final MailSender mailSender;
+	private final JavaMailSender mailSender;
 	private SimpleMailMessage templateMessage;
 	private int hardWrapColumnIndex = 0;
 	private boolean html = false;
+	private Map<String, String> headers;
 
 	private final Logger log = LoggerFactory.getLogger(DefaultMailService.class);
 
@@ -62,14 +66,43 @@ public class DefaultMailService implements MailService {
 	 * @param mailSender
 	 *        the {@link MailSender} to use
 	 */
-	public DefaultMailService(MailSender mailSender) {
+	public DefaultMailService(JavaMailSender mailSender) {
 		this.mailSender = mailSender;
 	}
 
-	private void prepareMailMessage(MailMessage msg, MailAddress address,
+	/**
+	 * Apply settings.
+	 * 
+	 * @param settings
+	 *        the settings to apply
+	 */
+	public void applySettings(MailServiceSettings settings) {
+		if ( settings == null ) {
+			return;
+		}
+		if ( settings.getHeaders() != null ) {
+			headers = settings.getHeaders();
+		}
+	}
+
+	private void prepareMailMessage(MimeMailMessage msg, MailAddress address,
 			MessageDataSource messageDataSource) {
 		if ( templateMessage != null ) {
 			templateMessage.copyTo(msg);
+		}
+		if ( headers != null && msg instanceof MimeMailMessage mimeMailMsg ) {
+			MimeMessage mimeMsg = mimeMailMsg.getMimeMessage();
+			for ( Entry<String, String> header : headers.entrySet() ) {
+				if ( header.getValue() == null || header.getValue().isBlank() ) {
+					continue;
+				}
+				try {
+					mimeMsg.addHeader(header.getKey(), header.getValue());
+				} catch ( MessagingException ex ) {
+					throw new MailParseException("Error configuring message header [%s] value [%s]"
+							.formatted(header.getKey(), header.getValue()), ex);
+				}
+			}
 		}
 		msg.setTo(address.getTo());
 		if ( address.getFrom() != null ) {
@@ -112,49 +145,40 @@ public class DefaultMailService implements MailService {
 		final Iterator<Resource> attachments = (messageDataSource.getAttachments() != null
 				? messageDataSource.getAttachments().iterator()
 				: null);
-		if ( html || (attachments != null && attachments.hasNext()) ) {
-			// need JavaMailSender to send attachments
-			if ( !(mailSender instanceof JavaMailSender sender) ) {
-				throw new RuntimeException("Cannot send mail attachments without a JavaMailSender.");
-			}
-			try {
-				MimeMailMessage msg = new MimeMailMessage(new MimeMessageHelper(
-						sender.createMimeMessage(), MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED));
+		try {
+			MimeMailMessage msg;
+			if ( html || (attachments != null && attachments.hasNext()) ) {
+				msg = new MimeMailMessage(new MimeMessageHelper(mailSender.createMimeMessage(),
+						MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED));
 				if ( html ) {
 					msg.getMimeMessageHelper().setText(messageDataSource.getBody(), true);
 				}
-				prepareMailMessage(msg, address, messageDataSource);
-				if ( attachments != null ) {
-					while ( attachments.hasNext() ) {
-						Resource att = attachments.next();
-						if ( att == null ) {
-							continue;
-						}
-						msg.getMimeMessageHelper().addAttachment(att.getFilename(), att);
-					}
-				}
-				if ( log.isInfoEnabled() ) {
-					log.info("Sending MIME mail [{}] from [{}] to [{}]",
-							msg.getMimeMessage().getSubject(),
-							arrayToCommaDelimitedString(msg.getMimeMessage().getFrom()),
-							arrayToCommaDelimitedString(msg.getMimeMessage().getAllRecipients()));
-				}
-				sender.send(msg.getMimeMessage());
-			} catch ( MessagingException e ) {
-				String err = String.format("Error preparing mail [%s] to %s: %s",
-						messageDataSource.getSubject() != null ? messageDataSource.getSubject()
-								: templateMessage.getSubject(),
-						Arrays.toString(address.getTo()), e.getMessage());
-				throw new RuntimeException(err, e);
+			} else {
+				msg = new MimeMailMessage(new MimeMessageHelper(mailSender.createMimeMessage(),
+						MimeMessageHelper.MULTIPART_MODE_NO));
 			}
-		} else {
-			SimpleMailMessage msg = new SimpleMailMessage();
 			prepareMailMessage(msg, address, messageDataSource);
-			if ( log.isInfoEnabled() ) {
-				log.info("Sending mail [{}] from [{}] to [{}]", msg.getSubject(), msg.getFrom(),
-						arrayToCommaDelimitedString(msg.getTo()));
+			if ( attachments != null ) {
+				while ( attachments.hasNext() ) {
+					Resource att = attachments.next();
+					if ( att == null ) {
+						continue;
+					}
+					msg.getMimeMessageHelper().addAttachment(att.getFilename(), att);
+				}
 			}
-			mailSender.send(msg);
+			if ( log.isInfoEnabled() ) {
+				log.info("Sending MIME mail [{}] from [{}] to [{}]", msg.getMimeMessage().getSubject(),
+						arrayToCommaDelimitedString(msg.getMimeMessage().getFrom()),
+						arrayToCommaDelimitedString(msg.getMimeMessage().getAllRecipients()));
+			}
+			mailSender.send(msg.getMimeMessage());
+		} catch ( MessagingException e ) {
+			String err = String.format("Error preparing mail [%s] to %s: %s",
+					messageDataSource.getSubject() != null ? messageDataSource.getSubject()
+							: templateMessage.getSubject(),
+					Arrays.toString(address.getTo()), e.getMessage());
+			throw new RuntimeException(err, e);
 		}
 	}
 
@@ -225,6 +249,25 @@ public class DefaultMailService implements MailService {
 	 */
 	public void setHtml(boolean html) {
 		this.html = html;
+	}
+
+	/**
+	 * Get headers to add to every message.
+	 * 
+	 * @return the headers
+	 */
+	public Map<String, String> getHeaders() {
+		return headers;
+	}
+
+	/**
+	 * Set headers to add to every message.
+	 * 
+	 * @param headers
+	 *        the headers to set
+	 */
+	public void setHeaders(Map<String, String> headers) {
+		this.headers = headers;
 	}
 
 }
