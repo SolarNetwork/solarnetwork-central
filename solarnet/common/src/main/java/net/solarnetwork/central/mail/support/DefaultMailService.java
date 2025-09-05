@@ -90,8 +90,8 @@ public class DefaultMailService implements MailService {
 		if ( templateMessage != null ) {
 			templateMessage.copyTo(msg);
 		}
-		if ( headers != null && msg instanceof MimeMailMessage mimeMailMsg ) {
-			MimeMessage mimeMsg = mimeMailMsg.getMimeMessage();
+		if ( headers != null ) {
+			MimeMessage mimeMsg = msg.getMimeMessage();
 			for ( Entry<String, String> header : headers.entrySet() ) {
 				if ( header.getValue() == null || header.getValue().isBlank() ) {
 					continue;
