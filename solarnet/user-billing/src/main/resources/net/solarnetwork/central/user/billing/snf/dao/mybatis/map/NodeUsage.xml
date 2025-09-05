@@ -151,7 +151,7 @@
 		<result property="cloudIntegrationsDataCostTiers"	column="node_usage_c2c_data_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 	</resultMap>
 
-	<select id="find-Usage-for-account" parameterType="map" resultMap="Usage-FullResult">
+	<select id="find-Usage-for-account" parameterType="map" resultMap="Usage-FullResult" timeout="300">
 		SELECT
 			<include refid="fragment-Usage-full-result"/>
 			, CURRENT_TIMESTAMP AS node_usage_created
@@ -195,7 +195,7 @@
 		<result property="description" column="node_usage_node_name"/>
 	</resultMap>
 
-	<select id="find-NodeUsage-for-account" parameterType="map" resultMap="NodeUsage-FullResult">
+	<select id="find-NodeUsage-for-account" parameterType="map" resultMap="NodeUsage-FullResult" timeout="300">
 		SELECT
 			<include refid="fragment-NodeUsage-full-result"/>
 			, CURRENT_TIMESTAMP AS node_usage_created

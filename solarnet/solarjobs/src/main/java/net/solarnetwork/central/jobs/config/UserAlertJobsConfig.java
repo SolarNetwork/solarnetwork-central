@@ -29,14 +29,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.dao.AppSettingDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.DefaultMailService;
+import net.solarnetwork.central.mail.support.MailServiceSettings;
 import net.solarnetwork.central.scheduler.ManagedJob;
 import net.solarnetwork.central.user.alert.jobs.EmailNodeStaleDataAlertProcessor;
 import net.solarnetwork.central.user.alert.jobs.UserAlertBatchJob;
@@ -51,7 +52,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
  * User alert jobs configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration
 public class UserAlertJobsConfig {
@@ -84,7 +85,13 @@ public class UserAlertJobsConfig {
 	private DatumEntityDao datumDao;
 
 	@Autowired
-	private MailSender mailSender;
+	private JavaMailSender mailSender;
+
+	@ConfigurationProperties(prefix = "app.mail.settings")
+	@Bean
+	public MailServiceSettings mailSettings() {
+		return new MailServiceSettings();
+	}
 
 	@ConfigurationProperties(prefix = "app.user-alert.stale-data.mail")
 	@Bean
@@ -99,6 +106,7 @@ public class UserAlertJobsConfig {
 	public MailService emailNodeStaleDataAlertMailService() {
 		DefaultMailService service = new DefaultMailService(mailSender);
 		service.setTemplateMessage(emailNodeStaleDataAlertMailTemplate());
+		service.applySettings(mailSettings());
 		return service;
 	}
 
