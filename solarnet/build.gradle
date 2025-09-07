@@ -84,7 +84,7 @@ subprojects {
 
 	ext {
 		awsSdk2Version = '2.31.48'
-		batikVersion = '1.18'
+		batikVersion = '1.19'
 		bucket4jVersion = '8.14.0'
 		checkstyleVersion = '8.34'
 		commonsIoVersion = '2.19.0'
@@ -101,7 +101,7 @@ subprojects {
 		snCommonOcppVersion = '5.0.0'
 		snCommonOcpp16JakartaVersion = '5.0.0'
 		snCommonOcpp201Version = '2.0.0'
-		snCommonOcppWebJakartaVersion = '3.1.2'
+		snCommonOcppWebJakartaVersion = '3.1.3'
 		snCommonPkiBcVersion = '4.0.0'
 		snCommonWebJakartaVersion = '2.1.1'
 		snExternalOcpp16JakartaVersion = '1.0.1'
