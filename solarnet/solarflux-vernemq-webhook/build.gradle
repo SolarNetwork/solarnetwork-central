@@ -64,8 +64,8 @@ dependencies {
     
     // Testing
 	testImplementation project(':solarnet-common-test')
-	testImplementation 'com.spotify:hamcrest-jackson:1.1.3'
-    testImplementation 'com.spotify:hamcrest-pojo:1.1.3'
+	testImplementation 'com.spotify:hamcrest-jackson:1.3.2'
+    testImplementation 'com.spotify:hamcrest-pojo:1.3.2'
 }
 
 bootJar {
