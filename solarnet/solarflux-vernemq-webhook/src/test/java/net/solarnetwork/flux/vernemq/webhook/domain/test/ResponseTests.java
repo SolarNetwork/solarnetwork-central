@@ -17,16 +17,8 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.test;
 
-import static com.spotify.hamcrest.jackson.IsJsonStringMatching.isJsonStringMatching;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonArray;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonBoolean;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonInt;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonMissing;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonObject;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonText;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.is;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
+import static org.assertj.core.api.BDDAssertions.then;
 
 import java.util.Arrays;
 
@@ -66,10 +58,14 @@ public class ResponseTests extends TestSupport {
     log.debug("OK simple JSON: {}", json);
 
     // @formatter:off
-    assertThat(json, isJsonStringMatching(
-        jsonObject()
-          .where("result", is(jsonText("ok")))
-        ));
+    then(json)
+        .asInstanceOf(JSON)
+        .as("Result is JSON object")
+        .isObject()
+        .containsOnlyKeys("result")
+        .as("Result OK")
+        .containsEntry("result", "ok")
+        ;
     // @formatter:on
   }
 
@@ -80,13 +76,18 @@ public class ResponseTests extends TestSupport {
     log.debug("Error simple JSON: {}", json);
 
     // @formatter:off
-    assertThat(json, isJsonStringMatching(
-        jsonObject()
-          .where("result", is(
-              jsonObject()
-                .where("error", is(jsonText("fail")))
-              ))
-        ));
+    then(json)
+        .asInstanceOf(JSON)
+        .as("Result is JSON object")
+        .isObject()
+        .containsOnlyKeys("result")
+        .as("Result error object")
+        .node("result")
+            .isObject()
+            .containsOnlyKeys("error")
+            .as("Error")
+            .containsEntry("error", "fail")
+        ;
     // @formatter:on
   }
 
@@ -98,14 +99,19 @@ public class ResponseTests extends TestSupport {
     log.debug("Ok with mods JSON: {}", json);
 
     // @formatter:off
-    assertThat(json, isJsonStringMatching(
-        jsonObject()
-          .where("result", is(jsonText("ok")))
-          .where("modifiers", is(jsonObject()
-            .where("upgrade_qos", is(jsonBoolean(false)))    
-          ))
-          .where("topics", is(jsonMissing()))
-        ));
+    then(json)
+        .asInstanceOf(JSON)
+        .as("Result is JSON object")
+        .isObject()
+        .containsOnlyKeys("result", "modifiers")
+        .as("Result OK")
+        .containsEntry("result", "ok")
+        .node("modifiers")
+            .isObject()
+            .containsOnlyKeys("upgrade_qos")
+            .as("Upgrade QoS")
+            .containsEntry("upgrade_qos", false)
+        ;
     // @formatter:on
   }
 
@@ -118,16 +124,25 @@ public class ResponseTests extends TestSupport {
     log.debug("Ok with topic settings JSON: {}", json);
 
     // @formatter:off
-    assertThat(json, isJsonStringMatching(
-        jsonObject()
-          .where("result", is(jsonText("ok")))
-          .where("modifiers", is(jsonMissing()))
-          .where("topics", is(jsonArray(contains(
-              jsonObject()
-                .where("topic", is(jsonText("foo")))
-                .where("qos", is(jsonInt(Qos.AtLeastOnce.getKey())))
-          ))))
-        ));
+    then(json)
+        .asInstanceOf(JSON)
+        .as("Result is JSON object")
+        .isObject()
+        .containsOnlyKeys("result", "topics")
+        .as("Result OK")
+        .containsEntry("result", "ok")
+        .node("topics")
+        .isArray()
+        .as("Topic specified as array")
+        .hasSize(1)
+        .element(0)
+            .isObject()
+            .containsOnlyKeys("topic", "qos")
+            .as("Topic name provided")
+            .containsEntry("topic", "foo")
+            .as("Topic QoS provided")
+            .containsEntry("qos", Qos.AtLeastOnce.getKey())
+        ;
     // @formatter:on
   }
 
@@ -139,15 +154,18 @@ public class ResponseTests extends TestSupport {
     log.debug("Ok with topics list JSON: {}", json);
 
     // @formatter:off
-    assertThat(json, isJsonStringMatching(
-        jsonObject()
-          .where("result", is(jsonText("ok")))
-          .where("modifiers", is(jsonMissing()))
-          .where("topics", is(jsonArray(contains(
-              jsonText("foo"),
-              jsonText("bar")
-          ))))
-        ));
+    then(json)
+        .asInstanceOf(JSON)
+        .as("Result is JSON object")
+        .isObject()
+        .containsOnlyKeys("result", "topics")
+        .as("Result OK")
+        .containsEntry("result", "ok")
+        .node("topics")
+        .isArray()
+        .as("Topics specified")
+        .containsExactly("foo", "bar")
+        ;
     // @formatter:on
   }
 

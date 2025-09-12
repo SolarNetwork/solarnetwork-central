@@ -17,13 +17,9 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.test;
 
-import static com.spotify.hamcrest.jackson.IsJsonStringMatching.isJsonStringMatching;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonArray;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonText;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -59,11 +55,13 @@ public class TopicListTests extends TestSupport {
     log.debug("Topic settings full JSON: {}", json);
 
     // @formatter:off
-    assertThat(json, isJsonStringMatching(
-        jsonArray(contains(
-          jsonText("foo"),
-          jsonText("bar")
-        ))));
+    then(json)
+        .asInstanceOf(JSON)
+        .as("Result is JSON array")
+        .isArray()
+        .as("Topic specified as array")
+        .containsExactly("foo", "bar")
+        ;
     // @formatter:on
   }
 
@@ -72,9 +70,15 @@ public class TopicListTests extends TestSupport {
     String json = "[\"bim\",\"bam\"]";
 
     TopicList list = objectMapper.readValue(json, TopicList.class);
-    assertThat("List size", list.getTopics(), hasSize(2));
-    assertThat("Topic 1", list.getTopics().get(0), equalTo("bim"));
-    assertThat("Topic 2", list.getTopics().get(1), equalTo("bam"));
+
+    // @formatter:off
+    then(list)
+        .isNotNull()
+        .extracting(TopicList::getTopics, list(String.class))
+        .as("Parsed topics array")
+        .containsExactly("bim", "bam")
+        ;
+    // @formatter:on
   }
 
 }

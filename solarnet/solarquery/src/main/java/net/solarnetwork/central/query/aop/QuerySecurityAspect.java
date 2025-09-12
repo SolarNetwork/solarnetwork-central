@@ -403,7 +403,6 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	 *
 	 * @param filter
 	 *        the filter
-	 * @return The reportable interval.
 	 * @throws Throwable
 	 *         If any error occurs.
 	 */
