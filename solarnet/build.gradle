@@ -135,6 +135,7 @@ subprojects {
 				libraries.mockito,
 				libraries.mockitoJupiter,
 				libraries.easymock,
+				'net.javacrumbs.json-unit:json-unit-assertj:4.1.1',
 				'org.junit.platform:junit-platform-launcher'
 		
 		errorprone 'com.google.errorprone:error_prone_core:2.38.0'
