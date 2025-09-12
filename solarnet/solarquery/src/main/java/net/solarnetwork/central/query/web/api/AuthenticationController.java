@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.web.api.v1;
+package net.solarnetwork.central.query.web.api;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityToken;
-import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
@@ -39,7 +38,7 @@ import net.solarnetwork.domain.Result;
  * Remote authentication for nodes.
  *
  * @author matt
- * @version 2.2
+ * @version 1.0
  */
 @Controller("v1AuthenticationController")
 @GlobalExceptionRestController
@@ -59,11 +58,7 @@ public class AuthenticationController {
 	public Result<Map<String, ?>> validate() {
 		SecurityActor actor = SecurityUtils.getCurrentActor();
 		Map<String, Object> data = new LinkedHashMap<>(3);
-		if ( actor instanceof SecurityUser user ) {
-			data.put("userId", user.getUserId());
-			data.put("username", user.getEmail());
-			data.put("name", user.getDisplayName());
-		} else if ( actor instanceof SecurityToken token ) {
+		if ( actor instanceof SecurityToken token ) {
 			data.put("userId", token.getUserId());
 			data.put("token", token.getToken().trim());
 			data.put("tokenType", token.getTokenType());
