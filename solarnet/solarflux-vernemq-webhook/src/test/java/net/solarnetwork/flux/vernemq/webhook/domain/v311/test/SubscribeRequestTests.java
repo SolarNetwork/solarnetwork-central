@@ -73,4 +73,34 @@ public class SubscribeRequestTests extends TestSupport {
     // @formatter:on
   }
 
+  @Test
+  public void parseFull_v5() throws IOException {
+    SubscribeRequest req = objectMapper
+        .readValue(classResourceAsBytes("auth_on_subscribe-01_v5.json"), SubscribeRequest.class);
+    assertThat("client_id", req.getClientId(), equalTo("clientid"));
+    assertThat("mountpoint", req.getMountpoint(), equalTo(""));
+    assertThat("username", req.getUsername(), equalTo("username"));
+
+    // @formatter:off
+    assertThat("topics", req.getTopics(), 
+        pojo(TopicSettings.class)
+            .withProperty("settings", contains(
+                pojo(TopicSubscriptionSetting.class)
+                  .withProperty("topic", equalTo("a/b"))
+                  .withProperty("qos", equalTo(Qos.AtLeastOnce))
+                  .withProperty("noLocal", equalTo(false))
+                  .withProperty("rap", equalTo(false))
+                  .withProperty("retainHandling", equalTo("send_retain"))
+                  ,
+                pojo(TopicSubscriptionSetting.class)
+                  .withProperty("topic", equalTo("c/d"))
+                  .withProperty("qos", equalTo(Qos.ExactlyOnce))
+                  .withProperty("noLocal", equalTo(false))
+                  .withProperty("rap", equalTo(false))
+                  .withProperty("retainHandling", equalTo("send_retain"))
+            ))
+    );
+    // @formatter:on
+  }
+
 }

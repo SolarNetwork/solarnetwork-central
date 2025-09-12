@@ -204,7 +204,15 @@ public class SimpleAuthorizationEvaluator implements AuthorizationEvaluator {
         if (!haveChange) {
           haveChange = true;
         }
-        res.add(TopicSubscriptionSetting.builder().withTopic(topic).withQos(qos).build());
+        // @formatter:off
+        res.add(TopicSubscriptionSetting.builder()
+            .withTopic(topic)
+            .withQos(qos)
+            .withNoLocal(s.getNoLocal())
+            .withRap(s.getRap())
+            .withRetainHandling(s.getRetainHandling())
+            .build());
+        // @formatter:on
       }
     }
 

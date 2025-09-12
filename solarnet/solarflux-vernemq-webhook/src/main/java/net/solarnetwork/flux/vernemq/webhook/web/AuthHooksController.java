@@ -25,6 +25,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.domain.Response;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.PublishRequest;
@@ -43,13 +47,15 @@ import net.solarnetwork.flux.vernemq.webhook.service.AuthService;
 public class AuthHooksController {
 
   private final AuthService authService;
+  private final ObjectMapper objectMapper;
 
   private static final Logger log = LoggerFactory.getLogger(AuthHooksController.class);
 
   @Autowired
-  public AuthHooksController(AuthService authService) {
+  public AuthHooksController(AuthService authService, ObjectMapper objectMapper) {
     super();
     this.authService = authService;
+    this.objectMapper = objectMapper;
   }
 
   /**
@@ -81,7 +87,14 @@ public class AuthHooksController {
    * @return map of properties
    */
   @RequestMapping(value = "", headers = "vernemq-hook=auth_on_subscribe")
-  public Response authOnSubscribe(@RequestBody SubscribeRequest request) {
+  public Response authOnSubscribe(@RequestBody JsonNode json) {
+    log.debug("subscribe: {}", json);
+    SubscribeRequest request;
+    try {
+      request = objectMapper.treeToValue(json, SubscribeRequest.class);
+    } catch (JsonProcessingException | IllegalArgumentException e) {
+      return Response.NEXT;
+    }
     return authService.authorizeRequest(request);
   }
 

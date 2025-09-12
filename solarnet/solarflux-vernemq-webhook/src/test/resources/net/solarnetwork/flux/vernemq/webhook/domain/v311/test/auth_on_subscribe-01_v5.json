@@ -1,0 +1,16 @@
+{
+    "client_id": "clientid",
+    "mountpoint": "",
+    "username": "username",
+    "topics":
+        [{"topic": "a/b",
+          "qos": 1		,
+	      "no_local": false,
+	      "rap": false,
+	      "retain_handling": "send_retain"},
+         {"topic": "c/d",
+          "qos": 2		 ,
+	       "no_local": false,
+	       "rap": false,
+	       "retain_handling": "send_retain"}]
+}

@@ -17,6 +17,9 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain;
 
+import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
@@ -25,16 +28,26 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  *
  * @author matt
  */
-@JsonPropertyOrder({ "topic", "qos" })
+@JsonPropertyOrder({ "topic", "qos", "no_local", "rap", "retain_handling" })
 @JsonDeserialize(builder = TopicSubscriptionSetting.Builder.class)
 public class TopicSubscriptionSetting {
 
   private final String topic;
   private final Qos qos;
 
+  @JsonProperty("no_local")
+  private final Boolean noLocal;
+  private final Boolean rap;
+
+  @JsonProperty("retain_handling")
+  private final String retainHandling;
+
   private TopicSubscriptionSetting(Builder builder) {
     this.topic = builder.topic;
     this.qos = builder.qos;
+    this.noLocal = builder.noLocal;
+    this.rap = builder.rap;
+    this.retainHandling = builder.retainHandling;
   }
 
   /**
@@ -54,6 +67,13 @@ public class TopicSubscriptionSetting {
     private String topic;
     private Qos qos;
 
+    @JsonProperty("no_local")
+    private Boolean noLocal;
+    private Boolean rap;
+
+    @JsonProperty("retain_handling")
+    private String retainHandling;
+
     private Builder() {
     }
 
@@ -67,6 +87,21 @@ public class TopicSubscriptionSetting {
       return this;
     }
 
+    public Builder withNoLocal(Boolean noLocal) {
+      this.noLocal = noLocal;
+      return this;
+    }
+
+    public Builder withRap(Boolean rap) {
+      this.rap = rap;
+      return this;
+    }
+
+    public Builder withRetainHandling(String retainHandling) {
+      this.retainHandling = retainHandling;
+      return this;
+    }
+
     public TopicSubscriptionSetting build() {
       return new TopicSubscriptionSetting(this);
     }
@@ -77,13 +112,13 @@ public class TopicSubscriptionSetting {
     return topic + "@" + qos;
   }
 
+  public String getTopic() {
+    return topic;
+  }
+
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((qos == null) ? 0 : qos.hashCode());
-    result = prime * result + ((topic == null) ? 0 : topic.hashCode());
-    return result;
+    return Objects.hash(topic, qos, noLocal, rap, retainHandling);
   }
 
   @Override
@@ -94,21 +129,25 @@ public class TopicSubscriptionSetting {
     if (!(obj instanceof TopicSubscriptionSetting other)) {
       return false;
     }
-    if (qos != other.qos) {
-      return false;
-    }
-    if (topic == null) {
-      return other.topic == null;
-    }
-    return topic.equals(other.topic);
-  }
-
-  public String getTopic() {
-    return topic;
+    return Objects.equals(topic, other.topic) && qos == other.qos
+        && Objects.equals(noLocal, other.noLocal) && Objects.equals(rap, other.rap)
+        && Objects.equals(retainHandling, other.retainHandling);
   }
 
   public Qos getQos() {
     return qos;
+  }
+
+  public Boolean getNoLocal() {
+    return noLocal;
+  }
+
+  public Boolean getRap() {
+    return rap;
+  }
+
+  public String getRetainHandling() {
+    return retainHandling;
   }
 
 }

@@ -114,6 +114,14 @@ public class SimpleAuthorizationEvaluatorTests {
     return new TopicSettings(settings);
   }
 
+  private TopicSettings requestForTopics_v5(String... topics) {
+    List<TopicSubscriptionSetting> settings = Arrays.stream(topics)
+        .map(s -> TopicSubscriptionSetting.builder().withTopic(s).withQos(Qos.AtLeastOnce)
+            .withNoLocal(false).withRap(false).withRetainHandling("send_retain").build())
+        .collect(toList());
+    return new TopicSettings(settings);
+  }
+
   private Message requestMessage(String topic) {
     return PublishRequest.builder().withTopic(topic).withQos(Qos.AtLeastOnce).build();
   }
@@ -129,7 +137,30 @@ public class SimpleAuthorizationEvaluatorTests {
     assertThat("Topic allowed via ownership", result.getSettings().get(0),
         pojo(TopicSubscriptionSetting.class)
             .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
+            .withProperty("qos", equalTo(Qos.AtLeastOnce))
+            .withProperty("noLocal", nullValue())
+            .withProperty("rap", nullValue())
+            .withProperty("retainHandling", nullValue())
+            );
+    // @formatter:on
+  }
+
+  @Test
+  public void subscribeNoPolicyAllowedNode_v5() {
+    ActorDetails actor = actor(null, 2L);
+    TopicSettings request = requestForTopics_v5("node/2/datum/0/foo");
+    TopicSettings result = service.evaluateSubscribe(actor, request);
+    assertThat("Result provided", result, notNullValue());
+    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
+    // @formatter:off
+    assertThat("Topic allowed via ownership", result.getSettings().get(0),
+        pojo(TopicSubscriptionSetting.class)
+            .withProperty("topic", equalTo("node/2/datum/0/foo"))
+            .withProperty("qos", equalTo(Qos.AtLeastOnce))
+            .withProperty("noLocal", equalTo(false))
+            .withProperty("rap", equalTo(false))
+            .withProperty("retainHandling", equalTo("send_retain"))
+            );
     // @formatter:on
   }
 
@@ -145,7 +176,31 @@ public class SimpleAuthorizationEvaluatorTests {
     assertThat("Topic allowed via ownership", result.getSettings().get(0),
         pojo(TopicSubscriptionSetting.class)
             .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtMostOnce)));
+            .withProperty("qos", equalTo(Qos.AtMostOnce))
+            .withProperty("noLocal", nullValue())
+            .withProperty("rap", nullValue())
+            .withProperty("retainHandling", nullValue())
+            );
+    // @formatter:on
+  }
+
+  @Test
+  public void subscribeNoPolicyAllowedNodeQosDowngraded_v5() {
+    ActorDetails actor = actor(null, 2L);
+    TopicSettings request = requestForTopics_v5("node/2/datum/0/foo");
+    service.setMaxQos(Qos.AtMostOnce);
+    TopicSettings result = service.evaluateSubscribe(actor, request);
+    assertThat("Result provided", result, notNullValue());
+    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
+    // @formatter:off
+    assertThat("Topic allowed via ownership", result.getSettings().get(0),
+        pojo(TopicSubscriptionSetting.class)
+            .withProperty("topic", equalTo("node/2/datum/0/foo"))
+            .withProperty("qos", equalTo(Qos.AtMostOnce))
+            .withProperty("noLocal", equalTo(false))
+            .withProperty("rap", equalTo(false))
+            .withProperty("retainHandling", equalTo("send_retain"))
+            );
     // @formatter:on
   }
 

@@ -18,6 +18,7 @@
 package net.solarnetwork.flux.vernemq.webhook.domain.test;
 
 import static com.spotify.hamcrest.jackson.IsJsonStringMatching.isJsonStringMatching;
+import static com.spotify.hamcrest.jackson.JsonMatchers.jsonBoolean;
 import static com.spotify.hamcrest.jackson.JsonMatchers.jsonInt;
 import static com.spotify.hamcrest.jackson.JsonMatchers.jsonObject;
 import static com.spotify.hamcrest.jackson.JsonMatchers.jsonText;
@@ -69,12 +70,46 @@ public class TopicSubscriptionSettingTests extends TestSupport {
   }
 
   @Test
+  public void toJsonFull_v5() throws JsonProcessingException {
+    TopicSubscriptionSetting topic = TopicSubscriptionSetting.builder().withTopic("foo")
+        .withQos(Qos.AtLeastOnce).withNoLocal(false).withRap(false)
+        .withRetainHandling("send_retain").build();
+    String json = objectMapper.writeValueAsString(topic);
+    log.debug("Topic setting full JSON: {}", json);
+
+    // @formatter:off
+    assertThat(json, isJsonStringMatching(
+        jsonObject()
+          .where("topic", is(jsonText(topic.getTopic())))
+          .where("qos", is(jsonInt(topic.getQos().getKey())))
+          .where("no_local", is(jsonBoolean(false)))
+          .where("rap", is(jsonBoolean(false)))
+          .where("retain_handling", is(jsonText("send_retain")))
+        ));
+    // @formatter:on
+  }
+
+  @Test
   public void fromJson() throws IOException {
     String json = "{\"topic\":\"foobar\",\"qos\":1}";
 
     TopicSubscriptionSetting s = objectMapper.readValue(json, TopicSubscriptionSetting.class);
     assertThat("Topic", s.getTopic(), equalTo("foobar"));
     assertThat("Qos", s.getQos(), equalTo(Qos.AtLeastOnce));
+  }
+
+  @Test
+  public void fromJson_v5() throws IOException {
+    String json = """
+        {"topic":"foobar","qos":1,"no_local":false,"rap":false,"retain_handling":"send_retain"}
+        """;
+
+    TopicSubscriptionSetting s = objectMapper.readValue(json, TopicSubscriptionSetting.class);
+    assertThat("Topic", s.getTopic(), equalTo("foobar"));
+    assertThat("Qos", s.getQos(), equalTo(Qos.AtLeastOnce));
+    assertThat("NoLocal", s.getNoLocal(), equalTo(false));
+    assertThat("Rap", s.getRap(), equalTo(false));
+    assertThat("RetainHandling", s.getRetainHandling(), equalTo("send_retain"));
   }
 
 }
