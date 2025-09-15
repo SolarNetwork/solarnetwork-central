@@ -70,7 +70,7 @@ import net.solarnetwork.util.NumberUtils;
  * Global REST controller support.
  *
  * @author matt
- * @version 1.10
+ * @version 1.11
  */
 @RestControllerAdvice
 @Order(1000)
@@ -422,16 +422,27 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseStatus
 	public Result<?> handleRuntimeException(RuntimeException e, WebRequest request) {
 		// NOTE: in Spring 4.3 the root exception will be unwrapped; support Spring 4.2 here
-		Throwable cause = e;
-		while ( cause.getCause() != null ) {
-			cause = cause.getCause();
-		}
-		if ( cause instanceof IllegalArgumentException ) {
-			return handleIllegalArgumentException((IllegalArgumentException) cause, request);
+		Result<?> result = handleCause(e, request);
+		if ( result != null ) {
+			return result;
 		}
 		log.error("RuntimeException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		return error(null, "Internal error");
+	}
+
+	private Result<?> handleCause(Throwable e, WebRequest request) {
+		Throwable cause = e;
+		Result<?> result = null;
+		do {
+			if ( cause instanceof IllegalArgumentException iae ) {
+				result = handleIllegalArgumentException(iae, request);
+			} else if ( cause instanceof IOException ioe ) {
+				result = handleIOException(ioe, request);
+			}
+			cause = cause.getCause();
+		} while ( cause != null && result == null );
+		return result;
 	}
 
 	/**

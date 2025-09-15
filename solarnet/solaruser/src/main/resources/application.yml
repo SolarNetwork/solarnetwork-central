@@ -295,6 +295,11 @@ app:
         node-certificate-renewal-period-months: 3
       mail.template:
         from: "nobody@localhost.localdomain"
+  user-service-auditor:
+    update-delay: 100
+    flush-delay: 10000
+    connection-recovery-delay: 15000
+    stat-log-update-count: 50000
   versioned-messages-cache:
       ttl: 600
   web.rate-limit:
