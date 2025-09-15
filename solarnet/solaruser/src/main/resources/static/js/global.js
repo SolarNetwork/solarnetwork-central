@@ -373,6 +373,19 @@ SolarReg.fill = function fill(dest, src) {
 	}
 };
 
+/**
+ * Watch for a key event for the "enter" key, and prevent the event default.
+ * 
+ * @param {Event} e the event
+ */
+SolarReg.preventEnterKeyDefault = function preventEnterKeyDefault(e) {
+	const keyCode = e.keyCode || e.which;
+	if ( keyCode == 13 ) {
+		e.preventDefault();
+		return false;
+	}
+};
+
 $(document).ready(function() {
 	$('body').on('hidden', '.modal.dynamic', function () {
 		$(this).removeData('modal');

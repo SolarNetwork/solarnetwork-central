@@ -155,29 +155,35 @@ $(document).ready(function() {
 		});
 	}
 
-	$('#create-user-auth-token').on('hidden.bs.modal', resetAuthTokenForm).each(function() {
-		$(this).ajaxForm({
-			dataType: 'json',
-			beforeSerialize: setupActivePolicyFromForm,
-			beforeSubmit: beforeSubmitTokenForm,
-			success: handleAuthTokenCreated,
-			error: function(xhr, status, statusText) {
-				SolarReg.showAlertBefore('#create-user-auth-token .modal-body > *:first-child', 'alert-warning', statusText);
-			}
+	$('#create-user-auth-token')
+		.on('hidden.bs.modal', resetAuthTokenForm)
+		.on('keyup keypress', 'input[type="text"]', SolarReg.preventEnterKeyDefault)
+		.each(function() {
+			$(this).ajaxForm({
+				dataType: 'json',
+				beforeSerialize: setupActivePolicyFromForm,
+				beforeSubmit: beforeSubmitTokenForm,
+				success: handleAuthTokenCreated,
+				error: function(xhr, status, statusText) {
+					SolarReg.showAlertBefore('#create-user-auth-token .modal-body > *:first-child', 'alert-warning', statusText);
+				}
+			});
 		});
-	});
 	
-	$('#create-data-auth-token').on('hidden.bs.modal', resetAuthTokenForm).each(function() {
-		$(this).ajaxForm({
-			dataType: 'json',
-			beforeSerialize: setupActivePolicyFromForm,
-			beforeSubmit: beforeSubmitTokenForm,
-			success: handleAuthTokenCreated,
-			error: function(xhr, status, statusText) {
-				SolarReg.showAlertBefore('#create-data-auth-token .modal-body > *:first-child', 'alert-error', statusText);
-			}
+	$('#create-data-auth-token')
+		.on('hidden.bs.modal', resetAuthTokenForm)
+		.on('keyup keypress', 'input[type="text"]', SolarReg.preventEnterKeyDefault)
+		.each(function() {
+			$(this).ajaxForm({
+				dataType: 'json',
+				beforeSerialize: setupActivePolicyFromForm,
+				beforeSubmit: beforeSubmitTokenForm,
+				success: handleAuthTokenCreated,
+				error: function(xhr, status, statusText) {
+					SolarReg.showAlertBefore('#create-data-auth-token .modal-body > *:first-child', 'alert-error', statusText);
+				}
+			});
 		});
-	});
 	
 	$('.create-auth-token-download-csv').on('click', function downloadTokenCsv() {
 		const link = this;
