@@ -50,6 +50,7 @@ app:
       publish-only: false
     ws:
       partial-message-maximum-size: 1048576
+      partial-message-maximum-size-exceeded-close: true
       pending-message-timeout: 120000
       ping-frequency-secs: 50
       shutdown-task-post-delay: "5s"
