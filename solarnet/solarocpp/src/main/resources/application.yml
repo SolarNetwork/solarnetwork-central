@@ -48,6 +48,20 @@ app:
       mqtt-topic: "instr/OCPP_v16"
       subscribe-timeout: 30
       publish-only: false
+    ws:
+      partial-message-maximum-size: 1048576
+      partial-message-maximum-size-exceeded-close: true
+      pending-message-timeout: 120000
+      ping-frequency-secs: 50
+      shutdown-task-post-delay: "5s"
+      shutdown-task-max-wait: "1m"
+  ocpp.v201:
+    ws:
+      partial-message-maximum-size: 1048576
+      pending-message-timeout: 120000
+      ping-frequency-secs: 50
+      shutdown-task-post-delay: "5s"
+      shutdown-task-max-wait: "1m"
   solarflux:
     connection:
       uid: "SolarFlux-${app.meta.instance-id}"
