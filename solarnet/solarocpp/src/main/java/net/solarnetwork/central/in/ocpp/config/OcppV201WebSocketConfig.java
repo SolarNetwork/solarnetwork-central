@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -128,6 +129,7 @@ public class OcppV201WebSocketConfig implements WebSocketConfigurer {
 	@Qualifier(OCPP_V201)
 	private List<ActionMessageProcessor<?, ?>> ocppActions;
 
+	@ConfigurationProperties(prefix = "app.ocpp.v201.ws")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	@Qualifier(OCPP_V201)
 	public CentralOcppWebSocketHandler<Action, Action> ocppWebSocketHandler_v201() {
