@@ -53,6 +53,7 @@ dependencies {
 	
 	// Utilities
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 	implementation 'org.aspectj:aspectjweaver'
 
 	// Testing
