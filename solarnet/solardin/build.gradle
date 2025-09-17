@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarDIN'
-version = '2.0.0'
+version = '2.1.0'
 
 base {
 	archivesName = 'solardin'
@@ -49,9 +49,10 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	
 	// Utilities
-	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
-	implementation 'org.aspectj:aspectjweaver'
 	implementation "commons-io:commons-io:${commonsIoVersion}"
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+	implementation 'org.aspectj:aspectjweaver'
 
 	// Testing
 	testImplementation project(':solarnet-common-test')
