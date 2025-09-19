@@ -28,7 +28,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
@@ -242,7 +241,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	}
 
 	/**
-	 * Get the event admin service.
+	 * Get the event publisher service.
 	 *
 	 * @return the service
 	 */
@@ -251,7 +250,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	}
 
 	/**
-	 * Configure an {@link EventAdmin} service for posting status events.
+	 * Configure an {@link AppEventPublisher} service for posting status events.
 	 *
 	 * @param eventPublisher
 	 *        the optional event admin service

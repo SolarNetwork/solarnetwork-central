@@ -45,20 +45,6 @@ public final class MoneyUtils {
 		// don't construct me
 	}
 
-	/*-
-	 * Invoke the {@link Bootstrap#init(javax.money.spi.ServiceProvider)} method
-	 * with the internal {@link ClassLoaderServiceProvider}.
-	 *
-	 * <p>
-	 * This is called automatically when deployed in an OSGi runtime. Outside
-	 * OSGi this method can be called to ensure the {@code javax.money} runtime
-	 * uses the same {@code ServiceProvider} as under OSGi.
-	 * </p>
-	 */
-	//public static void bootstrap() {
-	//	javax.money.spi.Bootstrap.init(new ClassLoaderServiceProvider(MoneyUtils.class.getClassLoader()));
-	//}
-
 	/**
 	 * Get a monetary amount format that uses currency symbols.
 	 *
