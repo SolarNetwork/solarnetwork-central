@@ -128,7 +128,7 @@ subprojects {
 		]
 	}
 		
-	ext['netty.version'] = '4.2.3.Final'
+	ext['netty.version'] = '4.2.6.Final'
 
 	dependencies {
 		testImplementation libraries.hamcrest,
