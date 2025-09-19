@@ -175,7 +175,7 @@ public class LocusEnergyConfig implements SolarNetCloudIntegrationsConfiguration
 		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
 				integrationConfigurationDao, LocusEnergyCloudIntegrationService.TOKEN_URI,
 				ClientAuthenticationMethod.CLIENT_SECRET_POST, encryptor,
-				integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS);
+				_ -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS);
 		if ( cache != null ) {
 			repo = new CachingOAuth2ClientRegistrationRepository(cache, repo);
 		}

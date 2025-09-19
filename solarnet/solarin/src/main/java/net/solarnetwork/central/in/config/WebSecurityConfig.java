@@ -116,7 +116,7 @@ public class WebSecurityConfig {
 
 		// this following is disabled to allow for the SSL_CLIENT_CERT header value
 		// which is a full PEM encoded certificate with newline characters
-		firewall.setAllowedHeaderValues((header) -> true);
+		firewall.setAllowedHeaderValues(_ -> true);
 
 		return firewall;
 	}

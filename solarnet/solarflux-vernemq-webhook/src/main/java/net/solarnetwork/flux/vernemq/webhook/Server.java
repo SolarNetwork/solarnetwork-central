@@ -60,7 +60,7 @@ public class Server {
    */
   @Bean
   public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-    return args -> {
+    return _ -> {
       if (LOG.isTraceEnabled()) {
         StringBuilder buf = new StringBuilder();
         String[] beanNames = ctx.getBeanDefinitionNames();

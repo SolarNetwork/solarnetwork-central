@@ -132,7 +132,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 		do {
 			processed = false;
 			if ( txTemplate != null ) {
-				processed = txTemplate.execute((tx) -> {
+				processed = txTemplate.execute(_ -> {
 					return exchange(supportedOscpVersions, remainingIterations);
 				});
 			} else {

@@ -116,7 +116,7 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 				new OpenWeatherMapRestOperationsHelper(
 						LoggerFactory.getLogger(OpenWeatherMapCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS));
+						_ -> SECURE_SETTINGS));
 	}
 
 	@Override
@@ -141,7 +141,7 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 			final String response = restOpsHelper.httpGet("Validate connection", integration,
 					String.class,
 					// @formatter:off
-					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(WEATHER_URL_PATH)
 							.queryParam(LATITUDE_PARAM, VALIDATION_LAT)
 							.queryParam(LONGITUDE_PARAM, VALIDATION_LON)

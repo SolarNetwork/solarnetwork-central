@@ -102,7 +102,7 @@ public class UserAlertBatchJob extends JobSupport implements ServiceLifecycleObs
 
 	@Override
 	public void run() {
-		txTemplate.executeWithoutResult(t -> {
+		txTemplate.executeWithoutResult(_ -> {
 			Collection<AppSetting> settings = appSettingDao.lockForUpdate(SETTING_KEY);
 			Long startingId = null;
 			Long validDateMs = null;

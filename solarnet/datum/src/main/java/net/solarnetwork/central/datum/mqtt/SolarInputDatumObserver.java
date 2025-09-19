@@ -162,7 +162,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 		requireNonNullArgument(observer, "observer");
 		final var handler = handlers.computeIfAbsent(observer, MessageHandler::new);
 		for ( Long nodeId : requireNonEmptyArgument(nodeIds, "nodeIds") ) {
-			if ( observers.computeIfAbsent(nodeId, (k) -> new CopyOnWriteArrayList<>())
+			if ( observers.computeIfAbsent(nodeId, _ -> new CopyOnWriteArrayList<>())
 					.addIfAbsent(observer) ) {
 				subscribe(mqttConnection.get(), nodeId, handler);
 			}

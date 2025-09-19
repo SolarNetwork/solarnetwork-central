@@ -126,7 +126,7 @@ public class FroniusCloudIntegrationService extends BaseRestOperationsCloudInteg
 				new FroniusRestOperationsHelper(
 						LoggerFactory.getLogger(FroniusCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS));
+						_ -> SECURE_SETTINGS));
 	}
 
 	@Override
@@ -157,7 +157,7 @@ public class FroniusCloudIntegrationService extends BaseRestOperationsCloudInteg
 		// validate by requesting the V1 available sites
 		try {
 			final String response = restOpsHelper.httpGet("List systems", integration, String.class,
-					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(FroniusCloudIntegrationService.LIST_SYSTEMS_URL).buildAndExpand()
 							.toUri(),
 					res -> res.getBody());

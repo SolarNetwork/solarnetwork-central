@@ -237,8 +237,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(LoggerFactory.getLogger(SmaCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SmaCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager, clock, integrationLocksCache));
+						_ -> SmaCloudIntegrationService.SECURE_SETTINGS, oauthClientManager, clock,
+						integrationLocksCache));
 	}
 
 	@Override
@@ -286,7 +286,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 	private List<CloudDataValue> systems(CloudIntegrationConfiguration integration) {
 		List<CloudDataValue> result = restOpsHelper.httpGet("List systems", integration, JsonNode.class,
-				req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH)
 						.buildAndExpand(integration.getServiceProperties()).toUri(),
 				res -> parseSystems(res.getBody()));
@@ -386,7 +386,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			final String systemId, Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List system devices", integration, JsonNode.class,
 		// @formatter:off
-				req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SYSTEM_DEVICES_PATH_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
@@ -441,7 +441,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			final String systemId, final String deviceId, Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List device measurement sets", integration, JsonNode.class,
 		// @formatter:off
-				req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(DEVICE_MEASUREMENT_SETS_PATH_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
@@ -580,7 +580,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					for ( Entry<SmaMeasurementSetType, List<ValueRef>> measurementSetEntry : devPlan.measurementSetRefs
 							.entrySet() ) {
 						restOpsHelper.httpGet("List device measurement set data", integration,
-								JsonNode.class, req -> {
+								JsonNode.class, _ -> {
 									UriComponentsBuilder b = fromUri(
 											resolveBaseUrl(integration, BASE_URI))
 													.path(DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE);
@@ -605,7 +605,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			if ( !e.getValue().isEmpty() ) {
 				Instant ts = e.getValue().lastKey();
 				greatestTimestampPerStream.compute(e.getKey(),
-						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
 			}
 			allDatum.addAll(e.getValue().values());
 		}
@@ -693,7 +693,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			} else if ( !ts.isBefore(filter.getEndDate()) ) {
 				break;
 			}
-			GeneralDatum datum = resultDatum.computeIfAbsent(sourceId, k -> new TreeMap<>())
+			GeneralDatum datum = resultDatum.computeIfAbsent(sourceId, _ -> new TreeMap<>())
 					.computeIfAbsent(ts,
 							k -> new GeneralDatum(
 									new DatumId(ds.getKind(), ds.getObjectId(), sourceId, k),
@@ -778,7 +778,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		private void addValueRef(ValueRef ref) {
 			assert ref != null;
-			measurementSetRefs.computeIfAbsent(ref.measurementSet, k -> new ArrayList<>(4)).add(ref);
+			measurementSetRefs.computeIfAbsent(ref.measurementSet, _ -> new ArrayList<>(4)).add(ref);
 		}
 	}
 
@@ -788,9 +788,9 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		private void addValueRef(ZoneId zone, ValueRef ref) {
 			assert ref != null;
-			zoneDevicePlans.computeIfAbsent(zone, k -> new LinkedHashMap<>(4))
+			zoneDevicePlans.computeIfAbsent(zone, _ -> new LinkedHashMap<>(4))
 					.computeIfAbsent(ref.deviceId,
-							k -> new DeviceQueryPlan(ref.systemId, ref.deviceId, zone))
+							_ -> new DeviceQueryPlan(ref.systemId, ref.deviceId, zone))
 					.addValueRef(ref);
 		}
 
@@ -881,7 +881,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		result = restOpsHelper.httpGet("Query for system details", integration, JsonNode.class,
 		// @formatter:off
-				headers -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(SYSTEM_VIEW_PATH_TEMPLATE)
 							.buildAndExpand(systemId)
 							.toUri()

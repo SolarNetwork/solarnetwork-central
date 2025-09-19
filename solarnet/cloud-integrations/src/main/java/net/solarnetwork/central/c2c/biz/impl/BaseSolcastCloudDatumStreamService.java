@@ -185,7 +185,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings,
 				new SolcastRestOperationsHelper(restOpsLogger, userEventAppenderBiz, restOps,
 						INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SolcastCloudIntegrationService.SECURE_SETTINGS));
+						_ -> SolcastCloudIntegrationService.SECURE_SETTINGS));
 	}
 
 	/**

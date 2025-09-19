@@ -146,7 +146,7 @@ public class AuditingStreamDatumFilteredResultsProcessor extends AbstractMap<Gen
 			ObjectDatumStreamMetadata meta = metadataProvider.metadataForStreamId(d.getStreamId());
 			if ( meta != null && meta.getKind() == ObjectDatumKind.Node ) {
 				currentKey = auditDatumKeys.computeIfAbsent(d.getStreamId(),
-						k -> new GeneralNodeDatumPK(meta.getObjectId(), auditDate, meta.getSourceId()));
+						_ -> new GeneralNodeDatumPK(meta.getObjectId(), auditDate, meta.getSourceId()));
 				auditor.addNodeDatumAuditResults(this);
 			}
 		}

@@ -315,7 +315,7 @@ public final class WebUtils {
 	public static InputStream maxUploadSizeExceededInputStream(InputStream in, long maxLength)
 			throws IOException {
 		return BoundedInputStream.builder().setInputStream(in).setMaxCount(maxLength)
-				.setOnMaxCount((m, c) -> {
+				.setOnMaxCount((_, _) -> {
 					throw new MaxUploadSizeExceededException(maxLength);
 				}).get();
 	}

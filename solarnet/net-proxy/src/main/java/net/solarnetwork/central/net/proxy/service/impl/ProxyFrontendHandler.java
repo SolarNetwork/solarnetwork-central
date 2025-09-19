@@ -102,7 +102,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 				}
 			});
 			if ( settings instanceof ServiceLifecycleObserver obs ) {
-				outboundChannel.closeFuture().addListener((close) -> obs.serviceDidShutdown());
+				outboundChannel.closeFuture().addListener(_ -> obs.serviceDidShutdown());
 			}
 		}
 		super.userEventTriggered(ctx, evt);

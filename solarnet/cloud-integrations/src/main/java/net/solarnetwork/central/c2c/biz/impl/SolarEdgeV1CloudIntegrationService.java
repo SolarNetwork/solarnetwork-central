@@ -110,7 +110,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 				new SolarEdgeV1RestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeV1CloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS));
+						_ -> SECURE_SETTINGS));
 	}
 
 	@Override
@@ -133,7 +133,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 		// validate by requesting the V1 available sites
 		try {
 			final String response = restOpsHelper.httpGet("List sites", integration, String.class,
-					(req) -> UriComponentsBuilder.fromUri(SolarEdgeV1CloudIntegrationService.BASE_URI)
+					_ -> UriComponentsBuilder.fromUri(SolarEdgeV1CloudIntegrationService.BASE_URI)
 							.path(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL).buildAndExpand()
 							.toUri(),
 					HttpEntity::getBody);

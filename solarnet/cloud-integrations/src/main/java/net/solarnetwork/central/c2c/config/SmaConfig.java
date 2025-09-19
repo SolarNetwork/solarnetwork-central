@@ -199,7 +199,7 @@ public class SmaConfig implements SolarNetCloudIntegrationsConfiguration {
 		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
 				integrationConfigurationDao, SmaCloudIntegrationService.TOKEN_URI,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, encryptor,
-				integrationServiceIdentifier -> SmaCloudIntegrationService.SECURE_SETTINGS);
+				_ -> SmaCloudIntegrationService.SECURE_SETTINGS);
 		if ( cache != null ) {
 			repo = new CachingOAuth2ClientRegistrationRepository(cache, repo);
 		}

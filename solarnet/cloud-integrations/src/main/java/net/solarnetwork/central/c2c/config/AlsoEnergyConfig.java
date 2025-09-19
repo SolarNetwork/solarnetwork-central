@@ -173,7 +173,7 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
 				integrationConfigurationDao, AlsoEnergyCloudIntegrationService.TOKEN_URI,
 				ClientAuthenticationMethod.CLIENT_SECRET_POST, encryptor,
-				integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS);
+				_ -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS);
 		if ( cache != null ) {
 			repo = new CachingOAuth2ClientRegistrationRepository(cache, repo);
 		}

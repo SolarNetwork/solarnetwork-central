@@ -147,7 +147,7 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 				new SolcastRestOperationsHelper(
 						LoggerFactory.getLogger(SolcastCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS));
+						_ -> SECURE_SETTINGS));
 	}
 
 	@Override
@@ -172,7 +172,7 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 			final String response = restOpsHelper.httpGet("Validate connection", integration,
 					String.class,
 					// @formatter:off
-					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(LIVE_RADIATION_URL_PATH)
 							.queryParam(LATITUDE_PARAM, "-33.856784")
 							.queryParam(LONGITUDE_PARAM, "151.215297")

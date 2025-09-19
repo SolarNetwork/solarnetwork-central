@@ -218,7 +218,7 @@ public class JdbcAuditService implements AuditService {
   }
 
   private void addCount(DelayedKey key, int count) {
-    counters.computeIfAbsent(key, k -> new AtomicInteger(0)).addAndGet(count);
+    counters.computeIfAbsent(key, _ -> new AtomicInteger(0)).addAndGet(count);
     counterQueue.add(key);
   }
 

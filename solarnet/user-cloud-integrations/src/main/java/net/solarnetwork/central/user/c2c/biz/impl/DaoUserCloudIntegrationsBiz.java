@@ -193,12 +193,12 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				.unmodifiableMap(requireNonNullArgument(integrationServices, "integrationServices")
 						.stream().sorted(comparing(CloudIntegrationService::getId))
 						.collect(Collectors.toMap(CloudIntegrationService::getId, Function.identity(),
-								(l, r) -> l, LinkedHashMap::new)));
+								(l, _) -> l, LinkedHashMap::new)));
 		this.datumStreamServices = Collections.unmodifiableMap(integrationServices.stream()
 				.flatMap(s -> StreamSupport.stream(s.datumStreamServices().spliterator(), false))
 				.sorted(comparing(CloudDatumStreamService::getId))
 				.collect(Collectors.toMap(CloudDatumStreamService::getId, Function.identity(),
-						(l, r) -> l, LinkedHashMap::new)));
+						(l, _) -> l, LinkedHashMap::new)));
 
 		// create a map of all services to their corresponding secure keys
 		// we assume here that all integration and datum stream identifiers are globally unique

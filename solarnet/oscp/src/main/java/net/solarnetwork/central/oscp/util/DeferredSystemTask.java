@@ -281,7 +281,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 				// ignore
 			}
 			if ( tt != null ) {
-				tt.executeWithoutResult((t) -> {
+				tt.executeWithoutResult(_ -> {
 					try {
 						doWork();
 					} catch ( Exception e ) {

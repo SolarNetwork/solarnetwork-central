@@ -222,7 +222,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 		for ( FilterMatch<GeneralNodeDatumPK> result : results ) {
 			GeneralNodeDatumPK id = result.getId();
 			GeneralNodeDatumPK pk = nodeDatumKey(auditDate, id.getNodeId(), id.getSourceId());
-			counts.compute(pk, (k, v) -> v == null ? 1 : v + 1);
+			counts.compute(pk, (_, v) -> v == null ? 1 : v + 1);
 		}
 
 		// insert counts
@@ -270,7 +270,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	}
 
 	private void addNodeSourceCount(GeneralNodeDatumPK key, int count) {
-		nodeSourceCounters.computeIfAbsent(key, k -> new AtomicInteger(0)).addAndGet(count);
+		nodeSourceCounters.computeIfAbsent(key, _ -> new AtomicInteger(0)).addAndGet(count);
 		stats.increment(JdbcQueryAuditorCount.ResultsAdded);
 	}
 

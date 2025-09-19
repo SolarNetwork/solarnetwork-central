@@ -119,13 +119,13 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 	@Override
 	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		requireNonNullArgument(datumStream, "datumStream");
-		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
+		return performAction(datumStream, (ms, ds, mapping, integration, _, exprProps) -> {
 
 			final UriComponentsBuilder uriBuilder = locationBasedUrl(ms, ds, integration,
 					WEATHER_URL_PATH);
 
 			final GeneralDatum datum = restOpsHelper.httpGet("Get weather conditions", integration,
-					JsonNode.class, req -> uriBuilder.buildAndExpand().toUri(),
+					JsonNode.class, _ -> uriBuilder.buildAndExpand().toUri(),
 					res -> parseDatum(res.getBody(), ds));
 
 			final List<GeneralDatum> resultDatum = (datum != null ? List.of(datum)

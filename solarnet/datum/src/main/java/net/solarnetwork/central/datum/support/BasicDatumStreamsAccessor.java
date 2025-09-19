@@ -85,9 +85,9 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 			// create tmp map with SortedSet to identify and warn about duplicate datum
 			Map<ObjectDatumKind, Map<Long, Map<String, SortedSet<Datum>>>> map = new HashMap<>(2);
 			for ( Datum d : datum ) {
-				SortedSet<Datum> set = map.computeIfAbsent(d.getKind(), k -> new HashMap<>(2))
-						.computeIfAbsent(d.getObjectId(), k -> new HashMap<>(8))
-						.computeIfAbsent(d.getSourceId(), k -> new TreeSet<>(
+				SortedSet<Datum> set = map.computeIfAbsent(d.getKind(), _ -> new HashMap<>(2))
+						.computeIfAbsent(d.getObjectId(), _ -> new HashMap<>(8))
+						.computeIfAbsent(d.getSourceId(), _ -> new TreeSet<>(
 								(l, r) -> r.getTimestamp().compareTo(l.getTimestamp())));
 
 				if ( !set.contains(d) ) {
@@ -105,10 +105,10 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 				for ( Map<String, SortedSet<Datum>> sourceMap : nodeMap.values() ) {
 					for ( SortedSet<Datum> set : sourceMap.values() ) {
 						for ( Datum d : set ) {
-							result.computeIfAbsent(d.getKind(), k -> new HashMap<>(nodeMap.size()))
+							result.computeIfAbsent(d.getKind(), _ -> new HashMap<>(nodeMap.size()))
 									.computeIfAbsent(d.getObjectId(),
-											k -> new HashMap<>(sourceMap.size()))
-									.computeIfAbsent(d.getSourceId(), k -> new ArrayList<>(set.size()))
+											_ -> new HashMap<>(sourceMap.size()))
+									.computeIfAbsent(d.getSourceId(), _ -> new ArrayList<>(set.size()))
 									.add(d);
 						}
 					}
@@ -130,7 +130,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	@Override
 	public Datum at(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp) {
 		final var map = sortedDatumStreams(kind, objectId);
-		final List<Datum> list = map.computeIfAbsent(sourceId, k -> new ArrayList<>(2));
+		final List<Datum> list = map.computeIfAbsent(sourceId, _ -> new ArrayList<>(2));
 		return at(kind, objectId, sourceId, list, timestamp);
 	}
 
@@ -173,7 +173,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	@Override
 	public Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, int offset) {
 		final var map = sortedDatumStreams(kind, objectId);
-		final List<Datum> list = map.computeIfAbsent(sourceId, k -> new ArrayList<>(2));
+		final List<Datum> list = map.computeIfAbsent(sourceId, _ -> new ArrayList<>(2));
 		return offset(kind, objectId, sourceId, list, offset);
 	}
 
@@ -199,7 +199,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	public Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp,
 			int offset) {
 		final var map = sortedDatumStreams(kind, objectId);
-		final List<Datum> list = map.computeIfAbsent(sourceId, k -> new ArrayList<>(2));
+		final List<Datum> list = map.computeIfAbsent(sourceId, _ -> new ArrayList<>(2));
 		return offset(kind, objectId, sourceId, list, timestamp, offset);
 	}
 

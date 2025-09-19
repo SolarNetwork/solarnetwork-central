@@ -116,7 +116,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 		do {
 			try {
 				if ( transactionTemplate != null ) {
-					processed = transactionTemplate.execute(status -> execute());
+					processed = transactionTemplate.execute(_ -> execute());
 				} else {
 					processed = execute();
 				}

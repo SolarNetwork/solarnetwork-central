@@ -161,7 +161,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				LocusEnergyGranularity.Latest.name());
 		var granularityTitles = unmodifiableMap(Arrays.stream(LocusEnergyGranularity.values())
 				.collect(Collectors.toMap(LocusEnergyGranularity::name, LocusEnergyGranularity::name,
-						(l, r) -> r,
+						(_, r) -> r,
 						() -> new LinkedHashMap<>(LocusEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
 
@@ -234,8 +234,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(LocusEnergyCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager, clock, integrationLocksCache));
+						_ -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS, oauthClientManager,
+						clock, integrationLocksCache));
 		this.executor = requireNonNullArgument(executor, "executor");
 	}
 
@@ -277,7 +277,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 
 	private List<CloudDataValue> sitesForPartner(CloudIntegrationConfiguration integration) {
 		return restOpsHelper.httpGet("List sites", integration, ObjectNode.class,
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
 						.buildAndExpand(integration.getServiceProperties()).toUri(),
 				res -> parseSites(res.getBody()));
@@ -340,7 +340,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 	private List<CloudDataValue> componentsForSite(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List components for site", integration, ObjectNode.class,
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(LocusEnergyCloudIntegrationService.V3_COMPONENTS_FOR_SITE_ID_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 				res -> parseComponents(res.getBody()));
@@ -405,7 +405,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 	private List<CloudDataValue> nodesForComponent(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List fields for component", integration, ObjectNode.class,
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(LocusEnergyCloudIntegrationService.V3_NODES_FOR_COMPOENNT_ID_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 				res -> parseNodes(res.getBody(), filters));
@@ -604,7 +604,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				// groups: 1 = siteId, 2 = componentId, 3 = baseField, 4 = field
 				String componentId = m.group(2);
 				String fieldName = m.group(4);
-				fieldNamesByComponent.computeIfAbsent(componentId, k -> new LinkedHashSet<>(8))
+				fieldNamesByComponent.computeIfAbsent(componentId, _ -> new LinkedHashSet<>(8))
 						.add(fieldName);
 				fieldNamesByProperty.put(config.getId(), fieldName);
 			}
@@ -627,7 +627,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 					Set<String> fieldNames = reqEntry.getValue();
 					futures.add(executor.submit(() -> {
 						ObjectNode json = restOpsHelper.httpGet("Fetch data", integration,
-								ObjectNode.class, (headers) -> {
+								ObjectNode.class, _ -> {
 								// @formatter:off
 									UriComponentsBuilder b = fromUri(resolveBaseUrl(integration, BASE_URI))
 											.path(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE)
@@ -680,7 +680,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 												foundProp = true;
 												// track the greatest timestamp per component to support multi-stream lag
 												greatestTimestampPerComponent.compute(reqEntry.getKey(),
-														(k, v) -> v == null || ts.compareTo(v) > 0 ? ts
+														(_, v) -> v == null || ts.compareTo(v) > 0 ? ts
 																: v);
 											}
 										}
