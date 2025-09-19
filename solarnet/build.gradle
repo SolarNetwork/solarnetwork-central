@@ -168,7 +168,7 @@ subprojects {
     pluginManager.withPlugin('eclipse') { 
 		eclipse {
 			jdt {
-				javaRuntimeName = 'JavaSE-21'
+				javaRuntimeName = 'JavaSE-25'
 				file {
 					withProperties { properties ->
 						// set properties for the file org.eclipse.jdt.core.prefs to enable -parameters for Spring 6
