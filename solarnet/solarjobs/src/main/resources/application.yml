@@ -351,6 +351,7 @@ app:
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
+    schedule-delay: "30s"
   secrets:
     aws:
       region: "us-west-2"
