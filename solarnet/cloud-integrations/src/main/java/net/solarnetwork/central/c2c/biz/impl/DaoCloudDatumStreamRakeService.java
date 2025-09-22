@@ -344,7 +344,7 @@ public class DaoCloudDatumStreamRakeService
 			CloudDatumStreamPollTaskEntity pollTask = pollTaskDao.get(datumStream.getId());
 			if ( pollTask != null && pollTask.getStartAt() != null
 					&& endDate.isAfter(pollTask.getStartAt().atZone(rakeZone)) ) {
-				log.warn(
+				log.debug(
 						"Refusing to execute datum stream {} rake task because end date {} is after stream's poll task start date {}",
 						datumStreamIdent, endDate.toInstant(), pollTask.getStartAt());
 				var errMsg = "Rake task date is after poll task start.";
