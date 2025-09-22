@@ -56,6 +56,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -992,4 +993,43 @@ public class DaoCloudDatumStreamRakeServiceTests {
 
 		// @formatter:on
 	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void executeTask_shutdown() throws Exception {
+		// GIVEN
+		// submit task
+		final var rejectedException = new RejectedExecutionException("Executor is shut down.");
+		given(executor.submit(any(Callable.class))).willThrow(rejectedException);
+
+		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(randomLong());
+		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// update task state to "queued"
+		given(taskDao.updateTaskState(datumStream.getId(), Queued, Claimed)).willReturn(true);
+
+		// WHEN
+		var task = new CloudDatumStreamRakeTaskEntity(datumStream.getId());
+		task.setDatumStreamId(datumStream.getConfigId());
+		task.setState(Claimed);
+		task.setExecuteAt(hour);
+		task.setOffset(Period.ofDays(1));
+
+		// THEN
+		// @formatter:off
+		and.thenThrownBy(() -> service.executeTask(task), "Task fails to execute")
+			.as("The exception cause is the one thrown by the submit() call")
+			.isSameAs(rejectedException)
+			;
+		// @formatter:on
+	}
+
 }

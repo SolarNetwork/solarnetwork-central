@@ -44,7 +44,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
@@ -201,14 +200,14 @@ public class DaoCloudDatumStreamRakeService
 		try {
 			return executorService.submit(new CloudDatumStreamRakeTask(task));
 		} catch ( RejectedExecutionException e ) {
-			log.warn("Datum stream rake task execution rejected, resetting state to Queued: {}",
+			log.debug("Datum stream rake task execution rejected, resetting state to Queued: {}",
 					e.getMessage());
 			// go back to queued
 			if ( !taskDao.updateTaskState(task.getId(), Queued, task.getState()) ) {
 				log.warn("Failed to update rejected datum stream rake task {} state from {} to Queued",
 						task.getId().ident(), task.getState());
 			}
-			return CompletableFuture.failedFuture(e);
+			throw e;
 		}
 	}
 
