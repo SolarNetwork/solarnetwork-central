@@ -52,6 +52,7 @@ public class CloudIntegrationsJobsConfig {
 
 	@Autowired
 	private CloudDatumStreamRakeService cloudDatumStreamRakeService;
+
 	@Autowired
 	private AsyncTaskExecutor taskExecutor;
 
