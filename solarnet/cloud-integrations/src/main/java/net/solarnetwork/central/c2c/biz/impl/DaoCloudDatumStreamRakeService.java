@@ -391,8 +391,11 @@ public class DaoCloudDatumStreamRakeService
 
 			ZonedDateTime queryStartDate = startDate;
 			ZonedDateTime queryEndDate = startDate.plusDays(1);
+			if ( queryEndDate.isAfter(maxDate) ) {
+				queryEndDate = maxDate;
+			}
 
-			while ( !queryEndDate.isAfter(maxDate) ) {
+			while ( queryStartDate.isBefore(maxDate) && !queryEndDate.isAfter(maxDate) ) {
 				final var filter = new BasicQueryFilter();
 				filter.setStartDate(queryStartDate.toInstant());
 				filter.setEndDate(queryEndDate.toInstant());
@@ -474,6 +477,9 @@ public class DaoCloudDatumStreamRakeService
 				// iterate to next day
 				queryStartDate = queryEndDate;
 				queryEndDate = queryStartDate.plusDays(1);
+				if ( queryEndDate.isAfter(maxDate) ) {
+					queryEndDate = maxDate;
+				}
 
 				if ( iterationUpdateCount < 1 ) {
 					// no difference found, so stop
