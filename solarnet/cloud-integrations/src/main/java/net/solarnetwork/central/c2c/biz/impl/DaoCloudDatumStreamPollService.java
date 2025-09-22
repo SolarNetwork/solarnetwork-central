@@ -318,7 +318,7 @@ public class DaoCloudDatumStreamPollService
 
 			// save task state to Executing (TODO maybe we don't need this step?)
 			if ( !taskDao.updateTaskState(taskInfo.getId(), Executing, startState) ) {
-				log.warn("Failed to reset poll task {} to execution @ {} starting @ {}",
+				log.warn("Failed to update poll task {} state to Executing @ {} starting @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to update task state from Claimed to Executing.";
 				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStreamIdent);
@@ -467,8 +467,8 @@ public class DaoCloudDatumStreamPollService
 
 			// save task state
 			if ( !taskDao.updateTask(taskInfo, Executing) ) {
-				log.warn("Failed to reset poll task {} to execution @ {} starting @ {}",
-						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
+				log.warn("Failed to reset poll task {} @ {} starting @ {}", datumStreamIdent,
+						taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to reset task state.";
 				var errData = Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
 						taskInfo.getStartAt());

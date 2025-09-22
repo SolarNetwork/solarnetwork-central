@@ -361,8 +361,8 @@ public class DaoCloudDatumStreamRakeService
 
 			// save task state to Executing (TODO maybe we don't need this step?)
 			if ( !taskDao.updateTaskState(taskInfo.getId(), Executing, startState) ) {
-				log.warn("Failed to reset rake task {} to execution @ {} offset @ {}", datumStreamIdent,
-						taskInfo.getExecuteAt(), taskInfo.getOffset());
+				log.warn("Failed to update rake task {} state to Executing @ {} offset @ {}",
+						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getOffset());
 				var errMsg = "Failed to update task state from Claimed to Executing.";
 				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStreamIdent);
 				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
@@ -497,8 +497,8 @@ public class DaoCloudDatumStreamRakeService
 
 			// save task state
 			if ( !taskDao.updateTask(taskInfo, Executing) ) {
-				log.warn("Failed to reset rake task {} to execution @ {} starting @ {}",
-						datumStreamIdent, taskInfo.getExecuteAt(), startDate);
+				log.warn("Failed to reset rake task {} @ {} starting @ {}", datumStreamIdent,
+						taskInfo.getExecuteAt(), startDate);
 				var errMsg = "Failed to reset task state.";
 				var errData = Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
 						startDate.toInstant());
