@@ -1485,6 +1485,7 @@ public class DaoUserCloudIntegrationsBizTests {
 		sprops.put("foo", "bar");
 
 		CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
+		input.setDatumStreamId(randomLong());
 		input.setState(Queued);
 		input.setExecuteAt(now());
 		input.setOffset(Period.ofDays(1));
@@ -1500,6 +1501,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		and.then(datumStreamRakeTaskCaptor.getValue())
 			.as("Entity ID on DAO save is argument to service")
 			.returns(unassignedPk, from(CloudDatumStreamRakeTaskEntity::getId))
+			.as("Datum stream ID from input passed to DAO")
+			.returns(input.getDatumStreamId(), from(CloudDatumStreamRakeTaskEntity::getDatumStreamId))
 			.as("State from input passed to DAO")
 			.returns(input.getState(), from(CloudDatumStreamRakeTaskEntity::getState))
 			.as("Exec date input passed to DAO")
@@ -1536,6 +1539,7 @@ public class DaoUserCloudIntegrationsBizTests {
 		sprops.put("foo", "bar");
 
 		CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
+		input.setDatumStreamId(randomLong());
 		input.setState(Queued);
 		input.setExecuteAt(now());
 		input.setOffset(Period.ofDays(1));
@@ -1550,6 +1554,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		and.then(datumStreamRakeTaskCaptor.getValue())
 			.as("Entity ID on DAO save is argument to service")
 			.returns(pk, from(CloudDatumStreamRakeTaskEntity::getId))
+			.as("Datum stream ID from input passed to DAO")
+			.returns(input.getDatumStreamId(), from(CloudDatumStreamRakeTaskEntity::getDatumStreamId))
 			.as("State from input passed to DAO")
 			.returns(input.getState(), from(CloudDatumStreamRakeTaskEntity::getState))
 			.as("Exec date input passed to DAO")
@@ -1617,6 +1623,7 @@ public class DaoUserCloudIntegrationsBizTests {
 		sprops.put("foo", "bar");
 
 		CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
+		input.setDatumStreamId(randomLong());
 		input.setState(Queued);
 		input.setExecuteAt(now());
 		input.setOffset(Period.ofDays(1));
@@ -1631,6 +1638,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		and.then(datumStreamRakeTaskCaptor.getValue())
 			.as("Entity ID on DAO save is argument to service")
 			.returns(pk, from(CloudDatumStreamRakeTaskEntity::getId))
+			.as("Datum stream ID from input passed to DAO")
+			.returns(input.getDatumStreamId(), from(CloudDatumStreamRakeTaskEntity::getDatumStreamId))
 			.as("State from input passed to DAO")
 			.returns(input.getState(), from(CloudDatumStreamRakeTaskEntity::getState))
 			.as("Exec date input passed to DAO")
