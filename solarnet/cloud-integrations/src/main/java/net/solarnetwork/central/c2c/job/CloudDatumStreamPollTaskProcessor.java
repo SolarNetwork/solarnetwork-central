@@ -37,7 +37,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * Job to process ready-to-execute cloud datum stream polling tasks.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudDatumStreamPollTaskProcessor extends JobSupport {
 
@@ -79,6 +79,7 @@ public class CloudDatumStreamPollTaskProcessor extends JobSupport {
 			} catch ( TimeoutException e ) {
 				log.info("Timeout waiting for task [{}] to complete within {}ms; moving on",
 						task.getId(), maxWaitMs);
+				f.cancel(true);
 			} catch ( ExecutionException e ) {
 				Throwable t = e.getCause();
 				if ( !(t instanceof RemoteServiceException) ) {

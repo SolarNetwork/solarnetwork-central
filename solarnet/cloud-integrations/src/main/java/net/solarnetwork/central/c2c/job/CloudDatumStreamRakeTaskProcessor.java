@@ -79,6 +79,7 @@ public class CloudDatumStreamRakeTaskProcessor extends JobSupport {
 			} catch ( TimeoutException e ) {
 				log.info("Timeout waiting for task [{}] to complete within {}ms; moving on",
 						task.getId(), maxWaitMs);
+				f.cancel(true);
 			} catch ( ExecutionException e ) {
 				Throwable t = e.getCause();
 				if ( !(t instanceof RemoteServiceException) ) {
