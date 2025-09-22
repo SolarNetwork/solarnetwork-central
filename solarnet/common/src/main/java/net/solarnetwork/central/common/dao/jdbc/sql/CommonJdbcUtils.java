@@ -30,6 +30,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.postgresql.util.PGInterval;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -56,7 +58,7 @@ import net.solarnetwork.domain.Unique;
  * Common JDBC utilities.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public final class CommonJdbcUtils {
 
@@ -401,7 +403,7 @@ public final class CommonJdbcUtils {
 	 * @param rs
 	 *        the result set to read from
 	 * @param column
-	 *        the column number to get as a UUID
+	 *        the column number to get as an Instant
 	 * @return the instant, or {@literal null} if the column value is null
 	 * @throws SQLException
 	 *         if an error occurs
@@ -410,6 +412,52 @@ public final class CommonJdbcUtils {
 	public static Instant getTimestampInstant(ResultSet rs, int column) throws SQLException {
 		Timestamp ts = rs.getTimestamp(column);
 		return (ts != null ? ts.toInstant() : null);
+	}
+
+	/**
+	 * Get a Period from an INTERVAL column value.
+	 * 
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as a Period
+	 * @return the period, or {@code null} if the column value is null
+	 * @throws IllegalArgumentException
+	 *         if {@code value} is not of a supported type
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @since 2.2
+	 */
+	public static Period getIntervalPeriod(ResultSet rs, int column) throws SQLException {
+		Object o = rs.getObject(column);
+		try {
+			return getIntervalPeriod(o);
+		} catch ( IllegalArgumentException e ) {
+			throw new IllegalArgumentException(
+					"Unsupported Period type in column %d: %s".formatted(column, o.getClass()));
+		}
+	}
+
+	/**
+	 * Get a Period from an INTERVAL column value.
+	 * 
+	 * @param o
+	 *        the column number to get as a Period
+	 * @return the period, or {@code null} if the column value is null
+	 * @throws IllegalArgumentException
+	 *         if {@code value} is not of a supported type
+	 * @since 2.2
+	 */
+	public static Period getIntervalPeriod(Object value) {
+		if ( value == null ) {
+			return null;
+		} else if ( value instanceof PGInterval pg ) {
+			if ( pg.isNull() ) {
+				return null;
+			}
+			return Period.of(pg.getYears(), pg.getMonths(), pg.getDays());
+		}
+		throw new IllegalArgumentException("Unsupported Period type: %s".formatted(value.getClass()));
 	}
 
 }

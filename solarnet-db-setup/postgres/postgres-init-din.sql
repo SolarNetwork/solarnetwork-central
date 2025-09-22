@@ -511,9 +511,9 @@ CREATE INDEX cin_datum_stream_poll_task_exec_idx ON solardin.cin_datum_stream_po
 
 
 /**************************************************************************************************
- * FUNCTION solarnet.claim_datum_export_task()
+ * FUNCTION solardin.claim_datum_stream_poll_task()
  *
- * "Claim" an export task from the solarnet.sn_datum_export_task table that has a status of 'q'
+ * "Claim" a poll task from the solardin.cin_datum_stream_poll_task table that has a status of 'q'
  * and change the status to 'p' and return it. The tasks will be claimed from oldest to newest
  * based on the exec_at column.
  *

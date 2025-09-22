@@ -26,6 +26,7 @@ import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -255,7 +257,7 @@ public class CinJdbcTestUtils {
 	}
 
 	/**
-	 * Create a new datum stream configuration instance.
+	 * Create a new datum stream rake task instance.
 	 *
 	 * @param userId
 	 *        the user ID
@@ -297,6 +299,55 @@ public class CinJdbcTestUtils {
 		List<Map<String, Object>> data = jdbcOps.queryForList(
 				"select * from solardin.cin_datum_stream_poll_task ORDER BY user_id, ds_id");
 		log.debug("solardin.cin_datum_stream_poll_task table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * Create a new datum stream rake task instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param datumStreamId
+	 *        the datum stream ID
+	 * @param state
+	 *        the state
+	 * @param executeAt
+	 *        the execution time
+	 * @param offset
+	 *        the offset
+	 * @param message
+	 *        a message
+	 * @param serviceProps
+	 *        the service properties
+	 * @return the entity
+	 */
+	public static CloudDatumStreamRakeTaskEntity newCloudDatumStreamRakeTaskEntity(Long userId,
+			Long datumStreamId, BasicClaimableJobState state, Instant executeAt, Period offset,
+			String message, Map<String, Object> serviceProps) {
+		CloudDatumStreamRakeTaskEntity conf = new CloudDatumStreamRakeTaskEntity(
+				unassignedEntityIdKey(userId));
+		conf.setDatumStreamId(datumStreamId);
+		conf.setState(state);
+		conf.setExecuteAt(executeAt);
+		conf.setOffset(offset);
+		conf.setMessage(message);
+		conf.setServiceProps(serviceProps);
+		return conf;
+	}
+
+	/**
+	 * List datum stream rake task rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allCloudDatumStreamRakeTaskEntityData(
+			JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps.queryForList(
+				"select * from solardin.cin_datum_stream_rake_task ORDER BY user_id, ds_id, id");
+		log.debug("solardin.cin_datum_stream_rake_task table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}

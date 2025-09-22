@@ -44,7 +44,7 @@ dependencies {
 	// DAO
 	implementation 'org.mybatis:mybatis'
 	implementation 'org.mybatis:mybatis-spring'
-	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'org.postgresql:postgresql'
 	
 	// JAXB
 	implementation 'jakarta.xml.bind:jakarta.xml.bind-api'

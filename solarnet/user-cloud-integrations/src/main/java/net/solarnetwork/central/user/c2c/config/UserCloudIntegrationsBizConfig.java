@@ -40,6 +40,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.UserSettingsEntityDao;
@@ -50,7 +51,7 @@ import net.solarnetwork.central.user.c2c.biz.impl.DaoUserCloudIntegrationsBiz;
  * Configuration for user cloud integrations services.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -70,6 +71,9 @@ public class UserCloudIntegrationsBizConfig {
 
 	@Autowired
 	private CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
+
+	@Autowired
+	private CloudDatumStreamRakeTaskDao datumStreamRakeTaskDao;
 
 	@Autowired
 	private UserSettingsEntityDao userSettingsDao;
@@ -105,7 +109,7 @@ public class UserCloudIntegrationsBizConfig {
 		DaoUserCloudIntegrationsBiz biz = new DaoUserCloudIntegrationsBiz(Clock.systemUTC(),
 				userSettingsDao, integrationDao, datumStreamDao, datumStreamSettingsDao,
 				datumStreamMappingDao, datumStreamPropertyDao, datumStreamPollTaskDao,
-				clientAccessTokenDao, textEncryptor, integrationServices);
+				datumStreamRakeTaskDao, clientAccessTokenDao, textEncryptor, integrationServices);
 		return biz;
 	}
 

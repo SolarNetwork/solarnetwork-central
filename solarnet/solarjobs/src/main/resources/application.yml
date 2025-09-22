@@ -67,6 +67,14 @@ app:
         allow-core-thread-time-out: true
       service:
         shutdown-max-wait: "1m"
+    ds-rake:
+      executor:
+        thread-name-prefix: "SolarNet-C2C-DsRake-"
+        core-pool-size: 2
+        max-pool-size: 2
+        allow-core-thread-time-out: true
+      service:
+        shutdown-max-wait: "1m"
   datasource:
     hikari:
       minimumIdle: 1
@@ -148,6 +156,15 @@ app:
         maximum-wait-ms: 60000
         schedule: 60000
         minimum-age: "2h"
+      ds-rake:
+        maximum-iterations: 10
+        maximum-wait-ms: 900000
+        parallelism: 2
+        schedule: 60000
+      ds-rake-reset-abandoned:
+        maximum-wait-ms: 900000
+        schedule: 300000
+        minimum-age: "8h"
     datum:
       agg:
         hourly:
