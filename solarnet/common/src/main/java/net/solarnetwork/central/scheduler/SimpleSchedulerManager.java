@@ -30,10 +30,14 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
@@ -75,6 +79,8 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 
 	private SchedulerStatus status = SchedulerStatus.Starting;
 
+	private List<StartupScheduledFuture> startupFutures;
+
 	/**
 	 * Constructor.
 	 *
@@ -89,8 +95,14 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	}
 
 	@Override
-	public void serviceDidStartup() {
+	public synchronized void serviceDidStartup() {
 		status = SchedulerStatus.Running;
+		if ( startupFutures != null ) {
+			for ( StartupScheduledFuture f : startupFutures ) {
+				f.schedule();
+			}
+			startupFutures = null;
+		}
 	}
 
 	@Override
@@ -132,6 +144,14 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	@Override
 	public synchronized ScheduledFuture<?> scheduleJob(String groupId, String id, Runnable task,
 			Trigger trigger) {
+		if ( this.status == SchedulerStatus.Starting ) {
+			if ( startupFutures == null ) {
+				startupFutures = new ArrayList<>();
+			}
+			StartupScheduledFuture f = new StartupScheduledFuture(groupId, id, task, trigger);
+			startupFutures.add(f);
+			return f;
+		}
 		final Duration delay = getScheduleDelay();
 		if ( delay != null && delay.isPositive() ) {
 			log.info("Will schedule job {} after delay of {}", new JobKey(groupId, id).getDescription(),
@@ -159,6 +179,39 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 		} catch ( Exception e ) {
 			log.error("Error scheduling job [{}.{}]: {}", groupId, id, e.toString(), e);
 			throw e;
+		}
+	}
+
+	private class StartupScheduledFuture extends CompletableFuture<Void>
+			implements ScheduledFuture<Void> {
+
+		private final String groupId;
+		private final String id;
+		private final Runnable task;
+		private final Trigger trigger;
+
+		private StartupScheduledFuture(String groupId, String id, Runnable task, Trigger trigger) {
+			super();
+			this.groupId = groupId;
+			this.id = id;
+			this.task = task;
+			this.trigger = trigger;
+		}
+
+		@Override
+		public long getDelay(TimeUnit unit) {
+			return 0;
+		}
+
+		@Override
+		public int compareTo(Delayed o) {
+			return 0;
+		}
+
+		private void schedule() {
+			@SuppressWarnings("unused")
+			ScheduledFuture<?> unused = scheduleJob(groupId, id, task, trigger);
+			complete(null);
 		}
 	}
 
