@@ -137,7 +137,8 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 			log.info("Will schedule job {} after delay of {}", new JobKey(groupId, id).getDescription(),
 					delay);
 			return taskScheduler.schedule(() -> {
-				scheduleJobInternal(groupId, id, task, trigger);
+				@SuppressWarnings("unused")
+				ScheduledFuture<?> unused = scheduleJobInternal(groupId, id, task, trigger);
 			}, Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(delay));
 		}
 		return scheduleJobInternal(groupId, id, task, trigger);

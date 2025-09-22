@@ -132,8 +132,6 @@ public class DaoCloudDatumStreamRakeService
 	 *        the poll task DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
-	 * @param datumStreamSettingsDao
-	 *        the datum stream settings DAO
 	 * @param datumDao
 	 *        the datum DAO
 	 * @param executor
@@ -312,7 +310,7 @@ public class DaoCloudDatumStreamRakeService
 				return taskInfo;
 			}
 
-			/** The time zone of the datum stream. */
+			// The time zone of the datum stream.
 			ZoneId rakeZone = ZoneOffset.UTC;
 
 			if ( datumStream.getKind() == ObjectDatumKind.Node ) {
