@@ -69,6 +69,7 @@ import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamMappingConfigura
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskStateInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityBaseInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskStateInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamSettingsEntityInput;
@@ -656,6 +657,17 @@ public class UserCloudIntegrationsController {
 		URI loc = uriWithoutHost(fromMethodCall(on(UserCloudIntegrationsController.class)
 				.getCloudDatumStreamRakeTask(result.getConfigId())));
 		return ResponseEntity.created(loc).body(success(result));
+	}
+
+	@RequestMapping(value = "/datum-stream-rake-tasks/{datumStreamId}/tasks",
+			method = RequestMethod.POST)
+	public Result<List<CloudDatumStreamRakeTaskEntity>> replaceCloudDatumStreamRakeTasks(
+			@PathVariable("datumStreamId") Long datumStreamId,
+			@Valid @RequestBody List<CloudDatumStreamRakeTaskEntityBaseInput> inputs) {
+		final UserCloudIntegrationsBiz biz = biz();
+		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
+		var result = biz.replaceDatumStreamRakeTasks(id, inputs);
+		return success(result);
 	}
 
 	@RequestMapping(value = "/datum-stream-rake-tasks/{taskId}", method = RequestMethod.GET)

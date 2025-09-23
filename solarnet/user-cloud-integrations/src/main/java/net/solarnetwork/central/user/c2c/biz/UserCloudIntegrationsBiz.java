@@ -46,6 +46,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityBaseInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
@@ -57,7 +58,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Service API for SolarUser cloud integrations support.
  *
  * @author matt
- * @version 1.5
+ * @version 1.7
  */
 public interface UserCloudIntegrationsBiz {
 
@@ -419,5 +420,24 @@ public interface UserCloudIntegrationsBiz {
 	 * @since 1.5
 	 */
 	void deleteDatumStreamRakeTask(UserLongCompositePK id);
+
+	/**
+	 * Save a list of cloud datum stream rake tasks for a given datum stream.
+	 *
+	 * <p>
+	 * This method will first <b>delete</b> all tasks for the given
+	 * {@code datumStreamId}, then <b>insert</b> the given tasks
+	 * </p>
+	 * </p>
+	 *
+	 * @param datumStreamId
+	 *        the datum stream ID of the tasks to replace
+	 * @param inputs
+	 *        the task inputs to save
+	 * @return the saved tasks
+	 * @since 1.7
+	 */
+	List<CloudDatumStreamRakeTaskEntity> replaceDatumStreamRakeTasks(UserLongCompositePK datumStreamId,
+			List<CloudDatumStreamRakeTaskEntityBaseInput> inputs);
 
 }

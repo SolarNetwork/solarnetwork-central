@@ -33,13 +33,13 @@ import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskFilter;
+import net.solarnetwork.central.c2c.dao.jdbc.sql.DeleteCloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.InsertCloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.SelectCloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamRakeTaskEntityState;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
-import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.FilterResults;
@@ -148,18 +148,23 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 
 	@Override
 	public Collection<CloudDatumStreamRakeTaskEntity> getAll(List<SortDescriptor> sorts) {
-		throw new UnsupportedOperationException();
+		var filter = new BasicFilter();
+		var sql = new SelectCloudDatumStreamRakeTaskEntity(filter);
+		return jdbcOps.query(sql, CloudDatumStreamRakeTaskEntityRowMapper.INSTANCE);
 	}
-
-	private static final String TABLE_NAME = "solardin.cin_datum_stream_rake_task";
-	private static final String ID_COLUMN_NAME = "id";
-	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", ID_COLUMN_NAME };
 
 	@Override
 	public void delete(CloudDatumStreamRakeTaskEntity entity) {
-		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
-		jdbcOps.update(sql);
+		BasicFilter filter = new BasicFilter();
+		filter.setUserId(entity.getUserId());
+		filter.setTaskId(entity.getConfigId());
+		delete(filter);
+	}
+
+	@Override
+	public int delete(CloudDatumStreamRakeTaskFilter filter) {
+		var sql = new DeleteCloudDatumStreamRakeTaskEntity(filter);
+		return jdbcOps.update(sql);
 	}
 
 	@Override

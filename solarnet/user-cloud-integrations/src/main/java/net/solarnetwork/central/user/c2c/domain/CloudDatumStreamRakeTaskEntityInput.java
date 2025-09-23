@@ -22,47 +22,20 @@
 
 package net.solarnetwork.central.user.c2c.domain;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.time.Instant;
-import java.time.Period;
-import java.util.Map;
-import java.util.Set;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
-import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.domain.validation.PositiveTemporalAmount;
-import net.solarnetwork.central.domain.validation.StartStopClaimableJobState;
 
 /**
  * DTO for cloud datum stream rake task entity.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class CloudDatumStreamRakeTaskEntityInput {
+public class CloudDatumStreamRakeTaskEntityInput extends CloudDatumStreamRakeTaskEntityBaseInput {
 
 	@NotNull
 	private Long datumStreamId;
-
-	@NotNull
-	@StartStopClaimableJobState
-	private BasicClaimableJobState state;
-
-	@NotNull
-	private Instant executeAt;
-
-	@NotNull
-	@PositiveTemporalAmount
-	private Period offset;
-
-	@Size(max = 4096)
-	private String message;
-
-	private Map<String, Object> serviceProperties;
-
-	private Set<BasicClaimableJobState> requiredStates;
 
 	/**
 	 * Constructor.
@@ -71,20 +44,11 @@ public class CloudDatumStreamRakeTaskEntityInput {
 		super();
 	}
 
+	@Override
 	public CloudDatumStreamRakeTaskEntity toEntity(UserLongCompositePK id) {
-		CloudDatumStreamRakeTaskEntity conf = new CloudDatumStreamRakeTaskEntity(
-				requireNonNullArgument(id, "id"));
-		populateConfiguration(conf);
-		return conf;
-	}
-
-	private void populateConfiguration(CloudDatumStreamRakeTaskEntity conf) {
+		CloudDatumStreamRakeTaskEntity conf = super.toEntity(id);
 		conf.setDatumStreamId(datumStreamId);
-		conf.setState(state);
-		conf.setExecuteAt(executeAt);
-		conf.setOffset(offset);
-		conf.setMessage(message);
-		conf.setServiceProps(serviceProperties);
+		return conf;
 	}
 
 	/**
@@ -104,120 +68,6 @@ public class CloudDatumStreamRakeTaskEntityInput {
 	 */
 	public void setDatumStreamId(Long datumStreamId) {
 		this.datumStreamId = datumStreamId;
-	}
-
-	/**
-	 * Get the job state.
-	 *
-	 * @return the state
-	 */
-	public final BasicClaimableJobState getState() {
-		return state;
-	}
-
-	/**
-	 * Set the job state.
-	 *
-	 * @param state
-	 *        the state to set
-	 */
-	public final void setState(BasicClaimableJobState state) {
-		this.state = state;
-	}
-
-	/**
-	 * Get the offset at which the data should be queried.
-	 *
-	 * @return the offset
-	 */
-	public Period getOffset() {
-		return offset;
-	}
-
-	/**
-	 * Set the offset at which the data should be queried.
-	 *
-	 * @param offset
-	 *        the offset to set
-	 */
-	public void setOffset(Period offset) {
-		this.offset = offset;
-	}
-
-	/**
-	 * Get the time at which the job should next execute.
-	 *
-	 * @return the date
-	 */
-	public final Instant getExecuteAt() {
-		return executeAt;
-	}
-
-	/**
-	 * Set the time at which the job should next execute.
-	 *
-	 * @param executeAt
-	 *        the date to set
-	 */
-	public final void setExecuteAt(Instant executeAt) {
-		this.executeAt = executeAt;
-	}
-
-	/**
-	 * Get the status message.
-	 *
-	 * @return the message
-	 */
-	public final String getMessage() {
-		return message;
-	}
-
-	/**
-	 * Set the status message.
-	 *
-	 * @param message
-	 *        the message to set
-	 */
-	public final void setMessage(String message) {
-		this.message = message;
-	}
-
-	/**
-	 * Get the service properties.
-	 *
-	 * @return the service properties
-	 */
-	public Map<String, Object> getServiceProperties() {
-		return serviceProperties;
-	}
-
-	/**
-	 * Set the service properties to use.
-	 *
-	 * @param serviceProperties
-	 *        the service properties to set
-	 */
-	public void setServiceProperties(Map<String, Object> serviceProperties) {
-		this.serviceProperties = serviceProperties;
-	}
-
-	/**
-	 * Get a list of states the job must have in order to perform an update.
-	 *
-	 * @return the states, or {@literal null}
-	 */
-	public final Set<BasicClaimableJobState> getRequiredStates() {
-		return requiredStates;
-	}
-
-	/**
-	 * Set a list of states the job must have in order to perform an update.
-	 *
-	 * @param requiredStates
-	 *        the states to set, or {@literal null}
-	 */
-	public final void setRequiredStates(Set<BasicClaimableJobState> requiredStates) {
-		this.requiredStates = requiredStates;
 	}
 
 }

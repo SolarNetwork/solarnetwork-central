@@ -101,6 +101,7 @@ import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityBaseInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
@@ -116,7 +117,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.10
+ * @version 1.11
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
@@ -713,6 +714,38 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		requireNonNullArgument(id, "id");
 		requireNonNullArgument(id.getUserId(), "id.userId");
 		datumStreamRakeTaskDao.delete(datumStreamRakeTaskDao.entityKey(id));
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
+	public List<CloudDatumStreamRakeTaskEntity> replaceDatumStreamRakeTasks(
+			UserLongCompositePK datumStreamId, List<CloudDatumStreamRakeTaskEntityBaseInput> inputs) {
+		requireNonNullArgument(datumStreamId, "datumStreamId");
+		if ( !(datumStreamId.userIdIsAssigned() && datumStreamId.entityIdIsAssigned()) ) {
+			throw new IllegalArgumentException(
+					"The datum stream userId and entityId components must be provided.");
+		}
+
+		requireNonNullArgument(inputs, "inputs");
+
+		// delete all for given datum stream ID
+		final var deleteFilter = new BasicFilter();
+		deleteFilter.setUserId(datumStreamId.getUserId());
+		deleteFilter.setDatumStreamId(datumStreamId.getEntityId());
+		datumStreamRakeTaskDao.delete(deleteFilter);
+
+		// then insert properties
+		final UserLongCompositePK unassignedId = UserLongCompositePK
+				.unassignedEntityIdKey(datumStreamId.getUserId());
+		final var result = new ArrayList<CloudDatumStreamRakeTaskEntity>(inputs.size());
+		for ( var input : inputs ) {
+			// force datum stream ID
+			validateInput(input);
+			var task = input.toEntity(unassignedId);
+			task.setDatumStreamId(datumStreamId.getEntityId());
+			result.add(datumStreamRakeTaskDao.get(datumStreamRakeTaskDao.save(task)));
+		}
+		return result;
 	}
 
 	private void validateInput(final Object input) {
