@@ -94,7 +94,7 @@ public interface CloudDatumStreamRakeTaskDao
 	/**
 	 * Remove persisted entities matching a filter.
 	 *
-	 * @param entifilterty
+	 * @param filter
 	 *        the delete criteria
 	 * @since 1.1
 	 */
