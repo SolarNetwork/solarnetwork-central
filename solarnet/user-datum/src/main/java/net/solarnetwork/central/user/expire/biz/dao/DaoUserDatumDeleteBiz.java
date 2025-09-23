@@ -46,7 +46,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -588,7 +587,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	}
 
 	/**
-	 * Get the event admin service.
+	 * Get the event publisher service.
 	 *
 	 * @return the service
 	 */
@@ -597,10 +596,10 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	}
 
 	/**
-	 * Configure an {@link EventAdmin} service for posting status events.
+	 * Configure an {@link AppEventPublisher} service for posting status events.
 	 *
 	 * @param eventPublisher
-	 *        the optional event admin service
+	 *        the event publisher service
 	 */
 	public void setEventPublisher(AppEventPublisher eventPublisher) {
 		this.eventPublisher = eventPublisher;

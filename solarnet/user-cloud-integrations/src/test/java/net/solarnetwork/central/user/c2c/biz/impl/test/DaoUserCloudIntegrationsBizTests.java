@@ -46,6 +46,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.time.Instant;
+import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
@@ -72,6 +73,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.UserSettingsEntityDao;
@@ -80,6 +82,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -97,6 +100,7 @@ import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamConfigurationInp
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamMappingConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -111,7 +115,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Test cases for the {@link DaoUserCloudIntegrationsBiz} class.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -135,6 +139,9 @@ public class DaoUserCloudIntegrationsBizTests {
 
 	@Mock
 	private CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
+
+	@Mock
+	private CloudDatumStreamRakeTaskDao datumStreamRakeTaskDao;
 
 	@Mock
 	private CloudIntegrationService integrationService;
@@ -165,6 +172,9 @@ public class DaoUserCloudIntegrationsBizTests {
 
 	@Captor
 	private ArgumentCaptor<CloudDatumStreamPollTaskEntity> datumStreamPollTaskCaptor;
+
+	@Captor
+	private ArgumentCaptor<CloudDatumStreamRakeTaskEntity> datumStreamRakeTaskCaptor;
 
 	@Captor
 	private ArgumentCaptor<UserSettingsEntity> userSettingsCaptor;
@@ -200,7 +210,7 @@ public class DaoUserCloudIntegrationsBizTests {
 
 		biz = new DaoUserCloudIntegrationsBiz(clock, userSettingsDao, integrationDao, datumStreamDao,
 				datumStreamSettingsDao, datumStreamMappingDao, datumStreamPropertyDao,
-				datumStreamPollTaskDao, clientAccessTokenDao, textEncryptor,
+				datumStreamPollTaskDao, datumStreamRakeTaskDao, clientAccessTokenDao, textEncryptor,
 				Collections.singleton(integrationService));
 
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
@@ -1454,6 +1464,270 @@ public class DaoUserCloudIntegrationsBizTests {
 		and.then(result)
 			.as("2nd DAO result returned")
 			.isSameAs(conf2)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumStreamRakeTaskEntity_save_create() {
+		// GIVEN
+		Long userId = randomLong();
+		Long entityId = randomLong();
+		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk);
+
+		// save and retrieve
+		given(datumStreamRakeTaskDao.save(any(CloudDatumStreamRakeTaskEntity.class))).willReturn(pk);
+		given(datumStreamRakeTaskDao.get(pk)).willReturn(entity);
+
+		// WHEN
+		Map<String, Object> sprops = new LinkedHashMap<>(4);
+		sprops.put("foo", "bar");
+
+		CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
+		input.setDatumStreamId(randomLong());
+		input.setState(Queued);
+		input.setExecuteAt(now());
+		input.setOffset(Period.ofDays(1));
+		input.setMessage(randomString());
+		input.setServiceProperties(new LinkedHashMap<>(sprops));
+		UserLongCompositePK unassignedPk = UserLongCompositePK.unassignedEntityIdKey(userId);
+		CloudDatumStreamRakeTaskEntity result = biz.saveDatumStreamRakeTask(unassignedPk, input);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamRakeTaskDao).should().save(datumStreamRakeTaskCaptor.capture());
+
+		and.then(datumStreamRakeTaskCaptor.getValue())
+			.as("Entity ID on DAO save is argument to service")
+			.returns(unassignedPk, from(CloudDatumStreamRakeTaskEntity::getId))
+			.as("Datum stream ID from input passed to DAO")
+			.returns(input.getDatumStreamId(), from(CloudDatumStreamRakeTaskEntity::getDatumStreamId))
+			.as("State from input passed to DAO")
+			.returns(input.getState(), from(CloudDatumStreamRakeTaskEntity::getState))
+			.as("Exec date input passed to DAO")
+			.returns(input.getExecuteAt(), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
+			.as("Offset from input passed to DAO")
+			.returns(input.getOffset(), from(CloudDatumStreamRakeTaskEntity::getOffset))
+			.as("Message from input passed to DAO")
+			.returns(input.getMessage(), from(CloudDatumStreamRakeTaskEntity::getMessage))
+			.as("Service properties from input passed to DAO")
+			.returns(input.getServiceProperties(), from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
+			;
+
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(entity)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumStreamRakeTaskEntity_save_update() {
+		// GIVEN
+		Long userId = randomLong();
+		Long entityId = randomLong();
+		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk);
+
+		// save and retrieve
+		given(datumStreamRakeTaskDao.save(any(CloudDatumStreamRakeTaskEntity.class))).willReturn(pk);
+		given(datumStreamRakeTaskDao.get(pk)).willReturn(entity);
+
+		// WHEN
+		Map<String, Object> sprops = new LinkedHashMap<>(4);
+		sprops.put("foo", "bar");
+
+		CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
+		input.setDatumStreamId(randomLong());
+		input.setState(Queued);
+		input.setExecuteAt(now());
+		input.setOffset(Period.ofDays(1));
+		input.setMessage(randomString());
+		input.setServiceProperties(new LinkedHashMap<>(sprops));
+		CloudDatumStreamRakeTaskEntity result = biz.saveDatumStreamRakeTask(pk, input);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamRakeTaskDao).should().save(datumStreamRakeTaskCaptor.capture());
+
+		and.then(datumStreamRakeTaskCaptor.getValue())
+			.as("Entity ID on DAO save is argument to service")
+			.returns(pk, from(CloudDatumStreamRakeTaskEntity::getId))
+			.as("Datum stream ID from input passed to DAO")
+			.returns(input.getDatumStreamId(), from(CloudDatumStreamRakeTaskEntity::getDatumStreamId))
+			.as("State from input passed to DAO")
+			.returns(input.getState(), from(CloudDatumStreamRakeTaskEntity::getState))
+			.as("Exec date input passed to DAO")
+			.returns(input.getExecuteAt(), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
+			.as("Offset from input passed to DAO")
+			.returns(input.getOffset(), from(CloudDatumStreamRakeTaskEntity::getOffset))
+			.as("Message from input passed to DAO")
+			.returns(input.getMessage(), from(CloudDatumStreamRakeTaskEntity::getMessage))
+			.as("Service properties from input passed to DAO")
+			.returns(input.getServiceProperties(), from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
+			;
+
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(entity)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumStreamRakeTaskEntity_save_invalidState() {
+		// GIVEN
+		Long userId = randomLong();
+		Long entityId = randomLong();
+		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+
+		CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
+		input.setExecuteAt(now());
+		input.setOffset(Period.ofDays(1));
+
+		// WHEN
+		for ( BasicClaimableJobState state : EnumSet.complementOf(EnumSet.of(Queued, Completed)) ) {
+			input.setState(state);
+			ValidationException ex = catchThrowableOfType(ValidationException.class,
+					() -> biz.saveDatumStreamRakeTask(pk, input));
+
+			// THEN
+			// @formatter:off
+			and.then(ex)
+				.as("Validation exception is thrown because not allowed set %s state", state)
+				.isNotNull()
+				.extracting(e -> e.getErrors().getFieldError("state"))
+				.as("Validation is on the state field")
+				.isNotNull()
+				;
+			// @formatter:on
+		}
+	}
+
+	@Test
+	public void datumStreamRakeTaskEntity_save_expectedState() {
+		// GIVEN
+		Long userId = randomLong();
+		Long entityId = randomLong();
+		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk);
+
+		// save and retrieve
+		given(datumStreamRakeTaskDao.updateTask(any(CloudDatumStreamRakeTaskEntity.class),
+				eq(Completed))).willReturn(true);
+		given(datumStreamRakeTaskDao.get(pk)).willReturn(entity);
+
+		// WHEN
+		Map<String, Object> sprops = new LinkedHashMap<>(4);
+		sprops.put("foo", "bar");
+
+		CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
+		input.setDatumStreamId(randomLong());
+		input.setState(Queued);
+		input.setExecuteAt(now());
+		input.setOffset(Period.ofDays(1));
+		input.setMessage(randomString());
+		input.setServiceProperties(new LinkedHashMap<>(sprops));
+		CloudDatumStreamRakeTaskEntity result = biz.saveDatumStreamRakeTask(pk, input, Completed);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamRakeTaskDao).should().updateTask(datumStreamRakeTaskCaptor.capture(), eq(Completed));
+
+		and.then(datumStreamRakeTaskCaptor.getValue())
+			.as("Entity ID on DAO save is argument to service")
+			.returns(pk, from(CloudDatumStreamRakeTaskEntity::getId))
+			.as("Datum stream ID from input passed to DAO")
+			.returns(input.getDatumStreamId(), from(CloudDatumStreamRakeTaskEntity::getDatumStreamId))
+			.as("State from input passed to DAO")
+			.returns(input.getState(), from(CloudDatumStreamRakeTaskEntity::getState))
+			.as("Exec date input passed to DAO")
+			.returns(input.getExecuteAt(), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
+			.as("Offset from input passed to DAO")
+			.returns(input.getOffset(), from(CloudDatumStreamRakeTaskEntity::getOffset))
+			.as("Message from input passed to DAO")
+			.returns(input.getMessage(), from(CloudDatumStreamRakeTaskEntity::getMessage))
+			.as("Service properties from input passed to DAO")
+			.returns(input.getServiceProperties(), from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
+			;
+
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(entity)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumStreamRakeTaskEntity_updateState() {
+		// GIVEN
+		Long userId = randomLong();
+		Long entityId = randomLong();
+		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk);
+
+		// save and retrieve
+		given(datumStreamRakeTaskDao.updateTaskState(pk, Queued)).willReturn(true);
+		given(datumStreamRakeTaskDao.get(pk)).willReturn(entity);
+
+		// WHEN
+		CloudDatumStreamRakeTaskEntity result = biz.updateDatumStreamRakeTaskState(pk, Queued);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(entity)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumStreamRakeTaskEntity_updateState_expectedState() {
+		// GIVEN
+		Long userId = randomLong();
+		Long entityId = randomLong();
+		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk);
+
+		// save and retrieve
+		given(datumStreamRakeTaskDao.updateTaskState(pk, Queued, Completed)).willReturn(true);
+		given(datumStreamRakeTaskDao.get(pk)).willReturn(entity);
+
+		// WHEN
+		CloudDatumStreamRakeTaskEntity result = biz.updateDatumStreamRakeTaskState(pk, Queued,
+				Completed);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(entity)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumStreamRakeTaskEntity_delete() {
+		// GIVEN
+		Long userId = randomLong();
+		Long entityId = randomLong();
+		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk);
+
+		given(datumStreamRakeTaskDao.entityKey(pk)).willReturn(entity);
+
+		// WHEN
+		biz.deleteDatumStreamRakeTask(pk);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamRakeTaskDao).should().delete(datumStreamRakeTaskCaptor.capture());
+
+		and.then(datumStreamRakeTaskCaptor.getValue())
+			.as("DAO passed entity returned from entityKey()")
+			.isSameAs(entity)
 			;
 		// @formatter:on
 	}

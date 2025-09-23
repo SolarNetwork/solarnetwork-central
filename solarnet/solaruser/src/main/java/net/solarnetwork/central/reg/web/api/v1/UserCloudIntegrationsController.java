@@ -55,6 +55,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -68,6 +69,8 @@ import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamMappingConfigura
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskStateInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskStateInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamSettingsEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
@@ -81,7 +84,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Web service API for cloud integrations management.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 @Profile(SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS)
 @GlobalExceptionRestController
@@ -631,4 +634,72 @@ public class UserCloudIntegrationsController {
 		}
 		return success(biz.updateDatumStreamPollTaskState(id, input.getState(), requiredStates));
 	}
+
+	/*-=======================
+	 * Datum Stream Rake Tasks
+	 *-======================= */
+
+	@RequestMapping(value = "/datum-stream-rake-tasks", method = RequestMethod.GET)
+	public Result<FilterResults<CloudDatumStreamRakeTaskEntity, UserLongCompositePK>> listCloudDatumStreamRakeTasks(
+			BasicFilter filter) {
+		final UserCloudIntegrationsBiz biz = biz();
+		var result = biz.listDatumStreamRakeTasksForUser(getCurrentActorUserId(), filter);
+		return success(result);
+	}
+
+	@RequestMapping(value = "/datum-stream-rake-tasks", method = RequestMethod.POST)
+	public ResponseEntity<Result<CloudDatumStreamRakeTaskEntity>> createCloudDatumStreamRakeTask(
+			@Valid @RequestBody CloudDatumStreamRakeTaskEntityInput input) {
+		final UserCloudIntegrationsBiz biz = biz();
+		var id = UserLongCompositePK.unassignedEntityIdKey(getCurrentActorUserId());
+		var result = biz.saveDatumStreamRakeTask(id, input);
+		URI loc = uriWithoutHost(fromMethodCall(on(UserCloudIntegrationsController.class)
+				.getCloudDatumStreamRakeTask(result.getConfigId())));
+		return ResponseEntity.created(loc).body(success(result));
+	}
+
+	@RequestMapping(value = "/datum-stream-rake-tasks/{taskId}", method = RequestMethod.GET)
+	public Result<CloudDatumStreamRakeTaskEntity> getCloudDatumStreamRakeTask(
+			@PathVariable("taskId") Long taskId) {
+		final UserCloudIntegrationsBiz biz = biz();
+		final BasicFilter filter = new BasicFilter();
+		filter.setTaskId(taskId);
+		var result = biz.listDatumStreamRakeTasksForUser(getCurrentActorUserId(), filter);
+		return success(result.getReturnedResultCount() > 0 ? result.iterator().next() : null);
+	}
+
+	@RequestMapping(value = "/datum-stream-rake-tasks/{taskId}", method = RequestMethod.PUT)
+	public Result<CloudDatumStreamRakeTaskEntity> updateCloudDatumStreamRakeTask(
+			@PathVariable("taskId") Long taskId,
+			@Valid @RequestBody CloudDatumStreamRakeTaskEntityInput input) {
+		final UserCloudIntegrationsBiz biz = biz();
+		var id = new UserLongCompositePK(getCurrentActorUserId(), taskId);
+		BasicClaimableJobState[] requiredStates = null;
+		if ( input.getRequiredStates() != null && !input.getRequiredStates().isEmpty() ) {
+			requiredStates = input.getRequiredStates().toArray(BasicClaimableJobState[]::new);
+		}
+		return success(biz.saveDatumStreamRakeTask(id, input, requiredStates));
+	}
+
+	@RequestMapping(value = "/datum-stream-rake-tasks/{taskId}", method = RequestMethod.DELETE)
+	public Result<Void> deleteCloudDatumStreamRakeTask(@PathVariable("taskId") Long taskId) {
+		final UserCloudIntegrationsBiz biz = biz();
+		var id = new UserLongCompositePK(getCurrentActorUserId(), taskId);
+		biz.deleteDatumStreamRakeTask(id);
+		return success();
+	}
+
+	@RequestMapping(value = "/datum-stream-rake-tasks/{taskId}/state", method = RequestMethod.POST)
+	public Result<CloudDatumStreamRakeTaskEntity> updateCloudDatumStreamRakeTaskState(
+			@PathVariable("taskId") Long taskId,
+			@Valid @RequestBody CloudDatumStreamRakeTaskStateInput input) {
+		final UserCloudIntegrationsBiz biz = biz();
+		var id = new UserLongCompositePK(getCurrentActorUserId(), taskId);
+		BasicClaimableJobState[] requiredStates = null;
+		if ( input.getRequiredStates() != null && !input.getRequiredStates().isEmpty() ) {
+			requiredStates = input.getRequiredStates().toArray(BasicClaimableJobState[]::new);
+		}
+		return success(biz.updateDatumStreamRakeTaskState(id, input.getState(), requiredStates));
+	}
+
 }

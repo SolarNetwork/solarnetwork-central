@@ -986,25 +986,6 @@ public final class DatumUtils {
 	}
 
 	/**
-	 * Convert an {@link ObjectDatumKind} to a
-	 * {@link net.solarnetwork.domain.datum.ObjectDatumKind}.
-	 *
-	 * @param kind
-	 *        the kind to convert
-	 * @return the converted instance, or {@literal null} if {@code kind} is
-	 *         {@literal null}
-	 * @since 1.7
-	 */
-	public static net.solarnetwork.domain.datum.ObjectDatumKind toCommonObjectDatumKind(
-			ObjectDatumKind kind) {
-		return switch (kind) {
-			case Node -> ObjectDatumKind.Node;
-			case Location -> ObjectDatumKind.Location;
-			default -> null;
-		};
-	}
-
-	/**
 	 * Convert a {@link ObjectDatumStreamMetadata} to a
 	 * {@link BasicObjectDatumStreamMetadata}.
 	 *
@@ -1025,8 +1006,8 @@ public final class DatumUtils {
 			return null;
 		}
 		return new BasicObjectDatumStreamMetadata(meta.getStreamId(), meta.getTimeZoneId(),
-				toCommonObjectDatumKind(meta.getKind()), meta.getObjectId(), meta.getSourceId(),
-				meta.getLocation(), meta.propertyNamesForType(DatumSamplesType.Instantaneous),
+				meta.getKind(), meta.getObjectId(), meta.getSourceId(), meta.getLocation(),
+				meta.propertyNamesForType(DatumSamplesType.Instantaneous),
 				meta.propertyNamesForType(DatumSamplesType.Accumulating),
 				meta.propertyNamesForType(DatumSamplesType.Status), null);
 	}

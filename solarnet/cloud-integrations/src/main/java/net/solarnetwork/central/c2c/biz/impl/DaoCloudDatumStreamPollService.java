@@ -36,7 +36,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
@@ -79,13 +78,27 @@ import net.solarnetwork.util.StringNaturalSortComparator;
  * DAO based implementation of {@link CloudDatumStreamPollService}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class DaoCloudDatumStreamPollService
 		implements CloudDatumStreamPollService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
 
 	/** The {@code shutdownMaxWait} property default value: 1 minute. */
 	public static final Duration DEFAULT_SHUTDOWN_MAX_WAIT = Duration.ofMinutes(1);
+
+	/**
+	 * The {@code fastRescheduleMinLag} property default value: 1 day.
+	 *
+	 * @since 1.7
+	 */
+	public static final Duration DEFAULT_FAST_RESCHEDULE_MIN_LAG = Duration.ofDays(1);
+
+	/**
+	 * The {@code fastRescheduleAmount} property default value: 5 minutes.
+	 *
+	 * @since 1.7
+	 */
+	public static final Duration DEFAULT_FAST_RESCHEDULE_AMOUNT = Duration.ofMinutes(5);
 
 	/** The {@code defaultDatumStreamSettings} default value. */
 	public static final CloudDatumStreamSettings DEFAULT_DATUM_STREAM_SETTINGS = new BasicCloudDatumStreamSettings(
@@ -102,6 +115,8 @@ public class DaoCloudDatumStreamPollService
 	private final DatumWriteOnlyDao datumDao;
 	private final ExecutorService executorService;
 	private final Function<String, CloudDatumStreamService> datumStreamServiceProvider;
+	private Duration fastRescheduleMinLag = DEFAULT_FAST_RESCHEDULE_MIN_LAG;
+	private Duration fastRescheduleAmount = DEFAULT_FAST_RESCHEDULE_AMOUNT;
 	private Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
 	private CloudDatumStreamSettings defaultDatumStreamSettings = DEFAULT_DATUM_STREAM_SETTINGS;
 	private DatumProcessor fluxPublisher;
@@ -192,14 +207,14 @@ public class DaoCloudDatumStreamPollService
 		try {
 			return executorService.submit(new CloudDatumStreamPollTask(task));
 		} catch ( RejectedExecutionException e ) {
-			log.warn("Datum stream poll task execution rejected, resetting state to Queued: {}",
+			log.debug("Datum stream poll task execution rejected, resetting state to Queued: {}",
 					e.getMessage());
 			// go back to queued
 			if ( !taskDao.updateTaskState(task.getId(), Queued, task.getState()) ) {
 				log.warn("Failed to update rejected datum stream poll task {} state from {} to Queued",
 						task.getId().ident(), task.getState());
 			}
-			return CompletableFuture.failedFuture(e);
+			throw e;
 		}
 	}
 
@@ -291,8 +306,6 @@ public class DaoCloudDatumStreamPollService
 						eventForConfiguration(datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg));
 				taskInfo.setMessage(errMsg);
 				taskInfo.setState(Completed); // stop processing job
-				userEventAppenderBiz.addEvent(taskInfo.getUserId(),
-						eventForConfiguration(taskInfo.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg));
 				taskDao.updateTask(taskInfo, startState);
 				return taskInfo;
 			}
@@ -318,7 +331,7 @@ public class DaoCloudDatumStreamPollService
 
 			// save task state to Executing (TODO maybe we don't need this step?)
 			if ( !taskDao.updateTaskState(taskInfo.getId(), Executing, startState) ) {
-				log.warn("Failed to reset poll task {} to execution @ {} starting @ {}",
+				log.warn("Failed to update poll task {} state to Executing @ {} starting @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to update task state from Claimed to Executing.";
 				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStreamIdent);
@@ -444,15 +457,22 @@ public class DaoCloudDatumStreamPollService
 			var now = clock.instant();
 			var ctx = new SimpleTriggerContext(clock);
 			Instant nextExecTime = execDate;
-			while ( nextExecTime.isBefore(now) ) {
-				// skip any missed execution times between last actual execution and now...
-				ctx.update(nextExecTime,
-						(ctx.lastScheduledExecution() == null ? execTime : nextExecTime), now);
-				Instant net = schedule.nextExecution(ctx);
-				if ( net == null ) {
-					break;
+			if ( fastRescheduleMinLag.isPositive() && Duration.between(taskInfo.getStartAt(), now)
+					.compareTo(fastRescheduleMinLag) > 0 ) {
+				log.info("Fast-rescheduling datum stream [{}] by {} to catch stream up",
+						datumStreamIdent, fastRescheduleAmount);
+				nextExecTime = now.plus(fastRescheduleAmount).truncatedTo(ChronoUnit.SECONDS);
+			} else {
+				while ( nextExecTime.isBefore(now) ) {
+					// skip any missed execution times between last actual execution and now...
+					ctx.update(nextExecTime,
+							(ctx.lastScheduledExecution() == null ? execTime : nextExecTime), now);
+					Instant net = schedule.nextExecution(ctx);
+					if ( net == null ) {
+						break;
+					}
+					nextExecTime = net.truncatedTo(ChronoUnit.SECONDS);
 				}
-				nextExecTime = net.truncatedTo(ChronoUnit.SECONDS);
 			}
 			taskInfo.setExecuteAt(nextExecTime);
 
@@ -467,8 +487,8 @@ public class DaoCloudDatumStreamPollService
 
 			// save task state
 			if ( !taskDao.updateTask(taskInfo, Executing) ) {
-				log.warn("Failed to reset poll task {} to execution @ {} starting @ {}",
-						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
+				log.warn("Failed to reset poll task {} @ {} starting @ {}", datumStreamIdent,
+						taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to reset task state.";
 				var errData = Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
 						taskInfo.getStartAt());
@@ -593,6 +613,62 @@ public class DaoCloudDatumStreamPollService
 	 */
 	public void setFluxPublisher(DatumProcessor fluxPublisher) {
 		this.fluxPublisher = fluxPublisher;
+	}
+
+	/**
+	 * Get the "fast reschedule" minimum lag.
+	 *
+	 * @return the duration; defaults to
+	 *         {@link #DEFAULT_FAST_RESCHEDULE_MIN_LAG}
+	 * @since 1.7
+	 */
+	public Duration getFastRescheduleMinLag() {
+		return fastRescheduleMinLag;
+	}
+
+	/**
+	 * Set the "fast reschedule" minimum lag.
+	 *
+	 * <p>
+	 * This is the amount of time in the past a task's {@code startAt} must be
+	 * to "fast reschedule" a task.
+	 * </p>
+	 *
+	 * @param fastRescheduleMinLag
+	 *        the duration to set; if {@code null} then
+	 *        {@link #DEFAULT_FAST_RESCHEDULE_MIN_LAG} will be used
+	 * @since 1.7
+	 */
+	public void setFastRescheduleMinLag(Duration fastRescheduleMinLag) {
+		this.fastRescheduleMinLag = (fastRescheduleMinLag != null ? fastRescheduleMinLag
+				: DEFAULT_FAST_RESCHEDULE_MIN_LAG);
+	}
+
+	/**
+	 * Get the "fast reschedule" amount.
+	 *
+	 * @return the duration; defaults to {@link #DEFAULT_FAST_RESCHEDULE_AMOUNT}
+	 * @since 1.7
+	 */
+	public Duration getFastRescheduleAmount() {
+		return fastRescheduleAmount;
+	}
+
+	/**
+	 * Set the "fast reschedule" amount.
+	 *
+	 * <p>
+	 * This is the amount of time in the future to "fast reschedule" a task at.
+	 * </p>
+	 *
+	 * @param fastRescheduleAmount
+	 *        the duration to set; if {@code null} then
+	 *        {@link #DEFAULT_FAST_RESCHEDULE_AMOUNT} will be used
+	 * @since 1.7
+	 */
+	public void setFastRescheduleAmount(Duration fastRescheduleAmount) {
+		this.fastRescheduleAmount = (fastRescheduleAmount != null ? fastRescheduleAmount
+				: DEFAULT_FAST_RESCHEDULE_AMOUNT);
 	}
 
 }

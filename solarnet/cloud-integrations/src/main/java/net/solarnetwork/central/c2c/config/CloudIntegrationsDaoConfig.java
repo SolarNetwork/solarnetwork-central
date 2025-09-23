@@ -32,6 +32,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.UserSettingsEntityDao;
@@ -39,6 +40,7 @@ import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDa
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamRakeTaskDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcUserSettingsEntityDao;
@@ -47,7 +49,7 @@ import net.solarnetwork.central.c2c.dao.jdbc.JdbcUserSettingsEntityDao;
  * Cloud integrations DAO configuration.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -104,6 +106,17 @@ public class CloudIntegrationsDaoConfig {
 	@Bean
 	public CloudDatumStreamPollTaskDao cloudDatumStreamPollTaskDaoDao() {
 		return new JdbcCloudDatumStreamPollTaskDao(jdbcOperations);
+	}
+
+	/**
+	 * The cloud datum stream rake task DAO.
+	 *
+	 * @return the DAO
+	 * @since 1.3
+	 */
+	@Bean
+	public CloudDatumStreamRakeTaskDao cloudDatumStreamRakeTaskDaoDao() {
+		return new JdbcCloudDatumStreamRakeTaskDao(jdbcOperations);
 	}
 
 	/**

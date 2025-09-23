@@ -35,7 +35,7 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * Constants and helpers for cloud integration user event handling.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface CloudIntegrationsUserEvents {
 
@@ -70,6 +70,13 @@ public interface CloudIntegrationsUserEvents {
 
 	/** A user event tag for a datum stream poll event. */
 	String POLL_TAG = "poll";
+
+	/**
+	 * A user event tag for a datum stream rake event.
+	 *
+	 * @since 1.4
+	 */
+	String RAKE_TAG = "rake";
 
 	/** User event data key for a configuration ID. */
 	String CONFIG_ID_DATA_KEY = "configId";
@@ -111,6 +118,22 @@ public interface CloudIntegrationsUserEvents {
 	 * @since 1.1
 	 */
 	List<String> INTEGRATION_POLL_TAGS = INTEGRATION_POLL_ERROR_TAGS.stream()
+			.filter(t -> !ERROR_TAG.equals(t)).toList();
+
+	/**
+	 * Tags for a rake error event.
+	 *
+	 * @since 1.4
+	 */
+	List<String> INTEGRATION_RAKE_ERROR_TAGS = List.of(CLOUD_INTEGRATIONS_TAG, ERROR_TAG,
+			CLOUD_DATUM_STREAM_TAG, RAKE_TAG);
+
+	/**
+	 * Tags for a non-error rake events.
+	 *
+	 * @since 1.4
+	 */
+	List<String> INTEGRATION_RAKE_TAGS = INTEGRATION_RAKE_ERROR_TAGS.stream()
 			.filter(t -> !ERROR_TAG.equals(t)).toList();
 
 	/**

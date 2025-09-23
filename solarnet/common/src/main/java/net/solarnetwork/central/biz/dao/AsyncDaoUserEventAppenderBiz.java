@@ -44,6 +44,7 @@ import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.StatTracker;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
@@ -53,7 +54,7 @@ import net.solarnetwork.util.UuidGenerator;
  * Asynchronous {@link UserEventAppenderBiz}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class AsyncDaoUserEventAppenderBiz
 		implements UserEventAppenderBiz, PingTest, ServiceLifecycleObserver, Runnable {
@@ -202,9 +203,10 @@ public class AsyncDaoUserEventAppenderBiz
 					while ( root.getCause() != null ) {
 						root = root.getCause();
 					}
-					if ( root instanceof IllegalArgumentException iae ) {
+					if ( root instanceof IllegalArgumentException
+							|| root instanceof RemoteServiceException ) {
 						log.warn("Unable to publish UserEvent {} to SolarFlux: {}", event,
-								iae.getMessage());
+								root.getMessage());
 					} else {
 						log.warn("Error publishing UserEvent {} to SolarFlux: {}", event,
 								root.toString(), root);

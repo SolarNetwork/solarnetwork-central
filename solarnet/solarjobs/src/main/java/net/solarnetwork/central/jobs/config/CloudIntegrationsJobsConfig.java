@@ -30,15 +30,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.task.AsyncTaskExecutor;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamRakeService;
 import net.solarnetwork.central.c2c.job.CloudDatumStreamPollTaskProcessor;
 import net.solarnetwork.central.c2c.job.CloudDatumStreamPollTaskResetAbandoned;
+import net.solarnetwork.central.c2c.job.CloudDatumStreamRakeTaskProcessor;
+import net.solarnetwork.central.c2c.job.CloudDatumStreamRakeTaskResetAbandoned;
 import net.solarnetwork.central.scheduler.ManagedJob;
 
 /**
  * Cloud integrations jobs configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Profile(CLOUD_INTEGRATIONS)
 @Configuration(proxyBeanMethods = false)
@@ -46,6 +49,9 @@ public class CloudIntegrationsJobsConfig {
 
 	@Autowired
 	private CloudDatumStreamPollService cloudDatumStreamPollService;
+
+	@Autowired
+	private CloudDatumStreamRakeService cloudDatumStreamRakeService;
 
 	@Autowired
 	private AsyncTaskExecutor taskExecutor;
@@ -62,6 +68,20 @@ public class CloudIntegrationsJobsConfig {
 	@Bean
 	public ManagedJob cloudDatumStreamPollTaskResetAbandonedJob() {
 		return new CloudDatumStreamPollTaskResetAbandoned(cloudDatumStreamPollService);
+	}
+
+	@ConfigurationProperties(prefix = "app.job.c2c.ds-rake")
+	@Bean
+	public ManagedJob cloudDatumStreamRakeTaskProcessor() {
+		var job = new CloudDatumStreamRakeTaskProcessor(cloudDatumStreamRakeService);
+		job.setParallelTaskExecutor(taskExecutor);
+		return job;
+	}
+
+	@ConfigurationProperties(prefix = "app.job.c2c.ds-rake-reset-abandoned")
+	@Bean
+	public ManagedJob cloudDatumStreamRakeTaskResetAbandonedJob() {
+		return new CloudDatumStreamRakeTaskResetAbandoned(cloudDatumStreamRakeService);
 	}
 
 }
