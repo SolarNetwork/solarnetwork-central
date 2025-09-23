@@ -79,8 +79,6 @@ public class CloudDatumStreamRakeTaskEntity
 	 *
 	 * @param id
 	 *        the primary key
-	 * @param created
-	 *        the creation date
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -95,8 +93,6 @@ public class CloudDatumStreamRakeTaskEntity
 	 *        the user ID
 	 * @param configId
 	 *        the configuration ID
-	 * @param created
-	 *        the creation date
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */

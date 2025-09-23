@@ -441,7 +441,7 @@ public final class CommonJdbcUtils {
 	/**
 	 * Get a Period from an INTERVAL column value.
 	 * 
-	 * @param o
+	 * @param value
 	 *        the column number to get as a Period
 	 * @return the period, or {@code null} if the column value is null
 	 * @throws IllegalArgumentException

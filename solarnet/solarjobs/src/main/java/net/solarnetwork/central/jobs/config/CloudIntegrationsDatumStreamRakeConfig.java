@@ -42,9 +42,7 @@ import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguratio
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
-import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.scheduler.ThreadPoolTaskExecutorPingTest;
 import net.solarnetwork.service.PingTest;
@@ -75,14 +73,7 @@ public class CloudIntegrationsDatumStreamRakeConfig implements SolarNetCloudInte
 	private CloudDatumStreamConfigurationDao datumStreamDao;
 
 	@Autowired
-	private CloudDatumStreamSettingsEntityDao datumStreamSettingsDao;
-
-	@Autowired
 	private DatumEntityDao datumDao;
-
-	@Autowired(required = false)
-	@Qualifier("solarflux")
-	private DatumProcessor fluxPublisher;
 
 	@ConfigurationProperties(prefix = "app.c2c.ds-rake.executor")
 	@Qualifier(CLOUD_INTEGRATIONS_RAKE)

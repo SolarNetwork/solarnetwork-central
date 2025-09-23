@@ -64,14 +64,18 @@ app:
         thread-name-prefix: "SolarNet-C2C-DsPoll-"
         core-pool-size: 2
         max-pool-size: 2
+        queue-capacity: 0
         allow-core-thread-time-out: true
       service:
-        shutdown-max-wait: "1m"
+        shutdown-max-wait: "5m"
+        fast-reschedule-min-lag: "2d"
+        fast-reschedule-amount: "1m"
     ds-rake:
       executor:
         thread-name-prefix: "SolarNet-C2C-DsRake-"
         core-pool-size: 2
         max-pool-size: 2
+        queue-capacity: 0
         allow-core-thread-time-out: true
       service:
         shutdown-max-wait: "1m"
@@ -150,7 +154,7 @@ app:
       ds-poll:
         maximum-iterations: 10
         maximum-wait-ms: 60000
-        parallelism: 2
+        parallelism: 1
         schedule: 5000
       ds-poll-reset-abandoned:
         maximum-wait-ms: 60000
@@ -158,8 +162,8 @@ app:
         minimum-age: "2h"
       ds-rake:
         maximum-iterations: 10
-        maximum-wait-ms: 900000
-        parallelism: 2
+        maximum-wait-ms: 60000
+        parallelism: 1
         schedule: 60000
       ds-rake-reset-abandoned:
         maximum-wait-ms: 900000
@@ -351,6 +355,7 @@ app:
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
+    schedule-delay: "30s"
   secrets:
     aws:
       region: "us-west-2"
