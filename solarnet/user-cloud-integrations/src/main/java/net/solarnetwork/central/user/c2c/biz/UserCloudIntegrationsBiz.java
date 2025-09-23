@@ -28,6 +28,7 @@ import java.util.Map;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskFilter;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
@@ -35,6 +36,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
@@ -44,6 +46,8 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityBaseInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
 import net.solarnetwork.dao.FilterResults;
@@ -54,7 +58,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Service API for SolarUser cloud integrations support.
  *
  * @author matt
- * @version 1.4
+ * @version 1.7
  */
 public interface UserCloudIntegrationsBiz {
 
@@ -359,5 +363,81 @@ public interface UserCloudIntegrationsBiz {
 	 * @since 1.3
 	 */
 	CloudDatumStreamSettings defaultDatumStreamSettings();
+
+	/**
+	 * Get a list of all available cloud datum stream rake tasks for a given
+	 * user.
+	 *
+	 * @param userId
+	 *        the user ID to get entities for
+	 * @param filter
+	 *        an optional filter
+	 * @return the available entities, never {@literal null}
+	 * @since 1.5
+	 */
+	FilterResults<CloudDatumStreamRakeTaskEntity, UserLongCompositePK> listDatumStreamRakeTasksForUser(
+			Long userId, CloudDatumStreamRakeTaskFilter filter);
+
+	/**
+	 * Update the state of a datum stream rake task.
+	 *
+	 * @param id
+	 *        the ID of the task to update the state of
+	 * @param desiredState
+	 *        the state to update the task to
+	 * @param expectedStates
+	 *        a set of states that must include the task's current state in
+	 *        order to change it to {@code desiredState}, or {@literal null} if
+	 *        the current state of the task does not matter
+	 * @return the resulting task, or {@literal null} if no such task exists
+	 * @since 1.5
+	 */
+	CloudDatumStreamRakeTaskEntity updateDatumStreamRakeTaskState(UserLongCompositePK id,
+			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates);
+
+	/**
+	 * Save a datum stream rake task.
+	 *
+	 * @param id
+	 *        the ID of the {@link CloudDatumStreamRakeTaskEntity} to save
+	 * @param input
+	 *        the info to save
+	 * @param expectedStates
+	 *        a set of states that must include the task's current state in
+	 *        order to change it to the info's given state, or {@literal null}
+	 *        if the current state of the task does not matter
+	 * @return the resulting task
+	 * @since 1.5
+	 */
+	CloudDatumStreamRakeTaskEntity saveDatumStreamRakeTask(UserLongCompositePK id,
+			CloudDatumStreamRakeTaskEntityInput input, BasicClaimableJobState... expectedStates);
+
+	/**
+	 * Delete a specific datum stream rake task.
+	 *
+	 * @param id
+	 *        the primary key of the entity to delete
+	 * @since 1.5
+	 */
+	void deleteDatumStreamRakeTask(UserLongCompositePK id);
+
+	/**
+	 * Save a list of cloud datum stream rake tasks for a given datum stream.
+	 *
+	 * <p>
+	 * This method will first <b>delete</b> all tasks for the given
+	 * {@code datumStreamId}, then <b>insert</b> the given tasks
+	 * </p>
+	 * </p>
+	 *
+	 * @param datumStreamId
+	 *        the datum stream ID of the tasks to replace
+	 * @param inputs
+	 *        the task inputs to save
+	 * @return the saved tasks
+	 * @since 1.7
+	 */
+	List<CloudDatumStreamRakeTaskEntity> replaceDatumStreamRakeTasks(UserLongCompositePK datumStreamId,
+			List<CloudDatumStreamRakeTaskEntityBaseInput> inputs);
 
 }

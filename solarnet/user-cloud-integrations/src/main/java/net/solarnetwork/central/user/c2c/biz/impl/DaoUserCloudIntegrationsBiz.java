@@ -67,6 +67,8 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
@@ -79,6 +81,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -98,6 +101,8 @@ import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityBaseInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
 import net.solarnetwork.dao.FilterResults;
@@ -112,7 +117,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.9
+ * @version 1.11
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
@@ -128,6 +133,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private final CloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
 	private final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 	private final CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
+	private final CloudDatumStreamRakeTaskDao datumStreamRakeTaskDao;
 	private final ClientAccessTokenDao clientAccessTokenDao;
 	private final TextEncryptor textEncryptor;
 	private final Map<String, CloudIntegrationService> integrationServices;
@@ -156,6 +162,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 *        the datum stream property DAO
 	 * @param datumStreamPollTaskDao
 	 *        the datum stream poll task DAO
+	 * @param datumStreamRakeTaskDao
+	 *        the datum stream rake task DAO
 	 * @param clientAccessTokenDao
 	 *        the client access token DAO
 	 * @param textEncryptor
@@ -172,6 +180,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			CloudDatumStreamPollTaskDao datumStreamPollTaskDao,
+			CloudDatumStreamRakeTaskDao datumStreamRakeTaskDao,
 			ClientAccessTokenDao clientAccessTokenDao, TextEncryptor textEncryptor,
 			Collection<CloudIntegrationService> integrationServices) {
 		super();
@@ -187,6 +196,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				"datumStreamPropertyDao");
 		this.datumStreamPollTaskDao = requireNonNullArgument(datumStreamPollTaskDao,
 				"datumStreamPollTaskDao");
+		this.datumStreamRakeTaskDao = requireNonNullArgument(datumStreamRakeTaskDao,
+				"datumStreamRakeTaskDao");
 		this.clientAccessTokenDao = requireNonNullArgument(clientAccessTokenDao, "clientAccessTokenDao");
 		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
 		this.integrationServices = Collections
@@ -645,6 +656,96 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		var service = requireNonNullObject(datumStreamService(datumStream.getServiceIdentifier()),
 				"datumStreamService");
 		return service.datum(datumStream, filter);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<CloudDatumStreamRakeTaskEntity, UserLongCompositePK> listDatumStreamRakeTasksForUser(
+			Long userId, CloudDatumStreamRakeTaskFilter filter) {
+		requireNonNullArgument(userId, "userId");
+		BasicFilter f = new BasicFilter(filter);
+		f.setUserId(userId);
+		return datumStreamRakeTaskDao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
+	public CloudDatumStreamRakeTaskEntity updateDatumStreamRakeTaskState(UserLongCompositePK id,
+			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates) {
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(desiredState, "desiredState");
+		if ( !id.allKeyComponentsAreAssigned() ) {
+			throw new IllegalArgumentException("The userId and configId components must be provided.");
+		}
+		// only update state if a user-settable value (start, stop)
+		if ( desiredState == BasicClaimableJobState.Queued
+				|| desiredState == BasicClaimableJobState.Completed ) {
+			datumStreamRakeTaskDao.updateTaskState(id, desiredState, expectedStates);
+		}
+		return datumStreamRakeTaskDao.get(id);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
+	public CloudDatumStreamRakeTaskEntity saveDatumStreamRakeTask(UserLongCompositePK id,
+			CloudDatumStreamRakeTaskEntityInput input, BasicClaimableJobState... expectedStates) {
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(input, "input");
+
+		validateInput(input);
+
+		CloudDatumStreamRakeTaskEntity entity = input.toEntity(id);
+		UserLongCompositePK pk = id;
+		if ( expectedStates == null || expectedStates.length < 1 ) {
+			pk = datumStreamRakeTaskDao.save(entity);
+		} else {
+			if ( !id.allKeyComponentsAreAssigned() ) {
+				throw new IllegalArgumentException(
+						"The userId and configId components must be provided.");
+			}
+			datumStreamRakeTaskDao.updateTask(entity, expectedStates);
+		}
+		return datumStreamRakeTaskDao.get(pk);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteDatumStreamRakeTask(UserLongCompositePK id) {
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(id.getUserId(), "id.userId");
+		datumStreamRakeTaskDao.delete(datumStreamRakeTaskDao.entityKey(id));
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
+	public List<CloudDatumStreamRakeTaskEntity> replaceDatumStreamRakeTasks(
+			UserLongCompositePK datumStreamId, List<CloudDatumStreamRakeTaskEntityBaseInput> inputs) {
+		requireNonNullArgument(datumStreamId, "datumStreamId");
+		if ( !(datumStreamId.userIdIsAssigned() && datumStreamId.entityIdIsAssigned()) ) {
+			throw new IllegalArgumentException(
+					"The datum stream userId and entityId components must be provided.");
+		}
+
+		requireNonNullArgument(inputs, "inputs");
+
+		// delete all for given datum stream ID
+		final var deleteFilter = new BasicFilter();
+		deleteFilter.setUserId(datumStreamId.getUserId());
+		deleteFilter.setDatumStreamId(datumStreamId.getEntityId());
+		datumStreamRakeTaskDao.delete(deleteFilter);
+
+		// then insert properties
+		final UserLongCompositePK unassignedId = UserLongCompositePK
+				.unassignedEntityIdKey(datumStreamId.getUserId());
+		final var result = new ArrayList<CloudDatumStreamRakeTaskEntity>(inputs.size());
+		for ( var input : inputs ) {
+			// force datum stream ID
+			validateInput(input);
+			var task = input.toEntity(unassignedId);
+			task.setDatumStreamId(datumStreamId.getEntityId());
+			result.add(datumStreamRakeTaskDao.get(datumStreamRakeTaskDao.save(task)));
+		}
+		return result;
 	}
 
 	private void validateInput(final Object input) {

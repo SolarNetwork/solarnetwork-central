@@ -40,15 +40,16 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of cloud integration query filter.
  *
  * @author matt
- * @version 1.2
+ * @version 1.4
  */
-public class BasicFilter extends BasicCoreCriteria
-		implements CloudIntegrationFilter, CloudDatumStreamFilter, CloudDatumStreamMappingFilter,
-		CloudDatumStreamPropertyFilter, CloudDatumStreamPollTaskFilter, CloudDatumStreamSettingsFilter {
+public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFilter,
+		CloudDatumStreamFilter, CloudDatumStreamMappingFilter, CloudDatumStreamPropertyFilter,
+		CloudDatumStreamPollTaskFilter, CloudDatumStreamRakeTaskFilter, CloudDatumStreamSettingsFilter {
 
 	private Long[] integrationIds;
 	private Long[] datumStreamIds;
 	private Long[] datumStreamMappingIds;
+	private Long[] taskIds;
 	private Integer[] indexes;
 	private BasicClaimableJobState[] claimableJobStates;
 	private String[] serviceIdentifiers;
@@ -346,6 +347,38 @@ public class BasicFilter extends BasicCoreCriteria
 	 */
 	public final void setServiceIdentifiers(String[] serviceIdentifiers) {
 		this.serviceIdentifiers = serviceIdentifiers;
+	}
+
+	@Override
+	public Long getTaskId() {
+		return CloudDatumStreamRakeTaskFilter.super.getTaskId();
+	}
+
+	/**
+	 * Set the task ID.
+	 *
+	 * @param taskId
+	 *        the task ID to set
+	 * @since 1.4
+	 */
+	public void setTaskId(Long taskId) {
+		setTaskIds(taskId != null ? new Long[] { taskId } : null);
+	}
+
+	@Override
+	public Long[] getTaskIds() {
+		return taskIds;
+	}
+
+	/**
+	 * Set the task IDs.
+	 *
+	 * @param taskIds
+	 *        the task IDs to set
+	 * @since 1.4
+	 */
+	public void setTaskIds(Long[] taskIds) {
+		this.taskIds = taskIds;
 	}
 
 }

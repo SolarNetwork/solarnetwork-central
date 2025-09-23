@@ -24,14 +24,20 @@ package net.solarnetwork.central.scheduler;
 
 import static net.solarnetwork.central.scheduler.SchedulerUtils.extractExecutionScheduleDescription;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
@@ -44,17 +50,24 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Implementation of {@link SchedulerManager} using a {@link TaskScheduler}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SimpleSchedulerManager implements SchedulerManager, PingTest, ServiceLifecycleObserver {
 
 	/**
-	 * The default {@code pingTestMaximumExecutionMilliseconds} property value.
+	 * The {@code pingTestMaximumExecutionMilliseconds} property default value.
 	 */
 	public static final long DEFAULT_PING_TEST_MAX_EXECUTION = 2000;
 
-	/** The default {@code blockedJobMaxSeconds} property value. */
+	/** The {@code blockedJobMaxSeconds} property default value. */
 	public static final long DEFAULT_BLOCKED_JOB_MAX_SECONDS = 1800;
+
+	/**
+	 * The {@code scheduleDelay} property default value.
+	 * 
+	 * @since 1.1
+	 */
+	public static final Duration DEFAULT_SCHEDULE_DELAY = Duration.ofSeconds(90);
 
 	private static final Logger log = LoggerFactory.getLogger(SimpleSchedulerManager.class);
 
@@ -62,8 +75,11 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	private final TaskScheduler taskScheduler;
 	private long blockedJobMaxSeconds = DEFAULT_BLOCKED_JOB_MAX_SECONDS;
 	private long pingTestMaximumExecutionMilliseconds = DEFAULT_PING_TEST_MAX_EXECUTION;
+	private Duration scheduleDelay = DEFAULT_SCHEDULE_DELAY;
 
 	private SchedulerStatus status = SchedulerStatus.Starting;
+
+	private List<StartupScheduledFuture> startupFutures;
 
 	/**
 	 * Constructor.
@@ -79,8 +95,14 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	}
 
 	@Override
-	public void serviceDidStartup() {
+	public synchronized void serviceDidStartup() {
 		status = SchedulerStatus.Running;
+		if ( startupFutures != null ) {
+			for ( StartupScheduledFuture f : startupFutures ) {
+				f.schedule();
+			}
+			startupFutures = null;
+		}
 	}
 
 	@Override
@@ -122,6 +144,28 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	@Override
 	public synchronized ScheduledFuture<?> scheduleJob(String groupId, String id, Runnable task,
 			Trigger trigger) {
+		if ( this.status == SchedulerStatus.Starting ) {
+			if ( startupFutures == null ) {
+				startupFutures = new ArrayList<>();
+			}
+			StartupScheduledFuture f = new StartupScheduledFuture(groupId, id, task, trigger);
+			startupFutures.add(f);
+			return f;
+		}
+		final Duration delay = getScheduleDelay();
+		if ( delay != null && delay.isPositive() ) {
+			log.info("Will schedule job {} after delay of {}", new JobKey(groupId, id).getDescription(),
+					delay);
+			return taskScheduler.schedule(() -> {
+				@SuppressWarnings("unused")
+				ScheduledFuture<?> unused = scheduleJobInternal(groupId, id, task, trigger);
+			}, Instant.now().truncatedTo(ChronoUnit.SECONDS).plus(delay));
+		}
+		return scheduleJobInternal(groupId, id, task, trigger);
+	}
+
+	private synchronized ScheduledFuture<?> scheduleJobInternal(String groupId, String id, Runnable task,
+			Trigger trigger) {
 		try {
 			final JobKey key = new JobKey(groupId, id);
 			unscheduleJob(key);
@@ -135,6 +179,39 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 		} catch ( Exception e ) {
 			log.error("Error scheduling job [{}.{}]: {}", groupId, id, e.toString(), e);
 			throw e;
+		}
+	}
+
+	private class StartupScheduledFuture extends CompletableFuture<Void>
+			implements ScheduledFuture<Void> {
+
+		private final String groupId;
+		private final String id;
+		private final Runnable task;
+		private final Trigger trigger;
+
+		private StartupScheduledFuture(String groupId, String id, Runnable task, Trigger trigger) {
+			super();
+			this.groupId = groupId;
+			this.id = id;
+			this.task = task;
+			this.trigger = trigger;
+		}
+
+		@Override
+		public long getDelay(TimeUnit unit) {
+			return 0;
+		}
+
+		@Override
+		public int compareTo(Delayed o) {
+			return 0;
+		}
+
+		private void schedule() {
+			@SuppressWarnings("unused")
+			ScheduledFuture<?> unused = scheduleJob(groupId, id, task, trigger);
+			complete(null);
 		}
 	}
 
@@ -232,6 +309,25 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	 */
 	public void setPingTestMaximumExecutionMilliseconds(long pingTestMaximumExecutionMilliseconds) {
 		this.pingTestMaximumExecutionMilliseconds = pingTestMaximumExecutionMilliseconds;
+	}
+
+	/**
+	 * Get the schedule delay.
+	 * 
+	 * @return the delay; defaults to {@link #DEFAULT_SCHEDULE_DELAY}
+	 */
+	public Duration getScheduleDelay() {
+		return scheduleDelay;
+	}
+
+	/**
+	 * Set the schedule delay.
+	 * 
+	 * @param scheduleDelay
+	 *        the delay to set
+	 */
+	public void setScheduleDelay(Duration scheduleDelay) {
+		this.scheduleDelay = scheduleDelay;
 	}
 
 }

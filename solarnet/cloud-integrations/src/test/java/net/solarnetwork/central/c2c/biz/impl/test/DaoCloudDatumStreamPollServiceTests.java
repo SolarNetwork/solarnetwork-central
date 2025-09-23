@@ -572,13 +572,9 @@ public class DaoCloudDatumStreamPollServiceTests {
 		task.setExecuteAt(hour);
 		task.setStartAt(hour.minusSeconds(300));
 
-		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
-
 		// THEN
 		// @formatter:off
-		and.thenThrownBy(() -> result.get(1, TimeUnit.MINUTES), "Task fails to execute")
-			.isInstanceOf(ExecutionException.class)
-			.extracting(e -> e.getCause())
+		and.thenThrownBy(() -> service.executeTask(task), "Task fails to execute")
 			.as("The exception cause is the one thrown by the submit() call")
 			.isSameAs(rejectedException)
 			;

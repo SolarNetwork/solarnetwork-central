@@ -1,7 +1,7 @@
 /* ==================================================================
- * CloudDatumStreamPollJobProcessor.java - 9/10/2024 6:48:57 pm
+ * CloudDatumStreamRakeTaskProcessor.java - 22/09/2025 11:50:33 am
  *
- * Copyright 2024 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -26,19 +26,19 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
-import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamRakeService;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.scheduler.JobSupport;
 
 /**
- * Job to process ready-to-execute cloud datum stream polling tasks.
+ * Job to process ready-to-execute cloud datum stream rake tasks.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class CloudDatumStreamPollTaskProcessor extends JobSupport {
+public class CloudDatumStreamRakeTaskProcessor extends JobSupport {
 
-	private final CloudDatumStreamPollService service;
+	private final CloudDatumStreamRakeService service;
 
 	/**
 	 * Constructor.
@@ -48,23 +48,23 @@ public class CloudDatumStreamPollTaskProcessor extends JobSupport {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public CloudDatumStreamPollTaskProcessor(CloudDatumStreamPollService service) {
+	public CloudDatumStreamRakeTaskProcessor(CloudDatumStreamRakeService service) {
 		super();
 		this.service = requireNonNullArgument(service, "service");
 		setGroupId("CloudIntegrations");
-		setId("DatumStreamPollTaskProcessor");
+		setId("DatumStreamRakeTaskProcessor");
 	}
 
 	@Override
 	public void run() {
-		executeParallelJob("cloud datum stream poll");
+		executeParallelJob("cloud datum stream rake");
 	}
 
 	@Override
 	protected int executeJobTask(AtomicInteger remainingIterations) throws Exception {
 		int count = 0;
 		while ( remainingIterations.getAndDecrement() > 0 ) {
-			CloudDatumStreamPollTaskEntity task = service.claimQueuedTask();
+			CloudDatumStreamRakeTaskEntity task = service.claimQueuedTask();
 			if ( task == null ) {
 				break;
 			}

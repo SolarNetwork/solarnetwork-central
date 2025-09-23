@@ -26,14 +26,17 @@ import static java.time.Instant.now;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamMappingConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamPollTaskEntityData;
+import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamRakeTaskEntityData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudIntegrationConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamPollTaskEntity;
+import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamRakeTaskEntity;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
+import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,10 +47,12 @@ import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPollTaskDao;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamRakeTaskDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -68,12 +73,14 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 	private JdbcCloudDatumStreamConfigurationDao datumStreamDao;
 	private JdbcCloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
 	private JdbcCloudDatumStreamPollTaskDao datumStreamPollTaskDao;
+	private JdbcCloudDatumStreamRakeTaskDao datumStreamRakeTaskDao;
 	private Long userId;
 
 	private Map<UserLongCompositePK, CloudIntegrationConfiguration> integrations;
 	private Map<UserLongCompositePK, CloudDatumStreamConfiguration> datumStreams;
 	private Map<UserLongCompositePK, CloudDatumStreamMappingConfiguration> datumStreamMappings;
 	private Map<UserLongCompositePK, CloudDatumStreamPollTaskEntity> datumStreamPollTasks;
+	private Map<UserLongCompositePK, CloudDatumStreamRakeTaskEntity> datumStreamRakeTasks;
 
 	@BeforeEach
 	public void setup() {
@@ -82,11 +89,13 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		datumStreamDao = new JdbcCloudDatumStreamConfigurationDao(jdbcTemplate);
 		datumStreamMappingDao = new JdbcCloudDatumStreamMappingConfigurationDao(jdbcTemplate);
 		datumStreamPollTaskDao = new JdbcCloudDatumStreamPollTaskDao(jdbcTemplate);
+		datumStreamRakeTaskDao = new JdbcCloudDatumStreamRakeTaskDao(jdbcTemplate);
 
 		integrations = new LinkedHashMap<>();
 		datumStreamMappings = new LinkedHashMap<>();
 		datumStreams = new LinkedHashMap<>();
 		datumStreamPollTasks = new LinkedHashMap<>();
+		datumStreamRakeTasks = new LinkedHashMap<>();
 	}
 
 	private CloudIntegrationConfiguration createIntegration(Long userId, boolean enabled) {
@@ -137,6 +146,24 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		return entity;
 	}
 
+	private CloudDatumStreamRakeTaskEntity createDatumStreamRakeTask(Long userId, Long datumStreamId,
+			BasicClaimableJobState state) {
+		// @formatter:off
+		CloudDatumStreamRakeTaskEntity conf = newCloudDatumStreamRakeTaskEntity(userId,
+				datumStreamId,
+				state,
+				now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+				Period.ofDays(1),
+				randomString(),
+				null)
+				;
+		// @formatter:on
+		CloudDatumStreamRakeTaskEntity entity = datumStreamRakeTaskDao
+				.get(datumStreamRakeTaskDao.save(conf));
+		datumStreamRakeTasks.put(entity.getId(), entity);
+		return entity;
+	}
+
 	@Test
 	public void disableIntegrationStopsAllAssociatedTasks() {
 		// GIVEN
@@ -150,6 +177,8 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 				CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
 						mapping.getConfigId(), RNG.nextBoolean());
 				createDatumStreamPollTask(userId, datumStream.getConfigId(), Queued);
+				createDatumStreamRakeTask(userId, datumStream.getConfigId(), Queued);
+				createDatumStreamRakeTask(userId, datumStream.getConfigId(), Queued);
 			}
 		}
 
@@ -165,11 +194,14 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		allCloudIntegrationConfigurationData(jdbcTemplate);
 		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
 		allCloudDatumStreamConfigurationData(jdbcTemplate);
-		final List<Map<String, Object>> taskRows = allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
+		final List<Map<String, Object>> pollTaskRows = allCloudDatumStreamPollTaskEntityData(
+				jdbcTemplate);
+		final List<Map<String, Object>> rakeTaskRows = allCloudDatumStreamRakeTaskEntityData(
+				jdbcTemplate);
 
 		// @formatter:off
-		then(taskRows)
-			.as("Rows for tasks found")
+		then(pollTaskRows)
+			.as("Rows for poll tasks found")
 			.hasSize(integrationCount * datumStreamCount)
 			.satisfies(rows -> {
 				for (int idx = 0, len = rows.size(); idx < len; idx++ ) {
@@ -185,7 +217,34 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 									? Completed : Queued;
 							then(row)
 								.as("""
-									Task state only Completed for datum stream %d that was enabled under
+									Poll task state only Completed for datum stream %d that was enabled under
+									integration %d that was then disabled: %s
+									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
+								.containsEntry("status", expectedState.keyValue())
+								;
+						})
+						;
+				}
+			})
+			;
+		then(rakeTaskRows)
+			.as("Rows for rake tasks found")
+			.hasSize(integrationCount * datumStreamCount * 2)
+			.satisfies(rows -> {
+				for (int idx = 0, len = rows.size(); idx < len; idx++ ) {
+					then(rows)
+						.element(idx)
+						.satisfies(row -> {
+							CloudDatumStreamConfiguration datumStream = datumStreams.get(new UserLongCompositePK(
+									userId, (Long)row.get("ds_id")));
+							CloudDatumStreamMappingConfiguration mapping = datumStreamMappings.get(new UserLongCompositePK(
+									userId, datumStream.getDatumStreamMappingId()));
+							BasicClaimableJobState expectedState = mapping.getIntegrationId()
+										.equals(randomIntegration.getConfigId()) && datumStream.isEnabled()
+									? Completed : Queued;
+							then(row)
+								.as("""
+									Rake task state only Completed for datum stream %d that was enabled under
 									integration %d that was then disabled: %s
 									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
 								.containsEntry("status", expectedState.keyValue())
@@ -211,6 +270,8 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 				CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
 						mapping.getConfigId(), RNG.nextBoolean());
 				createDatumStreamPollTask(userId, datumStream.getConfigId(), Completed);
+				createDatumStreamRakeTask(userId, datumStream.getConfigId(), Completed);
+				createDatumStreamRakeTask(userId, datumStream.getConfigId(), Completed);
 			}
 		}
 
@@ -218,6 +279,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
 		allCloudDatumStreamConfigurationData(jdbcTemplate);
 		allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
+		allCloudDatumStreamRakeTaskEntityData(jdbcTemplate);
 
 		final CloudIntegrationConfiguration randomIntegration = integrations.values().stream().toList()
 				.get(RNG.nextInt(integrationCount));
@@ -233,11 +295,14 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		allCloudIntegrationConfigurationData(jdbcTemplate);
 		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
 		allCloudDatumStreamConfigurationData(jdbcTemplate);
-		final List<Map<String, Object>> taskRows = allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
+		final List<Map<String, Object>> pollTaskRows = allCloudDatumStreamPollTaskEntityData(
+				jdbcTemplate);
+		final List<Map<String, Object>> rakeTaskRows = allCloudDatumStreamRakeTaskEntityData(
+				jdbcTemplate);
 
 		// @formatter:off
-		then(taskRows)
-			.as("Rows for tasks found")
+		then(pollTaskRows)
+			.as("Rows for poll tasks found")
 			.hasSize(integrationCount * datumStreamCount)
 			.satisfies(rows -> {
 				for (int idx = 0, len = rows.size(); idx < len; idx++ ) {
@@ -253,7 +318,34 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 									? Queued : Completed;
 							then(row)
 								.as("""
-									Task state only Queued for datum stream %d that was enabled under
+									Poll task state only Queued for datum stream %d that was enabled under
+									integration %d that was then enabled: %s
+									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
+								.containsEntry("status", expectedState.keyValue())
+								;
+						})
+						;
+				}
+			})
+			;
+		then(rakeTaskRows)
+			.as("Rows for rake tasks found")
+			.hasSize(integrationCount * datumStreamCount * 2)
+			.satisfies(rows -> {
+				for (int idx = 0, len = rows.size(); idx < len; idx++ ) {
+					then(rows)
+						.element(idx)
+						.satisfies(row -> {
+							CloudDatumStreamConfiguration datumStream = datumStreams.get(new UserLongCompositePK(
+									userId, (Long)row.get("ds_id")));
+							CloudDatumStreamMappingConfiguration mapping = datumStreamMappings.get(new UserLongCompositePK(
+									userId, datumStream.getDatumStreamMappingId()));
+							BasicClaimableJobState expectedState = mapping.getIntegrationId()
+										.equals(randomIntegration.getConfigId()) && datumStream.isEnabled()
+									? Queued : Completed;
+							then(row)
+								.as("""
+									Rake task state only Queued for datum stream %d that was enabled under
 									integration %d that was then enabled: %s
 									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
 								.containsEntry("status", expectedState.keyValue())
@@ -281,6 +373,10 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 						mapping.getConfigId(), true);
 				createDatumStreamPollTask(userId, datumStream.getConfigId(),
 						integration.isEnabled() ? Queued : Completed);
+				createDatumStreamRakeTask(userId, datumStream.getConfigId(),
+						integration.isEnabled() ? Queued : Completed);
+				createDatumStreamRakeTask(userId, datumStream.getConfigId(),
+						integration.isEnabled() ? Queued : Completed);
 			}
 		}
 
@@ -303,11 +399,14 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		// THEN
 		allCloudIntegrationConfigurationData(jdbcTemplate);
 		allCloudDatumStreamConfigurationData(jdbcTemplate);
-		final List<Map<String, Object>> taskRows = allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
+		final List<Map<String, Object>> pollTaskRows = allCloudDatumStreamPollTaskEntityData(
+				jdbcTemplate);
+		final List<Map<String, Object>> rakeTaskRows = allCloudDatumStreamRakeTaskEntityData(
+				jdbcTemplate);
 
 		// @formatter:off
-		then(taskRows)
-			.as("Rows for tasks found")
+		then(pollTaskRows)
+			.as("Rows for poll tasks found")
 			.hasSize(integrationCount * datumStreamCount)
 			.satisfies(rows -> {
 				for (int idx = 0, len = rows.size(); idx < len; idx++ ) {
@@ -325,7 +424,36 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 									? Completed : Queued;
 							then(row)
 								.as("""
-									Task state only Completed for datum stream %d that was enabled under
+									Poll task state only Completed for datum stream %d that was enabled under
+									integration %d that was then disabled: %s
+									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
+								.containsEntry("status", expectedState.keyValue())
+								;
+						})
+						;
+				}
+			})
+			;
+		then(rakeTaskRows)
+			.as("Rows for rake tasks found")
+			.hasSize(integrationCount * datumStreamCount * 2)
+			.satisfies(rows -> {
+				for (int idx = 0, len = rows.size(); idx < len; idx++ ) {
+					then(rows)
+						.element(idx)
+						.satisfies(row -> {
+							CloudDatumStreamConfiguration datumStream = datumStreams.get(new UserLongCompositePK(
+									userId, (Long)row.get("ds_id")));
+							CloudDatumStreamMappingConfiguration mapping = datumStreamMappings.get(new UserLongCompositePK(
+									userId, datumStream.getDatumStreamMappingId()));
+							CloudIntegrationConfiguration integration = integrations.get(new UserLongCompositePK(
+									userId, mapping.getIntegrationId()));
+							BasicClaimableJobState expectedState = datumStream.getConfigId()
+										.equals(randomDatumStream.getConfigId()) || !integration.isEnabled()
+									? Completed : Queued;
+							then(row)
+								.as("""
+									Rake task state only Completed for datum stream %d that was enabled under
 									integration %d that was then disabled: %s
 									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
 								.containsEntry("status", expectedState.keyValue())
@@ -353,6 +481,10 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 						mapping.getConfigId(), i == 0 && d == 0 ? false : RNG.nextBoolean());
 				createDatumStreamPollTask(userId, datumStream.getConfigId(),
 						integration.isEnabled() && datumStream.isEnabled() ? Queued : Completed);
+				createDatumStreamRakeTask(userId, datumStream.getConfigId(),
+						integration.isEnabled() && datumStream.isEnabled() ? Queued : Completed);
+				createDatumStreamRakeTask(userId, datumStream.getConfigId(),
+						integration.isEnabled() && datumStream.isEnabled() ? Queued : Completed);
 			}
 		}
 
@@ -370,6 +502,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		allCloudIntegrationConfigurationData(jdbcTemplate);
 		allCloudDatumStreamConfigurationData(jdbcTemplate);
 		allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
+		allCloudDatumStreamRakeTaskEntityData(jdbcTemplate);
 
 		// WHEN
 		BasicFilter filter = new BasicFilter();
@@ -379,11 +512,14 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		// THEN
 		allCloudIntegrationConfigurationData(jdbcTemplate);
 		allCloudDatumStreamConfigurationData(jdbcTemplate);
-		final List<Map<String, Object>> taskRows = allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
+		final List<Map<String, Object>> pollTaskRows = allCloudDatumStreamPollTaskEntityData(
+				jdbcTemplate);
+		final List<Map<String, Object>> rakeTaskRows = allCloudDatumStreamRakeTaskEntityData(
+				jdbcTemplate);
 
 		// @formatter:off
-		then(taskRows)
-			.as("Rows for tasks found")
+		then(pollTaskRows)
+			.as("Rows for poll tasks found")
 			.hasSize(integrationCount * datumStreamCount)
 			.satisfies(rows -> {
 				for (int idx = 0, len = rows.size(); idx < len; idx++ ) {
@@ -402,7 +538,37 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 									? Queued : Completed;
 							then(row)
 								.as("""
-									Task state only Queued for datum stream %d that was disabled under
+									Poll task state only Queued for datum stream %d that was disabled under
+									integration %d that was then enabled: %s
+									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
+								.containsEntry("status", expectedState.keyValue())
+								;
+						})
+						;
+				}
+			})
+			;
+		then(rakeTaskRows)
+			.as("Rows for rake tasks found")
+			.hasSize(integrationCount * datumStreamCount * 2)
+			.satisfies(rows -> {
+				for (int idx = 0, len = rows.size(); idx < len; idx++ ) {
+					then(rows)
+						.element(idx)
+						.satisfies(row -> {
+							CloudDatumStreamConfiguration datumStream = datumStreams.get(new UserLongCompositePK(
+									userId, (Long)row.get("ds_id")));
+							CloudDatumStreamMappingConfiguration mapping = datumStreamMappings.get(new UserLongCompositePK(
+									userId, datumStream.getDatumStreamMappingId()));
+							CloudIntegrationConfiguration integration = integrations.get(new UserLongCompositePK(
+									userId, mapping.getIntegrationId()));
+							BasicClaimableJobState expectedState = datumStream.getConfigId()
+										.equals(randomDatumStream.getConfigId())
+										|| (integration.isEnabled() && datumStream.isEnabled())
+									? Queued : Completed;
+							then(row)
+								.as("""
+									Rake task state only Queued for datum stream %d that was disabled under
 									integration %d that was then enabled: %s
 									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
 								.containsEntry("status", expectedState.keyValue())
