@@ -352,13 +352,11 @@ public class DaoCloudDatumStreamRakeService
 				taskInfo.setMessage(errMsg);
 				taskInfo.putServiceProps(errData);
 				taskInfo.setState(Queued);
-				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
-						datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 				taskDao.updateTask(taskInfo, startState);
 				return taskInfo;
 			}
 
-			// save task state to Executing (TODO maybe we don't need this step?)
+			// save task state to Executing
 			if ( !taskDao.updateTaskState(taskInfo.getId(), Executing, startState) ) {
 				log.warn("Failed to update rake task {} state to Executing @ {} offset @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getOffset());
