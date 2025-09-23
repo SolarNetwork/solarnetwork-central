@@ -33,7 +33,7 @@ import net.solarnetwork.dao.FilterableDao;
  * DAO API for {@link CloudDatumStreamRakeTaskEntity} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudDatumStreamRakeTaskDao
 		extends GenericCompositeKey2Dao<CloudDatumStreamRakeTaskEntity, UserLongCompositePK, Long, Long>,
@@ -90,5 +90,14 @@ public interface CloudDatumStreamRakeTaskDao
 	 * @return the number of tasks reset
 	 */
 	int resetAbandondedExecutingTasks(Instant olderThan);
+
+	/**
+	 * Remove persisted entities matching a filter.
+	 *
+	 * @param filter
+	 *        the delete criteria
+	 * @since 1.1
+	 */
+	int delete(CloudDatumStreamRakeTaskFilter filter);
 
 }
