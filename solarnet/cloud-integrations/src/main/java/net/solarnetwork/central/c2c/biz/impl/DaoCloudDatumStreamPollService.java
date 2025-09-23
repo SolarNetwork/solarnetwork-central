@@ -306,8 +306,6 @@ public class DaoCloudDatumStreamPollService
 						eventForConfiguration(datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg));
 				taskInfo.setMessage(errMsg);
 				taskInfo.setState(Completed); // stop processing job
-				userEventAppenderBiz.addEvent(taskInfo.getUserId(),
-						eventForConfiguration(taskInfo.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg));
 				taskDao.updateTask(taskInfo, startState);
 				return taskInfo;
 			}

@@ -26,6 +26,8 @@ import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.HOURS;
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.CONFIG_ID_DATA_KEY;
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.CONFIG_SUB_ID_DATA_KEY;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.INTEGRATION_RAKE_TAGS;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Claimed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
@@ -331,6 +333,7 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"configId", datumStream.getConfigId(),
 							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
 							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
@@ -346,6 +349,7 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"configId", datumStream.getConfigId(),
 							"executeAt", ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
 							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
@@ -503,7 +507,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
 							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
 							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
@@ -518,7 +523,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"executeAt", ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
 							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
 							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
@@ -675,7 +681,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
 							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
 							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
@@ -690,7 +697,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"executeAt", ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
 							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(1, DAYS)),
 							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod),
@@ -927,7 +935,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
 							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(7, DAYS)),
 							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(6, DAYS)),
@@ -942,7 +951,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
 							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(6, DAYS)),
 							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(5, DAYS)),
@@ -957,7 +967,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
 							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(5, DAYS)),
 							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(4, DAYS)),
@@ -973,7 +984,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 					.returns(INTEGRATION_RAKE_TAGS.toArray(String[]::new), from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
-							"configId", datumStream.getConfigId(),
+							CONFIG_ID_DATA_KEY, datumStream.getConfigId(),
+							CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
 							"executeAt", ISO_DATE_TIME_ALT_UTC.format(sod.plus(1, DAYS)),
 							"startAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(7, DAYS)),
 							"endAt", ISO_DATE_TIME_ALT_UTC.format(sod.minus(4, DAYS)),
