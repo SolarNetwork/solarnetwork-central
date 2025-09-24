@@ -31,7 +31,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
  * Job to find export tasks that need to be submitted for execution.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class UserExportTaskPopulatorJob extends JobSupport {
 
@@ -58,7 +58,9 @@ public class UserExportTaskPopulatorJob extends JobSupport {
 	@Override
 	public void run() {
 		int count = jobsService.createExportExecutionTasks(Instant.now(), scheduleType);
-		log.info("Found {} {} user export configurations for execution", count, scheduleType);
+		if ( count > 0 ) {
+			log.info("Found {} {} user export configurations for execution", count, scheduleType);
+		}
 	}
 
 }

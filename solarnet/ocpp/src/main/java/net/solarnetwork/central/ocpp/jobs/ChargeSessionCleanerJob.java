@@ -34,7 +34,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
  * Job to delete charge sessions older than a certain period.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ChargeSessionCleanerJob extends JobSupport {
 
