@@ -34,7 +34,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
  * Job to delete charge sessions older than a certain period.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ChargeSessionCleanerJob extends JobSupport {
 
@@ -70,12 +70,15 @@ public class ChargeSessionCleanerJob extends JobSupport {
 	public void run() {
 		final Instant expireDate = clock.instant().atZone(ZoneOffset.UTC).minus(expirePeriod)
 				.toInstant();
-		log.info("Deleting posted OCPP charge sessions older than {} @ {}", expirePeriod, expireDate);
+		log.debug("Deleting posted OCPP charge sessions older than {} @ {}", expirePeriod, expireDate);
 		final long start = System.currentTimeMillis();
 		final int result = chargeSessionDao.deletePostedChargeSessions(expireDate);
 		final long duration = System.currentTimeMillis() - start;
 		this.deleteCount = result;
-		log.info("Deleted {} expired OCPP charge sessions in {}ms", result, duration);
+		if ( result > 0 ) {
+			log.info("Deleted {} expired OCPP charge sessions older than {} @ {} in {}ms", result,
+					expirePeriod, expireDate, duration);
+		}
 	}
 
 	/**

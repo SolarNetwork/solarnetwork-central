@@ -33,7 +33,7 @@ import net.solarnetwork.central.user.dao.UserAlertSituationDao;
  * Job to periodically clean out old, resolved user alert situations.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UserAlertSituationCleanerJob extends JobSupport {
 
@@ -66,7 +66,10 @@ public class UserAlertSituationCleanerJob extends JobSupport {
 	public void run() {
 		Instant date = clock.instant().truncatedTo(ChronoUnit.MINUTES).minus(daysOlder, ChronoUnit.DAYS);
 		long result = dao.purgeResolvedSituations(date);
-		log.info("Purged {} user alert situations older than {} ({} days ago)", result, date, daysOlder);
+		if ( result > 0 ) {
+			log.info("Purged {} user alert situations older than {} ({} days ago)", result, date,
+					daysOlder);
+		}
 	}
 
 	/**

@@ -91,7 +91,7 @@ import net.solarnetwork.util.StringNaturalSortComparator;
  * DAO based implementation of {@link CloudDatumStreamRakeService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoCloudDatumStreamRakeService
 		implements CloudDatumStreamRakeService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
@@ -248,7 +248,8 @@ public class DaoCloudDatumStreamRakeService
 					}
 					var errMsg = "Error executing rake task.";
 					var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
-							MESSAGE_DATA_KEY, (Object) t.getMessage());
+							MESSAGE_DATA_KEY,
+							(Object) (e instanceof RemoteServiceException ? e : t).getMessage());
 					var oldState = taskInfo.getState();
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
@@ -260,7 +261,8 @@ public class DaoCloudDatumStreamRakeService
 						taskInfo.setState(Queued);
 						if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
 							// bump date into future by 1 minute so we do not immediately try to process again
-							taskInfo.setExecuteAt(clock.instant().plus(1, ChronoUnit.MINUTES));
+							taskInfo.setExecuteAt(clock.instant().truncatedTo(ChronoUnit.SECONDS).plus(1,
+									ChronoUnit.MINUTES));
 						}
 					} else {
 						// stop processing job if not what appears to be an API IO exception
@@ -349,6 +351,8 @@ public class DaoCloudDatumStreamRakeService
 				var errMsg = "Rake task date is after poll task start.";
 				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), "endDate",
 						(Object) endDate.toInstant(), "startDate", pollTask.getStartAt());
+				taskInfo.setExecuteAt(
+						clock.instant().atZone(rakeZone).truncatedTo(DAYS).plusDays(1).toInstant());
 				taskInfo.setMessage(errMsg);
 				taskInfo.putServiceProps(errData);
 				taskInfo.setState(Queued);

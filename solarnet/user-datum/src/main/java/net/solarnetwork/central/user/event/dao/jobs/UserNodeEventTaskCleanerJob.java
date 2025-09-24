@@ -32,7 +32,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Job to periodically delete completed/abandoned user node event tasks.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class UserNodeEventTaskCleanerJob extends JobSupport {
 
@@ -58,8 +58,10 @@ public class UserNodeEventTaskCleanerJob extends JobSupport {
 	public void run() {
 		Instant date = Instant.now().minus(minimumAgeMinutes, ChronoUnit.MINUTES);
 		long result = taskDao.purgeCompletedTasks(date);
-		log.info("Purged {} completed/abandoned user node event tasks older than {} minutes", result,
-				minimumAgeMinutes);
+		if ( result > 0 ) {
+			log.info("Purged {} completed/abandoned user node event tasks older than {} minutes", result,
+					minimumAgeMinutes);
+		}
 	}
 
 	/**
