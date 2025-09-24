@@ -110,6 +110,7 @@ import net.solarnetwork.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.service.ProgressListener;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.service.ResourceStorageService;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.StringUtils;
@@ -118,7 +119,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  *
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
 		implements DatumImportJobBiz, ServiceLifecycleObserver {
@@ -694,7 +695,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				String msg = "Loaded " + getLoadedCount() + " datum.";
 				updateTaskStatus(DatumImportState.Completed, Boolean.TRUE, msg, Instant.now());
 			} catch ( Exception e ) {
-				log.warn("Error importing datum for task {}", this, e);
+				if ( e instanceof RemoteServiceException ) {
+					// don't bother with stack trace
+					log.warn("Error importing datum for task {}: {}", this, e.getMessage());
+				} else {
+					log.warn("Error importing datum for task {}", this, e);
+				}
 				Throwable root = e;
 				while ( root.getCause() != null ) {
 					root = root.getCause();
