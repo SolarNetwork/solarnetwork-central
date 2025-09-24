@@ -1044,4 +1044,86 @@ public class DaoCloudDatumStreamRakeServiceTests {
 		// @formatter:on
 	}
 
+	@Test
+	public void executeTask_afterPollStartDate() throws Exception {
+		// GIVEN
+		// submit task
+		var future = new CompletableFuture<CloudDatumStreamRakeTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamRakeTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
+		final Instant sod = clock.instant().truncatedTo(ChronoUnit.DAYS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(randomLong());
+		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// look up datum stream associated with task
+		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// verify node ownership
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
+
+		// load poll task to check its start date
+		final CloudDatumStreamPollTaskEntity pollTask = new CloudDatumStreamPollTaskEntity(
+				datumStream.getId());
+		pollTask.setStartAt(sod.minus(1, DAYS));
+		given(pollTaskDao.get(datumStream.getId())).willReturn(pollTask);
+
+		// update task state to "queued" and stop because execute date after poll start date
+		given(taskDao.updateTask(any(), eq(Claimed))).willReturn(true);
+
+		// WHEN
+		var task = new CloudDatumStreamRakeTaskEntity(datumStream.getId());
+		task.setDatumStreamId(datumStream.getConfigId());
+		task.setState(Claimed);
+		task.setExecuteAt(sod);
+		task.setOffset(Period.ofDays(1));
+
+		Future<CloudDatumStreamRakeTaskEntity> result = service.executeTask(task);
+		CloudDatumStreamRakeTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
+
+		// THEN
+		// @formatter:off
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Claimed));
+		and.then(taskCaptor.getValue())
+			.as("Task to update is copy of given task")
+			.isNotSameAs(task)
+			.as("Task to update has same ID as given task")
+			.isEqualTo(task)
+			.as("Update task state to Queued to run again")
+			.returns(Queued, from(CloudDatumStreamRakeTaskEntity::getState))
+			.as("Update task execute date to start of 'tomorrow'")
+			.returns(sod.plus(1, DAYS), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
+			.as("Message generated for failed execution")
+			.returns("Rake task date is after poll task start.", from(CloudDatumStreamRakeTaskEntity::getMessage))
+			.as("Service properties generated for failed execution")
+			.returns(Map.of(
+					CONFIG_SUB_ID_DATA_KEY, task.getConfigId(),
+					"endDate", sod,
+					"startDate", pollTask.getStartAt()
+				), from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
+			;
+
+		and.then(resultTask)
+			.as("Result task is same as passed to DAO for update")
+			.isSameAs(taskCaptor.getValue())
+			;
+
+		// @formatter:on
+	}
+
 }
