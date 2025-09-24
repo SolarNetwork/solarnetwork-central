@@ -22,15 +22,21 @@
 
 package net.solarnetwork.central.datum.imp.jobs.test;
 
-import static org.easymock.EasyMock.expect;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import java.util.EnumSet;
 import java.util.UUID;
-import org.easymock.EasyMock;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.task.TaskRejectedException;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
+import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.datum.imp.jobs.DatumImportProcessorJob;
 
@@ -38,54 +44,65 @@ import net.solarnetwork.central.datum.imp.jobs.DatumImportProcessorJob;
  * Test cases for the {@link DatumImportProcessorJob} class.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
+@ExtendWith(MockitoExtension.class)
 public class DatumImportProcessorJobTests {
+
+	@Mock
+	private DatumImportJobBiz importJobBiz;
 
 	private static final String JOB_ID = "test.job";
 	private static final Long TEST_USER_ID = 123L;
-
-	private DatumImportJobBiz importJobBiz;
 
 	private DatumImportProcessorJob job;
 
 	@BeforeEach
 	public void setup() {
-		importJobBiz = EasyMock.createMock(DatumImportJobBiz.class);
-
 		job = new DatumImportProcessorJob(importJobBiz);
 		job.setId(JOB_ID);
 		job.setMaximumIterations(2);
 	}
 
-	private void replayAll() {
-		EasyMock.replay(importJobBiz);
-	}
+	@Test
+	public void executeJob() {
+		// GIVEN
+		DatumImportJobInfo info1 = new DatumImportJobInfo();
+		info1.setId(new UserUuidPK(TEST_USER_ID, UUID.randomUUID()));
+		DatumImportStatus status1 = Mockito.mock(DatumImportStatus.class);
 
-	@AfterEach
-	public void teardown() {
-		EasyMock.verify(importJobBiz);
+		DatumImportJobInfo info2 = new DatumImportJobInfo();
+		info2.setId(new UserUuidPK(TEST_USER_ID, UUID.randomUUID()));
+		DatumImportStatus status2 = Mockito.mock(DatumImportStatus.class);
+
+		given(importJobBiz.claimQueuedJob()).willReturn(info1, info2);
+		given(importJobBiz.performImport(info1.getId())).willReturn(status1);
+		given(importJobBiz.performImport(info2.getId())).willReturn(status2);
+
+		// WHEN
+		job.run();
+
+		// THEN
+		then(importJobBiz).shouldHaveNoMoreInteractions();
 	}
 
 	@Test
-	public void executeJob() {
-		// given
+	public void executeJob_rejected() {
+		// GIVEN
 		DatumImportJobInfo info1 = new DatumImportJobInfo();
 		info1.setId(new UserUuidPK(TEST_USER_ID, UUID.randomUUID()));
-		expect(importJobBiz.claimQueuedJob()).andReturn(info1);
-		DatumImportStatus status1 = EasyMock.createNiceMock(DatumImportStatus.class);
-		expect(importJobBiz.performImport(info1.getId())).andReturn(status1);
+		given(importJobBiz.claimQueuedJob()).willReturn(info1);
 
-		DatumImportJobInfo info2 = new DatumImportJobInfo();
-		expect(importJobBiz.claimQueuedJob()).andReturn(info2);
-		DatumImportStatus status2 = EasyMock.createNiceMock(DatumImportStatus.class);
-		expect(importJobBiz.performImport(info2.getId())).andReturn(status2);
+		TaskRejectedException tre = new TaskRejectedException("Rejected");
+		given(importJobBiz.performImport(info1.getId())).willThrow(tre);
 
-		// when
-		replayAll();
+		// WHEN
 		job.run();
 
-		// then
+		// THEN
+		then(importJobBiz).should().updateJobState(info1.getId(), DatumImportState.Queued,
+				EnumSet.of(DatumImportState.Claimed));
+		then(importJobBiz).shouldHaveNoMoreInteractions();
 	}
 
 }

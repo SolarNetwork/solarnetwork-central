@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.biz;
 
 import java.time.Instant;
+import java.util.Set;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
@@ -38,7 +39,7 @@ import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface DatumImportJobBiz {
 
@@ -94,4 +95,22 @@ public interface DatumImportJobBiz {
 	 * @return the job primary key
 	 */
 	UserUuidPK saveJobInfo(DatumImportJobInfo jobInfo);
+
+	/**
+	 * Update the state of a specific job.
+	 *
+	 * @param id
+	 *        the ID of the job to update
+	 * @param desiredState
+	 *        the state to change the job to
+	 * @param expectedStates
+	 *        a set of states that must include the job's current state in order
+	 *        to change it to {@code desiredState}, or {@literal null} if the
+	 *        current state of the job does not matter
+	 * @return {@literal true} if the job state was changed
+	 * @since 2.1
+	 */
+	boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
+			Set<DatumImportState> expectedStates);
+
 }

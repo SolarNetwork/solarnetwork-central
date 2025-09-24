@@ -38,6 +38,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -56,6 +57,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +127,7 @@ import net.solarnetwork.test.Assertion;
  * Test cases for the {@link DaoDatumImportBiz} class.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoDatumImportBizTests {
 
@@ -1469,5 +1471,23 @@ public class DaoDatumImportBizTests {
 		DatumImportStatus status = results.iterator().next();
 		assertThat("Result is requested info", status.getJobId(),
 				equalTo(info.getId().getId().toString()));
+	}
+
+	@Test
+	public void updateJobState() {
+		// GIVEN
+		final UUID jobId = UUID.randomUUID();
+		final UserUuidPK jobPk = new UserUuidPK(TEST_USER_ID, jobId);
+
+		expect(jobInfoDao.updateJobState(jobPk, DatumImportState.Claimed,
+				EnumSet.of(DatumImportState.Queued))).andReturn(true);
+
+		// WHEN
+		replayAll();
+		boolean result = biz.updateJobState(jobPk, DatumImportState.Claimed,
+				EnumSet.of(DatumImportState.Queued));
+
+		// THEN
+		assertThat("Result from DAO returned", result, is(Matchers.equalTo(true)));
 	}
 }

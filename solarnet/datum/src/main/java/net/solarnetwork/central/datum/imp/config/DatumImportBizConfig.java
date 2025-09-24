@@ -29,8 +29,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
@@ -157,11 +159,21 @@ public class DatumImportBizConfig {
 		return new DatumImportSettings();
 	}
 
-	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public DaoDatumImportBiz datumImportBiz(DatumImportSettings settings) {
-		SimpleAsyncTaskExecutor taskExecutor = new SimpleAsyncTaskExecutor("Datum-Import-");
-		taskExecutor.setConcurrencyLimit(settings.concurrentTasks);
+	@Qualifier(DATUM_IMPORT)
+	@Bean
+	public ThreadPoolTaskExecutor datumImportTaskExecutor(DatumImportSettings settings) {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setThreadNamePrefix("Datum-Import-");
+		executor.setCorePoolSize(settings.concurrentTasks);
+		executor.setMaxPoolSize(settings.concurrentTasks);
+		executor.setAllowCoreThreadTimeOut(true);
+		executor.setQueueCapacity(0);
+		return executor;
+	}
 
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
+	public DaoDatumImportBiz datumImportBiz(DatumImportSettings settings,
+			@Qualifier(DATUM_IMPORT) AsyncTaskExecutor taskExecutor) {
 		DaoDatumImportBiz biz = new DaoDatumImportBiz(taskScheduler, taskExecutor, userNodeDao,
 				securityTokenDao, jobInfoDao, datumDao);
 		biz.setMaxPreviewCount(settings.previewMaxCount);

@@ -231,7 +231,7 @@ app:
           schedule: "40 53 * * * *"
         processor:
           maximum-iterations: 1000
-          maximum-wait-ms: 7200000
+          maximum-wait-ms: 59000
           schedule: 60000
     instr:
       cleaner:

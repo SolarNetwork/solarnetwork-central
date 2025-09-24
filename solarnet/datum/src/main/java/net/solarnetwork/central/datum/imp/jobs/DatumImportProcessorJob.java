@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.imp.jobs;
 
+import java.util.EnumSet;
+import org.springframework.core.task.TaskRejectedException;
 import net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
@@ -63,6 +65,11 @@ public class DatumImportProcessorJob extends JobSupport {
 			try {
 				DatumImportStatus status = importJobBiz.performImport(info.getId());
 				log.info("Submitted datum import task {}", status);
+			} catch ( TaskRejectedException e ) {
+				log.debug("Import task rejected, setting back to Claimed state: {}", info);
+				importJobBiz.updateJobState(info.getId(), DatumImportState.Queued,
+						EnumSet.of(DatumImportState.Claimed));
+				break;
 			} catch ( RuntimeException e ) {
 				log.error("Error submitting datum import task {}", info, e);
 				info.setMessage(e.getMessage());
