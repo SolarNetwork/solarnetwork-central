@@ -32,7 +32,7 @@ import net.solarnetwork.central.user.expire.biz.UserDatumDeleteJobBiz;
  * Delete old job records for completed or abandoned jobs.
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class DatumDeleteJobInfoCleanerJob extends JobSupport {
 
@@ -61,8 +61,10 @@ public class DatumDeleteJobInfoCleanerJob extends JobSupport {
 	public void run() {
 		Instant date = Instant.now().minus(minimumAgeMinutes, ChronoUnit.MINUTES);
 		long result = datumDeleteBiz.purgeOldJobs(date);
-		log.info("Purged {} completed/abandoned datum delete tasks older than {} minutes", result,
-				minimumAgeMinutes);
+		if ( result > 0 ) {
+			log.info("Purged {} completed/abandoned datum delete tasks older than {} minutes", result,
+					minimumAgeMinutes);
+		}
 	}
 
 	/**
