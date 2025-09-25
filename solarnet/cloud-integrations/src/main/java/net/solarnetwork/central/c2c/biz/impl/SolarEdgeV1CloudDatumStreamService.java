@@ -78,6 +78,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestOperations;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
@@ -104,6 +105,7 @@ import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
@@ -369,10 +371,19 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 	private List<CloudDataValue> equipmentChangeLog(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters, SolarEdgeDeviceType deviceType, String replacedByRef) {
-		return restOpsHelper.httpGet("List equipment change log", integration, JsonNode.class,
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
-						.path(EQUIPMENT_CHANGELOG_URL_TEMPLATE).buildAndExpand(filters).toUri(),
-				res -> parseEquipmentChangeLog(res.getBody(), filters, deviceType, replacedByRef));
+		try {
+			return restOpsHelper.httpGet("List equipment change log", integration, JsonNode.class,
+					(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+							.path(EQUIPMENT_CHANGELOG_URL_TEMPLATE).buildAndExpand(filters).toUri(),
+					res -> parseEquipmentChangeLog(res.getBody(), filters, deviceType, replacedByRef));
+		} catch ( RemoteServiceException e ) {
+			if ( e.getCause() instanceof HttpClientErrorException hce
+					&& hce.getStatusCode().is4xxClientError() ) {
+				// ignore as "equipment not found" and move on
+				return List.of();
+			}
+			throw e;
+		}
 	}
 
 	private List<CloudDataValue> components(Map<String, ?> filters) {
