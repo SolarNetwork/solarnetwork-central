@@ -596,9 +596,12 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				meterValues.add(dataValue);
 
 				// look for replaced equipment in changelog
-				meterValues.addAll(equipmentChangeLog(integration,
-						Map.of(SITE_ID_FILTER, siteId, COMPONENT_ID_FILTER, id), Meter,
-						pathReferenceValue(dataValue.getIdentifiers())));
+				if ( meta.containsKey(DEVICE_SERIAL_NUMBER_METADATA) ) {
+					meterValues.addAll(equipmentChangeLog(integration,
+							Map.of(SITE_ID_FILTER, siteId, COMPONENT_ID_FILTER,
+									meta.get(DEVICE_SERIAL_NUMBER_METADATA)),
+							Meter, pathReferenceValue(dataValue.getIdentifiers())));
+				}
 			}
 			result.add(intermediateDataValue(List.of(siteId, Meter.getKey()), Meter.getGroupKey(), null,
 					meterValues));
