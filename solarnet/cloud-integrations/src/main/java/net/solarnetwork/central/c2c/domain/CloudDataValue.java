@@ -40,7 +40,7 @@ import net.solarnetwork.util.StringUtils;
  * </p>
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 @JsonPropertyOrder({ "name", "reference", "identifiers", "metadata", "children" })
 public final class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
@@ -133,6 +133,20 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @since 1.6
 	 */
 	public static final String START_DATE_METADATA = "startDate";
+
+	/**
+	 * Standard metadata key for a reference to another data value that replaced
+	 * this one.
+	 *
+	 * <p>
+	 * This can be used to correlate different pieces of equipment that
+	 * logically represent the same stream of data, for example when equipment
+	 * is replaced.
+	 * </p>
+	 *
+	 * @since 1.7
+	 */
+	public static final String REPLACED_BY_METADATA = "replacedBy";
 
 	/**
 	 * A wildcard identifier value.

@@ -35,12 +35,14 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_SERIAL_N
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.LOCALITY_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.MANUFACTURER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.POSTAL_CODE_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.REPLACED_BY_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.STATE_PROVINCE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.STREET_ADDRESS_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.WILDCARD_IDENTIFIER;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.pathReferenceValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -113,7 +115,7 @@ import net.solarnetwork.util.StringUtils;
  * SolarEdge implementation of {@link CloudDatumStreamService} using the V1 API.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -196,6 +198,18 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	 * </p>
 	 */
 	public static final String EQUIPMENT_DATA_URL_TEMPLATE = "/equipment/{siteId}/{componentId}/data";
+
+	/**
+	 * The URI path to list the equipment "change log" for a given site and
+	 * component.
+	 *
+	 * <p>
+	 * Accepts two parameters: {@code {siteId}} and {@code {componentId}}.
+	 * </p>
+	 *
+	 * @since 1.7
+	 */
+	public static final String EQUIPMENT_CHANGELOG_URL_TEMPLATE = "/equipment/{siteId}/{componentId}/changeLog";
 
 	/**
 	 * The URI path to list the meter power data for a given site.
@@ -350,7 +364,15 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		return restOpsHelper.httpGet("List site inventory", integration, JsonNode.class,
 				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI)).path(SITE_INVENTORY_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
-				res -> parseSiteInventory(res.getBody(), filters));
+				res -> parseSiteInventory(integration, res.getBody(), filters));
+	}
+
+	private List<CloudDataValue> equipmentChangeLog(CloudIntegrationConfiguration integration,
+			Map<String, ?> filters, SolarEdgeDeviceType deviceType, String replacedByRef) {
+		return restOpsHelper.httpGet("List equipment change log", integration, JsonNode.class,
+				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+						.path(EQUIPMENT_CHANGELOG_URL_TEMPLATE).buildAndExpand(filters).toUri(),
+				res -> parseEquipmentChangeLog(res.getBody(), filters, deviceType, replacedByRef));
 	}
 
 	private List<CloudDataValue> components(Map<String, ?> filters) {
@@ -442,7 +464,8 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<CloudDataValue> parseSiteInventory(JsonNode json, Map<String, ?> filters) {
+	private List<CloudDataValue> parseSiteInventory(final CloudIntegrationConfiguration integration,
+			final JsonNode json, final Map<String, ?> filters) {
 		if ( json == null ) {
 			return Collections.emptyList();
 		}
@@ -522,8 +545,14 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 						meta.put(DEVICE_FIRMWARE_VERSION_METADATA, buf.toString());
 					}
 
-					inverterValues.add(
-							intermediateDataValue(List.of(siteId, Inverter.getKey(), id), name, meta));
+					final var dataValue = intermediateDataValue(List.of(siteId, Inverter.getKey(), id),
+							name, meta);
+					inverterValues.add(dataValue);
+
+					// look for replaced equipment in changelog
+					inverterValues.addAll(equipmentChangeLog(integration,
+							Map.of(SITE_ID_FILTER, siteId, COMPONENT_ID_FILTER, id), Inverter,
+							pathReferenceValue(dataValue.getIdentifiers())));
 				}
 			}
 			result.add(intermediateDataValue(List.of(siteId, Inverter.getKey()), Inverter.getGroupKey(),
@@ -562,7 +591,14 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				populateNonEmptyValue(meterNode, "firmwareVersion", DEVICE_FIRMWARE_VERSION_METADATA,
 						meta);
 
-				meterValues.add(intermediateDataValue(List.of(siteId, Meter.getKey(), id), name, meta));
+				final var dataValue = intermediateDataValue(List.of(siteId, Meter.getKey(), id), name,
+						meta);
+				meterValues.add(dataValue);
+
+				// look for replaced equipment in changelog
+				meterValues.addAll(equipmentChangeLog(integration,
+						Map.of(SITE_ID_FILTER, siteId, COMPONENT_ID_FILTER, id), Meter,
+						pathReferenceValue(dataValue.getIdentifiers())));
 			}
 			result.add(intermediateDataValue(List.of(siteId, Meter.getKey()), Meter.getGroupKey(), null,
 					meterValues));
@@ -600,8 +636,15 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 						meta);
 				populateNonEmptyValue(batteryNode, "nameplateCapacity", "capacity", meta);
 
-				batteryValues
-						.add(intermediateDataValue(List.of(siteId, Battery.getKey(), id), name, meta));
+				final var dataValue = intermediateDataValue(List.of(siteId, Battery.getKey(), id), name,
+						meta);
+				batteryValues.add(dataValue);
+
+				// look for replaced equipment in changelog
+				batteryValues.addAll(equipmentChangeLog(integration,
+						Map.of(SITE_ID_FILTER, siteId, COMPONENT_ID_FILTER, id), Battery,
+						pathReferenceValue(dataValue.getIdentifiers())));
+
 			}
 			result.add(intermediateDataValue(List.of(siteId, Battery.getKey()), Battery.getGroupKey(),
 					null, batteryValues));
@@ -609,6 +652,41 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 		return result;
 
+	}
+
+	private static List<CloudDataValue> parseEquipmentChangeLog(JsonNode json, Map<String, ?> filters,
+			SolarEdgeDeviceType deviceType, String replacedByRef) {
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
+		final String siteId = filters.get(SITE_ID_FILTER).toString();
+		/*- EXAMPLE JSON:
+		{
+		  "ChangeLog": {
+		    "count": 1,
+		    "list": [
+		      {
+		        "serialNumber": "7E130000-01",
+		        "partNumber": "SE20K-USR48NNU4",
+		        "date": "2025-09-09"
+		      }
+		    ]
+		  }
+		}
+		*/
+		final var result = new ArrayList<CloudDataValue>(4);
+		final JsonNode changeLogNode = json.path("ChangeLog");
+
+		for ( JsonNode changedNode : changeLogNode.path("list") ) {
+			final String id = changedNode.path("serialNumber").asText().trim();
+			if ( id.isEmpty() ) {
+				continue;
+			}
+			result.add(intermediateDataValue(List.of(siteId, deviceType.getKey(), id), id,
+					Map.of(REPLACED_BY_METADATA, replacedByRef, DEVICE_SERIAL_NUMBER_METADATA, id)));
+		}
+
+		return result;
 	}
 
 	private static List<CloudDataValue> inverterDataValues(String siteId, SolarEdgeDeviceType deviceType,
