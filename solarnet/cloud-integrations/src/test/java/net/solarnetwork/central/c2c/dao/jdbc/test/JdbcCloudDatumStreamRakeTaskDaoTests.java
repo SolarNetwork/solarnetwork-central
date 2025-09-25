@@ -619,7 +619,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// GIVEN
 		insert();
 
-		// add another, but not in Queued state so not claimable
+		// add another, but not in Completed state so not claimable
 		final CloudDatumStreamConfiguration datumStream2 = createDatumStream(userId,
 				lastMapping.getConfigId(), null);
 		datumStream2.setDatumStreamMappingId(lastMapping.getConfigId());
@@ -703,6 +703,124 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// @formatter:off
 		then(result)
 			.as("Retrieved entity matches row with executeAt in the past")
+			.isEqualTo(expected)
+			.matches(c -> c.isSameAs(expected), "Claimed entity has Claimed state")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void claimTask_withinDatumStreamGroup_executing() {
+		// GIVEN
+		insert();
+
+		// add another for same datum stream, but not in Executing state so not claimable
+		// @formatter:off
+		CloudDatumStreamRakeTaskEntity conf2 = newCloudDatumStreamRakeTaskEntity(userId,
+				last.getDatumStreamId(),
+				BasicClaimableJobState.Executing,
+				now().truncatedTo(ChronoUnit.SECONDS),
+				Period.ofDays(2),
+				randomString(),
+				null)
+				;
+		// @formatter:on
+		conf2 = dao.get(dao.save(conf2));
+
+		allCloudDatumStreamRakeTaskEntityData(jdbcTemplate);
+
+		// WHEN
+		CloudDatumStreamRakeTaskEntity result = dao.claimQueuedTask();
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("No task claimed because another for same datum stream is Executing")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void claimTask_withinDatumStreamGroup_claimed() {
+		// GIVEN
+		insert();
+
+		// add another for same datum stream, but not in Claimed state so not claimable
+		// @formatter:off
+		CloudDatumStreamRakeTaskEntity conf2 = newCloudDatumStreamRakeTaskEntity(userId,
+				last.getDatumStreamId(),
+				BasicClaimableJobState.Claimed,
+				now().truncatedTo(ChronoUnit.SECONDS),
+				Period.ofDays(2),
+				randomString(),
+				null)
+				;
+		// @formatter:on
+		conf2 = dao.get(dao.save(conf2));
+
+		allCloudDatumStreamRakeTaskEntityData(jdbcTemplate);
+
+		// WHEN
+		CloudDatumStreamRakeTaskEntity result = dao.claimQueuedTask();
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("No task claimed because another for same datum stream is Claimed")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void claimTask_withinDatumStreamGroup_differentGroup() {
+		// GIVEN
+		insert();
+
+		// add another for same datum stream, but not in Claimed state so not claimable
+		// @formatter:off
+		CloudDatumStreamRakeTaskEntity conf2 = newCloudDatumStreamRakeTaskEntity(userId,
+				last.getDatumStreamId(),
+				BasicClaimableJobState.Claimed,
+				now().truncatedTo(ChronoUnit.SECONDS),
+				Period.ofDays(2),
+				randomString(),
+				null)
+				;
+		// @formatter:on
+		conf2 = dao.get(dao.save(conf2));
+
+		// add another for DIFFERENT datum stream
+		final CloudDatumStreamConfiguration datumStream2 = createDatumStream(userId,
+				lastMapping.getConfigId(), null);
+		datumStream2.setDatumStreamMappingId(lastMapping.getConfigId());
+		// @formatter:off
+		CloudDatumStreamRakeTaskEntity conf3 = newCloudDatumStreamRakeTaskEntity(userId,
+				datumStream2.getConfigId(),
+				BasicClaimableJobState.Queued,
+				now().truncatedTo(ChronoUnit.SECONDS),
+				Period.ofDays(1),
+				randomString(),
+				null)
+				;
+		// @formatter:on
+		conf3 = dao.get(dao.save(conf3));
+
+		allCloudDatumStreamRakeTaskEntityData(jdbcTemplate);
+
+		// WHEN
+		CloudDatumStreamRakeTaskEntity result = dao.claimQueuedTask();
+
+		//TestTransaction.flagForCommit();
+
+		// THEN
+		CloudDatumStreamRakeTaskEntity expected = conf3.clone();
+		expected.setState(BasicClaimableJobState.Claimed);
+
+		// @formatter:off
+		then(result)
+			.as("Retrieved entity matches with with Queued state from other datum stream")
 			.isEqualTo(expected)
 			.matches(c -> c.isSameAs(expected), "Claimed entity has Claimed state")
 			;

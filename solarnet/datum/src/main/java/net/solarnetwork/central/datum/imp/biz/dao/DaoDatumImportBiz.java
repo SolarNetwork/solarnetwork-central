@@ -119,7 +119,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  *
  * @author matt
- * @version 2.6
+ * @version 2.7
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
 		implements DatumImportJobBiz, ServiceLifecycleObserver {
@@ -434,6 +434,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		DatumImportTask task = taskForId(id);
 		task.info.setImportState(info.getImportState());
 		return task;
+	}
+
+	@Override
+	public boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
+			Set<DatumImportState> expectedStates) {
+		return jobInfoDao.updateJobState(id, desiredState, expectedStates);
 	}
 
 	@Override

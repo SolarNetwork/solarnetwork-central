@@ -583,7 +583,8 @@ $$;
  *
  * "Claim" a rake task from the solardin.cin_datum_stream_rake_task table that has a status of 'q'
  * and change the status to 'p' and return it. The tasks will be claimed from oldest to newest
- * based on the exec_at column.
+ * based on the exec_at column, and only one task at a time per ds_id group can be claimed or
+ * executing ('p' or 'e' status).
  *
  * @return the claimed row, if one was able to be claimed
  */
@@ -594,10 +595,16 @@ DECLARE
 	rec solardin.cin_datum_stream_rake_task;
 
 	-- include ORDER BY here to encourage cin_datum_stream_rake_task_exec_idx to be used
-	curs CURSOR FOR SELECT * FROM solardin.cin_datum_stream_rake_task
-			WHERE status = 'q'
-			AND exec_at <= CURRENT_TIMESTAMP
-			ORDER BY exec_at
+	curs CURSOR FOR SELECT * FROM solardin.cin_datum_stream_rake_task t
+			WHERE t.status = 'q'
+			AND t.exec_at <= CURRENT_TIMESTAMP
+			AND NOT EXISTS (
+				SELECT id FROM solardin.cin_datum_stream_rake_task g
+				WHERE g.user_id = t.user_id
+				AND g.ds_id = t.ds_id
+				AND g.status IN ('p', 'e')
+			)
+			ORDER BY t.exec_at
 			LIMIT 1
 			FOR UPDATE SKIP LOCKED;
 BEGIN
