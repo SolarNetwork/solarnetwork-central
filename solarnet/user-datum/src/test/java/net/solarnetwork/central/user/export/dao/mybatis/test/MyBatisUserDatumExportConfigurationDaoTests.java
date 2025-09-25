@@ -447,12 +447,12 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		assertThat(found.get(0), equalTo(confs.get(0)));
 
 		found = dao.findForExecution(exportDate.plus(2, ChronoUnit.HOURS), ScheduleType.Hourly);
-		assertThat("0901 query export date finds 0800, 0900 confs", found, hasSize(2));
+		assertThat("1000 query export date finds 0800, 0900 confs", found, hasSize(2));
 		assertThat(found.get(0), equalTo(confs.get(0)));
 		assertThat(found.get(1), equalTo(confs.get(1)));
 
 		found = dao.findForExecution(exportDate.plus(3, ChronoUnit.HOURS), ScheduleType.Hourly);
-		assertThat("1001 query export date finds 0800, 0900, 1000 confs", found, hasSize(3));
+		assertThat("1100 query export date finds 0800, 0900, 1000 confs", found, hasSize(3));
 		assertThat(found, not(sameInstance(confs)));
 		assertThat(found, equalTo(confs));
 	}

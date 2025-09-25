@@ -128,7 +128,13 @@
 		<include refid="fragment-UserDatumExportConfiguration-select-full"/>
 		WHERE
 			udexc.schedule = #{schedule}
-			AND udexc.min_export_date &lt; #{date}
+			AND (udexc.min_export_date + CASE udexc.schedule
+					WHEN 'h' THEN INTERVAL 'PT1H'
+					WHEN 'd' THEN INTERVAL 'P1D'
+					WHEN 'w' THEN INTERVAL 'P7D'
+					WHEN 'm' THEN INTERVAL 'P1M'
+					ELSE INTERVAL 'P0D'
+				END) &lt;= #{date}
 			AND udexc.data_conf_id IS NOT NULL
 			AND udexc.dest_conf_id IS NOT NULL
 			AND udexc.outp_conf_id IS NOT NULL

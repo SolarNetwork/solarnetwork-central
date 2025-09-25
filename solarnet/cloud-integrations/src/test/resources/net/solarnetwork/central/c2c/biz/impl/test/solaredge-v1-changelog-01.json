@@ -1,0 +1,17 @@
+{
+  "ChangeLog": {
+    "count": 2,
+    "list": [
+      {
+        "serialNumber": "6E140000-02",
+        "partNumber": "SE20K-USR48NNU4",
+        "date": "2018-08-16"
+      },
+	  {
+        "serialNumber": "6E140000-01",
+        "partNumber": "SE20K-USR48NNU4",
+        "date": "2017-01-10"
+	  }
+    ]
+  }
+}
