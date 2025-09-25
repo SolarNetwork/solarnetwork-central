@@ -130,16 +130,87 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 		return charset;
 	}
 
+	/**
+	 * Get the completed count, against the estimated result count.
+	 *
+	 * @return the count
+	 * @see {@link #setEstimatedResultCount(long)}
+	 */
+	protected long getCompleteCount() {
+		return complete;
+	}
+
+	/**
+	 * Get the estimated result count.
+	 *
+	 * @return the estimated result count
+	 */
+	protected long getEstimatedResultCount() {
+		return estimatedResultCount;
+	}
+
+	/**
+	 * Set the estimated result count.
+	 *
+	 * @param estimatedResultCount
+	 *        the estimated result count
+	 * @see #incrementProgress(DatumImportService, long, ProgressListener)
+	 * @see #updateProgress(DatumImportService, long, ProgressListener)
+	 */
 	protected void setEstimatedResultCount(long estimatedResultCount) {
 		this.estimatedResultCount = estimatedResultCount;
 	}
 
-	protected void incrementProgress(DatumImportService context, int count,
+	/**
+	 * Increment progress against the estimated result count.
+	 *
+	 * <p>
+	 * The {@code count} will be added to the current progress amount. Use
+	 * {@link #updateProgress(DatumImportService, long, ProgressListener)} to
+	 * set the absolute progress amount.
+	 * </p>
+	 *
+	 * @param context
+	 *        the context
+	 * @param count
+	 *        the progress amount to add
+	 * @param progressListener
+	 *        the progress listener
+	 * @see #setEstimatedResultCount(long)
+	 */
+	protected void incrementProgress(DatumImportService context, long count,
 			ProgressListener<DatumImportService> progressListener) {
 		if ( estimatedResultCount < 1 ) {
 			return;
 		}
 		complete += count;
+		progressListener.progressChanged(context,
+				Math.min(1.0, (double) complete / (double) estimatedResultCount));
+	}
+
+	/**
+	 * Set the progress amount against the estimated result count.
+	 *
+	 * <p>
+	 * The {@code amount} value is the absolute progress value to set. Use
+	 * {@link #incrementProgress(DatumImportService, long, ProgressListener)} to
+	 * add a count to the current amount.
+	 * </p>
+	 *
+	 * @param context
+	 *        the context
+	 * @param amount
+	 *        the progress amount to set
+	 * @param progressListener
+	 *        the progress listener
+	 * @see #setEstimatedResultCount(long)
+	 */
+	protected void updateProgress(DatumImportService context, long amount,
+			ProgressListener<DatumImportService> progressListener) {
+		if ( estimatedResultCount < 1 ) {
+			return;
+		}
+		complete = amount;
 		progressListener.progressChanged(context,
 				Math.min(1.0, (double) complete / (double) estimatedResultCount));
 	}

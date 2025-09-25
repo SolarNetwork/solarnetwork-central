@@ -222,11 +222,12 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 		queryFilters.add(BasicQueryFilter.ofRange(startDate.toInstant(), endDate.toInstant()));
 
 		var datumStub = given(datumStreamService.datum(same(datumStream), any()));
-		for ( var datumPage : datumPages ) {
-			var filter = BasicQueryFilter.ofRange(now(), now());
-			queryFilters.add(filter);
+		for ( List<Datum> datumPage : datumPages ) {
+			var nextDay = datumPage.getLast().getTimestamp().plus(1, ChronoUnit.DAYS);
+			var nextFilter = BasicQueryFilter.ofRange(nextDay, endDate.toInstant());
+			queryFilters.add(nextFilter);
 			datumStub = datumStub
-					.willReturn(new BasicCloudDatumStreamQueryResult(null, filter, datumPage));
+					.willReturn(new BasicCloudDatumStreamQueryResult(null, nextFilter, datumPage));
 		}
 		// return the final non-paginated end result
 		datumStub.willReturn(new BasicCloudDatumStreamQueryResult(emptyList()));
@@ -235,7 +236,6 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 		final var progress = new ArrayList<Double>(8);
 		final var datum = new ArrayList<GeneralNodeDatum>(8);
 
-		// WHEN
 		try (var ctx = service.createImportContext(config, resource, (importService, progressAmount) -> {
 			progress.add(progressAmount);
 		})) {
@@ -263,7 +263,20 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 			})
 			;
 
-		// TODO: validate progress?
+		and.then(progress)
+			.as("Progress udpated with each datum page")
+			.hasSize(datumPages.size())
+			;
+		for ( int i = 0; i < datumPages.size(); i++ ) {
+			Double amount = progress.get(i);
+			double overallSeconds = ChronoUnit.SECONDS.between(startDate, endDate);
+			BasicQueryFilter usedFilter = queryFilters.get(i+1);
+			double expectedSeconds = ChronoUnit.SECONDS.between(startDate.toInstant(), usedFilter.getStartDate());
+			and.then(amount)
+				.as("Progress amount equals percentage of seconds between overall start and query start dates")
+				.isEqualByComparingTo(expectedSeconds / overallSeconds)
+				;
+		}
 
 		List<Datum> allDatumList = datumPages.stream().flatMap(l -> l.stream()).toList();
 		and.then(datum)

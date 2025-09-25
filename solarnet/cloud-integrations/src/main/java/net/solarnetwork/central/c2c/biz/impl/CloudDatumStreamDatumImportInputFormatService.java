@@ -27,6 +27,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -35,6 +36,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
@@ -47,6 +49,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.service.ProgressListener;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 
@@ -54,8 +57,15 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * A {@link DatumImportInputFormatService} implementation that reads data from a
  * {@link CloudDatumStreamService}.
  *
+ * <p>
+ * The progress updates made by this service are calculated by the start date
+ * used in each cloud datum stream query, as a percentage of the the total
+ * amount of time between the start/end dates of the overall import
+ * configuration.
+ * </p>
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImportInputFormatService {
 
@@ -71,6 +81,17 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 	/** The setting for end date (ISO 8601 instant). */
 	public static final String END_DATE_SETTING = "endDate";
 
+	/** The setting for a retry (after error) count. */
+	public static final String RETRY_COUNT_SETTING = "retries";
+
+	/** The default retry count setting value. */
+	public static final int DEFAULT_RETRY_COUNT = 2;
+
+	/** The maximum allowed retry count. */
+	public static final int MAXIMUM_RETRY_COUNT = 5;
+
+	private static final long RETRY_SLEEP_MS = 5_000L;
+
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
@@ -78,8 +99,10 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 		var datumStreamId = new BasicTextFieldSettingSpecifier(DATUM_STREAM_ID_SETTING, null);
 		var startDate = new BasicTextFieldSettingSpecifier(START_DATE_SETTING, null);
 		var endDate = new BasicTextFieldSettingSpecifier(END_DATE_SETTING, null);
+		var retries = new BasicTextFieldSettingSpecifier(RETRY_COUNT_SETTING,
+				String.valueOf(DEFAULT_RETRY_COUNT));
 
-		SETTINGS = List.of(datumStreamId, startDate, endDate);
+		SETTINGS = List.of(datumStreamId, startDate, endDate, retries);
 	}
 
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
@@ -125,6 +148,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 
 		private final Instant startDate;
 		private final Instant endDate;
+		private final int retryCount;
 
 		private final CloudDatumStreamService service;
 		private final CloudDatumStreamConfiguration datumStream;
@@ -164,6 +188,10 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 				throw new IllegalArgumentException("Invalid end date: " + e.getMessage());
 			}
 
+			var retryVal = config.serviceProperty(RETRY_COUNT_SETTING, Integer.class);
+			this.retryCount = (retryVal != null ? Math.min(retryVal.intValue(), MAXIMUM_RETRY_COUNT)
+					: DEFAULT_RETRY_COUNT);
+
 			datumStream = requireNonNullObject(
 					datumStreamDao.get(new UserLongCompositePK(config.getUserId(), datumStreamId)),
 					datumStreamId);
@@ -178,6 +206,9 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 			service = requireNonNullObject(
 					datumStreamServiceProvider.apply(datumStream.getServiceIdentifier()),
 					datumStream.getServiceIdentifier());
+
+			// set estimated count to seconds between start/end dates
+			setEstimatedResultCount(ChronoUnit.SECONDS.between(startDate, endDate));
 		}
 
 		@Override
@@ -204,7 +235,12 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 				while ( !batchItr.hasNext() && filter != null ) {
 					batchItr = listDatumForBatchRange();
 				}
-				return batchItr.hasNext();
+				boolean result = batchItr.hasNext();
+				if ( !result && getCompleteCount() < getEstimatedResultCount() ) {
+					updateProgress(CloudDatumStreamDatumImportInputFormatService.this,
+							getEstimatedResultCount(), progressListener);
+				}
+				return result;
 			}
 
 			@Override
@@ -214,9 +250,38 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 			}
 
 			private Iterator<Datum> listDatumForBatchRange() {
-				var results = service.datum(datumStream, filter);
+				CloudDatumStreamQueryResult results = null;
+				int attempt = 0;
+				while ( true ) {
+					try {
+						results = service.datum(datumStream, filter);
+						break;
+					} catch ( RemoteServiceException e ) {
+						attempt++;
+						if ( attempt > retryCount ) {
+							throw e;
+						} else {
+							log.warn(
+									"Error importing datum from Cloud Datum Stream {} for date range {} - {}: {}; will try up to {} more times",
+									datumStream.ident(), filter.getStartDate(), filter.getEndDate(),
+									e.getMessage(), (retryCount - attempt + 1));
+						}
+						try {
+							Thread.sleep(RETRY_SLEEP_MS);
+						} catch ( InterruptedException ie ) {
+							// continue
+						}
+					}
+				}
+				if ( results == null ) {
+					return Collections.emptyIterator();
+				}
 				var nextFilter = results.getNextQueryFilter();
 				if ( nextFilter != null && nextFilter.getStartDate().isAfter(filter.getStartDate()) ) {
+					// update progress based on the seconds between the overall start date and the next start date
+					updateProgress(CloudDatumStreamDatumImportInputFormatService.this,
+							ChronoUnit.SECONDS.between(startDate, nextFilter.getStartDate()),
+							progressListener);
 					filter = BasicQueryFilter.copyOf(nextFilter, config.getServiceProperties());
 					filter.setEndDate(endDate); // keep importing to end date
 				} else {
