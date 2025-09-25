@@ -654,6 +654,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	private static List<CloudDataValue> parseEquipmentChangeLog(JsonNode json, Map<String, ?> filters,
 			SolarEdgeDeviceType deviceType, String replacedByRef) {
 		if ( json == null ) {
