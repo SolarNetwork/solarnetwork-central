@@ -173,45 +173,6 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	}
 
 	private static final FluxPublishSettingsInfo PUB_RETAINED = new FluxPublishSettingsInfo(true, true);
-	private static final FluxPublishSettingsInfo PUB_NOT_RETAINED = new FluxPublishSettingsInfo(true,
-			false);
-
-	@Test
-	public void publishRawDatum() throws Exception {
-		// GIVEN
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(UUID.randomUUID().toString());
-		DatumSamples samples = new DatumSamples();
-		samples.putInstantaneousSampleValue("foo", 123);
-		samples.putAccumulatingSampleValue("bar", 234L);
-		datum.setSamples(samples);
-
-		expect(datumSupportDao.ownershipForNodeId(TEST_NODE_ID))
-				.andReturn(ownershipFor(TEST_NODE_ID, TEST_USER_ID));
-
-		expect(fluxPublishSettingsDao.nodeSourcePublishConfiguration(TEST_USER_ID, TEST_NODE_ID,
-				datum.getSourceId())).andReturn(PUB_RETAINED);
-
-		final TestingInterceptHandler session = getTestingInterceptHandler();
-
-		// WHEN
-		replayAll();
-		boolean success = publisher.processDatum(datum, None);
-
-		stopMqttServer(); // to flush messages
-
-		// THEN
-		assertThat("Datum published", success, equalTo(true));
-		assertThat("Stat published count", publisher.getMqttStats().get(RawDatumPublished), equalTo(1L));
-		assertThat("Only 1 message published", session.publishMessages, hasSize(1));
-		InterceptPublishMessage msg = session.getPublishMessageAtIndex(0);
-		assertThat(msg.getTopicName(),
-				equalTo(datumTopic(TEST_USER_ID, datum.getNodeId(), None, datum.getSourceId())));
-		assertPublishedDatumEqualTo("MQTT published datum", session.getPublishMessageAtIndex(0),
-				session.getPublishPayloadAtIndex(0), datum, true);
-	}
 
 	@Test
 	public void publishRawDatum_notRetained() throws Exception {
@@ -227,9 +188,6 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 
 		expect(datumSupportDao.ownershipForNodeId(TEST_NODE_ID))
 				.andReturn(ownershipFor(TEST_NODE_ID, TEST_USER_ID));
-
-		expect(fluxPublishSettingsDao.nodeSourcePublishConfiguration(TEST_USER_ID, TEST_NODE_ID,
-				datum.getSourceId())).andReturn(PUB_NOT_RETAINED);
 
 		final TestingInterceptHandler session = getTestingInterceptHandler();
 

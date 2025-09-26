@@ -134,7 +134,7 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 	 * Get the completed count, against the estimated result count.
 	 *
 	 * @return the count
-	 * @see {@link #setEstimatedResultCount(long)}
+	 * @see #setEstimatedResultCount(long)
 	 */
 	protected long getCompleteCount() {
 		return complete;
