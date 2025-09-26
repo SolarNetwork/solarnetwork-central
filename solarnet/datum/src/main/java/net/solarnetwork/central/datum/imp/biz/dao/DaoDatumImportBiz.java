@@ -730,6 +730,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					} else {
 						msg.append(ae.getMessage());
 					}
+				} else if ( root instanceof InterruptedException ) {
+					msg.append("Cancelled.");
 				} else {
 					if ( root.getMessage() == null && e.getMessage() != null ) {
 						msg.append(e.getMessage());

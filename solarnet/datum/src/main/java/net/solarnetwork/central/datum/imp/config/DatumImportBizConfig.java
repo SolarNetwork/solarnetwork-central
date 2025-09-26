@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.config;
 
 import static net.solarnetwork.central.datum.imp.config.SolarNetDatumImportConfiguration.DATUM_IMPORT;
+import java.time.Duration;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -46,7 +47,7 @@ import net.solarnetwork.service.ResourceStorageService;
  * Configuration for datum import services.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class DatumImportBizConfig {
@@ -86,6 +87,7 @@ public class DatumImportBizConfig {
 		private String workPath;
 		private long resourceStorageWaitMs = 60_000L;
 		private String resourceStorageUid = "Datum-Import";
+		private Duration shutdownMaxWait = Duration.ofMinutes(5);
 
 		public int getConcurrentTasks() {
 			return concurrentTasks;
@@ -151,6 +153,14 @@ public class DatumImportBizConfig {
 			this.resourceStorageUid = resourceStorageUid;
 		}
 
+		public Duration getShutdownMaxWait() {
+			return shutdownMaxWait;
+		}
+
+		public void setShutdownMaxWait(Duration shutdownMaxWait) {
+			this.shutdownMaxWait = shutdownMaxWait;
+		}
+
 	}
 
 	@ConfigurationProperties(prefix = "app.datum.import")
@@ -168,6 +178,7 @@ public class DatumImportBizConfig {
 		executor.setMaxPoolSize(settings.concurrentTasks);
 		executor.setAllowCoreThreadTimeOut(true);
 		executor.setQueueCapacity(0);
+		executor.setAwaitTerminationMillis(settings.shutdownMaxWait.toMillis());
 		return executor;
 	}
 

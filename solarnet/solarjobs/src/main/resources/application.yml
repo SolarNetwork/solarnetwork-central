@@ -111,6 +111,7 @@ app:
       workPath: "${java.io.tmpdir}"
       resource-storage-wait-ms: 60000
       resource-storage-uid: "Datum-Import"
+      shutdown-max-wait: "5m"
       s3-storage:
         service:
           objectKeyPrefix: "datum-import/"
