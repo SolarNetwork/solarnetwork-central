@@ -45,7 +45,7 @@ import net.solarnetwork.util.StatTracker;
  * Publish datum to SolarFlux.
  *
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralNodeDatumPK>>
 		implements DatumProcessor {
@@ -142,10 +142,16 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 					continue;
 				}
 
-				final FluxPublishSettings pubSettings = fluxPublishSettingsDao
-						.nodeSourcePublishConfiguration(ownership.getUserId(), nodeId, sourceId);
-				if ( pubSettings == null || !pubSettings.isPublish() ) {
-					continue;
+				// if datum is for aggregate, check agg publish settings
+				final FluxPublishSettings pubSettings;
+				if ( aggregation != Aggregation.None ) {
+					pubSettings = fluxPublishSettingsDao
+							.nodeSourcePublishConfiguration(ownership.getUserId(), nodeId, sourceId);
+					if ( pubSettings == null || !pubSettings.isPublish() ) {
+						continue;
+					}
+				} else {
+					pubSettings = null;
 				}
 				if ( sourceId.startsWith("/") ) {
 					sourceId = sourceId.substring(1);
@@ -153,7 +159,8 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 				final String topic = String.format(NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE,
 						ownership.getUserId(), nodeId, aggregation.getKey(), sourceId);
 
-				Future<?> f = publish(d, topic, pubSettings.isRetain(), getPublishQos());
+				Future<?> f = publish(d, topic, (pubSettings != null ? pubSettings.isRetain() : false),
+						getPublishQos());
 				if ( timeout > 0 ) {
 					f.get(timeout, TimeUnit.SECONDS);
 				}

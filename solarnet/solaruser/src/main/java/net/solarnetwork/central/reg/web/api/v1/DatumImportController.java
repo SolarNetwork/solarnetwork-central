@@ -23,6 +23,10 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static java.util.Collections.singleton;
+import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Claimed;
+import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Queued;
+import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Retracted;
+import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Staged;
 import static net.solarnetwork.domain.Result.error;
 import static net.solarnetwork.domain.Result.success;
 import java.io.IOException;
@@ -374,17 +378,19 @@ public class DatumImportController {
 	 *
 	 * @param id
 	 *        the ID of the job to retract
+	 * @param force
+	 *        {@code true} to retract regardless of the job's current state
 	 * @return the status
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.DELETE)
-	public Result<DatumImportStatus> retractJob(@PathVariable("id") String id) {
+	public Result<DatumImportStatus> retractJob(@PathVariable("id") String id,
+			@RequestParam(name = "force", required = false, defaultValue = "false") boolean force) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = importBiz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Retracted,
-					EnumSet.of(DatumImportState.Staged, DatumImportState.Queued,
-							DatumImportState.Claimed));
+			result = importBiz.updateDatumImportJobStateForUser(userId, id, Retracted,
+					force ? null : EnumSet.of(Staged, Queued, Claimed));
 			if ( result != null ) {
 				importBiz.deleteDatumImportJobsForUser(userId, singleton(id));
 			}

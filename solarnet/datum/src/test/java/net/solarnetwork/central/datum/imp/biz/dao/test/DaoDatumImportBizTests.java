@@ -65,7 +65,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.easymock.Capture;
@@ -127,7 +131,7 @@ import net.solarnetwork.test.Assertion;
  * Test cases for the {@link DaoDatumImportBiz} class.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoDatumImportBizTests {
 
@@ -1474,6 +1478,37 @@ public class DaoDatumImportBizTests {
 	}
 
 	@Test
+	public void deleteForUserExecutingIncluded() {
+		// GIVEN
+		UUID uuid1 = UUID.randomUUID();
+		UUID uuid2 = UUID.randomUUID();
+		Capture<Set<DatumImportState>> statesCaptor = new Capture<>();
+
+		expect(jobInfoDao.deleteForUser(eq(TEST_USER_ID), eq(Set.of(uuid1, uuid2)),
+				capture(statesCaptor))).andReturn(2);
+
+		// after delete, DAO returns list that still includes the requested job ID, along with
+		// another job not requested; we need to verify that the Biz filters out the non-requested job
+		DatumImportJobInfo info = new DatumImportJobInfo();
+		info.setId(new UserUuidPK(TEST_USER_ID, uuid1));
+		info.setImportState(DatumImportState.Executing);
+		DatumImportJobInfo info2 = new DatumImportJobInfo();
+		info2.setId(new UserUuidPK(TEST_USER_ID, uuid2));
+		info2.setImportState(DatumImportState.Queued);
+		expect(jobInfoDao.findForUser(TEST_USER_ID, null)).andReturn(List.of());
+
+		// WHEN
+		replayAll();
+		Set<String> jobIds = Set.of(uuid1.toString(), uuid2.toString());
+		Collection<DatumImportStatus> results = biz.deleteDatumImportJobsForUser(TEST_USER_ID, jobIds,
+				true);
+
+		// THEN
+		assertThat("Queried states", statesCaptor.getValue(), nullValue());
+		assertThat("Results count", results, hasSize(0));
+	}
+
+	@Test
 	public void updateJobState() {
 		// GIVEN
 		final UUID jobId = UUID.randomUUID();
@@ -1489,5 +1524,65 @@ public class DaoDatumImportBizTests {
 
 		// THEN
 		assertThat("Result from DAO returned", result, is(Matchers.equalTo(true)));
+	}
+
+	@Test
+	public void shutdownCancelRunningTask() throws IOException {
+		// GIVEN
+		final ExecutorService realExecutor = Executors.newSingleThreadExecutor();
+
+		List<GeneralNodeDatum> data = sampleData(5,
+				Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
+		biz.setInputServices(singletonList(new TestInputService(data)));
+		UserUuidPK pk = new UserUuidPK(TEST_USER_ID, UUID.randomUUID());
+		File dataFile = biz.getImportDataFile(pk);
+		copy(copyToByteArray(getClass().getResourceAsStream("test-data-01.csv")), dataFile);
+
+		DatumImportJobInfo info = createTestJobInfo(pk);
+		expect(jobInfoDao.get(pk)).andReturn(info);
+
+		Capture<Callable<DatumImportResult>> taskCaptor = new Capture<>();
+		CountDownLatch latch = new CountDownLatch(1);
+		expect(executorSercvice.submit(capture(taskCaptor))).andAnswer(() -> {
+			@SuppressWarnings("unchecked")
+			Callable<DatumImportResult> arg = (Callable<DatumImportResult>) EasyMock
+					.getCurrentArguments()[0];
+			return realExecutor.submit(arg);
+		});
+
+		// allow updating the status as job progresses
+		expect(jobInfoDao.save(info)).andReturn(pk).anyTimes();
+
+		// make test node owned by job's user
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
+				ZoneId.of("Pacific/Auckland"), false, false);
+		expect(userNodeDao.ownershipsForUserId(TEST_USER_ID))
+				.andReturn(new SolarNodeOwnership[] { ownership }).anyTimes();
+
+		// start import
+		Capture<BulkLoadingDao.LoadingOptions> loadingOptionsCaptor = new Capture<>();
+		expect(datumDao.createBulkLoadingContext(capture(loadingOptionsCaptor), anyObject()))
+				.andAnswer(() -> {
+					latch.await();
+					return loadingContext;
+				});
+
+		// WHEN
+		replayAll();
+		DatumImportStatus status = biz.performImport(pk);
+		List<Runnable> cancelledTasks = realExecutor.shutdownNow();
+		try {
+			realExecutor.awaitTermination(2, TimeUnit.SECONDS);
+		} catch ( InterruptedException e ) {
+			// continue
+		}
+
+		// THEN
+		assertThat("Status returned", status, notNullValue());
+		assertThat("No pending tasks cancelled", cancelledTasks, Matchers.hasSize(0));
+		assertThat("Job status completed", info.getImportState(), is(DatumImportState.Completed));
+		assertThat("Job status failure", info.isSuccess(), is(false));
+		assertThat("Job status message is from interrupted exception", info.getMessage(),
+				is(equalTo("Cancelled.")));
 	}
 }

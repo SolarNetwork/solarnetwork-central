@@ -41,7 +41,7 @@ import net.solarnetwork.dao.FilterResults;
  * API for a datum import service.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface DatumImportBiz {
 
@@ -172,5 +172,22 @@ public interface DatumImportBiz {
 	 *         {@literal null}
 	 */
 	Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId, Set<String> jobIds);
+
+	/**
+	 * Delete jobs.
+	 *
+	 * @param userId
+	 *        the user ID that owns the job
+	 * @param jobIds
+	 *        the set of job IDs to delete
+	 * @param force
+	 *        if {@code true} then also delete claimed or executing jobs
+	 * @return the job statuses specified by {@code jobIds} that were <b>not</b>
+	 *         removed, i.e. because of their current execution state, never
+	 *         {@literal null}
+	 * @since 1.2
+	 */
+	Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId, Set<String> jobIds,
+			boolean force);
 
 }

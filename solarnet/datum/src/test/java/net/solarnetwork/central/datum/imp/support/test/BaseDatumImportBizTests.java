@@ -135,6 +135,12 @@ public class BaseDatumImportBizTests {
 			return null;
 		}
 
+		@Override
+		public Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId,
+				Set<String> jobIds, boolean force) {
+			return null;
+		}
+
 	}
 
 	@Test

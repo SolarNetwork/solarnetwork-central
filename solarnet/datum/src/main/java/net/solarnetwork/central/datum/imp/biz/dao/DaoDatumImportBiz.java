@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.imp.biz.dao;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Claimed;
+import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Executing;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -444,19 +446,27 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	@Override
 	public Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId, Set<String> jobIds) {
+		return deleteDatumImportJobsForUser(userId, jobIds, false);
+	}
+
+	@Override
+	public Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId, Set<String> jobIds,
+			boolean force) {
 		if ( jobIds == null || jobIds.isEmpty() ) {
 			return Collections.emptyList();
 		}
-		Set<DatumImportState> allowStates = EnumSet
-				.complementOf(EnumSet.of(DatumImportState.Claimed, DatumImportState.Executing));
+		Set<DatumImportState> allowStates = (force ? null
+				: EnumSet.complementOf(EnumSet.of(Claimed, Executing)));
 		Set<UUID> ids = jobIds.stream().map(UUID::fromString).collect(toSet());
 		int deleted = jobInfoDao.deleteForUser(userId, ids, allowStates);
 		log.debug("Deleted {} import jobs for user {} matching ids {} in states {}", deleted, userId,
 				jobIds, allowStates);
 		taskMap.entrySet().removeIf(e -> {
 			DatumImportTask task = e.getValue();
-			return userId.equals(task.getUserId()) && jobIds.contains(task.getJobId())
+			boolean remove = userId.equals(task.getUserId()) && jobIds.contains(task.getJobId())
 					&& allowStates.contains(task.getJobState());
+			task.cancel(true);
+			return remove;
 		});
 		return jobInfoDao.findForUser(userId, null).stream().filter(
 				job -> userId.equals(job.getUserId()) && jobIds.contains(job.getId().getId().toString()))
@@ -720,6 +730,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					} else {
 						msg.append(ae.getMessage());
 					}
+				} else if ( root instanceof InterruptedException ) {
+					msg.append("Cancelled.");
 				} else {
 					if ( root.getMessage() == null && e.getMessage() != null ) {
 						msg.append(e.getMessage());
@@ -962,28 +974,28 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 		@Override
 		public boolean cancel(boolean mayInterruptIfRunning) {
-			return delegate.cancel(mayInterruptIfRunning);
+			return (delegate != null ? delegate.cancel(mayInterruptIfRunning) : false);
 		}
 
 		@Override
 		public boolean isCancelled() {
-			return delegate.isCancelled();
+			return (delegate != null ? delegate.isCancelled() : false);
 		}
 
 		@Override
 		public boolean isDone() {
-			return delegate.isDone();
+			return (delegate != null ? delegate.isDone() : false);
 		}
 
 		@Override
 		public DatumImportResult get() throws InterruptedException, ExecutionException {
-			return delegate.get();
+			return (delegate != null ? delegate.get() : null);
 		}
 
 		@Override
 		public DatumImportResult get(long timeout, TimeUnit unit)
 				throws InterruptedException, ExecutionException, TimeoutException {
-			return delegate.get(timeout, unit);
+			return (delegate != null ? delegate.get(timeout, unit) : null);
 		}
 
 		@Override
