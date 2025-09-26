@@ -117,7 +117,7 @@ import net.solarnetwork.util.StringUtils;
  * SolarEdge implementation of {@link CloudDatumStreamService} using the V1 API.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -251,7 +251,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	public static final IntRange DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE = IntRange.rangeOf(0, 2);
 
 	/** The maximum length of time to query for data. */
-	public static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);
+	public static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(5);
 
 	/**
 	 * A cache of SolarEdge site IDs to associated time zones. This is used
