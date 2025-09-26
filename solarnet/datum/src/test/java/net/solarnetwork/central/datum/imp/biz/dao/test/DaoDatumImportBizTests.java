@@ -127,7 +127,7 @@ import net.solarnetwork.test.Assertion;
  * Test cases for the {@link DaoDatumImportBiz} class.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoDatumImportBizTests {
 
@@ -1471,6 +1471,35 @@ public class DaoDatumImportBizTests {
 		DatumImportStatus status = results.iterator().next();
 		assertThat("Result is requested info", status.getJobId(),
 				equalTo(info.getId().getId().toString()));
+	}
+
+	@Test
+	public void deleteForUserExecutingIncluded() {
+		UUID uuid1 = UUID.randomUUID();
+		UUID uuid2 = UUID.randomUUID();
+		Capture<Set<DatumImportState>> statesCaptor = new Capture<>();
+
+		expect(jobInfoDao.deleteForUser(eq(TEST_USER_ID), eq(Set.of(uuid1, uuid2)),
+				capture(statesCaptor))).andReturn(2);
+
+		// after delete, DAO returns list that still includes the requested job ID, along with
+		// another job not requested; we need to verify that the Biz filters out the non-requested job
+		DatumImportJobInfo info = new DatumImportJobInfo();
+		info.setId(new UserUuidPK(TEST_USER_ID, uuid1));
+		info.setImportState(DatumImportState.Executing);
+		DatumImportJobInfo info2 = new DatumImportJobInfo();
+		info2.setId(new UserUuidPK(TEST_USER_ID, uuid2));
+		info2.setImportState(DatumImportState.Queued);
+		expect(jobInfoDao.findForUser(TEST_USER_ID, null)).andReturn(List.of());
+
+		// when
+		replayAll();
+		Set<String> jobIds = Set.of(uuid1.toString(), uuid2.toString());
+		Collection<DatumImportStatus> results = biz.deleteDatumImportJobsForUser(TEST_USER_ID, jobIds,
+				true);
+
+		assertThat("Queried states", statesCaptor.getValue(), nullValue());
+		assertThat("Results count", results, hasSize(0));
 	}
 
 	@Test
