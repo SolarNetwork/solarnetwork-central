@@ -195,7 +195,7 @@ import net.solarnetwork.util.IntRange;
  * </ul>
  *
  * @author matt
- * @version 1.12
+ * @version 1.13
  */
 public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -207,6 +207,13 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	/** The setting for granularity. */
 	public static final String GRANULARITY_SETTING = "granularity";
+
+	/**
+	 * A {@code maxTimePeriods} property default value.
+	 *
+	 * @since 1.13
+	 */
+	public static final int DEFAULT_MAX_TIME_PERIODS = 144;
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
@@ -257,6 +264,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			throw new IllegalStateException(e);
 		}
 	}
+
+	private int maxTimePeriods = DEFAULT_MAX_TIME_PERIODS;
 
 	/**
 	 * Constructor.
@@ -437,7 +446,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
 			usedQueryFilter.setStartDate(startDate);
 
-			while ( startDate.isBefore(endDate) ) {
+			int page = 0;
+			while ( startDate.isBefore(endDate) && (page++) < maxTimePeriods ) {
 				final var periodStartDate = startDate;
 				final var periodEndDate = nextDate(periodStartDate, granularity);
 				usedQueryFilter.setEndDate(periodEndDate);
@@ -466,13 +476,20 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			Collection<GeneralDatum> r = datum.values().stream().flatMap(e -> e.values().stream())
 					.toList();
 
+			BasicQueryFilter nextQueryFilter = null;
+			if ( usedQueryFilter.getEndDate().isBefore(endDate) ) {
+				nextQueryFilter = new BasicQueryFilter();
+				nextQueryFilter.setStartDate(usedQueryFilter.getEndDate());
+				nextQueryFilter.setEndDate(endDate);
+			}
+
 			// evaluate expressions on merged datum
 			if ( !exprProps.isEmpty() ) {
 				r = evaluateExpressions(datumStream, exprProps, r, ds.getDatumStreamMappingId(),
 						mapping.getIntegrationId());
 			}
 
-			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, null,
+			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
 					r.stream().map(Datum.class::cast).toList());
 		});
 	}
@@ -839,6 +856,30 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 				datum.getSamples().putSampleValue(propType, ref.property.getPropertyName(), propVal);
 			}
 		}
+	}
+
+	/**
+	 * Get the maximum time periods to request in one call to
+	 * {@link #datum(CloudDatumStreamConfiguration, CloudDatumStreamQueryFilter)}.
+	 *
+	 * @return the maximum time periods; defaults to
+	 *         {@link #DEFAULT_MAX_TIME_PERIODS}
+	 * @since 1.13
+	 */
+	public int getMaxTimePeriods() {
+		return maxTimePeriods;
+	}
+
+	/**
+	 * Set the maximum time periods to request in one call to
+	 * {@link #datum(CloudDatumStreamConfiguration, CloudDatumStreamQueryFilter)}.
+	 *
+	 * @param maxTimePeriods
+	 *        the maximum time periods to set
+	 * @since 1.13
+	 */
+	public void setMaxTimePeriods(int maxTimePeriods) {
+		this.maxTimePeriods = (maxTimePeriods > 0 ? maxTimePeriods : DEFAULT_MAX_TIME_PERIODS);
 	}
 
 }
