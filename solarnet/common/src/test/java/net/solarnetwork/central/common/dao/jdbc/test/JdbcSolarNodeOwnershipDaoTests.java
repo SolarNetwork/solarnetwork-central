@@ -59,18 +59,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.common.dao.jdbc.JdbcSolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Test cases for the {@link JdbcSolarNodeOwnershipDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSupport {

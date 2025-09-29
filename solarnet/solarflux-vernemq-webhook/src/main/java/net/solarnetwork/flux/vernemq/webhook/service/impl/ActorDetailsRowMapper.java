@@ -27,9 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
 
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.flux.vernemq.webhook.domain.Actor;
 import net.solarnetwork.flux.vernemq.webhook.domain.ActorDetails;
 import net.solarnetwork.flux.vernemq.webhook.domain.ActorType;
@@ -38,7 +37,7 @@ import net.solarnetwork.flux.vernemq.webhook.domain.ActorType;
  * {@link RowMapper} for {@link ActorDetails}.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class ActorDetailsRowMapper implements RowMapper<Actor> {
 
@@ -112,7 +111,7 @@ public class ActorDetailsRowMapper implements RowMapper<Actor> {
     String policyJson = rs.getString(policyCol);
     SecurityPolicy policy = null;
     if (policyJson != null) {
-      policy = JsonUtils.getObjectFromJSON(policyJson, BasicSecurityPolicy.class);
+      policy = JsonUtils.getObjectFromJSON(policyJson, SecurityPolicy.class);
     }
 
     ActorType actorType = ActorType.forValue(tokenType);

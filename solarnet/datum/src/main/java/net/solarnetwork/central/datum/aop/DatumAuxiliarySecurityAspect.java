@@ -43,7 +43,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
-import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
@@ -51,7 +51,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Security AOP support for {@link DatumAuxiliaryBiz}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.5
  */
 @Aspect

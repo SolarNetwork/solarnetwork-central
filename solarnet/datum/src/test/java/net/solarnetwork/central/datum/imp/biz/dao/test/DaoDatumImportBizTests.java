@@ -115,12 +115,12 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthenticatedToken;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.service.ResourceStorageService;
@@ -131,7 +131,7 @@ import net.solarnetwork.test.Assertion;
  * Test cases for the {@link DaoDatumImportBiz} class.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DaoDatumImportBizTests {
 

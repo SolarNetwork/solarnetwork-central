@@ -44,12 +44,12 @@ import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.domain.SolarNodeMetadataMatch;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityPolicyMetadataType;
 import net.solarnetwork.central.support.NodeMetadataSerializer;
 import net.solarnetwork.codec.ObjectMapperFactoryBean;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
@@ -57,7 +57,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * Test cases for the {@link SecurityPolicyEnforcer} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SecurityPolicyEnforcerTests {
 

@@ -20,13 +20,13 @@ package net.solarnetwork.flux.vernemq.webhook.test;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 
-import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Utilities to help with SolarNetwork database access.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public final class DbUtils {
 

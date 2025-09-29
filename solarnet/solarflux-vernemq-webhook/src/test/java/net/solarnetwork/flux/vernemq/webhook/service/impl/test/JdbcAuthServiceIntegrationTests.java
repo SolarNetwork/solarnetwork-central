@@ -44,8 +44,8 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.Response;
 import net.solarnetwork.flux.vernemq.webhook.domain.ResponseModifiers;
@@ -65,7 +65,7 @@ import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
  * JDBC integration tests.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SpringJUnitConfig
 @JdbcTest

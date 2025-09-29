@@ -58,13 +58,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.Location;
-import net.solarnetwork.central.domain.LocationPrecision;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
@@ -82,6 +79,9 @@ import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.LocationPrecision;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
@@ -89,7 +89,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * Test cases for the {@link DaoUserBiz} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("static-access")

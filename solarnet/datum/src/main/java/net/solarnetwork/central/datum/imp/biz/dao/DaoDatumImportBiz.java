@@ -101,7 +101,6 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -111,6 +110,7 @@ import net.solarnetwork.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.service.ResourceStorageService;
@@ -121,7 +121,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  *
  * @author matt
- * @version 2.7
+ * @version 2.8
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
 		implements DatumImportJobBiz, ServiceLifecycleObserver {

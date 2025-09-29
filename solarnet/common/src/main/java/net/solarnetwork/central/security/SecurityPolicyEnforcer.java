@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.PathMatcher;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
@@ -46,7 +47,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * Support for enforcing a {@link SecurityPolicy} on domain objects.
  *
  * @author matt
- * @version 2.3
+ * @version 3.0
  * @since 1.12
  */
 public class SecurityPolicyEnforcer implements InvocationHandler {

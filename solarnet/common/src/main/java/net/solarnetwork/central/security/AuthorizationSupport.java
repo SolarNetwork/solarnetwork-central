@@ -36,12 +36,13 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Helper class for authorization needs, e.g. aspect implementations.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class AuthorizationSupport {
 

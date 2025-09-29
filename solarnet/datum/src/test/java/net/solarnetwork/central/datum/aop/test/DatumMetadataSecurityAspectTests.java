@@ -46,17 +46,17 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.CentralTestConstants;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Test cases for the {@link DatumMetadataSecurityAspect} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DatumMetadataSecurityAspectTests implements CentralTestConstants {
 

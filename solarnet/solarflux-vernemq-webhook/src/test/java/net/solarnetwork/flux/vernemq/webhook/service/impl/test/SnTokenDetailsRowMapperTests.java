@@ -35,7 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.flux.vernemq.webhook.service.impl.SnTokenDetails;
 import net.solarnetwork.flux.vernemq.webhook.service.impl.SnTokenDetailsRowMapper;
@@ -45,7 +45,7 @@ import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
  * Test cases for the {@link SnTokenDetailsRowMapper} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @ExtendWith(MockitoExtension.class)
 public class SnTokenDetailsRowMapperTests extends TestSupport {

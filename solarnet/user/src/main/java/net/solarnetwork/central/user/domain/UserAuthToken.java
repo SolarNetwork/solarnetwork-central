@@ -30,19 +30,19 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.dao.BaseStringEntity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.SerializeIgnore;
 
 /**
  * A user authorization token.
  *
  * @author matt
- * @version 2.3
+ * @version 3.0
  */
 public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity<String>, SecurityToken {
 
@@ -55,7 +55,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	private String authSecret;
 	private SecurityTokenStatus status;
 	private SecurityTokenType type;
-	private BasicSecurityPolicy policy;
+	private SecurityPolicy policy;
 	private String policyJson;
 
 	/**
@@ -243,7 +243,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	@SerializeIgnore
 	@JsonIgnore
 	public Set<Long> getNodeIds() {
-		BasicSecurityPolicy p = getPolicy();
+		SecurityPolicy p = getPolicy();
 		return (p == null ? null : p.getNodeIds());
 	}
 
@@ -259,9 +259,9 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 * @return the policy
 	 */
 	@Override
-	public BasicSecurityPolicy getPolicy() {
+	public SecurityPolicy getPolicy() {
 		if ( policy == null && policyJson != null ) {
-			policy = JsonUtils.getObjectFromJSON(policyJson, BasicSecurityPolicy.class);
+			policy = JsonUtils.getObjectFromJSON(policyJson, SecurityPolicy.class);
 		}
 		return policy;
 	}
@@ -277,7 +277,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 * @param policy
 	 *        the policy instance to set
 	 */
-	public void setPolicy(BasicSecurityPolicy policy) {
+	public void setPolicy(SecurityPolicy policy) {
 		this.policy = policy;
 		policyJson = null;
 	}

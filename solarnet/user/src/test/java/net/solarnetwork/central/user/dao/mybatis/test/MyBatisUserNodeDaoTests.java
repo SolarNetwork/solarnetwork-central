@@ -41,7 +41,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
@@ -54,12 +53,13 @@ import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
+import net.solarnetwork.domain.BasicSecurityPolicy;
 
 /**
  * Test cases for the {@link MyBatisUserNodeDao} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 

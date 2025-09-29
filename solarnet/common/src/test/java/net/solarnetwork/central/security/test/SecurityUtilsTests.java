@@ -52,16 +52,16 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Test cases for the {@link SecurityUtils} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)

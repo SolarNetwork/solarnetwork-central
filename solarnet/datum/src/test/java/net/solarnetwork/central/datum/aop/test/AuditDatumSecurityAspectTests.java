@@ -38,15 +38,15 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Test cases for the {@link AuditDatumSecurityAspect} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AuditDatumSecurityAspectTests {
 

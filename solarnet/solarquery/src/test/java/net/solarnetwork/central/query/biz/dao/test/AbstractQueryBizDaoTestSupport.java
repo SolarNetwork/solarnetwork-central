@@ -36,19 +36,19 @@ import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthenticatedToken;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Base class for other unit tests.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc

@@ -23,12 +23,13 @@
 package net.solarnetwork.central.security;
 
 import net.solarnetwork.central.domain.UserIdRelated;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * A token based actor.
  * 
  * @author matt
- * @version 2.1
+ * @version 3.0
  */
 public interface SecurityToken extends SecurityActor, UserIdRelated {
 

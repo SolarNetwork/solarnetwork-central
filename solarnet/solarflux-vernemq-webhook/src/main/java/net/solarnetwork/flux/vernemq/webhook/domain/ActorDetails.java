@@ -26,13 +26,13 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Details about an authenticated actor.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class ActorDetails implements Actor {
 

@@ -46,13 +46,14 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.domain.UserIdRelated;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.util.CollectionUtils;
 
 /**
  * Security helper methods.
  *
  * @author matt
- * @version 2.5
+ * @version 3.0
  */
 public class SecurityUtils {
 

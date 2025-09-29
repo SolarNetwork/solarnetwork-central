@@ -89,12 +89,12 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.BasicLocation;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
@@ -107,7 +107,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * {@link DatumStreamMetadataDao}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdbcTestSupport {
 

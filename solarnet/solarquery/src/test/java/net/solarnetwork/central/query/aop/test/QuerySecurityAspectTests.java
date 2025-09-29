@@ -75,12 +75,12 @@ import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
@@ -88,7 +88,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Unit tests for the {@link QuerySecurityAspect} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class QuerySecurityAspectTests {
 
