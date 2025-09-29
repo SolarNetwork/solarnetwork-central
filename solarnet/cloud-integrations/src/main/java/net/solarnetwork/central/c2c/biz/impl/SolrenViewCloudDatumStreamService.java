@@ -447,7 +447,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			usedQueryFilter.setStartDate(startDate);
 
 			int page = 0;
-			while ( startDate.isBefore(endDate) && (page++) < maxTimePeriods ) {
+			while ( startDate.isBefore(endDate) && page < maxTimePeriods ) {
 				final var periodStartDate = startDate;
 				final var periodEndDate = nextDate(periodStartDate, granularity);
 				usedQueryFilter.setEndDate(periodEndDate);
@@ -471,6 +471,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 							refsByComponent));
 				}
 				startDate = periodEndDate;
+				page++;
 			}
 
 			Collection<GeneralDatum> r = datum.values().stream().flatMap(e -> e.values().stream())
