@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
+import static net.solarnetwork.central.c2c.biz.impl.CloudIntegrationsUtils.truncateDate;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_END_DATE_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM;
@@ -31,6 +32,7 @@ import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationSe
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_SITE_ID_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_START_DATE_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_USE_UTC_PARAM;
+import static net.solarnetwork.central.c2c.biz.impl.SolrenViewGranularity.FiveMinute;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
@@ -41,6 +43,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.net.URI;
@@ -76,10 +79,13 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
@@ -93,7 +99,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link SolrenViewCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -1077,6 +1083,190 @@ public class SolrenViewCloudDatumStreamServiceTests {
 							"voltage", 478
 						), null, null),
 						Datum::asSampleOperations)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	private CloudDatumStreamQueryResult request(CloudDatumStreamQueryFilter filter,
+			String... xmlResources) {
+		// GIVEN
+		final Long siteId = randomLong();
+		final String componentId1 = "1013811710134";
+		final String componentId2 = "1013811710042";
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		c1p1.setEnabled(true);
+		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
+		c1p1.setPropertyName("watts");
+		c1p1.setValueType(CloudDatumStreamValueType.Reference);
+		c1p1.setValueReference(componentValueRef(siteId, componentId1, "W"));
+
+		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		c1p2.setEnabled(true);
+		c1p2.setPropertyType(DatumSamplesType.Accumulating);
+		c1p2.setPropertyName("wattHours");
+		c1p2.setValueType(CloudDatumStreamValueType.Reference);
+		c1p2.setValueReference(componentValueRef(siteId, componentId1, "WHL"));
+
+		final CloudDatumStreamPropertyConfiguration c2p1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 3, now());
+		c2p1.setEnabled(true);
+		c2p1.setPropertyType(DatumSamplesType.Instantaneous);
+		c2p1.setPropertyName("watts");
+		c2p1.setValueType(CloudDatumStreamValueType.Reference);
+		c2p1.setValueReference(componentValueRef(siteId, componentId2, "W"));
+
+		final CloudDatumStreamPropertyConfiguration c2p2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 4, now());
+		c2p2.setEnabled(true);
+		c2p2.setPropertyType(DatumSamplesType.Accumulating);
+		c2p2.setPropertyName("wattHours");
+		c2p2.setValueType(CloudDatumStreamValueType.Reference);
+		c2p2.setValueReference(componentValueRef(siteId, componentId2, "WHL"));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(c1p1, c1p2, c2p1, c2p2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+		// @formatter:off
+		datumStream.setServiceProps(Map.of(
+				SolrenViewCloudDatumStreamService.GRANULARITY_SETTING, "5min",
+				SolrenViewCloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
+						componentId1, sourceId + "/ONE",
+						componentId2, sourceId + "/TWO"
+				)
+		));
+		// @formatter:on
+
+		// request data
+		var givenExchange = given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class)));
+		for ( int i = 0; i < xmlResources.length; i++ ) {
+			final String resXml = utf8StringResource(xmlResources[i], getClass());
+			final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
+			givenExchange = givenExchange.willReturn(res);
+		}
+
+		service.setMaxTimePeriods(xmlResources.length);
+
+		// WHEN
+		CloudDatumStreamQueryResult result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should(times(xmlResources.length)).exchange(
+				uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(String.class));
+
+		and.then(uriCaptor.getAllValues())
+			.as("Request for pages made")
+			.hasSize(xmlResources.length)
+			.satisfies(l -> {
+				Instant expectedStartDate = truncateDate(filter.getStartDate(), FiveMinute.getTickDuration(), UTC);
+				for (int i = 0; i < l.size(); i++ ) {
+					and.then(l).element(i)
+						.as("Request URI %d", (i+1))
+						.isEqualTo(fromUri(BASE_URI)
+								.path(XML_FEED_PATH)
+								.queryParam(XML_FEED_USE_UTC_PARAM)
+								.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
+								.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
+								.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
+								.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
+								.buildAndExpand(
+										siteId,
+										expectedStartDate.plus(5 * i, ChronoUnit.MINUTES),
+										expectedStartDate.plus(5 * (i + 1), ChronoUnit.MINUTES))
+								.toUri())
+						;
+				}
+			})
+			;
+
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(2)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), Datum::getKind)
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), Datum::getObjectId)
+					;
+			})
+			;
+		// @formatter:on
+		return result;
+	}
+
+	@Test
+	public void requestDatum() {
+		// WHEN
+		BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(Instant.parse("2024-10-16T22:50:00Z"));
+		filter.setEndDate(filter.getStartDate().plus(FiveMinute.getTickDuration()));
+		final CloudDatumStreamQueryResult result = request(filter, "solrenview-site-data-01.xml");
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Result returned")
+			.isNotNull()
+			.satisfies(r -> {
+				and.then(result.getNextQueryFilter())
+				.as("No next query returned because within max time periods")
+					.isNull()
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void requestDatum_maxPeriods() {
+		// WHEN
+		BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(Instant.parse("2024-10-16T22:50:00Z"));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+		final CloudDatumStreamQueryResult result = request(filter, "solrenview-site-data-01.xml");
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Result returned")
+			.isNotNull()
+			.satisfies(r -> {
+				and.then(result.getNextQueryFilter())
+					.as("Next query filter returned")
+					.isNotNull()
+					.as("Next period start returned because max periods reached")
+					.returns(filter.getStartDate().plus(FiveMinute.getTickDuration()), from(CloudDatumStreamQueryFilter::getStartDate))
+					.as("Given end period returned because max periods reached")
+					.returns(truncateDate(filter.getEndDate(), FiveMinute.getTickDuration(), UTC), from(CloudDatumStreamQueryFilter::getEndDate))
 					;
 			})
 			;

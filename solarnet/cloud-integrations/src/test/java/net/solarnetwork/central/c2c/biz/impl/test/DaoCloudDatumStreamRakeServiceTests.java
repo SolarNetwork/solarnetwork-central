@@ -489,8 +489,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 			.returns(Queued, from(CloudDatumStreamRakeTaskEntity::getState))
 			.as("Update task execute date to start of 'tomorrow'")
 			.returns(sod.plus(1, DAYS), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
-			.as("No message generated for successful execution")
-			.returns(null, from(CloudDatumStreamRakeTaskEntity::getMessage))
+			.as("Update count generated for successful execution")
+			.returns("Updated 1 datum.", from(CloudDatumStreamRakeTaskEntity::getMessage))
 			.as("No service properties generated for successful execution")
 			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;
@@ -663,8 +663,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 			.returns(Queued, from(CloudDatumStreamRakeTaskEntity::getState))
 			.as("Update task execute date to start of 'tomorrow'")
 			.returns(sod.plus(1, DAYS), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
-			.as("No message generated for successful execution")
-			.returns(null, from(CloudDatumStreamRakeTaskEntity::getMessage))
+			.as("Update count generated for successful execution")
+			.returns("Updated 1 datum.", from(CloudDatumStreamRakeTaskEntity::getMessage))
 			.as("No service properties generated for successful execution")
 			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;
@@ -901,10 +901,12 @@ public class DaoCloudDatumStreamRakeServiceTests {
 			})
 			;
 
-		then(datumDao).should(times(4)).store(datumCaptor.capture());
+		final int datumUpdateCount = 4;
+
+		then(datumDao).should(times(datumUpdateCount)).store(datumCaptor.capture());
 		and.then(datumCaptor.getAllValues())
 			.as("Missing datum persisted")
-			.hasSize(4)
+			.hasSize(datumUpdateCount)
 			;
 
 		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
@@ -917,8 +919,8 @@ public class DaoCloudDatumStreamRakeServiceTests {
 			.returns(Queued, from(CloudDatumStreamRakeTaskEntity::getState))
 			.as("Update task execute date to start of 'tomorrow'")
 			.returns(sod.plus(1, DAYS), from(CloudDatumStreamRakeTaskEntity::getExecuteAt))
-			.as("No message generated for successful execution")
-			.returns(null, from(CloudDatumStreamRakeTaskEntity::getMessage))
+			.as("Update count generated for successful execution")
+			.returns("Updated %d datum.".formatted(datumUpdateCount), from(CloudDatumStreamRakeTaskEntity::getMessage))
 			.as("No service properties generated for successful execution")
 			.returns(null, from(CloudDatumStreamRakeTaskEntity::getServiceProperties))
 			;

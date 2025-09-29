@@ -492,15 +492,19 @@ public class DaoCloudDatumStreamRakeService
 				}
 			}
 
+			final var datumUpdateCount = updateCounts.values().stream().mapToInt(n -> n.intValue())
+					.sum();
+
 			// success: update task info to start again tomorrow
-			var now = clock.instant();
+			final var now = clock.instant();
 			taskInfo.setExecuteAt(now.atZone(rakeZone).truncatedTo(DAYS).plusDays(1).toInstant());
 
 			// reset task back to Queued so it can be executed again
 			taskInfo.setState(Queued);
 
-			// reset message back to null
-			taskInfo.setMessage(null);
+			// update message
+			taskInfo.setMessage(
+					datumUpdateCount > 0 ? "Updated %d datum.".formatted(datumUpdateCount) : null);
 
 			// reset props
 			taskInfo.setServiceProps(null);
@@ -521,8 +525,7 @@ public class DaoCloudDatumStreamRakeService
 				data.put("executeAt", taskInfo.getExecuteAt());
 				data.put("startAt", startDate.toInstant());
 				data.put("endAt", queryStartDate); // this has been moved to start of "next" day
-				data.put("datumUpdateCount",
-						updateCounts.values().stream().mapToInt(n -> n.intValue()).sum());
+				data.put("datumUpdateCount", datumUpdateCount);
 				if ( !updateCounts.isEmpty() ) {
 					Map<String, Integer> sourceCounts = new TreeMap<>(
 							StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT);
