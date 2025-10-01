@@ -39,8 +39,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.flux.vernemq.webhook.domain.ActorDetails;
 import net.solarnetwork.flux.vernemq.webhook.domain.ActorType;
@@ -55,7 +55,7 @@ import net.solarnetwork.flux.vernemq.webhook.service.impl.SimpleAuthorizationEva
  * Test cases for the {@link SimpleAuthorizationEvaluator} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SimpleAuthorizationEvaluatorTests {
 

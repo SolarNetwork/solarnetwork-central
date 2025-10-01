@@ -26,7 +26,6 @@ import java.time.Instant;
 import java.util.List;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.dao.UserAuthTokenFilter;
@@ -36,13 +35,14 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * API for registered user tasks.
  *
  * @author matt
- * @version 3.2
+ * @version 4.0
  */
 public interface UserBiz {
 

@@ -55,18 +55,18 @@ import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.SqlReturnResultSet;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * Test cases for authentication related database stored procedures.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class AuthTokenStoredProcedureTests extends AbstractJUnit5JdbcDaoTestSupport {
 

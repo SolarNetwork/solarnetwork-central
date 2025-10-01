@@ -392,7 +392,7 @@ public class DatumImportController {
 			result = importBiz.updateDatumImportJobStateForUser(userId, id, Retracted,
 					force ? null : EnumSet.of(Staged, Queued, Claimed));
 			if ( result != null ) {
-				importBiz.deleteDatumImportJobsForUser(userId, singleton(id));
+				importBiz.deleteDatumImportJobsForUser(userId, singleton(id), force);
 			}
 		}
 		return success(result);

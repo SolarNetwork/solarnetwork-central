@@ -19,13 +19,13 @@ package net.solarnetwork.flux.vernemq.webhook.domain;
 
 import java.util.Set;
 
-import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * API for details associated with an authenticated user.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public interface Actor {
 

@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.security.web;
 
-import static net.solarnetwork.central.security.SecurityPolicy.INVERTED_PATH_MATCH_PREFIX;
+import static net.solarnetwork.domain.SecurityPolicy.INVERTED_PATH_MATCH_PREFIX;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Set;
@@ -54,9 +54,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.web.config.SecurityTokenFilterSettings;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.web.jakarta.security.AuthenticationData;
 import net.solarnetwork.web.jakarta.security.AuthenticationDataFactory;
 import net.solarnetwork.web.jakarta.security.SecurityHttpServletRequestWrapper;
@@ -78,7 +78,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * </p>
  *
  * @author matt
- * @version 1.10
+ * @version 1.11
  */
 public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter implements Filter {
 

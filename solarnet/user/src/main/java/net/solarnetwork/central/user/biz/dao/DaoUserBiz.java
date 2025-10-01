@@ -42,8 +42,6 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
@@ -65,13 +63,15 @@ import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * DAO-based implementation of {@link UserBiz}.
  *
  * @author matt
- * @version 2.3
+ * @version 3.0
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 

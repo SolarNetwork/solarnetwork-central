@@ -45,15 +45,15 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Security AOP support for {@link DatumMetadataBiz}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Aspect
 @Component

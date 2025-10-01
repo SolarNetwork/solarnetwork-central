@@ -25,10 +25,10 @@ package net.solarnetwork.central.security.test;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.security.AuthorizationException.Reason.ACCESS_DENIED;
 import static net.solarnetwork.central.security.AuthorizationException.Reason.UNKNOWN_OBJECT;
-import static net.solarnetwork.central.security.BasicSecurityPolicy.builder;
 import static net.solarnetwork.central.security.SecurityTokenType.ReadNodeData;
 import static net.solarnetwork.central.security.SecurityTokenType.User;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.domain.BasicSecurityPolicy.builder;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -51,16 +51,16 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Test cases for the {@link AuthorizationSupport} class using token
  * authorization.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class AuthorizationSupport_tokenTests {

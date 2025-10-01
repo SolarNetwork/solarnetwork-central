@@ -33,15 +33,15 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
+import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link SecurityPolicyEnforcer} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SecurityPolicyEnforcerTests {
 

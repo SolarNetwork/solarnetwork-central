@@ -47,7 +47,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
@@ -57,13 +56,14 @@ import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * Test cases for the {@link MyBatisUserAuthTokenDao} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupport {
 

@@ -64,10 +64,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.security.AuthenticatedToken;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
 import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoint;
 
@@ -75,7 +75,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * Unit tests for the {@link SecurityTokenAuthenticationFilter} class.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class SecurityTokenAuthenticationFilterTests {
 

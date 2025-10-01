@@ -28,7 +28,6 @@ import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -42,22 +41,22 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicySerializer;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
+import net.solarnetwork.codec.BasicSecurityPolicyDeserializer;
 import net.solarnetwork.codec.ObjectMapperFactoryBean;
+import net.solarnetwork.codec.SecurityPolicySerializer;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Test cases for the {@link JdbcUserDetailsService} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -73,9 +72,8 @@ public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSuppor
 	@BeforeEach
 	public void setup() throws Exception {
 		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
-		List<JsonSerializer<?>> list = new ArrayList<JsonSerializer<?>>(1);
-		list.add(new SecurityPolicySerializer());
-		factory.setSerializers(list);
+		factory.setSerializers(List.of(new SecurityPolicySerializer()));
+		factory.setDeserializers(List.of(new BasicSecurityPolicyDeserializer()));
 		objectMapper = factory.getObject();
 
 		passwordEncoder = new BCryptPasswordEncoder(12, new java.security.SecureRandom());

@@ -55,9 +55,9 @@ import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.ArrayUtils;
@@ -66,7 +66,7 @@ import net.solarnetwork.util.ArrayUtils;
  * Security enforcing AOP aspect for {@link QueryBiz}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @Aspect
 @Component

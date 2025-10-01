@@ -37,8 +37,6 @@ import java.time.ZoneOffset;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -61,7 +59,6 @@ import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@ExtendWith(MockitoExtension.class)
 public class NodeInstructionControllerWebTests extends AbstractJUnit5CentralTransactionalTest {
 
 	private static final Long TEST_USER_ID = 1L;

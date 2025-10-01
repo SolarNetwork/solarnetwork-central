@@ -39,7 +39,7 @@ import net.solarnetwork.flux.vernemq.webhook.test.DbUtils;
  * JDBC integration tests.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SpringJUnitConfig
 @JdbcTest

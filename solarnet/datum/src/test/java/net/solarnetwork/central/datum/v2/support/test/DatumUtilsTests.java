@@ -60,12 +60,12 @@ import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.SolarLocation;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityPolicyMetadataType;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
@@ -79,7 +79,7 @@ import net.solarnetwork.util.DateUtils;
  * Test cases for the {@link DatumUtils} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DatumUtilsTests {
 

@@ -31,8 +31,8 @@ import java.util.HashSet;
 
 import org.junit.jupiter.api.Test;
 
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.flux.vernemq.webhook.domain.ActorDetails;
 import net.solarnetwork.flux.vernemq.webhook.domain.ActorType;
 
@@ -40,7 +40,7 @@ import net.solarnetwork.flux.vernemq.webhook.domain.ActorType;
  * Test cases for the {@link ActorDetails} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ActorDetailsTests {
 

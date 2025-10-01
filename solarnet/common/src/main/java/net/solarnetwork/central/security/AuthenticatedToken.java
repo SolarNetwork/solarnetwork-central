@@ -26,12 +26,13 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * {@link SecurityUser} implementation for authenticated tokens.
  *
  * @author matt
- * @version 2.1
+ * @version 3.0
  */
 public class AuthenticatedToken extends User implements SecurityToken {
 

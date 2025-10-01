@@ -40,10 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthenticatedUser;
-import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Extension of {@link JdbcDaoImpl} that returns {@link AuthenticatedUser}
@@ -65,7 +64,7 @@ import net.solarnetwork.codec.JsonUtils;
  * </ol>
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsService {
 
@@ -144,7 +143,7 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 				SecurityPolicy policy = null;
 				if ( policyJson != null && !"{}".equals(policyJson) ) {
 					try {
-						policy = objectMapper.readValue(policyJson, BasicSecurityPolicy.class);
+						policy = objectMapper.readValue(policyJson, SecurityPolicy.class);
 					} catch ( IOException e ) {
 						log.error("Error deserializing [{}] SecurityPolicy from [{}]: {}", username1,
 								policyJson, e.getMessage());

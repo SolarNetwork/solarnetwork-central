@@ -19,13 +19,13 @@ package net.solarnetwork.flux.vernemq.webhook.service.impl;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Token authentication result details.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @JsonDeserialize(builder = SnTokenDetails.Builder.class)
 public class SnTokenDetails {
