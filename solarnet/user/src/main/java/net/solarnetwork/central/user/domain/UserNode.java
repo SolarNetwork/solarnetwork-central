@@ -38,7 +38,7 @@ import net.solarnetwork.central.domain.SolarNode;
  * </p>
  *
  * @author matt
- * @version 1.5
+ * @version 1.4
  */
 public class UserNode extends BaseEntity implements UserRelatedEntity<Long> {
 
@@ -131,9 +131,6 @@ public class UserNode extends BaseEntity implements UserRelatedEntity<Long> {
 
 	public void setNode(SolarNode node) {
 		this.node = node;
-		if ( node != null && node.getId() != null && getId() == null ) {
-			setId(node.getId());
-		}
 	}
 
 	public UserNodeCertificate getCertificate() {
