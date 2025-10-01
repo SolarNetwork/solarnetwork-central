@@ -48,6 +48,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -71,7 +73,7 @@ import net.solarnetwork.service.CertificateService;
  * Controller for user nodes web service API.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @GlobalExceptionRestController
 @Controller("v1nodesController")
@@ -321,7 +323,15 @@ public class NodesController {
 		throw new RepeatableTaskException("Certificate renewal processing");
 	}
 
-	public static class UserNodeCertificateDecoded extends UserNodeCertificate {
+	/**
+	 * Extension of {@link UserNodeCertificate} to add additional properties
+	 * extracted from the certificate.
+	 */
+	@JsonIgnoreProperties({ "id", "node", "user" })
+	@JsonPropertyOrder({ "userId", "nodeId", "created", "requestId", "certificateSubjectDN",
+			"certificateIssuerDN", "certificateSerialNumber", "certificateValidFromDate",
+			"certificateValidUntilDate", "certificateRenewAfterDate", "pemValue" })
+	public static final class UserNodeCertificateDecoded extends UserNodeCertificate {
 
 		@Serial
 		private static final long serialVersionUID = -2314002517991208690L;
@@ -355,6 +365,11 @@ public class NodesController {
 			}
 		}
 
+		/**
+		 * Get the PEM encoded certificate.
+		 *
+		 * @return the certificate in PEM form
+		 */
 		public String getPemValue() {
 			return pemValue;
 		}
