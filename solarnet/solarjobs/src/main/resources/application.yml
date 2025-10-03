@@ -233,7 +233,7 @@ app:
         processor:
           maximum-iterations: 1000
           maximum-wait-ms: 59000
-          schedule: 60000
+          schedule: 10000
     instr:
       cleaner:
         days-older: 30
