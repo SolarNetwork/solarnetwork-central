@@ -32,19 +32,19 @@ import org.springframework.context.annotation.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.flux.SolarFluxDatumPublisher;
 import net.solarnetwork.central.datum.flux.dao.FluxPublishSettingsDao;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.support.UserEventSerializer;
+import net.solarnetwork.codec.CborUtils;
 import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Configuration for SolarFlux publishing.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile("mqtt")
@@ -70,7 +70,7 @@ public class SolarFluxPublishingConfig {
 	@Qualifier(SOLARFLUX)
 	public ObjectMapper solarFluxObjectMapper() {
 		ObjectMapper mapper = JsonUtils
-				.createObjectMapper(new CBORFactory(), JsonUtils.JAVA_TIMESTAMP_MODULE)
+				.createObjectMapper(CborUtils.cborFactory(), JsonUtils.JAVA_TIMESTAMP_MODULE)
 				.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 				.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
 		mapper.registerModule(SOLARFLUX_MODULE);

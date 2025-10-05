@@ -27,14 +27,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import net.solarnetwork.codec.CborUtils;
 import net.solarnetwork.codec.JsonUtils;
 
 /**
  * JSON configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class JsonConfig {
@@ -61,7 +61,7 @@ public class JsonConfig {
 	@Bean
 	@Qualifier(CBOR_MAPPER)
 	public ObjectMapper cborObjectMapper() {
-		return JsonUtils.newObjectMapper(new CBORFactory());
+		return JsonUtils.newObjectMapper(CborUtils.cborFactory());
 	}
 
 }

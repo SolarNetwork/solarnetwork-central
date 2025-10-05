@@ -48,12 +48,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
+import net.solarnetwork.codec.CborUtils;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessage;
@@ -82,7 +82,7 @@ public class MqttDataCollector_CborTests {
 
 	@BeforeEach
 	public void setup() throws Exception {
-		objectMapper = createObjectMapper(new CBORFactory());
+		objectMapper = createObjectMapper(CborUtils.cborFactory());
 		dataCollectorBiz = EasyMock.createMock(DataCollectorBiz.class);
 		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
 

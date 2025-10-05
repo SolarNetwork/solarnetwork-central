@@ -37,10 +37,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
+import net.solarnetwork.codec.CborUtils;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
@@ -48,7 +48,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Test cases for the {@link NodeInstructionSerializer} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class NodeInstructionSerializer_CborTests {
 
@@ -59,7 +59,7 @@ public class NodeInstructionSerializer_CborTests {
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		ObjectMapper m = JsonUtils.newObjectMapper(new CBORFactory());
+		ObjectMapper m = JsonUtils.newObjectMapper(CborUtils.cborFactory());
 		SimpleModule mod = new SimpleModule("Test");
 		mod.addSerializer(NodeInstruction.class, NodeInstructionSerializer.INSTANCE);
 		m.registerModule(mod);
