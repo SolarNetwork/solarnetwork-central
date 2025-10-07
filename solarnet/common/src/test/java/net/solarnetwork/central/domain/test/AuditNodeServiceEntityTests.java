@@ -46,7 +46,7 @@ public class AuditNodeServiceEntityTests {
 
 	public ObjectMapper objectMapper() {
 		ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-		objectMapper.setSerializationInclusion(Include.NON_NULL);
+		objectMapper.setDefaultPropertyInclusion(Include.NON_NULL);
 		objectMapper.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
 		return objectMapper;
 	}

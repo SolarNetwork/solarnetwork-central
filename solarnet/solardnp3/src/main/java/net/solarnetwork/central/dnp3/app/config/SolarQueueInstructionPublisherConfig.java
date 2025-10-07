@@ -31,9 +31,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.mqtt.MqttNodeInstructionQueueHook;
+import net.solarnetwork.codec.CborUtils;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.util.StatTracker;
 
@@ -41,7 +41,7 @@ import net.solarnetwork.util.StatTracker;
  * MQTT instruction publishing configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile("mqtt")
@@ -57,7 +57,7 @@ public class SolarQueueInstructionPublisherConfig {
 	@ConfigurationProperties(prefix = "app.solarqueue.instr-publish")
 	@Qualifier(SolarQueueMqttConnectionConfig.SOLARQUEUE)
 	public MqttNodeInstructionQueueHook mqttNodeInstructionQueueHook() {
-		ObjectMapper objectMapper = JsonUtils.newDatumObjectMapper(new CBORFactory());
+		ObjectMapper objectMapper = JsonUtils.newDatumObjectMapper(CborUtils.cborFactory());
 		return new MqttNodeInstructionQueueHook(objectMapper, executor, nodeInstructionDao,
 				new StatTracker("Instruction Publisher", null,
 						LoggerFactory.getLogger("net.solarnetwork.central.mqtt.stats.NodeInstructions"),

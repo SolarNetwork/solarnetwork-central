@@ -37,15 +37,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.ocpp.util.ChargePointStatusSerializer;
+import net.solarnetwork.codec.CborUtils;
 
 /**
  * Test cases for the {@link ChargePointStatusSerializer} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ChargePointStatusSerializer_CborTests {
 
@@ -56,7 +56,7 @@ public class ChargePointStatusSerializer_CborTests {
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		ObjectMapper m = new ObjectMapper(new CBORFactory());
+		ObjectMapper m = new ObjectMapper(CborUtils.cborFactory());
 		SimpleModule mod = new SimpleModule("Test");
 		mod.addSerializer(ChargePointStatus.class, ChargePointStatusSerializer.INSTANCE);
 		m.registerModule(mod);

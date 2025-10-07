@@ -39,7 +39,7 @@ public class DatumRecordCountsTests {
 
 	public ObjectMapper objectMapper() {
 		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.setSerializationInclusion(Include.NON_NULL);
+		objectMapper.setDefaultPropertyInclusion(Include.NON_NULL);
 		return objectMapper;
 	}
 

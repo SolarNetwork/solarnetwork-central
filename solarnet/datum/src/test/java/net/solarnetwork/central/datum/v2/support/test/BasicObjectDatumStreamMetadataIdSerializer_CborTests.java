@@ -32,23 +32,23 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.support.BasicObjectDatumStreamMetadataIdSerializer;
+import net.solarnetwork.codec.CborUtils;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Test cases for the {@link BasicObjectDatumStreamMetadataIdSerializer} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicObjectDatumStreamMetadataIdSerializer_CborTests {
 
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		ObjectMapper m = new ObjectMapper(new CBORFactory());
+		ObjectMapper m = new ObjectMapper(CborUtils.cborFactory());
 		SimpleModule mod = new SimpleModule("Test");
 		mod.addSerializer(ObjectDatumStreamMetadataId.class,
 				BasicObjectDatumStreamMetadataIdSerializer.INSTANCE);

@@ -32,13 +32,14 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.support.UserEventSerializer;
+import net.solarnetwork.codec.CborUtils;
 import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Configuration for SolarFlux publishing.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile("mqtt")
@@ -59,7 +60,7 @@ public class SolarFluxPublishingConfig {
 	@Bean
 	@Qualifier(SOLARFLUX)
 	public ObjectMapper solarFluxObjectMapper() {
-		ObjectMapper mapper = JsonUtils.newDatumObjectMapper(new CBORFactory());
+		ObjectMapper mapper = JsonUtils.newDatumObjectMapper(CborUtils.cborFactory());
 		mapper.registerModule(SOLARFLUX_MODULE);
 		return mapper;
 	}
