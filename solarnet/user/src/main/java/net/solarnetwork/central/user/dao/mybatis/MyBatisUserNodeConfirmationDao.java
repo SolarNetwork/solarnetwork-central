@@ -68,7 +68,7 @@ public class MyBatisUserNodeConfirmationDao extends BaseMyBatisGenericDao<UserNo
 	public List<UserNodeConfirmation> findPendingConfirmationsForUser(User user) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("user", user);
-		params.put("pending", Boolean.TRUE);
+		params.put("pending", true);
 
 		return getSqlSession().selectList(QUERY_FOR_USER, params);
 	}

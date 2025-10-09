@@ -95,7 +95,7 @@ public class MqttInstructionHandlerTests {
 		chargePointBroker = EasyMock.createMock(ChargePointBroker.class);
 		mqttConnection = EasyMock.createMock(MqttConnection.class);
 		objectMapper = new ObjectMapper();
-		objectMapper.setSerializationInclusion(Include.NON_NULL);
+		objectMapper.setDefaultPropertyInclusion(Include.NON_NULL);
 		objectMapper.registerModule(new JakartaXmlBindAnnotationModule());
 		handler = new MqttInstructionHandler<>(ChargePointAction.class, instructionDao, chargePointDao,
 				objectMapper, chargePointRouter);

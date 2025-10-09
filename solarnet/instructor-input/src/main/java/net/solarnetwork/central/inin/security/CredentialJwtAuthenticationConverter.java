@@ -96,8 +96,9 @@ public class CredentialJwtAuthenticationConverter
 
 		private final EndpointUserDetails info;
 
-		public EndpointJwtAuthenticatedToken(Jwt jwt, Collection<? extends GrantedAuthority> authorities,
-				String name, EndpointUserDetails info) {
+		private EndpointJwtAuthenticatedToken(Jwt jwt,
+				Collection<? extends GrantedAuthority> authorities, String name,
+				EndpointUserDetails info) {
 			super(jwt, authorities, name);
 			this.info = requireNonNullArgument(info, "info");
 		}

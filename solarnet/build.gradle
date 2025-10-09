@@ -99,8 +99,8 @@ subprojects {
 		snCommonMqttVersion = '5.0.0'
 		snCommonMqttNettyVersion = '5.0.0'
 		snCommonOcppVersion = '5.0.0'
-		snCommonOcpp16JakartaVersion = '5.0.0'
-		snCommonOcpp201Version = '2.0.0'
+		snCommonOcpp16JakartaVersion = '5.0.2'
+		snCommonOcpp201Version = '2.0.1'
 		snCommonOcppWebJakartaVersion = '3.3.0'
 		snCommonPkiBcVersion = '4.0.0'
 		snCommonWebJakartaVersion = '2.1.1'
@@ -139,7 +139,7 @@ subprojects {
 				'net.javacrumbs.json-unit:json-unit-assertj:4.1.1',
 				'org.junit.platform:junit-platform-launcher'
 		
-		errorprone 'com.google.errorprone:error_prone_core:2.38.0'
+		errorprone 'com.google.errorprone:error_prone_core:2.42.0'
 	}
 
 	configurations {

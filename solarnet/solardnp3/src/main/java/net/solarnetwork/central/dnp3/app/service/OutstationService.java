@@ -384,12 +384,12 @@ public class OutstationService
 		switch (command.opType) {
 			case LATCH_ON:
 				instr = new Instruction(INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER, now());
-				instr.addParameter(config.getControlId(), Boolean.TRUE.toString());
+				instr.addParameter(config.getControlId(), String.valueOf(true));
 				break;
 
 			case LATCH_OFF:
 				instr = new Instruction(INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER, now());
-				instr.addParameter(config.getControlId(), Boolean.FALSE.toString());
+				instr.addParameter(config.getControlId(), String.valueOf(false));
 				break;
 
 			default:

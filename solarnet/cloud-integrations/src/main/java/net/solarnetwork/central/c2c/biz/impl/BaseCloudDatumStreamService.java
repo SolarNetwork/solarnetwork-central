@@ -115,7 +115,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @since 1.12
 	 */
 	public static final ToggleSettingSpecifier UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER = new BasicToggleSettingSpecifier(
-			UPPER_CASE_SOURCE_ID_SETTING, Boolean.FALSE);
+			UPPER_CASE_SOURCE_ID_SETTING, false);
 
 	/**
 	 * A setting specifier for the {@code SOURCE_ID_MAP_SETTING}.

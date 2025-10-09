@@ -93,7 +93,7 @@ public final class CommonDbTestUtils {
 			String displayName) {
 		jdbcTemplate.update(
 				"insert into solaruser.user_user (id,email,password,disp_name,enabled) values (?,?,?,?,?)",
-				id, username, DigestUtils.sha256Hex(password), displayName, Boolean.TRUE);
+				id, username, DigestUtils.sha256Hex(password), displayName, true);
 	}
 
 	/**

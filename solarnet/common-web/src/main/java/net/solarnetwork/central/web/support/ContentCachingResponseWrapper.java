@@ -231,7 +231,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 		private final ServletOutputStream os;
 
-		public ResponseServletOutputStream(ServletOutputStream os) {
+		private ResponseServletOutputStream(ServletOutputStream os) {
 			this.os = os;
 		}
 
@@ -307,7 +307,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 	private static class ResponsePrintWriter extends PrintWriter {
 
-		public ResponsePrintWriter(String characterEncoding, ServletOutputStream os)
+		private ResponsePrintWriter(String characterEncoding, ServletOutputStream os)
 				throws UnsupportedEncodingException {
 			super(new OutputStreamWriter(os, characterEncoding));
 		}

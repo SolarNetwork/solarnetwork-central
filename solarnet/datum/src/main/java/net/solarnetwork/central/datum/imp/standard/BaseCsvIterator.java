@@ -69,7 +69,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 	private static final class StringListTypeReference extends TypeReference<ArrayList<String>> {
 
-		public StringListTypeReference() {
+		private StringListTypeReference() {
 			super();
 		}
 

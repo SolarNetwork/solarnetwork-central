@@ -84,7 +84,7 @@ public class FtpDatumExportDestinationService extends BaseDatumExportDestination
 		result.add(new BasicTextFieldSettingSpecifier("url", ""));
 		result.add(new BasicTextFieldSettingSpecifier("username", ""));
 		result.add(new BasicTextFieldSettingSpecifier("password", "", true));
-		result.add(new BasicToggleSettingSpecifier("implicitTls", Boolean.FALSE));
+		result.add(new BasicToggleSettingSpecifier("implicitTls", false));
 		result.add(
 				new BasicToggleSettingSpecifier("dataTls", FtpDestinationProperties.DEFAULT_DATA_TLS));
 		return result;
