@@ -133,7 +133,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 	@Override
 	public List<SettingSpecifier> getSettingSpecifiers() {
 		List<SettingSpecifier> result = new ArrayList<>(4);
-		result.add(new BasicToggleSettingSpecifier("includeHeader", Boolean.TRUE));
+		result.add(new BasicToggleSettingSpecifier("includeHeader", true));
 		return result;
 	}
 

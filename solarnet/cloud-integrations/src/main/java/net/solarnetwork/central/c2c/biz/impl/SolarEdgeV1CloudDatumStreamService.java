@@ -166,7 +166,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		// @formatter:off
 		SETTINGS = List.of(
 				UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER,
-				new BasicToggleSettingSpecifier(INDEX_BASED_SOURCE_ID_SETTING, Boolean.FALSE),
+				new BasicToggleSettingSpecifier(INDEX_BASED_SOURCE_ID_SETTING, false),
 				resolutionSpec,
 				SOURCE_ID_MAP_SETTING_SPECIFIER,
 				MULTI_STREAM_MAXIMUM_LAG_SETTING_SPECIFIER,
