@@ -162,10 +162,10 @@ public class UsageTiers implements NamedCostTiers {
 		StringBuilder buf = new StringBuilder();
 		buf.append(format("| %-20s | %9s | %-12s |\n", "Key", "Quantity", "Cost"));
 		buf.append("|----------------------|-----------|--------------|");
-		final String row = "| %-20s | %,9d | %0,9.10f |";
 		for ( UsageTier tier : tiers ) {
 			buf.append("\n");
-			buf.append(format(row, tier.getKey(), tier.getQuantity(), tier.getCost()));
+			buf.append(format("| %-20s | %,9d | %0,9.10f |", tier.getKey(), tier.getQuantity(),
+					tier.getCost()));
 		}
 		return buf.toString();
 	}
