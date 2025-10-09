@@ -107,8 +107,8 @@ public class ExternalSystemJwtAuthenticationConverter
 
 		private final AuthRoleInfo info;
 
-		public AuthInfoJwtAuthenticatedToken(Jwt jwt, Collection<? extends GrantedAuthority> authorities,
-				String name, AuthRoleInfo info) {
+		private AuthInfoJwtAuthenticatedToken(Jwt jwt,
+				Collection<? extends GrantedAuthority> authorities, String name, AuthRoleInfo info) {
 			super(jwt, authorities, name);
 			this.info = requireNonNullArgument(info, "info");
 		}

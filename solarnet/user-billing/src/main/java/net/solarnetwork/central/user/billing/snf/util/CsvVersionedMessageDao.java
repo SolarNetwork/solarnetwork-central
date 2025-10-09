@@ -93,18 +93,8 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 		this.resources = resources;
 	}
 
-	private static final class Row {
+	private static final record Row(Instant version, String name, String template) {
 
-		private final Instant version;
-		private final String name;
-		private final String template;
-
-		public Row(Instant version, String name, String template) {
-			super();
-			this.version = version;
-			this.name = name;
-			this.template = template;
-		}
 	}
 
 	@Override

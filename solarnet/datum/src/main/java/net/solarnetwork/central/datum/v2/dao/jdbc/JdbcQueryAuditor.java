@@ -329,19 +329,19 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 		private final AtomicBoolean keepGoing = new AtomicBoolean(true);
 		private boolean started = false;
 
-		public boolean hasStarted() {
+		private boolean hasStarted() {
 			return started;
 		}
 
-		public boolean isGoing() {
+		private boolean isGoing() {
 			return keepGoing.get();
 		}
 
-		public void reconnect() {
+		private void reconnect() {
 			keepGoingWithConnection.compareAndSet(true, false);
 		}
 
-		public void exit() {
+		private void exit() {
 			keepGoing.compareAndSet(true, false);
 			keepGoingWithConnection.compareAndSet(true, false);
 		}

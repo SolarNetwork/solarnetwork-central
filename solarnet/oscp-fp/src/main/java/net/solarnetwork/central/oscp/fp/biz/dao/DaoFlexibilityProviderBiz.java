@@ -513,6 +513,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		 *        additional source ID template parameters
 		 * @return the published event, or {@literal null} if not published
 		 */
+		@SuppressWarnings("EffectivelyPrivate")
 		protected DatumPublishEvent publish(String action, String sourceIdSuffix,
 				BaseOscpExternalSystemConfiguration<?> src, BaseOscpExternalSystemConfiguration<?> dest,
 				CapacityGroupConfiguration group, DatumPublishSettings settings,

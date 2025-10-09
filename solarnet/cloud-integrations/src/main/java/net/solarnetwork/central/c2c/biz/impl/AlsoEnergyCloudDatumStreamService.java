@@ -623,7 +623,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			AlsoEnergyFieldFunction fn, String sourceId,
 			CloudDatumStreamPropertyConfiguration property) {
 
-		public ValueRef(Long siteId, Long hardwareId, String fieldName, AlsoEnergyFieldFunction fn,
+		private ValueRef(Long siteId, Long hardwareId, String fieldName, AlsoEnergyFieldFunction fn,
 				CloudDatumStreamPropertyConfiguration property) {
 			this(siteId, hardwareId, fieldName, fn, "/%s/%s".formatted(siteId, hardwareId), property);
 		}

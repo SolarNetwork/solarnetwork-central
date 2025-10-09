@@ -108,7 +108,7 @@ public final class ResponseLengthUserServiceFilter extends OncePerRequestFilter 
 		 * @param response
 		 *        the response to wrap
 		 */
-		public ResponseLengthTrackingHttpServletResponse(HttpServletRequest request,
+		private ResponseLengthTrackingHttpServletResponse(HttpServletRequest request,
 				HttpServletResponse response) {
 			super(response);
 			this.request = requireNonNullArgument(request, "request");

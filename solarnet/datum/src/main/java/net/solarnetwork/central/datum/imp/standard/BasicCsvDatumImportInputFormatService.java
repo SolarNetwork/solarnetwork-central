@@ -79,7 +79,7 @@ public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFo
 		 * @param resource
 		 *        the data to import
 		 */
-		public CsvImportContext(InputConfiguration config, DatumImportResource resource,
+		private CsvImportContext(InputConfiguration config, DatumImportResource resource,
 				ProgressListener<DatumImportService> progressListener) throws IOException {
 			super(config, resource, progressListener);
 			BasicCsvDatumImportInputProperties props = new BasicCsvDatumImportInputProperties();

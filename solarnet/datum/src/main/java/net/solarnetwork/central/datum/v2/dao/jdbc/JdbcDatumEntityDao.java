@@ -757,7 +757,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-		
+
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/
@@ -828,7 +828,7 @@ public class JdbcDatumEntityDao
 		 * @param streamId
 		 *        the stream ID to set
 		 */
-		public void setStreamId(UUID streamId) {
+		private void setStreamId(UUID streamId) {
 			streamIds[0] = streamId;
 		}
 
@@ -931,7 +931,7 @@ public class JdbcDatumEntityDao
 
 		private final Map<UUID, BulkLoadStats> streamStats = new HashMap<>(32);
 
-		public BulkLoadingContext(LoadingOptions options,
+		private BulkLoadingContext(LoadingOptions options,
 				LoadingExceptionHandler<GeneralNodeDatum> exceptionHandler) {
 			super(bulkLoadTransactionManager, bulkLoadDataSource, bulkLoadJdbcCall, options,
 					exceptionHandler);
@@ -1018,7 +1018,7 @@ public class JdbcDatumEntityDao
 		 * @param d
 		 *        the datum to calculate the datum/property counts from
 		 */
-		public void updateStatsForDatum(GeneralNodeDatum d) {
+		private void updateStatsForDatum(GeneralNodeDatum d) {
 			if ( d == null ) {
 				return;
 			}

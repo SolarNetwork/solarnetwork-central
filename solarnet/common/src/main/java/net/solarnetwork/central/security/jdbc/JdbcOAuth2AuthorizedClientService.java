@@ -266,7 +266,7 @@ public class JdbcOAuth2AuthorizedClientService
 		private final String clientRegistrationId;
 		private final String principalName;
 
-		public SelectAuthorizedClient(Long userId, String clientRegistrationId, String principalName) {
+		private SelectAuthorizedClient(Long userId, String clientRegistrationId, String principalName) {
 			super();
 			this.userId = requireNonNullArgument(userId, "userId");
 			this.clientRegistrationId = requireNonNullArgument(clientRegistrationId,
@@ -391,7 +391,7 @@ public class JdbcOAuth2AuthorizedClientService
 
 		private final ClientRegistrationRepository clientRegistrationRepository;
 
-		public OAuth2AuthorizedClientRowMapper(
+		private OAuth2AuthorizedClientRowMapper(
 				ClientRegistrationRepository clientRegistrationRepository) {
 			requireNonNullArgument(clientRegistrationRepository, "clientRegistrationRepository");
 			this.clientRegistrationRepository = clientRegistrationRepository;
