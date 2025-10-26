@@ -142,16 +142,18 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		if ( entry.getNodeLocation() != null ) {
 			SolarNode node = entity.getNode();
 			SolarLocation norm = SolarLocation.normalizedLocation(entry.getNodeLocation());
-			SolarLocation locEntity = solarLocationDao.getSolarLocationForLocation(norm);
-			if ( locEntity == null ) {
-				log.debug("Saving new SolarLocation {}", norm);
-				locEntity = solarLocationDao.get(solarLocationDao.save(norm));
-			}
-			if ( !locEntity.getId().equals(node.getLocationId()) ) {
-				log.debug("Updating node {} location from {} to {}", node.getId(), node.getLocationId(),
-						locEntity.getId());
-				node.setLocationId(locEntity.getId());
-				solarNodeDao.save(node);
+			if ( norm.getCountry() != null && norm.getTimeZoneId() != null ) {
+				SolarLocation locEntity = solarLocationDao.getSolarLocationForLocation(norm);
+				if ( locEntity == null ) {
+					log.debug("Saving new SolarLocation {}", norm);
+					locEntity = solarLocationDao.get(solarLocationDao.save(norm));
+				}
+				if ( !locEntity.getId().equals(node.getLocationId()) ) {
+					log.debug("Updating node {} location from {} to {}", node.getId(),
+							node.getLocationId(), locEntity.getId());
+					node.setLocationId(locEntity.getId());
+					solarNodeDao.save(node);
+				}
 			}
 		}
 

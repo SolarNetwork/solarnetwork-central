@@ -89,7 +89,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * Test cases for the {@link DaoUserBiz} class.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("static-access")
@@ -380,6 +380,8 @@ public class DaoUserBizTests {
 		SolarLocation loc = new SolarLocation();
 		loc.setId(testNode.getLocationId());
 		loc.setName("foo");
+		loc.setTimeZoneId("UTC");
+		loc.setCountry("GB");
 
 		given(userNodeDao.get(testNode.getId())).willReturn(userNode);
 		given(solarLocationDao.getSolarLocationForLocation(any(loc.getClass()))).willReturn(loc);
@@ -409,6 +411,8 @@ public class DaoUserBizTests {
 		SolarLocation loc = new SolarLocation();
 		loc.setId(testNode.getLocationId());
 		loc.setName("foo");
+		loc.setTimeZoneId("UTC");
+		loc.setCountry("GB");
 
 		SolarLocation locMatch = new SolarLocation();
 		locMatch.setId(-9L);
@@ -465,6 +469,8 @@ public class DaoUserBizTests {
 		SolarLocation loc = new SolarLocation();
 		loc.setId(testNode.getLocationId());
 		loc.setName("foo");
+		loc.setTimeZoneId("UTC");
+		loc.setCountry("GB");
 
 		SolarLocation newLoc = new SolarLocation();
 		newLoc.setId(-99L);
@@ -500,6 +506,43 @@ public class DaoUserBizTests {
 			.as("Persisted location ID as given")
 			.returns(newLoc.getId(), SolarNode::getLocationId)
 			;
+
+		and.then(result)
+			.as("Result equals given")
+			.isEqualTo(userNode)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveUserNodeLocationNoCountry() {
+		// GIVEN
+		final UserNode userNode = new UserNode();
+		userNode.setCreated(Instant.now());
+		userNode.setDescription("Test user node");
+		userNode.setName("Test UserNode");
+		userNode.setRequiresAuthorization(true);
+		userNode.setUser(testUser);
+		userNode.setNode(testNode);
+
+		SolarLocation loc = new SolarLocation();
+		loc.setId(testNode.getLocationId());
+		loc.setName("foo");
+
+		given(userNodeDao.get(testNode.getId())).willReturn(userNode);
+		given(userNodeDao.save(userNode)).willReturn(testNode.getId());
+
+		// WHEN
+		UserNode entry = new UserNode(testUser, testNode.clone());
+		entry.getNode().setLocation(loc);
+
+		UserNode result = userBiz.saveUserNode(entry);
+
+		// THEN
+		// @formatter:off
+		then(solarLocationDao).shouldHaveNoInteractions();
+		
+		then(solarNodeDao).shouldHaveNoInteractions();
 
 		and.then(result)
 			.as("Result equals given")
