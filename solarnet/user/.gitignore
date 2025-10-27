@@ -1,1 +1,3 @@
 /*.yml
+/src/test/resources/dogtag.properties
+/src/test/resources/dogtag-client.*
