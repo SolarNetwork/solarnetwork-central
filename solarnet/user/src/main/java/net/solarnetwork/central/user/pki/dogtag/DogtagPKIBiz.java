@@ -23,6 +23,9 @@
 package net.solarnetwork.central.user.pki.dogtag;
 
 import java.math.BigInteger;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -50,6 +53,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestOperations;
 import org.w3c.dom.Node;
+import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -104,6 +108,8 @@ public class DogtagPKIBiz
 	public static final String DOGTAG_10_PKI_INFO_VERSION_XPATH = "/Info/Version";
 
 	public static final String DOGTAG_10_AGENT_CERTREQ_REQUEST_STATUS_XPATH = "/certReviewResponse/requestStatus";
+
+	private static final String REQ_STATUS_PENDING = "pending";
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -240,14 +246,25 @@ public class DogtagPKIBiz
 			req = params;
 		}
 
-		ResponseEntity<DOMSource> result = restOps.postForEntity(baseUrl + DOGTAG_10_CERTREG_RENEW_PATH,
-				req, DOMSource.class);
-		DOMSource xmlResult = result.getBody();
-		if ( log.isDebugEnabled() ) {
-			log.debug("Got XML response: {}", xmlSupport.getXmlAsString(xmlResult, true));
+		final ResponseEntity<?> renewResponse;
+		final DogtagCertRequestInfo requestInfo;
+		if ( isVersionAtLeast(11, 0, 0) ) {
+			ResponseEntity<JsonNode> result = restOps
+					.postForEntity(baseUrl + DOGTAG_10_CERTREG_RENEW_PATH, req, JsonNode.class);
+			if ( log.isDebugEnabled() ) {
+				log.debug("Got JSON response: {}", result.getBody());
+			}
+			renewResponse = result;
+			requestInfo = getRenewalRequestInfo(result.getBody());
+		} else {
+			ResponseEntity<DOMSource> result = restOps
+					.postForEntity(baseUrl + DOGTAG_10_CERTREG_RENEW_PATH, req, DOMSource.class);
+			if ( log.isDebugEnabled() ) {
+				log.debug("Got XML response: {}", xmlSupport.getXmlAsString(result.getBody(), true));
+			}
+			renewResponse = result;
+			requestInfo = getRenewalRequestInfo(result.getBody().getNode());
 		}
-
-		final DogtagCertRequestInfo requestInfo = getRenewalRequestInfo(result.getBody().getNode());
 
 		// the request ID is the last path value of the requestURL
 		final URL requestURL = requestInfo.getRequestURL();
@@ -256,8 +273,7 @@ public class DogtagPKIBiz
 			requestID = StringUtils.getFilename(requestURL.getPath());
 		}
 		if ( requestID == null ) {
-			log.error("Renewal request ID not found in CA response: {}",
-					xmlSupport.getXmlAsString(xmlResult, true));
+			log.error("Renewal request ID not found in CA response: {}", renewResponse);
 			throw new CertificateException(
 					"No certificate request ID could be extracted from CA renewal submit response");
 		}
@@ -270,6 +286,56 @@ public class DogtagPKIBiz
 			throw new IllegalArgumentException("The request ID argument must be provided.");
 		}
 
+		if ( isVersionAtLeast(11, 0, 0) ) {
+			return approveCsrJson(requestID);
+		} else {
+			return approveCsrXml(requestID);
+		}
+	}
+
+	private X509Certificate[] approveCsrJson(String requestID) {
+		// get the agent details for the CSR (required to approve)
+		ResponseEntity<JsonNode> result = restOps
+				.getForEntity(baseUrl + DOGTAG_10_AGENT_CERTREQ_GET_PATH, JsonNode.class, requestID);
+		if ( log.isDebugEnabled() ) {
+			log.debug("Got agent cert req details: {}", result);
+		}
+
+		// check if the request is already complete
+		String reqStatus = null;
+		if ( result.getBody() != null ) {
+			reqStatus = result.getBody().path("requestStatus").textValue();
+		}
+
+		if ( reqStatus == null || REQ_STATUS_PENDING.equalsIgnoreCase(reqStatus) ) {
+			// approve the pending CSR
+			restOps.postForEntity(baseUrl + DOGTAG_10_AGENT_CERTREQ_APPROVE_PATH, result.getBody(), null,
+					requestID);
+		}
+
+		// get the CSR details, which will include our cert URL
+		result = restOps.getForEntity(baseUrl + DOGTAG_10_CERTREG_GET_PATH, JsonNode.class, requestID);
+		final DogtagCertRequestInfo info = getCertRequestInfo(result.getBody());
+		if ( info.getCertURL() == null ) {
+			log.warn("Expected to find certURL for approved CSR {}; req info: {}", requestID,
+					result.getBody());
+			throw new CertificateException("URL not available for request " + requestID);
+		}
+
+		// in Dogtag 10.0 for some reason the certURL returned is missing the "/certs" path element, so we have to insert that
+		String certURL;
+		if ( !info.getCertURL().getPath().contains("/certs/") ) {
+			certURL = info.getCertURL().toExternalForm().replaceFirst("(/[^/]+)$", "/certs$1");
+		} else {
+			certURL = info.getCertURL().toExternalForm();
+		}
+		result = restOps.getForEntity(certURL, JsonNode.class);
+		final DogtagCertificateData certData = getCertData(result.getBody());
+
+		return certificateService.parsePKCS7CertificateChainString(certData.getPkcs7Chain());
+	}
+
+	private X509Certificate[] approveCsrXml(String requestID) {
 		// get the agent details for the CSR (required to approve)
 		ResponseEntity<DOMSource> result = restOps
 				.getForEntity(baseUrl + DOGTAG_10_AGENT_CERTREQ_GET_PATH, DOMSource.class, requestID);
@@ -285,7 +351,7 @@ public class DogtagPKIBiz
 					xpathForString(DOGTAG_10_AGENT_CERTREQ_REQUEST_STATUS_XPATH));
 		}
 
-		if ( reqStatus == null || "pending".equalsIgnoreCase(reqStatus) ) {
+		if ( reqStatus == null || REQ_STATUS_PENDING.equalsIgnoreCase(reqStatus) ) {
 			// approve the pending CSR
 			restOps.postForEntity(baseUrl + DOGTAG_10_AGENT_CERTREQ_APPROVE_PATH, result.getBody(), null,
 					requestID);
@@ -332,6 +398,100 @@ public class DogtagPKIBiz
 		PropertyAccessor bean = PropertyAccessorFactory.forBeanPropertyAccess(data);
 		xmlSupport.extractBeanDataFromXml(bean, node, getCertDetailMapping());
 		return data;
+	}
+
+	private DogtagCertRequestInfo getCertRequestInfo(final JsonNode json) {
+		/*- Example JSON:
+		 {
+			  "requestID": "0x2e866ad1ccc49e00a00df6ae82bce16b",
+			  "requestType": "enrollment",
+			  "requestStatus": "complete",
+			  "requestURL": "https://ca.solarnetworkdev.net:8443/ca/v1/61842422142626387223746006932518658411",
+			  "creationTime": 1761605508000,
+			  "modificationTime": 1761605558000,
+			  "certId": "0x6cf4dc5e017987f2f43d08da09588382",
+			  "certURL": "https://ca.solarnetworkdev.net:8443/ca/v1/144828013556269898958494806893087196034",
+			  "certRequestType": "pkcs10",
+			  "operationResult": "success",
+			  "requestId": "0x2e866ad1ccc49e00a00df6ae82bce16b"
+		}
+		 */
+
+		final var info = new DogtagCertRequestInfo();
+		try {
+			info.setCertURL(new URI(json.path("certURL").textValue()).toURL());
+			info.setRequestURL(new URI(json.path("requestURL").textValue()).toURL());
+			info.setRequestStatus(json.path("requestStatus").textValue());
+		} catch ( MalformedURLException | URISyntaxException e ) {
+			log.warn("Error parsing certificate request info [{}]: {}", json, e.toString());
+		}
+
+		return info;
+	}
+
+	private DogtagCertificateData getCertData(final JsonNode json) {
+		/*- Example JSON
+			{
+			  "id": "0xc11e3339cfad425c95c7375be7408f35",
+			  "IssuerDN": "CN=CA Signing Certificate,O=SolarNetworkDev",
+			  "SubjectDN": "UID=1111,O=SolarNetworkDev",
+			  "PrettyPrint": "    Certificate: \n        ...:82:9D:F0\n",
+			  "Encoded": "-----BEGIN CERTIFICATE-----\nMIIDCDCCAfCg...Jc4+1IAm54S0EFLAS\r\n-----END CERTIFICATE-----\n",
+			  "PKCS7CertChain": "MIIG2Q...Z6vcBBHM3MQA=\r\n",
+			  "NotBefore": "Tue Oct 28 12:12:07 NZDT 2025",
+			  "NotAfter": "Tue Apr 11 09:23:50 NZST 2034",
+			  "Status": "INVALID"
+			}
+		 */
+
+		final var data = new DogtagCertificateData();
+		try {
+			final String idVal = json.path("id").textValue();
+			data.setId(idVal.startsWith("0x") ? new BigInteger(idVal.substring(2), 16)
+					: new BigInteger(idVal));
+			data.setPkcs7Chain(json.path("PKCS7CertChain").textValue());
+		} catch ( IllegalArgumentException e ) {
+			log.warn("Error parsing certificate data from [{}]: {}", json, e.toString());
+		}
+		return data;
+	}
+
+	private DogtagCertRequestInfo getRenewalRequestInfo(final JsonNode json) {
+		/*- Example JSON
+			map.put("requestURL", "//CertRequestInfo[1]/requestURL");
+			map.put("requestStatus", "//CertRequestInfo[1]/requestStatus");
+			{
+			  "total": 1,
+			  "entries": [
+			    {
+			      "requestID": "0xe94986e1b51ae2a359daf22a34e5fcbb",
+			      "requestType": "renewal",
+			      "requestStatus": "complete",
+			      "requestURL": "https://ca.solarnetworkdev.net:8443/ca/v1/310091896413831184953875142786005990587",
+			      "creationTime": 1761607823354,
+			      "modificationTime": 1761607823365,
+			      "certId": "0xe9d9acb753aad4796b0cad46b28ac9a8",
+			      "certURL": "https://ca.solarnetworkdev.net:8443/ca/v1/310840354535286800765635121022956652968",
+			      "certRequestType": "pkcs10",
+			      "operationResult": "success",
+			      "requestId": "0xe94986e1b51ae2a359daf22a34e5fcbb"
+			    }
+			  ]
+			}
+		 */
+		final var info = new DogtagCertRequestInfo();
+		try {
+			final var entriesJson = json.path("entries");
+			if ( entriesJson.size() > 0 ) {
+				final var firstEntry = entriesJson.get(0);
+				info.setRequestURL(new URI(firstEntry.path("requestURL").textValue()).toURL());
+				info.setRequestStatus(firstEntry.path("requestStatus").textValue());
+			}
+		} catch ( MalformedURLException | URISyntaxException e ) {
+			log.warn("Error parsing certificate request info [{}]: {}", json, e.toString());
+		}
+
+		return info;
 	}
 
 	//	<CertRequestInfos>
