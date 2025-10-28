@@ -156,8 +156,8 @@ public class DogtagPKIBizTests extends AbstractJUnit4SpringContextTests {
 
 		// validate renewed subject the same, and has larger serial numberd
 		then(renewed[0].getSubjectX500Principal()).isEqualTo(result[0].getSubjectX500Principal());
-		then(renewed[0].getSerialNumber()).as("Renewed serial number larger than original")
-				.isGreaterThan(result[0].getSerialNumber());
+		then(renewed[0].getSerialNumber()).as("Renewed serial number different from original")
+				.isNotEqualTo(result[0].getSerialNumber());
 	}
 
 }

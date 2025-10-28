@@ -449,9 +449,9 @@ CREATE TABLE solaruser.user_node_cert (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	user_id			BIGINT NOT NULL,
 	node_id			BIGINT NOT NULL,
-	status			CHAR(1) NOT NULL,
-	request_id		VARCHAR(32) NOT NULL,
-	keystore		bytea,
+	status			CHARACTER(1) NOT NULL,
+	request_id		CHARACTER VARYING(128) NOT NULL,
+	keystore		BYTEA,
 	CONSTRAINT user_node_cert_pkey PRIMARY KEY (user_id, node_id),
 	CONSTRAINT user_node_cert_user_node_fk FOREIGN KEY (user_id, node_id)
 		REFERENCES solaruser.user_node (user_id, node_id) MATCH SIMPLE
