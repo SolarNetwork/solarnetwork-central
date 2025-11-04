@@ -290,7 +290,7 @@ app:
           disk-max-size-mb: 0
     reg:
       biz:
-        network-certificate-subject-format: "UID=%s,O=SolarNetwork"
+        network-certificate-subject-format: "UID=%1$s,CN=%1$s,OU=SolarNode,O=SolarNetwork"
         approve-csr-maximum-wait-secs: 15
         node-certificate-renewal-period-months: 3
       mail.template:

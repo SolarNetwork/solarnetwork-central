@@ -100,6 +100,19 @@ public class DevNodePKIBizTests {
 	}
 
 	@Test
+	public void approveCSR_extendedDN() throws Exception {
+		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+		keyGen.initialize(2048, new SecureRandom());
+		KeyPair keypair = keyGen.generateKeyPair();
+		X509Certificate certificate = createSelfSignedCertificate(
+				"UID=1111,CN=1111,OU=SolarNode,O=SolarNetworkDev", keypair);
+		String reqID = biz.submitCSR(certificate, keypair.getPrivate());
+		then(reqID).as("CSR request ID").isNotNull();
+		X509Certificate[] result = biz.approveCSR(reqID);
+		then(result).as("X.509 certificate").isNotNull();
+	}
+
+	@Test
 	public void initCA() throws Exception {
 		biz.serviceDidStartup();
 
