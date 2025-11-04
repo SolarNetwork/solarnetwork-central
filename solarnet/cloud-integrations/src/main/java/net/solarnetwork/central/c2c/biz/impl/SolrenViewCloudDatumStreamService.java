@@ -478,7 +478,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 					.toList();
 
 			BasicQueryFilter nextQueryFilter = null;
-			if ( usedQueryFilter.getEndDate().isBefore(endDate) ) {
+			if ( usedQueryFilter.getEndDate() != null
+					&& usedQueryFilter.getEndDate().isBefore(endDate) ) {
 				nextQueryFilter = new BasicQueryFilter();
 				nextQueryFilter.setStartDate(usedQueryFilter.getEndDate());
 				nextQueryFilter.setEndDate(endDate);
