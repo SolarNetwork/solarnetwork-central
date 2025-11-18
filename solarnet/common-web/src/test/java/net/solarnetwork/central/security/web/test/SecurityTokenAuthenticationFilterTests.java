@@ -75,7 +75,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * Unit tests for the {@link SecurityTokenAuthenticationFilter} class.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class SecurityTokenAuthenticationFilterTests {
 
@@ -154,7 +154,6 @@ public class SecurityTokenAuthenticationFilterTests {
 		setupAuthorizationHeader(request, "FooScheme ABC:DOEIJLSIEWOSEIHLSISYEOIHEOIJ");
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-
 	}
 
 	@Test
@@ -820,6 +819,18 @@ public class SecurityTokenAuthenticationFilterTests {
 		filter.doFilter(request, response, filterChain);
 
 		// THEN
+		verify(filterChain, userDetailsService);
+		assertThat("Status code", response.getStatus(), is(403));
+	}
+
+	@Test
+	public void invalidMimeTypeV2() throws ServletException, IOException {
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
+		request.setContentType("Invalid!");
+		replay(filterChain, userDetailsService);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, new Date()));
+		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
 		assertThat("Status code", response.getStatus(), is(403));
 	}

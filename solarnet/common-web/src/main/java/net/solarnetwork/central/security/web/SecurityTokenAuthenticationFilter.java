@@ -44,6 +44,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.transaction.TransactionException;
 import org.springframework.util.Assert;
+import org.springframework.util.InvalidMimeTypeException;
 import org.springframework.util.MimeType;
 import org.springframework.util.PathMatcher;
 import org.springframework.util.unit.DataSize;
@@ -78,7 +79,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * </p>
  *
  * @author matt
- * @version 1.11
+ * @version 1.12
  */
 public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter implements Filter {
 
@@ -175,7 +176,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 			deny(request, res, new MaxUploadSizeExceededException(
 					(int) settings.getMaxRequestBodySize().toBytes(), e));
 			return;
-		} catch ( SecurityException e ) {
+		} catch ( SecurityException | InvalidMimeTypeException e ) {
 			deny(request, res, e);
 			return;
 		} catch ( AuthenticationException e ) {
