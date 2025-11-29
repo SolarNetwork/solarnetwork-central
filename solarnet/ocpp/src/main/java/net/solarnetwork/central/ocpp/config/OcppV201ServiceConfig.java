@@ -33,6 +33,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.transaction.support.TransactionTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -109,6 +110,7 @@ public class OcppV201ServiceConfig {
 	private ActionMessageProcessor<JsonNode, Void> ocppInstructionHandler;
 
 	@Bean
+	@Order(10)
 	@Qualifier(OCPP_V201)
 	public OcppController ocppController_v201() {
 		OcppController controller = new OcppController(executor, ocppChargePointRouter, userNodeDao,

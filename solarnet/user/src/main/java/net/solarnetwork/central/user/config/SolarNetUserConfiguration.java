@@ -26,20 +26,48 @@ package net.solarnetwork.central.user.config;
  * Marker interface for the Instructor configuration package.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface SolarNetUserConfiguration {
 
 	/** A qualifier for user secrets support. */
-	public static final String USER_SECRETS = "user-secrets";
+	String USER_SECRETS = "user-secrets";
 
 	/** The qualifier for the user key pair related services. */
-	public static final String USER_KEYPAIR = "user-keypair";
+	String USER_KEYPAIR = "user-keypair";
 
 	/** The qualifier for the user secret related services. */
-	public static final String USER_SECRET = "user-secret";
+	String USER_SECRET = "user-secret";
 
 	/** The qualifier for the token related services. */
-	public static final String USER_AUTH_TOKEN = "user-auth-token";
+	String USER_AUTH_TOKEN = "user-auth-token";
+
+	/**
+	 * A qualifier for user instructions support.
+	 * 
+	 * @since 1.3
+	 */
+	String USER_INSTRUCTIONS = "user-instr";
+
+	/**
+	 * A qualifier for user instructions expression support.
+	 * 
+	 * @since 1.3
+	 */
+	String USER_INSTRUCTIONS_EXPRESSIONS = "user-instr-expr";
+
+	/**
+	 * A qualifier for user metadata.
+	 * 
+	 * @since 1.3
+	 */
+	String USER_METADATA = "user-metadata";
+
+	/**
+	 * A qualifier for user metadata path.
+	 * 
+	 * @since 1.3
+	 */
+	String USER_METADATA_PATH = "user-metadata-path";
 
 }

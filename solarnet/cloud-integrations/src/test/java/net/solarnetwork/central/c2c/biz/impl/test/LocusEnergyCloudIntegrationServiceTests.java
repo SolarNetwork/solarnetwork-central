@@ -33,14 +33,15 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,8 +52,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -98,6 +101,9 @@ public class LocusEnergyCloudIntegrationServiceTests {
 
 	@Captor
 	private ArgumentCaptor<OAuth2AuthorizeRequest> authRequestCaptor;
+
+	@Captor
+	private ArgumentCaptor<RequestEntity<String>> httpRequestCaptor;
 
 	@Mock
 	private TextEncryptor encryptor;
@@ -221,12 +227,8 @@ public class LocusEnergyCloudIntegrationServiceTests {
 
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
-		final URI sitesForPartnerId = LocusEnergyCloudIntegrationService.BASE_URI
-				.resolve(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE
-						.replace("{partnerId}", partnerId.toString()));
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
-		given(restOps.exchange(eq(sitesForPartnerId), eq(HttpMethod.GET), any(), eq(String.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 
@@ -243,6 +245,20 @@ public class LocusEnergyCloudIntegrationServiceTests {
 			.returns(null, from(OAuth2AuthorizeRequest::getAuthorizedClient))
 			.as("Client registration ID is configuration system identifier")
 			.returns(conf.systemIdentifier(), OAuth2AuthorizeRequest::getClientRegistrationId)
+			;
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(String.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("URL is list system devices")
+			.returns(LocusEnergyCloudIntegrationService.BASE_URI
+					.resolve(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE
+							.replace("{partnerId}", partnerId.toString())), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
 
 		and.then(result)

@@ -29,6 +29,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -46,9 +47,9 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
@@ -85,7 +86,7 @@ public class FroniusCloudIntegrationServiceTests {
 	private TextEncryptor encryptor;
 
 	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<String>> httpRequestCaptor;
 
 	private FroniusCloudIntegrationService service;
 
@@ -162,11 +163,8 @@ public class FroniusCloudIntegrationServiceTests {
 		));
 		// @formatter:on
 
-		final URI listSystemsUri = FroniusCloudIntegrationService.BASE_URI
-				.resolve(FroniusCloudIntegrationService.LIST_SYSTEMS_URL);
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
-		given(restOps.exchange(eq(listSystemsUri), eq(HttpMethod.GET), any(), eq(String.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 
@@ -174,8 +172,17 @@ public class FroniusCloudIntegrationServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(any(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(String.class));
-		and.then(httpEntityCaptor.getValue().getHeaders())
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(String.class));
+
+		final URI listSystemsUri = FroniusCloudIntegrationService.BASE_URI
+				.resolve(FroniusCloudIntegrationService.LIST_SYSTEMS_URL);
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for inverter telemetry")
+			.returns(listSystemsUri, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("Request headers contains API key")
 			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, List.of(apiKey))
 			.as("Request headers contains API secret")

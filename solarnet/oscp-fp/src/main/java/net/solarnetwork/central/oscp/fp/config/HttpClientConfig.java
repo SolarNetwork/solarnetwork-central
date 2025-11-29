@@ -39,7 +39,7 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
-import net.solarnetwork.central.support.HttpClientSettings;
+import net.solarnetwork.central.common.http.HttpClientSettings;
 import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
 
 /**

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.dao;
 
 import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
+import net.solarnetwork.central.common.dao.TaskCriteria;
 import net.solarnetwork.dao.DateRangeCriteria;
 
 /**
@@ -34,9 +35,9 @@ import net.solarnetwork.dao.DateRangeCriteria;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudDatumStreamPollTaskFilter extends CloudIntegrationsFilter,
-		CloudDatumStreamCriteria, ClaimableJobStateCriteria, DateRangeCriteria {
+		CloudDatumStreamCriteria, TaskCriteria, ClaimableJobStateCriteria, DateRangeCriteria {
 
 }

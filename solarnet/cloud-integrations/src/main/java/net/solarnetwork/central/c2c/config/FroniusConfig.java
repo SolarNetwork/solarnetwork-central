@@ -51,7 +51,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
-import net.solarnetwork.central.c2c.http.CachableRequestEntity;
+import net.solarnetwork.central.common.http.CachableRequestEntity;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
@@ -144,7 +144,7 @@ public class FroniusConfig implements SolarNetCloudIntegrationsConfiguration {
 
 	@Bean
 	@Qualifier(FRONIUS)
-	public CloudIntegrationService FroniusCloudIntegrationService(
+	public CloudIntegrationService froniusCloudIntegrationService(
 			@Qualifier(FRONIUS) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new FroniusCloudIntegrationService(datumStreamServices, userEventAppender,
 				encryptor, restOps);

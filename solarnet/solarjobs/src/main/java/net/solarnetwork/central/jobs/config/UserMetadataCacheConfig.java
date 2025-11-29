@@ -1,5 +1,5 @@
 /* ==================================================================
- * CommonCacheConfig.java - 6/04/2024 6:23:12 am
+ * UserMetadataCacheConfig.java - 6/04/2024 6:23:12 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.din.app.config;
+package net.solarnetwork.central.jobs.config;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.support.CacheSettings;
+import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 
 /**
  * Common cache configuration.
@@ -40,7 +41,7 @@ import net.solarnetwork.central.support.CacheSettings;
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-public class CommonCacheConfig implements SolarDinAppConfiguration {
+public class UserMetadataCacheConfig implements SolarNetUserConfiguration {
 
 	@Autowired
 	private CacheManager cacheManager;

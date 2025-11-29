@@ -85,7 +85,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Web service API for cloud integrations management.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 @Profile(SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS)
 @GlobalExceptionRestController
@@ -286,7 +286,7 @@ public class UserCloudIntegrationsController {
 	}
 
 	/*-=======================
-	 * Data Values
+	 * Datum Data Values
 	 *-======================= */
 
 	/**
@@ -303,7 +303,8 @@ public class UserCloudIntegrationsController {
 	 *        the HTTP request to obtain filter parameters from
 	 * @return the values
 	 */
-	@RequestMapping(value = "/integrations/{integrationId}/data-values", method = RequestMethod.GET)
+	@RequestMapping(value = { "/integrations/{integrationId}/datum-data-values",
+			"/integrations/{integrationId}/data-values" }, method = RequestMethod.GET)
 	public Result<Iterable<CloudDataValue>> listCloudDatumStreamDataValues(
 			@PathVariable("integrationId") Long integrationId,
 			@RequestParam(value = "datumStreamServiceIdentifier",

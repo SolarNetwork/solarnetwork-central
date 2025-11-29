@@ -32,6 +32,7 @@ dependencies {
 	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
+	implementation 'org.springframework:spring-expression'
 	
 	// OSGi Compatibility
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'

@@ -33,16 +33,15 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.expression.Expression;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
-import org.springframework.util.StringUtils;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataReadOnlyDao;
+import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
-import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.central.user.dao.UserSecretAccessDao;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
 import net.solarnetwork.domain.datum.Datum;
@@ -57,7 +56,7 @@ import net.solarnetwork.service.ExpressionService;
  * Basic implementation of {@link CloudIntegrationsExpressionService}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class BasicCloudIntegrationsExpressionService implements CloudIntegrationsExpressionService {
 
@@ -160,12 +159,12 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 				httpOperations, this::decryptUserSecret);
 	}
 
-	private byte[] decryptUserSecret(DatumExpressionRoot root, String key) {
+	private byte[] decryptUserSecret(Long userId, String key) {
 		final var dao = getUserSecretAccessDao();
 		if ( dao == null ) {
 			return null;
 		}
-		var secret = dao.getUserSecret(root.getUserId(), USER_SECRET_TOPIC_ID, key);
+		var secret = dao.getUserSecret(userId, USER_SECRET_TOPIC_ID, key);
 		if ( secret == null ) {
 			return null;
 		}
@@ -191,7 +190,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 		if ( result == null ) {
 			Object tariffData = meta.metadataAtPath(id.getSourceId());
 			if ( tariffData != null ) {
-				Locale locale = metadataLocale(meta, id.getSourceId());
+				Locale locale = meta.resolveLocale(id.getSourceId());
 				try {
 					result = TariffUtils.parseCsvTemporalRangeSchedule(locale, true, true, null,
 							tariffData);
@@ -207,35 +206,6 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 			}
 		}
 		return result;
-	}
-
-	private Locale metadataLocale(DatumMetadataOperations meta, String path) {
-		String[] components = StringUtils.delimitedListToStringArray(path, "/");
-		for ( int idx = components.length; idx > 0; idx-- ) {
-			String[] cmp = new String[idx];
-			System.arraycopy(components, 0, cmp, 0, cmp.length);
-			cmp[idx - 1] = cmp[idx - 1] + "-locale";
-			String localePath = StringUtils.arrayToDelimitedString(cmp, "/");
-			String localeValue = meta.metadataAtPath(localePath, String.class);
-			if ( localeValue != null ) {
-				try {
-					return Locale.forLanguageTag(localeValue);
-				} catch ( Exception e ) {
-					// ignore and continue
-				}
-			}
-			cmp[idx - 1] = "locale";
-			localePath = StringUtils.arrayToDelimitedString(cmp, "/");
-			localeValue = meta.metadataAtPath(localePath, String.class);
-			if ( localeValue != null ) {
-				try {
-					return Locale.forLanguageTag(localeValue);
-				} catch ( Exception e ) {
-					// ignore and continue
-				}
-			}
-		}
-		return Locale.getDefault();
 	}
 
 	@Override

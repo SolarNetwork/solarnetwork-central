@@ -8,7 +8,16 @@ app:
       mail.from: "accounts@localhost"
       html-template-cache:
         ttl: 3600
-  cache.persistence.path: "var/cache"
+  cache:
+    persistence.path: "var/cache"
+    user-metadata-cache:
+      ttl: 600
+      heap-max-entries: 1000
+      disk-max-size-mb: 0
+    user-metadata-path-cache:
+      ttl: 600
+      heap-max-entries: 1000
+      disk-max-size-mb: 0
   c2c:
     allow-http-local-hosts: false
     cache:
@@ -257,6 +266,16 @@ app:
           maximum-wait-ms: 299000
           parallelism: 4
           schedule: "40 18/20 * * * *"
+    user-instr:
+      processor:
+        maximum-iterations: 10
+        maximum-wait-ms: 60000
+        parallelism: 1
+        schedule: 60000
+      abandoned:
+        maximum-wait-ms: 900000
+        schedule: 300000
+        minimum-age: "2h"
   oauth:
     client:
       registration-cache:
@@ -353,6 +372,11 @@ app:
     ttl: 60
     heap-max-entries: 10000
     disk-max-size-mb: 10
+  node-service-auditor:
+    update-delay: 100
+    flush-delay: 10000
+    connection-recovery-delay: 15000
+    stat-log-update-count: 500
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
@@ -390,6 +414,21 @@ app:
         disk-max-size-mb: 10
     user-events:
       publish-qos-level: 0
+  solarqueue:
+    connection:
+      uid: "SolarInstr-${app.meta.instance-id}"
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://localhost:1883"
+        client-id: "solarjobs-${app.meta.instance-id}"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+        connect-timeout-seconds: 10
+        keep-alive-seconds: 60
+        read-timeout-seconds: 0
+        write-timeout-seconds: -1
+    instr-publish:
+      publish-qos-level: 1
   task.executor:
     thread-name-prefix: "SolarNet-"
     core-pool-size: 10
@@ -441,6 +480,21 @@ app:
       destination-cache:
         ttl: 600
         heap-max-entries: 1000
+  user-instr:
+    cache:
+      expression-cache:
+        tti: 3600
+        ttl: 0
+        heap-max-entries: 5000
+        disk-max-size-mb: 0
+    executor:
+      thread-name-prefix: "SolarNet-UserInstr-"
+      core-pool-size: 2
+      max-pool-size: 2
+      queue-capacity: 0
+      allow-core-thread-time-out: true
+    service:
+      shutdown-max-wait: "5m"
   web.rate-limit:
     cleaner:
       schedule:  "0 15 4 * * *"

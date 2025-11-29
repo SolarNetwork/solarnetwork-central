@@ -23,28 +23,39 @@
 package net.solarnetwork.central.jobs.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
+import java.util.Collection;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.ehcache.spi.loaderwriter.CacheLoaderWriter;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.expression.Expression;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.c2c.biz.CloudControlService;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
-import net.solarnetwork.central.c2c.http.CachableRequestEntity;
+import net.solarnetwork.central.c2c.dao.CloudControlConfigurationDao;
+import net.solarnetwork.central.c2c.support.CloudControlInstructionQueueHook;
+import net.solarnetwork.central.common.http.CachableRequestEntity;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.tariff.TariffSchedule;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Cloud integrations general configuration.
@@ -160,6 +171,37 @@ public class CloudIntegrationsConfig implements SolarNetCloudIntegrationsConfigu
 			@Qualifier(CLOUD_INTEGRATIONS_HTTP) CacheSettings settings) {
 		return (Cache) settings.createCache(cacheManager, CachableRequestEntity.class, Result.class,
 				CLOUD_INTEGRATIONS_HTTP + "-cache");
+	}
+
+	/**
+	 * A node instruction queue hook to process Cloud Control instructions.
+	 *
+	 * @param userEventAppenderBiz
+	 *        the user event appender
+	 * @param nodeOwneshipDao
+	 *        the node ownership DAO to use
+	 * @param controlDao
+	 *        the control DAO to use
+	 * @param nodeInstructionDao
+	 *        the node instruction DAO
+	 * @param controlServices
+	 *        the control services
+	 * @return the hook
+	 */
+	@Order(100)
+	@Qualifier(CLOUD_INTEGRATIONS)
+	@Bean
+	@ConditionalOnBean(value = CloudControlService.class)
+	public CloudControlInstructionQueueHook cloudIntegrationsInstructionQueueHook(
+			UserEventAppenderBiz userEventAppenderBiz, SolarNodeOwnershipDao nodeOwneshipDao,
+			CloudControlConfigurationDao controlDao, NodeInstructionDao nodeInstructionDao,
+			Collection<CloudControlService> controlServices) {
+		var stats = new StatTracker("CloudControlInstructions", null,
+				LoggerFactory.getLogger("net.solarnetwork.central.c2c.CloudControlInstructions"), 200);
+		var hook = new CloudControlInstructionQueueHook(stats, nodeOwneshipDao, controlDao,
+				nodeInstructionDao, controlServices);
+		hook.setUserEventAppenderBiz(userEventAppenderBiz);
+		return hook;
 	}
 
 }

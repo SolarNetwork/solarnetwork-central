@@ -34,8 +34,8 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import com.fasterxml.jackson.databind.JsonNode;
+import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
-import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
@@ -54,7 +54,7 @@ import net.solarnetwork.util.ObjectUtils;
  * {@link DatumMetadataOperations}.
  *
  * @author matt
- * @version 1.6
+ * @version 2.0
  */
 public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 		implements DatumCollectionFunctions, DatumHttpFunctions {
@@ -76,7 +76,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	private final HttpOperations httpOperations;
 
 	// a function to return decrypted user secrets based on a key
-	private final BiFunction<DatumExpressionRoot, String, byte[]> secretProvider;
+	private final BiFunction<Long, String, byte[]> secretProvider;
 
 	/**
 	 * Constructor.
@@ -111,8 +111,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 			DatumStreamsAccessor datumStreamsAccessor,
 			Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
 			BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider,
-			HttpOperations httpOperations,
-			BiFunction<DatumExpressionRoot, String, byte[]> secretProvider) {
+			HttpOperations httpOperations, BiFunction<Long, String, byte[]> secretProvider) {
 		super(datum, sample, parameters);
 		this.userId = ObjectUtils.requireNonNullArgument(userId, "userId");
 		this.metadata = metadata;
@@ -938,7 +937,6 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @since 1.4
 	 */
 	public String secret(String key) {
-		// TODO
 		byte[] secret = secretData(key);
 		if ( secret == null ) {
 			return null;
@@ -960,7 +958,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @since 1.4
 	 */
 	public byte[] secretData(String key) {
-		return (secretProvider != null ? secretProvider.apply(this, key) : null);
+		return (secretProvider != null ? secretProvider.apply(getUserId(), key) : null);
 	}
 
 }

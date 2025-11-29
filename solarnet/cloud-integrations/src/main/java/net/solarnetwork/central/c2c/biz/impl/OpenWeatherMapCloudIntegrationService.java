@@ -111,8 +111,8 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 	 */
 	public OpenWeatherMapCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {
-		super(SERVICE_IDENTIFIER, "OpenWeatherMap", datumStreamServices, userEventAppenderBiz, encryptor,
-				SETTINGS, WELL_KNOWN_URLS,
+		super(SERVICE_IDENTIFIER, "OpenWeatherMap", datumStreamServices, List.of(), userEventAppenderBiz,
+				encryptor, SETTINGS, WELL_KNOWN_URLS,
 				new OpenWeatherMapRestOperationsHelper(
 						LoggerFactory.getLogger(OpenWeatherMapCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,

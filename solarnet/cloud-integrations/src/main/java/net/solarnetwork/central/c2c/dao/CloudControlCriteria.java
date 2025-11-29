@@ -1,5 +1,5 @@
 /* ==================================================================
- * TaskCriteria.java - 21/09/2025 6:34:20 am
+ * CloudControlCriteria.java - 3/11/2025 7:56:11 am
  *
  * Copyright 2025 SolarNetwork.net Dev Team
  *
@@ -23,42 +23,42 @@
 package net.solarnetwork.central.c2c.dao;
 
 /**
- * Search criteria for task related data.
+ * Search criteria for cloud control related data.
  *
  * @author matt
  * @version 1.0
  */
-public interface TaskCriteria {
+public interface CloudControlCriteria {
 
 	/**
-	 * Get the first task ID.
+	 * Get the first cloud control ID.
 	 *
 	 * <p>
-	 * This returns the first available task ID from the {@link #getTaskIds()}
-	 * array, or {@literal null} if not available.
+	 * This returns the first available cloud control ID from the
+	 * {@link #getCloudControlIds()} array, or {@literal null} if not available.
 	 * </p>
 	 *
-	 * @return the first task ID, or {@literal null} if not available
+	 * @return the first cloud control ID, or {@literal null} if not available
 	 */
-	default Long getTaskId() {
-		final Long[] array = getTaskIds();
+	default Long getCloudControlId() {
+		final Long[] array = getCloudControlIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
 
 	/**
-	 * Get an array of task IDs.
+	 * Get an array of cloud control IDs.
 	 *
-	 * @return array of task IDs (may be {@literal null})
+	 * @return array of cloud control IDs (may be {@literal null})
 	 */
-	Long[] getTaskIds();
+	Long[] getCloudControlIds();
 
 	/**
-	 * Test if this filter has any task criteria.
+	 * Test if this filter has any cloud control criteria.
 	 *
-	 * @return {@literal true} if the task ID is non-null
+	 * @return {@literal true} if the cloud control ID is non-null
 	 */
-	default boolean hasTaskCriteria() {
-		return getTaskId() != null;
+	default boolean hasCloudControlCriteria() {
+		return getCloudControlId() != null;
 	}
 
 }

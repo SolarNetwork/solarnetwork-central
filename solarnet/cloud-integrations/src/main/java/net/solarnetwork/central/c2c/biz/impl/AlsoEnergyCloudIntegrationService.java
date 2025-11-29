@@ -125,8 +125,8 @@ public class AlsoEnergyCloudIntegrationService extends BaseRestOperationsCloudIn
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
 			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
-		super(SERVICE_IDENTIFIER, "AlsoEnergy", datumStreamServices, userEventAppenderBiz, encryptor,
-				SETTINGS, WELL_KNOWN_URLS,
+		super(SERVICE_IDENTIFIER, "AlsoEnergy", datumStreamServices, List.of(), userEventAppenderBiz,
+				encryptor, SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(AlsoEnergyCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,

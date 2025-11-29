@@ -23,10 +23,10 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static java.time.temporal.ChronoUnit.DAYS;
-import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
+import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -91,7 +91,7 @@ import net.solarnetwork.util.StringNaturalSortComparator;
  * DAO based implementation of {@link CloudDatumStreamRakeService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoCloudDatumStreamRakeService
 		implements CloudDatumStreamRakeService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
@@ -271,7 +271,7 @@ public class DaoCloudDatumStreamRakeService
 								taskInfo.getId().ident(), oldState, Completed, e.toString());
 						taskInfo.setState(Completed);
 					}
-					userEventAppenderBiz.addEvent(taskInfo.getUserId(), eventForConfiguration(
+					userEventAppenderBiz.addEvent(taskInfo.getUserId(), eventForUserRelatedKey(
 							taskInfo.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 					if ( !taskDao.updateTask(taskInfo, oldState) ) {
 						log.warn(
@@ -302,8 +302,8 @@ public class DaoCloudDatumStreamRakeService
 
 			if ( !datumStream.isFullyConfigured() ) {
 				var errMsg = "Datum stream not fully configured.";
-				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForConfiguration(datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg));
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
+						datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg));
 				taskInfo.setMessage(errMsg);
 				taskInfo.setState(Completed); // stop processing job
 				taskDao.updateTask(taskInfo, startState);
@@ -326,7 +326,7 @@ public class DaoCloudDatumStreamRakeService
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
 					taskInfo.setState(Completed); // stop processing job
-					userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
+					userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 							datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 					taskDao.updateTask(taskInfo, startState);
 					return taskInfo;
@@ -367,7 +367,7 @@ public class DaoCloudDatumStreamRakeService
 				var errMsg = "Failed to update task state from Claimed to Executing.";
 				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), SOURCE_DATA_KEY,
 						(Object) datumStreamIdent);
-				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 						datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 				return taskInfo;
 			}
@@ -383,7 +383,7 @@ public class DaoCloudDatumStreamRakeService
 				taskInfo.setMessage(errMsg);
 				taskInfo.putServiceProps(errData);
 				taskInfo.setState(Completed); // stop processing job
-				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 						datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 				taskDao.updateTask(taskInfo, Executing);
 				return taskInfo;
@@ -407,7 +407,7 @@ public class DaoCloudDatumStreamRakeService
 				log.debug("Raking for {} datum with filter {}", datumStreamIdent, filter);
 
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForConfiguration(datumStream.getId(), INTEGRATION_RAKE_TAGS,
+						eventForUserRelatedKey(datumStream.getId(), INTEGRATION_RAKE_TAGS,
 								"Rake for datum",
 								Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), "executeAt",
 										taskInfo.getExecuteAt(), "startAt", filter.getStartDate(),
@@ -445,8 +445,9 @@ public class DaoCloudDatumStreamRakeService
 							taskInfo.setMessage(errMsg);
 							taskInfo.putServiceProps(errData);
 							taskInfo.setState(Completed); // stop processing job
-							userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
-									datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
+							userEventAppenderBiz.addEvent(datumStream.getUserId(),
+									eventForUserRelatedKey(datumStream.getId(),
+											INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 							taskDao.updateTask(taskInfo, Executing);
 							return taskInfo;
 						}
@@ -516,7 +517,7 @@ public class DaoCloudDatumStreamRakeService
 				var errMsg = "Failed to reset task state.";
 				var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), "executeAt",
 						taskInfo.getExecuteAt(), "startAt", startDate.toInstant());
-				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
 						datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 			} else {
 				var msg = "Reset task state";
@@ -535,7 +536,7 @@ public class DaoCloudDatumStreamRakeService
 					data.put("datumUpdateCountBySource", sourceCounts);
 				}
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForConfiguration(datumStream.getId(), INTEGRATION_RAKE_TAGS, msg, data));
+						eventForUserRelatedKey(datumStream.getId(), INTEGRATION_RAKE_TAGS, msg, data));
 			}
 			return taskInfo;
 		}

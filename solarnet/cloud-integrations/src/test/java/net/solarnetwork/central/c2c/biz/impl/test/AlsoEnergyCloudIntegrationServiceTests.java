@@ -51,6 +51,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -96,6 +97,9 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 
 	@Captor
 	private ArgumentCaptor<OAuth2AuthorizeRequest> authRequestCaptor;
+
+	@Captor
+	private ArgumentCaptor<RequestEntity<?>> httpRequestCaptor;
 
 	@Mock
 	private TextEncryptor encryptor;
@@ -206,8 +210,7 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 		final URI sitesForPartnerId = AlsoEnergyCloudIntegrationService.BASE_URI
 				.resolve(AlsoEnergyCloudIntegrationService.LIST_SITES_URL);
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
-		given(restOps.exchange(eq(sitesForPartnerId), eq(HttpMethod.GET), any(), eq(String.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 
@@ -216,6 +219,14 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 		// THEN
 		// @formatter:off
 		then(oauthClientManager).should().authorize(authRequestCaptor.capture());
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(String.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("URI is site for partner ID")
+			.returns(sitesForPartnerId, from(RequestEntity::getUrl))
+			;
 
 		and.then(authRequestCaptor.getValue())
 			.as("OAuth request provided")

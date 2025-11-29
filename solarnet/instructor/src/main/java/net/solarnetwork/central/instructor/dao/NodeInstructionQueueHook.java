@@ -45,7 +45,12 @@ public interface NodeInstructionQueueHook {
 	 * <p>
 	 * This hook allows inspecting and/or modifying an instruction, as well as
 	 * preventing the instruction from being enqueued by returning
-	 * {@literal null}.
+	 * {@literal null}. When a new instruction is created, it starts in the
+	 * {@code Queued} state. If the given instruction's state is <b>not</b>
+	 * {@code Queued} that is an indication that some hook has modified the
+	 * instruction. Similarly, the returned instruction's state can be changed
+	 * to something other than {@code Queued}, like {@code Queuing}, to indicate
+	 * to other hooks that the instruction is being processed by this hook.
 	 * </p>
 	 * 
 	 * @param instruction

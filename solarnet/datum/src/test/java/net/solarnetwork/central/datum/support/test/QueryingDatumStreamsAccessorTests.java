@@ -32,6 +32,7 @@ import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -44,6 +45,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -64,10 +66,12 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
@@ -75,7 +79,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Test cases for the {@link QueryingDatumStreamsAccessor} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -1295,6 +1299,87 @@ public class QueryingDatumStreamsAccessorTests {
 			.isNull()
 			;
 		// @formatter:on
+	}
+
+	@Test
+	public void rangeMatching() {
+		// GIVEN
+		final int sourceIdCount = 3;
+		final var streamMetas = testStreamMetas(nodeId, sourceIdCount);
+		final var datumFreq = Duration.ofMinutes(5);
+		final var datum = testNodeDatum(nodeId, streamMetas, clock.instant(), datumFreq, 6);
+
+		final var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
+
+		final Instant to = clock.instant();
+		final Instant from = to.minus(datumFreq.multipliedBy(3));
+
+		// @formatter:off
+		final var foundDatum = datum.stream()
+				.filter(d -> randStreamMeta.getSourceId().equals(d.getSourceId())
+						&& !d.getTimestamp().isBefore(from)
+						&& d.getTimestamp().isBefore(to))
+				.map(d -> {
+					return (net.solarnetwork.central.datum.v2.domain.Datum)new DatumEntity(
+							d.getStreamId(), d.getTimestamp(), d.getTimestamp(), propertiesOf(
+							new BigDecimal[] { d.getSampleBigDecimal(DatumSamplesType.Instantaneous, "a") },
+							null,
+							null,
+							null));
+				})
+				.toList()
+				;
+		// @formatter:on
+		final var filterResults = new BasicObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK>(
+				streamMetas.stream().collect(toUnmodifiableMap(m -> m.getStreamId(), identity())),
+				foundDatum);
+
+		given(datumDao.findFiltered(any())).willReturn(filterResults);
+
+		// WHEN
+		final var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), List.of(), userId,
+				clock, datumDao, null);
+		Collection<Datum> result = accessor.rangeMatching(Node, nodeId, randStreamMeta.getSourceId(),
+				from, to);
+
+		// also check that cache is used, for same date range
+		Collection<Datum> result2 = accessor.rangeMatching(Node, nodeId, randStreamMeta.getSourceId(),
+				from, to);
+
+		// THEN
+		// @formatter:off
+		then(datumDao).should(times(1)).findFiltered(criteriaCaptor.capture());
+
+		and.then(criteriaCaptor.getValue())
+			.as("Query for user")
+			.returns(userId, from(DatumCriteria::getUserId))
+			.as("Query for stream node")
+			.returns(nodeId, from(DatumCriteria::getNodeId))
+			.as("Query for stream source")
+			.returns(randStreamMeta.getSourceId(), from(DatumCriteria::getSourceId))
+			.as("Query start date is given 'from' timestamp")
+			.returns(from, DatumCriteria::getStartDate)
+			.as("Query end date is given 'to' timestamp")
+			.returns(to, from(DatumCriteria::getEndDate))
+			.as("Start at offset 0")
+			.returns(null, from(DatumCriteria::getOffset))
+			.as("Query for at most accessor-configured limit")
+			.returns(accessor.getMaxResults(), from(DatumCriteria::getMax))
+			.extracting(DatumCriteria::getSorts, list(SortDescriptor.class))
+			.containsExactlyElementsOf(QueryingDatumStreamsAccessor.SORT_BY_DATE_DESCENDING)
+			;
+
+		and.then(result)
+			.as("Result not null")
+			.isNotNull()
+			;
+
+		and.then(result2)
+			.as("Equivalent cached data returned 2nd time for same date range")
+			.isEqualTo(result)
+			;
+		// @formatter:on
+
 	}
 
 }

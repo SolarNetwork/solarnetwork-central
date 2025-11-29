@@ -66,7 +66,7 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 
 	@Override
 	default ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter) {
-		return findFiltered(filter, null, null, null);
+		return findFiltered(filter, filter.getSorts(), filter.getOffset(), filter.getMax());
 	}
 
 	/**

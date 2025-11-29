@@ -33,6 +33,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
+import net.solarnetwork.central.c2c.biz.CloudControlService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.domain.Result;
@@ -45,7 +46,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * {@link RestOperations} support.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class BaseRestOperationsCloudIntegrationService extends BaseCloudIntegrationService {
 
@@ -61,6 +62,8 @@ public abstract class BaseRestOperationsCloudIntegrationService extends BaseClou
 	 *        the display name
 	 * @param datumStreamServices
 	 *        the datum stream services
+	 * @param controlServices
+	 *        the control services
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
 	 * @param encryptor
@@ -76,11 +79,11 @@ public abstract class BaseRestOperationsCloudIntegrationService extends BaseClou
 	 */
 	public BaseRestOperationsCloudIntegrationService(String serviceIdentifier, String displayName,
 			Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
-			List<SettingSpecifier> settings, Map<String, URI> wellKnownUrls,
+			Collection<CloudControlService> controlServices, UserEventAppenderBiz userEventAppenderBiz,
+			TextEncryptor encryptor, List<SettingSpecifier> settings, Map<String, URI> wellKnownUrls,
 			RestOperationsHelper restOpsHelper) {
-		super(serviceIdentifier, displayName, datumStreamServices, userEventAppenderBiz, encryptor,
-				settings, wellKnownUrls);
+		super(serviceIdentifier, displayName, datumStreamServices, controlServices, userEventAppenderBiz,
+				encryptor, settings, wellKnownUrls);
 		this.restOpsHelper = requireNonNullArgument(restOpsHelper, "restOpsHelper");
 	}
 

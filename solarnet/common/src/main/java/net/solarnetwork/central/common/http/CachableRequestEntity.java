@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.c2c.http;
+package net.solarnetwork.central.common.http;
 
 import java.net.URI;
 import java.util.Objects;

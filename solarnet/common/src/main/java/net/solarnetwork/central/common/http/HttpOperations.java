@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.support;
+package net.solarnetwork.central.common.http;
 
 import java.net.URI;
 import java.util.Arrays;

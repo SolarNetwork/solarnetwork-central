@@ -105,8 +105,8 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 	 */
 	public SolarEdgeV1CloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {
-		super(SERVICE_IDENTIFIER, "SolarEdge", datumStreamServices, userEventAppenderBiz, encryptor,
-				SETTINGS, WELL_KNOWN_URLS,
+		super(SERVICE_IDENTIFIER, "SolarEdge", datumStreamServices, List.of(), userEventAppenderBiz,
+				encryptor, SETTINGS, WELL_KNOWN_URLS,
 				new SolarEdgeV1RestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeV1CloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,

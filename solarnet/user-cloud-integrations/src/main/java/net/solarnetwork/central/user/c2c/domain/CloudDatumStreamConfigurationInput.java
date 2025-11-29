@@ -36,7 +36,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * DTO for cloud datum stream configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class CloudDatumStreamConfigurationInput extends
 		BaseUserRelatedStdIdentifiableConfigurationInput<CloudDatumStreamConfiguration, UserLongCompositePK>
@@ -52,7 +52,7 @@ public class CloudDatumStreamConfigurationInput extends
 
 	private Long objectId;
 
-	@Size(max = 64)
+	@Size(max = 256)
 	private String sourceId;
 
 	/**

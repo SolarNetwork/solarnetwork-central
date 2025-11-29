@@ -1,5 +1,5 @@
 /* ==================================================================
- * JdbcCloudDatumStreamPollTaskDao_DbStartStopTests.java - 13/10/2024 10:19:16 am
+ * DbStartStopTests.java - 13/10/2024 10:19:16 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
 import static java.time.Instant.now;
+import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudControlConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamMappingConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamPollTaskEntityData;
@@ -61,13 +62,13 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
- * Test cases for the datum stream task related status triggers on the datum
- * stream and integration enabled columns.
+ * Test cases for task related status triggers on the datum stream and
+ * integration enabled columns.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJUnit5JdbcDaoTestSupport {
+public class DbStartStopTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private JdbcCloudIntegrationConfigurationDao integrationDao;
 	private JdbcCloudDatumStreamConfigurationDao datumStreamDao;
@@ -177,6 +178,8 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 				CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
 						mapping.getConfigId(), RNG.nextBoolean());
 				createDatumStreamPollTask(userId, datumStream.getConfigId(), Queued);
+
+				// create 2 rake tasks per stream
 				createDatumStreamRakeTask(userId, datumStream.getConfigId(), Queued);
 				createDatumStreamRakeTask(userId, datumStream.getConfigId(), Queued);
 			}
@@ -194,6 +197,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		allCloudIntegrationConfigurationData(jdbcTemplate);
 		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
 		allCloudDatumStreamConfigurationData(jdbcTemplate);
+		allCloudControlConfigurationData(jdbcTemplate);
 		final List<Map<String, Object>> pollTaskRows = allCloudDatumStreamPollTaskEntityData(
 				jdbcTemplate);
 		final List<Map<String, Object>> rakeTaskRows = allCloudDatumStreamRakeTaskEntityData(
@@ -219,7 +223,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 								.as("""
 									Poll task state only Completed for datum stream %d that was enabled under
 									integration %d that was then disabled: %s
-									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
+									""", datumStream.getConfigId(), mapping.getIntegrationId(), datumStream)
 								.containsEntry("status", expectedState.keyValue())
 								;
 						})
@@ -246,7 +250,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 								.as("""
 									Rake task state only Completed for datum stream %d that was enabled under
 									integration %d that was then disabled: %s
-									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
+									""", datumStream.getConfigId(), mapping.getIntegrationId(), datumStream)
 								.containsEntry("status", expectedState.keyValue())
 								;
 						})
@@ -270,6 +274,8 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 				CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
 						mapping.getConfigId(), RNG.nextBoolean());
 				createDatumStreamPollTask(userId, datumStream.getConfigId(), Completed);
+
+				// create 2 rake tasks per stream
 				createDatumStreamRakeTask(userId, datumStream.getConfigId(), Completed);
 				createDatumStreamRakeTask(userId, datumStream.getConfigId(), Completed);
 			}
@@ -278,6 +284,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		allCloudIntegrationConfigurationData(jdbcTemplate);
 		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
 		allCloudDatumStreamConfigurationData(jdbcTemplate);
+		allCloudControlConfigurationData(jdbcTemplate);
 		allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
 		allCloudDatumStreamRakeTaskEntityData(jdbcTemplate);
 
@@ -295,6 +302,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		allCloudIntegrationConfigurationData(jdbcTemplate);
 		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
 		allCloudDatumStreamConfigurationData(jdbcTemplate);
+		allCloudControlConfigurationData(jdbcTemplate);
 		final List<Map<String, Object>> pollTaskRows = allCloudDatumStreamPollTaskEntityData(
 				jdbcTemplate);
 		final List<Map<String, Object>> rakeTaskRows = allCloudDatumStreamRakeTaskEntityData(
@@ -320,7 +328,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 								.as("""
 									Poll task state only Queued for datum stream %d that was enabled under
 									integration %d that was then enabled: %s
-									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
+									""", datumStream.getConfigId(), mapping.getIntegrationId(), datumStream)
 								.containsEntry("status", expectedState.keyValue())
 								;
 						})
@@ -347,7 +355,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 								.as("""
 									Rake task state only Queued for datum stream %d that was enabled under
 									integration %d that was then enabled: %s
-									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
+									""", datumStream.getConfigId(), mapping.getIntegrationId(), datumStream)
 								.containsEntry("status", expectedState.keyValue())
 								;
 						})

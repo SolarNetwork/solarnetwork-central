@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.c2c.config;
 
+import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
+
 /**
  * Marker interface for the cloud integrations configuration package.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public interface SolarNetCloudIntegrationsConfiguration {
 
@@ -70,4 +72,10 @@ public interface SolarNetCloudIntegrationsConfiguration {
 	 */
 	String CLOUD_INTEGRATIONS_RAKE = "c2c-rake";
 
+	/**
+	 * A qualifier for cloud integrations developer mode.
+	 *
+	 * @since 1.5
+	 */
+	String CLOUD_INTEGRATIONS_DEVMODE = SolarNetCommonConfiguration.DEVMODE + " & " + CLOUD_INTEGRATIONS;
 }

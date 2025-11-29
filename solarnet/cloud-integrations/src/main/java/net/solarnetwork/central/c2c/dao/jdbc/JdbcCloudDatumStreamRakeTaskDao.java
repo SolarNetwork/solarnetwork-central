@@ -200,12 +200,11 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 	@Override
 	public boolean updateTask(CloudDatumStreamRakeTaskEntity info,
 			BasicClaimableJobState... expectedStates) {
-		BasicFilter filter = null;
-		if ( expectedStates != null ) {
-			filter = new BasicFilter();
-			filter.setClaimableJobStates(expectedStates);
-		}
-		var sql = new UpdateCloudDatumStreamRakeTaskEntity(info.getId(), info, filter);
+		BasicFilter filter = new BasicFilter();
+		filter.setUserId(info.getUserId());
+		filter.setTaskId(filter.getTaskId());
+		filter.setClaimableJobStates(expectedStates);
+		var sql = new UpdateCloudDatumStreamRakeTaskEntityState(info.getState(), filter, info);
 		return jdbcOps.update(sql) != 0;
 	}
 

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.dao;
 
 import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
+import net.solarnetwork.central.common.dao.TaskCriteria;
 import net.solarnetwork.dao.DateRangeCriteria;
 
 /**

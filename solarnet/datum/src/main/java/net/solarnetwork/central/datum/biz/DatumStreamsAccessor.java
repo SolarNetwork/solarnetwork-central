@@ -37,7 +37,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface DatumStreamsAccessor {
 
@@ -241,5 +241,24 @@ public interface DatumStreamsAccessor {
 	default Datum latest(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp) {
 		return offset(kind, objectId, sourceId, timestamp, 0);
 	}
+
+	/**
+	 * Find datum matching a source ID pattern over a time range.
+	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the offset datum for
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param from
+	 *        the minimum datum timestamp (inclusive)
+	 * @param to
+	 *        the maximum datum timestamp (exclusive)
+	 * @return the matching datum, never {@literal null}
+	 * @since 2.2
+	 */
+	Collection<Datum> rangeMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
+			Instant from, Instant to);
 
 }

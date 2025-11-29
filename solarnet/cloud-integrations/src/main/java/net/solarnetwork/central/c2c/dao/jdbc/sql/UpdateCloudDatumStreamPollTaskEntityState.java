@@ -31,6 +31,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
@@ -41,7 +42,7 @@ import net.solarnetwork.central.domain.BasicClaimableJobState;
  * Support for UPDATE for {@link CloudDatumStreamPollTaskEntity} entity state.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class UpdateCloudDatumStreamPollTaskEntityState
 		implements PreparedStatementCreator, SqlProvider {
@@ -53,6 +54,7 @@ public final class UpdateCloudDatumStreamPollTaskEntityState
 
 	private final BasicClaimableJobState desiredState;
 	private final CloudDatumStreamPollTaskFilter filter;
+	private final CloudDatumStreamPollTaskEntity data;
 
 	/**
 	 * Constructor.
@@ -66,17 +68,48 @@ public final class UpdateCloudDatumStreamPollTaskEntityState
 	 */
 	public UpdateCloudDatumStreamPollTaskEntityState(BasicClaimableJobState desiredState,
 			CloudDatumStreamPollTaskFilter filter) {
+		this(desiredState, filter, null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * <p>
+	 * If {@code data} is {@code null} then the generated SQL will update just
+	 * the {@code status} property of the rows matching {@code filter}. When
+	 * {@code data} is provided, then the other runtime state properties will be
+	 * updated to match the given values.
+	 * </p>
+	 *
+	 * @param desiredState
+	 *        the desired state
+	 * @param filter
+	 *        a filter to restrict the update to
+	 * @param data
+	 *        optional runtime properties to update
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code data} is {@literal null}
+	 * @since 1.1
+	 */
+	public UpdateCloudDatumStreamPollTaskEntityState(BasicClaimableJobState desiredState,
+			CloudDatumStreamPollTaskFilter filter, CloudDatumStreamPollTaskEntity data) {
 		super();
 		this.desiredState = requireNonNullArgument(desiredState, "desiredState");
 		this.filter = requireNonNullArgument(filter, "filter");
+		this.data = data;
 	}
 
 	@Override
 	public String getSql() {
-		if ( filter == null ) {
-			return SQL;
-		}
 		StringBuilder buf = new StringBuilder(SQL);
+		if ( data != null ) {
+			buf.append("""
+						, exec_at = ?
+						, start_at = ?
+						, message = ?
+						, sprops = ?::jsonb
+					""");
+		}
 		sqlWhere(buf);
 		return buf.toString();
 	}
@@ -113,6 +146,12 @@ public final class UpdateCloudDatumStreamPollTaskEntityState
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
+		if ( data != null ) {
+			stmt.setTimestamp(++p, Timestamp.from(data.getExecuteAt()));
+			stmt.setTimestamp(++p, Timestamp.from(data.getStartAt()));
+			stmt.setString(++p, data.getMessage());
+			stmt.setString(++p, data.getServicePropsJson());
+		}
 		if ( filter.hasUserCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 		}

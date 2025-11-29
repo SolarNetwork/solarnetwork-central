@@ -32,9 +32,12 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -51,9 +54,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -135,10 +139,7 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 	private ClientAccessTokenDao clientAccessTokenDao;
 
 	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
-
-	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
 	private CloudIntegrationsExpressionService expressionService;
 
@@ -231,20 +232,10 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 		// @formatter:on
 
 		// request register data
-		final URI dataUri = UriComponentsBuilder
-				.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
-				.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
-				.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
-				.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
-				.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
-				.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
-						"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
-				.queryParam(SolcastCloudIntegrationService.HOURS_PARAM, 1).buildAndExpand().toUri();
 		final JsonNode dataJson = objectMapper
 				.readTree(utf8StringResource("solcast-irradiance-data-01.json", getClass()));
 		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
-		given(restOps.exchange(eq(dataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(dataRes);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(dataRes);
 
 		// WHEN
 		final Instant endDate = Instant.parse("2024-10-29T20:00:00Z");
@@ -255,6 +246,27 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI dataUri = UriComponentsBuilder
+			.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
+			.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
+			.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
+			.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
+			.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
+			.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
+					"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
+			.queryParam(SolcastCloudIntegrationService.HOURS_PARAM, 1).buildAndExpand().toUri();
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(dataUri, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains API key")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer " +apiKey))
+			;
 
 		and.then(result)
 			.as("Datum parsed from HTTP response (ignoring datum outside date range)")
@@ -347,20 +359,10 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 		// @formatter:on
 
 		// request register data
-		final URI dataUri = UriComponentsBuilder
-				.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
-				.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
-				.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
-				.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
-				.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
-				.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
-						"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
-				.queryParam(SolcastCloudIntegrationService.HOURS_PARAM, 1).buildAndExpand().toUri();
 		final JsonNode dataJson = objectMapper
 				.readTree(utf8StringResource("solcast-irradiance-data-01.json", getClass()));
 		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
-		given(restOps.exchange(eq(dataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(dataRes);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(dataRes);
 
 		final Instant now = Instant.parse("2024-10-29T20:00:00Z");
 
@@ -391,6 +393,33 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 				;
 			// @formatter:on
 		}
+
+		// @formatter:off
+		then(restOps).should(times(60)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI dataUri = UriComponentsBuilder
+			.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
+			.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
+			.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
+			.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
+			.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
+			.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
+					"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
+			.queryParam(SolcastCloudIntegrationService.HOURS_PARAM, 1).buildAndExpand().toUri();
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.as("Request URI for data")
+					.returns(dataUri, from(RequestEntity::getUrl))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("Request headers contains API key")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer " +apiKey))
+					;
+			})
+			;
 	}
 
 	@Test
@@ -458,22 +487,10 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 		final Instant startDate = Instant.parse("2024-10-29T19:00:00Z");
 
 		// request register data
-		final URI dataUri = UriComponentsBuilder
-				.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
-				.path(SolcastIrradianceCloudDatumStreamService.HISTORIC_RADIATION_URL_PATH)
-				.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
-				.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
-				.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
-				.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
-						"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
-				.queryParam(SolcastCloudIntegrationService.START_DATE_PARAM, startDate.toString())
-				.queryParam(SolcastCloudIntegrationService.END_DATE_PARAM, endDate.toString())
-				.buildAndExpand().toUri();
 		final JsonNode dataJson = objectMapper
 				.readTree(utf8StringResource("solcast-historic-irradiance-data-01.json", getClass()));
 		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
-		given(restOps.exchange(eq(dataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(dataRes);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(dataRes);
 
 		// WHEN
 		final BasicQueryFilter filter = new BasicQueryFilter();
@@ -483,6 +500,29 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI dataUri = UriComponentsBuilder
+			.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
+			.path(SolcastIrradianceCloudDatumStreamService.HISTORIC_RADIATION_URL_PATH)
+			.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
+			.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
+			.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
+			.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
+					"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
+			.queryParam(SolcastCloudIntegrationService.START_DATE_PARAM, startDate.toString())
+			.queryParam(SolcastCloudIntegrationService.END_DATE_PARAM, endDate.toString())
+			.buildAndExpand().toUri();
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(dataUri, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains API key")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer " +apiKey))
+			;
 
 		and.then(result)
 			.as("Datum parsed from HTTP response (ignoring datum outside date range)")
@@ -597,20 +637,10 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 		final Instant startDate = endDate.minus(1, ChronoUnit.HOURS);
 
 		// request register data
-		final URI dataUri = UriComponentsBuilder
-				.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
-				.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
-				.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
-				.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
-				.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
-				.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
-						"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
-				.queryParam(SolcastCloudIntegrationService.HOURS_PARAM, 1).buildAndExpand().toUri();
 		final JsonNode dataJson = objectMapper
 				.readTree(utf8StringResource("solcast-irradiance-data-01.json", getClass()));
 		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
-		given(restOps.exchange(eq(dataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(dataRes);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(dataRes);
 
 		// WHEN
 		final BasicQueryFilter filter = new BasicQueryFilter();
@@ -620,6 +650,27 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI dataUri = UriComponentsBuilder
+			.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
+			.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
+			.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
+			.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
+			.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
+			.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
+					"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
+			.queryParam(SolcastCloudIntegrationService.HOURS_PARAM, 1).buildAndExpand().toUri();
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(dataUri, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains API key")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer " +apiKey))
+			;
 
 		and.then(result)
 			.as("Datum parsed from HTTP response (ignoring datum outside date range)")
@@ -735,22 +786,10 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 		final Instant startDate = endDate.minus(1, ChronoUnit.HOURS);
 
 		// request register data
-		final URI dataUri = UriComponentsBuilder
-				.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
-				.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
-				.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
-				.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
-				.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
-				.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
-						"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
-				.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
-						SolcastIrradianceCloudDatumStreamService.MAX_LIVE_API_OFFSET_HOURS)
-				.buildAndExpand().toUri();
 		final JsonNode dataJson = objectMapper
 				.readTree(utf8StringResource("solcast-irradiance-data-01.json", getClass()));
 		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
-		given(restOps.exchange(eq(dataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(dataRes);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(dataRes);
 
 		// WHEN
 		final BasicQueryFilter filter = new BasicQueryFilter();
@@ -760,6 +799,29 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI dataUri = UriComponentsBuilder
+			.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
+			.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
+			.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
+			.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
+			.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, Duration.ofSeconds(1800))
+			.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
+					"%s,%s".formatted(GHI.getKey(), Temp.getKey()))
+			.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
+					SolcastIrradianceCloudDatumStreamService.MAX_LIVE_API_OFFSET_HOURS)
+			.buildAndExpand().toUri();
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(dataUri, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains API key")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer " +apiKey))
+			;
 
 		and.then(result)
 			.as("No datum parsed from HTTP response because 'live' data outside requested date range.")
@@ -860,8 +922,6 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 		final JsonNode dataJson = objectMapper
 				.readTree(utf8StringResource("solcast-historic-irradiance-data-02.json", getClass()));
 		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
-		given(restOps.exchange(eq(dataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(dataRes);
 
 		// request LIVE register data
 		final URI dataUriLive = UriComponentsBuilder
@@ -878,8 +938,7 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 		final JsonNode dataJsonLive = objectMapper
 				.readTree(utf8StringResource("solcast-irradiance-data-02.json", getClass()));
 		final var dataResLive = new ResponseEntity<JsonNode>(dataJsonLive, HttpStatus.OK);
-		given(restOps.exchange(eq(dataUriLive), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(dataResLive);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(dataRes).willReturn(dataResLive);
 
 		// WHEN
 		final BasicQueryFilter filter = new BasicQueryFilter();
@@ -889,6 +948,21 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("Request headers contains API key")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer " +apiKey))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
+			.containsExactly(dataUri, dataUriLive)
+			;
 
 		and.then(result)
 			.as("Datum parsed from HTTP response (ignoring datum outside date range)")

@@ -27,7 +27,7 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLI
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.PASSWORD_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.USERNAME_SETTING;
-import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
+import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,7 +54,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * OAuth2 utilities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class OAuth2Utils {
 
@@ -148,7 +148,7 @@ public final class OAuth2Utils {
 			headers.add("Authorization", "Bearer " + accessToken.getTokenValue());
 		} catch ( OAuth2AuthorizationException e ) {
 			userEventAppenderBiz.addEvent(config.getUserId(),
-					eventForConfiguration(config.getId(),
+					eventForUserRelatedKey(config.getId(),
 							CloudIntegrationsUserEvents.INTEGRATION_AUTH_ERROR_TAGS,
 							format("OAuth error: %s", e.getMessage())));
 			throw new RemoteServiceException("Error authenticating to cloud integration %d: %s"

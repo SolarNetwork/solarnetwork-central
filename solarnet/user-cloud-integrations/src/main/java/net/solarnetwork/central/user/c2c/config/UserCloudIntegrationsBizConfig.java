@@ -36,6 +36,7 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.dao.CloudControlConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
@@ -51,7 +52,7 @@ import net.solarnetwork.central.user.c2c.biz.impl.DaoUserCloudIntegrationsBiz;
  * Configuration for user cloud integrations services.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -68,6 +69,9 @@ public class UserCloudIntegrationsBizConfig {
 
 	@Autowired
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
+
+	@Autowired
+	private CloudControlConfigurationDao controlDao;
 
 	@Autowired
 	private CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
@@ -108,7 +112,7 @@ public class UserCloudIntegrationsBizConfig {
 				});
 		DaoUserCloudIntegrationsBiz biz = new DaoUserCloudIntegrationsBiz(Clock.systemUTC(),
 				userSettingsDao, integrationDao, datumStreamDao, datumStreamSettingsDao,
-				datumStreamMappingDao, datumStreamPropertyDao, datumStreamPollTaskDao,
+				datumStreamMappingDao, datumStreamPropertyDao, controlDao, datumStreamPollTaskDao,
 				datumStreamRakeTaskDao, clientAccessTokenDao, textEncryptor, integrationServices);
 		return biz;
 	}

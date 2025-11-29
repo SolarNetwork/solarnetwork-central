@@ -619,7 +619,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// GIVEN
 		insert();
 
-		// add another, but not in Completed state so not claimable
+		// add another, but not in Queued state so not claimable
 		final CloudDatumStreamConfiguration datumStream2 = createDatumStream(userId,
 				lastMapping.getConfigId(), null);
 		datumStream2.setDatumStreamMappingId(lastMapping.getConfigId());

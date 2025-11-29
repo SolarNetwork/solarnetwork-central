@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.SequencedSet;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
+import net.solarnetwork.central.common.dao.ControlCriteria;
 import net.solarnetwork.central.common.dao.IdentifiableCriteria;
 import net.solarnetwork.central.common.dao.IndexCriteria;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -40,26 +41,24 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of cloud integration query filter.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
-public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFilter,
-		CloudDatumStreamFilter, CloudDatumStreamMappingFilter, CloudDatumStreamPropertyFilter,
-		CloudDatumStreamPollTaskFilter, CloudDatumStreamRakeTaskFilter, CloudDatumStreamSettingsFilter {
+public class BasicFilter extends BasicCoreCriteria
+		implements CloudIntegrationFilter, CloudDatumStreamFilter, CloudDatumStreamMappingFilter,
+		CloudDatumStreamPropertyFilter, CloudDatumStreamPollTaskFilter, CloudDatumStreamRakeTaskFilter,
+		CloudDatumStreamSettingsFilter, CloudControlFilter {
 
 	private Long[] integrationIds;
 	private Long[] datumStreamIds;
 	private Long[] datumStreamMappingIds;
+	private Long[] cloudControlIds;
+	private String[] controlIds;
 	private Long[] taskIds;
 	private Integer[] indexes;
 	private BasicClaimableJobState[] claimableJobStates;
 	private String[] serviceIdentifiers;
 	private Instant startDate;
 	private Instant endDate;
-
-	@Override
-	public BasicFilter clone() {
-		return (BasicFilter) super.clone();
-	}
 
 	/**
 	 * Constructor.
@@ -79,12 +78,19 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 	}
 
 	@Override
+	public BasicFilter clone() {
+		return (BasicFilter) super.clone();
+	}
+
+	@Override
 	public void copyFrom(PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof BasicFilter f ) {
 			setIntegrationIds(f.getIntegrationIds());
 			setDatumStreamIds(f.getDatumStreamIds());
 			setDatumStreamMappingIds(f.getDatumStreamMappingIds());
+			setCloudControlIds(f.getCloudControlIds());
+			setControlIds(f.getControlIds());
 			setIndexes(f.getIndexes());
 			setClaimableJobStates(f.getClaimableJobStates());
 			setServiceIdentifiers(f.getServiceIdentifiers());
@@ -99,6 +105,12 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 			}
 			if ( criteria instanceof CloudDatumStreamMappingCriteria f ) {
 				setDatumStreamMappingIds(f.getDatumStreamMappingIds());
+			}
+			if ( criteria instanceof CloudControlCriteria f ) {
+				setCloudControlIds(f.getCloudControlIds());
+			}
+			if ( criteria instanceof ControlCriteria f ) {
+				setControlIds(f.getControlIds());
 			}
 			if ( criteria instanceof IndexCriteria f ) {
 				setIndexes(f.getIndexes());
@@ -135,6 +147,8 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 		result = prime * result + Arrays.hashCode(integrationIds);
 		result = prime * result + Arrays.hashCode(datumStreamIds);
 		result = prime * result + Arrays.hashCode(datumStreamMappingIds);
+		result = prime * result + Arrays.hashCode(cloudControlIds);
+		result = prime * result + Arrays.hashCode(controlIds);
 		result = prime * result + Arrays.hashCode(indexes);
 		result = prime * result + Arrays.hashCode(claimableJobStates);
 		result = prime * result + Arrays.hashCode(serviceIdentifiers);
@@ -156,7 +170,8 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 		return Arrays.equals(integrationIds, other.integrationIds)
 				&& Arrays.equals(datumStreamIds, other.datumStreamIds)
 				&& Arrays.equals(datumStreamMappingIds, other.datumStreamMappingIds)
-				&& Arrays.equals(indexes, other.indexes)
+				&& Arrays.equals(cloudControlIds, other.cloudControlIds)
+				&& Arrays.equals(controlIds, other.controlIds) && Arrays.equals(indexes, other.indexes)
 				&& Arrays.equals(claimableJobStates, other.claimableJobStates)
 				&& Arrays.equals(serviceIdentifiers, other.serviceIdentifiers)
 				&& Objects.equals(startDate, other.startDate) && Objects.equals(endDate, other.endDate);
@@ -256,6 +271,66 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 	@Override
 	public Integer getIndex() {
 		return CloudDatumStreamPropertyFilter.super.getIndex();
+	}
+
+	@Override
+	public Long getCloudControlId() {
+		return CloudControlFilter.super.getCloudControlId();
+	}
+
+	/**
+	 * Set the cloud control ID.
+	 *
+	 * @param cloudControlId
+	 *        the cloud control ID to set
+	 */
+	public void setCloudControlId(Long cloudControlId) {
+		setCloudControlIds(cloudControlId != null ? new Long[] { cloudControlId } : null);
+	}
+
+	@Override
+	public Long[] getCloudControlIds() {
+		return cloudControlIds;
+	}
+
+	/**
+	 * Set the cloud control IDs.
+	 *
+	 * @param cloudControlIds
+	 *        the cloud control IDs to set
+	 */
+	public void setCloudControlIds(Long[] cloudControlIds) {
+		this.cloudControlIds = cloudControlIds;
+	}
+
+	@Override
+	public String getControlId() {
+		return CloudControlFilter.super.getControlId();
+	}
+
+	/**
+	 * Set the control ID.
+	 *
+	 * @param controlId
+	 *        the cloud control ID to set
+	 */
+	public void setControlId(String controlId) {
+		setControlIds(controlId != null ? new String[] { controlId } : null);
+	}
+
+	@Override
+	public String[] getControlIds() {
+		return controlIds;
+	}
+
+	/**
+	 * Set the control IDs.
+	 *
+	 * @param controlIds
+	 *        the control IDs to set
+	 */
+	public void setControlIds(String[] controlIds) {
+		this.controlIds = controlIds;
 	}
 
 	/**

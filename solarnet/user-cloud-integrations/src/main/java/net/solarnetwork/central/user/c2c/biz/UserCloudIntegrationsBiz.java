@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.c2c.biz;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import net.solarnetwork.central.c2c.biz.CloudControlService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
@@ -58,7 +59,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Service API for SolarUser cloud integrations support.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public interface UserCloudIntegrationsBiz {
 
@@ -85,6 +86,15 @@ public interface UserCloudIntegrationsBiz {
 	 * @return the datum stream service, or {@literal null} if not available
 	 */
 	CloudDatumStreamService datumStreamService(String identifier);
+
+	/**
+	 * Get a specific {@link CloudControlService} based on its service
+	 * identifier.
+	 *
+	 * @return the control service, or {@literal null} if not available
+	 * @since 1.8
+	 */
+	CloudControlService controlService(String identifier);
 
 	/**
 	 * Get the user-level settings.
@@ -254,7 +264,7 @@ public interface UserCloudIntegrationsBiz {
 	Result<Void> validateIntegrationConfigurationForId(UserLongCompositePK id, Locale locale);
 
 	/**
-	 * List data values.
+	 * List datum stream data values.
 	 *
 	 * @param integrationId
 	 *        the ID of the {@link CloudIntegrationConfiguration} to get the
@@ -272,6 +282,27 @@ public interface UserCloudIntegrationsBiz {
 	 */
 	Iterable<CloudDataValue> listDatumStreamDataValues(UserLongCompositePK integrationId,
 			String datumStreamServiceIdentifier, Map<String, ?> filters);
+
+	/**
+	 * List control data values.
+	 *
+	 * @param integrationId
+	 *        the ID of the {@link CloudIntegrationConfiguration} to get the
+	 *        data values for
+	 * @param controlServiceIdentifier
+	 *        the service identifier of the {@link CloudControlService} to use;
+	 *        if not provided then the first service available for the
+	 *        {@link CloudIntegrationService} specified in the specified
+	 *        {@link CloudIntegrationConfiguration} will be used
+	 * @param filters
+	 *        an optional set of search filters to limit the data value groups
+	 *        to; the available key values come from the identifiers returned by
+	 *        {@link CloudControlService#dataValueFilters(Locale)}
+	 * @return the available values, never {@literal null}
+	 * @since 1.8
+	 */
+	Iterable<CloudDataValue> listControlDataValues(UserLongCompositePK integrationId,
+			String controlServiceIdentifier, Map<String, ?> filters);
 
 	/**
 	 * Get the latest available datum from a datum stream.

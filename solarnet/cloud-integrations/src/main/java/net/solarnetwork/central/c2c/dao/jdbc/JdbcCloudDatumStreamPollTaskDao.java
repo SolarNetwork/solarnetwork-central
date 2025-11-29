@@ -33,8 +33,8 @@ import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
+import net.solarnetwork.central.c2c.dao.jdbc.sql.DeleteCloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.SelectCloudDatumStreamPollTaskEntity;
-import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamPollTaskEntityState;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpsertCloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
@@ -48,7 +48,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link CloudDatumStreamPollTaskDao}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.4
  */
 public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTaskDao {
 
@@ -142,7 +142,9 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 
 	@Override
 	public Collection<CloudDatumStreamPollTaskEntity> getAll(List<SortDescriptor> sorts) {
-		throw new UnsupportedOperationException();
+		var filter = new BasicFilter();
+		var sql = new SelectCloudDatumStreamPollTaskEntity(filter);
+		return jdbcOps.query(sql, CloudDatumStreamPollTaskEntityRowMapper.INSTANCE);
 	}
 
 	private static final String TABLE_NAME = "solardin.cin_datum_stream_poll_task";
@@ -154,6 +156,12 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
 				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
+	}
+
+	@Override
+	public int delete(CloudDatumStreamPollTaskFilter filter) {
+		var sql = new DeleteCloudDatumStreamPollTaskEntity(filter);
+		return jdbcOps.update(sql);
 	}
 
 	@Override
@@ -189,12 +197,11 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 	@Override
 	public boolean updateTask(CloudDatumStreamPollTaskEntity info,
 			BasicClaimableJobState... expectedStates) {
-		BasicFilter filter = null;
-		if ( expectedStates != null ) {
-			filter = new BasicFilter();
-			filter.setClaimableJobStates(expectedStates);
-		}
-		var sql = new UpdateCloudDatumStreamPollTaskEntity(info.getId(), info, filter);
+		BasicFilter filter = new BasicFilter();
+		filter.setUserId(info.getUserId());
+		filter.setDatumStreamId(info.getDatumStreamId());
+		filter.setClaimableJobStates(expectedStates);
+		var sql = new UpdateCloudDatumStreamPollTaskEntityState(info.getState(), filter, info);
 		return jdbcOps.update(sql) != 0;
 	}
 

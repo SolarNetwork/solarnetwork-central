@@ -24,13 +24,13 @@ base {
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'net.sf.supercsv'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-common-web')
+	implementation project(':solarnet-datum')
 	implementation project(':solarnet-instructor')
 
 	// Spring
@@ -43,6 +43,7 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	
 	// Utilities
+	implementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.javamoney:moneta:1.4.2'

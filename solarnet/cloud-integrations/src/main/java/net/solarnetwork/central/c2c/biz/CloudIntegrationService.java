@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.biz;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -36,7 +37,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud integration service.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface CloudIntegrationService
 		extends Unique<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -150,6 +151,16 @@ public interface CloudIntegrationService
 	 * @return the supported datum stream services, never {@literal null}
 	 */
 	Iterable<CloudDatumStreamService> datumStreamServices();
+
+	/**
+	 * Get the control services supported by this integration.
+	 *
+	 * @return the supported control services, never {@literal null}
+	 * @since 2.1
+	 */
+	default Iterable<CloudControlService> controlServices() {
+		return List.of();
+	}
 
 	/**
 	 * Validate a configuration.

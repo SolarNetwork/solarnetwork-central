@@ -162,7 +162,18 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 				Future<?> f = publish(d, topic, (pubSettings != null ? pubSettings.isRetain() : false),
 						getPublishQos());
 				if ( timeout > 0 ) {
-					f.get(timeout, TimeUnit.SECONDS);
+					try {
+						f.get(timeout, TimeUnit.SECONDS);
+					} catch ( ExecutionException e ) {
+						if ( e.getCause() instanceof IllegalArgumentException iae ) {
+							// assume too large, etc
+							log.warn("Problem publishing {} datum to SolarFlux ({}); datum: {}",
+									aggDisplayName(aggregation), iae.getMessage(), d);
+							continue;
+						} else {
+							throw e;
+						}
+					}
 				}
 
 				SolarFluxDatumPublishCountStat stat = publishStat(aggregation);

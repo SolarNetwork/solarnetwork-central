@@ -35,6 +35,7 @@ import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
@@ -50,9 +51,9 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -129,10 +130,7 @@ public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 	private ClientAccessTokenDao clientAccessTokenDao;
 
 	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
-
-	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
 	private CloudIntegrationsExpressionService expressionService;
 
@@ -202,19 +200,10 @@ public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 		// @formatter:on
 
 		// request data
-		final URI dataUri = UriComponentsBuilder
-				.fromUri(resolveBaseUrl(integration, OpenWeatherMapCloudIntegrationService.BASE_URI))
-				.path(OpenWeatherMapCloudIntegrationService.WEATHER_URL_PATH)
-				.queryParam(UNITS_PARAM, UNITS_METRIC_VALUE)
-				.queryParam(OpenWeatherMapCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
-				.queryParam(OpenWeatherMapCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
-				.queryParam(OpenWeatherMapCloudIntegrationService.APPID_PARAM, apiKey).buildAndExpand()
-				.toUri();
 		final JsonNode dataJson = objectMapper
 				.readTree(utf8StringResource("openweathermap-weather-01.json", getClass()));
 		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
-		given(restOps.exchange(eq(dataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(dataRes);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(dataRes);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
@@ -224,6 +213,24 @@ public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 				.truncatedTo(ChronoUnit.DAYS).toInstant();
 
 		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI dataUri = UriComponentsBuilder
+			.fromUri(resolveBaseUrl(integration, OpenWeatherMapCloudIntegrationService.BASE_URI))
+			.path(OpenWeatherMapCloudIntegrationService.WEATHER_URL_PATH)
+			.queryParam(UNITS_PARAM, UNITS_METRIC_VALUE)
+			.queryParam(OpenWeatherMapCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
+			.queryParam(OpenWeatherMapCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
+			.queryParam(OpenWeatherMapCloudIntegrationService.APPID_PARAM, apiKey).buildAndExpand()
+			.toUri();
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(dataUri, from(RequestEntity::getUrl))
+			;
+
 		and.then(result)
 			.as("Latest datum parsed from HTTP response ")
 			.hasSize(1)

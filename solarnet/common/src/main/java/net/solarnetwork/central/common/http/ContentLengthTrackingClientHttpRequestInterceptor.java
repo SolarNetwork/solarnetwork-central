@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.web.support;
+package net.solarnetwork.central.common.http;
 
 import java.io.IOException;
 import java.io.InputStream;

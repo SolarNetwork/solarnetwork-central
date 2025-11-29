@@ -22,22 +22,19 @@
 
 package net.solarnetwork.central.c2c.domain;
 
-import static net.solarnetwork.central.domain.LogEventInfo.event;
-import static net.solarnetwork.codec.JsonUtils.getJSONString;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import net.solarnetwork.central.domain.LogEventInfo;
-import net.solarnetwork.central.domain.UserRelatedCompositeKey;
+import net.solarnetwork.central.common.http.HttpUserEvents;
+import net.solarnetwork.central.domain.CommonUserEvents;
+import net.solarnetwork.central.instructor.domain.InstructorUserEvents;
 
 /**
  * Constants and helpers for cloud integration user event handling.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
-public interface CloudIntegrationsUserEvents {
+public interface CloudIntegrationsUserEvents
+		extends CommonUserEvents, HttpUserEvents, InstructorUserEvents {
 
 	/** A user event tag for cloud integrations. */
 	String CLOUD_INTEGRATIONS_TAG = "c2c";
@@ -56,17 +53,15 @@ public interface CloudIntegrationsUserEvents {
 	 */
 	String CLOUD_DATUM_STREAM_TAG = "ds";
 
+	/**
+	 * A user event tag for {@code CloudControlService} related events.
+	 *
+	 * @since 1.5
+	 */
+	String CLOUD_CONTROL_TAG = "ctrl";
+
 	/** A user event tag for an "error". */
 	String ERROR_TAG = "error";
-
-	/** A user event tag for an authorization event. */
-	String AUTHORIZATION_TAG = "auth";
-
-	/** A user event tag for an HTTP event. */
-	String HTTP_TAG = "http";
-
-	/** A user event tag for an expression event. */
-	String EXPRESSION_TAG = "expr";
 
 	/** A user event tag for a datum stream poll event. */
 	String POLL_TAG = "poll";
@@ -78,23 +73,12 @@ public interface CloudIntegrationsUserEvents {
 	 */
 	String RAKE_TAG = "rake";
 
-	/** User event data key for a configuration ID. */
-	String CONFIG_ID_DATA_KEY = "configId";
-
 	/**
-	 * User event data key for a configuration sub ID (second component of a
-	 * composite ID).
+	 * User event data key for an integration ID.
+	 *
+	 * @since 1.5
 	 */
-	String CONFIG_SUB_ID_DATA_KEY = "subId";
-
-	/** User event data key for a message. */
-	String MESSAGE_DATA_KEY = "message";
-
-	/**
-	 * User event data key for the source of the event, such as the location of
-	 * an error.
-	 */
-	String SOURCE_DATA_KEY = "source";
+	String INTEGRATION_ID_DATA_KEY = "integrationId";
 
 	/** Tags for an authorization error event. */
 	List<String> INTEGRATION_AUTH_ERROR_TAGS = List.of(CLOUD_INTEGRATIONS_TAG, ERROR_TAG,
@@ -137,81 +121,19 @@ public interface CloudIntegrationsUserEvents {
 			.filter(t -> !ERROR_TAG.equals(t)).toList();
 
 	/**
-	 * Populate user-related composite key components to a parameter map.
+	 * Tags for a control instruction error event.
 	 *
-	 * @param configId
-	 *        the configuration ID
-	 * @param parameters
-	 *        the parameter to populate the ID components into
+	 * @since 1.5
 	 */
-	static void populateUserRelatedKeyEventParameters(UserRelatedCompositeKey<?> configId,
-			Map<String, Object> parameters) {
-		if ( configId == null ) {
-			return;
-		}
-		parameters.put(CONFIG_ID_DATA_KEY, configId.keyComponent(1));
-		if ( configId.keyComponentLength() > 2 && configId.keyComponentIsAssigned(2) ) {
-			parameters.put(CONFIG_SUB_ID_DATA_KEY, configId.keyComponent(2));
-		}
-	}
+	List<String> INTEGRATION_CONTROL_INSTRUCTION_ERROR_TAGS = List.of(CLOUD_INTEGRATIONS_TAG, ERROR_TAG,
+			CLOUD_CONTROL_TAG, INSTRUCTION_TAG);
 
 	/**
-	 * Get a user log event for a configuration ID.
+	 * Tags for a non-error control instruction events.
 	 *
-	 * @param configId
-	 *        the configuration ID
-	 * @param baseTags
-	 *        the base tags
-	 * @param message
-	 *        the message
-	 * @param extraTags
-	 *        optional extra tags
-	 * @return the log event
+	 * @since 1.5
 	 */
-	static LogEventInfo eventForConfiguration(UserRelatedCompositeKey<?> configId, List<String> baseTags,
-			String message, String... extraTags) {
-		Map<String, Object> data = new HashMap<>(4);
-		populateUserRelatedKeyEventParameters(configId, data);
-		return event(baseTags, message, getJSONString(data, null), extraTags);
-	}
+	List<String> INTEGRATION_CONTROL_INSTRUCTION_TAGS = INTEGRATION_CONTROL_INSTRUCTION_ERROR_TAGS
+			.stream().filter(t -> !ERROR_TAG.equals(t)).toList();
 
-	/**
-	 * Get a user log event for a configuration ID.
-	 *
-	 * @param configId
-	 *        the configuration ID
-	 * @param baseTags
-	 *        the base tags
-	 * @param message
-	 *        the message
-	 * @param parameters
-	 *        extra event parameters
-	 * @param extraTags
-	 *        optional extra tags
-	 * @return the log event
-	 */
-	static LogEventInfo eventForConfiguration(UserRelatedCompositeKey<?> configId, List<String> baseTags,
-			String message, Map<String, ?> parameters, String... extraTags) {
-		Map<String, Object> data = new LinkedHashMap<>(parameters);
-		populateUserRelatedKeyEventParameters(configId, data);
-		return event(baseTags, message, getJSONString(data, null), extraTags);
-	}
-
-	/**
-	 * Get a user log event for a configuration.
-	 *
-	 * @param config
-	 *        the configuration
-	 * @param baseTags
-	 *        the base tags
-	 * @param message
-	 *        the message
-	 * @param extraTags
-	 *        optional extra tags
-	 * @return the log event
-	 */
-	static LogEventInfo eventForConfiguration(CloudIntegrationsConfigurationEntity<?, ?> config,
-			List<String> baseTags, String message, String... extraTags) {
-		return eventForConfiguration(config.getId(), baseTags, message, extraTags);
-	}
 }

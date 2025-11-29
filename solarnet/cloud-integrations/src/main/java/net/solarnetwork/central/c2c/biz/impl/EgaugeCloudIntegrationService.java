@@ -46,7 +46,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * eGauge implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class EgaugeCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -88,8 +88,8 @@ public class EgaugeCloudIntegrationService extends BaseRestOperationsCloudIntegr
 	 */
 	public EgaugeCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {
-		super(SERVICE_IDENTIFIER, "eGauge", datumStreamServices, userEventAppenderBiz, encryptor,
-				SETTINGS, WELL_KNOWN_URLS,
+		super(SERVICE_IDENTIFIER, "eGauge", datumStreamServices, List.of(), userEventAppenderBiz,
+				encryptor, SETTINGS, WELL_KNOWN_URLS,
 				new RestOperationsHelper(LoggerFactory.getLogger(EgaugeCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS));

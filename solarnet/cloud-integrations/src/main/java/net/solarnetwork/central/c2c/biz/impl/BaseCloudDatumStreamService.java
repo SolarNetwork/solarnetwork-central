@@ -24,7 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
-import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
+import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.NumberUtils.narrow;
 import static net.solarnetwork.util.NumberUtils.parseNumber;
@@ -71,6 +71,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.support.BasicDatumStreamsAccessor;
 import net.solarnetwork.central.datum.support.LazyDatumMetadataOperations;
@@ -78,7 +79,6 @@ import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.DatumId;
@@ -104,7 +104,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.19
+ * @version 1.20
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -533,7 +533,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				t = t.getCause();
 			}
 			String exMsg = (t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
-			userEventAppenderBiz.addEvent(config.getUserId(), eventForConfiguration(config.getId(),
+			userEventAppenderBiz.addEvent(config.getUserId(), eventForUserRelatedKey(config.getId(),
 					DATUM_STREAM_EXPRESSION_ERROR_TAGS,
 					"Error evaluating datum stream property expression.",
 					Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY, config.getValueReference())));
@@ -568,7 +568,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				t = t.getCause();
 			}
 			String exMsg = (t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
-			userEventAppenderBiz.addEvent(config.getUserId(), eventForConfiguration(config.getId(),
+			userEventAppenderBiz.addEvent(config.getUserId(), eventForUserRelatedKey(config.getId(),
 					DATUM_STREAM_EXPRESSION_ERROR_TAGS,
 					"Error evaluating datum stream property expression.",
 					Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY, config.getValueReference())));

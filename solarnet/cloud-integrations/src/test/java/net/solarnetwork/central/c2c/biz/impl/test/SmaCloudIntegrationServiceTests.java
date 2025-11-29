@@ -51,6 +51,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.random.RandomGenerator;
@@ -63,10 +64,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -126,7 +127,10 @@ public class SmaCloudIntegrationServiceTests {
 	private ArgumentCaptor<OAuth2AuthorizeRequest> authRequestCaptor;
 
 	@Captor
-	private ArgumentCaptor<HttpEntity<JsonNode>> jsonHttpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<String>> stringRequestCaptor;
+
+	@Captor
+	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
 	@Mock
 	private TextEncryptor encryptor;
@@ -243,11 +247,8 @@ public class SmaCloudIntegrationServiceTests {
 
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
-		final URI listSystems = SmaCloudIntegrationService.BASE_URI
-				.resolve(SmaCloudIntegrationService.LIST_SYSTEMS_PATH);
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
-		given(restOps.exchange(eq(listSystems), eq(HttpMethod.GET), any(), eq(String.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 
@@ -255,6 +256,19 @@ public class SmaCloudIntegrationServiceTests {
 
 		// THEN
 		// @formatter:off
+		then(restOps).should().exchange(stringRequestCaptor.capture(), eq(String.class));
+
+		and.then(stringRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(SmaCloudIntegrationService.BASE_URI
+					.resolve(SmaCloudIntegrationService.LIST_SYSTEMS_PATH), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			;
+
 		then(oauthClientManager).should().authorize(authRequestCaptor.capture());
 
 		and.then(authRequestCaptor.getValue())
@@ -357,16 +371,9 @@ public class SmaCloudIntegrationServiceTests {
 				.willReturn(true);
 
 		// request token
-		final URI getTokenUri = UriComponentsBuilder
-				.fromUri(SmaCloudIntegrationService.AUTHORIZATION_BASE_URI)
-				.path(SmaCloudIntegrationService.TOKEN_PATH)
-				.queryParam("grant_type", "authorization_code")
-				.queryParam(AUTHORIZATION_CODE_PARAM, code).queryParam(REDIRECT_URI_PARAM, redirectUri)
-				.queryParam("scope", "offline_access").buildAndExpand().toUri();
-
 		final JsonNode resJson = getObjectFromJSON(utf8StringResource("sma-token-01.json", getClass()),
 				ObjectNode.class);
-		given(restOps.exchange(eq(getTokenUri), eq(HttpMethod.POST), any(), eq(JsonNode.class)))
+		given(restOps.exchange(any(), eq(JsonNode.class)))
 				.willReturn(new ResponseEntity<JsonNode>(resJson, HttpStatus.OK));
 
 		// WHEN
@@ -376,19 +383,28 @@ public class SmaCloudIntegrationServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(eq(getTokenUri), eq(HttpMethod.POST), jsonHttpEntityCaptor.capture(),
-				eq(JsonNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		// confirm basic auth provided
-		and.then(jsonHttpEntityCaptor.getValue()).extracting(HttpEntity<JsonNode>::getHeaders)
-			.satisfies(h -> {
-				HttpHeaders expected = new HttpHeaders();
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("Request URI for token")
+			.returns(UriComponentsBuilder
+					.fromUri(SmaCloudIntegrationService.AUTHORIZATION_BASE_URI)
+					.path(SmaCloudIntegrationService.TOKEN_PATH)
+					.queryParam("grant_type", "authorization_code")
+					.queryParam(AUTHORIZATION_CODE_PARAM, code).queryParam(REDIRECT_URI_PARAM, redirectUri)
+					.queryParam("scope", "offline_access").buildAndExpand().toUri(), from(RequestEntity::getUrl))
+			.satisfies(req -> {
+				final HttpHeaders expected = new HttpHeaders();
 				expected.setBasicAuth(clientId, clientSecret);
-				and.then(h.getFirst(HttpHeaders.AUTHORIZATION))
-					.as("Basic auth provided using cilent ID/secret from integration")
+
+				and.then(req.getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
+					.as("Basic auth provided")
 					.isEqualTo(expected.getFirst(HttpHeaders.AUTHORIZATION))
 					;
-			});
+			})
+			;
 
 		and.then(result)
 			.asInstanceOf(map(String.class, Object.class))

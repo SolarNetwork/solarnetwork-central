@@ -40,6 +40,7 @@ dependencies {
 	api 'org.springframework.boot:spring-boot-starter-test'
     api 'org.springframework.security:spring-security-test'
     api "org.threeten:threeten-extra:${threetenExtraVersion}"
+    api libraries.mockito
 }
 
 jar.manifest {

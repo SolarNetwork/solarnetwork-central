@@ -44,7 +44,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
-import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.net.URI;
 import java.time.Instant;
@@ -59,9 +58,9 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -138,10 +137,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 
 	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
-
-	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<String>> httpRequestCaptor;
 
 	private CloudIntegrationsExpressionService expressionService;
 
@@ -193,7 +189,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		// request data
 		final String resXml = utf8StringResource(xmlResource, getClass());
 		final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 		Iterable<CloudDataValue> results = service.dataValues(integration.getId(),
@@ -201,15 +197,17 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(GET), httpEntityCaptor.capture(), eq(String.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(String.class));
 
 		// expected date range is clock-aligned
 		Instant expectedEndDate = clock.instant();
 		Instant expectedStartDate = expectedEndDate.minus(SolrenViewGranularity.FiveMinute.getTickDuration());
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(fromUri(BASE_URI)
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(fromUri(BASE_URI)
 					.path(XML_FEED_PATH)
 					.queryParam(XML_FEED_USE_UTC_PARAM)
 					.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
@@ -217,8 +215,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 					.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
 					.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
 					.buildAndExpand(siteId, expectedStartDate, expectedEndDate)
-					.toUri()
-			)
+					.toUri(), from(RequestEntity::getUrl))
 			;
 
 		and.then(results)
@@ -372,22 +369,24 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		// request data
 		final String resXml = utf8StringResource(xmlResource, getClass());
 		final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(String.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(String.class));
 
 		// expected date range is clock-aligned
 		Instant expectedEndDate = clock.instant();
 		Instant expectedStartDate = expectedEndDate.minus(SolrenViewGranularity.FiveMinute.getTickDuration());
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(fromUri(BASE_URI)
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(fromUri(BASE_URI)
 					.path(XML_FEED_PATH)
 					.queryParam(XML_FEED_USE_UTC_PARAM)
 					.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
@@ -395,8 +394,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 					.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
 					.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
 					.buildAndExpand(siteId, expectedStartDate, expectedEndDate)
-					.toUri()
-			)
+					.toUri(), from(RequestEntity::getUrl))
 			;
 
 		and.then(result)
@@ -502,22 +500,24 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		// request data
 		final String resXml = utf8StringResource("solrenview-site-data-01.xml", getClass());
 		final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(String.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(String.class));
 
 		// expected date range is clock-aligned
 		Instant expectedEndDate = clock.instant();
 		Instant expectedStartDate = expectedEndDate.minus(SolrenViewGranularity.FiveMinute.getTickDuration());
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(fromUri(BASE_URI)
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(fromUri(BASE_URI)
 					.path(XML_FEED_PATH)
 					.queryParam(XML_FEED_USE_UTC_PARAM)
 					.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
@@ -525,8 +525,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 					.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
 					.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
 					.buildAndExpand(siteId, expectedStartDate, expectedEndDate)
-					.toUri()
-			)
+					.toUri(), from(RequestEntity::getUrl))
 			;
 
 		and.then(result)
@@ -635,22 +634,24 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		// request data
 		final String resXml = utf8StringResource("solrenview-site-data-01.xml", getClass());
 		final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(String.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(String.class));
 
 		// expected date range is clock-aligned
 		Instant expectedEndDate = clock.instant();
 		Instant expectedStartDate = expectedEndDate.minus(SolrenViewGranularity.FiveMinute.getTickDuration());
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(fromUri(BASE_URI)
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(fromUri(BASE_URI)
 					.path(XML_FEED_PATH)
 					.queryParam(XML_FEED_USE_UTC_PARAM)
 					.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
@@ -658,8 +659,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 					.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
 					.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
 					.buildAndExpand(siteId, expectedStartDate, expectedEndDate)
-					.toUri()
-			)
+					.toUri(), from(RequestEntity::getUrl))
 			;
 
 		and.then(result)
@@ -769,22 +769,24 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		// request data
 		final String resXml = utf8StringResource("solrenview-site-data-01.xml", getClass());
 		final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(String.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(String.class));
 
 		// expected date range is clock-aligned
 		Instant expectedEndDate = clock.instant();
 		Instant expectedStartDate = expectedEndDate.minus(SolrenViewGranularity.FiveMinute.getTickDuration());
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(fromUri(BASE_URI)
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(fromUri(BASE_URI)
 					.path(XML_FEED_PATH)
 					.queryParam(XML_FEED_USE_UTC_PARAM)
 					.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
@@ -792,8 +794,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 					.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
 					.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
 					.buildAndExpand(siteId, expectedStartDate, expectedEndDate)
-					.toUri()
-			)
+					.toUri(), from(RequestEntity::getUrl))
 			;
 
 		and.then(result)
@@ -917,22 +918,24 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		// request data
 		final String resXml = utf8StringResource("solrenview-site-data-01.xml", getClass());
 		final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(String.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(String.class));
 
 		// expected date range is clock-aligned
 		Instant expectedEndDate = clock.instant();
 		Instant expectedStartDate = expectedEndDate.minus(SolrenViewGranularity.FiveMinute.getTickDuration());
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(fromUri(URI.create(proxyBaseUrl))
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(fromUri(URI.create(proxyBaseUrl))
 					.path(XML_FEED_PATH)
 					.queryParam(XML_FEED_USE_UTC_PARAM)
 					.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
@@ -940,8 +943,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 					.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
 					.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
 					.buildAndExpand(siteId, expectedStartDate, expectedEndDate)
-					.toUri()
-			)
+					.toUri(), from(RequestEntity::getUrl))
 			;
 
 		and.then(result)
@@ -1034,7 +1036,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		// request data
 		final String resXml = utf8StringResource("solrenview-site-data-01.xml", getClass());
 		final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
@@ -1165,7 +1167,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		// @formatter:on
 
 		// request data
-		var givenExchange = given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class)));
+		var givenExchange = given(restOps.exchange(any(), eq(String.class)));
 		for ( int i = 0; i < xmlResources.length; i++ ) {
 			final String resXml = utf8StringResource(xmlResources[i], getClass());
 			final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
@@ -1179,10 +1181,16 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(xmlResources.length)).exchange(
-				uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(String.class));
+		then(restOps).should(times(xmlResources.length)).exchange(httpRequestCaptor.capture(), eq(String.class));
 
-		and.then(uriCaptor.getAllValues())
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
 			.as("Request for pages made")
 			.hasSize(xmlResources.length)
 			.satisfies(l -> {

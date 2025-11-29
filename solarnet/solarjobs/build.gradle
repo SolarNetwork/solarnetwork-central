@@ -50,6 +50,7 @@ dependencies {
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	implementation 'javax.cache:cache-api'
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.ehcache:ehcache'
 	implementation "org.tukaani:xz:${xzVersion}"
