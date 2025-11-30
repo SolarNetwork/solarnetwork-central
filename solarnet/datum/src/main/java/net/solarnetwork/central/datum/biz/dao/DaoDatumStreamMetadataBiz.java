@@ -46,7 +46,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * DAO-based implementation of {@link DatumStreamMetadataBiz}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.0
  */
 public class DaoDatumStreamMetadataBiz implements DatumStreamMetadataBiz {
@@ -104,7 +104,9 @@ public class DaoDatumStreamMetadataBiz implements DatumStreamMetadataBiz {
 		if ( c == null ) {
 			c = new BasicDatumCriteria();
 		}
-		c.setObjectKind(ObjectDatumKind.Node);
+		if ( c.getObjectKind() == null ) {
+			c.setObjectKind(ObjectDatumKind.Node);
+		}
 		restrictCriteriaToActor(actor, c);
 		Iterable<ObjectDatumStreamMetadataId> results = metaDao.findDatumStreamMetadataIds(c);
 		return toList(results);
@@ -118,6 +120,10 @@ public class DaoDatumStreamMetadataBiz implements DatumStreamMetadataBiz {
 	}
 
 	private void restrictCriteriaToActor(SecurityActor actor, BasicDatumCriteria c) {
+		if ( c.getObjectKind() == ObjectDatumKind.Location ) {
+			// location lookup always allowed
+			return;
+		}
 		if ( actor instanceof SecurityNode node ) {
 			c.setNodeId(node.getNodeId());
 		} else if ( actor instanceof SecurityUser user ) {
