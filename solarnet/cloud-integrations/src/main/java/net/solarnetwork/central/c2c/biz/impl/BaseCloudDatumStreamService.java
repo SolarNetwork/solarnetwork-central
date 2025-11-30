@@ -498,9 +498,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		// assume all configurations owned by the same user; extract the user ID from the first one
 		final Long userId = configurations.iterator().next().getUserId();
 
-		final var datumStreamsAccessor = (datumDao != null
+		final var datumStreamsAccessor = (datumDao != null && datumStreamMetadataDao != null
 				? new QueryingDatumStreamsAccessor(expressionService.sourceIdPathMatcher(),
-						expressionDatum, userId, clock, datumDao, queryAuditor)
+						expressionDatum, userId, clock, datumDao, datumStreamMetadataDao, queryAuditor)
 				: new BasicDatumStreamsAccessor(expressionService.sourceIdPathMatcher(),
 						expressionDatum));
 

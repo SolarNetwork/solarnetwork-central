@@ -60,6 +60,7 @@ import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.CommonUserEvents;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
@@ -109,6 +110,9 @@ public class DaoUserNodeInstructionService_SpelTests implements CommonUserEvents
 	@Mock
 	private DatumEntityDao datumDao;
 
+	@Mock
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
 	@Captor
 	private ArgumentCaptor<Instruction> instructionCaptor;
 
@@ -130,7 +134,7 @@ public class DaoUserNodeInstructionService_SpelTests implements CommonUserEvents
 
 		service = new DaoUserNodeInstructionService(clock, executor, JsonUtils.newObjectMapper(),
 				userEventAppenderBiz, instructorBiz, expressionService, nodeOwnershipDao, taskDao,
-				datumDao);
+				datumDao, datumStreamMetadataDao);
 	}
 
 	private CompletableFuture<UserNodeInstructionTaskEntity> givenTaskExecution() {

@@ -27,20 +27,26 @@ import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static net.solarnetwork.central.test.CommonTestUtils.randomBytes;
+import static net.solarnetwork.central.test.CommonTestUtils.randomDecimal;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.user.biz.InstructionsExpressionService.USER_SECRET_TOPIC_ID;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +58,7 @@ import net.solarnetwork.central.common.dao.SolarNodeMetadataReadOnlyDao;
 import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.dao.UserMetadataReadOnlyDao;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.domain.UserMetadataEntity;
@@ -63,7 +70,10 @@ import net.solarnetwork.central.user.domain.NodeInstructionExpressionRoot;
 import net.solarnetwork.central.user.domain.UserSecretEntity;
 import net.solarnetwork.central.user.support.BasicInstructionsExpressionService;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
+import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.tariff.TariffSchedule;
 import net.solarnetwork.domain.tariff.TariffUtils;
 
@@ -329,6 +339,57 @@ public class BasicInstructionsExpressionService_SpelTests {
 		and.then(result)
 			.as("Expression evaulated, using node metadata tariff schedule")
 			.isEqualTo(expectedResult)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void evaluate_latestLocationDatumLookup() {
+		// GIVEN
+		final SolarNodeOwnership owner = ownershipFor(randomLong(), randomLong(), "NZ", "UTC");
+
+		final NodeInstruction instruction = instruction(owner.getNodeId(), randomString());
+		final String sourceId = randomString();
+		final String streamName = randomString();
+		final String tag = randomString();
+
+		// look up stream meta
+		final var streamMeta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Location, randomLong(), sourceId, new String[] { "price" }, null, null);
+		given(datumStreamsAccessor.findStreams(ObjectDatumKind.Location, streamName, sourceId, tag))
+				.willReturn(List.of(streamMeta));
+
+		// find datum for stream
+		final BigDecimal price = randomDecimal();
+		final GeneralDatum datum = GeneralDatum.locationDatum(streamMeta.getObjectId(),
+				streamMeta.getSourceId(), Instant.now(),
+				new DatumSamples(Map.of("price", price), null, null));
+		given(datumStreamsAccessor.offset(eq(streamMeta.getKind()), eq(streamMeta.getObjectId()),
+				eq(streamMeta.getSourceId()), any(), eq(0))).willReturn(datum);
+
+		// create datum expression root
+		final var nodeMetadata = new SolarNodeMetadata(owner.getNodeId());
+
+		given(nodeMetadataDao.get(owner.getNodeId())).willReturn(nodeMetadata);
+
+		// WHEN
+		final NodeInstructionExpressionRoot root = service.createNodeInstructionExpressionRoot(owner,
+				instruction, null, datumStreamsAccessor, httpOperations);
+		final BigDecimal result = service.evaulateExpression("""
+				datumNear(findLocDatumStream('%s', '%s', '%s'), timestamp())?.price
+				""".formatted(streamName, sourceId, tag), root, null, BigDecimal.class);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamsAccessor).shouldHaveNoMoreInteractions();
+		then(httpOperations).shouldHaveNoInteractions();
+		then(nodeMetadataDao).shouldHaveNoMoreInteractions();
+		then(userMetadataDao).shouldHaveNoInteractions();
+		then(userSecretAccessDao).shouldHaveNoInteractions();
+
+		and.then(result)
+			.as("Expression evaulated, using datum property value")
+			.isEqualTo(price)
 			;
 		// @formatter:on
 	}

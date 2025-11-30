@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.PathMatcher;
@@ -41,10 +42,13 @@ import org.threeten.extra.Interval;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Datum;
@@ -79,6 +83,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	private final Long userId;
 	private final InstantSource clock;
 	private final DatumEntityDao datumDao;
+	private final DatumStreamMetadataDao metaDao;
 	private final QueryAuditor auditor;
 
 	private Duration maxStartDateDuration = DEFAULT_MAX_START_DATE_DURATION;
@@ -97,17 +102,21 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	 *        the clock to use
 	 * @param datumDao
 	 *        the datum DAO
+	 * @param metaDao
+	 *        the datum stream metadata DAO
 	 * @param auditor
 	 *        the optional auditor
 	 * @throws IllegalArgumentException
 	 *         if {@code pathMatcher} or {@code datumDao} or {@literal null}
 	 */
 	public QueryingDatumStreamsAccessor(PathMatcher pathMatcher, Collection<? extends Datum> datum,
-			Long userId, InstantSource clock, DatumEntityDao datumDao, QueryAuditor auditor) {
+			Long userId, InstantSource clock, DatumEntityDao datumDao, DatumStreamMetadataDao metaDao,
+			QueryAuditor auditor) {
 		super(pathMatcher, datum);
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.metaDao = requireNonNullArgument(metaDao, "metaDao");
 		this.auditor = auditor;
 	}
 
@@ -355,6 +364,25 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 
 		return result;
 
+	}
+
+	@Override
+	public Collection<ObjectDatumStreamMetadata> findStreams(ObjectDatumKind kind, String query,
+			String sourceIdPattern, String... tags) {
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setObjectKind(kind);
+		criteria.setSourceId(sourceIdPattern);
+		if ( query != null && kind == ObjectDatumKind.Location ) {
+			SimpleLocation loc = new SimpleLocation();
+			loc.setName(query);
+			criteria.setLocation(loc);
+		}
+		criteria.setSearchFilter(DatumUtils.generateTagsSearchFilter(tags));
+		Iterable<ObjectDatumStreamMetadata> data = metaDao.findDatumStreamMetadata(criteria);
+		if ( data instanceof Collection<ObjectDatumStreamMetadata> col ) {
+			return col;
+		}
+		return StreamSupport.stream(data.spliterator(), false).toList();
 	}
 
 	/**

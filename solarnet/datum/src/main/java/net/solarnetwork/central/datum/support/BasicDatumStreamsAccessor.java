@@ -39,6 +39,7 @@ import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.util.ObjectUtils;
 
 /**
@@ -367,6 +368,13 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 			}
 		}
 		return result;
+	}
+
+	@Override
+	public Collection<ObjectDatumStreamMetadata> findStreams(ObjectDatumKind kind, String query,
+			String sourceIdPattern, String... tags) {
+		// not supported
+		return List.of();
 	}
 
 }

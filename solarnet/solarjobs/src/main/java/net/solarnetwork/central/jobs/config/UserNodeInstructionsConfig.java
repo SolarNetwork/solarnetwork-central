@@ -39,6 +39,7 @@ import net.solarnetwork.central.common.http.BasicHttpOperations;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.user.biz.InstructionsExpressionService;
 import net.solarnetwork.central.user.biz.UserNodeInstructionService;
@@ -73,6 +74,9 @@ public class UserNodeInstructionsConfig implements SolarNetUserConfiguration {
 	private DatumEntityDao datumDao;
 
 	@Autowired
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
+	@Autowired
 	private ObjectMapper objectMapper;
 
 	@Autowired
@@ -93,7 +97,7 @@ public class UserNodeInstructionsConfig implements SolarNetUserConfiguration {
 	public UserNodeInstructionService userNodeInstructionService() {
 		var service = new DaoUserNodeInstructionService(Clock.systemUTC(),
 				taskExecutor.getThreadPoolExecutor(), objectMapper, userEventAppenderBiz, instructorBiz,
-				expressionService, nodeOwnershipDao, taskDao, datumDao);
+				expressionService, nodeOwnershipDao, taskDao, datumDao, datumStreamMetadataDao);
 		service.setQueryAuditor(queryAuditor);
 		service.setHttpOperations(
 				new BasicHttpOperations(LoggerFactory.getLogger(DaoUserNodeInstructionService.class),

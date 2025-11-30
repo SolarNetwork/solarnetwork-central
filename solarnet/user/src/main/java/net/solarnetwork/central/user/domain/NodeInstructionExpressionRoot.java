@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.SequencedCollection;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -53,6 +54,8 @@ import net.solarnetwork.domain.datum.DatumMathFunctions;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
 import net.solarnetwork.domain.datum.DatumSamplesOperations;
 import net.solarnetwork.domain.datum.DatumStringFunctions;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.tariff.Tariff;
 import net.solarnetwork.domain.tariff.TariffSchedule;
@@ -558,7 +561,84 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	}
 
 	/**
-	 * Get a datum matching a specific source ID at a specific timestamp.
+	 * Find datum streams matching a general query, source ID pattern, and
+	 * optional tags.
+	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param query
+	 *        the general query, to match the stream name, location, etc.
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param tags
+	 *        optional tags to match
+	 * @return the matching datum stream metadata, never {@code null}
+	 */
+	public Collection<ObjectDatumStreamMetadata> findDatumStreams(ObjectDatumKind kind, String query,
+			String sourceIdPattern, String... tags) {
+		if ( datumStreamsAccessor == null ) {
+			return null;
+		}
+		return datumStreamsAccessor.findStreams(kind, query, sourceIdPattern, tags);
+	}
+
+	/**
+	 * Find the first available datum stream matching a general query, source ID
+	 * pattern, and optional tags.
+	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param query
+	 *        the general query, to match the stream name, location, etc.
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param tags
+	 *        optional tags to match
+	 * @return the first matching datum stream metadata, or {@code null} if not
+	 *         available
+	 */
+	public ObjectDatumStreamMetadata findDatumStream(ObjectDatumKind kind, String query,
+			String sourceIdPattern, String... tags) {
+		Collection<ObjectDatumStreamMetadata> result = findDatumStreams(kind, query, sourceIdPattern,
+				tags);
+		if ( result.isEmpty() ) {
+			return null;
+		}
+		if ( result instanceof SequencedCollection<ObjectDatumStreamMetadata> l ) {
+			return l.getFirst();
+		}
+		return result.iterator().next();
+	}
+
+	/**
+	 * Find the first available location datum stream matching a general query,
+	 * source ID pattern, and optional tags.
+	 *
+	 * @param query
+	 *        the general query, to match the stream name, location, etc.
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param tags
+	 *        optional tags to match
+	 * @return the first matching datum stream metadata, or {@code null} if not
+	 *         available
+	 */
+	public ObjectDatumStreamMetadata findLocDatumStream(String query, String sourceIdPattern,
+			String... tags) {
+		Collection<ObjectDatumStreamMetadata> result = findDatumStreams(ObjectDatumKind.Location, query,
+				sourceIdPattern, tags);
+		if ( result.isEmpty() ) {
+			return null;
+		}
+		if ( result instanceof SequencedCollection<ObjectDatumStreamMetadata> l ) {
+			return l.getFirst();
+		}
+		return result.iterator().next();
+	}
+
+	/**
+	 * Get a datum matching the owner node ID and a specific source ID at a
+	 * specific timestamp.
 	 *
 	 * @param sourceId
 	 *        the source ID to find the datum for
@@ -576,7 +656,85 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	}
 
 	/**
-	 * Get a datum matching a specific source ID at a specific timestamp.
+	 * Get a datum matching a specific stream at a specific timestamp.
+	 * 
+	 * @param streamMeta
+	 *        the stream metadata to find the datum for
+	 * @param timestamp
+	 *        the timestamp to find the datum for
+	 * @return the matching datum, or {@literal null} if not available
+	 */
+	public DatumExpressionRoot datumAt(ObjectDatumStreamMetadata streamMeta, Instant timestamp) {
+		if ( streamMeta == null ) {
+			return null;
+		}
+		if ( datumStreamsAccessor == null || streamMeta == null || timestamp == null ) {
+			return null;
+		}
+		Datum d = datumStreamsAccessor.at(streamMeta.getKind(), streamMeta.getObjectId(),
+				streamMeta.getSourceId(), timestamp);
+		return (d != null ? datumRoot(d) : null);
+	}
+
+	/**
+	 * Get an offset from the latest available datum matching the owner node ID
+	 * and a specific source ID.
+	 *
+	 * @param sourceId
+	 *        the source ID to find the offset datum for
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return the matching datum, or {@literal null} if not available
+	 */
+	public DatumExpressionRoot datumOffset(String sourceId, int offset, Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+			return null;
+		}
+		Datum d = datumStreamsAccessor.offset(Node, getNodeId(), sourceId, timestamp, offset);
+		return (d != null ? datumRoot(d) : null);
+	}
+
+	/**
+	 * Get an offset from the latest available datum matching a specific stream.
+	 *
+	 * @param streamMeta
+	 *        the stream metadata to find the datum for
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return the matching datum, or {@literal null} if not available
+	 */
+	public DatumExpressionRoot datumOffset(ObjectDatumStreamMetadata streamMeta, int offset,
+			Instant timestamp) {
+		if ( datumStreamsAccessor == null || streamMeta == null || timestamp == null ) {
+			return null;
+		}
+		Datum d = datumStreamsAccessor.offset(streamMeta.getKind(), streamMeta.getObjectId(),
+				streamMeta.getSourceId(), timestamp, offset);
+		return (d != null ? datumRoot(d) : null);
+	}
+
+	/**
+	 * Get the latest available datum matching a specific stream.
+	 *
+	 * @param streamMeta
+	 *        the stream metadata to find the datum for
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return the matching datum, or {@literal null} if not available
+	 */
+	public DatumExpressionRoot datumNear(ObjectDatumStreamMetadata streamMeta, Instant timestamp) {
+		return datumOffset(streamMeta, 0, timestamp);
+	}
+
+	/**
+	 * Get a datum matching the owner node ID and a specific source ID over a
+	 * time range.
 	 *
 	 * @param sourceIdPattern
 	 *        an optional Ant-style source ID pattern to filter by
@@ -593,6 +751,27 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 		}
 		Collection<Datum> result = datumStreamsAccessor.rangeMatching(Node, getNodeId(), sourceIdPattern,
 				from, to);
+		return result.stream().map(this::datumRoot).toList();
+	}
+
+	/**
+	 * Get a datum matching a specific stream over a time range.
+	 *
+	 * @param streamMeta
+	 *        the stream metadata to find the datum for
+	 * @param from
+	 *        the minimum datum timestamp (inclusive)
+	 * @param to
+	 *        the maximum datum timestamp (exclusive)
+	 * @return the matching datum, never {@literal null}
+	 */
+	public Collection<DatumExpressionRoot> datumRange(ObjectDatumStreamMetadata streamMeta, Instant from,
+			Instant to) {
+		if ( datumStreamsAccessor == null || streamMeta == null || from == null || to == null ) {
+			return null;
+		}
+		Collection<Datum> result = datumStreamsAccessor.rangeMatching(streamMeta.getKind(),
+				streamMeta.getObjectId(), streamMeta.getSourceId(), from, to);
 		return result.stream().map(this::datumRoot).toList();
 	}
 

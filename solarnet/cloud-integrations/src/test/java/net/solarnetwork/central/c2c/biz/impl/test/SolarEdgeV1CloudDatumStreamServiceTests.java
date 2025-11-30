@@ -113,6 +113,7 @@ import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.codec.JsonUtils;
@@ -170,6 +171,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 	@Mock
 	private DatumEntityDao datumDao;
 
+	@Mock
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
 	@Captor
 	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
@@ -199,6 +203,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		service.setMessageSource(msg);
 
 		service.setDatumDao(datumDao);
+		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
 
 		clock.setInstant(Instant.now().truncatedTo(ChronoUnit.DAYS));
 	}

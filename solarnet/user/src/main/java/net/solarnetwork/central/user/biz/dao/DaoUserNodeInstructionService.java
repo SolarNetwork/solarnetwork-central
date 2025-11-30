@@ -58,6 +58,7 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
@@ -109,6 +110,7 @@ public class DaoUserNodeInstructionService
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final UserNodeInstructionTaskDao taskDao;
 	private final DatumEntityDao datumDao;
+	private final DatumStreamMetadataDao datumStreamMetadataDao;
 
 	private Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
 	private QueryAuditor queryAuditor;
@@ -136,6 +138,8 @@ public class DaoUserNodeInstructionService
 	 *        the task DAO
 	 * @param datumDao
 	 *        the datum DAO
+	 * @param datumStreamMetadataDao
+	 *        the datum stream metadata DAO
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -143,7 +147,7 @@ public class DaoUserNodeInstructionService
 			ObjectMapper objectMapper, UserEventAppenderBiz userEventAppenderBiz,
 			InstructorBiz instructorBiz, InstructionsExpressionService expressionService,
 			SolarNodeOwnershipDao nodeOwnershipDao, UserNodeInstructionTaskDao taskDao,
-			DatumEntityDao datumDao) {
+			DatumEntityDao datumDao, DatumStreamMetadataDao datumStreamMetadataDao) {
 		super();
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.executorService = requireNonNullArgument(executor, "executor");
@@ -154,6 +158,8 @@ public class DaoUserNodeInstructionService
 		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.datumStreamMetadataDao = requireNonNullArgument(datumStreamMetadataDao,
+				"datumStreamMetadataDao");
 	}
 
 	@Override
@@ -402,7 +408,7 @@ public class DaoUserNodeInstructionService
 			}
 			final var datumStreamsAccessor = new QueryingDatumStreamsAccessor(
 					expressionService.sourceIdPathMatcher(), List.of(), owner.getUserId(), clock,
-					datumDao, queryAuditor);
+					datumDao, datumStreamMetadataDao, queryAuditor);
 
 			// each key is a bean property path on an Instruction instance; each value is an expression to run
 			final NodeInstructionExpressionRoot exprRoot = expressionService

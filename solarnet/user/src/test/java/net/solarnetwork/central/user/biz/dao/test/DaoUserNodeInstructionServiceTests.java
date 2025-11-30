@@ -73,6 +73,7 @@ import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.CommonUserEvents;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
@@ -124,6 +125,9 @@ public class DaoUserNodeInstructionServiceTests implements CommonUserEvents, Use
 	@Mock
 	private DatumEntityDao datumDao;
 
+	@Mock
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
 	@Captor
 	private ArgumentCaptor<Instruction> instructionCaptor;
 
@@ -145,7 +149,7 @@ public class DaoUserNodeInstructionServiceTests implements CommonUserEvents, Use
 		sourceIdPathMatcher.setCachePatterns(false);
 		service = new DaoUserNodeInstructionService(clock, executor, JsonUtils.newObjectMapper(),
 				userEventAppenderBiz, instructorBiz, expressionService, nodeOwnershipDao, taskDao,
-				datumDao);
+				datumDao, datumStreamMetadataDao);
 	}
 
 	@Test

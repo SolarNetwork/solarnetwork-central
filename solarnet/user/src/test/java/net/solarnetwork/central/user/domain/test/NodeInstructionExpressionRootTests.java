@@ -23,17 +23,21 @@
 package net.solarnetwork.central.user.domain.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +52,7 @@ import net.solarnetwork.central.user.domain.NodeInstructionExpressionRoot;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.tariff.TariffSchedule;
 
@@ -524,6 +529,39 @@ public class NodeInstructionExpressionRootTests {
 		and.then(result)
 			.as("Secret resolved")
 			.isEqualTo(secretValue.getBytes(UTF_8))
+			;
+		// @formatter:on		
+	}
+
+	@Test
+	public void findStream() {
+		// GIVEN
+		final SolarNodeOwnership owner = ownershipFor(randomLong(), randomLong());
+		final NodeInstruction instruction = new NodeInstruction();
+		final String sourceId = randomString();
+		final String streamName = randomString();
+		final String tag = randomString();
+
+		final var streamMeta = emptyMeta(UUID.randomUUID(), "UTC", ObjectDatumKind.Location,
+				randomLong(), sourceId);
+		given(datumStreamsAccessor.findStreams(ObjectDatumKind.Location, streamName, sourceId, tag))
+				.willReturn(List.of(streamMeta));
+
+		final NodeInstructionExpressionRoot root = newRoot(owner, instruction, null, null, null, null,
+				null, null);
+
+		// WHEN
+		ObjectDatumStreamMetadata result = root.findDatumStream(ObjectDatumKind.Location, streamName,
+				sourceId, tag);
+
+		// THEN
+		then(httpOperations).shouldHaveNoInteractions();
+		then(datumStreamsAccessor).shouldHaveNoMoreInteractions();
+
+		// @formatter:off
+		and.then(result)
+			.as("First stream meta from accessor returned")
+			.isSameAs(streamMeta)
 			;
 		// @formatter:on		
 	}
