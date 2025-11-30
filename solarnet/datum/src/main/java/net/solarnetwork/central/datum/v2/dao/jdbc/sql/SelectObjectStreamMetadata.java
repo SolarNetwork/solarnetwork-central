@@ -40,7 +40,7 @@ import net.solarnetwork.util.SearchFilter;
  * Generate dynamic SQL for a "find stream metadata" query.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 3.8
  */
 public final class SelectObjectStreamMetadata implements PreparedStatementCreator, SqlProvider {
@@ -174,7 +174,7 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 		}
 
 		if ( withNameFts ) {
-			stmt.setString(++p, filter.getLocation().getName());
+			p = DatumSqlUtils.prepareObjectMetadataFilter(filter, kind, con, stmt, p);
 			if ( searchFilter != null ) {
 				DatumSqlUtils.prepareMetadataSearchFilter(searchFilter, con, stmt, p);
 			}
