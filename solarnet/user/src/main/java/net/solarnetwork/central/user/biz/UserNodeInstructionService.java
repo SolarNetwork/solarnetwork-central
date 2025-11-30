@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.biz;
 import java.time.Instant;
 import java.util.concurrent.Future;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
+import net.solarnetwork.central.user.domain.UserNodeInstructionTaskSimulationOutput;
 
 /**
  * Service to manage user instruction tasks.
@@ -67,9 +68,21 @@ public interface UserNodeInstructionService {
 	 * The intention of this method is to "reset" a task that was inadvertently
 	 * left in an executing state, for example after a server restart.
 	 * </p>
-	 *
+	 * 
+	 * @param olderThan
+	 *        the date tasks must be before to consider resetting
 	 * @return the number of tasks reset
 	 */
 	int resetAbandondedExecutingTasks(Instant olderThan);
+
+	/**
+	 * Simulate the execution of a control instruction task.
+	 *
+	 * @param task
+	 *        the task to simulate
+	 * @return the simulation result, never {@code null}
+	 */
+	UserNodeInstructionTaskSimulationOutput simulateControlInstructionTask(
+			UserNodeInstructionTaskEntity task);
 
 }

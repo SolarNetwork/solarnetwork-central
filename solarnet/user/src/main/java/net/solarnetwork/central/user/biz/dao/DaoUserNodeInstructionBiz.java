@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
@@ -33,11 +35,13 @@ import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.biz.UserNodeInstructionBiz;
+import net.solarnetwork.central.user.biz.UserNodeInstructionService;
 import net.solarnetwork.central.user.dao.BasicUserNodeInstructionTaskFilter;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskFilter;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntityInput;
+import net.solarnetwork.central.user.domain.UserNodeInstructionTaskSimulationOutput;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -48,22 +52,26 @@ import net.solarnetwork.dao.FilterResults;
  */
 public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 
-	private final UserNodeInstructionTaskDao controlInstructionTaskDao;
+	private final UserNodeInstructionService instructionService;
+	private final UserNodeInstructionTaskDao instructionTaskDao;
 
 	private Validator validator;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param controlInstructionTaskDao
+	 * @param instructionService
+	 *        the instruction service
+	 * @param instructionTaskDao
 	 *        the instruction task DAO
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public DaoUserNodeInstructionBiz(UserNodeInstructionTaskDao controlInstructionTaskDao) {
+	public DaoUserNodeInstructionBiz(UserNodeInstructionService instructionService,
+			UserNodeInstructionTaskDao instructionTaskDao) {
 		super();
-		this.controlInstructionTaskDao = requireNonNullArgument(controlInstructionTaskDao,
-				"controlInstructionTaskDao");
+		this.instructionService = requireNonNullArgument(instructionService, "instructionService");
+		this.instructionTaskDao = requireNonNullArgument(instructionTaskDao, "instructionTaskDao");
 
 	}
 
@@ -74,7 +82,7 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		requireNonNullArgument(userId, "userId");
 		BasicUserNodeInstructionTaskFilter f = new BasicUserNodeInstructionTaskFilter(filter);
 		f.setUserId(userId);
-		return controlInstructionTaskDao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
+		return instructionTaskDao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -89,9 +97,9 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		// only update state if a user-settable value (start, stop)
 		if ( desiredState == BasicClaimableJobState.Queued
 				|| desiredState == BasicClaimableJobState.Completed ) {
-			controlInstructionTaskDao.updateTaskState(id, desiredState, expectedStates);
+			instructionTaskDao.updateTaskState(id, desiredState, expectedStates);
 		}
-		return controlInstructionTaskDao.get(id);
+		return instructionTaskDao.get(id);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -106,15 +114,15 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		UserNodeInstructionTaskEntity entity = input.toEntity(id);
 		UserLongCompositePK pk = id;
 		if ( expectedStates == null || expectedStates.length < 1 ) {
-			pk = controlInstructionTaskDao.save(entity);
+			pk = instructionTaskDao.save(entity);
 		} else {
 			if ( !id.allKeyComponentsAreAssigned() ) {
 				throw new IllegalArgumentException(
 						"The userId and configId components must be provided.");
 			}
-			controlInstructionTaskDao.updateTask(entity, expectedStates);
+			instructionTaskDao.updateTask(entity, expectedStates);
 		}
-		return controlInstructionTaskDao.get(pk);
+		return instructionTaskDao.get(pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -122,7 +130,24 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 	public void deleteControlInstructionTask(UserLongCompositePK id) {
 		requireNonNullArgument(id, "id");
 		requireNonNullArgument(id.getUserId(), "id.userId");
-		controlInstructionTaskDao.delete(controlInstructionTaskDao.entityKey(id));
+		instructionTaskDao.delete(instructionTaskDao.entityKey(id));
+	}
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	@Override
+	public UserNodeInstructionTaskSimulationOutput simulateControlInstructionTask(final Long userId,
+			final UserNodeInstructionTaskEntityInput input) {
+		requireNonNullArgument(userId, "userId");
+		requireNonNullArgument(input, "input");
+
+		// force stating state to match execution job
+		input.setState(BasicClaimableJobState.Queued);
+		input.setExecuteAt(Instant.now());
+
+		validateInput(input);
+
+		final UserNodeInstructionTaskEntity task = input.toEntity(unassignedEntityIdKey(userId));
+		return instructionService.simulateControlInstructionTask(task);
 	}
 
 	private void validateInput(final Object input) {

@@ -36,6 +36,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,11 +50,14 @@ import jakarta.validation.ValidatorFactory;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.user.biz.UserNodeInstructionBiz;
+import net.solarnetwork.central.user.biz.UserNodeInstructionService;
 import net.solarnetwork.central.user.biz.dao.DaoUserNodeInstructionBiz;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntityInput;
+import net.solarnetwork.central.user.domain.UserNodeInstructionTaskSimulationOutput;
 
 /**
  * Test cases for the {@link UserNodeInstructionBiz} class.
@@ -68,6 +72,9 @@ public class DaoUserNodeInstructionBizTests {
 	private final static String TEST_SCHEDULE = "60";
 
 	@Mock
+	private UserNodeInstructionService instructionService;
+
+	@Mock
 	private UserNodeInstructionTaskDao controlInstructionTaskDao;
 
 	@Captor
@@ -77,7 +84,7 @@ public class DaoUserNodeInstructionBizTests {
 
 	@BeforeEach
 	public void setup() {
-		biz = new DaoUserNodeInstructionBiz(controlInstructionTaskDao);
+		biz = new DaoUserNodeInstructionBiz(instructionService, controlInstructionTaskDao);
 
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 		biz.setValidator(factory.getValidator());
@@ -377,4 +384,50 @@ public class DaoUserNodeInstructionBizTests {
 		// @formatter:on
 	}
 
+	@Test
+	public void simulate() {
+		// GIVEN
+		final Long userId = randomLong();
+
+		UserNodeInstructionTaskEntityInput input = new UserNodeInstructionTaskEntityInput();
+		input.setName(randomString());
+		input.setNodeId(randomLong());
+		input.setTopic(randomString());
+		input.setSchedule(TEST_SCHEDULE);
+		input.setState(BasicClaimableJobState.Claimed);
+
+		// @formatter:off
+		input.setServiceProperties(Map.of(
+				"instruction", Map.of(
+						"params", Map.of("foo", "bar")
+						)
+				));
+		// @formatter:on
+
+		final UserNodeInstructionTaskEntity task = input
+				.toEntity(UserLongCompositePK.unassignedEntityIdKey(userId));
+		final UserNodeInstructionTaskSimulationOutput serviceOutput = new UserNodeInstructionTaskSimulationOutput(
+				task, new Instruction(), List.of(), List.of(), TEST_SCHEDULE);
+		given(instructionService.simulateControlInstructionTask(any())).willReturn(serviceOutput);
+
+		// WHEN
+		UserNodeInstructionTaskSimulationOutput result = biz.simulateControlInstructionTask(userId,
+				input);
+
+		// THEN
+		// @formatter:off
+		then(instructionService).should().simulateControlInstructionTask(controlInstructionTaskCaptor.capture());
+		and.then(controlInstructionTaskCaptor.getValue())
+			.as("Task passed to service created from input")
+			.usingRecursiveComparison()
+			.ignoringFields("executeAt", "state")
+			.isEqualTo(task)
+			;
+		
+		and.then(result)
+			.as("Result from service returned")
+			.isSameAs(serviceOutput)
+			;
+		// @formatter:on
+	}
 }

@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import jakarta.validation.Validator;
+import net.solarnetwork.central.user.biz.UserNodeInstructionService;
 import net.solarnetwork.central.user.biz.dao.DaoUserNodeInstructionBiz;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
 
@@ -42,6 +43,9 @@ import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
 public class UserNodeInstructionBizConfig {
 
 	@Autowired
+	private UserNodeInstructionService instructionService;
+
+	@Autowired
 	private UserNodeInstructionTaskDao instructionTaskDao;
 
 	@Autowired
@@ -49,7 +53,7 @@ public class UserNodeInstructionBizConfig {
 
 	@Bean
 	public DaoUserNodeInstructionBiz userInstructionBiz() {
-		var biz = new DaoUserNodeInstructionBiz(instructionTaskDao);
+		var biz = new DaoUserNodeInstructionBiz(instructionService, instructionTaskDao);
 
 		biz.setValidator(validator);
 

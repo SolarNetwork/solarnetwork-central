@@ -44,6 +44,7 @@ import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.central.user.dao.BasicUserNodeInstructionTaskFilter;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntityInput;
+import net.solarnetwork.central.user.domain.UserNodeInstructionTaskSimulationOutput;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskStateInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
@@ -74,6 +75,17 @@ public class UserNodeInstructionsController {
 	public UserNodeInstructionsController(UserNodeInstructionBiz userInstructionBiz) {
 		super();
 		this.biz = requireNonNullArgument(userInstructionBiz, "userInstructionBiz");
+	}
+
+	/*-=======================
+	 * Simulate Instruction
+	 *-======================= */
+
+	@RequestMapping(value = "/simulate", method = RequestMethod.POST)
+	public Result<UserNodeInstructionTaskSimulationOutput> simulateUserNodeInstructionTask(
+			@Valid @RequestBody UserNodeInstructionTaskEntityInput input) {
+		var result = biz.simulateControlInstructionTask(getCurrentActorUserId(), input);
+		return success(result);
 	}
 
 	/*-=======================

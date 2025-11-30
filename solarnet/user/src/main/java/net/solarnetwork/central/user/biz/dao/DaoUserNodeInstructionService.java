@@ -27,6 +27,7 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
+import static net.solarnetwork.central.user.domain.InstructionExpressionEvaluationResult.expressionResult;
 import static net.solarnetwork.codec.JsonUtils.getStringMapFromTree;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.Trigger;
@@ -52,6 +55,7 @@ import org.springframework.scheduling.support.SimpleTriggerContext;
 import org.springframework.web.client.RestClientResponseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.biz.InMemoryUserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -62,15 +66,20 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
+import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.scheduler.SchedulerUtils;
 import net.solarnetwork.central.user.biz.InstructionsExpressionService;
 import net.solarnetwork.central.user.biz.UserNodeInstructionService;
+import net.solarnetwork.central.user.dao.NoopUserNodeInstructionTaskDao;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
+import net.solarnetwork.central.user.domain.InstructionExpressionEvaluationResult;
 import net.solarnetwork.central.user.domain.NodeInstructionExpressionRoot;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
+import net.solarnetwork.central.user.domain.UserNodeInstructionTaskSimulationOutput;
 import net.solarnetwork.central.user.domain.UsersUserEvents;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.KeyValuePair;
 import net.solarnetwork.security.AuthorizationException;
 import net.solarnetwork.security.AuthorizationException.Reason;
@@ -190,6 +199,38 @@ public class DaoUserNodeInstructionService
 	}
 
 	@Override
+	public UserNodeInstructionTaskSimulationOutput simulateControlInstructionTask(
+			UserNodeInstructionTaskEntity task) {
+		// force starting state to match what execution job does
+		task.setEnabled(true);
+		task.setState(BasicClaimableJobState.Claimed);
+		task.setExecuteAt(clock.instant());
+		task.setLastExecuteAt(null);
+
+		final InMemoryUserEventAppenderBiz eventAppender = new InMemoryUserEventAppenderBiz();
+		final List<Instruction> generatedInstructions = new ArrayList<>(1);
+		final var job = new UserNodeInstructionTask(task, eventAppender,
+				NoopUserNodeInstructionTaskDao.INSTANCE, (nodeId, instr) -> {
+					var result = new NodeInstruction(instr.getTopic(), instr.getInstructionDate(),
+							nodeId);
+					result.setInstruction(new Instruction(instr));
+					result.getInstruction().setState(InstructionState.Queued);
+					generatedInstructions.add(result.getInstruction());
+					return result;
+				}, new ArrayList<>(8));
+		UserNodeInstructionTaskEntity result = null;
+		String message = null;
+		try {
+			result = job.call();
+		} catch ( Exception e ) {
+			message = e.toString();
+		}
+		return new UserNodeInstructionTaskSimulationOutput(result,
+				!generatedInstructions.isEmpty() ? generatedInstructions.getFirst() : null,
+				eventAppender.getEvents(), job.expressionResults, message);
+	}
+
+	@Override
 	public UserNodeInstructionTaskEntity claimQueuedTask() {
 		if ( executorService.isShutdown() ) {
 			return null;
@@ -220,13 +261,57 @@ public class DaoUserNodeInstructionService
 
 	private final class UserNodeInstructionTask implements Callable<UserNodeInstructionTaskEntity> {
 
+		private final UserEventAppenderBiz userEventAppenderBiz;
+		private final UserNodeInstructionTaskDao taskDao;
+		private final BiFunction<Long, Instruction, NodeInstruction> instructionHandler;
 		private final UserNodeInstructionTaskEntity task;
 		private final BasicClaimableJobState startState;
+		private final List<InstructionExpressionEvaluationResult> expressionResults;
 
+		/**
+		 * Constructor for "real" mode.
+		 * 
+		 * @param taskInfo
+		 *        the task to execute
+		 * @throws IllegalArgumentException
+		 *         if any argument is {@code null}
+		 */
 		private UserNodeInstructionTask(UserNodeInstructionTaskEntity taskInfo) {
+			this(taskInfo, DaoUserNodeInstructionService.this.userEventAppenderBiz,
+					DaoUserNodeInstructionService.this.taskDao,
+					DaoUserNodeInstructionService.this.instructorBiz::queueInstruction, null);
+		}
+
+		/**
+		 * Constructor to support simulation mode.
+		 * 
+		 * @param userEventAppenderBiz
+		 *        the event appender to use
+		 * @param taskDao
+		 *        the task DAO to use
+		 * @param instructionHandler
+		 *        the instruction handler
+		 * @param taskInfo
+		 *        the task to execute
+		 * @param expressionResults
+		 *        optional list to save expression evaluation results to
+		 * @throws IllegalArgumentException
+		 *         if any argument except {@code expressionResults} is
+		 *         {@code null}
+		 */
+		private UserNodeInstructionTask(UserNodeInstructionTaskEntity taskInfo,
+				UserEventAppenderBiz userEventAppenderBiz, UserNodeInstructionTaskDao taskDao,
+				BiFunction<Long, Instruction, NodeInstruction> instructionHandler,
+
+				List<InstructionExpressionEvaluationResult> expressionResults) {
 			super();
+			this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz,
+					"userEventAppenderBiz");
+			this.taskDao = requireNonNullArgument(taskDao, "taskDao");
+			this.instructionHandler = requireNonNullArgument(instructionHandler, "instructorBiz");
 			this.task = requireNonNullArgument(taskInfo, "task").clone();
 			this.startState = requireNonNullArgument(taskInfo.getState(), "task.state");
+			this.expressionResults = expressionResults;
 		}
 
 		@Override
@@ -350,14 +435,14 @@ public class DaoUserNodeInstructionService
 			}
 			task.setState(Executing);
 
-			final NodeInstruction result = instructorBiz.queueInstruction(task.getNodeId(),
+			final NodeInstruction result = instructionHandler.apply(task.getNodeId(),
 					instrInput.getInstruction());
 
 			// success: update task info to start again tomorrow
 			final var now = clock.instant();
 			Instant nextExecTime = execDate;
 			var ctx = new SimpleTriggerContext(clock);
-			while ( nextExecTime.isBefore(now) ) {
+			while ( !nextExecTime.isAfter(now) ) {
 				// skip any missed execution times between last actual execution and now...
 				ctx.update(nextExecTime,
 						(ctx.lastScheduledExecution() == null ? execTime : nextExecTime), now);
@@ -454,6 +539,10 @@ public class DaoUserNodeInstructionService
 
 						default:
 							combinedParameters.put(exprInfo.getKey(), exprResult.toString());
+					}
+					if ( expressionResults != null ) {
+						expressionResults.add(expressionResult(exprInfo.getValue(), combinedParameters,
+								instrInput.getInstruction()));
 					}
 				} catch ( RuntimeException e ) {
 					task.setResultProps(Map.of(SOURCE_DATA_KEY, exprInfo.getValue()));

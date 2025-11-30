@@ -8,7 +8,16 @@ app:
       mail.from: accounts@localhost
       html-template-cache:
         ttl: 3600
-  cache.persistence.path: "var/cache"
+  cache:
+    persistence.path: "var/cache"
+    user-metadata-cache:
+      ttl: 600
+      heap-max-entries: 1000
+      disk-max-size-mb: 0
+    user-metadata-path-cache:
+      ttl: 600
+      heap-max-entries: 1000
+      disk-max-size-mb: 0
   c2c:
     cache:
       datum-stream-meta-cache:
@@ -295,6 +304,21 @@ app:
         node-certificate-renewal-period-months: 3
       mail.template:
         from: "nobody@localhost.localdomain"
+  user-instr:
+    cache:
+      expression-cache:
+        tti: 3600
+        ttl: 0
+        heap-max-entries: 5000
+        disk-max-size-mb: 0
+    executor:
+      thread-name-prefix: "SolarNet-UserInstr-"
+      core-pool-size: 2
+      max-pool-size: 2
+      queue-capacity: 0
+      allow-core-thread-time-out: true
+    service:
+      shutdown-max-wait: "5m"
   user-service-auditor:
     update-delay: 100
     flush-delay: 10000

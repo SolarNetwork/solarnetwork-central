@@ -27,6 +27,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskFilter;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntityInput;
+import net.solarnetwork.central.user.domain.UserNodeInstructionTaskSimulationOutput;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -38,8 +39,7 @@ import net.solarnetwork.dao.FilterResults;
 public interface UserNodeInstructionBiz {
 
 	/**
-	 * Get a list of all available cloud datum stream rake tasks for a given
-	 * user.
+	 * Get a list of all available control instruction tasks for a given user.
 	 *
 	 * @param userId
 	 *        the user ID to get entities for
@@ -51,7 +51,7 @@ public interface UserNodeInstructionBiz {
 			Long userId, UserNodeInstructionTaskFilter filter);
 
 	/**
-	 * Update the state of a datum stream rake task.
+	 * Update the state of a control instruction task.
 	 *
 	 * @param id
 	 *        the ID of the task to update the state of
@@ -67,10 +67,13 @@ public interface UserNodeInstructionBiz {
 			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates);
 
 	/**
-	 * Save a datum stream rake task.
+	 * Save a control instruction task.
 	 *
 	 * @param id
-	 *        the ID of the {@link UserNodeInstructionTaskEntity} to save
+	 *        the ID of the {@link UserNodeInstructionTaskEntity} to save; the
+	 *        entity ID can be set to
+	 *        {@link UserLongCompositePK#UNASSIGNED_ENTITY_ID} to create a new
+	 *        instruction task entity
 	 * @param input
 	 *        the info to save
 	 * @param expectedStates
@@ -83,11 +86,23 @@ public interface UserNodeInstructionBiz {
 			UserNodeInstructionTaskEntityInput input, BasicClaimableJobState... expectedStates);
 
 	/**
-	 * Delete a specific datum stream rake task.
+	 * Delete a specific control instruction task.
 	 *
 	 * @param id
 	 *        the primary key of the entity to delete
 	 */
 	void deleteControlInstructionTask(UserLongCompositePK id);
+
+	/**
+	 * Simulate the execution of a control instruction task.
+	 *
+	 * @param id
+	 *        the ID of the user simulating the task for
+	 * @param input
+	 *        the complete node instruction task input to simulate
+	 * @return the simulation result, never {@code null}
+	 */
+	UserNodeInstructionTaskSimulationOutput simulateControlInstructionTask(Long userId,
+			UserNodeInstructionTaskEntityInput input);
 
 }

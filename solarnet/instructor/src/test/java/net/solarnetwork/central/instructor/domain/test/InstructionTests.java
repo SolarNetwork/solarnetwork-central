@@ -22,24 +22,22 @@
 
 package net.solarnetwork.central.instructor.domain.test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasSize;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * Test cases for the {@link Instruction} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class InstructionTests {
 
@@ -55,12 +53,21 @@ public class InstructionTests {
 		instr.setParams(params);
 
 		// THEN
-		List<InstructionParameter> list = instr.getParameters();
-		assertThat("InstructionParameter instances created", list, hasSize(2));
-		assertThat("Param 1 key", list.get(0).getName(), equalTo("foo"));
-		assertThat("Param 1 val", list.get(0).getValue(), equalTo("bar"));
-		assertThat("Param 2 key", list.get(1).getName(), equalTo("bar"));
-		assertThat("Param 2 val", list.get(1).getValue(), equalTo("bam"));
+		// @formatter:off
+		then(instr.getParameters())
+			.as("InstructionParameter instances created")
+			.hasSize(2)
+			.satisfies(list -> {
+				then(list).element(0)
+					.returns("foo", from(InstructionParameter::getName))
+					.returns("bar", from(InstructionParameter::getValue))
+					;
+				then(list).element(1)
+					.returns("bar", from(InstructionParameter::getName))
+					.returns("bam", from(InstructionParameter::getValue))
+					;
+			})
+			;
 	}
 
 	@Test
@@ -74,8 +81,13 @@ public class InstructionTests {
 		Map<String, String> params = instr.getParams();
 
 		// THEN
-		assertThat("Parameters available", params,
-				allOf(hasEntry("foo", "bar"), hasEntry("bar", "bam")));
+		// @formatter:off
+		then(params)
+			.as("Parameters available")
+			.containsEntry("foo", "bar")
+			.containsEntry("bar", "bam")
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -89,7 +101,63 @@ public class InstructionTests {
 		Map<String, String> params = instr.getParams();
 
 		// THEN
-		assertThat("Multiple parameters for same key merged", params, hasEntry("foo", "barbam"));
+		// @formatter:off
+		then(params)
+			.as("Multiple parameters for same key merged")
+			.containsEntry("foo", "barbam")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void copy() {
+		// GIVEN
+		Instruction instr = new Instruction("test", Instant.now());
+		instr.setId(randomLong());
+		instr.setCreated(instr.getInstructionDate().plusSeconds(1L));
+		instr.setExpirationDate(instr.getInstructionDate().plusSeconds(2L));
+		instr.setStatusDate(instr.getInstructionDate().plusSeconds(3L));
+		instr.setState(InstructionState.Completed);
+		instr.addParameter("foo", "bar");
+		instr.addParameter("foo", "bam");
+		instr.setResultParameters(Map.of("foo", "bar"));
+
+		// WHEN
+		Instruction result = new Instruction(instr);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Topic copied")
+			.returns(instr.getTopic(), from(Instruction::getTopic))
+			.as("Instruction date copied")
+			.returns(instr.getInstructionDate(), from(Instruction::getInstructionDate))
+			.as("ID copied")
+			.returns(instr.getId(), from(Instruction::getId))
+			.as("Created copied")
+			.returns(instr.getCreated(), from(Instruction::getCreated))
+			.as("Expiration date copied")
+			.returns(instr.getExpirationDate(), from(Instruction::getExpirationDate))
+			.as("Status date copied")
+			.returns(instr.getStatusDate(), from(Instruction::getStatusDate))
+			.as("State copied")
+			.returns(instr.getState(), from(Instruction::getState))
+			;
+
+		then(result.getParameters())
+			.as("Parameters list copied")
+			.isEqualTo(instr.getParameters())
+			.as("List is new instance")
+			.isNotSameAs(instr.getParameters())
+			;
+		
+		then(result.getResultParameters())
+			.as("Result parameters list copied")
+			.isEqualTo(instr.getResultParameters())
+			.as("Map is new instance")
+			.isNotSameAs(instr.getResultParameters())
+			;
+		// @formatter:on
 	}
 
 }

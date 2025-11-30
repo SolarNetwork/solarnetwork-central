@@ -61,6 +61,7 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.CommonUserEvents;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
@@ -71,6 +72,7 @@ import net.solarnetwork.central.test.ResultCaptor;
 import net.solarnetwork.central.user.biz.dao.DaoUserNodeInstructionService;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
+import net.solarnetwork.central.user.domain.UserNodeInstructionTaskSimulationOutput;
 import net.solarnetwork.central.user.domain.UsersUserEvents;
 import net.solarnetwork.central.user.support.BasicInstructionsExpressionService;
 import net.solarnetwork.codec.JsonUtils;
@@ -239,6 +241,99 @@ public class DaoUserNodeInstructionService_SpelTests implements CommonUserEvents
 			.containsAllEntriesOf(Map.of(
 					"foo", "%s_%s_changed".formatted(topic, controlVal), 
 					"bar", "foo: %s_%s_changed".formatted(topic, controlVal)))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void simulate() {
+		// GIVEN
+		final Duration taskSchedule = Duration.ofHours(1);
+		final Instant startingExecDate = clock.instant().minusSeconds(1);
+		final String topic = randomString();
+
+		final UserNodeInstructionTaskEntity task = new UserNodeInstructionTaskEntity(TEST_USER_ID,
+				randomLong());
+		task.setTopic(topic);
+		task.setState(Claimed);
+		task.setExecuteAt(startingExecDate);
+		task.setSchedule(String.valueOf(taskSchedule.toSeconds()));
+		task.setNodeId(randomLong());
+
+		final String controlId = randomString();
+		final String controlVal = String.valueOf(randomInt());
+		final Map<String, Object> params = Map.of(controlId, controlVal);
+
+		// @formatter:off
+		task.setServiceProps(Map.of(
+				"instruction", Map.of(
+						"topic", topic,
+						"params", params
+						),
+				"expressions", List.of(
+						Map.of(
+								"key", "foo",
+								"value", "instruction.topic + '_' + parameters['%s'] + '_changed'".formatted(controlId)
+								),
+						Map.of(
+								"key", "bar",
+								"value", "'foo: ' + #foo"
+								)
+						)
+				));
+		// @formatter:on
+
+		// verify node ownership
+		final SolarNodeOwnership owner = ownershipFor(task.getNodeId(), TEST_USER_ID);
+		given(nodeOwnershipDao.ownershipForNodeId(task.getNodeId())).willReturn(owner);
+
+		// WHEN
+		UserNodeInstructionTaskSimulationOutput result = service.simulateControlInstructionTask(task);
+
+		// THEN
+		// @formatter:off
+		then(instructorBiz).shouldHaveNoInteractions();
+		then(taskDao).shouldHaveNoInteractions();
+
+		and.then(result)
+			.as("Result generated")
+			.isNotNull()
+			.as("No message generated")
+			.returns(null, from(UserNodeInstructionTaskSimulationOutput::getMessage))
+			;
+		
+		and.then(result.getTask())
+			.as("Provided task returned")
+			.isEqualTo(task)
+			.as("State ends as Queued")
+			.returns(BasicClaimableJobState.Queued, from(UserNodeInstructionTaskEntity::getState))
+			.as("Last execute at populated from clock time")
+			.returns(clock.instant(), from(UserNodeInstructionTaskEntity::getLastExecuteAt))
+			.as("Execute date set to next execution date based on schedule")
+			.returns(clock.instant().plus(taskSchedule), from(UserNodeInstructionTaskEntity::getExecuteAt))
+			;
+		
+		and.then(result.getInstruction())
+			.as("Generated instruction returned")
+			.isNotNull()
+			.as("Instruction to queue topic from task topic")
+			.returns(topic, from(Instruction::getTopic))
+			.as("Instruction is (simulated) Queued")
+			.returns(InstructionState.Queued, from(Instruction::getState))
+			.extracting(Instruction::getParams, map(String.class, Object.class))
+			.as("Params from task copied to queued instruction")
+			.containsAllEntriesOf(params)
+			.as("Expression results copied to queued instruction; expressions refer to parameters as variables")
+			.containsAllEntriesOf(Map.of(
+					"foo", "%s_%s_changed".formatted(topic, controlVal), 
+					"bar", "foo: %s_%s_changed".formatted(topic, controlVal)))
+			;
+		
+		and.then(result.getEvents())
+			.as("Events provided")
+			.isNotNull()
+			.as("1 event generated for task reset")
+			.hasSize(1)
 			;
 		// @formatter:on
 	}
