@@ -305,11 +305,16 @@ app:
       mail.template:
         from: "nobody@localhost.localdomain"
   user-instr:
+    allow-http-local-hosts: false
     cache:
       expression-cache:
         tti: 3600
         ttl: 0
         heap-max-entries: 5000
+        disk-max-size-mb: 0
+      http-cache:
+        ttl: 900
+        heap-max-entries: 1000
         disk-max-size-mb: 0
     executor:
       thread-name-prefix: "SolarNet-UserInstr-"

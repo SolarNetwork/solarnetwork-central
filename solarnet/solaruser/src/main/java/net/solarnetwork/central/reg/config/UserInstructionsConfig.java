@@ -33,9 +33,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.expression.Expression;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import net.solarnetwork.central.common.http.CachableRequestEntity;
 import net.solarnetwork.central.scheduler.ThreadPoolTaskExecutorPingTest;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.PingTest;
 
 /**
@@ -86,6 +88,22 @@ public class UserInstructionsConfig implements SolarNetUserConfiguration {
 			@Qualifier(USER_INSTRUCTIONS_EXPRESSIONS) CacheSettings settings) {
 		return settings.createCache(cacheManager, String.class, Expression.class,
 				USER_INSTRUCTIONS_EXPRESSIONS + "-cache");
+	}
+
+	@Bean
+	@Qualifier(USER_INSTRUCTIONS_HTTP)
+	@ConfigurationProperties(prefix = "app.user-instr.cache.http-cache")
+	public CacheSettings userInstructionsHttpCacheSettings() {
+		return new CacheSettings();
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Bean
+	@Qualifier(USER_INSTRUCTIONS_HTTP)
+	public Cache<CachableRequestEntity, Result<?>> userInstructionsHttpCache(
+			@Qualifier(USER_INSTRUCTIONS_HTTP) CacheSettings settings) {
+		return (Cache) settings.createCache(cacheManager, CachableRequestEntity.class, Result.class,
+				USER_INSTRUCTIONS_HTTP + "-cache");
 	}
 
 }

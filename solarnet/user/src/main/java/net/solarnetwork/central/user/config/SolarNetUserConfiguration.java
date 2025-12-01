@@ -57,6 +57,13 @@ public interface SolarNetUserConfiguration {
 	String USER_INSTRUCTIONS_EXPRESSIONS = "user-instr-expr";
 
 	/**
+	 * A qualifier for user instructions HTTP.
+	 *
+	 * @since 1.3
+	 */
+	String USER_INSTRUCTIONS_HTTP = "user-instr-http";
+
+	/**
 	 * A qualifier for user metadata.
 	 * 
 	 * @since 1.3
@@ -69,5 +76,12 @@ public interface SolarNetUserConfiguration {
 	 * @since 1.3
 	 */
 	String USER_METADATA_PATH = "user-metadata-path";
+
+	/**
+	 * The audit service name for content processed (bytes).
+	 *
+	 * @since 1.3
+	 */
+	String CONTENT_PROCESSED_AUDIT_SERVICE = "ccio";
 
 }
