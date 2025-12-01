@@ -84,7 +84,7 @@ public class UserNodeInstructionsController {
 	@RequestMapping(value = "/simulate", method = RequestMethod.POST)
 	public Result<UserNodeInstructionTaskSimulationOutput> simulateUserNodeInstructionTask(
 			@Valid @RequestBody UserNodeInstructionTaskEntityInput input) {
-		var result = biz.simulateControlInstructionTask(getCurrentActorUserId(), input);
+		var result = biz.simulateControlInstructionTaskForUser(getCurrentActorUserId(), input);
 		return success(result);
 	}
 

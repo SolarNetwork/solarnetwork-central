@@ -135,8 +135,8 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	@Override
-	public UserNodeInstructionTaskSimulationOutput simulateControlInstructionTask(final Long userId,
-			final UserNodeInstructionTaskEntityInput input) {
+	public UserNodeInstructionTaskSimulationOutput simulateControlInstructionTaskForUser(
+			final Long userId, final UserNodeInstructionTaskEntityInput input) {
 		requireNonNullArgument(userId, "userId");
 		requireNonNullArgument(input, "input");
 
