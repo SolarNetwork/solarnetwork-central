@@ -141,7 +141,7 @@ public abstract class BaseCloudControlService extends BaseCloudIntegrationsIdent
 	 *
 	 * <p>
 	 * This is a convenient method to invoke in implementations of
-	 * {@link CloudControlService#executeInstruction(UserLongCompositePK, net.solarnetwork.central.instructor.domain.Instruction)}
+	 * {@link CloudControlService#executeInstruction(UserLongCompositePK, net.solarnetwork.central.instructor.domain.NodeInstruction)}
 	 * and similar methods.
 	 * </p>
 	 *
@@ -164,7 +164,7 @@ public abstract class BaseCloudControlService extends BaseCloudIntegrationsIdent
 	 *
 	 * <p>
 	 * This is a convenient method to invoke in implementations of
-	 * {@link CloudControlService#executeInstruction(UserLongCompositePK, net.solarnetwork.central.instructor.domain.Instruction)}
+	 * {@link CloudControlService#executeInstruction(UserLongCompositePK, net.solarnetwork.central.instructor.domain.NodeInstruction)}
 	 * and similar methods.
 	 * </p>
 	 *

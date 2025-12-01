@@ -44,7 +44,7 @@ public record InstructionExpressionEvaluationResult(String expression, Map<Strin
 	 *        the expression parameters (will be copied)
 	 * @param instruction
 	 *        the instruction generated (will be copied)
-	 * @return
+	 * @return the new instance
 	 */
 	public static InstructionExpressionEvaluationResult expressionResult(String expression,
 			Map<String, ?> parameters, Instruction instruction) {
