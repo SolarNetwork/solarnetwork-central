@@ -102,7 +102,7 @@ public interface UserNodeInstructionBiz {
 	 *        the complete node instruction task input to simulate
 	 * @return the simulation result, never {@code null}
 	 */
-	UserNodeInstructionTaskSimulationOutput simulateControlInstructionTask(Long userId,
+	UserNodeInstructionTaskSimulationOutput simulateControlInstructionTaskForUser(Long userId,
 			UserNodeInstructionTaskEntityInput input);
 
 }

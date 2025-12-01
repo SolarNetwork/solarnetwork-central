@@ -411,7 +411,7 @@ public class DaoUserNodeInstructionBizTests {
 		given(instructionService.simulateControlInstructionTask(any())).willReturn(serviceOutput);
 
 		// WHEN
-		UserNodeInstructionTaskSimulationOutput result = biz.simulateControlInstructionTask(userId,
+		UserNodeInstructionTaskSimulationOutput result = biz.simulateControlInstructionTaskForUser(userId,
 				input);
 
 		// THEN
