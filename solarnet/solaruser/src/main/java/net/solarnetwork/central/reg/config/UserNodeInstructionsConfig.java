@@ -24,9 +24,11 @@ package net.solarnetwork.central.reg.config;
 
 import static net.solarnetwork.central.user.config.SolarNetUserConfiguration.USER_INSTRUCTIONS;
 import java.time.Clock;
+import javax.cache.Cache;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,7 +37,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestOperations;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.common.http.BasicHttpOperations;
+import net.solarnetwork.central.common.http.CachableRequestEntity;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -47,6 +51,7 @@ import net.solarnetwork.central.user.biz.dao.DaoUserNodeInstructionService;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
 import net.solarnetwork.central.user.domain.UsersUserEvents;
+import net.solarnetwork.domain.Result;
 
 /**
  * Configuration for user node instructions support.
@@ -92,6 +97,16 @@ public class UserNodeInstructionsConfig implements SolarNetUserConfiguration {
 	@Autowired(required = false)
 	private QueryAuditor queryAuditor;
 
+	@Autowired(required = false)
+	private UserServiceAuditor userServiceAuditor;
+
+	@Autowired(required = false)
+	@Qualifier(USER_INSTRUCTIONS_HTTP)
+	private Cache<CachableRequestEntity, Result<?>> httpCache;
+
+	@Value("${app.user-instr.allow-http-local-hosts:false}")
+	private boolean allowHttpLocalHosts;
+
 	@ConfigurationProperties(prefix = "app.user-instr.service")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public UserNodeInstructionService userNodeInstructionService() {
@@ -99,9 +114,15 @@ public class UserNodeInstructionsConfig implements SolarNetUserConfiguration {
 				taskExecutor.getThreadPoolExecutor(), objectMapper, userEventAppenderBiz, instructorBiz,
 				expressionService, nodeOwnershipDao, taskDao, datumDao, datumStreamMetadataDao);
 		service.setQueryAuditor(queryAuditor);
-		service.setHttpOperations(
-				new BasicHttpOperations(LoggerFactory.getLogger(DaoUserNodeInstructionService.class),
-						userEventAppenderBiz, restOps, UsersUserEvents.INSTRUCTION_ERROR_TAGS));
+
+		var http = new BasicHttpOperations(LoggerFactory.getLogger(DaoUserNodeInstructionService.class),
+				userEventAppenderBiz, restOps, UsersUserEvents.INSTRUCTION_ERROR_TAGS);
+		http.setHttpCache(httpCache);
+		http.setAllowLocalHosts(allowHttpLocalHosts);
+		http.setUserServiceAuditor(userServiceAuditor);
+		http.setUserServiceKey(CONTENT_PROCESSED_AUDIT_SERVICE);
+		service.setHttpOperations(http);
+
 		return service;
 	}
 
