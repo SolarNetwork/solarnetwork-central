@@ -1,5 +1,5 @@
 /* ==================================================================
- * HttpUserEvents.java - 19/11/2025 11:48:39 am
+ * OAuthClientIdentity.java - 3/12/2025 10:16:13 am
  * 
  * Copyright 2025 SolarNetwork.net Dev Team
  * 
@@ -22,33 +22,15 @@
 
 package net.solarnetwork.central.common.http;
 
+import net.solarnetwork.central.domain.UserLongCompositePK;
+
 /**
- * Constants and helpers for common HTTP user event handling.
+ * An OAuth client identifier.
  * 
  * @author matt
  * @version 1.0
  */
-public interface HttpUserEvents {
-
-	/** A user event tag for an HTTP event. */
-	String HTTP_TAG = "http";
-
-	/** User event data key for a URL. */
-	String HTTP_URI_DATA_KEY = "uri";
-
-	/** User event data key for an HTTP method. */
-	String HTTP_METHOD_DATA_KEY = "method";
-
-	/** User event data key for HTTP body content. */
-	String HTTP_BODY_DATA_KEY = "body";
-
-	/** User event data key for HTTP status code. */
-	String HTTP_STATUS_CODE_DATA_KEY = "status";
-
-	/** User event data key for HTTP response data. */
-	String HTTP_RESPONSE_BODY_DATA_KEY = "responseBody";
-
-	/** User event data keyf or HTTP response data length. */
-	String HTTP_RESPONSE_BODY_LENGTH_DATA_KEY = "responseLength";
+public record OAuth2ClientIdentity(UserLongCompositePK configId, String registrationId,
+		String principal) {
 
 }

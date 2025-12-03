@@ -22,20 +22,34 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.central.common.http.HttpConstants.OAUTH_CLIENT_ID_SETTING;
+import static net.solarnetwork.central.common.http.HttpConstants.OAUTH_TOKEN_URL_SETTING;
+import static net.solarnetwork.central.common.http.HttpConstants.USERNAME_SETTING;
+import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
+import static net.solarnetwork.util.CollectionUtils.getMapString;
+import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.central.common.http.OAuth2ClientIdentity;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Cloud control instruction task runtime information.
@@ -43,11 +57,20 @@ import net.solarnetwork.codec.JsonUtils;
  * @author matt
  * @version 1.0
  */
-@JsonIgnoreProperties({ "id", "enabled" })
-@JsonPropertyOrder({ "userId", "configId", "name", "nodeId", "topic", "schedule", "state", "executeAt",
-		"serviceProperties", "lastExecuteAt", "message", "resultProperties" })
+@JsonIgnoreProperties({ "id" })
+@JsonPropertyOrder({ "userId", "configId", "enabled", "name", "nodeId", "topic", "schedule", "state",
+		"executeAt", "serviceProperties", "lastExecuteAt", "message", "resultProperties" })
 public class UserNodeInstructionTaskEntity
 		extends BaseUserModifiableEntity<UserNodeInstructionTaskEntity, UserLongCompositePK> {
+
+	/** A service property key for expression settings. */
+	public static final String EXPRESSION_SETTINGS_PROP = "settings";
+
+	/** A service property key for encrypted expression settings. */
+	public static final String EXPRESSION_SECURE_SETTINGS_PROP = "secrets";
+
+	/** A system identifier component for OAuth registration IDs. */
+	public static final String OAUTH_SYSTEM_NAME = "user-instr";
 
 	@Serial
 	private static final long serialVersionUID = -8913216603960129724L;
@@ -197,6 +220,129 @@ public class UserNodeInstructionTaskEntity
 		}
 		builder.append("}");
 		return builder.toString();
+	}
+
+	/**
+	 * Get the task settings.
+	 * 
+	 * <p>
+	 * This returns the combination of settings and secure settings from the
+	 * {@link #EXPRESSION_SETTINGS_PROP} and
+	 * {@link #EXPRESSION_SECURE_SETTINGS_PROP} service property keys, which
+	 * must have {@code Map} object values. The value of any key in the secure
+	 * settings that also exists in the regular settings will override the
+	 * regular settings value in the returned map.
+	 * </p>
+	 * 
+	 * @param decryptor
+	 *        a function to apply to all values in the
+	 *        {@link #EXPRESSION_SECURE_SETTINGS_PROP} service property map
+	 * @return a new map instance, never {@code null}
+	 */
+	public Map<String, Object> settings(Function<String, String> decryptor) {
+		final Map<String, Object> result = new LinkedHashMap<>(4);
+		final Map<String, ?> props = getServiceProperties();
+		if ( props != null && props.get(EXPRESSION_SETTINGS_PROP) instanceof Map<?, ?> s ) {
+			for ( Entry<?, ?> e : s.entrySet() ) {
+				if ( e.getKey() == null || e.getValue() == null ) {
+					continue;
+				}
+				result.put(e.getKey().toString(), e.getValue());
+			}
+		}
+		if ( props != null && props.get(EXPRESSION_SECURE_SETTINGS_PROP) instanceof Map<?, ?> s ) {
+			final Set<String> secureKeys = new HashSet<>(s.size());
+			for ( Entry<?, ?> e : s.entrySet() ) {
+				if ( e.getKey() == null || e.getValue() == null ) {
+					continue;
+				}
+				String key = e.getKey().toString();
+				secureKeys.add(key);
+				result.put(key, e.getValue());
+			}
+			SecurityUtils.decryptedMap(result, secureKeys, decryptor);
+		}
+		return result;
+	}
+
+	/**
+	 * Encrypt all secure settings.
+	 * 
+	 * <p>
+	 * This will encrypt all settings found in a
+	 * {@link #EXPRESSION_SECURE_SETTINGS_PROP} service property map value.
+	 * </p>
+	 * 
+	 * @param encryptor
+	 *        a function to apply to all values in the
+	 *        {@link #EXPRESSION_SECURE_SETTINGS_PROP} service property map
+	 */
+	public void encryptSettings(Function<String, String> encryptor) {
+		final Map<String, Object> props = getServiceProps();
+		if ( props == null || !(props.get(EXPRESSION_SECURE_SETTINGS_PROP) instanceof Map<?, ?> s) ) {
+			return;
+		}
+
+		final Map<String, String> encryptedSettings = new LinkedHashMap<>(s.size());
+		final Set<String> secureKeys = new HashSet<>(s.size());
+		for ( Entry<?, ?> e : s.entrySet() ) {
+			if ( e.getKey() == null || e.getValue() == null ) {
+				continue;
+			}
+			String key = e.getKey().toString();
+			secureKeys.add(key);
+			encryptedSettings.put(key, encryptor.apply(e.getValue().toString()));
+		}
+		putServiceProps(Map.of(EXPRESSION_SECURE_SETTINGS_PROP, encryptedSettings));
+	}
+
+	/**
+	 * Cryptographically digest all secure settings.
+	 * 
+	 * <p>
+	 * This will perform a one-way digest of all settings found in a
+	 * {@link #EXPRESSION_SECURE_SETTINGS_PROP} service property map value.
+	 * </p>
+	 */
+	public void digestSensitiveInformation() {
+		final Map<String, Object> props = getServiceProps();
+		if ( props == null || !(props.get(EXPRESSION_SECURE_SETTINGS_PROP) instanceof Map<?, ?> s) ) {
+			return;
+		}
+
+		final Map<String, String> encryptedSettings = new LinkedHashMap<>(s.size());
+		for ( Entry<?, ?> e : s.entrySet() ) {
+			if ( e.getKey() == null || e.getValue() == null ) {
+				continue;
+			}
+			encryptedSettings.put(e.getKey().toString(),
+					StringUtils.sha256Base64Value(e.getValue().toString()));
+		}
+		putServiceProps(Map.of(EXPRESSION_SECURE_SETTINGS_PROP, encryptedSettings));
+	}
+
+	/**
+	 * Get the configured OAuth client identity.
+	 * 
+	 * @return the identity, or {@code null} if no OAuth identity is available
+	 */
+	public OAuth2ClientIdentity oauthClientIdentity() {
+		final Map<String, Object> props = getServiceProps();
+		if ( props == null || !(props.get(EXPRESSION_SETTINGS_PROP) instanceof Map<?, ?> s) ) {
+			return null;
+		}
+		@SuppressWarnings("unchecked")
+		final Map<String, Object> settings = (Map<String, Object>) s;
+		final String tokenUrl = nonEmptyString(getMapString(OAUTH_TOKEN_URL_SETTING, settings));
+		if ( tokenUrl == null ) {
+			return null;
+		}
+		final String username = nonEmptyString(getMapString(USERNAME_SETTING, settings));
+		final String clientId = nonEmptyString(getMapString(OAUTH_CLIENT_ID_SETTING, settings));
+		return new OAuth2ClientIdentity(getId(),
+				userIdSystemIdentifier(getUserId(), OAUTH_SYSTEM_NAME, getConfigId()),
+				username != null ? username
+						: clientId != null ? clientId : "%s %s".formatted(getId().ident(), getName()));
 	}
 
 	/**

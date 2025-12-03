@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserInstructionTaskEntityRowMapper.java - 10/11/2025 4:54:11 pm
+ * UserNodeInstructionTaskEntityRowMapper.java - 10/11/2025 4:54:11 pm
  *
  * Copyright 2025 SolarNetwork.net Dev Team
  *
@@ -55,17 +55,17 @@ import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
  * @author matt
  * @version 1.0
  */
-public class UserInstructionTaskEntityRowMapper implements RowMapper<UserNodeInstructionTaskEntity> {
+public class UserNodeInstructionTaskEntityRowMapper implements RowMapper<UserNodeInstructionTaskEntity> {
 
 	/** A default instance. */
-	public static final RowMapper<UserNodeInstructionTaskEntity> INSTANCE = new UserInstructionTaskEntityRowMapper();
+	public static final RowMapper<UserNodeInstructionTaskEntity> INSTANCE = new UserNodeInstructionTaskEntityRowMapper();
 
 	private final int columnOffset;
 
 	/**
 	 * Default constructor.
 	 */
-	public UserInstructionTaskEntityRowMapper() {
+	public UserNodeInstructionTaskEntityRowMapper() {
 		this(0);
 	}
 
@@ -75,7 +75,7 @@ public class UserInstructionTaskEntityRowMapper implements RowMapper<UserNodeIns
 	 * @param columnOffset
 	 *        a column offset to apply
 	 */
-	public UserInstructionTaskEntityRowMapper(int columnOffset) {
+	public UserNodeInstructionTaskEntityRowMapper(int columnOffset) {
 		this.columnOffset = columnOffset;
 	}
 

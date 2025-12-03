@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -61,7 +62,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Test cases for the {@link SecurityUtils} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -74,6 +75,9 @@ public class SecurityUtilsTests {
 
 	@Mock
 	private TextEncryptor textEncryptor;
+
+	@Mock
+	private Function<String, String> fn;
 
 	private void becomeUser(String... roles) {
 		User userDetails = new User("test@localhost", "foobar", AuthorityUtils.NO_AUTHORITIES);
@@ -411,6 +415,74 @@ public class SecurityUtilsTests {
 			.containsEntry("bim", data.get("bim"))
 			.as("Secure value that failed to decrypt returned as-is")
 			.containsEntry("foo", data.get("foo"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void encrpytedMap_function() {
+		// GIVEN
+		var data = new LinkedHashMap<String, String>(8);
+		data.put("foo", "bar");
+		data.put("bim", "bam");
+
+		var secureKeys = Set.of("foo");
+
+		var encryptedValue = "foo-encrypted";
+		given(fn.apply(data.get("foo"))).willReturn(encryptedValue);
+
+		// WHEN
+		var result = SecurityUtils.encryptedMap(data, secureKeys, fn);
+
+		// THEN
+		then(textEncryptor).shouldHaveNoMoreInteractions();
+
+		// @formatter:off
+		and.then(result)
+			.as("Result map provided")
+			.isNotNull()
+			.as("New map instance returned")
+			.isNotSameAs(data)
+			.as("Has same keys as input map")
+			.containsOnlyKeys(data.keySet())
+			.as("Non-secure value left alone")
+			.containsEntry("bim", data.get("bim"))
+			.as("Secure value encrypted")
+			.containsEntry("foo", encryptedValue)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void decryptedMap_function() {
+		// GIVEN
+		var data = new LinkedHashMap<String, String>(8);
+		data.put("foo", "bar");
+		data.put("bim", "bam");
+
+		var secureKeys = Set.of("foo");
+
+		var decryptedValue = "foo-decrypted";
+		given(fn.apply(data.get("foo"))).willReturn(decryptedValue);
+
+		// WHEN
+		var result = SecurityUtils.decryptedMap(data, secureKeys, fn);
+
+		// THEN
+		then(textEncryptor).shouldHaveNoMoreInteractions();
+
+		// @formatter:off
+		and.then(result)
+			.as("Result map provided")
+			.isNotNull()
+			.as("New map instance returned")
+			.isNotSameAs(data)
+			.as("Has same keys as input map")
+			.containsOnlyKeys(data.keySet())
+			.as("Non-secure value left alone")
+			.containsEntry("bim", data.get("bim"))
+			.as("Secure value decrypted")
+			.containsEntry("foo", decryptedValue)
 			;
 		// @formatter:on
 	}

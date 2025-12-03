@@ -63,8 +63,8 @@ import net.solarnetwork.service.RemoteServiceException;
  * Basic implementation of {@link HttpOperations}.
  * 
  * <p>
- * The {@link #httpGet(String, Map, Map, Class, Object)} has caching support, if
- * {@link #setHttpCache(Cache)} is configured.
+ * The {@link #httpGet(String, Map, Map, Class, Object, Map)} has caching
+ * support, if {@link #setHttpCache(Cache)} is configured.
  * </p>
  * 
  * @author matt
@@ -73,7 +73,18 @@ import net.solarnetwork.service.RemoteServiceException;
 public class BasicHttpOperations implements HttpOperations, CommonUserEvents, HttpUserEvents {
 
 	/** A maximum error response body length to include in user events. */
-	public static final int USER_EVENT_MAX_ERROR_RESPONSE_BODY_LENGTH = 4096;
+	public static final int USER_EVENT_MAX_RESPONSE_BODY_LENGTH = 4096;
+
+	/**
+	 * A runtime data key for a runtime-specific {@link UserEventAppenderBiz} to
+	 * use.
+	 * 
+	 * <p>
+	 * This can be used to provide a request-specific event appender to use, for
+	 * example during a simulation.
+	 * </p>
+	 */
+	public static final String USER_EVENT_APPENDER_RUNTIME = "userEventAppender";
 
 	/** A logger. */
 	protected final Logger log;
@@ -142,9 +153,9 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 
 	@Override
 	public <I, O> ResponseEntity<O> http(HttpMethod method, URI uri, HttpHeaders headers, I body,
-			Class<O> responseType, Object context) {
+			Class<O> responseType, Object context, Map<String, ?> runtimeData) {
 		final RequestEntity<I> req = RequestEntity.method(method, uri).headers(headers).body(body);
-		return exchange(() -> req, responseType, context,
+		return exchange(() -> req, responseType, context, runtimeData,
 				BasicHttpOperations::defaultRequestEventMessage,
 				BasicHttpOperations::defaultRequestErrorEventMessage);
 	}
@@ -152,7 +163,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	@SuppressWarnings("unchecked")
 	@Override
 	public <O> Result<O> httpGet(String uri, Map<String, ?> parameters, Map<String, ?> headers,
-			Class<O> responseType, Object context) {
+			Class<O> responseType, Object context, Map<String, ?> runtimeData) {
 		URI u = HttpOperations.uri(uri, parameters);
 		HttpHeaders h = HttpOperations.headersForMap(headers);
 		CachableRequestEntity req = new CachableRequestEntity(context, h, HttpMethod.GET, u);
@@ -162,7 +173,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 			result = (Result<O>) httpCache.get(req);
 		}
 		if ( result == null ) {
-			ResponseEntity<O> res = exchange(() -> req, responseType, context,
+			ResponseEntity<O> res = exchange(() -> req, responseType, context, runtimeData,
 					BasicHttpOperations::defaultRequestEventMessage,
 					BasicHttpOperations::defaultRequestErrorEventMessage);
 			result = Result.success(res.getBody());
@@ -221,7 +232,8 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 *        the desired response type
 	 * @param context
 	 *        a user-related context item, such as the user ID or a user-related
-	 *        entity or primary key
+	 * @param runtimeData
+	 *        optional runtime data entity or primary key
 	 * @param eventMessageProvider
 	 *        an event message supplier, for example
 	 *        {@link #defaultRequestEventMessage()}
@@ -230,9 +242,10 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 *        {@link #defaultRequestErrorEventMessage(Throwable)}
 	 * @return the HTTP response entity
 	 */
-	protected final <I, O> ResponseEntity<O> exchange(Supplier<RequestEntity<I>> reqProvider,
-			Class<O> responseType, Object context, Supplier<String> eventMessageProvider,
-			Function<Throwable, String> errorEventMessageProvider) {
+	protected final <I, O> ResponseEntity<O> exchange(final Supplier<RequestEntity<I>> reqProvider,
+			final Class<O> responseType, final Object context, final Map<String, ?> runtimeData,
+			final Supplier<String> eventMessageProvider,
+			final Function<Throwable, String> errorEventMessageProvider) {
 		// cache some log/event details
 		final Long userId = contextUserId(context);
 		final Object confId = (context instanceof Entity<?> e ? e.getId() : null);
@@ -244,6 +257,13 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 		if ( confId instanceof UserRelatedCompositeKey<?> pk ) {
 			CommonUserEvents.populateUserRelatedKeyEventParameters(pk, eventData);
 		}
+
+		final UserEventAppenderBiz eventAppender = (runtimeData != null
+				&& runtimeData.get(USER_EVENT_APPENDER_RUNTIME) instanceof UserEventAppenderBiz b ? b
+						: this.userEventAppenderBiz);
+
+		List<String> tags = eventTags;
+		String eventMsg = eventDescription;
 
 		RequestEntity<I> req = null;
 		try {
@@ -258,19 +278,18 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 
 			validateRequest(req);
 
-			if ( userId != null ) {
-				userEventAppenderBiz.addEvent(userId,
-						event(eventTags, eventDescription, getJSONString(eventData)));
-			}
-			return restOps.exchange(req, responseType);
+			ResponseEntity<O> result = restOps.exchange(req, responseType);
+
+			eventData.put(HTTP_STATUS_CODE_DATA_KEY, result.getStatusCode().value());
+			populateResponseBodyEventData(result, eventData);
+
+			return result;
 		} catch ( ResourceAccessException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of a communication error: {}",
 					eventDescription, context.getClass().getSimpleName(), confIdDesc,
 					req != null ? req.getUrl() : null, e.getMessage());
-			if ( userId != null ) {
-				userEventAppenderBiz.addEvent(userId, event(errorEventTags,
-						errorEventMessageProvider.apply(e), getJSONString(eventData)));
-			}
+			tags = errorEventTags;
+			eventMsg = errorEventMessageProvider.apply(e);
 			throw new RemoteServiceException("%s failed because of a communication error: %s"
 					.formatted(eventDescription, e.getMessage()), e);
 		} catch ( RestClientResponseException e ) {
@@ -282,22 +301,23 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 			if ( e.getResponseBodyAsByteArray() != null ) {
 				try {
 					String respBody = e.getResponseBodyAsString();
-					if ( respBody.length() > USER_EVENT_MAX_ERROR_RESPONSE_BODY_LENGTH ) {
-						respBody = respBody.substring(0, USER_EVENT_MAX_ERROR_RESPONSE_BODY_LENGTH);
+					if ( respBody.length() > USER_EVENT_MAX_RESPONSE_BODY_LENGTH ) {
+						respBody = respBody.substring(0, USER_EVENT_MAX_RESPONSE_BODY_LENGTH);
 					}
-					eventData.put("responseBody", respBody);
+					eventData.put(HTTP_RESPONSE_BODY_DATA_KEY, respBody);
 				} catch ( Exception e2 ) {
 					// forget it, we don't need the drama
 				}
 			}
-
-			if ( userId != null ) {
-				userEventAppenderBiz.addEvent(userId, event(errorEventTags,
-						errorEventMessageProvider.apply(e), getJSONString(eventData)));
-			}
+			eventData.put(HTTP_STATUS_CODE_DATA_KEY, e.getStatusCode().value());
+			tags = errorEventTags;
+			eventMsg = errorEventMessageProvider.apply(e);
 			throw new RemoteServiceException("%s failed because an invalid HTTP status was returned: %s"
 					.formatted(eventDescription, e.getStatusCode()), e);
 		} catch ( UnknownContentTypeException e ) {
+			eventData.put(HTTP_STATUS_CODE_DATA_KEY, e.getStatusCode().value());
+			tags = errorEventTags;
+			eventMsg = errorEventMessageProvider.apply(e);
 			if ( e.getStatusCode().is4xxClientError() ) {
 				// we see some APIs return text/html on a 404, but our Accept might only expect something like JSON
 				// so treat this more like a RestClientResponseException
@@ -305,10 +325,6 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 						"[{}] for {} {} failed at [{}] because the HTTP status {} was returned (with unexpected Content-Type [{}]).",
 						eventDescription, context.getClass().getSimpleName(), confIdDesc,
 						req != null ? req.getUrl() : null, e.getStatusCode(), e.getContentType());
-				if ( userId != null ) {
-					userEventAppenderBiz.addEvent(userId, event(errorEventTags,
-							errorEventMessageProvider.apply(e), getJSONString(eventData)));
-				}
 				throw new RemoteServiceException(
 						"%s failed because an invalid HTTP status (with unexpected Content-Type [%s]) was returned: %s"
 								.formatted(eventDescription, e.getContentType(), e.getStatusCode()),
@@ -319,10 +335,6 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 						"[{}] for {} {} failed at [{}] because the response Content-Type [{}] is not supported.",
 						eventDescription, context.getClass().getSimpleName(), confIdDesc,
 						req != null ? req.getUrl() : null, e.getContentType());
-				if ( userId != null ) {
-					userEventAppenderBiz.addEvent(userId, event(errorEventTags,
-							errorEventMessageProvider.apply(e), getJSONString(eventData)));
-				}
 				throw new RemoteServiceException(
 						"%s failed because the respones Content-Type is not supported: %s"
 								.formatted(context, e.getContentType()),
@@ -332,20 +344,16 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 			log.warn("[{}] for {} {} failed at [{}] because of an OAuth error: {}", eventDescription,
 					context.getClass().getSimpleName(), confIdDesc, req != null ? req.getUrl() : null,
 					e.getMessage());
-			if ( userId != null ) {
-				userEventAppenderBiz.addEvent(userId, event(errorEventTags,
-						errorEventMessageProvider.apply(e), getJSONString(eventData)));
-			}
+			tags = errorEventTags;
+			eventMsg = errorEventMessageProvider.apply(e);
 			throw new RemoteServiceException("%s failed because of an authorization error: %s"
 					.formatted(eventDescription, e.getMessage()), e);
 		} catch ( RemoteServiceException e ) {
 			// assume already logged
 			throw e;
 		} catch ( RuntimeException e ) {
-			if ( userId != null ) {
-				userEventAppenderBiz.addEvent(userId, event(errorEventTags,
-						errorEventMessageProvider.apply(e), getJSONString(eventData)));
-			}
+			tags = errorEventTags;
+			eventMsg = errorEventMessageProvider.apply(e);
 			throw e;
 		} finally {
 			if ( responseLengthTracker != null && userId != null ) {
@@ -355,7 +363,21 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 				if ( userServiceKey != null && userServiceAuditor != null ) {
 					userServiceAuditor.auditUserService(userId, userServiceKey, (int) len);
 				}
+				eventData.put(HTTP_RESPONSE_BODY_LENGTH_DATA_KEY, len);
 			}
+			if ( userId != null ) {
+				eventAppender.addEvent(userId, event(tags, eventMsg, getJSONString(eventData)));
+			}
+		}
+	}
+
+	private void populateResponseBodyEventData(ResponseEntity<?> result, Map<String, Object> eventData) {
+		String respBody = result.hasBody() ? result.getBody().toString() : null;
+		if ( respBody == null ) {
+			return;
+		}
+		if ( respBody.length() <= USER_EVENT_MAX_RESPONSE_BODY_LENGTH ) {
+			eventData.put(HTTP_RESPONSE_BODY_DATA_KEY, result.getBody());
 		}
 	}
 

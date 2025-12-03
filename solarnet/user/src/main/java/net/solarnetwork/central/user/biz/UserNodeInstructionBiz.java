@@ -67,6 +67,18 @@ public interface UserNodeInstructionBiz {
 			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates);
 
 	/**
+	 * Update the enabled status of tasks, either a specific task or all tasks
+	 * for a user.
+	 *
+	 * @param id
+	 *        the ID of the task to update; at a minimum the user ID component
+	 *        must be provided
+	 * @param enabled
+	 *        the enabled status to set
+	 */
+	void updateControlInstructionTaskEnabled(UserLongCompositePK id, boolean enabled);
+
+	/**
 	 * Save a control instruction task.
 	 *
 	 * @param id

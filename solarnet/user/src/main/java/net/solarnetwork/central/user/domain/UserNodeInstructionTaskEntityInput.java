@@ -41,6 +41,8 @@ import net.solarnetwork.central.domain.validation.StartStopClaimableJobState;
  */
 public class UserNodeInstructionTaskEntityInput {
 
+	private boolean enabled;
+
 	@NotNull
 	@NotBlank
 	@Size(max = 64)
@@ -87,6 +89,7 @@ public class UserNodeInstructionTaskEntityInput {
 	public UserNodeInstructionTaskEntity toEntity(UserLongCompositePK id) {
 		UserNodeInstructionTaskEntity conf = new UserNodeInstructionTaskEntity(
 				requireNonNullArgument(id, "id"));
+		conf.setEnabled(enabled);
 		conf.setName(name);
 		conf.setNodeId(nodeId);
 		conf.setTopic(topic);
@@ -95,6 +98,25 @@ public class UserNodeInstructionTaskEntityInput {
 		conf.setExecuteAt(executeAt);
 		conf.setServiceProps(serviceProperties);
 		return conf;
+	}
+
+	/**
+	 * Get the enabled state.
+	 * 
+	 * @return the enabled state
+	 */
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	/**
+	 * Set the enabled state.
+	 * 
+	 * @param enabled
+	 *        the state to set
+	 */
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
 	}
 
 	/**

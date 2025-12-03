@@ -24,6 +24,8 @@ package net.solarnetwork.central.reg.config;
 
 import static net.solarnetwork.central.user.config.SolarNetUserConfiguration.USER_INSTRUCTIONS;
 import java.time.Clock;
+import java.util.concurrent.locks.Lock;
+import java.util.function.Function;
 import javax.cache.Cache;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,16 +36,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
+import net.solarnetwork.central.common.dao.UserServiceConfigurationDao;
 import net.solarnetwork.central.common.http.BasicHttpOperations;
 import net.solarnetwork.central.common.http.CachableRequestEntity;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.user.biz.InstructionsExpressionService;
 import net.solarnetwork.central.user.biz.UserNodeInstructionService;
@@ -52,6 +57,7 @@ import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
 import net.solarnetwork.central.user.domain.UsersUserEvents;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.service.StaticOptionalService;
 
 /**
  * Configuration for user node instructions support.
@@ -104,6 +110,18 @@ public class UserNodeInstructionsConfig implements SolarNetUserConfiguration {
 	@Qualifier(USER_INSTRUCTIONS_HTTP)
 	private Cache<CachableRequestEntity, Result<?>> httpCache;
 
+	@Autowired(required = false)
+	@Qualifier(USER_INSTRUCTIONS_HTTP)
+	public OAuth2AuthorizedClientManager oauthClientManager;
+
+	@Autowired(required = false)
+	@Qualifier(USER_INSTRUCTIONS_HTTP)
+	public Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> simulationOauthClientManagerProvider;
+
+	@Autowired(required = false)
+	@Qualifier(USER_INSTRUCTIONS_LOCKS)
+	private Cache<UserLongCompositePK, Lock> userInstructionsLockCache;
+
 	@Value("${app.user-instr.allow-http-local-hosts:false}")
 	private boolean allowHttpLocalHosts;
 
@@ -114,9 +132,12 @@ public class UserNodeInstructionsConfig implements SolarNetUserConfiguration {
 				taskExecutor.getThreadPoolExecutor(), objectMapper, userEventAppenderBiz, instructorBiz,
 				expressionService, nodeOwnershipDao, taskDao, datumDao, datumStreamMetadataDao);
 		service.setQueryAuditor(queryAuditor);
+		service.setOauthClientManager(oauthClientManager);
+		service.setSimulationOauthClientManagerProvider(simulationOauthClientManagerProvider);
+		service.setLocksCache(new StaticOptionalService<>(userInstructionsLockCache));
 
 		var http = new BasicHttpOperations(LoggerFactory.getLogger(DaoUserNodeInstructionService.class),
-				userEventAppenderBiz, restOps, UsersUserEvents.INSTRUCTION_ERROR_TAGS);
+				userEventAppenderBiz, restOps, UsersUserEvents.INSTRUCTION_HTTP_ERROR_TAGS);
 		http.setHttpCache(httpCache);
 		http.setAllowLocalHosts(allowHttpLocalHosts);
 		http.setUserServiceAuditor(userServiceAuditor);

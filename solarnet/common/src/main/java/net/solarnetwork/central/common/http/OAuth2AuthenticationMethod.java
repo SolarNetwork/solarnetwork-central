@@ -1,5 +1,5 @@
 /* ==================================================================
- * HttpUserEvents.java - 19/11/2025 11:48:39 am
+ * OAuth2AuthenticationMethod.java - 3/12/2025 7:25:15 am
  * 
  * Copyright 2025 SolarNetwork.net Dev Team
  * 
@@ -23,32 +23,23 @@
 package net.solarnetwork.central.common.http;
 
 /**
- * Constants and helpers for common HTTP user event handling.
+ * Enumeration of OAuth2 authentication methods.
  * 
  * @author matt
  * @version 1.0
  */
-public interface HttpUserEvents {
+public enum OAuth2AuthenticationMethod {
 
-	/** A user event tag for an HTTP event. */
-	String HTTP_TAG = "http";
+	/** Client secret HTTP Basic authentication. */
+	ClientSecretBasic,
 
-	/** User event data key for a URL. */
-	String HTTP_URI_DATA_KEY = "uri";
+	/** Client secret form POST encoding. */
+	ClientSecretForm,
 
-	/** User event data key for an HTTP method. */
-	String HTTP_METHOD_DATA_KEY = "method";
+	/** Client secret JWT. */
+	ClientSecretJwt,
 
-	/** User event data key for HTTP body content. */
-	String HTTP_BODY_DATA_KEY = "body";
-
-	/** User event data key for HTTP status code. */
-	String HTTP_STATUS_CODE_DATA_KEY = "status";
-
-	/** User event data key for HTTP response data. */
-	String HTTP_RESPONSE_BODY_DATA_KEY = "responseBody";
-
-	/** User event data keyf or HTTP response data length. */
-	String HTTP_RESPONSE_BODY_LENGTH_DATA_KEY = "responseLength";
+	/** No authentication. */
+	None,
 
 }

@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.biz.UserNodeInstructionBiz;
@@ -147,6 +148,14 @@ public class UserNodeInstructionsController {
 			requiredStates = input.getRequiredStates().toArray(BasicClaimableJobState[]::new);
 		}
 		return success(biz.updateControlInstructionTaskState(id, input.getState(), requiredStates));
+	}
+
+	@RequestMapping(value = "/tasks/{taskId}/enabled/{enabled}", method = RequestMethod.POST)
+	public Result<CloudIntegrationConfiguration> enableUserNodeInstructionTask(
+			@PathVariable("taskId") Long taskId, @PathVariable("enabled") boolean enabled) {
+		var id = new UserLongCompositePK(getCurrentActorUserId(), taskId);
+		biz.updateControlInstructionTaskEnabled(id, enabled);
+		return success();
 	}
 
 }

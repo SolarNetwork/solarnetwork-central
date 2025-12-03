@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.domain;
 
 import java.util.List;
+import net.solarnetwork.central.common.http.HttpUserEvents;
 import net.solarnetwork.central.domain.CommonUserEvents;
 import net.solarnetwork.central.instructor.domain.InstructorUserEvents;
 
@@ -32,7 +33,7 @@ import net.solarnetwork.central.instructor.domain.InstructorUserEvents;
  * @author matt
  * @version 1.0
  */
-public interface UsersUserEvents extends CommonUserEvents, InstructorUserEvents {
+public interface UsersUserEvents extends CommonUserEvents, InstructorUserEvents, HttpUserEvents {
 
 	/**
 	 * Tags for a user instruction error event.
@@ -44,5 +45,16 @@ public interface UsersUserEvents extends CommonUserEvents, InstructorUserEvents 
 	 */
 	List<String> INSTRUCTION_TAGS = INSTRUCTION_ERROR_TAGS.stream().filter(t -> !ERROR_TAG.equals(t))
 			.toList();
+
+	/**
+	 * Tags for a user instruction HTTP error event.
+	 */
+	List<String> INSTRUCTION_HTTP_ERROR_TAGS = List.of(ERROR_TAG, NODE_TAG, INSTRUCTION_TAG, HTTP_TAG);
+
+	/**
+	 * Tags for a non-error user instruction HTTP events.
+	 */
+	List<String> INSTRUCTION_HTTP_TAGS = INSTRUCTION_ERROR_TAGS.stream()
+			.filter(t -> !ERROR_TAG.equals(t)).toList();
 
 }

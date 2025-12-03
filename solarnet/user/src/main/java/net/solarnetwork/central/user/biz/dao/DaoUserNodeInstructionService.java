@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.biz.dao;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
+import static net.solarnetwork.central.common.http.BasicHttpOperations.USER_EVENT_APPENDER_RUNTIME;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
@@ -46,18 +47,25 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.function.BiFunction;
+import java.util.function.Function;
+import javax.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.scheduling.support.SimpleTriggerContext;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestClientResponseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.InMemoryUserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.common.dao.UserServiceConfigurationDao;
 import net.solarnetwork.central.common.http.HttpOperations;
+import net.solarnetwork.central.common.http.OAuth2ClientIdentity;
+import net.solarnetwork.central.common.http.Oauth2HttpOperations;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
@@ -65,6 +73,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
@@ -83,6 +92,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.KeyValuePair;
 import net.solarnetwork.security.AuthorizationException;
 import net.solarnetwork.security.AuthorizationException.Reason;
+import net.solarnetwork.service.OptionalService;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.DateUtils;
@@ -124,6 +134,9 @@ public class DaoUserNodeInstructionService
 	private Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
 	private QueryAuditor queryAuditor;
 	private HttpOperations httpOperations;
+	private OAuth2AuthorizedClientManager oauthClientManager;
+	private Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> simulationOauthClientManagerProvider;
+	private OptionalService<Cache<UserLongCompositePK, Lock>> locksCache;
 
 	/**
 	 * Constructor.
@@ -209,8 +222,8 @@ public class DaoUserNodeInstructionService
 
 		final InMemoryUserEventAppenderBiz eventAppender = new InMemoryUserEventAppenderBiz();
 		final List<Instruction> generatedInstructions = new ArrayList<>(1);
-		final var job = new UserNodeInstructionTask(task, eventAppender,
-				NoopUserNodeInstructionTaskDao.INSTANCE, (nodeId, instr) -> {
+		final var job = new UserNodeInstructionTask(true, task, eventAppender,
+				new NoopUserNodeInstructionTaskDao(Map.of(task.getId(), task)), (nodeId, instr) -> {
 					var result = new NodeInstruction(instr.getTopic(), instr.getInstructionDate(),
 							nodeId);
 					result.setInstruction(new Instruction(instr));
@@ -261,6 +274,7 @@ public class DaoUserNodeInstructionService
 
 	private final class UserNodeInstructionTask implements Callable<UserNodeInstructionTaskEntity> {
 
+		private final boolean simulation;
 		private final UserEventAppenderBiz userEventAppenderBiz;
 		private final UserNodeInstructionTaskDao taskDao;
 		private final BiFunction<Long, Instruction, NodeInstruction> instructionHandler;
@@ -277,7 +291,7 @@ public class DaoUserNodeInstructionService
 		 *         if any argument is {@code null}
 		 */
 		private UserNodeInstructionTask(UserNodeInstructionTaskEntity taskInfo) {
-			this(taskInfo, DaoUserNodeInstructionService.this.userEventAppenderBiz,
+			this(false, taskInfo, DaoUserNodeInstructionService.this.userEventAppenderBiz,
 					DaoUserNodeInstructionService.this.taskDao,
 					DaoUserNodeInstructionService.this.instructorBiz::queueInstruction, null);
 		}
@@ -285,6 +299,8 @@ public class DaoUserNodeInstructionService
 		/**
 		 * Constructor to support simulation mode.
 		 * 
+		 * @param simulation
+		 *        {@code true} if the task is for a simulation
 		 * @param userEventAppenderBiz
 		 *        the event appender to use
 		 * @param taskDao
@@ -299,12 +315,12 @@ public class DaoUserNodeInstructionService
 		 *         if any argument except {@code expressionResults} is
 		 *         {@code null}
 		 */
-		private UserNodeInstructionTask(UserNodeInstructionTaskEntity taskInfo,
+		private UserNodeInstructionTask(boolean simulation, UserNodeInstructionTaskEntity taskInfo,
 				UserEventAppenderBiz userEventAppenderBiz, UserNodeInstructionTaskDao taskDao,
 				BiFunction<Long, Instruction, NodeInstruction> instructionHandler,
-
 				List<InstructionExpressionEvaluationResult> expressionResults) {
 			super();
+			this.simulation = simulation;
 			this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz,
 					"userEventAppenderBiz");
 			this.taskDao = requireNonNullArgument(taskDao, "taskDao");
@@ -495,10 +511,27 @@ public class DaoUserNodeInstructionService
 					expressionService.sourceIdPathMatcher(), List.of(), owner.getUserId(), clock,
 					datumDao, datumStreamMetadataDao, queryAuditor);
 
+			HttpOperations http = getHttpOperations();
+			if ( http != null && ((simulation && simulationOauthClientManagerProvider != null)
+					|| (!simulation && oauthClientManager != null)) ) {
+				OAuth2ClientIdentity oauthIdent = task.oauthClientIdentity();
+				if ( oauthIdent != null ) {
+					OAuth2AuthorizedClientManager manager = (simulation
+							? simulationOauthClientManagerProvider.apply(taskDao)
+							: oauthClientManager);
+					http = new Oauth2HttpOperations(http, manager, locksCache, oauthIdent);
+				}
+			}
+
 			// each key is a bean property path on an Instruction instance; each value is an expression to run
 			final NodeInstructionExpressionRoot exprRoot = expressionService
 					.createNodeInstructionExpressionRoot(owner, instrInput, null, datumStreamsAccessor,
-							httpOperations);
+							http);
+			if ( simulation ) {
+				// provide our UserEventAppenderBiz implementation for capturing HTTP events
+				exprRoot.setRuntimeData(Map.of(USER_EVENT_APPENDER_RUNTIME, userEventAppenderBiz));
+			}
+
 			final Map<String, Object> combinedParameters = exprRoot.getParameters();
 
 			// combine existing template parameters with expression results, and provide these as
@@ -538,7 +571,7 @@ public class DaoUserNodeInstructionService
 							break;
 
 						default:
-							combinedParameters.put(exprInfo.getKey(), exprResult.toString());
+							combinedParameters.put(exprInfo.getKey(), exprResult);
 					}
 					if ( expressionResults != null ) {
 						expressionResults.add(expressionResult(exprInfo.getValue(), combinedParameters,
@@ -552,7 +585,9 @@ public class DaoUserNodeInstructionService
 			if ( !combinedParameters.isEmpty() ) {
 				instrInput.getInstruction().clearParameters();
 				for ( Entry<String, Object> e : combinedParameters.entrySet() ) {
-					if ( e.getKey() == null || e.getKey().isBlank() || e.getValue() == null ) {
+					// ignore empty values as well as keys starting with _
+					if ( e.getKey() == null || e.getKey().isBlank() || e.getKey().startsWith("_")
+							|| e.getValue() == null ) {
 						continue;
 					}
 					String val = e.getValue().toString();
@@ -632,6 +667,64 @@ public class DaoUserNodeInstructionService
 	 */
 	public void setHttpOperations(HttpOperations httpOperations) {
 		this.httpOperations = httpOperations;
+	}
+
+	/**
+	 * Get the OAuth client manager.
+	 * 
+	 * @return the manager
+	 */
+	public OAuth2AuthorizedClientManager getOauthClientManager() {
+		return oauthClientManager;
+	}
+
+	/**
+	 * Set the OAuth client manager.
+	 * 
+	 * @param oauthClientManager
+	 *        the manager to set
+	 */
+	public void setOauthClientManager(OAuth2AuthorizedClientManager oauthClientManager) {
+		this.oauthClientManager = oauthClientManager;
+	}
+
+	/**
+	 * Get a provider of OAuth client managers for simulation use.
+	 * 
+	 * @return the provider
+	 */
+	public Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> getSimulationOauthClientManagerProvider() {
+		return simulationOauthClientManagerProvider;
+	}
+
+	/**
+	 * Set a provider of OAuth client managers for simulation use.
+	 * 
+	 * @param simulationOauthClientManagerProvider
+	 *        the provider to set
+	 */
+	public void setSimulationOauthClientManagerProvider(
+			Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> simulationOauthClientManagerProvider) {
+		this.simulationOauthClientManagerProvider = simulationOauthClientManagerProvider;
+	}
+
+	/**
+	 * Get the task locks cache.
+	 * 
+	 * @return the locks cache
+	 */
+	public OptionalService<Cache<UserLongCompositePK, Lock>> getLocksCache() {
+		return locksCache;
+	}
+
+	/**
+	 * Set the task locks cache.
+	 * 
+	 * @param locksCache
+	 *        the cache to set
+	 */
+	public void setLocksCache(OptionalService<Cache<UserLongCompositePK, Lock>> locksCache) {
+		this.locksCache = locksCache;
 	}
 
 }

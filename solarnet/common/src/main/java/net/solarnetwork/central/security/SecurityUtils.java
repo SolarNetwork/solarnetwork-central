@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -53,7 +54,7 @@ import net.solarnetwork.util.CollectionUtils;
  * Security helper methods.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class SecurityUtils {
 
@@ -545,18 +546,55 @@ public class SecurityUtils {
 	 *        the map of values to encrypt
 	 * @param secureKeys
 	 *        the set of map keys whose values should be encrypted
+	 * @param encryptor
+	 *        the encryptor to use
 	 * @return either a new map instance with one or more values encrypted, or
 	 *         {@code map} when no values need encrypted
 	 * @since 2.4
 	 */
-	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K, V> encryptedMap(Map<K, V> map, Set<K> secureKeys,
 			TextEncryptor encryptor) {
+		assert encryptor != null;
+		return encryptedMap(map, secureKeys, encryptor::encrypt);
+	}
+
+	/**
+	 * Encrypt a set of map values associated with a set of key values.
+	 *
+	 * <p>
+	 * This method will return a new map instance, unless no values need
+	 * encrypting in which case {@code map} itself will be returned. For any key
+	 * in {@code secureKeys} found in {@code map}, the returned map's value will
+	 * be encrypted value computed by invoking {@code encryptor} on them.
+	 * </p>
+	 *
+	 * <p>
+	 * Any exception thrown by the {@code encryptor} function will be ignored,
+	 * and the original value will be used instead.
+	 * </p>
+	 *
+	 * @param <K>
+	 *        the key type
+	 * @param <V>
+	 *        the value type
+	 * @param map
+	 *        the map of values to encrypt
+	 * @param secureKeys
+	 *        the set of map keys whose values should be encrypted
+	 * @param encryptor
+	 *        function to encrypt the secure key values with
+	 * @return either a new map instance with one or more values encrypted, or
+	 *         {@code map} when no values need encrypted
+	 * @since 3.1
+	 */
+	@SuppressWarnings("unchecked")
+	public static <K, V> Map<K, V> encryptedMap(Map<K, V> map, Set<K> secureKeys,
+			Function<String, String> encryptor) {
 		assert encryptor != null;
 		return CollectionUtils.transformMap(map, secureKeys, (val) -> {
 			var result = val;
 			try {
-				result = (V) (val == null ? null : encryptor.encrypt(val.toString()));
+				result = (V) (val == null ? null : encryptor.apply(val.toString()));
 			} catch ( Exception e ) {
 				// ignore and return input value
 			}
@@ -587,19 +625,56 @@ public class SecurityUtils {
 	 * @param map
 	 *        the map of values to encrypt
 	 * @param secureKeys
-	 *        the set of map keys whose values should be encrypted
+	 *        the set of map keys whose values should be decrypted
+	 * @param encryptor
+	 *        the encryptor to use for decryption
 	 * @return either a new map instance with one or more values encrypted, or
 	 *         {@code map} when no values need encrypted
 	 * @since 2.4
 	 */
-	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K, V> decryptedMap(Map<K, V> map, Set<K> secureKeys,
 			TextEncryptor encryptor) {
 		assert encryptor != null;
+		return decryptedMap(map, secureKeys, encryptor::decrypt);
+	}
+
+	/**
+	 * Decrypt a set of map values associated with a set of key values.
+	 *
+	 * <p>
+	 * This method will return a new map instance, unless no values need
+	 * decrypting in which case {@code map} itself will be returned. For any key
+	 * in {@code secureKeys} found in {@code map}, the returned map's value will
+	 * be decrypted value computed by invoking {@code decryptor} on them.
+	 * </p>
+	 *
+	 * <p>
+	 * Any exception thrown by the {@code decryptor} function will be ignored,
+	 * and the original value will be used instead.
+	 * </p>
+	 *
+	 * @param <K>
+	 *        the key type
+	 * @param <V>
+	 *        the value type
+	 * @param map
+	 *        the map of values to encrypt
+	 * @param secureKeys
+	 *        the set of map keys whose values should be decrypted
+	 * @param decryptor
+	 *        the decryptor to use
+	 * @return either a new map instance with one or more values decrypted, or
+	 *         {@code map} when no values need encrypted
+	 * @since 3.1
+	 */
+	@SuppressWarnings("unchecked")
+	public static <K, V> Map<K, V> decryptedMap(Map<K, V> map, Set<K> secureKeys,
+			Function<String, String> decryptor) {
+		assert decryptor != null;
 		return CollectionUtils.transformMap(map, secureKeys, (val) -> {
 			var result = val;
 			try {
-				result = (V) (val == null ? null : encryptor.decrypt(val.toString()));
+				result = (V) (val == null ? null : decryptor.apply(val.toString()));
 			} catch ( Exception e ) {
 				// ignore and return input value
 			}

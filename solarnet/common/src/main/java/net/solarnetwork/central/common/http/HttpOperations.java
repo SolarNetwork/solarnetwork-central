@@ -61,10 +61,13 @@ public interface HttpOperations {
 	 * @param context
 	 *        an optional contextual object, such as a user ID or other
 	 *        discriminator
+	 * @param runtimeData
+	 *        optional runtime information, the supported keys will be
+	 *        implementation specific
 	 * @return the result, never {@literal null}
 	 */
 	<I, O> ResponseEntity<O> http(HttpMethod method, URI uri, HttpHeaders headers, I body,
-			Class<O> responseType, Object context);
+			Class<O> responseType, Object context, Map<String, ?> runtimeData);
 
 	/**
 	 * Make an HTTP GET request for an object and return the result.
@@ -80,13 +83,16 @@ public interface HttpOperations {
 	 * @param context
 	 *        an optional contextual object, such as a user ID or other
 	 *        discriminator
+	 * @param runtimeData
+	 *        optional runtime information, the supported keys will be
+	 *        implementation specific
 	 * @return the result, never {@literal null}
 	 */
 	default <O> Result<O> httpGet(String uri, Map<String, ?> parameters, Map<String, ?> headers,
-			Class<O> responseType, Object context) {
+			Class<O> responseType, Object context, Map<String, ?> runtimeData) {
 		URI u = uri(uri, parameters);
 		HttpHeaders h = headersForMap(headers);
-		ResponseEntity<O> res = http(HttpMethod.GET, u, h, null, responseType, context);
+		ResponseEntity<O> res = http(HttpMethod.GET, u, h, null, responseType, context, runtimeData);
 		return new Result<>(res.getBody());
 	}
 

@@ -113,7 +113,7 @@ public class BasicHttpOperationsTests implements HttpUserEvents {
 		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
-		Result<String> result = ops.httpGet(url, null, null, String.class, userId);
+		Result<String> result = ops.httpGet(url, null, null, String.class, userId, null);
 
 		// THEN
 		// @formatter:off
@@ -160,7 +160,7 @@ public class BasicHttpOperationsTests implements HttpUserEvents {
 		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
-		Result<String> result = ops.httpGet(url, null, null, String.class, userId);
+		Result<String> result = ops.httpGet(url, null, null, String.class, userId, null);
 
 		// THEN
 		// @formatter:off
@@ -196,8 +196,8 @@ public class BasicHttpOperationsTests implements HttpUserEvents {
 		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
-		Result<String> result = ops.httpGet(url, null, null, String.class, userId); // cache miss
-		Result<String> result2 = ops.httpGet(url, null, null, String.class, userId); // should be cache hit
+		Result<String> result = ops.httpGet(url, null, null, String.class, userId, null); // cache miss
+		Result<String> result2 = ops.httpGet(url, null, null, String.class, userId, null); // should be cache hit
 
 		// THEN
 		// @formatter:off

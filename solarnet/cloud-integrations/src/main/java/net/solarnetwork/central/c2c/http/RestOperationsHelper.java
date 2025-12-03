@@ -155,7 +155,7 @@ public class RestOperationsHelper extends BasicHttpOperations {
 			final var headers = new HttpHeaders();
 			URI uri = setup.apply(headers);
 			return RequestEntity.method(method, uri).headers(headers).body(body);
-		}, responseType, configuration, () -> description,
+		}, responseType, configuration, null, () -> description,
 				BasicHttpOperations::defaultRequestErrorEventMessage);
 		return handler.apply(res);
 	}

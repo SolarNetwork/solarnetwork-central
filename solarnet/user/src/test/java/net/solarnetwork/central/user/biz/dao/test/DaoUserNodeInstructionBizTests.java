@@ -27,11 +27,14 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity.EXPRESSION_SECURE_SETTINGS_PROP;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.catchThrowableOfType;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.util.EnumSet;
@@ -45,16 +48,19 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.test.CommonTestUtils;
 import net.solarnetwork.central.user.biz.UserNodeInstructionBiz;
 import net.solarnetwork.central.user.biz.UserNodeInstructionService;
 import net.solarnetwork.central.user.biz.dao.DaoUserNodeInstructionBiz;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
+import net.solarnetwork.central.user.dao.UserNodeInstructionTaskFilter;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntityInput;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskSimulationOutput;
@@ -75,16 +81,22 @@ public class DaoUserNodeInstructionBizTests {
 	private UserNodeInstructionService instructionService;
 
 	@Mock
-	private UserNodeInstructionTaskDao controlInstructionTaskDao;
+	private UserNodeInstructionTaskDao instructionTaskDao;
+
+	@Mock
+	private TextEncryptor textEncryptor;
 
 	@Captor
-	private ArgumentCaptor<UserNodeInstructionTaskEntity> controlInstructionTaskCaptor;
+	private ArgumentCaptor<UserNodeInstructionTaskEntity> instructionTaskCaptor;
+
+	@Captor
+	private ArgumentCaptor<UserNodeInstructionTaskFilter> instructionTaskFilterCaptor;
 
 	private DaoUserNodeInstructionBiz biz;
 
 	@BeforeEach
 	public void setup() {
-		biz = new DaoUserNodeInstructionBiz(instructionService, controlInstructionTaskDao);
+		biz = new DaoUserNodeInstructionBiz(instructionService, instructionTaskDao, textEncryptor);
 
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 		biz.setValidator(factory.getValidator());
@@ -93,20 +105,21 @@ public class DaoUserNodeInstructionBizTests {
 	@Test
 	public void controlInstructionTaskEntity_save_create() {
 		// GIVEN
-		Long userId = randomLong();
-		Long entityId = randomLong();
-		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		UserNodeInstructionTaskEntity entity = new UserNodeInstructionTaskEntity(pk);
+		final Long userId = randomLong();
+		final Long entityId = randomLong();
+		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		final UserNodeInstructionTaskEntity entity = new UserNodeInstructionTaskEntity(pk);
 
 		// save and retrieve
-		given(controlInstructionTaskDao.save(any(UserNodeInstructionTaskEntity.class))).willReturn(pk);
-		given(controlInstructionTaskDao.get(pk)).willReturn(entity);
+		given(instructionTaskDao.save(any(UserNodeInstructionTaskEntity.class))).willReturn(pk);
+		given(instructionTaskDao.get(pk)).willReturn(entity);
 
 		// WHEN
-		Map<String, Object> sprops = new LinkedHashMap<>(4);
+		final Map<String, Object> sprops = new LinkedHashMap<>(4);
 		sprops.put("foo", "bar");
 
 		UserNodeInstructionTaskEntityInput input = new UserNodeInstructionTaskEntityInput();
+		input.setEnabled(true);
 		input.setName(randomString());
 		input.setNodeId(randomLong());
 		input.setTopic(randomString());
@@ -119,11 +132,13 @@ public class DaoUserNodeInstructionBizTests {
 
 		// THEN
 		// @formatter:off
-		then(controlInstructionTaskDao).should().save(controlInstructionTaskCaptor.capture());
+		then(instructionTaskDao).should().save(instructionTaskCaptor.capture());
 
-		and.then(controlInstructionTaskCaptor.getValue())
+		and.then(instructionTaskCaptor.getValue())
 			.as("Entity ID on DAO save is argument to service")
 			.returns(unassignedPk, from(UserNodeInstructionTaskEntity::getId))
+			.as("Enabled from input passed to DAO")
+			.returns(true, from(UserNodeInstructionTaskEntity::isEnabled))
 			.as("Name from input passed to DAO")
 			.returns(input.getName(), from(UserNodeInstructionTaskEntity::getName))
 			.as("Node ID from input passed to DAO")
@@ -137,7 +152,7 @@ public class DaoUserNodeInstructionBizTests {
 			.as("Exec date input passed to DAO")
 			.returns(input.getExecuteAt(), from(UserNodeInstructionTaskEntity::getExecuteAt))
 			.as("Service properties from input passed to DAO")
-			.returns(input.getServiceProperties(), from(UserNodeInstructionTaskEntity::getServiceProperties))
+			.returns(sprops, from(UserNodeInstructionTaskEntity::getServiceProperties))
 			.as("Message is null")
 			.returns(null, from(UserNodeInstructionTaskEntity::getMessage))
 			.as("Last execut at is null")
@@ -154,6 +169,106 @@ public class DaoUserNodeInstructionBizTests {
 	}
 
 	@Test
+	public void controlInstructionTaskEntity_save_createWithSecureSettings() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long entityId = randomLong();
+		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+
+		final Map<String, Object> sprops = new LinkedHashMap<>(4);
+		final String secureKey = randomString();
+		final String secureValue = randomString();
+		sprops.put("foo", "bar");
+		sprops.put(EXPRESSION_SECURE_SETTINGS_PROP, Map.of(secureKey, secureValue));
+
+		// encrypt secure settings
+		final String encryptedSecureValue = randomString();
+		given(textEncryptor.encrypt(secureValue)).willReturn(encryptedSecureValue);
+
+		// save and retrieve
+		final Map<String, Object> encryptedProps = new LinkedHashMap<>(sprops);
+		// @formatter:off
+		encryptedProps.put(EXPRESSION_SECURE_SETTINGS_PROP, Map.of(
+				secureKey, encryptedSecureValue,
+				// toss in another invented secure setting just to validate it is digested in response
+				randomString(), randomString())
+				);
+		// @formatter:on
+
+		final UserNodeInstructionTaskEntity entity = new UserNodeInstructionTaskEntity(pk);
+		entity.setServiceProps(encryptedProps);
+		given(instructionTaskDao.save(any(UserNodeInstructionTaskEntity.class))).willReturn(pk);
+		given(instructionTaskDao.get(pk)).willReturn(entity);
+
+		// WHEN
+		UserNodeInstructionTaskEntityInput input = new UserNodeInstructionTaskEntityInput();
+		input.setName(randomString());
+		input.setNodeId(randomLong());
+		input.setTopic(randomString());
+		input.setSchedule(TEST_SCHEDULE);
+		input.setState(Queued);
+		input.setExecuteAt(now());
+		input.setServiceProperties(new LinkedHashMap<>(sprops));
+		UserLongCompositePK unassignedPk = UserLongCompositePK.unassignedEntityIdKey(userId);
+		UserNodeInstructionTaskEntity result = biz.saveControlInstructionTask(unassignedPk, input);
+
+		// THEN
+		// @formatter:off
+		then(instructionTaskDao).should().save(instructionTaskCaptor.capture());
+
+		final Map<String, Object> expectedSavedProps = new LinkedHashMap<>(sprops);
+		expectedSavedProps.put(EXPRESSION_SECURE_SETTINGS_PROP, Map.of(secureKey,
+				encryptedSecureValue));
+
+		and.then(instructionTaskCaptor.getValue())
+			.as("Entity ID on DAO save is argument to service")
+			.returns(unassignedPk, from(UserNodeInstructionTaskEntity::getId))
+			.as("Name from input passed to DAO")
+			.returns(input.getName(), from(UserNodeInstructionTaskEntity::getName))
+			.as("Node ID from input passed to DAO")
+			.returns(input.getNodeId(), from(UserNodeInstructionTaskEntity::getNodeId))
+			.as("Topic from input passed to DAO")
+			.returns(input.getTopic(), from(UserNodeInstructionTaskEntity::getTopic))
+			.as("Schedule from input passed to DAO")
+			.returns(input.getSchedule(), from(UserNodeInstructionTaskEntity::getSchedule))
+			.as("State from input passed to DAO")
+			.returns(input.getState(), from(UserNodeInstructionTaskEntity::getState))
+			.as("Exec date input passed to DAO")
+			.returns(input.getExecuteAt(), from(UserNodeInstructionTaskEntity::getExecuteAt))
+			.as("Service properties from input passed to DAO")
+			.returns(expectedSavedProps, from(UserNodeInstructionTaskEntity::getServiceProperties))
+			.as("Message is null")
+			.returns(null, from(UserNodeInstructionTaskEntity::getMessage))
+			.as("Last execut at is null")
+			.returns(null, from(UserNodeInstructionTaskEntity::getLastExecuteAt))
+			.as("Result properties is null")
+			.returns(null, from(UserNodeInstructionTaskEntity::getResultProperties))
+			;
+
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(entity)
+			.extracting(UserNodeInstructionTaskEntity::getServiceProperties, map(String.class, Object.class))
+			.as("Contains regular setting")
+			.containsEntry("foo", sprops.get("foo"))
+			.as("Contains secure setting")
+			.hasEntrySatisfying(EXPRESSION_SECURE_SETTINGS_PROP, secure -> {
+				and.then(secure).asInstanceOf(map(String.class, Object.class))
+					.as("Secure setting is returned")
+					.containsKey(secureKey)
+					.allSatisfy((k, v) -> {
+						and.then(v.toString())
+							.as("Secure setting %s is digested in result", k)
+							.startsWith("{SSHA-256}")
+							;
+					})
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void controlInstructionTaskEntity_save_update() {
 		// GIVEN
 		Long userId = randomLong();
@@ -162,8 +277,8 @@ public class DaoUserNodeInstructionBizTests {
 		UserNodeInstructionTaskEntity entity = new UserNodeInstructionTaskEntity(pk);
 
 		// save and retrieve
-		given(controlInstructionTaskDao.save(any(UserNodeInstructionTaskEntity.class))).willReturn(pk);
-		given(controlInstructionTaskDao.get(pk)).willReturn(entity);
+		given(instructionTaskDao.save(any(UserNodeInstructionTaskEntity.class))).willReturn(pk);
+		given(instructionTaskDao.get(pk)).willReturn(entity);
 
 		// WHEN
 		Map<String, Object> sprops = new LinkedHashMap<>(4);
@@ -181,9 +296,9 @@ public class DaoUserNodeInstructionBizTests {
 
 		// THEN
 		// @formatter:off
-		then(controlInstructionTaskDao).should().save(controlInstructionTaskCaptor.capture());
+		then(instructionTaskDao).should().save(instructionTaskCaptor.capture());
 
-		and.then(controlInstructionTaskCaptor.getValue())
+		and.then(instructionTaskCaptor.getValue())
 			.as("Entity ID on DAO save is argument to service")
 			.returns(pk, from(UserNodeInstructionTaskEntity::getId))
 			.as("Name from input passed to DAO")
@@ -257,9 +372,9 @@ public class DaoUserNodeInstructionBizTests {
 		UserNodeInstructionTaskEntity entity = new UserNodeInstructionTaskEntity(pk);
 
 		// save and retrieve
-		given(controlInstructionTaskDao.updateTask(any(UserNodeInstructionTaskEntity.class),
-				eq(Completed))).willReturn(true);
-		given(controlInstructionTaskDao.get(pk)).willReturn(entity);
+		given(instructionTaskDao.updateTask(any(UserNodeInstructionTaskEntity.class), eq(Completed)))
+				.willReturn(true);
+		given(instructionTaskDao.get(pk)).willReturn(entity);
 
 		// WHEN
 		Map<String, Object> sprops = new LinkedHashMap<>(4);
@@ -277,9 +392,9 @@ public class DaoUserNodeInstructionBizTests {
 
 		// THEN
 		// @formatter:off
-		then(controlInstructionTaskDao).should().updateTask(controlInstructionTaskCaptor.capture(), eq(Completed));
+		then(instructionTaskDao).should().updateTask(instructionTaskCaptor.capture(), eq(Completed));
 
-		and.then(controlInstructionTaskCaptor.getValue())
+		and.then(instructionTaskCaptor.getValue())
 			.as("Entity ID on DAO save is argument to service")
 			.returns(pk, from(UserNodeInstructionTaskEntity::getId))
 			.as("Name from input passed to DAO")
@@ -320,8 +435,8 @@ public class DaoUserNodeInstructionBizTests {
 		UserNodeInstructionTaskEntity entity = new UserNodeInstructionTaskEntity(pk);
 
 		// save and retrieve
-		given(controlInstructionTaskDao.updateTaskState(pk, Queued)).willReturn(true);
-		given(controlInstructionTaskDao.get(pk)).willReturn(entity);
+		given(instructionTaskDao.updateTaskState(pk, Queued)).willReturn(true);
+		given(instructionTaskDao.get(pk)).willReturn(entity);
 
 		// WHEN
 		UserNodeInstructionTaskEntity result = biz.updateControlInstructionTaskState(pk, Queued);
@@ -344,8 +459,8 @@ public class DaoUserNodeInstructionBizTests {
 		UserNodeInstructionTaskEntity entity = new UserNodeInstructionTaskEntity(pk);
 
 		// save and retrieve
-		given(controlInstructionTaskDao.updateTaskState(pk, Queued, Completed)).willReturn(true);
-		given(controlInstructionTaskDao.get(pk)).willReturn(entity);
+		given(instructionTaskDao.updateTaskState(pk, Queued, Completed)).willReturn(true);
+		given(instructionTaskDao.get(pk)).willReturn(entity);
 
 		// WHEN
 		UserNodeInstructionTaskEntity result = biz.updateControlInstructionTaskState(pk, Queued,
@@ -363,25 +478,60 @@ public class DaoUserNodeInstructionBizTests {
 	@Test
 	public void controlInstructionTaskEntity_delete() {
 		// GIVEN
-		Long userId = randomLong();
-		Long entityId = randomLong();
-		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		UserNodeInstructionTaskEntity entity = new UserNodeInstructionTaskEntity(pk);
+		final Long userId = randomLong();
+		final Long entityId = randomLong();
+		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		final UserNodeInstructionTaskEntity entity = new UserNodeInstructionTaskEntity(pk);
 
-		given(controlInstructionTaskDao.entityKey(pk)).willReturn(entity);
+		given(instructionTaskDao.entityKey(pk)).willReturn(entity);
 
 		// WHEN
 		biz.deleteControlInstructionTask(pk);
 
 		// THEN
 		// @formatter:off
-		then(controlInstructionTaskDao).should().delete(controlInstructionTaskCaptor.capture());
+		then(instructionTaskDao).should().delete(instructionTaskCaptor.capture());
 
-		and.then(controlInstructionTaskCaptor.getValue())
+		and.then(instructionTaskCaptor.getValue())
 			.as("DAO passed entity returned from entityKey()")
 			.isSameAs(entity)
 			;
 		// @formatter:on
+	}
+
+	@Test
+	public void updateEnabled_forTask() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long entityId = randomLong();
+		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+
+		// WHEN
+		final boolean enabled = CommonTestUtils.randomBoolean();
+		biz.updateControlInstructionTaskEnabled(pk, enabled);
+
+		// THEN
+		// @formatter:off
+		then(instructionTaskDao).should().updateEnabledStatus(eq(userId), instructionTaskFilterCaptor.capture(), eq(enabled));
+		and.then(instructionTaskFilterCaptor.getValue())
+			.as("Task ID provided in DAO filter")
+			.returns(entityId, from(UserNodeInstructionTaskFilter::getTaskId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateEnabled_forUser() {
+		// GIVEN
+		final Long userId = randomLong();
+		final UserLongCompositePK pk = UserLongCompositePK.unassignedEntityIdKey(userId);
+
+		// WHEN
+		final boolean enabled = CommonTestUtils.randomBoolean();
+		biz.updateControlInstructionTaskEnabled(pk, enabled);
+
+		// THEN
+		then(instructionTaskDao).should().updateEnabledStatus(eq(userId), isNull(), eq(enabled));
 	}
 
 	@Test
@@ -411,13 +561,13 @@ public class DaoUserNodeInstructionBizTests {
 		given(instructionService.simulateControlInstructionTask(any())).willReturn(serviceOutput);
 
 		// WHEN
-		UserNodeInstructionTaskSimulationOutput result = biz.simulateControlInstructionTaskForUser(userId,
-				input);
+		UserNodeInstructionTaskSimulationOutput result = biz
+				.simulateControlInstructionTaskForUser(userId, input);
 
 		// THEN
 		// @formatter:off
-		then(instructionService).should().simulateControlInstructionTask(controlInstructionTaskCaptor.capture());
-		and.then(controlInstructionTaskCaptor.getValue())
+		then(instructionService).should().simulateControlInstructionTask(instructionTaskCaptor.capture());
+		and.then(instructionTaskCaptor.getValue())
 			.as("Task passed to service created from input")
 			.usingRecursiveComparison()
 			.ignoringFields("executeAt", "state")
@@ -430,4 +580,5 @@ public class DaoUserNodeInstructionBizTests {
 			;
 		// @formatter:on
 	}
+
 }
