@@ -284,13 +284,11 @@ public class UserNodeInstructionTaskEntity
 		}
 
 		final Map<String, String> encryptedSettings = new LinkedHashMap<>(s.size());
-		final Set<String> secureKeys = new HashSet<>(s.size());
 		for ( Entry<?, ?> e : s.entrySet() ) {
 			if ( e.getKey() == null || e.getValue() == null ) {
 				continue;
 			}
 			String key = e.getKey().toString();
-			secureKeys.add(key);
 			encryptedSettings.put(key, encryptor.apply(e.getValue().toString()));
 		}
 		putServiceProps(Map.of(EXPRESSION_SECURE_SETTINGS_PROP, encryptedSettings));

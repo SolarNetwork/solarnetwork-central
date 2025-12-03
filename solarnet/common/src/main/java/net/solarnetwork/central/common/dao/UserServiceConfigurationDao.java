@@ -39,7 +39,7 @@ public interface UserServiceConfigurationDao<K extends UserRelatedCompositeKey<K
 	 * 
 	 * @param id
 	 *        the primary key to lookup the service configuration for
-	 * @param encryptor
+	 * @param decryptor
 	 *        an optional service to decrypt the values associated with any
 	 *        encrypted service configuration keys
 	 * @return the configuration, or {@code null} if an entity with primary key
