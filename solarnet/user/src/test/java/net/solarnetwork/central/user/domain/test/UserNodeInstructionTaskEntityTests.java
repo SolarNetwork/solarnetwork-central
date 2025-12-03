@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.domain.test;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity.EXPRESSION_SETTINGS_PROP;
 import static net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity.OAUTH_SYSTEM_NAME;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -50,9 +51,9 @@ public class UserNodeInstructionTaskEntityTests {
 
 		final String clientId = randomString();
 		// @formatter:off
-		task.setServiceProps(Map.of(
+		task.setServiceProps(Map.of(EXPRESSION_SETTINGS_PROP, Map.of(
 				HttpConstants.OAUTH_CLIENT_ID_SETTING, clientId
-				));
+				)));
 		// @formatter:on
 
 		// WHEN
@@ -75,10 +76,10 @@ public class UserNodeInstructionTaskEntityTests {
 
 		final String username = randomString();
 		// @formatter:off
-		task.setServiceProps(Map.of(
+		task.setServiceProps(Map.of(EXPRESSION_SETTINGS_PROP, Map.of(
 				HttpConstants.OAUTH_TOKEN_URL_SETTING, randomString(),
 				HttpConstants.USERNAME_SETTING, username
-				));
+				)));
 		// @formatter:on
 
 		// WHEN
@@ -108,10 +109,10 @@ public class UserNodeInstructionTaskEntityTests {
 
 		final String clientId = randomString();
 		// @formatter:off
-		task.setServiceProps(Map.of(
+		task.setServiceProps(Map.of(EXPRESSION_SETTINGS_PROP, Map.of(
 				HttpConstants.OAUTH_TOKEN_URL_SETTING, randomString(),
 				HttpConstants.OAUTH_CLIENT_ID_SETTING, clientId
-				));
+				)));
 		// @formatter:on
 
 		// WHEN
@@ -141,9 +142,9 @@ public class UserNodeInstructionTaskEntityTests {
 		task.setName(randomString());
 
 		// @formatter:off
-		task.setServiceProps(Map.of(
+		task.setServiceProps(Map.of(EXPRESSION_SETTINGS_PROP, Map.of(
 				HttpConstants.OAUTH_TOKEN_URL_SETTING, randomString()
-				));
+				)));
 		// @formatter:on
 
 		// WHEN
