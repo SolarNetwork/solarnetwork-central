@@ -24,6 +24,7 @@ package net.solarnetwork.central.reg.config;
 
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.HTTP_TRACE;
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
+import static net.solarnetwork.central.user.config.SolarNetUserConfiguration.USER_INSTRUCTIONS;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.function.Function;
@@ -33,6 +34,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -71,6 +73,7 @@ import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
  * @author matt
  * @version 1.0
  */
+@Profile(USER_INSTRUCTIONS)
 @Configuration(proxyBeanMethods = false)
 public class UserInstructionsOAuthClientConfig implements SolarNetUserConfiguration {
 
