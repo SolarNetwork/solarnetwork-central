@@ -134,7 +134,9 @@ public class BasicHttpOperationsTests implements HttpUserEvents {
 			.as("Event data values")
 			.containsExactlyInAnyOrderEntriesOf(Map.of(
 						HTTP_METHOD_DATA_KEY, HttpMethod.GET.toString(),
-						HTTP_URI_DATA_KEY, url
+						HTTP_URI_DATA_KEY, url,
+						HTTP_STATUS_CODE_DATA_KEY, 200,
+						HTTP_RESPONSE_BODY_DATA_KEY, res.getBody()
 					))
 			;
 		then(userEventAppenderBiz).shouldHaveNoMoreInteractions();
