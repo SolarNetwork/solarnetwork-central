@@ -94,6 +94,30 @@ public class UpdateEnabledIdFilterTests {
 	}
 
 	@Test
+	public void updateRow_withoutModified() throws SQLException {
+		// GIVEN
+		String tableName = "example.foo";
+		String[] pkColNames = new String[] { "pk1", "pk2" };
+		givenPrepStatement();
+
+		// WHEN
+		UserStringCompositePK filter = new UserStringCompositePK(CommonTestUtils.randomLong(),
+				randomString());
+		UpdateEnabledIdFilter sql = new UpdateEnabledIdFilter(tableName, pkColNames, filter, true, true);
+		PreparedStatement result = sql.createPreparedStatement(con);
+
+		// THEN
+		verify(con).prepareStatement(sqlCaptor.capture());
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"update-enabled-id-filter-row-without-mod.sql", TestSqlResources.class, SQL_COMMENT));
+		then(result).as("Connection statement returned").isSameAs(stmt);
+		verify(stmt).setBoolean(1, true);
+		verify(stmt).setObject(2, filter.getUserId());
+		verify(stmt).setObject(3, filter.getEntityId());
+	}
+
+	@Test
 	public void updateGroup() throws SQLException {
 		// GIVEN
 		String tableName = "example.foo";
@@ -111,6 +135,29 @@ public class UpdateEnabledIdFilterTests {
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
 				"update-enabled-id-filter-group.sql", TestSqlResources.class, SQL_COMMENT));
+		then(result).as("Connection statement returned").isSameAs(stmt);
+		verify(stmt).setBoolean(1, true);
+		verify(stmt).setObject(2, filter.getUserId());
+	}
+
+	@Test
+	public void updateGroup_withoutMod() throws SQLException {
+		// GIVEN
+		String tableName = "example.foo";
+		String[] pkColNames = new String[] { "pk1", "pk2" };
+		givenPrepStatement();
+
+		// WHEN
+		UserStringCompositePK filter = UserStringCompositePK
+				.unassignedEntityIdKey(CommonTestUtils.randomLong());
+		UpdateEnabledIdFilter sql = new UpdateEnabledIdFilter(tableName, pkColNames, filter, true, true);
+		PreparedStatement result = sql.createPreparedStatement(con);
+
+		// THEN
+		verify(con).prepareStatement(sqlCaptor.capture());
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"update-enabled-id-filter-group-without-mod.sql", TestSqlResources.class, SQL_COMMENT));
 		then(result).as("Connection statement returned").isSameAs(stmt);
 		verify(stmt).setBoolean(1, true);
 		verify(stmt).setObject(2, filter.getUserId());
