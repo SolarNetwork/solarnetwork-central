@@ -102,29 +102,7 @@ public class UserInstructionsOAuthClientConfig implements SolarNetUserConfigurat
 
 	@Qualifier(USER_INSTRUCTIONS_HTTP)
 	@Bean
-	public OAuth2AuthorizedClientManager userInstructionsOauthAuthorizedClientManager(@Autowired(
-			required = false) @Qualifier(OAUTH_CLIENT_REGISTRATION) Cache<String, ClientRegistration> cache) {
-		return createOAuth2AuthorizedClientManager(instructionTaskDao, cache);
-	}
-
-	@Qualifier(USER_INSTRUCTIONS_HTTP)
-	@Bean
-	public Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> userInstructionsOauthAuthorizedClientManagerProvider() {
-		return (configurationDao) -> createOAuth2AuthorizedClientManager(configurationDao, null);
-	}
-
-	private OAuth2AuthorizedClientManager createOAuth2AuthorizedClientManager(
-			UserServiceConfigurationDao<UserLongCompositePK> configurationDao,
-			Cache<String, ClientRegistration> cache) {
-		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
-				configurationDao, textEncryptor::decrypt);
-		if ( cache != null ) {
-			repo = new CachingOAuth2ClientRegistrationRepository(cache, repo);
-		}
-
-		var clientService = new JdbcOAuth2AuthorizedClientService(bytesEncryptor, jdbcOperations, repo);
-
-		// AlsoEnergy not providing expires_in in token response, so extract from JWT exp claim
+	public OAuth2AuthorizedClientProvider userInstructionsOauthAuthorizedClientProvider() {
 		var tokenResponseConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
 		tokenResponseConverter.setAccessTokenResponseConverter(new JwtOAuth2AccessTokenResponseConverter(
 				Clock.systemUTC(), new DefaultMapOAuth2AccessTokenResponseConverter()));
@@ -159,6 +137,36 @@ public class UserInstructionsOAuthClientConfig implements SolarNetUserConfigurat
 					client.setRestClient(authRestClient);
 					b.accessTokenResponseClient(client);
 				}).build();
+
+		return provider;
+	}
+
+	@Qualifier(USER_INSTRUCTIONS_HTTP)
+	@Bean
+	public OAuth2AuthorizedClientManager userInstructionsOauthAuthorizedClientManager(
+			@Qualifier(USER_INSTRUCTIONS_HTTP) OAuth2AuthorizedClientProvider provider, @Autowired(
+					required = false) @Qualifier(OAUTH_CLIENT_REGISTRATION) Cache<String, ClientRegistration> cache) {
+		return createOAuth2AuthorizedClientManager(instructionTaskDao, provider, cache);
+	}
+
+	@Qualifier(USER_INSTRUCTIONS_HTTP)
+	@Bean
+	public Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> userInstructionsOauthAuthorizedClientManagerProvider(
+			@Qualifier(USER_INSTRUCTIONS_HTTP) OAuth2AuthorizedClientProvider provider) {
+		return (configurationDao) -> createOAuth2AuthorizedClientManager(configurationDao, provider,
+				null);
+	}
+
+	private OAuth2AuthorizedClientManager createOAuth2AuthorizedClientManager(
+			UserServiceConfigurationDao<UserLongCompositePK> configurationDao,
+			OAuth2AuthorizedClientProvider provider, Cache<String, ClientRegistration> cache) {
+		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
+				configurationDao, textEncryptor::decrypt);
+		if ( cache != null ) {
+			repo = new CachingOAuth2ClientRegistrationRepository(cache, repo);
+		}
+
+		var clientService = new JdbcOAuth2AuthorizedClientService(bytesEncryptor, jdbcOperations, repo);
 
 		var manager = new AuthorizedClientServiceOAuth2AuthorizedClientManager(repo, clientService);
 		manager.setAuthorizedClientProvider(provider);
