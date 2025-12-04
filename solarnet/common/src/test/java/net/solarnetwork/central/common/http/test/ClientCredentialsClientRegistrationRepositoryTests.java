@@ -33,7 +33,7 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,13 +64,13 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 	private UserServiceConfigurationDao<UserLongCompositePK> configurationDao;
 
 	@Mock
-	private Function<String, String> textDecryptor;
+	private BiFunction<UserLongCompositePK, String, String> secretResolver;
 
 	private ClientCredentialsClientRegistrationRepository repo;
 
 	@BeforeEach
 	public void setup() {
-		repo = new ClientCredentialsClientRegistrationRepository(configurationDao, textDecryptor);
+		repo = new ClientCredentialsClientRegistrationRepository(configurationDao, secretResolver);
 	}
 
 	@Test
@@ -105,7 +105,7 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 		final UserLongCompositePK id = new UserLongCompositePK(userId, configId);
 		final String registrationId = userIdSystemIdentifier(userId, srvc, configId);
 
-		given(configurationDao.serviceConfiguration(eq(id), same(textDecryptor))).willReturn(null);
+		given(configurationDao.serviceConfiguration(eq(id), same(secretResolver))).willReturn(null);
 
 		// WHEN
 		// @formatter:off
@@ -137,7 +137,7 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 				HttpConstants.OAUTH_CLIENT_SECRET_SETTING, clientSecret
 				);
 		// @formatter:on
-		given(configurationDao.serviceConfiguration(eq(id), same(textDecryptor))).willReturn(config);
+		given(configurationDao.serviceConfiguration(eq(id), same(secretResolver))).willReturn(config);
 
 		// WHEN
 		// @formatter:off
@@ -171,7 +171,7 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 				HttpConstants.OAUTH_CLIENT_SECRET_SETTING, clientSecret
 				);
 		// @formatter:on
-		given(configurationDao.serviceConfiguration(eq(id), same(textDecryptor))).willReturn(config);
+		given(configurationDao.serviceConfiguration(eq(id), same(secretResolver))).willReturn(config);
 
 		// WHEN
 		ClientRegistration result = repo.findByRegistrationId(registrationId);
@@ -224,7 +224,7 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 				HttpConstants.OAUTH_AUTHENTICATION_METHOD_SETTING, "ClientSecretForm"
 				);
 		// @formatter:on
-		given(configurationDao.serviceConfiguration(eq(id), same(textDecryptor))).willReturn(config);
+		given(configurationDao.serviceConfiguration(eq(id), same(secretResolver))).willReturn(config);
 
 		// WHEN
 		ClientRegistration result = repo.findByRegistrationId(registrationId);
@@ -279,7 +279,7 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 				HttpConstants.PASSWORD_SETTING, password
 				);
 		// @formatter:on
-		given(configurationDao.serviceConfiguration(eq(id), same(textDecryptor))).willReturn(config);
+		given(configurationDao.serviceConfiguration(eq(id), same(secretResolver))).willReturn(config);
 
 		// WHEN
 		ClientRegistration result = repo.findByRegistrationId(registrationId);

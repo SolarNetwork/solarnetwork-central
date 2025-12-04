@@ -23,7 +23,7 @@
 package net.solarnetwork.central.common.dao;
 
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
@@ -39,14 +39,16 @@ public interface UserServiceConfigurationDao<K extends UserRelatedCompositeKey<K
 	 * 
 	 * @param id
 	 *        the primary key to lookup the service configuration for
-	 * @param decryptor
-	 *        an optional service to decrypt the values associated with any
-	 *        encrypted service configuration keys
+	 * @param secretResolver
+	 *        an optional service to resolve the values associated with any
+	 *        "secret" service configuration keys; the configuration primary key
+	 *        is provided as the first argument, followed by the name of the
+	 *        secret to resolve
 	 * @return the configuration, or {@code null} if an entity with primary key
 	 *         {@code id} does not exist; if an entity with primary key
 	 *         {@code id} exists but has no service configuration, an empty Map
 	 *         should be returned
 	 */
-	Map<String, Object> serviceConfiguration(K id, Function<String, String> decryptor);
+	Map<String, Object> serviceConfiguration(K id, BiFunction<K, String, String> secretResolver);
 
 }

@@ -27,11 +27,9 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
-import static net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity.EXPRESSION_SECURE_SETTINGS_PROP;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.catchThrowableOfType;
 import static org.assertj.core.api.BDDAssertions.from;
-import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -48,7 +46,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.encrypt.TextEncryptor;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import net.solarnetwork.central.ValidationException;
@@ -83,9 +80,6 @@ public class DaoUserNodeInstructionBizTests {
 	@Mock
 	private UserNodeInstructionTaskDao instructionTaskDao;
 
-	@Mock
-	private TextEncryptor textEncryptor;
-
 	@Captor
 	private ArgumentCaptor<UserNodeInstructionTaskEntity> instructionTaskCaptor;
 
@@ -96,7 +90,7 @@ public class DaoUserNodeInstructionBizTests {
 
 	@BeforeEach
 	public void setup() {
-		biz = new DaoUserNodeInstructionBiz(instructionService, instructionTaskDao, textEncryptor);
+		biz = new DaoUserNodeInstructionBiz(instructionService, instructionTaskDao);
 
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 		biz.setValidator(factory.getValidator());
@@ -164,106 +158,6 @@ public class DaoUserNodeInstructionBizTests {
 		and.then(result)
 			.as("Result provided from DAO")
 			.isSameAs(entity)
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void controlInstructionTaskEntity_save_createWithSecureSettings() {
-		// GIVEN
-		final Long userId = randomLong();
-		final Long entityId = randomLong();
-		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-
-		final Map<String, Object> sprops = new LinkedHashMap<>(4);
-		final String secureKey = randomString();
-		final String secureValue = randomString();
-		sprops.put("foo", "bar");
-		sprops.put(EXPRESSION_SECURE_SETTINGS_PROP, Map.of(secureKey, secureValue));
-
-		// encrypt secure settings
-		final String encryptedSecureValue = randomString();
-		given(textEncryptor.encrypt(secureValue)).willReturn(encryptedSecureValue);
-
-		// save and retrieve
-		final Map<String, Object> encryptedProps = new LinkedHashMap<>(sprops);
-		// @formatter:off
-		encryptedProps.put(EXPRESSION_SECURE_SETTINGS_PROP, Map.of(
-				secureKey, encryptedSecureValue,
-				// toss in another invented secure setting just to validate it is digested in response
-				randomString(), randomString())
-				);
-		// @formatter:on
-
-		final UserNodeInstructionTaskEntity entity = new UserNodeInstructionTaskEntity(pk);
-		entity.setServiceProps(encryptedProps);
-		given(instructionTaskDao.save(any(UserNodeInstructionTaskEntity.class))).willReturn(pk);
-		given(instructionTaskDao.get(pk)).willReturn(entity);
-
-		// WHEN
-		UserNodeInstructionTaskEntityInput input = new UserNodeInstructionTaskEntityInput();
-		input.setName(randomString());
-		input.setNodeId(randomLong());
-		input.setTopic(randomString());
-		input.setSchedule(TEST_SCHEDULE);
-		input.setState(Queued);
-		input.setExecuteAt(now());
-		input.setServiceProperties(new LinkedHashMap<>(sprops));
-		UserLongCompositePK unassignedPk = UserLongCompositePK.unassignedEntityIdKey(userId);
-		UserNodeInstructionTaskEntity result = biz.saveControlInstructionTask(unassignedPk, input);
-
-		// THEN
-		// @formatter:off
-		then(instructionTaskDao).should().save(instructionTaskCaptor.capture());
-
-		final Map<String, Object> expectedSavedProps = new LinkedHashMap<>(sprops);
-		expectedSavedProps.put(EXPRESSION_SECURE_SETTINGS_PROP, Map.of(secureKey,
-				encryptedSecureValue));
-
-		and.then(instructionTaskCaptor.getValue())
-			.as("Entity ID on DAO save is argument to service")
-			.returns(unassignedPk, from(UserNodeInstructionTaskEntity::getId))
-			.as("Name from input passed to DAO")
-			.returns(input.getName(), from(UserNodeInstructionTaskEntity::getName))
-			.as("Node ID from input passed to DAO")
-			.returns(input.getNodeId(), from(UserNodeInstructionTaskEntity::getNodeId))
-			.as("Topic from input passed to DAO")
-			.returns(input.getTopic(), from(UserNodeInstructionTaskEntity::getTopic))
-			.as("Schedule from input passed to DAO")
-			.returns(input.getSchedule(), from(UserNodeInstructionTaskEntity::getSchedule))
-			.as("State from input passed to DAO")
-			.returns(input.getState(), from(UserNodeInstructionTaskEntity::getState))
-			.as("Exec date input passed to DAO")
-			.returns(input.getExecuteAt(), from(UserNodeInstructionTaskEntity::getExecuteAt))
-			.as("Service properties from input passed to DAO")
-			.returns(expectedSavedProps, from(UserNodeInstructionTaskEntity::getServiceProperties))
-			.as("Message is null")
-			.returns(null, from(UserNodeInstructionTaskEntity::getMessage))
-			.as("Last execut at is null")
-			.returns(null, from(UserNodeInstructionTaskEntity::getLastExecuteAt))
-			.as("Result properties is null")
-			.returns(null, from(UserNodeInstructionTaskEntity::getResultProperties))
-			;
-
-		and.then(result)
-			.as("Result provided from DAO")
-			.isSameAs(entity)
-			.extracting(UserNodeInstructionTaskEntity::getServiceProperties, map(String.class, Object.class))
-			.as("Contains regular setting")
-			.containsEntry("foo", sprops.get("foo"))
-			.as("Contains secure setting")
-			.hasEntrySatisfying(EXPRESSION_SECURE_SETTINGS_PROP, secure -> {
-				and.then(secure).asInstanceOf(map(String.class, Object.class))
-					.as("Secure setting is returned")
-					.containsKey(secureKey)
-					.allSatisfy((k, v) -> {
-						and.then(v.toString())
-							.as("Secure setting %s is digested in result", k)
-							.startsWith("{SSHA-256}")
-							;
-					})
-					;
-			})
 			;
 		// @formatter:on
 	}

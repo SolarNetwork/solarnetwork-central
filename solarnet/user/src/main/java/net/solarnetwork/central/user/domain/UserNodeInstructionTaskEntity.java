@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -49,7 +49,6 @@ import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.util.StringUtils;
 
 /**
  * Cloud control instruction task runtime information.
@@ -63,11 +62,11 @@ import net.solarnetwork.util.StringUtils;
 public class UserNodeInstructionTaskEntity
 		extends BaseUserModifiableEntity<UserNodeInstructionTaskEntity, UserLongCompositePK> {
 
-	/** A service property key for expression settings. */
+	/** A service property key for general expression settings. */
 	public static final String EXPRESSION_SETTINGS_PROP = "settings";
 
-	/** A service property key for encrypted expression settings. */
-	public static final String EXPRESSION_SECURE_SETTINGS_PROP = "secrets";
+	/** A service property key for user secret names to use in expressions. */
+	public static final String EXPRESSION_SECRETS_PROP = "secrets";
 
 	/** A system identifier component for OAuth registration IDs. */
 	public static final String OAUTH_SYSTEM_NAME = "user-instr";
@@ -226,22 +225,22 @@ public class UserNodeInstructionTaskEntity
 	 * Get the task settings.
 	 * 
 	 * <p>
-	 * This returns the combination of settings and secure settings from the
-	 * {@link #EXPRESSION_SETTINGS_PROP} and
-	 * {@link #EXPRESSION_SECURE_SETTINGS_PROP} service property keys, which
-	 * must have {@code Map} object values. The value of any key in the secure
-	 * settings that also exists in the regular settings will override the
-	 * regular settings value in the returned map.
+	 * This returns the combination of settings and secret settings from the
+	 * {@link #EXPRESSION_SETTINGS_PROP} and {@link #EXPRESSION_SECRETS_PROP}
+	 * service property keys, which must have {@code Map} object values. The
+	 * value of any key in the secret settings that also exists in the regular
+	 * settings will override the regular settings value in the returned map.
 	 * </p>
 	 * 
-	 * @param decryptor
+	 * @param secretResolver
 	 *        a function to apply to all values in the
-	 *        {@link #EXPRESSION_SECURE_SETTINGS_PROP} service property map
+	 *        {@link #EXPRESSION_SECRETS_PROP} service property map
 	 * @return a new map instance, never {@code null}
 	 */
-	public Map<String, Object> settings(Function<String, String> decryptor) {
+	public Map<String, Object> settings(BiFunction<UserLongCompositePK, String, String> secretResolver) {
 		final Map<String, Object> result = new LinkedHashMap<>(4);
 		final Map<String, ?> props = getServiceProperties();
+		final UserLongCompositePK id = getId();
 		if ( props != null && props.get(EXPRESSION_SETTINGS_PROP) instanceof Map<?, ?> s ) {
 			for ( Entry<?, ?> e : s.entrySet() ) {
 				if ( e.getKey() == null || e.getValue() == null ) {
@@ -250,7 +249,7 @@ public class UserNodeInstructionTaskEntity
 				result.put(e.getKey().toString(), e.getValue());
 			}
 		}
-		if ( props != null && props.get(EXPRESSION_SECURE_SETTINGS_PROP) instanceof Map<?, ?> s ) {
+		if ( props != null && props.get(EXPRESSION_SECRETS_PROP) instanceof Map<?, ?> s ) {
 			final Set<String> secureKeys = new HashSet<>(s.size());
 			for ( Entry<?, ?> e : s.entrySet() ) {
 				if ( e.getKey() == null || e.getValue() == null ) {
@@ -260,63 +259,9 @@ public class UserNodeInstructionTaskEntity
 				secureKeys.add(key);
 				result.put(key, e.getValue());
 			}
-			SecurityUtils.decryptedMap(result, secureKeys, decryptor);
+			SecurityUtils.decryptedMap(result, secureKeys, (key) -> secretResolver.apply(id, key));
 		}
 		return result;
-	}
-
-	/**
-	 * Encrypt all secure settings.
-	 * 
-	 * <p>
-	 * This will encrypt all settings found in a
-	 * {@link #EXPRESSION_SECURE_SETTINGS_PROP} service property map value.
-	 * </p>
-	 * 
-	 * @param encryptor
-	 *        a function to apply to all values in the
-	 *        {@link #EXPRESSION_SECURE_SETTINGS_PROP} service property map
-	 */
-	public void encryptSettings(Function<String, String> encryptor) {
-		final Map<String, Object> props = getServiceProps();
-		if ( props == null || !(props.get(EXPRESSION_SECURE_SETTINGS_PROP) instanceof Map<?, ?> s) ) {
-			return;
-		}
-
-		final Map<String, String> encryptedSettings = new LinkedHashMap<>(s.size());
-		for ( Entry<?, ?> e : s.entrySet() ) {
-			if ( e.getKey() == null || e.getValue() == null ) {
-				continue;
-			}
-			String key = e.getKey().toString();
-			encryptedSettings.put(key, encryptor.apply(e.getValue().toString()));
-		}
-		putServiceProps(Map.of(EXPRESSION_SECURE_SETTINGS_PROP, encryptedSettings));
-	}
-
-	/**
-	 * Cryptographically digest all secure settings.
-	 * 
-	 * <p>
-	 * This will perform a one-way digest of all settings found in a
-	 * {@link #EXPRESSION_SECURE_SETTINGS_PROP} service property map value.
-	 * </p>
-	 */
-	public void digestSensitiveInformation() {
-		final Map<String, Object> props = getServiceProps();
-		if ( props == null || !(props.get(EXPRESSION_SECURE_SETTINGS_PROP) instanceof Map<?, ?> s) ) {
-			return;
-		}
-
-		final Map<String, String> encryptedSettings = new LinkedHashMap<>(s.size());
-		for ( Entry<?, ?> e : s.entrySet() ) {
-			if ( e.getKey() == null || e.getValue() == null ) {
-				continue;
-			}
-			encryptedSettings.put(e.getKey().toString(),
-					StringUtils.sha256Base64Value(e.getValue().toString()));
-		}
-		putServiceProps(Map.of(EXPRESSION_SECURE_SETTINGS_PROP, encryptedSettings));
 	}
 
 	/**

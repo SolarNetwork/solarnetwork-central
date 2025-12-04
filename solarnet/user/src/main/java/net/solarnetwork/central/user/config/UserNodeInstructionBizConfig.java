@@ -24,11 +24,9 @@ package net.solarnetwork.central.user.config;
 
 import static net.solarnetwork.central.user.config.SolarNetUserConfiguration.USER_INSTRUCTIONS;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.encrypt.TextEncryptor;
 import jakarta.validation.Validator;
 import net.solarnetwork.central.user.biz.UserNodeInstructionService;
 import net.solarnetwork.central.user.biz.dao.DaoUserNodeInstructionBiz;
@@ -53,13 +51,9 @@ public class UserNodeInstructionBizConfig {
 	@Autowired
 	private Validator validator;
 
-	@Qualifier(USER_INSTRUCTIONS)
-	@Autowired
-	private TextEncryptor textEncryptor;
-
 	@Bean
 	public DaoUserNodeInstructionBiz userInstructionBiz() {
-		var biz = new DaoUserNodeInstructionBiz(instructionService, instructionTaskDao, textEncryptor);
+		var biz = new DaoUserNodeInstructionBiz(instructionService, instructionTaskDao);
 
 		biz.setValidator(validator);
 

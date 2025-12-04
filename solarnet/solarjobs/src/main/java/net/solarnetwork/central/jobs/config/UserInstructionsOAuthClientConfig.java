@@ -25,6 +25,7 @@ package net.solarnetwork.central.jobs.config;
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.HTTP_TRACE;
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
 import static net.solarnetwork.central.user.config.SolarNetUserConfiguration.USER_INSTRUCTIONS;
+import static net.solarnetwork.central.user.dao.UserSecretAccessDao.userSecretDecryptorFunction;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.function.Function;
@@ -41,7 +42,6 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.crypto.encrypt.BytesEncryptor;
-import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
@@ -64,8 +64,10 @@ import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
 import net.solarnetwork.central.security.service.JwtOAuth2AccessTokenResponseConverter;
 import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientManager;
+import net.solarnetwork.central.user.biz.InstructionsExpressionService;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
+import net.solarnetwork.central.user.dao.UserSecretAccessDao;
 
 /**
  * OAuth support for user instructions.
@@ -92,9 +94,8 @@ public class UserInstructionsOAuthClientConfig implements SolarNetUserConfigurat
 	@Autowired
 	private UserNodeInstructionTaskDao instructionTaskDao;
 
-	@Autowired
-	@Qualifier(USER_INSTRUCTIONS)
-	private TextEncryptor textEncryptor;
+	@Autowired(required = false)
+	private UserSecretAccessDao userSecretAccessDao;
 
 	@Autowired
 	@Qualifier(USER_INSTRUCTIONS)
@@ -161,7 +162,8 @@ public class UserInstructionsOAuthClientConfig implements SolarNetUserConfigurat
 			UserServiceConfigurationDao<UserLongCompositePK> configurationDao,
 			OAuth2AuthorizedClientProvider provider, Cache<String, ClientRegistration> cache) {
 		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
-				configurationDao, textEncryptor::decrypt);
+				configurationDao, userSecretDecryptorFunction(userSecretAccessDao,
+						InstructionsExpressionService.USER_SECRET_TOPIC_ID));
 		if ( cache != null ) {
 			repo = new CachingOAuth2ClientRegistrationRepository(cache, repo);
 		}

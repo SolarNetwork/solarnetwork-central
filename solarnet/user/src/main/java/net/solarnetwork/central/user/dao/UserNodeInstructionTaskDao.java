@@ -22,14 +22,14 @@
 
 package net.solarnetwork.central.user.dao;
 
-import static net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity.EXPRESSION_SECURE_SETTINGS_PROP;
+import static net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity.EXPRESSION_SECRETS_PROP;
 import static net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity.EXPRESSION_SETTINGS_PROP;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import net.solarnetwork.central.common.dao.ClaimableTaskDao;
 import net.solarnetwork.central.common.dao.FilterableDeleteDao;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
@@ -56,7 +56,7 @@ public interface UserNodeInstructionTaskDao
 
 	@Override
 	default Map<String, Object> serviceConfiguration(UserLongCompositePK id,
-			Function<String, String> decryptor) {
+			BiFunction<UserLongCompositePK, String, String> secretResolver) {
 		final UserNodeInstructionTaskEntity task = get(id);
 		if ( task == null ) {
 			return null;
@@ -71,7 +71,7 @@ public interface UserNodeInstructionTaskDao
 				result.put(e.getKey().toString(), e.getValue());
 			}
 		}
-		if ( props != null && props.get(EXPRESSION_SECURE_SETTINGS_PROP) instanceof Map<?, ?> s ) {
+		if ( props != null && props.get(EXPRESSION_SECRETS_PROP) instanceof Map<?, ?> s ) {
 			Set<String> secureKeys = new HashSet<>(s.size());
 			for ( Entry<?, ?> e : s.entrySet() ) {
 				if ( e.getKey() == null || e.getValue() == null ) {
@@ -81,7 +81,7 @@ public interface UserNodeInstructionTaskDao
 				secureKeys.add(key);
 				result.put(key, e.getValue());
 			}
-			return SecurityUtils.decryptedMap(result, secureKeys, decryptor);
+			return SecurityUtils.decryptedMap(result, secureKeys, (key) -> secretResolver.apply(id, key));
 		}
 		return result;
 	}

@@ -33,7 +33,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -59,24 +59,24 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public class ClientCredentialsClientRegistrationRepository implements ClientRegistrationRepository {
 
 	private final UserServiceConfigurationDao<UserLongCompositePK> configurationDao;
-	private final Function<String, String> textDecryptor;
+	private final BiFunction<UserLongCompositePK, String, String> secretResolver;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param configurationDao
 	 *        the configuration DAO
-	 * @param textDecryptor
+	 * @param secretResolver
 	 *        function to decrypt values with
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public ClientCredentialsClientRegistrationRepository(
 			UserServiceConfigurationDao<UserLongCompositePK> configurationDao,
-			Function<String, String> textDecryptor) {
+			BiFunction<UserLongCompositePK, String, String> secretResolver) {
 		super();
 		this.configurationDao = requireNonNullArgument(configurationDao, "configurationDao");
-		this.textDecryptor = requireNonNullArgument(textDecryptor, "textDecryptor");
+		this.secretResolver = requireNonNullArgument(secretResolver, "secretResolver");
 	}
 
 	@SuppressWarnings("removal")
@@ -87,8 +87,8 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 			throw new EmptyResultDataAccessException(
 					"Configuration for registration ID %s not supported.".formatted(registrationId), 1);
 		}
-		final Map<String, Object> conf = configurationDao
-				.serviceConfiguration(new UserLongCompositePK(ids.get(0), ids.get(1)), textDecryptor);
+		final var id = new UserLongCompositePK(ids.get(0), ids.get(1));
+		final Map<String, Object> conf = configurationDao.serviceConfiguration(id, secretResolver);
 		if ( conf == null ) {
 			throw new EmptyResultDataAccessException(
 					"Configuration for registration ID %s not found.".formatted(registrationId), 1);

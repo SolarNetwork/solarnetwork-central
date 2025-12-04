@@ -25,7 +25,6 @@ package net.solarnetwork.central.user.biz.dao;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
-import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
@@ -55,7 +54,6 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 
 	private final UserNodeInstructionService instructionService;
 	private final UserNodeInstructionTaskDao instructionTaskDao;
-	private final TextEncryptor textEncryptor;
 
 	private Validator validator;
 
@@ -66,17 +64,14 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 	 *        the instruction service
 	 * @param instructionTaskDao
 	 *        the instruction task DAO
-	 * @param textEncryptor
-	 *        the text encryptor to use for task settings
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
 	public DaoUserNodeInstructionBiz(UserNodeInstructionService instructionService,
-			UserNodeInstructionTaskDao instructionTaskDao, TextEncryptor textEncryptor) {
+			UserNodeInstructionTaskDao instructionTaskDao) {
 		super();
 		this.instructionService = requireNonNullArgument(instructionService, "instructionService");
 		this.instructionTaskDao = requireNonNullArgument(instructionTaskDao, "instructionTaskDao");
-		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
 
 	}
 
@@ -87,8 +82,7 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		requireNonNullArgument(userId, "userId");
 		BasicUserNodeInstructionTaskFilter f = new BasicUserNodeInstructionTaskFilter(filter);
 		f.setUserId(userId);
-		return digestSensitiveInformation(
-				instructionTaskDao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax()));
+		return instructionTaskDao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -105,7 +99,7 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 				|| desiredState == BasicClaimableJobState.Completed ) {
 			instructionTaskDao.updateTaskState(id, desiredState, expectedStates);
 		}
-		return digestSecureSettings(instructionTaskDao.get(id));
+		return instructionTaskDao.get(id);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -118,7 +112,6 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		validateInput(input);
 
 		final UserNodeInstructionTaskEntity entity = input.toEntity(id);
-		entity.encryptSettings(textEncryptor::encrypt);
 		UserLongCompositePK pk = id;
 		if ( expectedStates == null || expectedStates.length < 1 ) {
 			pk = instructionTaskDao.save(entity);
@@ -129,7 +122,7 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 			}
 			instructionTaskDao.updateTask(entity, expectedStates);
 		}
-		return digestSecureSettings(instructionTaskDao.get(pk));
+		return instructionTaskDao.get(pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -154,13 +147,7 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		validateInput(input);
 
 		final UserNodeInstructionTaskEntity task = input.toEntity(unassignedEntityIdKey(userId));
-		task.encryptSettings(textEncryptor::encrypt);
-		UserNodeInstructionTaskSimulationOutput result = instructionService
-				.simulateControlInstructionTask(task);
-		if ( result != null ) {
-			digestSecureSettings(result.getTask());
-		}
-		return result;
+		return instructionService.simulateControlInstructionTask(task);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -195,24 +182,6 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		if ( errors.hasErrors() ) {
 			throw new ValidationException(errors);
 		}
-	}
-
-	private FilterResults<UserNodeInstructionTaskEntity, UserLongCompositePK> digestSensitiveInformation(
-			FilterResults<UserNodeInstructionTaskEntity, UserLongCompositePK> results) {
-		if ( results == null || results.getReturnedResultCount() < 1 ) {
-			return results;
-		}
-		for ( UserNodeInstructionTaskEntity entity : results ) {
-			digestSecureSettings(entity);
-		}
-		return results;
-	}
-
-	private UserNodeInstructionTaskEntity digestSecureSettings(UserNodeInstructionTaskEntity entity) {
-		if ( entity != null ) {
-			entity.digestSensitiveInformation();
-		}
-		return entity;
 	}
 
 	/**
