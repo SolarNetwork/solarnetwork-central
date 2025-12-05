@@ -148,8 +148,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				AlsoEnergyGranularity.Raw.name());
 		var granularityTitles = unmodifiableMap(Arrays.stream(AlsoEnergyGranularity.values())
 				.collect(Collectors.toMap(AlsoEnergyGranularity::name, AlsoEnergyGranularity::name,
-						(l, r) -> r,
-						() -> new LinkedHashMap<>(LocusEnergyGranularity.values().length))));
+						(l, r) -> r, () -> new LinkedHashMap<>(AlsoEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
 
 		// @formatter:off
