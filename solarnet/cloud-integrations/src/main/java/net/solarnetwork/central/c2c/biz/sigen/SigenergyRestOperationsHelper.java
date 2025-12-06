@@ -32,11 +32,12 @@ import static net.solarnetwork.codec.JsonUtils.getTreeFromObject;
 import static net.solarnetwork.service.OptionalService.service;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
-import static org.springframework.http.HttpHeaders.encodeBasicAuth;
 import static org.springframework.web.util.UriComponentsBuilder.fromUriString;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.InstantSource;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,8 +79,14 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 	 */
 	public static final String CLOUD_INTEGRATION_SYSTEM_IDENTIFIER = "c2c-i9n-sigen";
 
+	/** The base URL to the AlsoEnergy API. */
+	public static final String BASE_URI_TEMPLATE = "https://api-{region}.sigencloud.com";
+
 	/** The URL path to request a token for a given key. */
 	public static final String KEY_TOKEN_REQUEST_PATH = "/openapi/auth/login/key";
+
+	/** The URL path to list the available systems. */
+	public static final String SYSTEM_LIST_PATH = "/openapi/system";
 
 	/** The message returned on successful API responses. */
 	public static final String RESPONSE_SUCCESS_MESSAGE = "success";
@@ -205,6 +212,25 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 		}
 	}
 
+	/**
+	 * Resolve a Sigenergy region key.
+	 *
+	 * @param config
+	 *        the configuration to resolve the region key from
+	 * @return the region (never {@code null})
+	 */
+	public static SigenergyRegion resolveRegion(final CloudIntegrationConfiguration config) {
+		SigenergyRegion result = SigenergyRegion.AustraliaNewZealand;
+		if ( config.hasServiceProperty(REGION_SETTING) ) {
+			try {
+				result = SigenergyRegion.valueOf(config.serviceProperty(REGION_SETTING, String.class));
+			} catch ( Exception e ) {
+				// ignore
+			}
+		}
+		return result;
+	}
+
 	private void addSigenergyBearerAuthorizationInternal(final CloudIntegrationConfiguration config,
 			final HttpHeaders headers) {
 		final UserStringStringCompositePK accessTokenId = accessTokenId(config);
@@ -221,28 +247,24 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 		final var decrypted = config.copyWithId(config.getId());
 		decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
 
-		final String appKey = nonEmptyString(config.serviceProperty(APP_KEY_SETTING, String.class));
+		final String appKey = nonEmptyString(decrypted.serviceProperty(APP_KEY_SETTING, String.class));
 		if ( appKey == null ) {
 			return;
 		}
 
 		final String appSecret = nonEmptyString(
-				config.serviceProperty(APP_SECRET_SETTING, String.class));
+				decrypted.serviceProperty(APP_SECRET_SETTING, String.class));
 		if ( appSecret == null ) {
 			return;
 		}
 
-		final String region = config.hasServiceProperty(REGION_SETTING)
-				? config.serviceProperty(REGION_SETTING, String.class)
-				: SigenergyRegion.AustraliaNewZealand.getKey();
+		final SigenergyRegion region = resolveRegion(decrypted);
 
-		final URI tokenRequestUri = fromUriString(
-				resolveBaseUrl(config, SigenergyCloudIntegrationService.BASE_URI_TEMPLATE))
-						.path(KEY_TOKEN_REQUEST_PATH).buildAndExpand(region).toUri();
+		final URI tokenRequestUri = fromUriString(resolveBaseUrl(config, BASE_URI_TEMPLATE))
+				.path(KEY_TOKEN_REQUEST_PATH).buildAndExpand(region.getKey()).toUri();
 
 		final JsonNode res = restOps.postForObject(tokenRequestUri,
-				getTreeFromObject(Map.of("key", encodeBasicAuth(appKey, appSecret, UTF_8))),
-				JsonNode.class);
+				getTreeFromObject(Map.of("key", encodeAuthKey(appKey, appSecret))), JsonNode.class);
 
 		requireSuccessResponse("Authenticate", tokenRequestUri, res);
 
@@ -254,6 +276,20 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 
 		clientAccessTokenDao.save(registration);
 		headers.setBearerAuth(registration.getAccessTokenValue());
+	}
+
+	/**
+	 * Encode an application key and secret into an authentication key value.
+	 *
+	 * @param appKey
+	 *        the application key
+	 * @param appSecret
+	 *        the application secret
+	 * @return the authentication key
+	 */
+	public static String encodeAuthKey(String appKey, String appSecret) {
+		return Base64.getEncoder().withoutPadding()
+				.encodeToString((appKey + ':' + appSecret).getBytes(StandardCharsets.UTF_8));
 	}
 
 	/**
@@ -355,7 +391,7 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 		}
 		buf.append(" failed");
 		if ( uri != null ) {
-			buf.append("at [").append(uri).append("]");
+			buf.append(" at [").append(uri).append("]");
 		}
 		if ( code != null ) {
 			buf.append("; code ").append(code);

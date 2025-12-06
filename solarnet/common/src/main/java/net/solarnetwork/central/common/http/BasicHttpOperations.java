@@ -349,7 +349,8 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 			throw new RemoteServiceException("%s failed because of an authorization error: %s"
 					.formatted(eventDescription, e.getMessage()), e);
 		} catch ( RemoteServiceException e ) {
-			// assume already logged
+			tags = errorEventTags;
+			eventMsg = errorEventMessageProvider.apply(e);
 			throw e;
 		} catch ( RuntimeException e ) {
 			tags = errorEventTags;

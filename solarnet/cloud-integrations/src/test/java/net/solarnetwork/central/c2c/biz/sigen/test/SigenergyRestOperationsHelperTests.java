@@ -54,7 +54,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -126,8 +125,8 @@ public class SigenergyRestOperationsHelperTests {
 		helper = new SigenergyRestOperationsHelper(
 				LoggerFactory.getLogger(SigenergyRestOperationsHelperTests.class), userEventAppenderBiz,
 				new RestTemplate(), CloudIntegrationsUserEvents.INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-				datumStreamServiceIdentifier -> SigenergyCloudIntegrationService.SECURE_SETTINGS, clock,
-				mapper, clientAccessTokenDao, new StaticOptionalService<>(lockCache));
+				(serviceIdentifier) -> SigenergyCloudIntegrationService.SECURE_SETTINGS, clock, mapper,
+				clientAccessTokenDao, new StaticOptionalService<>(lockCache));
 		helper.setAllowLocalHosts(true);
 	}
 
@@ -142,8 +141,8 @@ public class SigenergyRestOperationsHelperTests {
 		final String baseUrl = server.url("").toString() + "{region}";
 		final String appKey = randomString();
 		final String appSecret = randomString();
-		final String region = SigenergyRegion.values()[RNG.nextInt(SigenergyRegion.values().length)]
-				.getKey();
+		final SigenergyRegion region = SigenergyRegion.values()[RNG
+				.nextInt(SigenergyRegion.values().length)];
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
 				randomLong(), clock.instant());
@@ -197,7 +196,7 @@ public class SigenergyRestOperationsHelperTests {
 
 		final URI tokenRequestUri = fromUriString(baseUrl)
 				.path(SigenergyRestOperationsHelper.KEY_TOKEN_REQUEST_PATH)
-				.buildAndExpand(region)
+				.buildAndExpand(region.getKey())
 				.toUri();
 
 		and.then(server.takeRequest())
@@ -208,7 +207,7 @@ public class SigenergyRestOperationsHelperTests {
 			.returns(tokenRequestUri, from(req -> req.getRequestUrl().uri()))
 			.as("HTTP request body for token is JSON object with key field encoded as Basic auth of appKey:appSecret")
 			.returns(Map.of(
-					"key", HttpHeaders.encodeBasicAuth(appKey, appSecret, UTF_8)
+					"key", SigenergyRestOperationsHelper.encodeAuthKey(appKey, appSecret)
 					), from(req -> JsonUtils.getStringMap(req.getBody().readUtf8())))
 			;
 
@@ -259,7 +258,7 @@ public class SigenergyRestOperationsHelperTests {
 		final String appKey = randomString();
 		final String appSecret = randomString();
 		final String region = SigenergyRegion.values()[RNG.nextInt(SigenergyRegion.values().length)]
-				.getKey();
+				.name();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
 				randomLong(), clock.instant());

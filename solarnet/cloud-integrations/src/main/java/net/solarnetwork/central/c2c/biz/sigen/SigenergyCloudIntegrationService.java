@@ -23,7 +23,11 @@
 package net.solarnetwork.central.c2c.biz.sigen;
 
 import static java.util.Collections.unmodifiableMap;
+import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.BASE_URI_TEMPLATE;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,15 +37,20 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
-import org.springframework.web.client.RestOperations;
+import org.springframework.web.util.UriComponentsBuilder;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudControlService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.BaseRestOperationsCloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.Result.ErrorDetail;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
@@ -58,14 +67,11 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.sigen";
 
-	/** The base URL to the AlsoEnergy API. */
-	public static final String BASE_URI_TEMPLATE = "https://api-{region}.sigencloud.com";
-
 	/** An app secret setting name. */
 	public static final String REGION_SETTING = "region";
 
 	/** An app key setting name. */
-	public static final String APP_KEY_SETTING = "apKeyId";
+	public static final String APP_KEY_SETTING = "appKey";
 
 	/** An app secret setting name. */
 	public static final String APP_SECRET_SETTING = "appSecret";
@@ -76,10 +82,11 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 	public static final Map<String, URI> WELL_KNOWN_URLS;
 	static {
 		Map<String, URI> map = new LinkedHashMap<>(SigenergyRegion.values().length + 1);
-		map.put(API_BASE_WELL_KNOWN_URL, URI.create(BASE_URI_TEMPLATE.formatted("{region}")));
+		map.put(API_BASE_WELL_KNOWN_URL, UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
+				.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri());
 		for ( SigenergyRegion reg : SigenergyRegion.values() ) {
-			map.put(API_BASE_WELL_KNOWN_URL + ':' + reg.name(),
-					URI.create(BASE_URI_TEMPLATE.formatted(reg.getKey())));
+			map.put(API_BASE_WELL_KNOWN_URL + ':' + reg.name(), UriComponentsBuilder
+					.fromUriString(BASE_URI_TEMPLATE).buildAndExpand(reg.getKey()).toUri());
 		}
 		WELL_KNOWN_URLS = Collections.unmodifiableMap(map);
 	}
@@ -91,7 +98,7 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 		var regionSpec = new BasicMultiValueSettingSpecifier(REGION_SETTING,
 				SigenergyRegion.AustraliaNewZealand.name());
 		var regionTitles = unmodifiableMap(Arrays.stream(SigenergyRegion.values())
-				.collect(Collectors.toMap(SigenergyRegion::getKey, SigenergyRegion::name, (l, r) -> r,
+				.collect(Collectors.toMap(SigenergyRegion::name, SigenergyRegion::name, (l, r) -> r,
 						() -> new LinkedHashMap<>(SigenergyRegion.values().length))));
 		regionSpec.setValueTitles(regionTitles);
 
@@ -119,23 +126,59 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 	 *        the user event appender service
 	 * @param encryptor
 	 *        the sensitive key encryptor
-	 * @param restOps
-	 *        the REST operations
+	 * @param restOpsHelper
+	 *        the REST operations helper; see
+	 *        {@link SigenergyRestOperationsHelper}
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public SigenergyCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			Collection<CloudControlService> controlServices, UserEventAppenderBiz userEventAppenderBiz,
-			TextEncryptor encryptor, RestOperations restOps) {
+			TextEncryptor encryptor, RestOperationsHelper restOpsHelper) {
 		super(SERVICE_IDENTIFIER, "Sigenergy", datumStreamServices, controlServices,
-				userEventAppenderBiz, encryptor, SETTINGS, WELL_KNOWN_URLS,
-				null /* TODO */);
+				userEventAppenderBiz, encryptor, SETTINGS, WELL_KNOWN_URLS, restOpsHelper);
 	}
 
 	@Override
 	public Result<Void> validate(CloudIntegrationConfiguration integration, Locale locale) {
-		// TODO Auto-generated method stub
-		return null;
+		// check that authentication settings provided
+		final List<ErrorDetail> errorDetails = new ArrayList<>(2);
+		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
+
+		final String appKey = nonEmptyString(integration.serviceProperty(APP_KEY_SETTING, String.class));
+		if ( appKey == null ) {
+			String errMsg = ms.getMessage("error.appKey.missing", null, locale);
+			errorDetails.add(new ErrorDetail(APP_KEY_SETTING, null, errMsg));
+		}
+
+		final String appSecret = nonEmptyString(
+				integration.serviceProperty(APP_SECRET_SETTING, String.class));
+		if ( appSecret == null ) {
+			String errMsg = ms.getMessage("error.appSecret.missing", null, locale);
+			errorDetails.add(new ErrorDetail(APP_SECRET_SETTING, null, errMsg));
+		}
+
+		if ( !errorDetails.isEmpty() ) {
+			String errMsg = ms.getMessage("error.settings.missing", null, locale);
+			return Result.error("SGCI.0001", errMsg, errorDetails);
+		}
+
+		// validate by requesting the available systems
+		final SigenergyRegion region = SigenergyRestOperationsHelper.resolveRegion(integration);
+		try {
+			final String response = restOpsHelper.httpGet("List systems", integration, String.class,
+					(req) -> UriComponentsBuilder
+							.fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+							.path(SigenergyRestOperationsHelper.SYSTEM_LIST_PATH)
+							.buildAndExpand(region.getKey()).toUri(),
+					HttpEntity::getBody);
+			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
+			return Result.success();
+		} catch ( RemoteServiceException e ) {
+			return validationResult(e, null);
+		} catch ( Exception e ) {
+			return Result.error("SGCI.0002", "Validation failed: " + e.getMessage());
+		}
 	}
 
 }
