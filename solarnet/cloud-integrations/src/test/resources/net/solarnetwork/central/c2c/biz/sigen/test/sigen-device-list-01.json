@@ -1,0 +1,9 @@
+{
+  "code": 0,
+  "msg": "success",
+  "timestamp": 1764869251,
+  "data": [
+    "{\"systemId\":\"ABC123\",\"serialNumber\":\"110A123\",\"deviceType\":\"Inverter\",\"status\":\"Normal\",\"pn\":\"1104004100\",\"firmwareVersion\":\"V100R001C22SPC111B064L\",\"attrMap\":\"{\\\"ratedFrequency\\\":50.000,\\\"ratedVoltage\\\":230.000,\\\"maxAbsorbedPower\\\":11.000,\\\"ratedActivePower\\\":10.000,\\\"pvStringNumber\\\":4,\\\"maxActivePower\\\":11.000}\"}",
+    "{\"systemId\":\"ABC123\",\"serialNumber\":\"110B123\",\"deviceType\":\"Battery\",\"status\":\"Normal\",\"pn\":\"1113000120\",\"firmwareVersion\":\"V100R001C22SPC111B064L\",\"attrMap\":\"{\\\"ratedDischargePower\\\":4.800,\\\"ratedEnergy\\\":280.000,\\\"ratedChargePower\\\":4.200,\\\"dischargeEnergy\\\":7.57,\\\"chargeableEnergy\\\":0.81}\"}"
+  ]
+}

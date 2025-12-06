@@ -367,6 +367,26 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 	}
 
 	/**
+	 * Get a JSON object or array from a field on a JSON object.
+	 *
+	 * <p>
+	 * The Sigenergy API returns some nested fields as JSON strings, which must
+	 * be decoded.
+	 * </p>
+	 *
+	 * @param json
+	 *        the object to extract a JSON field from
+	 * @param field
+	 *        the name of the JSON field to extract as JSON
+	 * @return the JSON tree
+	 * @throws IllegalArgumentException
+	 *         if the field value cannot be parsed as JSON
+	 */
+	public JsonNode jsonObjectOrArray(JsonNode json, String field) {
+		return jsonObjectOrArray(mapper, json, field);
+	}
+
+	/**
 	 * Verify that a JSON response contains the "success" message, otherwise
 	 * throw an exception.
 	 *

@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import java.time.Clock;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
@@ -41,17 +42,29 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.client.RestTemplate;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
+import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
+import net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
+import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.central.common.http.CachableRequestEntity;
+import net.solarnetwork.central.datum.biz.QueryAuditor;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
-import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
@@ -95,23 +108,46 @@ public class SigenergyConfig implements SolarNetCloudIntegrationsConfiguration {
 	private Cache<UserLongCompositePK, Lock> integrationLocksCache;
 
 	@Autowired(required = false)
-	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
-	private Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
-
-	@Autowired(required = false)
 	@Qualifier(CLOUD_INTEGRATIONS_HTTP)
 	private Cache<CachableRequestEntity, Result<?>> httpCache;
 
 	@Value("${app.c2c.allow-http-local-hosts:false}")
 	private boolean allowHttpLocalHosts;
 
+	@Autowired
+	private CloudIntegrationsExpressionService expressionService;
+
+	@Autowired
+	private CloudIntegrationConfigurationDao integrationConfigurationDao;
+
+	@Autowired
+	private CloudDatumStreamConfigurationDao datumStreamConfigurationDao;
+
+	@Autowired
+	private CloudDatumStreamMappingConfigurationDao datumStreamMappingConfigurationDao;
+
+	@Autowired
+	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyConfigurationDao;
+
+	@Autowired
+	private ObjectMapper objectMapper;
+
+	@Autowired
+	private DatumEntityDao datumDao;
+
+	@Autowired(required = false)
+	private QueryAuditor queryAuditor;
+
+	@Autowired
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
+	private Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
+
 	@Bean
 	@Qualifier(SIGENERGY)
-	public CloudIntegrationService sigenergyCloudIntegrationService(
-	/*- TODO
-	@Qualifier(SIGENERGY) Collection<CloudDatumStreamService> datumStreamServices,
-	@Qualifier(SIGENERGY) Collection<CloudControlService> controlServices
-	*/ ) {
+	public SigenergyRestOperationsHelper sigenergyRestOpsHelper() {
 		var accessTokenDao = new JdbcOAuth2AuthorizedClientService(bytesEncryptor, jdbcOperations,
 				new ClientRegistrationRepository() {
 
@@ -121,15 +157,23 @@ public class SigenergyConfig implements SolarNetCloudIntegrationsConfiguration {
 						throw new UnsupportedOperationException();
 					}
 				});
-		var restOpsHelper = new SigenergyRestOperationsHelper(
+		return new SigenergyRestOperationsHelper(
 				LoggerFactory.getLogger(SigenergyCloudIntegrationService.class), userEventAppender,
 				restOps, CloudIntegrationsUserEvents.INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 				serviceIdentifier -> SigenergyCloudIntegrationService.SECURE_SETTINGS, Clock.systemUTC(),
-				JsonUtils.newObjectMapper(), accessTokenDao,
-				new StaticOptionalService<>(integrationLocksCache));
+				objectMapper, accessTokenDao, new StaticOptionalService<>(integrationLocksCache));
+	}
 
-		var service = new SigenergyCloudIntegrationService(List.of(), List.of(), userEventAppender,
-				encryptor, restOpsHelper);
+	@Bean
+	@Qualifier(SIGENERGY)
+	public CloudIntegrationService sigenergyCloudIntegrationService(
+			@Qualifier(SIGENERGY) RestOperationsHelper restOpsHelper,
+			@Qualifier(SIGENERGY) Collection<CloudDatumStreamService> datumStreamServices
+	/*- TODO
+	, @Qualifier(SIGENERGY) Collection<CloudControlService> controlServices
+	*/ ) {
+		var service = new SigenergyCloudIntegrationService(datumStreamServices, List.of(),
+				userEventAppender, encryptor, restOpsHelper);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(SigenergyCloudIntegrationService.class.getName(),
@@ -137,6 +181,31 @@ public class SigenergyConfig implements SolarNetCloudIntegrationsConfiguration {
 		service.setMessageSource(msgSource);
 
 		service.setUserServiceAuditor(userServiceAuditor);
+
+		return service;
+	}
+
+	@Bean
+	@Qualifier(SIGENERGY)
+	public CloudDatumStreamService sigenergyCloudDatumStreamService(
+			@Qualifier(SIGENERGY) RestOperationsHelper restOpsHelper) {
+		var service = new SigenergyCloudDatumStreamService(Clock.systemUTC(), userEventAppender,
+				encryptor, expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
+				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOpsHelper,
+				objectMapper);
+
+		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
+		msgSource.setBasenames(SigenergyCloudDatumStreamService.class.getName(),
+				BaseCloudDatumStreamService.class.getName());
+		service.setMessageSource(msgSource);
+
+		service.setUserServiceAuditor(userServiceAuditor);
+		service.setDatumDao(datumDao);
+		service.setQueryAuditor(queryAuditor);
+		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
+		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
+		service.setHttpCache(httpCache);
+		service.setAllowLocalHosts(allowHttpLocalHosts);
 
 		return service;
 	}

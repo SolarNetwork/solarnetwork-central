@@ -1,0 +1,6 @@
+{
+  "code": 0,
+  "msg": "success",
+  "timestamp": 1764870200,
+  "data": "[{\"systemId\":\"ABC123\",\"systemName\":\"Test House\",\"addr\":\"123 Main Street, Anytown\",\"status\":\"Normal\",\"isActivate\":true,\"onOffGridStatus\":\"onGrid\",\"timeZone\":\"Pacific/Auckland\",\"gridConnectedTime\":1746419521000,\"pvCapacity\":9.2,\"batteryCapacity\":9.2}]"
+}
