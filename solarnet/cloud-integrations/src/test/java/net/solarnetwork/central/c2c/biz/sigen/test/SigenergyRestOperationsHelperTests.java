@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
@@ -54,11 +55,13 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestTemplate;
 import org.threeten.extra.MutableClock;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
@@ -324,6 +327,207 @@ public class SigenergyRestOperationsHelperTests {
 		and.then(result)
 			.as("HTTP response body returned")
 			.isEqualTo(responseBody)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void authKey() {
+		// GIVEN
+		final String appKey = randomString();
+		final String appSecret = randomString();
+
+		// WHEN
+		final String result = SigenergyRestOperationsHelper.encodeAuthKey(appKey, appSecret);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Authentiation key is HTTP basic encoding without padding")
+			.isEqualTo(HttpHeaders.encodeBasicAuth(appKey, appSecret, UTF_8).replaceAll("=+$", ""))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void jsonObjectOrArray_object() {
+		// GIVEN
+		// @formatter:off
+		final Map<String, Object> nestedData = Map.of(
+				randomString(), randomLong()
+				);
+		final JsonNode json = JsonUtils.getTreeFromObject(Map.of(
+				"foo", randomString(),
+				"data", JsonUtils.getJSONString(nestedData)
+				));
+		// @formatter:off
+
+		// WHEN
+		final JsonNode result = SigenergyRestOperationsHelper.jsonObjectOrArray(mapper, json, "data");
+
+		// THEN
+		// @formatter:off
+		and.then(JsonUtils.getStringMapFromTree(result))
+			.as("Nested JSON decoded")
+			.isEqualTo(nestedData)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void jsonObjectOrArray_array() throws IOException {
+		// GIVEN
+		// @formatter:off
+		final List<String> nestedData = List.of(
+				randomString(), randomString()
+				);
+		final JsonNode json = JsonUtils.getTreeFromObject(Map.of(
+				"foo", randomString(),
+				"data", JsonUtils.getJSONString(nestedData)
+				));
+		// @formatter:off
+
+		// WHEN
+		final JsonNode result = SigenergyRestOperationsHelper.jsonObjectOrArray(mapper, json, "data");
+
+		// THEN
+		// @formatter:off
+		final String[] resultList = mapper.treeToValue(result, String[].class);
+		and.then(resultList)
+			.as("Nested JSON decoded")
+			.containsExactlyElementsOf(nestedData)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void jsonObjectOrArray_alreadyObject() {
+		// GIVEN
+		// @formatter:off
+		final Map<String, Object> nestedData = Map.of(
+				randomString(), randomLong()
+				);
+		final JsonNode json = JsonUtils.getTreeFromObject(Map.of(
+				"foo", randomString(),
+				"data", nestedData
+				));
+		// @formatter:off
+
+		// WHEN
+		final JsonNode result = SigenergyRestOperationsHelper.jsonObjectOrArray(mapper, json, "data");
+
+		// THEN
+		// @formatter:off
+		and.then(JsonUtils.getStringMapFromTree(result))
+			.as("Nested object returned directly")
+			.isEqualTo(nestedData)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void jsonObjectOrArray_alreadyArray() throws IOException {
+		// GIVEN
+		// @formatter:off
+		final List<String> nestedData = List.of(
+				randomString(), randomString()
+				);
+		final JsonNode json = JsonUtils.getTreeFromObject(Map.of(
+				"foo", randomString(),
+				"data", nestedData
+				));
+		// @formatter:off
+
+		// WHEN
+		final JsonNode result = SigenergyRestOperationsHelper.jsonObjectOrArray(mapper, json, "data");
+
+		// THEN
+		// @formatter:off
+		final String[] resultList = mapper.treeToValue(result, String[].class);
+		and.then(resultList)
+			.as("Nested array returned directly")
+			.containsExactlyElementsOf(nestedData)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void jsonObjectOrArray_notObjectOrArray() {
+		// GIVEN
+		// @formatter:off
+		final JsonNode json = JsonUtils.getTreeFromObject(Map.of(
+				"foo", randomString(),
+				"data", randomString()
+				));
+		// @formatter:off
+
+		// THEN
+		// @formatter:off
+		and.thenThrownBy(() -> {
+			SigenergyRestOperationsHelper.jsonObjectOrArray(mapper, json, "data");
+		}, "Exception thrown when field value is not a JSON string")
+			.as("IllegalArgumentException thrown")
+			.isInstanceOf(IllegalArgumentException.class)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void resolveRegion_noneSpecified() {
+		// GIVEN
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), Instant.now());
+		integration.setServiceProps(Map.of("foo", "bar"));
+
+		// WHEN
+		SigenergyRegion result = SigenergyRestOperationsHelper.resolveRegion(integration);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Default region returned")
+			.isEqualTo(SigenergyRestOperationsHelper.DEFAULT_REGION)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void resolveRegion_notValid() {
+		// GIVEN
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), Instant.now());
+		integration.setServiceProps(Map.of(SigenergyCloudIntegrationService.REGION_SETTING, "bar"));
+
+		// WHEN
+		SigenergyRegion result = SigenergyRestOperationsHelper.resolveRegion(integration);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Default region returned")
+			.isEqualTo(SigenergyRestOperationsHelper.DEFAULT_REGION)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void resolveRegion() {
+		// GIVEN
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), Instant.now());
+
+		final SigenergyRegion region = SigenergyRegion.NorthAmerica;
+		integration
+				.setServiceProps(Map.of(SigenergyCloudIntegrationService.REGION_SETTING, region.name()));
+
+		// WHEN
+		SigenergyRegion result = SigenergyRestOperationsHelper.resolveRegion(integration);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Explicit region returned")
+			.isEqualTo(region)
 			;
 		// @formatter:on
 	}

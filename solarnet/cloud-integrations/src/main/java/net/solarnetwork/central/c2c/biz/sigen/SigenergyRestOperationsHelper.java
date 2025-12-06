@@ -79,6 +79,9 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 	 */
 	public static final String CLOUD_INTEGRATION_SYSTEM_IDENTIFIER = "c2c-i9n-sigen";
 
+	/** The default region. */
+	public static final SigenergyRegion DEFAULT_REGION = SigenergyRegion.AustraliaNewZealand;
+
 	/** The base URL to the AlsoEnergy API. */
 	public static final String BASE_URI_TEMPLATE = "https://api-{region}.sigencloud.com";
 
@@ -220,7 +223,7 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 	 * @return the region (never {@code null})
 	 */
 	public static SigenergyRegion resolveRegion(final CloudIntegrationConfiguration config) {
-		SigenergyRegion result = SigenergyRegion.AustraliaNewZealand;
+		SigenergyRegion result = DEFAULT_REGION;
 		if ( config.hasServiceProperty(REGION_SETTING) ) {
 			try {
 				result = SigenergyRegion.valueOf(config.serviceProperty(REGION_SETTING, String.class));
@@ -344,6 +347,8 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 	 * @param field
 	 *        the name of the JSON field to extract as JSON
 	 * @return the JSON tree
+	 * @throws IllegalArgumentException
+	 *         if the field value cannot be parsed as JSON
 	 */
 	public static JsonNode jsonObjectOrArray(ObjectMapper mapper, JsonNode json, String field) {
 		if ( json == null ) {
