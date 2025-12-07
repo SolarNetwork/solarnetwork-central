@@ -91,6 +91,9 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 	/** The URL path to list the available systems. */
 	public static final String SYSTEM_LIST_PATH = "/openapi/system";
 
+	/** The URL path to the list of devices for a system. */
+	public static final String SYSTEM_DEVICE_LIST_PATH = "/openapi/system/{systemId}/devices";
+
 	/** The message returned on successful API responses. */
 	public static final String RESPONSE_SUCCESS_MESSAGE = "success";
 
@@ -330,6 +333,37 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 			return result;
 		}
 		return null;
+	}
+
+	/**
+	 * Get a JSON object or array from a field on a JSON object.
+	 *
+	 * <p>
+	 * The Sigenergy API returns some nested fields as JSON strings, which must
+	 * be decoded.
+	 * </p>
+	 *
+	 * @param mapper
+	 *        the mapper to decode JSON strings with
+	 * @param json
+	 *        the object to extract JSON from
+	 * @return the JSON tree
+	 * @throws IllegalArgumentException
+	 *         if the field value cannot be parsed as JSON
+	 */
+	public static JsonNode jsonObjectOrArray(ObjectMapper mapper, JsonNode json) {
+		if ( json == null ) {
+			return null;
+		}
+		if ( json.isObject() || json.isArray() || json.isNull() ) {
+			return json;
+		}
+		// decode as a JSON string
+		try {
+			return mapper.readTree(json.asText());
+		} catch ( JsonProcessingException e ) {
+			throw new IllegalArgumentException("Unable to parse data as JSON", e);
+		}
 	}
 
 	/**

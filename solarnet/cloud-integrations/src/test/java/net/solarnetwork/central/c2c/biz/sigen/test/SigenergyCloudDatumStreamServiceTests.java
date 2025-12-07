@@ -25,6 +25,7 @@ package net.solarnetwork.central.c2c.biz.sigen.test;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
+import static java.util.Map.entry;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationService.APP_KEY_SETTING;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationService.APP_SECRET_SETTING;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.BASE_URI_TEMPLATE;
@@ -234,6 +235,120 @@ public class SigenergyCloudDatumStreamServiceTests {
 							"gridConnectedTime", Instant.parse("2025-05-05T04:32:01Z"),
 							"pvCapacity", 9.2f,
 							"batteryCapacity", 9.2f
+							))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void dataValues_system() {
+		// GIVEN
+		final String appKey = randomString();
+		final String appSecret = randomString();
+		final String systemId = randomString();
+
+		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		config.setServiceProps(Map.of(
+				APP_KEY_SETTING, appKey,
+				APP_SECRET_SETTING, appSecret
+			));
+
+		given(integrationDao.get(config.getId())).willReturn(config);
+
+		// get access token
+		final String authToken = randomString();
+		final String registrationId = userIdSystemIdentifier(config.getUserId(),
+				SigenergyRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, config.getConfigId());
+		ClientAccessTokenEntity tokenEntity = new ClientAccessTokenEntity(TEST_USER_ID, registrationId,
+				appKey, clock.instant());
+		tokenEntity.setAccessTokenIssuedAt(clock.instant());
+		tokenEntity.setAccessTokenExpiresAt(clock.instant().plus(1L, ChronoUnit.HOURS));
+		tokenEntity.setAccessToken(authToken.getBytes(UTF_8));
+
+		given(clientAccessTokenDao.get(tokenEntity.getId())).willReturn(tokenEntity);
+
+		// get data
+		final JsonNode resJson = getObjectFromJSON(
+				utf8StringResource("sigen-device-list-01.json", getClass()), ObjectNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+		final Map<String, Object> filter = Map.of(SigenergyCloudDatumStreamService.SYSTEM_ID_FILTER, systemId);
+		Iterable<CloudDataValue> results = service.dataValues(config.getId(), filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for inverter telemetry")
+			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
+					.path(SigenergyRestOperationsHelper.SYSTEM_DEVICE_LIST_PATH)
+					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey(), systemId)
+					.toUri(), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains Bearer authentication")
+			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			;
+
+		and.then(results)
+			.as("Result generated for 2 devices")
+			.hasSize(2)
+			.satisfies(l -> {
+				and.then(l).element(0)
+					.as("Serial number parsed as name")
+					.returns("110A123", from(CloudDataValue::getName))
+					.as("System ID and serial number parsed as identifiers")
+					.returns(List.of(systemId, "110A123"), from(CloudDataValue::getIdentifiers))
+					.as("Reference not returned for intermediate value")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					.extracting(CloudDataValue::getMetadata, map(String.class, Object.class))
+					.as("Metadata extracted")
+					.containsExactlyInAnyOrderEntriesOf(Map.ofEntries(
+							entry("serial", "110A123"),
+							entry("firmwareVersion", "V100R001C22SPC111B064L"),
+							entry("deviceType", "Inverter"),
+							entry("status", "Normal"),
+							entry("pn", "1104004100"),
+							entry("ratedFrequency", 50),
+							entry("ratedVoltage", 230),
+							entry("maxAbsorbedPower", 11),
+							entry("ratedActivePower", 10),
+							entry("pvStringNumber", 4),
+							entry("maxActivePower", 11)
+							))
+					;
+				and.then(l).element(1)
+					.as("Serial number parsed as name")
+					.returns("110B123", from(CloudDataValue::getName))
+					.as("System ID and serial number parsed as identifiers")
+					.returns(List.of(systemId, "110B123"), from(CloudDataValue::getIdentifiers))
+					.as("Reference not returned for intermediate value")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					.extracting(CloudDataValue::getMetadata, map(String.class, Object.class))
+					.as("Metadata extracted")
+					.containsExactlyInAnyOrderEntriesOf(Map.ofEntries(
+							entry("serial", "110B123"),
+							entry("firmwareVersion", "V100R001C22SPC111B064L"),
+							entry("deviceType", "Battery"),
+							entry("status", "Normal"),
+							entry("pn", "1113000120"),
+							entry("ratedDischargePower", 4.8f),
+							entry("ratedChargePower", 4.2f),
+							entry("ratedEnergy", 280),
+							entry("dischargeEnergy", 7.57f),
+							entry("chargeableEnergy", 0.81f)
 							))
 					;
 			})

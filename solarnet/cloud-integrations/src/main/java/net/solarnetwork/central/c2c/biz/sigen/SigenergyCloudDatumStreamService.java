@@ -26,6 +26,8 @@ import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.BASE_URI_TEMPLATE;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.RESPONSE_DATA_FIELD;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.jsonObjectOrArray;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_FIRMWARE_VERSION_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.LOCALITY_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.STREET_ADDRESS_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METADATA;
@@ -37,6 +39,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -196,10 +199,8 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 			result = deviceChannels(integration, systemId, deviceId, filters);
 			*/
 		} else if ( filters != null && filters.get(SYSTEM_ID_FILTER) != null ) {
-			/*- TODO
 			String systemId = filters.get(SYSTEM_ID_FILTER).toString();
 			result = systemDevices(integration, systemId, filters);
-			*/
 		} else {
 			// list available systems
 			result = systems(integration);
@@ -215,19 +216,19 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 						.fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
 						.path(SigenergyRestOperationsHelper.SYSTEM_LIST_PATH)
 						.buildAndExpand(region.getKey()).toUri(),
-				res -> parseSystems(res.getBody()));
+				(res) -> parseSystems(res.getBody()));
 	}
 
 	private List<CloudDataValue> parseSystems(JsonNode json) {
 		/*- EXAMPLE JSON:
-			{
-			  "code": 0,
-			  "msg": "success",
-			  "timestamp": 1764870200,
-			  "data": "[{\"systemId\":\"ABC123\",\"systemName\":\"Test House\",\"addr\":\"123 Main Street, Anytown\"
-			  	,\"status\":\"Normal\",\"isActivate\":true,\"onOffGridStatus\":\"onGrid\",\"timeZone\":\"Pacific/Auckland\"
-			  	,\"gridConnectedTime\":1746419521000,\"pvCapacity\":9.2,\"batteryCapacity\":9.2}]"
-			}
+		{
+		  "code": 0,
+		  "msg": "success",
+		  "timestamp": 1764870200,
+		  "data": "[{\"systemId\":\"ABC123\",\"systemName\":\"Test House\",\"addr\":\"123 Main Street, Anytown\"
+		  	,\"status\":\"Normal\",\"isActivate\":true,\"onOffGridStatus\":\"onGrid\",\"timeZone\":\"Pacific/Auckland\"
+		  	,\"gridConnectedTime\":1746419521000,\"pvCapacity\":9.2,\"batteryCapacity\":9.2}]"
+		}
 		*/
 		if ( json == null ) {
 			return List.of();
@@ -277,19 +278,87 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 		return intermediateDataValue(List.of(id), name, meta.isEmpty() ? null : meta);
 	}
 
-	/*- TODO EXAMPLE JSON (device list)
-			{
-			  "code": 0,
-			  "msg": "success",
-			  "timestamp": 1764869251,
-			  "data": [
-			    "{\"systemId\":\"ABC123\",\"serialNumber\":\"110A123\",\"deviceType\":\"Inverter\",\"status\":\"Normal\"
-			    ,\"pn\":\"1104004100\",\"firmwareVersion\":\"V100R001C22SPC111B064L\"
-			    ,\"attrMap\":\"{\\\"ratedFrequency\\\":50.000,\\\"ratedVoltage\\\":230.000,\\\"maxAbsorbedPower\\\":11.000
-			    ,\\\"ratedActivePower\\\":10.000,\\\"pvStringNumber\\\":4,\\\"maxActivePower\\\":11.000}\"}"
-			  ]
+	private List<CloudDataValue> systemDevices(final CloudIntegrationConfiguration integration,
+			final String systemId, Map<String, ?> filters) {
+		final SigenergyRegion region = SigenergyRestOperationsHelper.resolveRegion(integration);
+		return restOpsHelper.httpGet("List system devices", integration, JsonNode.class,
+				(req) -> UriComponentsBuilder
+						.fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+						.path(SigenergyRestOperationsHelper.SYSTEM_DEVICE_LIST_PATH)
+						.buildAndExpand(region.getKey(), systemId).toUri(),
+				(res) -> parseSystemDevices(res.getBody(), systemId));
+	}
+
+	private List<CloudDataValue> parseSystemDevices(final JsonNode json, final String systemId) {
+		/*- EXAMPLE JSON:
+		{
+		  "code": 0,
+		  "msg": "success",
+		  "timestamp": 1764869251,
+		  "data": [
+		    "{\"systemId\":\"ABC123\",\"serialNumber\":\"110A123\",\"deviceType\":\"Inverter\",\"status\":\"Normal\"
+		    ,\"pn\":\"1104004100\",\"firmwareVersion\":\"V100R001C22SPC111B064L\"
+		    ,\"attrMap\":\"{\\\"ratedFrequency\\\":50.000,\\\"ratedVoltage\\\":230.000,\\\"maxAbsorbedPower\\\":11.000
+		    ,\\\"ratedActivePower\\\":10.000,\\\"pvStringNumber\\\":4,\\\"maxActivePower\\\":11.000}\"}"
+		  ]
+		}
+		*/
+		if ( json == null ) {
+			return List.of();
+		}
+		final JsonNode data;
+		try {
+			data = jsonObjectOrArray(mapper, json, RESPONSE_DATA_FIELD);
+		} catch ( IllegalArgumentException e ) {
+			return List.of();
+		}
+
+		final List<CloudDataValue> result = new ArrayList<>(8);
+
+		for ( JsonNode devNodeJson : data ) {
+			final JsonNode devNode;
+			try {
+				devNode = jsonObjectOrArray(mapper, devNodeJson);
+			} catch ( IllegalArgumentException e ) {
+				continue;
 			}
-	 */
+			final var meta = new LinkedHashMap<String, Object>(4);
+			populateNonEmptyValue(devNode, "serialNumber", DEVICE_SERIAL_NUMBER_METADATA, meta);
+			populateNonEmptyValue(devNode, "firmwareVersion", DEVICE_FIRMWARE_VERSION_METADATA, meta);
+			populateNonEmptyValue(devNode, "deviceType", "deviceType", meta);
+			populateNonEmptyValue(devNode, "status", "status", meta);
+			populateNonEmptyValue(devNode, "pn", "pn", meta);
+
+			try {
+				final JsonNode attrMapNode = jsonObjectOrArray(mapper, devNode, "attrMap");
+				for ( Iterator<String> itr = attrMapNode.fieldNames(); itr.hasNext(); ) {
+					String attr = itr.next();
+					if ( !meta.containsKey(attr) ) {
+						JsonNode attrVal = attrMapNode.get(attr);
+						if ( attrVal.isNumber() ) {
+							populateNumberValue(attrMapNode, attr, attr, meta);
+						} else if ( attrVal.isBigDecimal() ) {
+							populateBooleanValue(attrMapNode, attr, attr, meta);
+						} else {
+							populateNonEmptyValue(attrMapNode, attr, attr, meta);
+						}
+					}
+				}
+			} catch ( IllegalArgumentException e ) {
+				continue;
+			}
+
+			final Object id = meta.get(DEVICE_SERIAL_NUMBER_METADATA);
+			if ( id == null ) {
+				continue;
+			}
+
+			result.add(intermediateDataValue(List.of(systemId, id.toString()), id.toString(),
+					meta.isEmpty() ? null : meta));
+		}
+
+		return result;
+	}
 
 	@Override
 	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
