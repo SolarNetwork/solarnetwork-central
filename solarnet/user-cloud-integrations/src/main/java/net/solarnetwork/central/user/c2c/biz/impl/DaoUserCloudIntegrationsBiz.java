@@ -89,6 +89,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationTopicConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
@@ -343,6 +344,23 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		}
 
 		return digestSensitiveInformation(result);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
+	public Result<?> saveTopicConfiguration(UserLongCompositePK id,
+			CloudIntegrationTopicConfiguration settings, Locale locale) {
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(settings, "settings");
+
+		final CloudIntegrationConfiguration integration = requireNonNullObject(integrationDao.get(id),
+				id);
+
+		final CloudIntegrationService service = requireNonNullObject(
+				integrationService(integration.getServiceIdentifier()),
+				integration.getServiceIdentifier());
+
+		return service.configure(integration, settings);
 	}
 
 	private void saveOAuthTokens(UserIdentifiableSystem config, Map<String, ?> oauthTokenProperties) {

@@ -49,6 +49,7 @@ import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudConfigurationTopicLocalizedServiceInfo;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
@@ -59,6 +60,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationTopicConfiguration;
 import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -133,6 +135,29 @@ public class UserCloudIntegrationsController {
 		final UserCloudIntegrationsBiz biz = biz();
 		var services = biz.availableIntegrationServices();
 		var result = localizedServiceSettings(services, locale);
+		return success(result);
+	}
+
+	/**
+	 * List the available configuration topics for a given integration service.
+	 *
+	 * @param identifier
+	 *        the {@link CloudIntegrationService} identifier to list the
+	 *        available configuration topics for
+	 * @param locale
+	 *        the desired locale
+	 * @return the services
+	 * @since 1.8
+	 */
+	@RequestMapping(value = "/services/configuration-topics", method = RequestMethod.GET)
+	public Result<Iterable<CloudConfigurationTopicLocalizedServiceInfo>> availableConfigurationTopicsForIntegration(
+			@RequestParam("identifier") String identifier, Locale locale) {
+		final UserCloudIntegrationsBiz biz = biz();
+		final CloudIntegrationService service = biz.integrationService(identifier);
+		if ( service == null ) {
+			return success();
+		}
+		var result = service.supportedConfigurationTopics(locale);
 		return success(result);
 	}
 
@@ -275,7 +300,7 @@ public class UserCloudIntegrationsController {
 	 *        the ID of the integration configuration to validate
 	 * @param locale
 	 *        the desired locale
-	 * @return the services
+	 * @return the result
 	 */
 	@RequestMapping(value = "/integrations/{integrationId}/validate", method = RequestMethod.GET)
 	public Result<Void> validateIntegrationConfiguration(
@@ -283,6 +308,26 @@ public class UserCloudIntegrationsController {
 		final UserCloudIntegrationsBiz biz = biz();
 		var id = new UserLongCompositePK(getCurrentActorUserId(), integrationId);
 		return biz.validateIntegrationConfigurationForId(id, locale);
+	}
+
+	/**
+	 * Configure an integration service topic.
+	 *
+	 * @param integrationId
+	 *        the ID of the integration configuration to configure
+	 * @param settings
+	 *        the topic configuration to apply
+	 * @param locale
+	 *        the desired locale
+	 * @return the result
+	 * @since 1.8
+	 */
+	@RequestMapping(value = "/integrations/{integrationId}/configure-topic", method = RequestMethod.POST)
+	public Result<?> configureIntegrationTopic(@PathVariable("integrationId") Long integrationId,
+			@RequestBody CloudIntegrationTopicConfiguration settings, Locale locale) {
+		final UserCloudIntegrationsBiz biz = biz();
+		var id = new UserLongCompositePK(getCurrentActorUserId(), integrationId);
+		return biz.saveTopicConfiguration(id, settings, locale);
 	}
 
 	/*-=======================

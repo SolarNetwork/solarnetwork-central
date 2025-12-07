@@ -396,7 +396,7 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 		try {
 			return mapper.readTree(data.asText());
 		} catch ( JsonProcessingException e ) {
-			throw new IllegalArgumentException("Unable to parse field [%s] as JSON", e);
+			throw new IllegalArgumentException("Unable to parse field [%s] as JSON".formatted(field), e);
 		}
 	}
 
@@ -430,7 +430,6 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 	 *        the URI to use in error messages
 	 * @param response
 	 *        the response to test ({@code null} is allowed}
-	 * @return {@code true} if the response contains the success message
 	 * @throws RemoteServiceException
 	 *         if the response does not include a success message
 	 */

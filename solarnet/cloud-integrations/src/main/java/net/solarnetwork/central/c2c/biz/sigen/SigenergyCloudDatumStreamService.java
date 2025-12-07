@@ -36,7 +36,6 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.time.Clock;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -51,6 +50,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseRestOperationsCloudDatumStreamService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
@@ -71,7 +71,7 @@ import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.IntRange;
 
 /**
- * Sigenergy implementation of {@Link CloudDatumStreamService}.
+ * Sigenergy implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
  * @version 1.0
@@ -111,15 +111,6 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 	 * The device ID data value filter value that represents system-level data.
 	 */
 	public static final String SYSTEM_DEVICE_ID = "sys";
-
-	/**
-	 * The maximum period of time to request data for in one call to
-	 * {@link #datum(CloudDatumStreamConfiguration, CloudDatumStreamQueryFilter)}.
-	 */
-	private static final Duration MAX_FILTER_TIME_RANGE = Duration.ofDays(7);
-
-	/** The maximum period of time to request data for in one API request. */
-	private static final Duration MAX_QUERY_TIME_RANGE = Duration.ofHours(24);
 
 	private final ObjectMapper mapper;
 
@@ -200,7 +191,7 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 			*/
 		} else if ( filters != null && filters.get(SYSTEM_ID_FILTER) != null ) {
 			String systemId = filters.get(SYSTEM_ID_FILTER).toString();
-			result = systemDevices(integration, systemId, filters);
+			result = systemDevices(integration, systemId);
 		} else {
 			// list available systems
 			result = systems(integration);
@@ -279,7 +270,7 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 	}
 
 	private List<CloudDataValue> systemDevices(final CloudIntegrationConfiguration integration,
-			final String systemId, Map<String, ?> filters) {
+			final String systemId) {
 		final SigenergyRegion region = SigenergyRestOperationsHelper.resolveRegion(integration);
 		return restOpsHelper.httpGet("List system devices", integration, JsonNode.class,
 				(req) -> UriComponentsBuilder

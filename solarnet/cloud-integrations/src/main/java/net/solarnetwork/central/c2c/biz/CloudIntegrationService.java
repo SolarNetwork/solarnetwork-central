@@ -26,7 +26,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import net.solarnetwork.central.c2c.domain.CloudConfigurationTopicLocalizedServiceInfo;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationTopicConfiguration;
 import net.solarnetwork.central.common.http.HttpConstants;
 import net.solarnetwork.central.domain.HttpRequestInfo;
 import net.solarnetwork.domain.Result;
@@ -178,6 +180,56 @@ public interface CloudIntegrationService
 	 * @return the validation results, never {@literal null}
 	 */
 	Result<Void> validate(CloudIntegrationConfiguration integration, Locale locale);
+
+	/**
+	 * Get a list of supported configuration topics.
+	 *
+	 * <p>
+	 * Some cloud providers require setup interactions to integrate with
+	 * SolarNetwork, such as "adopting" a system. The
+	 * {@link #configure(CloudIntegrationConfiguration, CloudIntegrationTopicConfiguration)}
+	 * method provides a way to perform those actions by associating each with a
+	 * <b>topic</b> and a list of settings that detail what parameters are
+	 * required by that topic.
+	 * </p>
+	 *
+	 * <p>
+	 * This method returns the list of configuration topics supported by the
+	 * implementation.
+	 * </p>
+	 *
+	 * @return the list of supported topics and their associated settings
+	 * @since 2.1
+	 * @see #configure(CloudIntegrationConfiguration, String, Map)
+	 */
+	default Iterable<CloudConfigurationTopicLocalizedServiceInfo> supportedConfigurationTopics(
+			Locale locale) {
+		return List.of();
+	}
+
+	/**
+	 * Configure an integration topic.
+	 *
+	 * <p>
+	 * This method provides a way to configure some cloud providers that require
+	 * setup interactions, such as "adopting" or "releasing" a system from
+	 * integration with SolarNetwork. The
+	 * {@link #supportedConfigurationTopics(Locale)} method provides a list of
+	 * the supported topics and any associated parameters required.
+	 * </p>
+	 *
+	 * @param integration
+	 *        the integration configuration to configure the topic for
+	 * @param settings
+	 *        the settings to apply
+	 * @return the configuration result, never {@literal null}
+	 * @since 2.1
+	 * @see #supportedConfigurationTopics(Locale)
+	 */
+	default Result<?> configure(CloudIntegrationConfiguration integration,
+			CloudIntegrationTopicConfiguration settings) {
+		return Result.error("CIS.001", "Topic not supported.");
+	}
 
 	/**
 	 * Generate external authorization request information, for example to

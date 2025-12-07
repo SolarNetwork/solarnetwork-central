@@ -40,6 +40,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationTopicConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -268,6 +269,21 @@ public interface UserCloudIntegrationsBiz {
 	 * @return the validation result, never {@literal null}
 	 */
 	Result<Void> validateIntegrationConfigurationForId(UserLongCompositePK id, Locale locale);
+
+	/**
+	 * Apply parameters to a configuration topic.
+	 *
+	 * @param id
+	 *        the ID of the configuration to apply parameters to
+	 * @param settings
+	 *        the configuration settings to apply
+	 * @param locale
+	 *        the desired locale
+	 * @return the result, never {@literal null}
+	 * @since 1.8
+	 */
+	Result<?> saveTopicConfiguration(UserLongCompositePK id, CloudIntegrationTopicConfiguration settings,
+			Locale locale);
 
 	/**
 	 * List datum stream data values.

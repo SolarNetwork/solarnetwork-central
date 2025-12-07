@@ -23,6 +23,8 @@
 package net.solarnetwork.central.c2c.biz.sigen;
 
 import static java.util.Collections.unmodifiableMap;
+import static java.util.Comparator.comparing;
+import static java.util.Map.entry;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.BASE_URI_TEMPLATE;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
@@ -35,9 +37,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.context.MessageSource;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -46,12 +50,16 @@ import net.solarnetwork.central.c2c.biz.CloudControlService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.BaseRestOperationsCloudIntegrationService;
+import net.solarnetwork.central.c2c.domain.BasicCloudConfigurationTopicLocalizedServiceInfo;
+import net.solarnetwork.central.c2c.domain.CloudConfigurationTopicLocalizedServiceInfo;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationTopicConfiguration;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
@@ -114,6 +122,35 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 	/** The service secure setting keys. */
 	public static final Set<String> SECURE_SETTINGS = Collections
 			.unmodifiableSet(SettingUtils.secureKeys(SETTINGS));
+
+	/**
+	 * Configuration topic to "adopt" a system into the application associated
+	 * with the integration credentials.
+	 */
+	public static final String ONBOARD_CONFIGURATION_TOPIC = "onboard";
+
+	/**
+	 * Configuration topic to "release" a system from the application associated
+	 * with the integration credentials.
+	 */
+	public static final String UNONBOARD_CONFIGURATION_TOPIC = "unonboard";
+
+	/** The setting name for a system ID. */
+	public static final String SYSTEM_ID_SETTING = "systemId";
+
+	/**
+	 * The available configuration topics and their associated settings.
+	 */
+	public static final Map<String, List<SettingSpecifier>> CONFIGURATION_TOPICS;
+	static {
+		SettingSpecifier systemIdSpec = new BasicTextFieldSettingSpecifier(SYSTEM_ID_SETTING, null);
+		// @formatter:off
+		CONFIGURATION_TOPICS = Map.ofEntries(
+				entry(ONBOARD_CONFIGURATION_TOPIC, List.of(systemIdSpec)),
+				entry(UNONBOARD_CONFIGURATION_TOPIC, List.of(systemIdSpec))
+				);
+		// @formatter:on
+	}
 
 	/**
 	 * Constructor.
@@ -179,6 +216,45 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 		} catch ( Exception e ) {
 			return Result.error("SGCI.0002", "Validation failed: " + e.getMessage());
 		}
+	}
+
+	@Override
+	public Iterable<CloudConfigurationTopicLocalizedServiceInfo> supportedConfigurationTopics(
+			Locale locale) {
+		return CONFIGURATION_TOPICS.entrySet().stream().sorted(comparing(Entry::getKey)).map(e -> {
+			var messageSource = new ResourceBundleMessageSource();
+			messageSource.setBundleClassLoader(SigenergyCloudIntegrationService.class.getClassLoader());
+			messageSource
+					.setBasename(SigenergyCloudIntegrationService.class.getName() + "_" + e.getKey());
+
+			var info = new BaseSettingsSpecifierLocalizedServiceInfoProvider(e.getKey()) {
+
+				@Override
+				public String getDisplayName() {
+					return e.getKey();
+				}
+
+				@Override
+				public List<SettingSpecifier> getSettingSpecifiers() {
+					return e.getValue();
+				}
+
+			};
+			info.setMessageSource(messageSource);
+			return (CloudConfigurationTopicLocalizedServiceInfo) new BasicCloudConfigurationTopicLocalizedServiceInfo(
+					info.getLocalizedServiceInfo(locale != null ? locale : Locale.getDefault()),
+					e.getValue(), e.getKey());
+		}).toList();
+	}
+
+	@Override
+	public Result<?> configure(CloudIntegrationConfiguration integration,
+			CloudIntegrationTopicConfiguration settings) {
+		if ( !CONFIGURATION_TOPICS.containsKey(requireNonNullArgument(settings.topic(), "topic")) ) {
+			throw new IllegalArgumentException("Unsupported topic [" + settings.topic() + "]");
+		}
+		// TODO
+		return Result.success();
 	}
 
 }
