@@ -261,10 +261,10 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 			String[] addrComponents = StringUtils.commaDelimitedListToStringArray(addr);
 			if ( addrComponents != null ) {
 				if ( addrComponents.length > 0 ) {
-					meta.put(STREET_ADDRESS_METADATA, addrComponents[0]);
+					meta.put(STREET_ADDRESS_METADATA, addrComponents[0].trim());
 				}
 				if ( addrComponents.length > 1 ) {
-					meta.put(LOCALITY_METADATA, addrComponents[1]);
+					meta.put(LOCALITY_METADATA, addrComponents[1].trim());
 				}
 			}
 		}

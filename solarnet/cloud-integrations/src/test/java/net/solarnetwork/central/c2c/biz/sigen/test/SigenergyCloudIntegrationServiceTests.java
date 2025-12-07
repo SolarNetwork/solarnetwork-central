@@ -181,7 +181,6 @@ public class SigenergyCloudIntegrationServiceTests {
 		// GIVEN
 		final String appKey = randomString();
 		final String appSecret = randomString();
-		final String authToken = randomString();
 
 		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
 				randomLong(), now());
@@ -193,6 +192,7 @@ public class SigenergyCloudIntegrationServiceTests {
 		// @formatter:on
 
 		// get access token
+		final String authToken = randomString();
 		final String registrationId = userIdSystemIdentifier(config.getUserId(),
 				SigenergyRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, config.getConfigId());
 		ClientAccessTokenEntity tokenEntity = new ClientAccessTokenEntity(TEST_USER_ID, registrationId,
@@ -218,7 +218,7 @@ public class SigenergyCloudIntegrationServiceTests {
 		and.then(httpRequestCaptor.getValue())
 			.as("HTTP method is GET")
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-			.as("Request URI for inverter telemetry")
+			.as("Request URI for system list")
 			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
 					.resolve(SigenergyRestOperationsHelper.SYSTEM_LIST_PATH), from(RequestEntity::getUrl))
