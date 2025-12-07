@@ -127,7 +127,7 @@ public class FroniusCloudDatumStreamServiceTests {
 	private static final Long TEST_USER_ID = randomLong();
 
 	@Mock
-	SolarNodeOwnershipDao nodeOwnershipDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -192,6 +192,7 @@ public class FroniusCloudDatumStreamServiceTests {
 				ACCESS_KEY_ID_SETTING, apiKey,
 				ACCESS_KEY_SECRET_SETTING, apiSecret
 			));
+		// @formatter:on
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
