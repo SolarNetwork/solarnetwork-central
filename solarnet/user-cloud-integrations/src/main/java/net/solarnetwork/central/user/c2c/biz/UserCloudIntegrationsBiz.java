@@ -75,6 +75,8 @@ public interface UserCloudIntegrationsBiz {
 	 * Get a specific {@link CloudIntegrationService} based on its service
 	 * identifier.
 	 *
+	 * @param identifier
+	 *        the integration service identifier to view
 	 * @return the integration service, or {@literal null} if not available
 	 */
 	CloudIntegrationService integrationService(String identifier);
@@ -83,6 +85,8 @@ public interface UserCloudIntegrationsBiz {
 	 * Get a specific {@link CloudDatumStreamService} based on its service
 	 * identifier.
 	 *
+	 * @param identifier
+	 *        the datum stream service identifier to view
 	 * @return the datum stream service, or {@literal null} if not available
 	 */
 	CloudDatumStreamService datumStreamService(String identifier);
@@ -91,6 +95,8 @@ public interface UserCloudIntegrationsBiz {
 	 * Get a specific {@link CloudControlService} based on its service
 	 * identifier.
 	 *
+	 * @param identifier
+	 *        the control service identifier to view
 	 * @return the control service, or {@literal null} if not available
 	 * @since 1.8
 	 */
