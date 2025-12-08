@@ -1,0 +1,33 @@
+Field,Key,Description,Unit,Scale Factor,Data Type
+activePower,W,"Real-time active power output (positive: generation, negative: consumption)",kW,1000,Numeric
+reactivePower,PVAR,"Real-time reactive power (positive: generation, negative: consumption)",kW,1000,Numeric
+aPhaseVoltage,VphA,Voltage of phase A,V,,Numeric
+bPhaseVoltage,VphB,Voltage of phase B,V,,Numeric
+cPhaseVoltage,VphC,Voltage of phase C,V,,Numeric
+aPhaseCurrent,IphA,Current of phase A,A,,Numeric
+bPhaseCurrent,IphB,Current of phase B,A,,Numeric
+cPhaseCurrent,IphC,Current of phase C,A,,Numeric
+powerFactor,PF,Power factor (cosφ),-,,Numeric
+gridFrequency,F,Grid frequency,Hz,,Numeric
+pvPower,DCW,Total PV power currently generated,kW,1000,Numeric
+pv1Voltage,DC1V,PV string 1 voltage,V,,Numeric
+pv1Current,DC1I,PV string 1 current,A,,Numeric
+pv2Voltage,DC2V,PV string 2 voltage,V,,Numeric
+pv2Current,DC2I,PV string 2 current,A,,Numeric
+pv3Voltage,DC3V,PV string 3 voltage,V,,Numeric
+pv3Current,DC3I,PV string 3 current,A,,Numeric
+pv4Voltage,DC4V,PV string 4 voltage,V,,Numeric
+pv4Current,DC4I,PV string 4 current,A,,Numeric
+internalTemperature,Temp,Device internal temperature,℃,,Numeric
+insulationResistance,InsR,Device insulation resistance,MΩ,1000000,Numeric
+pvEnergyDaily,WhDay,Daily PV energy generation,kWh,1000,Numeric/String
+pvEnergyTotal,Wh,Total PV energy generation (lifetime),kWh,1000,Numeric/String
+batPower,BatW,"Battery real-time power (positive: discharging, negative: charging)",kW,1000,Numeric
+pvTotalPower,DCWCom,Combined PV output power,kW,1000,Numeric
+pcsReactivePower,PCSVAR,PCS (Power Conversion System) reactive power,kW,1000,Numeric
+pcsActivePower,PCSW,PCS (Power Conversion System) active power,kW,1000,Numeric
+esDischargingDay,BatWhExpDay,Battery energy discharged today,kWh,1000,Numeric
+esChargingDay,BatWhImpDay,Battery energy charged today,kWh,1000,Numeric
+pvPowerDay,DCWhDay,Daily PV power,kWh,1000,Numeric
+esDischargingTotal,BatWhExp,Total battery discharged energy (lifetime),kWh,1000,Numeric
+batSoc,BatSoC,Battery State of Charge,%,,Numeric

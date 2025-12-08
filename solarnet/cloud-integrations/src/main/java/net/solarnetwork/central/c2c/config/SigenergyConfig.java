@@ -28,10 +28,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
+import javax.cache.CacheManager;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -57,6 +59,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.central.common.http.CachableRequestEntity;
@@ -65,6 +68,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
+import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
@@ -145,6 +149,27 @@ public class SigenergyConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
 	private Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
 
+	@Autowired
+	private CacheManager cacheManager;
+
+	/** A qualifier for Sigenergy system device configuration. */
+	public static final String SIGENERGY_SYSTEM_DEVICES = "sigen-sysdev";
+
+	@Bean
+	@Qualifier(SIGENERGY_SYSTEM_DEVICES)
+	@ConfigurationProperties(prefix = "app.c2c.cache.sigenergy-system-devices")
+	public CacheSettings sigenergySystemDevicesCacheSettings() {
+		return new CacheSettings();
+	}
+
+	@Bean
+	@Qualifier(SIGENERGY_SYSTEM_DEVICES)
+	public Cache<String, CloudDataValue[]> sigenergySystemDevicesCache(
+			@Qualifier(SIGENERGY_SYSTEM_DEVICES) CacheSettings settings) {
+		return settings.createCache(cacheManager, String.class, CloudDataValue[].class,
+				SIGENERGY_SYSTEM_DEVICES + "-cache");
+	}
+
 	@Bean
 	@Qualifier(SIGENERGY)
 	public SigenergyRestOperationsHelper sigenergyRestOpsHelper() {
@@ -188,7 +213,8 @@ public class SigenergyConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Bean
 	@Qualifier(SIGENERGY)
 	public CloudDatumStreamService sigenergyCloudDatumStreamService(
-			@Qualifier(SIGENERGY) RestOperationsHelper restOpsHelper) {
+			@Qualifier(SIGENERGY) final RestOperationsHelper restOpsHelper,
+			@Qualifier(SIGENERGY_SYSTEM_DEVICES) final Cache<String, CloudDataValue[]> systemDeviceCache) {
 		var service = new SigenergyCloudDatumStreamService(Clock.systemUTC(), userEventAppender,
 				encryptor, expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOpsHelper,
@@ -206,6 +232,7 @@ public class SigenergyConfig implements SolarNetCloudIntegrationsConfiguration {
 		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
 		service.setHttpCache(httpCache);
 		service.setAllowLocalHosts(allowHttpLocalHosts);
+		service.setSystemDeviceCache(systemDeviceCache);
 
 		return service;
 	}

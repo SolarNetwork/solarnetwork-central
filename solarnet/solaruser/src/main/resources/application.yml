@@ -46,6 +46,10 @@ app:
         ttl: 0
         heap-max-entries: 5000
         disk-max-size-mb: 0
+      sigenergy-system-devices:
+        ttl: 900
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
       sma-system-tz:
         tti: 3600
         ttl: 0

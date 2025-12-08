@@ -1,0 +1,8 @@
+Field,Key,Description,Unit,Scale Factor,Data Type
+dailyPowerGeneration,WhDay,Daily PV energy generation,kWh,1000,Double
+monthlyPowerGeneration,WhMonth,Monthly PV energy generation,kWh,1000,Double
+annualPowerGeneration,WhYear,Annual PV energy generation,kWh,1000,Double
+lifetimePowerGeneration,Wh,Lifetime PV energy generation,kWh,1000,Double
+lifetimeCo2,EqvCO2,Lifetime CO₂ emission reduction,tons,,Double
+lifetimeCoal,EqvCoal,Lifetime standard coal saved,tons,,Double
+lifetimeTreeEquivalent,EqvTrees,Lifetime equivalent number of trees planted,,,Double

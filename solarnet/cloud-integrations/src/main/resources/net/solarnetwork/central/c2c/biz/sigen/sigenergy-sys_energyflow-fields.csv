@@ -1,0 +1,8 @@
+Name,,Description,Unit,Scale Factor,Data Type
+pvPower,PVW,PV generation power,kW,1000,Double
+gridPower,GridW,Grid power (positive is selling to grid and negative is buying from grid),kW,1000,Double
+evPower,EVW,DC or AC power,kW,1000,Double
+loadPower,LoadW,Used by load,kW,1000,Double
+heatPumpPower,HPW,Heat pump power,kW,1000,Double
+batteryPower,BatW,"Battery power (positive is import to batteries, and negative is export from battery)",kW,1000,Double
+batterySoc,BatSoc,Battery soc,%,,Double

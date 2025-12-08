@@ -125,13 +125,16 @@ public class SigenergyCloudDatumStreamServiceTests {
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 
 	@Mock
-	private Cache<String, CloudDataValue> systemCache;
+	private Cache<String, CloudDataValue[]> systemDeviceCache;
 
 	@Mock
 	private ClientAccessTokenDao clientAccessTokenDao;
 
 	@Captor
 	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
+
+	@Captor
+	private ArgumentCaptor<CloudDataValue[]> cloudDataValueArrayCaptor;
 
 	private MutableClock clock;
 	private CloudIntegrationsExpressionService expressionService;
@@ -172,6 +175,7 @@ public class SigenergyCloudDatumStreamServiceTests {
 				APP_KEY_SETTING, appKey,
 				APP_SECRET_SETTING, appSecret
 			));
+		// @formatter:on
 
 		given(integrationDao.get(config.getId())).willReturn(config);
 
@@ -256,6 +260,7 @@ public class SigenergyCloudDatumStreamServiceTests {
 				APP_KEY_SETTING, appKey,
 				APP_SECRET_SETTING, appSecret
 			));
+		// @formatter:on
 
 		given(integrationDao.get(config.getId())).willReturn(config);
 
@@ -278,7 +283,8 @@ public class SigenergyCloudDatumStreamServiceTests {
 		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
-		final Map<String, Object> filter = Map.of(SigenergyCloudDatumStreamService.SYSTEM_ID_FILTER, systemId);
+		final Map<String, Object> filter = Map.of(SigenergyCloudDatumStreamService.SYSTEM_ID_FILTER,
+				systemId);
 		Iterable<CloudDataValue> results = service.dataValues(config.getId(), filter);
 
 		// THEN
@@ -299,10 +305,23 @@ public class SigenergyCloudDatumStreamServiceTests {
 			;
 
 		and.then(results)
-			.as("Result generated for 2 devices")
-			.hasSize(2)
+			.as("Result generated for system + 2 devices")
+			.hasSize(3)
 			.satisfies(l -> {
 				and.then(l).element(0)
+					.as("Name is 'System'")
+					.returns(SigenergyCloudDatumStreamService.SYSTEM_DEVICE_NAME, from(CloudDataValue::getName))
+					.as("System ID and sys parsed as identifiers")
+					.returns(List.of(systemId, SigenergyCloudDatumStreamService.SYSTEM_DEVICE_ID), from(CloudDataValue::getIdentifiers))
+					.as("Reference not returned for intermediate value")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					.as("No metadata provided")
+					.returns(null,  from(CloudDataValue::getMetadata))
+					;
+
+				and.then(l).element(1)
 					.as("Serial number parsed as name")
 					.returns("110A123", from(CloudDataValue::getName))
 					.as("System ID and serial number parsed as identifiers")
@@ -327,7 +346,8 @@ public class SigenergyCloudDatumStreamServiceTests {
 							entry("maxActivePower", 11)
 							))
 					;
-				and.then(l).element(1)
+
+				and.then(l).element(2)
 					.as("Serial number parsed as name")
 					.returns("110B123", from(CloudDataValue::getName))
 					.as("System ID and serial number parsed as identifiers")
@@ -352,6 +372,189 @@ public class SigenergyCloudDatumStreamServiceTests {
 							))
 					;
 			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void dataValues_system_withCache_miss() {
+		// GIVEN
+		service.setSystemDeviceCache(systemDeviceCache);
+
+		final String appKey = randomString();
+		final String appSecret = randomString();
+		final String systemId = randomString();
+
+		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		config.setServiceProps(Map.of(
+				APP_KEY_SETTING, appKey,
+				APP_SECRET_SETTING, appSecret
+			));
+		// @formatter:on
+
+		given(integrationDao.get(config.getId())).willReturn(config);
+
+		// get access token
+		final String authToken = randomString();
+		final String registrationId = userIdSystemIdentifier(config.getUserId(),
+				SigenergyRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, config.getConfigId());
+		ClientAccessTokenEntity tokenEntity = new ClientAccessTokenEntity(TEST_USER_ID, registrationId,
+				appKey, clock.instant());
+		tokenEntity.setAccessTokenIssuedAt(clock.instant());
+		tokenEntity.setAccessTokenExpiresAt(clock.instant().plus(1L, ChronoUnit.HOURS));
+		tokenEntity.setAccessToken(authToken.getBytes(UTF_8));
+
+		given(clientAccessTokenDao.get(tokenEntity.getId())).willReturn(tokenEntity);
+
+		// get data
+		final JsonNode resJson = getObjectFromJSON(
+				utf8StringResource("sigen-device-list-01.json", getClass()), ObjectNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+		final Map<String, Object> filter = Map.of(SigenergyCloudDatumStreamService.SYSTEM_ID_FILTER,
+				systemId);
+		Iterable<CloudDataValue> results = service.dataValues(config.getId(), filter);
+
+		// THEN
+		// @formatter:off
+		then(systemDeviceCache).should().get(systemId);
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for inverter telemetry")
+			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
+					.path(SigenergyRestOperationsHelper.SYSTEM_DEVICE_LIST_PATH)
+					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey(), systemId)
+					.toUri(), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains Bearer authentication")
+			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			;
+
+		then(systemDeviceCache).should().put(eq(systemId), cloudDataValueArrayCaptor.capture());
+		and.then(cloudDataValueArrayCaptor.getValue())
+			.as("Same instance as result added to cache")
+			.containsExactlyElementsOf(results)
+			;
+
+		and.then(results)
+			.as("Result generated for 2 devices")
+			.hasSize(3)
+			.satisfies(l -> {
+				and.then(l).element(0)
+					.as("Name is 'System'")
+					.returns(SigenergyCloudDatumStreamService.SYSTEM_DEVICE_NAME, from(CloudDataValue::getName))
+					.as("System ID and sys parsed as identifiers")
+					.returns(List.of(systemId, SigenergyCloudDatumStreamService.SYSTEM_DEVICE_ID), from(CloudDataValue::getIdentifiers))
+					.as("Reference not returned for intermediate value")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					.as("No metadata provided")
+					.returns(null,  from(CloudDataValue::getMetadata))
+					;
+
+				and.then(l).element(1)
+					.as("Serial number parsed as name")
+					.returns("110A123", from(CloudDataValue::getName))
+					.as("System ID and serial number parsed as identifiers")
+					.returns(List.of(systemId, "110A123"), from(CloudDataValue::getIdentifiers))
+					.as("Reference not returned for intermediate value")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					.extracting(CloudDataValue::getMetadata, map(String.class, Object.class))
+					.as("Metadata extracted")
+					.containsExactlyInAnyOrderEntriesOf(Map.ofEntries(
+							entry("serial", "110A123"),
+							entry("firmwareVersion", "V100R001C22SPC111B064L"),
+							entry("deviceType", "Inverter"),
+							entry("status", "Normal"),
+							entry("pn", "1104004100"),
+							entry("ratedFrequency", 50),
+							entry("ratedVoltage", 230),
+							entry("maxAbsorbedPower", 11),
+							entry("ratedActivePower", 10),
+							entry("pvStringNumber", 4),
+							entry("maxActivePower", 11)
+							))
+					;
+
+				and.then(l).element(2)
+					.as("Serial number parsed as name")
+					.returns("110B123", from(CloudDataValue::getName))
+					.as("System ID and serial number parsed as identifiers")
+					.returns(List.of(systemId, "110B123"), from(CloudDataValue::getIdentifiers))
+					.as("Reference not returned for intermediate value")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					.extracting(CloudDataValue::getMetadata, map(String.class, Object.class))
+					.as("Metadata extracted")
+					.containsExactlyInAnyOrderEntriesOf(Map.ofEntries(
+							entry("serial", "110B123"),
+							entry("firmwareVersion", "V100R001C22SPC111B064L"),
+							entry("deviceType", "Battery"),
+							entry("status", "Normal"),
+							entry("pn", "1113000120"),
+							entry("ratedDischargePower", 4.8f),
+							entry("ratedChargePower", 4.2f),
+							entry("ratedEnergy", 280),
+							entry("dischargeEnergy", 7.57f),
+							entry("chargeableEnergy", 0.81f)
+							))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void dataValues_system_withCache_hit() {
+		// GIVEN
+		service.setSystemDeviceCache(systemDeviceCache);
+
+		final String appKey = randomString();
+		final String appSecret = randomString();
+		final String systemId = randomString();
+
+		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		config.setServiceProps(Map.of(
+				APP_KEY_SETTING, appKey,
+				APP_SECRET_SETTING, appSecret
+			));
+		// @formatter:on
+
+		given(integrationDao.get(config.getId())).willReturn(config);
+
+		// get cached value
+		final CloudDataValue[] cachedResult = new CloudDataValue[] {
+				CloudDataValue.dataValue(List.of(randomString()), randomString()) };
+		given(systemDeviceCache.get(systemId)).willReturn(cachedResult);
+
+		// WHEN
+		final Map<String, Object> filter = Map.of(SigenergyCloudDatumStreamService.SYSTEM_ID_FILTER,
+				systemId);
+		Iterable<CloudDataValue> results = service.dataValues(config.getId(), filter);
+
+		// THEN
+		// @formatter:off
+		then(clientAccessTokenDao).shouldHaveNoInteractions();
+		then(restOps).shouldHaveNoInteractions();
+
+		then(systemDeviceCache).shouldHaveNoMoreInteractions();
+
+		and.then(results)
+			.as("Result from cache returned")
+			.containsExactly(cachedResult)
 			;
 		// @formatter:on
 	}

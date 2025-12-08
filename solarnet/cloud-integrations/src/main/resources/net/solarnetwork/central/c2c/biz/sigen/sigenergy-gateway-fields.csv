@@ -1,0 +1,9 @@
+Field,Key,Description,Unit,Scale Factor,Data Type
+voltageA,VphA,Phase A voltage,V,,Numeric
+voltageB,VphB,Phase B voltage,V,,Numeric
+voltageC,VphC,Phase C voltage,V,,Numeric
+currentA,IphA,Phase A current,A,,Numeric
+currentB,IphB,Phase B current,A,,Numeric
+currentC,IphC,Phase C current,A,,Numeric
+activePower,W,Apparent power,kW,1000,Numeric
+reactivePower,PVAR,Reactive power,kW,1000,Numeric

@@ -40,7 +40,7 @@ import net.solarnetwork.util.StringUtils;
  * </p>
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 @JsonPropertyOrder({ "name", "reference", "identifiers", "metadata", "children" })
 public final class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
@@ -98,6 +98,13 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 
 	/** Standard metadata key for a unit of measure name. */
 	public static final String UNIT_OF_MEASURE_METADATA = "unit";
+
+	/**
+	 * Standard metadata key for a unit scale factor name.
+	 *
+	 * @since 1.8
+	 */
+	public static final String UNIT_SCALE_FACTOR_METADATA = "unitScaleFactor";
 
 	/**
 	 * Standard metadata key for a description.

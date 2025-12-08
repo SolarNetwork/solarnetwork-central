@@ -37,13 +37,17 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
+import javax.cache.Cache;
 import org.springframework.context.MessageSource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -59,6 +63,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -87,6 +92,9 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 	/** The data value filter key for a filter ID. */
 	public static final String DEVICE_ID_FILTER = "deviceId";
 
+	/** The metadata key for a Sigenergy device type. */
+	public static final String DEVICE_TYPE_METADATA = "deviceType";
+
 	/** The data value identifier levels source ID range. */
 	public static final IntRange DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE = IntRange.rangeOf(0, 1);
 
@@ -109,10 +117,20 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 
 	/**
 	 * The device ID data value filter value that represents system-level data.
+	 *
+	 * <p>
+	 * Note the {@code $} prefix is used to sort this before "normal" device
+	 * serial number values.
+	 * </p>
 	 */
-	public static final String SYSTEM_DEVICE_ID = "sys";
+	public static final String SYSTEM_DEVICE_ID = "$SYS";
+
+	/** The device data value name for system-level data. */
+	public static final String SYSTEM_DEVICE_NAME = "System";
 
 	private final ObjectMapper mapper;
+	private final SigenergyFields fields;
+	private Cache<String, CloudDataValue[]> systemDeviceCache;
 
 	/**
 	 * Constructor.
@@ -151,6 +169,15 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS, restOpsHelper);
 		this.mapper = requireNonNullArgument(mapper, "mapper");
+		// @formatter:off
+		this.fields = new SigenergyFields(Map.of(
+				SigenergyFields.AIO_FIELD_SET_NAME, new ClassPathResource("sigenergy-aio-fields.csv", getClass()),
+				SigenergyFields.GATEWAY_FIELD_SET_NAME, new ClassPathResource("sigenergy-gateway-fields.csv", getClass()),
+				SigenergyFields.METER_FIELD_SET_NAME, new ClassPathResource("sigenergy-meter-fields.csv", getClass()),
+				SigenergyFields.SYS_SUMMERY_FIELD_SET_NAME, new ClassPathResource("sigenergy-sys_summary-fields.csv", getClass()),
+				SigenergyFields.SYS_ENERGY_FLOW_FIELD_SET_NAME, new ClassPathResource("sigenergy-sys_energyflow-fields.csv", getClass())
+				));
+		// @formatter:on
 	}
 
 	@Override
@@ -184,11 +211,9 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 		List<CloudDataValue> result = Collections.emptyList();
 		if ( filters != null && filters.get(SYSTEM_ID_FILTER) != null
 				&& filters.get(DEVICE_ID_FILTER) != null ) {
-			/*- TODO
 			String systemId = filters.get(SYSTEM_ID_FILTER).toString();
 			String deviceId = filters.get(DEVICE_ID_FILTER).toString();
-			result = deviceChannels(integration, systemId, deviceId, filters);
-			*/
+			result = deviceFields(integration, systemId, deviceId);
 		} else if ( filters != null && filters.get(SYSTEM_ID_FILTER) != null ) {
 			String systemId = filters.get(SYSTEM_ID_FILTER).toString();
 			result = systemDevices(integration, systemId);
@@ -271,13 +296,25 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 
 	private List<CloudDataValue> systemDevices(final CloudIntegrationConfiguration integration,
 			final String systemId) {
+		final Cache<String, CloudDataValue[]> cache = getSystemDeviceCache();
+
+		final CloudDataValue[] cachedResult = (cache != null ? cache.get(systemId) : null);
+		if ( cachedResult != null ) {
+			return Arrays.asList(cachedResult);
+		}
+
 		final SigenergyRegion region = SigenergyRestOperationsHelper.resolveRegion(integration);
-		return restOpsHelper.httpGet("List system devices", integration, JsonNode.class,
+		List<CloudDataValue> result = restOpsHelper.httpGet("List system devices", integration,
+				JsonNode.class,
 				(req) -> UriComponentsBuilder
 						.fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
 						.path(SigenergyRestOperationsHelper.SYSTEM_DEVICE_LIST_PATH)
 						.buildAndExpand(region.getKey(), systemId).toUri(),
 				(res) -> parseSystemDevices(res.getBody(), systemId));
+		if ( result != null && !result.isEmpty() && cache != null ) {
+			cache.put(systemId, result.toArray(CloudDataValue[]::new));
+		}
+		return result;
 	}
 
 	private List<CloudDataValue> parseSystemDevices(final JsonNode json, final String systemId) {
@@ -306,6 +343,9 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 
 		final List<CloudDataValue> result = new ArrayList<>(8);
 
+		// include sys "device"
+		result.add(intermediateDataValue(List.of(systemId, SYSTEM_DEVICE_ID), "System", null));
+
 		for ( JsonNode devNodeJson : data ) {
 			final JsonNode devNode;
 			try {
@@ -315,8 +355,8 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 			}
 			final var meta = new LinkedHashMap<String, Object>(4);
 			populateNonEmptyValue(devNode, "serialNumber", DEVICE_SERIAL_NUMBER_METADATA, meta);
+			populateNonEmptyValue(devNode, "deviceType", DEVICE_TYPE_METADATA, meta);
 			populateNonEmptyValue(devNode, "firmwareVersion", DEVICE_FIRMWARE_VERSION_METADATA, meta);
-			populateNonEmptyValue(devNode, "deviceType", "deviceType", meta);
 			populateNonEmptyValue(devNode, "status", "status", meta);
 			populateNonEmptyValue(devNode, "pn", "pn", meta);
 
@@ -351,6 +391,113 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 		return result;
 	}
 
+	private List<CloudDataValue> deviceFields(CloudIntegrationConfiguration integration, String systemId,
+			String deviceId) {
+		if ( SYSTEM_DEVICE_ID.equals(deviceId) ) {
+			return systemDeviceFields(integration, systemId);
+		}
+
+		// look up the device type to know what fields are supported
+		final List<CloudDataValue> deviceInfos = systemDevices(integration, systemId);
+		final CloudDataValue deviceInfo = (deviceInfos != null
+				? deviceInfos.stream().filter(e -> deviceId.equals(e.getIdentifiers().getLast()))
+						.findAny().orElse(null)
+				: null);
+
+		SigenergyDeviceType deviceType = null;
+		if ( deviceInfo != null && deviceInfo.getMetadata() != null
+				&& deviceInfo.getMetadata().containsKey(DEVICE_TYPE_METADATA) ) {
+			try {
+				deviceType = SigenergyDeviceType
+						.valueOf(deviceInfo.getMetadata().get(DEVICE_TYPE_METADATA).toString());
+			} catch ( Exception e ) {
+				// continue
+			}
+		}
+		return switch (deviceType) {
+			case AcCharger -> deviceFields_Aio(systemId, deviceId);
+			case Battery -> deviceFields_Aio(systemId, deviceId);
+			case DcCharger -> deviceFields_Aio(systemId, deviceId);
+			case Gateway -> deviceFields_Gateway(systemId, deviceId);
+			case Inverter -> deviceFields_Aio(systemId, deviceId);
+			case Meter -> deviceFields_Meter(systemId, deviceId);
+			case null -> List.of();
+		};
+	}
+
+	public static final String FIELD_NAME_METADATA = "field";
+
+	private List<CloudDataValue> deviceFields_Aio(String systemId, String deviceId) {
+		return fields.cloudDataValues(SigenergyFields.AIO_FIELD_SET_NAME, systemId, deviceId);
+	}
+
+	private List<CloudDataValue> deviceFields_Gateway(String systemId, String deviceId) {
+		return fields.cloudDataValues(SigenergyFields.GATEWAY_FIELD_SET_NAME, systemId, deviceId);
+	}
+
+	private List<CloudDataValue> deviceFields_Meter(String systemId, String deviceId) {
+		return fields.cloudDataValues(SigenergyFields.METER_FIELD_SET_NAME, systemId, deviceId);
+	}
+
+	/*- example JSON from /summary
+	 {
+	 	"lifetimeCo2":2.28,
+	 	"lifetimeCoal":1.92,
+	 	"lifetimeTreeEquivalent":3.11,
+	 	"dailyPowerGeneration":0.07,
+	 	"monthlyPowerGeneration":115.53,
+	 	"annualPowerGeneration":4791.59,
+	 	"lifetimePowerGeneration":4791.6
+	 }
+	
+	    example JSON from /energyFlow
+	 {
+	 	"pvPower":0.3,
+	 	"gridPower":3.71,
+	 	"evPower":0.0,
+	 	"loadPower":0.89,
+	 	"heatPumpPower":0.0,
+	 	"batteryPower":-4.3,
+	 	"batterySoc":88.3
+	 }
+	 */
+
+	private List<CloudDataValue> systemDeviceFields(CloudIntegrationConfiguration integration,
+			String systemId) {
+		return fields.mergedCloudDataValues(systemId, SYSTEM_DEVICE_ID,
+				SigenergyFields.SYS_SUMMERY_FIELD_SET_NAME,
+				SigenergyFields.SYS_ENERGY_FLOW_FIELD_SET_NAME);
+	}
+
+	/**
+	 * Value reference pattern, with component matching groups.
+	 *
+	 * <p>
+	 * The matching groups are
+	 * </p>
+	 *
+	 * <ol>
+	 * <li>systemId</li>
+	 * <li>deviceId</li>
+	 * <li>field</li>
+	 * </ol>
+	 */
+	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/(.+)");
+
+	private static record ValueRef(String systemId, String deviceId, String fieldName,
+			CloudDatumStreamPropertyConfiguration property, String sourceId) {
+
+		private ValueRef(String systemId, String deviceId, String channelName,
+				CloudDatumStreamPropertyConfiguration property) {
+			this(systemId, deviceId, channelName, property, "/%s/%s".formatted(systemId, deviceId));
+		}
+
+		private boolean isSystemRef() {
+			return SYSTEM_DEVICE_ID.equals(deviceId);
+		}
+
+	}
+
 	@Override
 	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		// TODO Auto-generated method stub
@@ -362,6 +509,25 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 			CloudDatumStreamQueryFilter filter) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	/**
+	 * Get the system device cache.
+	 *
+	 * @return the cache
+	 */
+	public Cache<String, CloudDataValue[]> getSystemDeviceCache() {
+		return systemDeviceCache;
+	}
+
+	/**
+	 * Set the system device cache.
+	 *
+	 * @param systemDeviceCache
+	 *        the cache to set
+	 */
+	public void setSystemDeviceCache(Cache<String, CloudDataValue[]> systemDeviceCache) {
+		this.systemDeviceCache = systemDeviceCache;
 	}
 
 }
