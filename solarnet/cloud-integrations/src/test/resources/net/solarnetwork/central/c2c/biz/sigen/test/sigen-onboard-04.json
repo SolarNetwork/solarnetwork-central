@@ -1,0 +1,21 @@
+{
+  "code": 0,
+  "msg": "success",
+  "timestamp": 1764866672,
+  "data": [
+    {
+      "systemId": "ABC123",
+      "result": true,
+      "codeList": [
+        0
+      ]
+    },
+	{
+	  "systemId": "DEF234",
+	  "result": false,
+	  "codeList": [
+	    123
+	  ]
+	}
+  ]
+}

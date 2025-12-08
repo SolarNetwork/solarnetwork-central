@@ -94,6 +94,12 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 	/** The URL path to the list of devices for a system. */
 	public static final String SYSTEM_DEVICE_LIST_PATH = "/openapi/system/{systemId}/devices";
 
+	/** The URL path to onboard systems. */
+	public static final String ONBOARD_PATH = "/openapi/board/onboard";
+
+	/** The URL path to offboard systems. */
+	public static final String OFFBOARD_PATH = "/openapi/board/offboard";
+
 	/** The message returned on successful API responses. */
 	public static final String RESPONSE_SUCCESS_MESSAGE = "success";
 

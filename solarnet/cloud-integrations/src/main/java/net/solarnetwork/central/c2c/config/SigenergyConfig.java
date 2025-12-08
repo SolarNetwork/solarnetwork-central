@@ -173,7 +173,7 @@ public class SigenergyConfig implements SolarNetCloudIntegrationsConfiguration {
 	, @Qualifier(SIGENERGY) Collection<CloudControlService> controlServices
 	*/ ) {
 		var service = new SigenergyCloudIntegrationService(datumStreamServices, List.of(),
-				userEventAppender, encryptor, restOpsHelper);
+				userEventAppender, encryptor, restOpsHelper, objectMapper);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(SigenergyCloudIntegrationService.class.getName(),

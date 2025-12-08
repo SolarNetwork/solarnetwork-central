@@ -26,8 +26,12 @@ import static java.util.Collections.unmodifiableMap;
 import static java.util.Comparator.comparing;
 import static java.util.Map.entry;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.BASE_URI_TEMPLATE;
+import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.jsonObjectOrArray;
+import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.requireSuccessResponse;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
+import static org.springframework.http.HttpMethod.POST;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,6 +49,8 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.util.UriComponentsBuilder;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudControlService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -63,6 +69,7 @@ import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceIn
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Sigenergy implementation of {@link CloudIntegrationService}.
@@ -133,7 +140,7 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 	 * Configuration topic to "release" a system from the application associated
 	 * with the integration credentials.
 	 */
-	public static final String UNONBOARD_CONFIGURATION_TOPIC = "unonboard";
+	public static final String OFFBOARD_CONFIGURATION_TOPIC = "offboard";
 
 	/** The setting name for a system ID. */
 	public static final String SYSTEM_ID_SETTING = "systemId";
@@ -147,10 +154,12 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 		// @formatter:off
 		CONFIGURATION_TOPICS = Map.ofEntries(
 				entry(ONBOARD_CONFIGURATION_TOPIC, List.of(systemIdSpec)),
-				entry(UNONBOARD_CONFIGURATION_TOPIC, List.of(systemIdSpec))
+				entry(OFFBOARD_CONFIGURATION_TOPIC, List.of(systemIdSpec))
 				);
 		// @formatter:on
 	}
+
+	private final ObjectMapper mapper;
 
 	/**
 	 * Constructor.
@@ -166,14 +175,17 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 	 * @param restOpsHelper
 	 *        the REST operations helper; see
 	 *        {@link SigenergyRestOperationsHelper}
+	 * @param mapper
+	 *        the object mapper
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public SigenergyCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			Collection<CloudControlService> controlServices, UserEventAppenderBiz userEventAppenderBiz,
-			TextEncryptor encryptor, RestOperationsHelper restOpsHelper) {
+			TextEncryptor encryptor, RestOperationsHelper restOpsHelper, ObjectMapper mapper) {
 		super(SERVICE_IDENTIFIER, "Sigenergy", datumStreamServices, controlServices,
 				userEventAppenderBiz, encryptor, SETTINGS, WELL_KNOWN_URLS, restOpsHelper);
+		this.mapper = requireNonNullArgument(mapper, "mapper");
 	}
 
 	@Override
@@ -248,13 +260,107 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 	}
 
 	@Override
-	public Result<?> configure(CloudIntegrationConfiguration integration,
-			CloudIntegrationTopicConfiguration settings) {
-		if ( !CONFIGURATION_TOPICS.containsKey(requireNonNullArgument(settings.topic(), "topic")) ) {
-			throw new IllegalArgumentException("Unsupported topic [" + settings.topic() + "]");
+	public Result<?> configure(final CloudIntegrationConfiguration integration,
+			final CloudIntegrationTopicConfiguration settings) {
+		requireNonNullArgument(integration, "integration");
+		final String topic = requireNonNullArgument(requireNonNullArgument(settings, "settings").topic(),
+				"settings.topic");
+		if ( !CONFIGURATION_TOPICS.containsKey(topic) ) {
+			throw new IllegalArgumentException("Unsupported topic [" + topic + "]");
 		}
-		// TODO
-		return Result.success();
+		return switch (topic) {
+			case OFFBOARD_CONFIGURATION_TOPIC -> offboard(integration, settings);
+			case ONBOARD_CONFIGURATION_TOPIC -> onboard(integration, settings);
+			default -> throw new IllegalStateException("Unimplemented topic [" + topic + "]");
+		};
+	}
+
+	private Result<?> onboard(final CloudIntegrationConfiguration integration,
+			final CloudIntegrationTopicConfiguration settings) {
+		final String[] systemIds = stringListParameter(SYSTEM_ID_SETTING, settings.parameters());
+		if ( systemIds == null || systemIds.length < 1 ) {
+			throw new IllegalArgumentException("The [" + SYSTEM_ID_SETTING + "] parameter is required.");
+		}
+		final SigenergyRegion region = SigenergyRestOperationsHelper.resolveRegion(integration);
+		final URI uri = UriComponentsBuilder
+				.fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+				.path(SigenergyRestOperationsHelper.ONBOARD_PATH).buildAndExpand(region.getKey())
+				.toUri();
+		try {
+			final JsonNode response = restOpsHelper.http("Onboard systems", POST, systemIds, integration,
+					JsonNode.class, (req) -> uri, HttpEntity::getBody);
+			requireSuccessResponse(ONBOARD_CONFIGURATION_TOPIC, uri, response);
+			log.debug("Onboard of config {} returned: {}", integration.getConfigId(), response);
+			return boardingResult(systemIds, response, "SGCI.0003");
+		} catch ( Exception e ) {
+			return Result.error("SGCI.0004", "Onboard failed: " + e.getMessage());
+		}
+	}
+
+	private Result<?> offboard(final CloudIntegrationConfiguration integration,
+			final CloudIntegrationTopicConfiguration settings) {
+		final String[] systemIds = stringListParameter(SYSTEM_ID_SETTING, settings.parameters());
+		if ( systemIds == null || systemIds.length < 1 ) {
+			throw new IllegalArgumentException("The [" + SYSTEM_ID_SETTING + "] parameter is required.");
+		}
+		final SigenergyRegion region = SigenergyRestOperationsHelper.resolveRegion(integration);
+		final URI uri = UriComponentsBuilder
+				.fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+				.path(SigenergyRestOperationsHelper.OFFBOARD_PATH).buildAndExpand(region.getKey())
+				.toUri();
+		try {
+			final JsonNode response = restOpsHelper.http("Offboard systems", POST, systemIds,
+					integration, JsonNode.class, (req) -> uri, HttpEntity::getBody);
+			requireSuccessResponse(OFFBOARD_CONFIGURATION_TOPIC, uri, response);
+			log.debug("Offboard of config {} succeeded: {}", integration.getConfigId(), response);
+			return boardingResult(systemIds, response, "SGCI.0005");
+		} catch ( Exception e ) {
+			return Result.error("SGCI.0006", "Offboard failed: " + e.getMessage());
+		}
+	}
+
+	private String[] stringListParameter(String key, Map<String, ?> parameters) {
+		Object o = (parameters != null ? parameters.get(key) : null);
+		if ( o instanceof String s ) {
+			List<String> l = StringUtils.commaDelimitedStringToList(s);
+			return l.toArray(String[]::new);
+		} else if ( o instanceof String[] a ) {
+			return a;
+		} else if ( o instanceof Iterable<?> itr ) {
+			List<String> l = new ArrayList<>(8);
+			for ( Object val : itr ) {
+				if ( val != null ) {
+					l.add(val.toString());
+				}
+			}
+			return l.toArray(String[]::new);
+		}
+		return null;
+	}
+
+	private Result<?> boardingResult(final String[] systemIds, JsonNode response, String errorCode) {
+		// check each system ID for success, only if all succeeded do we return success here
+		List<ErrorDetail> systemErrors = new ArrayList<>(systemIds.length);
+		boolean allSuccess = true;
+		JsonNode data = jsonObjectOrArray(mapper, response, "data");
+		for ( JsonNode systemNode : data ) {
+			final String systemId = nonEmptyString(systemNode.path("systemId").textValue());
+			final boolean success = systemNode.path("result").booleanValue();
+			if ( !success ) {
+				allSuccess = false;
+				final List<Integer> codes = new ArrayList<>();
+				for ( JsonNode codeNode : systemNode.path("codeList") ) {
+					if ( codeNode.isNumber() ) {
+						codes.add(codeNode.intValue());
+					}
+				}
+				systemErrors.add(new ErrorDetail(null,
+						codes.size() == 1 ? codes.getFirst().toString() : null, systemId,
+						codes.size() > 1 ? commaDelimitedStringFromCollection(codes) : null));
+			}
+		}
+		return new Result<Void>(allSuccess, (!allSuccess ? errorCode : null), null,
+				(!systemErrors.isEmpty() ? systemErrors : null), null);
 	}
 
 }

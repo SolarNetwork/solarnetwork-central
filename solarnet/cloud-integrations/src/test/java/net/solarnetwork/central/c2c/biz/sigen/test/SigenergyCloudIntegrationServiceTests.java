@@ -27,12 +27,18 @@ import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationService.APP_KEY_SETTING;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationService.APP_SECRET_SETTING;
+import static net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationService.OFFBOARD_CONFIGURATION_TOPIC;
+import static net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationService.ONBOARD_CONFIGURATION_TOPIC;
+import static net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationService.SYSTEM_ID_SETTING;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.BASE_URI_TEMPLATE;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
+import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -61,6 +67,7 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.MutableClock;
+import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
@@ -68,6 +75,7 @@ import net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.sigen.SigenergyRegion;
 import net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationTopicConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.security.ClientAccessTokenEntity;
@@ -121,7 +129,7 @@ public class SigenergyCloudIntegrationServiceTests {
 				JsonUtils.newObjectMapper(), clientAccessTokenDao, new StaticOptionalService<>(null));
 
 		service = new SigenergyCloudIntegrationService(List.of(datumStreamService), List.of(),
-				userEventAppenderBiz, encryptor, restOpsHelper);
+				userEventAppenderBiz, encryptor, restOpsHelper, JsonUtils.newObjectMapper());
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(SigenergyCloudIntegrationService.class.getName(),
@@ -232,6 +240,664 @@ public class SigenergyCloudIntegrationServiceTests {
 			.isNotNull()
 			.as("Result is success")
 			.returns(true, from(Result::getSuccess))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void onboard_single() {
+		// GIVEN
+		final String appKey = randomString();
+		final String appSecret = randomString();
+		final String systemId = randomString();
+
+		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		config.setServiceProps(Map.of(
+				APP_KEY_SETTING, appKey,
+				APP_SECRET_SETTING, appSecret
+		));
+		// @formatter:on
+
+		// get access token
+		final String authToken = randomString();
+		final String registrationId = userIdSystemIdentifier(config.getUserId(),
+				SigenergyRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, config.getConfigId());
+		ClientAccessTokenEntity tokenEntity = new ClientAccessTokenEntity(TEST_USER_ID, registrationId,
+				appKey, clock.instant());
+		tokenEntity.setAccessTokenIssuedAt(clock.instant());
+		tokenEntity.setAccessTokenExpiresAt(clock.instant().plus(1L, ChronoUnit.HOURS));
+		tokenEntity.setAccessToken(authToken.getBytes(UTF_8));
+
+		given(clientAccessTokenDao.get(tokenEntity.getId())).willReturn(tokenEntity);
+
+		// get data
+		final JsonNode onboardResJson = JsonUtils.getObjectFromJSON(
+				utf8StringResource("sigen-onboard-01.json", getClass()), JsonNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(onboardResJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+
+		Result<?> result = service.configure(config, new CloudIntegrationTopicConfiguration(
+				ONBOARD_CONFIGURATION_TOPIC, Map.of(SYSTEM_ID_SETTING, systemId)));
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("HTTP body is string array")
+			.returns(new String[] {systemId}, from(RequestEntity::getBody))
+			.as("Request URI for system onboard")
+			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
+					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
+					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains Bearer authentication")
+			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			;
+
+		and.then(result)
+			.as("Result generated")
+			.isNotNull()
+			.as("Result is success")
+			.returns(true, from(Result::getSuccess))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void onboard_single_fail() {
+		// GIVEN
+		final String appKey = randomString();
+		final String appSecret = randomString();
+		final String systemId = randomString();
+
+		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		config.setServiceProps(Map.of(
+				APP_KEY_SETTING, appKey,
+				APP_SECRET_SETTING, appSecret
+		));
+		// @formatter:on
+
+		// get access token
+		final String authToken = randomString();
+		final String registrationId = userIdSystemIdentifier(config.getUserId(),
+				SigenergyRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, config.getConfigId());
+		ClientAccessTokenEntity tokenEntity = new ClientAccessTokenEntity(TEST_USER_ID, registrationId,
+				appKey, clock.instant());
+		tokenEntity.setAccessTokenIssuedAt(clock.instant());
+		tokenEntity.setAccessTokenExpiresAt(clock.instant().plus(1L, ChronoUnit.HOURS));
+		tokenEntity.setAccessToken(authToken.getBytes(UTF_8));
+
+		given(clientAccessTokenDao.get(tokenEntity.getId())).willReturn(tokenEntity);
+
+		// get data
+		final JsonNode onboardResJson = JsonUtils.getObjectFromJSON(
+				utf8StringResource("sigen-onboard-02.json", getClass()), JsonNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(onboardResJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+
+		Result<?> result = service.configure(config, new CloudIntegrationTopicConfiguration(
+				ONBOARD_CONFIGURATION_TOPIC, Map.of(SYSTEM_ID_SETTING, systemId)));
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("HTTP body is string array")
+			.returns(new String[] {systemId}, from(RequestEntity::getBody))
+			.as("Request URI for system onboard")
+			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
+					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
+					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains Bearer authentication")
+			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			;
+
+		and.then(result)
+			.as("Result generated")
+			.isNotNull()
+			.as("Result is not success")
+			.returns(false, from(Result::getSuccess))
+			.as("Code returned")
+			.returns("SGCI.0003", from(Result::getCode))
+			.as("No data returned")
+			.returns(null, from(Result::getData))
+			.extracting(Result::getErrors, list(ErrorDetail.class))
+			.as("One erorr returned for failed onboard")
+			.hasSize(1)
+			.element(0)
+			.as("Single code returned as error code")
+			.returns("123", from(ErrorDetail::getCode))
+			.as("System ID returned as rejected value")
+			.returns("ABC123", from(ErrorDetail::getRejectedValue))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void onboard_multiple_delimitedString() {
+		// GIVEN
+		final String appKey = randomString();
+		final String appSecret = randomString();
+		final String systemId1 = randomString();
+		final String systemId2 = randomString();
+
+		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		config.setServiceProps(Map.of(
+				APP_KEY_SETTING, appKey,
+				APP_SECRET_SETTING, appSecret
+		));
+		// @formatter:on
+
+		// get access token
+		final String authToken = randomString();
+		final String registrationId = userIdSystemIdentifier(config.getUserId(),
+				SigenergyRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, config.getConfigId());
+		ClientAccessTokenEntity tokenEntity = new ClientAccessTokenEntity(TEST_USER_ID, registrationId,
+				appKey, clock.instant());
+		tokenEntity.setAccessTokenIssuedAt(clock.instant());
+		tokenEntity.setAccessTokenExpiresAt(clock.instant().plus(1L, ChronoUnit.HOURS));
+		tokenEntity.setAccessToken(authToken.getBytes(UTF_8));
+
+		given(clientAccessTokenDao.get(tokenEntity.getId())).willReturn(tokenEntity);
+
+		// get data
+		final JsonNode onboardResJson = JsonUtils.getObjectFromJSON(
+				utf8StringResource("sigen-onboard-03.json", getClass()), JsonNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(onboardResJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+
+		Result<?> result = service.configure(config,
+				new CloudIntegrationTopicConfiguration(ONBOARD_CONFIGURATION_TOPIC,
+						Map.of(SYSTEM_ID_SETTING,
+								commaDelimitedStringFromCollection(List.of(systemId1, systemId2)))));
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("HTTP body is string array")
+			.returns(new String[] {systemId1, systemId2}, from(RequestEntity::getBody))
+			.as("Request URI for system onboard")
+			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
+					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
+					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains Bearer authentication")
+			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			;
+
+		and.then(result)
+			.as("Result generated")
+			.isNotNull()
+			.as("Result is success")
+			.returns(true, from(Result::getSuccess))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void onboard_multiple_array() {
+		// GIVEN
+		final String appKey = randomString();
+		final String appSecret = randomString();
+		final String systemId1 = randomString();
+		final String systemId2 = randomString();
+
+		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		config.setServiceProps(Map.of(
+				APP_KEY_SETTING, appKey,
+				APP_SECRET_SETTING, appSecret
+		));
+		// @formatter:on
+
+		// get access token
+		final String authToken = randomString();
+		final String registrationId = userIdSystemIdentifier(config.getUserId(),
+				SigenergyRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, config.getConfigId());
+		ClientAccessTokenEntity tokenEntity = new ClientAccessTokenEntity(TEST_USER_ID, registrationId,
+				appKey, clock.instant());
+		tokenEntity.setAccessTokenIssuedAt(clock.instant());
+		tokenEntity.setAccessTokenExpiresAt(clock.instant().plus(1L, ChronoUnit.HOURS));
+		tokenEntity.setAccessToken(authToken.getBytes(UTF_8));
+
+		given(clientAccessTokenDao.get(tokenEntity.getId())).willReturn(tokenEntity);
+
+		// get data
+		final JsonNode onboardResJson = JsonUtils.getObjectFromJSON(
+				utf8StringResource("sigen-onboard-03.json", getClass()), JsonNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(onboardResJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+
+		Result<?> result = service.configure(config,
+				new CloudIntegrationTopicConfiguration(ONBOARD_CONFIGURATION_TOPIC,
+						Map.of(SYSTEM_ID_SETTING, new String[] { systemId1, systemId2 })));
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("HTTP body is string array")
+			.returns(new String[] {systemId1, systemId2}, from(RequestEntity::getBody))
+			.as("Request URI for system onboard")
+			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
+					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
+					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains Bearer authentication")
+			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			;
+
+		and.then(result)
+			.as("Result generated")
+			.isNotNull()
+			.as("Result is success")
+			.returns(true, from(Result::getSuccess))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void onboard_multiple_list() {
+		// GIVEN
+		final String appKey = randomString();
+		final String appSecret = randomString();
+		final String systemId1 = randomString();
+		final String systemId2 = randomString();
+
+		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		config.setServiceProps(Map.of(
+				APP_KEY_SETTING, appKey,
+				APP_SECRET_SETTING, appSecret
+		));
+		// @formatter:on
+
+		// get access token
+		final String authToken = randomString();
+		final String registrationId = userIdSystemIdentifier(config.getUserId(),
+				SigenergyRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, config.getConfigId());
+		ClientAccessTokenEntity tokenEntity = new ClientAccessTokenEntity(TEST_USER_ID, registrationId,
+				appKey, clock.instant());
+		tokenEntity.setAccessTokenIssuedAt(clock.instant());
+		tokenEntity.setAccessTokenExpiresAt(clock.instant().plus(1L, ChronoUnit.HOURS));
+		tokenEntity.setAccessToken(authToken.getBytes(UTF_8));
+
+		given(clientAccessTokenDao.get(tokenEntity.getId())).willReturn(tokenEntity);
+
+		// get data
+		final JsonNode onboardResJson = JsonUtils.getObjectFromJSON(
+				utf8StringResource("sigen-onboard-03.json", getClass()), JsonNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(onboardResJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+
+		Result<?> result = service.configure(config, new CloudIntegrationTopicConfiguration(
+				ONBOARD_CONFIGURATION_TOPIC, Map.of(SYSTEM_ID_SETTING, List.of(systemId1, systemId2))));
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("HTTP body is string array")
+			.returns(new String[] {systemId1, systemId2}, from(RequestEntity::getBody))
+			.as("Request URI for system onboard")
+			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
+					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
+					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains Bearer authentication")
+			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			;
+
+		and.then(result)
+			.as("Result generated")
+			.isNotNull()
+			.as("Result is success")
+			.returns(true, from(Result::getSuccess))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void onboard_multiple_failSome() {
+		// GIVEN
+		final String appKey = randomString();
+		final String appSecret = randomString();
+		final String systemId1 = randomString();
+		final String systemId2 = randomString();
+
+		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		config.setServiceProps(Map.of(
+				APP_KEY_SETTING, appKey,
+				APP_SECRET_SETTING, appSecret
+		));
+		// @formatter:on
+
+		// get access token
+		final String authToken = randomString();
+		final String registrationId = userIdSystemIdentifier(config.getUserId(),
+				SigenergyRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, config.getConfigId());
+		ClientAccessTokenEntity tokenEntity = new ClientAccessTokenEntity(TEST_USER_ID, registrationId,
+				appKey, clock.instant());
+		tokenEntity.setAccessTokenIssuedAt(clock.instant());
+		tokenEntity.setAccessTokenExpiresAt(clock.instant().plus(1L, ChronoUnit.HOURS));
+		tokenEntity.setAccessToken(authToken.getBytes(UTF_8));
+
+		given(clientAccessTokenDao.get(tokenEntity.getId())).willReturn(tokenEntity);
+
+		// get data
+		final JsonNode onboardResJson = JsonUtils.getObjectFromJSON(
+				utf8StringResource("sigen-onboard-04.json", getClass()), JsonNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(onboardResJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+
+		Result<?> result = service.configure(config, new CloudIntegrationTopicConfiguration(
+				ONBOARD_CONFIGURATION_TOPIC, Map.of(SYSTEM_ID_SETTING, List.of(systemId1, systemId2))));
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("HTTP body is string array")
+			.returns(new String[] {systemId1, systemId2}, from(RequestEntity::getBody))
+			.as("Request URI for system onboard")
+			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
+					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
+					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains Bearer authentication")
+			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			;
+
+		and.then(result)
+			.as("Result generated")
+			.isNotNull()
+			.as("Result is not success")
+			.returns(false, from(Result::getSuccess))
+			.as("Code returned")
+			.returns("SGCI.0003", from(Result::getCode))
+			.as("No data returned")
+			.returns(null, from(Result::getData))
+			.extracting(Result::getErrors, list(ErrorDetail.class))
+			.as("One erorr returned for failed onboard")
+			.hasSize(1)
+			.element(0)
+			.as("Single code returned as error code")
+			.returns("123", from(ErrorDetail::getCode))
+			.as("System ID returned as rejected value")
+			.returns("DEF234", from(ErrorDetail::getRejectedValue))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void onboard_multiple_failAll() {
+		// GIVEN
+		final String appKey = randomString();
+		final String appSecret = randomString();
+		final String systemId1 = randomString();
+		final String systemId2 = randomString();
+
+		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		config.setServiceProps(Map.of(
+				APP_KEY_SETTING, appKey,
+				APP_SECRET_SETTING, appSecret
+		));
+		// @formatter:on
+
+		// get access token
+		final String authToken = randomString();
+		final String registrationId = userIdSystemIdentifier(config.getUserId(),
+				SigenergyRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, config.getConfigId());
+		ClientAccessTokenEntity tokenEntity = new ClientAccessTokenEntity(TEST_USER_ID, registrationId,
+				appKey, clock.instant());
+		tokenEntity.setAccessTokenIssuedAt(clock.instant());
+		tokenEntity.setAccessTokenExpiresAt(clock.instant().plus(1L, ChronoUnit.HOURS));
+		tokenEntity.setAccessToken(authToken.getBytes(UTF_8));
+
+		given(clientAccessTokenDao.get(tokenEntity.getId())).willReturn(tokenEntity);
+
+		// get data
+		final JsonNode onboardResJson = JsonUtils.getObjectFromJSON(
+				utf8StringResource("sigen-onboard-05.json", getClass()), JsonNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(onboardResJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+
+		Result<?> result = service.configure(config, new CloudIntegrationTopicConfiguration(
+				ONBOARD_CONFIGURATION_TOPIC, Map.of(SYSTEM_ID_SETTING, List.of(systemId1, systemId2))));
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("HTTP body is string array")
+			.returns(new String[] {systemId1, systemId2}, from(RequestEntity::getBody))
+			.as("Request URI for system onboard")
+			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
+					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
+					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains Bearer authentication")
+			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			;
+
+		and.then(result)
+			.as("Result generated")
+			.isNotNull()
+			.as("Result is not success")
+			.returns(false, from(Result::getSuccess))
+			.as("Code returned")
+			.returns("SGCI.0003", from(Result::getCode))
+			.as("No data returned")
+			.returns(null, from(Result::getData))
+			.extracting(Result::getErrors, list(ErrorDetail.class))
+			.as("Two erorrs returned for failed onboards")
+			.hasSize(2)
+			.satisfies(errors -> {
+				and.then(errors).element(0)
+					.as("Single code returned as error code")
+					.returns("123", from(ErrorDetail::getCode))
+					.as("System ID returned as rejected value")
+					.returns("ABC123", from(ErrorDetail::getRejectedValue))
+					;
+				and.then(errors).element(1)
+					.as("Single code returned as error code")
+					.returns("321", from(ErrorDetail::getCode))
+					.as("System ID returned as rejected value")
+					.returns("DEF234", from(ErrorDetail::getRejectedValue))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	public void offboard_single() {
+		// GIVEN
+		final String appKey = randomString();
+		final String appSecret = randomString();
+		final String systemId = randomString();
+
+		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		config.setServiceProps(Map.of(
+				APP_KEY_SETTING, appKey,
+				APP_SECRET_SETTING, appSecret
+		));
+		// @formatter:on
+
+		// get access token
+		final String authToken = randomString();
+		final String registrationId = userIdSystemIdentifier(config.getUserId(),
+				SigenergyRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, config.getConfigId());
+		ClientAccessTokenEntity tokenEntity = new ClientAccessTokenEntity(TEST_USER_ID, registrationId,
+				appKey, clock.instant());
+		tokenEntity.setAccessTokenIssuedAt(clock.instant());
+		tokenEntity.setAccessTokenExpiresAt(clock.instant().plus(1L, ChronoUnit.HOURS));
+		tokenEntity.setAccessToken(authToken.getBytes(UTF_8));
+
+		given(clientAccessTokenDao.get(tokenEntity.getId())).willReturn(tokenEntity);
+
+		// get data
+		final JsonNode onboardResJson = JsonUtils.getObjectFromJSON(
+				utf8StringResource("sigen-offboard-01.json", getClass()), JsonNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(onboardResJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+
+		Result<?> result = service.configure(config, new CloudIntegrationTopicConfiguration(
+				OFFBOARD_CONFIGURATION_TOPIC, Map.of(SYSTEM_ID_SETTING, systemId)));
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("HTTP body is string array")
+			.returns(new String[] {systemId}, from(RequestEntity::getBody))
+			.as("Request URI for system onboard")
+			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
+					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
+					.resolve(SigenergyRestOperationsHelper.OFFBOARD_PATH), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains Bearer authentication")
+			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			;
+
+		and.then(result)
+			.as("Result generated")
+			.isNotNull()
+			.as("Result is success")
+			.returns(true, from(Result::getSuccess))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void offboard_single_fail() {
+		// GIVEN
+		final String appKey = randomString();
+		final String appSecret = randomString();
+		final String systemId = randomString();
+
+		final CloudIntegrationConfiguration config = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		config.setServiceProps(Map.of(
+				APP_KEY_SETTING, appKey,
+				APP_SECRET_SETTING, appSecret
+		));
+		// @formatter:on
+
+		// get access token
+		final String authToken = randomString();
+		final String registrationId = userIdSystemIdentifier(config.getUserId(),
+				SigenergyRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, config.getConfigId());
+		ClientAccessTokenEntity tokenEntity = new ClientAccessTokenEntity(TEST_USER_ID, registrationId,
+				appKey, clock.instant());
+		tokenEntity.setAccessTokenIssuedAt(clock.instant());
+		tokenEntity.setAccessTokenExpiresAt(clock.instant().plus(1L, ChronoUnit.HOURS));
+		tokenEntity.setAccessToken(authToken.getBytes(UTF_8));
+
+		given(clientAccessTokenDao.get(tokenEntity.getId())).willReturn(tokenEntity);
+
+		// get data
+		final JsonNode onboardResJson = JsonUtils.getObjectFromJSON(
+				utf8StringResource("sigen-offboard-02.json", getClass()), JsonNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(onboardResJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+
+		Result<?> result = service.configure(config, new CloudIntegrationTopicConfiguration(
+				OFFBOARD_CONFIGURATION_TOPIC, Map.of(SYSTEM_ID_SETTING, systemId)));
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("HTTP body is string array")
+			.returns(new String[] {systemId}, from(RequestEntity::getBody))
+			.as("Request URI for system onboard")
+			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
+					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
+					.resolve(SigenergyRestOperationsHelper.OFFBOARD_PATH), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains Bearer authentication")
+			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			;
+
+		and.then(result)
+			.as("Result generated")
+			.isNotNull()
+			.as("Result is not success")
+			.returns(false, from(Result::getSuccess))
+			.as("Code returned")
+			.returns("SGCI.0005", from(Result::getCode))
+			.as("No data returned")
+			.returns(null, from(Result::getData))
+			.extracting(Result::getErrors, list(ErrorDetail.class))
+			.as("One erorr returned for failed onboard")
+			.hasSize(1)
+			.element(0)
+			.as("Single code returned as error code")
+			.returns("123", from(ErrorDetail::getCode))
+			.as("System ID returned as rejected value")
+			.returns("ABC123", from(ErrorDetail::getRejectedValue))
 			;
 		// @formatter:on
 	}
