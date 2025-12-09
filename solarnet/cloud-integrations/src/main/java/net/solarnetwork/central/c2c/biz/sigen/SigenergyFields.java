@@ -96,6 +96,7 @@ public class SigenergyFields {
 	}
 
 	private final Map<String, List<FieldInfo>> fieldSets;
+	private final Map<String, Map<String, FieldInfo>> fieldSetKeyMap;
 
 	/**
 	 * Constructor.
@@ -108,13 +109,18 @@ public class SigenergyFields {
 		super();
 		final Map<String, List<FieldInfo>> fields = new LinkedHashMap<>(
 				requireNonNullArgument(resources, "resources").size());
+		final Map<String, Map<String, FieldInfo>> keyMaps = new LinkedHashMap<>(resources.size());
 		for ( Entry<String, Resource> e : resources.entrySet() ) {
-			fields.put(e.getKey(), loadFieldSet(e.getKey(), e.getValue()));
+			fields.put(e.getKey(), loadFieldSet(e.getKey(), e.getValue(),
+					keyMaps.computeIfAbsent(e.getKey(), k -> new LinkedHashMap<>(8))));
+
 		}
 		this.fieldSets = Collections.unmodifiableMap(fields);
+		this.fieldSetKeyMap = Collections.unmodifiableMap(keyMaps);
 	}
 
-	private List<FieldInfo> loadFieldSet(final String setKey, final Resource value) {
+	private List<FieldInfo> loadFieldSet(final String setKey, final Resource value,
+			Map<String, FieldInfo> keyMap) {
 		final List<FieldInfo> result = new ArrayList<>(8);
 		final CsvPreference prefs = new CsvPreference.Builder(CsvPreference.STANDARD_PREFERENCE)
 				.skipComments(new CommentStartsWith("#")).build();
@@ -145,7 +151,9 @@ public class SigenergyFields {
 						}
 					}
 				}
-				result.add(new FieldInfo(fieldName, key, row.get(2), row.get(3), scaleFactor));
+				var field = new FieldInfo(fieldName, key, row.get(2), row.get(3), scaleFactor);
+				result.add(field);
+				keyMap.put(field.key, field);
 			}
 		} catch ( IOException e ) {
 			throw new RuntimeException("Failed to load field set [%s] from %s".formatted(setKey, value),
@@ -217,6 +225,30 @@ public class SigenergyFields {
 			result.add(field.cloudDataValue(systemId, deviceId));
 		}
 		return result;
+	}
+
+	/**
+	 * Get the field key mapping for a field set key.
+	 *
+	 * @param setKey
+	 *        the set key to get the field mapping for
+	 * @return the set mapping of field keys to associated fields
+	 */
+	public Map<String, FieldInfo> fieldKeyMap(String setKey) {
+		return fieldSetKeyMap.getOrDefault(setKey, Map.of());
+	}
+
+	/**
+	 * Test if a field set contains a given field key.
+	 *
+	 * @param setKey
+	 *        the set key to test
+	 * @param fieldKey
+	 *        the field key to look for
+	 * @return {@code true} if the given field set contains the given field key
+	 */
+	public boolean fieldIsMemberOfSet(String setKey, String fieldKey) {
+		return fieldKeyMap(setKey).containsKey(fieldKey);
 	}
 
 }

@@ -32,6 +32,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.LOCALITY_METADA
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.STREET_ADDRESS_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
@@ -44,12 +45,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.cache.Cache;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
-import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,6 +75,7 @@ import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.IntRange;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Sigenergy implementation of {@link CloudDatumStreamService}.
@@ -275,13 +277,13 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 		final var meta = new LinkedHashMap<String, Object>(4);
 		final JsonNode addrNode = sysNode.path("address");
 		if ( addrNode != null ) {
-			String[] addrComponents = StringUtils.commaDelimitedListToStringArray(addr);
+			List<String> addrComponents = StringUtils.commaDelimitedStringToList(addr);
 			if ( addrComponents != null ) {
-				if ( addrComponents.length > 0 ) {
-					meta.put(STREET_ADDRESS_METADATA, addrComponents[0].trim());
+				if ( addrComponents.size() > 0 ) {
+					meta.put(STREET_ADDRESS_METADATA, addrComponents.get(0).trim());
 				}
-				if ( addrComponents.length > 1 ) {
-					meta.put(LOCALITY_METADATA, addrComponents[1].trim());
+				if ( addrComponents.size() > 1 ) {
+					meta.put(LOCALITY_METADATA, addrComponents.get(1).trim());
 				}
 			}
 		}
@@ -496,6 +498,79 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 			return SYSTEM_DEVICE_ID.equals(deviceId);
 		}
 
+	}
+
+	/**
+	 * A system-specific query plan.
+	 *
+	 * <p>
+	 * This plan is constructed from a set of
+	 * {@link CloudDatumStreamPropertyConfiguration}, and used to determine
+	 * which Sigenergy APIs are necessary to satisfy those configurations.
+	 * </p>
+	 */
+	private static class SystemQueryPlan {
+
+		/** The system ID. */
+		private final String systemId;
+
+		private final List<ValueRef> systemSummaryDeviceRefs = new ArrayList<>(8);
+
+		private final List<ValueRef> systemEnergyFlowDeviceRefs = new ArrayList<>(8);
+
+		private final Map<String, List<ValueRef>> deviceRefs = new LinkedHashMap<>(8);
+
+		private SystemQueryPlan(String systemId) {
+			super();
+			this.systemId = requireNonNullArgument(systemId, "systemId");
+		}
+
+	}
+
+	private Map<String, SystemQueryPlan> resolveSystemQueryPlans(
+			CloudIntegrationConfiguration integration, CloudDatumStreamConfiguration datumStream,
+			Map<String, String> sourceIdMap, List<CloudDatumStreamPropertyConfiguration> propConfigs) {
+		final var result = new LinkedHashMap<String, SystemQueryPlan>(2);
+
+		@SuppressWarnings("unchecked")
+		final List<Map<String, ?>> placeholderSets = resolvePlaceholderSets(
+				datumStream.serviceProperty(PLACEHOLDERS_SERVICE_PROPERTY, Map.class),
+				(sourceIdMap != null ? sourceIdMap.keySet() : null));
+
+		for ( CloudDatumStreamPropertyConfiguration config : propConfigs ) {
+			for ( Map<String, ?> ph : placeholderSets ) {
+				final String ref = StringUtils.expandTemplateString(config.getValueReference(), ph);
+				final Matcher m = VALUE_REF_PATTERN.matcher(ref);
+				if ( !m.matches() ) {
+					continue;
+				}
+				// groups: 1 = systemId, 2 = deviceId, 3 = field
+				final String systemId = m.group(1);
+				final String deviceId = m.group(2);
+				final String fieldName = m.group(3);
+
+				final SystemQueryPlan plan = result.computeIfAbsent(systemId, id -> {
+					return new SystemQueryPlan(systemId);
+				});
+
+				final ValueRef valueRef = new ValueRef(systemId, deviceId, fieldName, config);
+
+				// sort into API-specific groups
+				if ( SYSTEM_DEVICE_ID.equals(deviceId) ) {
+					if ( fields.fieldIsMemberOfSet(SigenergyFields.SYS_ENERGY_FLOW_FIELD_SET_NAME,
+							fieldName) ) {
+						plan.systemEnergyFlowDeviceRefs.add(valueRef);
+					} else {
+						// assume summary field
+						plan.systemSummaryDeviceRefs.add(valueRef);
+					}
+				} else {
+					plan.deviceRefs.computeIfAbsent(deviceId, k -> new ArrayList<>(8)).add(valueRef);
+				}
+			}
+		}
+
+		return result;
 	}
 
 	@Override
