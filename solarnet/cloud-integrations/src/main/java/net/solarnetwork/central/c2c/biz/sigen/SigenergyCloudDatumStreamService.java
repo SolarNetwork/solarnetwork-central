@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.c2c.biz.sigen;
 
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.BASE_URI_TEMPLATE;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.RESPONSE_DATA_FIELD;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.jsonObjectOrArray;
+import static net.solarnetwork.central.c2c.biz.sigen.SigenergyRestOperationsHelper.requireSuccessResponse;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_FIRMWARE_VERSION_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.LOCALITY_METADATA;
@@ -36,10 +38,14 @@ import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfiguration
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
+import java.net.URI;
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -51,17 +57,23 @@ import javax.cache.Cache;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
+import org.springframework.validation.BindException;
+import org.springframework.validation.Errors;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseRestOperationsCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.CloudIntegrationsUtils;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
@@ -73,6 +85,8 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.GeneralDatum;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
@@ -129,6 +143,12 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 
 	/** The device data value name for system-level data. */
 	public static final String SYSTEM_DEVICE_NAME = "System";
+
+	/** The data resolution duration. */
+	public static final Duration DATA_RESOLUTION = Duration.ofMinutes(5L);
+
+	/** The maximum length of time to query for data. */
+	public static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(5);
 
 	private final ObjectMapper mapper;
 	private final SigenergyFields fields;
@@ -451,7 +471,7 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 	 	"annualPowerGeneration":4791.59,
 	 	"lifetimePowerGeneration":4791.6
 	 }
-	
+
 	    example JSON from /energyFlow
 	 {
 	 	"pvPower":0.3,
@@ -492,10 +512,6 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 		private ValueRef(String systemId, String deviceId, String channelName,
 				CloudDatumStreamPropertyConfiguration property) {
 			this(systemId, deviceId, channelName, property, "/%s/%s".formatted(systemId, deviceId));
-		}
-
-		private boolean isSystemRef() {
-			return SYSTEM_DEVICE_ID.equals(deviceId);
 		}
 
 	}
@@ -575,15 +591,200 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 
 	@Override
 	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
-		// TODO Auto-generated method stub
+		requireNonNullArgument(datumStream, "datumStream");
+		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
+
+			if ( valueProps.isEmpty() ) {
+				String msg = "Datum stream has no properties.";
+				Errors errors = new BindException(ds, "datumStream");
+				errors.reject("error.datumStream.noProperties", null, msg);
+				throw new ValidationException(msg, errors, ms);
+			}
+
+			final SigenergyRegion region = SigenergyRestOperationsHelper.resolveRegion(integration);
+
+			// mapping of /systemId/deviceId -> sourceId
+			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+
+			final List<GeneralDatum> resultDatum = new ArrayList<>(16);
+			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(integration, ds,
+					sourceIdMap, valueProps);
+
+			for ( SystemQueryPlan queryPlan : queryPlans.values() ) {
+				Map<String, GeneralDatum> systemSourceIdMapping = new LinkedHashMap<>(4);
+				// system summary data
+				if ( !queryPlan.systemSummaryDeviceRefs.isEmpty() ) {
+					final URI viewSysSummaryUri = UriComponentsBuilder
+							.fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+							.path(SigenergyRestOperationsHelper.SYSTEM_SUMMARY_VIEW_PATH)
+							.buildAndExpand(region.getKey()).toUri();
+					restOpsHelper.httpGet("View system summary", integration, JsonNode.class,
+							(req) -> viewSysSummaryUri,
+							(res) -> parseSystemSummaryDatum(viewSysSummaryUri, res.getBody(), queryPlan,
+									ds, sourceIdMap, systemSourceIdMapping));
+				}
+
+			}
+
+			// evaluate expressions on merged datum
+			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
+					integration.getConfigId());
+
+			Map<ObjectDatumStreamMetadataId, Instant> greatestTimestampPerStream = new HashMap<>(4);
+			List<Datum> finalResult = new ArrayList<>(r.size());
+			for ( GeneralDatum d : r ) {
+				ObjectDatumStreamMetadataId streamPk = new ObjectDatumStreamMetadataId(d.getKind(),
+						d.getObjectId(), d.getSourceId());
+				Instant ts = d.getTimestamp();
+				greatestTimestampPerStream.compute(streamPk,
+						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+				finalResult.add(d);
+			}
+			Collections.sort(finalResult, null);
+
+			return finalResult;
+		});
+	}
+
+	private Void parseSystemSummaryDatum(URI uri, JsonNode body, SystemQueryPlan queryPlan,
+			CloudDatumStreamConfiguration datumStream, Map<String, String> sourceIdMap,
+			Map<String, GeneralDatum> systemSourceIdMapping) {
+		/*- Example JSON:
+			{
+			    "code": 0,
+			    "msg": "success",
+			    "timestamp": 1757581478,
+			    "data": {
+			        "dailyPowerGeneration": 0.0,
+			        "monthlyPowerGeneration": 0.0,
+			        "annualPowerGeneration": 1394.37,
+			        "lifetimePowerGeneration": 1394.38,
+			        "lifetimeCo2": 0.66,
+			        "lifetimeCoal": 0.56,
+			        "lifetimeTreeEquivalent": 0.9
+			    }
+			}
+		 */
+		requireSuccessResponse("View system summary", uri, body);
+
+		final JsonNode data;
+		try {
+			data = jsonObjectOrArray(mapper, body, RESPONSE_DATA_FIELD);
+		} catch ( IllegalArgumentException e ) {
+			return null;
+		}
+
+		final String sourceId = resolveSourceId(datumStream, queryPlan, SYSTEM_DEVICE_ID, sourceIdMap);
+		if ( sourceId == null ) {
+			return null;
+		}
+		final List<ValueRef> summaryRefs = queryPlan.systemSummaryDeviceRefs;
+		// TODO
 		return null;
+	}
+
+	private static String resolveSourceId(CloudDatumStreamConfiguration datumStream,
+			SystemQueryPlan sitePlan, String deviceId, Map<String, String> sourceIdMap) {
+		if ( sourceIdMap != null ) {
+			String key = "/%s/%s".formatted(sitePlan.systemId, deviceId);
+			return sourceIdMap.get(key);
+		}
+
+		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
+
+		String result = "/%s/%s".formatted(datumStream.getSourceId(), deviceId);
+		return (ucSourceId != null && ucSourceId ? result.toUpperCase() : result);
 	}
 
 	@Override
 	public CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
-		// TODO Auto-generated method stub
-		return null;
+		requireNonNullArgument(datumStream, "datumStream");
+		requireNonNullArgument(filter, "filter");
+		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
+
+			if ( valueProps.isEmpty() ) {
+				String msg = "Datum stream has no properties.";
+				Errors errors = new BindException(ds, "datumStream");
+				errors.reject("error.datumStream.noProperties", null, msg);
+				throw new ValidationException(msg, errors, ms);
+			}
+
+			final Instant filterStartDate = requireNonNullArgument(filter.getStartDate(),
+					"filter.startDate");
+			final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(),
+					"filter.startDate");
+
+			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+
+			final List<GeneralDatum> resultDatum = new ArrayList<>(16);
+			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(integration, ds,
+					sourceIdMap, valueProps);
+
+			BasicQueryFilter nextQueryFilter = null;
+
+			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, DATA_RESOLUTION,
+					UTC);
+			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, DATA_RESOLUTION, UTC);
+			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
+				Instant nextEndDate = startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2));
+				if ( nextEndDate.isAfter(endDate) ) {
+					nextEndDate = endDate;
+				}
+
+				endDate = startDate.plus(MAX_QUERY_TIME_RANGE);
+
+				nextQueryFilter = new BasicQueryFilter();
+				nextQueryFilter.setStartDate(endDate);
+				nextQueryFilter.setEndDate(nextEndDate);
+			}
+
+			final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
+			usedQueryFilter.setStartDate(startDate);
+			usedQueryFilter.setEndDate(endDate);
+			for ( SystemQueryPlan queryPlan : queryPlans.values() ) {
+				// TODO
+
+			}
+
+			// evaluate expressions on merged datum
+			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
+					integration.getConfigId());
+
+			Map<ObjectDatumStreamMetadataId, Instant> greatestTimestampPerStream = new HashMap<>(4);
+			List<Datum> finalResult = new ArrayList<>(r.size());
+			for ( GeneralDatum d : r ) {
+				ObjectDatumStreamMetadataId streamPk = new ObjectDatumStreamMetadataId(d.getKind(),
+						d.getObjectId(), d.getSourceId());
+				Instant ts = d.getTimestamp();
+				greatestTimestampPerStream.compute(streamPk,
+						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+				finalResult.add(d);
+			}
+			Collections.sort(finalResult, null);
+
+			// latest datum might not have been reported yet; check latest datum date (per stream), and if
+			// less than expected date make that the next query start date
+			final Duration multiStreamMaximumLag = multiStreamMaximumLag(ds);
+			if ( multiStreamMaximumLag.compareTo(Duration.ZERO) > 0
+					&& greatestTimestampPerStream.size() > 1 ) {
+				Instant leastGreatestTimestampPerStream = greatestTimestampPerStream.values().stream()
+						.min(Instant::compareTo).get();
+				Instant greatestTimestampAcrossStreams = greatestTimestampPerStream.values().stream()
+						.max(Instant::compareTo).get();
+				if ( leastGreatestTimestampPerStream.isBefore(greatestTimestampAcrossStreams)
+						&& Duration.between(leastGreatestTimestampPerStream, clock.instant())
+								.compareTo(multiStreamMaximumLag) < 0 ) {
+					if ( nextQueryFilter == null ) {
+						nextQueryFilter = new BasicQueryFilter();
+					}
+					nextQueryFilter.setStartDate(CloudIntegrationsUtils
+							.truncateDate(leastGreatestTimestampPerStream, DATA_RESOLUTION, UTC));
+				}
+			}
+
+			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter, finalResult);
+		});
 	}
 
 	/**

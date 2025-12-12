@@ -94,6 +94,15 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 	/** The URL path to the list of devices for a system. */
 	public static final String SYSTEM_DEVICE_LIST_PATH = "/openapi/system/{systemId}/devices";
 
+	/** The URL path to view the system summary. */
+	public static final String SYSTEM_SUMMARY_VIEW_PATH = "/openapi/systems/{systemId}/summary";
+
+	/** The URL path to the view the system energy flow. */
+	public static final String SYSTEM_ENERGY_FLOW_VIEW_PATH = "/openapi/systems/{systemId}/energyFlow";
+
+	/** The URL path to the view a device's real-time info. */
+	public static final String DEVICE_REALTIME_INFO_VIEW_PATH = "/openapi/systems/{systemId}/devices/{deviceId}/realtimeInfo";
+
 	/** The URL path to onboard systems. */
 	public static final String ONBOARD_PATH = "/openapi/board/onboard";
 
