@@ -32,7 +32,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of {@link UserAuthTokenFilter}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserAuthTokenFilter {
 
@@ -142,6 +142,17 @@ public class BasicUserAuthTokenFilter extends BasicCoreCriteria implements UserA
 		}
 		builder.append("}");
 		return builder.toString();
+	}
+
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| active != null
+				|| (identifiers != null && identifiers.length > 0)
+				|| (tokenTypes != null && tokenTypes.length > 0)
+				;
+		// @formatter:on
 	}
 
 	@Override

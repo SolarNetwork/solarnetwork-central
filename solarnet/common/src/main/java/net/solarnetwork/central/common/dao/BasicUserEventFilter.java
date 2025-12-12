@@ -35,7 +35,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of {@link UserEventFilter}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicUserEventFilter extends BasicCoreCriteria
 		implements UserEventFilter, UserEventPurgeFilter {
@@ -103,6 +103,17 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 		}
 		return Objects.equals(endDate, other.endDate) && Arrays.equals(tags, other.tags)
 				&& Objects.equals(startDate, other.startDate);
+	}
+
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| endDate != null
+				|| startDate != null
+				|| (tags != null && tags.length > 0)
+				;
+		// @formatter:on
 	}
 
 	@Override
