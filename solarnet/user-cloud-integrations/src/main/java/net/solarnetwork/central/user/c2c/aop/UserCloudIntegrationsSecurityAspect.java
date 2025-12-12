@@ -30,12 +30,14 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamConfigurationInput;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Security enforcing AOP aspect for {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 @Component
@@ -117,8 +119,8 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	 * @param userKey
 	 *        the user key
 	 */
-	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.save*(..)) && args(userKey,..)")
-	public void saveEntityForUserKey(UserIdRelated userKey) {
+	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.save*(..)) && args(userKey,entity,..)")
+	public void saveEntityForUserKey(UserIdRelated userKey, Object entity) {
 	}
 
 	/**
@@ -176,9 +178,13 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
-	@Before(value = "saveEntityForUserKey(userKey)", argNames = "userKey")
-	public void saveEntityAccessCheck(UserIdRelated userKey) {
+	@Before(value = "saveEntityForUserKey(userKey, entity)", argNames = "userKey,entity")
+	public void saveEntityAccessCheck(UserIdRelated userKey, Object entity) {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
+		if ( entity instanceof CloudDatumStreamConfigurationInput ds
+				&& ObjectDatumKind.Node.equals(ds.getKind()) && ds.getObjectId() != null ) {
+			requireNodeWriteAccess(ds.getObjectId());
+		}
 	}
 
 	@Before(value = "saveEntityForUserId(userId)", argNames = "userId")
