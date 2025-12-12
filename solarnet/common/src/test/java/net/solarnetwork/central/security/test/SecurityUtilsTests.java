@@ -24,7 +24,10 @@ package net.solarnetwork.central.security.test;
 
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static net.solarnetwork.central.security.SecurityUtils.becomeNode;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.catchThrowableOfType;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.is;
@@ -34,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -62,7 +66,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Test cases for the {@link SecurityUtils} class.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -483,6 +487,152 @@ public class SecurityUtilsTests {
 			.containsEntry("bim", data.get("bim"))
 			.as("Secure value decrypted")
 			.containsEntry("foo", decryptedValue)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void restrictNodeIds_nullNodeIds_nullPolicy() {
+		// WHEN
+		Long[] result = SecurityUtils.restrictNodeIds(null, null);
+
+		// THEN
+		and.then(result).as("Input returned for empty policy").isNull();
+	}
+
+	@Test
+	public void restrictNodeIds_emptyNodeIds_emptyPolicy() {
+		// WHEN
+		Long[] result = SecurityUtils.restrictNodeIds(new Long[0],
+				BasicSecurityPolicy.builder().build());
+
+		// THEN
+		and.then(result).as("Input returned for empty policy").isEmpty();
+	}
+
+	@Test
+	public void restrictNodeIds_nodeIds_noPolicy() {
+		// GIVEN
+		final Long[] origNodeIds = new Long[] { randomLong(), randomLong() };
+
+		// WHEN
+		final Long[] nodeIds = Arrays.copyOf(origNodeIds, origNodeIds.length);
+		Long[] result = SecurityUtils.restrictNodeIds(nodeIds, null);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Input returned for empty policy")
+			.isSameAs(nodeIds)
+			.as("Input unchanged")
+			.containsExactly(origNodeIds)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void restrictNodeIds_nodeIds_supersetPolicy() {
+		// GIVEN
+		final Long[] origNodeIds = new Long[] { randomLong(), randomLong() };
+
+		// create policy node IDs superset
+		final Long[] policyIds = Arrays.copyOf(origNodeIds, origNodeIds.length + 1);
+		policyIds[origNodeIds.length] = randomLong();
+
+		final SecurityPolicy policy = BasicSecurityPolicy.builder()
+				.withNodeIds(new LinkedHashSet<>(Arrays.asList(policyIds))).build();
+
+		// WHEN
+		final Long[] nodeIds = Arrays.copyOf(origNodeIds, origNodeIds.length);
+		Long[] result = SecurityUtils.restrictNodeIds(nodeIds, policy);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Input returned for for subset of policy")
+			.isSameAs(nodeIds)
+			.as("Input unchanged")
+			.containsExactly(origNodeIds)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void restrictNodeIds_nodeIds_subsetPolicy() {
+		// GIVEN
+		final Long[] origNodeIds = new Long[] { randomLong(), randomLong(), randomLong() };
+
+		// create policy node IDs subset
+		final Long[] policyIds = Arrays.copyOf(origNodeIds, origNodeIds.length - 1);
+
+		final SecurityPolicy policy = BasicSecurityPolicy.builder()
+				.withNodeIds(new LinkedHashSet<>(Arrays.asList(policyIds))).build();
+
+		// WHEN
+		final Long[] nodeIds = Arrays.copyOf(origNodeIds, origNodeIds.length);
+		Long[] result = SecurityUtils.restrictNodeIds(nodeIds, policy);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Input restricted to intersection with policy")
+			.containsExactly(origNodeIds[0], origNodeIds[1])
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void restrictNodeIds_nodeIds_disjointPolicy() {
+		// GIVEN
+		final Long[] origNodeIds = new Long[] { 1L, 2L, 3L };
+
+		// create policy node IDs subset
+		final Long[] policyIds = new Long[] { 4L, 5L, 6L };
+
+		final SecurityPolicy policy = BasicSecurityPolicy.builder()
+				.withNodeIds(new LinkedHashSet<>(Arrays.asList(policyIds))).build();
+
+		// WHEN
+		final Long[] nodeIds = Arrays.copyOf(origNodeIds, origNodeIds.length);
+		final AuthorizationException ex = catchThrowableOfType(AuthorizationException.class, () -> {
+			SecurityUtils.restrictNodeIds(nodeIds, policy);
+		});
+
+		// THEN
+		// @formatter:off
+		and.then(ex)
+			.as("Reason is deined")
+			.returns(AuthorizationException.Reason.ACCESS_DENIED, from(AuthorizationException::getReason))
+			.as("Input node IDs is exception ID")
+			.returns(nodeIds, from(AuthorizationException::getId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void restrictNodeIds_nodeIds_disjointPolicy_singleNodeId() {
+		// GIVEN
+		final Long[] origNodeIds = new Long[] { 1L };
+
+		// create policy node IDs subset
+		final Long[] policyIds = new Long[] { 4L, 5L, 6L };
+
+		final SecurityPolicy policy = BasicSecurityPolicy.builder()
+				.withNodeIds(new LinkedHashSet<>(Arrays.asList(policyIds))).build();
+
+		// WHEN
+		final Long[] nodeIds = Arrays.copyOf(origNodeIds, origNodeIds.length);
+		final AuthorizationException ex = catchThrowableOfType(AuthorizationException.class, () -> {
+			SecurityUtils.restrictNodeIds(nodeIds, policy);
+		});
+
+		// THEN
+		// @formatter:off
+		and.then(ex)
+			.as("Reason is deined")
+			.returns(AuthorizationException.Reason.ACCESS_DENIED, from(AuthorizationException::getReason))
+			.as("Input node ID is exception ID")
+			.returns(nodeIds[0], from(AuthorizationException::getId))
 			;
 		// @formatter:on
 	}
