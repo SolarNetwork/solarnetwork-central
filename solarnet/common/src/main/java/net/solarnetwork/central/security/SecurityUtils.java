@@ -701,6 +701,7 @@ public class SecurityUtils {
 	 * @throws AuthorizationException
 	 *         if {@code nodeIds} is not empty and no node IDs are allowed by
 	 *         the policy
+	 * @since 3.2
 	 */
 	public static Long[] restrictNodeIds(Long[] nodeIds, final SecurityPolicy policy) {
 		final Set<Long> policyNodeIds = (policy != null ? policy.getNodeIds() : null);
@@ -729,6 +730,30 @@ public class SecurityUtils {
 			return policyNodeIds.toArray(Long[]::new);
 		}
 		return nodeIds;
+	}
+
+	/**
+	 * Test if a policy is unrestricted.
+	 * 
+	 * <p>
+	 * The {@code notAfter} property is not considered.
+	 * </p>
+	 * 
+	 * @param policy
+	 *        the policy to test; {@code null} will be treated as unrestricted
+	 * @return {@code true} if {@code policy} is {@code null} or has no
+	 *         restrictions
+	 * @since 3.2
+	 */
+	public static boolean policyIsUnrestricted(SecurityPolicy policy) {
+		if ( policy == null ) {
+			return true;
+		}
+		return policy.getAggregations() == null && policy.getApiPaths() == null
+				&& policy.getLocationPrecisions() == null && policy.getMinAggregation() == null
+				&& policy.getMinLocationPrecision() == null && policy.getNodeIds() == null
+				&& policy.getNodeMetadataPaths() == null && policy.getRefreshAllowed() == null
+				&& policy.getSourceIds() == null && policy.getUserMetadataPaths() == null;
 	}
 
 }

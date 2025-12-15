@@ -23,8 +23,7 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.domain.Result.success;
-import java.util.List;
-import java.util.ListIterator;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.NoSuchElementException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -36,11 +35,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.biz.UserBiz;
-import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
@@ -50,7 +48,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * Controller for node metadata.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.18
  */
 @GlobalExceptionRestController
@@ -58,22 +56,25 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 @RequestMapping(value = "/api/v1/sec/nodes/meta")
 public class NodeMetadataController {
 
-	private final UserBiz userBiz;
+	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final SolarNodeMetadataBiz solarNodeMetadataBiz;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param userBiz
-	 *        the UserBiz to use
+	 * @param nodeOwnershipDao
+	 *        the node ownership DAO
 	 * @param solarNodeMetadataBiz
 	 *        the SolarNodeMetadataBiz to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	@Autowired
-	public NodeMetadataController(UserBiz userBiz, SolarNodeMetadataBiz solarNodeMetadataBiz) {
+	public NodeMetadataController(SolarNodeOwnershipDao nodeOwnershipDao,
+			SolarNodeMetadataBiz solarNodeMetadataBiz) {
 		super();
-		this.userBiz = userBiz;
-		this.solarNodeMetadataBiz = solarNodeMetadataBiz;
+		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
+		this.solarNodeMetadataBiz = requireNonNullArgument(solarNodeMetadataBiz, "solarNodeMetadataBiz");
 	}
 
 	@InitBinder
@@ -94,14 +95,7 @@ public class NodeMetadataController {
 			DatumFilterCommand criteria) {
 		if ( criteria.getNodeId() == null ) {
 			// default to all nodes for actor
-			List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentActorUserId());
-			if ( nodes != null && !nodes.isEmpty() ) {
-				Long[] nodeIds = new Long[nodes.size()];
-				for ( ListIterator<UserNode> itr = nodes.listIterator(); itr.hasNext(); ) {
-					nodeIds[itr.nextIndex()] = itr.next().getId();
-				}
-				criteria.setNodeIds(nodeIds);
-			}
+			criteria.setNodeIds(SecurityUtils.authorizedNodeIdsForCurrentActor(nodeOwnershipDao));
 		}
 		FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
 				.findSolarNodeMetadata(criteria, criteria.getSortDescriptors(), criteria.getOffset(),

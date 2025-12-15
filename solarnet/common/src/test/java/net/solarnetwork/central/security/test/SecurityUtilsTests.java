@@ -33,6 +33,7 @@ import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -60,7 +61,9 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.LocationPrecision;
 import net.solarnetwork.domain.SecurityPolicy;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link SecurityUtils} class.
@@ -635,6 +638,143 @@ public class SecurityUtilsTests {
 			.returns(nodeIds[0], from(AuthorizationException::getId))
 			;
 		// @formatter:on
+	}
+
+	@Test
+	public void policyIsUnrestricted_null() {
+		// GIVEN
+		final SecurityPolicy policy = null;
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy)).as("Null policy is treated as unrestricted")
+				.isTrue();
+	}
+
+	@Test
+	public void policyIsUnrestricted_empty() {
+		// GIVEN
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().build();
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy))
+				.as("Empty policy is treated as unrestricted").isTrue();
+	}
+
+	@Test
+	public void policyIsUnrestricted_aggregations() {
+		// GIVEN
+		final SecurityPolicy policy = BasicSecurityPolicy.builder()
+				.withAggregations(Set.of(Aggregation.Hour)).build();
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy)).as("Policy with aggregations is restricted")
+				.isFalse();
+	}
+
+	@Test
+	public void policyIsUnrestricted_apiPaths() {
+		// GIVEN
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withApiPaths(Set.of("foo")).build();
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy)).as("Policy with API paths is restricted")
+				.isFalse();
+	}
+
+	@Test
+	public void policyIsUnrestricted_locationPrecisions() {
+		// GIVEN
+		final SecurityPolicy policy = BasicSecurityPolicy.builder()
+				.withLocationPrecisions(Set.of(LocationPrecision.Country)).build();
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy))
+				.as("Policy with location precision is restricted").isFalse();
+	}
+
+	@Test
+	public void policyIsUnrestricted_minAggregation() {
+		// GIVEN
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withMinAggregation(Aggregation.Hour)
+				.build();
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy))
+				.as("Policy with min aggregation is restricted").isFalse();
+	}
+
+	@Test
+	public void policyIsUnrestricted_minLocationPrecision() {
+		// GIVEN
+		final SecurityPolicy policy = BasicSecurityPolicy.builder()
+				.withMinLocationPrecision(LocationPrecision.Country).build();
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy))
+				.as("Policy with min location precision is restricted").isFalse();
+	}
+
+	@Test
+	public void policyIsUnrestricted_nodeIds() {
+		// GIVEN
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withNodeIds(Set.of(randomLong()))
+				.build();
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy)).as("Policy with node IDs is restricted")
+				.isFalse();
+	}
+
+	@Test
+	public void policyIsUnrestricted_nodeMetadataPaths() {
+		// GIVEN
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withNodeMetadataPaths(Set.of("foo"))
+				.build();
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy))
+				.as("Policy with node metadata paths is restricted").isFalse();
+	}
+
+	@Test
+	public void policyIsUnrestricted_notAFter() {
+		// GIVEN
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withNotAfter(Instant.now()).build();
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy)).as("Policy with notAfter is unrestricted")
+				.isTrue();
+	}
+
+	@Test
+	public void policyIsUnrestricted_refreshAllowed() {
+		// GIVEN
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withRefreshAllowed(false).build();
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy))
+				.as("Policy with refresh allowed is restricted").isFalse();
+	}
+
+	@Test
+	public void policyIsUnrestricted_sourceIds() {
+		// GIVEN
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withSourceIds(Set.of("foo")).build();
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy)).as("Policy with source IDs is restricted")
+				.isFalse();
+	}
+
+	@Test
+	public void policyIsUnrestricted_userMetadataPaths() {
+		// GIVEN
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withUserMetadataPaths(Set.of("foo"))
+				.build();
+
+		// THEN
+		and.then(SecurityUtils.policyIsUnrestricted(policy))
+				.as("Policy with user metadata paths is restricted").isFalse();
 	}
 
 }
