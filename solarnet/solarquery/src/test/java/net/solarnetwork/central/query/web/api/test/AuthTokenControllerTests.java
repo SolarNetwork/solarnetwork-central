@@ -24,6 +24,7 @@ package net.solarnetwork.central.query.web.api.test;
 
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToken;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
+import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_DATE_HEADER_FORMATTER;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -50,6 +51,9 @@ import net.solarnetwork.central.query.web.api.AuthTokenController;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
+import net.solarnetwork.central.test.CommonTestUtils;
+import net.solarnetwork.domain.BasicSecurityPolicy;
+import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.security.AuthorizationUtils;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
@@ -170,6 +174,40 @@ public class AuthTokenControllerTests extends AbstractJUnit5CentralTransactional
 				.queryParam("date", reqDate.toString())
 				.accept(MediaType.APPLICATION_JSON))
 			.andExpect(status().is(HttpStatus.UNAUTHORIZED.value()));
+		// @formatter:on
+	}
+
+	@Test
+	public void refreshNotAllowed() throws Exception {
+		// GIVEN
+		final String tokenId = CommonTestUtils.randomString(20);
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withRefreshAllowed(false).build();
+		insertSecurityToken(jdbcTemplate, tokenId, TEST_TOKEN_SECRET, testUserId,
+				SecurityTokenStatus.Active.name(), SecurityTokenType.ReadNodeData.name(),
+				getJSONString(policy));
+
+		Instant now = Instant.now();
+		LocalDate reqDate = LocalDate.of(2021, 10, 9);
+		MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+		queryParams.add("date", reqDate.toString());
+
+		// @formatter:off
+		Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.host("localhost")
+				.path("/api/v1/sec/auth-tokens/refresh/v2")
+				.useSnDate(true).date(now)
+				.queryParams(queryParams.toSingleValueMap())
+				.saveSigningKey(TEST_TOKEN_SECRET);
+		String authHeader = auth.build();
+
+		// WHEN
+		mvc.perform(get("/api/v1/sec/auth-tokens/refresh/v2")
+				.queryParam("date", reqDate.toString())
+				.header(HttpHeaders.AUTHORIZATION, authHeader)
+				.header(AuthorizationUtils.SN_DATE_HEADER,
+						AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().is(HttpStatus.FORBIDDEN.value()));
 		// @formatter:on
 	}
 
