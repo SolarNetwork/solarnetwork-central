@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
+import net.solarnetwork.central.common.dao.jdbc.MetadataKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.LocationDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.NodeDatumId;

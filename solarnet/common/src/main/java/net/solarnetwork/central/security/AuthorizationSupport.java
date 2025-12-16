@@ -42,7 +42,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * Helper class for authorization needs, e.g. aspect implementations.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class AuthorizationSupport {
 
@@ -417,6 +417,25 @@ public class AuthorizationSupport {
 	}
 
 	/**
+	 * Enforce a security policy on a domain object and
+	 * {@code SecurityPolicyMetadataType#Node} metadata type.
+	 *
+	 * @param <T>
+	 *        the domain object type
+	 * @param domainObject
+	 *        The domain object to enforce the active policy on.
+	 * @return The domain object to use.
+	 * @param writeAccess
+	 *        {@code true} to require write-level access
+	 * @throws AuthorizationException
+	 *         If the policy check fails.
+	 * @since 2.1
+	 */
+	public <T> T policyEnforcerCheck(T domainObject, boolean writeAccess) {
+		return policyEnforcerCheck(domainObject, SecurityPolicyMetadataType.Node, writeAccess);
+	}
+
+	/**
 	 * Enforce a security policy on a domain object or collection of domain
 	 * objects.
 	 *
@@ -435,9 +454,36 @@ public class AuthorizationSupport {
 	 *         If the policy check fails.
 	 */
 	public <T> T policyEnforcerCheck(T domainObject, SecurityPolicyMetadataType metadataType) {
+		return policyEnforcerCheck(domainObject, metadataType, false);
+	}
+
+	/**
+	 * Enforce a security policy on a domain object or collection of domain
+	 * objects.
+	 *
+	 * <p>
+	 * The {@link FilterResults} API is supported, as is {@link List}.
+	 * </p>
+	 *
+	 * @param <T>
+	 *        the domain object type
+	 * @param domainObject
+	 *        The domain object to enforce the active policy on.
+	 * @param metadataType
+	 *        The metadata type to enforce the active policy on.
+	 * @param writeAccess
+	 *        {@code true} to require write-level access
+	 * @return The domain object to use.
+	 * @throws AuthorizationException
+	 *         If the policy check fails.
+	 * @since 2.1
+	 */
+	public <T> T policyEnforcerCheck(T domainObject, SecurityPolicyMetadataType metadataType,
+			boolean writeAccess) {
+
 		Authentication authentication = SecurityUtils.getCurrentAuthentication();
 		SecurityPolicy policy = getActiveSecurityPolicy();
-		if ( policy == null || domainObject == null ) {
+		if ( domainObject == null ) {
 			return domainObject;
 		}
 
@@ -445,7 +491,7 @@ public class AuthorizationSupport {
 
 		if ( domainObject instanceof FilterResults<?, ?> filterResults ) {
 			Collection<?> filteredObjects = policyEnforcedCollection(filterResults, policy, principal,
-					metadataType);
+					metadataType, writeAccess);
 			@SuppressWarnings({ "rawtypes", "unchecked" })
 			T result = (T) new BasicFilterResults(filteredObjects, filterResults.getTotalResults(),
 					filterResults.getStartingOffset(), filterResults.getReturnedResultCount());
@@ -453,26 +499,32 @@ public class AuthorizationSupport {
 		} else if ( domainObject instanceof List<?> collectionResults ) {
 			@SuppressWarnings("unchecked")
 			T filteredObjects = (T) policyEnforcedCollection(collectionResults, policy, principal,
-					metadataType);
+					metadataType, writeAccess);
 			return filteredObjects;
 		}
 
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
 				(authentication != null ? authentication.getPrincipal() : null), domainObject,
-				pathMatcher, metadataType);
-		enforcer.verify();
+				pathMatcher, metadataType,
+				(writeAccess ? this::requireNodeWriteAccess : this::requireNodeReadAccess),
+				nodeOwnershipDao::getDatumStreamMetadataIds);
+		if ( enforcer.verify() ) {
+			return domainObject;
+		}
 		return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 	}
 
 	private Collection<?> policyEnforcedCollection(Iterable<?> input, SecurityPolicy policy,
-			Object principal, SecurityPolicyMetadataType metadataType) {
+			Object principal, SecurityPolicyMetadataType metadataType, boolean writeAccess) {
 		if ( input == null ) {
 			return null;
 		}
 		List<Object> enforced = new ArrayList<>();
 		for ( Object obj : input ) {
 			SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, obj,
-					pathMatcher, metadataType);
+					pathMatcher, metadataType,
+					(writeAccess ? this::requireNodeWriteAccess : this::requireNodeReadAccess),
+					nodeOwnershipDao::getDatumStreamMetadataIds);
 			enforcer.verify();
 			enforced.add(SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer));
 		}

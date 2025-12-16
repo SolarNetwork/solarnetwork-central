@@ -34,7 +34,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * Common DB test utilities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class CommonDbTestUtils {
 
@@ -162,6 +162,33 @@ public final class CommonDbTestUtils {
 		jdbcTemplate.update(
 				"insert into solaruser.user_node (user_id,node_id,disp_name,private,archived) values (?,?,?,?,?)",
 				userId, nodeId, name, requiresAuth, archived);
+	}
+
+	/**
+	 * Insert a security token.
+	 *
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param tokenId
+	 *        the token ID
+	 * @param tokenSecret
+	 *        the token secret
+	 * @param userId
+	 *        the owner user ID
+	 * @param status
+	 *        the status, i.e.
+	 *        {@code net.solarnetwork.central.security.SecurityTokenStatus}
+	 * @param type
+	 *        the type, i.e.
+	 *        {@code  net.solarnetwork.central.security.SecurityTokenType}
+	 * @param policy
+	 *        the policy
+	 * @since 1.2
+	 */
+	public static void insertSecurityToken(JdbcOperations jdbcTemplate, String tokenId,
+			String tokenSecret, Long userId, Enum<?> status, Enum<?> type, String policy) {
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, status.name(), type.name(),
+				policy);
 	}
 
 	/**

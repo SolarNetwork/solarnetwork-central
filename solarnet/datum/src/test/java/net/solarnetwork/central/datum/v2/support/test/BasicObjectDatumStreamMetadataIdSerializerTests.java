@@ -32,8 +32,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.support.BasicObjectDatumStreamMetadataIdSerializer;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**

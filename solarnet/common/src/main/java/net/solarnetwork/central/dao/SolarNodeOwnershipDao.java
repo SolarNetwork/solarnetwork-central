@@ -22,13 +22,16 @@
 
 package net.solarnetwork.central.dao;
 
+import java.util.Map;
+import java.util.UUID;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 
 /**
  * DAO for helping with node ownership information.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface SolarNodeOwnershipDao {
 
@@ -59,5 +62,15 @@ public interface SolarNodeOwnershipDao {
 	 * @return the node IDs; never {@literal null}
 	 */
 	Long[] nonArchivedNodeIdsForToken(String tokenId);
+
+	/**
+	 * Get a mapping of stream IDs to associated stream metadata IDs.
+	 * 
+	 * @param streamIds
+	 *        the stream IDs to look up metadata IDs for
+	 * @return the mapping, never {@literal null}
+	 * @since 1.1
+	 */
+	Map<UUID, ObjectDatumStreamMetadataId> getDatumStreamMetadataIds(UUID... streamIds);
 
 }

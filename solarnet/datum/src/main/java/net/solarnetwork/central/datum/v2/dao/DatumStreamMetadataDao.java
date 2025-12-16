@@ -22,10 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import java.util.Map;
 import java.util.UUID;
 import net.solarnetwork.central.datum.domain.ObjectSourcePK;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
@@ -33,7 +32,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * DAO API for datum stream metadata.
  *
  * @author matt
- * @version 2.3
+ * @version 3.0
  * @since 2.8
  */
 public interface DatumStreamMetadataDao {
@@ -85,17 +84,6 @@ public interface DatumStreamMetadataDao {
 	 * @since 2.0
 	 */
 	Iterable<ObjectDatumStreamMetadataId> findDatumStreamMetadataIds(ObjectStreamCriteria filter);
-
-	/**
-	 * Get a mapping of stream IDs to {@link ObjectDatumStreamMetadataId}
-	 * instances.
-	 *
-	 * @param streamIds
-	 *        the stream IDs to look up
-	 * @return the mapping, never {@literal null}
-	 * @since 2.2
-	 */
-	Map<UUID, ObjectDatumStreamMetadataId> getDatumStreamMetadataIds(UUID... streamIds);
 
 	/**
 	 * Replace the JSON metadata associated with an object datum stream.

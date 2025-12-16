@@ -64,9 +64,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.query.aop.QuerySecurityAspect;
@@ -95,25 +94,23 @@ public class QuerySecurityAspectTests {
 	private static final Long TEST_USER_ID = -9999L;
 
 	private SolarNodeOwnershipDao nodeOwnershipDao;
-	private DatumStreamMetadataDao streamMetadataDao;
 	private QuerySecurityAspect service;
 
 	@BeforeEach
 	public void setup() {
 		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
-		streamMetadataDao = EasyMock.createMock(DatumStreamMetadataDao.class);
-		service = new QuerySecurityAspect(nodeOwnershipDao, streamMetadataDao);
+		service = new QuerySecurityAspect(nodeOwnershipDao);
 		service.setNodeIdNotRequiredSet(new HashSet<>(Arrays.asList("price", "weather")));
 	}
 
 	@AfterEach
 	public void teardown() {
-		EasyMock.verify(nodeOwnershipDao, streamMetadataDao);
+		EasyMock.verify(nodeOwnershipDao);
 		SecurityContextHolder.getContext().setAuthentication(null);
 	}
 
 	private void replayAll(Object... others) {
-		EasyMock.replay(nodeOwnershipDao, streamMetadataDao);
+		EasyMock.replay(nodeOwnershipDao);
 		if ( others != null ) {
 			EasyMock.replay(others);
 		}
@@ -341,14 +338,11 @@ public class QuerySecurityAspectTests {
 	@Test
 	public void datumFilterPrivateNodeAsReadNodeDataTokenSomeOtherUserNonMatchingNode() {
 		final Long nodeId = -1L;
-		final Long userId = -100L;
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withNodeIds(Collections.singleton(-2L)).build();
 		// note the actor is not the owner of the node, and the token is not granted access to the node ID
 		setAuthenticatedReadNodeDataToken(-200L, policy);
-		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
-		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
@@ -683,7 +677,7 @@ public class QuerySecurityAspectTests {
 
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId, new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, -1L, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 
@@ -710,7 +704,7 @@ public class QuerySecurityAspectTests {
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId,
 				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 
@@ -735,7 +729,7 @@ public class QuerySecurityAspectTests {
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId,
 				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 
@@ -763,7 +757,7 @@ public class QuerySecurityAspectTests {
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId,
 				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 
@@ -783,15 +777,12 @@ public class QuerySecurityAspectTests {
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(singleton(-2L))
 				.build();
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		UUID streamId = UUID.randomUUID();
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId,
 				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
-
-		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		// WHEN
 		replayAll();
@@ -817,7 +808,7 @@ public class QuerySecurityAspectTests {
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId,
 				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 
@@ -842,7 +833,7 @@ public class QuerySecurityAspectTests {
 		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
 		idMap.put(streamId,
 				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
-		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+		expect(nodeOwnershipDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
 
 		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 

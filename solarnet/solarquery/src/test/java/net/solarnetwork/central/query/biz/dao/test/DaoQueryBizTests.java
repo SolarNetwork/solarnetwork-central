@@ -28,7 +28,7 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
-import static net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId.idForMetadata;
+import static net.solarnetwork.central.domain.ObjectDatumStreamMetadataId.idForMetadata;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;

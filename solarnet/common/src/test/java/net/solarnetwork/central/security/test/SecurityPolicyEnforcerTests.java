@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.AntPathMatcher;
 import com.fasterxml.jackson.databind.JsonSerializer;
@@ -44,6 +45,7 @@ import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.domain.SolarNodeMetadataMatch;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityPolicyMetadataType;
 import net.solarnetwork.central.support.NodeMetadataSerializer;
@@ -57,7 +59,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * Test cases for the {@link SecurityPolicyEnforcer} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SecurityPolicyEnforcerTests {
 
@@ -379,6 +381,83 @@ public class SecurityPolicyEnforcerTests {
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 
 		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> filter.getNodeIds());
+	}
+
+	private void rejectNegativeNodeId(Long nodeId) {
+		if ( nodeId < 0 ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
+		}
+	}
+
+	@Test
+	public void allowNodeIdsWithValidator() {
+		// GIVEN
+		final BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(Set.of(TEST_NODE_ID, TEST_NODE_ID2, -1L)).build();
+
+		// WHEN
+		final DatumFilterCommand cmd = new DatumFilterCommand();
+		cmd.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID2 });
+
+		final SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd, null,
+				null, this::rejectNegativeNodeId, null);
+
+		final GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+
+		// THEN
+		// @formatter:off
+		then(filter.getNodeIds())
+			.as("Requested node IDs within policy and pass validation")
+			.containsExactlyInAnyOrder(TEST_NODE_ID, TEST_NODE_ID2)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void restrictNodeIdsWithValidator() {
+		// GIVEN
+		final BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(Set.of(TEST_NODE_ID, TEST_NODE_ID2, -1L)).build();
+
+		// WHEN
+		final DatumFilterCommand cmd = new DatumFilterCommand();
+		cmd.setNodeIds(new Long[] { TEST_NODE_ID, -1L });
+
+		final SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd, null,
+				null, this::rejectNegativeNodeId, null);
+
+		final GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+
+		// THEN
+		// @formatter:off
+		then(filter.getNodeIds())
+			.as("Restricted node IDs to intersection of policy and validation")
+			.containsExactlyInAnyOrder(TEST_NODE_ID)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void restrictNodeIdsWithValidatorEliminatesAllNodeIds() {
+		// GIVEN
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(Set.of(TEST_NODE_ID, TEST_NODE_ID2, -1L)).build();
+
+		// WHEN
+		DatumFilterCommand cmd = new DatumFilterCommand();
+		cmd.setNodeIds(new Long[] { -1L, 3L });
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd, null, null,
+				this::rejectNegativeNodeId, null);
+
+		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+
+		// THEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class)
+			.as("All node IDs are eliminated by policy or validation, causing auth exception")
+			.isThrownBy(() -> filter.getNodeIds())
+			;
+		// @formatter:on
 	}
 
 	@Test
