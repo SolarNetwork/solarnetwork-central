@@ -27,10 +27,7 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.AuthorizationSupport;
-import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.domain.UserNode;
 
@@ -76,9 +73,7 @@ public class RegistrationSecurityAspect extends AuthorizationSupport {
 	 */
 	@Before(value = "createNodeManually()")
 	public void requireUnrestrictedPolicyAccessCheck() {
-		if ( !SecurityUtils.policyIsUnrestricted(getActiveSecurityPolicy()) ) {
-			throw new AuthorizationException(Reason.ACCESS_DENIED, SecurityUtils.currentTokenId());
-		}
+		requireUnrestrictedSecurityPolicy();
 	}
 
 	/**

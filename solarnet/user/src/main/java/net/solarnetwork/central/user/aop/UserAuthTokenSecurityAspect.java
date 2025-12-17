@@ -30,8 +30,6 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserBiz;
@@ -39,7 +37,6 @@ import net.solarnetwork.central.user.dao.BasicUserAuthTokenFilter;
 import net.solarnetwork.central.user.dao.UserAuthTokenFilter;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * Security enforcing AOP aspect for auth token methods of {@link UserBiz}.
@@ -106,10 +103,7 @@ public class UserAuthTokenSecurityAspect extends AuthorizationSupport {
 	 */
 	@Before("generateUserAuthToken() || deleteUserAuthToken() || updateUserAuthToken()")
 	public void generateUserAuthTokenAccessCheck() {
-		final SecurityPolicy actorPolicy = getActiveSecurityPolicy();
-		if ( !SecurityUtils.policyIsUnrestricted(actorPolicy) ) {
-			throw new AuthorizationException(Reason.ACCESS_DENIED, SecurityUtils.currentTokenId());
-		}
+		requireUnrestrictedSecurityPolicy();
 	}
 
 	/**

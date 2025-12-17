@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseIdentifiableUserModifiableEntity;
 import net.solarnetwork.central.dao.UserRelatedStdIdentifiableConfigurationEntity;
+import net.solarnetwork.central.domain.ObjectDatumIdRelated;
 import net.solarnetwork.central.domain.UserIdentifiableSystem;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.datum.DatumId;
@@ -56,7 +57,7 @@ public final class CloudDatumStreamConfiguration
 		implements
 		CloudIntegrationsConfigurationEntity<CloudDatumStreamConfiguration, UserLongCompositePK>,
 		UserRelatedStdIdentifiableConfigurationEntity<CloudDatumStreamConfiguration, UserLongCompositePK>,
-		UserIdentifiableSystem {
+		UserIdentifiableSystem, ObjectDatumIdRelated {
 
 	/**
 	 * A system identifier component included in {@link #systemIdentifier()}.
@@ -283,6 +284,7 @@ public final class CloudDatumStreamConfiguration
 	 *
 	 * @return the kind
 	 */
+	@Override
 	public ObjectDatumKind getKind() {
 		return kind;
 	}
@@ -302,6 +304,7 @@ public final class CloudDatumStreamConfiguration
 	 *
 	 * @return the object ID
 	 */
+	@Override
 	public Long getObjectId() {
 		return objectId;
 	}

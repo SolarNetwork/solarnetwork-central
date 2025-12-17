@@ -41,7 +41,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public final class CloudDatumStreamSettingsEntity
 		extends BaseUserModifiableEntity<CloudDatumStreamSettingsEntity, UserLongCompositePK> implements
 		CloudIntegrationsConfigurationEntity<CloudDatumStreamSettingsEntity, UserLongCompositePK>,
-		CloudDatumStreamSettings {
+		CloudDatumStreamSettings, CloudDatumStreamIdRelated {
 
 	@Serial
 	private static final long serialVersionUID = -5768166630955664067L;
@@ -68,15 +68,15 @@ public final class CloudDatumStreamSettingsEntity
 	 *
 	 * @param userId
 	 *        the user ID
-	 * @param dataSourceId
-	 *        the data source ID
+	 * @param datumStreamId
+	 *        the datum stream ID
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public CloudDatumStreamSettingsEntity(Long userId, Long dataSourceId, Instant created) {
-		this(new UserLongCompositePK(userId, dataSourceId), created);
+	public CloudDatumStreamSettingsEntity(Long userId, Long datumStreamId, Instant created) {
+		this(new UserLongCompositePK(userId, datumStreamId), created);
 	}
 
 	@Override
@@ -131,6 +131,7 @@ public final class CloudDatumStreamSettingsEntity
 	 *
 	 * @return the cloud datum stream ID
 	 */
+	@Override
 	public Long getDatumStreamId() {
 		UserLongCompositePK id = getId();
 		return (id != null ? id.getEntityId() : null);

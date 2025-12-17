@@ -22,16 +22,24 @@
 
 package net.solarnetwork.central.user.c2c.aop;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamIdRelated;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRelated;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.domain.NodeIdRelated;
+import net.solarnetwork.central.domain.ObjectDatumIdRelated;
 import net.solarnetwork.central.domain.UserIdRelated;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
-import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamConfigurationInput;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Security enforcing AOP aspect for {@link UserCloudIntegrationsBiz}.
@@ -41,16 +49,23 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  */
 @Aspect
 @Component
+@Profile(SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS)
 public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
+
+	private final CloudDatumStreamConfigurationDao datumStreamDao;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO
+	 * @param datumStreamDao
+	 *        the datum stream DAO
 	 */
-	public UserCloudIntegrationsSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
+	public UserCloudIntegrationsSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao,
+			CloudDatumStreamConfigurationDao datumStreamDao) {
 		super(nodeOwnershipDao);
+		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
 	}
 
 	/**
@@ -104,6 +119,16 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
+	 * Match replace datum stream rake tasks configuration.
+	 *
+	 * @param datumStreamId
+	 *        the datum stream ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.replaceDatumStreamRakeTasks(..)) && args(datumStreamId,..)")
+	public void replaceDatumStreamRakeTasksForDatumStreamId(UserLongCompositePK datumStreamId) {
+	}
+
+	/**
 	 * Match update methods given an entity.
 	 *
 	 * @param userKey
@@ -134,13 +159,23 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Match delete methods given an entity.
+	 * Match delete methods given an entity key.
 	 *
 	 * @param userKey
 	 *        the user key
 	 */
-	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.delete*(..)) && args(userKey,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.delete*(..)) && args(userKey)")
 	public void deleteEntityForUserKey(UserIdRelated userKey) {
+	}
+
+	/**
+	 * Match delete methods given an entity key and entity class.
+	 *
+	 * @param userKey
+	 *        the user key
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.delete*(..)) && args(userKey,entityClass)")
+	public void deleteEntityForUserKeyAndClass(UserIdRelated userKey, Class<?> entityClass) {
 	}
 
 	/**
@@ -151,6 +186,13 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	 */
 	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.delete*(..)) && args(userId,..)")
 	public void deleteEntityForUserId(Long userId) {
+	}
+
+	private void requireDatumStreamWriteAccess(UserLongCompositePK datumStreamId) {
+		CloudDatumStreamConfiguration conf = datumStreamDao.get(datumStreamId);
+		if ( conf != null && conf.hasNodeId() ) {
+			requireNodeWriteAccess(conf.nodeId());
+		}
 	}
 
 	@Before(value = "readForUserKey(userKey)", argNames = "userKey")
@@ -181,15 +223,25 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	@Before(value = "saveEntityForUserKey(userKey, entity)", argNames = "userKey,entity")
 	public void saveEntityAccessCheck(UserIdRelated userKey, Object entity) {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
-		if ( entity instanceof CloudDatumStreamConfigurationInput ds
-				&& ObjectDatumKind.Node.equals(ds.getKind()) && ds.getObjectId() != null ) {
-			requireNodeWriteAccess(ds.getObjectId());
+		if ( entity instanceof NodeIdRelated id && id.getNodeId() != null ) {
+			requireNodeWriteAccess(id.getNodeId());
+		} else if ( entity instanceof ObjectDatumIdRelated id && id.hasNodeId() ) {
+			requireNodeWriteAccess(id.nodeId());
+		} else if ( entity instanceof CloudDatumStreamIdRelated id && id.hasDatumStreamId() ) {
+			requireDatumStreamWriteAccess(
+					new UserLongCompositePK(userKey.getUserId(), id.getDatumStreamId()));
+		} else if ( entity instanceof CloudDatumStreamRelated
+				&& userKey instanceof UserLongCompositePK pk ) {
+			requireDatumStreamWriteAccess(pk);
 		}
 	}
 
 	@Before(value = "saveEntityForUserId(userId)", argNames = "userId")
 	public void saveEntityForUserAccessCheck(Long userId) {
 		requireUserWriteAccess(userId);
+
+		// also these are global settings so require an unrestricted token
+		requireUnrestrictedSecurityPolicy();
 	}
 
 	@Before(value = "updateEntityForUserKey(userKey)", argNames = "userKey")
@@ -202,9 +254,27 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
+	@Before(value = "deleteEntityForUserKeyAndClass(userKey,entityClass)",
+			argNames = "userKey,entityClass")
+	public void deleteEntityForUserKeyAndClassAccessCheck(UserIdRelated userKey, Class<?> entityClass) {
+		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
+		if ( entityClass != null && CloudDatumStreamIdRelated.class.isAssignableFrom(entityClass)
+				&& userKey instanceof UserLongCompositePK pk ) {
+			requireDatumStreamWriteAccess(pk);
+		}
+	}
+
 	@Before(value = "deleteEntityForUserId(userId)", argNames = "userId")
 	public void userIdDeleteAccessCheck(Long userId) {
 		requireUserWriteAccess(userId);
+
+		// also these are global settings so require an unrestricted token
+		requireUnrestrictedSecurityPolicy();
+	}
+
+	@Before("replaceDatumStreamRakeTasksForDatumStreamId(datumStreamId)")
+	public void datumStreamIdAccessCheck(UserLongCompositePK datumStreamId) {
+		requireDatumStreamWriteAccess(datumStreamId);
 	}
 
 }

@@ -34,6 +34,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SecurityPolicy;
@@ -315,6 +316,18 @@ public class AuthorizationSupport {
 	 */
 	public SecurityPolicy getActiveSecurityPolicy() {
 		return SecurityUtils.getActiveSecurityPolicy();
+	}
+
+	/**
+	 * Require the active user to have an unrestricted policy, or no policy at
+	 * all.
+	 * 
+	 * @since 2.1
+	 */
+	public void requireUnrestrictedSecurityPolicy() {
+		if ( !SecurityUtils.policyIsUnrestricted(getActiveSecurityPolicy()) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, SecurityUtils.currentTokenId());
+		}
 	}
 
 	/**

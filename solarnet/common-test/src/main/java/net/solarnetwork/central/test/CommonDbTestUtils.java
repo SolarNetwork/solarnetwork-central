@@ -29,6 +29,7 @@ import java.util.Map;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.PreparedStatementCallback;
 
 /**
  * Common DB test utilities.
@@ -321,6 +322,31 @@ public final class CommonDbTestUtils {
 		log.debug("%s table has {} items: [{}]".formatted(table), data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
+	}
+
+	/**
+	 * Insert roles for a given user ID.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param userId
+	 *        the user ID
+	 * @param roles
+	 *        the roles to insert
+	 * @since 1.2
+	 */
+	public static void insertUserRoles(JdbcOperations jdbcOps, Long userId, String... roles) {
+		jdbcOps.execute("""
+				INSERT INTO solaruser.user_role (user_id, role_name)
+				VALUES (?,?)
+				""", (PreparedStatementCallback<Void>) ps -> {
+			ps.setObject(1, userId);
+			for ( String role : roles ) {
+				ps.setString(2, role);
+				ps.executeUpdate();
+			}
+			return null;
+		});
 	}
 
 }
