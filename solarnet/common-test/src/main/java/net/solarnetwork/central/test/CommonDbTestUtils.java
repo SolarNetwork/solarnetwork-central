@@ -23,7 +23,7 @@
 package net.solarnetwork.central.test;
 
 import static java.util.stream.Collectors.joining;
-import java.security.SecureRandom;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -53,7 +53,7 @@ public final class CommonDbTestUtils {
 	 * @return the assigned user ID
 	 */
 	public static Long insertUser(JdbcOperations jdbcTemplate) {
-		Long newId = new SecureRandom().nextLong();
+		Long newId = randomLong();
 		insertUser(jdbcTemplate, newId, String.format("test%d@localhost", newId), "password",
 				String.format("Test User %d", newId));
 		return newId;
@@ -71,7 +71,7 @@ public final class CommonDbTestUtils {
 	 * @return the assigned user ID
 	 */
 	public static Long insertUser(JdbcOperations jdbcTemplate, String username) {
-		Long newId = new SecureRandom().nextLong();
+		Long newId = randomLong();
 		insertUser(jdbcTemplate, newId, username, "password", String.format("Test User %d", newId));
 		return newId;
 	}
@@ -232,7 +232,7 @@ public final class CommonDbTestUtils {
 	 * @return the assigned ID
 	 */
 	public static Long insertLocation(JdbcOperations jdbcTemplate, String country, String timeZoneId) {
-		Long newId = new SecureRandom().nextLong();
+		Long newId = randomLong();
 		insertLocation(jdbcTemplate, newId, country, timeZoneId);
 		return newId;
 	}
@@ -283,7 +283,7 @@ public final class CommonDbTestUtils {
 	 * @return the assigned ID
 	 */
 	public static Long insertNode(JdbcOperations jdbcTemplate, Long locationId) {
-		Long newId = new SecureRandom().nextLong();
+		Long newId = randomLong();
 		insertNode(jdbcTemplate, newId, locationId);
 		return newId;
 	}

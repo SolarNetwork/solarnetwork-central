@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudDatumStreamRakeTaskFilter.java - 20/09/2025 6:46:54 pm
+ * CloudDatumStreamMappingIdRelated.java - 18/12/2025 8:59:20 am
  *
  * Copyright 2025 SolarNetwork.net Dev Team
  *
@@ -20,26 +20,32 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.c2c.dao;
-
-import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
-import net.solarnetwork.central.common.dao.NodeCriteria;
-import net.solarnetwork.central.common.dao.TaskCriteria;
-import net.solarnetwork.dao.DateRangeCriteria;
+package net.solarnetwork.central.c2c.domain;
 
 /**
- * A filter for cloud datum stream rake task entities.
- *
- * <p>
- * Note that the {@link DateRangeCriteria} component applies to the
- * {@code execute} date of the rake task entity.
- * </p>
+ * API for objects related to an {@link CloudDatumStreamMappingConfiguration}
+ * entity by way of a configuration ID.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface CloudDatumStreamRakeTaskFilter
-		extends CloudIntegrationsFilter, CloudDatumStreamCriteria, NodeCriteria, TaskCriteria,
-		ClaimableJobStateCriteria, DateRangeCriteria {
+public interface CloudDatumStreamMappingIdRelated {
+
+	/**
+	 * Get the associated {@link CloudDatumStreamMappingConfiguration}
+	 * {@code configId}.
+	 *
+	 * @return the datum stream mapping ID
+	 */
+	Long getDatumStreamMappingId();
+
+	/**
+	 * Test if a datum stream mapping ID is available.
+	 *
+	 * @return {@code true} if a datum stream mapping ID is available
+	 */
+	default boolean hasDatumStreamMappingId() {
+		return (getDatumStreamMappingId() != null);
+	}
 
 }

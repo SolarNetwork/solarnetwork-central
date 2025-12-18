@@ -30,6 +30,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRelated;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.validation.PositiveTemporalAmount;
@@ -39,9 +40,9 @@ import net.solarnetwork.central.domain.validation.StartStopClaimableJobState;
  * DTO for cloud datum stream rake task entity without a datum stream ID.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class CloudDatumStreamRakeTaskEntityBaseInput {
+public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStreamRelated {
 
 	@NotNull
 	@StartStopClaimableJobState

@@ -29,5 +29,5 @@ package net.solarnetwork.central.c2c.domain;
  * @version 1.0
  */
 public interface CloudDatumStreamRelated {
-
+	// empty
 }

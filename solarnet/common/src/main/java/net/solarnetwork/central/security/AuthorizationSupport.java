@@ -516,8 +516,7 @@ public class AuthorizationSupport {
 			return filteredObjects;
 		}
 
-		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
-				(authentication != null ? authentication.getPrincipal() : null), domainObject,
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, domainObject,
 				pathMatcher, metadataType,
 				(writeAccess ? this::requireNodeWriteAccess : this::requireNodeReadAccess),
 				nodeOwnershipDao::getDatumStreamMetadataIds);

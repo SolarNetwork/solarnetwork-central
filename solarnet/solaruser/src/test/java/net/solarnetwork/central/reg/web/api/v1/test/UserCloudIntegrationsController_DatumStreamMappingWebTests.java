@@ -31,21 +31,20 @@ import static net.solarnetwork.central.security.SecurityTokenType.User;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToken;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserRoles;
-import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_DATE_HEADER_FORMATTER;
 import static net.solarnetwork.security.AuthorizationUtils.SN_DATE_HEADER;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.Period;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -63,19 +62,21 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.central.domain.BasicClaimableJobState;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.reg.web.api.v1.UserCloudIntegrationsControlsController;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
-import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityBaseInput;
-import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamMappingConfigurationInput;
 import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * Web API level integration tests for the
- * {@link UserCloudIntegrationsControlsController} rake task actions.
+ * {@link UserCloudIntegrationsControlsController} datum stream mapping actions.
  *
  * @author matt
  * @version 1.0
@@ -83,7 +84,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles(SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS)
-public class UserCloudIntegrationsController_RakeTaskWebTests
+public class UserCloudIntegrationsController_DatumStreamMappingWebTests
 		extends AbstractJUnit5CentralTransactionalTest {
 
 	private static final Clock clock = Clock.tickMillis(ZoneOffset.UTC);
@@ -92,7 +93,13 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 	private MockMvc mvc;
 
 	@Autowired
+	private CloudIntegrationConfigurationDao integrationDao;
+
+	@Autowired
 	private CloudDatumStreamConfigurationDao datumStreamDao;
+
+	@Autowired
+	private CloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
 
 	@Autowired
 	private ObjectMapper objectMapper;
@@ -118,7 +125,18 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 		return result;
 	}
 
-	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long nodeId) {
+	private CloudIntegrationConfiguration createIntegration(Long userId) {
+		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
+				unassignedEntityIdKey(userId), clock.instant());
+		conf.setModified(conf.getCreated());
+		conf.setName(randomString());
+		conf.setServiceIdentifier(randomString());
+		conf.setEnabled(true);
+
+		return integrationDao.get(integrationDao.save(conf));
+	}
+
+	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long nodeId, Long mappingId) {
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
 				unassignedEntityIdKey(userId), clock.instant());
 		conf.setModified(conf.getCreated());
@@ -129,28 +147,36 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 		conf.setObjectId(nodeId);
 		conf.setSchedule("600");
 		conf.setSourceId(randomString());
+		conf.setDatumStreamMappingId(mappingId);
 
 		return datumStreamDao.get(datumStreamDao.save(conf));
 	}
 
-	@Test
-	public void createRakeTask_asUnrestrictedToken() throws Exception {
-		// GIVEN
-		final List<Long> nodeIds = createUserNodes(3);
+	private CloudDatumStreamMappingConfiguration createDatumStreamMapping(Long userId,
+			Long integrationId) {
+		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(
+				unassignedEntityIdKey(userId), clock.instant());
+		conf.setModified(conf.getCreated());
+		conf.setName(randomString());
+		conf.setEnabled(true);
+		conf.setIntegrationId(integrationId);
 
+		return datumStreamMappingDao.get(datumStreamMappingDao.save(conf));
+	}
+
+	@Test
+	public void createDatumStreamMapping_asUnrestrictedToken() throws Exception {
+		// GIVEN
 		final String tokenId = randomString(20);
 		final String tokenSecret = randomString();
 		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
 
-		final Long reqNodeId = nodeIds.get(RNG.nextInt(nodeIds.size()));
+		final CloudIntegrationConfiguration integration = createIntegration(userId);
 
-		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId, reqNodeId);
-
-		final CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
-		input.setDatumStreamId(datumStream.getConfigId());
-		input.setExecuteAt(clock.instant().truncatedTo(ChronoUnit.DAYS).plus(24, ChronoUnit.HOURS));
-		input.setOffset(Period.ofDays(1));
-		input.setState(BasicClaimableJobState.Completed);
+		final CloudDatumStreamMappingConfigurationInput input = new CloudDatumStreamMappingConfigurationInput();
+		input.setEnabled(true);
+		input.setName(randomString());
+		input.setIntegrationId(integration.getConfigId());
 
 		final String reqJson = objectMapper.writeValueAsString(input);
 
@@ -162,7 +188,7 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
 				.method(HttpMethod.POST.name())
 				.host("localhost")
-				.path("/api/v1/sec/user/c2c/datum-stream-rake-tasks")
+				.path("/api/v1/sec/user/c2c/datum-stream-mappings")
 				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
 				.contentSha256(DigestUtils.sha256(reqJson))
 				.useSnDate(true).date(now)
@@ -170,7 +196,7 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 		final String authHeader = auth.build();
 
 		final String result = mvc.perform(
-				post("/api/v1/sec/user/c2c/datum-stream-rake-tasks")
+				post("/api/v1/sec/user/c2c/datum-stream-mappings")
 				.header(HttpHeaders.AUTHORIZATION, authHeader)
 				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
 				.accept(MediaType.APPLICATION_JSON)
@@ -194,17 +220,17 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 			.isObject()
 			.as("ID assigned")
 			.containsKey("configId")
-			.as("Rake task created for given node ID")
+			.as("Datum stream created for given node ID")
 			.contains(
 				entry("userId", userId),
-				entry("datumStreamId", datumStream.getConfigId())
+				entry("integrationId", integration.getConfigId())
 			)
 			;
 		// @formatter:on
 	}
 
 	@Test
-	public void createRakeTask_asRestrictedToken_allowed_datumStreamNodeIdInPolicy() throws Exception {
+	public void createDatumStreamMapping_asRestrictedToken_allowed() throws Exception {
 		// GIVEN
 		final List<Long> nodeIds = createUserNodes(3);
 
@@ -214,15 +240,12 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 				objectMapper.writeValueAsString(BasicSecurityPolicy.builder()
 						.withNodeIds(Set.of(nodeIds.get(0), nodeIds.get(2))).build()));
 
-		final Long reqNodeId = nodeIds.get(0); // allowed in policy
+		final CloudIntegrationConfiguration integration = createIntegration(userId);
 
-		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId, reqNodeId);
-
-		final CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
-		input.setDatumStreamId(datumStream.getConfigId());
-		input.setExecuteAt(clock.instant().truncatedTo(ChronoUnit.DAYS).plus(24, ChronoUnit.HOURS));
-		input.setOffset(Period.ofDays(1));
-		input.setState(BasicClaimableJobState.Completed);
+		final CloudDatumStreamMappingConfigurationInput input = new CloudDatumStreamMappingConfigurationInput();
+		input.setEnabled(true);
+		input.setName(randomString());
+		input.setIntegrationId(integration.getConfigId());
 
 		final String reqJson = objectMapper.writeValueAsString(input);
 
@@ -234,7 +257,7 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
 				.method(HttpMethod.POST.name())
 				.host("localhost")
-				.path("/api/v1/sec/user/c2c/datum-stream-rake-tasks")
+				.path("/api/v1/sec/user/c2c/datum-stream-mappings")
 				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
 				.contentSha256(DigestUtils.sha256(reqJson))
 				.useSnDate(true).date(now)
@@ -242,7 +265,7 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 		final String authHeader = auth.build();
 
 		final String result = mvc.perform(
-				post("/api/v1/sec/user/c2c/datum-stream-rake-tasks")
+				post("/api/v1/sec/user/c2c/datum-stream-mappings")
 				.header(HttpHeaders.AUTHORIZATION, authHeader)
 				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
 				.accept(MediaType.APPLICATION_JSON)
@@ -266,35 +289,40 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 			.isObject()
 			.as("ID assigned")
 			.containsKey("configId")
-			.as("Rake task created for given node ID")
+			.as("Datum stream created for given node ID")
 			.contains(
 				entry("userId", userId),
-				entry("datumStreamId", datumStream.getConfigId())
+				entry("integrationId", integration.getConfigId())
 			)
 			;
 		// @formatter:on
 	}
 
 	@Test
-	public void createRakeTask_asRestrictedToken_denied_datumStreamNodeIdNotInPolicy() throws Exception {
+	public void updateDatumStreamMapping_asRestrictedToken_allowed_datumStreamNodeIdsAllInPolicy()
+			throws Exception {
 		// GIVEN
 		final List<Long> nodeIds = createUserNodes(3);
+		final Set<Long> allowedNodeIds = Set.of(nodeIds.get(0), nodeIds.get(2));
 
 		final String tokenId = randomString(20);
 		final String tokenSecret = randomString();
-		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User,
-				objectMapper.writeValueAsString(BasicSecurityPolicy.builder()
-						.withNodeIds(Set.of(nodeIds.get(0), nodeIds.get(2))).build()));
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, objectMapper
+				.writeValueAsString(BasicSecurityPolicy.builder().withNodeIds(allowedNodeIds).build()));
 
-		final Long reqNodeId = nodeIds.get(1); // not in policy
+		final CloudIntegrationConfiguration integration = createIntegration(userId);
+		final CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+				integration.getConfigId());
 
-		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId, reqNodeId);
+		// associate mapping with datum streams using allowed node IDs
+		for ( Long nodeId : allowedNodeIds ) {
+			createDatumStream(userId, nodeId, mapping.getConfigId());
+		}
 
-		final CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
-		input.setDatumStreamId(datumStream.getConfigId());
-		input.setExecuteAt(clock.instant().truncatedTo(ChronoUnit.DAYS).plus(24, ChronoUnit.HOURS));
-		input.setOffset(Period.ofDays(1));
-		input.setState(BasicClaimableJobState.Completed);
+		final CloudDatumStreamMappingConfigurationInput input = new CloudDatumStreamMappingConfigurationInput();
+		input.setEnabled(true);
+		input.setName(randomString());
+		input.setIntegrationId(integration.getConfigId());
 
 		final String reqJson = objectMapper.writeValueAsString(input);
 
@@ -304,9 +332,9 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 		// WHEN
 		// @formatter:off
 		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
-				.method(HttpMethod.POST.name())
+				.method(HttpMethod.PUT.name())
 				.host("localhost")
-				.path("/api/v1/sec/user/c2c/datum-stream-rake-tasks")
+				.path("/api/v1/sec/user/c2c/datum-stream-mappings/%d".formatted(mapping.getConfigId()))
 				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
 				.contentSha256(DigestUtils.sha256(reqJson))
 				.useSnDate(true).date(now)
@@ -314,7 +342,86 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 		final String authHeader = auth.build();
 
 		final String result = mvc.perform(
-				post("/api/v1/sec/user/c2c/datum-stream-rake-tasks")
+				put("/api/v1/sec/user/c2c/datum-stream-mappings/%d".formatted(mapping.getConfigId()))
+				.header(HttpHeaders.AUTHORIZATION, authHeader)
+				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON)
+				.content(reqJson)
+				.contentType(MediaType.APPLICATION_JSON)
+			)
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andReturn()
+			.getResponse()
+			.getContentAsString()
+			;
+
+		then(result)
+			.asInstanceOf(JSON)
+			.isObject()
+			.as("Success result")
+			.containsEntry("success", true)
+			.node("data")
+			.isObject()
+			.as("ID assigned")
+			.containsKey("configId")
+			.as("Datum stream created for given node ID")
+			.contains(
+				entry("userId", userId),
+				entry("integrationId", integration.getConfigId())
+			)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateDatumStreamMapping_asRestrictedToken_denied_datumStreamNodeIdsNotAllInPolicy()
+			throws Exception {
+		// GIVEN
+		final List<Long> nodeIds = createUserNodes(3);
+		final Set<Long> allowedNodeIds = Set.of(nodeIds.get(0), nodeIds.get(2));
+
+		final String tokenId = randomString(20);
+		final String tokenSecret = randomString();
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, objectMapper
+				.writeValueAsString(BasicSecurityPolicy.builder().withNodeIds(allowedNodeIds).build()));
+
+		final CloudIntegrationConfiguration integration = createIntegration(userId);
+		final CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+				integration.getConfigId());
+
+		// associate mapping with datum streams using allowed node IDs
+		for ( Long nodeId : allowedNodeIds ) {
+			createDatumStream(userId, nodeId, mapping.getConfigId());
+		}
+
+		// add mapping to datum stream with NOT allowed node ID
+		createDatumStream(userId, nodeIds.get(1), mapping.getConfigId());
+
+		final CloudDatumStreamMappingConfigurationInput input = new CloudDatumStreamMappingConfigurationInput();
+		input.setEnabled(false);
+		input.setName(randomString());
+		input.setIntegrationId(integration.getConfigId());
+
+		final String reqJson = objectMapper.writeValueAsString(input);
+
+		// WHEN
+		final Instant now = Instant.now();
+
+		// WHEN
+		// @formatter:off
+		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
+				.method(HttpMethod.PUT.name())
+				.host("localhost")
+				.path("/api/v1/sec/user/c2c/datum-stream-mappings/%d".formatted(mapping.getConfigId()))
+				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
+				.contentSha256(DigestUtils.sha256(reqJson))
+				.useSnDate(true).date(now)
+				.saveSigningKey(tokenSecret);
+		final String authHeader = auth.build();
+
+		final String result = mvc.perform(
+				put("/api/v1/sec/user/c2c/datum-stream-mappings/%d".formatted(mapping.getConfigId()))
 				.header(HttpHeaders.AUTHORIZATION, authHeader)
 				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
 				.accept(MediaType.APPLICATION_JSON)
@@ -340,32 +447,26 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 		// @formatter:on
 	}
 
-	//
-
 	@Test
-	public void replace_asUnrestrictedToken() throws Exception {
+	public void deleteDatumStreamMapping_asRestrictedToken_allowed_datumStreamNodeIdsAllInPolicy()
+			throws Exception {
 		// GIVEN
 		final List<Long> nodeIds = createUserNodes(3);
+		final Set<Long> allowedNodeIds = Set.of(nodeIds.get(0), nodeIds.get(2));
 
 		final String tokenId = randomString(20);
 		final String tokenSecret = randomString();
-		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, null);
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, objectMapper
+				.writeValueAsString(BasicSecurityPolicy.builder().withNodeIds(allowedNodeIds).build()));
 
-		final Long reqNodeId = nodeIds.get(RNG.nextInt(nodeIds.size()));
+		final CloudIntegrationConfiguration integration = createIntegration(userId);
+		final CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+				integration.getConfigId());
 
-		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId, reqNodeId);
-
-		final List<CloudDatumStreamRakeTaskEntityBaseInput> inputs = new ArrayList<>(3);
-		for ( int i = 0; i < 3; i++ ) {
-			final CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
-			input.setDatumStreamId(datumStream.getConfigId());
-			input.setExecuteAt(clock.instant().truncatedTo(ChronoUnit.DAYS).plus(24, ChronoUnit.HOURS));
-			input.setOffset(Period.ofDays(i + 1));
-			input.setState(BasicClaimableJobState.Completed);
-			inputs.add(input);
+		// associate mapping with datum streams using allowed node IDs
+		for ( Long nodeId : allowedNodeIds ) {
+			createDatumStream(userId, nodeId, mapping.getConfigId());
 		}
-
-		final String reqJson = objectMapper.writeValueAsString(inputs);
 
 		// WHEN
 		final Instant now = Instant.now();
@@ -373,22 +474,18 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 		// WHEN
 		// @formatter:off
 		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
-				.method(HttpMethod.POST.name())
+				.method(HttpMethod.DELETE.name())
 				.host("localhost")
-				.path("/api/v1/sec/user/c2c/datum-stream-rake-tasks/%d/tasks".formatted(datumStream.getConfigId()))
-				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
-				.contentSha256(DigestUtils.sha256(reqJson))
+				.path("/api/v1/sec/user/c2c/datum-stream-mappings/%d".formatted(mapping.getConfigId()))
 				.useSnDate(true).date(now)
 				.saveSigningKey(tokenSecret);
 		final String authHeader = auth.build();
 
 		final String result = mvc.perform(
-				post("/api/v1/sec/user/c2c/datum-stream-rake-tasks/%d/tasks".formatted(datumStream.getConfigId()))
+				delete("/api/v1/sec/user/c2c/datum-stream-mappings/%d".formatted(mapping.getConfigId()))
 				.header(HttpHeaders.AUTHORIZATION, authHeader)
 				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
 				.accept(MediaType.APPLICATION_JSON)
-				.content(reqJson)
-				.contentType(MediaType.APPLICATION_JSON)
 			)
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -403,53 +500,35 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 			.as("Success result")
 			.containsEntry("success", true)
 			.node("data")
-			.as("Persisted entity array returned for data")
-			.isArray()
-			.as("Array has items for every entity")
-			.hasSize(3)
-			.allSatisfy(item -> {
-				then(item)
-					.asInstanceOf(JSON)
-					.as("Data array elements are entity objects")
-					.isObject()
-					.as("ID assigned")
-					.containsKey("configId")
-					.contains(
-						entry("userId", userId),
-						entry("datumStreamId", datumStream.getConfigId())
-					)
-					;
-			})
+			.as("No data returned on delete")
+			.isAbsent()
 			;
 		// @formatter:on
 	}
 
 	@Test
-	public void replace_asRestrictedToken_allowed_datumStreamNodeIdInPolicy() throws Exception {
+	public void deleteDatumStreamMapping_asRestrictedToken_denied_datumStreamNodeIdsNotAllInPolicy()
+			throws Exception {
 		// GIVEN
 		final List<Long> nodeIds = createUserNodes(3);
+		final Set<Long> allowedNodeIds = Set.of(nodeIds.get(0), nodeIds.get(2));
 
 		final String tokenId = randomString(20);
 		final String tokenSecret = randomString();
-		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User,
-				objectMapper.writeValueAsString(BasicSecurityPolicy.builder()
-						.withNodeIds(Set.of(nodeIds.get(0), nodeIds.get(2))).build()));
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, objectMapper
+				.writeValueAsString(BasicSecurityPolicy.builder().withNodeIds(allowedNodeIds).build()));
 
-		final Long reqNodeId = nodeIds.get(0); // in policy
+		final CloudIntegrationConfiguration integration = createIntegration(userId);
+		final CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+				integration.getConfigId());
 
-		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId, reqNodeId);
-
-		final List<CloudDatumStreamRakeTaskEntityBaseInput> inputs = new ArrayList<>(3);
-		for ( int i = 0; i < 3; i++ ) {
-			final CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
-			input.setDatumStreamId(datumStream.getConfigId());
-			input.setExecuteAt(clock.instant().truncatedTo(ChronoUnit.DAYS).plus(24, ChronoUnit.HOURS));
-			input.setOffset(Period.ofDays(i + 1));
-			input.setState(BasicClaimableJobState.Completed);
-			inputs.add(input);
+		// associate mapping with datum streams using allowed node IDs
+		for ( Long nodeId : allowedNodeIds ) {
+			createDatumStream(userId, nodeId, mapping.getConfigId());
 		}
 
-		final String reqJson = objectMapper.writeValueAsString(inputs);
+		// add mapping to datum stream with NOT allowed node ID
+		createDatumStream(userId, nodeIds.get(1), mapping.getConfigId());
 
 		// WHEN
 		final Instant now = Instant.now();
@@ -457,106 +536,18 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 		// WHEN
 		// @formatter:off
 		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
-				.method(HttpMethod.POST.name())
+				.method(HttpMethod.DELETE.name())
 				.host("localhost")
-				.path("/api/v1/sec/user/c2c/datum-stream-rake-tasks/%d/tasks".formatted(datumStream.getConfigId()))
-				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
-				.contentSha256(DigestUtils.sha256(reqJson))
+				.path("/api/v1/sec/user/c2c/datum-stream-mappings/%d".formatted(mapping.getConfigId()))
 				.useSnDate(true).date(now)
 				.saveSigningKey(tokenSecret);
 		final String authHeader = auth.build();
 
 		final String result = mvc.perform(
-				post("/api/v1/sec/user/c2c/datum-stream-rake-tasks/%d/tasks".formatted(datumStream.getConfigId()))
+				delete("/api/v1/sec/user/c2c/datum-stream-mappings/%d".formatted(mapping.getConfigId()))
 				.header(HttpHeaders.AUTHORIZATION, authHeader)
 				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
 				.accept(MediaType.APPLICATION_JSON)
-				.content(reqJson)
-				.contentType(MediaType.APPLICATION_JSON)
-			)
-			.andExpect(status().isOk())
-			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-			.andReturn()
-			.getResponse()
-			.getContentAsString()
-			;
-
-		then(result)
-			.asInstanceOf(JSON)
-			.isObject()
-			.as("Success result")
-			.containsEntry("success", true)
-			.node("data")
-			.as("Persisted entity array returned for data")
-			.isArray()
-			.as("Array has items for every entity")
-			.hasSize(3)
-			.allSatisfy(item -> {
-				then(item)
-					.asInstanceOf(JSON)
-					.as("Data array elements are entity objects")
-					.isObject()
-					.as("ID assigned")
-					.containsKey("configId")
-					.contains(
-						entry("userId", userId),
-						entry("datumStreamId", datumStream.getConfigId())
-					)
-					;
-			})
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void replace_asRestrictedToken_denied_datumStreamNodeIdNotInPolicy() throws Exception {
-		// GIVEN
-		final List<Long> nodeIds = createUserNodes(3);
-
-		final String tokenId = randomString(20);
-		final String tokenSecret = randomString();
-		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User,
-				objectMapper.writeValueAsString(BasicSecurityPolicy.builder()
-						.withNodeIds(Set.of(nodeIds.get(0), nodeIds.get(2))).build()));
-
-		final Long reqNodeId = nodeIds.get(1); // not in policy
-
-		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId, reqNodeId);
-
-		final List<CloudDatumStreamRakeTaskEntityBaseInput> inputs = new ArrayList<>(3);
-		for ( int i = 0; i < 3; i++ ) {
-			final CloudDatumStreamRakeTaskEntityInput input = new CloudDatumStreamRakeTaskEntityInput();
-			input.setDatumStreamId(datumStream.getConfigId());
-			input.setExecuteAt(clock.instant().truncatedTo(ChronoUnit.DAYS).plus(24, ChronoUnit.HOURS));
-			input.setOffset(Period.ofDays(i + 1));
-			input.setState(BasicClaimableJobState.Completed);
-			inputs.add(input);
-		}
-
-		final String reqJson = objectMapper.writeValueAsString(inputs);
-
-		// WHEN
-		final Instant now = Instant.now();
-
-		// WHEN
-		// @formatter:off
-		final Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(tokenId)
-				.method(HttpMethod.POST.name())
-				.host("localhost")
-				.path("/api/v1/sec/user/c2c/datum-stream-rake-tasks/%d/tasks".formatted(datumStream.getConfigId()))
-				.contentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
-				.contentSha256(DigestUtils.sha256(reqJson))
-				.useSnDate(true).date(now)
-				.saveSigningKey(tokenSecret);
-		final String authHeader = auth.build();
-
-		final String result = mvc.perform(
-				post("/api/v1/sec/user/c2c/datum-stream-rake-tasks/%d/tasks".formatted(datumStream.getConfigId()))
-				.header(HttpHeaders.AUTHORIZATION, authHeader)
-				.header(SN_DATE_HEADER, AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
-				.accept(MediaType.APPLICATION_JSON)
-				.content(reqJson)
-				.contentType(MediaType.APPLICATION_JSON)
 			)
 			.andExpect(status().isForbidden())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON))

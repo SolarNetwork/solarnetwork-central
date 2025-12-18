@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudDatumStreamRakeTaskFilter.java - 20/09/2025 6:46:54 pm
+ * CloudDatumStreamMappingRelated.java - 18/12/2025 6:08:22 am
  *
  * Copyright 2025 SolarNetwork.net Dev Team
  *
@@ -20,26 +20,15 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.c2c.dao;
-
-import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
-import net.solarnetwork.central.common.dao.NodeCriteria;
-import net.solarnetwork.central.common.dao.TaskCriteria;
-import net.solarnetwork.dao.DateRangeCriteria;
+package net.solarnetwork.central.c2c.domain;
 
 /**
- * A filter for cloud datum stream rake task entities.
- *
- * <p>
- * Note that the {@link DateRangeCriteria} component applies to the
- * {@code execute} date of the rake task entity.
- * </p>
+ * A marker interface to indicate something is related to a cloud datum stream
+ * mapping.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface CloudDatumStreamRakeTaskFilter
-		extends CloudIntegrationsFilter, CloudDatumStreamCriteria, NodeCriteria, TaskCriteria,
-		ClaimableJobStateCriteria, DateRangeCriteria {
-
+public interface CloudDatumStreamMappingRelated {
+	// empty
 }

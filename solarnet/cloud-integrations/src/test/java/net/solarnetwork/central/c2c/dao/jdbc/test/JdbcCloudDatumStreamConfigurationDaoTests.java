@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
 import static java.util.Collections.singletonMap;
+import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamConfiguration;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
@@ -38,6 +39,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
@@ -59,7 +61,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link JdbcCloudDatumStreamConfigurationDao} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -338,6 +340,122 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 				.filter(e -> randomUserId.equals(e.getUserId()))
 				.toArray(CloudDatumStreamConfiguration[]::new);
 		then(results).as("Results for single user returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forMapping() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 3;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(count);
+
+		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < integrationCount; i++ ) {
+				Long integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+				for ( int m = 0; m < mappingCount; m++ ) {
+					Long mappingId = createDatumStreamMapping(userId, integrationId, null).getConfigId();
+					for ( int ds = 0; ds < count; ds++ ) {
+						// @formatter:off
+						CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(
+								userId,
+								mappingId,
+								randomString(),
+								ObjectDatumKind.Node,
+								randomLong(),
+								randomString(),
+								randomString(),
+								randomString(),
+								props
+							);
+						// @formatter:on
+						UserLongCompositePK id = dao.create(userId, conf);
+						conf = conf.copyWithId(id);
+						confs.add(conf);
+					}
+				}
+			}
+		}
+
+		// WHEN
+		final CloudDatumStreamConfiguration randomConf = confs.get(RNG.nextInt(confs.size()));
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomConf.getUserId());
+		filter.setDatumStreamMappingId(randomConf.getDatumStreamMappingId());
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		CloudDatumStreamConfiguration[] expected = confs.stream()
+				.filter(e -> randomConf.getUserId().equals(e.getUserId())
+						&& randomConf.getDatumStreamMappingId().equals(e.getDatumStreamMappingId()))
+				.toArray(CloudDatumStreamConfiguration[]::new);
+		then(results).as("Results for single mapping returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forNode() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 3;
+		final int integrationCount = 3;
+		final int mappingCount = 3;
+		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(count);
+
+		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < integrationCount; i++ ) {
+				Long integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+				for ( int m = 0; m < mappingCount; m++ ) {
+					Long mappingId = createDatumStreamMapping(userId, integrationId, null).getConfigId();
+					for ( int ds = 0; ds < count; ds++ ) {
+						// @formatter:off
+						CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(
+								userId,
+								mappingId,
+								randomString(),
+								ObjectDatumKind.Node,
+								randomLong(),
+								randomString(),
+								randomString(),
+								randomString(),
+								props
+							);
+						// @formatter:on
+						UserLongCompositePK id = dao.create(userId, conf);
+						conf = conf.copyWithId(id);
+						confs.add(conf);
+					}
+				}
+			}
+		}
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userConfs = confs.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+		final List<CloudDatumStreamConfiguration> userRandomConfs = List
+				.of(userConfs.get(RNG.nextInt(userConfs.size())),
+						userConfs.get(RNG.nextInt(userConfs.size())))
+				.stream().sorted().toList();
+		final Set<Long> randomNodeIds = userRandomConfs.stream()
+				.map(CloudDatumStreamConfiguration::getObjectId).collect(toSet());
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setNodeIds(randomNodeIds.toArray(Long[]::new));
+		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		then(results).as("Results for given node IDs returned")
+				.containsExactlyElementsOf(userRandomConfs);
 	}
 
 }
