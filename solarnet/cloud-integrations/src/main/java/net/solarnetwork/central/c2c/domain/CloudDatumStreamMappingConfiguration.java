@@ -45,15 +45,16 @@ import net.solarnetwork.codec.JsonUtils;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @see CloudDatumStreamPropertyConfiguration
  */
-@JsonIgnoreProperties({ "id", "enabled", "fullyConfigured" })
+@JsonIgnoreProperties({ "id", "enabled", "fullyConfigured", "datumStreamMappingId" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "name", "integrationId",
 		"serviceProperties" })
 public final class CloudDatumStreamMappingConfiguration extends
 		BaseUserModifiableEntity<CloudDatumStreamMappingConfiguration, UserLongCompositePK> implements
-		CloudIntegrationsConfigurationEntity<CloudDatumStreamMappingConfiguration, UserLongCompositePK> {
+		CloudIntegrationsConfigurationEntity<CloudDatumStreamMappingConfiguration, UserLongCompositePK>,
+		CloudDatumStreamMappingIdRelated {
 
 	@Serial
 	private static final long serialVersionUID = -5099340175851992871L;
@@ -171,6 +172,11 @@ public final class CloudDatumStreamMappingConfiguration extends
 	public Long getConfigId() {
 		UserLongCompositePK id = getId();
 		return (id != null ? id.getEntityId() : null);
+	}
+
+	@Override
+	public Long getDatumStreamMappingId() {
+		return getConfigId();
 	}
 
 	/**

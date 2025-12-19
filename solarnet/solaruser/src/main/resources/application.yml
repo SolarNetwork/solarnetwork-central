@@ -316,6 +316,14 @@ app:
         ttl: 900
         heap-max-entries: 1000
         disk-max-size-mb: 0
+      locks:
+        tti: 3600
+        ttl: 0
+        heap-max-entries: 5000
+        disk-max-size-mb: 0
+    encryptor:
+      password: "Secret123"
+      salt-hex: "01234567"
     executor:
       thread-name-prefix: "SolarNet-UserInstr-"
       core-pool-size: 2

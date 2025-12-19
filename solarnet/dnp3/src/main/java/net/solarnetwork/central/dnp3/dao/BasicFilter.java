@@ -33,7 +33,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of DNP3 query filter.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicFilter extends BasicCoreCriteria
 		implements CertificateFilter, ServerFilter, ServerDataPointFilter {
@@ -83,6 +83,18 @@ public class BasicFilter extends BasicCoreCriteria
 		if ( criteria instanceof ServerCriteria f ) {
 			setServerIds(f.getServerIds());
 		}
+	}
+
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (identifiers != null && identifiers.length > 0)
+				|| (indexes != null && indexes.length > 0)
+				|| (serverIds != null && serverIds.length > 0)
+				|| (subjectDns != null && subjectDns.length > 0)
+				;
+		// @formatter:on
 	}
 
 	@Override

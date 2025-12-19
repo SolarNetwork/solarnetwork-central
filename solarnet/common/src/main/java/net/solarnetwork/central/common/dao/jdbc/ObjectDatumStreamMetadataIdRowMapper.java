@@ -20,14 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc;
+package net.solarnetwork.central.common.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**

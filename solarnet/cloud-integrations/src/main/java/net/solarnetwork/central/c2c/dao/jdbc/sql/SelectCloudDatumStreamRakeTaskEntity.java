@@ -40,7 +40,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
  * Support for SELECT for {@link CloudDatumStreamRakeTaskEntity} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SelectCloudDatumStreamRakeTaskEntity
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -90,6 +90,12 @@ public class SelectCloudDatumStreamRakeTaskEntity
 					, cdsrt.sprops
 				FROM solardin.cin_datum_stream_rake_task cdsrt
 				""");
+		if ( filter.hasNodeCriteria() ) {
+			buf.append("""
+					INNER JOIN solardin.cin_datum_stream cds ON cds.user_id = cdsrt.user_id
+						AND cds.kind = 'n' AND cds.id = cdsrt.ds_id
+					""");
+		}
 	}
 
 	private void sqlWhere(StringBuilder buf) {
@@ -106,6 +112,9 @@ public class SelectCloudDatumStreamRakeTaskEntity
 		}
 		if ( filter.hasClaimableJobStateCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.claimableJobStateKeys(), "cdsrt.status", where);
+		}
+		if ( filter.hasNodeCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getNodeIds(), "cds.obj_id", where);
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -140,6 +149,9 @@ public class SelectCloudDatumStreamRakeTaskEntity
 		}
 		if ( filter.hasClaimableJobStateCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.claimableJobStateKeys());
+		}
+		if ( filter.hasNodeCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());
 		}
 		return p;
 	}

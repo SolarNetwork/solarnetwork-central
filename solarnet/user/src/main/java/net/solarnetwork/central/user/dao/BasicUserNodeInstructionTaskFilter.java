@@ -42,7 +42,8 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @author matt
  * @version 1.0
  */
-public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria implements UserNodeInstructionTaskFilter {
+public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
+		implements UserNodeInstructionTaskFilter {
 
 	private String[] topics;
 	private Long[] taskIds;
@@ -155,6 +156,19 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria implem
 		}
 		builder.append("}");
 		return builder.toString();
+	}
+
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (claimableJobStates != null && claimableJobStates.length > 0)
+				|| endDate != null
+				|| startDate != null
+				|| (taskIds != null && taskIds.length > 0)
+				|| (topics != null && topics.length > 0)
+				;
+		// @formatter:on
 	}
 
 	@Override

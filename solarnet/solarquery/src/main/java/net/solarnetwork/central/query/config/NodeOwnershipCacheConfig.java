@@ -23,6 +23,8 @@
 package net.solarnetwork.central.query.config;
 
 import static net.solarnetwork.central.common.dao.config.SolarNodeOwnershipDaoConfig.NODE_OWNERSHIP_CACHE;
+import static net.solarnetwork.central.common.dao.config.SolarNodeOwnershipDaoConfig.STREAM_METADATA_ID_CACHE_NAME;
+import java.util.UUID;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.support.CacheSettings;
 
@@ -37,7 +40,7 @@ import net.solarnetwork.central.support.CacheSettings;
  * Configuration for the node ownership cache.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class NodeOwnershipCacheConfig {
@@ -68,6 +71,26 @@ public class NodeOwnershipCacheConfig {
 			@Qualifier(NODE_OWNERSHIP_CACHE) CacheSettings settings) {
 		return settings.createCache(cacheManager, Long.class, SolarNodeOwnership.class,
 				NODE_OWNERSHIP_CACHE);
+	}
+
+	@Bean
+	@Qualifier(STREAM_METADATA_ID_CACHE_NAME)
+	@ConfigurationProperties(prefix = "app.datum.stream-metadata-id-cache")
+	public CacheSettings streamMetadataIdCacheSettings() {
+		return new CacheSettings();
+	}
+
+	/**
+	 * Get the metadata ID cache.
+	 *
+	 * @return the metadata ID cache
+	 */
+	@Bean
+	@Qualifier(STREAM_METADATA_ID_CACHE_NAME)
+	public Cache<UUID, ObjectDatumStreamMetadataId> streamMetadataIdCache(
+			@Qualifier(STREAM_METADATA_ID_CACHE_NAME) CacheSettings settings) {
+		return settings.createCache(cacheManager, UUID.class, ObjectDatumStreamMetadataId.class,
+				STREAM_METADATA_ID_CACHE_NAME);
 	}
 
 }

@@ -33,6 +33,9 @@ import jakarta.validation.Validator;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.biz.UserNodeInstructionBiz;
 import net.solarnetwork.central.user.biz.UserNodeInstructionService;
@@ -43,6 +46,7 @@ import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntityInput;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskSimulationOutput;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * DAO implementation of {@link UserNodeInstructionBiz}.
@@ -72,7 +76,6 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		super();
 		this.instructionService = requireNonNullArgument(instructionService, "instructionService");
 		this.instructionTaskDao = requireNonNullArgument(instructionTaskDao, "instructionTaskDao");
-
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -82,7 +85,9 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		requireNonNullArgument(userId, "userId");
 		BasicUserNodeInstructionTaskFilter f = new BasicUserNodeInstructionTaskFilter(filter);
 		f.setUserId(userId);
-		return instructionTaskDao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
+		restrictToSecurityPolicy(f);
+
+		return instructionTaskDao.findFiltered(f);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -94,6 +99,9 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		if ( !id.allKeyComponentsAreAssigned() ) {
 			throw new IllegalArgumentException("The userId and configId components must be provided.");
 		}
+
+		restrictToSecurityPolicy(instructionTaskDao.get(id));
+
 		// only update state if a user-settable value (start, stop)
 		if ( desiredState == BasicClaimableJobState.Queued
 				|| desiredState == BasicClaimableJobState.Completed ) {
@@ -111,7 +119,8 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 
 		validateInput(input);
 
-		UserNodeInstructionTaskEntity entity = input.toEntity(id);
+		final UserNodeInstructionTaskEntity entity = input.toEntity(id);
+		restrictToSecurityPolicy(entity);
 		UserLongCompositePK pk = id;
 		if ( expectedStates == null || expectedStates.length < 1 ) {
 			pk = instructionTaskDao.save(entity);
@@ -130,7 +139,14 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 	public void deleteControlInstructionTask(UserLongCompositePK id) {
 		requireNonNullArgument(id, "id");
 		requireNonNullArgument(id.getUserId(), "id.userId");
-		instructionTaskDao.delete(instructionTaskDao.entityKey(id));
+
+		final var task = instructionTaskDao.get(id);
+		if ( task == null ) {
+			return;
+		}
+		restrictToSecurityPolicy(task);
+
+		instructionTaskDao.delete(task);
 	}
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -147,7 +163,24 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		validateInput(input);
 
 		final UserNodeInstructionTaskEntity task = input.toEntity(unassignedEntityIdKey(userId));
+		restrictToSecurityPolicy(task);
+
 		return instructionService.simulateControlInstructionTask(task);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
+	public void updateControlInstructionTaskEnabled(UserLongCompositePK id, boolean enabled) {
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(id.getUserId(), "id.userId");
+
+		BasicUserNodeInstructionTaskFilter filter = new BasicUserNodeInstructionTaskFilter();
+		if ( id.entityIdIsAssigned() ) {
+			filter.setTaskId(id.getEntityId());
+		}
+		restrictToSecurityPolicy(filter);
+
+		instructionTaskDao.updateEnabledStatus(id.getUserId(), filter, enabled);
 	}
 
 	private void validateInput(final Object input) {
@@ -166,6 +199,22 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 				.toBindingResult(new ConstraintViolationException(violations), v);
 		if ( errors.hasErrors() ) {
 			throw new ValidationException(errors);
+		}
+	}
+
+	private void restrictToSecurityPolicy(BasicUserNodeInstructionTaskFilter f) {
+		final SecurityPolicy policy = SecurityUtils.getActiveSecurityPolicy();
+		f.setNodeIds(SecurityUtils.restrictNodeIds(f.getNodeIds(), policy));
+	}
+
+	private void restrictToSecurityPolicy(UserNodeInstructionTaskEntity task) {
+		if ( task == null || task.getNodeId() == null ) {
+			return;
+		}
+		final SecurityPolicy policy = SecurityUtils.getActiveSecurityPolicy();
+		if ( policy != null && policy.getNodeIds() != null && policy.getNodeIds() != null
+				&& !policy.getNodeIds().contains(task.getNodeId()) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, task.getNodeId());
 		}
 	}
 

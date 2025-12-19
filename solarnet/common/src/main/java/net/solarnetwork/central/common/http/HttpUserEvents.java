@@ -42,4 +42,13 @@ public interface HttpUserEvents {
 	/** User event data key for HTTP body content. */
 	String HTTP_BODY_DATA_KEY = "body";
 
+	/** User event data key for HTTP status code. */
+	String HTTP_STATUS_CODE_DATA_KEY = "status";
+
+	/** User event data key for HTTP response data. */
+	String HTTP_RESPONSE_BODY_DATA_KEY = "responseBody";
+
+	/** User event data keyf or HTTP response data length. */
+	String HTTP_RESPONSE_BODY_LENGTH_DATA_KEY = "responseLength";
+
 }

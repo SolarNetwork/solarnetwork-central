@@ -23,10 +23,14 @@
 package net.solarnetwork.central.reg.config;
 
 import static net.solarnetwork.central.user.config.SolarNetUserConfiguration.USER_INSTRUCTIONS;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
+import org.ehcache.spi.loaderwriter.CacheLoaderWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,7 +38,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.expression.Expression;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import net.solarnetwork.central.common.http.CachableRequestEntity;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.scheduler.ThreadPoolTaskExecutorPingTest;
+import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.domain.Result;
@@ -73,6 +79,48 @@ public class UserInstructionsConfig implements SolarNetUserConfiguration {
 	public PingTest userInstructionsExecutorPingTest(
 			@Qualifier(USER_INSTRUCTIONS) ThreadPoolTaskExecutor taskExecutor) {
 		return new ThreadPoolTaskExecutorPingTest(taskExecutor);
+	}
+
+	@Bean
+	@Qualifier(USER_INSTRUCTIONS)
+	public PrefixedTextEncryptor userInstructionsTextEncryptor(
+			@Value("${app.user-instr.encryptor.password}") String password,
+			@Value("${app.user-instr.encryptor.salt-hex}") String salt) {
+		return PrefixedTextEncryptor.aesTextEncryptor(password, salt);
+	}
+
+	@Bean
+	@Qualifier(USER_INSTRUCTIONS_LOCKS)
+	@ConfigurationProperties(prefix = "app.user-instr.cache.locks")
+	public CacheSettings userInstructionsLockCacheSettings() {
+		CacheSettings settings = new CacheSettings();
+		settings.setLoaderWriter(new CacheLoaderWriter<UserLongCompositePK, Lock>() {
+
+			@Override
+			public Lock load(UserLongCompositePK key) throws Exception {
+				// always return a new lock for any given (missing) key
+				return new ReentrantLock();
+			}
+
+			@Override
+			public void write(UserLongCompositePK key, Lock value) throws Exception {
+				// ignore
+			}
+
+			@Override
+			public void delete(UserLongCompositePK key) throws Exception {
+				// ignore
+			}
+		});
+		return settings;
+	}
+
+	@Bean
+	@Qualifier(USER_INSTRUCTIONS_LOCKS)
+	public Cache<UserLongCompositePK, Lock> userInstructionsLockCache(
+			@Qualifier(USER_INSTRUCTIONS_LOCKS) CacheSettings settings) {
+		return settings.createCache(cacheManager, UserLongCompositePK.class, Lock.class,
+				USER_INSTRUCTIONS_LOCKS + "-cache");
 	}
 
 	@Bean

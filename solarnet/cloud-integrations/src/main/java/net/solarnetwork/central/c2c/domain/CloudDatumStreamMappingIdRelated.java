@@ -1,7 +1,7 @@
 /* ==================================================================
- * FindObjectStreamMetadata.java - 1/05/2022 7:47:21 am
+ * CloudDatumStreamMappingIdRelated.java - 18/12/2025 8:59:20 am
  *
- * Copyright 2022 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,41 +20,32 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
-
-import java.util.UUID;
-import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.util.ObjectUtils;
+package net.solarnetwork.central.c2c.domain;
 
 /**
- * Generate dynamic SQL for a "find stream metadata IDs" query.
+ * API for objects related to an {@link CloudDatumStreamMappingConfiguration}
+ * entity by way of a configuration ID.
  *
  * @author matt
  * @version 1.0
- * @since 1.3
  */
-public final class FindObjectStreamMetadataIds implements SqlProvider {
+public interface CloudDatumStreamMappingIdRelated {
 
 	/**
-	 * The SQL for finding metadata ID values for a single stream ID.
+	 * Get the associated {@link CloudDatumStreamMappingConfiguration}
+	 * {@code configId}.
+	 *
+	 * @return the datum stream mapping ID
 	 */
-	public static final String FIND_METADATA_IDS_FOR_STREAM_ID;
-
-	static {
-		FIND_METADATA_IDS_FOR_STREAM_ID = "SELECT stream_id, obj_id, source_id, kind FROM solardatm.find_metadata_for_stream(?)";
-	}
+	Long getDatumStreamMappingId();
 
 	/**
-	 * Constructor.
+	 * Test if a datum stream mapping ID is available.
+	 *
+	 * @return {@code true} if a datum stream mapping ID is available
 	 */
-	public FindObjectStreamMetadataIds(UUID[] streamIds) {
-		super();
-		ObjectUtils.requireNonEmptyArgument(streamIds, "streamIds");
-	}
-
-	@Override
-	public String getSql() {
-		return FIND_METADATA_IDS_FOR_STREAM_ID;
+	default boolean hasDatumStreamMappingId() {
+		return (getDatumStreamMappingId() != null);
 	}
 
 }

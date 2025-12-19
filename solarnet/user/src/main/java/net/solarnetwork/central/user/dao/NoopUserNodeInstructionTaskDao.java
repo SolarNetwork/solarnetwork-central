@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.dao;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
@@ -43,11 +44,24 @@ public class NoopUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	/** A static shared instance. */
 	public static final UserNodeInstructionTaskDao INSTANCE = new NoopUserNodeInstructionTaskDao();
 
+	private final Map<UserLongCompositePK, UserNodeInstructionTaskEntity> data;
+
 	/**
 	 * Constructor.
 	 */
 	public NoopUserNodeInstructionTaskDao() {
+		this(null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param data
+	 *        optional data to use
+	 */
+	public NoopUserNodeInstructionTaskDao(Map<UserLongCompositePK, UserNodeInstructionTaskEntity> data) {
 		super();
+		this.data = data;
 	}
 
 	@Override
@@ -95,12 +109,12 @@ public class NoopUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 
 	@Override
 	public Collection<UserNodeInstructionTaskEntity> getAll(List<SortDescriptor> sorts) {
-		throw new UnsupportedOperationException();
+		return (data != null ? data.values() : List.of());
 	}
 
 	@Override
 	public UserNodeInstructionTaskEntity get(UserLongCompositePK id) {
-		throw new UnsupportedOperationException();
+		return (data != null ? data.get(id) : null);
 	}
 
 	@Override
@@ -111,11 +125,18 @@ public class NoopUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	@Override
 	public Collection<UserNodeInstructionTaskEntity> findAll(Long keyComponent1,
 			List<SortDescriptor> sorts) {
-		throw new UnsupportedOperationException();
+		return (data != null && keyComponent1 != null ? data.values().stream()
+				.filter(e -> e.hasId() && keyComponent1.equals(e.getId().keyComponent1())).toList()
+				: null);
 	}
 
 	@Override
 	public UserLongCompositePK create(Long keyComponent1, UserNodeInstructionTaskEntity entity) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public int updateEnabledStatus(Long userId, UserNodeInstructionTaskFilter filter, boolean enabled) {
 		throw new UnsupportedOperationException();
 	}
 

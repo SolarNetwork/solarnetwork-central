@@ -32,6 +32,7 @@ import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import java.math.BigDecimal;
@@ -462,8 +463,8 @@ public class DatumExpressionRootTests {
 				{"yee":"haw"}
 				""", JsonNode.class);
 		final var httpRes = new Result<>(res);
-		given(httpOperations.httpGet(eq(uri), eq(params), eq(headers), eq(JsonNode.class), eq(userId)))
-				.willReturn(httpRes);
+		given(httpOperations.httpGet(eq(uri), eq(params), eq(headers), eq(JsonNode.class), eq(userId),
+				any())).willReturn(httpRes);
 
 		// WHEN
 		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);

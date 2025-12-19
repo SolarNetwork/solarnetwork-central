@@ -29,6 +29,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingRelated;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.dao.BaseUserRelatedStdInput;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -37,11 +38,12 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * DTO for cloud datum stream mapping configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudDatumStreamMappingConfigurationInput extends
 		BaseUserRelatedStdInput<CloudDatumStreamMappingConfiguration, UserLongCompositePK> implements
-		CloudIntegrationsConfigurationInput<CloudDatumStreamMappingConfiguration, UserLongCompositePK> {
+		CloudIntegrationsConfigurationInput<CloudDatumStreamMappingConfiguration, UserLongCompositePK>,
+		CloudDatumStreamMappingRelated {
 
 	@NotNull
 	@NotBlank

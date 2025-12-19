@@ -111,14 +111,14 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 
 	@Override
 	public <I, O> ResponseEntity<O> http(HttpMethod method, URI uri, HttpHeaders headers, I body,
-			Class<O> responseType, Object context) {
-		return restOpsHelper.http(method, uri, headers, body, responseType, context);
+			Class<O> responseType, Object context, Map<String, ?> runtimeData) {
+		return restOpsHelper.http(method, uri, headers, body, responseType, context, runtimeData);
 	}
 
 	@Override
 	public <O> Result<O> httpGet(String uri, Map<String, ?> parameters, Map<String, ?> headers,
-			Class<O> responseType, Object context) {
-		return restOpsHelper.httpGet(uri, parameters, headers, responseType, context);
+			Class<O> responseType, Object context, Map<String, ?> runtimeData) {
+		return restOpsHelper.httpGet(uri, parameters, headers, responseType, context, runtimeData);
 	}
 
 	/**

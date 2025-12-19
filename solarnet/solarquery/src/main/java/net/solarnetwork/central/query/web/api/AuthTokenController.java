@@ -37,6 +37,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
@@ -48,7 +50,7 @@ import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
  * REST controller for authorization token API.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @RestController("v1AuthTokenController")
 @RequestMapping(value = "/api/v1/sec/auth-tokens")
@@ -84,7 +86,12 @@ public class AuthTokenController {
 	@ResponseBody
 	@RequestMapping(value = "/refresh/v2", method = RequestMethod.GET)
 	public Result<Map<String, ?>> refreshV2(@RequestParam("date") LocalDate signDate) {
-		SecurityToken actor = SecurityUtils.getCurrentToken();
+		final SecurityToken actor = SecurityUtils.getCurrentToken();
+		if ( actor.getPolicy() != null && actor.getPolicy().getRefreshAllowed() != null
+				&& !actor.getPolicy().getRefreshAllowed() ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, actor.getToken());
+		}
+
 		Instant date = signDate.atStartOfDay(ZoneOffset.UTC).toInstant();
 		if ( date.isAfter(Instant.now()) ) {
 			throw new IllegalArgumentException("date parameter cannot be in the future");

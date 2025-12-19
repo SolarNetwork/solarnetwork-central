@@ -28,6 +28,7 @@ import java.time.Instant;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingRelated;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.dao.BaseUserRelatedStdInput;
@@ -38,12 +39,13 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
  * DTO for cloud datum stream property configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudDatumStreamPropertyConfigurationInput extends
 		BaseUserRelatedStdInput<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK>
 		implements
-		CloudIntegrationsConfigurationInput<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK> {
+		CloudIntegrationsConfigurationInput<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK>,
+		CloudDatumStreamMappingRelated {
 
 	@NotNull
 	private DatumSamplesType propertyType;

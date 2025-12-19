@@ -64,6 +64,13 @@ public interface SolarNetUserConfiguration {
 	String USER_INSTRUCTIONS_HTTP = "user-instr-http";
 
 	/**
+	 * A qualifier for user instructions locks.
+	 *
+	 * @since 1.3
+	 */
+	String USER_INSTRUCTIONS_LOCKS = "user-instr-locks";
+
+	/**
 	 * A qualifier for user metadata.
 	 * 
 	 * @since 1.3

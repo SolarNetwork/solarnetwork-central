@@ -201,7 +201,7 @@ public class UserCloudIntegrationsController {
 	}
 
 	@RequestMapping(value = "/settings", method = RequestMethod.DELETE)
-	public Result<UserSettingsEntity> deleteUserSettings() {
+	public Result<Void> deleteUserSettings() {
 		final UserCloudIntegrationsBiz biz = biz();
 		biz.deleteSettings(getCurrentActorUserId());
 		return success();

@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.domain;
+package net.solarnetwork.central.domain;
 
 import java.io.Serial;
 import java.util.Objects;

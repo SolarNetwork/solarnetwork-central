@@ -917,7 +917,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 		if ( httpOperations == null ) {
 			return Result.error("DXR.00001", "HTTP not supported");
 		}
-		Result<JsonNode> res = httpOperations.httpGet(uri, parameters, headers, JsonNode.class, userId);
+		Result<JsonNode> res = httpOperations.httpGet(uri, parameters, headers, JsonNode.class, userId,
+				null);
 		if ( res == null ) {
 			return Result.error();
 		}

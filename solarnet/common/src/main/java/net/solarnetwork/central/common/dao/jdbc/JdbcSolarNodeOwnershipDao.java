@@ -22,34 +22,70 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import javax.cache.Cache;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.SelectSolarNodeOwnership;
 import net.solarnetwork.central.common.dao.jdbc.sql.SelectUserAuthTokenNodes;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 
 /**
  * JDBC implementation of {@link SolarNodeOwnershipDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 
+	/**
+	 * The SQL for finding metadata ID values for a single stream ID.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String FIND_METADATA_IDS_FOR_STREAM_ID = """
+			SELECT stream_id, obj_id, source_id, kind
+			FROM solardatm.find_metadata_for_stream(?)
+			""";
+
 	private final JdbcOperations jdbcOps;
 	private Cache<Long, SolarNodeOwnership> nodeOwnershipCache;
+	private Cache<UUID, ObjectDatumStreamMetadataId> streamMetadataIdCache;
+
+	/**
+	 * Metadata ID provider implementation that returns an empty map.
+	 * 
+	 * @param streamIds
+	 *        the stream IDs (unused)
+	 * @return an empty map
+	 */
+	public static Map<UUID, ObjectDatumStreamMetadataId> emptyMetadataIdProvider(UUID... streamIds) {
+		return Map.of();
+	}
 
 	/**
 	 * Constructor.
 	 *
 	 * @param jdbcOps
 	 *        the JDBC operations to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public JdbcSolarNodeOwnershipDao(JdbcOperations jdbcOps) {
 		super();
-		this.jdbcOps = jdbcOps;
+		this.jdbcOps = requireNonNullArgument(jdbcOps, "jdbcOps");
 	}
 
 	@Override
@@ -102,6 +138,54 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 		return results.toArray(Long[]::new);
 	}
 
+	@Override
+	public Map<UUID, ObjectDatumStreamMetadataId> getDatumStreamMetadataIds(UUID... streamIds) {
+		if ( streamIds == null || streamIds.length < 1 ) {
+			return Collections.emptyMap();
+		}
+
+		final Map<UUID, ObjectDatumStreamMetadataId> result = new LinkedHashMap<>(streamIds.length);
+		final List<UUID> queryList = (streamMetadataIdCache != null ? new ArrayList<>(streamIds.length)
+				: Arrays.asList(streamIds));
+		if ( streamMetadataIdCache != null ) {
+			for ( UUID streamId : streamIds ) {
+				ObjectDatumStreamMetadataId id = streamMetadataIdCache.get(streamId);
+				if ( id != null ) {
+					result.put(streamId, id);
+				} else {
+					queryList.add(streamId);
+				}
+			}
+		}
+
+		if ( queryList.isEmpty() ) {
+			return Collections.unmodifiableMap(result);
+		}
+
+		jdbcOps.execute((ConnectionCallback<Void>) con -> {
+
+			try (PreparedStatement stmt = con.prepareStatement(FIND_METADATA_IDS_FOR_STREAM_ID)) {
+				int resultNum = 0;
+				for ( UUID streamId : queryList ) {
+					stmt.setObject(1, streamId, Types.OTHER);
+					try (ResultSet rs = stmt.executeQuery()) {
+						if ( rs.next() ) {
+							ObjectDatumStreamMetadataId id = ObjectDatumStreamMetadataIdRowMapper.INSTANCE
+									.mapRow(rs, ++resultNum);
+							result.put(streamId, id);
+							if ( streamMetadataIdCache != null ) {
+								streamMetadataIdCache.put(streamId, id);
+							}
+						}
+					}
+				}
+			}
+
+			return null;
+		});
+		return Collections.unmodifiableMap(result);
+	}
+
 	/**
 	 * Get the JDBC operations.
 	 *
@@ -126,8 +210,30 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 	 * @param nodeOwnershipCache
 	 *        the cache to set
 	 */
-	public void setUserNodeCache(Cache<Long, SolarNodeOwnership> nodeOwnershipCache) {
+	public void setNodeOwnershipCache(Cache<Long, SolarNodeOwnership> nodeOwnershipCache) {
 		this.nodeOwnershipCache = nodeOwnershipCache;
+	}
+
+	/**
+	 * Get the stream metadata ID cache.
+	 *
+	 * @return the cache, or {@literal null}
+	 * @since 1.1
+	 */
+	public Cache<UUID, ObjectDatumStreamMetadataId> getStreamMetadataIdCache() {
+		return streamMetadataIdCache;
+	}
+
+	/**
+	 * Set the stream metadata ID cache.
+	 *
+	 * @param streamMetadataIdCache
+	 *        the cache to set
+	 * @since 1.1
+	 */
+	public void setStreamMetadataIdCache(
+			Cache<UUID, ObjectDatumStreamMetadataId> streamMetadataIdCache) {
+		this.streamMetadataIdCache = streamMetadataIdCache;
 	}
 
 }

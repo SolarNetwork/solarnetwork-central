@@ -40,7 +40,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
  * Support for SELECT for {@link CloudDatumStreamSettingsEntity} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class SelectCloudDatumStreamSettingsEntity
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -169,6 +169,12 @@ public final class SelectCloudDatumStreamSettingsEntity
 						, cdss.pub_flux
 					FROM solardin.cin_datum_stream_settings cdss
 					""");
+			if ( filter.hasNodeCriteria() ) {
+				buf.append("""
+						INNER JOIN solardin.cin_datum_stream cds ON cds.user_id = cdss.user_id
+							AND cds.kind = 'n' AND cds.id = cdss.ds_id
+						""");
+			}
 		}
 	}
 
@@ -183,6 +189,9 @@ public final class SelectCloudDatumStreamSettingsEntity
 		}
 		if ( filter.hasDatumStreamCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getDatumStreamIds(), "cdss.ds_id", where);
+		}
+		if ( filter.hasNodeCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getNodeIds(), "cds.obj_id", where);
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -214,6 +223,8 @@ public final class SelectCloudDatumStreamSettingsEntity
 		}
 		if ( resolveUserSettings ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
+		} else if ( filter.hasNodeCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());
 		}
 		return p;
 	}

@@ -113,7 +113,7 @@ public class BasicHttpOperationsTests implements HttpUserEvents {
 		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
-		Result<String> result = ops.httpGet(url, null, null, String.class, userId);
+		Result<String> result = ops.httpGet(url, null, null, String.class, userId, null);
 
 		// THEN
 		// @formatter:off
@@ -134,7 +134,9 @@ public class BasicHttpOperationsTests implements HttpUserEvents {
 			.as("Event data values")
 			.containsExactlyInAnyOrderEntriesOf(Map.of(
 						HTTP_METHOD_DATA_KEY, HttpMethod.GET.toString(),
-						HTTP_URI_DATA_KEY, url
+						HTTP_URI_DATA_KEY, url,
+						HTTP_STATUS_CODE_DATA_KEY, 200,
+						HTTP_RESPONSE_BODY_DATA_KEY, res.getBody()
 					))
 			;
 		then(userEventAppenderBiz).shouldHaveNoMoreInteractions();
@@ -160,7 +162,7 @@ public class BasicHttpOperationsTests implements HttpUserEvents {
 		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
-		Result<String> result = ops.httpGet(url, null, null, String.class, userId);
+		Result<String> result = ops.httpGet(url, null, null, String.class, userId, null);
 
 		// THEN
 		// @formatter:off
@@ -196,8 +198,8 @@ public class BasicHttpOperationsTests implements HttpUserEvents {
 		given(restOps.exchange(any(), eq(String.class))).willReturn(res);
 
 		// WHEN
-		Result<String> result = ops.httpGet(url, null, null, String.class, userId); // cache miss
-		Result<String> result2 = ops.httpGet(url, null, null, String.class, userId); // should be cache hit
+		Result<String> result = ops.httpGet(url, null, null, String.class, userId, null); // cache miss
+		Result<String> result2 = ops.httpGet(url, null, null, String.class, userId, null); // should be cache hit
 
 		// THEN
 		// @formatter:off

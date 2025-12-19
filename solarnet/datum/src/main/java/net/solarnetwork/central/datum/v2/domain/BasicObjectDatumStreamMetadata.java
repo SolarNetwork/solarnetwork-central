@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.Arrays;
 import java.util.UUID;
+import net.solarnetwork.central.domain.ObjectDatumIdRelated;
 import net.solarnetwork.domain.BasicLocation;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -35,11 +36,11 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Basic implementation of {@link ObjectDatumStreamMetadata}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
-		implements ObjectDatumStreamMetadata {
+		implements ObjectDatumStreamMetadata, ObjectDatumIdRelated {
 
 	@Serial
 	private static final long serialVersionUID = -4093896601567626604L;

@@ -23,18 +23,19 @@
 package net.solarnetwork.central.test;
 
 import static java.util.stream.Collectors.joining;
-import java.security.SecureRandom;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.PreparedStatementCallback;
 
 /**
  * Common DB test utilities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class CommonDbTestUtils {
 
@@ -52,7 +53,7 @@ public final class CommonDbTestUtils {
 	 * @return the assigned user ID
 	 */
 	public static Long insertUser(JdbcOperations jdbcTemplate) {
-		Long newId = new SecureRandom().nextLong();
+		Long newId = randomLong();
 		insertUser(jdbcTemplate, newId, String.format("test%d@localhost", newId), "password",
 				String.format("Test User %d", newId));
 		return newId;
@@ -70,7 +71,7 @@ public final class CommonDbTestUtils {
 	 * @return the assigned user ID
 	 */
 	public static Long insertUser(JdbcOperations jdbcTemplate, String username) {
-		Long newId = new SecureRandom().nextLong();
+		Long newId = randomLong();
 		insertUser(jdbcTemplate, newId, username, "password", String.format("Test User %d", newId));
 		return newId;
 	}
@@ -177,6 +178,33 @@ public final class CommonDbTestUtils {
 	 *        the owner user ID
 	 * @param status
 	 *        the status, i.e.
+	 *        {@code net.solarnetwork.central.security.SecurityTokenStatus}
+	 * @param type
+	 *        the type, i.e.
+	 *        {@code  net.solarnetwork.central.security.SecurityTokenType}
+	 * @param policy
+	 *        the policy
+	 * @since 1.2
+	 */
+	public static void insertSecurityToken(JdbcOperations jdbcTemplate, String tokenId,
+			String tokenSecret, Long userId, Enum<?> status, Enum<?> type, String policy) {
+		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, status.name(), type.name(),
+				policy);
+	}
+
+	/**
+	 * Insert a security token.
+	 *
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param tokenId
+	 *        the token ID
+	 * @param tokenSecret
+	 *        the token secret
+	 * @param userId
+	 *        the owner user ID
+	 * @param status
+	 *        the status, i.e.
 	 *        {@code net.solarnetwork.central.security.SecurityTokenStatus.name()}
 	 * @param type
 	 *        the type, i.e.
@@ -204,7 +232,7 @@ public final class CommonDbTestUtils {
 	 * @return the assigned ID
 	 */
 	public static Long insertLocation(JdbcOperations jdbcTemplate, String country, String timeZoneId) {
-		Long newId = new SecureRandom().nextLong();
+		Long newId = randomLong();
 		insertLocation(jdbcTemplate, newId, country, timeZoneId);
 		return newId;
 	}
@@ -255,7 +283,7 @@ public final class CommonDbTestUtils {
 	 * @return the assigned ID
 	 */
 	public static Long insertNode(JdbcOperations jdbcTemplate, Long locationId) {
-		Long newId = new SecureRandom().nextLong();
+		Long newId = randomLong();
 		insertNode(jdbcTemplate, newId, locationId);
 		return newId;
 	}
@@ -294,6 +322,31 @@ public final class CommonDbTestUtils {
 		log.debug("%s table has {} items: [{}]".formatted(table), data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
+	}
+
+	/**
+	 * Insert roles for a given user ID.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param userId
+	 *        the user ID
+	 * @param roles
+	 *        the roles to insert
+	 * @since 1.2
+	 */
+	public static void insertUserRoles(JdbcOperations jdbcOps, Long userId, String... roles) {
+		jdbcOps.execute("""
+				INSERT INTO solaruser.user_role (user_id, role_name)
+				VALUES (?,?)
+				""", (PreparedStatementCallback<Void>) ps -> {
+			ps.setObject(1, userId);
+			for ( String role : roles ) {
+				ps.setString(2, role);
+				ps.executeUpdate();
+			}
+			return null;
+		});
 	}
 
 }

@@ -32,7 +32,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of {@link UserMetadataFilter}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicUserMetadataFilter extends BasicCoreCriteria implements UserMetadataFilter {
 
@@ -85,6 +85,15 @@ public class BasicUserMetadataFilter extends BasicCoreCriteria implements UserMe
 			return false;
 		}
 		return Arrays.equals(tags, other.tags);
+	}
+
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (tags != null && tags.length > 0)
+				;
+		// @formatter:on
 	}
 
 	@Override

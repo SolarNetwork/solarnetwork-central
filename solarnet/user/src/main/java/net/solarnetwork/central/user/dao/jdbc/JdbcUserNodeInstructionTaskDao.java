@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
+import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.dao.BasicUserNodeInstructionTaskFilter;
@@ -108,7 +109,7 @@ public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 			UserNodeInstructionTaskFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectUserNodeInstructionTaskEntity(filter);
-		return executeFilterQuery(jdbcOps, filter, sql, UserInstructionTaskEntityRowMapper.INSTANCE);
+		return executeFilterQuery(jdbcOps, filter, sql, UserNodeInstructionTaskEntityRowMapper.INSTANCE);
 	}
 
 	@Override
@@ -117,7 +118,7 @@ public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectUserNodeInstructionTaskEntity(filter);
 		var results = executeFilterQuery(jdbcOps, filter, sql,
-				UserInstructionTaskEntityRowMapper.INSTANCE);
+				UserNodeInstructionTaskEntityRowMapper.INSTANCE);
 		return stream(results.spliterator(), false).toList();
 	}
 
@@ -126,8 +127,8 @@ public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 		if ( !entity.getId().entityIdIsAssigned() ) {
 			return create(entity.getId().getUserId(), entity);
 		}
-		final UpdateUserNodeInstructionTaskEntity sql = new UpdateUserNodeInstructionTaskEntity(entity.getId(),
-				entity);
+		final UpdateUserNodeInstructionTaskEntity sql = new UpdateUserNodeInstructionTaskEntity(
+				entity.getId(), entity);
 		int count = jdbcOps.update(sql);
 		return (count > 0 ? entity.getId() : null);
 	}
@@ -140,7 +141,7 @@ public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 		filter.setTaskId(requireNonNullArgument(id.getEntityId(), "id.entityId"));
 		var sql = new SelectUserNodeInstructionTaskEntity(filter);
 		var results = executeFilterQuery(jdbcOps, filter, sql,
-				UserInstructionTaskEntityRowMapper.INSTANCE);
+				UserNodeInstructionTaskEntityRowMapper.INSTANCE);
 		return stream(results.spliterator(), false).findFirst().orElse(null);
 	}
 
@@ -148,7 +149,7 @@ public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	public Collection<UserNodeInstructionTaskEntity> getAll(List<SortDescriptor> sorts) {
 		var filter = new BasicUserNodeInstructionTaskFilter();
 		var sql = new SelectUserNodeInstructionTaskEntity(filter);
-		return jdbcOps.query(sql, UserInstructionTaskEntityRowMapper.INSTANCE);
+		return jdbcOps.query(sql, UserNodeInstructionTaskEntityRowMapper.INSTANCE);
 	}
 
 	@Override
@@ -172,7 +173,7 @@ public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 				try (var rs = cs.getResultSet()) {
 					if ( rs != null ) {
 						if ( rs.next() ) {
-							return UserInstructionTaskEntityRowMapper.INSTANCE.mapRow(rs, 1);
+							return UserNodeInstructionTaskEntityRowMapper.INSTANCE.mapRow(rs, 1);
 						}
 					}
 				}
@@ -196,7 +197,8 @@ public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	}
 
 	@Override
-	public boolean updateTask(UserNodeInstructionTaskEntity info, BasicClaimableJobState... expectedStates) {
+	public boolean updateTask(UserNodeInstructionTaskEntity info,
+			BasicClaimableJobState... expectedStates) {
 		var filter = new BasicUserNodeInstructionTaskFilter();
 		filter.setUserId(info.getUserId());
 		filter.setTaskId(filter.getTaskId());
@@ -213,6 +215,19 @@ public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 				BasicClaimableJobState.Claimed });
 		filter.setEndDate(olderThan);
 		var sql = new UpdateUserNodeInstructionTaskEntityState(BasicClaimableJobState.Queued, filter);
+		return jdbcOps.update(sql);
+	}
+
+	private static final String TABLE_NAME = "solaruser.user_node_instr_task";
+	private static final String ID_COLUMN_NAME = "id";
+	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", ID_COLUMN_NAME };
+
+	@Override
+	public int updateEnabledStatus(Long userId, UserNodeInstructionTaskFilter filter, boolean enabled) {
+		UserLongCompositePK key = filter != null && filter.hasTaskCriteria()
+				? new UserLongCompositePK(userId, filter.getTaskId())
+				: UserLongCompositePK.unassignedEntityIdKey(userId);
+		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled, true);
 		return jdbcOps.update(sql);
 	}
 

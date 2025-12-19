@@ -32,7 +32,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of {@link UserSecretFilter}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicUserSecretFilter extends BasicCoreCriteria
 		implements UserSecretFilter, UserKeyPairFilter {
@@ -99,6 +99,16 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	@Override
 	public BasicUserSecretFilter clone() {
 		return (BasicUserSecretFilter) super.clone();
+	}
+
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (keys != null && keys.length > 0)
+				|| (topics != null && topics.length > 0)
+				;
+		// @formatter:on
 	}
 
 	/**

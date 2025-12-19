@@ -763,4 +763,120 @@ public class JdbcUserNodeInstructionTaskDaoTests extends AbstractJUnit5JdbcDaoTe
 		// @formatter:on
 	}
 
+	@Test
+	public void updateEnabledStatus_forUser() {
+		// GIVEN
+		final int userCount = 2;
+		final int taskCount = 2;
+		final List<UserNodeInstructionTaskEntity> confs = new ArrayList<>(userCount * taskCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			final Long locId = CommonDbTestUtils.insertLocation(jdbcTemplate, "GB", "UTC");
+			final Long nodeId = CommonDbTestUtils.insertNode(jdbcTemplate, locId);
+			CommonDbTestUtils.insertUserNode(jdbcTemplate, userId, nodeId);
+			for ( int t = 0; t < taskCount; t++ ) {
+				// @formatter:off
+				UserNodeInstructionTaskEntity entity = newUserNodeInstructionTaskEntity(
+						userId,
+						randomString(),
+						nodeId,
+						randomString(),
+						TEST_SCHEDULE,
+						BasicClaimableJobState.Queued,
+						now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+						null,
+						null,
+						null,
+						null
+						);
+				// @formatter:on
+				var pk = dao.save(entity);
+				confs.add(dao.get(pk));
+			}
+		}
+
+		// WHEN
+		final UserNodeInstructionTaskEntity randomConf = confs.get(RNG.nextInt(confs.size()));
+
+		int result = dao.updateEnabledStatus(randomConf.getUserId(), null, false);
+
+		// THEN
+		// @formatter:off
+		UserNodeInstructionTaskEntity[] expected = confs.stream()
+				.filter(e -> randomConf.getUserId().equals(e.getUserId()))
+				.toArray(UserNodeInstructionTaskEntity[]::new);
+		then(result).as("Updated state rows").isEqualTo(expected.length);
+
+		List<Boolean> data = allUserNodeInstructionTaskEntityData(jdbcTemplate)
+			.stream()
+			.filter(m -> userId.equals(m.get("user_id")))
+			.map(m -> (Boolean)m.get("enabled"))
+			.toList()
+			;
+		then(data)
+			.as("All tasks for user are disabled")
+			.allMatch(b -> b == false)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateEnabledStatus_forEntity() {
+		// GIVEN
+		final int userCount = 2;
+		final int taskCount = 2;
+		final List<UserNodeInstructionTaskEntity> confs = new ArrayList<>(userCount * taskCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			final Long locId = CommonDbTestUtils.insertLocation(jdbcTemplate, "GB", "UTC");
+			final Long nodeId = CommonDbTestUtils.insertNode(jdbcTemplate, locId);
+			CommonDbTestUtils.insertUserNode(jdbcTemplate, userId, nodeId);
+			for ( int t = 0; t < taskCount; t++ ) {
+				// @formatter:off
+				UserNodeInstructionTaskEntity entity = newUserNodeInstructionTaskEntity(
+						userId,
+						randomString(),
+						nodeId,
+						randomString(),
+						TEST_SCHEDULE,
+						BasicClaimableJobState.Queued,
+						now().truncatedTo(ChronoUnit.SECONDS).minus(1L, ChronoUnit.DAYS),
+						null,
+						null,
+						null,
+						null
+						);
+				// @formatter:on
+				var pk = dao.save(entity);
+				confs.add(dao.get(pk));
+			}
+		}
+
+		// WHEN
+		final UserNodeInstructionTaskEntity randomConf = confs.get(RNG.nextInt(confs.size()));
+		final var filter = new BasicUserNodeInstructionTaskFilter();
+		filter.setUserId(randomConf.getUserId());
+		filter.setTaskId(randomConf.getConfigId());
+
+		int result = dao.updateEnabledStatus(randomConf.getUserId(), filter, false);
+
+		// THEN
+		// @formatter:off
+		then(result).as("Updated state row").isEqualTo(1);
+		
+		List<Boolean> data = allUserNodeInstructionTaskEntityData(jdbcTemplate)
+			.stream()
+			.filter(m -> userId.equals(m.get("user_id")) && randomConf.getConfigId().equals(m.get("id")))
+			.map(m -> (Boolean)m.get("enabled"))
+			.toList()
+			;
+		then(data)
+			.as("All tasks for user are disabled")
+			.allMatch(b -> b == false)
+			;
+		// @formatter:on
+	}
+
 }

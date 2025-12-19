@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc;
+package net.solarnetwork.central.common.dao.jdbc;
 
 /**
  * The type of metadata to parse.

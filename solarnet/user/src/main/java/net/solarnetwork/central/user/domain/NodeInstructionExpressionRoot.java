@@ -88,6 +88,9 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	// a function to return decrypted user secrets based on a user ID and key
 	private final BiFunction<Long, String, byte[]> secretProvider;
 
+	// dynamic runtime data to pass to runtime services
+	private Map<String, Object> runtimeData;
+
 	/**
 	 * Constructor.
 	 *
@@ -509,7 +512,8 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 		if ( httpOperations == null ) {
 			return Result.error("IXR.00001", "HTTP not supported");
 		}
-		Result<JsonNode> res = httpOperations.httpGet(uri, parameters, headers, JsonNode.class, owner);
+		Result<JsonNode> res = httpOperations.httpGet(uri, parameters, headers, JsonNode.class, owner,
+				runtimeData);
 		if ( res == null ) {
 			return Result.error();
 		}
@@ -773,6 +777,25 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 		Collection<Datum> result = datumStreamsAccessor.rangeMatching(streamMeta.getKind(),
 				streamMeta.getObjectId(), streamMeta.getSourceId(), from, to);
 		return result.stream().map(this::datumRoot).toList();
+	}
+
+	/**
+	 * Get the runtime data.
+	 * 
+	 * @return the data
+	 */
+	public Map<String, Object> getRuntimeData() {
+		return runtimeData;
+	}
+
+	/**
+	 * Set the runtime data.
+	 * 
+	 * @param runtimeData
+	 *        the data to set
+	 */
+	public void setRuntimeData(Map<String, Object> runtimeData) {
+		this.runtimeData = runtimeData;
 	}
 
 }
