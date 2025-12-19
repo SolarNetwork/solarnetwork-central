@@ -84,6 +84,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @author matt
  * @version 1.2
  */
+@SuppressWarnings("InlineFormatString")
 public class JdbcOAuth2AuthorizedClientService
 		implements OAuth2AuthorizedClientService, ClientAccessTokenDao {
 

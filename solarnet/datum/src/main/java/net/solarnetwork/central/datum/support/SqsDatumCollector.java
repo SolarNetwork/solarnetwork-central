@@ -111,7 +111,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLifecycleObserver {
 
@@ -757,7 +757,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 		private long sleep = readSleepMinMs;
 
 		private QueueReaderThread() {
-			super(String.format("QueueReader-" + READER_COUNTER.incrementAndGet()));
+			super("QueueReader-" + READER_COUNTER.incrementAndGet());
 		}
 
 		@Override
@@ -888,7 +888,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	private final class DatumWriterThread extends Thread {
 
 		private DatumWriterThread() {
-			super(String.format("DatumWriter-" + WRITER_COUNTER.incrementAndGet()));
+			super("DatumWriter-" + WRITER_COUNTER.incrementAndGet());
 		}
 
 		@Override
