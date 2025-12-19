@@ -306,8 +306,9 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			final BigDecimal[][] statValues) throws IOException {
 		for ( int i = 0; i < len; i++ ) {
 			BigDecimal[] sv = (statValues != null && statValues.length > i ? statValues[i] : null);
-			int arrayLen = (values != null ? values.length : 0);
-			if ( type == Instantaneous && values != null && values.length > i ) {
+			int arrayLen = (sv != null ? sv.length : 0);
+			if ( (type == Instantaneous || (!reading && type == Accumulating)) && values != null
+					&& values.length > i ) {
 				arrayLen++;
 			}
 			if ( arrayLen > 0 ) {
