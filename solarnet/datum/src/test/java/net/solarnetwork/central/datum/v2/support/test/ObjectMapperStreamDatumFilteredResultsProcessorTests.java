@@ -65,7 +65,7 @@ import net.solarnetwork.util.ByteUtils;
  * class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 
@@ -172,6 +172,50 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 				meta.getStreamId()) + "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
 				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],\"data\":["
 				+ "[0,[1651197060000,null],[1.23,10,1.0,2.0],[2.34,10,2.0,3.0],[3,100,130],\"foo\",\"wham\",\"bam\"]"
+				+ "]}"));
+	}
+
+	@Test
+	public void oneStream_aggregate_missingAccumulatingStats() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = nodeMeta(123L, "test/source", new String[] { "a", "b" },
+				new String[] { "c" }, new String[] { "d" });
+		ZonedDateTime start = LocalDateTime.of(2022, 4, 29, 13, 52)
+				.atZone(ZoneId.of("Pacific/Auckland"));
+
+		// @formatter:off
+		AggregateDatum d1 = new AggregateDatumEntity(meta.getStreamId(), start.minusMinutes(1).toInstant(),
+				Aggregation.Hour,
+				propertiesOf(
+						decimalArray("1.23", "2.34"),
+						decimalArray("3"),
+						new String[] {"foo"},
+						new String[] {"wham", "bam"}),
+				statisticsOf(new BigDecimal[][] {
+						decimalArray("10", "1.0", "2.0"),
+						decimalArray("10", "2.0", "3.0")
+					}, null
+				)
+			);
+		// @formatter:on
+
+		BasicObjectDatumStreamDataSet<StreamDatum> data = dataSet(asList(meta), asList(d1));
+
+		// WHEN
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try (ObjectMapperStreamDatumFilteredResultsProcessor processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
+				mapper.createGenerator(out), mapper.getSerializerProviderInstance(),
+				MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE))) {
+			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
+			processor.handleResultItem(d1);
+		}
+
+		// THEN
+		String json = out.toString(ByteUtils.UTF8);
+		assertThat("Aggregate JSON", json, is(format("{\"success\":true,\"meta\":[{\"streamId\":\"%s\",",
+				meta.getStreamId()) + "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
+				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],\"data\":["
+				+ "[0,[1651197060000,null],[1.23,10,1.0,2.0],[2.34,10,2.0,3.0],[3],\"foo\",\"wham\",\"bam\"]"
 				+ "]}"));
 	}
 
