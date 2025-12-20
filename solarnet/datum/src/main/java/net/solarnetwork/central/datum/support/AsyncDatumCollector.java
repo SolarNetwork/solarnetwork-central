@@ -88,7 +88,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 2.9
+ * @version 2.10
  * @deprecated since 2.9, use {@link SqsDatumCollector}
  */
 @Deprecated
@@ -98,21 +98,27 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		DatumWriteOnlyDao {
 
 	/** The {@code concurrency} property default value. */
+	@Deprecated
 	public static final int DEFAULT_CONCURRENCY = 2;
 
 	/** The {@code queueSize} property default value. */
+	@Deprecated
 	public static final int DEFAULT_QUEUE_SIZE = 200;
 
 	/** The {@code shutdownWaitSecs} default value. */
+	@Deprecated
 	public static final int DEFAULT_SHUTDOWN_WAIT_SECS = 30;
 
 	/** The {@code datumCacheRemovalAlertThreshold} default value. */
+	@Deprecated
 	public static final int DEFAULT_DATUM_CACHE_REMOVAL_ALERT_THRESHOLD = 500;
 
 	/** The {@code queueRefillThreshold} property default value. */
+	@Deprecated
 	public static final double DEFAULT_QUEUE_REFILL_THRESHOLD = 0.1;
 
 	/** The {@code queueRefillWaitMs} property default value. */
+	@Deprecated
 	public static final long DEFAULT_QUEUE_REFILL_WAIT_MS = 20L;
 
 	/** Basic counted fields. */
@@ -196,6 +202,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 * @param transactionTemplate
 	 *        the transaction template
 	 */
+	@Deprecated
 	public AsyncDatumCollector(Cache<Serializable, Serializable> datumCache, DatumWriteOnlyDao datumDao,
 			TransactionTemplate transactionTemplate) {
 		this(datumCache, datumDao, transactionTemplate,
@@ -216,6 +223,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
+	@Deprecated
 	public AsyncDatumCollector(Cache<Serializable, Serializable> datumCache, DatumWriteOnlyDao datumDao,
 			TransactionTemplate transactionTemplate, StatTracker stats) {
 		super();
@@ -234,6 +242,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	/**
 	 * Call after configured to start up processing.
 	 */
+	@Deprecated
 	@Override
 	public synchronized void serviceDidStartup() {
 		final int threadCount = getConcurrency();
@@ -257,6 +266,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	/**
 	 * Call when no longer needed.
 	 */
+	@Deprecated
 	@Override
 	public synchronized void serviceDidShutdown() {
 		doShutdown();
@@ -279,6 +289,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	/**
 	 * Shutdown and wait for all threads to finish.
 	 */
+	@Deprecated
 	public synchronized void shutdownAndWait() {
 		doShutdown();
 		if ( datumThreads != null ) {
@@ -296,21 +307,25 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		datumThreads = null;
 	}
 
+	@Deprecated
 	@Override
 	public String getPingTestId() {
 		return getClass().getName();
 	}
 
+	@Deprecated
 	@Override
 	public String getPingTestName() {
 		return "Async DAO Datum Collector";
 	}
 
+	@Deprecated
 	@Override
 	public long getPingTestMaximumExecutionMilliseconds() {
 		return 1000;
 	}
 
+	@Deprecated
 	@Override
 	public Result performPingTest() throws Exception {
 		// verify buffer removals not lagging behind additions
@@ -335,6 +350,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 				addCount, workers != null ? workers.length : 0, lagDiff), statMap);
 	}
 
+	@Deprecated
 	@Override
 	public DatumPK persist(GeneralObjectDatum<? extends GeneralObjectDatumKey> entity) {
 		GeneralObjectDatumKey id = requireNonNullArgument(entity.getId(), "entity.id");
@@ -344,6 +360,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 				null);
 	}
 
+	@Deprecated
 	@Override
 	public DatumPK store(net.solarnetwork.domain.datum.Datum datum) {
 		if ( datum == null || datum.getObjectId() == null || datum.getSourceId() == null ) {
@@ -353,6 +370,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		return persist(d);
 	}
 
+	@Deprecated
 	@Override
 	public DatumPK store(StreamDatum datum) {
 		DatumPK id = switch (datum) {
@@ -369,7 +387,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	private final class DatumWriterThread extends Thread {
 
 		private DatumWriterThread() {
-			super(String.format("DatumWriter-" + COUNTER.incrementAndGet()));
+			super("DatumWriter-" + COUNTER.incrementAndGet());
 		}
 
 		@Override
@@ -462,10 +480,12 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *
 	 * @return the number of threads
 	 */
+	@Deprecated
 	public int getConcurrency() {
 		return concurrency;
 	}
 
+	@Deprecated
 	@Override
 	public void onCreated(
 			Iterable<CacheEntryEvent<? extends Serializable, ? extends Serializable>> events)
@@ -487,6 +507,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		}
 	}
 
+	@Deprecated
 	@Override
 	public void onUpdated(
 			Iterable<CacheEntryEvent<? extends Serializable, ? extends Serializable>> events)
@@ -499,6 +520,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		}
 	}
 
+	@Deprecated
 	@Override
 	public void onRemoved(
 			Iterable<CacheEntryEvent<? extends Serializable, ? extends Serializable>> events)
@@ -525,6 +547,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *        the number of threads; anything less than {@literal 1} will be
 	 *        treated as {@literal 1}
 	 */
+	@Deprecated
 	public void setConcurrency(int concurrency) {
 		if ( concurrency < 1 ) {
 			concurrency = 1;
@@ -537,6 +560,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *
 	 * @return the cache
 	 */
+	@Deprecated
 	public Cache<Serializable, Serializable> getDatumCache() {
 		return datumCache;
 	}
@@ -546,6 +570,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *
 	 * @return the configured handler
 	 */
+	@Deprecated
 	public UncaughtExceptionHandler getExceptionHandler() {
 		return exceptionHandler;
 	}
@@ -556,6 +581,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 * @param exceptionHandler
 	 *        the handler to use
 	 */
+	@Deprecated
 	public void setExceptionHandler(UncaughtExceptionHandler exceptionHandler) {
 		this.exceptionHandler = exceptionHandler;
 	}
@@ -565,6 +591,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *
 	 * @return the queue size
 	 */
+	@Deprecated
 	public int getQueueSize() {
 		return queueSize;
 	}
@@ -576,6 +603,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *        the queue size; anything less than {@literal 1} will be treated as
 	 *        {@literal 1}
 	 */
+	@Deprecated
 	public void setQueueSize(int queueSize) {
 		if ( queueSize < 1 ) {
 			queueSize = 1;
@@ -596,6 +624,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *         {@link #DEFAULT_QUEUE_REFILL_THRESHOLD}
 	 * @since 2.4
 	 */
+	@Deprecated
 	public double getQueueRefillThreshold() {
 		return queueRefillThreshold;
 	}
@@ -608,6 +637,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *        the threshold to set
 	 * @since 2.4
 	 */
+	@Deprecated
 	public void setQueueRefillThreshold(double queueRefillThreshold) {
 		this.queueRefillThreshold = queueRefillThreshold;
 		setupQueueRefillSize(queueSize, queueRefillThreshold);
@@ -619,6 +649,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *
 	 * @return the wait secs
 	 */
+	@Deprecated
 	public int getShutdownWaitSecs() {
 		return shutdownWaitSecs;
 	}
@@ -631,6 +662,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *        the wait secs; anything less than {@literal 0} will be treated as
 	 *        {@literal 0}
 	 */
+	@Deprecated
 	public void setShutdownWaitSecs(int shutdownWaitSecs) {
 		if ( shutdownWaitSecs < 0 ) {
 			shutdownWaitSecs = 0;
@@ -643,6 +675,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *
 	 * @return the threshold
 	 */
+	@Deprecated
 	public int getDatumCacheRemovalAlertThreshold() {
 		return datumCacheRemovalAlertThreshold;
 	}
@@ -662,6 +695,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 * @param datumCacheRemovalAlertThreshold
 	 *        the threshold to set
 	 */
+	@Deprecated
 	public void setDatumCacheRemovalAlertThreshold(int datumCacheRemovalAlertThreshold) {
 		this.datumCacheRemovalAlertThreshold = datumCacheRemovalAlertThreshold;
 	}
@@ -674,6 +708,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *         {@link #DEFAULT_QUEUE_REFILL_WAIT_MS}
 	 * @since 2.7
 	 */
+	@Deprecated
 	public long getQueueRefillWaitMs() {
 		return queueRefillWaitMs;
 	}
@@ -688,6 +723,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *         if {@code queueRefillWaitMs} is less than 0
 	 * @since 2.7
 	 */
+	@Deprecated
 	public void setQueueRefillWaitMs(long queueRefillWaitMs) {
 		if ( queueRefillWaitMs < 0 ) {
 			throw new IllegalArgumentException("The queueRefillWaitMs value must be 0 or more.");

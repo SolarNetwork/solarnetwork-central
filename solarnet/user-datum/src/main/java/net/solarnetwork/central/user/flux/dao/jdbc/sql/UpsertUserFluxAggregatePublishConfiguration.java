@@ -43,6 +43,7 @@ import net.solarnetwork.central.user.flux.domain.UserFluxAggregatePublishConfigu
 public final class UpsertUserFluxAggregatePublishConfiguration
 		implements PreparedStatementCreator, SqlProvider {
 
+	@SuppressWarnings("InlineFormatString")
 	private static final String SQL = """
 			INSERT INTO solaruser.user_flux_agg_pub_settings (
 				created,modified,user_id%s,node_ids,source_ids,publish,retain

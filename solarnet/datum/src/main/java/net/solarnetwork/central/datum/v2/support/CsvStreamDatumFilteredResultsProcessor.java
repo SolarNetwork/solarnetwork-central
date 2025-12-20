@@ -167,7 +167,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * }</pre>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.11
  */
 public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilteredResultsProcessor {
@@ -217,12 +217,6 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 		metadataProvider = (ObjectDatumStreamMetadataProvider) attributes.get(METADATA_PROVIDER_ATTR);
 	}
 
-	private static final String COUNT_FORMAT = "%s_count";
-	private static final String MIN_FORMAT = "%s_min";
-	private static final String MAX_FORMAT = "%s_max";
-	private static final String START_FORMAT = "%s_start";
-	private static final String END_FORMAT = "%s_end";
-
 	@Override
 	public void handleResultItem(StreamDatum resultItem) throws IOException {
 		if ( metadataProvider == null ) {
@@ -249,11 +243,11 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 								if ( streamColumnIndexes.putIfAbsent(propName, colIndex) == null ) {
 									colIndex += 1;
 									if ( agg ) {
-										streamColumnIndexes.put(COUNT_FORMAT.formatted(propName),
+										streamColumnIndexes.put("%s_count".formatted(propName),
 												colIndex++);
-										streamColumnIndexes.put(MIN_FORMAT.formatted(propName),
+										streamColumnIndexes.put("%s_min".formatted(propName),
 												colIndex++);
-										streamColumnIndexes.put(MAX_FORMAT.formatted(propName),
+										streamColumnIndexes.put("%s_max".formatted(propName),
 												colIndex++);
 									}
 								}
@@ -265,9 +259,9 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 								if ( streamColumnIndexes.putIfAbsent(propName, colIndex) == null ) {
 									colIndex += 1;
 									if ( agg ) {
-										streamColumnIndexes.put(START_FORMAT.formatted(propName),
+										streamColumnIndexes.put("%s_start".formatted(propName),
 												colIndex++);
-										streamColumnIndexes.put(END_FORMAT.formatted(propName),
+										streamColumnIndexes.put("%s_end".formatted(propName),
 												colIndex++);
 									}
 								}

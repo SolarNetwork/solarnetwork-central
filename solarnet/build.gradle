@@ -128,18 +128,18 @@ subprojects {
 		]
 	}
 		
-	ext['netty.version'] = '4.2.6.Final'
-	ext['jackson-bom.version'] = '2.20.0'
+	ext['netty.version'] = '4.2.9.Final'
+	ext['jackson-bom.version'] = '2.20.1'
 
 	dependencies {
 		testImplementation libraries.hamcrest,
 				libraries.mockito,
 				libraries.mockitoJupiter,
 				libraries.easymock,
-				'net.javacrumbs.json-unit:json-unit-assertj:4.1.1',
+				'net.javacrumbs.json-unit:json-unit-assertj:5.1.0',
 				'org.junit.platform:junit-platform-launcher'
 		
-		errorprone 'com.google.errorprone:error_prone_core:2.42.0'
+		errorprone 'com.google.errorprone:error_prone_core:2.45.0'
 	}
 
 	configurations {
