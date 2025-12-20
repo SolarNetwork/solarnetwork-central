@@ -27,6 +27,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -54,7 +56,7 @@ import net.solarnetwork.util.CollectionUtils;
  * Security helper methods.
  *
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 public class SecurityUtils {
 
@@ -680,6 +682,78 @@ public class SecurityUtils {
 			}
 			return result;
 		});
+	}
+
+	/**
+	 * Verify an arbitrary list of node IDs against a policy.
+	 * 
+	 * <p>
+	 * If {@code nodeIds} is {@code null} or empty and {@code policy} defines a
+	 * set of allowed node IDs, the full list of policy node IDs will be
+	 * returned.
+	 * </p>
+	 *
+	 * @param nodeIds
+	 *        the node IDs to restrict according to the policy, or {@code null}
+	 * @param policy
+	 *        the policy to enforce, or {@code null}
+	 * @return the allowed node IDs
+	 * @throws AuthorizationException
+	 *         if {@code nodeIds} is not empty and no node IDs are allowed by
+	 *         the policy
+	 * @since 3.2
+	 */
+	public static Long[] restrictNodeIds(Long[] nodeIds, final SecurityPolicy policy) {
+		final Set<Long> policyNodeIds = (policy != null ? policy.getNodeIds() : null);
+		// verify source IDs
+		if ( policyNodeIds == null || policyNodeIds.isEmpty() ) {
+			return nodeIds;
+		}
+		if ( nodeIds != null && nodeIds.length > 0 ) {
+			// remove any node IDs not in the policy
+			Set<Long> nodeIdsSet = new LinkedHashSet<>(Arrays.asList(nodeIds));
+			for ( Iterator<Long> itr = nodeIdsSet.iterator(); itr.hasNext(); ) {
+				Long nodeId = itr.next();
+				if ( !policyNodeIds.contains(nodeId) ) {
+					itr.remove();
+				}
+			}
+			if ( nodeIdsSet.isEmpty() ) {
+				// gave node IDs but none allowed by policy, so throw exception
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
+						(nodeIds.length > 1 ? nodeIds : nodeIds[0]));
+			} else if ( nodeIdsSet.size() < nodeIds.length ) {
+				return nodeIdsSet.toArray(Long[]::new);
+			}
+		} else {
+			// no node IDs provided, set to policy node IDs
+			return policyNodeIds.toArray(Long[]::new);
+		}
+		return nodeIds;
+	}
+
+	/**
+	 * Test if a policy is unrestricted.
+	 * 
+	 * <p>
+	 * The {@code notAfter} property is not considered.
+	 * </p>
+	 * 
+	 * @param policy
+	 *        the policy to test; {@code null} will be treated as unrestricted
+	 * @return {@code true} if {@code policy} is {@code null} or has no
+	 *         restrictions
+	 * @since 3.2
+	 */
+	public static boolean policyIsUnrestricted(SecurityPolicy policy) {
+		if ( policy == null ) {
+			return true;
+		}
+		return policy.getAggregations() == null && policy.getApiPaths() == null
+				&& policy.getLocationPrecisions() == null && policy.getMinAggregation() == null
+				&& policy.getMinLocationPrecision() == null && policy.getNodeIds() == null
+				&& policy.getNodeMetadataPaths() == null && policy.getRefreshAllowed() == null
+				&& policy.getSourceIds() == null && policy.getUserMetadataPaths() == null;
 	}
 
 }

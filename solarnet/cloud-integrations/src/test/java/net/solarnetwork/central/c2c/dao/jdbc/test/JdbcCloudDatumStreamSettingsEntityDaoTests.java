@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.dao.jdbc.test;
 
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamSettingsEntityData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamSettingsEntity;
+import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomBoolean;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -35,11 +36,14 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamSettingsEntityDao;
@@ -268,6 +272,62 @@ public class JdbcCloudDatumStreamSettingsEntityDaoTests extends AbstractJUnit5Jd
 		CloudDatumStreamSettingsEntity[] expected = confs.stream()
 				.filter(e -> randomEntity.getUserId().equals(e.getUserId()))
 				.toArray(CloudDatumStreamSettingsEntity[]::new);
+		then(results).as("Results for single user returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forUserAndNodes() throws Exception {
+		// GIVEN
+		final int userCount = 3;
+		final int count = 5;
+		final List<CloudDatumStreamSettingsEntity> confs = new ArrayList<>(count);
+		final List<CloudDatumStreamConfiguration> datumStreams = new ArrayList<>();
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			Long integrationId = createIntegration(userId).getConfigId();
+			Long mappingId = createDatumStreamMapping(userId, integrationId).getConfigId();
+			for ( int i = 0; i < count; i++ ) {
+				var datumStream = createDatumStream(userId, mappingId);
+				datumStreams.add(datumStream);
+				// @formatter:off
+				CloudDatumStreamSettingsEntity conf = newCloudDatumStreamSettingsEntity(userId,
+						datumStream.getConfigId(),
+						randomBoolean(),
+						randomBoolean()
+						);
+				// @formatter:on
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
+			}
+		}
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userDatumStreams = datumStreams.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+		final List<Long> userDatumStreamNodeIds = userDatumStreams.stream()
+				.map(CloudDatumStreamConfiguration::getObjectId).toList();
+
+		final Set<Long> randomNodeIds = new HashSet<>();
+		while ( randomNodeIds.size() < 2 ) {
+			randomNodeIds.add(userDatumStreamNodeIds.get(RNG.nextInt(userDatumStreamNodeIds.size())));
+		}
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setNodeIds(randomNodeIds.toArray(Long[]::new));
+		var results = dao.findFiltered(filter);
+
+		// THEN
+		CloudDatumStreamSettingsEntity[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			return userDatumStreams.stream().filter(ds -> e.getDatumStreamId().equals(ds.getConfigId())
+					&& randomNodeIds.contains(ds.getObjectId())).findAny().isPresent();
+		}).toArray(CloudDatumStreamSettingsEntity[]::new);
 		then(results).as("Results for single user returned").containsExactly(expected);
 	}
 

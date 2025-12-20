@@ -41,7 +41,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of cloud integration query filter.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class BasicFilter extends BasicCoreCriteria
 		implements CloudIntegrationFilter, CloudDatumStreamFilter, CloudDatumStreamMappingFilter,
@@ -175,6 +175,25 @@ public class BasicFilter extends BasicCoreCriteria
 				&& Arrays.equals(claimableJobStates, other.claimableJobStates)
 				&& Arrays.equals(serviceIdentifiers, other.serviceIdentifiers)
 				&& Objects.equals(startDate, other.startDate) && Objects.equals(endDate, other.endDate);
+	}
+
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (claimableJobStates != null && claimableJobStates.length > 0)
+				|| (cloudControlIds != null && cloudControlIds.length > 0)
+				|| (controlIds != null && controlIds.length > 0)
+				|| (datumStreamIds != null && datumStreamIds.length > 0)
+				|| (datumStreamMappingIds != null && datumStreamMappingIds.length > 0)
+				|| endDate != null
+				|| (indexes != null && indexes.length > 0)
+				|| (integrationIds != null && datumStreamMappingIds.length > 0)
+				|| (serviceIdentifiers != null && serviceIdentifiers.length > 0)
+				|| startDate != null
+				|| (taskIds != null && taskIds.length > 0)
+				;
+		// @formatter:on
 	}
 
 	@Override

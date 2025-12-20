@@ -32,7 +32,6 @@ import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.execu
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.central.datum.support.DatumUtils.convertGeneralDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper.mapperForAggregate;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.FindObjectStreamMetadataIds.FIND_METADATA_IDS_FOR_STREAM_ID;
 import static net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor.METADATA_PROVIDER_ATTR;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -48,8 +47,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -64,7 +61,6 @@ import javax.cache.Cache;
 import javax.sql.DataSource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataRetrievalFailureException;
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -72,6 +68,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.PlatformTransactionManager;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.common.dao.jdbc.ObjectDatumStreamMetadataIdRowMapper;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -122,13 +119,13 @@ import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
 import net.solarnetwork.central.datum.v2.domain.StreamRange;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.dao.BasicBulkExportResult;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.BulkLoadingDao;
@@ -148,7 +145,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  *
  * @author matt
- * @version 2.11
+ * @version 3.0
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -180,7 +177,6 @@ public class JdbcDatumEntityDao
 
 	private final JdbcOperations jdbcTemplate;
 	private Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache;
-	private Cache<UUID, ObjectDatumStreamMetadataId> streamMetadataIdCache;
 	private PlatformTransactionManager bulkLoadTransactionManager;
 	private DataSource bulkLoadDataSource;
 	private String bulkLoadJdbcCall = DEFAULT_BULK_LOADING_JDBC_CALL;
@@ -547,54 +543,6 @@ public class JdbcDatumEntityDao
 	}
 
 	@Override
-	public Map<UUID, ObjectDatumStreamMetadataId> getDatumStreamMetadataIds(UUID... streamIds) {
-		if ( streamIds == null || streamIds.length < 1 ) {
-			return Collections.emptyMap();
-		}
-
-		final Map<UUID, ObjectDatumStreamMetadataId> result = new LinkedHashMap<>(streamIds.length);
-		final List<UUID> queryList = (streamMetadataIdCache != null ? new ArrayList<>(streamIds.length)
-				: Arrays.asList(streamIds));
-		if ( streamMetadataIdCache != null ) {
-			for ( UUID streamId : streamIds ) {
-				ObjectDatumStreamMetadataId id = streamMetadataIdCache.get(streamId);
-				if ( id != null ) {
-					result.put(streamId, id);
-				} else {
-					queryList.add(streamId);
-				}
-			}
-		}
-
-		if ( queryList.isEmpty() ) {
-			return Collections.unmodifiableMap(result);
-		}
-
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
-
-			try (PreparedStatement stmt = con.prepareStatement(FIND_METADATA_IDS_FOR_STREAM_ID)) {
-				int resultNum = 0;
-				for ( UUID streamId : queryList ) {
-					stmt.setObject(1, streamId, Types.OTHER);
-					try (ResultSet rs = stmt.executeQuery()) {
-						if ( rs.next() ) {
-							ObjectDatumStreamMetadataId id = ObjectDatumStreamMetadataIdRowMapper.INSTANCE
-									.mapRow(rs, ++resultNum);
-							result.put(streamId, id);
-							if ( streamMetadataIdCache != null ) {
-								streamMetadataIdCache.put(streamId, id);
-							}
-						}
-					}
-				}
-			}
-
-			return null;
-		});
-		return Collections.unmodifiableMap(result);
-	}
-
-	@Override
 	public void replaceJsonMeta(ObjectSourcePK id, String json) {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setSourceId(id.getSourceId());
@@ -757,7 +705,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-
+		
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/
@@ -1069,28 +1017,6 @@ public class JdbcDatumEntityDao
 	 */
 	public void setStreamMetadataCache(Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache) {
 		this.streamMetadataCache = streamMetadataCache;
-	}
-
-	/**
-	 * Get the stream metadata ID cache.
-	 *
-	 * @return the cache, or {@literal null}
-	 * @since 2.1
-	 */
-	public Cache<UUID, ObjectDatumStreamMetadataId> getStreamMetadataIdCache() {
-		return streamMetadataIdCache;
-	}
-
-	/**
-	 * Set the stream metadata ID cache.
-	 *
-	 * @param streamMetadataIdCache
-	 *        the cache to set
-	 * @since 2.1
-	 */
-	public void setStreamMetadataIdCache(
-			Cache<UUID, ObjectDatumStreamMetadataId> streamMetadataIdCache) {
-		this.streamMetadataIdCache = streamMetadataIdCache;
 	}
 
 	/**

@@ -37,7 +37,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Basic implementation of some core criteria APIs.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class BasicCoreCriteria extends SimplePagination
 		implements UserModifiableFilter, PaginationCriteria, LocationCriteria, NodeCriteria,
@@ -165,6 +165,28 @@ public class BasicCoreCriteria extends SimplePagination
 				setValidNodeOwnership(c.getValidNodeOwnership());
 			}
 		}
+	}
+
+	/**
+	 * Test if any criteria properties are non-empty.
+	 * 
+	 * @return {@code true} if any non-pagination related criteria properties
+	 *         are non-empty
+	 * @since 1.6
+	 */
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     enabled != null
+				|| (location != null && !location.hasLocationCriteria())
+				|| (locationIds != null && locationIds.length > 0)
+				|| (nodeIds != null && nodeIds.length > 0)
+				|| (searchFilter != null && !searchFilter.isEmpty())
+				|| (sourceIds != null && sourceIds.length > 0)
+				|| (tokenIds != null && tokenIds.length > 0)
+				|| (userIds != null && userIds.length > 0)
+				|| validNodeOwnership != null
+				;
+		// @formatter:on
 	}
 
 	/**

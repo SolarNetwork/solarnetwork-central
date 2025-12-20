@@ -39,8 +39,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
@@ -65,7 +67,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link JdbcCloudDatumStreamRakeTaskDao} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -309,6 +311,70 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 				.toArray(CloudDatumStreamRakeTaskEntity[]::new);
 		then(results).as("Results for single user and specified states returned")
 				.containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forUserAndNode() throws Exception {
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int streamCount = 5;
+		final List<CloudDatumStreamRakeTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+		final List<CloudDatumStreamConfiguration> datumStreams = new ArrayList<>();
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+					final var datumStream = createDatumStream(userId, mappingId, Map.of("bim", "bam"));
+					datumStreams.add(datumStream);
+
+					// @formatter:off
+					CloudDatumStreamRakeTaskEntity entity = newCloudDatumStreamRakeTaskEntity(
+							userId,
+							datumStream.getConfigId(),
+							BasicClaimableJobState.Queued,
+							Instant.now(),
+							Period.ofDays(1),
+							randomString(),
+							null
+							);
+					// @formatter:on
+					var pk = dao.save(entity);
+					confs.add(dao.get(pk));
+				}
+			}
+		}
+
+		// WHEN
+		final Long randomUserId = confs.get(RNG.nextInt(confs.size())).getUserId();
+		final List<CloudDatumStreamConfiguration> userDatumStreams = datumStreams.stream()
+				.filter(c -> randomUserId.equals(c.getUserId())).toList();
+		final List<Long> userDatumStreamNodeIds = userDatumStreams.stream()
+				.map(CloudDatumStreamConfiguration::getObjectId).toList();
+
+		final Set<Long> randomNodeIds = new HashSet<>();
+		while ( randomNodeIds.size() < 2 ) {
+			randomNodeIds.add(userDatumStreamNodeIds.get(RNG.nextInt(userDatumStreamNodeIds.size())));
+		}
+
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomUserId);
+		filter.setNodeIds(randomNodeIds.toArray(Long[]::new));
+		var results = dao.findFiltered(filter);
+
+		// THEN
+		CloudDatumStreamRakeTaskEntity[] expected = confs.stream().filter(e -> {
+			if ( !randomUserId.equals(e.getUserId()) ) {
+				return false;
+			}
+			return userDatumStreams.stream().filter(ds -> e.getDatumStreamId().equals(ds.getConfigId())
+					&& randomNodeIds.contains(ds.getObjectId())).findAny().isPresent();
+		}).toArray(CloudDatumStreamRakeTaskEntity[]::new);
+		then(results).as("Results for single user and node IDs returned").containsExactly(expected);
 	}
 
 	@Test

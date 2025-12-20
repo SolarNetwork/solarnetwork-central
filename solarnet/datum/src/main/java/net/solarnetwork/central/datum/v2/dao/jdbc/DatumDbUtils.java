@@ -64,6 +64,7 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
+import net.solarnetwork.central.common.dao.jdbc.CommonDbUtils;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
@@ -102,7 +103,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * </p>
  *
  * @author matt
- * @version 2.6
+ * @version 2.7
  * @since 3.8
  */
 public final class DatumDbUtils {
@@ -712,16 +713,7 @@ public final class DatumDbUtils {
 	 * @since 2.6
 	 */
 	public static String insertDatumMetaSql(ObjectDatumKind kind) {
-		return """
-				INSERT INTO solardatm.%s (stream_id,%s,source_id,names_i,names_a,names_s,jdata)
-				VALUES (?::uuid,?,?,?::text[],?::text[],?::text[],?::jsonb)
-				""".formatted(switch (kind) {
-			case Location -> "da_loc_datm_meta";
-			default -> "da_datm_meta";
-		}, switch (kind) {
-			case Location -> "loc_id";
-			default -> "node_id";
-		});
+		return CommonDbUtils.insertDatumMetaSql(kind);
 	}
 
 	/**
@@ -736,10 +728,7 @@ public final class DatumDbUtils {
 	 */
 	public static void insertObjectDatumStreamMetadata(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<? extends ObjectDatumStreamMetadata> metas) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
-			insertObjectDatumStreamMetadata(log, con, metas);
-			return null;
-		});
+		CommonDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, metas);
 	}
 
 	/**
@@ -756,51 +745,7 @@ public final class DatumDbUtils {
 	 */
 	public static void insertObjectDatumStreamMetadata(Logger log, Connection con,
 			Iterable<? extends ObjectDatumStreamMetadata> metas) throws SQLException {
-		try (PreparedStatement nodeMetaStmt = con
-				.prepareStatement(insertDatumMetaSql(ObjectDatumKind.Node));
-				PreparedStatement locMetaStmt = con
-						.prepareStatement(insertDatumMetaSql(ObjectDatumKind.Location))) {
-			for ( ObjectDatumStreamMetadata meta : metas ) {
-				if ( log != null ) {
-					log.debug("Inserting ObjectDatumStreamMetadata {}", meta);
-				}
-				@SuppressWarnings("resource")
-				PreparedStatement metaStmt = (meta.getKind() == ObjectDatumKind.Location ? locMetaStmt
-						: nodeMetaStmt);
-				metaStmt.setString(1, meta.getStreamId().toString());
-				metaStmt.setObject(2, meta.getObjectId());
-				metaStmt.setString(3, meta.getSourceId());
-
-				String[] iNames = meta.propertyNamesForType(DatumSamplesType.Instantaneous);
-				if ( iNames == null || iNames.length < 1 ) {
-					metaStmt.setNull(4, Types.OTHER);
-				} else {
-					Array iArray = con.createArrayOf("TEXT", iNames);
-					metaStmt.setArray(4, iArray);
-				}
-
-				String[] aNames = meta.propertyNamesForType(DatumSamplesType.Accumulating);
-				if ( aNames == null || aNames.length < 1 ) {
-					metaStmt.setNull(5, Types.OTHER);
-				} else {
-					Array aArray = con.createArrayOf("TEXT", aNames);
-					metaStmt.setArray(5, aArray);
-				}
-
-				String[] sNames = meta.propertyNamesForType(DatumSamplesType.Status);
-				if ( sNames == null || sNames.length < 1 ) {
-					metaStmt.setNull(6, Types.OTHER);
-				} else {
-					Array aArray = con.createArrayOf("TEXT", sNames);
-					metaStmt.setArray(6, aArray);
-				}
-
-				String json = meta.getMetaJson();
-				metaStmt.setString(7, json);
-
-				metaStmt.execute();
-			}
-		}
+		CommonDbUtils.insertObjectDatumStreamMetadata(log, con, metas);
 	}
 
 	/**

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.c2c.domain;
 
 import java.time.Instant;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamRelated;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
@@ -30,10 +31,11 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * DTO for datum stream settings entity.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudDatumStreamSettingsEntityInput implements
-		CloudIntegrationsConfigurationInput<CloudDatumStreamSettingsEntity, UserLongCompositePK> {
+		CloudIntegrationsConfigurationInput<CloudDatumStreamSettingsEntity, UserLongCompositePK>,
+		CloudDatumStreamRelated {
 
 	private boolean publishToSolarIn = true;
 

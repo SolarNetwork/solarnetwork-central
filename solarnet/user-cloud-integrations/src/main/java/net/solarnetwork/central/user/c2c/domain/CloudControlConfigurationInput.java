@@ -30,17 +30,19 @@ import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.c2c.domain.CloudControlConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.dao.BaseUserRelatedStdIdentifiableConfigurationInput;
+import net.solarnetwork.central.domain.NodeIdRelated;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * DTO for cloud control configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudControlConfigurationInput extends
 		BaseUserRelatedStdIdentifiableConfigurationInput<CloudControlConfiguration, UserLongCompositePK>
-		implements CloudIntegrationsConfigurationInput<CloudControlConfiguration, UserLongCompositePK> {
+		implements CloudIntegrationsConfigurationInput<CloudControlConfiguration, UserLongCompositePK>,
+		NodeIdRelated {
 
 	@NotNull
 	private Long integrationId;
@@ -108,6 +110,7 @@ public class CloudControlConfigurationInput extends
 	 *
 	 * @return the node ID
 	 */
+	@Override
 	public Long getNodeId() {
 		return nodeId;
 	}
