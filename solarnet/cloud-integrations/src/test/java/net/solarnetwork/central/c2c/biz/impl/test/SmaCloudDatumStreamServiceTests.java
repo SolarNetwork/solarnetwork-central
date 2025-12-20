@@ -28,6 +28,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static net.solarnetwork.central.c2c.biz.CloudDatumStreamService.SOURCE_ID_MAP_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING;
@@ -47,7 +48,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
-import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.net.URI;
@@ -56,14 +56,15 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SequencedMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
-import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,10 +73,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -166,10 +167,7 @@ public class SmaCloudDatumStreamServiceTests {
 	private Cache<String, ZoneId> systemTimeZoneCache;
 
 	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
-
-	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
 	private MutableClock clock = MutableClock.of(Instant.now(), UTC);
 
@@ -233,14 +231,10 @@ public class SmaCloudDatumStreamServiceTests {
 
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
-		final URI listSystems = UriComponentsBuilder.fromUri(SmaCloudIntegrationService.BASE_URI)
-				.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH).buildAndExpand().toUri();
-
 		final JsonNode resJson = getObjectFromJSON(utf8StringResource("sma-plants-01.json", getClass()),
 				ObjectNode.class);
 		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(eq(listSystems), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 
@@ -249,6 +243,19 @@ public class SmaCloudDatumStreamServiceTests {
 		// THEN
 		// @formatter:off
 		then(oauthClientManager).should().authorize(authRequestCaptor.capture());
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("URL is list systems")
+			.returns(UriComponentsBuilder.fromUri(SmaCloudIntegrationService.BASE_URI)
+					.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH).buildAndExpand().toUri(), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			;
 
 		and.then(authRequestCaptor.getValue())
 			.as("OAuth request provided")
@@ -380,15 +387,10 @@ public class SmaCloudDatumStreamServiceTests {
 
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
-		final URI listSystemDevices = UriComponentsBuilder.fromUri(SmaCloudIntegrationService.BASE_URI)
-				.path(SmaCloudDatumStreamService.SYSTEM_DEVICES_PATH_TEMPLATE).buildAndExpand(systemId)
-				.toUri();
-
 		final JsonNode resJson = getObjectFromJSON(utf8StringResource("sma-devices-01.json", getClass()),
 				ObjectNode.class);
 		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(eq(listSystemDevices), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		Iterable<CloudDataValue> results = service.dataValues(integration.getId(),
@@ -405,6 +407,20 @@ public class SmaCloudDatumStreamServiceTests {
 			.returns(null, from(OAuth2AuthorizeRequest::getAuthorizedClient))
 			.as("Client registration ID is configuration system identifier")
 			.returns(integration.systemIdentifier(), OAuth2AuthorizeRequest::getClientRegistrationId)
+			;
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("URL is list system devices")
+			.returns(UriComponentsBuilder.fromUri(SmaCloudIntegrationService.BASE_URI)
+					.path(SmaCloudDatumStreamService.SYSTEM_DEVICES_PATH_TEMPLATE).buildAndExpand(systemId)
+					.toUri(), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
 
 		and.then(results)
@@ -502,17 +518,11 @@ public class SmaCloudDatumStreamServiceTests {
 
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
-		final URI listDeviceMeasurementSets = UriComponentsBuilder
-				.fromUri(SmaCloudIntegrationService.BASE_URI)
-				.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_SETS_PATH_TEMPLATE)
-				.buildAndExpand(deviceId).toUri();
-
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("sma-device-measurement-sets-inverter-01.json", getClass()),
 				ObjectNode.class);
 		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(eq(listDeviceMeasurementSets), eq(HttpMethod.GET), any(),
-				eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		Iterable<CloudDataValue> results = service.dataValues(integration.getId(),
@@ -530,6 +540,21 @@ public class SmaCloudDatumStreamServiceTests {
 			.returns(null, from(OAuth2AuthorizeRequest::getAuthorizedClient))
 			.as("Client registration ID is configuration system identifier")
 			.returns(integration.systemIdentifier(), OAuth2AuthorizeRequest::getClientRegistrationId)
+			;
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("URL is list measurement sets")
+			.returns(UriComponentsBuilder
+					.fromUri(SmaCloudIntegrationService.BASE_URI)
+					.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_SETS_PATH_TEMPLATE)
+					.buildAndExpand(deviceId).toUri(), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
 
 		and.then(results)
@@ -618,6 +643,7 @@ public class SmaCloudDatumStreamServiceTests {
 		return "/{systemId}/{deviceId}/%s/%s".formatted(measurementSet.getKey(), measurementName);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void datum_oneZone_mappedSourceIds() {
 		// GIVEN
@@ -707,14 +733,11 @@ public class SmaCloudDatumStreamServiceTests {
 		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
-		// @formatter:off
-		datumStream.setServiceProps(Map.of(
-				CloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
-						"/%s/%s".formatted(systemId, device1Id), inv1SourceId,
-						"/%s/%s".formatted(systemId, device2Id), inv2SourceId
-						)
-				));
-		// @formatter:on
+
+		final SequencedMap<String, String> sourceIdMap = new LinkedHashMap<>();
+		sourceIdMap.put("/%s/%s".formatted(systemId, device1Id), inv1SourceId);
+		sourceIdMap.put("/%s/%s".formatted(systemId, device2Id), inv2SourceId);
+		datumStream.setServiceProps(Map.of(CloudDatumStreamService.SOURCE_ID_MAP_SETTING, sourceIdMap));
 
 		// configure expected HTTP responses
 
@@ -724,14 +747,16 @@ public class SmaCloudDatumStreamServiceTests {
 
 		given(systemTimeZoneCache.get(systemId)).willReturn(null, systemTimeZone);
 
-		final URI systemDetailsUrl = fromUri(BASE_URI)
-				.path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE).buildAndExpand(systemId)
-				.toUri();
-		given(restOps.exchange(eq(systemDetailsUrl), eq(GET), any(), eq(JsonNode.class)))
-				.willReturn(new ResponseEntity<>(getObjectFromJSON(
-						utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class), OK));
+		final List<URI> expectedUris = new ArrayList<>();
+		expectedUris.add(fromUri(BASE_URI).path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE)
+				.buildAndExpand(systemId).toUri());
+		final ResponseEntity<JsonNode> systemDetailsRes = new ResponseEntity<>(
+				getObjectFromJSON(utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class),
+				OK);
 
 		// HTTP request measurement set data for each day in filter range, per device per measurement set
+
+		final List<ResponseEntity<JsonNode>> responses = new ArrayList<>();
 
 		final LocalDate day = LocalDate.parse("2025-03-28");
 		for ( String deviceId : List.of(device1Id, device2Id) ) {
@@ -739,26 +764,28 @@ public class SmaCloudDatumStreamServiceTests {
 					.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE)
 					.queryParam(SmaCloudDatumStreamService.DATE_PARAM, day.toString());
 
-			final URI set1Uri = b
+			expectedUris.add(b
 					.queryParam(SmaCloudDatumStreamService.RETURN_ENERGY_VALUES_PARAM,
 							prop1MeasuermentSet.shouldReturnEnergyValues())
 					.buildAndExpand(deviceId, prop1MeasuermentSet.getKey(), SmaPeriod.Day.getKey())
-					.toUri();
-			given(restOps.exchange(eq(set1Uri), eq(GET), any(), eq(JsonNode.class)))
-					.willReturn(new ResponseEntity<>(getObjectFromJSON(utf8StringResource(
-							"sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-01.json",
-							getClass()), JsonNode.class), OK));
+					.toUri());
+			responses.add(new ResponseEntity<>(getObjectFromJSON(
+					utf8StringResource("sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-01.json",
+							getClass()),
+					JsonNode.class), OK));
 
-			final URI set2Uri = b
+			expectedUris.add(b
 					.replaceQueryParam(SmaCloudDatumStreamService.RETURN_ENERGY_VALUES_PARAM,
 							prop2MeasuermentSet.shouldReturnEnergyValues())
 					.buildAndExpand(deviceId, prop2MeasuermentSet.getKey(), SmaPeriod.Day.getKey())
-					.toUri();
-			given(restOps.exchange(eq(set2Uri), eq(GET), any(), eq(JsonNode.class)))
-					.willReturn(new ResponseEntity<>(getObjectFromJSON(
-							utf8StringResource("sma-device-data-Day-PowerAc-01.json", getClass()),
-							JsonNode.class), OK));
+					.toUri());
+			responses.add(new ResponseEntity<>(getObjectFromJSON(
+					utf8StringResource("sma-device-data-Day-PowerAc-01.json", getClass()),
+					JsonNode.class), OK));
 		}
+
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(systemDetailsRes,
+				responses.toArray(ResponseEntity[]::new));
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -772,27 +799,21 @@ public class SmaCloudDatumStreamServiceTests {
 		// cache system time zone
 		then(systemTimeZoneCache).should().put(systemId, systemTimeZone);
 
-		then(restOps).should(times(5)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("Authorization in HTTP request header")
-					.hasEntrySatisfying(HttpHeaders.AUTHORIZATION, vals -> {
-						and.then(vals)
-							.as("Single Authroization header value provided")
-							.hasSize(1)
-							.element(0, InstanceOfAssertFactories.STRING)
-							.as("Authroization scheme is Bearer")
-							.startsWith("Bearer ")
-							.as("Authroization value is OAuth token")
-							.endsWith(oauthAccessToken.getTokenValue())
-							;
-					})
+		then(restOps).should(times(expectedUris.size())).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 					;
 			})
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
 			;
-
 
 		final int datumPerDevice = 79;
 		and.then(result)
@@ -850,6 +871,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void datum_oneZone_multiDay_mappedSourceId() {
 		// GIVEN
@@ -942,12 +964,14 @@ public class SmaCloudDatumStreamServiceTests {
 
 		given(systemTimeZoneCache.get(systemId)).willReturn(null, systemTimeZone);
 
-		final URI systemDetailsUrl = fromUri(BASE_URI)
-				.path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE).buildAndExpand(systemId)
-				.toUri();
-		given(restOps.exchange(eq(systemDetailsUrl), eq(GET), any(), eq(JsonNode.class)))
-				.willReturn(new ResponseEntity<>(getObjectFromJSON(
-						utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class), OK));
+		final List<URI> expectedUris = new ArrayList<>();
+		final List<ResponseEntity<JsonNode>> responses = new ArrayList<>();
+
+		expectedUris.add(fromUri(BASE_URI).path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE)
+				.buildAndExpand(systemId).toUri());
+		responses.add(new ResponseEntity<>(
+				getObjectFromJSON(utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class),
+				OK));
 
 		// HTTP request measurement set data for each day in filter range, per device per measurement set
 
@@ -959,19 +983,22 @@ public class SmaCloudDatumStreamServiceTests {
 					.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE)
 					.queryParam(SmaCloudDatumStreamService.DATE_PARAM, day.toString());
 
-			final URI setUri = b
+			expectedUris.add(b
 					.queryParam(SmaCloudDatumStreamService.RETURN_ENERGY_VALUES_PARAM,
 							prop1MeasuermentSet.shouldReturnEnergyValues())
 					.buildAndExpand(deviceId, prop1MeasuermentSet.getKey(), SmaPeriod.Day.getKey())
-					.toUri();
-			given(restOps.exchange(eq(setUri), eq(GET), any(), eq(JsonNode.class)))
-					.willReturn(new ResponseEntity<>(getObjectFromJSON(
+					.toUri());
+			responses
+					.add(new ResponseEntity<>(getObjectFromJSON(
 							utf8StringResource(
 									"sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-0%d.json"
 											.formatted(DAYS.between(startDay, day) + 1),
 									getClass()),
 							JsonNode.class), OK));
 		}
+
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(responses.get(0),
+				responses.subList(1, responses.size()).toArray(ResponseEntity[]::new));
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -985,27 +1012,21 @@ public class SmaCloudDatumStreamServiceTests {
 		// cache system time zone
 		then(systemTimeZoneCache).should().put(systemId, systemTimeZone);
 
-		then(restOps).should(times(4)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("Authorization in HTTP request header")
-					.hasEntrySatisfying(HttpHeaders.AUTHORIZATION, vals -> {
-						and.then(vals)
-							.as("Single Authroization header value provided")
-							.hasSize(1)
-							.element(0, InstanceOfAssertFactories.STRING)
-							.as("Authroization scheme is Bearer")
-							.startsWith("Bearer ")
-							.as("Authroization value is OAuth token")
-							.endsWith(oauthAccessToken.getTokenValue())
-							;
-					})
+		then(restOps).should(times(expectedUris.size())).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 					;
 			})
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
 			;
-
 
 		final int datumPerDevice = 79;
 		and.then(result)
@@ -1050,6 +1071,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void datum_oneZone_hour_mappedSourceId() {
 		// GIVEN
@@ -1142,12 +1164,14 @@ public class SmaCloudDatumStreamServiceTests {
 
 		given(systemTimeZoneCache.get(systemId)).willReturn(null, systemTimeZone);
 
-		final URI systemDetailsUrl = fromUri(BASE_URI)
-				.path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE).buildAndExpand(systemId)
-				.toUri();
-		given(restOps.exchange(eq(systemDetailsUrl), eq(GET), any(), eq(JsonNode.class)))
-				.willReturn(new ResponseEntity<>(getObjectFromJSON(
-						utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class), OK));
+		final List<URI> expectedUris = new ArrayList<>();
+		final List<ResponseEntity<JsonNode>> responses = new ArrayList<>();
+
+		expectedUris.add(fromUri(BASE_URI).path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE)
+				.buildAndExpand(systemId).toUri());
+		responses.add(new ResponseEntity<>(
+				getObjectFromJSON(utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class),
+				OK));
 
 		// HTTP request measurement set data for each day in filter range, per device per measurement set
 
@@ -1159,19 +1183,22 @@ public class SmaCloudDatumStreamServiceTests {
 					.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE)
 					.queryParam(SmaCloudDatumStreamService.DATE_PARAM, day.toString());
 
-			final URI setUri = b
+			expectedUris.add(b
 					.queryParam(SmaCloudDatumStreamService.RETURN_ENERGY_VALUES_PARAM,
 							prop1MeasuermentSet.shouldReturnEnergyValues())
 					.buildAndExpand(deviceId, prop1MeasuermentSet.getKey(), SmaPeriod.Day.getKey())
-					.toUri();
-			given(restOps.exchange(eq(setUri), eq(GET), any(), eq(JsonNode.class)))
-					.willReturn(new ResponseEntity<>(getObjectFromJSON(
+					.toUri());
+			responses
+					.add(new ResponseEntity<>(getObjectFromJSON(
 							utf8StringResource(
 									"sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-0%d.json"
 											.formatted(DAYS.between(startDay, day) + 1),
 									getClass()),
 							JsonNode.class), OK));
 		}
+
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(responses.get(0),
+				responses.subList(1, responses.size()).toArray(ResponseEntity[]::new));
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -1185,27 +1212,21 @@ public class SmaCloudDatumStreamServiceTests {
 		// cache system time zone
 		then(systemTimeZoneCache).should().put(systemId, systemTimeZone);
 
-		then(restOps).should(times(2)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("Authorization in HTTP request header")
-					.hasEntrySatisfying(HttpHeaders.AUTHORIZATION, vals -> {
-						and.then(vals)
-							.as("Single Authroization header value provided")
-							.hasSize(1)
-							.element(0, InstanceOfAssertFactories.STRING)
-							.as("Authroization scheme is Bearer")
-							.startsWith("Bearer ")
-							.as("Authroization value is OAuth token")
-							.endsWith(oauthAccessToken.getTokenValue())
-							;
-					})
+		then(restOps).should(times(expectedUris.size())).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 					;
 			})
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
 			;
-
 
 		and.then(result)
 			.as("Datum x1 device x1 day filtered to 1 hour parsed from HTTP responses")
@@ -1249,6 +1270,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void datum_indexedValue() {
 		// GIVEN
@@ -1340,12 +1362,14 @@ public class SmaCloudDatumStreamServiceTests {
 
 		given(systemTimeZoneCache.get(systemId)).willReturn(null, systemTimeZone);
 
-		final URI systemDetailsUrl = fromUri(BASE_URI)
-				.path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE).buildAndExpand(systemId)
-				.toUri();
-		given(restOps.exchange(eq(systemDetailsUrl), eq(GET), any(), eq(JsonNode.class)))
-				.willReturn(new ResponseEntity<>(getObjectFromJSON(
-						utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class), OK));
+		final List<URI> expectedUris = new ArrayList<>();
+		final List<ResponseEntity<JsonNode>> responses = new ArrayList<>();
+
+		expectedUris.add(fromUri(BASE_URI).path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE)
+				.buildAndExpand(systemId).toUri());
+		responses.add(new ResponseEntity<>(
+				getObjectFromJSON(utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class),
+				OK));
 
 		// HTTP request measurement set data for each day in filter range, per device per measurement set
 
@@ -1357,17 +1381,20 @@ public class SmaCloudDatumStreamServiceTests {
 					.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE)
 					.queryParam(SmaCloudDatumStreamService.DATE_PARAM, day.toString());
 
-			final URI setUri = b
+			expectedUris.add(b
 					.queryParam(SmaCloudDatumStreamService.RETURN_ENERGY_VALUES_PARAM,
 							prop1MeasuermentSet.shouldReturnEnergyValues())
 					.buildAndExpand(deviceId, prop1MeasuermentSet.getKey(), SmaPeriod.Day.getKey())
-					.toUri();
-			given(restOps.exchange(eq(setUri), eq(GET), any(), eq(JsonNode.class)))
-					.willReturn(new ResponseEntity<>(getObjectFromJSON(
+					.toUri());
+			responses
+					.add(new ResponseEntity<>(getObjectFromJSON(
 							utf8StringResource("sma-device-data-Day-PowerDc-0%d.json"
 									.formatted(DAYS.between(startDay, day) + 1), getClass()),
 							JsonNode.class), OK));
 		}
+
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(responses.get(0),
+				responses.subList(1, responses.size()).toArray(ResponseEntity[]::new));
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -1381,27 +1408,21 @@ public class SmaCloudDatumStreamServiceTests {
 		// cache system time zone
 		then(systemTimeZoneCache).should().put(systemId, systemTimeZone);
 
-		then(restOps).should(times(2)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("Authorization in HTTP request header")
-					.hasEntrySatisfying(HttpHeaders.AUTHORIZATION, vals -> {
-						and.then(vals)
-							.as("Single Authroization header value provided")
-							.hasSize(1)
-							.element(0, InstanceOfAssertFactories.STRING)
-							.as("Authroization scheme is Bearer")
-							.startsWith("Bearer ")
-							.as("Authroization value is OAuth token")
-							.endsWith(oauthAccessToken.getTokenValue())
-							;
-					})
+		then(restOps).should(times(expectedUris.size())).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 					;
 			})
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
 			;
-
 
 		and.then(result)
 			.as("Datum x1 device x1 day filtered to 1 hour parsed from HTTP responses")
@@ -1435,6 +1456,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void datum_oneZone_splitDay_mappedSourceId() {
 		// GIVEN
@@ -1527,12 +1549,14 @@ public class SmaCloudDatumStreamServiceTests {
 
 		given(systemTimeZoneCache.get(systemId)).willReturn(null, systemTimeZone);
 
-		final URI systemDetailsUrl = fromUri(BASE_URI)
-				.path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE).buildAndExpand(systemId)
-				.toUri();
-		given(restOps.exchange(eq(systemDetailsUrl), eq(GET), any(), eq(JsonNode.class)))
-				.willReturn(new ResponseEntity<>(getObjectFromJSON(
-						utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class), OK));
+		final List<URI> expectedUris = new ArrayList<>();
+		final List<ResponseEntity<JsonNode>> responses = new ArrayList<>();
+
+		expectedUris.add(fromUri(BASE_URI).path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE)
+				.buildAndExpand(systemId).toUri());
+		responses.add(new ResponseEntity<>(
+				getObjectFromJSON(utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class),
+				OK));
 
 		// HTTP request measurement set data for each day in filter range, per device per measurement set
 
@@ -1544,19 +1568,22 @@ public class SmaCloudDatumStreamServiceTests {
 					.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE)
 					.queryParam(SmaCloudDatumStreamService.DATE_PARAM, day.toString());
 
-			final URI setUri = b
+			expectedUris.add(b
 					.queryParam(SmaCloudDatumStreamService.RETURN_ENERGY_VALUES_PARAM,
 							prop1MeasuermentSet.shouldReturnEnergyValues())
 					.buildAndExpand(deviceId, prop1MeasuermentSet.getKey(), SmaPeriod.Day.getKey())
-					.toUri();
-			given(restOps.exchange(eq(setUri), eq(GET), any(), eq(JsonNode.class)))
-					.willReturn(new ResponseEntity<>(getObjectFromJSON(
+					.toUri());
+			responses
+					.add(new ResponseEntity<>(getObjectFromJSON(
 							utf8StringResource(
 									"sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-0%d.json"
 											.formatted(DAYS.between(startDay, day) + 1),
 									getClass()),
 							JsonNode.class), OK));
 		}
+
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(responses.get(0),
+				responses.subList(1, responses.size()).toArray(ResponseEntity[]::new));
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -1570,27 +1597,21 @@ public class SmaCloudDatumStreamServiceTests {
 		// cache system time zone
 		then(systemTimeZoneCache).should().put(systemId, systemTimeZone);
 
-		then(restOps).should(times(3)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("Authorization in HTTP request header")
-					.hasEntrySatisfying(HttpHeaders.AUTHORIZATION, vals -> {
-						and.then(vals)
-							.as("Single Authroization header value provided")
-							.hasSize(1)
-							.element(0, InstanceOfAssertFactories.STRING)
-							.as("Authroization scheme is Bearer")
-							.startsWith("Bearer ")
-							.as("Authroization value is OAuth token")
-							.endsWith(oauthAccessToken.getTokenValue())
-							;
-					})
+		then(restOps).should(times(expectedUris.size())).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 					;
 			})
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
 			;
-
 
 		final int expectedDatumCount = 17 + 62;
 		and.then(result)
@@ -1635,6 +1656,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void datum_oneZone_multiDay_exceedFilterLimit_mappedSourceId() {
 		// GIVEN
@@ -1727,12 +1749,14 @@ public class SmaCloudDatumStreamServiceTests {
 
 		given(systemTimeZoneCache.get(systemId)).willReturn(null, systemTimeZone);
 
-		final URI systemDetailsUrl = fromUri(BASE_URI)
-				.path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE).buildAndExpand(systemId)
-				.toUri();
-		given(restOps.exchange(eq(systemDetailsUrl), eq(GET), any(), eq(JsonNode.class)))
-				.willReturn(new ResponseEntity<>(getObjectFromJSON(
-						utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class), OK));
+		final List<URI> expectedUris = new ArrayList<>();
+		final List<ResponseEntity<JsonNode>> responses = new ArrayList<>();
+
+		expectedUris.add(fromUri(BASE_URI).path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE)
+				.buildAndExpand(systemId).toUri());
+		responses.add(new ResponseEntity<>(
+				getObjectFromJSON(utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class),
+				OK));
 
 		// HTTP request measurement set data for each day in filter range, per device per measurement set
 
@@ -1744,19 +1768,22 @@ public class SmaCloudDatumStreamServiceTests {
 					.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE)
 					.queryParam(SmaCloudDatumStreamService.DATE_PARAM, day.toString());
 
-			final URI setUri = b
+			expectedUris.add(b
 					.queryParam(SmaCloudDatumStreamService.RETURN_ENERGY_VALUES_PARAM,
 							prop1MeasuermentSet.shouldReturnEnergyValues())
 					.buildAndExpand(deviceId, prop1MeasuermentSet.getKey(), SmaPeriod.Day.getKey())
-					.toUri();
-			given(restOps.exchange(eq(setUri), eq(GET), any(), eq(JsonNode.class)))
-					.willReturn(new ResponseEntity<>(getObjectFromJSON(
+					.toUri());
+			responses
+					.add(new ResponseEntity<>(getObjectFromJSON(
 							utf8StringResource(
 									"sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-0%d.json"
 											.formatted(DAYS.between(startDay, day) + 1),
 									getClass()),
 							JsonNode.class), OK));
 		}
+
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(responses.get(0),
+				responses.subList(1, responses.size()).toArray(ResponseEntity[]::new));
 
 		// WHEN
 		service.setMaxFilterTimeRange(Duration.ofDays(3));
@@ -1771,25 +1798,20 @@ public class SmaCloudDatumStreamServiceTests {
 		// cache system time zone
 		then(systemTimeZoneCache).should().put(systemId, systemTimeZone);
 
-		then(restOps).should(times(4)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("Authorization in HTTP request header")
-					.hasEntrySatisfying(HttpHeaders.AUTHORIZATION, vals -> {
-						and.then(vals)
-							.as("Single Authroization header value provided")
-							.hasSize(1)
-							.element(0, InstanceOfAssertFactories.STRING)
-							.as("Authroization scheme is Bearer")
-							.startsWith("Bearer ")
-							.as("Authroization value is OAuth token")
-							.endsWith(oauthAccessToken.getTokenValue())
-							;
-					})
+		then(restOps).should(times(expectedUris.size())).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 					;
 			})
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
 			;
 
 		and.then(result.getUsedQueryFilter())
@@ -1854,6 +1876,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void datum_oneZone_multiStreamLag_withinTolerance() {
 		// GIVEN
@@ -1932,14 +1955,11 @@ public class SmaCloudDatumStreamServiceTests {
 		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
-		// @formatter:off
-		datumStream.setServiceProps(Map.of(
-				CloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
-						"/%s/%s".formatted(systemId, device1Id), inv1SourceId,
-						"/%s/%s".formatted(systemId, device2Id), inv2SourceId
-						)
-				));
-		// @formatter:on
+
+		final SequencedMap<String, String> sourceIdMap = new LinkedHashMap<>();
+		sourceIdMap.put("/%s/%s".formatted(systemId, device1Id), inv1SourceId);
+		sourceIdMap.put("/%s/%s".formatted(systemId, device2Id), inv2SourceId);
+		datumStream.setServiceProps(Map.of(CloudDatumStreamService.SOURCE_ID_MAP_SETTING, sourceIdMap));
 
 		// configure expected HTTP responses
 
@@ -1949,12 +1969,14 @@ public class SmaCloudDatumStreamServiceTests {
 
 		given(systemTimeZoneCache.get(systemId)).willReturn(null, systemTimeZone);
 
-		final URI systemDetailsUrl = fromUri(BASE_URI)
-				.path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE).buildAndExpand(systemId)
-				.toUri();
-		given(restOps.exchange(eq(systemDetailsUrl), eq(GET), any(), eq(JsonNode.class)))
-				.willReturn(new ResponseEntity<>(getObjectFromJSON(
-						utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class), OK));
+		final List<URI> expectedUris = new ArrayList<>();
+		final List<ResponseEntity<JsonNode>> responses = new ArrayList<>();
+
+		expectedUris.add(fromUri(BASE_URI).path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE)
+				.buildAndExpand(systemId).toUri());
+		responses.add(new ResponseEntity<>(
+				getObjectFromJSON(utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class),
+				OK));
 
 		// HTTP request measurement set data for each day in filter range
 
@@ -1964,18 +1986,20 @@ public class SmaCloudDatumStreamServiceTests {
 					.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE)
 					.queryParam(SmaCloudDatumStreamService.DATE_PARAM, day.toString());
 
-			final URI set1Uri = b
+			expectedUris.add(b
 					.queryParam(SmaCloudDatumStreamService.RETURN_ENERGY_VALUES_PARAM,
 							prop1MeasuermentSet.shouldReturnEnergyValues())
 					.buildAndExpand(deviceId, prop1MeasuermentSet.getKey(), SmaPeriod.Day.getKey())
-					.toUri();
-			given(restOps.exchange(eq(set1Uri), eq(GET), any(), eq(JsonNode.class)))
-					.willReturn(new ResponseEntity<>(getObjectFromJSON(utf8StringResource(
-							deviceId.equals(device1Id)
-									? "sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-01.json"
-									: "sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-01a.json",
-							getClass()), JsonNode.class), OK));
+					.toUri());
+			responses.add(new ResponseEntity<>(getObjectFromJSON(utf8StringResource(
+					deviceId.equals(device1Id)
+							? "sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-01.json"
+							: "sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-01a.json",
+					getClass()), JsonNode.class), OK));
 		}
+
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(responses.get(0),
+				responses.subList(1, responses.size()).toArray(ResponseEntity[]::new));
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -1993,27 +2017,21 @@ public class SmaCloudDatumStreamServiceTests {
 		// cache system time zone
 		then(systemTimeZoneCache).should().put(systemId, systemTimeZone);
 
-		then(restOps).should(times(3)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("Authorization in HTTP request header")
-					.hasEntrySatisfying(HttpHeaders.AUTHORIZATION, vals -> {
-						and.then(vals)
-							.as("Single Authroization header value provided")
-							.hasSize(1)
-							.element(0, InstanceOfAssertFactories.STRING)
-							.as("Authroization scheme is Bearer")
-							.startsWith("Bearer ")
-							.as("Authroization value is OAuth token")
-							.endsWith(oauthAccessToken.getTokenValue())
-							;
-					})
+		then(restOps).should(times(expectedUris.size())).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 					;
 			})
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
 			;
-
 
 		final int inv1DatumCount = 79;
 		final int inv2DatumCount = 50;
@@ -2067,6 +2085,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void datum_oneZone_multiStreamLag_outsideTolerance() {
 		// GIVEN
@@ -2145,14 +2164,11 @@ public class SmaCloudDatumStreamServiceTests {
 		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
-		// @formatter:off
-		datumStream.setServiceProps(Map.of(
-				CloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
-						"/%s/%s".formatted(systemId, device1Id), inv1SourceId,
-						"/%s/%s".formatted(systemId, device2Id), inv2SourceId
-						)
-				));
-		// @formatter:on
+
+		SequencedMap<String, String> sourceIdMap = new LinkedHashMap<>();
+		sourceIdMap.put("/%s/%s".formatted(systemId, device1Id), inv1SourceId);
+		sourceIdMap.put("/%s/%s".formatted(systemId, device2Id), inv2SourceId);
+		datumStream.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING, sourceIdMap));
 
 		// configure expected HTTP responses
 
@@ -2162,12 +2178,14 @@ public class SmaCloudDatumStreamServiceTests {
 
 		given(systemTimeZoneCache.get(systemId)).willReturn(null, systemTimeZone);
 
-		final URI systemDetailsUrl = fromUri(BASE_URI)
-				.path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE).buildAndExpand(systemId)
-				.toUri();
-		given(restOps.exchange(eq(systemDetailsUrl), eq(GET), any(), eq(JsonNode.class)))
-				.willReturn(new ResponseEntity<>(getObjectFromJSON(
-						utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class), OK));
+		final List<URI> expectedUris = new ArrayList<>();
+		final List<ResponseEntity<JsonNode>> responses = new ArrayList<>();
+
+		expectedUris.add(fromUri(BASE_URI).path(SmaCloudDatumStreamService.SYSTEM_VIEW_PATH_TEMPLATE)
+				.buildAndExpand(systemId).toUri());
+		responses.add(new ResponseEntity<>(
+				getObjectFromJSON(utf8StringResource("sma-plant-01.json", getClass()), JsonNode.class),
+				OK));
 
 		// HTTP request measurement set data for each day in filter range
 
@@ -2177,18 +2195,20 @@ public class SmaCloudDatumStreamServiceTests {
 					.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE)
 					.queryParam(SmaCloudDatumStreamService.DATE_PARAM, day.toString());
 
-			final URI set1Uri = b
+			expectedUris.add(b
 					.queryParam(SmaCloudDatumStreamService.RETURN_ENERGY_VALUES_PARAM,
 							prop1MeasuermentSet.shouldReturnEnergyValues())
 					.buildAndExpand(deviceId, prop1MeasuermentSet.getKey(), SmaPeriod.Day.getKey())
-					.toUri();
-			given(restOps.exchange(eq(set1Uri), eq(GET), any(), eq(JsonNode.class)))
-					.willReturn(new ResponseEntity<>(getObjectFromJSON(utf8StringResource(
-							deviceId.equals(device1Id)
-									? "sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-01.json"
-									: "sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-01a.json",
-							getClass()), JsonNode.class), OK));
+					.toUri());
+			responses.add(new ResponseEntity<>(getObjectFromJSON(utf8StringResource(
+					deviceId.equals(device1Id)
+							? "sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-01.json"
+							: "sma-device-data-Day-EnergyAndPowerPv-ReturnEnergyValues-01a.json",
+					getClass()), JsonNode.class), OK));
 		}
+
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(responses.get(0),
+				responses.subList(1, responses.size()).toArray(ResponseEntity[]::new));
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -2206,27 +2226,21 @@ public class SmaCloudDatumStreamServiceTests {
 		// cache system time zone
 		then(systemTimeZoneCache).should().put(systemId, systemTimeZone);
 
-		then(restOps).should(times(3)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("Authorization in HTTP request header")
-					.hasEntrySatisfying(HttpHeaders.AUTHORIZATION, vals -> {
-						and.then(vals)
-							.as("Single Authroization header value provided")
-							.hasSize(1)
-							.element(0, InstanceOfAssertFactories.STRING)
-							.as("Authroization scheme is Bearer")
-							.startsWith("Bearer ")
-							.as("Authroization value is OAuth token")
-							.endsWith(oauthAccessToken.getTokenValue())
-							;
-					})
+		then(restOps).should(times(expectedUris.size())).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 					;
 			})
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
 			;
-
 
 		final int inv1DatumCount = 79;
 		final int inv2DatumCount = 50;

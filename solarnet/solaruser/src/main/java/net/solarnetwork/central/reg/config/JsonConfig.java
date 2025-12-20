@@ -27,20 +27,35 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
+import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.codec.CborUtils;
 
 /**
  * JSON configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class JsonConfig {
 
 	/** The {@link ObjectMapper} for CBOR handling. */
 	public static final String CBOR_MAPPER = "cbor";
+
+	/**
+	 * A module for handling SolarFlux objects.
+	 *
+	 * @since 1.2
+	 */
+	public static final com.fasterxml.jackson.databind.Module SOLARAPP_MODULE;
+	static {
+		SimpleModule m = new SimpleModule("SolarApp");
+		m.addSerializer(UserEvent.class, UserEventSerializer.INSTANCE);
+		SOLARAPP_MODULE = m;
+	}
 
 	/**
 	 * Get the primary {@link ObjectMapper} to use for JSON processing.
@@ -50,7 +65,9 @@ public class JsonConfig {
 	@Primary
 	@Bean
 	public ObjectMapper objectMapper() {
-		return DatumJsonUtils.newDatumObjectMapper();
+		ObjectMapper mapper = DatumJsonUtils.newDatumObjectMapper();
+		mapper.registerModule(SOLARAPP_MODULE);
+		return mapper;
 	}
 
 	/**
@@ -61,7 +78,9 @@ public class JsonConfig {
 	@Bean
 	@Qualifier(CBOR_MAPPER)
 	public ObjectMapper cborObjectMapper() {
-		return DatumJsonUtils.newDatumObjectMapper(CborUtils.cborFactory());
+		ObjectMapper mapper = DatumJsonUtils.newDatumObjectMapper(CborUtils.cborFactory());
+		mapper.registerModule(SOLARAPP_MODULE);
+		return mapper;
 	}
 
 }

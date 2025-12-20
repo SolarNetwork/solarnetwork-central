@@ -23,9 +23,11 @@
 package net.solarnetwork.central.c2c.biz;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.common.http.HttpConstants;
 import net.solarnetwork.central.domain.HttpRequestInfo;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Unique;
@@ -36,7 +38,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud integration service.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface CloudIntegrationService
 		extends Unique<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -55,58 +57,58 @@ public interface CloudIntegrationService
 	String AUTHORIZATION_WELL_KNOWN_URL = "authorizationUrl";
 
 	/** A standard OAuth client identifier setting name. */
-	String OAUTH_CLIENT_ID_SETTING = "oauthClientId";
+	String OAUTH_CLIENT_ID_SETTING = HttpConstants.OAUTH_CLIENT_ID_SETTING;
 
 	/** A standard OAuth client secret setting name. */
-	String OAUTH_CLIENT_SECRET_SETTING = "oauthClientSecret";
+	String OAUTH_CLIENT_SECRET_SETTING = HttpConstants.OAUTH_CLIENT_SECRET_SETTING;
 
 	/**
 	 * A standard OAuth access token.
 	 *
 	 * @since 1.3
 	 */
-	String OAUTH_ACCESS_TOKEN_SETTING = "oauthAccessToken";
+	String OAUTH_ACCESS_TOKEN_SETTING = HttpConstants.OAUTH_ACCESS_TOKEN_SETTING;
 
 	/**
 	 * A standard OAuth refresh token.
 	 *
 	 * @since 1.3
 	 */
-	String OAUTH_REFRESH_TOKEN_SETTING = "oauthRefreshToken";
+	String OAUTH_REFRESH_TOKEN_SETTING = HttpConstants.OAUTH_REFRESH_TOKEN_SETTING;
 
 	/**
 	 * A standard OAuth state value.
 	 *
 	 * @since 1.4
 	 */
-	String OAUTH_STATE_SETTING = "oauthState";
+	String OAUTH_STATE_SETTING = HttpConstants.OAUTH_STATE_SETTING;
 
 	/**
 	 * An OAuth authorization code parameter.
 	 *
 	 * @since 1.4
 	 */
-	String AUTHORIZATION_CODE_PARAM = "code";
+	String AUTHORIZATION_CODE_PARAM = HttpConstants.AUTHORIZATION_CODE_PARAM;
 
 	/**
 	 * An OAuth authorization state parameter.
 	 *
 	 * @since 1.4
 	 */
-	String AUTHORIZATION_STATE_PARAM = "state";
+	String AUTHORIZATION_STATE_PARAM = HttpConstants.AUTHORIZATION_STATE_PARAM;
 
 	/**
 	 * An OAuth redirect URI parameter.
 	 *
 	 * @since 1.4
 	 */
-	String REDIRECT_URI_PARAM = "redirect_uri";
+	String REDIRECT_URI_PARAM = HttpConstants.REDIRECT_URI_PARAM;
 
 	/** A standard username setting name. */
-	String USERNAME_SETTING = "username";
+	String USERNAME_SETTING = HttpConstants.USERNAME_SETTING;
 
 	/** A standard password setting name. */
-	String PASSWORD_SETTING = "password";
+	String PASSWORD_SETTING = HttpConstants.PASSWORD_SETTING;
 
 	/**
 	 * A standard base URL setting name, to support proxy servers for example.
@@ -150,6 +152,16 @@ public interface CloudIntegrationService
 	 * @return the supported datum stream services, never {@literal null}
 	 */
 	Iterable<CloudDatumStreamService> datumStreamServices();
+
+	/**
+	 * Get the control services supported by this integration.
+	 *
+	 * @return the supported control services, never {@literal null}
+	 * @since 2.1
+	 */
+	default Iterable<CloudControlService> controlServices() {
+		return List.of();
+	}
 
 	/**
 	 * Validate a configuration.

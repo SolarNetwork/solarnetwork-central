@@ -55,21 +55,23 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
-import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.OK;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SequencedMap;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.BDDMockito.BDDMyOngoingStubbing;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -77,6 +79,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
@@ -151,10 +154,7 @@ public class FroniusCloudDatumStreamServiceTests {
 	private Cache<String, CloudDataValue> systemCache;
 
 	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
-
-	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
 	private CloudIntegrationsExpressionService expressionService;
 
@@ -198,8 +198,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("fronius-systems-01.json", getClass()), ObjectNode.class);
 		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 
@@ -207,18 +206,18 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(FroniusCloudIntegrationService.BASE_URI.resolve(LIST_SYSTEMS_URL))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
-			.as("API ID provided in HTTP request header")
-			.containsEntry(ACCESS_KEY_ID_HEADER, List.of(apiKey))
-			.as("API secret provided in HTTP request header")
-			.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for inverter telemetry")
+			.returns(FroniusCloudIntegrationService.BASE_URI.resolve(LIST_SYSTEMS_URL), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains API key")
+			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, List.of(apiKey))
+			.as("Request headers contains API secret")
+			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
 			;
 
 		and.then(results)
@@ -295,8 +294,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("fronius-devices-01.json", getClass()), ObjectNode.class);
 		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 
@@ -305,27 +303,24 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(uriCaptor.getValue())
-			.satisfies(uri -> {
-				URI expectedUri = UriComponentsBuilder.fromUri(BASE_URI)
-					.path(SYSTEM_DEVICES_URL_TEMPLATE)
-					.buildAndExpand(systemId)
-					.toUri()
-					;
-				and.then(uri)
-					.as("Request devices for system")
-					.isEqualTo(expectedUri)
-					;
-			})
+		URI expectedUri = UriComponentsBuilder.fromUri(BASE_URI)
+			.path(SYSTEM_DEVICES_URL_TEMPLATE)
+			.buildAndExpand(systemId)
+			.toUri()
 			;
 
-		and.then(httpEntityCaptor.getValue().getHeaders())
-			.as("API ID provided in HTTP request header")
-			.containsEntry(ACCESS_KEY_ID_HEADER, List.of(apiKey))
-			.as("API secret provided in HTTP request header")
-			.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request devices for system")
+			.returns(expectedUri, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains API key")
+			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, List.of(apiKey))
+			.as("Request headers contains API secret")
+			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
 			;
 
 		and.then(results)
@@ -412,7 +407,7 @@ public class FroniusCloudDatumStreamServiceTests {
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("fronius-device-history-inverter-01.json", getClass()), ObjectNode.class);
 		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
+		given(restOps.exchange(any(), eq(JsonNode.class)))
 				.willReturn(res);
 
 		// WHEN
@@ -423,30 +418,27 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(uriCaptor.getValue())
-			.satisfies(uri -> {
-				URI expectedUri = UriComponentsBuilder.fromUri(BASE_URI)
-					.path(DEVICE_HISTORY_URL_TEMPLATE)
-					.queryParam(START_AT_PARAM, clock.instant().truncatedTo(HOURS).minus(1, DAYS))
-					.queryParam(END_AT_PARAM, clock.instant().truncatedTo(HOURS))
-					.queryParam(LIMIT_PARAM, 1)
-					.buildAndExpand(systemId, deviceId)
-					.toUri()
-					;
-				and.then(uri)
-					.as("Request device history for past day, limited to first result")
-					.isEqualTo(expectedUri)
-					;
-			})
+		URI expectedUri = UriComponentsBuilder.fromUri(BASE_URI)
+			.path(DEVICE_HISTORY_URL_TEMPLATE)
+			.queryParam(START_AT_PARAM, clock.instant().truncatedTo(HOURS).minus(1, DAYS))
+			.queryParam(END_AT_PARAM, clock.instant().truncatedTo(HOURS))
+			.queryParam(LIMIT_PARAM, 1)
+			.buildAndExpand(systemId, deviceId)
+			.toUri()
 			;
 
-		and.then(httpEntityCaptor.getValue().getHeaders())
-			.as("API ID provided in HTTP request header")
-			.containsEntry(ACCESS_KEY_ID_HEADER, List.of(apiKey))
-			.as("API secret provided in HTTP request header")
-			.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request device history for past day, limited to first result")
+			.returns(expectedUri, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains API key")
+			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, List.of(apiKey))
+			.as("Request headers contains API secret")
+			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
 			;
 
 		and.then(results)
@@ -582,9 +574,11 @@ public class FroniusCloudDatumStreamServiceTests {
 		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
-		datumStream.setServiceProps(
-				Map.of(SOURCE_ID_MAP_SETTING, Map.of("/%s/%s".formatted(systemId, device1Id),
-						inv1SourceId, "/%s/%s".formatted(systemId, device2Id), met1SourceId)));
+
+		SequencedMap<String, String> sourceIdMap = new LinkedHashMap<>();
+		sourceIdMap.put("/%s/%s".formatted(systemId, device1Id), inv1SourceId);
+		sourceIdMap.put("/%s/%s".formatted(systemId, device2Id), met1SourceId);
+		datumStream.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING, sourceIdMap));
 
 		// look up lastImport date for system; first try is cache miss, second as cache hit
 		final Instant lastImportDate = Instant.parse("2025-03-24T16:45:08Z");
@@ -595,45 +589,12 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// HTTP requests: first for system info (cache miss), then one for each device
 
-		// @formatter:off
-		final URI expectedSystemInfoUri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(FroniusCloudDatumStreamService.SYSTEM_URL_TEMPLATE)
-				.buildAndExpand(systemId)
-				.toUri();
-
-		URI expectedDevice1Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, lastImportDate.truncatedTo(HOURS))
-				.queryParam(END_AT_PARAM, lastImportDate.truncatedTo(HOURS).truncatedTo(HOURS).plus(1, HOURS))
-				.queryParam(OFFSET_PARAM, 0L)
-				.queryParam(LIMIT_PARAM, 1)
-				.buildAndExpand(systemId, device1Id)
-				.toUri()
-				;
-
-		URI expectedDevice2Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, lastImportDate.truncatedTo(HOURS))
-				.queryParam(END_AT_PARAM, lastImportDate.truncatedTo(HOURS).truncatedTo(HOURS).plus(1, HOURS))
-				.queryParam(OFFSET_PARAM, 0L)
-				.queryParam(LIMIT_PARAM, 1)
-				.buildAndExpand(systemId, device2Id)
-				.toUri()
-				;
-		// @formatter:on
-
-		given(restOps.exchange(eq(expectedSystemInfoUri), eq(GET), any(), eq(JsonNode.class)))
-				.willReturn(new ResponseEntity<>(
-						getObjectFromJSON(utf8StringResource("fronius-system-01.json", getClass()),
-								ObjectNode.class),
-						OK));
-
-		given(restOps.exchange(eq(expectedDevice1Uri), eq(GET), any(), eq(JsonNode.class)))
+		given(restOps.exchange(any(), eq(JsonNode.class)))
+				.willReturn(new ResponseEntity<>(getObjectFromJSON(
+						utf8StringResource("fronius-system-01.json", getClass()), ObjectNode.class), OK))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-inverter-01.json", getClass()),
-						ObjectNode.class), OK));
-
-		given(restOps.exchange(eq(expectedDevice2Uri), eq(GET), any(), eq(JsonNode.class)))
+						ObjectNode.class), OK))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-smartmeter-01.json", getClass()),
 						ObjectNode.class), OK));
@@ -643,20 +604,59 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(3)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should(times(3)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("API ID provided in HTTP request header")
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("Request headers contains API key")
 					.containsEntry(ACCESS_KEY_ID_HEADER, List.of(accessKeyId))
-					.as("API secret provided in HTTP request header")
+					.as("Request headers contains API secret")
 					.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(accessKeySecret))
 					;
 			})
-			;
+			.satisfies(reqs -> {
+				final URI expectedSystemInfoUri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(FroniusCloudDatumStreamService.SYSTEM_URL_TEMPLATE)
+						.buildAndExpand(systemId)
+						.toUri();
 
+				final URI expectedDevice1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, lastImportDate.truncatedTo(HOURS))
+						.queryParam(END_AT_PARAM, lastImportDate.truncatedTo(HOURS).truncatedTo(HOURS).plus(1, HOURS))
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, 1)
+						.buildAndExpand(systemId, device1Id)
+						.toUri()
+						;
+
+				final URI expectedDevice2Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, lastImportDate.truncatedTo(HOURS))
+						.queryParam(END_AT_PARAM, lastImportDate.truncatedTo(HOURS).truncatedTo(HOURS).plus(1, HOURS))
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, 1)
+						.buildAndExpand(systemId, device2Id)
+						.toUri()
+						;
+				and.then(reqs).element(0)
+					.as("Request system info")
+					.returns(expectedSystemInfoUri, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(1)
+					.as("Request device 1")
+					.returns(expectedDevice1Uri, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(2)
+					.as("Request device 2")
+					.returns(expectedDevice2Uri, from(RequestEntity::getUrl))
+					;
+			})
+			;
 
 		and.then(result)
 			.as("Datum parsed from HTTP response")
@@ -773,50 +773,13 @@ public class FroniusCloudDatumStreamServiceTests {
 		final Instant startDate = clock.instant().minus(48, HOURS);
 		final Instant endDate = clock.instant();
 
-		// @formatter:off
-		URI expectedDevice1Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, startDate)
-				.queryParam(END_AT_PARAM, startDate.plus(24, HOURS))
-				.queryParam(OFFSET_PARAM, 0L)
-				.queryParam(LIMIT_PARAM, 2)
-				.buildAndExpand(systemId, device1Id)
-				.toUri()
-				;
-
-		URI expectedDevice1Day1Page2Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, startDate)
-				.queryParam(END_AT_PARAM, startDate.plus(24, HOURS))
-				.queryParam(OFFSET_PARAM, 2L)
-				.queryParam(LIMIT_PARAM, 2)
-				.buildAndExpand(systemId, device1Id)
-				.toUri()
-				;
-
-		URI expectedDevice1Day2Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, startDate.plus(24, HOURS))
-				.queryParam(END_AT_PARAM, endDate)
-				.queryParam(OFFSET_PARAM, 0L)
-				.queryParam(LIMIT_PARAM, 2)
-				.buildAndExpand(systemId, device1Id)
-				.toUri()
-				;
-
-		// @formatter:on
-
-		given(restOps.exchange(eq(expectedDevice1Day1Page1Uri), eq(GET), any(), eq(JsonNode.class)))
+		given(restOps.exchange(any(), eq(JsonNode.class)))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-inverter-02.json", getClass()),
-						ObjectNode.class), OK));
-
-		given(restOps.exchange(eq(expectedDevice1Day1Page2Uri), eq(GET), any(), eq(JsonNode.class)))
+						ObjectNode.class), OK))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-inverter-03.json", getClass()),
-						ObjectNode.class), OK));
-
-		given(restOps.exchange(eq(expectedDevice1Day2Page1Uri), eq(GET), any(), eq(JsonNode.class)))
+						ObjectNode.class), OK))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-inverter-04.json", getClass()),
 						ObjectNode.class), OK));
@@ -831,16 +794,62 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(3)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should(times(3)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("API ID provided in HTTP request header")
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("Request headers contains API key")
 					.containsEntry(ACCESS_KEY_ID_HEADER, List.of(accessKeyId))
-					.as("API secret provided in HTTP request header")
+					.as("Request headers contains API secret")
 					.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(accessKeySecret))
+					;
+			})
+			.satisfies(reqs -> {
+				URI expectedDevice1Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate)
+						.queryParam(END_AT_PARAM, startDate.plus(24, HOURS))
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, 2)
+						.buildAndExpand(systemId, device1Id)
+						.toUri()
+						;
+
+				URI expectedDevice1Day1Page2Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate)
+						.queryParam(END_AT_PARAM, startDate.plus(24, HOURS))
+						.queryParam(OFFSET_PARAM, 2L)
+						.queryParam(LIMIT_PARAM, 2)
+						.buildAndExpand(systemId, device1Id)
+						.toUri()
+						;
+
+				URI expectedDevice1Day2Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate.plus(24, HOURS))
+						.queryParam(END_AT_PARAM, endDate)
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, 2)
+						.buildAndExpand(systemId, device1Id)
+						.toUri()
+						;
+
+				and.then(reqs).element(0)
+					.as("Request device 1 day 1 page 1")
+					.returns(expectedDevice1Day1Page1Uri, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(1)
+					.as("Request device 1 day 1 page 2")
+					.returns(expectedDevice1Day1Page2Uri, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(2)
+					.as("Request device 1 day 2 page 1")
+					.returns(expectedDevice1Day2Page1Uri, from(RequestEntity::getUrl))
 					;
 			})
 			;
@@ -986,10 +995,13 @@ public class FroniusCloudDatumStreamServiceTests {
 		final Instant usedEndDate = startDate.plus(7, DAYS);
 
 		List<Instant> datumTimestamps = new ArrayList<>();
+		List<URI> expectedUris = new ArrayList<>();
+
+		BDDMyOngoingStubbing<ResponseEntity<JsonNode>> reqStub = null;
 
 		for ( int i = 0; i < 7; i++ ) {
 			// @formatter:off
-			URI expectedDevice1DayUri = UriComponentsBuilder.fromUri(BASE_URI)
+			URI expectedUri = UriComponentsBuilder.fromUri(BASE_URI)
 					.path(DEVICE_HISTORY_URL_TEMPLATE)
 					.queryParam(START_AT_PARAM, startDate.plus(i, DAYS))
 					.queryParam(END_AT_PARAM, startDate.plus(i + 1, DAYS))
@@ -999,16 +1011,19 @@ public class FroniusCloudDatumStreamServiceTests {
 					.toUri()
 					;
 			// @formatter:on
+			expectedUris.add(expectedUri);
 
 			Instant datumTimestamp = startDate.plus(i + 1, DAYS).minusSeconds(300);
 			datumTimestamps.add(datumTimestamp);
 
-			given(restOps.exchange(eq(expectedDevice1DayUri), eq(GET), any(), eq(JsonNode.class)))
-					.willReturn(new ResponseEntity<>(getObjectFromJSON(
-							responseJsonTemplate
-									.formatted(JsonUtils.getJSONString(datumTimestamp.toString())),
-							ObjectNode.class), OK));
-
+			var res = new ResponseEntity<>(getObjectFromJSON(
+					responseJsonTemplate.formatted(JsonUtils.getJSONString(datumTimestamp.toString())),
+					JsonNode.class), OK);
+			if ( reqStub == null ) {
+				reqStub = given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
+			} else {
+				reqStub = reqStub.willReturn(res);
+			}
 		}
 
 		// WHEN
@@ -1019,9 +1034,20 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(7)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should(times(7)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(httpEntityCaptor.getAllValues())
+		and.then(httpRequestCaptor.getAllValues())
+			.extracting(RequestEntity::getUrl)
+			.containsExactlyElementsOf(expectedUris)
+			;
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					;
+			})
 			.extracting(HttpEntity::getHeaders)
 			.allSatisfy(headers -> {
 				and.then(headers)
@@ -1126,12 +1152,11 @@ public class FroniusCloudDatumStreamServiceTests {
 		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
-		// @formatter:off
-		datumStream.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING, Map.of(
-				"/%s/%s".formatted(systemId1, device1Id1), inv1SourceId,
-				"/%s/%s".formatted(systemId2, device1Id2), inv2SourceId
-				)));
-		// @formatter:on
+
+		SequencedMap<String, String> sourceIdMap = new LinkedHashMap<>();
+		sourceIdMap.put("/%s/%s".formatted(systemId1, device1Id1), inv1SourceId);
+		sourceIdMap.put("/%s/%s".formatted(systemId2, device1Id2), inv2SourceId);
+		datumStream.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING, sourceIdMap));
 
 		// setup clock to be near end of requested data period
 
@@ -1142,35 +1167,10 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// HTTP requests: 1x per device
 
-		// @formatter:off
-		URI expectedDevice1Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, startDate)
-				.queryParam(END_AT_PARAM, endDate)
-				.queryParam(OFFSET_PARAM, 0L)
-				.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
-				.buildAndExpand(systemId1, device1Id1)
-				.toUri()
-				;
-
-		URI expectedDevice2Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, startDate)
-				.queryParam(END_AT_PARAM, endDate)
-				.queryParam(OFFSET_PARAM, 0L)
-				.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
-				.buildAndExpand(systemId2, device1Id2)
-				.toUri()
-				;
-
-		// @formatter:on
-
-		given(restOps.exchange(eq(expectedDevice1Day1Page1Uri), eq(GET), any(), eq(JsonNode.class)))
+		given(restOps.exchange(any(), eq(JsonNode.class)))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-inverter-02.json", getClass()),
-						ObjectNode.class), OK));
-
-		given(restOps.exchange(eq(expectedDevice2Day1Page1Uri), eq(GET), any(), eq(JsonNode.class)))
+						ObjectNode.class), OK))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-inverter-02a.json", getClass()),
 						ObjectNode.class), OK));
@@ -1183,16 +1183,48 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(2)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("API ID provided in HTTP request header")
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("Request headers contains API key")
 					.containsEntry(ACCESS_KEY_ID_HEADER, List.of(accessKeyId))
-					.as("API secret provided in HTTP request header")
+					.as("Request headers contains API secret")
 					.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(accessKeySecret))
+					;
+			})
+			.satisfies(reqs -> {
+				URI expectedDevice1Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate)
+						.queryParam(END_AT_PARAM, endDate)
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
+						.buildAndExpand(systemId1, device1Id1)
+						.toUri()
+						;
+
+				URI expectedDevice2Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate)
+						.queryParam(END_AT_PARAM, endDate)
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
+						.buildAndExpand(systemId2, device1Id2)
+						.toUri()
+						;
+
+				and.then(reqs).element(0)
+					.as("Request device 1 day 1 page 1")
+					.returns(expectedDevice1Day1Page1Uri, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(1)
+					.as("Request device 2 day 1 page 2")
+					.returns(expectedDevice2Day1Page1Uri, from(RequestEntity::getUrl))
 					;
 			})
 			;
@@ -1324,12 +1356,11 @@ public class FroniusCloudDatumStreamServiceTests {
 		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
-		// @formatter:off
-		datumStream.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING, Map.of(
-				"/%s/%s".formatted(systemId1, device1Id1), inv1SourceId,
-				"/%s/%s".formatted(systemId2, device1Id2), inv2SourceId
-				)));
-		// @formatter:on
+
+		SequencedMap<String, String> sourceIdMap = new LinkedHashMap<>();
+		sourceIdMap.put("/%s/%s".formatted(systemId1, device1Id1), inv1SourceId);
+		sourceIdMap.put("/%s/%s".formatted(systemId2, device1Id2), inv2SourceId);
+		datumStream.setServiceProps(Map.of(SOURCE_ID_MAP_SETTING, sourceIdMap));
 
 		// setup clock to be 1y after end of requested data period
 
@@ -1340,35 +1371,10 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// HTTP requests: 1x per device
 
-		// @formatter:off
-		URI expectedDevice1Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, startDate)
-				.queryParam(END_AT_PARAM, endDate)
-				.queryParam(OFFSET_PARAM, 0L)
-				.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
-				.buildAndExpand(systemId1, device1Id1)
-				.toUri()
-				;
-
-		URI expectedDevice2Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
-				.path(DEVICE_HISTORY_URL_TEMPLATE)
-				.queryParam(START_AT_PARAM, startDate)
-				.queryParam(END_AT_PARAM, endDate)
-				.queryParam(OFFSET_PARAM, 0L)
-				.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
-				.buildAndExpand(systemId2, device1Id2)
-				.toUri()
-				;
-
-		// @formatter:on
-
-		given(restOps.exchange(eq(expectedDevice1Day1Page1Uri), eq(GET), any(), eq(JsonNode.class)))
+		given(restOps.exchange(any(), eq(JsonNode.class)))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-inverter-02.json", getClass()),
-						ObjectNode.class), OK));
-
-		given(restOps.exchange(eq(expectedDevice2Day1Page1Uri), eq(GET), any(), eq(JsonNode.class)))
+						ObjectNode.class), OK))
 				.willReturn(new ResponseEntity<>(getObjectFromJSON(
 						utf8StringResource("fronius-device-history-inverter-02a.json", getClass()),
 						ObjectNode.class), OK));
@@ -1381,16 +1387,48 @@ public class FroniusCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(2)).exchange(any(), eq(GET), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(httpEntityCaptor.getAllValues())
-			.extracting(HttpEntity::getHeaders)
-			.allSatisfy(headers -> {
-				and.then(headers)
-					.as("API ID provided in HTTP request header")
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("Request headers contains API key")
 					.containsEntry(ACCESS_KEY_ID_HEADER, List.of(accessKeyId))
-					.as("API secret provided in HTTP request header")
+					.as("Request headers contains API secret")
 					.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(accessKeySecret))
+					;
+			})
+			.satisfies(reqs -> {
+				URI expectedDevice1Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate)
+						.queryParam(END_AT_PARAM, endDate)
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
+						.buildAndExpand(systemId1, device1Id1)
+						.toUri()
+						;
+
+				URI expectedDevice2Day1Page1Uri = UriComponentsBuilder.fromUri(BASE_URI)
+						.path(DEVICE_HISTORY_URL_TEMPLATE)
+						.queryParam(START_AT_PARAM, startDate)
+						.queryParam(END_AT_PARAM, endDate)
+						.queryParam(OFFSET_PARAM, 0L)
+						.queryParam(LIMIT_PARAM, DEFAULT_QUERY_LIMIT)
+						.buildAndExpand(systemId2, device1Id2)
+						.toUri()
+						;
+
+				and.then(reqs).element(0)
+					.as("Request device 1 day 1 page 1")
+					.returns(expectedDevice1Day1Page1Uri, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(1)
+					.as("Request device 2 day 1 page 2")
+					.returns(expectedDevice2Day1Page1Uri, from(RequestEntity::getUrl))
 					;
 			})
 			;

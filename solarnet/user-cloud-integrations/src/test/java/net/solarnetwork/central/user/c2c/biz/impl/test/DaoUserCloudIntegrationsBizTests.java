@@ -71,6 +71,7 @@ import jakarta.validation.ValidatorFactory;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
+import net.solarnetwork.central.c2c.dao.CloudControlConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
@@ -81,6 +82,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.UserSettingsEntityDao;
 import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamSettings;
+import net.solarnetwork.central.c2c.domain.CloudControlConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
@@ -107,6 +109,7 @@ import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityBa
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamRakeTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
+import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
@@ -119,7 +122,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Test cases for the {@link DaoUserCloudIntegrationsBiz} class.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -140,6 +143,9 @@ public class DaoUserCloudIntegrationsBizTests {
 
 	@Mock
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
+
+	@Mock
+	private CloudControlConfigurationDao controlDao;
 
 	@Mock
 	private CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
@@ -175,10 +181,16 @@ public class DaoUserCloudIntegrationsBizTests {
 	private ArgumentCaptor<CloudDatumStreamPropertyConfiguration> datumStreamPropertyCaptor;
 
 	@Captor
+	private ArgumentCaptor<CloudControlConfiguration> controlCaptor;
+
+	@Captor
 	private ArgumentCaptor<CloudDatumStreamPollTaskEntity> datumStreamPollTaskCaptor;
 
 	@Captor
 	private ArgumentCaptor<CloudDatumStreamRakeTaskEntity> datumStreamRakeTaskCaptor;
+
+	@Captor
+	private ArgumentCaptor<UserNodeInstructionTaskEntity> controlInstructionTaskCaptor;
 
 	@Captor
 	private ArgumentCaptor<UserSettingsEntity> userSettingsCaptor;
@@ -216,7 +228,7 @@ public class DaoUserCloudIntegrationsBizTests {
 		given(integrationService.getSettingSpecifiers()).willReturn(settings);
 
 		biz = new DaoUserCloudIntegrationsBiz(clock, userSettingsDao, integrationDao, datumStreamDao,
-				datumStreamSettingsDao, datumStreamMappingDao, datumStreamPropertyDao,
+				datumStreamSettingsDao, datumStreamMappingDao, datumStreamPropertyDao, controlDao,
 				datumStreamPollTaskDao, datumStreamRakeTaskDao, clientAccessTokenDao, textEncryptor,
 				Collections.singleton(integrationService));
 

@@ -23,32 +23,25 @@
 package net.solarnetwork.central.dao;
 
 import net.solarnetwork.central.domain.UserMetadataEntity;
-import net.solarnetwork.central.domain.UserMetadataFilter;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for {@link UserMetadataEntity}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.23
  */
-public interface UserMetadataDao extends net.solarnetwork.dao.GenericDao<UserMetadataEntity, Long>,
-		net.solarnetwork.dao.FilterableDao<UserMetadataEntity, Long, UserMetadataFilter> {
+public interface UserMetadataDao extends UserMetadataReadOnlyDao, GenericDao<UserMetadataEntity, Long> {
 
 	/**
-	 * Extract metadata at a given path as a JSON string.
+	 * Get a persisted entity by its primary key.
 	 *
-	 * <p>
-	 * The {@code path} is a URL-like path, such as {@literal /pm/some/thing}.
-	 * </p>
-	 *
-	 * @param userId
-	 *        the user ID to extract metadata for
-	 * @param path
-	 *        the path to extract
-	 * @return the metadata object
-	 * @see net.solarnetwork.domain.datum.DatumMetadataOperations#metadataAtPath(String)
+	 * @param id
+	 *        the primary key to retrieve
+	 * @return the domain object, or {@code null} if not available
 	 */
-	String jsonMetadataAtPath(Long userId, String path);
+	@Override
+	UserMetadataEntity get(Long id);
 
 }

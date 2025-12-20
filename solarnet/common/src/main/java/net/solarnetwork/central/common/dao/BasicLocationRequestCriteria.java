@@ -31,7 +31,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of {@link LocationRequestCriteria}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.3
  */
 public class BasicLocationRequestCriteria extends BasicCoreCriteria implements LocationRequestCriteria {
@@ -63,6 +63,15 @@ public class BasicLocationRequestCriteria extends BasicCoreCriteria implements L
 	@Override
 	public BasicLocationRequestCriteria clone() {
 		return (BasicLocationRequestCriteria) super.clone();
+	}
+
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (requestStatuses != null && !requestStatuses.isEmpty())
+				;
+		// @formatter:on
 	}
 
 	/**

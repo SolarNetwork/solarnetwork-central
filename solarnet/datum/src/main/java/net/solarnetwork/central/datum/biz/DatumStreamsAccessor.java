@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.Collection;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * API for accessing datum streams.
@@ -37,7 +38,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </p>
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface DatumStreamsAccessor {
 
@@ -52,7 +53,7 @@ public interface DatumStreamsAccessor {
 	 *        the source ID to find the datum for
 	 * @param timestamp
 	 *        the timestamp to find the datum for
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 * @since 2.1
 	 */
 	Datum at(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp);
@@ -107,7 +108,7 @@ public interface DatumStreamsAccessor {
 	 *        the object ID to find the offset datum for
 	 * @param sourceIdPattern
 	 *        an optional Ant-style source ID pattern to filter by
-	 * @return the matching datum, never {@literal null}
+	 * @return the matching datum, never {@code null}
 	 * @see #offsetMatching(ObjectDatumKind, Long, String, int)
 	 */
 	default Collection<Datum> latestMatching(ObjectDatumKind kind, Long objectId,
@@ -128,7 +129,7 @@ public interface DatumStreamsAccessor {
 	 * @param offset
 	 *        the offset from the latest, {@code 0} being the latest and
 	 *        {@code 1} the next later, and so on
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
 	Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, int offset);
 
@@ -145,7 +146,7 @@ public interface DatumStreamsAccessor {
 	 *        the object ID to find the offset datum for
 	 * @param sourceId
 	 *        the source ID to find
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 * @see #offset(ObjectDatumKind, Long, String, int)
 	 */
 	default Datum latest(ObjectDatumKind kind, Long objectId, String sourceId) {
@@ -191,7 +192,7 @@ public interface DatumStreamsAccessor {
 	 *        an optional Ant-style source ID pattern to filter by
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, never {@literal null}
+	 * @return the matching datum, never {@code null}
 	 * @see #offsetMatching(ObjectDatumKind, Long, String, int)
 	 * @since 1.1
 	 */
@@ -214,7 +215,7 @@ public interface DatumStreamsAccessor {
 	 * @param offset
 	 *        the offset from the reference timestamp, {@code 0} being the
 	 *        latest and {@code 1} the next later, and so on
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 * @since 1.1
 	 */
 	Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp, int offset);
@@ -235,11 +236,48 @@ public interface DatumStreamsAccessor {
 	 *        the source ID to find the offset datum for
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 * @since 1.1
 	 */
 	default Datum latest(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp) {
 		return offset(kind, objectId, sourceId, timestamp, 0);
 	}
+
+	/**
+	 * Find datum matching a source ID pattern over a time range.
+	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the offset datum for
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param from
+	 *        the minimum datum timestamp (inclusive)
+	 * @param to
+	 *        the maximum datum timestamp (exclusive)
+	 * @return the matching datum, never {@code null}
+	 * @since 2.2
+	 */
+	Collection<Datum> rangeMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
+			Instant from, Instant to);
+
+	/**
+	 * Find datum streams matching a general query, source ID pattern, and
+	 * optional tags.
+	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param query
+	 *        the general query, to match the stream name, location, etc.
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param tags
+	 *        optional tags to match
+	 * @return the matching datum stream metadata, never {@code null}
+	 * @since 2.2
+	 */
+	Collection<ObjectDatumStreamMetadata> findStreams(ObjectDatumKind kind, String query,
+			String sourceIdPattern, String... tags);
 
 }

@@ -44,7 +44,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
  * Test cases for the {@link BasicDatumStreamsAccessor} class.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class BasicDatumStreamsAccessorTests {
 
@@ -415,6 +415,99 @@ public class BasicDatumStreamsAccessorTests {
 		then(result)
 			.as("Source %s not found", sourceIdPath)
 			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findRangeMatching_within() {
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final int startOffset = 3;
+		final int endOffset = 1;
+		final Instant from = now.minusSeconds(startOffset);
+		final Instant to = now.minusSeconds(endOffset);
+		final String sourceIdPath = "test/*";
+		Collection<Datum> result = accessor.rangeMatching(Node, nodeId, sourceIdPath, from, to);
+
+		// THEN
+		// @formatter:off
+		List<Datum> expected = new ArrayList<>(sourceCount);
+		for ( int sourceIdx = 0; sourceIdx < sourceCount; sourceIdx++)  {
+			expected.addAll(data.subList(
+					(sourceIdx * sourceCount) + (datumCount - startOffset - 1),
+					(sourceIdx * sourceCount) + (datumCount - endOffset - 1)));
+		}
+		then(result)
+			.as("Range [%s - %s] (offset [%d - %d]) returned", from, to, startOffset, endOffset)
+			.hasSameElementsAs(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findRangeMatching_leading() {
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final int startOffset = 8;
+		final int endOffset = 3;
+		final Instant from = now.minusSeconds(startOffset);
+		final Instant to = now.minusSeconds(endOffset);
+		final String sourceIdPath = "test/*";
+		Collection<Datum> result = accessor.rangeMatching(Node, nodeId, sourceIdPath, from, to);
+
+		// THEN
+		// @formatter:off
+		List<Datum> expected = new ArrayList<>(sourceCount);
+		for ( int sourceIdx = 0; sourceIdx < sourceCount; sourceIdx++)  {
+			expected.addAll(data.subList(
+					(sourceIdx * sourceCount),
+					(sourceIdx * sourceCount) + (datumCount - endOffset - 1)));
+		}
+		then(result)
+			.as("Range [%s - %s] (offset [%d - %d]) returned", from, to, startOffset, endOffset)
+			.hasSameElementsAs(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findRangeMatching_trailing() {
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final int startOffset = 3;
+		final int endOffset = -5;
+		final Instant from = now.minusSeconds(startOffset);
+		final Instant to = now.minusSeconds(endOffset);
+		final String sourceIdPath = "test/*";
+		Collection<Datum> result = accessor.rangeMatching(Node, nodeId, sourceIdPath, from, to);
+
+		// THEN
+		// @formatter:off
+		List<Datum> expected = new ArrayList<>(sourceCount);
+		for ( int sourceIdx = 0; sourceIdx < sourceCount; sourceIdx++)  {
+			expected.addAll(data.subList(
+					(sourceIdx * sourceCount) + (datumCount - startOffset - 1),
+					(sourceIdx * sourceCount) + datumCount));
+		}
+		then(result)
+			.as("Range [%s - %s] (offset [%d - %d]) returned", from, to, startOffset, endOffset)
+			.hasSameElementsAs(expected)
 			;
 		// @formatter:on
 	}

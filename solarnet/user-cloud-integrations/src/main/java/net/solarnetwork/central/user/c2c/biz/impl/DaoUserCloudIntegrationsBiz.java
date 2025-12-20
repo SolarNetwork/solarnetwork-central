@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -59,9 +60,11 @@ import com.nimbusds.jwt.JWTParser;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.c2c.biz.CloudControlService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
+import net.solarnetwork.central.c2c.dao.CloudControlConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
@@ -74,6 +77,7 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
 import net.solarnetwork.central.c2c.dao.UserSettingsEntityDao;
 import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamSettings;
+import net.solarnetwork.central.c2c.domain.CloudControlConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
@@ -117,7 +121,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.11
+ * @version 1.13
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
@@ -132,12 +136,14 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private final CloudDatumStreamSettingsEntityDao datumStreamSettingsDao;
 	private final CloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
 	private final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
+	private final CloudControlConfigurationDao controlDao;
 	private final CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
 	private final CloudDatumStreamRakeTaskDao datumStreamRakeTaskDao;
 	private final ClientAccessTokenDao clientAccessTokenDao;
 	private final TextEncryptor textEncryptor;
 	private final Map<String, CloudIntegrationService> integrationServices;
 	private final Map<String, CloudDatumStreamService> datumStreamServices;
+	private final Map<String, CloudControlService> controlServices;
 	private final Map<String, Set<String>> serviceSecureKeys;
 
 	private Validator validator;
@@ -160,6 +166,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 *        the datum stream mapping DAO
 	 * @param datumStreamPropertyDao
 	 *        the datum stream property DAO
+	 * @param controlDao
+	 *        the control DAO
 	 * @param datumStreamPollTaskDao
 	 *        the datum stream poll task DAO
 	 * @param datumStreamRakeTaskDao
@@ -179,7 +187,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			CloudDatumStreamSettingsEntityDao datumStreamSettingsDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
-			CloudDatumStreamPollTaskDao datumStreamPollTaskDao,
+			CloudControlConfigurationDao controlDao, CloudDatumStreamPollTaskDao datumStreamPollTaskDao,
 			CloudDatumStreamRakeTaskDao datumStreamRakeTaskDao,
 			ClientAccessTokenDao clientAccessTokenDao, TextEncryptor textEncryptor,
 			Collection<CloudIntegrationService> integrationServices) {
@@ -194,6 +202,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				"datumStreamMappingDao");
 		this.datumStreamPropertyDao = requireNonNullArgument(datumStreamPropertyDao,
 				"datumStreamPropertyDao");
+		this.controlDao = requireNonNullArgument(controlDao, "controlDao");
 		this.datumStreamPollTaskDao = requireNonNullArgument(datumStreamPollTaskDao,
 				"datumStreamPollTaskDao");
 		this.datumStreamRakeTaskDao = requireNonNullArgument(datumStreamRakeTaskDao,
@@ -210,10 +219,16 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				.sorted(comparing(CloudDatumStreamService::getId))
 				.collect(Collectors.toMap(CloudDatumStreamService::getId, Function.identity(),
 						(l, r) -> l, LinkedHashMap::new)));
+		this.controlServices = Collections.unmodifiableMap(integrationServices.stream()
+				.flatMap(s -> StreamSupport.stream(s.controlServices().spliterator(), false))
+				.sorted(comparing(CloudControlService::getId))
+				.collect(Collectors.toMap(CloudControlService::getId, Function.identity(), (l, r) -> l,
+						LinkedHashMap::new)));
 
 		// create a map of all services to their corresponding secure keys
 		// we assume here that all integration and datum stream identifiers are globally unique
-		this.serviceSecureKeys = Stream.of(integrationServices, datumStreamServices.values())
+		this.serviceSecureKeys = Stream
+				.of(integrationServices, datumStreamServices.values(), controlServices.values())
 				.flatMap(Collection::stream).map(SettingSpecifierProvider.class::cast)
 				.collect(toUnmodifiableMap(SettingSpecifierProvider::getSettingUid,
 						s -> SettingUtils.secureKeys(s.getSettingSpecifiers())));
@@ -233,6 +248,11 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	@Override
 	public CloudDatumStreamService datumStreamService(String identifier) {
 		return datumStreamServices.get(requireNonNullArgument(identifier, "identifier"));
+	}
+
+	@Override
+	public CloudControlService controlService(String identifier) {
+		return controlServices.get(requireNonNullArgument(identifier, "identifier"));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -561,7 +581,63 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			CloudIntegrationService integrationService = integrationServices
 					.get(integrationServiceIdentifier);
 			if ( integrationService != null ) {
-				result = integrationService.datumStreamServices().iterator().next();
+				try {
+					result = integrationService.datumStreamServices().iterator().next();
+				} catch ( NoSuchElementException e ) {
+					// none available
+				}
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public Iterable<CloudDataValue> listControlDataValues(UserLongCompositePK integrationId,
+			String controlServiceIdentifier, Map<String, ?> filters) {
+		var integration = requireNonNullObject(
+				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
+				"integration");
+		var service = requireNonNullObject(
+				resolveControlService(integration.getServiceIdentifier(), controlServiceIdentifier),
+				"controlService");
+		return service.dataValues(integration.getId(), filters);
+	}
+
+	private CloudControlService resolveControlService(String integrationServiceIdentifier,
+			String controlServiceIdentifier) {
+		CloudControlService result = null;
+		if ( controlServiceIdentifier != null ) {
+			result = controlServices.get(controlServiceIdentifier);
+			if ( result != null && integrationServiceIdentifier != null ) {
+				// verify service belongs to integration
+				CloudIntegrationService integrationService = integrationServices
+						.get(integrationServiceIdentifier);
+				if ( integrationService != null ) {
+					boolean found = false;
+					for ( CloudDatumStreamService service : integrationService.datumStreamServices() ) {
+						if ( service.getId().equals(controlServiceIdentifier) ) {
+							found = true;
+							break;
+						}
+					}
+					if ( !found ) {
+						throw new IllegalArgumentException(
+								"CloudControlService [%s] not supported by CloudIntegrationService [%s]"
+										.formatted(controlServiceIdentifier,
+												integrationService.getId()));
+					}
+				}
+			}
+		} else if ( integrationServiceIdentifier != null ) {
+			// get first provided by integration
+			CloudIntegrationService integrationService = integrationServices
+					.get(integrationServiceIdentifier);
+			if ( integrationService != null ) {
+				try {
+					result = integrationService.controlServices().iterator().next();
+				} catch ( NoSuchElementException e ) {
+					// none available
+				}
 			}
 		}
 		return result;
@@ -779,6 +855,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			result = (GenericDao<C, K>) datumStreamMappingDao;
 		} else if ( CloudDatumStreamPropertyConfiguration.class.isAssignableFrom(clazz) ) {
 			result = (GenericDao<C, K>) datumStreamPropertyDao;
+		} else if ( CloudControlConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (GenericDao<C, K>) controlDao;
 		} else if ( CloudDatumStreamSettingsEntity.class.isAssignableFrom(clazz) ) {
 			result = (GenericDao<C, K>) datumStreamSettingsDao;
 		}
@@ -798,6 +876,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			result = (UserModifiableEnabledStatusDao<F>) datumStreamDao;
 		} else if ( CloudDatumStreamPropertyConfiguration.class.isAssignableFrom(clazz) ) {
 			result = (UserModifiableEnabledStatusDao<F>) datumStreamPropertyDao;
+		} else if ( CloudControlConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (UserModifiableEnabledStatusDao<F>) controlDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -817,6 +897,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			result = (FilterableDao<C, K, F>) datumStreamMappingDao;
 		} else if ( CloudDatumStreamPropertyConfiguration.class.isAssignableFrom(clazz) ) {
 			result = (FilterableDao<C, K, F>) datumStreamPropertyDao;
+		} else if ( CloudControlConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (FilterableDao<C, K, F>) controlDao;
 		} else if ( CloudDatumStreamSettingsEntity.class.isAssignableFrom(clazz) ) {
 			result = (FilterableDao<C, K, F>) datumStreamSettingsDao;
 		}

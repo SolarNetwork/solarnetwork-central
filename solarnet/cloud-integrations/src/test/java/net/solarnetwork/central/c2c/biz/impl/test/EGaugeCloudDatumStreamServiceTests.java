@@ -33,9 +33,11 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.springframework.web.util.UriComponentsBuilder.fromUriString;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -56,9 +58,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -141,10 +144,7 @@ public class EGaugeCloudDatumStreamServiceTests {
 	private ClientAccessTokenDao clientAccessTokenDao;
 
 	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
-
-	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
 	private CloudIntegrationsExpressionService expressionService;
 
@@ -246,23 +246,34 @@ public class EGaugeCloudDatumStreamServiceTests {
 		final Instant startDate = endDate.minusSeconds(60);
 
 		// request register data
-		final URI registerDataUri = fromUriString(EgaugeCloudIntegrationService.BASE_URI_TEMPLATE)
-				.path(EgaugeCloudDatumStreamService.REGISTER_URL_PATH).queryParam("raw")
-				.queryParam("virtual", "value").queryParam("reg", "8")
-				.queryParam("time",
-						"%s:60:%s".formatted(startDate.getEpochSecond(), endDate.getEpochSecond()))
-				.buildAndExpand(deviceId).toUri();
 		final JsonNode registerDataJson = objectMapper
 				.readTree(utf8StringResource("egauge-register-data-02.json", getClass()));
 		final var registerDataRes = new ResponseEntity<JsonNode>(registerDataJson, HttpStatus.OK);
-		given(restOps.exchange(eq(registerDataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(registerDataRes);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(registerDataRes);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI registerDataUri = fromUriString(EgaugeCloudIntegrationService.BASE_URI_TEMPLATE)
+			.path(EgaugeCloudDatumStreamService.REGISTER_URL_PATH).queryParam("raw")
+			.queryParam("virtual", "value").queryParam("reg", "8")
+			.queryParam("time", "%s:60:%s".formatted(startDate.getEpochSecond(), endDate.getEpochSecond()))
+			.buildAndExpand(deviceId).toUri();
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for inverter telemetry")
+			.returns(registerDataUri, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains token")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer TOKEN"))
+			;
+
 		and.then(result)
 			.as("Datum parsed from HTTP response")
 			.hasSize(1)
@@ -367,23 +378,33 @@ public class EGaugeCloudDatumStreamServiceTests {
 		final Instant startDate = endDate.minusSeconds(60);
 
 		// request register data
-		final URI registerDataUri = fromUriString(EgaugeCloudIntegrationService.BASE_URI_TEMPLATE)
-				.path(EgaugeCloudDatumStreamService.REGISTER_URL_PATH).queryParam("raw")
-				.queryParam("virtual", "value").queryParam("reg", "0")
-				.queryParam("time",
-						"%s:60:%s".formatted(startDate.getEpochSecond(), endDate.getEpochSecond()))
-				.buildAndExpand(deviceId).toUri();
 		final JsonNode registerDataJson = objectMapper
 				.readTree(utf8StringResource("egauge-register-data-01.json", getClass()));
 		final var registerDataRes = new ResponseEntity<JsonNode>(registerDataJson, HttpStatus.OK);
-		given(restOps.exchange(eq(registerDataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(registerDataRes);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(registerDataRes);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		final URI registerDataUri = fromUriString(EgaugeCloudIntegrationService.BASE_URI_TEMPLATE)
+			.path(EgaugeCloudDatumStreamService.REGISTER_URL_PATH).queryParam("raw")
+			.queryParam("virtual", "value").queryParam("reg", "0")
+			.queryParam("time", "%s:60:%s".formatted(startDate.getEpochSecond(), endDate.getEpochSecond()))
+			.buildAndExpand(deviceId).toUri();
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for inverter telemetry")
+			.returns(registerDataUri, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("Request headers contains token")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer TOKEN"))
+			;
 
 		// 10044744826787 - 10044736304528
 

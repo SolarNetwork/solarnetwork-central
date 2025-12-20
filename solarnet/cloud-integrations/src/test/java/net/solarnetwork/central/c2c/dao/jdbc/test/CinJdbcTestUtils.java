@@ -33,6 +33,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.c2c.domain.CloudControlConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
@@ -50,7 +51,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Helper methods for cloud integrations JDBC tests.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class CinJdbcTestUtils {
 
@@ -424,6 +425,61 @@ public class CinJdbcTestUtils {
 		List<Map<String, Object>> data = jdbcOps
 				.queryForList("select * from solardin.cin_datum_stream_settings ORDER BY user_id");
 		log.debug("solardin.cin_datum_stream_settings table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * Create a new control configuration instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param integrationId
+	 *        the integration ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param controlId
+	 *        the control ID
+	 * @param controlReference
+	 *        the control reference
+	 * @param name
+	 *        the name
+	 * @param serviceId
+	 *        the service ID
+	 * @param serviceProps
+	 *        the service properties
+	 * @return the entity
+	 * @since 1.3
+	 */
+	public static CloudControlConfiguration newCloudControlConfiguration(Long userId, Long integrationId,
+			Long nodeId, String controlId, String controlReference, String name, String serviceId,
+			Map<String, Object> serviceProps) {
+		CloudControlConfiguration conf = new CloudControlConfiguration(unassignedEntityIdKey(userId),
+				Instant.now().truncatedTo(ChronoUnit.MILLIS));
+		conf.setModified(conf.getCreated());
+		conf.setName(name);
+		conf.setServiceIdentifier(serviceId);
+		conf.setIntegrationId(integrationId);
+		conf.setNodeId(nodeId);
+		conf.setControlId(controlId);
+		conf.setControlReference(controlReference);
+		conf.setServiceProps(serviceProps);
+		conf.setEnabled(true);
+		return conf;
+	}
+
+	/**
+	 * List control configuration rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 * @since 1.3
+	 */
+	public static List<Map<String, Object>> allCloudControlConfigurationData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solardin.cin_control ORDER BY user_id, id");
+		log.debug("solardin.cin_control table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}

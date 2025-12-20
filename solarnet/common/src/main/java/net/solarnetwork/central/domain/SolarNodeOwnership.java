@@ -31,7 +31,7 @@ import org.springframework.lang.NonNull;
  * @author matt
  * @version 1.0
  */
-public interface SolarNodeOwnership {
+public interface SolarNodeOwnership extends UserIdRelated {
 
 	/**
 	 * Get the node ID.
@@ -46,6 +46,7 @@ public interface SolarNodeOwnership {
 	 * 
 	 * @return the owner user ID
 	 */
+	@Override
 	@NonNull
 	Long getUserId();
 

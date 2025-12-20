@@ -48,7 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.springframework.http.HttpMethod.GET;
+import static org.mockito.Mockito.times;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -63,10 +63,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -152,10 +152,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 
 	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
-
-	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
@@ -216,17 +213,10 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
-		final URI listSystems = UriComponentsBuilder.fromUri(EnphaseCloudIntegrationService.BASE_URI)
-				.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_PATH)
-				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
-				.queryParam(EnphaseCloudIntegrationService.PAGE_SIZE_PARAM, MAX_PAGE_SIZE)
-				.queryParam(EnphaseCloudIntegrationService.PAGE_PARAM, 1).buildAndExpand().toUri();
-
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("enphase-systems-01.json", getClass()), ObjectNode.class);
 		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(eq(listSystems), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 
@@ -243,6 +233,23 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(null, from(OAuth2AuthorizeRequest::getAuthorizedClient))
 			.as("Client registration ID is configuration system identifier")
 			.returns(integration.systemIdentifier(), OAuth2AuthorizeRequest::getClientRegistrationId)
+			;
+
+		final URI listSystems = UriComponentsBuilder.fromUri(EnphaseCloudIntegrationService.BASE_URI)
+				.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_PATH)
+				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
+				.queryParam(EnphaseCloudIntegrationService.PAGE_SIZE_PARAM, MAX_PAGE_SIZE)
+				.queryParam(EnphaseCloudIntegrationService.PAGE_PARAM, 1).buildAndExpand().toUri();
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for inverter telemetry")
+			.returns(listSystems, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
 
 		and.then(results)
@@ -339,17 +346,10 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
-		final URI listSystemDevices = UriComponentsBuilder
-				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
-				.path(EnphaseCloudDatumStreamService.SYSTEM_DEVICES_PATH_TEMPLATE)
-				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
-				.buildAndExpand(systemId).toUri();
-
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("enphase-system-devices-01.json", getClass()), ObjectNode.class);
 		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(eq(listSystemDevices), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
-				.willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		Iterable<CloudDataValue> results = service.dataValues(integration.getId(),
@@ -366,6 +366,23 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(null, from(OAuth2AuthorizeRequest::getAuthorizedClient))
 			.as("Client registration ID is configuration system identifier")
 			.returns(integration.systemIdentifier(), OAuth2AuthorizeRequest::getClientRegistrationId)
+			;
+
+		final URI listSystemDevices = UriComponentsBuilder
+				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
+				.path(EnphaseCloudDatumStreamService.SYSTEM_DEVICES_PATH_TEMPLATE)
+				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
+				.buildAndExpand(systemId).toUri();
+
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for system devices")
+			.returns(listSystemDevices, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
 
 		and.then(results)
@@ -628,7 +645,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 				utf8StringResource("enphase-system-telemetry-inverter-01.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -638,8 +655,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-
 		// request inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -649,12 +664,13 @@ public class EnphaseCloudDatumStreamServiceTests {
 				.queryParam(GRANULARITY_PARAM, EnphaseGranularity.forQueryDateRange(filter.getStartDate(), filter.getEndDate()).getKey())
 				.buildAndExpand(systemId).toUri();
 
-		and.then(uriCaptor.getValue())
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
-			.isEqualTo(listSystemInverterTelemetry)
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+			.returns(listSystemInverterTelemetry, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
@@ -813,7 +829,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 				utf8StringResource("enphase-system-telemetry-inverter-01.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -823,8 +839,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-
 		// request inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -834,9 +848,12 @@ public class EnphaseCloudDatumStreamServiceTests {
 				.queryParam(GRANULARITY_PARAM, EnphaseGranularity.forQueryDateRange(filter.getStartDate(), filter.getEndDate()).getKey())
 				.buildAndExpand(systemId).toUri();
 
-		and.then(uriCaptor.getValue())
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
-			.isEqualTo(listSystemInverterTelemetry)
+			.returns(listSystemInverterTelemetry, from(RequestEntity::getUrl))
 			;
 
 		and.then(result)
@@ -854,7 +871,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 			})
 			;
 		// @formatter:on
-
 	}
 
 	@Test
@@ -936,7 +952,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 				utf8StringResource("enphase-system-telemetry-inverter-01.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -946,8 +962,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-
 		// request inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -957,9 +971,15 @@ public class EnphaseCloudDatumStreamServiceTests {
 				.queryParam(GRANULARITY_PARAM, EnphaseGranularity.forQueryDateRange(filter.getStartDate(), filter.getEndDate()).getKey())
 				.buildAndExpand(systemId).toUri();
 
-		and.then(uriCaptor.getValue())
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
-			.isEqualTo(listSystemInverterTelemetry)
+			.returns(listSystemInverterTelemetry, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
 
 		String expectedSourceId = datumStream.getSourceId() + "/%d/%s/%s".formatted(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID);
@@ -978,7 +998,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 			})
 			;
 		// @formatter:on
-
 	}
 
 	@Test
@@ -1060,7 +1079,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 				utf8StringResource("enphase-system-telemetry-inverter-01.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -1070,8 +1089,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-
 		// request inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -1081,9 +1098,15 @@ public class EnphaseCloudDatumStreamServiceTests {
 				.queryParam(GRANULARITY_PARAM, EnphaseGranularity.forQueryDateRange(filter.getStartDate(), filter.getEndDate()).getKey())
 				.buildAndExpand(systemId).toUri();
 
-		and.then(uriCaptor.getValue())
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
-			.isEqualTo(listSystemInverterTelemetry)
+			.returns(listSystemInverterTelemetry, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
 
 		String expectedSourceId = (datumStream.getSourceId() + "/%d/%s/%s".formatted(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID)).toUpperCase();
@@ -1102,7 +1125,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 			})
 			;
 		// @formatter:on
-
 	}
 
 	@Test
@@ -1181,7 +1203,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 				utf8StringResource("enphase-system-telemetry-inverter-02.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -1191,8 +1213,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-
 		// request inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -1202,9 +1222,15 @@ public class EnphaseCloudDatumStreamServiceTests {
 				.queryParam(GRANULARITY_PARAM, EnphaseGranularity.forQueryDateRange(filter.getStartDate(), filter.getEndDate()).getKey())
 				.buildAndExpand(systemId).toUri();
 
-		and.then(uriCaptor.getValue())
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
-			.isEqualTo(listSystemInverterTelemetry)
+			.returns(listSystemInverterTelemetry, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
 
 		and.then(result.getUsedQueryFilter())
@@ -1303,7 +1329,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 				utf8StringResource("enphase-system-telemetry-inverter-03.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -1313,8 +1339,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-
 		// request inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -1324,9 +1348,15 @@ public class EnphaseCloudDatumStreamServiceTests {
 				.queryParam(GRANULARITY_PARAM, EnphaseGranularity.forQueryDateRange(filter.getStartDate(), filter.getEndDate()).getKey())
 				.buildAndExpand(systemId).toUri();
 
-		and.then(uriCaptor.getValue())
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
-			.isEqualTo(listSystemInverterTelemetry)
+			.returns(listSystemInverterTelemetry, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
 
 		and.then(result.getUsedQueryFilter())
@@ -1465,7 +1495,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 				utf8StringResource("enphase-system-telemetry-rgm-01.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -1475,8 +1505,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-
 		// request meter data
 		final URI listSystemRgmTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -1486,12 +1514,13 @@ public class EnphaseCloudDatumStreamServiceTests {
 				.queryParam(END_AT_PARAM, FifteenMinute.tickStart(filter.getEndDate(), UTC).getEpochSecond())
 				.buildAndExpand(systemId).toUri();
 
-		and.then(uriCaptor.getValue())
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for RGM telemetry")
-			.isEqualTo(listSystemRgmTelemetry)
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+			.returns(listSystemRgmTelemetry, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
@@ -1688,7 +1717,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 				utf8StringResource("enphase-system-telemetry-rgm-02.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		BasicQueryFilter filter = new BasicQueryFilter();
@@ -1698,8 +1727,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-
 		// request meter data
 		final URI listSystemRgmTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -1709,12 +1736,13 @@ public class EnphaseCloudDatumStreamServiceTests {
 				.queryParam(END_AT_PARAM, FifteenMinute.tickStart(filter.getEndDate(), UTC).getEpochSecond())
 				.buildAndExpand(systemId).toUri();
 
-		and.then(uriCaptor.getValue())
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for RGM telemetry")
-			.isEqualTo(listSystemRgmTelemetry)
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+			.returns(listSystemRgmTelemetry, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
@@ -1835,7 +1863,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 				utf8StringResource("enphase-system-telemetry-rgm-03.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		// set time to 15m after latest datum in data
@@ -1848,8 +1876,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-
 		// request meter data
 		final URI listSystemRgmTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -1859,12 +1885,13 @@ public class EnphaseCloudDatumStreamServiceTests {
 				.queryParam(END_AT_PARAM, FifteenMinute.tickStart(filter.getEndDate(), UTC).getEpochSecond())
 				.buildAndExpand(systemId).toUri();
 
-		and.then(uriCaptor.getValue())
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for RGM telemetry")
-			.isEqualTo(listSystemRgmTelemetry)
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+			.returns(listSystemRgmTelemetry, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
@@ -2012,7 +2039,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 				utf8StringResource("enphase-system-telemetry-rgm-03.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		// set time to 15m after latest datum in data
@@ -2025,8 +2052,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-
 		// request meter data
 		final URI listSystemRgmTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -2036,12 +2061,13 @@ public class EnphaseCloudDatumStreamServiceTests {
 				.queryParam(END_AT_PARAM, FifteenMinute.tickStart(filter.getEndDate(), UTC).getEpochSecond())
 				.buildAndExpand(systemId).toUri();
 
-		and.then(uriCaptor.getValue())
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for RGM telemetry")
-			.isEqualTo(listSystemRgmTelemetry)
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+			.returns(listSystemRgmTelemetry, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
@@ -2147,7 +2173,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 				utf8StringResource("enphase-system-telemetry-rgm-03.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		// set time to 2d after latest datum in data
@@ -2160,8 +2186,6 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(JsonNode.class));
-
 		// request meter data
 		final URI listSystemRgmTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -2171,12 +2195,13 @@ public class EnphaseCloudDatumStreamServiceTests {
 				.queryParam(END_AT_PARAM, FifteenMinute.tickStart(filter.getEndDate(), UTC).getEpochSecond())
 				.buildAndExpand(systemId).toUri();
 
-		and.then(uriCaptor.getValue())
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for RGM telemetry")
-			.isEqualTo(listSystemRgmTelemetry)
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+			.returns(listSystemRgmTelemetry, from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
@@ -2301,9 +2326,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final JsonNode invterResJson = getObjectFromJSON(
 				utf8StringResource("enphase-system-telemetry-inverter-04.json", getClass()),
 				ObjectNode.class);
-		final var inveterRes = new ResponseEntity<JsonNode>(invterResJson, HttpStatus.OK);
-		given(restOps.exchange(eq(listSystemInverterTelemetry), eq(GET), any(), eq(JsonNode.class)))
-				.willReturn(inveterRes);
+		final var inverterRes = new ResponseEntity<JsonNode>(invterResJson, HttpStatus.OK);
 
 		// request meter data
 		final URI listSystemRgmTelemetry = UriComponentsBuilder
@@ -2319,8 +2342,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 				utf8StringResource("enphase-system-telemetry-rgm-03.json", getClass()),
 				ObjectNode.class);
 		final var meterRes = new ResponseEntity<JsonNode>(meterResJson, HttpStatus.OK);
-		given(restOps.exchange(eq(listSystemRgmTelemetry), eq(GET), any(), eq(JsonNode.class)))
-				.willReturn(meterRes);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(inverterRes).willReturn(meterRes);
 
 		// WHEN
 		// set time to 15m after latest datum in data
@@ -2330,6 +2352,29 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					;
+			})
+			.satisfies(reqs -> {
+				and.then(reqs).element(0)
+					.as("Request URI for inverter telemetry")
+					.returns(listSystemInverterTelemetry, from(RequestEntity::getUrl))
+					;
+				and.then(reqs).element(1)
+					.as("Request URI for RGM telemetry")
+					.returns(listSystemRgmTelemetry, from(RequestEntity::getUrl))
+					;
+			})
+			;
+
 		String inverterExpectedSourceId = datumStream.getSourceId() + "/%d/%s/%s".formatted(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID);
 		and.then(result)
 			.filteredOn(d -> inverterExpectedSourceId.equals(d.getSourceId()))

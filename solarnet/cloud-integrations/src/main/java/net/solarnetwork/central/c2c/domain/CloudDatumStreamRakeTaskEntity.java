@@ -42,13 +42,14 @@ import net.solarnetwork.codec.JsonUtils;
  * Cloud datum stream rake task runtime information.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id", "enabled" })
 @JsonPropertyOrder({ "userId", "configId", "datumStreamId", "state", "executeAt", "offset", "message",
 		"serviceProperties" })
 public class CloudDatumStreamRakeTaskEntity
-		extends BaseUserModifiableEntity<CloudDatumStreamRakeTaskEntity, UserLongCompositePK> {
+		extends BaseUserModifiableEntity<CloudDatumStreamRakeTaskEntity, UserLongCompositePK>
+		implements CloudDatumStreamIdRelated {
 
 	@Serial
 	private static final long serialVersionUID = -8913216603960129724L;
@@ -183,6 +184,7 @@ public class CloudDatumStreamRakeTaskEntity
 	 *
 	 * @return the datum stream ID
 	 */
+	@Override
 	public Long getDatumStreamId() {
 		return datumStreamId;
 	}

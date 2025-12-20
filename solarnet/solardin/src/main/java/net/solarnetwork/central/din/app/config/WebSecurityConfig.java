@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.din.app.config;
 
-import static net.solarnetwork.central.din.app.config.SolarDinAppConfiguration.CACHING;
+import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.CACHING;
 import static net.solarnetwork.central.din.security.SecurityUtils.ROLE_DIN;
 import static net.solarnetwork.central.inin.security.SecurityUtils.ROLE_ININ;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;

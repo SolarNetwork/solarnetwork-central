@@ -46,7 +46,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Basic implementation of {@link DatumCriteria}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 2.8
  */
 public class BasicDatumCriteria extends BasicCoreCriteria
@@ -285,6 +285,35 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		}
 		builder.append("}");
 		return builder.toString();
+	}
+
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (accumulatingPropertyNames != null && accumulatingPropertyNames.length > 0)
+				|| aggregation != null
+				|| combiningType != null
+				|| datumAuxiliaryType != null
+				|| (datumRollupTypes != null && datumRollupTypes.length > 0)
+				|| endDate != null
+				|| (instantaneousPropertyNames != null && instantaneousPropertyNames.length > 0)
+				|| localEndDate != null
+				|| localStartDate != null
+				|| mostRecent
+				|| (objectIdMappings != null && !objectIdMappings.isEmpty())
+				|| objectKind != null
+				|| partialAggregation != null
+				|| (propertyNames != null && propertyNames.length > 0)
+				|| readingType != null
+				|| (sourceIdMappings != null && !sourceIdMappings.isEmpty())
+				|| startDate != null
+				|| (statusPropertyNames != null && statusPropertyNames.length > 0)
+				|| (streamIds != null && streamIds.length > 0)
+				|| timeTolerance != null
+				// withoutTotalResultsCount ignored
+				;
+		// @formatter:on
 	}
 
 	@Override

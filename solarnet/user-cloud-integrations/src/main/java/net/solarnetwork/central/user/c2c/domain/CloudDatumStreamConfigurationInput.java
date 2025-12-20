@@ -29,6 +29,7 @@ import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.dao.BaseUserRelatedStdIdentifiableConfigurationInput;
+import net.solarnetwork.central.domain.ObjectDatumIdRelated;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
@@ -36,12 +37,13 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * DTO for cloud datum stream configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 public class CloudDatumStreamConfigurationInput extends
 		BaseUserRelatedStdIdentifiableConfigurationInput<CloudDatumStreamConfiguration, UserLongCompositePK>
 		implements
-		CloudIntegrationsConfigurationInput<CloudDatumStreamConfiguration, UserLongCompositePK> {
+		CloudIntegrationsConfigurationInput<CloudDatumStreamConfiguration, UserLongCompositePK>,
+		ObjectDatumIdRelated {
 
 	private Long datumStreamMappingId;
 
@@ -52,7 +54,7 @@ public class CloudDatumStreamConfigurationInput extends
 
 	private Long objectId;
 
-	@Size(max = 64)
+	@Size(max = 256)
 	private String sourceId;
 
 	/**
@@ -127,6 +129,7 @@ public class CloudDatumStreamConfigurationInput extends
 	 *
 	 * @return the kind
 	 */
+	@Override
 	public final ObjectDatumKind getKind() {
 		return kind;
 	}
@@ -146,6 +149,7 @@ public class CloudDatumStreamConfigurationInput extends
 	 *
 	 * @return the object ID
 	 */
+	@Override
 	public final Long getObjectId() {
 		return objectId;
 	}

@@ -26,9 +26,9 @@ import java.util.Map;
 import org.springframework.expression.Expression;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
-import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
 

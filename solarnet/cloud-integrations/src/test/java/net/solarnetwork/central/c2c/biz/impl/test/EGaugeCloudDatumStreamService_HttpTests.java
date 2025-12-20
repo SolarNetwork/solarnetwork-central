@@ -61,7 +61,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -144,12 +143,6 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 	private ClientAccessTokenDao clientAccessTokenDao;
 
 	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
-
-	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
-
-	@Captor
 	private ArgumentCaptor<ClientAccessTokenEntity> clientAccessTokenCaptor;
 
 	private CloudIntegrationsExpressionService expressionService;
@@ -169,6 +162,7 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 		service = new EgaugeCloudDatumStreamService(userEventAppenderBiz, encryptor, expressionService,
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao,
 				new RestTemplate(), clock, new SecureRandom(), clientAccessTokenDao);
+		service.setAllowLocalHosts(true);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(SolarEdgeV1CloudDatumStreamService.class.getName(),

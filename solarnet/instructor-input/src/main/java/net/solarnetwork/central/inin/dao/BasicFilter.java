@@ -31,7 +31,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of datum input endpoint query filter.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicFilter extends BasicCoreCriteria
 		implements CredentialFilter, TransformFilter, EndpointFilter, EndpointAuthFilter {
@@ -97,6 +97,17 @@ public class BasicFilter extends BasicCoreCriteria
 		return Arrays.equals(credentialIds, other.credentialIds)
 				&& Arrays.equals(endpointIds, other.endpointIds)
 				&& Arrays.equals(transformIds, other.transformIds);
+	}
+
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (credentialIds != null && credentialIds.length > 0)
+				|| (endpointIds != null && endpointIds.length > 0)
+				|| (transformIds != null && transformIds.length > 0)
+				;
+		// @formatter:on
 	}
 
 	@Override

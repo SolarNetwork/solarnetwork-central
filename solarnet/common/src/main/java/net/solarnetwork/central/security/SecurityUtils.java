@@ -27,9 +27,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -53,7 +56,7 @@ import net.solarnetwork.util.CollectionUtils;
  * Security helper methods.
  *
  * @author matt
- * @version 3.0
+ * @version 3.2
  */
 public class SecurityUtils {
 
@@ -545,18 +548,55 @@ public class SecurityUtils {
 	 *        the map of values to encrypt
 	 * @param secureKeys
 	 *        the set of map keys whose values should be encrypted
+	 * @param encryptor
+	 *        the encryptor to use
 	 * @return either a new map instance with one or more values encrypted, or
 	 *         {@code map} when no values need encrypted
 	 * @since 2.4
 	 */
-	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K, V> encryptedMap(Map<K, V> map, Set<K> secureKeys,
 			TextEncryptor encryptor) {
+		assert encryptor != null;
+		return encryptedMap(map, secureKeys, encryptor::encrypt);
+	}
+
+	/**
+	 * Encrypt a set of map values associated with a set of key values.
+	 *
+	 * <p>
+	 * This method will return a new map instance, unless no values need
+	 * encrypting in which case {@code map} itself will be returned. For any key
+	 * in {@code secureKeys} found in {@code map}, the returned map's value will
+	 * be encrypted value computed by invoking {@code encryptor} on them.
+	 * </p>
+	 *
+	 * <p>
+	 * Any exception thrown by the {@code encryptor} function will be ignored,
+	 * and the original value will be used instead.
+	 * </p>
+	 *
+	 * @param <K>
+	 *        the key type
+	 * @param <V>
+	 *        the value type
+	 * @param map
+	 *        the map of values to encrypt
+	 * @param secureKeys
+	 *        the set of map keys whose values should be encrypted
+	 * @param encryptor
+	 *        function to encrypt the secure key values with
+	 * @return either a new map instance with one or more values encrypted, or
+	 *         {@code map} when no values need encrypted
+	 * @since 3.1
+	 */
+	@SuppressWarnings("unchecked")
+	public static <K, V> Map<K, V> encryptedMap(Map<K, V> map, Set<K> secureKeys,
+			Function<String, String> encryptor) {
 		assert encryptor != null;
 		return CollectionUtils.transformMap(map, secureKeys, (val) -> {
 			var result = val;
 			try {
-				result = (V) (val == null ? null : encryptor.encrypt(val.toString()));
+				result = (V) (val == null ? null : encryptor.apply(val.toString()));
 			} catch ( Exception e ) {
 				// ignore and return input value
 			}
@@ -587,24 +627,133 @@ public class SecurityUtils {
 	 * @param map
 	 *        the map of values to encrypt
 	 * @param secureKeys
-	 *        the set of map keys whose values should be encrypted
+	 *        the set of map keys whose values should be decrypted
+	 * @param encryptor
+	 *        the encryptor to use for decryption
 	 * @return either a new map instance with one or more values encrypted, or
 	 *         {@code map} when no values need encrypted
 	 * @since 2.4
 	 */
-	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K, V> decryptedMap(Map<K, V> map, Set<K> secureKeys,
 			TextEncryptor encryptor) {
 		assert encryptor != null;
+		return decryptedMap(map, secureKeys, encryptor::decrypt);
+	}
+
+	/**
+	 * Decrypt a set of map values associated with a set of key values.
+	 *
+	 * <p>
+	 * This method will return a new map instance, unless no values need
+	 * decrypting in which case {@code map} itself will be returned. For any key
+	 * in {@code secureKeys} found in {@code map}, the returned map's value will
+	 * be decrypted value computed by invoking {@code decryptor} on them.
+	 * </p>
+	 *
+	 * <p>
+	 * Any exception thrown by the {@code decryptor} function will be ignored,
+	 * and the original value will be used instead.
+	 * </p>
+	 *
+	 * @param <K>
+	 *        the key type
+	 * @param <V>
+	 *        the value type
+	 * @param map
+	 *        the map of values to encrypt
+	 * @param secureKeys
+	 *        the set of map keys whose values should be decrypted
+	 * @param decryptor
+	 *        the decryptor to use
+	 * @return either a new map instance with one or more values decrypted, or
+	 *         {@code map} when no values need encrypted
+	 * @since 3.1
+	 */
+	@SuppressWarnings("unchecked")
+	public static <K, V> Map<K, V> decryptedMap(Map<K, V> map, Set<K> secureKeys,
+			Function<String, String> decryptor) {
+		assert decryptor != null;
 		return CollectionUtils.transformMap(map, secureKeys, (val) -> {
 			var result = val;
 			try {
-				result = (V) (val == null ? null : encryptor.decrypt(val.toString()));
+				result = (V) (val == null ? null : decryptor.apply(val.toString()));
 			} catch ( Exception e ) {
 				// ignore and return input value
 			}
 			return result;
 		});
+	}
+
+	/**
+	 * Verify an arbitrary list of node IDs against a policy.
+	 * 
+	 * <p>
+	 * If {@code nodeIds} is {@code null} or empty and {@code policy} defines a
+	 * set of allowed node IDs, the full list of policy node IDs will be
+	 * returned.
+	 * </p>
+	 *
+	 * @param nodeIds
+	 *        the node IDs to restrict according to the policy, or {@code null}
+	 * @param policy
+	 *        the policy to enforce, or {@code null}
+	 * @return the allowed node IDs
+	 * @throws AuthorizationException
+	 *         if {@code nodeIds} is not empty and no node IDs are allowed by
+	 *         the policy
+	 * @since 3.2
+	 */
+	public static Long[] restrictNodeIds(Long[] nodeIds, final SecurityPolicy policy) {
+		final Set<Long> policyNodeIds = (policy != null ? policy.getNodeIds() : null);
+		// verify source IDs
+		if ( policyNodeIds == null || policyNodeIds.isEmpty() ) {
+			return nodeIds;
+		}
+		if ( nodeIds != null && nodeIds.length > 0 ) {
+			// remove any node IDs not in the policy
+			Set<Long> nodeIdsSet = new LinkedHashSet<>(Arrays.asList(nodeIds));
+			for ( Iterator<Long> itr = nodeIdsSet.iterator(); itr.hasNext(); ) {
+				Long nodeId = itr.next();
+				if ( !policyNodeIds.contains(nodeId) ) {
+					itr.remove();
+				}
+			}
+			if ( nodeIdsSet.isEmpty() ) {
+				// gave node IDs but none allowed by policy, so throw exception
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
+						(nodeIds.length > 1 ? nodeIds : nodeIds[0]));
+			} else if ( nodeIdsSet.size() < nodeIds.length ) {
+				return nodeIdsSet.toArray(Long[]::new);
+			}
+		} else {
+			// no node IDs provided, set to policy node IDs
+			return policyNodeIds.toArray(Long[]::new);
+		}
+		return nodeIds;
+	}
+
+	/**
+	 * Test if a policy is unrestricted.
+	 * 
+	 * <p>
+	 * The {@code notAfter} property is not considered.
+	 * </p>
+	 * 
+	 * @param policy
+	 *        the policy to test; {@code null} will be treated as unrestricted
+	 * @return {@code true} if {@code policy} is {@code null} or has no
+	 *         restrictions
+	 * @since 3.2
+	 */
+	public static boolean policyIsUnrestricted(SecurityPolicy policy) {
+		if ( policy == null ) {
+			return true;
+		}
+		return policy.getAggregations() == null && policy.getApiPaths() == null
+				&& policy.getLocationPrecisions() == null && policy.getMinAggregation() == null
+				&& policy.getMinLocationPrecision() == null && policy.getNodeIds() == null
+				&& policy.getNodeMetadataPaths() == null && policy.getRefreshAllowed() == null
+				&& policy.getSourceIds() == null && policy.getUserMetadataPaths() == null;
 	}
 
 }

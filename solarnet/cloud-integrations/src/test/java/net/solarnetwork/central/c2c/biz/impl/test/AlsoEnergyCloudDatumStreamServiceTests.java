@@ -38,14 +38,14 @@ import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.springframework.http.HttpMethod.POST;
+import static org.mockito.Mockito.times;
 import java.math.BigDecimal;
-import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -58,10 +58,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -145,10 +145,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 
 	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
-
-	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
@@ -220,21 +217,27 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("alsoenergy-hardware-01.json", getClass()), ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		Iterable<CloudDataValue> results = service.dataValues(integration.getId(),
 				Map.of("siteId", siteId));
 
 		// THEN
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), any(),
-				eq(JsonNode.class));
-
-		and.then(uriCaptor.getValue()).as("Request URI").isEqualTo(
-				BASE_URI.resolve(SITE_HARDWARE_URL_TEMPLATE.replace("{siteId}", siteId.toString())
-						+ "?includeArchivedFields=true&includeDeviceConfig=true"));
-
 		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(SITE_HARDWARE_URL_TEMPLATE.replace("{siteId}", siteId.toString())
+					+ "?includeArchivedFields=true&includeDeviceConfig=true"), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			;
+
 		and.then(results)
 			.as("Results provided")
 			.hasSize(2)
@@ -383,35 +386,32 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("alsoenergy-bindata-01.json", getClass()), ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.POST), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.POST), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(BASE_URI.resolve(BIN_DATA_URL
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(BIN_DATA_URL
 					+ "?from=%s&to=%s&binSizes=BinRaw&tz=Z".formatted(
 							ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().minus(10, MINUTES).atZone(UTC).toLocalDateTime()),
 							ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().atZone(UTC).toLocalDateTime())
-							)))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
-			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
-			;
-
-		and.then(httpEntityCaptor.getValue())
-			.as("HTTP request body contains criteria")
+							)), from(RequestEntity::getUrl))
+			.as("Request body contains criteria")
 			.returns(List.of(
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
-				), from(HttpEntity::getBody))
+				), from(RequestEntity::getBody))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
 
 		String expectedSourceId = datumStream.getSourceId() + "/%s/%s".formatted(siteId, hardwareId);
@@ -542,35 +542,32 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// request data
 		final var res = new ResponseEntity<JsonNode>(HttpStatus.NO_CONTENT);
-		given(restOps.exchange(any(), eq(HttpMethod.POST), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.POST), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(BASE_URI.resolve(BIN_DATA_URL
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(BIN_DATA_URL
 					+ "?from=%s&to=%s&binSizes=BinRaw&tz=Z".formatted(
 							ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().minus(10, MINUTES).atZone(UTC).toLocalDateTime()),
 							ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().atZone(UTC).toLocalDateTime())
-							)))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
-			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
-			;
-
-		and.then(httpEntityCaptor.getValue())
-			.as("HTTP request body contains criteria")
+							)), from(RequestEntity::getUrl))
+			.as("Request body contains criteria")
 			.returns(List.of(
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
-				), from(HttpEntity::getBody))
+				), from(RequestEntity::getBody))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
 
 		and.then(result)
@@ -667,7 +664,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("alsoenergy-bindata-02.json", getClass()), ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.POST), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		var filter = new BasicQueryFilter();
@@ -677,28 +674,25 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.POST), httpEntityCaptor.capture(), eq(JsonNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(BASE_URI.resolve(BIN_DATA_URL
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(BIN_DATA_URL
 					+ "?from=%s&to=%s&binSizes=BinRaw&tz=Z".formatted(
 							ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().minus(10, MINUTES).atZone(UTC).toLocalDateTime()),
 							ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().atZone(UTC).toLocalDateTime())
-							)))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
-			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
-			;
-
-		and.then(httpEntityCaptor.getValue())
-			.as("HTTP request body contains criteria")
+							)), from(RequestEntity::getUrl))
+			.as("Request body contains criteria")
 			.returns(List.of(
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
-				), from(HttpEntity::getBody))
+				), from(RequestEntity::getBody))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
 
 		String expectedSourceId = datumStream.getSourceId() + "/%s/%s".formatted(siteId, hardwareId);
@@ -860,7 +854,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		final JsonNode resJson = getObjectFromJSON(
 				utf8StringResource("alsoenergy-bindata-03.json", getClass()), ObjectNode.class);
 		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.POST), any(), eq(JsonNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res);
 
 		// WHEN
 		var filter = new BasicQueryFilter();
@@ -870,6 +864,27 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is POST")
+			.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(BIN_DATA_URL
+					+ "?from=%s&to=%s&binSizes=BinRaw&tz=Z".formatted(
+							ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().minus(10, MINUTES).atZone(UTC).toLocalDateTime()),
+							ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().atZone(UTC).toLocalDateTime())
+							)), from(RequestEntity::getUrl))
+			.as("Request body contains criteria")
+			.returns(List.of(
+				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
+				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
+				), from(RequestEntity::getBody))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			;
+
 		and.then(result)
 			.as("Datum parsed from HTTP response")
 			.hasSize(3)
@@ -1028,11 +1043,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		final JsonNode resJson2 = getObjectFromJSON(
 				utf8StringResource("alsoenergy-bindata-04.json", getClass()), ObjectNode.class);
 		final var res2 = new ResponseEntity<JsonNode>(resJson2, HttpStatus.OK);
-		// @formatter:off
-		given(restOps.exchange(any(), eq(POST), any(), eq(JsonNode.class)))
-			.willReturn(res1)
-			.willReturn(res2);
-		// @formatter:on
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(res1).willReturn(res2);
 
 		// WHEN
 		// set clock to near data request, to work with maximum lag setting (default 3h)
@@ -1045,6 +1056,47 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is POST")
+					.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					;
+			})
+			.satisfies(reqs -> {
+				and.then(reqs).element(0)
+					.as("Request 1 body criteria")
+					.returns(List.of(
+								Map.of("siteId", siteId1, "hardwareId", hardwareId1, "fieldName", fieldName1, "function", Avg.name()),
+								Map.of("siteId", siteId1, "hardwareId", hardwareId1, "fieldName", fieldName2, "function", Last.name())
+							), from(RequestEntity::getBody))
+					;
+				and.then(reqs).element(1)
+					.as("Request 2 body criteria")
+					.returns(List.of(
+								Map.of("siteId", siteId2, "hardwareId", hardwareId2, "fieldName", fieldName1, "function", Avg.name()),
+								Map.of("siteId", siteId2, "hardwareId", hardwareId2, "fieldName", fieldName2, "function", Last.name())
+							), from(RequestEntity::getBody))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
+			.allSatisfy(uri -> {
+				and.then(uri)
+					.as("Request URL")
+					.isEqualTo(BASE_URI.resolve(BIN_DATA_URL
+							+ "?from=%s&to=%s&binSizes=BinRaw&tz=Z".formatted(
+									ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().minus(10, MINUTES).atZone(UTC).toLocalDateTime()),
+									ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().atZone(UTC).toLocalDateTime())
+									)))
+					;
+			})
+			;
+
 		and.then(result)
 			.as("Datum parsed from HTTP response")
 			.hasSize(5)
@@ -1218,7 +1270,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("alsoenergy-bindata-04.json", getClass()), ObjectNode.class);
 		final var res2 = new ResponseEntity<JsonNode>(resJson2, HttpStatus.OK);
 		// @formatter:off
-		given(restOps.exchange(any(), eq(POST), any(), eq(JsonNode.class)))
+		given(restOps.exchange(any(), eq(JsonNode.class)))
 			.willReturn(res1)
 			.willReturn(res2);
 		// @formatter:on
@@ -1234,6 +1286,47 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is POST")
+					.returns(HttpMethod.POST, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					;
+			})
+			.satisfies(reqs -> {
+				and.then(reqs).element(0)
+					.as("Request 1 body criteria")
+					.returns(List.of(
+								Map.of("siteId", siteId1, "hardwareId", hardwareId1, "fieldName", fieldName1, "function", Avg.name()),
+								Map.of("siteId", siteId1, "hardwareId", hardwareId1, "fieldName", fieldName2, "function", Last.name())
+							), from(RequestEntity::getBody))
+					;
+				and.then(reqs).element(1)
+					.as("Request 2 body criteria")
+					.returns(List.of(
+								Map.of("siteId", siteId2, "hardwareId", hardwareId2, "fieldName", fieldName1, "function", Avg.name()),
+								Map.of("siteId", siteId2, "hardwareId", hardwareId2, "fieldName", fieldName2, "function", Last.name())
+							), from(RequestEntity::getBody))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
+			.allSatisfy(uri -> {
+				and.then(uri)
+					.as("Request URL")
+					.isEqualTo(BASE_URI.resolve(BIN_DATA_URL
+							+ "?from=%s&to=%s&binSizes=BinRaw&tz=Z".formatted(
+									ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().minus(10, MINUTES).atZone(UTC).toLocalDateTime()),
+									ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().atZone(UTC).toLocalDateTime())
+									)))
+					;
+			})
+			;
+
 		and.then(result)
 			.as("Datum parsed from HTTP response")
 			.hasSize(5)

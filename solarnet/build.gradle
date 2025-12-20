@@ -94,7 +94,7 @@ subprojects {
 		myBatisStarterVersion = '3.0.4'
 		okhttp3Mockwebserver = '4.12.0'
 		saxonVersion = '12.5'
-		snCommonVersion = '4.7.0'
+		snCommonVersion = '4.11.0'
 		snCommonExprSpelVersion = '4.1.0'
 		snCommonMqttVersion = '5.0.0'
 		snCommonMqttNettyVersion = '5.0.0'
@@ -103,7 +103,7 @@ subprojects {
 		snCommonOcpp201Version = '2.0.1'
 		snCommonOcppWebJakartaVersion = '3.3.0'
 		snCommonPkiBcVersion = '4.0.0'
-		snCommonWebJakartaVersion = '2.1.1'
+		snCommonWebJakartaVersion = '2.1.2'
 		snExternalOcpp16JakartaVersion = '1.0.1'
 		snExternalOcpp201Version = '1.0.0'
 		springdocStarterVersion = '2.8.8'
@@ -128,18 +128,18 @@ subprojects {
 		]
 	}
 		
-	ext['netty.version'] = '4.2.6.Final'
-	ext['jackson-bom.version'] = '2.20.0'
+	ext['netty.version'] = '4.2.9.Final'
+	ext['jackson-bom.version'] = '2.20.1'
 
 	dependencies {
 		testImplementation libraries.hamcrest,
 				libraries.mockito,
 				libraries.mockitoJupiter,
 				libraries.easymock,
-				'net.javacrumbs.json-unit:json-unit-assertj:4.1.1',
+				'net.javacrumbs.json-unit:json-unit-assertj:5.1.0',
 				'org.junit.platform:junit-platform-launcher'
 		
-		errorprone 'com.google.errorprone:error_prone_core:2.42.0'
+		errorprone 'com.google.errorprone:error_prone_core:2.45.0'
 	}
 
 	configurations {

@@ -166,8 +166,8 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 			CloudIntegrationConfigurationDao integrationDao, RandomGenerator rng, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
 			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
-		super(SERVICE_IDENTIFIER, "AlsoEnergy", datumStreamServices, userEventAppenderBiz, encryptor,
-				SETTINGS, WELL_KNOWN_URLS,
+		super(SERVICE_IDENTIFIER, "AlsoEnergy", datumStreamServices, List.of(), userEventAppenderBiz,
+				encryptor, SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(LoggerFactory.getLogger(SmaCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,

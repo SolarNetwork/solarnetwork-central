@@ -108,7 +108,7 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * General datum utility methods.
  *
  * @author matt
- * @version 2.10
+ * @version 2.11
  * @since 2.8
  */
 public final class DatumUtils {
@@ -302,18 +302,32 @@ public final class DatumUtils {
 		c.setMax(m);
 		c.setOffset(o);
 
-		if ( tags != null && tags.length > 0 ) {
-			// turn tags into metadata query
-			Map<String, Object> map = new LinkedHashMap<>(tags.length);
-			for ( int i = 0; i < tags.length; i++ ) {
-				map.put(String.valueOf(i), new SearchFilter("/t", tags[i], CompareOperator.EQUAL));
-			}
-			SearchFilter sf = new SearchFilter(map, LogicOperator.OR);
-			// support merging into existing metadata query? for now assume tags take over
-			c.setSearchFilter(sf.asLDAPSearchFilterString());
-		}
+		c.setSearchFilter(generateTagsSearchFilter(tags));
 
 		return c;
+	}
+
+	/**
+	 * Generate a metadata search filter for a set of tag values.
+	 *
+	 * @param tags
+	 *        the tags to turn into a metadata search filter ({@code null}
+	 *        allowed)
+	 * @return the metadata search filter, or {@code null}
+	 * @since 2.11
+	 */
+	public static String generateTagsSearchFilter(String... tags) {
+		if ( tags == null || tags.length < 1 ) {
+			return null;
+		}
+		// turn tags into metadata query
+		Map<String, Object> map = new LinkedHashMap<>(tags.length);
+		for ( int i = 0; i < tags.length; i++ ) {
+			map.put(String.valueOf(i), new SearchFilter("/t", tags[i], CompareOperator.EQUAL));
+		}
+		SearchFilter sf = new SearchFilter(map, LogicOperator.OR);
+		// support merging into existing metadata query? for now assume tags take over
+		return sf.asLDAPSearchFilterString();
 	}
 
 	/**

@@ -27,17 +27,13 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLI
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.PASSWORD_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.USERNAME_SETTING;
-import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
+import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.OAuth2AuthorizationContext;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
@@ -54,7 +50,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * OAuth2 utilities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class OAuth2Utils {
 
@@ -72,16 +68,8 @@ public final class OAuth2Utils {
 	 */
 	public static Map<String, Object> principalCredentialsContextAttributes(
 			OAuth2AuthorizeRequest authReq) {
-		Map<String, Object> contextAttributes = Collections.emptyMap();
-		Authentication principal = authReq.getPrincipal();
-		if ( principal.getPrincipal() != null && principal.getCredentials() != null ) {
-			contextAttributes = new HashMap<>(4);
-			contextAttributes.put(OAuth2AuthorizationContext.USERNAME_ATTRIBUTE_NAME,
-					principal.getPrincipal());
-			contextAttributes.put(OAuth2AuthorizationContext.PASSWORD_ATTRIBUTE_NAME,
-					principal.getCredentials());
-		}
-		return contextAttributes;
+		return net.solarnetwork.central.common.http.OAuth2Utils
+				.principalCredentialsContextAttributes(authReq);
 	}
 
 	/**
@@ -148,7 +136,7 @@ public final class OAuth2Utils {
 			headers.add("Authorization", "Bearer " + accessToken.getTokenValue());
 		} catch ( OAuth2AuthorizationException e ) {
 			userEventAppenderBiz.addEvent(config.getUserId(),
-					eventForConfiguration(config.getId(),
+					eventForUserRelatedKey(config.getId(),
 							CloudIntegrationsUserEvents.INTEGRATION_AUTH_ERROR_TAGS,
 							format("OAuth error: %s", e.getMessage())));
 			throw new RemoteServiceException("Error authenticating to cloud integration %d: %s"

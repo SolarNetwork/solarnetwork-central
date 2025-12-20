@@ -32,7 +32,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of {@link ConfigurationFilter}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicConfigurationFilter extends BasicCoreCriteria
 		implements AssetFilter, CapacityGroupFilter {
@@ -142,6 +142,21 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	@Override
 	public BasicConfigurationFilter clone() {
 		return (BasicConfigurationFilter) super.clone();
+	}
+
+	@Override
+	public boolean hasAnyCriteria() {
+		// @formatter:off
+		return     super.hasAnyCriteria()
+				|| (configurationIds != null && configurationIds.length > 0)
+				|| (groupIds != null && groupIds.length > 0)
+				|| (identifiers != null && identifiers.length > 0)
+				// lockResults ignored
+				|| (optimizerIds != null && optimizerIds.length > 0)
+				|| (providerIds != null && providerIds.length > 0)
+				// skipLockedResults ignored
+				;
+		// @formatter:on
 	}
 
 	@Override

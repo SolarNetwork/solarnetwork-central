@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.app.config;
 
+import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.CACHING;
 import static net.solarnetwork.central.din.app.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
 import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,7 @@ import net.solarnetwork.central.din.dao.TransformConfigurationDao;
  * Core service configuration.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 public class DatumInputServiceConfig implements DatumInputConfiguration {

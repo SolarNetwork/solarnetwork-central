@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.5.6' apply false
+	id 'org.springframework.boot' version '3.5.9' apply false
 }
 
 apply plugin: 'java-library'
@@ -16,7 +16,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: User'
-version = '4.0.2'
+version = '4.1.0'
 
 base {
 	archivesName = 'solarnet-user'
@@ -24,17 +24,18 @@ base {
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'net.sf.supercsv'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-common-web')
+	implementation project(':solarnet-datum')
 	implementation project(':solarnet-instructor')
 
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
@@ -43,6 +44,7 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	
 	// Utilities
+	implementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.javamoney:moneta:1.4.2'

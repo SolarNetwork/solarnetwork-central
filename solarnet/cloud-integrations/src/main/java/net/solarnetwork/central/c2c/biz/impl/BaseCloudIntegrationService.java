@@ -31,6 +31,7 @@ import java.util.Locale;
 import java.util.Map;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.c2c.biz.CloudControlService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.BasicCloudIntegrationLocalizedServiceInfo;
@@ -44,7 +45,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Abstract base implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudIntegrationService {
@@ -133,6 +134,9 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	/** The supported datum stream services. */
 	protected final Collection<CloudDatumStreamService> datumStreamServices;
 
+	/** The supported control services. */
+	protected final Collection<CloudControlService> controlServices;
+
 	/** The well known URLs. */
 	protected final Map<String, URI> wellKnownUrls;
 
@@ -145,6 +149,8 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 *        the display name
 	 * @param datumStreamServices
 	 *        the datum stream services
+	 * @param controlServices
+	 *        the control services
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
 	 * @param encryptor
@@ -158,10 +164,11 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 */
 	public BaseCloudIntegrationService(String serviceIdentifier, String displayName,
 			Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
-			List<SettingSpecifier> settings, Map<String, URI> wellKnownUrls) {
+			Collection<CloudControlService> controlServices, UserEventAppenderBiz userEventAppenderBiz,
+			TextEncryptor encryptor, List<SettingSpecifier> settings, Map<String, URI> wellKnownUrls) {
 		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, settings);
 		this.datumStreamServices = requireNonNullArgument(datumStreamServices, "datumStreamServices");
+		this.controlServices = requireNonNullArgument(controlServices, "controlServices");
 		this.wellKnownUrls = requireNonNullArgument(wellKnownUrls, "wellKnownUrls");
 	}
 
@@ -290,6 +297,11 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	@Override
 	public final Iterable<CloudDatumStreamService> datumStreamServices() {
 		return datumStreamServices;
+	}
+
+	@Override
+	public Iterable<CloudControlService> controlServices() {
+		return controlServices;
 	}
 
 }

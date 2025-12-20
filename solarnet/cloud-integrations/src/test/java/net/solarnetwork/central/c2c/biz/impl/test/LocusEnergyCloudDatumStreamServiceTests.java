@@ -33,13 +33,12 @@ import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
 import static net.solarnetwork.codec.JsonUtils.getObjectFromJSON;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -54,10 +53,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.task.support.TaskExecutorAdapter;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -109,7 +108,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 	private static final Long TEST_USER_ID = randomLong();
 
 	@Mock
-	SolarNodeOwnershipDao nodeOwnershipDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -139,10 +138,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 
 	@Captor
-	private ArgumentCaptor<URI> uriCaptor;
-
-	@Captor
-	private ArgumentCaptor<HttpEntity<?>> httpEntityCaptor;
+	private ArgumentCaptor<RequestEntity<ObjectNode>> httpRequestCaptor;
 
 	private MutableClock clock = MutableClock.of(Instant.now(), UTC);
 
@@ -263,22 +259,22 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-01.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
-						+ "?gran=latest&tz=UTC&fields=W_avg,TotWhExp_max"))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
+					+ "?gran=latest&tz=UTC&fields=W_avg,TotWhExp_max"), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
@@ -394,22 +390,22 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-01.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
-						+ "?gran=latest&tz=UTC&fields=W_avg,TotWhExp_max"))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
+					+ "?gran=latest&tz=UTC&fields=W_avg,TotWhExp_max"), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
@@ -524,29 +520,32 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		final var res2 = new ResponseEntity<ObjectNode>(getObjectFromJSON(
 				utf8StringResource("locus-energy-data-for-component-03.json", getClass()),
 				ObjectNode.class), HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res1)
-				.willReturn(res2);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res1).willReturn(res2);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(2)).exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getAllValues())
-			.as("Made 2 HTTP requests, one for each component")
-			.hasSize(2)
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
 			.containsOnly(
 					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId1.toString())
 							+ "?gran=latest&tz=UTC&fields=W_avg"),
 					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId2.toString())
 							+ "?gran=latest&tz=UTC&fields=TotWhExp_max")
-			);
-
-		and.then(httpEntityCaptor.getAllValues()).extracting(HttpEntity::getHeaders)
-			.as("HTTP request includes OAuth Authorization header")
-			.allMatch(headers -> headers.getFirst(AUTHORIZATION).equals("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			)
 			;
 
 		DatumSamples expectedSamples = new DatumSamples();
@@ -659,29 +658,32 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		final var res2 = new ResponseEntity<ObjectNode>(getObjectFromJSON(
 				utf8StringResource("locus-energy-data-for-component-04.json", getClass()),
 				ObjectNode.class), HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res1)
-				.willReturn(res2);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res1).willReturn(res2);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(2)).exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getAllValues())
-			.as("Made 2 HTTP requests, one for each component")
-			.hasSize(2)
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
 			.containsOnly(
 					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId1.toString())
 							+ "?gran=latest&tz=UTC&fields=W_avg"),
 					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId2.toString())
 							+ "?gran=latest&tz=UTC&fields=TotWhExp_max")
-			);
-
-		and.then(httpEntityCaptor.getAllValues()).extracting(HttpEntity::getHeaders)
-			.as("HTTP request includes OAuth Authorization header")
-			.allMatch(headers -> headers.getFirst(AUTHORIZATION).equals("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			)
 			;
 
 		DatumSamples expectedSamples = new DatumSamples();
@@ -789,7 +791,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-05.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
 		final Instant startDate = Instant.parse("2024-01-01T00:00:00Z");
@@ -801,19 +803,19 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(BASE_URI.resolve(
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(
 					V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
 					+ "?gran=5min&tz=UTC&fields=W_avg,TotWhExp_max&start=%s&end=%s".formatted(
 							ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 							ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
-					)))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+					)), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
@@ -949,7 +951,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-05.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
 		final Instant startDate = Instant.parse("2024-01-01T00:00:00Z");
@@ -961,20 +963,20 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI has end date truncated to 5min granularity constraint")
-			.isEqualTo(BASE_URI.resolve(
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(
 					V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
 					+ "?gran=5min&tz=UTC&fields=W_avg,TotWhExp_max&start=%s&end=%s".formatted(
 							ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 							ISO_LOCAL_DATE_TIME.format(startDate.plus(
 									LocusEnergyGranularity.FiveMinute.getConstraint()).atOffset(UTC))
-					)))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+					)), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
@@ -1085,7 +1087,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-05.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
 		final Instant startDate = Instant.parse("2024-12-30T00:00:00Z");
@@ -1097,19 +1099,19 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI")
-			.isEqualTo(BASE_URI.resolve(
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(
 					V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
 					+ "?gran=5min&tz=UTC&fields=W_avg,TotWhExp_max&start=%s&end=%s".formatted(
 							ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 							ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
-					)))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+					)), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
@@ -1214,7 +1216,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-05.json", getClass()),
 				ObjectNode.class);
 		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
 		final Instant startDate = Instant.parse("2024-01-01T00:00:00Z");
@@ -1227,19 +1229,19 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getValue())
-			.as("Request URI uses 'monthly' granularity from query filter, overriding datum stream setting")
-			.isEqualTo(BASE_URI.resolve(
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(BASE_URI.resolve(
 					V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
 					+ "?gran=monthly&tz=UTC&fields=W_avg,TotWhExp_max&start=%s&end=%s".formatted(
 							ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 							ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
-					)))
-			;
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
+					)), from(RequestEntity::getUrl))
+			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
 			.as("HTTP request includes OAuth Authorization header")
 			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
 			;
@@ -1376,8 +1378,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-05a.json", getClass()),
 				ObjectNode.class);
 		final var res2 = new ResponseEntity<ObjectNode>(resJson2, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res1)
-				.willReturn(res2);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res1).willReturn(res2);
 
 		// WHEN
 		final Instant startDate = Instant.parse("2014-04-01T12:00:00Z");
@@ -1393,27 +1394,31 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(2)).exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getAllValues())
-			.as("Made 2 HTTP requests, one for each component")
-			.hasSize(2)
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
 			.containsOnly(
 					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId1.toString())
-						+ "?gran=5min&tz=UTC&fields=W_avg&start=%s&end=%s".formatted(
-								ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
-								ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
-						)),
+							+ "?gran=5min&tz=UTC&fields=W_avg&start=%s&end=%s".formatted(
+									ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
+									ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
+							)),
 					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId2.toString())
 						+ "?gran=5min&tz=UTC&fields=TotWhExp_max&start=%s&end=%s".formatted(
 								ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 								ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
 						))
-			);
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
-			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			)
 			;
 
 		and.then(result)
@@ -1556,8 +1561,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				utf8StringResource("locus-energy-data-for-component-05a.json", getClass()),
 				ObjectNode.class);
 		final var res2 = new ResponseEntity<ObjectNode>(resJson2, HttpStatus.OK);
-		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res1)
-				.willReturn(res2);
+		given(restOps.exchange(any(), eq(ObjectNode.class))).willReturn(res1).willReturn(res2);
 
 		// WHEN
 		final Instant startDate = Instant.parse("2014-04-01T12:00:00Z");
@@ -1573,27 +1577,31 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(restOps).should(times(2)).exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+		then(restOps).should(times(2)).exchange(httpRequestCaptor.capture(), eq(ObjectNode.class));
 
-		and.then(uriCaptor.getAllValues())
-			.as("Made 2 HTTP requests, one for each component")
-			.hasSize(2)
+		and.then(httpRequestCaptor.getAllValues())
+			.allSatisfy(req -> {
+				and.then(req)
+					.as("HTTP method is GET")
+					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.as("HTTP request includes OAuth Authorization header")
+					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					;
+			})
+			.extracting(RequestEntity::getUrl)
 			.containsOnly(
 					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId1.toString())
-						+ "?gran=5min&tz=UTC&fields=W_avg&start=%s&end=%s".formatted(
-								ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
-								ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
-						)),
+							+ "?gran=5min&tz=UTC&fields=W_avg&start=%s&end=%s".formatted(
+									ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
+									ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
+							)),
 					BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId2.toString())
 						+ "?gran=5min&tz=UTC&fields=TotWhExp_max&start=%s&end=%s".formatted(
 								ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 								ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
 						))
-			);
-
-		and.then(httpEntityCaptor.getValue().getHeaders())
-			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			)
 			;
 
 		and.then(result)

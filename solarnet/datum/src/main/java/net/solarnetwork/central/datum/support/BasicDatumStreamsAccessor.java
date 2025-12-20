@@ -39,6 +39,7 @@ import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.util.ObjectUtils;
 
 /**
@@ -49,7 +50,7 @@ import net.solarnetwork.util.ObjectUtils;
  * </p>
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 
@@ -124,7 +125,8 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 			return emptyMap();
 		}
 		final var maps = sortedDatumStreams();
-		return maps.getOrDefault(kind, new HashMap<>(2)).getOrDefault(objectId, new HashMap<>());
+		return maps.computeIfAbsent(kind, k -> new HashMap<>(2)).computeIfAbsent(objectId,
+				k -> new HashMap<>(4));
 	}
 
 	@Override
@@ -321,6 +323,58 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 			}
 		}
 		return offsetMiss(kind, objectId, sourceId, list, timestamp, offset, -1);
+	}
+
+	@Override
+	public final Collection<Datum> rangeMatching(ObjectDatumKind kind, Long objectId,
+			String sourceIdPattern, Instant from, Instant to) {
+		final var map = sortedDatumStreams(kind, objectId);
+		return rangeMatching(kind, objectId, sourceIdPattern, from, to, map);
+	}
+
+	/**
+	 * Find datum matching a time range query.
+	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the offset datum for
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param from
+	 *        the minimum datum timestamp (inclusive)
+	 * @param to
+	 *        the maximum datum timestamp (exclusive)
+	 * @param datumBySourceId
+	 *        a mapping of source ID to cached datum; extending classes can
+	 *        update as needed, but the datum lists must be kept in order by
+	 *        timestamp, descending
+	 * @return the matching datum, never {@code null}
+	 */
+	protected Collection<Datum> rangeMatching(ObjectDatumKind kind, Long objectId,
+			String sourceIdPattern, Instant from, Instant to, Map<String, List<Datum>> datumBySourceId) {
+		final var result = new ArrayList<Datum>(8);
+		for ( Entry<String, List<Datum>> e : datumBySourceId.entrySet() ) {
+			if ( sourceIdPattern == null || sourceIdPattern.isEmpty()
+					|| pathMatcher.match(sourceIdPattern, e.getKey()) ) {
+				for ( Datum d : e.getValue() ) {
+					if ( from != null && d.getTimestamp().isBefore(from) ) {
+						continue;
+					} else if ( to != null && !d.getTimestamp().isBefore(to) ) {
+						continue;
+					}
+					result.add(d);
+				}
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public Collection<ObjectDatumStreamMetadata> findStreams(ObjectDatumKind kind, String query,
+			String sourceIdPattern, String... tags) {
+		// not supported
+		return List.of();
 	}
 
 }

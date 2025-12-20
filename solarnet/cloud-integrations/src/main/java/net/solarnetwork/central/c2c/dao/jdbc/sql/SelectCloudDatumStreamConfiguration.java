@@ -35,12 +35,13 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Support for SELECT for {@link CloudDatumStreamConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class SelectCloudDatumStreamConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -102,6 +103,13 @@ public final class SelectCloudDatumStreamConfiguration
 		if ( filter.hasDatumStreamCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getDatumStreamIds(), "cds.id", where);
 		}
+		if ( filter.hasDatumStreamMappingCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getDatumStreamMappingIds(), "cds.map_id", where);
+		}
+		if ( filter.hasNodeCriteria() ) {
+			where.append("\tAND cds.kind = '").append(ObjectDatumKind.Node.getKey()).append("'\n");
+			idx += whereOptimizedArrayContains(filter.getNodeIds(), "cds.obj_id", where);
+		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}
@@ -129,6 +137,12 @@ public final class SelectCloudDatumStreamConfiguration
 		}
 		if ( filter.hasDatumStreamCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamIds());
+		}
+		if ( filter.hasDatumStreamMappingCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamMappingIds());
+		}
+		if ( filter.hasNodeCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());
 		}
 		return p;
 	}

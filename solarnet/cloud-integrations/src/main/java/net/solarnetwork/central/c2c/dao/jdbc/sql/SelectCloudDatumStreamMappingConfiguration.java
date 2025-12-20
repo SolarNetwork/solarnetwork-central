@@ -40,7 +40,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
  * Support for SELECT for {@link CloudDatumStreamMappingConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class SelectCloudDatumStreamMappingConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -104,6 +104,26 @@ public final class SelectCloudDatumStreamMappingConfiguration
 		if ( filter.hasIntegrationCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getIntegrationIds(), "cdm.int_id", where);
 		}
+		if ( filter.hasNodeCriteria() ) {
+			where.append("""
+						AND NOT EXISTS (
+							SELECT id
+							FROM solardin.cin_datum_stream cds
+							WHERE cds.user_id = cdm.user_id
+							AND cds.kind = 'n'
+							AND cds.map_id = cdm.id
+						) OR EXISTS (
+							SELECT id
+							FROM solardin.cin_datum_stream cds
+							WHERE cds.user_id = cdm.user_id
+							AND cds.kind = 'n'
+							AND cds.map_id = cdm.id
+							AND (cds.obj_id IS NULL OR
+					""".stripTrailing());
+			StringBuilder tmp = new StringBuilder();
+			idx += whereOptimizedArrayContains(filter.getNodeIds(), "cds.obj_id", tmp);
+			where.append(tmp.substring(4, tmp.length() - 1)).append(")\n\t)\n");
+		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}
@@ -134,6 +154,9 @@ public final class SelectCloudDatumStreamMappingConfiguration
 		}
 		if ( filter.hasIntegrationCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIntegrationIds());
+		}
+		if ( filter.hasNodeCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());
 		}
 		return p;
 	}

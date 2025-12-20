@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.c2c.domain;
 
 import jakarta.validation.constraints.NotNull;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamIdRelated;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
@@ -30,9 +31,10 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * DTO for cloud datum stream rake task entity.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class CloudDatumStreamRakeTaskEntityInput extends CloudDatumStreamRakeTaskEntityBaseInput {
+public class CloudDatumStreamRakeTaskEntityInput extends CloudDatumStreamRakeTaskEntityBaseInput
+		implements CloudDatumStreamIdRelated {
 
 	@NotNull
 	private Long datumStreamId;
@@ -56,6 +58,7 @@ public class CloudDatumStreamRakeTaskEntityInput extends CloudDatumStreamRakeTas
 	 *
 	 * @return the datum stream ID
 	 */
+	@Override
 	public Long getDatumStreamId() {
 		return datumStreamId;
 	}

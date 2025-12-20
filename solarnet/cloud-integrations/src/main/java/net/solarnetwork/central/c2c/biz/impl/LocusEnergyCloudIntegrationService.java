@@ -147,8 +147,8 @@ public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudI
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
 			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
-		super(SERVICE_IDENTIFIER, "Locus Energy", datumStreamServices, userEventAppenderBiz, encryptor,
-				SETTINGS, WELL_KNOWN_URLS,
+		super(SERVICE_IDENTIFIER, "Locus Energy", datumStreamServices, List.of(), userEventAppenderBiz,
+				encryptor, SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(LocusEnergyCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,

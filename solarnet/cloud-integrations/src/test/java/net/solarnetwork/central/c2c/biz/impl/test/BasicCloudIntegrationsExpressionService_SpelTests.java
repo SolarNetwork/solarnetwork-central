@@ -49,12 +49,12 @@ import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionSer
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataReadOnlyDao;
+import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
-import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.central.support.SimpleCache;
 import net.solarnetwork.central.user.dao.UserSecretAccessDao;
 import net.solarnetwork.central.user.domain.UserSecretEntity;
@@ -77,7 +77,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
 public class BasicCloudIntegrationsExpressionService_SpelTests {
 
 	@Mock
-	SolarNodeOwnershipDao nodeOwnershipDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private SolarNodeMetadataReadOnlyDao metadataDao;

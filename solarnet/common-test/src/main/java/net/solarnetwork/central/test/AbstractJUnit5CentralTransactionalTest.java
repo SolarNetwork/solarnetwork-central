@@ -261,8 +261,7 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 *        the node ID
 	 */
 	protected void setupTestUserNode(Long userId, Long nodeId) {
-		jdbcTemplate.update("insert into solaruser.user_node (user_id, node_id) values (?,?)", userId,
-				nodeId);
+		CommonDbTestUtils.insertUserNode(jdbcTemplate, userId, nodeId);
 	}
 
 	/**

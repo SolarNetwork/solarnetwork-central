@@ -32,8 +32,8 @@ import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -53,9 +53,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import com.fasterxml.jackson.databind.JsonNode;
+import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
-import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
 import net.solarnetwork.domain.Result;
@@ -71,7 +71,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * Test cases for the {@link DatumExpressionRoot} class.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -84,7 +84,7 @@ public class DatumExpressionRootTests {
 	private HttpOperations httpOperations;
 
 	@Mock
-	private BiFunction<DatumExpressionRoot, String, byte[]> userSecretProvider;
+	private BiFunction<Long, String, byte[]> userSecretProvider;
 
 	@Captor
 	private ArgumentCaptor<URI> uriCaptor;
@@ -463,8 +463,8 @@ public class DatumExpressionRootTests {
 				{"yee":"haw"}
 				""", JsonNode.class);
 		final var httpRes = new Result<>(res);
-		given(httpOperations.httpGet(eq(uri), eq(params), eq(headers), eq(JsonNode.class), eq(userId)))
-				.willReturn(httpRes);
+		given(httpOperations.httpGet(eq(uri), eq(params), eq(headers), eq(JsonNode.class), eq(userId),
+				any())).willReturn(httpRes);
 
 		// WHEN
 		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
@@ -494,7 +494,7 @@ public class DatumExpressionRootTests {
 
 		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
 
-		given(userSecretProvider.apply(same(root), eq(secretName))).willReturn(secretValue);
+		given(userSecretProvider.apply(eq(userId), eq(secretName))).willReturn(secretValue);
 
 		// WHEN
 		byte[] result = root.secretData(secretName);
@@ -519,7 +519,7 @@ public class DatumExpressionRootTests {
 
 		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
 
-		given(userSecretProvider.apply(same(root), eq(secretName))).willReturn(secretValue);
+		given(userSecretProvider.apply(eq(userId), eq(secretName))).willReturn(secretValue);
 
 		// WHEN
 		String result = root.secret(secretName);

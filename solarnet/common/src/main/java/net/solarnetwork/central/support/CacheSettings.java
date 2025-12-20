@@ -64,7 +64,7 @@ public class CacheSettings {
 	private CacheLoaderWriter<?, ?> loaderWriter;
 
 	/**
-	 * Create a cache.
+	 * Create a cache, or return an already existing one with the same name.
 	 *
 	 * @param <K>
 	 *        the key type
@@ -83,6 +83,11 @@ public class CacheSettings {
 	@SuppressWarnings("unchecked")
 	public <K, V> Cache<K, V> createCache(CacheManager cacheManager, Class<K> keyType,
 			Class<V> valueType, String name) {
+		var existing = cacheManager.getCache(name, keyType, valueType);
+		if ( existing != null ) {
+			return existing;
+		}
+
 		CacheConfigurationBuilder<K, V> cacheConfigBuilder = CacheConfigurationBuilder
 				.newCacheConfigurationBuilder(keyType, valueType,
 						ResourcePoolsBuilder.heap(Integer.MAX_VALUE));

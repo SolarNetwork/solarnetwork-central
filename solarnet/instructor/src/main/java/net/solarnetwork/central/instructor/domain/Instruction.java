@@ -40,7 +40,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Domain object for an individual instruction.
  *
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public class Instruction extends BaseEntity {
 
@@ -81,6 +81,11 @@ public class Instruction extends BaseEntity {
 	/**
 	 * Copy constructor.
 	 *
+	 * <p>
+	 * The parameters and result parameters collections will be copied into new
+	 * collection instances, but not the values within those collections.
+	 * </p>
+	 *
 	 * @param other
 	 *        the instance to copy
 	 * @since 1.2
@@ -88,9 +93,12 @@ public class Instruction extends BaseEntity {
 	public Instruction(Instruction other) {
 		this(other.getTopic(), other.getInstructionDate());
 		setId(other.getId());
+		setCreated(other.getCreated());
 		setStatusDate(other.getStatusDate());
-		setParameters(other.getParameters());
-		setResultParameters(other.getResultParameters());
+		setParameters(other.getParameters() != null ? new ArrayList<>(other.getParameters()) : null);
+		setResultParameters(
+				other.getResultParameters() != null ? new LinkedHashMap<>(other.getResultParameters())
+						: null);
 		setState(other.getState());
 		setExpirationDate(other.getExpirationDate());
 	}
