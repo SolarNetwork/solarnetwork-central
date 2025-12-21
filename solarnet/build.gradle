@@ -143,14 +143,16 @@ subprojects {
 	}
 
 	configurations {
-    	all*.exclude group: 'commons-logging'
-		all*.exclude group: 'com.amazonaws'
-		all*.exclude group: 'javax.servlet'
-		all*.exclude group: 'log4j', module: 'log4j'
-		all*.exclude group: 'net.solarnetwork.external', module: 'net.solarnetwork.external.ocpp'
-		all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-		all*.exclude group: 'xml-apis', module: 'xml-apis'
-		all {	
+		configureEach {
+			exclude group: 'commons-logging'
+			exclude group: 'com.amazonaws'
+			exclude group: 'javax.servlet'
+			exclude group: 'log4j', module: 'log4j'
+			exclude group: 'net.solarnetwork.external', module: 'net.solarnetwork.external.ocpp'
+			exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+			exclude group: 'xml-apis', module: 'xml-apis'
+		}
+		all {
 			resolutionStrategy {
 				// the following are to pick up security fixes in transitive dependencies
 				force "commons-io:commons-io:${commonsIoVersion}"

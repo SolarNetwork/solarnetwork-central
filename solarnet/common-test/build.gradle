@@ -20,17 +20,6 @@ base {
 	archivesName = 'solarnet-common-test'
 }
 
-configurations {
-	all*.exclude group: 'commons-beanutils'
-	all*.exclude group: 'io.moquette'
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'org.hamcrest', module: 'hamcrest-all'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-	all*.exclude group: 'org.slf4j', module: 'jcl-over-slf4j'
-	all*.exclude group: 'org.apache.commons', module: 'commons-compress'
-	all*.exclude group: 'net.sf.supercsv'
-}
-
 dependencies {
 	api 'ch.qos.logback:logback-classic'
 	api "net.solarnetwork.common:net.solarnetwork.common:${snCommonVersion}"
@@ -41,6 +30,13 @@ dependencies {
     api 'org.springframework.security:spring-security-test'
     api "org.threeten:threeten-extra:${threetenExtraVersion}"
     api libraries.mockito
+}
+
+configurations.configureEach {
+	exclude group: 'commons-beanutils'
+	exclude group: 'io.moquette'
+	exclude group: 'org.hamcrest', module: 'hamcrest-all'
+	exclude group: 'org.apache.commons', module: 'commons-compress'
 }
 
 jar.manifest {
