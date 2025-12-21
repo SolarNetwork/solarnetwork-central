@@ -15,13 +15,6 @@ base {
 	archivesName = 'solaroscp-fp'
 }
 
-configurations {
-    all*.exclude group: 'commons-logging'
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-	all*.exclude group: 'net.sf.supercsv'
-}
-
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-common-web')

@@ -20,13 +20,6 @@ base {
 	archivesName = 'solarnet-oscp'
 }
 
-configurations {
-	all*.exclude group: 'javax.servlet'
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'net.sf.supercsv'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-}
-
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-common-web')
