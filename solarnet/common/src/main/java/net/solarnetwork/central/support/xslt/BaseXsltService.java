@@ -205,7 +205,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 			}
 		}
 
-		Function<String, Templates> provider = (key) -> {
+		Function<String, Templates> provider = _ -> {
 			try (Reader xsltInput = new StringReader(xslt)) {
 				Document xsltDoc = documentBuilder().parse(new InputSource(xsltInput));
 				return transformerFactory.newTemplates(new DOMSource(xsltDoc));

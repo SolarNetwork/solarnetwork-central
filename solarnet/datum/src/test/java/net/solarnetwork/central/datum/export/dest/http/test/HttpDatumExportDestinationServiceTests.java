@@ -186,7 +186,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 
 		DatumExportResource rsrc = getExportResource(data);
 
-		doWithHttpServer(handler, (server, port, baseUrl) -> {
+		doWithHttpServer(handler, (_, _, baseUrl) -> {
 			destProps.put("url", baseUrl + "/save");
 			service.export(config, singleton(rsrc), runtimeProps, null);
 			return null;
@@ -284,7 +284,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 
 		DatumExportResource rsrc = getExportResource(data);
 
-		doWithHttpServer(handler, (server, port, baseUrl) -> {
+		doWithHttpServer(handler, (_, _, baseUrl) -> {
 			destProps.put("url", baseUrl + "/save/{name}");
 			service.export(config, singleton(rsrc), runtimeProps, null);
 			return null;
@@ -399,7 +399,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
 				new CsvDatumExportOutputFormatService());
 
-		doWithHttpServer(handler, (server, port, baseUrl) -> {
+		doWithHttpServer(handler, (_, _, baseUrl) -> {
 			destProps.put("url", baseUrl + "/save");
 			service.export(config, singleton(rsrc), runtimeProps, null);
 			return null;
@@ -482,7 +482,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 
 		DatumExportResource rsrc = getExportResource(data);
 
-		doWithHttpServer(handler, (server, port, baseUrl) -> {
+		doWithHttpServer(handler, (_, _, baseUrl) -> {
 			destProps.put("url", baseUrl + "/save");
 			service.export(config, singleton(rsrc), runtimeProps, null);
 			return null;

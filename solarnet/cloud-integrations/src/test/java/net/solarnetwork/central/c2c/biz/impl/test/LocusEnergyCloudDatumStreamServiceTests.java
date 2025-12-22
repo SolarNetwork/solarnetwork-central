@@ -823,7 +823,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("Datum list parsed from HTTP response")
 			.hasSize(2)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("Next filter not provided")
 					.isNull()
@@ -984,7 +984,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("Datum list parsed from HTTP response")
 			.hasSize(2)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("Next filter provided")
 					.isNotNull()
@@ -1119,7 +1119,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("Datum list parsed from HTTP response")
 			.hasSize(2)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("Next filter not provided because no more date-based pages")
 					.isNull()
@@ -1424,7 +1424,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("Datum list parsed from HTTP responses")
 			.hasSize(2)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("Next query filter returned")
 					.isNotNull()
@@ -1607,7 +1607,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("Datum list parsed from HTTP responses")
 			.hasSize(2)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("No next query filter returned because clock is beyond multi stream lag tolerance")
 					.isNull()

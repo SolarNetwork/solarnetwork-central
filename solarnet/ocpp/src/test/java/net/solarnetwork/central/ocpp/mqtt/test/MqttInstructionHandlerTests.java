@@ -142,7 +142,7 @@ public class MqttInstructionHandlerTests {
 		replayAll();
 
 		CountDownLatch latch = new CountDownLatch(1);
-		handler.processActionMessage(message, (msg, res, err) -> {
+		handler.processActionMessage(message, (_, _, err) -> {
 			assertThat("No error returned", err, nullValue());
 			latch.countDown();
 			return true;

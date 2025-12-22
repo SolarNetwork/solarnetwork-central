@@ -793,7 +793,7 @@ public final class DatumDbUtils {
 					Object id = datumStmt.getObject(1);
 					UUID streamId = (id instanceof UUID uuid ? uuid
 							: id != null ? UUID.fromString(id.toString()) : null);
-					result.computeIfAbsent(nspk, k -> streamMetadata(jdbcTemplate, streamId));
+					result.computeIfAbsent(nspk, _ -> streamMetadata(jdbcTemplate, streamId));
 				}
 			}
 			return null;

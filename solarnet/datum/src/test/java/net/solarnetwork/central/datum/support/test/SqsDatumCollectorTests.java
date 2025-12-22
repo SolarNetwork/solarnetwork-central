@@ -195,7 +195,7 @@ public class SqsDatumCollectorTests {
 
 		// store datum (slowly)
 		DatumPK datumId = new DatumPK(UUID.randomUUID(), now().truncatedTo(ChronoUnit.SECONDS));
-		given(delegateDao.store(any(StreamDatum.class))).willAnswer(invocation -> {
+		given(delegateDao.store(any(StreamDatum.class))).willAnswer(_ -> {
 			log.info("Sleeping on delegateDao.store() to simulate slow performance...");
 			Thread.sleep(250);
 			return datumId;
@@ -420,7 +420,7 @@ public class SqsDatumCollectorTests {
 		d.setSamples(new DatumSamples(Map.of("a", 1), Map.of("b", 2), null));
 		final DatumPK datumId = new ObjectDatumPK(d.getId().getKind(), d.getId().getObjectId(),
 				d.getId().getSourceId(), d.getId().getTimestamp(), null);
-		given(delegateDao.persist(same(d))).willAnswer(invocation -> {
+		given(delegateDao.persist(same(d))).willAnswer(_ -> {
 			log.info("Sleeping on delegateDao.store() to simulate slow performance...");
 			Thread.sleep(250);
 			return datumId;

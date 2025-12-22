@@ -126,7 +126,7 @@ public class OcppController extends BaseOcppController {
 
 	private ActionMessageResultHandler<GetConfigurationRequest, GetConfigurationResponse> processConfiguration(
 			ChargePoint chargePoint) {
-		return (msg, confs, err) -> {
+		return (_, confs, err) -> {
 			if ( confs != null && confs.getConfigurationKey() != null
 					&& !confs.getConfigurationKey().isEmpty() ) {
 				tryWithTransaction(new TransactionCallbackWithoutResult() {
@@ -252,7 +252,7 @@ public class OcppController extends BaseOcppController {
 			log.trace("Passing OCPPv16 instruction {} to processor {}", instructionId, handler);
 			BasicActionMessage<JsonNode> cpMsg = new BasicActionMessage<>(instr.chargePointIdentity,
 					instr.getId().toString(), instr.action, instr.jsonPayload);
-			ActionMessageResultHandler<JsonNode, Void> processor = (msg, res, err) -> {
+			ActionMessageResultHandler<JsonNode, Void> processor = (_, _, err) -> {
 				if ( err != null ) {
 					Throwable root = err;
 					while ( root.getCause() != null ) {
@@ -292,7 +292,7 @@ public class OcppController extends BaseOcppController {
 		}
 
 		log.info("Sending OCPPv16 {} to charge point {}", instr.action, instr.chargePointIdentity);
-		sendToChargePoint(instr.chargePointIdentity, instr.action, instr.payload, (msg, res, err) -> {
+		sendToChargePoint(instr.chargePointIdentity, instr.action, instr.payload, (_, res, err) -> {
 			if ( err != null ) {
 				Throwable root = err;
 				while ( root.getCause() != null ) {

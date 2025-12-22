@@ -22,7 +22,7 @@ subprojects {
 
 	java {
 		toolchain {
-	        languageVersion = JavaLanguageVersion.of(21)
+	        languageVersion = JavaLanguageVersion.of(25)
 	    }
 		withJavadocJar()
 		withSourcesJar()
@@ -37,7 +37,7 @@ subprojects {
 		compileJava,
 		compileTestJava
 	].each() {
-    	it.options.release = 21
+    	it.options.release = 25
 		it.options.compilerArgs += [
 			"-Xlint:all",
 			"-Xlint:-options",
@@ -79,7 +79,7 @@ subprojects {
 		encoding = 'UTF-8'
 		use = true
 		links = ['https://docs.oracle.com/en/java/javase/21/docs/api/']
-		source = "21"
+		source = "25"
 	}
 
 	ext {
@@ -177,7 +177,7 @@ subprojects {
     pluginManager.withPlugin('eclipse') { 
 		eclipse {
 			jdt {
-				javaRuntimeName = 'JavaSE-21'
+				javaRuntimeName = 'JavaSE-25'
 				file {
 					withProperties { properties ->
 						// set properties for the file org.eclipse.jdt.core.prefs to enable -parameters for Spring 6

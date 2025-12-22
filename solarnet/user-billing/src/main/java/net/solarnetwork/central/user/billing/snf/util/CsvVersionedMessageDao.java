@@ -129,7 +129,7 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 					}
 					String name = list.get(3);
 					String template = list.get(4);
-					rows.compute(name, (k, curr) -> {
+					rows.compute(name, (_, curr) -> {
 						if ( curr == null || curr.version.isBefore(ts) ) {
 							return new Row(ts, name, template);
 						}

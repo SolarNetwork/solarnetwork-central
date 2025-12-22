@@ -235,7 +235,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	}
 
 	private void updateColumnOrder(String key) {
-		columnOrder.computeIfAbsent(key, aKey -> {
+		columnOrder.computeIfAbsent(key, _ -> {
 			int size = columnOrder.size();
 			columnCount = size + 1;
 			return size;
@@ -269,7 +269,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 		BeanWrapper wrapper = PropertyAccessorFactory.forBeanPropertyAccess(item);
 		PropertyDescriptor[] descriptors = wrapper.getPropertyDescriptors();
 		final Class<?> clazz = item.getClass();
-		String[] propOrder = propertyOrder.computeIfAbsent(clazz, k -> {
+		String[] propOrder = propertyOrder.computeIfAbsent(clazz, _ -> {
 			JsonPropertyOrder order = AnnotationUtils.findAnnotation(clazz, JsonPropertyOrder.class);
 			if ( order != null ) {
 				return order.value();
@@ -350,7 +350,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 				}
 			}
 		}
-		ignoredProperties.computeIfAbsent(item.getClass(), k -> new HashMap<>(8)).put(key, result);
+		ignoredProperties.computeIfAbsent(item.getClass(), _ -> new HashMap<>(8)).put(key, result);
 		return result;
 	}
 

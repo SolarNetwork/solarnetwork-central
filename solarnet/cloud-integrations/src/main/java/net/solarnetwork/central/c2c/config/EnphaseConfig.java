@@ -175,7 +175,7 @@ public class EnphaseConfig implements SolarNetCloudIntegrationsConfiguration {
 		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
 				integrationConfigurationDao, EnphaseCloudIntegrationService.TOKEN_URI,
 				ClientAuthenticationMethod.CLIENT_SECRET_BASIC, encryptor,
-				integrationServiceIdentifier -> EnphaseCloudIntegrationService.SECURE_SETTINGS);
+				_ -> EnphaseCloudIntegrationService.SECURE_SETTINGS);
 		if ( cache != null ) {
 			repo = new CachingOAuth2ClientRegistrationRepository(cache, repo);
 		}

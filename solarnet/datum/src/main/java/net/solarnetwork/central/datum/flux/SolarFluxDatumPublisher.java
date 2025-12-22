@@ -107,7 +107,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 	public SolarFluxDatumPublisher(SolarNodeOwnershipDao nodeOwnershipDao,
 			FluxPublishSettingsDao fluxPublishSettingsDao, ObjectMapper objectMapper, boolean retained,
 			MqttQos publishQos) {
-		super("SolarFlux Datum Publisher", objectMapper, (item) -> {
+		super("SolarFlux Datum Publisher", objectMapper, _ -> {
 			throw new UnsupportedOperationException();
 		}, retained, publishQos);
 		this.supportDao = requireNonNullArgument(nodeOwnershipDao, "supportDao");

@@ -336,7 +336,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		}
 
 		return restOpsHelper.httpGet("List irradiance data", integration, JsonNode.class,
-				req -> uriBuilder.buildAndExpand().toUri(), res -> parseDatum(res.getBody(), datumStream,
+				_ -> uriBuilder.buildAndExpand().toUri(), res -> parseDatum(res.getBody(), datumStream,
 						refsByFieldName, resolution, startDate, endDate));
 	}
 

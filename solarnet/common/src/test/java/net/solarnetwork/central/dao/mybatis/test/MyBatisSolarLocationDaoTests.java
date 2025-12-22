@@ -78,7 +78,7 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 
 	private void validatePublic(SolarLocation src, SolarLocation entity) {
 		then(entity).as("SolarLocation should exist").isNotNull().satisfies(e -> {
-			then(entity.getCreated()).as("Created date should be set").isNotNull();
+			then(e.getCreated()).as("Created date should be set").isNotNull();
 		}).returns(src.getCountry(), from(SolarLocation::getCountry))
 				.returns(src.getLocality(), from(SolarLocation::getLocality))
 				.returns(src.getPostalCode(), from(SolarLocation::getPostalCode))

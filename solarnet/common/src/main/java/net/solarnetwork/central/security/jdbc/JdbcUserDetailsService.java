@@ -122,7 +122,7 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	protected List<UserDetails> loadUsersByUsername(String username) {
 		assert getJdbcTemplate() != null;
-		return getJdbcTemplate().query(getUsersByUsernameQuery(), (rs, rowNum) -> {
+		return getJdbcTemplate().query(getUsersByUsernameQuery(), (rs, _) -> {
 			String username1 = rs.getString(1);
 			String password = rs.getString(2);
 			boolean enabled = rs.getBoolean(3);

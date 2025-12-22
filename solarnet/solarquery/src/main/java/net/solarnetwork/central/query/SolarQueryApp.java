@@ -82,7 +82,7 @@ public class SolarQueryApp {
 	 */
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-		return args -> ApplicationContextUtils.traceBeanNames(ctx, LOG);
+		return _ -> ApplicationContextUtils.traceBeanNames(ctx, LOG);
 	}
 
 }

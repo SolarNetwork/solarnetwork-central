@@ -103,7 +103,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 	public void postProcessEnvironment(ConfigurableEnvironment environment,
 			SpringApplication application) {
 		application.addInitializers(
-				ctx -> logger.replayTo(ApplicationMetadataEnvironmentPostProcessor.class));
+				_ -> logger.replayTo(ApplicationMetadataEnvironmentPostProcessor.class));
 
 		Properties appProps = new Properties();
 

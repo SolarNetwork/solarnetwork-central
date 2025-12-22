@@ -473,7 +473,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 					continue;
 				}
 				for ( MutableDatum d : datum ) {
-					virtualDatum.computeIfAbsent(d.getTimestamp(), k -> {
+					virtualDatum.computeIfAbsent(d.getTimestamp(), _ -> {
 						var l = new ArrayList<GeneralDatum>(virtualSourceIds.size());
 						for ( String virtualSourceId : virtualSourceIds ) {
 							String sourceId = expandTemplateString(virtualSourceId, placeholders);

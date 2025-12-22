@@ -1387,7 +1387,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		and.then(result)
 			.as("Datum parsed from HTTP response")
 			.hasSize(5)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("Next query filter returned")
 					.isNotNull()
@@ -1563,7 +1563,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		and.then(result)
 			.as("Datum parsed from HTTP response")
 			.hasSize(5)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("No next query filter returned because clock is beyond multi stream lag tolerance")
 					.isNull()

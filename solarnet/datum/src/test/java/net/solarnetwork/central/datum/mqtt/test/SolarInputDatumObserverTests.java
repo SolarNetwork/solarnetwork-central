@@ -245,7 +245,7 @@ public class SolarInputDatumObserverTests extends MqttServerSupport {
 		service.registerNodeObserver(handler, nodeId);
 
 		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(owner);
-		given(datumStreamMetadataDao.findDatumStreamMetadata(any())).willAnswer(i -> {
+		given(datumStreamMetadataDao.findDatumStreamMetadata(any())).willAnswer(_ -> {
 			return singleton(new BasicObjectDatumStreamMetadata(streamId, "UTC", Node, nodeId, sourceId,
 					new String[] { "a" }, new String[] { "b" }, new String[] { "c" }));
 		});
@@ -299,7 +299,7 @@ public class SolarInputDatumObserverTests extends MqttServerSupport {
 		final IMqttClient client = startConnectionAndClient();
 
 		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(owner);
-		given(datumStreamMetadataDao.findDatumStreamMetadata(any())).willAnswer(i -> {
+		given(datumStreamMetadataDao.findDatumStreamMetadata(any())).willAnswer(_ -> {
 			return singleton(new BasicObjectDatumStreamMetadata(streamId, "UTC", Node, nodeId, sourceId,
 					new String[] { "a" }, new String[] { "b" }, new String[] { "c" }));
 		});
@@ -355,7 +355,7 @@ public class SolarInputDatumObserverTests extends MqttServerSupport {
 		final IMqttClient client = startConnectionAndClient();
 
 		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(owner);
-		given(datumStreamMetadataDao.findDatumStreamMetadata(any())).willAnswer(i -> {
+		given(datumStreamMetadataDao.findDatumStreamMetadata(any())).willAnswer(_ -> {
 			return singleton(new BasicObjectDatumStreamMetadata(streamId, "UTC", Node, nodeId, sourceId,
 					new String[] { "a" }, new String[] { "b" }, new String[] { "c" }));
 		});
@@ -422,7 +422,7 @@ public class SolarInputDatumObserverTests extends MqttServerSupport {
 		final IMqttClient client = startConnectionAndClient();
 
 		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(owner).willReturn(owner);
-		given(datumStreamMetadataDao.findDatumStreamMetadata(any())).willAnswer(i -> {
+		given(datumStreamMetadataDao.findDatumStreamMetadata(any())).willAnswer(_ -> {
 			return singleton(new BasicObjectDatumStreamMetadata(streamId, "UTC", Node, nodeId, sourceId,
 					new String[] { "a" }, new String[] { "b" }, new String[] { "c" }));
 		});

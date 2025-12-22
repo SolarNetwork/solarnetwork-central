@@ -148,7 +148,7 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 		final var datum = new ArrayList<GeneralNodeDatum>(8);
 
 		// WHEN
-		try (var ctx = service.createImportContext(config, resource, (importService, progressAmount) -> {
+		try (var ctx = service.createImportContext(config, resource, (_, progressAmount) -> {
 			progress.add(progressAmount);
 		})) {
 			for ( var d : ctx ) {
@@ -236,7 +236,7 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 		final var progress = new ArrayList<Double>(8);
 		final var datum = new ArrayList<GeneralNodeDatum>(8);
 
-		try (var ctx = service.createImportContext(config, resource, (importService, progressAmount) -> {
+		try (var ctx = service.createImportContext(config, resource, (_, progressAmount) -> {
 			progress.add(progressAmount);
 		})) {
 			for ( var d : ctx ) {
@@ -356,7 +356,7 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 		final var datum = new ArrayList<GeneralNodeDatum>(8);
 
 		// WHEN
-		try (var ctx = service.createImportContext(config, resource, (importService, progressAmount) -> {
+		try (var ctx = service.createImportContext(config, resource, (_, progressAmount) -> {
 			progress.add(progressAmount);
 		})) {
 			for ( var d : ctx ) {

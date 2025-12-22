@@ -747,8 +747,8 @@ public class OutstationService
 				measurementConfigs.size());
 		for ( ServerMeasurementConfiguration config : measurementConfigs ) {
 			if ( config.isValid() ) {
-				map.computeIfAbsent(config.getNodeId(), k -> new HashMap<>(measurementConfigs.size()))
-						.computeIfAbsent(config.getSourceId(), k -> new ArrayList<>(4)).add(config);
+				map.computeIfAbsent(config.getNodeId(), _ -> new HashMap<>(measurementConfigs.size()))
+						.computeIfAbsent(config.getSourceId(), _ -> new ArrayList<>(4)).add(config);
 			}
 		}
 		return map;
@@ -759,8 +759,8 @@ public class OutstationService
 				measurementConfigs.size());
 		for ( ServerControlConfiguration config : controlConfigs ) {
 			if ( config.isValid() ) {
-				map.computeIfAbsent(config.getNodeId(), k -> new HashMap<>(measurementConfigs.size()))
-						.computeIfAbsent(config.getControlId(), k -> new ArrayList<>(4)).add(config);
+				map.computeIfAbsent(config.getNodeId(), _ -> new HashMap<>(measurementConfigs.size()))
+						.computeIfAbsent(config.getControlId(), _ -> new ArrayList<>(4)).add(config);
 			}
 		}
 		return map;
@@ -772,7 +772,7 @@ public class OutstationService
 		for ( ServerMeasurementConfiguration config : measurementConfigs ) {
 			MeasurementType type = config.getType();
 			if ( type != null && config.getProperty() != null && !config.getProperty().isEmpty() ) {
-				map.computeIfAbsent(type, k -> new ArrayList<>(4)).add(config);
+				map.computeIfAbsent(type, _ -> new ArrayList<>(4)).add(config);
 			}
 		}
 		return map;
@@ -784,7 +784,7 @@ public class OutstationService
 		for ( ServerControlConfiguration config : controlConfigs ) {
 			ControlType type = config.getType();
 			if ( type != null && config.getControlId() != null && !config.getControlId().isEmpty() ) {
-				map.computeIfAbsent(type, k -> new ArrayList<>(4)).add(config);
+				map.computeIfAbsent(type, _ -> new ArrayList<>(4)).add(config);
 			}
 		}
 		return map;

@@ -170,13 +170,12 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 				encryptor, SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(LoggerFactory.getLogger(SmaCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
-						integrationLocksCache));
+						_ -> SECURE_SETTINGS, oauthClientManager, clock, integrationLocksCache));
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.rng = requireNonNullArgument(rng, "rng");
 		this.tokenFetchHelper = new RestOperationsHelper(
 				LoggerFactory.getLogger(SmaCloudIntegrationService.class), userEventAppenderBiz, restOps,
-				INTEGRATION_HTTP_ERROR_TAGS, encryptor, integrationServiceIdentifier -> SECURE_SETTINGS);
+				INTEGRATION_HTTP_ERROR_TAGS, encryptor, _ -> SECURE_SETTINGS);
 	}
 
 	@Override
@@ -225,7 +224,7 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 		// validate by requesting the available systems
 		try {
 			final String response = restOpsHelper.httpGet("List systems", integration, String.class,
-					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH).buildAndExpand().toUri(),
 					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
@@ -303,7 +302,7 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 		}
 
 		final var decrypted = integration.copyWithId(integration.getId());
-		decrypted.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
+		decrypted.unmaskSensitiveInformation(_ -> SECURE_SETTINGS, encryptor);
 
 		final JsonNode json = tokenFetchHelper.http("Get OAuth token", HttpMethod.POST, null,
 				integration, JsonNode.class, (req) -> {

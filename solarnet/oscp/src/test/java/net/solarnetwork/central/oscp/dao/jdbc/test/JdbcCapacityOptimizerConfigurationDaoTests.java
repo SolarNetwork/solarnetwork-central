@@ -225,10 +225,10 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 
 			TransactionTemplate tt = new TransactionTemplate(txManager);
 
-			tt.executeWithoutResult((ts) -> {
+			tt.executeWithoutResult((_) -> {
 				CapacityOptimizerConfiguration result = dao.getForUpdate(last.getId());
 				Thread t = new Thread(() -> {
-					tt.executeWithoutResult((ts2) -> {
+					tt.executeWithoutResult((_) -> {
 						try {
 							jdbcTemplate.queryForList(
 									"SELECT * FROM solaroscp.oscp_co_conf WHERE user_id = ? AND id = ? FOR UPDATE NOWAIT",
@@ -575,12 +575,12 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 			TransactionTemplate tt = new TransactionTemplate(txManager);
 			CountDownLatch latch = new CountDownLatch(1);
 
-			tt.executeWithoutResult((ts) -> {
+			tt.executeWithoutResult((_) -> {
 				boolean b = dao.processExternalSystemWithExpiredMeasurement((ctx) -> {
 					log.info("Locked ID: {}", ctx.config().getId());
 
 					Thread t = new Thread(() -> {
-						tt.executeWithoutResult((ts2) -> {
+						tt.executeWithoutResult((_) -> {
 							try {
 								jdbcTemplate.queryForList(
 										"SELECT * FROM solaroscp.oscp_cg_co_meas LIMIT 1 FOR UPDATE NOWAIT");

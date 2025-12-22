@@ -574,7 +574,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 	private <T> T doWithinOptionalTransaction(Supplier<T> supplier) {
 		if ( transactionTemplate != null ) {
-			return transactionTemplate.execute(status -> supplier.get());
+			return transactionTemplate.execute(_ -> supplier.get());
 		} else {
 			return supplier.get();
 		}

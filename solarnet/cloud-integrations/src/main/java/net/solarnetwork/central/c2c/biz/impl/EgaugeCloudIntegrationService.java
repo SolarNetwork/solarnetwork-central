@@ -92,7 +92,7 @@ public class EgaugeCloudIntegrationService extends BaseRestOperationsCloudIntegr
 				encryptor, SETTINGS, WELL_KNOWN_URLS,
 				new RestOperationsHelper(LoggerFactory.getLogger(EgaugeCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS));
+						_ -> SECURE_SETTINGS));
 	}
 
 	@Override

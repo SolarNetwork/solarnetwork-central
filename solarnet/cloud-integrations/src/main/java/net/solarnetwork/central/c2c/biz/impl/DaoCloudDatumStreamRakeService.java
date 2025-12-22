@@ -425,7 +425,7 @@ public class DaoCloudDatumStreamRakeService
 							.collect(Collectors.toMap(
 									d -> new DatumId(d.getKind(), d.getObjectId(), d.getSourceId(),
 											d.getTimestamp()),
-									Function.identity(), (l, r) -> l, TreeMap::new));
+									Function.identity(), (l, _) -> l, TreeMap::new));
 
 					ObjectDatumStreamMetadataId currStreamId = null;
 					SortedMap<DatumId, Datum> existingDatum = new TreeMap<>();
@@ -474,7 +474,7 @@ public class DaoCloudDatumStreamRakeService
 								datumDao.store(datum);
 							}
 							iterationUpdateCount++;
-							updateCounts.computeIfAbsent(currStreamId, k -> new MutableInt(0))
+							updateCounts.computeIfAbsent(currStreamId, _ -> new MutableInt(0))
 									.increment();
 						}
 					}
@@ -568,7 +568,7 @@ public class DaoCloudDatumStreamRakeService
 				var meta = results.metadataForStreamId(d.getStreamId());
 				return ObjectDatum.forStreamDatum(d, userId, new DatumId(meta.getKind(),
 						meta.getObjectId(), meta.getSourceId(), d.getTimestamp()), meta);
-			}).collect(Collectors.toMap(d -> d.getId(), Function.identity(), (l, r) -> l, TreeMap::new));
+			}).collect(Collectors.toMap(d -> d.getId(), Function.identity(), (l, _) -> l, TreeMap::new));
 		}
 
 	}

@@ -212,8 +212,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				new EgaugeRestOperationsHelper(
 						LoggerFactory.getLogger(EgaugeCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						datumStreamServiceIdentifier -> SECURE_SETTINGS, clock, rng,
-						clientAccessTokenDao, integrationDao));
+						_ -> SECURE_SETTINGS, clock, rng, clientAccessTokenDao, integrationDao));
 	}
 
 	@Override
@@ -336,7 +335,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 
 			final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("List register data", ds,
 					JsonNode.class,
-					req -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+					_ -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
 							.path(REGISTER_URL_PATH).queryParam("raw").queryParam("virtual", "value")
 							.queryParam("reg", queryRegisters).queryParam("time", queryTimeRange)
 							.buildAndExpand(deviceId).toUri(),
@@ -354,7 +353,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	private List<CloudDataValue> deviceRegisters(CloudIntegrationConfiguration integration,
 			CloudDatumStreamConfiguration datumStream, String deviceId) {
 		return restOpsHelper.httpGet("List registers", datumStream, JsonNode.class,
-				(req) -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+				_ -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
 						.path(REGISTER_URL_PATH).buildAndExpand(deviceId).toUri(),
 				res -> parseDeviceRegisters(deviceId, res.getBody()));
 	}
@@ -469,7 +468,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 					&& reg.getMetadata().get(REGISTER_TYPE_METADATA) instanceof String t ) {
 				try {
 					EgaugeTypeCode type = EgaugeTypeCode.fromValue(t);
-					result.computeIfAbsent(regName, k -> new ArrayList<>(2))
+					result.computeIfAbsent(regName, _ -> new ArrayList<>(2))
 							.add(new ValueRef(deviceId, regName, n.intValue(), type, config));
 				} catch ( IllegalArgumentException e ) {
 					// ignore and continue

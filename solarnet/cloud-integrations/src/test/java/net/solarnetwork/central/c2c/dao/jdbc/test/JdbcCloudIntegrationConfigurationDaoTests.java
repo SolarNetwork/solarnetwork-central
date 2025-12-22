@@ -320,8 +320,9 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 							integration.getConfigId());
 					CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
 							mapping.getConfigId());
-					datumStreamsByIntegrationIds.computeIfAbsent(integration.getId(),
-							id -> new ArrayList<>(datumStreamCount)).add(datumStream);
+					datumStreamsByIntegrationIds
+							.computeIfAbsent(integration.getId(), _ -> new ArrayList<>(datumStreamCount))
+							.add(datumStream);
 				}
 			}
 		}
@@ -349,7 +350,7 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 	}
 
 	private String[] randomServiceIdentifiers(List<CloudIntegrationConfiguration> confs) {
-		String[] randomServiceIdents = confs.stream().filter(c -> RNG.nextBoolean())
+		String[] randomServiceIdents = confs.stream().filter(_ -> RNG.nextBoolean())
 				.map(c -> c.getServiceIdentifier()).toArray(String[]::new);
 		if ( randomServiceIdents.length < 1 ) {
 			randomServiceIdents = new String[] {

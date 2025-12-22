@@ -234,7 +234,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				new FroniusRestOperationsHelper(
 						LoggerFactory.getLogger(FroniusCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> FroniusCloudIntegrationService.SECURE_SETTINGS));
+						_ -> FroniusCloudIntegrationService.SECURE_SETTINGS));
 	}
 
 	@Override
@@ -284,7 +284,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 	private List<CloudDataValue> systems(CloudIntegrationConfiguration integration) {
 		return restOpsHelper.httpGet("List systems", integration, JsonNode.class,
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(FroniusCloudIntegrationService.LIST_SYSTEMS_URL)
 						.buildAndExpand(integration.getServiceProperties()).toUri(),
 				res -> parseSystems(res.getBody()));
@@ -294,7 +294,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			final String systemId, Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List system devices", integration, JsonNode.class,
 		// @formatter:off
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SYSTEM_DEVICES_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
@@ -308,7 +308,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		Instant startDate = endDate.minus(1, ChronoUnit.DAYS);
 		return restOpsHelper.httpGet("List devices channels", integration, JsonNode.class,
 		// @formatter:off
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(DEVICE_HISTORY_URL_TEMPLATE)
 						.queryParam(START_AT_PARAM, startDate.toString())
 						.queryParam(END_AT_PARAM, endDate.toString())
@@ -559,7 +559,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		}
 
 		private void addValueRef(ValueRef ref) {
-			deviceValueRefs.computeIfAbsent(ref.deviceId, k -> new ArrayList<>(4)).add(ref);
+			deviceValueRefs.computeIfAbsent(ref.deviceId, _ -> new ArrayList<>(4)).add(ref);
 		}
 
 	}
@@ -678,7 +678,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 						d.getObjectId(), d.getSourceId());
 				Instant ts = d.getTimestamp();
 				greatestTimestampPerStream.compute(streamPk,
-						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
 				finalResult.add(d);
 			}
 			Collections.sort(finalResult, null);
@@ -724,7 +724,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			final var links = new Links();
 			while ( links.hasMore(pageFilter.getOffset()) ) {
 				List<GeneralDatum> datum = restOpsHelper.httpGet("List device data", integration,
-						JsonNode.class, req -> {
+						JsonNode.class, _ -> {
 							var b = fromUri(resolveBaseUrl(integration, BASE_URI))
 									.path(DEVICE_HISTORY_URL_TEMPLATE)
 									.queryParam(START_AT_PARAM, pageFilter.getStartDate())
@@ -895,7 +895,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				String deviceId = m.group(2);
 				String channelName = m.group(3);
 
-				SystemQueryPlan plan = result.computeIfAbsent(systemId, id -> {
+				SystemQueryPlan plan = result.computeIfAbsent(systemId, _ -> {
 					return new SystemQueryPlan(systemId);
 				});
 
@@ -920,7 +920,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			var integration = integrationProvider.get();
 			result = restOpsHelper.httpGet("View system information", integration, JsonNode.class,
 			// @formatter:off
-							(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 									.path(SYSTEM_URL_TEMPLATE)
 									.buildAndExpand(systemId).toUri(),
 									// @formatter:on

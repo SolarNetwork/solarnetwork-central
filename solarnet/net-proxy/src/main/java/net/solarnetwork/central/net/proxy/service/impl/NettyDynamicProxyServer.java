@@ -206,9 +206,9 @@ public class NettyDynamicProxyServer
 				.childOption(ChannelOption.AUTO_READ, false);
 			for ( SocketAddress bindAddress : bindAddresses ) {
 				b.bind(bindAddress).sync()
-				.addListener((f) -> log.info("Proxy server started on {} supporting TLS protocols [{}]", bindAddress,
+				.addListener(_ -> log.info("Proxy server started on {} supporting TLS protocols [{}]", bindAddress,
 						String.join(", ",tlsProtocols)))
-				.channel().closeFuture().addListener((f) -> log.info("Proxy server stopped on {}", bindAddress));
+				.channel().closeFuture().addListener(_ -> log.info("Proxy server stopped on {}", bindAddress));
 			}
 			// @formatter:on
 		} catch ( InterruptedException e ) {

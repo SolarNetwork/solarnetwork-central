@@ -121,13 +121,13 @@ public class OpenWeatherMapForecastCloudDatumStreamService
 	@Override
 	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		requireNonNullArgument(datumStream, "datumStream");
-		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
+		return performAction(datumStream, (ms, ds, mapping, integration, _, exprProps) -> {
 
 			final UriComponentsBuilder uriBuilder = locationBasedUrl(ms, ds, integration,
 					FORECAST_URL_PATH);
 
 			final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("Get forecast", integration,
-					JsonNode.class, req -> uriBuilder.buildAndExpand().toUri(),
+					JsonNode.class, _ -> uriBuilder.buildAndExpand().toUri(),
 					res -> parseDatum(res.getBody(), ds));
 
 			// evaluate expressions on merged datum

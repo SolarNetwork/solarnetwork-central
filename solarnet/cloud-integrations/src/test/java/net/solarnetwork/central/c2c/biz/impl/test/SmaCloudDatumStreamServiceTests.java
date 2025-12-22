@@ -2038,7 +2038,7 @@ public class SmaCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("%d Datum parsed from HTTP responses", inv1DatumCount + inv2DatumCount)
 			.hasSize(inv1DatumCount + inv2DatumCount)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("Next query filter returned")
 					.isNotNull()
@@ -2247,7 +2247,7 @@ public class SmaCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("%d Datum parsed from HTTP responses", inv1DatumCount + inv2DatumCount)
 			.hasSize(inv1DatumCount + inv2DatumCount)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("No next query filter returned because clock is beyond multi stream lag tolerance")
 					.isNull()

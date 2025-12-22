@@ -248,7 +248,7 @@ public class CentralOcppNodeInstructionProvider extends
 		// this instruction is for this charge point... send it now
 		stats.increment(CentralOcppNodeInstructionStatusCount.InstructionsProcessed);
 		OcppInstructionUtils.decodeJsonOcppInstructionMessage(objectMapper, action, params,
-				actionPayloadDecoder, (e, jsonPayload, payload) -> {
+				actionPayloadDecoder, (e, _, payload) -> {
 					if ( e != null ) {
 						Throwable root = e;
 						while ( root.getCause() != null ) {
@@ -273,7 +273,7 @@ public class CentralOcppNodeInstructionProvider extends
 
 					ActionMessage<Object> message = new BasicActionMessage<>(identity,
 							UUID.randomUUID().toString(), action, payload);
-					chargePointBroker.sendMessageToChargePoint(message, (msg, res, err) -> {
+					chargePointBroker.sendMessageToChargePoint(message, (_, res, err) -> {
 						if ( err != null ) {
 							stats.increment(CentralOcppNodeInstructionStatusCount.InstructionsFailed);
 							Throwable root = err;

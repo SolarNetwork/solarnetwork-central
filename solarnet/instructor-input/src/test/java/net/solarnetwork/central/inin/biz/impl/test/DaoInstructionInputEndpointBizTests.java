@@ -407,7 +407,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 					eq(type),
 					same(transform),
 					paramsCaptor.capture(),
-					assertArg((OutputStream o) -> {
+					assertArg((OutputStream _) -> {
 						if (out.size() < 1 ) {
 							out.write(response.getBytes(StandardCharsets.UTF_8));
 						}
@@ -532,7 +532,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 					eq(type),
 					same(transform),
 					paramsCaptor.capture(),
-					assertArg((OutputStream o) -> {
+					assertArg((OutputStream _) -> {
 						if (out.size() < 1 ) {
 							out.write(response.getBytes(StandardCharsets.UTF_8));
 						}
@@ -757,7 +757,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 					eq(type),
 					same(transform),
 					paramsCaptor.capture(),
-					assertArg((OutputStream o) -> {
+					assertArg((OutputStream _) -> {
 						if (out.size() < 1 ) {
 							out.write(response.getBytes(StandardCharsets.UTF_8));
 						}

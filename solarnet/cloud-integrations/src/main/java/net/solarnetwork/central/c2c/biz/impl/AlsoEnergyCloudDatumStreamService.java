@@ -148,7 +148,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				AlsoEnergyGranularity.Raw.name());
 		var granularityTitles = unmodifiableMap(Arrays.stream(AlsoEnergyGranularity.values())
 				.collect(Collectors.toMap(AlsoEnergyGranularity::name, AlsoEnergyGranularity::name,
-						(l, r) -> r,
+						(_, r) -> r,
 						() -> new LinkedHashMap<>(LocusEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
 
@@ -217,8 +217,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(AlsoEnergyCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager, clock, integrationLocksCache));
+						_ -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS, oauthClientManager,
+						clock, integrationLocksCache));
 	}
 
 	@Override
@@ -384,7 +384,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 						e.getKey().getKind(), e.getKey().getObjectId(), e.getKey().getSourceId());
 				Instant ts = e.getKey().getTimestamp();
 				greatestTimestampPerStream.compute(streamPk,
-						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
 				return true;
 			}).map(e -> new GeneralDatum(e.getKey(), e.getValue())).toList();
 
@@ -423,7 +423,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	private List<CloudDataValue> sites(CloudIntegrationConfiguration integration) {
 		return restOpsHelper.httpGet("List sites", integration, JsonNode.class,
-				(req) -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
 						.path(AlsoEnergyCloudIntegrationService.LIST_SITES_URL)
 						.buildAndExpand(integration.getServiceProperties()).toUri(),
 				res -> parseSites(res.getBody()));
@@ -433,7 +433,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List site hardware", integration, JsonNode.class,
 		// @formatter:off
-				(req) -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
 						.path(SITE_HARDWARE_URL_TEMPLATE)
 						.queryParam("includeArchivedFields", true)
 						.queryParam("includeDeviceConfig", true)
@@ -656,7 +656,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 				var valueRef = new ValueRef(siteId, hardwareId, fieldName, fn, config);
 				List<ValueRef> valueRefs = result.computeIfAbsent(
-						new UserLongCompositePK(siteId, hardwareId), k -> new ArrayList<>(8));
+						new UserLongCompositePK(siteId, hardwareId), _ -> new ArrayList<>(8));
 				if ( !valueRefs.contains(valueRef) ) {
 					valueRefs.add(valueRef);
 				}
@@ -721,7 +721,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				if ( propVal != null ) {
 					dataMap.computeIfAbsent(
 							new DatumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts),
-							k -> new DatumSamples()).putSampleValue(ref.property.getPropertyType(),
+							_ -> new DatumSamples()).putSampleValue(ref.property.getPropertyType(),
 									ref.property.getPropertyName(), propVal);
 				}
 

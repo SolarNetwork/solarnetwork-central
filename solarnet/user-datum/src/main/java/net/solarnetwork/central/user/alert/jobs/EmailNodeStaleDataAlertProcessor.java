@@ -399,7 +399,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				final NodeDatumStreamPK pk = ObjectDatumStreamPK.nodeId(meta.getObjectId(),
 						meta.getSourceId(), match.getTimestamp());
 				List<NodeDatumStreamPK> datumMatches = nodeDataCache.computeIfAbsent(pk.getNodeId(),
-						k -> new ArrayList<>());
+						_ -> new ArrayList<>());
 				datumMatches.add(pk);
 
 				// now add match to User list
@@ -410,7 +410,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 							pk.getNodeId());
 					continue;
 				}
-				datumMatches = userDataCache.computeIfAbsent(userId, k -> new ArrayList<>());
+				datumMatches = userDataCache.computeIfAbsent(userId, _ -> new ArrayList<>());
 				datumMatches.add(pk);
 			}
 			log.debug("Loaded most recent datum for users {}: {}", userIds, userDataCache);
@@ -436,7 +436,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				final NodeDatumStreamPK pk = ObjectDatumStreamPK.nodeId(meta.getObjectId(),
 						meta.getSourceId(), match.getTimestamp());
 				List<NodeDatumStreamPK> datumMatches = nodeDataCache.computeIfAbsent(pk.getNodeId(),
-						k -> new ArrayList<>());
+						_ -> new ArrayList<>());
 				if ( !nodeCache.containsKey(pk.getNodeId()) ) {
 					nodeCache.put(pk.getNodeId(), solarNodeDao.get(pk.getNodeId()));
 				}

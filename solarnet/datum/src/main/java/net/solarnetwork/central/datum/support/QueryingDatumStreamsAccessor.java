@@ -279,8 +279,8 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	private void markRangeLoaded(ObjectDatumKind kind, Long objectId, String sourceId, Instant from,
 			Instant to) {
 		// @formatter:off
-		loadedRanges.computeIfAbsent(kind, k -> new HashMap<>(4))
-				.computeIfAbsent(objectId, k -> new HashMap<>(4))
+		loadedRanges.computeIfAbsent(kind, _ -> new HashMap<>(4))
+				.computeIfAbsent(objectId, _ -> new HashMap<>(4))
 				.put(sourceId, Interval.of(from, to));
 		// @formatter:on
 	}
@@ -340,7 +340,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 			}
 
 			final List<Datum> list = datumBySourceId.computeIfAbsent(d.getSourceId(),
-					k -> new ArrayList<>(daoResults.getReturnedResultCount()));
+					_ -> new ArrayList<>(daoResults.getReturnedResultCount()));
 			list.add(d);
 		}
 

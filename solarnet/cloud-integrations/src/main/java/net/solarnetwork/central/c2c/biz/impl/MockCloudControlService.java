@@ -205,7 +205,7 @@ public class MockCloudControlService extends BaseCloudControlService {
 
 		validateTopicIsSupported(instruction);
 
-		return performAction(cloudControlId, (ms, control, integration) -> {
+		return performAction(cloudControlId, (_, control, integration) -> {
 			InstructionStatus result = instruction.toStatus()
 					.newCopyWithState(InstructionState.Completed);
 			// @formatter:off
