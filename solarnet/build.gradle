@@ -106,9 +106,9 @@ subprojects {
 		snCommonWebJakartaVersion = '2.1.2'
 		snExternalOcpp16JakartaVersion = '1.0.1'
 		snExternalOcpp201Version = '1.0.0'
-		springdocStarterVersion = '2.8.8'
+		springdocStarterVersion = '3.0.0'
 		superCsvVersion = '2.4.0'
-		swaggerVersion = '2.2.32'
+		swaggerVersion = '2.2.41'
 		threetenExtraVersion = '1.8.0'
 		uuidGeneratorVersion = '5.1.0'
 		xzVersion = '1.10'
@@ -129,7 +129,7 @@ subprojects {
 	}
 		
 	ext['netty.version'] = '4.2.9.Final'
-	ext['jackson-bom.version'] = '2.20.1'
+	//ext['jackson-bom.version'] = '2.20.1'
 
 	dependencies {
 		testImplementation libraries.hamcrest,
