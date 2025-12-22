@@ -17,26 +17,21 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.test;
 
-import static com.spotify.hamcrest.jackson.IsJsonStringMatching.isJsonStringMatching;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonInt;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonObject;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonText;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 
 import java.io.IOException;
 
+import org.json.JSONException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSubscriptionSetting;
 import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link TopicSubscriptionSetting} class.
@@ -53,19 +48,15 @@ public class TopicSubscriptionSettingTests extends TestSupport {
   }
 
   @Test
-  public void toJsonFull() throws JsonProcessingException {
+  public void toJsonFull() throws JSONException {
     TopicSubscriptionSetting topic = TopicSubscriptionSetting.builder().withTopic("foo")
         .withQos(Qos.AtLeastOnce).build();
     String json = objectMapper.writeValueAsString(topic);
     log.debug("Topic setting full JSON: {}", json);
 
-    // @formatter:off
-    assertThat(json, isJsonStringMatching(
-        jsonObject()
-          .where("topic", is(jsonText(topic.getTopic())))
-          .where("qos", is(jsonInt(topic.getQos().getKey())))
-        ));
-    // @formatter:on
+    JSONAssert.assertEquals("""
+        {"topic": "%s", "qos": %d}
+        """.formatted(topic.getTopic(), topic.getQos().getKey()), json, true);
   }
 
   @Test

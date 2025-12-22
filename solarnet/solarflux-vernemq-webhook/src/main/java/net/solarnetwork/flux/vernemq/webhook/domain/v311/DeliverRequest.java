@@ -18,16 +18,16 @@
 package net.solarnetwork.flux.vernemq.webhook.domain.v311;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * A deliver request model.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @JsonDeserialize(builder = DeliverRequest.Builder.class)
 public class DeliverRequest implements Message {

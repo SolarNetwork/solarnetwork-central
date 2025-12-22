@@ -19,17 +19,16 @@ package net.solarnetwork.flux.vernemq.webhook.domain.v311;
 
 import java.util.Arrays;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.ResponseModifiers;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Publish response modifiers.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @JsonDeserialize(builder = PublishModifiers.Builder.class)
 public class PublishModifiers implements ResponseModifiers, Message {

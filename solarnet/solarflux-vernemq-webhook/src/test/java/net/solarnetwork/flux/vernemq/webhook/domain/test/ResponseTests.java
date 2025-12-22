@@ -26,7 +26,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.Response;
@@ -36,6 +35,7 @@ import net.solarnetwork.flux.vernemq.webhook.domain.TopicSubscriptionSetting;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.RegisterModifiers;
 import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link Response} class.
