@@ -27,7 +27,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
+import org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -35,7 +35,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * Base test class for HTTP server integration.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @SpringBootApplication
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
