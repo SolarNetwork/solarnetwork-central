@@ -125,7 +125,7 @@ public class DatumInputController {
 					params);
 			return ResponseEntity.ok(result != null ? success(result) : null);
 		} catch ( IOException e ) {
-			return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+			return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
 					.body(Result.error("DIN.0100", e.getMessage()));
 		}
 	}

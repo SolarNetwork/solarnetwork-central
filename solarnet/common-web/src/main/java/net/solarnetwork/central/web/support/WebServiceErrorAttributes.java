@@ -24,7 +24,7 @@ package net.solarnetwork.central.web.support;
 
 import java.util.Map;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
-import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
+import org.springframework.boot.webmvc.error.DefaultErrorAttributes;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.WebRequest;
 
@@ -32,7 +32,7 @@ import org.springframework.web.context.request.WebRequest;
  * Error controller.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Component
 public class WebServiceErrorAttributes extends DefaultErrorAttributes {

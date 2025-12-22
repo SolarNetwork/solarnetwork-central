@@ -88,7 +88,7 @@ public class GlobalExceptionHandlers {
 	 * @return an error response object
 	 */
 	@ExceptionHandler(ConstraintViolationException.class)
-	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleConstraintViolationException(ConstraintViolationException e,
 			WebRequest request, Locale locale) {
 		log.debug("ConstraintViolationException in request {}; user [{}]: {}",
@@ -107,7 +107,7 @@ public class GlobalExceptionHandlers {
 	 * @return an error response object
 	 */
 	@ExceptionHandler(BindException.class)
-	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleBindException(BindException e, WebRequest request, Locale locale) {
 		log.debug("MethodArgumentNotValidException in request {}; user [{}]: {}",
 				requestDescription(request), userPrincipalName(request), e.toString());
@@ -127,7 +127,7 @@ public class GlobalExceptionHandlers {
 	 */
 	@ExceptionHandler(JsonParseException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleJsonParseException(JsonProcessingException e, WebRequest request) {
 		log.warn("JsonProcessingException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
@@ -146,7 +146,7 @@ public class GlobalExceptionHandlers {
 	 */
 	@ExceptionHandler(DateTimeParseException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleDateTimeParseException(DateTimeParseException e, WebRequest request) {
 		log.warn("DateTimeParseException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
@@ -166,7 +166,7 @@ public class GlobalExceptionHandlers {
 	 */
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e,
 			WebRequest request) {
 		Throwable t = e.getMostSpecificCause();

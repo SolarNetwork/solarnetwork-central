@@ -99,7 +99,7 @@ public class WebServiceGlobalControllerSupport {
 	 */
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e,
 			WebRequest request, Locale locale) {
 		log.warn("MaxUploadSizeExceededException for {}; user [{}]", requestDescription(request),
@@ -400,7 +400,7 @@ public class WebServiceGlobalControllerSupport {
 	 */
 	@ExceptionHandler(IllegalArgumentException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleIllegalArgumentException(IllegalArgumentException e, WebRequest request) {
 		log.debug("IllegalArgumentException in request {}", requestDescription(request), e);
 		return error(null, "Illegal argument: " + e.getMessage());
@@ -547,7 +547,7 @@ public class WebServiceGlobalControllerSupport {
 	 */
 	@ExceptionHandler(IOException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleIOException(IOException e, WebRequest request) {
 		Throwable cause = e;
 		do {
@@ -574,7 +574,7 @@ public class WebServiceGlobalControllerSupport {
 	 */
 	@ExceptionHandler(RemoteServiceException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleRemoteServiceException(RemoteServiceException e, WebRequest request) {
 		log.warn("RemoteServiceException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
