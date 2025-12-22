@@ -24,6 +24,7 @@ package net.solarnetwork.central.common.http;
 
 import java.net.URI;
 import java.util.Objects;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.util.MultiValueMap;
@@ -33,6 +34,9 @@ import net.solarnetwork.util.ObjectUtils;
  * Extension of {@link RequestEntity} that changes the equality methods to
  * consider a "context" object (such as a user ID) and headers in addition to
  * the method and URI.
+ * 
+ * @author matt
+ * @version 1.1
  */
 public final class CachableRequestEntity extends RequestEntity<Void> {
 
@@ -52,6 +56,24 @@ public final class CachableRequestEntity extends RequestEntity<Void> {
 	 */
 	public CachableRequestEntity(Object context, MultiValueMap<String, String> headers,
 			HttpMethod method, URI url) {
+		this(context, headers != null ? new HttpHeaders(headers) : null, method, url);
+		this.context = ObjectUtils.requireNonNullArgument(context, "context");
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param context
+	 *        the context, such as a user ID
+	 * @param headers
+	 *        the headers
+	 * @param method
+	 *        the method
+	 * @param url
+	 *        the URL
+	 * @since 1.1
+	 */
+	public CachableRequestEntity(Object context, HttpHeaders headers, HttpMethod method, URI url) {
 		super(headers, method, url);
 		this.context = ObjectUtils.requireNonNullArgument(context, "context");
 	}

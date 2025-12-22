@@ -41,7 +41,7 @@ import net.solarnetwork.util.ObjectUtils;
  * response.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class ContentLengthTrackingClientHttpRequestInterceptor implements ClientHttpRequestInterceptor {
 
@@ -91,12 +91,6 @@ public class ContentLengthTrackingClientHttpRequestInterceptor implements Client
 		@Override
 		public HttpStatusCode getStatusCode() throws IOException {
 			return delegate.getStatusCode();
-		}
-
-		@SuppressWarnings("removal")
-		@Override
-		public int getRawStatusCode() throws IOException {
-			return delegate.getRawStatusCode();
 		}
 
 		@Override
