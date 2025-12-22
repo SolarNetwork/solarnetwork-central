@@ -31,9 +31,9 @@ import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import org.springframework.boot.EnvironmentPostProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor;
-import org.springframework.boot.env.EnvironmentPostProcessor;
 import org.springframework.boot.logging.DeferredLog;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.CommandLinePropertySource;
@@ -53,7 +53,7 @@ import net.solarnetwork.util.ByteUtils;
  * Load up application metadata into the environment.
  *
  * @author matt
- * @version 1.5
+ * @version 2.0
  */
 public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
