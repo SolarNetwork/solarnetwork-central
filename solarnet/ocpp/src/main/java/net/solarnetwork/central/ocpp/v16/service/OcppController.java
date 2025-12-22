@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionSynchronization;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -76,7 +76,7 @@ import ocpp.v16.jakarta.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  *
  * @author matt
- * @version 2.10
+ * @version 2.11
  */
 public class OcppController extends BaseOcppController {
 
@@ -129,10 +129,10 @@ public class OcppController extends BaseOcppController {
 		return (_, confs, err) -> {
 			if ( confs != null && confs.getConfigurationKey() != null
 					&& !confs.getConfigurationKey().isEmpty() ) {
-				tryWithTransaction(new TransactionCallbackWithoutResult() {
+				tryWithTransaction(new TransactionCallback<Void>() {
 
 					@Override
-					protected void doInTransactionWithoutResult(TransactionStatus status) {
+					public Void doInTransaction(TransactionStatus status) {
 						ChargePoint cp = chargePointDao.get(chargePoint.getId());
 						ChargePoint orig = new ChargePoint(cp);
 						KeyValue numConnsKey = confs.getConfigurationKey().stream()
@@ -179,6 +179,7 @@ public class OcppController extends BaseOcppController {
 								itr.remove();
 							}
 						}
+						return null;
 					}
 				});
 			} else if ( err != null ) {
