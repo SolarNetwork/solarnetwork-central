@@ -51,7 +51,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.random.RandomGenerator;
@@ -97,7 +96,7 @@ import net.solarnetwork.domain.Result.ErrorDetail;
  * Test cases for the {@link SmaCloudIntegrationService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -264,9 +263,9 @@ public class SmaCloudIntegrationServiceTests {
 			.as("Request URI for data")
 			.returns(SmaCloudIntegrationService.BASE_URI
 					.resolve(SmaCloudIntegrationService.LIST_SYSTEMS_PATH), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		then(oauthClientManager).should().authorize(authRequestCaptor.capture());

@@ -58,7 +58,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
@@ -68,6 +67,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.common.http.OAuth2Utils;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 
@@ -75,7 +75,7 @@ import net.solarnetwork.domain.Result.ErrorDetail;
  * Test cases for the {@link AlsoEnergyCloudIntegrationService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -189,10 +189,9 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 				AlsoEnergyCloudIntegrationService.PASSWORD_SETTING, password
 			));
 
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration
 			.withRegistrationId("test")
-			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+			.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 			.clientId(randomString())
 			.clientSecret(randomString())
 			.tokenUri(tokenUri)

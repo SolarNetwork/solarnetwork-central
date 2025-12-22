@@ -247,9 +247,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
 			.returns(listSystems, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(results)
@@ -380,9 +380,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for system devices")
 			.returns(listSystemDevices, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(results)
@@ -670,9 +670,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
 			.returns(listSystemInverterTelemetry, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		String expectedSourceId = datumStream.getSourceId() + "/%d/%s/%s".formatted(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID);
@@ -977,9 +977,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
 			.returns(listSystemInverterTelemetry, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		String expectedSourceId = datumStream.getSourceId() + "/%d/%s/%s".formatted(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID);
@@ -1104,9 +1104,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
 			.returns(listSystemInverterTelemetry, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		String expectedSourceId = (datumStream.getSourceId() + "/%d/%s/%s".formatted(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID)).toUpperCase();
@@ -1228,9 +1228,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
 			.returns(listSystemInverterTelemetry, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result.getUsedQueryFilter())
@@ -1354,9 +1354,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
 			.returns(listSystemInverterTelemetry, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result.getUsedQueryFilter())
@@ -1520,9 +1520,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for RGM telemetry")
 			.returns(listSystemRgmTelemetry, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		String expectedSourceId = datumStream.getSourceId() + "/%d/%s/%s".formatted(systemId, Meter.getKey(), SYSTEM_DEVICE_ID);
@@ -1742,9 +1742,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for RGM telemetry")
 			.returns(listSystemRgmTelemetry, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		String expectedSourceId = datumStream.getSourceId() + "/%d/%s/%s".formatted(systemId, Meter.getKey(), SYSTEM_DEVICE_ID);
@@ -1891,9 +1891,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for RGM telemetry")
 			.returns(listSystemRgmTelemetry, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		String expectedSourceId = datumStream.getSourceId() + "/%d/%s/%s".formatted(systemId, Meter.getKey(), SYSTEM_DEVICE_ID);
@@ -2067,9 +2067,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for RGM telemetry")
 			.returns(listSystemRgmTelemetry, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)
@@ -2201,9 +2201,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for RGM telemetry")
 			.returns(listSystemRgmTelemetry, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)
@@ -2358,9 +2358,9 @@ public class EnphaseCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.satisfies(reqs -> {

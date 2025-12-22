@@ -97,7 +97,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link SolcastIrradianceCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -263,9 +263,9 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for data")
 			.returns(dataUri, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("Request headers contains API key")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer " +apiKey))
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
 			;
 
 		and.then(result)
@@ -414,9 +414,9 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 					.as("Request URI for data")
 					.returns(dataUri, from(RequestEntity::getUrl))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("Request headers contains API key")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer " +apiKey))
+					.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
 					;
 			})
 			;
@@ -519,9 +519,9 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for data")
 			.returns(dataUri, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("Request headers contains API key")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer " +apiKey))
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
 			;
 
 		and.then(result)
@@ -667,9 +667,9 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for data")
 			.returns(dataUri, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("Request headers contains API key")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer " +apiKey))
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
 			;
 
 		and.then(result)
@@ -818,9 +818,9 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for data")
 			.returns(dataUri, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("Request headers contains API key")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer " +apiKey))
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
 			;
 
 		and.then(result)
@@ -955,9 +955,9 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("Request headers contains API key")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer " +apiKey))
+					.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)

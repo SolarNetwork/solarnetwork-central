@@ -103,7 +103,7 @@ import net.solarnetwork.util.StringUtils;
  * Enphase implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -874,7 +874,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			lastReportDate.setValue(FifteenMinute
 					.tickStart(Instant.ofEpochSecond(lastReportDate.longValue()), UTC).getEpochSecond());
 
-			if ( lastReportDate.getValue() < endDate.getEpochSecond() ) {
+			if ( lastReportDate.longValue() < endDate.getEpochSecond() ) {
 				// data drop out? adjust next start date
 				if ( nextQueryFilter == null ) {
 					nextQueryFilter = new BasicQueryFilter();

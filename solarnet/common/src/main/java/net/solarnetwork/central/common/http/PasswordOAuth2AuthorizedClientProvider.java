@@ -31,6 +31,7 @@ import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestClient;
 
 /**
  * An implementation of an {@link OAuth2AuthorizedClientProvider} for the
@@ -55,6 +56,21 @@ public class PasswordOAuth2AuthorizedClientProvider implements OAuth2AuthorizedC
 	private Duration clockSkew = Duration.ofSeconds(60);
 
 	private Clock clock = Clock.systemUTC();
+
+	/**
+	 * Construct a provider with a specific {@link RestClient}.
+	 * 
+	 * @param client
+	 *        the client to use
+	 * @return the provider
+	 */
+	public static PasswordOAuth2AuthorizedClientProvider forRestClient(RestClient client) {
+		var tokenClient = new DefaultPasswordTokenResponseClient();
+		tokenClient.setRestClient(client);
+		var result = new PasswordOAuth2AuthorizedClientProvider();
+		result.setAccessTokenResponseClient(tokenClient);
+		return result;
+	}
 
 	/**
 	 * Attempt to authorize (or re-authorize) the

@@ -41,6 +41,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.common.http.OAuth2Utils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.GenericDao;
 
@@ -56,7 +57,7 @@ import net.solarnetwork.dao.GenericDao;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ClientCredentialsClientRegistrationRepository implements ClientRegistrationRepository {
 
@@ -91,7 +92,6 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 				"sensitiveKeysProvider");
 	}
 
-	@SuppressWarnings("removal")
 	@Override
 	public ClientRegistration findByRegistrationId(String registrationId) {
 		final List<Long> ids = systemIdentifierLongComponents(registrationId, true);
@@ -131,7 +131,7 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 		}
 
 		if ( username != null && password != null ) {
-			builder.authorizationGrantType(AuthorizationGrantType.PASSWORD);
+			builder.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE);
 		} else {
 			builder.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS);
 		}

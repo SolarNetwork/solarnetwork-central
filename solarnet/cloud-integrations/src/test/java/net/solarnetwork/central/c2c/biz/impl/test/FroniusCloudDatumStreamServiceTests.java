@@ -118,7 +118,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link FroniusCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -213,11 +213,11 @@ public class FroniusCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
 			.returns(FroniusCloudIntegrationService.BASE_URI.resolve(LIST_SYSTEMS_URL), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("Request headers contains API key")
-			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, List.of(apiKey))
+			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, apiKey)
 			.as("Request headers contains API secret")
-			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
+			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, apiSecret)
 			;
 
 		and.then(results)
@@ -316,11 +316,11 @@ public class FroniusCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request devices for system")
 			.returns(expectedUri, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("Request headers contains API key")
-			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, List.of(apiKey))
+			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, apiKey)
 			.as("Request headers contains API secret")
-			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
+			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, apiSecret)
 			;
 
 		and.then(results)
@@ -434,11 +434,11 @@ public class FroniusCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request device history for past day, limited to first result")
 			.returns(expectedUri, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("Request headers contains API key")
-			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, List.of(apiKey))
+			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, apiKey)
 			.as("Request headers contains API secret")
-			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
+			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, apiSecret)
 			;
 
 		and.then(results)
@@ -611,11 +611,11 @@ public class FroniusCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("Request headers contains API key")
-					.containsEntry(ACCESS_KEY_ID_HEADER, List.of(accessKeyId))
+					.containsEntry(ACCESS_KEY_ID_HEADER, accessKeyId)
 					.as("Request headers contains API secret")
-					.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(accessKeySecret))
+					.containsEntry(ACCES_KEY_SECRET_HEADER, accessKeySecret)
 					;
 			})
 			.satisfies(reqs -> {
@@ -801,11 +801,11 @@ public class FroniusCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("Request headers contains API key")
-					.containsEntry(ACCESS_KEY_ID_HEADER, List.of(accessKeyId))
+					.containsEntry(ACCESS_KEY_ID_HEADER, accessKeyId)
 					.as("Request headers contains API secret")
-					.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(accessKeySecret))
+					.containsEntry(ACCES_KEY_SECRET_HEADER, accessKeySecret)
 					;
 			})
 			.satisfies(reqs -> {
@@ -1050,11 +1050,11 @@ public class FroniusCloudDatumStreamServiceTests {
 			})
 			.extracting(HttpEntity::getHeaders)
 			.allSatisfy(headers -> {
-				and.then(headers)
+				and.then(headers.toSingleValueMap())
 					.as("API ID provided in HTTP request header")
-					.containsEntry(ACCESS_KEY_ID_HEADER, List.of(accessKeyId))
+					.containsEntry(ACCESS_KEY_ID_HEADER, accessKeyId)
 					.as("API secret provided in HTTP request header")
-					.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(accessKeySecret))
+					.containsEntry(ACCES_KEY_SECRET_HEADER, accessKeySecret)
 					;
 			})
 			;
@@ -1190,11 +1190,11 @@ public class FroniusCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("Request headers contains API key")
-					.containsEntry(ACCESS_KEY_ID_HEADER, List.of(accessKeyId))
+					.containsEntry(ACCESS_KEY_ID_HEADER, accessKeyId)
 					.as("Request headers contains API secret")
-					.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(accessKeySecret))
+					.containsEntry(ACCES_KEY_SECRET_HEADER, accessKeySecret)
 					;
 			})
 			.satisfies(reqs -> {
@@ -1394,11 +1394,11 @@ public class FroniusCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("Request headers contains API key")
-					.containsEntry(ACCESS_KEY_ID_HEADER, List.of(accessKeyId))
+					.containsEntry(ACCESS_KEY_ID_HEADER, accessKeyId)
 					.as("Request headers contains API secret")
-					.containsEntry(ACCES_KEY_SECRET_HEADER, List.of(accessKeySecret))
+					.containsEntry(ACCES_KEY_SECRET_HEADER, accessKeySecret)
 					;
 			})
 			.satisfies(reqs -> {

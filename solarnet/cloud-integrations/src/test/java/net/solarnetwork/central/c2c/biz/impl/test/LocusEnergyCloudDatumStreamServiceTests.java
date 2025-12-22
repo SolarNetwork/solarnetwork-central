@@ -63,7 +63,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
@@ -88,6 +87,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.common.http.OAuth2Utils;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -99,7 +99,7 @@ import net.solarnetwork.test.CallingThreadExecutorService;
  * Test cases for the {@link LocusEnergyCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -237,9 +237,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -274,9 +273,9 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 			.as("Request URI for data")
 			.returns(BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
 					+ "?gran=latest&tz=UTC&fields=W_avg,TotWhExp_max"), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		DatumSamples expectedSamples = new DatumSamples();
@@ -368,9 +367,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 						Map.of("siteId", (Object) 321, "componentId", componentId)));
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -405,9 +403,9 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 			.as("Request URI for data")
 			.returns(BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
 					+ "?gran=latest&tz=UTC&fields=W_avg,TotWhExp_max"), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		DatumSamples expectedSamples = new DatumSamples();
@@ -495,9 +493,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -534,9 +531,9 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -633,9 +630,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -672,9 +668,9 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -769,9 +765,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -815,9 +810,9 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 							ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 							ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
 					)), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)
@@ -929,9 +924,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -976,9 +970,9 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 							ISO_LOCAL_DATE_TIME.format(startDate.plus(
 									LocusEnergyGranularity.FiveMinute.getConstraint()).atOffset(UTC))
 					)), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)
@@ -1065,9 +1059,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -1111,9 +1104,9 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 							ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 							ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
 					)), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)
@@ -1194,9 +1187,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				Map.of(LocusEnergyCloudDatumStreamService.GRANULARITY_SETTING, "daily"));
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -1241,9 +1233,9 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 							ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)),
 							ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC))
 					)), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)
@@ -1352,9 +1344,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -1401,9 +1392,9 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1535,9 +1526,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -1584,9 +1574,9 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.extracting(RequestEntity::getUrl)

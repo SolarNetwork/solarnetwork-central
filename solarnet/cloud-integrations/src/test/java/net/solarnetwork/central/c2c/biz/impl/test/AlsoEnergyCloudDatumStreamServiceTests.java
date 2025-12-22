@@ -68,7 +68,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
@@ -95,6 +94,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.common.http.OAuth2Utils;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
@@ -106,7 +106,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link AlsoEnergyCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -196,9 +196,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -233,9 +232,9 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 			.as("Request URI for data")
 			.returns(BASE_URI.resolve(SITE_HARDWARE_URL_TEMPLATE.replace("{siteId}", siteId.toString())
 					+ "?includeArchivedFields=true&includeDeviceConfig=true"), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(results)
@@ -365,9 +364,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -409,9 +407,9 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
 				), from(RequestEntity::getBody))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		String expectedSourceId = datumStream.getSourceId() + "/%s/%s".formatted(siteId, hardwareId);
@@ -523,9 +521,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -565,9 +562,9 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
 				), from(RequestEntity::getBody))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)
@@ -643,9 +640,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -690,9 +686,9 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
 				), from(RequestEntity::getBody))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		String expectedSourceId = datumStream.getSourceId() + "/%s/%s".formatted(siteId, hardwareId);
@@ -833,9 +829,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -880,9 +875,9 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
 				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
 				), from(RequestEntity::getBody))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)
@@ -1019,9 +1014,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		// @formatter:on
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -1063,9 +1057,9 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is POST")
 					.returns(HttpMethod.POST, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.satisfies(reqs -> {
@@ -1245,9 +1239,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		// @formatter:on
 
 		// @formatter:off
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
-				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 				.clientId(randomString())
 				.clientSecret(randomString())
 				.tokenUri(tokenUri)
@@ -1293,9 +1286,9 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is POST")
 					.returns(HttpMethod.POST, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.satisfies(reqs -> {

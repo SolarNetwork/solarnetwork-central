@@ -269,9 +269,9 @@ public class EGaugeCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
 			.returns(registerDataUri, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("Request headers contains token")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer TOKEN"))
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer TOKEN")
 			;
 
 		and.then(result)
@@ -401,9 +401,9 @@ public class EGaugeCloudDatumStreamServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
 			.returns(registerDataUri, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("Request headers contains token")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer TOKEN"))
+			.containsEntry(HttpHeaders.AUTHORIZATION, "Bearer TOKEN")
 			;
 
 		// 10044744826787 - 10044736304528
