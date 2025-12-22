@@ -42,7 +42,6 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.user.pki.dogtag.DogtagPKIBiz;
@@ -52,12 +51,12 @@ import net.solarnetwork.pki.bc.BCCertificateService;
  * Test cases for the {@Link DogtagPKIBiz} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @ContextConfiguration
 @SpringBootTest
 @EnabledIfSystemProperty(named = "test.dogtag", matches = ".*")
-public class DogtagPKIBizTests extends AbstractJUnit4SpringContextTests {
+public class DogtagPKIBizTests {
 
 	@Value("${dogtag.baseUrl}")
 	private String baseUrl;

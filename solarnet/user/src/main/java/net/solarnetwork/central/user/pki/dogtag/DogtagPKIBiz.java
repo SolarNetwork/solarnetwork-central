@@ -223,7 +223,6 @@ public class DogtagPKIBiz
 		return (dogtagVersion[0] > major || dogtagVersion[1] > minor || dogtagVersion[2] >= patch);
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public String submitRenewalRequest(X509Certificate certificate) throws BasicSecurityException {
 		BigInteger serialNumber = certificate.getSerialNumber();
@@ -235,7 +234,7 @@ public class DogtagPKIBiz
 			params.put("Renewal", "true");
 			params.put("SerialNumber", serialNumber.toString());
 			HttpHeaders reqHeaders = new HttpHeaders();
-			reqHeaders.setContentType(MediaType.APPLICATION_JSON_UTF8);
+			reqHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON + ";charset=UTF-8");
 			req = new HttpEntity<>(params, reqHeaders);
 		} else {
 			// Dogtag 10.0
