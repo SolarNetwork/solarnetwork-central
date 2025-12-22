@@ -47,6 +47,7 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import net.solarnetwork.central.common.dao.UserServiceConfigurationDao;
 import net.solarnetwork.central.common.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.common.http.HttpConstants;
+import net.solarnetwork.central.common.http.OAuth2Utils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
@@ -54,7 +55,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -255,7 +256,6 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 		// @formatter:on
 	}
 
-	@SuppressWarnings("removal")
 	@Test
 	public void find_username_basic() {
 		// GIVEN
@@ -290,7 +290,7 @@ public class ClientCredentialsClientRegistrationRepositoryTests {
 			.as("Result provided")
 			.isNotNull()
 			.as("Client credentials grant type resolved")
-			.returns(AuthorizationGrantType.PASSWORD, from(ClientRegistration::getAuthorizationGrantType))
+			.returns(OAuth2Utils.PASSWORD_GRANT_TYPE, from(ClientRegistration::getAuthorizationGrantType))
 			.as("HTTP basic authentication resolved")
 			.returns(ClientAuthenticationMethod.CLIENT_SECRET_BASIC, from(ClientRegistration::getClientAuthenticationMethod))
 			.as("Client ID from configuration")
