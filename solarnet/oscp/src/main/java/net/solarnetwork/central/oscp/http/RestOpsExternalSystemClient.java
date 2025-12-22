@@ -68,7 +68,7 @@ import net.solarnetwork.central.oscp.web.OscpWebUtils;
  * Implementation of {@link ExternalSystemClient} using {@link RestOperations}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class RestOpsExternalSystemClient implements ExternalSystemClient {
 
@@ -177,7 +177,7 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 				}
 			}
 		}
-		if ( !headers.containsKey(OscpWebUtils.REQUEST_ID_HEADER) ) {
+		if ( !headers.containsHeader(OscpWebUtils.REQUEST_ID_HEADER) ) {
 			// assign a unique ID
 			headers.add(OscpWebUtils.REQUEST_ID_HEADER, UUID.randomUUID().toString());
 		}
@@ -302,11 +302,11 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 		Map<String, Object> info = new LinkedHashMap<>(4);
 		info.put(OscpUserEvents.METHOD_DATA_KEY, method.toString());
 		info.put(OscpUserEvents.URL_DATA_KEY, uri);
-		if ( headers.containsKey(OscpWebUtils.REQUEST_ID_HEADER) ) {
+		if ( headers.containsHeader(OscpWebUtils.REQUEST_ID_HEADER) ) {
 			info.put(OscpUserEvents.REQUEST_ID_DATA_KEY,
 					headers.getFirst(OscpWebUtils.REQUEST_ID_HEADER));
 		}
-		if ( headers.containsKey(OscpWebUtils.CORRELATION_ID_HEADER) ) {
+		if ( headers.containsHeader(OscpWebUtils.CORRELATION_ID_HEADER) ) {
 			info.put(OscpUserEvents.CORRELATION_ID_DATA_KEY,
 					headers.getFirst(OscpWebUtils.CORRELATION_ID_HEADER));
 		}
