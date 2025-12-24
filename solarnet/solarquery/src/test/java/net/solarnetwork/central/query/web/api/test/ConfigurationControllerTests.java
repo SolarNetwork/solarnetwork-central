@@ -28,8 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import net.solarnetwork.central.query.web.api.ConfigurationController;
@@ -39,7 +39,7 @@ import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
  * Test cases for the {@link ConfigurationController}.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @SpringBootTest
 @AutoConfigureMockMvc
