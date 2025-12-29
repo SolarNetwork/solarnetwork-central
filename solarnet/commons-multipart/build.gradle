@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.5.9' apply false
+	id 'org.springframework.boot' version '4.0.1' apply false
 }
 
 apply plugin: 'java-library'
@@ -31,13 +31,14 @@ dependencies {
 	
 	// Util
 	implementation 'commons-codec:commons-codec'
+	implementation 'org.slf4j:jcl-over-slf4j'
 	
 	// Web
 	implementation 'jakarta.servlet:jakarta.servlet-api'
 	
 	// Testing
 	testImplementation 'org.apache.httpcomponents.client5:httpclient5'
-	testImplementation 'org.springframework.boot:spring-boot-starter-web'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	testImplementation 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

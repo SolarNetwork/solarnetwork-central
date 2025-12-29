@@ -44,12 +44,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.supercsv.io.ICsvListReader;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.imp.biz.DatumImportValidationException;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Base class to support parsing CSV data into objects.
@@ -140,7 +141,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		}
 		this.dateFormatter = formatter;
 
-		this.objectMapper = JsonUtils.newObjectMapper();
+		this.objectMapper = JsonUtils.JSON_OBJECT_MAPPER;
 	}
 
 	/**
@@ -272,7 +273,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		if ( v != null ) {
 			try {
 				result = objectMapper.readValue(v, STRING_LIST_TYPE);
-			} catch ( IOException e ) {
+			} catch ( JacksonException e ) {
 				throw new DatumImportValidationException("Unable to parse JSON array from column " + col,
 						e, (long) reader.getLineNumber(), reader.getUntokenizedRow());
 			}

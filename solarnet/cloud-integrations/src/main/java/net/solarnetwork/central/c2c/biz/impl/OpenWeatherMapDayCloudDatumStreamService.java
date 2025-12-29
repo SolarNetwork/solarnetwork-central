@@ -23,7 +23,7 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.WEATHER_URL_PATH;
-import static net.solarnetwork.codec.JsonUtils.parseIntegerAttribute;
+import static net.solarnetwork.codec.jackson.JsonUtils.parseIntegerAttribute;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Status;
 import static net.solarnetwork.domain.datum.DayDatum.SUNRISE_KEY;
 import static net.solarnetwork.domain.datum.DayDatum.SUNSET_KEY;
@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -53,13 +52,14 @@ import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import tools.jackson.databind.JsonNode;
 
 /**
  * OpenWeatherMap implementation of {@link CloudDatumStreamService} using the
  * weather API.
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMapCloudDatumStreamService {
 

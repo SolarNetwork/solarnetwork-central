@@ -37,7 +37,7 @@ import net.solarnetwork.central.oscp.domain.MeasurementUnit;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.central.oscp.domain.StatisticType;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Row mapper for {@link AssetConfiguration} entities.

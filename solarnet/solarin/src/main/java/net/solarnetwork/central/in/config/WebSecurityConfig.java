@@ -52,19 +52,20 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.security.NodeUserDetailsService;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.service.AuthenticationUserEventPublisher;
+import net.solarnetwork.central.security.service.UidX500PrincipalExtractor;
 import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Security configuration.
  *
  * @author matt
- * @version 1.6
+ * @version 2.0
  */
 @Configuration
 @EnableWebSecurity
@@ -223,7 +224,7 @@ public class WebSecurityConfig {
 
 					.x509((x509) -> x509
 							.userDetailsService(new NodeUserDetailsService())
-							.subjectPrincipalRegex("UID=(.*?),"))
+							.x509PrincipalExtractor(UidX500PrincipalExtractor.INSTANCE))
 
 					.authorizeHttpRequests((matchers) -> matchers
 							.requestMatchers(HttpMethod.OPTIONS, "/solarin/**").permitAll()

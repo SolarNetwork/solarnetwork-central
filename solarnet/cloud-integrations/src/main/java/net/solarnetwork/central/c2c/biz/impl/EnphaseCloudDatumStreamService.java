@@ -68,7 +68,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -98,12 +97,13 @@ import net.solarnetwork.settings.TextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Enphase implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.8
+ * @version 2.0
  */
 public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -473,8 +473,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		if ( json == null ) {
 			return List.of();
 		}
-		final String id = json.path("system_id").asText();
-		final String name = json.path("name").asText().trim();
+		final String id = json.path("system_id").asString();
+		final String name = json.path("name").asString().trim();
 
 		final var meta = new LinkedHashMap<String, Object>(4);
 		populateNonEmptyValue(json, "timezone", CloudDataValue.TIME_ZONE_METADATA, meta);
@@ -874,7 +874,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			lastReportDate.setValue(FifteenMinute
 					.tickStart(Instant.ofEpochSecond(lastReportDate.longValue()), UTC).getEpochSecond());
 
-			if ( lastReportDate.getValue() < endDate.getEpochSecond() ) {
+			if ( lastReportDate.longValue() < endDate.getEpochSecond() ) {
 				// data drop out? adjust next start date
 				if ( nextQueryFilter == null ) {
 					nextQueryFilter = new BasicQueryFilter();

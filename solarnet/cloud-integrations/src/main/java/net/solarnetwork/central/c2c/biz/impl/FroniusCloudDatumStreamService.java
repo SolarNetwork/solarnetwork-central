@@ -67,7 +67,6 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -95,12 +94,13 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Fronius implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -371,7 +371,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		}
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode sysNode : json.path("pvSystems") ) {
-			final String id = sysNode.path("pvSystemId").asText();
+			final String id = sysNode.path("pvSystemId").asString();
 			result.add(parseSystem(sysNode, id));
 		}
 		return result;
@@ -381,7 +381,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		if ( sysNode == null ) {
 			return null;
 		}
-		final String name = sysNode.path("name").asText().trim();
+		final String name = sysNode.path("name").asString().trim();
 		final var meta = new LinkedHashMap<String, Object>(4);
 		final JsonNode addrNode = sysNode.path("address");
 		if ( addrNode.isObject() ) {
@@ -435,8 +435,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		final List<CloudDataValue> result = new ArrayList<>(8);
 
 		for ( JsonNode devNode : json.path("devices") ) {
-			final String id = devNode.path("deviceId").asText();
-			final String name = devNode.path("deviceName").asText().trim();
+			final String id = devNode.path("deviceId").asString();
+			final String name = devNode.path("deviceName").asString().trim();
 
 			final var meta = new LinkedHashMap<String, Object>(4);
 			populateNonEmptyValue(devNode, "deviceManufacturer", MANUFACTURER_METADATA, meta);
@@ -500,7 +500,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		final List<CloudDataValue> result = new ArrayList<>(8);
 		for ( JsonNode dataNode : json.path("data") ) {
 			for ( JsonNode channelNode : dataNode.path("channels") ) {
-				final String id = channelNode.path("channelName").asText();
+				final String id = channelNode.path("channelName").asString();
 
 				final var meta = new LinkedHashMap<String, Object>(4);
 				populateNonEmptyValue(channelNode, "channelType", "channelType", meta);
@@ -769,7 +769,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				return;
 			}
 			var links = json.path("links");
-			next = links.path("next").textValue();
+			next = links.path("next").stringValue();
 			if ( links.hasNonNull("totalItemsCount") ) {
 				count = links.path("totalItemsCount").intValue();
 			}
@@ -813,7 +813,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		for ( JsonNode dataNode : json.path("data") ) {
 			final Instant ts;
 			try {
-				ts = Instant.parse(dataNode.path("logDateTime").textValue());
+				ts = Instant.parse(dataNode.path("logDateTime").stringValue());
 			} catch ( DateTimeParseException e ) {
 				// ignore and continue
 				continue;
@@ -824,7 +824,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			}
 			DatumSamples s = new DatumSamples();
 			for ( JsonNode channelNode : dataNode.path("channels") ) {
-				String channelName = channelNode.path("channelName").textValue();
+				String channelName = channelNode.path("channelName").stringValue();
 				if ( !channelNames.contains(channelName) ) {
 					continue;
 				}

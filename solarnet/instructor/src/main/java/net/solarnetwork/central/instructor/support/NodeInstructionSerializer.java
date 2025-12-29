@@ -22,28 +22,23 @@
 
 package net.solarnetwork.central.instructor.support;
 
-import java.io.IOException;
-import java.io.Serial;
 import java.util.Map;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 /**
  * Serializer for {@link NodeInstruction} objects.
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
-
-	@Serial
-	private static final long serialVersionUID = 5889973152713872817L;
 
 	/** A default instance. */
 	public static final NodeInstructionSerializer INSTANCE = new NodeInstructionSerializer();
@@ -54,7 +49,7 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 
 	@Override
 	public void serialize(NodeInstruction nodeInstruction, JsonGenerator generator,
-			SerializerProvider provider) throws IOException, JsonGenerationException {
+			SerializationContext provider) throws JacksonException {
 		if ( nodeInstruction == null ) {
 			generator.writeNull();
 			return;
@@ -82,48 +77,48 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 		// @formatter:on
 		generator.writeStartObject(instr, size);
 		if ( nodeInstruction.getId() != null ) {
-			generator.writeNumberField("id", nodeInstruction.getId());
+			generator.writeNumberProperty("id", nodeInstruction.getId());
 		}
 		if ( nodeInstruction.getCreated() != null ) {
-			generator.writeObjectField("created", nodeInstruction.getCreated());
+			generator.writePOJOProperty("created", nodeInstruction.getCreated());
 		}
 		if ( nodeInstruction.getNodeId() != null ) {
-			generator.writeNumberField("nodeId", nodeInstruction.getNodeId());
+			generator.writeNumberProperty("nodeId", nodeInstruction.getNodeId());
 		}
 		if ( instr.getTopic() != null ) {
-			generator.writeStringField("topic", instr.getTopic());
+			generator.writeStringProperty("topic", instr.getTopic());
 		}
 		if ( instr.getInstructionDate() != null ) {
-			generator.writeObjectField("instructionDate", instr.getInstructionDate());
+			generator.writePOJOProperty("instructionDate", instr.getInstructionDate());
 		}
 		if ( instr.getState() != null ) {
-			generator.writeStringField("state", instr.getState().toString());
+			generator.writeStringProperty("state", instr.getState().toString());
 		}
 		if ( instr.getStatusDate() != null ) {
-			generator.writeObjectField("statusDate", instr.getStatusDate());
+			generator.writePOJOProperty("statusDate", instr.getStatusDate());
 		}
 		if ( instr.getExpirationDate() != null ) {
-			generator.writeObjectField("expirationDate", instr.getExpirationDate());
+			generator.writePOJOProperty("expirationDate", instr.getExpirationDate());
 		}
 		if ( hasParameters ) {
-			generator.writeFieldName("parameters");
+			generator.writeName("parameters");
 			generator.writeStartArray(instr.getParameters(), instr.getParameters().size());
 			for ( InstructionParameter p : instr.getParameters() ) {
 				generator.writeStartObject(p, 2);
-				generator.writeStringField("name", p.getName());
-				generator.writeStringField("value", p.getValue());
+				generator.writeStringProperty("name", p.getName());
+				generator.writeStringProperty("value", p.getValue());
 				generator.writeEndObject();
 			}
 			generator.writeEndArray();
 		}
 		if ( hasResultParams ) {
-			generator.writeFieldName("resultParameters");
+			generator.writeName("resultParameters");
 			try {
 				generator.writeRawValue(resultParamsJson);
 			} catch ( UnsupportedOperationException e ) {
 				// can happen with things like CBOR, so parse as Map
 				Map<String, Object> dataMap = JsonUtils.getStringMap(resultParamsJson);
-				generator.writeObject(dataMap);
+				generator.writePOJO(dataMap);
 			}
 		}
 		generator.writeEndObject();

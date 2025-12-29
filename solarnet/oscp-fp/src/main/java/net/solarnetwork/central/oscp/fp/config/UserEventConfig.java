@@ -36,7 +36,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.LoggingUserEventAppenderBiz;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz;
 import net.solarnetwork.central.biz.dao.DaoUserEventBiz;
@@ -49,6 +48,7 @@ import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.util.StatTracker;
 import net.solarnetwork.util.UuidGenerator;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Configuration for user event handling.
@@ -60,7 +60,7 @@ import net.solarnetwork.util.UuidGenerator;
  * </p>
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 public class UserEventConfig {
@@ -115,8 +115,8 @@ public class UserEventConfig {
 
 		@Bean(destroyMethod = "serviceDidShutdown")
 		public AsyncDaoUserEventAppenderBiz userEventAppenderBiz(AsyncUserEventAppenderSettings settings,
-				UserEventAppenderDao dao, UuidGenerator uuidGenerator,
-				@Qualifier(SOLARFLUX) @Autowired(required = false) MqttJsonPublisher<UserEvent> solarFluxPublisher) {
+				UserEventAppenderDao dao, UuidGenerator uuidGenerator, @Qualifier(SOLARFLUX) @Autowired(
+						required = false) MqttJsonPublisher<UserEvent> solarFluxPublisher) {
 			ThreadPoolExecutor executor = new ThreadPoolExecutor(settings.getThreads(),
 					settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
 					new CustomizableThreadFactory("UserEventAppender-"));

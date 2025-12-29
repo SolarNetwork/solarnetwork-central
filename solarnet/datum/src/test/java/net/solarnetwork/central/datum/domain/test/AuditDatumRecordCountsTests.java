@@ -28,11 +28,11 @@ import static org.hamcrest.Matchers.instanceOf;
 import java.time.Instant;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link AuditDatumRecordCounts} class.
@@ -43,7 +43,7 @@ import net.solarnetwork.codec.JsonUtils;
 public class AuditDatumRecordCountsTests {
 
 	public ObjectMapper objectMapper() {
-		return DatumJsonUtils.newDatumObjectMapper();
+		return DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	@Test

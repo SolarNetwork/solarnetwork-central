@@ -46,7 +46,7 @@ import net.solarnetwork.central.user.event.dest.sqs.SqsStats;
 import net.solarnetwork.central.user.event.dest.sqs.SqsUserNodeEventHookService;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.settings.KeyedSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;

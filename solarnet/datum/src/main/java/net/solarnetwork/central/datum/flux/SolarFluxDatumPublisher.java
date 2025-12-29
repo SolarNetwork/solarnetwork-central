@@ -27,7 +27,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -40,12 +39,13 @@ import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Publish datum to SolarFlux.
  *
  * @author matt
- * @version 2.6
+ * @version 3.0
  */
 public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralNodeDatumPK>>
 		implements DatumProcessor {

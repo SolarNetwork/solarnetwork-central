@@ -116,7 +116,7 @@ public class DatumImportController {
 	 */
 	@ExceptionHandler(DatumImportValidationException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleDatumImportValidationException(DatumImportValidationException e) {
 		log.debug("DatumImportValidationException in {} controller", getClass().getSimpleName(), e);
 		return datumImportExceptionResponse(e, "DI.00400");

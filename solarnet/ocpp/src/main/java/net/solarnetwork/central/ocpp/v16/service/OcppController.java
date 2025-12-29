@@ -39,11 +39,8 @@ import java.util.stream.Collectors;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionSynchronization;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
@@ -53,7 +50,7 @@ import net.solarnetwork.central.ocpp.service.BaseOcppController;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePoint;
@@ -71,12 +68,15 @@ import net.solarnetwork.ocpp.v16.jakarta.ConfigurationKey;
 import ocpp.v16.jakarta.cp.GetConfigurationRequest;
 import ocpp.v16.jakarta.cp.GetConfigurationResponse;
 import ocpp.v16.jakarta.cp.KeyValue;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Manage OCPP 1.6 interactions.
  *
  * @author matt
- * @version 2.10
+ * @version 3.0
  */
 public class OcppController extends BaseOcppController {
 
@@ -129,10 +129,10 @@ public class OcppController extends BaseOcppController {
 		return (_, confs, err) -> {
 			if ( confs != null && confs.getConfigurationKey() != null
 					&& !confs.getConfigurationKey().isEmpty() ) {
-				tryWithTransaction(new TransactionCallbackWithoutResult() {
+				tryWithTransaction(new TransactionCallback<Void>() {
 
 					@Override
-					protected void doInTransactionWithoutResult(TransactionStatus status) {
+					public Void doInTransaction(TransactionStatus status) {
 						ChargePoint cp = chargePointDao.get(chargePoint.getId());
 						ChargePoint orig = new ChargePoint(cp);
 						KeyValue numConnsKey = confs.getConfigurationKey().stream()
@@ -179,6 +179,7 @@ public class OcppController extends BaseOcppController {
 								itr.remove();
 							}
 						}
+						return null;
 					}
 				});
 			} else if ( err != null ) {

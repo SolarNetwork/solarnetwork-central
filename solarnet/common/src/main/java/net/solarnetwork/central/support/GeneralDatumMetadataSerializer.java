@@ -22,25 +22,20 @@
 
 package net.solarnetwork.central.support;
 
-import java.io.IOException;
-import java.io.Serial;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 /**
  * JSON serializer for {@link GeneralDatumMetadata}.
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public class GeneralDatumMetadataSerializer extends StdSerializer<GeneralDatumMetadata> {
-
-	@Serial
-	private static final long serialVersionUID = -6242470880807088734L;
 
 	public GeneralDatumMetadataSerializer() {
 		super(GeneralDatumMetadata.class);
@@ -48,7 +43,7 @@ public class GeneralDatumMetadataSerializer extends StdSerializer<GeneralDatumMe
 
 	@Override
 	public void serialize(GeneralDatumMetadata meta, JsonGenerator generator,
-			SerializerProvider provider) throws IOException, JsonGenerationException {
+			SerializationContext provider) throws JacksonException {
 		JsonUtils.writeMetadata(generator, meta);
 	}
 

@@ -167,7 +167,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * }</pre>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.11
  */
 public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilteredResultsProcessor {
@@ -332,7 +332,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 				case Instantaneous -> props.getInstantaneous();
 				case Accumulating -> props.getAccumulating();
 				case Status -> props.getStatus();
-				case Tag -> throw new IllegalArgumentException("Tag type not supported.");
+				case Tag, Metadata -> throw new IllegalArgumentException("Tag type not supported.");
 			};
 			if ( propVals == null ) {
 				return;

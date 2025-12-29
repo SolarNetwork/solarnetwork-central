@@ -33,12 +33,12 @@ import java.time.ZoneOffset;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link GeneralNodeDatumAuxiliary} class.
@@ -58,7 +58,7 @@ public class GeneralNodeDatumAuxiliaryTests {
 
 	@BeforeEach
 	public void setup() {
-		objectMapper = DatumJsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	private GeneralNodeDatumAuxiliary getTestInstance() {

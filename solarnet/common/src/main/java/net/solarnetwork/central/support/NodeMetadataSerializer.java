@@ -22,35 +22,30 @@
 
 package net.solarnetwork.central.support;
 
-import java.io.IOException;
-import java.io.Serial;
 import java.time.Instant;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import net.solarnetwork.central.domain.NodeMetadata;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 /**
  * JSON serializer for {@link NodeMetadata}.
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public class NodeMetadataSerializer extends StdSerializer<NodeMetadata> {
-
-	@Serial
-	private static final long serialVersionUID = 6524627619550315956L;
 
 	public NodeMetadataSerializer() {
 		super(NodeMetadata.class);
 	}
 
 	@Override
-	public void serialize(NodeMetadata meta, JsonGenerator generator, SerializerProvider provider)
-			throws IOException, JsonGenerationException {
+	public void serialize(NodeMetadata meta, JsonGenerator generator, SerializationContext provider)
+			throws JacksonException {
 		if ( meta == null ) {
 			generator.writeNull();
 			return;
@@ -58,17 +53,17 @@ public class NodeMetadataSerializer extends StdSerializer<NodeMetadata> {
 		generator.writeStartObject();
 		Long l = meta.getNodeId();
 		if ( l != null ) {
-			generator.writeNumberField("nodeId", l);
+			generator.writeNumberProperty("nodeId", l);
 		}
 
 		Instant dt = meta.getCreated();
 		if ( dt != null ) {
-			generator.writeObjectField("created", dt);
+			generator.writePOJOProperty("created", dt);
 		}
 
 		dt = meta.getUpdated();
 		if ( dt != null ) {
-			generator.writeObjectField("updated", dt);
+			generator.writePOJOProperty("updated", dt);
 		}
 
 		GeneralDatumMetadata metadata = meta.getMetadata();

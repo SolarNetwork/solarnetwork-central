@@ -32,7 +32,7 @@ import java.util.function.Function;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -46,7 +46,6 @@ import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2A
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
-import org.springframework.security.oauth2.client.endpoint.DefaultPasswordTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.RestClientClientCredentialsTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.RestClientRefreshTokenTokenResponseClient;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
@@ -59,6 +58,7 @@ import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.central.common.dao.UserServiceConfigurationDao;
 import net.solarnetwork.central.common.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.common.http.OAuth2Utils;
+import net.solarnetwork.central.common.http.PasswordOAuth2AuthorizedClientProvider;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
@@ -123,13 +123,9 @@ public class UserInstructionsOAuthClientConfig implements SolarNetUserConfigurat
 		var authRestClient = RestClient.create(authRestOps);
 		// @formatter:on
 
-		@SuppressWarnings("removal")
 		OAuth2AuthorizedClientProvider provider = OAuth2AuthorizedClientProviderBuilder.builder()
-				.password(b -> {
-					var client = new DefaultPasswordTokenResponseClient();
-					client.setRestOperations(authRestOps);
-					b.accessTokenResponseClient(client);
-				}).clientCredentials(b -> {
+				.provider(PasswordOAuth2AuthorizedClientProvider.forRestClient(authRestClient))
+				.clientCredentials(b -> {
 					var client = new RestClientClientCredentialsTokenResponseClient();
 					client.setRestClient(authRestClient);
 					b.accessTokenResponseClient(client);

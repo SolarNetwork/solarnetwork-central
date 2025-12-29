@@ -42,13 +42,13 @@ import javax.xml.transform.Templates;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.sf.saxon.TransformerFactoryImpl;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.inin.biz.impl.DataUriResolver;
 import net.solarnetwork.central.inin.biz.impl.XsltRequestTransformService;
 import net.solarnetwork.central.inin.biz.impl.XsltResponseTransformService;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.SharedValueCache;
-import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.util.CachedResult;
@@ -77,7 +77,7 @@ public class XsltResponseTransformServiceTests {
 		primaryCache = new ConcurrentHashMap<>();
 		sharedCache = new ConcurrentHashMap<>();
 		templatesCache = new BasicSharedValueCache<>(primaryCache, sharedCache);
-		service = new XsltResponseTransformService(dbf, tf, JsonUtils.newDatumObjectMapper(),
+		service = new XsltResponseTransformService(dbf, tf, DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER,
 				Duration.ZERO, templatesCache);
 	}
 

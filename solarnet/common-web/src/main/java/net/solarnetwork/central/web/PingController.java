@@ -25,7 +25,6 @@ package net.solarnetwork.central.web;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -34,11 +33,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.springframework.boot.actuate.health.CompositeHealthContributor;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthContributor;
-import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.boot.actuate.health.NamedContributor;
+import java.util.stream.Stream;
+import org.springframework.boot.health.contributor.CompositeHealthContributor;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthContributor;
+import org.springframework.boot.health.contributor.HealthContributors;
+import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.ui.Model;
@@ -58,7 +58,7 @@ import net.solarnetwork.util.ObjectUtils;
  * the results.
  *
  * @author matt
- * @version 3.3
+ * @version 4.0
  */
 @Hidden
 public class PingController implements CompositeHealthContributor {
@@ -216,17 +216,15 @@ public class PingController implements CompositeHealthContributor {
 	}
 
 	@Override
-	public Iterator<NamedContributor<HealthContributor>> iterator() {
+	public Stream<HealthContributors.Entry> stream() {
 		if ( tests == null || tests.isEmpty() ) {
-			return Collections.emptyIterator();
+			return Stream.of();
 		}
-		return tests.stream()
-				.map(t -> (NamedContributor<HealthContributor>) new PingTestHealthIndicator(t))
-				.iterator();
+
+		return tests.stream().map(t -> new PingTestHealthIndicator(t).toEntry());
 	}
 
-	private static class PingTestHealthIndicator
-			implements HealthIndicator, NamedContributor<HealthContributor> {
+	private static class PingTestHealthIndicator implements HealthIndicator {
 
 		private final PingTest test;
 
@@ -235,14 +233,8 @@ public class PingController implements CompositeHealthContributor {
 			this.test = ObjectUtils.requireNonNullArgument(test, "test");
 		}
 
-		@Override
-		public String getName() {
-			return test.getPingTestId();
-		}
-
-		@Override
-		public HealthContributor getContributor() {
-			return this;
+		public HealthContributors.Entry toEntry() {
+			return new HealthContributors.Entry(test.getPingTestId(), this);
 		}
 
 		@Override

@@ -58,8 +58,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartException;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
@@ -70,12 +68,13 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.security.AbstractAuthorizationBuilder;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.core.JacksonException;
 
 /**
  * A base class to support web service style controllers.
  *
  * @author matt
- * @version 2.2
+ * @version 3.0
  */
 @RestControllerAdvice(annotations = GlobalExceptionRestController.class)
 @Order(100)
@@ -240,7 +239,7 @@ public final class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(BeanInstantiationException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleBeanInstantiationException(BeanInstantiationException e,
 			WebRequest request) {
 		log.debug("BeanInstantiationException in request {}: {}", requestDescription(request),
@@ -262,7 +261,7 @@ public final class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(TypeMismatchException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleTypeMismatchException(TypeMismatchException e, WebRequest request,
 			HttpServletResponse response) {
 		log.debug("TypeMismatchException in request {}", requestDescription(request), e);
@@ -290,8 +289,7 @@ public final class WebServiceControllerSupport {
 	}
 
 	/**
-	 * Handle a {@link JsonProcessingException}, presuming from malformed JSON
-	 * input.
+	 * Handle a {@link JacksonException}, presuming from malformed JSON input.
 	 *
 	 * @param e
 	 *        the exception
@@ -300,10 +298,10 @@ public final class WebServiceControllerSupport {
 	 * @return an error response object
 	 * @since 1.6
 	 */
-	@ExceptionHandler(JsonParseException.class)
+	@ExceptionHandler(JacksonException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Result<Void> handleJsonParseException(JsonProcessingException e, WebRequest request) {
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
+	public Result<Void> handleJsonParseException(JacksonException e, WebRequest request) {
 		log.debug("JsonProcessingException in request {}", requestDescription(request), e);
 		return error(null, "Malformed JSON: " + e.getOriginalMessage());
 	}
@@ -320,7 +318,7 @@ public final class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(DateTimeParseException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleDateTimeParseException(DateTimeParseException e, WebRequest request) {
 		log.debug("DateTimeParseException in request {}", requestDescription(request), e);
 		return error(null, "Malformed date string: " + e.getMessage());
@@ -338,7 +336,7 @@ public final class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(DateTimeException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleDateTimeException(DateTimeException e, WebRequest request) {
 		log.debug("DateTimeException in request {}", requestDescription(request), e);
 		return error(null, "Date exception: " + e.getMessage());
@@ -357,11 +355,11 @@ public final class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException e,
 			WebRequest request) {
 		Throwable t = e.getMostSpecificCause();
-		if ( t instanceof JsonProcessingException ex ) {
+		if ( t instanceof JacksonException ex ) {
 			return handleJsonParseException(ex, request);
 		} else if ( t instanceof DateTimeParseException ex ) {
 			return handleDateTimeParseException(ex, request);
@@ -385,7 +383,7 @@ public final class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleDataIntegrityViolationException(DataIntegrityViolationException e,
 			WebRequest request, Locale locale, HttpServletRequest servletRequest) {
 		log.warn("DataIntegrityViolationException in request {}: {}", requestDescription(request),
@@ -515,7 +513,7 @@ public final class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(ConstraintViolationException.class)
 	@ResponseBody
-	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleConstraintViolationException(ConstraintViolationException e,
 			WebRequest request, Locale locale) {
 		log.debug("ConstraintViolationException in request {}: {}", requestDescription(request),
@@ -537,7 +535,7 @@ public final class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(BindException.class)
 	@ResponseBody
-	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleBindException(BindException e, WebRequest request, Locale locale) {
 		log.debug("BindException in request {}: {}", requestDescription(request), e.toString());
 		return ExceptionUtils.generateErrorsResult(e, "VAL.00004", locale, messageSource);
@@ -572,7 +570,7 @@ public final class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(InvalidPropertyException.class)
 	@ResponseBody
-	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleInvalidPropertyException(InvalidPropertyException e, WebRequest request,
 			Locale locale) {
 		log.info("InvalidPropertyException in request {}: {}", requestDescription(request),
@@ -594,7 +592,7 @@ public final class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(ValidationException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleValidationException(ValidationException e, WebRequest request,
 			Locale locale) {
 		log.debug("ValidationException in request {}: {}", requestDescription(request), e.toString());
@@ -615,7 +613,7 @@ public final class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(MultipartException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleMultipartException(MultipartException e, WebRequest request) {
 		log.info("MultipartException in request {}; user [{}]: {}", requestDescription(request),
 				userPrincipalName(request), e.toString());

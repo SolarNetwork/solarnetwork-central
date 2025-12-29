@@ -17,23 +17,14 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.v311.test;
 
-import static com.spotify.hamcrest.jackson.IsJsonMissing.jsonMissing;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonBoolean;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonInt;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonLong;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonObject;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonText;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
+import org.json.JSONException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.RegisterModifiers;
 import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link RegisterModifiers} class.
@@ -50,46 +41,42 @@ public class RegisterModifiersTests {
   }
 
   @Test
-  public void jsonFull() {
+  public void jsonFull() throws JSONException {
     RegisterModifiers mods = RegisterModifiers.builder().withCleanSession(true)
         .withMaxInflightMessages(1).withMaxMessageRate(2).withMaxMessageSize(3).withRegView("foo")
         .withRetryInterval(4L).withSubscriberId("bar").withUpgradeQos(true).build();
 
-    JsonNode json = objectMapper.valueToTree(mods);
-    // @formatter:off
-    assertThat(json, is(
-        jsonObject()
-          .where("clean_session", is(jsonBoolean(mods.getCleanSession())))
-          .where("max_message_rate", is(jsonInt(mods.getMaxMessageRate())))
-          .where("max_message_size", is(jsonInt(mods.getMaxMessageSize())))
-          .where("max_inflight_messages", is(jsonInt(mods.getMaxInflightMessages())))
-          .where("reg_view", is(jsonText(mods.getRegView())))
-          .where("retry_interval", is(jsonLong(mods.getRetryInterval())))
-          .where("subscriber_id", is(jsonText(mods.getSubscriberId())))
-          .where("upgrade_qos", is(jsonBoolean(mods.getCleanSession())))
-        ));
-    // @formatter:on
+    String json = objectMapper.writeValueAsString(mods);
+    JSONAssert.assertEquals("""
+        {
+          "clean_session": %s,
+          "max_message_rate": %d,
+          "max_message_size": %d,
+          "max_inflight_messages": %d,
+          "reg_view": "%s",
+          "retry_interval": %d,
+          "subscriber_id": "%s",
+          "upgrade_qos": %s
+        }
+        """.formatted(mods.getCleanSession(), mods.getMaxMessageRate(), mods.getMaxMessageSize(),
+        mods.getMaxInflightMessages(), mods.getRegView(), mods.getRetryInterval(),
+        mods.getSubscriberId(), mods.getUpgradeQos()), json, true);
   }
 
   @Test
-  public void jsonSome() {
+  public void jsonSome() throws JSONException {
     RegisterModifiers mods = RegisterModifiers.builder().withMaxMessageSize(1)
         .withMaxInflightMessages(2).withRetryInterval(3L).build();
 
-    JsonNode json = objectMapper.valueToTree(mods);
-    // @formatter:off
-    assertThat(json, is(
-        jsonObject()
-          .where("clean_session", is(jsonMissing()))
-          .where("max_message_rate", is(jsonMissing()))
-          .where("max_message_size", is(jsonInt(mods.getMaxMessageSize())))
-          .where("max_inflight_messages", is(jsonInt(mods.getMaxInflightMessages())))
-          .where("reg_view", is(jsonMissing()))
-          .where("retry_interval", is(jsonLong(mods.getRetryInterval())))
-          .where("subscriber_id", is(jsonMissing()))
-          .where("upgrade_qos", is(jsonMissing()))
-        ));
-    // @formatter:on
+    String json = objectMapper.writeValueAsString(mods);
+    JSONAssert.assertEquals("""
+        {
+          "max_message_size": %d,
+          "max_inflight_messages": %d,
+          "retry_interval": %d
+        }
+        """.formatted(mods.getMaxMessageSize(), mods.getMaxInflightMessages(),
+        mods.getRetryInterval()), json, true);
   }
 
 }

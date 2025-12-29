@@ -25,9 +25,9 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase.Replace;
+import org.springframework.boot.jdbc.test.autoconfigure.JdbcTest;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import net.solarnetwork.flux.vernemq.webhook.domain.Response;
@@ -39,7 +39,7 @@ import net.solarnetwork.flux.vernemq.webhook.test.DbUtils;
  * JDBC integration tests.
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 @SpringJUnitConfig
 @JdbcTest

@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.support;
 
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ValueSerializer;
 
 /**
  * Supporting services for output serialization.
@@ -38,10 +38,10 @@ import net.solarnetwork.codec.PropertySerializerRegistrar;
  * @param registrar
  *        a property serializer registrar for non-JSON/CBOR output
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public record OutputSerializationSupportContext<T> (ObjectMapper jsonObjectMapper,
-		ObjectMapper cborObjectMapper, JsonSerializer<T> jsonSerializer,
+public record OutputSerializationSupportContext<T>(ObjectMapper jsonObjectMapper,
+		ObjectMapper cborObjectMapper, ValueSerializer<T> jsonSerializer,
 		PropertySerializerRegistrar registrar) {
 
 }

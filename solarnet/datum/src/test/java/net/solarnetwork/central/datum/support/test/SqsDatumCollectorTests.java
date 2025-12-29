@@ -52,7 +52,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.support.SqsDatumCollector;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
@@ -72,6 +71,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link SqsDatumCollector} .
@@ -116,7 +116,7 @@ public class SqsDatumCollectorTests {
 	public void setup() {
 		sqsUrl = "http://sqs.localhost/%d/test".formatted(randomLong());
 		workQueue = new ArrayBlockingQueue<>(4);
-		sqsObjectMapper = DatumJsonUtils.newDatumObjectMapper();
+		sqsObjectMapper = DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 		stats = new StatTracker("SqsDatumCollector", null, log, 10);
 		collector = new SqsDatumCollector(sqsClient, sqsUrl, sqsObjectMapper, workQueue, delegateDao,
 				stats);

@@ -55,14 +55,13 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.mqtt.SolarInputDatumObserver;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.support.ObservableMqttConnection;
-import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;
@@ -71,6 +70,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link SolarInputDatumObserver} class.
@@ -99,16 +99,12 @@ public class SolarInputDatumObserverTests extends MqttServerSupport {
 	private ObservableMqttConnection mqttConnection;
 	private SolarInputDatumObserver service;
 
-	private ObjectMapper createObjectMapper() {
-		return JsonUtils.newDatumObjectMapper();
-	}
-
 	@BeforeEach
 	public void setup() throws Exception {
 		setupMqttServer();
 
 		executor = Executors.newSingleThreadExecutor();
-		objectMapper = createObjectMapper();
+		objectMapper = DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 		scheduler.initialize();

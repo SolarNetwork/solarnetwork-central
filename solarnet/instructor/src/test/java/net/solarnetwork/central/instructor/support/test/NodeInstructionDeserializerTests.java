@@ -32,13 +32,13 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.NodeInstructionDeserializer;
-import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * Test cases for the {@link NodeInstructionDeserializer} class.
@@ -56,11 +56,9 @@ public class NodeInstructionDeserializerTests {
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		ObjectMapper m = JsonUtils.newObjectMapper();
 		SimpleModule mod = new SimpleModule("Test");
 		mod.addDeserializer(NodeInstruction.class, NodeInstructionDeserializer.INSTANCE);
-		m.registerModule(mod);
-		return m;
+		return JsonMapper.builder().addModule(mod).build();
 	}
 
 	@BeforeEach

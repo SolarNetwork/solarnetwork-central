@@ -23,8 +23,8 @@
 package net.solarnetwork.central.datum.agg.test;
 
 import static java.util.Collections.singletonList;
-import static net.solarnetwork.codec.JsonUtils.getJSONString;
-import static net.solarnetwork.codec.JsonUtils.getObjectFromJSON;
+import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.jackson.JsonUtils.getObjectFromJSON;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;

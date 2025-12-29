@@ -53,7 +53,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
@@ -66,12 +65,13 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
 import net.solarnetwork.central.security.ClientAccessTokenEntity;
 import net.solarnetwork.service.RemoteServiceException;
+import tools.jackson.databind.JsonNode;
 
 /**
  * eGauge REST operations helper.
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 
@@ -261,8 +261,8 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 			return;
 		}
 
-		final String rlm = realm.path(REALM_PROPERTY).asText();
-		final String nnc = realm.path(NONCE_PROPERTY).asText();
+		final String rlm = realm.path(REALM_PROPERTY).asString();
+		final String nnc = realm.path(NONCE_PROPERTY).asString();
 		final byte[] cnncBytes = new byte[16];
 		rng.nextBytes(cnncBytes);
 		final String cnnc = HexFormat.of().formatHex(cnncBytes);
@@ -283,7 +283,7 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 						authBody, JsonNode.class);
 
 		final String accessTokenValue = nonEmptyString(
-				tokenRes != null ? tokenRes.path(JWT_PROPERTY).asText() : null);
+				tokenRes != null ? tokenRes.path(JWT_PROPERTY).asString() : null);
 		if ( accessTokenValue != null ) {
 			var registration = new ClientAccessTokenEntity(accessTokenId, clock.instant());
 			registration.setAccessTokenIssuedAt(authReqTime);

@@ -56,7 +56,6 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -90,6 +89,7 @@ import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.IntRangeSet;
 import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * eGauge implementation of {@link CloudDatumStreamService}.
@@ -115,7 +115,7 @@ import net.solarnetwork.util.StringUtils;
  * however.
  *
  * @author matt
- * @version 1.9
+ * @version 2.0
  */
 public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -376,7 +376,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		*/
 		final var result = new ArrayList<CloudDataValue>(16);
 		for ( JsonNode regNode : json.path("registers") ) {
-			String name = nonEmptyString(regNode.path("name").asText());
+			String name = nonEmptyString(regNode.path("name").asString());
 
 			final var meta = new LinkedHashMap<String, Object>(4);
 			populateNumberValue(regNode, "idx", REGISTER_INDEX_METADATA, meta);
@@ -570,7 +570,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 */
 	private static Instant parseTimestamp(JsonNode json, String field) {
 		JsonNode fieldNode = json.path(field);
-		if ( !(fieldNode.isNumber() || fieldNode.isTextual()) ) {
+		if ( !(fieldNode.isNumber() || fieldNode.isString()) ) {
 			return null;
 		}
 		BigDecimal n = null;
@@ -578,7 +578,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 			n = fieldNode.decimalValue();
 		} else {
 			try {
-				n = new BigDecimal(fieldNode.asText());
+				n = new BigDecimal(fieldNode.asString());
 			} catch ( NumberFormatException e ) {
 				// ignore, return null
 				return null;
@@ -636,7 +636,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 
 		for ( int i = 0, len = regsNode.size(); i < len; i++ ) {
 			JsonNode regNode = regsNode.get(i);
-			regNames[i] = regNode.path("name").asText();
+			regNames[i] = regNode.path("name").asString();
 		}
 
 		for ( JsonNode rangeNode : json.findPath("ranges") ) {
@@ -666,8 +666,8 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 					if ( refs == null ) {
 						continue;
 					}
-					String val = nonEmptyString(rowNode.get(i).asText());
-					String nextVal = nonEmptyString(rowsNode.get(rowIdx + 1).path(i).asText());
+					String val = nonEmptyString(rowNode.get(i).asString());
+					String nextVal = nonEmptyString(rowsNode.get(rowIdx + 1).path(i).asString());
 					if ( val == null || nextVal == null ) {
 						continue;
 					}

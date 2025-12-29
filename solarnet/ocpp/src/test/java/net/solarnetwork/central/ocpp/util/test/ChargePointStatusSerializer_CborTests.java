@@ -35,11 +35,11 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.ocpp.util.ChargePointStatusSerializer;
-import net.solarnetwork.codec.CborUtils;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 /**
  * Test cases for the {@link ChargePointStatusSerializer} class.
@@ -56,11 +56,10 @@ public class ChargePointStatusSerializer_CborTests {
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		ObjectMapper m = new ObjectMapper(CborUtils.cborFactory());
 		SimpleModule mod = new SimpleModule("Test");
 		mod.addSerializer(ChargePointStatus.class, ChargePointStatusSerializer.INSTANCE);
-		m.registerModule(mod);
-		return m;
+		return CBORMapper.builder(net.solarnetwork.codec.jackson.CborUtils.cborFactory()).addModule(mod)
+				.build();
 	}
 
 	@BeforeEach

@@ -253,7 +253,7 @@ public class SqsDatumCollector_IntegrationTests implements UncaughtExceptionHand
 		stored = Collections.synchronizedList(new ArrayList<>(1000));
 
 		collector = new SqsDatumCollector(client, SQS_PROPS.getUrl(),
-				DatumJsonUtils.newDatumObjectMapper(), workQueue, delegateDao, stats);
+				DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER, workQueue, delegateDao, stats);
 		collector.setExceptionHandler(this);
 		collector.setReadConcurrency(1);
 		collector.setWriteConcurrency(2);

@@ -49,18 +49,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.moquette.interception.messages.InterceptSubscribeMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.support.ObservableMqttConnection;
-import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
@@ -72,6 +70,7 @@ import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.test.mqtt.TestingInterceptHandler;
 import net.solarnetwork.util.DateUtils;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link MqttDataCollector} class.
@@ -94,15 +93,15 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 	private NodeInstructionDao nodeInstructionDao;
 	private MqttDataCollector service;
 
-	private ObjectMapper createObjectMapper(JsonFactory jsonFactory) {
-		return JsonUtils.newDatumObjectMapper(jsonFactory);
+	private ObjectMapper createObjectMapper() {
+		return DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	@BeforeEach
 	public void setup() throws Exception {
 		setupMqttServer();
 
-		objectMapper = createObjectMapper(null);
+		objectMapper = createObjectMapper();
 		dataCollectorBiz = EasyMock.createMock(DataCollectorBiz.class);
 		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
 

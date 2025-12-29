@@ -27,15 +27,15 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.v201.util.OcppUtils;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Configuration for OCPP v2.0.1.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(OCPP_V201)
@@ -52,7 +52,7 @@ public class OcppV201Config {
 	public ActionPayloadDecoder actionPayloadDecoder_v201(
 			@Qualifier(OCPP_V201) ObjectMapper objectMapper) {
 		return new net.solarnetwork.ocpp.v201.util.ActionPayloadDecoder(objectMapper,
-				OcppUtils.ocppSchemaFactory_v201());
+				OcppUtils.ocppSchemaRegistry_v201());
 	}
 
 }

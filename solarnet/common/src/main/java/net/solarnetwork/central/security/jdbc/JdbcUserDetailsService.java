@@ -23,7 +23,6 @@
 package net.solarnetwork.central.security.jdbc;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -37,12 +36,13 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.SecurityTokenType;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.SecurityPolicy;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Extension of {@link JdbcDaoImpl} that returns {@link AuthenticatedUser}
@@ -64,7 +64,7 @@ import net.solarnetwork.domain.SecurityPolicy;
  * </ol>
  *
  * @author matt
- * @version 2.2
+ * @version 3.0
  */
 public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsService {
 
@@ -87,7 +87,7 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 	 * Constructor.
 	 */
 	public JdbcUserDetailsService() {
-		this(JsonUtils.newObjectMapper());
+		this(JsonUtils.JSON_OBJECT_MAPPER);
 	}
 
 	/**
@@ -144,7 +144,7 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 				if ( policyJson != null && !"{}".equals(policyJson) ) {
 					try {
 						policy = objectMapper.readValue(policyJson, SecurityPolicy.class);
-					} catch ( IOException e ) {
+					} catch ( JacksonException e ) {
 						log.error("Error deserializing [{}] SecurityPolicy from [{}]: {}", username1,
 								policyJson, e.getMessage());
 					}

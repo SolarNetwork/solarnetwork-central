@@ -48,7 +48,7 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.central.user.dao.BasicUserNodeInstructionTaskFilter;
 import net.solarnetwork.central.user.dao.jdbc.JdbcUserNodeInstructionTaskDao;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.Entity;
 
 /**

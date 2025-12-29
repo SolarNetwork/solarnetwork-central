@@ -1,21 +1,21 @@
 /* ==================================================================
  * OscpInstructionUtilsTests.java - 6/10/2022 7:33:37 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -33,7 +33,7 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.FileCopyUtils;
-import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SchemaRegistry;
 import com.nimbusds.jose.util.StandardCharset;
 import net.solarnetwork.central.oscp.util.OscpInstructionUtils;
 import net.solarnetwork.central.oscp.util.OscpUtils;
@@ -42,17 +42,17 @@ import oscp.v20.UpdateGroupCapacityForecast;
 
 /**
  * Test cases for the {@link OscpInstructionUtils} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
 public class OscpInstructionUtilsTests {
 
-	private JsonSchemaFactory jsonSchemaFactory;
+	private SchemaRegistry jsonSchemaRegistry;
 
 	@BeforeEach
 	public void setup() {
-		jsonSchemaFactory = OscpUtils.oscpSchemaFactory_v20();
+		jsonSchemaRegistry = OscpUtils.oscpSchemaRegistry_v20();
 	}
 
 	@Test
@@ -81,7 +81,7 @@ public class OscpInstructionUtilsTests {
 		params.put("msg", json);
 
 		// WHEN
-		Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(params, jsonSchemaFactory);
+		Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(params, jsonSchemaRegistry);
 
 		// THEN
 		assertThat("Message parsed and validated", msg,
@@ -100,7 +100,7 @@ public class OscpInstructionUtilsTests {
 		params.put("msg", json);
 
 		// WHEN
-		Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(params, jsonSchemaFactory);
+		Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(params, jsonSchemaRegistry);
 
 		// THEN
 		assertThat("Message parsed and validated", msg, is(instanceOf(Handshake.class)));

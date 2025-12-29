@@ -84,8 +84,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import org.threeten.extra.MutableClock;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -116,12 +114,14 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link SolarEdgeV1CloudDatumStreamService} class.
@@ -190,7 +190,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		objectMapper = JsonUtils.newObjectMapper();
+		objectMapper = JsonUtils.JSON_OBJECT_MAPPER;
 
 		expressionService = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao);
 		service = new SolarEdgeV1CloudDatumStreamService(userEventAppenderBiz, encryptor,
@@ -358,9 +358,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, List.of(apiKey))
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -671,9 +671,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, List.of(apiKey))
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1085,9 +1085,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, List.of(apiKey))
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1225,9 +1225,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, List.of(apiKey))
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1350,9 +1350,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, List.of(apiKey))
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1526,9 +1526,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, List.of(apiKey))
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1641,9 +1641,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes API token header")
-					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, List.of(apiKey))
+					.containsEntry(SolarEdgeV1CloudIntegrationService.API_KEY_HEADER, apiKey)
 					;
 			})
 			.extracting(RequestEntity::getUrl)

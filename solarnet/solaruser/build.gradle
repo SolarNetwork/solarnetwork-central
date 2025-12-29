@@ -2,7 +2,7 @@ plugins {
 	//id 'checkstyle'
 	id 'java'
 	id 'eclipse'
-	id 'org.springframework.boot' version '3.5.9'
+	id 'org.springframework.boot' version '4.0.1'
 }
 
 //apply plugin: 'checkstyle'
@@ -42,16 +42,17 @@ dependencies {
 	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-restclient'
+	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.session:spring-session-jdbc'
-	implementation 'org.springframework.webflow:spring-webflow:3.0.0'
+	implementation 'org.springframework.webflow:spring-webflow:4.0.0'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 
 	// Template support
@@ -62,13 +63,13 @@ dependencies {
 	implementation "com.bucket4j:bucket4j_jdk17-core:${bucket4jVersion}"
 	implementation "com.bucket4j:bucket4j_jdk17-postgresql:${bucket4jVersion}"
 	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
-	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	implementation 'javax.cache:cache-api'
     implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.ehcache:ehcache'
 	implementation "org.tukaani:xz:${xzVersion}"
+	implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
 		
 	// SolarNetwork
 	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.v16.jakarta:${snExternalOcpp16JakartaVersion}"
@@ -84,6 +85,7 @@ dependencies {
 	// Testing
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 }
 
 bootJar {

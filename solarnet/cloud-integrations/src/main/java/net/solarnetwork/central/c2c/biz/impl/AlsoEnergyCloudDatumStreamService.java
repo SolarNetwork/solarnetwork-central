@@ -66,7 +66,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -97,12 +96,13 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * AlsoEnergy implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.6
+ * @version 2.0
  */
 public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -461,8 +461,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		*/
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode siteNode : json.path("items") ) {
-			final String id = siteNode.path("siteId").asText();
-			final String name = siteNode.path("siteName").asText().trim();
+			final String id = siteNode.path("siteId").asString();
+			final String name = siteNode.path("siteName").asString().trim();
 			result.add(intermediateDataValue(List.of(id), name, null));
 		}
 		return result;
@@ -536,11 +536,11 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			if ( !fieldsNode.isArray() || fieldsNode.isEmpty() ) {
 				continue;
 			}
-			final String id = deviceNode.path("id").asText().trim();
+			final String id = deviceNode.path("id").asString().trim();
 			if ( id.isEmpty() ) {
 				continue;
 			}
-			final String name = deviceNode.path("name").asText().trim();
+			final String name = deviceNode.path("name").asString().trim();
 			final var meta = new LinkedHashMap<String, Object>(4);
 			populateNonEmptyValue(deviceNode, "functionCode", "functionCode", meta);
 			JsonNode configNode = deviceNode.path("config");
@@ -549,7 +549,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 			List<CloudDataValue> fields = new ArrayList<>(fieldsNode.size());
 			for ( JsonNode fieldNode : fieldsNode ) {
-				final String fieldName = fieldNode.asText();
+				final String fieldName = fieldNode.asString();
 
 				List<CloudDataValue> aggs = new ArrayList<>(AlsoEnergyFieldFunction.values().length);
 				for ( AlsoEnergyFieldFunction fn : AlsoEnergyFieldFunction.values() ) {
@@ -701,10 +701,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		final int refCount = refs.size();
 		for ( JsonNode item : items ) {
 			JsonNode tsNode = item.path("timestamp");
-			if ( !tsNode.isTextual() ) {
+			if ( !tsNode.isString() ) {
 				continue;
 			}
-			Instant ts = Instant.parse(tsNode.asText());
+			Instant ts = Instant.parse(tsNode.asString());
 			JsonNode dataNode = item.path("data");
 			if ( dataNode.size() != refCount ) {
 				continue;

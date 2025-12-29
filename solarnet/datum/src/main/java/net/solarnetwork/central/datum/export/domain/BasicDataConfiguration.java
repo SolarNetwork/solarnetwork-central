@@ -25,12 +25,12 @@ package net.solarnetwork.central.datum.export.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 import net.solarnetwork.util.CollectionUtils;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Basic implementation of {@link DataConfiguration}.

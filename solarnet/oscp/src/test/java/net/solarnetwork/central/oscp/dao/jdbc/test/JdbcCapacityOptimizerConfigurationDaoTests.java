@@ -29,7 +29,7 @@ import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allC
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allHeartbeatData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allTokenData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.newCapacityOptimizerConf;
-import static net.solarnetwork.codec.JsonUtils.getStringMap;
+import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;

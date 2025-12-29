@@ -26,20 +26,20 @@ import java.io.Serial;
 import java.time.Instant;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import net.solarnetwork.central.dao.BaseObjectEntity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Entity for user-specific datum export tasks.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTaskPK>
 		implements UserRelatedEntity<UserDatumExportTaskPK> {

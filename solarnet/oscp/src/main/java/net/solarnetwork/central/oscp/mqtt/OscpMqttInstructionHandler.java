@@ -49,8 +49,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import org.springframework.http.HttpMethod;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -68,13 +66,15 @@ import net.solarnetwork.central.oscp.util.OscpInstructionUtils;
 import net.solarnetwork.central.oscp.util.SystemTaskContext;
 import net.solarnetwork.central.oscp.web.OscpWebUtils;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.util.StatTracker;
 import oscp.v20.AdjustGroupCapacityForecast;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * MQTT subscriber for OSCP v2.0 instructions.
@@ -190,8 +190,8 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 				return;
 			}
 
-			correlationId = (json.path(CORRELATION_ID_PARAM).isTextual()
-					? json.path(CORRELATION_ID_PARAM).textValue()
+			correlationId = (json.path(CORRELATION_ID_PARAM).isString()
+					? json.path(CORRELATION_ID_PARAM).stringValue()
 					: null);
 			if ( correlationId != null ) {
 				eventData.put(CORRELATION_ID_DATA_KEY, correlationId);
@@ -199,7 +199,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 
 			eventData.put(INSTRUCTION_ID_DATA_KEY, instructionId);
 
-			action = json.path(OSCP_ACTION_PARAM).textValue();
+			action = json.path(OSCP_ACTION_PARAM).stringValue();
 			if ( action == null || action.isBlank() ) {
 				generateUserEvent(userId, OSCP_INSTRUCTION_ERROR_TAGS, "Missing OSCP action", null);
 				nodeInstructionDao.compareAndUpdateInstructionState(instructionId, nodeId, Executing,
@@ -220,7 +220,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 			}
 			eventData.put(CAPACITY_OPTIMIZER_ID_DATA_KEY, coId);
 
-			final String cgIdent = json.path(OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM).textValue();
+			final String cgIdent = json.path(OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM).stringValue();
 			if ( cgIdent == null || cgIdent.isBlank() ) {
 				generateUserEvent(userId, OSCP_INSTRUCTION_ERROR_TAGS, "Missing group identifier",
 						eventData);

@@ -22,13 +22,10 @@
 
 package net.solarnetwork.central.ocpp.v16.vendor.abb;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -38,7 +35,7 @@ import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.service.DatumPublisherSupport;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.AcPhase;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.EnergyDatum;
@@ -51,6 +48,9 @@ import net.solarnetwork.util.StringUtils;
 import ocpp.v16.jakarta.cs.DataTransferRequest;
 import ocpp.v16.jakarta.cs.DataTransferResponse;
 import ocpp.v16.jakarta.cs.DataTransferStatus;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Publish ABB data transfer {@code MeterTransfer} messages as a datum stream.
@@ -96,7 +96,7 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  * </pre>
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class MeterTransferDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -183,12 +183,12 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 		final JsonNode root;
 		try {
 			root = mapper.readTree(data);
-		} catch ( IOException e ) {
+		} catch ( JacksonException e ) {
 			log.warn("Failed to parse DataTransfer data JSON [{}]: {}", data, e);
 			return null;
 		}
 
-		final String msgType = root.path("type").textValue();
+		final String msgType = root.path("type").stringValue();
 		final Instant ts = JsonUtils.parseDateAttribute(root, "timestamp", DateTimeFormatter.ISO_INSTANT,
 				Instant::from);
 		final JsonNode samples = root.path("sampledValue");
@@ -197,7 +197,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 		}
 		for ( JsonNode sampleNode : samples ) {
 			MeterTransferMeasurand measurand = MeterTransferMeasurand
-					.forKey(sampleNode.path("measurand").textValue());
+					.forKey(sampleNode.path("measurand").stringValue());
 			if ( measurand == null ) {
 				continue;
 			}
@@ -210,8 +210,8 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 			if ( propName == null ) {
 				continue;
 			}
-			Number value = normalizedValue(sampleNode.path("value").asText(),
-					sampleNode.path("accuracy").asText(), sampleNode.path("unit").asText());
+			Number value = normalizedValue(sampleNode.path("value").asString(),
+					sampleNode.path("accuracy").asString(), sampleNode.path("unit").asString());
 			s.putInstantaneousSampleValue(propName, value);
 		}
 

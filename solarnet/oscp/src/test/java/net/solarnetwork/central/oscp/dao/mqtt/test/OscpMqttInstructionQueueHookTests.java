@@ -28,7 +28,7 @@ import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPAC
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_OPTIMIZER_ID_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_MESSAGE_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_V20_TOPIC;
-import static net.solarnetwork.codec.JsonUtils.getStringMap;
+import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Declined;
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Queuing;
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Unknown;
@@ -58,7 +58,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.SolarNode;
@@ -77,12 +76,13 @@ import net.solarnetwork.central.oscp.util.OscpUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.util.StatTracker;
 import oscp.v20.AdjustGroupCapacityForecast;
 import oscp.v20.GroupCapacityComplianceError;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link OscpMqttInstructionQueueHook} class.
@@ -131,11 +131,11 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 
 	@BeforeEach
 	public void setup() {
-		mapper = JsonUtils.newObjectMapper();
+		mapper = JsonUtils.JSON_OBJECT_MAPPER;
 		hook = new OscpMqttInstructionQueueHook(new StatTracker("SolarOSCP-MQTT", null, log, 1), mapper,
 				userNodeDao, capacityGroupDao, capacityOptimizerDao, capacityProviderDao);
 		hook.setUserEventAppenderBiz(userEventAppenderBiz);
-		hook.setJsonSchemaFactory(OscpUtils.oscpSchemaFactory_v20());
+		hook.setJsonSchemaRegistry(OscpUtils.oscpSchemaRegistry_v20());
 	}
 
 	@Test

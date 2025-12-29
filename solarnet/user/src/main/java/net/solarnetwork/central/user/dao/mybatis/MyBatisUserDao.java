@@ -33,7 +33,7 @@ import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
 import net.solarnetwork.central.user.domain.UserMatch;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * MyBatis implementation of {@link UserDao}.

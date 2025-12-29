@@ -17,9 +17,8 @@
 
 package net.solarnetwork.flux.vernemq.webhook.service.impl;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
 import net.solarnetwork.domain.SecurityPolicy;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Token authentication result details.

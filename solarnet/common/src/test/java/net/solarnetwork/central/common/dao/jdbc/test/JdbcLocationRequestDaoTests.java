@@ -23,7 +23,7 @@
 package net.solarnetwork.central.common.dao.jdbc.test;
 
 import static java.lang.String.format;
-import static net.solarnetwork.codec.JsonUtils.getStringMap;
+import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;

@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.5.9' apply false
+	id 'org.springframework.boot' version '4.0.1' apply false
 }
 
 apply plugin: 'java-library'
@@ -42,7 +42,7 @@ dependencies {
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
     testImplementation 'io.moquette:moquette-broker:0.15'
     testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
-   	testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+   	testImplementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
 }
 
 jar.manifest {

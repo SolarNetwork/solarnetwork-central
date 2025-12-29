@@ -35,7 +35,7 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.REDIRECT_
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
-import static net.solarnetwork.codec.JsonUtils.getObjectFromJSON;
+import static net.solarnetwork.codec.jackson.JsonUtils.getObjectFromJSON;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -51,7 +51,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.random.RandomGenerator;
@@ -80,8 +79,6 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.MutableClock;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
@@ -92,12 +89,14 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.HttpRequestInfo;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Test cases for the {@link SmaCloudIntegrationService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -264,9 +263,9 @@ public class SmaCloudIntegrationServiceTests {
 			.as("Request URI for data")
 			.returns(SmaCloudIntegrationService.BASE_URI
 					.resolve(SmaCloudIntegrationService.LIST_SYSTEMS_PATH), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		then(oauthClientManager).should().authorize(authRequestCaptor.capture());

@@ -38,7 +38,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.common.dao.UserServiceConfigurationDao;
@@ -58,12 +57,13 @@ import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
 import net.solarnetwork.central.user.domain.UsersUserEvents;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.StaticOptionalService;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Configuration for user node instructions support.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Profile(USER_INSTRUCTIONS)
 @Configuration(proxyBeanMethods = false)

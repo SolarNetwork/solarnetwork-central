@@ -29,7 +29,7 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.central.user.domain.InstructionExpressionEvaluationResult.expressionResult;
-import static net.solarnetwork.codec.JsonUtils.getStringMapFromTree;
+import static net.solarnetwork.codec.jackson.JsonUtils.getStringMapFromTree;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Clock;
@@ -58,8 +58,6 @@ import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.scheduling.support.SimpleTriggerContext;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestClientResponseException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.InMemoryUserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.common.dao.UserServiceConfigurationDao;
@@ -96,12 +94,14 @@ import net.solarnetwork.service.OptionalService;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.DateUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * DAO implementation of {@link UserNodeInstructionService}.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class DaoUserNodeInstructionService
 		implements UserNodeInstructionService, ServiceLifecycleObserver, UsersUserEvents {

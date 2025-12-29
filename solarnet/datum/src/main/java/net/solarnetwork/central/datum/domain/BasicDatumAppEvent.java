@@ -26,8 +26,8 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import net.solarnetwork.event.BasicAppEvent;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Basic immutable implementation of {@link DatumAppEvent}.

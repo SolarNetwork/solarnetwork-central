@@ -41,8 +41,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.common.dao.BasicLocationRequestCriteria;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
 import net.solarnetwork.central.common.dao.LocationRequestDao;
@@ -65,7 +63,7 @@ import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
 import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.BasicLocation;
@@ -75,12 +73,14 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.util.MapPathMatcher;
 import net.solarnetwork.util.SearchFilter;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * DAO-based implementation of {@link DatumMetadataBiz}.
  *
  * @author matt
- * @version 2.2
+ * @version 3.0
  */
 public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
@@ -341,7 +341,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		entity.setLocationId(infoToSave.getLocationId());
 		try {
 			entity.setJsonData(objectMapper.writeValueAsString(infoToSave));
-		} catch ( JsonProcessingException e ) {
+		} catch ( JacksonException e ) {
 			throw new IllegalArgumentException("Invalid JSON data: " + e.getMessage(), e);
 		}
 		entity.setStatus(LocationRequestStatus.Submitted);
@@ -386,7 +386,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		entity.setLocationId(infoToSave.getLocationId());
 		try {
 			entity.setJsonData(objectMapper.writeValueAsString(infoToSave));
-		} catch ( JsonProcessingException e ) {
+		} catch ( JacksonException e ) {
 			throw new RuntimeException("Error generating JSON data: " + e.getMessage(), e);
 		}
 		return locationRequestDao.get(locationRequestDao.save(entity));

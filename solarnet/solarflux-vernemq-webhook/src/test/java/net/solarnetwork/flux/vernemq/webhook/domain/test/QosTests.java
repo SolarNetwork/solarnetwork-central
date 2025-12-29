@@ -17,22 +17,20 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.test;
 
-import static com.spotify.hamcrest.jackson.IsJsonStringMatching.isJsonStringMatching;
-import static com.spotify.hamcrest.jackson.JsonMatchers.jsonInt;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 
+import org.json.JSONException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link Qos} enum.
@@ -49,15 +47,11 @@ public class QosTests {
   }
 
   @Test
-  public void toJson() throws JsonProcessingException {
+  public void toJson() throws JSONException {
     for (Qos qos : Qos.values()) {
       String json = objectMapper.writeValueAsString(qos);
 
-      // @formatter:off
-      assertThat("Qos " + qos, json, isJsonStringMatching(
-          jsonInt(qos.getKey())
-      ));
-      // @formatter:on
+      JSONAssert.assertEquals("Qos " + qos, String.valueOf(qos.getKey()), json, true);
     }
   }
 

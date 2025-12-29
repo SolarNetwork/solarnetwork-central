@@ -43,7 +43,6 @@ import org.springframework.security.web.authentication.Http403ForbiddenEntryPoin
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.oscp.dao.AuthTokenAuthorizationDao;
 import net.solarnetwork.central.oscp.fp.v20.web.AdjustGroupCapacityForecastController;
 import net.solarnetwork.central.oscp.fp.v20.web.UpdateGroupCapacityForecastController;
@@ -53,12 +52,13 @@ import net.solarnetwork.central.oscp.security.OscpTokenAuthorizationHeaderAuthen
 import net.solarnetwork.central.oscp.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Web security configuration.
  *
  * @author matt
- * @version 1.5
+ * @version 2.0
  */
 @Configuration
 @EnableWebSecurity

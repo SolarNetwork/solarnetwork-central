@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.5.9' apply false
+	id 'org.springframework.boot' version '4.0.1' apply false
 }
 
 apply plugin: 'java-library'
@@ -38,13 +38,13 @@ dependencies {
 	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v201:${snCommonOcpp201Version}"
 	
 	// Support
-	implementation 'com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations'
+	implementation 'tools.jackson.module:jackson-module-jakarta-xmlbind-annotations'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
     testImplementation "org.threeten:threeten-extra:${threetenExtraVersion}"
-   	testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+   	testImplementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
 }
 
 jar.manifest {

@@ -30,7 +30,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.util.DateUtils;
 
 /**

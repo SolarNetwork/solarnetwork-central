@@ -24,14 +24,14 @@ package net.solarnetwork.oscp.sim.cp.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.oscp.sim.cp.dao.SimpleCapacityProviderDao;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Service configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 public class ServiceConfig {

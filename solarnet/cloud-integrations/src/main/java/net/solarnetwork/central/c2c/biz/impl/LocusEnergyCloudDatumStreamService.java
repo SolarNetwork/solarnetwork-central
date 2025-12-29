@@ -77,8 +77,6 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -107,6 +105,8 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Locus Energy implementation of {@link CloudDatumStreamService}.
@@ -137,7 +137,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.17
+ * @version 2.0
  */
 public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -311,26 +311,26 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 		*/
 		List<CloudDataValue> result = new ArrayList<>(4);
 		for ( JsonNode siteNode : json.path("sites") ) {
-			final String id = siteNode.path("id").asText();
-			final String name = siteNode.path("name").asText().trim();
+			final String id = siteNode.path("id").asString();
+			final String name = siteNode.path("name").asString().trim();
 			final var meta = new LinkedHashMap<String, Object>(4);
 			if ( siteNode.hasNonNull("address1") ) {
-				meta.put(STREET_ADDRESS_METADATA, siteNode.path("address1").asText().trim());
+				meta.put(STREET_ADDRESS_METADATA, siteNode.path("address1").asString().trim());
 			}
 			if ( siteNode.hasNonNull("locale3") ) {
-				meta.put(LOCALITY_METADATA, siteNode.path("locale3").asText().trim());
+				meta.put(LOCALITY_METADATA, siteNode.path("locale3").asString().trim());
 			}
 			if ( siteNode.hasNonNull("locale1") ) {
-				meta.put(STATE_PROVINCE_METADATA, siteNode.path("locale1").asText().trim());
+				meta.put(STATE_PROVINCE_METADATA, siteNode.path("locale1").asString().trim());
 			}
 			if ( siteNode.hasNonNull("postalCode") ) {
-				meta.put(POSTAL_CODE_METADATA, siteNode.path("postalCode").asText().trim());
+				meta.put(POSTAL_CODE_METADATA, siteNode.path("postalCode").asString().trim());
 			}
 			if ( siteNode.hasNonNull("countryCode") ) {
-				meta.put(COUNTRY_METADATA, siteNode.path("countryCode").asText().trim());
+				meta.put(COUNTRY_METADATA, siteNode.path("countryCode").asString().trim());
 			}
 			if ( siteNode.hasNonNull("locationTimezone") ) {
-				meta.put(TIME_ZONE_METADATA, siteNode.path("locationTimezone").asText().trim());
+				meta.put(TIME_ZONE_METADATA, siteNode.path("locationTimezone").asString().trim());
 			}
 			result.add(intermediateDataValue(List.of(id), name, meta.isEmpty() ? null : meta));
 		}
@@ -375,27 +375,27 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 		*/
 		List<CloudDataValue> result = new ArrayList<>(32);
 		for ( JsonNode compNode : json.path("components") ) {
-			final String id = compNode.path("id").asText();
-			final String siteId = compNode.path("siteId").asText();
-			final String name = compNode.path("name").asText().trim();
+			final String id = compNode.path("id").asString();
+			final String siteId = compNode.path("siteId").asString();
+			final String name = compNode.path("name").asString().trim();
 			final var meta = new LinkedHashMap<String, Object>(8);
 			if ( compNode.hasNonNull("oem") ) {
-				meta.put(MANUFACTURER_METADATA, compNode.path("oem").asText().trim());
+				meta.put(MANUFACTURER_METADATA, compNode.path("oem").asString().trim());
 			}
 			if ( compNode.hasNonNull("model") ) {
-				meta.put(DEVICE_MODEL_METADATA, compNode.path("model").asText().trim());
+				meta.put(DEVICE_MODEL_METADATA, compNode.path("model").asString().trim());
 			}
 			if ( compNode.hasNonNull("nodeId") ) {
-				meta.put("nodeId", compNode.path("nodeId").asText().trim());
+				meta.put("nodeId", compNode.path("nodeId").asString().trim());
 			}
 			if ( compNode.hasNonNull("nodeType") ) {
-				meta.put("nodeType", compNode.path("nodeType").asText().trim());
+				meta.put("nodeType", compNode.path("nodeType").asString().trim());
 			}
 			if ( compNode.hasNonNull("application") ) {
-				meta.put("application", compNode.path("application").asText().trim());
+				meta.put("application", compNode.path("application").asString().trim());
 			}
 			if ( compNode.hasNonNull("generationType") ) {
-				meta.put("generationType", compNode.path("generationType").asText().trim());
+				meta.put("generationType", compNode.path("generationType").asString().trim());
 			}
 			result.add(intermediateDataValue(List.of(siteId, id), name, meta.isEmpty() ? null : meta));
 		}
@@ -459,23 +459,23 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 		final var compId = filters.get(COMPONENT_ID_FILTER).toString();
 		List<CloudDataValue> result = new ArrayList<>(32);
 		for ( JsonNode fieldNode : json.path("baseFields") ) {
-			final String id = fieldNode.path("baseField").asText().trim();
-			final String name = fieldNode.path("longName").asText().trim();
+			final String id = fieldNode.path("baseField").asString().trim();
+			final String name = fieldNode.path("longName").asString().trim();
 			final var meta = new LinkedHashMap<String, Object>(4);
 			if ( fieldNode.hasNonNull("source") ) {
-				meta.put("source", fieldNode.path("source").asText().trim());
+				meta.put("source", fieldNode.path("source").asString().trim());
 			}
 			if ( fieldNode.hasNonNull("unit") ) {
-				meta.put(UNIT_OF_MEASURE_METADATA, fieldNode.path("unit").asText().trim());
+				meta.put(UNIT_OF_MEASURE_METADATA, fieldNode.path("unit").asString().trim());
 			}
 			if ( fieldNode.hasNonNull("model") ) {
-				meta.put(DEVICE_MODEL_METADATA, fieldNode.path("model").asText().trim());
+				meta.put(DEVICE_MODEL_METADATA, fieldNode.path("model").asString().trim());
 			}
 			List<CloudDataValue> children = new ArrayList<>(4);
 			for ( JsonNode aggNode : fieldNode.path("aggregations") ) {
 				if ( aggNode.hasNonNull("shortName") && aggNode.hasNonNull("aggregation") ) {
-					final String aggId = aggNode.path("shortName").asText().trim();
-					final String agg = aggNode.path("aggregation").asText().trim();
+					final String aggId = aggNode.path("shortName").asString().trim();
+					final String agg = aggNode.path("aggregation").asString().trim();
 					if ( agg.isEmpty() ) {
 						continue;
 					}
@@ -653,7 +653,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 
 								final Instant ts;
 								try {
-									ts = Instant.parse(o.get("ts").asText());
+									ts = Instant.parse(o.get("ts").asString());
 								} catch ( DateTimeParseException dtpe ) {
 									// ignore and continue
 									continue;

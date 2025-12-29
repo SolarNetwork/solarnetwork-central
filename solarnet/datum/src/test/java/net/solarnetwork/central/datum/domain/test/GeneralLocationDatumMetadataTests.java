@@ -32,10 +32,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link GeneralLocationDatumMetadata} class.
@@ -56,7 +56,7 @@ public class GeneralLocationDatumMetadataTests {
 
 	@BeforeEach
 	public void setup() {
-		objectMapper = DatumJsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	private GeneralLocationDatumMetadata getTestInstance() {
@@ -100,7 +100,7 @@ public class GeneralLocationDatumMetadataTests {
 	@Test
 	public void deserializeJson() throws Exception {
 		String json = "{\"created\":\"" + TEST_TIMESTAMP_STRING
-				+ "\",\"sourceId\":\"Main\",\"meta\":{\"m\":{\"ploc\":2502287},\"t\":[\"foo\"]}}}";
+				+ "\",\"sourceId\":\"Main\",\"meta\":{\"m\":{\"ploc\":2502287},\"t\":[\"foo\"]}}";
 		GeneralLocationDatumMetadata datum = objectMapper.readValue(json,
 				GeneralLocationDatumMetadata.class);
 		assertThat(datum, is(notNullValue()));

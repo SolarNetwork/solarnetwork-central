@@ -34,7 +34,7 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.domain.DataConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * User related entity for {@link DataConfiguration}.

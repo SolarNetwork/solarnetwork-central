@@ -31,8 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SchemaRegistry;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
@@ -40,15 +39,14 @@ import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructionQueueHook;
 import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.codec.CborUtils;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.CborUtils;
 import net.solarnetwork.util.StatTracker;
 
 /**
  * Configuration for OSCP v2.0 MQTT.
  *
  * @author matt
- * @version 2.1
+ * @version 3.0
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(OscpV20MqttConfig.MQTT_OSCP_V20)
@@ -98,11 +96,11 @@ public class OscpV20MqttConfig {
 	@Bean
 	public OscpMqttInstructionQueueHook oscpMqttInstructionQueueHook_v20(
 			@Qualifier(OSCP_V20) StatTracker stats,
-			@Qualifier(OSCP_V20) JsonSchemaFactory jsonSchemaFactory) {
-		ObjectMapper objectMapper = JsonUtils.newObjectMapper(CborUtils.cborFactory());
+			@Qualifier(OSCP_V20) SchemaRegistry jsonSchemaRegistry) {
+		var objectMapper = CborUtils.CBOR_OBJECT_MAPPER;
 		OscpMqttInstructionQueueHook hook = new OscpMqttInstructionQueueHook(stats, objectMapper,
 				userNodeDao, capacityGroupDao, capacityOptimizerDao, capacityProviderDao);
-		hook.setJsonSchemaFactory(jsonSchemaFactory);
+		hook.setJsonSchemaRegistry(jsonSchemaRegistry);
 		hook.setUserEventAppenderBiz(userEventAppenderBiz);
 		return hook;
 	}

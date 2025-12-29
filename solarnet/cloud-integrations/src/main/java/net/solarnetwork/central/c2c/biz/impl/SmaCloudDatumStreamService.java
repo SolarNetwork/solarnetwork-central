@@ -64,7 +64,6 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -93,12 +92,13 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * SMA implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -347,8 +347,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		if ( json == null ) {
 			return List.of();
 		}
-		final String id = json.path("plantId").asText();
-		final String name = json.path("name").asText().trim();
+		final String id = json.path("plantId").asString();
+		final String name = json.path("name").asString().trim();
 
 		final var meta = new LinkedHashMap<String, Object>(4);
 		populateNonEmptyValue(json, "timezone", CloudDataValue.TIME_ZONE_METADATA, meta);
@@ -357,7 +357,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		if ( addrNode.has("street") && addrNode.has("streetNo") ) {
 			meta.put(CloudDataValue.STREET_ADDRESS_METADATA, "%s %s".formatted(
-					addrNode.get("streetNo").textValue(), addrNode.get("street").textValue()));
+					addrNode.get("streetNo").stringValue(), addrNode.get("street").stringValue()));
 		}
 
 		populateNonEmptyValue(addrNode, "city", CloudDataValue.LOCALITY_METADATA, meta);
@@ -417,8 +417,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		final List<CloudDataValue> result = new ArrayList<>(8);
 
 		for ( JsonNode devNode : json.path("devices") ) {
-			final String id = devNode.path("deviceId").asText();
-			final String name = devNode.path("name").asText().trim();
+			final String id = devNode.path("deviceId").asString();
+			final String name = devNode.path("name").asString().trim();
 
 			final var meta = new LinkedHashMap<String, Object>(4);
 			populateNonEmptyValue(devNode, "product", CloudDataValue.DEVICE_MODEL_METADATA, meta);
@@ -476,7 +476,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		final List<CloudDataValue> result = new ArrayList<>(8);
 
 		for ( JsonNode measSetNode : json.path("sets") ) {
-			final String measSetName = measSetNode.textValue();
+			final String measSetName = measSetNode.stringValue();
 			try {
 				final SmaMeasurementSetType measSet = SmaMeasurementSetType.fromValue(measSetName);
 				if ( measSet != null ) {
@@ -687,7 +687,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			if ( !dataNode.has("time") ) {
 				continue;
 			}
-			Instant ts = LocalDateTime.parse(dataNode.get("time").textValue()).atZone(zone).toInstant();
+			Instant ts = LocalDateTime.parse(dataNode.get("time").stringValue()).atZone(zone)
+					.toInstant();
 			if ( ts.isBefore(filter.getStartDate()) ) {
 				continue;
 			} else if ( !ts.isBefore(filter.getEndDate()) ) {
@@ -890,7 +891,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					ZoneId zone = ZoneOffset.UTC;
 					var json = res.getBody();
 					String zoneId = json != null
-							? StringUtils.nonEmptyString(json.findValue("timezone").asText())
+							? StringUtils.nonEmptyString(json.findValue("timezone").asString())
 							: null;
 					if ( zoneId != null ) {
 						try {

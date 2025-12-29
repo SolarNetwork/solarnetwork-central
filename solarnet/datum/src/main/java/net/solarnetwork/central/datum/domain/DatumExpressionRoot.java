@@ -33,10 +33,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
@@ -48,13 +47,14 @@ import net.solarnetwork.domain.tariff.Tariff;
 import net.solarnetwork.domain.tariff.TariffSchedule;
 import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.ObjectUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Extension of {@link DatumSamplesExpressionRoot} that adds support for
  * {@link DatumMetadataOperations}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 		implements DatumCollectionFunctions, DatumHttpFunctions {

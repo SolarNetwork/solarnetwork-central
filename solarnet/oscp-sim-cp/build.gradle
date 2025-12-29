@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
 	id 'eclipse'
-	id 'org.springframework.boot' version '3.5.9'
+	id 'org.springframework.boot' version '4.0.1'
 }
 
 apply plugin: 'java'
@@ -30,10 +30,7 @@ dependencies {
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	
-	// Utilities
-	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

@@ -52,9 +52,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.SucceededFuture;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz;
@@ -70,6 +67,9 @@ import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.util.StatTracker;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidGenerator;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * Test cases for the {@link AsyncDaoUserEventAppenderBiz}.
@@ -102,11 +102,9 @@ public class AsyncDaoUserEventAppenderBizTests {
 				LoggerFactory.getLogger(AsyncDaoUserEventAppenderBiz.class), 10);
 		biz = new AsyncDaoUserEventAppenderBiz(executor, dao, queue, stats, uuidGenerator);
 
-		objectMapper = new ObjectMapper();
 		SimpleModule m = new SimpleModule();
 		m.addSerializer(UserEvent.class, UserEventSerializer.INSTANCE);
-		objectMapper.registerModule(m);
-		objectMapper.registerModule(new JavaTimeModule());
+		objectMapper = JsonMapper.builder().addModule(m).build();
 
 		solarFluxPublisher = new MqttJsonPublisher<>("Test", objectMapper,
 				AsyncDaoUserEventAppenderBiz.SOLARFLUX_TOPIC_FN, false, MqttQos.AtMostOnce);

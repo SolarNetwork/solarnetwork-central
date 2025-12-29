@@ -32,10 +32,10 @@ import java.util.concurrent.TimeUnit;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.util.DateUtils;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link StaleAggregateDatum} class.
@@ -57,7 +57,7 @@ public class StaleAggregateDatumTests {
 
 	@BeforeEach
 	public void setup() {
-		objectMapper = DatumJsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	private StaleAggregateDatum getTestInstance() {

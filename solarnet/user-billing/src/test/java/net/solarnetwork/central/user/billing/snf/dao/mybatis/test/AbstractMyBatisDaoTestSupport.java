@@ -40,7 +40,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.test.context.ContextConfiguration;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;

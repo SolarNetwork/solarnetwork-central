@@ -49,8 +49,6 @@ import javax.xml.transform.stream.StreamResult;
 import org.springframework.util.MimeType;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.SharedValueCache;
@@ -60,6 +58,8 @@ import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextAreaSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * {@link TransformService} that uses XSLT to transform input data into datum
@@ -72,7 +72,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * </p>
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class XsltTransformService extends BaseXsltService implements TransformService {
 

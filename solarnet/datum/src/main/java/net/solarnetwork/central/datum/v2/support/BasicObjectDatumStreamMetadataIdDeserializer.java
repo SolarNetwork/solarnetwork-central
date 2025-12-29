@@ -22,36 +22,31 @@
 
 package net.solarnetwork.central.datum.v2.support;
 
-import java.io.IOException;
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.UUID;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
 import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
-import net.solarnetwork.codec.BasicObjectDatumStreamMetadataField;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.BasicObjectDatumStreamMetadataField;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.databind.exc.MismatchedInputException;
 
 /**
  * Deserializer for {@link ObjectDatumStreamMetadataId}.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 1.1
  */
 public class BasicObjectDatumStreamMetadataIdDeserializer
-		extends StdScalarDeserializer<ObjectDatumStreamMetadataId> implements Serializable {
-
-	@Serial
-	private static final long serialVersionUID = 5772539222468672138L;
+		extends StdDeserializer<ObjectDatumStreamMetadataId> {
 
 	/** A default instance. */
-	public static final BasicObjectDatumStreamMetadataIdDeserializer INSTANCE = new BasicObjectDatumStreamMetadataIdDeserializer();
+	public static final ValueDeserializer<ObjectDatumStreamMetadataId> INSTANCE = new BasicObjectDatumStreamMetadataIdDeserializer();
 
 	/**
 	 * Constructor.
@@ -62,7 +57,7 @@ public class BasicObjectDatumStreamMetadataIdDeserializer
 
 	@Override
 	public ObjectDatumStreamMetadataId deserialize(JsonParser p, DeserializationContext ctxt)
-			throws IOException, JsonProcessingException {
+			throws JacksonException {
 		JsonToken t = p.currentToken();
 		if ( t == JsonToken.VALUE_NULL ) {
 			return null;
@@ -79,7 +74,7 @@ public class BasicObjectDatumStreamMetadataIdDeserializer
 			);
 			// @formattter:on
 		}
-		throw new JsonParseException(p, "Unable to parse ObjectDatumStreamMetadataId (not an object)");
+		throw MismatchedInputException.from(p, "Unable to parse ObjectDatumStreamMetadataId (not an object)");
 	}
 
 }

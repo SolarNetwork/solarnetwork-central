@@ -24,7 +24,7 @@ package net.solarnetwork.central.datum.export.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Basic implementation of {@link Configuration}.

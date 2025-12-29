@@ -24,14 +24,16 @@ package net.solarnetwork.oscp.sim.cp.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.codec.JsonUtils;
+import org.springframework.context.annotation.Primary;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * JSON configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 public class JsonConfig {
@@ -41,9 +43,10 @@ public class JsonConfig {
 	 *
 	 * @return the mapper
 	 */
+	@Primary
 	@Bean
-	public ObjectMapper objectMapper() {
-		return JsonUtils.newObjectMapper();
+	public JsonMapper jsonMapper() {
+		return DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 }

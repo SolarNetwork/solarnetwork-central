@@ -33,7 +33,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.CodedValue;

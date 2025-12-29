@@ -39,8 +39,6 @@ import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 import org.ehcache.impl.internal.concurrent.ConcurrentHashMap;
 import org.springframework.transaction.TransactionException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.biz.NodeEventObservationRegistrar;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -57,12 +55,15 @@ import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.StreamDatum;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Observer of SolarInput datum streams.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 		implements NodeEventObservationRegistrar<ObjectDatum> {
@@ -364,7 +365,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 				}
 				final DatumId id = DatumId.nodeId(nodeId, meta.getSourceId(), d.getTimestamp());
 				return ObjectDatum.forStreamDatum(d, owner.getUserId(), id, meta);
-			} catch ( IOException e ) {
+			} catch ( JacksonException e ) {
 				log.debug("Unable to parse node {} stream datum: {}", nodeId, e.getMessage());
 			}
 			return null;
@@ -374,7 +375,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 
 	private static String getStringFieldValue(JsonNode json, String fieldName, String placeholder) {
 		JsonNode child = json.get(fieldName);
-		return (child == null ? placeholder : child.asText());
+		return (child == null ? placeholder : child.asString());
 	}
 
 	private ObjectDatumStreamMetadata metadataForDatumId(Long userId, DatumId id) {

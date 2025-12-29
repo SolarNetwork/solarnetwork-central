@@ -26,8 +26,8 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.SequencedMap;
 import java.util.function.Function;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.util.NumberUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * A measurement set type.
@@ -35,7 +35,7 @@ import net.solarnetwork.util.NumberUtils;
  * @param <T>
  *        the value type
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public record SmaMeasurementType<T>(String name, String description, Function<JsonNode, T> parser) {
 
@@ -49,7 +49,7 @@ public record SmaMeasurementType<T>(String name, String description, Function<Js
 	 * @return the measurement type
 	 */
 	public static SmaMeasurementType<String> stringType(String name, String description) {
-		return new SmaMeasurementType<>(name, description, JsonNode::textValue);
+		return new SmaMeasurementType<>(name, description, JsonNode::stringValue);
 	}
 
 	/**
@@ -63,7 +63,7 @@ public record SmaMeasurementType<T>(String name, String description, Function<Js
 	 */
 	public static SmaMeasurementType<LocalDateTime> localDateTimeType(String name, String description) {
 		return new SmaMeasurementType<>(name, description,
-				json -> LocalDateTime.parse(json.textValue()));
+				json -> LocalDateTime.parse(json.stringValue()));
 	}
 
 	/**
@@ -94,7 +94,7 @@ public record SmaMeasurementType<T>(String name, String description, Function<Js
 		return new SmaMeasurementType<>(name, description, json -> {
 			var result = new LinkedHashMap<String, Number>(8);
 			for ( JsonNode indexNode : json ) {
-				var key = indexNode.path("index").textValue();
+				var key = indexNode.path("index").stringValue();
 				var val = indexNode.path("value").numberValue();
 				if ( key != null && val != null ) {
 					result.put(key, NumberUtils.narrow(val, 2));

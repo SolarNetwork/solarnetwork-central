@@ -57,7 +57,7 @@ import net.solarnetwork.central.common.http.CachableRequestEntity;
 import net.solarnetwork.central.common.http.HttpUserEvents;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.support.SimpleCache;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.Result;
 
 /**

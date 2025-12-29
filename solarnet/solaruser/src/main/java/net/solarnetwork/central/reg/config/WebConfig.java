@@ -50,7 +50,9 @@ import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.cbor.MappingJackson2CborHttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverters.ServerBuilder;
+import org.springframework.http.converter.cbor.JacksonCborHttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.session.config.SessionRepositoryCustomizer;
 import org.springframework.session.jdbc.JdbcIndexedSessionRepository;
 import org.springframework.session.jdbc.PostgreSqlJdbcIndexedSessionRepositoryCustomizer;
@@ -63,7 +65,6 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 import net.solarnetwork.central.support.DelegatingParser;
@@ -85,12 +86,14 @@ import net.solarnetwork.web.jakarta.support.JSONView;
 import net.solarnetwork.web.jakarta.support.SimpleCsvHttpMessageConverter;
 import net.solarnetwork.web.jakarta.support.SimpleXmlHttpMessageConverter;
 import net.solarnetwork.web.jakarta.support.SimpleXmlView;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 /**
  * Web layer configuration.
  *
  * @author matt
- * @version 1.8
+ * @version 2.0
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -108,8 +111,11 @@ public class WebConfig implements WebMvcConfigurer {
 	private ContentCachingService contentCachingService;
 
 	@Autowired
+	private JsonMapper jsonMapper;
+
+	@Autowired
 	@Qualifier(JsonConfig.CBOR_MAPPER)
-	private ObjectMapper cborObjectMapper;
+	private CBORMapper cborMapper;
 
 	@Override
 	public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
@@ -188,14 +194,13 @@ public class WebConfig implements WebMvcConfigurer {
 	}
 
 	@Override
-	public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
-		// update CBOR with our standard ObjectMapper
-		for ( HttpMessageConverter<?> c : converters ) {
-			if ( c instanceof MappingJackson2CborHttpMessageConverter cbor ) {
-				cbor.setObjectMapper(cborObjectMapper);
-			}
-		}
+	public void configureMessageConverters(ServerBuilder builder) {
+		builder.withJsonConverter(new JacksonJsonHttpMessageConverter(jsonMapper))
+				.withCborConverter(new JacksonCborHttpMessageConverter(cborMapper));
+	}
 
+	@Override
+	public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
 		SimpleCsvHttpMessageConverter csv = new SimpleCsvHttpMessageConverter();
 		csv.setPropertySerializerRegistrar(propertySerializerRegistrar());
 		converters.add(csv);

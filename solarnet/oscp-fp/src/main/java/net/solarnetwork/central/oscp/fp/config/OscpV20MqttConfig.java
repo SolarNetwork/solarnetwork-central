@@ -33,7 +33,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.task.AsyncTaskExecutor;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
@@ -43,12 +42,13 @@ import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructionHandler;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Configuration for OSCP instruction handling.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @Profile(OscpV20MqttConfig.MQTT_OSCP_V20)
 @Configuration(proxyBeanMethods = false)

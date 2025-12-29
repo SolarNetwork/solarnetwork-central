@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.v2.support;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -35,13 +34,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
@@ -49,7 +41,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
@@ -58,12 +50,21 @@ import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.StreamDatum;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.JacksonModule;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * Utilities for Datum JSON processing.
  *
  * @author matt
- * @version 2.5
+ * @version 3.0
  * @since 2.8
  */
 public final class DatumJsonUtils {
@@ -98,11 +99,11 @@ public final class DatumJsonUtils {
 	 *        the generator
 	 * @param array
 	 *        the array whose contents should be written to {@code generator}
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
 	public static void writeJsonArrayValues(JsonGenerator generator, BigDecimal[] array)
-			throws IOException {
+			throws JacksonException {
 		if ( array == null ) {
 			return;
 		}
@@ -124,11 +125,11 @@ public final class DatumJsonUtils {
 	 *        the generator
 	 * @param arrayOfArrays
 	 *        the array whose contents should be written to {@code generator}
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
 	public static void writeJsonArrayValues(JsonGenerator generator, BigDecimal[][] arrayOfArrays)
-			throws IOException {
+			throws JacksonException {
 		if ( arrayOfArrays == null ) {
 			return;
 		}
@@ -155,10 +156,11 @@ public final class DatumJsonUtils {
 	 *        the generator
 	 * @param array
 	 *        the array whose contents should be written to {@code generator}
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
-	public static void writeJsonArrayValues(JsonGenerator generator, String[] array) throws IOException {
+	public static void writeJsonArrayValues(JsonGenerator generator, String[] array)
+			throws JacksonException {
 		if ( array == null ) {
 			return;
 		}
@@ -194,11 +196,11 @@ public final class DatumJsonUtils {
 	 *        the generator to write to
 	 * @param metadata
 	 *        the metadata to write
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
 	public static void writeStreamMetadata(JsonGenerator generator, DatumStreamMetadata metadata)
-			throws IOException {
+			throws JacksonException {
 		if ( metadata == null ) {
 			generator.writeNull();
 			return;
@@ -209,13 +211,13 @@ public final class DatumJsonUtils {
 		// tz
 		String timeZoneId = metadata.getTimeZoneId();
 		if ( timeZoneId != null ) {
-			generator.writeFieldName("tz");
+			generator.writeName("tz");
 			generator.writeString(timeZoneId);
 		}
 
 		// props
 
-		generator.writeFieldName("props");
+		generator.writeName("props");
 		String[] array = metadata.getPropertyNames();
 		if ( array == null || array.length < 1 ) {
 			generator.writeNull();
@@ -231,26 +233,26 @@ public final class DatumJsonUtils {
 		String[] aProps = metadata.propertyNamesForType(DatumSamplesType.Accumulating);
 		String[] sProps = metadata.propertyNamesForType(DatumSamplesType.Status);
 
-		generator.writeFieldName("class");
+		generator.writeName("class");
 		if ( array == null || array.length < 1 ) {
 			generator.writeNull();
 		} else {
 			generator.writeStartObject(null,
 					(iProps != null ? 1 : 0) + (aProps != null ? 1 : 0) + (sProps != null ? 1 : 0));
 			if ( iProps != null ) {
-				generator.writeFieldName("i");
+				generator.writeName("i");
 				generator.writeStartArray(iProps, iProps.length);
 				writeJsonArrayValues(generator, iProps);
 				generator.writeEndArray();
 			}
 			if ( aProps != null ) {
-				generator.writeFieldName("a");
+				generator.writeName("a");
 				generator.writeStartArray(aProps, aProps.length);
 				writeJsonArrayValues(generator, aProps);
 				generator.writeEndArray();
 			}
 			if ( sProps != null ) {
-				generator.writeFieldName("s");
+				generator.writeName("s");
 				generator.writeStartArray(sProps, sProps.length);
 				writeJsonArrayValues(generator, sProps);
 				generator.writeEndArray();
@@ -300,11 +302,11 @@ public final class DatumJsonUtils {
 	 *        the generator to write to
 	 * @param datum
 	 *        the datum to write the sample values for
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
 	public static void writePropertyValuesArray(JsonGenerator generator, Datum datum)
-			throws IOException {
+			throws JacksonException {
 		if ( datum == null ) {
 			generator.writeNull();
 			return;
@@ -381,30 +383,30 @@ public final class DatumJsonUtils {
 	 *        the datum to write
 	 * @param datumLength
 	 *        the number of elements in the {@code datum} iterator
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any IO error occurs
 	 * @see #writeStreamMetadata(JsonGenerator, DatumStreamMetadata)
 	 * @see #writePropertyValuesArray(JsonGenerator, Datum)
 	 */
 	public static void writeStream(JsonGenerator generator, UUID streamId, DatumStreamMetadata metadata,
-			Iterator<Datum> datum, int datumLength) throws IOException {
+			Iterator<Datum> datum, int datumLength) throws JacksonException {
 		if ( datum == null ) {
 			generator.writeNull();
 			return;
 		}
 		generator.writeStartObject(null, 3);
 
-		generator.writeFieldName("streamId");
+		generator.writeName("streamId");
 		if ( streamId == null ) {
 			generator.writeNull();
 		} else {
 			generator.writeString(streamId.toString());
 		}
 
-		generator.writeFieldName("metadata");
+		generator.writeName("metadata");
 		writeStreamMetadata(generator, metadata);
 
-		generator.writeFieldName("values");
+		generator.writeName("values");
 		if ( datumLength < 1 ) {
 			generator.writeNull();
 		} else {
@@ -455,11 +457,11 @@ public final class DatumJsonUtils {
 	 *        the generator to write to
 	 * @param datum
 	 *        the datum to write the sample values for
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
 	public static void writeStatisticValuesArray(JsonGenerator generator, AggregateDatum datum)
-			throws IOException {
+			throws JacksonException {
 		if ( datum == null ) {
 			generator.writeNull();
 			return;
@@ -542,7 +544,7 @@ public final class DatumJsonUtils {
 	 *        the datum to write
 	 * @param datumLength
 	 *        the number of elements in the {@code datum} iterator
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any IO error occurs
 	 * @see #writeStreamMetadata(JsonGenerator, DatumStreamMetadata)
 	 * @see #writePropertyValuesArray(JsonGenerator, Datum)
@@ -550,24 +552,24 @@ public final class DatumJsonUtils {
 	 */
 	public static void writeAggregateStream(JsonGenerator generator, UUID streamId,
 			DatumStreamMetadata metadata, Iterator<AggregateDatum> datum, int datumLength)
-			throws IOException {
+			throws JacksonException {
 		if ( datum == null ) {
 			generator.writeNull();
 			return;
 		}
 		generator.writeStartObject(null, 3);
 
-		generator.writeFieldName("streamId");
+		generator.writeName("streamId");
 		if ( streamId == null ) {
 			generator.writeNull();
 		} else {
 			generator.writeString(streamId.toString());
 		}
 
-		generator.writeFieldName("metadata");
+		generator.writeName("metadata");
 		writeStreamMetadata(generator, metadata);
 
-		generator.writeFieldName("values");
+		generator.writeName("values");
 		if ( datumLength < 1 ) {
 			generator.writeNull();
 		} else {
@@ -619,12 +621,12 @@ public final class DatumJsonUtils {
 	 * @param metadataProvider
 	 *        the stream metadata provider to translate property names with
 	 * @return the parsed JSON object
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	public static Datum parseDatum(JsonParser parser, ObjectDatumStreamMetadataProvider metadataProvider)
-			throws IOException {
+	public static Datum parseDatum(JsonParser parser,
+			ObjectDatumStreamMetadataProvider metadataProvider) {
 		// read up to the next object end
 		UUID streamId = null;
 		Instant timestamp = null;
@@ -641,7 +643,7 @@ public final class DatumJsonUtils {
 			if ( t == null ) {
 				return null;
 			}
-			if ( t == JsonToken.FIELD_NAME ) {
+			if ( t == JsonToken.PROPERTY_NAME ) {
 				parser.nextToken();
 				switch (parser.currentName()) {
 					case "locationId":
@@ -653,14 +655,14 @@ public final class DatumJsonUtils {
 						break;
 
 					case "sourceId":
-						sourceId = parser.getText();
+						sourceId = parser.getString();
 						if ( objectId != null ) {
 							meta = metadataProvider.metadataForObjectSource(objectId, sourceId);
 						}
 						break;
 
 					case "streamId":
-						streamId = UUID.fromString(parser.getText());
+						streamId = UUID.fromString(parser.getString());
 						meta = metadataProvider.metadataForStreamId(streamId);
 						break;
 
@@ -673,7 +675,7 @@ public final class DatumJsonUtils {
 						break;
 
 					case "samples":
-						if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
+						if ( parser.currentToken() == JsonToken.START_OBJECT ) {
 							props = parseDatumSamples(parser, meta);
 						}
 						break;
@@ -732,12 +734,12 @@ public final class DatumJsonUtils {
 	 * @param metadataProvider
 	 *        the stream metadata provider to translate property names with
 	 * @return the parsed JSON object
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public static AggregateDatum parseAggregateDatum(JsonParser parser,
-			ObjectDatumStreamMetadataProvider metadataProvider) throws IOException {
+			ObjectDatumStreamMetadataProvider metadataProvider) throws JacksonException {
 		// read up to the next object end
 		UUID streamId = null;
 		Instant timestamp = null;
@@ -755,11 +757,11 @@ public final class DatumJsonUtils {
 			if ( t == null ) {
 				return null;
 			}
-			if ( t == JsonToken.FIELD_NAME ) {
+			if ( t == JsonToken.PROPERTY_NAME ) {
 				parser.nextToken();
 				switch (parser.currentName()) {
 					case "kind":
-						kind = Aggregation.forKey(parser.getText());
+						kind = Aggregation.forKey(parser.getString());
 						break;
 
 					case "locationId":
@@ -771,14 +773,14 @@ public final class DatumJsonUtils {
 						break;
 
 					case "sourceId":
-						sourceId = parser.getText();
+						sourceId = parser.getString();
 						if ( objectId != null ) {
 							meta = metadataProvider.metadataForObjectSource(objectId, sourceId);
 						}
 						break;
 
 					case "streamId":
-						streamId = UUID.fromString(parser.getText());
+						streamId = UUID.fromString(parser.getString());
 						meta = metadataProvider.metadataForStreamId(streamId);
 						break;
 
@@ -787,13 +789,13 @@ public final class DatumJsonUtils {
 						break;
 
 					case "samples":
-						if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
+						if ( parser.currentToken() == JsonToken.START_OBJECT ) {
 							props = parseDatumSamples(parser, meta);
 						}
 						break;
 
 					case "stats":
-						if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
+						if ( parser.currentToken() == JsonToken.START_OBJECT ) {
 							stats = parseDatumSamplesStatistics(parser, meta);
 						}
 						break;
@@ -839,12 +841,12 @@ public final class DatumJsonUtils {
 	 * @param meta
 	 *        the stream metadata to translate property names with
 	 * @return the parsed JSON object
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public static DatumProperties parseDatumSamples(JsonParser parser, ObjectDatumStreamMetadata meta)
-			throws IOException {
+			throws JacksonException {
 		BigDecimal[] instantaneous = null;
 		BigDecimal[] accumulating = null;
 		String[] status = null;
@@ -854,7 +856,7 @@ public final class DatumJsonUtils {
 			if ( t == null ) {
 				return null;
 			}
-			if ( t == JsonToken.FIELD_NAME ) {
+			if ( t == JsonToken.PROPERTY_NAME ) {
 				parser.nextToken();
 				switch (parser.currentName()) {
 					case "i":
@@ -909,12 +911,12 @@ public final class DatumJsonUtils {
 	 * @param meta
 	 *        the stream metadata to translate property names with
 	 * @return the parsed JSON object
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public static DatumPropertiesStatistics parseDatumSamplesStatistics(JsonParser parser,
-			ObjectDatumStreamMetadata meta) throws IOException {
+			ObjectDatumStreamMetadata meta) throws JacksonException {
 		BigDecimal[][] instantaneous = null;
 		BigDecimal[][] accumulating = null;
 		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
@@ -922,7 +924,7 @@ public final class DatumJsonUtils {
 			if ( t == null ) {
 				return null;
 			}
-			if ( t == JsonToken.FIELD_NAME ) {
+			if ( t == JsonToken.PROPERTY_NAME ) {
 				parser.nextToken();
 				switch (parser.currentName()) {
 					case "i":
@@ -941,9 +943,9 @@ public final class DatumJsonUtils {
 	}
 
 	private static BigDecimal[] parseDecimalArrayForSamplesType(JsonParser parser,
-			ObjectDatumStreamMetadata meta, DatumSamplesType type) throws IOException {
+			ObjectDatumStreamMetadata meta, DatumSamplesType type) throws JacksonException {
 		BigDecimal[] result = null;
-		if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
+		if ( parser.currentToken() == JsonToken.START_OBJECT ) {
 			Map<String, BigDecimal> map = parseDecimalsObject(parser);
 			String[] names = meta.propertyNamesForType(type);
 			if ( names != null && map != null ) {
@@ -957,22 +959,22 @@ public final class DatumJsonUtils {
 	}
 
 	private static String[] parseStringArrayForSamplesType(JsonParser parser,
-			ObjectDatumStreamMetadata meta, DatumSamplesType type) throws IOException {
+			ObjectDatumStreamMetadata meta, DatumSamplesType type) throws JacksonException {
 		String[] result = null;
 		if ( type == DatumSamplesType.Tag ) {
-			if ( parser.getCurrentToken() == JsonToken.START_ARRAY ) {
+			if ( parser.currentToken() == JsonToken.START_ARRAY ) {
 				List<String> tags = new ArrayList<>(4);
-				while ( parser.getCurrentToken() != JsonToken.END_ARRAY ) {
+				while ( parser.currentToken() != JsonToken.END_ARRAY ) {
 					parser.nextToken();
-					if ( parser.getCurrentToken() == JsonToken.VALUE_STRING ) {
-						tags.add(parser.getText());
+					if ( parser.currentToken() == JsonToken.VALUE_STRING ) {
+						tags.add(parser.getString());
 					}
 				}
 				if ( !tags.isEmpty() ) {
 					result = tags.toArray(String[]::new);
 				}
 			}
-		} else if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
+		} else if ( parser.currentToken() == JsonToken.START_OBJECT ) {
 			Map<String, String> map = parseStringsObject(parser);
 			String[] names = meta.propertyNamesForType(type);
 			if ( names != null && map != null ) {
@@ -986,9 +988,9 @@ public final class DatumJsonUtils {
 	}
 
 	private static BigDecimal[][] parseDecimalArrayOfArraysForSamplesType(JsonParser parser,
-			ObjectDatumStreamMetadata meta, DatumSamplesType type) throws IOException {
+			ObjectDatumStreamMetadata meta, DatumSamplesType type) throws JacksonException {
 		BigDecimal[][] result = null;
-		if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
+		if ( parser.currentToken() == JsonToken.START_OBJECT ) {
 			Map<String, BigDecimal[]> map = parseDecimalArraysObject(parser);
 			String[] names = meta.propertyNamesForType(type);
 			if ( names != null ) {
@@ -1031,24 +1033,25 @@ public final class DatumJsonUtils {
 	 * @param parser
 	 *        the parser to read from
 	 * @return the parsed JSON object
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
-	public static Map<String, BigDecimal> parseDecimalsObject(JsonParser parser) throws IOException {
+	public static Map<String, BigDecimal> parseDecimalsObject(JsonParser parser)
+			throws JacksonException {
 		Map<String, BigDecimal> map = new LinkedHashMap<>(8);
 		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
 			JsonToken t = parser.currentToken();
 			if ( t == null ) {
 				return null;
 			}
-			if ( t == JsonToken.FIELD_NAME ) {
+			if ( t == JsonToken.PROPERTY_NAME ) {
 				t = parser.nextToken();
 				BigDecimal d = null;
 				if ( t == JsonToken.VALUE_NUMBER_INT || t == JsonToken.VALUE_NUMBER_FLOAT ) {
 					d = parser.getDecimalValue();
 				} else if ( t == JsonToken.VALUE_STRING ) {
 					try {
-						d = new BigDecimal(parser.getText());
+						d = new BigDecimal(parser.getString());
 					} catch ( NumberFormatException e ) {
 						// ignore error
 					}
@@ -1085,19 +1088,19 @@ public final class DatumJsonUtils {
 	 * @param parser
 	 *        the parser to read from
 	 * @return the parsed JSON object
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
-	public static Map<String, String> parseStringsObject(JsonParser parser) throws IOException {
+	public static Map<String, String> parseStringsObject(JsonParser parser) throws JacksonException {
 		Map<String, String> map = new LinkedHashMap<>(8);
 		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
 			JsonToken t = parser.currentToken();
 			if ( t == null ) {
 				return null;
 			}
-			if ( t == JsonToken.FIELD_NAME ) {
+			if ( t == JsonToken.PROPERTY_NAME ) {
 				parser.nextToken();
-				String v = parser.getText();
+				String v = parser.getString();
 				if ( v != null ) {
 					map.put(parser.currentName(), v);
 				}
@@ -1130,18 +1133,18 @@ public final class DatumJsonUtils {
 	 * @param parser
 	 *        the parser to read from
 	 * @return the parsed JSON object
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
 	public static Map<String, BigDecimal[]> parseDecimalArraysObject(JsonParser parser)
-			throws IOException {
+			throws JacksonException {
 		Map<String, BigDecimal[]> map = new LinkedHashMap<>(8);
 		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
 			JsonToken t = parser.currentToken();
 			if ( t == null ) {
 				return null;
 			}
-			if ( t == JsonToken.FIELD_NAME ) {
+			if ( t == JsonToken.PROPERTY_NAME ) {
 				String name = parser.currentName();
 				t = parser.nextToken();
 				if ( t == JsonToken.START_ARRAY ) {
@@ -1166,10 +1169,10 @@ public final class DatumJsonUtils {
 	 * @param parser
 	 *        the parser to read from
 	 * @return the parsed array
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
-	public static BigDecimal[] parseDecimalArray(JsonParser parser) throws IOException {
+	public static BigDecimal[] parseDecimalArray(JsonParser parser) throws JacksonException {
 		List<BigDecimal> list = new ArrayList<>(3);
 		while ( parser.nextToken() != JsonToken.END_ARRAY ) {
 			JsonToken t = parser.currentToken();
@@ -1203,17 +1206,17 @@ public final class DatumJsonUtils {
 	 * @param parser
 	 *        the parser to read from
 	 * @return the parsed instant
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
-	public static Instant parseInstant(JsonParser parser) throws IOException {
+	public static Instant parseInstant(JsonParser parser) throws JacksonException {
 		Instant timestamp = null;
-		if ( parser.getCurrentToken() == JsonToken.VALUE_NUMBER_INT ) {
+		if ( parser.currentToken() == JsonToken.VALUE_NUMBER_INT ) {
 			// parse as millisecond epoch value
 			timestamp = Instant.ofEpochMilli(parser.getLongValue());
 		} else {
 			// parse as ISO 8601 instant
-			String text = parser.getText();
+			String text = parser.getString();
 			if ( text != null ) {
 				text = text.replace(' ', 'T');
 				try {
@@ -1232,8 +1235,7 @@ public final class DatumJsonUtils {
 	 *
 	 * @since 2.1
 	 */
-	public static final com.fasterxml.jackson.databind.Module DATUM_MODULE;
-
+	public static final JacksonModule DATUM_MODULE;
 	static {
 		SimpleModule m = new SimpleModule("SolarNet Datum");
 		m.addSerializer(ObjectDatumStreamMetadataId.class,
@@ -1244,30 +1246,12 @@ public final class DatumJsonUtils {
 	}
 
 	/**
-	 * Create a new {@link ObjectMapper} with datum support.
+	 * A module for handling datum objects.
 	 *
-	 * @return a new {@link ObjectMapper}
-	 * @since 2.1
+	 * @since 3.0
 	 */
-	public static ObjectMapper newDatumObjectMapper() {
-		ObjectMapper mapper = JsonUtils.newDatumObjectMapper();
-		mapper.registerModule(DATUM_MODULE);
-		return mapper;
-	}
-
-	/**
-	 * Create a new {@link ObjectMapper} with datum support.
-	 *
-	 * @param jsonFactory
-	 *        the JSON factory to use
-	 * @return a new {@link ObjectMapper}
-	 * @since 2.1
-	 */
-	public static ObjectMapper newDatumObjectMapper(JsonFactory jsonFactory) {
-		ObjectMapper mapper = JsonUtils.newDatumObjectMapper(jsonFactory);
-		mapper.registerModule(DATUM_MODULE);
-		return mapper;
-	}
+	public static final JsonMapper DATUM_JSON_OBJECT_MAPPER = JsonUtils.JSON_OBJECT_MAPPER.rebuild()
+			.addModules(JsonUtils.DATUM_MODULE, DATUM_MODULE).build();
 
 	/**
 	 * Get a string field value.
@@ -1284,7 +1268,7 @@ public final class DatumJsonUtils {
 	 */
 	public static String getStringFieldValue(JsonNode node, String fieldName, String placeholder) {
 		JsonNode child = node.get(fieldName);
-		return (child == null ? placeholder : child.asText());
+		return (child == null ? placeholder : child.asString());
 	}
 
 	/**
@@ -1301,11 +1285,11 @@ public final class DatumJsonUtils {
 	 *        the JSON node to parse
 	 * @return the datum instance, or {@code null} if the structure is not
 	 *         recognized
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if a parsing error occurs
 	 * @since 2.5
 	 */
-	public static Object parseDatum(ObjectMapper mapper, JsonNode node) throws IOException {
+	public static Object parseDatum(ObjectMapper mapper, JsonNode node) throws JacksonException {
 		if ( node.isArray() ) {
 			return parseStreamDatum(mapper, node);
 		} else {
@@ -1327,16 +1311,13 @@ public final class DatumJsonUtils {
 	 * @param node
 	 *        the node to parse
 	 * @return the datum
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if the node cannot be parsed
 	 * @since 2.5
 	 */
-	public static StreamDatum parseStreamDatum(ObjectMapper mapper, JsonNode node) throws IOException {
-		try {
-			return mapper.treeToValue(node, StreamDatum.class);
-		} catch ( IOException e ) {
-			throw new IOException("Unable to parse JSON into StreamDatum: " + e.getMessage(), e);
-		}
+	public static StreamDatum parseStreamDatum(ObjectMapper mapper, JsonNode node)
+			throws JacksonException {
+		return mapper.treeToValue(node, StreamDatum.class);
 	}
 
 	/**
@@ -1347,17 +1328,13 @@ public final class DatumJsonUtils {
 	 * @param node
 	 *        the node to parse
 	 * @return the datum
-	 * @throws IOException
+	 * @throws JacksonException
 	 *         if the node cannot be parsed
 	 * @since 2.5
 	 */
 	public static net.solarnetwork.domain.datum.Datum parseGeneralDatum(ObjectMapper mapper,
-			JsonNode node) throws IOException {
-		try {
-			return mapper.treeToValue(node, net.solarnetwork.domain.datum.Datum.class);
-		} catch ( IOException e ) {
-			throw new IOException("Unable to parse JSON into GeneralDatum: " + e.getMessage(), e);
-		}
+			JsonNode node) throws JacksonException {
+		return mapper.treeToValue(node, net.solarnetwork.domain.datum.Datum.class);
 	}
 
 }

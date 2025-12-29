@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -45,13 +44,14 @@ import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import tools.jackson.databind.JsonNode;
 
 /**
  * OpenWeatherMap implementation of {@link CloudDatumStreamService} using the
  * weather forecast API.
  *
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 public class OpenWeatherMapForecastCloudDatumStreamService
 		extends BaseOpenWeatherMapCloudDatumStreamService {

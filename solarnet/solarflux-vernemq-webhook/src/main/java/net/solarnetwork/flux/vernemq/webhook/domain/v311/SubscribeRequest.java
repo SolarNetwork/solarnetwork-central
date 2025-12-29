@@ -18,15 +18,16 @@
 package net.solarnetwork.flux.vernemq.webhook.domain.v311;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import net.solarnetwork.flux.vernemq.webhook.domain.AuthRequest;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSettings;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * A subscribe or auth-subscribe request model.
  * 
  * @author matt
+ * @version 2.0
  */
 @JsonDeserialize(builder = SubscribeRequest.Builder.class)
 public class SubscribeRequest implements AuthRequest {

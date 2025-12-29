@@ -57,8 +57,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
@@ -81,12 +79,13 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongStringCompositePK;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
+import tools.jackson.core.JacksonException;
 
 /**
  * Test cases for the {@link DaoDatumInputEndpointBiz} class.
@@ -840,13 +839,13 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
 		given(xformService.transform(any(ByteArrayInputStream.class), eq(type), eq(transform), any()))
-				.willThrow(new JsonParseException("Oops."));
+				.willThrow(JacksonException.wrapWithPath(new RuntimeException("Oops."), "foo", "bar"));
 
 		// WHEN
 		Map<String, String> params = Map.of("foo", "bar", "bim", "bam");
 		and.thenThrownBy(() -> {
 			service.importDatum(userId, endpoint.getEndpointId(), type, in, params);
-		}).isInstanceOf(JsonProcessingException.class);
+		}).isInstanceOf(JacksonException.class);
 
 		// THEN
 		// @formatter:off
@@ -944,13 +943,13 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
 		given(xformService.transform(any(ByteArrayInputStream.class), eq(type), eq(transform), any()))
-				.willThrow(new JsonParseException("Oops."));
+				.willThrow(JacksonException.wrapWithPath(new RuntimeException("Oops."), "foo", "bar"));
 
 		// WHEN
 		Map<String, String> params = Map.of("foo", "bar", "bim", "bam");
 		and.thenThrownBy(() -> {
 			service.importDatum(userId, endpoint.getEndpointId(), type, in, params);
-		}).isInstanceOf(JsonProcessingException.class);
+		}).isInstanceOf(JacksonException.class);
 
 		// THEN
 		// @formatter:off

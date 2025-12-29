@@ -45,7 +45,6 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
@@ -63,12 +62,13 @@ import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Sma implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -334,13 +334,13 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 			}
 		 */
 
-		final String accessToken = json.path("access_token").textValue();
+		final String accessToken = json.path("access_token").stringValue();
 		if ( accessToken == null ) {
 			String errMsg = ms.getMessage("error.oauth.accessToken.missing", null, locale);
 			throw new IllegalStateException(errMsg);
 		}
 
-		final String refreshToken = json.path("refresh_token").textValue();
+		final String refreshToken = json.path("refresh_token").stringValue();
 		if ( refreshToken == null ) {
 			String errMsg = ms.getMessage("error.oauth.refreshToken.missing", null, locale);
 			throw new IllegalStateException(errMsg);

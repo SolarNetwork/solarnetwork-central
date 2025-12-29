@@ -30,11 +30,12 @@ import java.io.IOException;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.datum.v2.support.BasicObjectDatumStreamMetadataIdSerializer;
 import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * Test cases for the {@link BasicObjectDatumStreamMetadataIdSerializer} class.
@@ -47,12 +48,10 @@ public class BasicObjectDatumStreamMetadataIdSerializerTests {
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		ObjectMapper m = new ObjectMapper();
 		SimpleModule mod = new SimpleModule("Test");
 		mod.addSerializer(ObjectDatumStreamMetadataId.class,
 				BasicObjectDatumStreamMetadataIdSerializer.INSTANCE);
-		m.registerModule(mod);
-		return m;
+		return JsonMapper.builder().addModule(mod).build();
 	}
 
 	@BeforeEach

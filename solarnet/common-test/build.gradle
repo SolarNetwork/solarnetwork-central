@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.5.9' apply false
+	id 'org.springframework.boot' version '4.0.1' apply false
 }
 
 apply plugin: 'java-library'
@@ -26,8 +26,8 @@ dependencies {
 	api 'net.solarnetwork.common.test:net.solarnetwork.common.test:1.20.0'
 	api 'org.hamcrest:hamcrest-library'
 	api 'org.junit.jupiter:junit-jupiter-api'
-	api 'org.springframework.boot:spring-boot-starter-test'
-    api 'org.springframework.security:spring-security-test'
+	api 'org.springframework.boot:spring-boot-starter-jdbc-test'
+	api 'org.springframework.boot:spring-boot-starter-security-test'
     api "org.threeten:threeten-extra:${threetenExtraVersion}"
     api libraries.mockito
 }

@@ -39,12 +39,12 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.Aggregation;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link DatumFilterCommand} class.
@@ -67,7 +67,7 @@ public class DatumFilterCommandTests {
 
 	@BeforeEach
 	public void setup() {
-		objectMapper = DatumJsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	@Test

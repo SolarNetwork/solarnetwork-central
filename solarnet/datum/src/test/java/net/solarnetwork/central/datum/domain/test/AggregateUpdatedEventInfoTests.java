@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.equalTo;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**

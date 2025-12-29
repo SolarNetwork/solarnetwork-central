@@ -22,15 +22,15 @@
 
 package net.solarnetwork.central.test;
 
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.jdbc.test.autoconfigure.JdbcTest;
 import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Base class for JDBC DAO support.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 2.0
  */
 @ContextConfiguration

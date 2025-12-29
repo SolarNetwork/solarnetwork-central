@@ -32,7 +32,7 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.SolarNodeFilter;
 import net.solarnetwork.central.domain.SolarNodeFilterMatch;
 import net.solarnetwork.central.domain.SolarNodeMatch;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
