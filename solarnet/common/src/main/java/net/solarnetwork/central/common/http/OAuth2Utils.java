@@ -57,8 +57,8 @@ public final class OAuth2Utils {
 			"password");
 
 	/**
-	 * The name of the {@link #getAttribute(String) attribute} in the context
-	 * associated to the value for the resource owner's username.
+	 * The name of an attribute in the context associated to the value for the
+	 * resource owner's username.
 	 * 
 	 * @since 1.1
 	 */
@@ -66,8 +66,8 @@ public final class OAuth2Utils {
 			.concat(".USERNAME");
 
 	/**
-	 * The name of the {@link #getAttribute(String) attribute} in the context
-	 * associated to the value for the resource owner's password.
+	 * The name of an attribute in the context associated to the value for the
+	 * resource owner's password.
 	 * 
 	 * @since 1.1
 	 */

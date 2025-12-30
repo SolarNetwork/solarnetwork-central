@@ -25,7 +25,7 @@ package net.solarnetwork.oscp.sim.cp.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -46,7 +46,7 @@ public class JsonConfig {
 	@Primary
 	@Bean
 	public JsonMapper jsonMapper() {
-		return DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
+		return JsonUtils.JSON_OBJECT_MAPPER;
 	}
 
 }

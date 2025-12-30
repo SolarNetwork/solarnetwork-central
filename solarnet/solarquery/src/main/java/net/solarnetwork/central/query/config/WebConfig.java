@@ -48,7 +48,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
-import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverters.ServerBuilder;
 import org.springframework.http.converter.cbor.JacksonCborHttpMessageConverter;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
@@ -198,20 +197,19 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Override
 	public void configureMessageConverters(ServerBuilder builder) {
-		builder.withJsonConverter(new JacksonJsonHttpMessageConverter(jsonMapper))
-				.withCborConverter(new JacksonCborHttpMessageConverter(cborMapper));
-	}
-
-	@Override
-	public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
 		SimpleCsvHttpMessageConverter csv = new SimpleCsvHttpMessageConverter();
 		csv.setPropertySerializerRegistrar(propertySerializerRegistrar());
-		converters.add(csv);
 
 		SimpleXmlHttpMessageConverter xml = new SimpleXmlHttpMessageConverter();
 		xml.setClassNamesAllowedForNesting(Collections.singleton("net.solarnetwork"));
 		xml.setPropertySerializerRegistrar(xmlPropertySerializerRegistrar());
-		converters.add(xml);
+
+		// @formatter:off
+		builder.withJsonConverter(new JacksonJsonHttpMessageConverter(jsonMapper))
+				.withCborConverter(new JacksonCborHttpMessageConverter(cborMapper))
+				.addCustomConverter(csv)
+				.addCustomConverter(xml);
+		// @formatter:on
 	}
 
 	@Bean(autowireCandidate = false)

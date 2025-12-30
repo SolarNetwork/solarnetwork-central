@@ -233,7 +233,7 @@ public class PingController implements CompositeHealthContributor {
 			this.test = ObjectUtils.requireNonNullArgument(test, "test");
 		}
 
-		public HealthContributors.Entry toEntry() {
+		private HealthContributors.Entry toEntry() {
 			return new HealthContributors.Entry(test.getPingTestId(), this);
 		}
 

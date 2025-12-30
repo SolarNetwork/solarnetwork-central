@@ -87,7 +87,9 @@ public class OscpV20MqttConfig {
 	 * Capacity Optimizer) and publish them to a MQTT topic, for the Flexibility
 	 * Provider to subscribe to and process.
 	 *
-	 * @param jsonSchemaFactory
+	 * @param stats
+	 *        the stat tracker
+	 * @param jsonSchemaRegistry
 	 *        the JSON schema validator
 	 * @return the hook
 	 */

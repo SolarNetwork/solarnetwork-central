@@ -174,6 +174,7 @@ public class PasswordOAuth2AuthorizedClientProvider implements OAuth2AuthorizedC
 	 * @param clockSkew
 	 *        the maximum acceptable clock skew
 	 */
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	public void setClockSkew(Duration clockSkew) {
 		Assert.notNull(clockSkew, "clockSkew cannot be null");
 		Assert.isTrue(clockSkew.getSeconds() >= 0, "clockSkew must be >= 0");
