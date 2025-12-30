@@ -186,7 +186,7 @@ public final class RsaKeyHelper {
 	public static KeyPair generateKeyPair() {
 		try {
 			final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-			keyGen.initialize(1024);
+			keyGen.initialize(2048);
 			return keyGen.generateKeyPair();
 		} catch ( NoSuchAlgorithmException ex ) {
 			throw new IllegalStateException(ex);
