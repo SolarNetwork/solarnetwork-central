@@ -28,13 +28,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,20 +41,18 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StreamUtils;
-import org.supercsv.cellprocessor.FmtDate;
-import org.supercsv.cellprocessor.Optional;
-import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.io.CsvMapWriter;
-import org.supercsv.io.ICsvMapWriter;
-import org.supercsv.prefs.CsvPreference;
+import org.springframework.util.StringUtils;
+import de.siegmar.fastcsv.writer.CsvWriter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.biz.DatumExportService;
@@ -72,7 +69,6 @@ import net.solarnetwork.io.DeleteOnCloseFileResource;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
-import net.solarnetwork.util.ByteUtils;
 import net.solarnetwork.util.ClassUtils;
 
 /**
@@ -80,7 +76,7 @@ import net.solarnetwork.util.ClassUtils;
  * {@link DatumExportOutputFormatService}
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 1.23
  */
 public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputFormatService {
@@ -91,25 +87,14 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 	private static final PropertySerializer INSTANT_PROP_SERIALIZER = new TemporalPropertySerializer(
 			"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", ZoneOffset.UTC);
 
-	private static final CellProcessor INSTANT_CELL_PROCESSOR = new PropertySerializerCellProcessor(
-			INSTANT_PROP_SERIALIZER);
-
 	private static final PropertySerializer DATE_PROP_SERIALIZER = new TemporalPropertySerializer(
 			"yyyy-MM-dd", ZoneOffset.UTC);
-
-	private static final CellProcessor DATE_CELL_PROCESSOR = new PropertySerializerCellProcessor(
-			DATE_PROP_SERIALIZER);
 
 	private static final PropertySerializer TIME_PROP_SERIALIZER = new TemporalPropertySerializer(
 			"HH:mm:ss.SSS", ZoneOffset.UTC);
 
-	private static final CellProcessor TIME_CELL_PROCESSOR = new PropertySerializerCellProcessor(
-			TIME_PROP_SERIALIZER);
-
-	private static final CellProcessor DATE_TIME_CELL_PROCESSOR = new FmtDate(
-			"yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-
-	private static final CellProcessor ARRAY_JOIN_CELL_PROCESSOR = new ArrayJoinCellProcessor(",");
+	private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter
+			.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.ENGLISH);
 
 	public CsvDatumExportOutputFormatService() {
 		super("net.solarnetwork.central.datum.export.standard.CsvDatumExportOutputFormatService");
@@ -146,10 +131,11 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 
 		private final CsvOutputFormatProperties props;
 		private File temporaryFile;
-		private ICsvMapWriter writer;
+		private CsvWriter writer;
 		private Set<String> headerSet;
 		private String[] headers;
-		private CellProcessor[] cellProcessors;
+		private List<Function<Object, String>> cellProcessors;
+		private int rowNum;
 
 		private CsvExportContext(OutputConfiguration config) {
 			super(config);
@@ -178,37 +164,47 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			return headers;
 		}
 
-		private CellProcessor processorForDatumProperty(Object value) {
+		private Function<Object, String> processorForDatumProperty(final Object value) {
 			if ( value instanceof java.time.Instant || value instanceof ZonedDateTime
 					|| value instanceof LocalDateTime ) {
-				return INSTANT_CELL_PROCESSOR;
+				return (v) -> (String) INSTANT_PROP_SERIALIZER.serialize(null, null, v);
 			} else if ( value instanceof LocalDate ) {
-				return DATE_CELL_PROCESSOR;
+				return (v) -> (String) DATE_PROP_SERIALIZER.serialize(null, null, v);
 			} else if ( value instanceof LocalTime ) {
-				return TIME_CELL_PROCESSOR;
+				return (v) -> (String) TIME_PROP_SERIALIZER.serialize(null, null, v);
 			} else if ( value instanceof Date ) {
-				return DATE_TIME_CELL_PROCESSOR;
+				return (v) -> DATE_TIME_FORMATTER.format(((Date) v).toInstant());
 			} else if ( value.getClass().isArray() ) {
-				return ARRAY_JOIN_CELL_PROCESSOR;
+				return (v) -> {
+					String result = null;
+					if ( v != null ) {
+						if ( v.getClass().isArray() ) {
+							result = StringUtils.arrayToCommaDelimitedString((Object[]) v);
+						} else {
+							result = v.toString();
+						}
+					}
+					return result;
+				};
 			}
 			return null;
 		}
 
-		private CellProcessor[] processorsForDatumMap(Map<String, Object> map) {
-			CellProcessor[] processors = new CellProcessor[Math.max(CSV_CORE_HEADERS.size(),
-					map.size())];
-			processors[0] = INSTANT_CELL_PROCESSOR;
-			processors[1] = null;
-			processors[2] = null;
-			processors[3] = DATE_CELL_PROCESSOR;
-			processors[4] = TIME_CELL_PROCESSOR;
+		private List<Function<Object, String>> processorsForDatumMap(Map<String, Object> map) {
+			List<Function<Object, String>> processors = new ArrayList<>(
+					Math.max(CSV_CORE_HEADERS.size(), map.size()));
+			processors.add((value) -> (String) INSTANT_PROP_SERIALIZER.serialize(null, null, value));
+			processors.add(null);
+			processors.add(null);
+			processors.add((value) -> (String) DATE_PROP_SERIALIZER.serialize(null, null, value));
+			processors.add((value) -> (String) TIME_PROP_SERIALIZER.serialize(null, null, value));
 			int idx = 5;
 			for ( Map.Entry<String, ?> me : map.entrySet() ) {
 				if ( CSV_CORE_HEADERS.contains(me.getKey()) ) {
 					continue;
 				}
-				CellProcessor proc = processorForDatumProperty(me.getValue());
-				processors[idx++] = (proc != null ? new Optional(proc) : null);
+				Function<Object, String> proc = processorForDatumProperty(me.getValue());
+				processors.add(idx++, proc);
 			}
 			return processors;
 		}
@@ -257,8 +253,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 				// compress temporary results so don't run out of local disk space
 				out = new GZIPOutputStream(out);
 			}
-			writer = new CsvMapWriter(new OutputStreamWriter(out, ByteUtils.UTF8),
-					CsvPreference.STANDARD_PREFERENCE);
+			writer = CsvWriter.builder().build(out);
 			setEstimatedResultCount(estimatedResultCount);
 			log.info(
 					"Starting CSV export with estimated row count {} to temporary file [{}] for config {}",
@@ -274,11 +269,11 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			for ( GeneralNodeDatumFilterMatch m : iterable ) {
 				Map<String, Object> map = datumMap(m);
 				if ( !map.isEmpty() ) {
-					if ( writer.getLineNumber() == 0 ) {
+					if ( rowNum++ == 0 ) {
 						headers = headersForDatumMap(map);
 						headerSet = new LinkedHashSet<>(Arrays.asList(headers));
 						if ( props.isIncludeHeader() && isSinglePassOutput() ) {
-							writer.writeHeader(headers);
+							writer.writeRecord(headers);
 						}
 						cellProcessors = processorsForDatumMap(map);
 					} else {
@@ -290,7 +285,17 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 							}
 						}
 					}
-					writer.write(map, headers, cellProcessors);
+					String[] csvRow = new String[headers.length];
+					for ( int i = 0; i < headers.length; i++ ) {
+						Object val = map.get(headers[i]);
+						if ( cellProcessors.get(i) != null ) {
+							val = cellProcessors.get(i).apply(val);
+						}
+						if ( val != null ) {
+							csvRow[i] = val.toString();
+						}
+					}
+					writer.writeRecord(csvRow);
 				}
 				incrementProgress(CsvDatumExportOutputFormatService.this, 1, progressListener);
 			}
@@ -302,10 +307,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			newHeaders[headers.length] = key;
 			headers = newHeaders;
 			headerSet.add(key);
-			CellProcessor[] newProcessors = new CellProcessor[cellProcessors.length + 1];
-			System.arraycopy(cellProcessors, 0, newProcessors, 0, cellProcessors.length);
-			newProcessors[cellProcessors.length] = processorForDatumProperty(value);
-			cellProcessors = newProcessors;
+			cellProcessors.add(processorForDatumProperty(value));
 		}
 
 		@Override
@@ -328,11 +330,9 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 						OutputStream out = (decompressTemp ? new GZIPOutputStream(rawOut)
 								: createCompressedOutputStream(rawOut))) {
 					if ( headers != null ) {
-						try (ICsvMapWriter concatenatedWriter = new CsvMapWriter(
-								new OutputStreamWriter(StreamUtils.nonClosing(out),
-										StandardCharsets.UTF_8),
-								CsvPreference.STANDARD_PREFERENCE)) {
-							concatenatedWriter.writeHeader(headers);
+						try (CsvWriter concatenatedWriter = CsvWriter.builder()
+								.build(StreamUtils.nonClosing(out))) {
+							concatenatedWriter.writeRecord(headers);
 							concatenatedWriter.flush();
 						}
 					}
@@ -365,6 +365,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 		public void close() throws IOException {
 			if ( writer != null ) {
 				writer.close();
+				writer = null;
 			}
 		}
 

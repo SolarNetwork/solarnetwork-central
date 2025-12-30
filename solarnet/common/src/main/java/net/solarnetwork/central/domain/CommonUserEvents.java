@@ -23,7 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.central.domain.LogEventInfo.event;
-import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;

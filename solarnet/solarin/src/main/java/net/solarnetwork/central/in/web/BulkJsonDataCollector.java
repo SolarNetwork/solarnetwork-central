@@ -41,8 +41,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
@@ -59,17 +57,20 @@ import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.support.AbstractFilteredResultsProcessor;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.StreamDatum;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * JSON implementation of bulk upload service.
  *
  * @author matt
- * @version 3.7
+ * @version 4.0
  */
 @Controller
 @RequestMapping(value = { "/solarin/bulkCollector.do", "/solarin/u/bulkCollector.do" },
@@ -267,7 +268,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		}
 		try {
 			return parseDatum(objectMapper, node);
-		} catch ( IOException e ) {
+		} catch ( JacksonException e ) {
 			log.warn("Unable to parse JSON {}: {}", node, e.getMessage());
 		}
 		return null;

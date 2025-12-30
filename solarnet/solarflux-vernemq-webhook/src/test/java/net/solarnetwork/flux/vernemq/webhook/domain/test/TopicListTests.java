@@ -27,12 +27,10 @@ import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicList;
 import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link TopicList} class.
@@ -49,7 +47,7 @@ public class TopicListTests extends TestSupport {
   }
 
   @Test
-  public void toJsonFull() throws JsonProcessingException {
+  public void toJsonFull() {
     TopicList list = new TopicList(Arrays.asList("foo", "bar"));
     String json = objectMapper.writeValueAsString(list);
     log.debug("Topic settings full JSON: {}", json);

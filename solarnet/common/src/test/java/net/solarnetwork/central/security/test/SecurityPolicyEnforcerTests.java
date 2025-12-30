@@ -27,19 +27,14 @@ import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.is;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.AntPathMatcher;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.domain.NodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
@@ -49,11 +44,13 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityPolicyMetadataType;
 import net.solarnetwork.central.support.NodeMetadataSerializer;
-import net.solarnetwork.codec.ObjectMapperFactoryBean;
 import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * Test cases for the {@link SecurityPolicyEnforcer} class.
@@ -624,17 +621,9 @@ public class SecurityPolicyEnforcerTests {
 	}
 
 	private ObjectMapper nodeMetadataObjectMapper() {
-		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
-		List<JsonSerializer<?>> list = new ArrayList<JsonSerializer<?>>(1);
-		list.add(new NodeMetadataSerializer());
-		factory.setSerializers(list);
-		ObjectMapper mapper;
-		try {
-			mapper = factory.getObject();
-		} catch ( Exception e ) {
-			throw new RuntimeException(e);
-		}
-		return mapper;
+		SimpleModule mod = new SimpleModule("Test");
+		mod.addSerializer(new NodeMetadataSerializer());
+		return JsonMapper.builder().addModule(mod).build();
 	}
 
 	@Test
@@ -663,13 +652,7 @@ public class SecurityPolicyEnforcerTests {
 
 	private <T> T objectFromJSONResource(String resourceName, Class<T> objectClass) {
 		ObjectMapper mapper = new ObjectMapper();
-		T result;
-		try {
-			result = mapper.readValue(getClass().getResourceAsStream(resourceName), objectClass);
-		} catch ( IOException e ) {
-			throw new RuntimeException(e);
-		}
-		return result;
+		return mapper.readValue(getClass().getResourceAsStream(resourceName), objectClass);
 	}
 
 	@Test

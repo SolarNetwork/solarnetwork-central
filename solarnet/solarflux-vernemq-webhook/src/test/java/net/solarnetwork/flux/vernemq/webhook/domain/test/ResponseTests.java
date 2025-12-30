@@ -25,9 +25,6 @@ import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.Response;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicList;
@@ -36,6 +33,7 @@ import net.solarnetwork.flux.vernemq.webhook.domain.TopicSubscriptionSetting;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.RegisterModifiers;
 import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link Response} class.
@@ -52,7 +50,7 @@ public class ResponseTests extends TestSupport {
   }
 
   @Test
-  public void jsonOkSimple() throws JsonProcessingException {
+  public void jsonOkSimple() {
     Response r = new Response();
     String json = objectMapper.writeValueAsString(r);
     log.debug("OK simple JSON: {}", json);
@@ -70,7 +68,7 @@ public class ResponseTests extends TestSupport {
   }
 
   @Test
-  public void jsonErrorSimple() throws JsonProcessingException {
+  public void jsonErrorSimple() {
     Response r = new Response("fail");
     String json = objectMapper.writeValueAsString(r);
     log.debug("Error simple JSON: {}", json);
@@ -92,7 +90,7 @@ public class ResponseTests extends TestSupport {
   }
 
   @Test
-  public void jsonOkWithModifiers() throws JsonProcessingException {
+  public void jsonOkWithModifiers() {
     RegisterModifiers mods = RegisterModifiers.builder().withUpgradeQos(false).build();
     Response r = new Response(mods);
     String json = objectMapper.writeValueAsString(r);
@@ -116,7 +114,7 @@ public class ResponseTests extends TestSupport {
   }
 
   @Test
-  public void jsonOkWithTopicSettings() throws JsonProcessingException {
+  public void jsonOkWithTopicSettings() {
     TopicSettings topics = new TopicSettings(Arrays.asList(
         TopicSubscriptionSetting.builder().withTopic("foo").withQos(Qos.AtLeastOnce).build()));
     Response r = new Response(topics);
@@ -147,7 +145,7 @@ public class ResponseTests extends TestSupport {
   }
 
   @Test
-  public void jsonOkWithTopicList() throws JsonProcessingException {
+  public void jsonOkWithTopicList() {
     TopicList topics = new TopicList(Arrays.asList("foo", "bar"));
     Response r = new Response(topics);
     String json = objectMapper.writeValueAsString(r);

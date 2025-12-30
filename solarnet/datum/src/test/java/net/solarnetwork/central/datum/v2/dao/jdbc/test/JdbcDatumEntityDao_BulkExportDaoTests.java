@@ -52,7 +52,7 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BasicBulkExportOptions;
 import net.solarnetwork.dao.BulkExportingDao;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallback;

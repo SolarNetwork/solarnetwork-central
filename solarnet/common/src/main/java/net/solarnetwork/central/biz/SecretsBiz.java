@@ -23,7 +23,7 @@
 package net.solarnetwork.central.biz;
 
 import java.util.Map;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * API for secret management.

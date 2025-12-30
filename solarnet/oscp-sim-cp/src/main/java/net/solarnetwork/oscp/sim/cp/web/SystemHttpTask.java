@@ -48,7 +48,7 @@ import net.solarnetwork.central.oscp.web.OscpWebUtils;
  * Task to send an HTTP request.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SystemHttpTask<T> implements Runnable {
 
@@ -118,7 +118,7 @@ public class SystemHttpTask<T> implements Runnable {
 		if ( headersCustomizer != null ) {
 			headersCustomizer.accept(body, headers);
 		}
-		if ( !headers.containsKey(OscpWebUtils.REQUEST_ID_HEADER) ) {
+		if ( !headers.containsHeader(OscpWebUtils.REQUEST_ID_HEADER) ) {
 			headers.add(OscpWebUtils.REQUEST_ID_HEADER, UUID.randomUUID().toString());
 		}
 		try {

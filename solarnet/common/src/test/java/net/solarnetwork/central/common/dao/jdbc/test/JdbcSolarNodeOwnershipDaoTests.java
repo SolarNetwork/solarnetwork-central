@@ -65,7 +65,7 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;

@@ -133,7 +133,7 @@ public class SqsUserNodeEventHookService extends BaseSettingsSpecifierLocalizedS
 
 		// we want to serialize access to the SqsDestination objects, but Cache does not provide
 		// computeIfAbsent so we go through a ConcurrentMap instead
-		SqsDestination dest = cacheLock.computeIfAbsent(key, k -> {
+		SqsDestination dest = cacheLock.computeIfAbsent(key, _ -> {
 			SqsDestination d = null;
 			if ( cache != null ) {
 				d = cache.get(key);

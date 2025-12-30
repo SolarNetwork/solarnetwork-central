@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.5.9'
+	id 'org.springframework.boot' version '4.0.1'
 }
 
 apply plugin: 'java'
@@ -15,15 +15,6 @@ base {
 	archivesName = 'solarocpp'
 }
 
-configurations {
-    all*.exclude group: 'commons-logging'
-	all*.exclude group: 'javax.servlet'
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-	all*.exclude group: 'net.sf.supercsv'
-	all*.exclude group: 'net.solarnetwork.external', module: 'net.solarnetwork.external.ocpp'
-}
-
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-common-web')
@@ -35,20 +26,20 @@ dependencies {
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 
 	// Utilities
-	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
+	implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
 		
 	// SolarNetwork
 	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.v16.jakarta:${snExternalOcpp16JakartaVersion}"

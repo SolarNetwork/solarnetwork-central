@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateAssetConfiguration;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Test cases for the {@link UpdateAssetConfiguration} class.

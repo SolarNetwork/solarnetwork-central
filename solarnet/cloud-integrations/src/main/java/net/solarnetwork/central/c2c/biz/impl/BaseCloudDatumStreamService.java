@@ -57,7 +57,6 @@ import org.springframework.expression.ExpressionException;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -79,7 +78,7 @@ import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
@@ -99,12 +98,13 @@ import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.20
+ * @version 2.0
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -473,7 +473,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 					continue;
 				}
 				for ( MutableDatum d : datum ) {
-					virtualDatum.computeIfAbsent(d.getTimestamp(), k -> {
+					virtualDatum.computeIfAbsent(d.getTimestamp(), _ -> {
 						var l = new ArrayList<GeneralDatum>(virtualSourceIds.size());
 						for ( String virtualSourceId : virtualSourceIds ) {
 							String sourceId = expandTemplateString(virtualSourceId, placeholders);
@@ -587,7 +587,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 						}
 					}
 				}
-				case Status, Tag -> val.toString();
+				case Status, Tag, Metadata -> val.toString();
 			};
 			propVal = config.applyValueTransforms(propVal);
 			d.asMutableSampleOperations().putSampleValue(config.getPropertyType(),
@@ -669,7 +669,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			map.put(key, Instant.ofEpochMilli(field.asLong()));
 		}
 		try {
-			map.put(key, parser.apply(field.asText()));
+			map.put(key, parser.apply(field.asString()));
 		} catch ( DateTimeParseException e ) {
 			// ignore
 		}
@@ -713,8 +713,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		Number n = null;
 		if ( field.isNumber() ) {
 			n = field.numberValue();
-		} else if ( field.isTextual() ) {
-			n = StringUtils.numberValue(field.asText());
+		} else if ( field.isString() ) {
+			n = StringUtils.numberValue(field.asString());
 		}
 		if ( n != null ) {
 			map.put(key, NumberUtils.narrow(n, 2));
@@ -872,13 +872,13 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 					yield val.floatValue();
 				} else {
 					try {
-						yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
+						yield narrow(parseNumber(val.asString(), BigDecimal.class), 2);
 					} catch ( IllegalArgumentException e ) {
 						yield null;
 					}
 				}
 			}
-			case Status, Tag -> nonEmptyString(val.asText());
+			case Status, Tag, Metadata -> nonEmptyString(val.asString());
 		};
 	}
 

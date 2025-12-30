@@ -203,7 +203,7 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 			.as("Buffer watermark")
 			.returns(watermark, from(NonClosingBufferingDelegatingCache::getInternalSizeWatermark))
 			.as("Lag")
-			.returns(lag, (cache) -> {
+			.returns(lag, (_) -> {
 				return (int)(stats.get(AsyncDatumCollector.BasicCount.BufferAdds)
 						- stats.get(AsyncDatumCollector.BasicCount.BufferRemovals));
 			})

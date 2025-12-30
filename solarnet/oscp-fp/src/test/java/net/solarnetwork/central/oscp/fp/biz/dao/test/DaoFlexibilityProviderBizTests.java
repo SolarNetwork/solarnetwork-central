@@ -87,7 +87,6 @@ import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -122,7 +121,7 @@ import net.solarnetwork.central.oscp.domain.UserSettings;
 import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
 import net.solarnetwork.central.oscp.http.RestOpsExternalSystemClient;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.KeyValuePair;
@@ -133,6 +132,7 @@ import oscp.v20.HandshakeAcknowledge;
 import oscp.v20.Register;
 import oscp.v20.UpdateGroupCapacityForecast;
 import oscp.v20.VersionUrl;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link DaoFlexibilityProviderBiz} class.
@@ -197,7 +197,7 @@ public class DaoFlexibilityProviderBizTests {
 
 	@BeforeEach
 	public void setup() {
-		objectMapper = JsonUtils.newObjectMapper();
+		objectMapper = JsonUtils.JSON_OBJECT_MAPPER;
 		executor = new CallingThreadExecutorService();
 		restTemplate = new RestTemplate(
 				new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory()));

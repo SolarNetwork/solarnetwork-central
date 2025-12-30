@@ -26,7 +26,7 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
-import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import java.io.IOException;

@@ -24,18 +24,18 @@ package net.solarnetwork.central.ocpp.util;
 
 import java.io.IOException;
 import java.util.Map;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.SchemaValidationException;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Utilities for OCPP instruction handling.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  * @since 1.2
  */
 public final class OcppInstructionUtils {

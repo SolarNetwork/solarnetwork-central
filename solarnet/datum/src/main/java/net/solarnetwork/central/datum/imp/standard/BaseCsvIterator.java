@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.standard;
 
 import static java.util.stream.Collectors.toMap;
+import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.DateTimeException;
@@ -43,13 +44,15 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.supercsv.io.ICsvListReader;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRecord;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.imp.biz.DatumImportValidationException;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Base class to support parsing CSV data into objects.
@@ -59,7 +62,7 @@ import net.solarnetwork.util.StringUtils;
  * @param <T>
  *        the properties type
  * @author matt
- * @version 2.1
+ * @version 3.0
  */
 public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties>
 		implements Iterator<E>, Closeable {
@@ -90,7 +93,8 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		// @formatter:on
 	}
 
-	private final ICsvListReader reader;
+	private final CsvReader<CsvRecord> reader;
+	private final Iterator<CsvRecord> delegate;
 	protected final List<String> headerRow;
 	protected final T props;
 	protected final DateTimeFormatter dateFormatter;
@@ -98,25 +102,26 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 	private E next;
 
-	private static List<String> parseHeaderRows(ICsvListReader reader,
+	private static List<String> parseHeaderRows(Iterator<CsvRecord> delegate,
 			CsvDatumImportInputProperties props) throws IOException {
 		List<String> result = null;
 		if ( props != null && props.getHeaderRowCount() != null ) {
-			for ( int i = props.getHeaderRowCount(); i > 0; i-- ) {
-				List<String> row = reader.read();
+			for ( int i = props.getHeaderRowCount(); i > 0 && delegate.hasNext(); i-- ) {
+				CsvRecord row = delegate.next();
 				if ( result == null ) {
-					result = row;
+					result = row.getFields();
 				}
 			}
 		}
 		return result;
 	}
 
-	public BaseCsvIterator(ICsvListReader reader, T props) throws IOException {
+	public BaseCsvIterator(CsvReader<CsvRecord> reader, T props) throws IOException {
 		super();
 		this.reader = reader;
+		this.delegate = reader.iterator();
 		this.props = props;
-		this.headerRow = parseHeaderRows(reader, props);
+		this.headerRow = parseHeaderRows(delegate, props);
 
 		DateTimeFormatter formatter = null;
 		if ( props.getDateFormat() != null ) {
@@ -140,7 +145,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		}
 		this.dateFormatter = formatter;
 
-		this.objectMapper = JsonUtils.newObjectMapper();
+		this.objectMapper = JsonUtils.JSON_OBJECT_MAPPER;
 	}
 
 	/**
@@ -152,7 +157,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
-	protected abstract E parseRow(List<String> row) throws IOException;
+	protected abstract E parseRow(CsvRecord row) throws IOException;
 
 	/**
 	 * Get a column value.
@@ -164,11 +169,11 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 * @return the column value, or {@literal null} if the column isn't
 	 *         available
 	 */
-	protected String getColumnValue(List<String> row, Integer col) {
-		if ( row == null || col == null || col > row.size() || col < 1 ) {
+	protected String getColumnValue(CsvRecord row, Integer col) {
+		if ( row == null || col == null || col > row.getFieldCount() || col < 1 ) {
 			return null;
 		}
-		return row.get(col - 1);
+		return row.getField(col - 1);
 	}
 
 	/**
@@ -183,7 +188,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 * @return the columns combined value, or {@literal null} if the columns
 	 *         aren't available
 	 */
-	protected String getColumnsValue(List<String> row, List<Integer> cols, String delimiter) {
+	protected String getColumnsValue(CsvRecord row, List<Integer> cols, String delimiter) {
 		int numCols = cols.size();
 		if ( row == null || cols == null || numCols < 1 ) {
 			return null;
@@ -218,7 +223,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 * @return the map, or {@literal null} if the column is not available or the
 	 *         resulting map would be empty
 	 */
-	protected Map<String, Object> parseMap(List<String> row, Integer col) {
+	protected Map<String, Object> parseMap(CsvRecord row, Integer col) {
 		String v = getColumnValue(row, col);
 		Map<String, Object> result = null;
 		if ( v != null ) {
@@ -240,7 +245,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 * @return the map, or {@literal null} if the column is not available or the
 	 *         resulting map would be empty
 	 */
-	protected Map<String, Number> parseNumberMap(List<String> row, Integer col) {
+	protected Map<String, Number> parseNumberMap(CsvRecord row, Integer col) {
 		String v = getColumnValue(row, col);
 		Map<String, Number> result = null;
 		if ( v != null ) {
@@ -266,15 +271,16 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 * @return the list, or {@literal null} if the column is not available or
 	 *         the resulting list would be empty
 	 */
-	protected List<String> parseList(List<String> row, Integer col) {
+	protected List<String> parseList(CsvRecord row, Integer col) {
 		String v = getColumnValue(row, col);
 		List<String> result = null;
 		if ( v != null ) {
 			try {
 				result = objectMapper.readValue(v, STRING_LIST_TYPE);
-			} catch ( IOException e ) {
+			} catch ( JacksonException e ) {
 				throw new DatumImportValidationException("Unable to parse JSON array from column " + col,
-						e, (long) reader.getLineNumber(), reader.getUntokenizedRow());
+						e, row.getStartingLineNumber(),
+						commaDelimitedStringFromCollection(row.getFields()));
 			}
 			if ( result.isEmpty() ) {
 				result = null;
@@ -293,7 +299,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 * @return the list, or {@literal null} if the column is not available or
 	 *         the resulting list would be empty
 	 */
-	protected Set<String> parseSet(List<String> row, Integer col) {
+	protected Set<String> parseSet(CsvRecord row, Integer col) {
 		List<String> l = parseList(row, col);
 		Set<String> result = null;
 		if ( l != null && !l.isEmpty() ) {
@@ -324,22 +330,22 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *        the row of data
 	 * @return the datum
 	 */
-	protected GeneralNodeDatum parseDatum(List<String> row) {
+	protected GeneralNodeDatum parseDatum(CsvRecord row) {
 		Long nodeId;
 		try {
 			nodeId = Long.valueOf(getColumnValue(row, props.nodeIdColumn()));
 		} catch ( NumberFormatException e ) {
 			throw new DatumImportValidationException(
 					"Error parsing node ID from column " + props.getNodeIdColumn() + ".", e,
-					(long) reader.getLineNumber(), reader.getUntokenizedRow());
+					row.getStartingLineNumber(), commaDelimitedStringFromCollection(row.getFields()));
 		}
 
 		String sourceId = getColumnValue(row, props.sourceIdColumn());
 		if ( sourceId == null ) {
 			throw new DatumImportValidationException(
 					"Unable to parse source ID from column " + props.getSourceIdColumn(),
-					new NullPointerException(), (long) reader.getLineNumber(),
-					reader.getUntokenizedRow());
+					new NullPointerException(), row.getStartingLineNumber(),
+					commaDelimitedStringFromCollection(row.getFields()));
 		}
 
 		Instant date;
@@ -368,7 +374,8 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 						buf.append(StringUtils.commaDelimitedStringFromCollection(dateCols));
 						buf.append(".");
 						throw new DatumImportValidationException(buf.toString(), null,
-								(long) reader.getLineNumber(), reader.getUntokenizedRow());
+								row.getStartingLineNumber(),
+								commaDelimitedStringFromCollection(row.getFields()));
 					}
 				}
 				date = dt.atZone(zone).toInstant();
@@ -387,8 +394,8 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 			buf.append(" ");
 			buf.append(StringUtils.commaDelimitedStringFromCollection(dateCols));
 			buf.append(".");
-			throw new DatumImportValidationException(buf.toString(), e, (long) reader.getLineNumber(),
-					reader.getUntokenizedRow());
+			throw new DatumImportValidationException(buf.toString(), e, row.getStartingLineNumber(),
+					commaDelimitedStringFromCollection(row.getFields()));
 		}
 
 		GeneralNodeDatum d = new GeneralNodeDatum();
@@ -406,16 +413,16 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	}
 
 	private E getNext() {
-		if ( next == null ) {
+		if ( next == null && delegate.hasNext() ) {
 			try {
 				// read in rows of data until we parse a non-null value
-				List<String> row;
+				CsvRecord row;
 				do {
-					row = reader.read();
+					row = delegate.next();
 					if ( row != null ) {
 						next = parseRow(row);
 					}
-				} while ( next == null && row != null );
+				} while ( next == null && delegate.hasNext() );
 			} catch ( IOException e ) {
 				throw new RuntimeException(e);
 			}

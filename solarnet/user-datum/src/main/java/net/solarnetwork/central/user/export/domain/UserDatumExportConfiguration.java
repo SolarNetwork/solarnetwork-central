@@ -28,7 +28,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Objects;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -46,7 +46,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * User related {@link Configuration} entity.
  *
  * @author matt
- * @version 2.1
+ * @version 3.0
  */
 @JsonPropertyOrder({ "id", "created", "userId", "name", "hourDelayOffset", "scheduleKey" })
 @JsonIgnoreProperties("enabled")

@@ -68,7 +68,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -98,12 +97,13 @@ import net.solarnetwork.settings.TextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Enphase implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.8
+ * @version 2.0
  */
 public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -280,8 +280,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(EnphaseCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> EnphaseCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager, clock, integrationLocksCache));
+						_ -> EnphaseCloudIntegrationService.SECURE_SETTINGS, oauthClientManager, clock,
+						integrationLocksCache));
 	}
 
 	@Override
@@ -325,7 +325,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 	private List<CloudDataValue> systems(CloudIntegrationConfiguration integration) {
 		final var decryp = integration.copyWithId(integration.getId());
-		decryp.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
+		decryp.unmaskSensitiveInformation(_ -> SECURE_SETTINGS, encryptor);
 		List<CloudDataValue> result = null;
 
 		final var pagination = new Pagination();
@@ -333,7 +333,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		while ( pagination.hasMore() ) {
 			List<CloudDataValue> pageResults = restOpsHelper.httpGet("List systems", integration,
 					JsonNode.class,
-					(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+					_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_PATH)
 							.queryParam(API_KEY_PARAM,
 									decryp.serviceProperty(API_KEY_SETTING, String.class))
@@ -360,11 +360,11 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	private List<CloudDataValue> systemDevices(final CloudIntegrationConfiguration integration,
 			final String systemId, Map<String, ?> filters) {
 		final var decryp = integration.copyWithId(integration.getId());
-		decryp.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
+		decryp.unmaskSensitiveInformation(_ -> SECURE_SETTINGS, encryptor);
 
 		return restOpsHelper.httpGet("List system devices", integration, JsonNode.class,
 		// @formatter:off
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SYSTEM_DEVICES_PATH_TEMPLATE)
 						.queryParam(API_KEY_PARAM, decryp.serviceProperty(API_KEY_SETTING, String.class))
 						.buildAndExpand(filters).toUri(),
@@ -473,8 +473,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		if ( json == null ) {
 			return List.of();
 		}
-		final String id = json.path("system_id").asText();
-		final String name = json.path("name").asText().trim();
+		final String id = json.path("system_id").asString();
+		final String name = json.path("name").asString().trim();
 
 		final var meta = new LinkedHashMap<String, Object>(4);
 		populateNonEmptyValue(json, "timezone", CloudDataValue.TIME_ZONE_METADATA, meta);
@@ -683,10 +683,10 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 		private void addValueRef(ValueRef ref) {
 			if ( ref.isSystemDevice() ) {
-				systemValueRefs.computeIfAbsent(ref.deviceType, k -> new ArrayList<>(4)).add(ref);
+				systemValueRefs.computeIfAbsent(ref.deviceType, _ -> new ArrayList<>(4)).add(ref);
 			} else {
-				deviceValueRefs.computeIfAbsent(ref.deviceType, k -> new LinkedHashMap<>(2))
-						.computeIfAbsent(ref.deviceId, k -> new ArrayList<>(4)).add(ref);
+				deviceValueRefs.computeIfAbsent(ref.deviceType, _ -> new LinkedHashMap<>(2))
+						.computeIfAbsent(ref.deviceId, _ -> new ArrayList<>(4)).add(ref);
 			}
 		}
 
@@ -773,7 +773,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			}
 
 			final var decryptedIntegration = integration.copyWithId(integration.getId());
-			decryptedIntegration.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
+			decryptedIntegration.unmaskSensitiveInformation(_ -> SECURE_SETTINGS, encryptor);
 
 			final Duration deviceReportingMaxLag = servicePropertyDuration(datumStream,
 					DEVICE_REPORTING_MAXIMUM_LAG_SETTING, DEFAULT_DEVICE_REPORTING_MAXIMUM_LAG);
@@ -820,7 +820,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				if ( systemInvRefs != null && !systemInvRefs.isEmpty() ) {
 					List<GeneralDatum> datum = restOpsHelper.httpGet("List system inverter data",
 							integration, JsonNode.class,
-							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 									.path(INVERTER_TELEMETRY_PATH_TEMPLATE)
 									.queryParam(API_KEY_PARAM,
 											decryptedIntegration.serviceProperty(API_KEY_SETTING,
@@ -848,7 +848,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				if ( systemMetRefs != null && !systemMetRefs.isEmpty() ) {
 					List<GeneralDatum> datum = restOpsHelper.httpGet("List system meter data",
 							integration, JsonNode.class,
-							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 									.path(RGM_TELEMETRY_PATH_TEMPLATE)
 									.queryParam(API_KEY_PARAM,
 											decryptedIntegration.serviceProperty(API_KEY_SETTING,
@@ -874,7 +874,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			lastReportDate.setValue(FifteenMinute
 					.tickStart(Instant.ofEpochSecond(lastReportDate.longValue()), UTC).getEpochSecond());
 
-			if ( lastReportDate.getValue() < endDate.getEpochSecond() ) {
+			if ( lastReportDate.longValue() < endDate.getEpochSecond() ) {
 				// data drop out? adjust next start date
 				if ( nextQueryFilter == null ) {
 					nextQueryFilter = new BasicQueryFilter();
@@ -919,7 +919,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					continue;
 				}
 
-				SystemQueryPlan plan = result.computeIfAbsent(systemId, id -> {
+				SystemQueryPlan plan = result.computeIfAbsent(systemId, _ -> {
 					return new SystemQueryPlan(systemId);
 				});
 
@@ -1117,7 +1117,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					if ( ts < 1 ) {
 						continue;
 					}
-					phaseReadings.computeIfAbsent(ofEpochSecond(ts), k -> new ArrayList<>(3)).add(telem);
+					phaseReadings.computeIfAbsent(ofEpochSecond(ts), _ -> new ArrayList<>(3)).add(telem);
 				}
 			}
 		}

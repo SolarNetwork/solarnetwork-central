@@ -53,7 +53,7 @@ import net.solarnetwork.central.support.OutputSerializationSupportContext;
  * Helper utilities for web APIs.
  *
  * @author matt
- * @version 1.5
+ * @version 2.0
  */
 public final class WebUtils {
 
@@ -187,13 +187,13 @@ public final class WebUtils {
 			if ( MediaType.APPLICATION_CBOR.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperFilteredResultsProcessor<>(
 						context.cborObjectMapper().createGenerator(response.getOutputStream()),
-						context.cborObjectMapper().getSerializerProvider(),
+						context.cborObjectMapper()._serializationContext(), // FIXME use "allowed" method
 						MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE), context.jsonSerializer());
 				break;
 			} else if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperFilteredResultsProcessor<>(
 						context.jsonObjectMapper().createGenerator(response.getOutputStream()),
-						context.jsonObjectMapper().getSerializerProvider(),
+						context.jsonObjectMapper()._serializationContext(), // FIXME use "allowed" method
 						MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE), context.jsonSerializer());
 				break;
 			} else if ( TEXT_CSV_MEDIA_TYPE.isCompatibleWith(acceptType) ) {
@@ -315,7 +315,7 @@ public final class WebUtils {
 	public static InputStream maxUploadSizeExceededInputStream(InputStream in, long maxLength)
 			throws IOException {
 		return BoundedInputStream.builder().setInputStream(in).setMaxCount(maxLength)
-				.setOnMaxCount((m, c) -> {
+				.setOnMaxCount((_, _) -> {
 					throw new MaxUploadSizeExceededException(maxLength);
 				}).get();
 	}

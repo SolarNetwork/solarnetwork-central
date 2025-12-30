@@ -30,7 +30,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,17 +39,17 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
-import net.solarnetwork.codec.BasicSecurityPolicyDeserializer;
-import net.solarnetwork.codec.ObjectMapperFactoryBean;
-import net.solarnetwork.codec.SecurityPolicySerializer;
+import net.solarnetwork.codec.jackson.BasicSecurityPolicyDeserializer;
+import net.solarnetwork.codec.jackson.SecurityPolicySerializer;
 import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.SecurityPolicy;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * Test cases for the {@link JdbcUserDetailsService} class.
@@ -71,10 +70,10 @@ public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSuppor
 
 	@BeforeEach
 	public void setup() throws Exception {
-		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
-		factory.setSerializers(List.of(new SecurityPolicySerializer()));
-		factory.setDeserializers(List.of(new BasicSecurityPolicyDeserializer()));
-		objectMapper = factory.getObject();
+		SimpleModule mod = new SimpleModule("Test");
+		mod.addSerializer(new SecurityPolicySerializer());
+		mod.addDeserializer(SecurityPolicy.class, new BasicSecurityPolicyDeserializer());
+		objectMapper = JsonMapper.builder().addModule(mod).build();
 
 		passwordEncoder = new BCryptPasswordEncoder(12, new java.security.SecureRandom());
 
@@ -113,12 +112,7 @@ public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSuppor
 		service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_TOKEN_USERS_BY_USERNAME_SQL);
 		service.setAuthoritiesByUsernameQuery(
 				JdbcUserDetailsService.DEFAULT_TOKEN_AUTHORITIES_BY_USERNAME_SQL);
-		String json;
-		try {
-			json = objectMapper.writeValueAsString(policy);
-		} catch ( JsonProcessingException e ) {
-			throw new RuntimeException(e);
-		}
+		String json = objectMapper.writeValueAsString(policy);
 		jdbcTemplate.update(
 				"INSERT INTO solaruser.user_auth_token (auth_token,user_id,auth_secret,status,token_type,jpolicy) VALUES (?,?,?,?::solaruser.user_auth_token_status,?::solaruser.user_auth_token_type,?::json)",
 				TEST_TOKEN, userId, TEST_TOKEN_PASSWORD, "Active", "User", json);

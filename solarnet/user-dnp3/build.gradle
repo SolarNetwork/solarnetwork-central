@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.5.9' apply false
+	id 'org.springframework.boot' version '4.0.1' apply false
 }
 
 apply plugin: 'java-library'
@@ -20,11 +20,6 @@ base {
 	archivesName = 'solarnet-user-dnp3'
 }
 
-configurations {
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-}
-
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-common-web')
@@ -33,11 +28,11 @@ dependencies {
 
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
-	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	
 	// Utilities
-	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation "de.siegmar:fastcsv:${fastCsvVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

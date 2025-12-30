@@ -65,7 +65,7 @@ import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 

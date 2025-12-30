@@ -26,13 +26,13 @@ import java.io.Serial;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.instructor.support.NodeInstructionDeserializer;
 import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
 import net.solarnetwork.domain.InstructionStatus;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
  * Instruction for a specific node.

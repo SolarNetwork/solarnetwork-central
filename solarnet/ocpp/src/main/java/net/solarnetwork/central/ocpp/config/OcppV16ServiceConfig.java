@@ -33,8 +33,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.transaction.support.TransactionTemplate;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.common.config.VersionedQualifier;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
@@ -65,12 +63,14 @@ import ocpp.v16.jakarta.cs.FirmwareStatusNotificationRequest;
 import ocpp.v16.jakarta.cs.FirmwareStatusNotificationResponse;
 import ocpp.v16.jakarta.cs.StatusNotificationRequest;
 import ocpp.v16.jakarta.cs.StatusNotificationResponse;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * OCPP v1.6 controller configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(OCPP_V16)

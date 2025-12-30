@@ -28,17 +28,17 @@ import static net.solarnetwork.domain.datum.Aggregation.None;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.OwnedGeneralNodeDatum;
 import net.solarnetwork.central.oscp.domain.DatumPublishEvent;
 import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.common.mqtt.MqttQos;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Publish OSCP action events as datum.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class OscpActionDatumPublisher extends MqttJsonPublisher<OwnedGeneralNodeDatum> {
 

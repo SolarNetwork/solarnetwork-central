@@ -41,7 +41,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.springframework.util.MimeType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.inin.biz.ResponseTransformService;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.BasicSharedValueCache;
@@ -51,6 +50,7 @@ import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextAreaSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * XSLT implementation of {@link ResponseTransformService}.
@@ -63,7 +63,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class XsltResponseTransformService extends BaseXsltService implements ResponseTransformService {
 

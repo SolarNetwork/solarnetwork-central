@@ -27,7 +27,7 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToken;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
-import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_DATE_HEADER_FORMATTER;
 import static net.solarnetwork.security.AuthorizationUtils.SN_DATE_HEADER;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -48,14 +48,13 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -66,6 +65,7 @@ import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Web API level integration tests for the {@link NodeInstructionController}

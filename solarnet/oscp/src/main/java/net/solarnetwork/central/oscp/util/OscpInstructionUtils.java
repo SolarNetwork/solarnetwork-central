@@ -24,26 +24,25 @@ package net.solarnetwork.central.oscp.util;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
-import java.net.URI;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.ValidationMessage;
-import net.solarnetwork.codec.JsonUtils;
+import com.networknt.schema.Error;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaLocation;
+import com.networknt.schema.SchemaRegistry;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Utilities for OSCP instruction support.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public final class OscpInstructionUtils {
 
@@ -79,8 +78,6 @@ public final class OscpInstructionUtils {
 				+ ".json";
 	};
 
-	private static final ObjectMapper OBJECT_MAPPER = JsonUtils.newObjectMapper();
-
 	private OscpInstructionUtils() {
 		// not available
 	}
@@ -98,15 +95,15 @@ public final class OscpInstructionUtils {
 	 *
 	 * @param params
 	 *        the instruction parameters
-	 * @param validator
-	 *        the validator
+	 * @param registry
+	 *        the registry
 	 * @return the result
 	 * @throws IllegalArgumentException
 	 *         if the instruction parameters do not describe a supported OSCP
 	 *         message
 	 */
-	public static Object decodeJsonOscp20InstructionMessage(Map<String, ?> params,
-			JsonSchemaFactory validator) {
+	public static Object decodeJsonOscp20InstructionMessage(final Map<String, ?> params,
+			final SchemaRegistry registry) {
 		final String action = requireNonNullArgument(params.get(OSCP_ACTION_PARAM), "action").toString();
 		final Class<?> actionClass = switch (action) {
 			case "AdjustGroupCapacityForecast" -> oscp.v20.AdjustGroupCapacityForecast.class;
@@ -122,7 +119,7 @@ public final class OscpInstructionUtils {
 			ObjectNode jsonPayload;
 			Object msgObj = params.get(OSCP_MESSAGE_PARAM);
 			if ( msgObj instanceof String msgString ) {
-				JsonNode jsonNode = OBJECT_MAPPER.readTree(msgString);
+				JsonNode jsonNode = JsonUtils.JSON_OBJECT_MAPPER.readTree(msgString);
 				if ( jsonNode.isNull() ) {
 					jsonPayload = null;
 				} else if ( jsonNode instanceof ObjectNode on ) {
@@ -137,10 +134,10 @@ public final class OscpInstructionUtils {
 				throw new IllegalArgumentException("Missing [%s] parameter for OSCP 2.0 action [%s]"
 						.formatted(OSCP_MESSAGE_PARAM, action));
 			}
-			if ( validator != null ) {
+			if ( registry != null ) {
 				String schemaId = OSCP_ACTION_TO_JSON_SCHEMA_NAME.apply(action);
-				JsonSchema schema = validator.getSchema(URI.create(schemaId));
-				Set<ValidationMessage> errors = schema.validate(jsonPayload);
+				Schema schema = registry.getSchema(SchemaLocation.of(schemaId));
+				List<Error> errors = schema.validate(jsonPayload);
 				if ( !errors.isEmpty() ) {
 					throw new IllegalArgumentException(
 							"JSON schema validation error on [%s] OSCP action: %s.".formatted(action,
@@ -148,7 +145,7 @@ public final class OscpInstructionUtils {
 											.collect(Collectors.joining(", "))));
 				}
 			}
-			return OBJECT_MAPPER.treeToValue(jsonPayload, actionClass);
+			return JsonUtils.JSON_OBJECT_MAPPER.treeToValue(jsonPayload, actionClass);
 		} catch ( IOException e ) {
 			throw new IllegalArgumentException(
 					"Invalid JSON for [%s] OSCP action: %s".formatted(action, e.getMessage()));

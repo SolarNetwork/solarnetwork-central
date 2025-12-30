@@ -39,12 +39,10 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.MimeType;
-import org.supercsv.io.CsvListWriter;
-import org.supercsv.io.ICsvListWriter;
-import org.supercsv.prefs.CsvPreference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import de.siegmar.fastcsv.writer.CsvWriter;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.domain.SerializeIgnore;
 
@@ -52,7 +50,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * Basic {@link FilteredResultsProcessor} that serializes to CSV.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProcessor<R> {
 
@@ -87,7 +85,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	private final MimeType mimeType;
 
 	/** The output destination. */
-	private final ICsvListWriter writer;
+	private final CsvWriter writer;
 
 	/**
 	 * A mapping of column names to associated column index; linked so insertion
@@ -181,8 +179,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 			PropertySerializerRegistrar propertySerializerRegistrar,
 			Set<String> javaBeanIgnoreProperties, Set<Class<?>> javaBeanTreatAsStringValues) {
 		super();
-		this.writer = new CsvListWriter(requireNonNullArgument(out, "out"),
-				CsvPreference.STANDARD_PREFERENCE);
+		this.writer = CsvWriter.builder().build(requireNonNullArgument(out, "out"));
 		this.mimeType = mimeType;
 		this.includeHeader = includeHeader;
 		this.propertySerializerRegistrar = propertySerializerRegistrar;
@@ -214,7 +211,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 			return;
 		}
 
-		Map<String, Object> rowProperties = extractProperties(item);
+		Map<String, String> rowProperties = extractProperties(item);
 		if ( rowProperties == null ) {
 			return;
 		}
@@ -223,26 +220,26 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 
 		if ( rowNum == 0 && includeHeader ) {
 			// writer header based only one first item's properties
-			writer.writeHeader(columnOrder.keySet().toArray(String[]::new));
+			writer.writeRecord(columnOrder.keySet().toArray(String[]::new));
 		}
 
-		Object[] row = new Object[columnCount];
+		String[] row = new String[columnCount];
 		int i = 0;
 		for ( String key : columnOrder.keySet() ) {
 			row[i++] = rowProperties.get(key);
 		}
-		writer.write(row);
+		writer.writeRecord(row);
 	}
 
 	private void updateColumnOrder(String key) {
-		columnOrder.computeIfAbsent(key, aKey -> {
+		columnOrder.computeIfAbsent(key, _ -> {
 			int size = columnOrder.size();
 			columnCount = size + 1;
 			return size;
 		});
 	}
 
-	private Map<String, Object> extractProperties(Object item) {
+	private Map<String, String> extractProperties(Object item) {
 		if ( propertySerializerRegistrar != null ) {
 			// try whole-bean serialization first
 			item = propertySerializerRegistrar.serializeProperty("rowNum", item.getClass(), item, item);
@@ -251,14 +248,14 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 			}
 		}
 		if ( item instanceof Map<?, ?> map ) {
-			Map<String, Object> result = new HashMap<>(map.size());
+			Map<String, String> result = new HashMap<>(map.size());
 			for ( Entry<?, ?> e : map.entrySet() ) {
 				Object k = e.getKey();
 				if ( k == null ) {
 					continue;
 				}
 				String key = k.toString();
-				Object val = getRowPropertyValue(item, key, e.getValue(), null);
+				String val = getRowPropertyValue(item, key, e.getValue(), null);
 				if ( val != null ) {
 					updateColumnOrder(key);
 					result.put(key, val);
@@ -269,7 +266,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 		BeanWrapper wrapper = PropertyAccessorFactory.forBeanPropertyAccess(item);
 		PropertyDescriptor[] descriptors = wrapper.getPropertyDescriptors();
 		final Class<?> clazz = item.getClass();
-		String[] propOrder = propertyOrder.computeIfAbsent(clazz, k -> {
+		String[] propOrder = propertyOrder.computeIfAbsent(clazz, _ -> {
 			JsonPropertyOrder order = AnnotationUtils.findAnnotation(clazz, JsonPropertyOrder.class);
 			if ( order != null ) {
 				return order.value();
@@ -290,15 +287,14 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 				return Integer.compare(rIdx, lIdx);
 			});
 		}
-		Map<String, Object> result = new HashMap<>(descriptors.length);
+		Map<String, String> result = new HashMap<>(descriptors.length);
 		for ( PropertyDescriptor desc : descriptors ) {
 			String key = desc.getName();
 			if ( javaBeanIgnoreProperties.contains(key) ) {
 				continue;
 			}
 			if ( wrapper.isReadableProperty(key) && !shouldIgnoreProperty(item, key, desc) ) {
-				Object val = wrapper.getPropertyValue(key);
-				val = getRowPropertyValue(item, key, val, wrapper);
+				String val = getRowPropertyValue(item, key, wrapper.getPropertyValue(key), wrapper);
 				if ( val != null ) {
 					updateColumnOrder(key);
 					result.put(key, val);
@@ -350,11 +346,11 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 				}
 			}
 		}
-		ignoredProperties.computeIfAbsent(item.getClass(), k -> new HashMap<>(8)).put(key, result);
+		ignoredProperties.computeIfAbsent(item.getClass(), _ -> new HashMap<>(8)).put(key, result);
 		return result;
 	}
 
-	private Object getRowPropertyValue(Object row, String name, Object val, BeanWrapper wrapper) {
+	private String getRowPropertyValue(Object row, String name, Object val, BeanWrapper wrapper) {
 		if ( val != null ) {
 			if ( getPropertySerializerRegistrar() != null ) {
 				val = getPropertySerializerRegistrar().serializeProperty(name, val.getClass(), row, val);
@@ -371,7 +367,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 				val = val.toString();
 			}
 		}
-		return val;
+		return val != null ? val.toString() : null;
 	}
 
 	/**

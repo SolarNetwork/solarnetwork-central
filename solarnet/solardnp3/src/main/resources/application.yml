@@ -147,7 +147,6 @@ server:
     enabled: true
     mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
     min-response-size: 2048
-  error.whitelabel.enabled: false
   port: 9086
   tomcat.threads:
     min-spare: 10
@@ -159,6 +158,7 @@ spring:
     date: "iso"
     date-time: "iso"
     time: "iso"
+  web.error.whitelabel.enabled: false
 
 ---
 spring:

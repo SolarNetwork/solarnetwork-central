@@ -265,7 +265,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		}).returns("Error parsing node ID from column 1.",
 				from(DatumImportValidationException::getMessage))
 				.returns(2L, from(DatumImportValidationException::getLineNumber))
-				.returns("A,/DE/G1/B600/GEN/1,2017-04-17 14:30:00,\"{\"\"watts\"\":11899}\"",
+				.returns("A,/DE/G1/B600/GEN/1,2017-04-17 14:30:00,{\"watts\":11899}",
 						from(DatumImportValidationException::getLine));
 	}
 

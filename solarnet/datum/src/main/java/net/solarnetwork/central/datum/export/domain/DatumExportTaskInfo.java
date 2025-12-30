@@ -27,7 +27,7 @@ import java.time.Instant;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.BaseObjectEntity;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Entity for user-specific datum export tasks.

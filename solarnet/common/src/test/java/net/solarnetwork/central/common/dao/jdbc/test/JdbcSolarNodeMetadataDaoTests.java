@@ -40,7 +40,7 @@ import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.jdbc.JdbcSolarNodeMetadataDao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 

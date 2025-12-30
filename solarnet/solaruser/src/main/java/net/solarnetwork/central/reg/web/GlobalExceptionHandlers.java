@@ -54,7 +54,7 @@ public class GlobalExceptionHandlers {
 	 */
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handle(MaxUploadSizeExceededException e) {
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {

@@ -54,10 +54,11 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.central.domain.LocationRequestInfo;
 import net.solarnetwork.central.domain.LocationRequestStatus;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.BasicLocation;
@@ -93,7 +94,8 @@ public class DaoDatumMetadataBizTests {
 	public void setup() {
 		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
 		locationRequestDao = EasyMock.createMock(LocationRequestDao.class);
-		biz = new DaoDatumMetadataBiz(metaDao, locationRequestDao, JsonUtils.newDatumObjectMapper());
+		biz = new DaoDatumMetadataBiz(metaDao, locationRequestDao,
+				DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER);
 	}
 
 	@Test

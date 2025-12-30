@@ -22,15 +22,12 @@
 
 package net.solarnetwork.central.user.dnp3.biz.dao;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -47,11 +44,11 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.io.CsvListWriter;
-import org.supercsv.io.ICsvListReader;
-import org.supercsv.io.ICsvListWriter;
-import org.supercsv.prefs.CsvPreference;
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRecord;
+import de.siegmar.fastcsv.reader.CsvRecordHandler;
+import de.siegmar.fastcsv.reader.FieldModifiers;
+import de.siegmar.fastcsv.writer.CsvWriter;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
@@ -88,7 +85,7 @@ import net.solarnetwork.dao.FilterResults;
  * DAO-based implementation of {@link UserDnp3Biz}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserDnp3Biz implements UserDnp3Biz {
 
@@ -346,8 +343,10 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 			InputStreamSource csv, Locale locale) throws IOException {
 		final Instant date = Instant.now();
 		ServerConfigurationsInput result;
-		try (ICsvListReader in = new CsvListReader(new InputStreamReader(csv.getInputStream(), UTF_8),
-				CsvPreference.STANDARD_PREFERENCE)) {
+		try (CsvReader<CsvRecord> in = CsvReader.builder().allowExtraFields(true)
+				.allowMissingFields(true)
+				.build(CsvRecordHandler.builder().fieldModifier(FieldModifiers.TRIM).build(),
+						csv.getInputStream())) {
 			result = new ServerConfigurationsCsvParser(csvImportMessageSource,
 					locale != null ? locale : Locale.getDefault()).parse(in);
 		}
@@ -394,8 +393,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	@Override
 	public void exportServerConfigurationsCsv(Long userId, ServerDataPointFilter filter,
 			OutputStream out, Locale locale) throws IOException {
-		try (ICsvListWriter csv = new CsvListWriter(new OutputStreamWriter(out, UTF_8),
-				CsvPreference.STANDARD_PREFERENCE)) {
+		try (CsvWriter csv = CsvWriter.builder().build(out)) {
 			var measurements = serverMeasurementsForUser(userId, filter);
 			var controls = serverControlsForUser(userId, filter);
 			new ServerConfigurationsCsvWriter(csv, csvImportMessageSource,

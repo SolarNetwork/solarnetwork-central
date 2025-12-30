@@ -56,6 +56,7 @@ import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.IO;
 import org.eclipse.jetty.util.Promise;
+import org.eclipse.jetty.util.Promise.Invocable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -186,7 +187,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 
 		DatumExportResource rsrc = getExportResource(data);
 
-		doWithHttpServer(handler, (server, port, baseUrl) -> {
+		doWithHttpServer(handler, (_, _, baseUrl) -> {
 			destProps.put("url", baseUrl + "/save");
 			service.export(config, singleton(rsrc), runtimeProps, null);
 			return null;
@@ -284,7 +285,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 
 		DatumExportResource rsrc = getExportResource(data);
 
-		doWithHttpServer(handler, (server, port, baseUrl) -> {
+		doWithHttpServer(handler, (_, _, baseUrl) -> {
 			destProps.put("url", baseUrl + "/save/{name}");
 			service.export(config, singleton(rsrc), runtimeProps, null);
 			return null;
@@ -330,7 +331,14 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 
 				try {
 					var f = new Promise.Completable<MultiPartFormData.Parts>();
-					var p = Promise.from(InvocationType.NON_BLOCKING, f);
+					Invocable<MultiPartFormData.Parts> p = Invocable.from(InvocationType.NON_BLOCKING,
+							(result, err) -> {
+								if ( err != null ) {
+									f.failed(err);
+								} else {
+									f.succeeded(result);
+								}
+							});
 					formData.parse(request, p);
 					process(f.join());
 					callback.succeeded();
@@ -399,7 +407,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
 				new CsvDatumExportOutputFormatService());
 
-		doWithHttpServer(handler, (server, port, baseUrl) -> {
+		doWithHttpServer(handler, (_, _, baseUrl) -> {
 			destProps.put("url", baseUrl + "/save");
 			service.export(config, singleton(rsrc), runtimeProps, null);
 			return null;
@@ -482,7 +490,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 
 		DatumExportResource rsrc = getExportResource(data);
 
-		doWithHttpServer(handler, (server, port, baseUrl) -> {
+		doWithHttpServer(handler, (_, _, baseUrl) -> {
 			destProps.put("url", baseUrl + "/save");
 			service.export(config, singleton(rsrc), runtimeProps, null);
 			return null;

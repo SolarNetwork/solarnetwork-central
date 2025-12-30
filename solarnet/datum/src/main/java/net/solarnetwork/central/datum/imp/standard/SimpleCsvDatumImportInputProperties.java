@@ -159,6 +159,7 @@ public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProp
 			case Accumulating -> getAccumulatingDataColumns();
 			case Status -> getStatusDataColumns();
 			case Tag -> getTagDataColumns();
+			case Metadata -> throw new IllegalArgumentException("Metadata type not supported.");
 		};
 		return CsvUtils.parseColumnsReference(refs);
 	}

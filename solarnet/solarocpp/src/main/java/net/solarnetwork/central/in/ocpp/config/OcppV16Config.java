@@ -27,19 +27,19 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.ocpp.config.OcppCentralServiceQualifier;
 import net.solarnetwork.central.ocpp.config.OcppChargePointQualifier;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.v16.jakarta.cp.json.ChargePointActionPayloadDecoder;
 import net.solarnetwork.ocpp.v16.jakarta.cs.json.CentralServiceActionPayloadDecoder;
 import net.solarnetwork.ocpp.v16.jakarta.json.BaseActionPayloadDecoder;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Configuration for OCPP v1.6.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(OCPP_V16)

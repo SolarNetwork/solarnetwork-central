@@ -162,7 +162,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 *        the count to add
 	 */
 	protected void addServiceCount(DatumId key, int count) {
-		serviceCounters.computeIfAbsent(key, k -> new AtomicInteger(0)).addAndGet(count);
+		serviceCounters.computeIfAbsent(key, _ -> new AtomicInteger(0)).addAndGet(count);
 		statCounter.increment(JdbcNodeServiceAuditorCount.ResultsAdded);
 	}
 

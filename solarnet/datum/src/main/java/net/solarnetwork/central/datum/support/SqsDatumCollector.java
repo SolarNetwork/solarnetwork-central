@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.support;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -39,8 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
@@ -73,6 +70,8 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Implementation of {@link DatumWriteOnlyDao} that uses a SQS queue for
@@ -111,7 +110,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
  * </p>
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLifecycleObserver {
 
@@ -779,23 +778,19 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 						List<String> rejectedReceiptHandles = new ArrayList<>(msgs.size());
 						try {
 							for ( Message msg : msgs ) {
-								try {
-									JsonNode tree = sqsObjectMapper.readTree(msg.body());
-									Object o = DatumJsonUtils.parseDatum(sqsObjectMapper, tree);
-									CompletableFuture<Object> f = new CompletableFuture<Object>();
-									if ( queue.offer(new WorkItem(o, f)) ) {
-										stats.increment(BasicCount.WorkQueueAdds);
-										@SuppressWarnings("unused")
-										var unused = f.thenAccept(r -> {
-											sqsDeleteMessage(msg.receiptHandle());
-										});
-										accepted++;
-									} else {
-										// adjust visibility to 0 to allow reprocessing
-										rejectedReceiptHandles.add(msg.receiptHandle());
-									}
-								} catch ( IOException e ) {
-									throw new RuntimeException(e);
+								JsonNode tree = sqsObjectMapper.readTree(msg.body());
+								Object o = DatumJsonUtils.parseDatum(sqsObjectMapper, tree);
+								CompletableFuture<Object> f = new CompletableFuture<Object>();
+								if ( queue.offer(new WorkItem(o, f)) ) {
+									stats.increment(BasicCount.WorkQueueAdds);
+									@SuppressWarnings("unused")
+									var unused = f.thenAccept(r -> {
+										sqsDeleteMessage(msg.receiptHandle());
+									});
+									accepted++;
+								} else {
+									// adjust visibility to 0 to allow reprocessing
+									rejectedReceiptHandles.add(msg.receiptHandle());
 								}
 							}
 						} finally {

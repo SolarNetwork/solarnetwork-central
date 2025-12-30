@@ -41,7 +41,7 @@ import net.solarnetwork.util.StatTracker;
  * Configuration for the {@link DatumWriteOnlyDao}, without SQS.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Profile("datum-collector-sqs")
 @Configuration(proxyBeanMethods = false)
@@ -63,7 +63,7 @@ public class SqsDatumCollectorConfig implements SolarInConfiguration {
 				LoggerFactory.getLogger(SqsDatumCollector.class), settings.getStatFrequency());
 
 		SqsDatumCollector collector = new SqsDatumCollector(settings.newAsyncClient(), settings.getUrl(),
-				DatumJsonUtils.newDatumObjectMapper(),
+				DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER,
 				new ArrayBlockingQueue<>(settings.getWorkQueueSize()), datumDao, stats);
 		collector.setReadConcurrency(settings.getReadConcurrency());
 		collector.setWriteConcurrency(settings.getWriteConcurrency());

@@ -27,23 +27,23 @@ import java.util.Map;
 import java.util.Set;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesOperations;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Utilities for Datum domain classes.
  *
  * @author matt
- * @version 2.3
+ * @version 3.0
  */
 public final class DatumUtils {
 

@@ -167,8 +167,7 @@ public final class OscpWebUtils {
 	 * @return the customizer
 	 */
 	public static <T> BiConsumer<T, HttpHeaders> tokenAuthorizer(String token) {
-		return (body, headers) -> headers.set(HttpHeaders.AUTHORIZATION,
-				tokenAuthorizationHeader(token));
+		return (_, headers) -> headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(token));
 	}
 
 	/**

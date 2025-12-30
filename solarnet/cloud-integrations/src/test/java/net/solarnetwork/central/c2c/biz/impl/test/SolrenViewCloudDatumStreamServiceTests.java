@@ -1244,7 +1244,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("Result returned")
 			.isNotNull()
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 				.as("No next query returned because within max time periods")
 					.isNull()
@@ -1267,7 +1267,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("Result returned")
 			.isNotNull()
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("Next query filter returned")
 					.isNotNull()

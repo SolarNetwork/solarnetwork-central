@@ -72,7 +72,7 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.domain.BasicInstructionStatus;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;

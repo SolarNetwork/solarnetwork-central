@@ -44,8 +44,6 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -59,7 +57,7 @@ import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.domain.OcppAppEvents;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.support.DelayedOccasionalProcessor;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.event.AppEvent;
@@ -71,13 +69,15 @@ import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Manage queued OCPP node instructions asynchronously, when OCPP clients
  * connect.
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class CentralOcppNodeInstructionProvider extends
 		DelayedOccasionalProcessor<CentralOcppNodeInstructionProvider.DelayedChargePointIdentifier>
@@ -248,7 +248,7 @@ public class CentralOcppNodeInstructionProvider extends
 		// this instruction is for this charge point... send it now
 		stats.increment(CentralOcppNodeInstructionStatusCount.InstructionsProcessed);
 		OcppInstructionUtils.decodeJsonOcppInstructionMessage(objectMapper, action, params,
-				actionPayloadDecoder, (e, jsonPayload, payload) -> {
+				actionPayloadDecoder, (e, _, payload) -> {
 					if ( e != null ) {
 						Throwable root = e;
 						while ( root.getCause() != null ) {
@@ -273,7 +273,7 @@ public class CentralOcppNodeInstructionProvider extends
 
 					ActionMessage<Object> message = new BasicActionMessage<>(identity,
 							UUID.randomUUID().toString(), action, payload);
-					chargePointBroker.sendMessageToChargePoint(message, (msg, res, err) -> {
+					chargePointBroker.sendMessageToChargePoint(message, (_, res, err) -> {
 						if ( err != null ) {
 							stats.increment(CentralOcppNodeInstructionStatusCount.InstructionsFailed);
 							Throwable root = err;
@@ -321,7 +321,7 @@ public class CentralOcppNodeInstructionProvider extends
 		String dataStr;
 		try {
 			dataStr = (data instanceof String s ? s : objectMapper.writeValueAsString(data));
-		} catch ( JsonProcessingException e ) {
+		} catch ( JacksonException e ) {
 			dataStr = null;
 		}
 		LogEventInfo event = LogEventInfo.event(tags, message, dataStr);

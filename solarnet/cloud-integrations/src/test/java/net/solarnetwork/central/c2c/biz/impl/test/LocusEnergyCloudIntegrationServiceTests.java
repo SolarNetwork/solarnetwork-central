@@ -41,7 +41,6 @@ import static org.mockito.BDDMockito.then;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,7 +61,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
@@ -72,6 +70,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.common.http.OAuth2Utils;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 
@@ -79,7 +78,7 @@ import net.solarnetwork.domain.Result.ErrorDetail;
  * Test cases for the {@link LocusEnergyCloudIntegrationService}
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -209,10 +208,9 @@ public class LocusEnergyCloudIntegrationServiceTests {
 				LocusEnergyCloudIntegrationService.PASSWORD_SETTING, password
 			));
 
-		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration
 			.withRegistrationId("test")
-			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+			.authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
 			.clientId(randomString())
 			.clientSecret(randomString())
 			.tokenUri(tokenUri)
@@ -256,9 +254,9 @@ public class LocusEnergyCloudIntegrationServiceTests {
 			.returns(LocusEnergyCloudIntegrationService.BASE_URI
 					.resolve(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE
 							.replace("{partnerId}", partnerId.toString())), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(result)

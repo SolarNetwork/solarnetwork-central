@@ -41,7 +41,7 @@ import org.springframework.security.crypto.encrypt.AesBytesEncryptor.CipherAlgor
 import org.springframework.security.crypto.encrypt.BytesEncryptor;
 import org.springframework.security.crypto.keygen.BytesKeyGenerator;
 import org.springframework.security.crypto.keygen.KeyGenerators;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.util.ObjectUtils;
 
 /**

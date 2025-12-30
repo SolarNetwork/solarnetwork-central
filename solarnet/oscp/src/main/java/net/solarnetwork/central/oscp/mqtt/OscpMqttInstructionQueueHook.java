@@ -30,7 +30,6 @@ import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_MESSA
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Declined;
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Queuing;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.IOException;
 import java.io.Serial;
 import java.util.HashMap;
 import java.util.List;
@@ -39,8 +38,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SchemaRegistry;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -57,7 +55,7 @@ import net.solarnetwork.central.oscp.util.OscpInstructionUtils;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttQos;
@@ -65,6 +63,8 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.util.StatTracker;
 import oscp.v20.AdjustGroupCapacityForecast;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Node instruction queue hook to publish OSCP v2.0 instructions to a MQTT
@@ -77,7 +77,7 @@ import oscp.v20.AdjustGroupCapacityForecast;
  * </p>
  *
  * @author matt
- * @version 2.2
+ * @version 3.0
  */
 public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		implements NodeInstructionQueueHook, OscpUserEvents, OscpMqttInstructions {
@@ -87,7 +87,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 	private final CapacityOptimizerConfigurationDao capacityOptimizerDao;
 	private final CapacityProviderConfigurationDao capacityProviderDao;
 	private final ObjectMapper objectMapper;
-	private JsonSchemaFactory jsonSchemaFactory;
+	private SchemaRegistry jsonSchemaRegistry;
 	private UserEventAppenderBiz userEventAppenderBiz;
 	private String mqttTopic = MQTT_TOPIC_V20;
 
@@ -228,7 +228,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 
 		try {
 			Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(params,
-					jsonSchemaFactory);
+					jsonSchemaRegistry);
 
 			// for AdjustGroupCapacityForecast make sure group fixed to instruction group
 			if ( msg instanceof AdjustGroupCapacityForecast m ) {
@@ -303,7 +303,8 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 				f.get(getPublishTimeoutSeconds(), TimeUnit.SECONDS);
 				incrementInstructionQueuedStat(action);
 				generateUserEvent(userId, OSCP_INSTRUCTION_IN_TAGS, "Queued instruction", eventData);
-			} catch ( IOException | TimeoutException | ExecutionException | InterruptedException e ) {
+			} catch ( JacksonException | TimeoutException | ExecutionException
+					| InterruptedException e ) {
 				log.warn(
 						"Error queuing OSCP instruction {} action {} to MQTT topic {} for Capacity Provider {}: {}",
 						instructionId, action, mqttTopic, provider.getId().ident(), e.toString());
@@ -369,22 +370,24 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 	}
 
 	/**
-	 * Get the JSON schema validator.
+	 * Get the JSON schema registry.
 	 *
-	 * @return the jsonSchemaFactory the validator
+	 * @return the the registry
+	 * @since 3.0
 	 */
-	public JsonSchemaFactory getJsonSchemaFactory() {
-		return jsonSchemaFactory;
+	public SchemaRegistry getJsonSchemaRegistry() {
+		return jsonSchemaRegistry;
 	}
 
 	/**
-	 * SEt the JSON schema validator to use for OSCP JSON messages.
+	 * SEt the JSON schema registry to use for OSCP JSON messages.
 	 *
-	 * @param jsonSchemaFactory
-	 *        the validator to set
+	 * @param jsonSchemaRegistry
+	 *        the registry to set
+	 * @since 3.0
 	 */
-	public void setJsonSchemaFactory(JsonSchemaFactory jsonSchemaFactory) {
-		this.jsonSchemaFactory = jsonSchemaFactory;
+	public void setJsonSchemaRegistry(SchemaRegistry jsonSchemaRegistry) {
+		this.jsonSchemaRegistry = jsonSchemaRegistry;
 	}
 
 	/**

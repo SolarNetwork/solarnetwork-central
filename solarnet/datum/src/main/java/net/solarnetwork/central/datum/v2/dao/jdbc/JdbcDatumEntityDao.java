@@ -380,7 +380,7 @@ public class JdbcDatumEntityDao
 			ObjectStreamCriteria metaCriteria = DatumUtils.criteriaWithoutDates(filter);
 			Iterable<ObjectDatumStreamMetadata> metas = findDatumStreamMetadata(metaCriteria);
 			metaMap = stream(metas.spliterator(), false).collect(toMap(DatumStreamMetadata::getStreamId,
-					identity(), (u, v) -> u, LinkedHashMap::new));
+					identity(), (u, _) -> u, LinkedHashMap::new));
 		}
 		return new BasicObjectDatumStreamFilterResults<>(metaMap, results.getResults(),
 				results.getTotalResults(), results.getStartingOffset(),
@@ -662,7 +662,7 @@ public class JdbcDatumEntityDao
 			ObjectStreamCriteria metaCriteria = DatumUtils.criteriaWithoutDates(filter);
 			Iterable<ObjectDatumStreamMetadata> metas = findDatumStreamMetadata(metaCriteria);
 			metaMap = stream(metas.spliterator(), false).collect(toMap(DatumStreamMetadata::getStreamId,
-					identity(), (u, v) -> u, LinkedHashMap::new));
+					identity(), (u, _) -> u, LinkedHashMap::new));
 		}
 		return new BasicObjectDatumStreamFilterResults<>(metaMap, results.getResults(),
 				results.getTotalResults(), results.getStartingOffset(),
@@ -705,7 +705,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-		
+
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/

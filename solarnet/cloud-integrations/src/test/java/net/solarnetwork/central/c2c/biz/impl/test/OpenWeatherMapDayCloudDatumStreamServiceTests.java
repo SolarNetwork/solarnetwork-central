@@ -61,8 +61,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.MutableClock;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
@@ -79,10 +77,12 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link OpenWeatherMapDayCloudDatumStreamService} class.
@@ -142,7 +142,7 @@ public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		objectMapper = JsonUtils.newObjectMapper();
+		objectMapper = JsonUtils.JSON_OBJECT_MAPPER;
 
 		expressionService = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao);
 		service = new OpenWeatherMapDayCloudDatumStreamService(userEventAppenderBiz, encryptor,

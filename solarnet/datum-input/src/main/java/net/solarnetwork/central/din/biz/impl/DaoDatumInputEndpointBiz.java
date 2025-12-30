@@ -25,7 +25,7 @@ package net.solarnetwork.central.din.biz.impl;
 import static net.solarnetwork.central.biz.UserEventAppenderBiz.addUserEvent;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
-import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

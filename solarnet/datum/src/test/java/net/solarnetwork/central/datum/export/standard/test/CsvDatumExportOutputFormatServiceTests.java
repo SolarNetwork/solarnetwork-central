@@ -23,6 +23,9 @@
 package net.solarnetwork.central.datum.export.standard.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
@@ -125,6 +128,88 @@ public class CsvDatumExportOutputFormatServiceTests {
 		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));
 		assertThat("Generated CSV", csv, equalTo("created,nodeId,sourceId,localDate,localTime,watts\r\n"
 				+ "2018-04-23T11:19:00.000Z,-1,test.source,2018-04-23,11:19:00.000,123.456\r\n"));
+	}
+
+	@Test
+	public void export_withArrayCell() throws IOException {
+		// given
+		CsvDatumExportOutputFormatService service = new CsvDatumExportOutputFormatService();
+		BasicOutputConfiguration config = new BasicOutputConfiguration();
+		config.setCompressionType(OutputCompressionType.None);
+
+		GeneralNodeDatumMatch d1 = new GeneralNodeDatumMatch();
+		d1.setCreated(LocalDateTime.of(2018, 4, 23, 11, 19).atZone(ZoneOffset.UTC).toInstant());
+		d1.setNodeId(TEST_NODE_ID);
+		d1.setSourceId(TEST_SOURCE_ID);
+		d1.setLocalDateTime(d1.getCreated().atZone(ZoneOffset.UTC).toLocalDateTime());
+		d1.setPosted(d1.getCreated().plus(1, ChronoUnit.MINUTES));
+		d1.setSampleJson("""
+				{"i":{"watts":123.456},"t":["a","b"]}
+				""");
+		List<GeneralNodeDatumFilterMatch> data = Arrays.asList(d1);
+
+		List<Double> progress = new ArrayList<>(4);
+
+		// WHEN
+		Iterable<DatumExportResource> results = null;
+		try (DatumExportOutputFormatService.ExportContext context = service
+				.createExportContext(config)) {
+			assertThat("Context created", context, notNullValue());
+
+			context.start(1);
+			context.appendDatumMatch(data, new ProgressListener<DatumExportService>() {
+
+				@Override
+				public void progressChanged(DatumExportService ctx, double amountComplete) {
+					assertThat("Same context", ctx, sameInstance(service));
+					progress.add(amountComplete);
+				}
+			});
+			results = context.finish();
+		}
+
+		// THEN
+		// @formatter:off
+		then(progress)
+			.as("Progress provided")
+			.hasSize(1)
+			;
+
+		then(results)
+			.as("Result created")
+			.isNotNull()
+			.as("Generated one resource")
+			.hasSize(1)
+			.element(0, type(BasicDatumExportResource.class))
+			.satisfies(r -> {
+				then(r)
+					.as("Resource has CSV content type")
+					.returns(service.getExportContentType(), from(BasicDatumExportResource::getContentType))
+					;
+				then(r.getDelegate().getFile())
+					.as("Temp file exists")
+					.exists()
+					.as("Temp file has CSV extension")
+					.hasExtension("csv")
+					;
+
+				final String csv = FileCopyUtils.copyToString(new InputStreamReader(r.getInputStream(), UTF_8));
+				then(r.getDelegate().getFile())
+					.as("Temp file deleted after reading")
+					.doesNotExist()
+					;
+
+				then(csv)
+					.as("Generated CSV")
+					.isEqualToNormalizingNewlines(
+						"""
+						created,nodeId,sourceId,localDate,localTime,watts,tags
+						2018-04-23T11:19:00.000Z,-1,test.source,2018-04-23,11:19:00.000,123.456,"a,b"
+						""");
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test

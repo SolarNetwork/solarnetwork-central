@@ -59,8 +59,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.support.CacheUtils;
@@ -74,7 +72,7 @@ import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
  * Caching service backed by a {@link javax.cache.Cache}.
  *
  * @author matt
- * @version 1.8
+ * @version 2.0
  */
 public class JCacheContentCachingService
 		implements ContentCachingService, PingTest, CacheEntryCreatedListener<String, CachedContent>,
@@ -346,9 +344,9 @@ public class JCacheContentCachingService
 		stats.increment(ContentCacheStats.Hit);
 		response.setStatus(200);
 
-		MultiValueMap<String, String> headers = content.getHeaders();
+		HttpHeaders headers = content.getHeaders();
 		if ( headers != null ) {
-			for ( Map.Entry<String, List<String>> me : headers.entrySet() ) {
+			for ( Map.Entry<String, List<String>> me : headers.headerSet() ) {
 				for ( String value : me.getValue() ) {
 					response.addHeader(me.getKey(), value);
 				}
@@ -446,8 +444,8 @@ public class JCacheContentCachingService
 			}
 		}
 		Map<String, ?> metadata = getCacheContentMetadata(key, request, statusCode, headers);
-		cache.put(key, new SimpleCachedContent(new LinkedMultiValueMap<>(headers), data, contentEncoding,
-				metadata));
+		cache.put(key,
+				new SimpleCachedContent(new HttpHeaders(headers), data, contentEncoding, metadata));
 		stats.increment(ContentCacheStats.Stored);
 	}
 

@@ -32,9 +32,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.io.ICsvListReader;
-import org.supercsv.prefs.CsvPreference;
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRecord;
+import de.siegmar.fastcsv.reader.CsvRecordHandler;
+import de.siegmar.fastcsv.reader.FieldModifiers;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
@@ -55,7 +56,7 @@ import net.solarnetwork.util.StringUtils;
  * classification mapping settings.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputFormatServiceSupport {
 
@@ -78,7 +79,7 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 		return new CsvImportContext(config, resource, progressListener);
 	}
 
-	private static Map<String, Number> parseNumberColumns(List<String> headerRow, List<String> row,
+	private static Map<String, Number> parseNumberColumns(List<String> headerRow, CsvRecord row,
 			IntRangeSet columns) {
 		if ( columns == null ) {
 			return null;
@@ -86,7 +87,7 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 		Map<String, Number> result = new LinkedHashMap<>(4);
 		for ( Integer column : columns ) {
 			final int i = column - 1;
-			String val = (i < row.size() ? row.get(i) : null);
+			String val = (i < row.getFieldCount() ? row.getField(i) : null);
 			Number n = StringUtils.numberValue(val);
 			if ( n instanceof BigInteger ) {
 				n = NumberUtils.narrow((BigInteger) n, 2);
@@ -98,14 +99,14 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 		return (result.isEmpty() ? null : result);
 	}
 
-	private static Map<String, Object> parseObjectColumns(List<String> headerRow, List<String> row,
+	private static Map<String, Object> parseObjectColumns(List<String> headerRow, CsvRecord row,
 			IntRangeSet columns) {
 		if ( columns == null ) {
 			return null;
 		}
 		Map<String, Object> result = new LinkedHashMap<>(4);
 		for ( final int i : columns ) {
-			String val = (i < row.size() ? row.get(i) : null);
+			String val = (i < row.getFieldCount() ? row.getField(i) : null);
 			Number n = StringUtils.numberValue(val);
 			if ( n != null || val != null ) {
 				result.put(headerRow.get(i), n != null ? n : val);
@@ -114,13 +115,13 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 		return (result.isEmpty() ? null : result);
 	}
 
-	private static Set<String> parseSetColumns(List<String> row, IntRangeSet columns) {
+	private static Set<String> parseSetColumns(CsvRecord row, IntRangeSet columns) {
 		if ( columns == null ) {
 			return null;
 		}
 		Set<String> result = new LinkedHashSet<>(4);
 		for ( final int i : columns ) {
-			String val = (i < row.size() ? row.get(i) : null);
+			String val = (i < row.getFieldCount() ? row.getField(i) : null);
 			if ( val != null ) {
 				String[] tags = val.trim().split("\\s*,\\s*");
 				Collections.addAll(result, tags);
@@ -166,9 +167,14 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 		@Override
 		public Iterator<GeneralNodeDatum> iterator() {
 			try {
-				return new CsvIterator(new CsvListReader(new InputStreamReader(
-						getResourceProgressInputStream(SimpleCsvDatumImportInputFormatService.this),
-						getResourceCharset()), CsvPreference.STANDARD_PREFERENCE), props);
+				return new CsvIterator(
+						CsvReader.builder().allowExtraFields(true).allowMissingFields(true).build(
+								CsvRecordHandler.builder().fieldModifier(FieldModifiers.TRIM).build(),
+								new InputStreamReader(
+										getResourceProgressInputStream(
+												SimpleCsvDatumImportInputFormatService.this),
+										getResourceCharset())),
+						props);
 			} catch ( IOException e ) {
 				throw new RuntimeException(e);
 			}
@@ -177,13 +183,13 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 		private class CsvIterator
 				extends BaseCsvIterator<GeneralNodeDatum, SimpleCsvDatumImportInputProperties> {
 
-			private CsvIterator(ICsvListReader reader, SimpleCsvDatumImportInputProperties props)
+			private CsvIterator(CsvReader<CsvRecord> reader, SimpleCsvDatumImportInputProperties props)
 					throws IOException {
 				super(reader, props);
 			}
 
 			@Override
-			protected GeneralNodeDatum parseRow(List<String> row) throws IOException {
+			protected GeneralNodeDatum parseRow(CsvRecord row) throws IOException {
 				GeneralNodeDatum d = parseDatum(row);
 
 				DatumSamples s = new DatumSamples();

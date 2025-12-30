@@ -56,8 +56,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import io.moquette.interception.messages.InterceptPublishMessage;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -66,7 +64,8 @@ import net.solarnetwork.central.datum.flux.SolarFluxDatumPublisher;
 import net.solarnetwork.central.datum.flux.dao.FluxPublishSettingsDao;
 import net.solarnetwork.central.datum.flux.domain.FluxPublishSettingsInfo;
 import net.solarnetwork.central.support.ObservableMqttConnection;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonDateUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
 import net.solarnetwork.domain.datum.Aggregation;
@@ -74,6 +73,8 @@ import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.test.mqtt.TestingInterceptHandler;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
 
 /**
  * Unit tests for the {@link SolarFluxDatumPublisher}.
@@ -95,8 +96,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	private SolarFluxDatumPublisher publisher;
 
 	private ObjectMapper createObjectMapper() {
-		return JsonUtils.createObjectMapper(null, JsonUtils.JAVA_TIMESTAMP_MODULE)
-				.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		return JsonUtils.JSON_OBJECT_MAPPER.rebuild().addModule(JsonDateUtils.JAVA_TIMESTAMP_MODULE)
+				.enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS).build();
 	}
 
 	@BeforeEach

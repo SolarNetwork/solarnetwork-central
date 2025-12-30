@@ -80,7 +80,6 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -112,12 +111,13 @@ import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
 import net.solarnetwork.util.DateUtils;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * SolarEdge implementation of {@link CloudDatumStreamService} using the V1 API.
  *
  * @author matt
- * @version 1.8
+ * @version 2.0
  */
 public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -160,7 +160,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				SolarEdgeResolution.FifteenMinute.getKey());
 		var resolutionTitles = unmodifiableMap(Arrays.stream(SolarEdgeResolution.values())
 				.collect(Collectors.toMap(SolarEdgeResolution::getKey, SolarEdgeResolution::getKey,
-						(l, r) -> r, () -> new LinkedHashMap<>(SolarEdgeResolution.values().length))));
+						(_, r) -> r, () -> new LinkedHashMap<>(SolarEdgeResolution.values().length))));
 		resolutionSpec.setValueTitles(resolutionTitles);
 
 		// @formatter:off
@@ -302,7 +302,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				new SolarEdgeV1RestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeV1CloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SolarEdgeV1CloudIntegrationService.SECURE_SETTINGS));
+						_ -> SolarEdgeV1CloudIntegrationService.SECURE_SETTINGS));
 	}
 
 	@Override
@@ -355,7 +355,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 	private List<CloudDataValue> sites(CloudIntegrationConfiguration integration) {
 		return restOpsHelper.httpGet("List sites", integration, JsonNode.class,
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL)
 						.buildAndExpand(integration.getServiceProperties()).toUri(),
 				res -> parseSites(res.getBody()));
@@ -364,7 +364,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	private List<CloudDataValue> siteInventory(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List site inventory", integration, JsonNode.class,
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI)).path(SITE_INVENTORY_URL_TEMPLATE)
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI)).path(SITE_INVENTORY_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 				res -> parseSiteInventory(integration, res.getBody(), filters));
 	}
@@ -373,7 +373,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			Map<String, ?> filters, SolarEdgeDeviceType deviceType, String replacedByRef) {
 		try {
 			return restOpsHelper.httpGet("List equipment change log", integration, JsonNode.class,
-					(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+					(_) -> fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(EQUIPMENT_CHANGELOG_URL_TEMPLATE).buildAndExpand(filters).toUri(),
 					res -> parseEquipmentChangeLog(res.getBody(), filters, deviceType, replacedByRef));
 		} catch ( RemoteServiceException e ) {
@@ -451,11 +451,11 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		*/
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode siteNode : json.path("sites").path("site") ) {
-			final String id = siteNode.path("id").asText();
-			final String name = siteNode.path("name").asText().trim();
+			final String id = siteNode.path("id").asString();
+			final String name = siteNode.path("name").asString().trim();
 			final var meta = new LinkedHashMap<String, Object>(4);
 			if ( siteNode.hasNonNull("status") ) {
-				meta.put("status", siteNode.path("status").asText());
+				meta.put("status", siteNode.path("status").asString());
 			}
 			final JsonNode locNode = siteNode.path("location");
 			if ( locNode.isObject() ) {
@@ -524,11 +524,11 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 					inventoryNode.path("inverters").size());
 			for ( String nodeName : new String[] { "inverters", "thirdPartyInverters" } ) {
 				for ( JsonNode inverterNode : inventoryNode.path(nodeName) ) {
-					final String id = inverterNode.path("SN").asText().trim();
+					final String id = inverterNode.path("SN").asString().trim();
 					if ( id.isEmpty() ) {
 						continue;
 					}
-					final String name = inverterNode.path("name").asText().trim();
+					final String name = inverterNode.path("name").asString().trim();
 					final var meta = new LinkedHashMap<String, Object>(4);
 					meta.put(DEVICE_SERIAL_NUMBER_METADATA, id);
 					populateNonEmptyValue(inverterNode, "manufacturer", MANUFACTURER_METADATA, meta);
@@ -538,20 +538,21 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 						StringBuilder buf = new StringBuilder();
 						if ( inverterNode.hasNonNull("dsp1Version") ) {
 							buf.append("DSP1: ")
-									.append(inverterNode.path("dsp1Version").asText().trim());
+									.append(inverterNode.path("dsp1Version").asString().trim());
 						}
 						if ( inverterNode.hasNonNull("dsp2Version") ) {
 							if ( !buf.isEmpty() ) {
 								buf.append(", ");
 							}
 							buf.append("DSP2: ")
-									.append(inverterNode.path("dsp1Version").asText().trim());
+									.append(inverterNode.path("dsp1Version").asString().trim());
 						}
 						if ( inverterNode.hasNonNull("cpuVersion") ) {
 							if ( !buf.isEmpty() ) {
 								buf.append(", ");
 							}
-							buf.append("CPU: ").append(inverterNode.path("cpuVersion").asText().trim());
+							buf.append("CPU: ")
+									.append(inverterNode.path("cpuVersion").asString().trim());
 						}
 						meta.put(DEVICE_FIRMWARE_VERSION_METADATA, buf.toString());
 					}
@@ -587,11 +588,11 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			 */
 			final var meterValues = new ArrayList<CloudDataValue>(inventoryNode.path("meters").size());
 			for ( JsonNode meterNode : inventoryNode.path("meters") ) {
-				final String id = meterNode.path("type").asText().trim();
+				final String id = meterNode.path("type").asString().trim();
 				if ( id.isEmpty() ) {
 					continue;
 				}
-				final String name = meterNode.path("name").asText().trim();
+				final String name = meterNode.path("name").asString().trim();
 				final var meta = new LinkedHashMap<String, Object>(4);
 				populateNonEmptyValue(meterNode, "SN", DEVICE_SERIAL_NUMBER_METADATA, meta);
 				populateNonEmptyValue(meterNode, "manufacturer", MANUFACTURER_METADATA, meta);
@@ -635,11 +636,11 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			final var batteryValues = new ArrayList<CloudDataValue>(
 					inventoryNode.path("batteries").size());
 			for ( JsonNode batteryNode : inventoryNode.path("batteries") ) {
-				final String id = batteryNode.path("SN").asText().trim();
+				final String id = batteryNode.path("SN").asString().trim();
 				if ( id.isEmpty() ) {
 					continue;
 				}
-				final String name = batteryNode.path("name").asText().trim();
+				final String name = batteryNode.path("name").asString().trim();
 				final var meta = new LinkedHashMap<String, Object>(4);
 				populateNonEmptyValue(batteryNode, "SN", DEVICE_SERIAL_NUMBER_METADATA, meta);
 				populateNonEmptyValue(batteryNode, "manufacturer", MANUFACTURER_METADATA, meta);
@@ -693,7 +694,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		final JsonNode changeLogNode = json.path("ChangeLog");
 
 		for ( JsonNode changedNode : changeLogNode.path("list") ) {
-			final String id = changedNode.path("serialNumber").asText().trim();
+			final String id = changedNode.path("serialNumber").asString().trim();
 			if ( id.isEmpty() ) {
 				continue;
 			}
@@ -921,7 +922,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 					for ( String inverterId : queryPlan.inverterIds ) {
 						List<GeneralDatum> datum = restOpsHelper.httpGet("List inverter data",
 								integration, JsonNode.class,
-								req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+								_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 										.path(EQUIPMENT_DATA_URL_TEMPLATE)
 										.queryParam("startTime", startDateParam)
 										.queryParam("endTime", endDateParam)
@@ -940,7 +941,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 					// @formatter:off
 					JsonNode meterPower = restOpsHelper.httpGet("List meter power data", integration,
 							JsonNode.class,
-							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 									.path(POWER_DETAILS_URL_TEMPLATE)
 									.queryParam("startTime", startDateParam)
 									.queryParam("endTime", endDateParam)
@@ -950,7 +951,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 							HttpEntity::getBody);
 					JsonNode meterEnergy = restOpsHelper.httpGet("List meter energy data", integration,
 							JsonNode.class,
-							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 									.path(METERS_URL_TEMPLATE)
 									.queryParam("startTime", startDateParam)
 									.queryParam("endTime", endDateParam)
@@ -970,7 +971,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				if ( queryPlan.includeBatteries ) {
 					List<GeneralDatum> datum = restOpsHelper.httpGet("List battery data", integration,
 							JsonNode.class,
-							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 									.path(STORAGE_DATA_URL_TEMPLATE)
 									.queryParam("startTime", startDateParam)
 									.queryParam("endTime", endDateParam).buildAndExpand(queryPlan.siteId)
@@ -995,7 +996,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 						d.getObjectId(), d.getSourceId());
 				Instant ts = d.getTimestamp();
 				greatestTimestampPerStream.compute(streamPk,
-						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
 				finalResult.add(d);
 			}
 			Collections.sort(finalResult, null);
@@ -1064,7 +1065,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		}
 		List<GeneralDatum> result = new ArrayList<>(8);
 		for ( JsonNode telem : json.findValue("telemetries") ) {
-			String dateVal = nonEmptyString(telem.path("date").asText());
+			String dateVal = nonEmptyString(telem.path("date").asString());
 			if ( dateVal == null ) {
 				continue;
 			}
@@ -1186,7 +1187,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			final boolean power = (json == powerJson);
 			for ( JsonNode meterNode : json.findValue("meters") ) {
 				String meterId = nonEmptyString(
-						(power ? meterNode.path("type") : meterNode.path("meterType")).asText());
+						(power ? meterNode.path("type") : meterNode.path("meterType")).asString());
 				if ( meterId == null ) {
 					continue;
 				}
@@ -1196,7 +1197,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 					continue;
 				}
 				for ( JsonNode telem : meterNode.path("values") ) {
-					String dateVal = nonEmptyString(telem.path("date").asText());
+					String dateVal = nonEmptyString(telem.path("date").asString());
 					if ( dateVal == null ) {
 						continue;
 					}
@@ -1205,7 +1206,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 					DatumId datumId = new DatumId(datumStream.getKind(), datumStream.getObjectId(),
 							sourceId, ts);
 					GeneralDatum d = result.computeIfAbsent(datumId,
-							id -> new GeneralDatum(datumId, new DatumSamples()));
+							_ -> new GeneralDatum(datumId, new DatumSamples()));
 					for ( String componentId : new String[] { WILDCARD_IDENTIFIER, meterId } ) {
 						if ( !componentRefs.containsKey(componentId) ) {
 							continue;
@@ -1269,7 +1270,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		final Map<String, List<ValueRef>> componentRefs = queryPlan.batteryRefs;
 		List<GeneralDatum> result = new ArrayList<>(8);
 		for ( JsonNode battery : json.findValue("batteries") ) {
-			String batteryId = nonEmptyString(battery.path("serialNumber").asText());
+			String batteryId = nonEmptyString(battery.path("serialNumber").asString());
 			if ( batteryId == null ) {
 				continue;
 			}
@@ -1279,7 +1280,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				continue;
 			}
 			for ( JsonNode telem : battery.path("telemetries") ) {
-				String dateVal = nonEmptyString(telem.path("timeStamp").asText());
+				String dateVal = nonEmptyString(telem.path("timeStamp").asString());
 				if ( dateVal == null ) {
 					continue;
 				}
@@ -1429,30 +1430,29 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		}
 		 */
 
-		result = restOpsHelper.httpGet("Query for site details", integration, JsonNode.class,
-				(headers) -> {
-				// @formatter:off
+		result = restOpsHelper.httpGet("Query for site details", integration, JsonNode.class, _ -> {
+			// @formatter:off
 					return fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(SITE_DETAILS_URL_TEMPLATE)
 							.buildAndExpand(siteId)
 							.toUri();
 					// @formatter:on
-				}, res -> {
-					ZoneId zone = ZoneOffset.UTC;
-					var json = res.getBody();
-					String zoneId = json != null
-							? StringUtils.nonEmptyString(json.findValue("timeZone").asText())
-							: null;
-					if ( zoneId != null ) {
-						try {
-							zone = ZoneId.of(zoneId);
-						} catch ( DateTimeException e ) {
-							log.warn("Site [{}] time zone [{}] not usable, will use UTC: {}", siteId,
-									zoneId, e.toString());
-						}
-					}
-					return zone;
-				});
+		}, res -> {
+			ZoneId zone = ZoneOffset.UTC;
+			var json = res.getBody();
+			String zoneId = json != null
+					? StringUtils.nonEmptyString(json.findValue("timeZone").asString())
+					: null;
+			if ( zoneId != null ) {
+				try {
+					zone = ZoneId.of(zoneId);
+				} catch ( DateTimeException e ) {
+					log.warn("Site [{}] time zone [{}] not usable, will use UTC: {}", siteId, zoneId,
+							e.toString());
+				}
+			}
+			return zone;
+		});
 
 		if ( result != null && cache != null ) {
 			cache.put(siteId, result);
@@ -1566,7 +1566,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				SolarEdgeDeviceType type = SolarEdgeDeviceType.fromValue(identifiers.get(1));
 				final int indexIdx = type.ordinal();
 				final int compIdx = ++indexes[indexIdx];
-				map.computeIfAbsent(type, k -> new LinkedHashMap<>(8)).put(identifiers.get(2), compIdx);
+				map.computeIfAbsent(type, _ -> new LinkedHashMap<>(8)).put(identifiers.get(2), compIdx);
 			}
 			if ( v.getChildren() != null ) {
 				for ( CloudDataValue child : v.getChildren() ) {
@@ -1653,7 +1653,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 					valueRefMap = plan.inverterRefs;
 				}
 				if ( valueRefMap != null ) {
-					valueRefMap.computeIfAbsent(valueRef.componentId, id -> new ArrayList<>(8))
+					valueRefMap.computeIfAbsent(valueRef.componentId, _ -> new ArrayList<>(8))
 							.add(valueRef);
 
 				}

@@ -37,7 +37,7 @@ import static net.solarnetwork.central.c2c.biz.impl.SmaCloudIntegrationService.B
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
-import static net.solarnetwork.codec.JsonUtils.getObjectFromJSON;
+import static net.solarnetwork.codec.jackson.JsonUtils.getObjectFromJSON;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
@@ -89,8 +89,6 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.MutableClock;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -120,6 +118,8 @@ import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Test cases for the {@link SmaCloudDatumStreamService} class.
@@ -252,9 +252,9 @@ public class SmaCloudDatumStreamServiceTests {
 			.as("URL is list systems")
 			.returns(UriComponentsBuilder.fromUri(SmaCloudIntegrationService.BASE_URI)
 					.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH).buildAndExpand().toUri(), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(authRequestCaptor.getValue())
@@ -418,9 +418,9 @@ public class SmaCloudDatumStreamServiceTests {
 			.returns(UriComponentsBuilder.fromUri(SmaCloudIntegrationService.BASE_URI)
 					.path(SmaCloudDatumStreamService.SYSTEM_DEVICES_PATH_TEMPLATE).buildAndExpand(systemId)
 					.toUri(), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(results)
@@ -552,9 +552,9 @@ public class SmaCloudDatumStreamServiceTests {
 					.fromUri(SmaCloudIntegrationService.BASE_URI)
 					.path(SmaCloudDatumStreamService.DEVICE_MEASUREMENT_SETS_PATH_TEMPLATE)
 					.buildAndExpand(deviceId).toUri(), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("HTTP request includes OAuth Authorization header")
-			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 			;
 
 		and.then(results)
@@ -806,9 +806,9 @@ public class SmaCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1019,9 +1019,9 @@ public class SmaCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1219,9 +1219,9 @@ public class SmaCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1415,9 +1415,9 @@ public class SmaCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1604,9 +1604,9 @@ public class SmaCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -1805,9 +1805,9 @@ public class SmaCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -2024,9 +2024,9 @@ public class SmaCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -2038,7 +2038,7 @@ public class SmaCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("%d Datum parsed from HTTP responses", inv1DatumCount + inv2DatumCount)
 			.hasSize(inv1DatumCount + inv2DatumCount)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("Next query filter returned")
 					.isNotNull()
@@ -2233,9 +2233,9 @@ public class SmaCloudDatumStreamServiceTests {
 				and.then(req)
 					.as("HTTP method is GET")
 					.returns(HttpMethod.GET, from(RequestEntity::getMethod))
-					.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+					.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 					.as("HTTP request includes OAuth Authorization header")
-					.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+					.containsEntry(HttpHeaders.AUTHORIZATION,"Bearer %s".formatted(oauthAccessToken.getTokenValue()))
 					;
 			})
 			.extracting(RequestEntity::getUrl)
@@ -2247,7 +2247,7 @@ public class SmaCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("%d Datum parsed from HTTP responses", inv1DatumCount + inv2DatumCount)
 			.hasSize(inv1DatumCount + inv2DatumCount)
-			.satisfies(r -> {
+			.satisfies(_ -> {
 				and.then(result.getNextQueryFilter())
 					.as("No next query filter returned because clock is beyond multi stream lag tolerance")
 					.isNull()

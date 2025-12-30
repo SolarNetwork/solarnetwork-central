@@ -42,18 +42,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.domain.Result;
+import tools.jackson.core.JacksonException;
 
 /**
  * Global controller exception handlers.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -88,7 +87,7 @@ public class GlobalExceptionHandlers {
 	 * @return an error response object
 	 */
 	@ExceptionHandler(ConstraintViolationException.class)
-	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleConstraintViolationException(ConstraintViolationException e,
 			WebRequest request, Locale locale) {
 		log.debug("ConstraintViolationException in request {}; user [{}]: {}",
@@ -107,7 +106,7 @@ public class GlobalExceptionHandlers {
 	 * @return an error response object
 	 */
 	@ExceptionHandler(BindException.class)
-	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<Void> handleBindException(BindException e, WebRequest request, Locale locale) {
 		log.debug("MethodArgumentNotValidException in request {}; user [{}]: {}",
 				requestDescription(request), userPrincipalName(request), e.toString());
@@ -115,8 +114,7 @@ public class GlobalExceptionHandlers {
 	}
 
 	/**
-	 * Handle a {@link JsonProcessingException}, presuming from malformed JSON
-	 * input.
+	 * Handle a {@link JacksonException}, presuming from malformed JSON input.
 	 *
 	 * @param e
 	 *        the exception
@@ -125,10 +123,10 @@ public class GlobalExceptionHandlers {
 	 * @return an error response object
 	 * @since 1.1
 	 */
-	@ExceptionHandler(JsonParseException.class)
+	@ExceptionHandler(JacksonException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Result<?> handleJsonParseException(JsonProcessingException e, WebRequest request) {
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
+	public Result<?> handleJacksonException(JacksonException e, WebRequest request) {
 		log.warn("JsonProcessingException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		return Result.error("VAL.00005", "Malformed JSON: " + e.getOriginalMessage());
@@ -146,7 +144,7 @@ public class GlobalExceptionHandlers {
 	 */
 	@ExceptionHandler(DateTimeParseException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleDateTimeParseException(DateTimeParseException e, WebRequest request) {
 		log.warn("DateTimeParseException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
@@ -166,12 +164,12 @@ public class GlobalExceptionHandlers {
 	 */
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
 	public Result<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e,
 			WebRequest request) {
 		Throwable t = e.getMostSpecificCause();
-		if ( t instanceof JsonProcessingException ex ) {
-			return handleJsonParseException(ex, request);
+		if ( t instanceof JacksonException ex ) {
+			return handleJacksonException(ex, request);
 		} else if ( t instanceof DateTimeParseException ex ) {
 			return handleDateTimeParseException(ex, request);
 		}

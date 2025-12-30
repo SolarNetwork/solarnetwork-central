@@ -33,7 +33,7 @@ import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -49,7 +49,6 @@ import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2A
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
-import org.springframework.security.oauth2.client.endpoint.DefaultPasswordTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.RestClientClientCredentialsTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.RestClientRefreshTokenTokenResponseClient;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
@@ -76,6 +75,7 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
 import net.solarnetwork.central.common.http.CachableRequestEntity;
+import net.solarnetwork.central.common.http.PasswordOAuth2AuthorizedClientProvider;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
@@ -92,7 +92,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
  * Configuration for the AlsoEnergy cloud integration services.
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -173,7 +173,7 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
 				integrationConfigurationDao, AlsoEnergyCloudIntegrationService.TOKEN_URI,
 				ClientAuthenticationMethod.CLIENT_SECRET_POST, encryptor,
-				integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS);
+				_ -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS);
 		if ( cache != null ) {
 			repo = new CachingOAuth2ClientRegistrationRepository(cache, repo);
 		}
@@ -200,13 +200,9 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 		var authRestClient = RestClient.create(authRestOps);
 		// @formatter:on
 
-		@SuppressWarnings("removal")
 		OAuth2AuthorizedClientProvider provider = OAuth2AuthorizedClientProviderBuilder.builder()
-				.password(b -> {
-					var client = new DefaultPasswordTokenResponseClient();
-					client.setRestOperations(authRestOps);
-					b.accessTokenResponseClient(client);
-				}).clientCredentials(b -> {
+				.provider(PasswordOAuth2AuthorizedClientProvider.forRestClient(authRestClient))
+				.clientCredentials(b -> {
 					var client = new RestClientClientCredentialsTokenResponseClient();
 					client.setRestClient(authRestClient);
 					b.accessTokenResponseClient(client);

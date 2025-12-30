@@ -26,7 +26,7 @@ import org.apache.catalina.connector.Connector;
 import org.apache.catalina.valves.SSLValve;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,7 +35,7 @@ import org.springframework.context.annotation.Configuration;
  * Configuration for Tomcat when running dual HTTP/HTTPS.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 public class TomcatConfig {
@@ -47,7 +47,7 @@ public class TomcatConfig {
 		Connector connector = new Connector(TomcatServletWebServerFactory.DEFAULT_PROTOCOL);
 		connector.setPort(httpPort);
 		return (tomcat) -> {
-			tomcat.addAdditionalTomcatConnectors(connector);
+			tomcat.addAdditionalConnectors(connector);
 			tomcat.addEngineValves(new SSLValve());
 		};
 	}

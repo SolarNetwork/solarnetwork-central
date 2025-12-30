@@ -77,7 +77,7 @@ import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransf
 import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
@@ -407,7 +407,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 					eq(type),
 					same(transform),
 					paramsCaptor.capture(),
-					assertArg((OutputStream o) -> {
+					assertArg((OutputStream _) -> {
 						if (out.size() < 1 ) {
 							out.write(response.getBytes(StandardCharsets.UTF_8));
 						}
@@ -532,7 +532,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 					eq(type),
 					same(transform),
 					paramsCaptor.capture(),
-					assertArg((OutputStream o) -> {
+					assertArg((OutputStream _) -> {
 						if (out.size() < 1 ) {
 							out.write(response.getBytes(StandardCharsets.UTF_8));
 						}
@@ -757,7 +757,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 					eq(type),
 					same(transform),
 					paramsCaptor.capture(),
-					assertArg((OutputStream o) -> {
+					assertArg((OutputStream _) -> {
 						if (out.size() < 1 ) {
 							out.write(response.getBytes(StandardCharsets.UTF_8));
 						}

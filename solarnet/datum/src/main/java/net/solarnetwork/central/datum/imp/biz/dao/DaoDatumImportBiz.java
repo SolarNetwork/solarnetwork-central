@@ -311,7 +311,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	private CompletableFuture<Boolean> saveToResourceStorage(File f, UserUuidPK id,
 			ResourceStorageService rss) {
 		final AtomicInteger logCount = new AtomicInteger(0);
-		return rss.saveResource(f.getName(), new FileSystemResource(f), true, (r, amount) -> {
+		return rss.saveResource(f.getName(), new FileSystemResource(f), true, (_, amount) -> {
 			final double percent = amount * 100.0;
 			final int now = (int) percent;
 			final int prev = logCount.get();

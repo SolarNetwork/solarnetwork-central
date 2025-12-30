@@ -26,8 +26,8 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
-import static net.solarnetwork.codec.JsonUtils.getJSONString;
-import static net.solarnetwork.codec.JsonUtils.getStringMap;
+import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Clock;
 import java.util.ArrayList;
@@ -205,7 +205,7 @@ public class MockCloudControlService extends BaseCloudControlService {
 
 		validateTopicIsSupported(instruction);
 
-		return performAction(cloudControlId, (ms, control, integration) -> {
+		return performAction(cloudControlId, (_, control, integration) -> {
 			InstructionStatus result = instruction.toStatus()
 					.newCopyWithState(InstructionState.Completed);
 			// @formatter:off

@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.BasicUserMetadataFilter;
 import net.solarnetwork.central.dao.mybatis.MyBatisUserMetadataDao;
 import net.solarnetwork.central.domain.UserMetadataEntity;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 

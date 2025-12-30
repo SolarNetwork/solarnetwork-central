@@ -28,7 +28,7 @@ import java.sql.Timestamp;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Row mapper for {@link CapacityGroupConfiguration} entities.

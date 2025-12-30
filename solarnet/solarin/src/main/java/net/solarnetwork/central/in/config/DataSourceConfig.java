@@ -23,8 +23,8 @@
 package net.solarnetwork.central.in.config;
 
 import javax.sql.DataSource;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -38,7 +38,7 @@ import com.zaxxer.hikari.HikariDataSource;
  * DataSource configuration for SolarIn.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 public class DataSourceConfig {

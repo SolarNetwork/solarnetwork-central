@@ -30,7 +30,7 @@ import java.time.ZoneOffset;
 import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Test cases for the {@link UserNodeEventHookConfiguration} class.

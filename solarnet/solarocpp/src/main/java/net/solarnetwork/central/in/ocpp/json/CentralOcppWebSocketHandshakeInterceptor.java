@@ -38,7 +38,7 @@ import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.ocpp.domain.ChargePointAuthorizationDetails;
 import net.solarnetwork.ocpp.domain.SystemUser;
 import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandshakeInterceptor;

@@ -26,8 +26,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Test cases for the {@link DatumRecordCounts} class.
@@ -38,9 +39,10 @@ import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 public class DatumRecordCountsTests {
 
 	public ObjectMapper objectMapper() {
-		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.setDefaultPropertyInclusion(Include.NON_NULL);
-		return objectMapper;
+		return JsonMapper.builder()
+				.changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(Include.NON_NULL))
+				.changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(Include.NON_NULL))
+				.build();
 	}
 
 	@Test

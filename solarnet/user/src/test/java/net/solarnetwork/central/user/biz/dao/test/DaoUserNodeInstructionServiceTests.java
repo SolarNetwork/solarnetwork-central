@@ -35,8 +35,8 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.user.biz.dao.DaoUserNodeInstructionService.ERROR_MIMSSING_TASK_SCHEDULE;
 import static net.solarnetwork.central.user.biz.dao.DaoUserNodeInstructionService.ERROR_MISSING_INSTRUCTION;
 import static net.solarnetwork.central.user.biz.dao.DaoUserNodeInstructionService.EXCEPTION_TASK_MESSAGE;
-import static net.solarnetwork.codec.JsonUtils.getStringMap;
-import static net.solarnetwork.codec.JsonUtils.getStringMapFromObject;
+import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
+import static net.solarnetwork.codec.jackson.JsonUtils.getStringMapFromObject;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -87,7 +87,7 @@ import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
 import net.solarnetwork.central.user.domain.NodeInstructionExpressionRoot;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.central.user.domain.UsersUserEvents;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.security.AuthorizationException;
 import net.solarnetwork.security.AuthorizationException.Reason;
@@ -147,7 +147,7 @@ public class DaoUserNodeInstructionServiceTests implements CommonUserEvents, Use
 		clock = MutableClock.of(now().truncatedTo(ChronoUnit.HOURS), UTC);
 		sourceIdPathMatcher = new AntPathMatcher();
 		sourceIdPathMatcher.setCachePatterns(false);
-		service = new DaoUserNodeInstructionService(clock, executor, JsonUtils.newObjectMapper(),
+		service = new DaoUserNodeInstructionService(clock, executor, JsonUtils.JSON_OBJECT_MAPPER,
 				userEventAppenderBiz, instructorBiz, expressionService, nodeOwnershipDao, taskDao,
 				datumDao, datumStreamMetadataDao);
 	}

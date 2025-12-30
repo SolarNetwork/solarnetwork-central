@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
 	id 'eclipse'
-	id 'org.springframework.boot' version '3.5.9'
+	id 'org.springframework.boot' version '4.0.1'
 }
 
 apply plugin: 'java'
@@ -15,13 +15,6 @@ base {
 	archivesName = 'solaroscp-fp'
 }
 
-configurations {
-    all*.exclude group: 'commons-logging'
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-	all*.exclude group: 'net.sf.supercsv'
-}
-
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-common-web')
@@ -32,12 +25,14 @@ dependencies {
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-restclient'
+	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.security:spring-security-oauth2-jose'
 	implementation 'org.springframework.security:spring-security-oauth2-resource-server'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
@@ -50,17 +45,17 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	
 	// Utilities
-	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
+	implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
 
 	// Testing
 	testImplementation project(':solarnet-common-test')
+    testImplementation "de.siegmar:fastcsv:${fastCsvVersion}"
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-    testImplementation "net.sf.supercsv:super-csv:${superCsvVersion}"
-    
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 }
 
 bootJar {

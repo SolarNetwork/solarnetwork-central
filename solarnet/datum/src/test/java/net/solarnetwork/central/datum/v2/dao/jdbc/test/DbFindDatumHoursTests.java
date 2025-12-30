@@ -58,7 +58,7 @@ public class DbFindDatumHoursTests extends BaseDatumJdbcTestSupport {
 			stmt.setTimestamp(2, Timestamp.from(start));
 			stmt.setTimestamp(3, Timestamp.from(end));
 			return stmt;
-		}, (ResultSet rs, int rowNum) -> {
+		}, (ResultSet rs, int _) -> {
 			Timestamp ts = rs.getTimestamp(2);
 			return new StreamPK(streamId, ts.toInstant());
 		});

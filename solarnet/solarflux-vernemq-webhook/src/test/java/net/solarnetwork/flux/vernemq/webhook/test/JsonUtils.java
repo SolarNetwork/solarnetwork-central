@@ -17,15 +17,15 @@
 
 package net.solarnetwork.flux.vernemq.webhook.test;
 
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * JSON utilities to help with tests.
  * 
  * @author matt
+ * @version 2.0
  */
 public final class JsonUtils {
 
@@ -35,7 +35,12 @@ public final class JsonUtils {
    * @return the new instance
    */
   public static ObjectMapper defaultObjectMapper() {
-    return Jackson2ObjectMapperBuilder.json().serializationInclusion(Include.NON_EMPTY).build();
+    return tools.jackson.databind.json.JsonMapper.builder()
+        .changeDefaultPropertyInclusion(
+            incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+        .changeDefaultPropertyInclusion(
+            incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
+        .build();
   }
 
 }

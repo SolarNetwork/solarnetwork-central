@@ -30,8 +30,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -40,6 +38,8 @@ import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * MQTT implementation of {@link NodeInstructionQueueHook}.
@@ -110,7 +110,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 				&& InstructionState.Queuing == instruction.getInstruction().getState() ) {
 			try {
 				executor.execute(new PublishNodeInstructionTask(instruction, instructionId));
-			} catch ( JsonProcessingException e ) {
+			} catch ( JacksonException e ) {
 				log.error("Error encoding node instruction {} for MQTT payload: {}", instruction.getId(),
 						e.getMessage());
 			}
@@ -125,7 +125,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 		private final byte[] payload;
 
 		private PublishNodeInstructionTask(NodeInstruction instruction, Long instructionId)
-				throws JsonProcessingException {
+				throws JacksonException {
 			super();
 			// create copy with ID set
 			this.instructionId = instructionId;

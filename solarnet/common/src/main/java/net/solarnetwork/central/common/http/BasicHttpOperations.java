@@ -24,7 +24,7 @@ package net.solarnetwork.central.common.http;
 
 import static java.lang.String.format;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
-import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.InetAddress;
 import java.net.URI;
@@ -54,7 +54,7 @@ import net.solarnetwork.central.domain.CommonUserEvents;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.RemoteServiceException;

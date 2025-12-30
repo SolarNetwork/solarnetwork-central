@@ -1,21 +1,21 @@
 /* ==================================================================
  * CapacityOptimizerConfigurationTests.java - 14/08/2022 7:31:03 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -34,16 +34,16 @@ import java.util.UUID;
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.util.DateUtils;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link CapacityOptimizerConfiguration} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -95,7 +95,7 @@ public class CapacityOptimizerConfigurationTests {
 	@Test
 	public void serializeJson() throws IOException, JSONException {
 		// GIVEN
-		ObjectMapper mapper = JsonUtils.newObjectMapper();
+		ObjectMapper mapper = JsonUtils.JSON_OBJECT_MAPPER;
 
 		Long userId = UUID.randomUUID().getMostSignificantBits();
 		Long confId = UUID.randomUUID().getMostSignificantBits();

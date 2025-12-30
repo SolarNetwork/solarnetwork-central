@@ -23,29 +23,29 @@
 package net.solarnetwork.central.reg.config;
 
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
-import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import net.solarnetwork.central.ocpp.config.OcppCentralServiceQualifier;
 import net.solarnetwork.central.ocpp.config.OcppChargePointQualifier;
 import net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration;
-import net.solarnetwork.codec.ObjectMapperFactoryBean;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.v16.jakarta.cp.json.ChargePointActionPayloadDecoder;
 import net.solarnetwork.ocpp.v16.jakarta.cs.json.CentralServiceActionPayloadDecoder;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
 
 /**
  * Configuration for OCPP v1.6.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 @EnableWebSocket
@@ -56,14 +56,11 @@ public class OcppV16Config {
 	@Bean
 	@Qualifier(OCPP_V16)
 	public ObjectMapper ocppObjectMapper_v16() {
-		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
-		factory.setFeaturesToDisable(Arrays.asList(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS));
-		factory.setModules(Arrays.asList(new JakartaXmlBindAnnotationModule()));
-		try {
-			return factory.getObject();
-		} catch ( Exception e ) {
-			throw new RuntimeException(e);
-		}
+		return JsonMapper.builder()
+				.changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(Include.NON_NULL))
+				.changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(Include.NON_NULL))
+				.disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+				.addModule(new JakartaXmlBindAnnotationModule()).build();
 	}
 
 	@Bean

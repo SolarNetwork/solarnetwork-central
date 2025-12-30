@@ -66,7 +66,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -97,12 +96,13 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * AlsoEnergy implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.6
+ * @version 2.0
  */
 public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -148,7 +148,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				AlsoEnergyGranularity.Raw.name());
 		var granularityTitles = unmodifiableMap(Arrays.stream(AlsoEnergyGranularity.values())
 				.collect(Collectors.toMap(AlsoEnergyGranularity::name, AlsoEnergyGranularity::name,
-						(l, r) -> r, () -> new LinkedHashMap<>(AlsoEnergyGranularity.values().length))));
+						(_, r) -> r, () -> new LinkedHashMap<>(AlsoEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
 
 		// @formatter:off
@@ -216,8 +216,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(AlsoEnergyCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager, clock, integrationLocksCache));
+						_ -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS, oauthClientManager,
+						clock, integrationLocksCache));
 	}
 
 	@Override
@@ -383,7 +383,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 						e.getKey().getKind(), e.getKey().getObjectId(), e.getKey().getSourceId());
 				Instant ts = e.getKey().getTimestamp();
 				greatestTimestampPerStream.compute(streamPk,
-						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
 				return true;
 			}).map(e -> new GeneralDatum(e.getKey(), e.getValue())).toList();
 
@@ -422,7 +422,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	private List<CloudDataValue> sites(CloudIntegrationConfiguration integration) {
 		return restOpsHelper.httpGet("List sites", integration, JsonNode.class,
-				(req) -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
 						.path(AlsoEnergyCloudIntegrationService.LIST_SITES_URL)
 						.buildAndExpand(integration.getServiceProperties()).toUri(),
 				res -> parseSites(res.getBody()));
@@ -432,7 +432,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List site hardware", integration, JsonNode.class,
 		// @formatter:off
-				(req) -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
 						.path(SITE_HARDWARE_URL_TEMPLATE)
 						.queryParam("includeArchivedFields", true)
 						.queryParam("includeDeviceConfig", true)
@@ -460,8 +460,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		*/
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode siteNode : json.path("items") ) {
-			final String id = siteNode.path("siteId").asText();
-			final String name = siteNode.path("siteName").asText().trim();
+			final String id = siteNode.path("siteId").asString();
+			final String name = siteNode.path("siteName").asString().trim();
 			result.add(intermediateDataValue(List.of(id), name, null));
 		}
 		return result;
@@ -535,11 +535,11 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			if ( !fieldsNode.isArray() || fieldsNode.isEmpty() ) {
 				continue;
 			}
-			final String id = deviceNode.path("id").asText().trim();
+			final String id = deviceNode.path("id").asString().trim();
 			if ( id.isEmpty() ) {
 				continue;
 			}
-			final String name = deviceNode.path("name").asText().trim();
+			final String name = deviceNode.path("name").asString().trim();
 			final var meta = new LinkedHashMap<String, Object>(4);
 			populateNonEmptyValue(deviceNode, "functionCode", "functionCode", meta);
 			JsonNode configNode = deviceNode.path("config");
@@ -548,7 +548,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 			List<CloudDataValue> fields = new ArrayList<>(fieldsNode.size());
 			for ( JsonNode fieldNode : fieldsNode ) {
-				final String fieldName = fieldNode.asText();
+				final String fieldName = fieldNode.asString();
 
 				List<CloudDataValue> aggs = new ArrayList<>(AlsoEnergyFieldFunction.values().length);
 				for ( AlsoEnergyFieldFunction fn : AlsoEnergyFieldFunction.values() ) {
@@ -655,7 +655,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 				var valueRef = new ValueRef(siteId, hardwareId, fieldName, fn, config);
 				List<ValueRef> valueRefs = result.computeIfAbsent(
-						new UserLongCompositePK(siteId, hardwareId), k -> new ArrayList<>(8));
+						new UserLongCompositePK(siteId, hardwareId), _ -> new ArrayList<>(8));
 				if ( !valueRefs.contains(valueRef) ) {
 					valueRefs.add(valueRef);
 				}
@@ -700,10 +700,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		final int refCount = refs.size();
 		for ( JsonNode item : items ) {
 			JsonNode tsNode = item.path("timestamp");
-			if ( !tsNode.isTextual() ) {
+			if ( !tsNode.isString() ) {
 				continue;
 			}
-			Instant ts = Instant.parse(tsNode.asText());
+			Instant ts = Instant.parse(tsNode.asString());
 			JsonNode dataNode = item.path("data");
 			if ( dataNode.size() != refCount ) {
 				continue;
@@ -720,7 +720,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				if ( propVal != null ) {
 					dataMap.computeIfAbsent(
 							new DatumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts),
-							k -> new DatumSamples()).putSampleValue(ref.property.getPropertyType(),
+							_ -> new DatumSamples()).putSampleValue(ref.property.getPropertyType(),
 									ref.property.getPropertyName(), propVal);
 				}
 

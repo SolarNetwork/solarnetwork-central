@@ -22,7 +22,7 @@ subprojects {
 
 	java {
 		toolchain {
-	        languageVersion = JavaLanguageVersion.of(21)
+	        languageVersion = JavaLanguageVersion.of(25)
 	    }
 		withJavadocJar()
 		withSourcesJar()
@@ -37,7 +37,7 @@ subprojects {
 		compileJava,
 		compileTestJava
 	].each() {
-    	it.options.release = 21
+    	it.options.release = 25
 		it.options.compilerArgs += [
 			"-Xlint:all",
 			"-Xlint:-options",
@@ -79,7 +79,7 @@ subprojects {
 		encoding = 'UTF-8'
 		use = true
 		links = ['https://docs.oracle.com/en/java/javase/21/docs/api/']
-		source = "21"
+		source = "25"
 	}
 
 	ext {
@@ -89,26 +89,27 @@ subprojects {
 		checkstyleVersion = '8.34'
 		commonsIoVersion = '2.19.0'
 		cronUtilsVersion = '9.2.0'
-		jsonSchemaValidatorVersion = '1.3.2'
+		fastCsvVersion = '4.1.0'
+		jsonSchemaValidatorVersion = '3.0.0'
 		jsoupVersion = '1.18.3'
-		myBatisStarterVersion = '3.0.4'
+		myBatisStarterVersion = '4.0.0'
 		okhttp3Mockwebserver = '4.12.0'
 		saxonVersion = '12.5'
-		snCommonVersion = '4.11.0'
+		snCommonVersion = '4.15.0'
 		snCommonExprSpelVersion = '4.1.0'
 		snCommonMqttVersion = '5.0.0'
 		snCommonMqttNettyVersion = '5.0.0'
-		snCommonOcppVersion = '5.0.0'
-		snCommonOcpp16JakartaVersion = '5.0.2'
-		snCommonOcpp201Version = '2.0.1'
-		snCommonOcppWebJakartaVersion = '3.3.0'
+		snCommonOcppVersion = '6.0.0'
+		snCommonOcpp16JakartaVersion = '6.0.0'
+		snCommonOcpp201Version = '3.0.0'
+		snCommonOcppWebJakartaVersion = '4.0.0'
 		snCommonPkiBcVersion = '4.0.0'
-		snCommonWebJakartaVersion = '2.1.2'
+		snCommonWebJakartaVersion = '2.3.0'
 		snExternalOcpp16JakartaVersion = '1.0.1'
 		snExternalOcpp201Version = '1.0.0'
-		springdocStarterVersion = '2.8.8'
+		springdocStarterVersion = '3.0.0'
 		superCsvVersion = '2.4.0'
-		swaggerVersion = '2.2.32'
+		swaggerVersion = '2.2.41'
 		threetenExtraVersion = '1.8.0'
 		uuidGeneratorVersion = '5.1.0'
 		xzVersion = '1.10'
@@ -129,7 +130,7 @@ subprojects {
 	}
 		
 	ext['netty.version'] = '4.2.9.Final'
-	ext['jackson-bom.version'] = '2.20.1'
+	//ext['jackson-bom.version'] = '2.20.1'
 
 	dependencies {
 		testImplementation libraries.hamcrest,
@@ -143,8 +144,24 @@ subprojects {
 	}
 
 	configurations {
-    	all*.exclude group: 'commons-logging'
-		all {	
+		configureEach {
+			exclude group: 'commons-logging'
+			exclude group: 'com.amazonaws'
+			
+			/* TODO: when Springdoc migrates to Jackson 3, can enable these excludes on Jackson 2
+			exclude group: 'com.fasterxml.jackson.core', module:'jackson-databind'
+			exclude group: 'com.fasterxml.jackson.core', module:'jackson-core'
+			exclude group: 'com.fasterxml.jackson.dataformat'
+			exclude group: 'com.fasterxml.jackson.datatype'
+			*/
+			
+			exclude group: 'javax.servlet'
+			exclude group: 'log4j', module: 'log4j'
+			exclude group: 'net.solarnetwork.external', module: 'net.solarnetwork.external.ocpp'
+			exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+			exclude group: 'xml-apis', module: 'xml-apis'
+		}
+		all {
 			resolutionStrategy {
 				// the following are to pick up security fixes in transitive dependencies
 				force "commons-io:commons-io:${commonsIoVersion}"
@@ -169,7 +186,7 @@ subprojects {
     pluginManager.withPlugin('eclipse') { 
 		eclipse {
 			jdt {
-				javaRuntimeName = 'JavaSE-21'
+				javaRuntimeName = 'JavaSE-25'
 				file {
 					withProperties { properties ->
 						// set properties for the file org.eclipse.jdt.core.prefs to enable -parameters for Spring 6

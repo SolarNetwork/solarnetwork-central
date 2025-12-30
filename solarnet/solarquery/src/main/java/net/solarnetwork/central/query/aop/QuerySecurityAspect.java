@@ -304,7 +304,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		Map<String, Set<NodeSourcePK>> allSourceIds = new LinkedHashMap<>(result.size());
 		for ( NodeSourcePK pk : result ) {
 			Set<NodeSourcePK> pkSet = allSourceIds.computeIfAbsent(pk.getSourceId(),
-					k -> new LinkedHashSet<>(8));
+					_ -> new LinkedHashSet<>(8));
 			pkSet.add(pk);
 		}
 
