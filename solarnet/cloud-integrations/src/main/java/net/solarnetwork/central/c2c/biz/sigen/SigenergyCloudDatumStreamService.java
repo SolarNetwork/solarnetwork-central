@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -60,8 +59,6 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -90,6 +87,8 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Sigenergy implementation of {@link CloudDatumStreamService}.
@@ -250,8 +249,7 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 	private List<CloudDataValue> systems(CloudIntegrationConfiguration integration) {
 		final SigenergyRegion region = SigenergyRestOperationsHelper.resolveRegion(integration);
 		return restOpsHelper.httpGet("List systems", integration, JsonNode.class,
-				(req) -> UriComponentsBuilder
-						.fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+				(_) -> UriComponentsBuilder.fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
 						.path(SigenergyRestOperationsHelper.SYSTEM_LIST_PATH)
 						.buildAndExpand(region.getKey()).toUri(),
 				(res) -> parseSystems(res.getBody()));
@@ -291,9 +289,9 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 		if ( sysNode == null ) {
 			return null;
 		}
-		final String id = sysNode.path("systemId").asText().trim();
-		final String name = nonEmptyString(sysNode.path("systemName").asText().trim());
-		final String addr = nonEmptyString(sysNode.path("addr").asText().trim());
+		final String id = sysNode.path("systemId").asString().trim();
+		final String name = nonEmptyString(sysNode.path("systemName").asString().trim());
+		final String addr = nonEmptyString(sysNode.path("addr").asString().trim());
 		final var meta = new LinkedHashMap<String, Object>(4);
 		final JsonNode addrNode = sysNode.path("address");
 		if ( addrNode != null ) {
@@ -328,8 +326,7 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 		final SigenergyRegion region = SigenergyRestOperationsHelper.resolveRegion(integration);
 		List<CloudDataValue> result = restOpsHelper.httpGet("List system devices", integration,
 				JsonNode.class,
-				(req) -> UriComponentsBuilder
-						.fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+				(_) -> UriComponentsBuilder.fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
 						.path(SigenergyRestOperationsHelper.SYSTEM_DEVICE_LIST_PATH)
 						.buildAndExpand(region.getKey(), systemId).toUri(),
 				(res) -> parseSystemDevices(res.getBody(), systemId));
@@ -384,8 +381,7 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 
 			try {
 				final JsonNode attrMapNode = jsonObjectOrArray(mapper, devNode, "attrMap");
-				for ( Iterator<String> itr = attrMapNode.fieldNames(); itr.hasNext(); ) {
-					String attr = itr.next();
+				for ( String attr : attrMapNode.propertyNames() ) {
 					if ( !meta.containsKey(attr) ) {
 						JsonNode attrVal = attrMapNode.get(attr);
 						if ( attrVal.isNumber() ) {
@@ -565,7 +561,7 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 				final String deviceId = m.group(2);
 				final String fieldName = m.group(3);
 
-				final SystemQueryPlan plan = result.computeIfAbsent(systemId, id -> {
+				final SystemQueryPlan plan = result.computeIfAbsent(systemId, _ -> {
 					return new SystemQueryPlan(systemId);
 				});
 
@@ -581,7 +577,7 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 						plan.systemSummaryDeviceRefs.add(valueRef);
 					}
 				} else {
-					plan.deviceRefs.computeIfAbsent(deviceId, k -> new ArrayList<>(8)).add(valueRef);
+					plan.deviceRefs.computeIfAbsent(deviceId, _ -> new ArrayList<>(8)).add(valueRef);
 				}
 			}
 		}
@@ -619,9 +615,8 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 							.path(SigenergyRestOperationsHelper.SYSTEM_SUMMARY_VIEW_PATH)
 							.buildAndExpand(region.getKey()).toUri();
 					restOpsHelper.httpGet("View system summary", integration, JsonNode.class,
-							(req) -> viewSysSummaryUri,
-							(res) -> parseSystemSummaryDatum(viewSysSummaryUri, res.getBody(), queryPlan,
-									ds, sourceIdMap, systemSourceIdMapping));
+							(_) -> viewSysSummaryUri, (res) -> parseSystemSummaryDatum(viewSysSummaryUri,
+									res.getBody(), queryPlan, ds, sourceIdMap, systemSourceIdMapping));
 				}
 
 			}
@@ -637,7 +632,7 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 						d.getObjectId(), d.getSourceId());
 				Instant ts = d.getTimestamp();
 				greatestTimestampPerStream.compute(streamPk,
-						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
 				finalResult.add(d);
 			}
 			Collections.sort(finalResult, null);
@@ -758,7 +753,7 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 						d.getObjectId(), d.getSourceId());
 				Instant ts = d.getTimestamp();
 				greatestTimestampPerStream.compute(streamPk,
-						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
 				finalResult.add(d);
 			}
 			Collections.sort(finalResult, null);

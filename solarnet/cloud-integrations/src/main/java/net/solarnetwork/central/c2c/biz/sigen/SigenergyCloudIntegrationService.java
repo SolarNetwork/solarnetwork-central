@@ -49,8 +49,6 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudControlService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -70,6 +68,8 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Sigenergy implementation of {@link CloudIntegrationService}.
@@ -113,7 +113,7 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 		var regionSpec = new BasicMultiValueSettingSpecifier(REGION_SETTING,
 				SigenergyRegion.AustraliaNewZealand.name());
 		var regionTitles = unmodifiableMap(Arrays.stream(SigenergyRegion.values())
-				.collect(Collectors.toMap(SigenergyRegion::name, SigenergyRegion::name, (l, r) -> r,
+				.collect(Collectors.toMap(SigenergyRegion::name, SigenergyRegion::name, (_, r) -> r,
 						() -> new LinkedHashMap<>(SigenergyRegion.values().length))));
 		regionSpec.setValueTitles(regionTitles);
 
@@ -216,7 +216,7 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 		final SigenergyRegion region = SigenergyRestOperationsHelper.resolveRegion(integration);
 		try {
 			final String response = restOpsHelper.httpGet("List systems", integration, String.class,
-					(req) -> UriComponentsBuilder
+					(_) -> UriComponentsBuilder
 							.fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
 							.path(SigenergyRestOperationsHelper.SYSTEM_LIST_PATH)
 							.buildAndExpand(region.getKey()).toUri(),
@@ -288,7 +288,7 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 				.toUri();
 		try {
 			final JsonNode response = restOpsHelper.http("Onboard systems", POST, systemIds, integration,
-					JsonNode.class, (req) -> uri, HttpEntity::getBody);
+					JsonNode.class, (_) -> uri, HttpEntity::getBody);
 			requireSuccessResponse(ONBOARD_CONFIGURATION_TOPIC, uri, response);
 			log.debug("Onboard of config {} returned: {}", integration.getConfigId(), response);
 			return boardingResult(systemIds, response, "SGCI.0003");
@@ -310,7 +310,7 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 				.toUri();
 		try {
 			final JsonNode response = restOpsHelper.http("Offboard systems", POST, systemIds,
-					integration, JsonNode.class, (req) -> uri, HttpEntity::getBody);
+					integration, JsonNode.class, (_) -> uri, HttpEntity::getBody);
 			requireSuccessResponse(OFFBOARD_CONFIGURATION_TOPIC, uri, response);
 			log.debug("Offboard of config {} succeeded: {}", integration.getConfigId(), response);
 			return boardingResult(systemIds, response, "SGCI.0005");
@@ -344,7 +344,7 @@ public class SigenergyCloudIntegrationService extends BaseRestOperationsCloudInt
 		boolean allSuccess = true;
 		JsonNode data = jsonObjectOrArray(mapper, response, "data");
 		for ( JsonNode systemNode : data ) {
-			final String systemId = nonEmptyString(systemNode.path("systemId").textValue());
+			final String systemId = nonEmptyString(systemNode.path("systemId").stringValue());
 			final boolean success = systemNode.path("result").booleanValue();
 			if ( !success ) {
 				allSuccess = false;

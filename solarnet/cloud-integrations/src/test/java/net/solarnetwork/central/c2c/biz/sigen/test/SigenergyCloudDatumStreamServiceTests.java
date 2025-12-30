@@ -65,8 +65,6 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.MutableClock;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
@@ -85,8 +83,10 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.security.ClientAccessTokenEntity;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.service.StaticOptionalService;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Test cases for the {@link SigenergyCloudDatumStreamService} class.
@@ -149,12 +149,12 @@ public class SigenergyCloudDatumStreamServiceTests {
 		var restOpsHelper = new SigenergyRestOperationsHelper(
 				LoggerFactory.getLogger(SigenergyCloudIntegrationService.class), userEventAppenderBiz,
 				restOps, CloudIntegrationsUserEvents.INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-				serviceIdentifier -> SigenergyCloudIntegrationService.SECURE_SETTINGS, clock,
-				JsonUtils.newObjectMapper(), clientAccessTokenDao, new StaticOptionalService<>(null));
+				_ -> SigenergyCloudIntegrationService.SECURE_SETTINGS, clock,
+				JsonUtils.JSON_OBJECT_MAPPER, clientAccessTokenDao, new StaticOptionalService<>(null));
 
 		service = new SigenergyCloudDatumStreamService(clock, userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
-				datumStreamPropertyDao, restOpsHelper, JsonUtils.newObjectMapper());
+				datumStreamPropertyDao, restOpsHelper, JsonUtils.JSON_OBJECT_MAPPER);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(SigenergyCloudDatumStreamService.class.getName(),

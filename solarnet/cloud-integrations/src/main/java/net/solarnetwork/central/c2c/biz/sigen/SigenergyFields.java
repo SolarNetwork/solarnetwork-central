@@ -26,9 +26,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -36,10 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.springframework.core.io.Resource;
-import org.supercsv.comment.CommentStartsWith;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.io.ICsvListReader;
-import org.supercsv.prefs.CsvPreference;
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRecord;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 
 /**
@@ -112,7 +108,7 @@ public class SigenergyFields {
 		final Map<String, Map<String, FieldInfo>> keyMaps = new LinkedHashMap<>(resources.size());
 		for ( Entry<String, Resource> e : resources.entrySet() ) {
 			fields.put(e.getKey(), loadFieldSet(e.getKey(), e.getValue(),
-					keyMaps.computeIfAbsent(e.getKey(), k -> new LinkedHashMap<>(8))));
+					keyMaps.computeIfAbsent(e.getKey(), _ -> new LinkedHashMap<>(8))));
 
 		}
 		this.fieldSets = Collections.unmodifiableMap(fields);
@@ -122,27 +118,22 @@ public class SigenergyFields {
 	private List<FieldInfo> loadFieldSet(final String setKey, final Resource value,
 			Map<String, FieldInfo> keyMap) {
 		final List<FieldInfo> result = new ArrayList<>(8);
-		final CsvPreference prefs = new CsvPreference.Builder(CsvPreference.STANDARD_PREFERENCE)
-				.skipComments(new CommentStartsWith("#")).build();
-		try (ICsvListReader in = new CsvListReader(
-				new InputStreamReader(value.getInputStream(), StandardCharsets.UTF_8), prefs)) {
+		try (CsvReader<CsvRecord> in = CsvReader.builder().ofCsvRecord(value.getInputStream())) {
 
-			@SuppressWarnings("unused")
-			var unused = in.getHeader(true);
+			in.skipLines(1); // skip header
 
-			List<String> row = null;
-			while ( (row = in.read()) != null ) {
-				if ( row.isEmpty() || row.size() < 2 ) {
+			for ( CsvRecord row : in ) {
+				if ( row.getFieldCount() < 2 ) {
 					continue;
 				}
-				String fieldName = nonEmptyString(row.get(0));
-				String key = nonEmptyString(row.get(1));
+				String fieldName = nonEmptyString(row.getField(0));
+				String key = nonEmptyString(row.getField(1));
 				if ( fieldName == null || key == null ) {
 					continue;
 				}
 				BigDecimal scaleFactor = null;
-				if ( row.size() > 4 ) {
-					String sf = nonEmptyString(row.get(4));
+				if ( row.getFieldCount() > 4 ) {
+					String sf = nonEmptyString(row.getField(4));
 					if ( sf != null ) {
 						try {
 							scaleFactor = new BigDecimal(sf);
@@ -151,7 +142,7 @@ public class SigenergyFields {
 						}
 					}
 				}
-				var field = new FieldInfo(fieldName, key, row.get(2), row.get(3), scaleFactor);
+				var field = new FieldInfo(fieldName, key, row.getField(2), row.getField(3), scaleFactor);
 				result.add(field);
 				keyMap.put(field.key, field);
 			}

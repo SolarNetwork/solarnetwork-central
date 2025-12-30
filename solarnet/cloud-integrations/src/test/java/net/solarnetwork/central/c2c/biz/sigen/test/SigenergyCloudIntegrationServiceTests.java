@@ -67,7 +67,6 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.MutableClock;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
@@ -79,10 +78,11 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationTopicConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.security.ClientAccessTokenEntity;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.service.StaticOptionalService;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Test cases for the {@link SigenergyCloudIntegrationService}.
@@ -125,11 +125,11 @@ public class SigenergyCloudIntegrationServiceTests {
 		var restOpsHelper = new SigenergyRestOperationsHelper(
 				LoggerFactory.getLogger(SigenergyCloudIntegrationService.class), userEventAppenderBiz,
 				restOps, CloudIntegrationsUserEvents.INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-				serviceIdentifier -> SigenergyCloudIntegrationService.SECURE_SETTINGS, clock,
-				JsonUtils.newObjectMapper(), clientAccessTokenDao, new StaticOptionalService<>(null));
+				_ -> SigenergyCloudIntegrationService.SECURE_SETTINGS, clock,
+				JsonUtils.JSON_OBJECT_MAPPER, clientAccessTokenDao, new StaticOptionalService<>(null));
 
 		service = new SigenergyCloudIntegrationService(List.of(datumStreamService), List.of(),
-				userEventAppenderBiz, encryptor, restOpsHelper, JsonUtils.newObjectMapper());
+				userEventAppenderBiz, encryptor, restOpsHelper, JsonUtils.JSON_OBJECT_MAPPER);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(SigenergyCloudIntegrationService.class.getName(),

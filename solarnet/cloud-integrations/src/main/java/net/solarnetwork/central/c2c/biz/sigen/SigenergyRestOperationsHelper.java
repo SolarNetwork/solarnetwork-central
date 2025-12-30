@@ -50,9 +50,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
@@ -64,6 +61,9 @@ import net.solarnetwork.central.domain.UserStringStringCompositePK;
 import net.solarnetwork.central.security.ClientAccessTokenEntity;
 import net.solarnetwork.service.OptionalService;
 import net.solarnetwork.service.RemoteServiceException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Extension of {@link RestOperationsHelper} with support for Sigenergy style
@@ -335,8 +335,8 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 	private ClientAccessTokenEntity parseToken(JsonNode res, UserStringStringCompositePK id) {
 		final Instant timestamp = Instant.ofEpochSecond(res.path("timestamp").longValue());
 		final JsonNode data = jsonObjectOrArray(mapper, res, RESPONSE_DATA_FIELD);
-		final String tokenType = nonEmptyString(data.path("tokenType").textValue());
-		final String token = nonEmptyString(data.path("accessToken").textValue());
+		final String tokenType = nonEmptyString(data.path("tokenType").stringValue());
+		final String token = nonEmptyString(data.path("accessToken").stringValue());
 		final int expiresInSeconds = data.path("expiresIn").intValue();
 		if ( tokenType != null && token != null && expiresInSeconds > 0 ) {
 			ClientAccessTokenEntity result = new ClientAccessTokenEntity(id, clock.instant());
@@ -375,8 +375,8 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 		}
 		// decode as a JSON string
 		try {
-			return mapper.readTree(json.asText());
-		} catch ( JsonProcessingException e ) {
+			return mapper.readTree(json.asString());
+		} catch ( JacksonException e ) {
 			throw new IllegalArgumentException("Unable to parse data as JSON", e);
 		}
 	}
@@ -409,8 +409,8 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 		}
 		// decode as a JSON string
 		try {
-			return mapper.readTree(data.asText());
-		} catch ( JsonProcessingException e ) {
+			return mapper.readTree(data.asString());
+		} catch ( JacksonException e ) {
 			throw new IllegalArgumentException("Unable to parse field [%s] as JSON".formatted(field), e);
 		}
 	}
@@ -449,12 +449,12 @@ public class SigenergyRestOperationsHelper extends RestOperationsHelper {
 	 *         if the response does not include a success message
 	 */
 	public static void requireSuccessResponse(String action, URI uri, JsonNode response) {
-		if ( response != null && RESPONSE_SUCCESS_MESSAGE.equals(response.path("msg").asText()) ) {
+		if ( response != null && RESPONSE_SUCCESS_MESSAGE.equals(response.path("msg").asString()) ) {
 			return;
 		}
 
-		final String code = nonEmptyString(response != null ? response.path("code").asText() : null);
-		final String msg = nonEmptyString(response != null ? response.path("msg").asText() : null);
+		final String code = nonEmptyString(response != null ? response.path("code").asString() : null);
+		final String msg = nonEmptyString(response != null ? response.path("msg").asString() : null);
 
 		final StringBuilder buf = new StringBuilder();
 		if ( action != null ) {

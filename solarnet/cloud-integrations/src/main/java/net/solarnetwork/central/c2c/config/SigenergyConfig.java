@@ -44,7 +44,6 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.client.RestTemplate;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -73,6 +72,7 @@ import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.service.StaticOptionalService;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Configuration for the Sigenergy cloud integration services.
@@ -185,8 +185,8 @@ public class SigenergyConfig implements SolarNetCloudIntegrationsConfiguration {
 		return new SigenergyRestOperationsHelper(
 				LoggerFactory.getLogger(SigenergyCloudIntegrationService.class), userEventAppender,
 				restOps, CloudIntegrationsUserEvents.INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-				serviceIdentifier -> SigenergyCloudIntegrationService.SECURE_SETTINGS, Clock.systemUTC(),
-				objectMapper, accessTokenDao, new StaticOptionalService<>(integrationLocksCache));
+				_ -> SigenergyCloudIntegrationService.SECURE_SETTINGS, Clock.systemUTC(), objectMapper,
+				accessTokenDao, new StaticOptionalService<>(integrationLocksCache));
 	}
 
 	@Bean

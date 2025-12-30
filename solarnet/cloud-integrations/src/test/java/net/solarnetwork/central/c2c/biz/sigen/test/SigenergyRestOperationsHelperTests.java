@@ -36,6 +36,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.TEXT_PLAIN;
 import static org.springframework.web.util.UriComponentsBuilder.fromUriString;
 import java.io.IOException;
 import java.net.URI;
@@ -49,7 +50,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.MediaType;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -57,12 +57,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestTemplate;
 import org.threeten.extra.MutableClock;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationService;
@@ -75,10 +74,12 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
 import net.solarnetwork.central.security.ClientAccessTokenEntity;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.service.StaticOptionalService;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link SigenergyRestOperationsHelper} class.
@@ -122,13 +123,13 @@ public class SigenergyRestOperationsHelperTests {
 	@BeforeEach
 	public void setup() {
 		clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.HOURS), UTC);
-		mapper = JsonUtils.newObjectMapper();
+		mapper = JsonUtils.JSON_OBJECT_MAPPER;
 		server = new MockWebServer();
 
 		helper = new SigenergyRestOperationsHelper(
 				LoggerFactory.getLogger(SigenergyRestOperationsHelperTests.class), userEventAppenderBiz,
 				new RestTemplate(), CloudIntegrationsUserEvents.INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-				(serviceIdentifier) -> SigenergyCloudIntegrationService.SECURE_SETTINGS, clock, mapper,
+				(_) -> SigenergyCloudIntegrationService.SECURE_SETTINGS, clock, mapper,
 				clientAccessTokenDao, new StaticOptionalService<>(lockCache));
 		helper.setAllowLocalHosts(true);
 	}
@@ -185,12 +186,12 @@ public class SigenergyRestOperationsHelperTests {
 		// request given URI
 		final String responseBody = randomString();
 		server.enqueue(new MockResponse().setResponseCode(HttpStatus.OK.value())
-				.setHeader(CONTENT_TYPE, MediaType.TEXT_PLAIN).setBody(responseBody));
+				.setHeader(CONTENT_TYPE, MediaType.TEXT_PLAIN.toString()).setBody(responseBody));
 
 		// WHEN
 		final URI reqUri = fromUriString(baseUrl).path("/test").buildAndExpand(region).toUri();
 
-		final String result = helper.httpGet("Test", integration, String.class, (headers) -> reqUri,
+		final String result = helper.httpGet("Test", integration, String.class, (_) -> reqUri,
 				ResponseEntity<String>::getBody);
 
 		// THEN
@@ -295,12 +296,12 @@ public class SigenergyRestOperationsHelperTests {
 		// request given URI
 		final String responseBody = randomString();
 		server.enqueue(new MockResponse().setResponseCode(HttpStatus.OK.value())
-				.setHeader(CONTENT_TYPE, MediaType.TEXT_PLAIN).setBody(responseBody));
+				.setHeader(CONTENT_TYPE, TEXT_PLAIN.toString()).setBody(responseBody));
 
 		// WHEN
 		final URI reqUri = fromUriString(baseUrl).path("/test").buildAndExpand(region).toUri();
 
-		final String result = helper.httpGet("Test", integration, String.class, (headers) -> reqUri,
+		final String result = helper.httpGet("Test", integration, String.class, (_) -> reqUri,
 				ResponseEntity<String>::getBody);
 
 		// THEN
