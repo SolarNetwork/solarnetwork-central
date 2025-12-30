@@ -76,10 +76,20 @@ public final class RsaKeyHelper {
 
 	private static final byte[] PREFIX = new byte[] { 0, 0, 0, 7, 's', 's', 'h', '-', 'r', 's', 'a' };
 
+	/**
+	 * A maximum length to allow when parsing input security data, to prevent
+	 * regular expression attacks.
+	 */
+	private static final int MAX_INPUT_DATA_LENGTH = 16_384;
+
 	private RsaKeyHelper() {
 	}
 
 	public static KeyPair parseKeyPair(String pemData) {
+		if ( pemData.length() > MAX_INPUT_DATA_LENGTH ) {
+			throw new IllegalArgumentException("Key pair data too long; maximum of %d is supported."
+					.formatted(MAX_INPUT_DATA_LENGTH));
+		}
 		Matcher m = PEM_DATA.matcher(pemData.replaceAll("\n *", "").trim());
 
 		if ( !m.matches() ) {
@@ -197,6 +207,10 @@ public final class RsaKeyHelper {
 	private static final Pattern SSH_PUB_KEY = Pattern.compile("ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*) (.*)");
 
 	private static RSAPublicKey extractPublicKey(String key) {
+		if ( key.length() > MAX_INPUT_DATA_LENGTH ) {
+			throw new IllegalArgumentException(
+					"Key data too long; maximum of %d is supported.".formatted(MAX_INPUT_DATA_LENGTH));
+		}
 
 		Matcher m = SSH_PUB_KEY.matcher(key);
 
