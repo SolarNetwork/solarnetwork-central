@@ -230,9 +230,9 @@ public class SigenergyCloudIntegrationServiceTests {
 			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
 					.resolve(SigenergyRestOperationsHelper.SYSTEM_LIST_PATH), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(RequestEntity::getHeaders)
 			.as("Request headers contains Bearer authentication")
-			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			.returns(List.of("Bearer " +authToken), from(h -> h.get(AUTHORIZATION)))
 			;
 
 		and.then(result)
@@ -296,9 +296,9 @@ public class SigenergyCloudIntegrationServiceTests {
 			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
 					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(RequestEntity::getHeaders)
 			.as("Request headers contains Bearer authentication")
-			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			.returns(List.of("Bearer " +authToken), from(h -> h.get(AUTHORIZATION)))
 			;
 
 		and.then(result)
@@ -362,9 +362,9 @@ public class SigenergyCloudIntegrationServiceTests {
 			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
 					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(RequestEntity::getHeaders)
 			.as("Request headers contains Bearer authentication")
-			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			.returns(List.of("Bearer " +authToken), from(h -> h.get(AUTHORIZATION)))
 			;
 
 		and.then(result)
@@ -443,9 +443,9 @@ public class SigenergyCloudIntegrationServiceTests {
 			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
 					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(RequestEntity::getHeaders)
 			.as("Request headers contains Bearer authentication")
-			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			.returns(List.of("Bearer " +authToken), from(h -> h.get(AUTHORIZATION)))
 			;
 
 		and.then(result)
@@ -511,9 +511,9 @@ public class SigenergyCloudIntegrationServiceTests {
 			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
 					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(RequestEntity::getHeaders)
 			.as("Request headers contains Bearer authentication")
-			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			.returns(List.of("Bearer " +authToken), from(h -> h.get(AUTHORIZATION)))
 			;
 
 		and.then(result)
@@ -578,9 +578,9 @@ public class SigenergyCloudIntegrationServiceTests {
 			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
 					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(RequestEntity::getHeaders)
 			.as("Request headers contains Bearer authentication")
-			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			.returns(List.of("Bearer " +authToken), from(h -> h.get(AUTHORIZATION)))
 			;
 
 		and.then(result)
@@ -645,9 +645,9 @@ public class SigenergyCloudIntegrationServiceTests {
 			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
 					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(RequestEntity::getHeaders)
 			.as("Request headers contains Bearer authentication")
-			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			.returns(List.of("Bearer " +authToken), from(h -> h.get(AUTHORIZATION)))
 			;
 
 		and.then(result)
@@ -724,9 +724,9 @@ public class SigenergyCloudIntegrationServiceTests {
 			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
 					.resolve(SigenergyRestOperationsHelper.ONBOARD_PATH), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(RequestEntity::getHeaders)
 			.as("Request headers contains Bearer authentication")
-			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			.returns(List.of("Bearer " +authToken), from(h -> h.get(AUTHORIZATION)))
 			;
 
 		and.then(result)
@@ -876,9 +876,9 @@ public class SigenergyCloudIntegrationServiceTests {
 			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
 					.resolve(SigenergyRestOperationsHelper.OFFBOARD_PATH), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(RequestEntity::getHeaders)
 			.as("Request headers contains Bearer authentication")
-			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			.returns(List.of("Bearer " +authToken), from(h -> h.get(AUTHORIZATION)))
 			;
 
 		and.then(result)

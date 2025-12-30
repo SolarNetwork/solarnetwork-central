@@ -28,7 +28,7 @@ import static net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationSe
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationService.APP_SECRET_SETTING;
 import static net.solarnetwork.central.c2c.biz.sigen.SigenergyCloudIntegrationService.REGION_SETTING;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
-import static net.solarnetwork.codec.JsonUtils.getTreeFromObject;
+import static net.solarnetwork.codec.jackson.JsonUtils.getTreeFromObject;
 import static net.solarnetwork.service.OptionalService.service;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;

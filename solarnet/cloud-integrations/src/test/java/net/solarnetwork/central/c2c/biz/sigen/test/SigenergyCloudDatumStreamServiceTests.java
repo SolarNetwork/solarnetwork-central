@@ -34,7 +34,7 @@ import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSyste
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
-import static net.solarnetwork.codec.JsonUtils.getObjectFromJSON;
+import static net.solarnetwork.codec.jackson.JsonUtils.getObjectFromJSON;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -212,9 +212,9 @@ public class SigenergyCloudDatumStreamServiceTests {
 			.returns(UriComponentsBuilder.fromUriString(BASE_URI_TEMPLATE)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey()).toUri()
 					.resolve(SYSTEM_LIST_PATH), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(RequestEntity::getHeaders)
 			.as("Request headers contains Bearer authentication")
-			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			.returns(List.of("Bearer " +authToken), from(h -> h.get(AUTHORIZATION)))
 			;
 
 		and.then(results)
@@ -299,9 +299,9 @@ public class SigenergyCloudDatumStreamServiceTests {
 					.path(SigenergyRestOperationsHelper.SYSTEM_DEVICE_LIST_PATH)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey(), systemId)
 					.toUri(), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(RequestEntity::getHeaders)
 			.as("Request headers contains Bearer authentication")
-			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			.returns(List.of("Bearer " +authToken), from(h -> h.get(AUTHORIZATION)))
 			;
 
 		and.then(results)
@@ -432,9 +432,9 @@ public class SigenergyCloudDatumStreamServiceTests {
 					.path(SigenergyRestOperationsHelper.SYSTEM_DEVICE_LIST_PATH)
 					.buildAndExpand(SigenergyRegion.AustraliaNewZealand.getKey(), systemId)
 					.toUri(), from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(RequestEntity::getHeaders)
 			.as("Request headers contains Bearer authentication")
-			.containsEntry(AUTHORIZATION, List.of("Bearer " +authToken))
+			.returns(List.of("Bearer " +authToken), from(h -> h.get(AUTHORIZATION)))
 			;
 
 		then(systemDeviceCache).should().put(eq(systemId), cloudDataValueArrayCaptor.capture());

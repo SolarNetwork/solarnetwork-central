@@ -467,7 +467,7 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 	 	"annualPowerGeneration":4791.59,
 	 	"lifetimePowerGeneration":4791.6
 	 }
-
+	
 	    example JSON from /energyFlow
 	 {
 	 	"pvPower":0.3,
@@ -688,7 +688,7 @@ public class SigenergyCloudDatumStreamService extends BaseRestOperationsCloudDat
 		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
 
 		String result = "/%s/%s".formatted(datumStream.getSourceId(), deviceId);
-		return (ucSourceId != null && ucSourceId ? result.toUpperCase() : result);
+		return (ucSourceId != null && ucSourceId ? result.toUpperCase(Locale.ENGLISH) : result);
 	}
 
 	@Override
