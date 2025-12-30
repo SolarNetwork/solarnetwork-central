@@ -50,8 +50,8 @@ dependencies {
 
 	// Testing
 	testImplementation project(':solarnet-common-test')
+    testImplementation "de.siegmar:fastcsv:${fastCsvVersion}"
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-    testImplementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	testImplementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
 }
 

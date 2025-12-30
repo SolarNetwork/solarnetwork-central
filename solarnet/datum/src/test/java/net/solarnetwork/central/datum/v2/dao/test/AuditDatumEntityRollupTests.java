@@ -49,6 +49,7 @@ public class AuditDatumEntityRollupTests {
 		return JsonMapper.builder()
 				.changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(Include.NON_NULL))
 				.changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(Include.NON_NULL))
+				.enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
 				.disable(DateTimeFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS).build();
 	}
 

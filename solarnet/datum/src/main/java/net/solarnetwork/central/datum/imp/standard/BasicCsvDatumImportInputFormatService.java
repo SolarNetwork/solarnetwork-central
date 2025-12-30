@@ -26,9 +26,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Iterator;
 import java.util.List;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.io.ICsvListReader;
-import org.supercsv.prefs.CsvPreference;
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRecord;
+import de.siegmar.fastcsv.reader.CsvRecordHandler;
+import de.siegmar.fastcsv.reader.FieldModifiers;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
@@ -44,7 +45,7 @@ import net.solarnetwork.util.ClassUtils;
  * accumulating, status, and tag sample properties of datum.
  *
  * @author matt
- * @version 2.2
+ * @version 3.0
  */
 public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFormatServiceSupport {
 
@@ -96,9 +97,14 @@ public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFo
 		@Override
 		public Iterator<GeneralNodeDatum> iterator() {
 			try {
-				return new CsvIterator(new CsvListReader(new InputStreamReader(
-						getResourceProgressInputStream(BasicCsvDatumImportInputFormatService.this),
-						getResourceCharset()), CsvPreference.STANDARD_PREFERENCE), props);
+				return new CsvIterator(
+						CsvReader.builder().allowExtraFields(true).allowMissingFields(true).build(
+								CsvRecordHandler.builder().fieldModifier(FieldModifiers.TRIM).build(),
+								new InputStreamReader(
+										getResourceProgressInputStream(
+												BasicCsvDatumImportInputFormatService.this),
+										getResourceCharset())),
+						props);
 			} catch ( IOException e ) {
 				throw new RuntimeException(e);
 			}
@@ -107,13 +113,13 @@ public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFo
 		private static class CsvIterator
 				extends BaseCsvIterator<GeneralNodeDatum, BasicCsvDatumImportInputProperties> {
 
-			private CsvIterator(ICsvListReader reader, BasicCsvDatumImportInputProperties props)
+			private CsvIterator(CsvReader<CsvRecord> reader, BasicCsvDatumImportInputProperties props)
 					throws IOException {
 				super(reader, props);
 			}
 
 			@Override
-			protected GeneralNodeDatum parseRow(List<String> row) throws IOException {
+			protected GeneralNodeDatum parseRow(CsvRecord row) throws IOException {
 				GeneralNodeDatum d = parseDatum(row);
 
 				DatumSamples s = new DatumSamples();

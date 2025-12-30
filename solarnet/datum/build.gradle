@@ -37,7 +37,7 @@ dependencies {
 	// Utilities
 	implementation "commons-io:commons-io:${commonsIoVersion}"
 	implementation 'commons-net:commons-net:3.10.0'
-	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation "de.siegmar:fastcsv:${fastCsvVersion}"
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
     implementation "org.threeten:threeten-extra:${threetenExtraVersion}"

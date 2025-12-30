@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -48,8 +47,9 @@ import org.slf4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.prefs.CsvPreference;
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRecordHandler;
+import de.siegmar.fastcsv.reader.FieldModifiers;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
@@ -73,7 +73,7 @@ import net.solarnetwork.util.NumberUtils;
  * Helper methods for datum tests.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public final class DatumTestUtils {
 
@@ -422,10 +422,9 @@ public final class DatumTestUtils {
 	public static Iterator<Datum> datumResourceIterator(Class<?> clazz, String resource,
 			ObjectDatumStreamMetadataProvider metaProvider) {
 		try {
-			return new DatumCsvIterator(
-					new CsvListReader(new InputStreamReader(clazz.getResourceAsStream(resource), UTF_8),
-							CsvPreference.STANDARD_PREFERENCE),
-					metaProvider);
+			return new DatumCsvIterator(CsvReader.builder().build(
+					CsvRecordHandler.builder().fieldModifier(FieldModifiers.TRIM).build(),
+					new InputStreamReader(clazz.getResourceAsStream(resource))), metaProvider);
 		} catch ( IOException e ) {
 			throw new RuntimeException(e);
 		}

@@ -62,22 +62,22 @@ dependencies {
 	implementation 'io.netty:netty-transport'
 
 	// Utilities
-	implementation "software.amazon.awssdk:ec2:${awsSdk2Version}"
-	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
-	implementation "software.amazon.awssdk:secretsmanager:${awsSdk2Version}"
 	implementation "com.cronutils:cron-utils:${cronUtilsVersion}"
 	implementation "com.fasterxml.uuid:java-uuid-generator:${uuidGeneratorVersion}"
 	implementation 'com.nimbusds:nimbus-jose-jwt:[9.37,10)'
 	implementation 'commons-codec:commons-codec'
 	implementation "commons-io:commons-io:${commonsIoVersion}"
+	implementation "de.siegmar:fastcsv:${fastCsvVersion}"
 	implementation 'jakarta.validation:jakarta.validation-api'
 	implementation 'jakarta.annotation:jakarta.annotation-api'
-	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'org.apache.commons:commons-text:1.13.0'
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.slf4j:slf4j-api'
 	implementation 'org.slf4j:jcl-over-slf4j'
+	implementation "software.amazon.awssdk:ec2:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:secretsmanager:${awsSdk2Version}"
 	
 	// Swagger support
 	implementation "io.swagger.core.v3:swagger-annotations-jakarta:${swaggerVersion}"

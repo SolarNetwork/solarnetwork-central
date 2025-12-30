@@ -23,19 +23,15 @@
 package net.solarnetwork.central.user.billing.snf.util;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.springframework.core.io.Resource;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.io.ICsvListReader;
-import org.supercsv.prefs.CsvPreference;
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRecord;
 import net.solarnetwork.central.dao.VersionedMessageDao;
 
 /**
@@ -54,7 +50,7 @@ import net.solarnetwork.central.dao.VersionedMessageDao;
  * </ol>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CsvVersionedMessageDao implements VersionedMessageDao {
 
@@ -101,20 +97,17 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 	public Properties findMessages(Instant version, String[] bundleNames, String locale) {
 		Map<String, Row> rows = new LinkedHashMap<>(64);
 		for ( Resource r : resources ) {
-			try (ICsvListReader reader = new CsvListReader(
-					new InputStreamReader(r.getInputStream(), StandardCharsets.UTF_8),
-					CsvPreference.STANDARD_PREFERENCE)) {
-				List<String> list;
-				while ( (list = reader.read()) != null ) {
-					Instant ts = TIMESTAMP_FORMATTER.parse(list.get(0), Instant::from);
+			try (CsvReader<CsvRecord> reader = CsvReader.builder().ofCsvRecord(r.getInputStream())) {
+				for ( CsvRecord list : reader ) {
+					Instant ts = TIMESTAMP_FORMATTER.parse(list.getField(0), Instant::from);
 					if ( ts.isAfter(version) ) {
 						continue;
 					}
-					String lang = list.get(2);
+					String lang = list.getField(2);
 					if ( !lang.equals(locale) ) {
 						continue;
 					}
-					String bundleName = list.get(1);
+					String bundleName = list.getField(1);
 					boolean bundleMatches = false;
 					if ( bundleNames != null ) {
 						for ( String b : bundleNames ) {
@@ -127,8 +120,8 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 					if ( !bundleMatches ) {
 						continue;
 					}
-					String name = list.get(3);
-					String template = list.get(4);
+					String name = list.getField(3);
+					String template = list.getField(4);
 					rows.compute(name, (_, curr) -> {
 						if ( curr == null || curr.version.isBefore(ts) ) {
 							return new Row(ts, name, template);

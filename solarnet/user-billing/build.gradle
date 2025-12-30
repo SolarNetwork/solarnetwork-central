@@ -58,7 +58,7 @@ dependencies {
 	
 	
 	// Utilities
-	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation "de.siegmar:fastcsv:${fastCsvVersion}"
 	implementation "org.jsoup:jsoup:${jsoupVersion}"
 	implementation 'org.slf4j:slf4j-api'
 	

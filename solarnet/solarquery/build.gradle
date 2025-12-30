@@ -33,9 +33,9 @@ dependencies {
 	// Utilities
 	implementation "com.bucket4j:bucket4j_jdk17-core:${bucket4jVersion}"
 	implementation "com.bucket4j:bucket4j_jdk17-postgresql:${bucket4jVersion}"
+    implementation "de.siegmar:fastcsv:${fastCsvVersion}"
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	implementation 'javax.cache:cache-api'
-    implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.ehcache:ehcache'
 	implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'

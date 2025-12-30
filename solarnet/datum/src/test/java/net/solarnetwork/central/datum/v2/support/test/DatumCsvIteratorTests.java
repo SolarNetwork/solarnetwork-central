@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumCsvIteratorTests.java - 11/10/2021 9:51:51 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,12 +25,9 @@ package net.solarnetwork.central.datum.v2.support.test;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
-import static net.solarnetwork.util.ByteUtils.UTF8;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.assertj.core.api.BDDAssertions.then;
-import static org.supercsv.prefs.CsvPreference.STANDARD_PREFERENCE;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -38,20 +35,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.supercsv.io.CsvListReader;
+import de.siegmar.fastcsv.reader.CsvReader;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.support.DatumCsvIterator;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.support.DatumCsvIterator;
 import net.solarnetwork.util.CloseableIterator;
 
 /**
  * Test cases for the {@link DatumCsvIterator} class.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DatumCsvIteratorTests {
 
@@ -66,9 +63,9 @@ public class DatumCsvIteratorTests {
 
 		// WHEN
 		List<Datum> datum = new ArrayList<>();
-		try (CloseableIterator<Datum> itr = new DatumCsvIterator(new CsvListReader(
-				new InputStreamReader(getClass().getResourceAsStream("raw-data-01.csv"), UTF8),
-				STANDARD_PREFERENCE), staticProvider(singleton(meta)), formatter)) {
+		try (CloseableIterator<Datum> itr = new DatumCsvIterator(
+				CsvReader.builder().ofCsvRecord(getClass().getResourceAsStream("raw-data-01.csv")),
+				staticProvider(singleton(meta)), formatter)) {
 			while ( itr.hasNext() ) {
 				Datum d = itr.next();
 				datum.add(d);

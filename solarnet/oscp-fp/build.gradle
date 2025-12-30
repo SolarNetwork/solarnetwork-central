@@ -53,9 +53,9 @@ dependencies {
 
 	// Testing
 	testImplementation project(':solarnet-common-test')
+    testImplementation "de.siegmar:fastcsv:${fastCsvVersion}"
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-    testImplementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 }
 
 bootJar {

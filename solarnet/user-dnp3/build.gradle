@@ -32,7 +32,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	
 	// Utilities
-	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation "de.siegmar:fastcsv:${fastCsvVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

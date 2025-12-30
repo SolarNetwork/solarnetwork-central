@@ -39,9 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.util.MimeType;
-import org.supercsv.io.CsvListWriter;
-import org.supercsv.io.ICsvListWriter;
-import org.supercsv.prefs.CsvPreference;
+import de.siegmar.fastcsv.writer.CsvWriter;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.support.CsvFilteredResultsProcessor;
@@ -167,7 +165,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * }</pre>
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 1.11
  */
 public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilteredResultsProcessor {
@@ -176,7 +174,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 	public static final MimeType TEXT_CSV_MIME_TYPE = CsvFilteredResultsProcessor.TEXT_CSV_MIME_TYPE;
 
 	/** The output destination. */
-	private final ICsvListWriter writer;
+	private final CsvWriter writer;
 
 	/**
 	 * A mapping of column names to associated column index; linked so insertion
@@ -197,8 +195,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 	 */
 	public CsvStreamDatumFilteredResultsProcessor(Writer out) {
 		super();
-		this.writer = new CsvListWriter(requireNonNullArgument(out, "out"),
-				CsvPreference.STANDARD_PREFERENCE);
+		this.writer = CsvWriter.builder().build(requireNonNullArgument(out, "out"));
 
 	}
 
@@ -293,7 +290,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 				header[header.length - 1] = "tags";
 				String[] propNames = streamColumnIndexes.keySet().toArray(String[]::new);
 				System.arraycopy(propNames, 0, header, metaColumnCount, propNames.length);
-				writer.writeHeader(header);
+				writer.writeRecord(header);
 			}
 		}
 
@@ -320,7 +317,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 		populateRow(meta, resultItem, agg, reading, Accumulating, row);
 		populateRow(meta, resultItem, agg, reading, Status, row);
 		row[row.length - 1] = arrayToCommaDelimitedString(resultItem.getProperties().getTags());
-		writer.write(row);
+		writer.writeRecord(row);
 	}
 
 	private void populateRow(ObjectDatumStreamMetadata meta, StreamDatum resultItem, final boolean agg,
