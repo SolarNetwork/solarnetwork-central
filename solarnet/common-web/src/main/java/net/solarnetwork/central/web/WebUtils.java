@@ -38,6 +38,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.util.MimeType;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.util.UriComponents;
@@ -293,7 +294,8 @@ public final class WebUtils {
 		while ( true ) {
 			try {
 				return action.get();
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException
+					| UncategorizedSQLException e ) {
 				handleTransientDataAccessExceptionRetry(req, e, --tries, retryDelay, log);
 			}
 		}
