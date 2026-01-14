@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Instructor'
-version = '4.1.0'
+version = '5.0.0'
 
 base {
 	archivesName = 'solarnet-instructor'
