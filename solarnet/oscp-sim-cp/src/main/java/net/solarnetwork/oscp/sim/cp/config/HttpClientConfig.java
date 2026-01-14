@@ -22,7 +22,7 @@
 
 package net.solarnetwork.oscp.sim.cp.config;
 
-import java.util.Arrays;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -61,7 +61,7 @@ public class HttpClientConfig {
 	public RestTemplate testingSolarNetworkService() {
 		RestTemplate debugTemplate = new RestTemplate(
 				new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory()));
-		debugTemplate.setInterceptors(Arrays.asList(new LoggingHttpRequestInterceptor()));
+		debugTemplate.setInterceptors(List.of(new LoggingHttpRequestInterceptor()));
 		return debugTemplate;
 	}
 

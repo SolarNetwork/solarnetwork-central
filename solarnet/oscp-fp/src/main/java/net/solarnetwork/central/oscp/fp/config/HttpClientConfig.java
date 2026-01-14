@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.oscp.fp.config;
 
-import java.util.Arrays;
+import java.util.List;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -124,7 +124,7 @@ public class HttpClientConfig {
 		//var reqFactory = new SimpleClientHttpRequestFactory();
 		//reqFactory.setOutputStreaming(false);
 		RestTemplate debugTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(reqFactory));
-		debugTemplate.setInterceptors(Arrays.asList(new LoggingHttpRequestInterceptor()));
+		debugTemplate.setInterceptors(List.of(new LoggingHttpRequestInterceptor()));
 		return debugTemplate;
 	}
 
