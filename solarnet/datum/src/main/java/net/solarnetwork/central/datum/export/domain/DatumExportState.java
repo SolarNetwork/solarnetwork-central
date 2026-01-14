@@ -66,7 +66,7 @@ public enum DatumExportState implements ClaimableJobState {
 
 	private final char key;
 
-	private DatumExportState(char key) {
+	DatumExportState(char key) {
 		this.key = key;
 	}
 

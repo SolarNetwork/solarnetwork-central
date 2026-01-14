@@ -47,7 +47,7 @@ public class MyBatisVersionedMessageDao extends BaseMyBatisDao implements Versio
 
 		private final String queryName;
 
-		private QueryName(String queryName) {
+		QueryName(String queryName) {
 			this.queryName = queryName;
 		}
 

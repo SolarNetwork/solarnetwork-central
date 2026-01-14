@@ -83,8 +83,8 @@ public class NodeMetadataController {
 
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
-	public Result<SolarNodeMetadataFilterMatch> findMetadata(
-			@PathVariable("nodeId") Long requestNodeId, DatumFilterCommand criteria) {
+	public Result<SolarNodeMetadataFilterMatch> findMetadata(@PathVariable("nodeId") Long requestNodeId,
+			DatumFilterCommand criteria) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		if ( !nodeId.equals(requestNodeId) ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, requestNodeId);

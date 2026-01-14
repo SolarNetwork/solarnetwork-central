@@ -198,6 +198,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
@@ -639,7 +640,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/([^/]+)/(.+)");
 
-	private static record ValueRef(Long systemId, EnphaseDeviceType deviceType, String deviceId,
+	private record ValueRef(Long systemId, EnphaseDeviceType deviceType, String deviceId,
 			String fieldName, CloudDatumStreamPropertyConfiguration property, String sourceId) {
 
 		private ValueRef(Long systemId, EnphaseDeviceType deviceType, String deviceId, String fieldName,

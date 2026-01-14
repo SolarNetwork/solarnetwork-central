@@ -85,7 +85,7 @@ public class SolarJobsApp {
 	 * @param args
 	 *        command line arguments
 	 */
-	public static void main(String[] args) {
+	static void main(String[] args) {
 		SpringApplication.run(SolarJobsApp.class, args);
 	}
 

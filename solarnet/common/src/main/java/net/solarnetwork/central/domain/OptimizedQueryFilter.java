@@ -38,8 +38,8 @@ public interface OptimizedQueryFilter extends Filter {
 	 * Setting this to {@literal true} can improve the performance of most
 	 * queries, when the overall total count of results is not needed. When set,
 	 * features like
-	 * {@link net.solarnetwork.dao.FilterResults#getTotalResults()}
-	 * will not be available in the results.
+	 * {@link net.solarnetwork.dao.FilterResults#getTotalResults()} will not be
+	 * available in the results.
 	 * </p>
 	 * 
 	 * @return {@literal true} to optimize query to omit a total result count

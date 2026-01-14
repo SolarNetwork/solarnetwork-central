@@ -62,11 +62,11 @@ public enum LocusEnergyGranularity {
 	private final String key;
 	private final Period constraint;
 
-	private LocusEnergyGranularity(String key) {
+	LocusEnergyGranularity(String key) {
 		this(key, null);
 	}
 
-	private LocusEnergyGranularity(String key, Period constraint) {
+	LocusEnergyGranularity(String key, Period constraint) {
 		this.key = key;
 		this.constraint = constraint;
 	}

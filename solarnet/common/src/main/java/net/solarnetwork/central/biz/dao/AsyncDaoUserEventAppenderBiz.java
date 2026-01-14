@@ -104,7 +104,7 @@ public class AsyncDaoUserEventAppenderBiz
 	/**
 	 * Enumeration of user event statistic count types.
 	 */
-	public static enum UserEventStats {
+	public enum UserEventStats {
 
 		/** The count of user events added. */
 		EventsAdded,

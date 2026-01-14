@@ -49,7 +49,7 @@ public class MyBatisPaymentDao extends BaseMyBatisGenericDaoSupport<Payment, Use
 
 		private final String queryName;
 
-		private QueryName(String queryName) {
+		QueryName(String queryName) {
 			this.queryName = queryName;
 		}
 

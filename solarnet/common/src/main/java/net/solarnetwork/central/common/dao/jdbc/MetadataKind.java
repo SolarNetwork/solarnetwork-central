@@ -47,7 +47,7 @@ public enum MetadataKind {
 
 	private final char key;
 
-	private MetadataKind(char key) {
+	MetadataKind(char key) {
 		this.key = key;
 	}
 

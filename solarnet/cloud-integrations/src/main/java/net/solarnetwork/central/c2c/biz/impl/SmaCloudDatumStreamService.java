@@ -153,6 +153,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
@@ -749,9 +750,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/([^/]+)/(.+)");
 
-	private static record ValueRef(String systemId, String deviceId,
-			SmaMeasurementSetType measurementSet, SmaMeasurementType<?> measurement,
-			CloudDatumStreamPropertyConfiguration property) {
+	private record ValueRef(String systemId, String deviceId, SmaMeasurementSetType measurementSet,
+			SmaMeasurementType<?> measurement, CloudDatumStreamPropertyConfiguration property) {
 
 	}
 

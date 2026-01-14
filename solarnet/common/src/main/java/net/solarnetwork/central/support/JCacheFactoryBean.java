@@ -53,7 +53,7 @@ import org.springframework.beans.factory.InitializingBean;
 public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, InitializingBean {
 
 	/** Cache expiry policy type. */
-	public static enum ExpiryPolicy {
+	public enum ExpiryPolicy {
 		Accessed,
 		Created,
 		Updated,

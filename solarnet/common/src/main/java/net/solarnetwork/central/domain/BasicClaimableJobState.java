@@ -61,7 +61,7 @@ public enum BasicClaimableJobState implements ClaimableJobState {
 
 	private final String key;
 
-	private BasicClaimableJobState(char key) {
+	BasicClaimableJobState(char key) {
 		this.key = String.valueOf(key);
 	}
 

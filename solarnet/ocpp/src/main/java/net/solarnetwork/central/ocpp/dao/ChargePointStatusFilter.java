@@ -39,7 +39,7 @@ import net.solarnetwork.dao.SortCriteria;
  * @author matt
  * @version 1.0
  */
-public interface ChargePointStatusFilter extends ChargePointCriteria, IdentifierCriteria,
-		UserCriteria, DateRangeCriteria, SortCriteria, PaginationCriteria {
+public interface ChargePointStatusFilter extends ChargePointCriteria, IdentifierCriteria, UserCriteria,
+		DateRangeCriteria, SortCriteria, PaginationCriteria {
 
 }

@@ -42,7 +42,7 @@ public enum HookType implements HookNames {
 
   private final String key;
 
-  private HookType(String key) {
+  HookType(String key) {
     this.key = key;
   }
 

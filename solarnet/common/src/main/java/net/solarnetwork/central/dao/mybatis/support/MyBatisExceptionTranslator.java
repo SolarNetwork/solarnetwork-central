@@ -152,7 +152,7 @@ public class MyBatisExceptionTranslator extends org.mybatis.spring.MyBatisExcept
 		return result;
 	}
 
-	private static enum ExceptionType {
+	private enum ExceptionType {
 
 		ConcurrencyFailure;
 

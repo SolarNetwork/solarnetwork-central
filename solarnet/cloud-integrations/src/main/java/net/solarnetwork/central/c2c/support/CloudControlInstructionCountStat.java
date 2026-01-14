@@ -40,7 +40,7 @@ public enum CloudControlInstructionCountStat {
 
 	private final String description;
 
-	private CloudControlInstructionCountStat(String description) {
+	CloudControlInstructionCountStat(String description) {
 		this.description = description;
 	}
 

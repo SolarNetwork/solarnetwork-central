@@ -38,8 +38,7 @@ public interface ChargeSessionEndReasonCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available end reason from the
-	 * {@link #getEndReasons()} array, or {@literal null} if not
-	 * available.
+	 * {@link #getEndReasons()} array, or {@literal null} if not available.
 	 * </p>
 	 * 
 	 * @return the first end reason, or {@literal null} if not available

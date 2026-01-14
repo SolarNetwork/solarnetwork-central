@@ -65,7 +65,7 @@ public final class OcppInstructionUtils {
 	 *        the return type
 	 */
 	@FunctionalInterface
-	public static interface JsonOcppInstructionMessageHandler<T> {
+	public interface JsonOcppInstructionMessageHandler<T> {
 
 		/**
 		 * Handle the results of decoding a JSON OCPP instruction message.

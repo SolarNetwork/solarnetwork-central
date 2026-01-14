@@ -49,7 +49,7 @@ public enum SolarEdgeDeviceType {
 	private final String key;
 	private final String groupKey;
 
-	private SolarEdgeDeviceType(String key, String groupKey) {
+	SolarEdgeDeviceType(String key, String groupKey) {
 		this.key = key;
 		this.groupKey = groupKey;
 	}

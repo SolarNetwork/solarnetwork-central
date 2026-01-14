@@ -28,7 +28,7 @@ package net.solarnetwork.central.oscp.domain;
  * @author matt
  * @version 1.0
  */
-public record ExternalSystemAndGroup<C extends BaseOscpExternalSystemConfiguration<C>> (C conf,
+public record ExternalSystemAndGroup<C extends BaseOscpExternalSystemConfiguration<C>>(C conf,
 		CapacityGroupConfiguration group) {
 
 }

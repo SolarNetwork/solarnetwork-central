@@ -145,6 +145,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
@@ -527,7 +528,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/(.+)");
 
-	private static record ValueRef(String systemId, String deviceId, String channelName,
+	private record ValueRef(String systemId, String deviceId, String channelName,
 			CloudDatumStreamPropertyConfiguration property, String sourceId) {
 
 		private ValueRef(String systemId, String deviceId, String channelName,

@@ -41,7 +41,7 @@ public interface ReportingDatum {
 	 *
 	 * @return local date
 	 */
-	public LocalDate getLocalDate();
+	LocalDate getLocalDate();
 
 	/**
 	 * Get a "local" time for this datum, local to the node or location the
@@ -49,6 +49,6 @@ public interface ReportingDatum {
 	 *
 	 * @return local time
 	 */
-	public LocalTime getLocalTime();
+	LocalTime getLocalTime();
 
 }

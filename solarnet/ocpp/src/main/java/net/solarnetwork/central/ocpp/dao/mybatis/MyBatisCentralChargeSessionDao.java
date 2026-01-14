@@ -86,7 +86,7 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 
 		private final String queryName;
 
-		private QueryName(String queryName) {
+		QueryName(String queryName) {
 			this.queryName = queryName;
 		}
 

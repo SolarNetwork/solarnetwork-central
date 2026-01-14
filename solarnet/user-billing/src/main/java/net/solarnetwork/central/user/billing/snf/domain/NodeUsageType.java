@@ -72,7 +72,7 @@ public enum NodeUsageType implements NodeUsages {
 	private final int order;
 	private final String key;
 
-	private NodeUsageType(int order, String key) {
+	NodeUsageType(int order, String key) {
 		this.order = order;
 		this.key = key;
 	}

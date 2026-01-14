@@ -119,6 +119,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
@@ -353,7 +354,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/(.+)");
 
-	private static record ValueRef(String fieldName, SolcastIrradianceType type,
+	private record ValueRef(String fieldName, SolcastIrradianceType type,
 			CloudDatumStreamPropertyConfiguration property) {
 
 	}

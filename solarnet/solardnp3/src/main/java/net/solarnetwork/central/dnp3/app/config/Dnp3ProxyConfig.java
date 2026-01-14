@@ -114,8 +114,8 @@ public class Dnp3ProxyConfig {
 	}
 
 	@Bean
-	public Dnp3ProxyConfigurationProvider dnp3ProxyConfigurationProvider(
-			@Autowired(required = false) @Qualifier(USER_TRUST_STORE_CACHE_QUALIFIER) Cache<Long, KeyStore> userTrustStoreCache) {
+	public Dnp3ProxyConfigurationProvider dnp3ProxyConfigurationProvider(@Autowired(
+			required = false) @Qualifier(USER_TRUST_STORE_CACHE_QUALIFIER) Cache<Long, KeyStore> userTrustStoreCache) {
 		Dnp3ProxyConfigurationProvider provider = new Dnp3ProxyConfigurationProvider(manager,
 				instructorBiz, portRegistrar, trustedCertDao, serverAuthDao, serverMeasurementDao,
 				serverControlDao, datumObserver, datumDao, userEventAppenderBiz);

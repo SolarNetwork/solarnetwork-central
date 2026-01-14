@@ -50,7 +50,7 @@ public enum AssetCategory implements CodedValue {
 
 	private final char code;
 
-	private AssetCategory(char code) {
+	AssetCategory(char code) {
 		this.code = code;
 	}
 

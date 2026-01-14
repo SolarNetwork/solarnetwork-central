@@ -115,7 +115,7 @@ public abstract class BaseCloudControlService extends BaseCloudIntegrationsIdent
 	 *        the result type
 	 */
 	@FunctionalInterface
-	public static interface IntegrationAction<T> {
+	public interface IntegrationAction<T> {
 
 		/**
 		 * Handle a full control configuration model.

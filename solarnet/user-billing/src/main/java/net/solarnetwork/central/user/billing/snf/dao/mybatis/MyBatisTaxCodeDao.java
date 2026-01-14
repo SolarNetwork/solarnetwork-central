@@ -47,7 +47,7 @@ public class MyBatisTaxCodeDao extends BaseMyBatisGenericDaoSupport<TaxCode, Lon
 
 		private final String queryName;
 
-		private QueryName(String queryName) {
+		QueryName(String queryName) {
 			this.queryName = queryName;
 		}
 

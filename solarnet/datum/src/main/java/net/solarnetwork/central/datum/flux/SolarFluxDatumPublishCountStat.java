@@ -40,7 +40,7 @@ public enum SolarFluxDatumPublishCountStat {
 
 	private final String description;
 
-	private SolarFluxDatumPublishCountStat(String description) {
+	SolarFluxDatumPublishCountStat(String description) {
 		this.description = description;
 	}
 

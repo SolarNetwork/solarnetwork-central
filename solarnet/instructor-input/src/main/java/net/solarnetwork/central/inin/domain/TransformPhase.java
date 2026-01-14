@@ -44,7 +44,7 @@ public enum TransformPhase implements CodedValue {
 
 	private final char code;
 
-	private TransformPhase(char code) {
+	TransformPhase(char code) {
 		this.code = code;
 	}
 

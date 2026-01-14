@@ -46,7 +46,7 @@ public enum SolarEdgeResolution {
 	private final String key;
 	private final Duration tickDuration;
 
-	private SolarEdgeResolution(String key, Duration tickDuration) {
+	SolarEdgeResolution(String key, Duration tickDuration) {
 		this.key = key;
 		this.tickDuration = tickDuration;
 	}

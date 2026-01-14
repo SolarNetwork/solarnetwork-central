@@ -130,6 +130,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
@@ -419,7 +420,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/(.+)");
 
-	private static record ValueRef(String deviceId, String registerName, int registerIndex,
+	private record ValueRef(String deviceId, String registerName, int registerIndex,
 			EgaugeTypeCode registerType, CloudDatumStreamPropertyConfiguration property) {
 
 	}

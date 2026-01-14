@@ -84,7 +84,7 @@ public enum SkyCondition {
 
 	final private int code;
 
-	private SkyCondition(int code) {
+	SkyCondition(int code) {
 		this.code = code;
 	}
 

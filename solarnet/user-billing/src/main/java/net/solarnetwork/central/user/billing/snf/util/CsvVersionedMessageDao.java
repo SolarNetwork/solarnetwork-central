@@ -89,7 +89,7 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 		this.resources = resources;
 	}
 
-	private static final record Row(Instant version, String name, String template) {
+	private record Row(Instant version, String name, String template) {
 
 	}
 

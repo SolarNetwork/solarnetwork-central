@@ -705,7 +705,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-
+		
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/

@@ -65,7 +65,7 @@ public enum AlsoEnergyGranularity {
 	private final String queryKey;
 	private final TemporalAmount tickAmount;
 
-	private AlsoEnergyGranularity(String key, TemporalAmount tickAmount) {
+	AlsoEnergyGranularity(String key, TemporalAmount tickAmount) {
 		this.key = key;
 		this.queryKey = "Bin" + key;
 		this.tickAmount = tickAmount;

@@ -73,7 +73,7 @@ public class SolarDinApp {
 	 * @param args
 	 *        command line arguments
 	 */
-	public static void main(String[] args) {
+	static void main(String[] args) {
 		SpringApplication.run(SolarDinApp.class, args);
 	}
 

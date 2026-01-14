@@ -154,6 +154,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// menu for granularity
 		var resolutionSpec = new BasicMultiValueSettingSpecifier(RESOLUTION_SETTING,
@@ -1498,7 +1499,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/([^/]+)/(.+)");
 
-	private static record ValueRef(Object siteId, SolarEdgeDeviceType deviceType, String componentId,
+	private record ValueRef(Object siteId, SolarEdgeDeviceType deviceType, String componentId,
 			String fieldName, CloudDatumStreamPropertyConfiguration property) {
 
 	}

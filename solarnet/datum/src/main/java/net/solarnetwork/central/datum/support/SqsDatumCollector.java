@@ -649,7 +649,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	/**
 	 * A temporary work item.
 	 */
-	public static final record WorkItem(Object entity, CompletableFuture<Object> future) {
+	public record WorkItem(Object entity, CompletableFuture<Object> future) {
 
 	}
 

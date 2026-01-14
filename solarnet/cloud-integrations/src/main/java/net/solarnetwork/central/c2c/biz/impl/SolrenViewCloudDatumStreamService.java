@@ -381,7 +381,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/(-?\\d+)/([^/]+)/(.+)");
 
-	private static record ValueRef(Object siteId, String componentId, String fieldName,
+	private record ValueRef(Object siteId, String componentId, String fieldName,
 			CloudDatumStreamPropertyConfiguration property) {
 
 	}

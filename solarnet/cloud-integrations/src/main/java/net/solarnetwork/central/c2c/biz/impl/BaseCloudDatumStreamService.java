@@ -226,7 +226,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the result type
 	 */
 	@FunctionalInterface
-	public static interface IntegrationAction<T> {
+	public interface IntegrationAction<T> {
 
 		/**
 		 * Handle a full datum stream integration configuration model.

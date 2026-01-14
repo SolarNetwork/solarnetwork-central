@@ -142,6 +142,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// menu for granularity
 		var granularitySpec = new BasicMultiValueSettingSpecifier(GRANULARITY_SETTING,
@@ -619,9 +620,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/([^/]+)/(.+)");
 
-	private static record ValueRef(Long siteId, Long hardwareId, String fieldName,
-			AlsoEnergyFieldFunction fn, String sourceId,
-			CloudDatumStreamPropertyConfiguration property) {
+	private record ValueRef(Long siteId, Long hardwareId, String fieldName, AlsoEnergyFieldFunction fn,
+			String sourceId, CloudDatumStreamPropertyConfiguration property) {
 
 		private ValueRef(Long siteId, Long hardwareId, String fieldName, AlsoEnergyFieldFunction fn,
 				CloudDatumStreamPropertyConfiguration property) {

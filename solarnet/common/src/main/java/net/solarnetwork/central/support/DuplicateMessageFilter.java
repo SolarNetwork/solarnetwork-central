@@ -110,7 +110,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 	}
 
 	@SuppressWarnings("ArrayRecordComponent")
-	private static record MessageEntry(String format, Object[] params) {
+	private record MessageEntry(String format, Object[] params) {
 
 		@Override
 		public int hashCode() {
@@ -143,7 +143,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 
 	}
 
-	private static record MessageMeta(long timestamp, MutableInt count) {
+	private record MessageMeta(long timestamp, MutableInt count) {
 
 	}
 

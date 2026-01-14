@@ -87,9 +87,9 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * </p>
 	 *
 	 * @param dataSource
-	 * 		the JDBC data source to use
+	 *        the JDBC data source to use
 	 * @throws IllegalArgumentException
-	 * 		if any parameter is {@literal null}
+	 *         if any parameter is {@literal null}
 	 */
 	public AsyncJdbcChargePointActionStatusDao(DataSource dataSource) {
 		this(dataSource, new LinkedBlockingQueue<>());
@@ -99,11 +99,11 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * Constructor.
 	 *
 	 * @param dataSource
-	 * 		the JDBC data source to use
+	 *        the JDBC data source to use
 	 * @param statuses
-	 * 		the map to use for tracking status updates
+	 *        the map to use for tracking status updates
 	 * @throws IllegalArgumentException
-	 * 		if any parameter is {@literal null}
+	 *         if any parameter is {@literal null}
 	 */
 	public AsyncJdbcChargePointActionStatusDao(DataSource dataSource,
 			BlockingQueue<ChargePointActionStatusUpdate> statuses) {
@@ -115,13 +115,13 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * Constructor.
 	 *
 	 * @param dataSource
-	 * 		the JDBC data source to use
+	 *        the JDBC data source to use
 	 * @param statuses
-	 * 		the map to use for tracking status updates
+	 *        the map to use for tracking status updates
 	 * @param stats
-	 * 		the statistics counter
+	 *        the statistics counter
 	 * @throws IllegalArgumentException
-	 * 		if any parameter is {@literal null}
+	 *         if any parameter is {@literal null}
 	 * @since 1.1
 	 */
 	public AsyncJdbcChargePointActionStatusDao(DataSource dataSource,
@@ -262,7 +262,8 @@ public class AsyncJdbcChargePointActionStatusDao
 	}
 
 	/**
-	 * Cause the writing thread to re-connect to the database with a new connection.
+	 * Cause the writing thread to re-connect to the database with a new
+	 * connection.
 	 */
 	public synchronized void reconnectWriter() {
 		if ( writerThread != null && writerThread.isGoing() ) {
@@ -334,10 +335,10 @@ public class AsyncJdbcChargePointActionStatusDao
 	public Result performPingTest() throws Exception {
 		final Map<String, Long> statMap = stats.allCounts();
 		// verify buffer removals does not lag additions
-		final long addCount = statMap.getOrDefault(
-				AsyncJdbcChargePointActionStatusCount.ResultsAdded.name(), 0L);
-		final long removeLag = addCount - statMap.getOrDefault(
-				AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name(), 0L);
+		final long addCount = statMap
+				.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsAdded.name(), 0L);
+		final long removeLag = addCount
+				- statMap.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name(), 0L);
 		final WriterThread t = this.writerThread;
 		final boolean writerRunning = t != null && t.isAlive();
 		if ( removeLag > bufferRemovalLagAlertThreshold ) {
@@ -354,13 +355,14 @@ public class AsyncJdbcChargePointActionStatusDao
 	}
 
 	/**
-	 * Set the delay, in milliseconds, to wait after a JDBC connection error before trying to recover and
-	 * connect again.
+	 * Set the delay, in milliseconds, to wait after a JDBC connection error
+	 * before trying to recover and connect again.
 	 *
 	 * @param connectionRecoveryDelay
-	 * 		the delay, in milliseconds; defaults to {@link #DEFAULT_CONNECTION_RECOVERY_DELAY}
+	 *        the delay, in milliseconds; defaults to
+	 *        {@link #DEFAULT_CONNECTION_RECOVERY_DELAY}
 	 * @throws IllegalArgumentException
-	 * 		if {@code connectionRecoveryDelay} is &lt; 0
+	 *         if {@code connectionRecoveryDelay} is &lt; 0
 	 */
 	public void setConnectionRecoveryDelay(long connectionRecoveryDelay) {
 		if ( connectionRecoveryDelay < 0 ) {
@@ -370,11 +372,12 @@ public class AsyncJdbcChargePointActionStatusDao
 	}
 
 	/**
-	 * Set the delay, in milliseconds, to wait after executing JDBC statements within a loop before
-	 * executing another statement.
+	 * Set the delay, in milliseconds, to wait after executing JDBC statements
+	 * within a loop before executing another statement.
 	 *
 	 * @param updateDelay
-	 * 		the delay, in milliseconds; set to 0 for no delay; defaults to {@link #DEFAULT_UPDATE_DELAY}
+	 *        the delay, in milliseconds; set to 0 for no delay; defaults to
+	 *        {@link #DEFAULT_UPDATE_DELAY}
 	 */
 	public void setUpdateDelay(long updateDelay) {
 		this.updateDelay = updateDelay;
@@ -384,12 +387,14 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * Set the statistic log update count.
 	 *
 	 * <p>
-	 * Setting this to something greater than {@literal 0} will cause {@literal INFO} level statistic log
-	 * entries to be emitted every {@code statLogUpdateCount} records have been updated in the database.
+	 * Setting this to something greater than {@literal 0} will cause
+	 * {@literal INFO} level statistic log entries to be emitted every
+	 * {@code statLogUpdateCount} records have been updated in the database.
 	 * </p>
 	 *
 	 * @param statLogUpdateCount
-	 * 		the update count; defaults to {@link #DEFAULT_STAT_LOG_UPDATE_COUNT}
+	 *        the update count; defaults to
+	 *        {@link #DEFAULT_STAT_LOG_UPDATE_COUNT}
 	 */
 	public void setStatLogUpdateCount(int statLogUpdateCount) {
 		stats.setLogFrequency(statLogUpdateCount);
@@ -410,14 +415,15 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * <p>
 	 * This threshold represents the <i>difference</i> between the
 	 * {@link AsyncJdbcChargePointActionStatusCount#ResultsAdded} and
-	 * {@link AsyncJdbcChargePointActionStatusCount#ResultsRemoved} statistics. If the
-	 * {@code ResultsRemoved} count lags behind {@code ResultsAdded} it means updates are not getting
-	 * persisted fast enough. Passing this threshold will trigger a failure {@link PingTest} result in
+	 * {@link AsyncJdbcChargePointActionStatusCount#ResultsRemoved} statistics.
+	 * If the {@code ResultsRemoved} count lags behind {@code ResultsAdded} it
+	 * means updates are not getting persisted fast enough. Passing this
+	 * threshold will trigger a failure {@link PingTest} result in
 	 * {@link #performPingTest()}.
 	 * </p>
 	 *
 	 * @param bufferRemovalLagAlertThreshold
-	 * 		the threshold to set
+	 *        the threshold to set
 	 */
 	public void setBufferRemovalLagAlertThreshold(int bufferRemovalLagAlertThreshold) {
 		this.bufferRemovalLagAlertThreshold = bufferRemovalLagAlertThreshold;

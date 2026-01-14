@@ -73,7 +73,7 @@ public enum SmaMeasurementSetType {
 	private final String description;
 	private final SequencedMap<String, SmaMeasurementType<?>> measurements;
 
-	private SmaMeasurementSetType(String description) {
+	SmaMeasurementSetType(String description) {
 		this.description = description;
 		this.measurements = createMeasurements(this.name());
 	}
