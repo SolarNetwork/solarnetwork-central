@@ -363,9 +363,9 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 		}
 		int result = getSqlSession().delete(this.delete, domainObject.getId());
 		if ( result < 1 ) {
-			log.warn("Delete [" + domainObject + "] did not affect any rows");
-		} else if ( log.isInfoEnabled() ) {
-			log.debug("Deleted [" + domainObject + ']');
+			log.warn("Delete [{}] did not affect any rows", domainObject);
+		} else if ( log.isDebugEnabled() ) {
+			log.debug("Deleted [{}]", domainObject);
 		}
 	}
 
