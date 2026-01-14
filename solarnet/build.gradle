@@ -78,7 +78,7 @@ subprojects {
 	javadoc.options {
 		encoding = 'UTF-8'
 		use = true
-		links = ['https://docs.oracle.com/en/java/javase/21/docs/api/']
+		links = ['https://docs.oracle.com/en/java/javase/25/docs/api/']
 		source = "25"
 	}
 
@@ -95,7 +95,7 @@ subprojects {
 		myBatisStarterVersion = '4.0.0'
 		okhttp3Mockwebserver = '4.12.0'
 		saxonVersion = '12.5'
-		snCommonVersion = '4.15.0'
+		snCommonVersion = '4.15.1'
 		snCommonExprSpelVersion = '4.1.0'
 		snCommonMqttVersion = '5.0.0'
 		snCommonMqttNettyVersion = '5.0.0'
