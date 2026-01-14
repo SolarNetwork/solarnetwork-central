@@ -119,9 +119,7 @@ public final class CommonJdbcUtils {
 							break;
 						}
 					}
-					return (T) (result != null
-							? result.toArray(twoDee ? BigDecimal[][]::new : BigDecimal[]::new)
-							: null);
+					return (T) result.toArray(twoDee ? BigDecimal[][]::new : BigDecimal[]::new);
 				}
 			} catch ( SQLException e2 ) {
 				// give up
@@ -146,7 +144,7 @@ public final class CommonJdbcUtils {
 					try {
 						Array a2 = arrayResultSet.getArray(2);
 						List<Object> nested = parseBigDecimalArray(a2);
-						result.add(nested != null ? nested.toArray(BigDecimal[]::new) : null);
+						result.add(nested.toArray(BigDecimal[]::new));
 					} catch ( SQLException e2 ) {
 						// try as a string instead
 						String s = arrayResultSet.getString(2);

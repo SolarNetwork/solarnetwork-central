@@ -189,8 +189,8 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *         aren't available
 	 */
 	protected String getColumnsValue(CsvRecord row, List<Integer> cols, String delimiter) {
-		int numCols = cols.size();
-		if ( row == null || cols == null || numCols < 1 ) {
+		int numCols = (cols != null ? cols.size() : 0);
+		if ( row == null || numCols < 1 ) {
 			return null;
 		}
 

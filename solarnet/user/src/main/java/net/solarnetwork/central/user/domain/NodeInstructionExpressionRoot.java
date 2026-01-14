@@ -339,18 +339,15 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 		}
 
 		TariffSchedule result = null;
-		if ( result == null ) {
-			Object tariffData = meta.metadataAtPath(path);
-			if ( tariffData != null ) {
-				Locale locale = resolveLocale(meta, path);
-				try {
-					result = TariffUtils.parseCsvTemporalRangeSchedule(locale, true, true, null,
-							tariffData);
-				} catch ( Exception e ) {
-					String msg = "Error parsing tariff schedule at metadata path [%s]: %s"
-							.formatted(path, e.getMessage());
-					throw new IllegalArgumentException(msg);
-				}
+		Object tariffData = meta.metadataAtPath(path);
+		if ( tariffData != null ) {
+			Locale locale = resolveLocale(meta, path);
+			try {
+				result = TariffUtils.parseCsvTemporalRangeSchedule(locale, true, true, null, tariffData);
+			} catch ( Exception e ) {
+				String msg = "Error parsing tariff schedule at metadata path [%s]: %s".formatted(path,
+						e.getMessage());
+				throw new IllegalArgumentException(msg);
 			}
 		}
 		return result;
@@ -669,9 +666,6 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 * @return the matching datum, or {@literal null} if not available
 	 */
 	public DatumExpressionRoot datumAt(ObjectDatumStreamMetadata streamMeta, Instant timestamp) {
-		if ( streamMeta == null ) {
-			return null;
-		}
 		if ( datumStreamsAccessor == null || streamMeta == null || timestamp == null ) {
 			return null;
 		}

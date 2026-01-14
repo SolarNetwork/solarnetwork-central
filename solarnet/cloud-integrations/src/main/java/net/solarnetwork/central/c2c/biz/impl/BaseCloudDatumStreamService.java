@@ -38,7 +38,17 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.SequencedCollection;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.function.Function;
 import javax.cache.Cache;
 import org.springframework.context.MessageSource;
@@ -55,7 +65,11 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
-import net.solarnetwork.central.c2c.domain.*;
+import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamLocalizedServiceInfo;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.support.BasicDatumStreamsAccessor;
@@ -66,7 +80,15 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.domain.datum.*;
+import net.solarnetwork.domain.datum.DatumId;
+import net.solarnetwork.domain.datum.DatumMetadataOperations;
+import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumSamplesExpressionRoot;
+import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.domain.datum.GeneralDatum;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.MutableDatum;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.TextFieldSettingSpecifier;
@@ -441,7 +463,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				VIRTUAL_SOURCE_IDS_SETTING);
 		final SortedMap<Instant, List<GeneralDatum>> virtualDatum = (virtualSourceIds != null
 				&& !virtualSourceIds.isEmpty() ? new TreeMap<>() : null);
-		final boolean generateVirtualDatum = virtualDatum != null && virtualDatum.isEmpty();
+		final boolean generateVirtualDatum = virtualDatum != null;
 
 		final Collection<GeneralDatum> expressionDatum;
 		if ( generateVirtualDatum ) {
@@ -484,7 +506,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 
 		// assuming all property configurations from same mapping
 		final var expressionVars = Map.of("userId", (Object) datumStream.getUserId(),
-				"datumStreamMappingId", configurations.getFirst().getDatumStreamMappingId());
+				"datumStreamMappingId", mappingId);
 
 		for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
 			if ( !config.getValueType().isExpression() ) {

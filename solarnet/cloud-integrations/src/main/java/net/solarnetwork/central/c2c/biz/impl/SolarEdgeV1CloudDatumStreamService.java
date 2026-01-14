@@ -979,11 +979,8 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 									.toUri(),
 							res -> parseBatteryDatum(res.getBody(), queryPlan, ds, sourceIdMap,
 									timestampFmt));
-					if ( datum != null ) {
-						resultDatum.addAll(datum);
-					}
+					resultDatum.addAll(datum);
 				}
-
 			}
 
 			// evaluate expressions on merged datum

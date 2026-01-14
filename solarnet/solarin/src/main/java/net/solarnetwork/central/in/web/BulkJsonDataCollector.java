@@ -292,7 +292,6 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			result.setId(id);
 			result.setState(s);
 			result.setResultParameters(resultParams);
-			return result;
 		}
 		return result;
 	}

@@ -225,7 +225,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 			if ( xsltCacheKey != null ) {
 				t = templatesCache.put(xsltCacheKey, xsltSharedKey, provider, cacheTtlSeconds);
 			} else {
-				t = provider.apply(xsltCacheKey);
+				t = provider.apply(null);
 			}
 		} catch ( IllegalStateException e ) {
 			throw new IOException(e.getMessage(), e.getCause());

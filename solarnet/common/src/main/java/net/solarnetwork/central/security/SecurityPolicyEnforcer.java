@@ -350,8 +350,8 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 			final Map<UUID, ObjectDatumStreamMetadataId> ids = streamIdProvider.apply(streamIds);
 
 			// remove any stream IDs not in the policy or failing validation
-			Set<Long> nodeIdsSet = new HashSet<>(ids.size());
-			Set<String> sourceIdSet = new HashSet<>(ids.size());
+			Set<Long> nodeIdsSet = new HashSet<>(ids != null ? ids.size() : 8);
+			Set<String> sourceIdSet = new HashSet<>(ids != null ? ids.size() : 8);
 
 			if ( ids != null ) {
 				for ( ObjectDatumStreamMetadataId id : ids.values() ) {

@@ -714,7 +714,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	private void fetchDatumForSystem(BasicQueryFilter filter, CloudDatumStreamConfiguration datumStream,
 			CloudIntegrationConfiguration integration, Map<String, String> sourceIdMap,
 			SystemQueryPlan queryPlan, List<GeneralDatum> resultDatum) {
-		if ( queryPlan.deviceValueRefs == null ) {
+		if ( queryPlan.deviceValueRefs.isEmpty() ) {
 			return;
 		}
 		for ( Entry<String, List<ValueRef>> deviceEntry : queryPlan.deviceValueRefs.entrySet() ) {

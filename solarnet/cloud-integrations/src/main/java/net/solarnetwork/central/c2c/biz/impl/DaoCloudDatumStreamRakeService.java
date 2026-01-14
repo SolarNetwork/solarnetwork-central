@@ -331,9 +331,7 @@ public class DaoCloudDatumStreamRakeService
 					taskDao.updateTask(taskInfo, startState);
 					return taskInfo;
 				}
-				if ( ownership.getZone() != null ) {
-					rakeZone = ownership.getZone();
-				}
+				rakeZone = ownership.getZone();
 			}
 
 			// start with a single day range, offset from execute date
@@ -592,8 +590,7 @@ public class DaoCloudDatumStreamRakeService
 						return true;
 					}
 				}
-			} else if ( m1 != m2 && !((m1 == null && m2 != null && m2.isEmpty())
-					|| (m1 != null && m2 == null && m1.isEmpty())) ) {
+			} else if ( m1 != m2 && !((m1 == null && m2.isEmpty()) || (m1 != null && m1.isEmpty())) ) {
 				return true;
 			}
 		}

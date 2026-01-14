@@ -401,9 +401,7 @@ public final class SelectDatum
 		if ( combine != null ) {
 			if ( isMinuteAggregation() ) {
 				buf.append("	GROUP BY datum.stream_id, ts\n");
-				if ( combine != null ) {
-					buf.append(") AS ds ON ds.stream_id = s.stream_id\n");
-				}
+				buf.append(") AS ds ON ds.stream_id = s.stream_id\n");
 			}
 			buf.append(")\n");
 			buf.append(VirtualDatumSqlUtils.combineCteSql(combine.getType())).append("\n");

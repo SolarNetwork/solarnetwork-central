@@ -298,16 +298,14 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 					req != null ? req.getUrl() : null, e.getStatusCode());
 
 			// try to capture response body
-			if ( e.getResponseBodyAsByteArray() != null ) {
-				try {
-					String respBody = e.getResponseBodyAsString();
-					if ( respBody.length() > USER_EVENT_MAX_RESPONSE_BODY_LENGTH ) {
-						respBody = respBody.substring(0, USER_EVENT_MAX_RESPONSE_BODY_LENGTH);
-					}
-					eventData.put(HTTP_RESPONSE_BODY_DATA_KEY, respBody);
-				} catch ( Exception e2 ) {
-					// forget it, we don't need the drama
+			try {
+				String respBody = e.getResponseBodyAsString();
+				if ( respBody.length() > USER_EVENT_MAX_RESPONSE_BODY_LENGTH ) {
+					respBody = respBody.substring(0, USER_EVENT_MAX_RESPONSE_BODY_LENGTH);
 				}
+				eventData.put(HTTP_RESPONSE_BODY_DATA_KEY, respBody);
+			} catch ( Exception e2 ) {
+				// forget it, we don't need the drama
 			}
 			eventData.put(HTTP_STATUS_CODE_DATA_KEY, e.getStatusCode().value());
 			tags = errorEventTags;

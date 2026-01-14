@@ -589,40 +589,42 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			return;
 		}
 		User user = userDao.get(alert.getUserId());
+		if ( user == null ) {
+			return;
+		}
 		SolarNode node = (datum != null ? nodeCache.get(datum.getNodeId()) : null);
+		if ( node == null ) {
+			return;
+		}
 		BasicMailAddress addr = null;
 		String[] emails = alert.optionEmailTos();
 		if ( (emails == null || emails.length == 0) ) {
-			if ( user != null ) {
-				addr = new BasicMailAddress(user.getName(), user.getEmail());
-			}
+			addr = new BasicMailAddress(user.getName(), user.getEmail());
 		} else {
 			addr = new BasicMailAddress(emails);
 		}
-		if ( user != null && node != null && addr != null ) {
-			Locale locale = Locale.US; // TODO: get Locale from User entity
-			Map<String, Object> model = new HashMap<>(4);
-			model.put("alert", alert);
-			model.put("user", user);
-			model.put("datum", datum);
 
-			// add a formatted datum date to model
-			DateTimeFormatter dateFormat = timestampFormat.withLocale(locale);
-			if ( node != null && node.getTimeZone() != null ) {
-				dateFormat = dateFormat.withZone(node.getTimeZone().toZoneId());
-			}
-			model.put("datumDate", dateFormat.format(datum.getTimestamp()));
+		Locale locale = Locale.US; // TODO: get Locale from User entity
+		Map<String, Object> model = new HashMap<>(4);
+		model.put("alert", alert);
+		model.put("user", user);
+		model.put("datum", datum);
 
-			String subject = messageSource.getMessage(subjectKey, new Object[] { datum.getNodeId() },
-					locale);
-
-			log.debug("Sending NodeStaleData alert {} to {} with model {}", subject, user.getEmail(),
-					model);
-			ClasspathResourceMessageTemplateDataSource msg = new ClasspathResourceMessageTemplateDataSource(
-					locale, subject, resourcePath, model);
-			msg.setClassLoader(getClass().getClassLoader());
-			mailService.sendMail(addr, msg);
+		// add a formatted datum date to model
+		DateTimeFormatter dateFormat = timestampFormat.withLocale(locale);
+		if ( node.getTimeZone() != null ) {
+			dateFormat = dateFormat.withZone(node.getTimeZone().toZoneId());
 		}
+		model.put("datumDate", dateFormat.format(datum.getTimestamp()));
+
+		String subject = messageSource.getMessage(subjectKey, new Object[] { datum.getNodeId() },
+				locale);
+
+		log.debug("Sending NodeStaleData alert {} to {} with model {}", subject, user.getEmail(), model);
+		ClasspathResourceMessageTemplateDataSource msg = new ClasspathResourceMessageTemplateDataSource(
+				locale, subject, resourcePath, model);
+		msg.setClassLoader(getClass().getClassLoader());
+		mailService.sendMail(addr, msg);
 	}
 
 	public Integer getBatchSize() {

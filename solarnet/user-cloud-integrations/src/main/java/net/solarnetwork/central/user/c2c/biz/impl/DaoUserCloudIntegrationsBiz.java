@@ -912,7 +912,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C digestSensitiveInformation(
 			C entity) {
 		if ( entity == null ) {
-			return entity;
+			return null;
 		}
 		if ( entity instanceof UserRelatedStdIdentifiableConfigurationEntity u ) {
 			u.digestSensitiveInformation(serviceSecureKeys::get);

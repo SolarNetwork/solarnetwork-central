@@ -49,6 +49,7 @@ import net.solarnetwork.central.support.CsvFilteredResultsProcessor;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.support.ObjectMapperFilteredResultsProcessor;
 import net.solarnetwork.central.support.OutputSerializationSupportContext;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Helper utilities for web APIs.
@@ -206,14 +207,14 @@ public final class WebUtils {
 						new OutputStreamWriter(response.getOutputStream(), cs), TEXT_CSV_MEDIA_TYPE,
 						true, context.registrar());
 				break;
-			} else {
-				throw new IllegalArgumentException(
-						format("The [%s] media type is not supported.", acceptType));
 			}
 		}
-		if ( processor != null ) {
-			response.setContentType(processor.getMimeType().toString());
+		if ( processor == null ) {
+			throw new IllegalArgumentException(format("No supported media type within [%s]",
+					StringUtils.commaDelimitedStringFromCollection(acceptTypes)));
+
 		}
+		response.setContentType(processor.getMimeType().toString());
 		return processor;
 	}
 
