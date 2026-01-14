@@ -115,8 +115,8 @@ public class MyBatisSolarNodeDao
 			}).collect(toList());
 		}
 
-		return new BasicFilterResults<SolarNodeFilterMatch, Long>(rows, Long.valueOf(rows.size()),
-				offset != null ? offset : 0L, rows.size());
+		return new BasicFilterResults<>(rows, Long.valueOf(rows.size()), offset != null ? offset : 0L,
+				rows.size());
 	}
 
 }

@@ -236,7 +236,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			var filter = new SimpleInstructionFilter();
 			filter.setNodeId(authNode.getNodeId());
 			filter.setState(InstructionState.Queued);
-			try (FilteredResultsProcessor<NodeInstruction> processor = new AbstractFilteredResultsProcessor<NodeInstruction>() {
+			try (FilteredResultsProcessor<NodeInstruction> processor = new AbstractFilteredResultsProcessor<>() {
 
 				@Override
 				public void handleResultItem(NodeInstruction resultItem) throws IOException {

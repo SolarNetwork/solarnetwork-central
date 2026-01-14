@@ -54,9 +54,9 @@ import tools.jackson.databind.ObjectMapper;
  * Configuration for user event handling.
  *
  * <p>
- * The {@code logging-user-event-appender} profile can be enabled to disable the
- * default async DAO appender in favor of one that simply logs the events to the
- * application log. This can be useful in unit tests, for example.
+ * The {@code logging-user-event-appender} profile can be enabled to disable the default async DAO
+ * appender in favor of one that simply logs the events to the application log. This can be useful in
+ * unit tests, for example.
  * </p>
  *
  * @author matt
@@ -115,18 +115,17 @@ public class UserEventConfig {
 
 		@Bean(destroyMethod = "serviceDidShutdown")
 		public AsyncDaoUserEventAppenderBiz userEventAppenderBiz(AsyncUserEventAppenderSettings settings,
-				UserEventAppenderDao dao, UuidGenerator uuidGenerator, @Qualifier(SOLARFLUX) @Autowired(
-						required = false) MqttJsonPublisher<UserEvent> solarFluxPublisher) {
+				UserEventAppenderDao dao, UuidGenerator uuidGenerator,
+				@Qualifier(SOLARFLUX) @Autowired(required = false) MqttJsonPublisher<UserEvent> solarFluxPublisher) {
 			ThreadPoolExecutor executor = new ThreadPoolExecutor(settings.getThreads(),
-					settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
+					settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<>(),
 					new CustomizableThreadFactory("UserEventAppender-"));
 			executor.allowCoreThreadTimeOut(true);
 			AsyncDaoUserEventAppenderBiz biz = new AsyncDaoUserEventAppenderBiz(executor, dao,
 					new PriorityBlockingQueue<>(64, AsyncDaoUserEventAppenderBiz.EVENT_SORT),
 					new StatTracker("AsyncDaoUserEventAppender", null,
 							LoggerFactory.getLogger(AsyncDaoUserEventAppenderBiz.class),
-							settings.getStatFrequency()),
-					uuidGenerator);
+							settings.getStatFrequency()), uuidGenerator);
 			biz.setQueueLagAlertThreshold(settings.getQueueLagAlertThreshold());
 			biz.setSolarFluxPublisher(solarFluxPublisher);
 			return biz;

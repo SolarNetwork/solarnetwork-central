@@ -681,7 +681,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
 				finalResult.add(d);
 			}
-			Collections.sort(finalResult, null);
+			finalResult.sort(null);
 
 			// latest datum might not have been reported yet; check latest datum date (per stream), and if
 			// less than expected date make that the next query start date

@@ -97,7 +97,7 @@ public class UserEventConfig {
 				UserEventAppenderDao dao, UuidGenerator uuidGenerator, @Autowired(
 						required = false) @Qualifier(SOLARFLUX) MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher) {
 			ThreadPoolExecutor executor = new ThreadPoolExecutor(settings.getThreads(),
-					settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
+					settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<>(),
 					new CustomizableThreadFactory("UserEventAppender-"));
 			executor.allowCoreThreadTimeOut(true);
 			AsyncDaoUserEventAppenderBiz biz = new AsyncDaoUserEventAppenderBiz(executor, dao,

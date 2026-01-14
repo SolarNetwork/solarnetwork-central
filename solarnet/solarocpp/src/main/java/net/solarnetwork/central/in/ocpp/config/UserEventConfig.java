@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserEventConfig.java - 1/08/2022 4:42:46 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -50,13 +50,13 @@ import tools.jackson.databind.ObjectMapper;
 
 /**
  * Configuration for user event handling.
- * 
+ *
  * <p>
  * The {@code logging-user-event-appender} profile can be enabled to disable the
  * default async DAO appender in favor of one that simply logs the events to the
  * application log. This can be useful in unit tests, for example.
  * </p>
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -97,7 +97,7 @@ public class UserEventConfig {
 				UserEventAppenderDao dao, UuidGenerator uuidGenerator, @Autowired(
 						required = false) @Qualifier(SOLARFLUX) MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher) {
 			ThreadPoolExecutor executor = new ThreadPoolExecutor(settings.getThreads(),
-					settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
+					settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<>(),
 					new CustomizableThreadFactory("UserEventAppender-"));
 			executor.allowCoreThreadTimeOut(true);
 			AsyncDaoUserEventAppenderBiz biz = new AsyncDaoUserEventAppenderBiz(executor, dao,

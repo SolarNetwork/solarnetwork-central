@@ -522,7 +522,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 					f.get(workItemMaxWaitMs, TimeUnit.MILLISECONDS);
 				} catch ( Exception e ) {
 					f.cancel(false);
-					f = sendToSqs(entity, new CompletableFuture<Object>());
+					f = sendToSqs(entity, new CompletableFuture<>());
 				}
 			}
 		} else {
@@ -765,7 +765,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 							for ( Message msg : msgs ) {
 								JsonNode tree = sqsObjectMapper.readTree(msg.body());
 								Object o = DatumJsonUtils.parseDatum(sqsObjectMapper, tree);
-								CompletableFuture<Object> f = new CompletableFuture<Object>();
+								CompletableFuture<Object> f = new CompletableFuture<>();
 								if ( queue.offer(new WorkItem(o, f)) ) {
 									stats.increment(BasicCount.WorkQueueAdds);
 									var _ = f.thenAccept(_ -> {

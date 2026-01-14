@@ -28,7 +28,6 @@ import static net.solarnetwork.central.reg.config.RateLimitConfig.RATE_LIMIT;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -69,12 +68,7 @@ import io.github.bucket4j.distributed.proxy.ProxyManager;
 import net.solarnetwork.central.support.DelegatingParser;
 import net.solarnetwork.central.support.InstantFormatter;
 import net.solarnetwork.central.web.PingController;
-import net.solarnetwork.central.web.support.ContentCachingFilter;
-import net.solarnetwork.central.web.support.ContentCachingService;
-import net.solarnetwork.central.web.support.RateLimitingFilter;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
-import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
-import net.solarnetwork.central.web.support.WebServiceGlobalControllerSupport;
+import net.solarnetwork.central.web.support.*;
 import net.solarnetwork.codec.BindingResultSerializer;
 import net.solarnetwork.codec.PropertySerializer;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
@@ -135,7 +129,7 @@ public class WebConfig implements WebMvcConfigurer {
 	public void addFormatters(FormatterRegistry registry) {
 		registry.addFormatterForFieldType(LocalDateTime.class,
 				new TemporalAccessorPrinter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC),
-				new DelegatingParser<TemporalAccessor>(
+				new DelegatingParser<>(
 						new TemporalAccessorParser(LocalDateTime.class,
 								DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC),
 						new TemporalAccessorParser(LocalDateTime.class,

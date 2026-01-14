@@ -79,7 +79,7 @@ public class WebConfig implements WebMvcConfigurer {
 	@Bean
 	public MappedInterceptor responseSentInterceptor() {
 		return new MappedInterceptor(new String[] { "/oscp/**" },
-				new ThreadLocalCompletableHandlerInterceptor<Void>(RESPONSE_SENT, null));
+				new ThreadLocalCompletableHandlerInterceptor<>(RESPONSE_SENT, null));
 	}
 
 }

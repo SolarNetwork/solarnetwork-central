@@ -93,7 +93,7 @@ public class UserEventConfig {
 		public AsyncDaoUserEventAppenderBiz userEventAppenderBiz(AsyncUserEventAppenderSettings settings,
 				UserEventAppenderDao dao, UuidGenerator uuidGenerator) {
 			ThreadPoolExecutor executor = new ThreadPoolExecutor(settings.getThreads(),
-					settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
+					settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<>(),
 					new CustomizableThreadFactory("UserEventAppender-"));
 			executor.allowCoreThreadTimeOut(true);
 			AsyncDaoUserEventAppenderBiz biz = new AsyncDaoUserEventAppenderBiz(executor, dao,

@@ -82,7 +82,7 @@ public class MyBatisSolarNodeMetadataDao extends BaseMyBatisGenericDao<SolarNode
 			}).collect(toList());
 		}
 
-		return new BasicFilterResults<SolarNodeMetadataFilterMatch, Long>(rows,
-				Long.valueOf(rows.size()), offset != null ? offset : 0L, rows.size());
+		return new BasicFilterResults<>(rows, Long.valueOf(rows.size()), offset != null ? offset : 0L,
+				rows.size());
 	}
 }

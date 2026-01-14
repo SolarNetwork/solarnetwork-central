@@ -203,7 +203,7 @@ public final class CommonTestUtils {
 	 */
 	public static Matcher<BigDecimal[]> decimalArrayMatching(BigDecimal[] expected, int maxScale,
 			RoundingMode mode) {
-		return new org.hamcrest.CustomMatcher<BigDecimal[]>("decimal array") {
+		return new org.hamcrest.CustomMatcher<>("decimal array") {
 
 			@Override
 			public boolean matches(Object actual) {
