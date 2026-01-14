@@ -606,8 +606,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		} catch ( TimeoutException e ) {
 			log.debug("Timeout waiting for {} cert renewal approval", certSubjectDN);
 			// save to DB when we do get our reply
-			@SuppressWarnings("unused")
-			var unused = executorService.submit(() -> {
+			var _ = executorService.submit(() -> {
 				try {
 					UserNodeCertificate renewedCert = approval.get();
 					cert.setStatus(renewedCert.getStatus());
@@ -932,8 +931,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			} catch ( TimeoutException e ) {
 				log.warn("Timeout waiting for {} CSR approval", certSubjectDN);
 				// save to DB when we do get our reply
-				@SuppressWarnings("unused")
-				var unused = executorService.submit(() -> {
+				var _ = executorService.submit(() -> {
 					try {
 						UserNodeCertificate approvedCert = approval.get();
 						userNodeCertificateDao.save(approvedCert);
