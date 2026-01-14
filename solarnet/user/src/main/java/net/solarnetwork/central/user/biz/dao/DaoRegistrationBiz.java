@@ -61,7 +61,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.FileCopyUtils;
@@ -198,7 +197,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	private String networkCertificateSubjectFormat = DEFAULT_CERT_SUBJECT_FORMAT;
 
 	private User getCurrentUser() {
-		String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+		String currentUserEmail = SecurityUtils.getCurrentUser().getEmail();
 		User user = null;
 		if ( currentUserEmail != null ) {
 			user = userDao.getUserByEmail(currentUserEmail);
@@ -1010,7 +1009,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	private UserNodeCertificate generateNodeCSR(String keystorePassword, final String certSubjectDN) {
 		log.info("Generating private key and CSR for node DN: {}", certSubjectDN);
 		try {
-			KeyStore keystore = loadKeyStore(keystorePassword, null);
+			KeyStore keystore = createKeyStore(keystorePassword);
 
 			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
 			keyGen.initialize(nodePrivateKeySize, new SecureRandom());
@@ -1040,11 +1039,11 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		}
 	}
 
-	private KeyStore loadKeyStore(String password, InputStream in) {
+	private KeyStore createKeyStore(String password) {
 		KeyStore keyStore;
 		try {
 			keyStore = KeyStore.getInstance("pkcs12");
-			keyStore.load(in, password.toCharArray());
+			keyStore.load(null, password.toCharArray());
 			return keyStore;
 		} catch ( KeyStoreException | NoSuchAlgorithmException
 				| java.security.cert.CertificateException e ) {
@@ -1057,14 +1056,6 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 				msg = "Error loading certificate key store";
 			}
 			throw new CertificateException(msg, e);
-		} finally {
-			if ( in != null ) {
-				try {
-					in.close();
-				} catch ( IOException e ) {
-					// ignore this one
-				}
-			}
 		}
 	}
 
