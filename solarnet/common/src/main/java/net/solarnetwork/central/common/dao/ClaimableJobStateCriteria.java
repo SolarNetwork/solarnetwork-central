@@ -51,7 +51,7 @@ public interface ClaimableJobStateCriteria {
 	/**
 	 * Get a set of claimable job states.
 	 * 
-	 * @return set of states (may be {@literal null})
+	 * @return array of states (may be {@literal null})
 	 */
 	ClaimableJobState[] getClaimableJobStates();
 

@@ -94,7 +94,8 @@ public abstract class BaseSolcastCloudDatumStreamService
 	protected static final String QUERY_PARAM_USE_LIVE_DATA = "live";
 
 	/**
-	 * An internal parameter map with just the {@link #USE_LIVE_DATA} value set.
+	 * An internal parameter map with just the
+	 * {@link #QUERY_PARAM_USE_LIVE_DATA} value set.
 	 *
 	 * @since 1.2
 	 */

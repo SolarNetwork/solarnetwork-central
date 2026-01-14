@@ -52,7 +52,7 @@ import org.bouncycastle.asn1.ASN1Sequence;
  * 
  * <p>
  * Shamelessly adapted from
- * {@link org.springframework.security.crypto.encrypt.RsaKeyHelper} because that
+ * {@code org.springframework.security.crypto.encrypt.RsaKeyHelper} because that
  * class is package-private.
  * </p>
  * 

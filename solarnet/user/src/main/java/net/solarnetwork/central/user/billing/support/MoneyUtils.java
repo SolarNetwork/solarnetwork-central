@@ -87,7 +87,8 @@ public final class MoneyUtils {
 	 * @param locale
 	 *        the desired locale of the builder
 	 * @return the builder
-	 * @see https://github.com/JavaMoney/javamoney-examples/issues/25
+	 * @see <a href=
+	 *      "https://github.com/JavaMoney/javamoney-examples/issues/25">issue-25</a>
 	 */
 	public static AmountFormatQueryBuilder ofSymbolCurrencyStyle(Locale locale) {
 		return AmountFormatQueryBuilder.of(locale).set(CurrencyStyle.SYMBOL);
