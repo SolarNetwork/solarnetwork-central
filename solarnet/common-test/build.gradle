@@ -23,7 +23,7 @@ base {
 dependencies {
 	api 'ch.qos.logback:logback-classic'
 	api "net.solarnetwork.common:net.solarnetwork.common:${snCommonVersion}"
-	api 'net.solarnetwork.common.test:net.solarnetwork.common.test:1.20.0'
+	api 'net.solarnetwork.common.test:net.solarnetwork.common.test:2.1.0'
 	api 'org.hamcrest:hamcrest-library'
 	api 'org.junit.jupiter:junit-jupiter-api'
 	api 'org.springframework.boot:spring-boot-starter-jdbc-test'
@@ -33,6 +33,7 @@ dependencies {
 }
 
 configurations.configureEach {
+	exclude group: 'com.h2database'
 	exclude group: 'commons-beanutils'
 	exclude group: 'io.moquette'
 	exclude group: 'org.hamcrest', module: 'hamcrest-all'
