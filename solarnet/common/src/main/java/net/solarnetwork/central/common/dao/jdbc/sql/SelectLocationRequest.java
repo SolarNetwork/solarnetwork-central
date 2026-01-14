@@ -35,7 +35,7 @@ import net.solarnetwork.central.common.dao.LocationRequestCriteria;
  * Select location request entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.3
  */
 public final class SelectLocationRequest implements PreparedStatementCreator, SqlProvider {
@@ -88,7 +88,7 @@ public final class SelectLocationRequest implements PreparedStatementCreator, Sq
 				"SELECT id, created, modified, user_id, status, jdata, loc_id, message\nFROM solarnet.sn_loc_req");
 		StringBuilder where = new StringBuilder();
 		LocationRequestSqlUtils.appendLocationRequestCriteria(id, filter, where);
-		if ( where.length() > 0 ) {
+		if ( !where.isEmpty() ) {
 			buf.append(" WHERE").append(where.substring(CommonSqlUtils.WHERE_COMPONENT_PREFIX_LENGTH));
 		}
 		if ( id == null ) {

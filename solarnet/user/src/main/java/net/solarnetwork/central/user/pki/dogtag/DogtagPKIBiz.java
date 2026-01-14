@@ -481,7 +481,7 @@ public class DogtagPKIBiz
 		final var info = new DogtagCertRequestInfo();
 		try {
 			final var entriesJson = json.path("entries");
-			if ( entriesJson.size() > 0 ) {
+			if ( !entriesJson.isEmpty() ) {
 				final var firstEntry = entriesJson.get(0);
 				info.setRequestURL(new URI(firstEntry.path("requestURL").stringValue()).toURL());
 				info.setRequestStatus(firstEntry.path("requestStatus").stringValue());

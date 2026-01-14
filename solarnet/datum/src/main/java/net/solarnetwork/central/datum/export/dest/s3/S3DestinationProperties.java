@@ -32,7 +32,7 @@ import software.amazon.awssdk.services.s3.S3Utilities;
  * Service properties for the S3 export destination.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class S3DestinationProperties {
 
@@ -70,8 +70,8 @@ public class S3DestinationProperties {
 	 * @return {@literal true} if the configuration appears valid
 	 */
 	public boolean isValid() {
-		return (path != null && path.trim().length() > 0 && filenameTemplate != null
-				&& filenameTemplate.trim().length() > 0);
+		return (path != null && !path.isBlank() && filenameTemplate != null
+				&& !filenameTemplate.isBlank());
 	}
 
 	/**
