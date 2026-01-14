@@ -85,6 +85,7 @@ subprojects {
 	ext {
 		awsSdk2Version = '2.31.48'
 		batikVersion = '1.19'
+		bouncyCastleVersion = '1.83'
 		bucket4jVersion = '8.14.0'
 		checkstyleVersion = '8.34'
 		commonsIoVersion = '2.19.0'
@@ -169,6 +170,8 @@ subprojects {
 		  	resolutionStrategy.eachDependency { DependencyResolveDetails details ->
 		  		if (details.requested.group == 'software.amazon.awssdk') {
 		  			details.useVersion "${awsSdk2Version}"
+		  		} else if (details.requested.group == 'org.bouncycastle') {
+		  			details.useVersion "${bouncyCastleVersion}"
 		  		}
 			}
 		}
