@@ -356,9 +356,6 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 				LocalDateTime dt = dateFormatter.parse(getColumnsValue(row, props.getDateColumns(), " "),
 						LocalDateTime::from);
 				ZoneId zone = dateFormatter.getZone();
-				if ( zone == null ) {
-					zone = ZoneOffset.UTC;
-				}
 				if ( !zone.getRules().isFixedOffset() ) {
 					List<ZoneOffset> offsets = zone.getRules().getValidOffsets(dt);
 					if ( offsets.isEmpty() ) {
