@@ -32,7 +32,7 @@ import org.springframework.security.core.userdetails.UserDetails;
  * authenticated nodes.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AuthenticatedNode implements UserDetails, SecurityNode {
 
@@ -105,26 +105,6 @@ public class AuthenticatedNode implements UserDetails, SecurityNode {
 	@Override
 	public String getUsername() {
 		return username;
-	}
-
-	@Override
-	public boolean isAccountNonExpired() {
-		return true;
-	}
-
-	@Override
-	public boolean isAccountNonLocked() {
-		return true;
-	}
-
-	@Override
-	public boolean isCredentialsNonExpired() {
-		return true;
-	}
-
-	@Override
-	public boolean isEnabled() {
-		return true;
 	}
 
 	@Override
