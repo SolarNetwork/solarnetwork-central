@@ -7,8 +7,6 @@ $(document).ready(function() {
 		pageSize: 10,
 	};
 
-	var latestInvoice;
-	
 	function resetInvoiceDetails(modal) {
 		$(modal).find('table.invoice-items').addClass('hidden').find('tbody').empty();
 		$(modal).find('.invoice-items-loading').removeClass('hidden');
@@ -36,7 +34,6 @@ $(document).ready(function() {
 			taxTemplateRow = table.find('.invoice-item-tax.template'),
 			tr, 
 			item,
-			prop,
 			usageList,
 			usageTemplateRow,
 			usageRecords,
@@ -147,11 +144,11 @@ $(document).ready(function() {
 		}
 	}
 	
-	function renderInvoiceTable(table, pagination, displayCount, json) {
-		var haveRows = !!(json && json.data && json.data.results && json.data.results.length > 0);
-		var total = (json.data ? json.data.totalResults : returned);
-		var container, prop, cell;
-		var table = $(table);
+	function renderInvoiceTable(tableEl, pagination, displayCount, json) {
+		const haveRows = !!(json && json.data && json.data.results && json.data.results.length > 0);
+		const total = (json.data ? json.data.totalResults : returned);
+		const table = $(tableEl);
+		var container, prop;
 		if ( haveRows ) {
 			var templateRow = table.find('tr.template');
 			var tbody = table.find('tbody');
@@ -275,8 +272,7 @@ $(document).ready(function() {
 	}
 
 	function renderPreviewInvoiceTotals(table, invoice) {
-		var foo,
-			taxItems = (invoice ? invoice.localizedTaxInvoiceItemsGroupedByDescription : null),
+		var taxItems = (invoice ? invoice.localizedTaxInvoiceItemsGroupedByDescription : null),
 			haveTaxItems = (Array.isArray(taxItems) && taxItems.length > 0),
 			totalRows = table.children('thead,tfoot').children('tr').not('.template');
 		if ( haveTaxItems ) {
@@ -329,7 +325,7 @@ $(document).ready(function() {
 		});
 		
 		// reset invoice details modal on close
-		$('#invoice-details-modal').on('hidden.bs.modal', function(event) {
+		$('#invoice-details-modal').on('hidden.bs.modal', function(_event) {
 			resetInvoiceDetails(this);
 		});
 

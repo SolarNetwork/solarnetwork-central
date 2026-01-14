@@ -172,7 +172,7 @@ SolarReg.arrayAsDelimitedString = function arrayAsDelimitedString(array, delimit
  */
 SolarReg.replaceTemplateParameters = function replaceTemplateParameters(str, params) {
 	var re = /\{(\w+)\}/g;
-	return str.replace(re, function(match, p1) {
+	return str.replace(re, function(_match, p1) {
 		return params[p1] || '';
 	});
 };
@@ -417,7 +417,7 @@ $(document).ready(function() {
 				btn.trigger('copied', [SolarReg.i18n.copyFailedTooltip || 'Failed!']);
 			}
 			}
-	}).on('copied', function handleCopyResult(event, message) {
+	}).on('copied', function handleCopyResult(_event, message) {
 		$(this).attr('title', message)
 			.tooltip('fixTitle')
 			.tooltip('show')
@@ -425,7 +425,7 @@ $(document).ready(function() {
 			.tooltip('fixTitle');
 	});
 
-}).ajaxComplete(function(event, xhr, ajaxOptions) {
+}).ajaxComplete(function(_event, xhr, _ajaxOptions) {
 	// look for X-LoginFormPage header to handle auto client-side redirect to login page
 	if ( xhr.readyState == 4 && "true" === xhr.getResponseHeader("X-LoginFormPage") ) {
 		window.location.href = SolarReg.solarUserPublicURL('/login');

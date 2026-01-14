@@ -78,14 +78,14 @@ $(document).ready(function() {
 		});
 
 		// attach actual service configuration to each link
-		container.find('a.edit-link:not(*[data-config-type])').each(function(idx, el) {
+		container.find('a.edit-link:not(*[data-config-type])').each(function(_idx, el) {
 			var btn = $(el),
 				config = SolarReg.Templates.findContextItem(btn);
 			if ( !config ) {
 				return;
 			}
 
-			btn.parent().find('.edit-link[data-config-type]').each(function(idx, el) {
+			btn.parent().find('.edit-link[data-config-type]').each(function(_idx, el) {
 				var link = $(el),
 					configType = link.data('config-type'),
 					relatedConfig;
@@ -169,14 +169,14 @@ $(document).ready(function() {
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
 
 		// attach actual service configuration to each link
-		container.find('a.edit-link:not(*[data-config-type])').each(function(idx, el) {
+		container.find('a.edit-link:not(*[data-config-type])').each(function(_idx, el) {
 			var btn = $(el),
 				config = SolarReg.Templates.findContextItem(btn);
 			if ( !config ) {
 				return;
 			}
 
-			btn.closest('li').find('.edit-link[data-config-type]').each(function(idx, el) {
+			btn.closest('li').find('.edit-link[data-config-type]').each(function(_idx, el) {
 				var link = $(el),
 					configType = link.data('config-type'),
 					relatedConfig;
@@ -275,7 +275,7 @@ $(document).ready(function() {
 		handleServiceIdentifierChange(event, []);
 	})
 	.on('submit', function(event) {
-		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 			SolarReg.storeServiceConfiguration(res, exportConfigs.adhocDatumExportConfigs);
 			populateAdhocDatumExportConfigs([res], true);
 		}, function serializeDataConfigForm(form) {
@@ -320,7 +320,7 @@ $(document).ready(function() {
 		handleServiceIdentifierChange(event, []);
 	})
 	.on('submit', function(event) {
-		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 			SolarReg.storeServiceConfiguration(res, exportConfigs.datumExportConfigs);
 			populateDatumExportConfigs([res], true);
 		});
@@ -344,7 +344,7 @@ $(document).ready(function() {
 		handleServiceIdentifierChange(event, dataServices);
 	})
 	.on('submit', function(event) {
-		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 			populateDataConfigs([res], true);
 			SolarReg.storeServiceConfiguration(res, exportConfigs.dataConfigs);
 		}, function serializeDataConfigForm(form) {
@@ -390,7 +390,7 @@ $(document).ready(function() {
 		handleServiceIdentifierChange(event, destinationServices);
 	})
 	.on('submit', function(event) {
-		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 			populateDestinationConfigs([res], true);
 			SolarReg.storeServiceConfiguration(res, exportConfigs.destinationConfigs);
 		}, undefined, {
@@ -420,7 +420,7 @@ $(document).ready(function() {
 		handleServiceIdentifierChange(event, outputServices);
 	})
 	.on('submit', function(event) {
-		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 			populateOutputConfigs([res], true);
 			SolarReg.storeServiceConfiguration(res, exportConfigs.outputConfigs);
 		}, undefined, {
@@ -443,7 +443,7 @@ $(document).ready(function() {
 	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 	.on('submit', function(event) {
 		var form = event.target;
-		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 			var config = SolarReg.Templates.findContextItem(form);
 			if ( config ) {
 				config.minimumExportDate = res;

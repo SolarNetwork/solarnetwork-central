@@ -311,7 +311,7 @@ SolarReg.Settings.setupCoreSettings = function setupCoreSettings(form, config) {
 			val = Array.isArray(obj[component])
 				? SolarReg.arrayAsDelimitedString(obj[component])
 				: obj[component];
-			if ( field.type == "date" ) {
+			if ( field.type === "date" ) {
 				// make sure date formatted
 				val = moment(val).format('YYYY-MM-DD');
 			}

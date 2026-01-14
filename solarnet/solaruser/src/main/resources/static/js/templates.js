@@ -45,7 +45,7 @@ SolarReg.Templates.populateServiceSelectOptions = function populateServiceSelect
  * @returns {jQuery} the jQuery selector for the first matching item
  */
 SolarReg.Templates.findExistingTemplateItem = function findExistingTemplateItem(container, itemId) {
-	return container.children().filter(function(i, e) {
+	return container.children().filter(function(_i, e) {
 		var ctx = $(e).data('context-item');
 		// note the loose == here, to handle numbers that might be handed in as strings from form elements
 		return (ctx && ctx.id !== undefined && ctx.id == itemId);
@@ -82,7 +82,7 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 		.not('.template .list-container')
 		.first();
 	var itemTemplate = container.find('.template')
-		.not(function(idx, el) {
+		.not(function(_idx, el) {
 			// ignore templates already in the destination container
 			return itemContainer.length > 0 && $.contains(itemContainer[0], el);
 		})
@@ -358,7 +358,7 @@ SolarReg.Templates.findContextItem = function findContextItem(el) {
 	if ( ctx ) {
 		return ctx;
 	}
-	return el.parents().filter(function(i, e) {
+	return el.parents().filter(function(_i, e) {
 		return !!$(e).data('context-item');
 	}).first().data('context-item');
 };
