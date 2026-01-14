@@ -23,16 +23,10 @@
 package net.solarnetwork.central.oscp.jobs;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_ASSET_MEASUREMENTS_URL_PATH;
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_MEASUREMENTS_URL_PATH;
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.*;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.http.HttpMethod;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -41,19 +35,11 @@ import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.MeasurementDao;
-import net.solarnetwork.central.oscp.domain.AssetConfiguration;
-import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
-import net.solarnetwork.central.oscp.domain.Measurement;
-import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
-import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.domain.*;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.dao.DateRangeCriteria;
-import oscp.v20.AssetMeasurement;
-import oscp.v20.EnergyMeasurement;
-import oscp.v20.InstantaneousMeasurement;
-import oscp.v20.UpdateAssetMeasurement;
-import oscp.v20.UpdateGroupMeasurements;
+import oscp.v20.*;
 
 /**
  * Job to post OSCP measurement messages to external systems.
@@ -223,7 +209,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 			return null;
 		}
 		if ( measurements.size() == 1 ) {
-			return measurements.get(0);
+			return measurements.getFirst();
 		}
 		/*-
 		"value",
@@ -257,7 +243,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 			return null;
 		}
 		if ( measurements.size() == 1 ) {
-			return measurements.get(0);
+			return measurements.getFirst();
 		}
 		/*-
 		"value",
@@ -286,7 +272,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 			return null;
 		}
 		if ( measurements.size() == 1 ) {
-			return measurements.get(0);
+			return measurements.getFirst();
 		}
 		/*-
 		"asset_id",
@@ -299,7 +285,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 		InstantaneousMeasurement inst = combineInstantaneousMeasurements(
 				measurements.stream().map(AssetMeasurement::getInstantaneousMeasurement).toList());
 		AssetMeasurement result = new AssetMeasurement(combinedAssetId,
-				measurements.get(0).getAssetCategory());
+				measurements.getFirst().getAssetCategory());
 		result.setEnergyMeasurement(energy);
 		result.setInstantaneousMeasurement(inst);
 		return result;

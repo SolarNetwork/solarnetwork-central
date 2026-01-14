@@ -94,6 +94,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// menu for granularity
 		var datumStreamId = new BasicTextFieldSettingSpecifier(DATUM_STREAM_ID_SETTING, null);
@@ -189,7 +190,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 			}
 
 			var retryVal = config.serviceProperty(RETRY_COUNT_SETTING, Integer.class);
-			this.retryCount = (retryVal != null ? Math.min(retryVal.intValue(), MAXIMUM_RETRY_COUNT)
+			this.retryCount = (retryVal != null ? Math.min(retryVal, MAXIMUM_RETRY_COUNT)
 					: DEFAULT_RETRY_COUNT);
 
 			datumStream = requireNonNullObject(

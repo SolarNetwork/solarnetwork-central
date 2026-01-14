@@ -191,7 +191,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K extend
 		if ( count < 0 ) {
 			List<BatchResult> updates = getSqlSession().flushStatements();
 			if ( updates != null && !updates.isEmpty() ) {
-				BatchResult br = updates.get(updates.size() - 1);
+				BatchResult br = updates.getLast();
 				int[] counts = br.getUpdateCounts();
 				if ( counts != null && counts.length > 0 ) {
 					count = counts[counts.length - 1];
