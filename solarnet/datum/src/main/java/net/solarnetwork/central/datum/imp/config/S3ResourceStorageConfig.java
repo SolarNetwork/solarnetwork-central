@@ -33,7 +33,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import net.solarnetwork.common.s3.S3Client;
 import net.solarnetwork.common.s3.S3ResourceStorageService;
 import net.solarnetwork.common.s3.sdk2.Sdk2S3Client;
-import net.solarnetwork.service.ResourceStorageService;
 
 /**
  * S3 resource storage configuration for datum import.
@@ -71,7 +70,7 @@ public class S3ResourceStorageConfig implements SolarNetDatumImportConfiguration
 	@ConfigurationProperties(prefix = "app.datum.import.s3-storage.service")
 	@Qualifier(DATUM_IMPORT)
 	@Bean(initMethod = "startup")
-	public ResourceStorageService datumImportResourceStorageService(
+	public S3ResourceStorageService datumImportResourceStorageService(
 			@Qualifier(DATUM_IMPORT) S3Client s3Client) {
 		S3ResourceStorageService service = new S3ResourceStorageService(executor);
 		service.setUid("Datum-Import");

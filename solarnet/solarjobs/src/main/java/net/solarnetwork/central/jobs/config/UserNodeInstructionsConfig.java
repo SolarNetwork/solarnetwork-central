@@ -50,7 +50,6 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.user.biz.InstructionsExpressionService;
-import net.solarnetwork.central.user.biz.UserNodeInstructionService;
 import net.solarnetwork.central.user.biz.dao.DaoUserNodeInstructionService;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
@@ -127,7 +126,7 @@ public class UserNodeInstructionsConfig implements SolarNetUserConfiguration {
 
 	@ConfigurationProperties(prefix = "app.user-instr.service")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public UserNodeInstructionService userNodeInstructionService() {
+	public DaoUserNodeInstructionService userNodeInstructionService() {
 		var service = new DaoUserNodeInstructionService(Clock.systemUTC(),
 				taskExecutor.getThreadPoolExecutor(), objectMapper, userEventAppenderBiz, instructorBiz,
 				expressionService, nodeOwnershipDao, taskDao, datumDao, datumStreamMetadataDao);

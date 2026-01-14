@@ -35,7 +35,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.c2c.biz.CloudDatumStreamRakeService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.DaoCloudDatumStreamRakeService;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
@@ -99,7 +98,7 @@ public class CloudIntegrationsDatumStreamRakeConfig implements SolarNetCloudInte
 
 	@ConfigurationProperties(prefix = "app.c2c.ds-rake.service")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public CloudDatumStreamRakeService cloudDatumStreamRakeService(
+	public DaoCloudDatumStreamRakeService cloudDatumStreamRakeService(
 			@Qualifier(CLOUD_INTEGRATIONS_RAKE) ThreadPoolTaskExecutor taskExecutor,
 			Collection<CloudDatumStreamService> datumStreamServices) {
 		var dsMap = datumStreamServices.stream()
