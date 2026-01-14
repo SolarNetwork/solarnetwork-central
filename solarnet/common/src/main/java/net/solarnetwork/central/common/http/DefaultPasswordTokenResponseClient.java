@@ -26,7 +26,6 @@ import org.springframework.security.oauth2.client.endpoint.DefaultOAuth2TokenReq
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -41,19 +40,21 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestOperations;
 
 /**
- * The default implementation of an {@link OAuth2AccessTokenResponseClient} for the
- * {@link AuthorizationGrantType#PASSWORD password} grant. This implementation uses a
- * {@link RestOperations} when requesting an access token credential at the Authorization Server's Token
- * Endpoint.
+ * The default implementation of an {@link OAuth2AccessTokenResponseClient} for
+ * the {@code password} grant. This implementation uses a {@link RestOperations}
+ * when requesting an access token credential at the Authorization Server's
+ * Token Endpoint.
  *
  * @author Joe Grandja
  * @see OAuth2AccessTokenResponseClient
  * @see OAuth2PasswordGrantRequest
  * @see OAuth2AccessTokenResponse
- * @see <a target="_blank" href= "https://tools.ietf.org/html/rfc6749#section-4.3.2">Section 4.3.2 Access
- * Token Request (Resource Owner Password Credentials Grant)</a>
- * @see <a target="_blank" href= "https://tools.ietf.org/html/rfc6749#section-4.3.3">Section 4.3.3 Access
- * Token Response (Resource Owner Password Credentials Grant)</a>
+ * @see <a target="_blank" href=
+ *      "https://tools.ietf.org/html/rfc6749#section-4.3.2">Section 4.3.2 Access
+ *      Token Request (Resource Owner Password Credentials Grant)</a>
+ * @see <a target="_blank" href=
+ *      "https://tools.ietf.org/html/rfc6749#section-4.3.3">Section 4.3.3 Access
+ *      Token Response (Resource Owner Password Credentials Grant)</a>
  * @since 5.2
  */
 public final class DefaultPasswordTokenResponseClient
@@ -103,7 +104,8 @@ public final class DefaultPasswordTokenResponseClient
 			return accessTokenResponse;
 		} catch ( RestClientException ex ) {
 			OAuth2Error error = new OAuth2Error(INVALID_TOKEN_RESPONSE_ERROR_CODE,
-					"An error occurred while attempting to retrieve the OAuth 2.0 Access Token Response: " + ex.getMessage(),
+					"An error occurred while attempting to retrieve the OAuth 2.0 Access Token Response: "
+							+ ex.getMessage(),
 					null);
 			throw new OAuth2AuthorizationException(error, ex);
 		}
@@ -116,11 +118,12 @@ public final class DefaultPasswordTokenResponseClient
 
 	private void validateClientAuthenticationMethod(OAuth2PasswordGrantRequest grantRequest) {
 		ClientRegistration clientRegistration = grantRequest.getClientRegistration();
-		ClientAuthenticationMethod clientAuthenticationMethod = clientRegistration.getClientAuthenticationMethod();
-		boolean supportedClientAuthenticationMethod = clientAuthenticationMethod.equals(
-				ClientAuthenticationMethod.NONE) || clientAuthenticationMethod.equals(
-				ClientAuthenticationMethod.CLIENT_SECRET_BASIC) || clientAuthenticationMethod.equals(
-				ClientAuthenticationMethod.CLIENT_SECRET_POST);
+		ClientAuthenticationMethod clientAuthenticationMethod = clientRegistration
+				.getClientAuthenticationMethod();
+		boolean supportedClientAuthenticationMethod = clientAuthenticationMethod
+				.equals(ClientAuthenticationMethod.NONE)
+				|| clientAuthenticationMethod.equals(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+				|| clientAuthenticationMethod.equals(ClientAuthenticationMethod.CLIENT_SECRET_POST);
 		if ( !supportedClientAuthenticationMethod ) {
 			throw new IllegalArgumentException(String.format(
 					"This class supports `client_secret_basic`, `client_secret_post`, and `none` by default. Client [%s] is using [%s] instead. Please use a supported client authentication method, or use `set/addParametersConverter` or `set/addHeadersConverter` to supply an instance that supports [%s].",
@@ -136,9 +139,9 @@ public final class DefaultPasswordTokenResponseClient
 		}
 		this.parametersCustomizer.accept(parameters);
 
-		return this.restClient.post().uri(
-				grantRequest.getClientRegistration().getProviderDetails().getTokenUri()).headers(
-				(headers) -> {
+		return this.restClient.post()
+				.uri(grantRequest.getClientRegistration().getProviderDetails().getTokenUri())
+				.headers((headers) -> {
 					HttpHeaders headersToAdd = this.headersConverter.convert(grantRequest);
 					if ( headersToAdd != null ) {
 						headers.addAll(headersToAdd);
@@ -147,10 +150,12 @@ public final class DefaultPasswordTokenResponseClient
 	}
 
 	/**
-	 * Sets the {@link RestClient} used when requesting the OAuth 2.0 Access Token Response.
+	 * Sets the {@link RestClient} used when requesting the OAuth 2.0 Access
+	 * Token Response.
 	 *
 	 * @param restClient
-	 * 		the {@link RestClient} used when requesting the Access Token Response
+	 *        the {@link RestClient} used when requesting the Access Token
+	 *        Response
 	 */
 	public void setRestClient(RestClient restClient) {
 		Assert.notNull(restClient, "restClient cannot be null");
@@ -158,11 +163,13 @@ public final class DefaultPasswordTokenResponseClient
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting the {@link AbstractOAuth2AuthorizationGrantRequest}
-	 * instance to a {@link HttpHeaders} used in the OAuth 2.0 Access Token Request headers.
+	 * Sets the {@link Converter} used for converting the
+	 * {@link AbstractOAuth2AuthorizationGrantRequest} instance to a
+	 * {@link HttpHeaders} used in the OAuth 2.0 Access Token Request headers.
 	 *
 	 * @param headersConverter
-	 * 		the {@link Converter} used for converting the {@link AbstractOAuth2AuthorizationGrantRequest} to
+	 *        the {@link Converter} used for converting the
+	 *        {@link AbstractOAuth2AuthorizationGrantRequest} to
 	 *        {@link HttpHeaders}
 	 */
 	public void setHeadersConverter(
@@ -173,13 +180,16 @@ public final class DefaultPasswordTokenResponseClient
 	}
 
 	/**
-	 * Add (compose) the provided {@code headersConverter} to the current {@link Converter} used for
-	 * converting the {@link AbstractOAuth2AuthorizationGrantRequest} instance to a {@link HttpHeaders}
-	 * used in the OAuth 2.0 Access Token Request headers.
+	 * Add (compose) the provided {@code headersConverter} to the current
+	 * {@link Converter} used for converting the
+	 * {@link AbstractOAuth2AuthorizationGrantRequest} instance to a
+	 * {@link HttpHeaders} used in the OAuth 2.0 Access Token Request headers.
 	 *
 	 * @param headersConverter
-	 * 		the {@link Converter} to add (compose) to the current {@link Converter} used for converting the
-	 *        {@link AbstractOAuth2AuthorizationGrantRequest} to a {@link HttpHeaders}
+	 *        the {@link Converter} to add (compose) to the current
+	 *        {@link Converter} used for converting the
+	 *        {@link AbstractOAuth2AuthorizationGrantRequest} to a
+	 *        {@link HttpHeaders}
 	 */
 	public void addHeadersConverter(
 			Converter<OAuth2PasswordGrantRequest, HttpHeaders> headersConverter) {
@@ -201,11 +211,13 @@ public final class DefaultPasswordTokenResponseClient
 	}
 
 	/**
-	 * Sets the {@link Converter} used for converting the {@link AbstractOAuth2AuthorizationGrantRequest}
-	 * instance to a {@link MultiValueMap} used in the OAuth 2.0 Access Token Request body.
+	 * Sets the {@link Converter} used for converting the
+	 * {@link AbstractOAuth2AuthorizationGrantRequest} instance to a
+	 * {@link MultiValueMap} used in the OAuth 2.0 Access Token Request body.
 	 *
 	 * @param parametersConverter
-	 * 		the {@link Converter} used for converting the {@link AbstractOAuth2AuthorizationGrantRequest} to
+	 *        the {@link Converter} used for converting the
+	 *        {@link AbstractOAuth2AuthorizationGrantRequest} to
 	 *        {@link MultiValueMap}
 	 */
 	public void setParametersConverter(
@@ -216,10 +228,10 @@ public final class DefaultPasswordTokenResponseClient
 		} else {
 			Converter<OAuth2PasswordGrantRequest, MultiValueMap<String, String>> defaultParametersConverter = new DefaultOAuth2TokenRequestParametersConverter<>();
 			this.parametersConverter = (authorizationGrantRequest) -> {
-				MultiValueMap<String, String> parameters = defaultParametersConverter.convert(
-						authorizationGrantRequest);
-				MultiValueMap<String, String> parametersToSet = parametersConverter.convert(
-						authorizationGrantRequest);
+				MultiValueMap<String, String> parameters = defaultParametersConverter
+						.convert(authorizationGrantRequest);
+				MultiValueMap<String, String> parametersToSet = parametersConverter
+						.convert(authorizationGrantRequest);
 				if ( parametersToSet != null ) {
 					parameters.putAll(parametersToSet);
 				}
@@ -230,26 +242,29 @@ public final class DefaultPasswordTokenResponseClient
 	}
 
 	/**
-	 * Add (compose) the provided {@code parametersConverter} to the current {@link Converter} used for
-	 * converting the {@link AbstractOAuth2AuthorizationGrantRequest} instance to a {@link MultiValueMap}
-	 * used in the OAuth 2.0 Access Token Request body.
+	 * Add (compose) the provided {@code parametersConverter} to the current
+	 * {@link Converter} used for converting the
+	 * {@link AbstractOAuth2AuthorizationGrantRequest} instance to a
+	 * {@link MultiValueMap} used in the OAuth 2.0 Access Token Request body.
 	 *
 	 * @param parametersConverter
-	 * 		the {@link Converter} to add (compose) to the current {@link Converter} used for converting the
-	 *        {@link AbstractOAuth2AuthorizationGrantRequest} to a {@link MultiValueMap}
+	 *        the {@link Converter} to add (compose) to the current
+	 *        {@link Converter} used for converting the
+	 *        {@link AbstractOAuth2AuthorizationGrantRequest} to a
+	 *        {@link MultiValueMap}
 	 */
 	public void addParametersConverter(
 			Converter<OAuth2PasswordGrantRequest, MultiValueMap<String, String>> parametersConverter) {
 		Assert.notNull(parametersConverter, "parametersConverter cannot be null");
 		Converter<OAuth2PasswordGrantRequest, MultiValueMap<String, String>> currentParametersConverter = this.parametersConverter;
 		this.parametersConverter = (authorizationGrantRequest) -> {
-			MultiValueMap<String, String> parameters = currentParametersConverter.convert(
-					authorizationGrantRequest);
+			MultiValueMap<String, String> parameters = currentParametersConverter
+					.convert(authorizationGrantRequest);
 			if ( parameters == null ) {
 				parameters = new LinkedMultiValueMap<>();
 			}
-			MultiValueMap<String, String> parametersToAdd = parametersConverter.convert(
-					authorizationGrantRequest);
+			MultiValueMap<String, String> parametersToAdd = parametersConverter
+					.convert(authorizationGrantRequest);
 			if ( parametersToAdd != null ) {
 				parameters.addAll(parametersToAdd);
 			}
@@ -259,11 +274,12 @@ public final class DefaultPasswordTokenResponseClient
 	}
 
 	/**
-	 * Sets the {@link Consumer} used for customizing the OAuth 2.0 Access Token parameters, which allows
-	 * for parameters to be added, overwritten or removed.
+	 * Sets the {@link Consumer} used for customizing the OAuth 2.0 Access Token
+	 * parameters, which allows for parameters to be added, overwritten or
+	 * removed.
 	 *
 	 * @param parametersCustomizer
-	 * 		the {@link Consumer} to customize the parameters
+	 *        the {@link Consumer} to customize the parameters
 	 */
 	public void setParametersCustomizer(Consumer<MultiValueMap<String, String>> parametersCustomizer) {
 		Assert.notNull(parametersCustomizer, "parametersCustomizer cannot be null");

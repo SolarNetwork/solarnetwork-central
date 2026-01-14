@@ -25,7 +25,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
@@ -35,7 +34,7 @@ import org.springframework.web.client.RestClient;
 
 /**
  * An implementation of an {@link OAuth2AuthorizedClientProvider} for the
- * {@link AuthorizationGrantType#PASSWORD password} grant.
+ * {@code password} grant.
  * 
  * <p>
  * This has been adapted from Spring Security 6. It has been removed from Spring
@@ -78,21 +77,21 @@ public class PasswordOAuth2AuthorizedClientProvider implements OAuth2AuthorizedC
 	 * provided {@code context}. Returns {@code null} if authorization (or
 	 * re-authorization) is not supported, e.g. the client's
 	 * {@link ClientRegistration#getAuthorizationGrantType() authorization grant
-	 * type} is not {@link AuthorizationGrantType#PASSWORD password} OR the
-	 * {@link OAuth2AuthorizationContext#USERNAME_ATTRIBUTE_NAME username}
-	 * and/or {@link OAuth2AuthorizationContext#PASSWORD_ATTRIBUTE_NAME
-	 * password} attributes are not available in the provided {@code context} OR
-	 * the {@link OAuth2AuthorizedClient#getAccessToken() access token} is not
+	 * type} is not {@code password} OR the
+	 * {@link OAuth2Utils#USERNAME_ATTRIBUTE_NAME username} and/or
+	 * {@link OAuth2Utils#PASSWORD_ATTRIBUTE_NAME password} attributes are not
+	 * available in the provided {@code context} OR the
+	 * {@link OAuth2AuthorizedClient#getAccessToken() access token} is not
 	 * expired.
 	 *
 	 * <p>
 	 * The following {@link OAuth2AuthorizationContext#getAttributes() context
 	 * attributes} are supported:
 	 * <ol>
-	 * <li>{@link OAuth2AuthorizationContext#USERNAME_ATTRIBUTE_NAME} (required)
-	 * - a {@code String} value for the resource owner's username</li>
-	 * <li>{@link OAuth2AuthorizationContext#PASSWORD_ATTRIBUTE_NAME} (required)
-	 * - a {@code String} value for the resource owner's password</li>
+	 * <li>{@link OAuth2Utils#USERNAME_ATTRIBUTE_NAME} (required) - a
+	 * {@code String} value for the resource owner's username</li>
+	 * <li>{@link OAuth2Utils#PASSWORD_ATTRIBUTE_NAME} (required) - a
+	 * {@code String} value for the resource owner's password</li>
 	 * </ol>
 	 * 
 	 * @param context
