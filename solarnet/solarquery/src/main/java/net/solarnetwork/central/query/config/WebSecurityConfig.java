@@ -1,21 +1,21 @@
 /* ==================================================================
  * WebSecurityConfig.java - 9/10/2021 3:10:26 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,11 +30,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationEventPublisher;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
-import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.*;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -58,7 +54,7 @@ import tools.jackson.databind.ObjectMapper;
 
 /**
  * Security configuration.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -66,10 +62,10 @@ import tools.jackson.databind.ObjectMapper;
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-	private static String[] READ_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
+	private static final String[] READ_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
 			Role.ROLE_NODE.toString(), Role.ROLE_READNODEDATA.toString(), };
 
-	private static String[] WRITE_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
+	private static final String[] WRITE_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
 			Role.ROLE_NODE.toString(), Role.ROLE_WRITENODEDATA.toString(), };
 
 	@Autowired

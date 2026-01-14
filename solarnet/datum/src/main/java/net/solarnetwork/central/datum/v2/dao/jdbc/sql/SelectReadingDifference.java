@@ -25,12 +25,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 import static java.time.Instant.now;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.time.Period;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
@@ -53,7 +48,7 @@ public final class SelectReadingDifference
 	 * The default time tolerance used for the
 	 * {@link DatumReadingType#NearestDifference} query.
 	 */
-	public static Period DEFAULT_NEAREST_DIFFERENCE_TIME_TOLERANCE = Period.ofMonths(3);
+	public static final Period DEFAULT_NEAREST_DIFFERENCE_TIME_TOLERANCE = Period.ofMonths(3);
 
 	private final DatumCriteria filter;
 

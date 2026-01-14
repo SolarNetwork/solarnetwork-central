@@ -52,7 +52,7 @@ import net.solarnetwork.domain.SortDescriptor;
  */
 public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTaskDao {
 
-	public static String DEFAULT_CLAIM_JOB_SQL = "{call solardin.claim_datum_stream_poll_task()}";
+	public static final String DEFAULT_CLAIM_JOB_SQL = "{call solardin.claim_datum_stream_poll_task()}";
 
 	private final JdbcOperations jdbcOps;
 	private final String claimTaskSql;

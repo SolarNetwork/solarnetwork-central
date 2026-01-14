@@ -25,14 +25,7 @@ package net.solarnetwork.central.biz.dao;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +61,7 @@ public class AsyncDaoUserEventAppenderBiz
 	 * A comparator for {@link UserEvent} that sorts by event ID first, then
 	 * user ID.
 	 */
-	public static Comparator<UserEvent> EVENT_SORT = (o1, o2) -> {
+	public static final Comparator<UserEvent> EVENT_SORT = (o1, o2) -> {
 		int comparison = UUIDComparator.staticCompare(o1.getEventId(), o2.getEventId());
 		if ( comparison != 0 ) {
 			return comparison;
@@ -89,7 +82,7 @@ public class AsyncDaoUserEventAppenderBiz
 	 *
 	 * @since 1.3
 	 */
-	public static Function<UserEvent, String> SOLARFLUX_TAGGED_TOPIC_FN = (event) -> {
+	public static final Function<UserEvent, String> SOLARFLUX_TAGGED_TOPIC_FN = (event) -> {
 		final StringBuilder buf = new StringBuilder("user/");
 		buf.append(event.getUserId()).append("/event");
 

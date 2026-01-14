@@ -69,7 +69,7 @@ public final class OscpInstructionUtils {
 	 * A function that converts an OSCP action name to an equivalent JSON schema
 	 * name.
 	 */
-	public static Function<String, String> OSCP_ACTION_TO_JSON_SCHEMA_NAME = (s) -> {
+	public static final Function<String, String> OSCP_ACTION_TO_JSON_SCHEMA_NAME = (s) -> {
 		if ( s == null ) {
 			return null;
 		}

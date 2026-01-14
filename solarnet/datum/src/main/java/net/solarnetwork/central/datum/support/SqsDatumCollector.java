@@ -25,12 +25,7 @@ package net.solarnetwork.central.datum.support;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -48,11 +43,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumPK;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
-import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DatumId;
-import net.solarnetwork.domain.datum.GeneralDatum;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.StreamDatum;
+import net.solarnetwork.domain.datum.*;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.RemoteServiceException;
@@ -61,15 +52,7 @@ import net.solarnetwork.util.StatTracker;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchRequestEntry;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
-import software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse;
-import software.amazon.awssdk.services.sqs.model.Message;
-import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
-import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+import software.amazon.awssdk.services.sqs.model.*;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -87,21 +70,24 @@ import tools.jackson.databind.ObjectMapper;
  * (like an {@link java.util.concurrent.ArrayBlockingQueue}). The "writer"
  * threads pull from this queue and persist the datum with the configured
  * delegate DAO.
- *
+ * </p>
+ * <p>
  * If a datum cannot be added to the work queue, or does not get persisted
  * within {@code workItemMaxWaitMs}ms, then the datum "overflows" to a SQS
  * queue, encoded into JSON. A configurable number of "reader" threads poll for
  * SQS messages, parse them as JSON back into datum, and then attempt to persist
  * each datum again. If the SQS datum is successfully processed, it's
  * corresponding message is deleted from the SQS queue.
- *
+ * </p>
+ * <p>
  * This design is meant to prioritize saving datum directly, without added to
  * the SQS queue, for maximum performance. There is a small chance for data
  * loss, however, for datum added to the internal work queue but have not yet
  * been persisted and have not yet "overflowed" to SQS. Configuring a smaller
  * work queue and/or shorter {@code workItemMaxWaitMs} reduces the amount of
  * possible data loss, at the expense of an overall decrease in throughput.
- *
+ * </p>
+ * <p>
  * This design also means some datum will be persisted multiple times. First
  * from the chance of a timeout while waiting for a datum that is actively being
  * persisted, and thus "overflows" to SQS even though the datum was successfully
@@ -171,7 +157,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	private final DatumWriteOnlyDao datumDao;
 	private final StatTracker stats;
 
-	private BlockingQueue<String> completedSqsMessageHandles = new LinkedHashSetBlockingQueue<>(9);
+	private final BlockingQueue<String> completedSqsMessageHandles = new LinkedHashSetBlockingQueue<>(9);
 
 	private long workItemMaxWaitMs = DEFAULT_WORK_ITEM_MAX_WAIT_MS;
 	private int readConcurrency = DEFAULT_READ_CONCURRENCY;
@@ -467,10 +453,12 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 					}
 				}
 			}
-			if ( writersAlive < writers.length || readersAlive < readers.length ) {
+			if ( (writers != null && writersAlive < writers.length)
+					|| (readers != null && readersAlive < readers.length) ) {
 				return new PingTestResult(false,
 						String.format("Not all threads running: %d/%d writers, %d/%d readers.",
-								writersAlive, writers.length, readersAlive, readers.length),
+								writersAlive, (writers != null ? writers.length : 0), readersAlive,
+								(readers != null ? readers.length : 0)),
 						statMap);
 			}
 		}
@@ -807,7 +795,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 									} else {
 										Throwable t = changeVizEx.getCause();
 										log.warn(
-												"Failed to un-hide {} messages received from SQS queue but rejected by work queue:",
+												"Failed to un-hide {} messages received from SQS queue but rejected by work queue: {}",
 												rejectedReceiptHandles.size(), t.toString());
 									}
 									return changeVizResp;
@@ -891,9 +879,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 					continue;
 				}
 				stats.increment(BasicCount.WorkQueueRemovals, true);
-				if ( item == null ) {
-					continue;
-				}
+
 				if ( item.future.isDone() ) {
 					stats.increment(BasicCount.WorkQueueCancels, true);
 					continue;

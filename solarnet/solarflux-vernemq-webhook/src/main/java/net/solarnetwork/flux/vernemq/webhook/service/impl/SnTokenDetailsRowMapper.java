@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,15 +19,13 @@ package net.solarnetwork.flux.vernemq.webhook.service.impl;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
 import org.springframework.jdbc.core.RowMapper;
-
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.SecurityPolicy;
 
 /**
  * {@link RowMapper} for {@link SnTokenDetails}.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -36,17 +34,17 @@ public class SnTokenDetailsRowMapper implements RowMapper<SnTokenDetails> {
   /**
    * The default value for the {@code userIdCol} property.
    */
-  public static int DEFAULT_USER_ID_COL = 1;
+  public static final int DEFAULT_USER_ID_COL = 1;
 
   /**
    * The default value for the {@code tokenTypeCol} property.
    */
-  public static int DEFAULT_TOKEN_TYPE_COL = 2;
+  public static final int DEFAULT_TOKEN_TYPE_COL = 2;
 
   /**
    * The default value for the {@code policyCol} property.
    */
-  public static int DEFAULT_POLICY_COL = 3;
+  public static final int DEFAULT_POLICY_COL = 3;
 
   private final String tokenId;
   private final int userIdCol;
@@ -55,7 +53,7 @@ public class SnTokenDetailsRowMapper implements RowMapper<SnTokenDetails> {
 
   /**
    * Constructor with default settings.
-   * 
+   *
    * @param tokenId
    *        the token ID
    */
@@ -65,7 +63,7 @@ public class SnTokenDetailsRowMapper implements RowMapper<SnTokenDetails> {
 
   /**
    * Constructor.
-   * 
+   *
    * @param tokenId
    *        the token ID
    * @param userIdCol

@@ -29,27 +29,13 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.security.Key;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
-import java.security.PrivateKey;
-import java.security.UnrecoverableKeyException;
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.X509ExtendedTrustManager;
-import javax.net.ssl.X509KeyManager;
+import javax.net.ssl.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.netty.bootstrap.ServerBootstrap;
@@ -75,7 +61,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Netty implementation of {@link DynamicProxyServer}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class NettyDynamicProxyServer
 		implements DynamicProxyServer, ServiceLifecycleObserver, X509KeyManager {
@@ -97,8 +83,11 @@ public class NettyDynamicProxyServer
 	private final SocketAddress[] bindAddresses;
 	private final EventLoopGroup bossGroup;
 	private final EventLoopGroup workerGroup;
+
+	// this field is final because we only support a single alias value
+	private final String[] keyStoreAliases = new String[] { DEFAULT_KEYSTORE_ALIAS };
+
 	private String[] tlsProtocols = DEFAULT_TLS_PROTOCOLS;
-	private String[] keyStoreAliases = new String[] { DEFAULT_KEYSTORE_ALIAS };
 	private KeyStore keyStore;
 	private boolean wireLogging = false;
 
