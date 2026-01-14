@@ -121,8 +121,6 @@ public class HttpClientConfig {
 	@Profile(SolarNetCommonConfiguration.HTTP_TRACE)
 	@Bean
 	public RestTemplate testingRestTemplate(ClientHttpRequestFactory reqFactory) {
-		//var reqFactory = new SimpleClientHttpRequestFactory();
-		//reqFactory.setOutputStreaming(false);
 		RestTemplate debugTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(reqFactory));
 		debugTemplate.setInterceptors(List.of(new LoggingHttpRequestInterceptor()));
 		return debugTemplate;

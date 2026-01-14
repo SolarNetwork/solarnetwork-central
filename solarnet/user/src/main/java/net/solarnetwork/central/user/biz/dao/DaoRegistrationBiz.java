@@ -897,10 +897,6 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			userNodeDao.save(userNode);
 		}
 
-		//		conf.setConfirmationDate(Instant.now());
-		//		conf.setNodeId(nodeId);
-		//		userNodeConfirmationDao.save(conf);
-
 		final String certSubjectDN = String.format(networkCertificateSubjectFormat, nodeId.toString());
 
 		UserNodeCertificate cert;
