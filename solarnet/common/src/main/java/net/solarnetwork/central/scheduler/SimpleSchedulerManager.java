@@ -177,7 +177,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 			jobs.put(key, job);
 			return f;
 		} catch ( Exception e ) {
-			log.error("Error scheduling job [{}.{}]: {}", groupId, id, e.toString(), e);
+			log.error("Error scheduling job [{}.{}]: {}", groupId, id, e, e);
 			throw e;
 		}
 	}

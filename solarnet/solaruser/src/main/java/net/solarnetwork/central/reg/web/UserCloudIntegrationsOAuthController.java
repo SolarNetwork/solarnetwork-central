@@ -154,7 +154,7 @@ public class UserCloudIntegrationsOAuthController {
 			} else {
 				b.queryParam("errorMessage", error);
 			}
-			return new ModelAndView("redirect:" + b.build(false).toString());
+			return new ModelAndView("redirect:" + b.build(false));
 		}
 
 		var service = requireNonNullObject(biz.integrationService(integration.getServiceIdentifier()),

@@ -154,14 +154,14 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 				while ( root.getCause() != null ) {
 					root = root.getCause();
 				}
-				if ( (e instanceof IOException) || (e instanceof TimeoutException) ) {
+				if ( (root instanceof IOException) || (e instanceof TimeoutException) ) {
 					log.info(
 							"Failed to publish MQTT instruction {} to node {}, falling back to batch mode: {}",
 							instructionId, nodeId, root.toString());
 				} else {
 					log.error(
 							"Failed to publish MQTT instruction {} to node {}, falling back to batch mode: {}",
-							instructionId, nodeId, root.toString(), e);
+							instructionId, nodeId, root, e);
 				}
 				nodeInstructionDao.compareAndUpdateInstructionState(instructionId, nodeId,
 						InstructionState.Queuing, InstructionState.Queued, null);

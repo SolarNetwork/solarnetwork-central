@@ -117,7 +117,7 @@ public class PingController implements CompositeHealthContributor {
 			while ( root.getCause() != null ) {
 				root = root.getCause();
 			}
-			pingTestResult = new PingTestResult(false, "Exception: " + root.toString());
+			pingTestResult = new PingTestResult(false, "Exception: " + root);
 		}
 		return pingTestResult;
 	}

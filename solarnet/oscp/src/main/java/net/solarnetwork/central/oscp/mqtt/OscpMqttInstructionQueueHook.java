@@ -251,8 +251,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 			instruction.getInstruction().setState(Declined);
 			instruction.getInstruction().setResultParameters(singletonMap("error", e.getMessage()));
 		} catch ( Exception e ) {
-			log.error("Error queuing OSCP {} instruction with data {}: {}", action, eventData,
-					e.toString(), e);
+			log.error("Error queuing OSCP {} instruction with data {}: {}", action, eventData, e, e);
 			incrementInstructionErrorStat(action);
 			eventData.put(MESSAGE_DATA_KEY, e.getMessage());
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,

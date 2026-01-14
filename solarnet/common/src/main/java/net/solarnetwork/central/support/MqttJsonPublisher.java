@@ -131,7 +131,7 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 			while ( root.getCause() != null ) {
 				root = root.getCause();
 			}
-			log.error("Error publishing {} to SolarFlux topic {}: {}", item, topic, root.toString(), e);
+			log.error("Error publishing {} to SolarFlux topic {}: {}", item, topic, root, e);
 			return CompletableFuture.failedFuture(e);
 		}
 	}

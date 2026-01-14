@@ -162,8 +162,7 @@ public abstract class JobSupport implements ManagedJob {
 								while ( root.getCause() != null ) {
 									root = root.getCause();
 								}
-								log.error("Error processing {} iteration: {}", taskName, e.toString(),
-										root);
+								log.error("Error processing {} iteration: {}", taskName, e, root);
 							} finally {
 								latch.countDown();
 							}
@@ -200,7 +199,7 @@ public abstract class JobSupport implements ManagedJob {
 				while ( root.getCause() != null ) {
 					root = root.getCause();
 				}
-				log.error("Error processing {} iteration: {}", taskName, e.toString(), root);
+				log.error("Error processing {} iteration: {}", taskName, e, root);
 			}
 			allDone = true;
 		}

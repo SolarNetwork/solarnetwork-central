@@ -115,8 +115,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 					while ( root.getCause() != null ) {
 						root = root.getCause();
 					}
-					log.error("Error offering datum event {} to {}: {}", event, acceptor,
-							root.toString(), t);
+					log.error("Error offering datum event {} to {}: {}", event, acceptor, root, t);
 				}
 			}
 		};

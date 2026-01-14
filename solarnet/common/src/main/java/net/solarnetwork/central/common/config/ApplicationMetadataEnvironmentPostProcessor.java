@@ -195,11 +195,9 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 			logger.info(format("Discovered ECS metadata from [%s]: %s", uri, root));
 			return meta;
 		} catch ( URISyntaxException e ) {
-			logger.error(format("URL syntax error for ECS container metadata from [%s]: %s", uri,
-					e.toString()));
+			logger.error(format("URL syntax error for ECS container metadata from [%s]: %s", uri, e));
 		} catch ( IOException e ) {
-			logger.error(
-					format("IO error reading ECS container metadata from [%s]: %s", uri, e.toString()));
+			logger.error(format("IO error reading ECS container metadata from [%s]: %s", uri, e));
 		}
 		return null;
 	}

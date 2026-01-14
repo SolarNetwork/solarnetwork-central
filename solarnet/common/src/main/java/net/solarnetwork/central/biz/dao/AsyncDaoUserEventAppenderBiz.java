@@ -25,7 +25,14 @@ package net.solarnetwork.central.biz.dao;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -201,8 +208,7 @@ public class AsyncDaoUserEventAppenderBiz
 						log.warn("Unable to publish UserEvent {} to SolarFlux: {}", event,
 								root.getMessage());
 					} else {
-						log.warn("Error publishing UserEvent {} to SolarFlux: {}", event,
-								root.toString(), root);
+						log.warn("Error publishing UserEvent {} to SolarFlux: {}", event, root, root);
 					}
 				}
 			}

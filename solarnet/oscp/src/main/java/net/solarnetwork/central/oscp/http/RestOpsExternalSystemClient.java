@@ -286,11 +286,11 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			throw e;
 		} catch ( RuntimeException e ) {
 			log.warn("[{}] with {} {} failed at [{}] because of an unknown error: {}", context.name(),
-					context.role(), context.config().getId().ident(), uri, e.toString(), e);
+					context.role(), context.config().getId().ident(), uri, e, e);
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
 				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
-								format("Unknown error: %s", e.toString()),
+								format("Unknown error: %s", e),
 								requestInfoMap(method, uri, headers, body), HTTP_TAG));
 			}
 			throw e;

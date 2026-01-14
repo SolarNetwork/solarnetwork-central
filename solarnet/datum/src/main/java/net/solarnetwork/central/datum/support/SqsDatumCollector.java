@@ -25,7 +25,12 @@ package net.solarnetwork.central.datum.support;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +48,11 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumPK;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
-import net.solarnetwork.domain.datum.*;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumId;
+import net.solarnetwork.domain.datum.GeneralDatum;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.RemoteServiceException;
@@ -52,7 +61,15 @@ import net.solarnetwork.util.StatTracker;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
-import software.amazon.awssdk.services.sqs.model.*;
+import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchRequestEntry;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -600,7 +617,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 					stats.increment(BasicCount.DatumFail);
 				}
 				log.warn("Failed to persist datum [{}] after failing to send to SQS queue: {}", entity,
-						e2.toString(), e2);
+						e2, e2);
 				f.completeExceptionally(e);
 			}
 		}

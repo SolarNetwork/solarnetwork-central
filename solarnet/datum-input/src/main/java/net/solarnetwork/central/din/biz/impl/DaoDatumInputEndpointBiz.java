@@ -315,8 +315,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 						fluxPublisher.processDatum(gnd);
 					}
 				} catch ( Exception e ) {
-					log.warn("Error publishing endpoint {} datum {}: {}", endpoint.getId(), gnd,
-							e.toString(), e);
+					log.warn("Error publishing endpoint {} datum {}: {}", endpoint.getId(), gnd, e, e);
 				}
 			}
 		}

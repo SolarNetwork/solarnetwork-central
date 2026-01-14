@@ -138,7 +138,7 @@ public class SystemHttpTask<T> implements Runnable {
 					name, uri, e.getContentType(), MediaType.APPLICATION_JSON_VALUE);
 			throw e;
 		} catch ( RuntimeException e ) {
-			log.warn("[{}] to [{}] failed of an unknown error: {}", name, uri, e.toString(), e);
+			log.warn("[{}] to [{}] failed of an unknown error: {}", name, uri, e, e);
 			throw e;
 		}
 	}

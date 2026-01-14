@@ -29,13 +29,27 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.security.*;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.security.PrivateKey;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import javax.net.ssl.*;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.X509ExtendedTrustManager;
+import javax.net.ssl.X509KeyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.netty.bootstrap.ServerBootstrap;
@@ -203,7 +217,7 @@ public class NettyDynamicProxyServer
 		} catch ( InterruptedException e ) {
 			log.warn("Proxy server interrupted: shutting down.");
 		} catch ( SSLException e ) {
-			log.error("Proxy server SSL error: {}", e.toString(), e);
+			log.error("Proxy server SSL error: {}", e, e);
 		}
 	}
 
@@ -213,7 +227,7 @@ public class NettyDynamicProxyServer
 			bossGroup.shutdownGracefully();
 			workerGroup.shutdownGracefully();
 		} catch ( Exception e ) {
-			log.warn("Error shutting down proxy server: {}", e.toString(), e);
+			log.warn("Error shutting down proxy server: {}", e, e);
 		}
 	}
 

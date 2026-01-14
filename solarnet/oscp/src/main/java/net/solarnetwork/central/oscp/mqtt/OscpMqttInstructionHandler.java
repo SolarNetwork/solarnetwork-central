@@ -291,8 +291,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 			}
 		} catch ( Exception e ) {
 			incrementInstructionErrorStat(action);
-			log.warn("Error processing OSCP instruction MQTT message [{}]: {}", eventData, e.toString(),
-					e);
+			log.warn("Error processing OSCP instruction MQTT message [{}]: {}", eventData, e, e);
 			eventData.put(MESSAGE_DATA_KEY, e.getMessage());
 			if ( userId != null ) {
 				generateUserEvent(userId, OSCP_INSTRUCTION_ERROR_TAGS, "Error handling OSCP message",

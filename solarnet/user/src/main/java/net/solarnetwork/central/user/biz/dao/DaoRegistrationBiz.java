@@ -591,7 +591,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		cert.setRequestId(renewRequestID);
 		cert.setStatus(UserNodeCertificateStatus.a);
 
-		final String certSubjectDN = String.format(networkCertificateSubjectFormat, nodeId.toString());
+		final String certSubjectDN = String.format(networkCertificateSubjectFormat, nodeId);
 
 		final Future<UserNodeCertificate> approval = approveCSR(certSubjectDN, keystorePassword, user,
 				cert);
