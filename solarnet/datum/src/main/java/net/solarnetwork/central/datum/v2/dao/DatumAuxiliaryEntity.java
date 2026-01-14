@@ -39,7 +39,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * stream itself.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 2.8
  */
 public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
@@ -105,6 +105,11 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 			GeneralDatumMetadata metadata) {
 		this(new DatumAuxiliaryPK(streamId, timestamp, kind), updated, samplesFinal, samplesStart, notes,
 				metadata);
+	}
+
+	@Override
+	public DatumAuxiliaryEntity clone() {
+		return (DatumAuxiliaryEntity) super.clone();
 	}
 
 	@Override
