@@ -40,7 +40,6 @@ dependencies {
 	testImplementation project(':solarnet-common-test')
 	testImplementation "org.springframework.boot:spring-boot-starter-jdbc-test"
 	testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
-	testImplementation 'com.spotify:hamcrest-jackson:1.3.2'
     testImplementation 'com.spotify:hamcrest-pojo:1.3.2'
 }
 
