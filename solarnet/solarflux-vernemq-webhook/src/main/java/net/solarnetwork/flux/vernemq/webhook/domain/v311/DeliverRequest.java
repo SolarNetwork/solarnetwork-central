@@ -17,7 +17,6 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.v311;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.DeliverRequestDeserializer;
@@ -32,15 +31,10 @@ import tools.jackson.databind.annotation.JsonDeserialize;
 @JsonDeserialize(using = DeliverRequestDeserializer.class)
 public class DeliverRequest implements Message {
 
-	@JsonProperty("client_id")
 	private final String clientId;
-
 	private final String mountpoint;
-
 	private final String username;
-
 	private final String topic;
-
 	private final byte[] payload;
 
 	private DeliverRequest(Builder builder) {
@@ -77,7 +71,6 @@ public class DeliverRequest implements Message {
 	 */
 	public static final class Builder {
 
-		@JsonProperty("client_id")
 		private String clientId;
 		private String mountpoint;
 		private String username;

@@ -1,5 +1,5 @@
 /* ==================================================================
- * SubscribeRequestDeserializer.java - 16/01/2026 11:05:12 am
+ * TopicSubscriptionSettingDeserializer.java - 16/01/2026 11:11:05 am
  * 
  * Copyright 2026 SolarNetwork.net Dev Team
  * 
@@ -20,54 +20,54 @@
  * ==================================================================
  */
 
-package net.solarnetwork.flux.vernemq.webhook.domain.v311.codec;
+package net.solarnetwork.flux.vernemq.webhook.domain.codec;
 
-import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSettingsDeserializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.SubscribeRequest;
+import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
+import net.solarnetwork.flux.vernemq.webhook.domain.TopicSubscriptionSetting;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
 import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 import tools.jackson.databind.deser.std.StdDeserializer;
 import tools.jackson.databind.exc.MismatchedInputException;
 
 /**
- * Deserialize {@link SubscribeRequest} objects.
+ * Deserialize {@link TopicSubscriptionSetting} objects.
  * 
  * @author matt
  * @version 1.0
  */
-public final class SubscribeRequestDeserializer extends StdDeserializer<SubscribeRequest> {
+public final class TopicSubscriptionSettingDeserializer
+		extends StdDeserializer<TopicSubscriptionSetting> {
+
+	/** A default instance. */
+	public static final ValueDeserializer<TopicSubscriptionSetting> INSTANCE = new TopicSubscriptionSettingDeserializer();
 
 	/**
 	 * Constructor.
 	 */
-	public SubscribeRequestDeserializer() {
-		super(SubscribeRequest.class);
+	public TopicSubscriptionSettingDeserializer() {
+		super(TopicSubscriptionSetting.class);
 	}
 
 	@Override
-	public SubscribeRequest deserialize(JsonParser p, DeserializationContext ctxt)
+	public TopicSubscriptionSetting deserialize(JsonParser p, DeserializationContext ctxt)
 			throws JacksonException {
 		JsonToken t = p.currentToken();
 		if ( t == JsonToken.VALUE_NULL ) {
 			return null;
 		} else if ( !p.isExpectedStartObjectToken() ) {
-			throw MismatchedInputException.from(p, "Unable to parse SubscribeRequest (not an object)");
+			throw MismatchedInputException.from(p, "Unable to parse DeliverRequest (not an object)");
 		}
 
-		final SubscribeRequest.Builder builder = SubscribeRequest.builder();
+		final TopicSubscriptionSetting.Builder builder = TopicSubscriptionSetting.builder();
 
 		while ( (t = p.nextToken()) != JsonToken.END_OBJECT ) {
 			String f = p.currentName();
 			switch (f) {
-				case "client_id" -> builder.withClientId(p.nextStringValue());
-				case "mountpoint" -> builder.withMountpoint(p.nextStringValue());
-				case "username" -> builder.withUsername(p.nextStringValue());
-				case "topics" -> {
-					p.nextToken();
-					builder.withTopics(TopicSettingsDeserializer.INSTANCE.deserialize(p, ctxt));
-				}
+				case "topic" -> builder.withTopic(p.nextStringValue());
+				case "qos" -> builder.withQos(Qos.forKey(p.nextIntValue(0)));
 				default -> p.nextValue();
 			}
 		}

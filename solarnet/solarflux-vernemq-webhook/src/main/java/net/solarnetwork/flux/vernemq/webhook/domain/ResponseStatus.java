@@ -17,7 +17,7 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * A response status code.
@@ -26,13 +26,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public enum ResponseStatus {
 
-	@JsonProperty("ok")
+	/** Success. */
 	OK,
 
-	@JsonProperty("error")
+	/** Error. */
 	ERROR,
 
-	@JsonProperty("next")
+	/** Continue processing. */
 	NEXT;
 
 	/**
@@ -40,6 +40,7 @@ public enum ResponseStatus {
 	 * 
 	 * @return the result status value
 	 */
+	@JsonValue
 	public String toResultValue() {
 		return switch (this) {
 			case OK -> "ok";

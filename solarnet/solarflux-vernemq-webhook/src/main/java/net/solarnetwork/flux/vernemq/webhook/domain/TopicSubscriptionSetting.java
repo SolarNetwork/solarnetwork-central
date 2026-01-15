@@ -17,8 +17,8 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain;
 
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.TopicSubscriptionSettingDeserializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.TopicSubscriptionSettingSerializer;
+import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSubscriptionSettingDeserializer;
+import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSubscriptionSettingSerializer;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
 

@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.flux.vernemq.webhook.domain.v311.codec;
+package net.solarnetwork.flux.vernemq.webhook.domain.codec;
 
 import java.util.ArrayList;
 import java.util.List;

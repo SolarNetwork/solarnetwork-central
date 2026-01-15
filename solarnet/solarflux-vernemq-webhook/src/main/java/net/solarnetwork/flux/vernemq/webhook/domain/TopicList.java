@@ -18,10 +18,10 @@
 package net.solarnetwork.flux.vernemq.webhook.domain;
 
 import java.util.List;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
+import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicListDeserializer;
 import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicListSerializer;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
@@ -29,6 +29,7 @@ import tools.jackson.databind.annotation.JsonSerialize;
  * 
  * @author matt
  */
+@JsonDeserialize(using = TopicListDeserializer.class)
 @JsonSerialize(using = TopicListSerializer.class)
 public class TopicList implements ResponseTopics {
 
@@ -40,7 +41,6 @@ public class TopicList implements ResponseTopics {
 	 * @param topics
 	 *        the topics
 	 */
-	@JsonCreator
 	public TopicList(List<String> topics) {
 		super();
 		this.topics = topics;
@@ -51,7 +51,11 @@ public class TopicList implements ResponseTopics {
 		return (topics != null ? StringUtils.commaDelimitedStringFromCollection(topics) : "<<empty>>");
 	}
 
-	@JsonValue
+	/**
+	 * Get the topics.
+	 * 
+	 * @return the topics
+	 */
 	public List<String> getTopics() {
 		return topics;
 	}

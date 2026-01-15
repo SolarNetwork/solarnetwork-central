@@ -17,39 +17,25 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.v311;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.ResponseModifiers;
+import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.RegisterModifiersSerializer;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
  * Registration response modifiers.
  * 
  * @author matt
  */
+@JsonSerialize(using = RegisterModifiersSerializer.class)
 public class RegisterModifiers implements ResponseModifiers {
 
-	@JsonProperty("subscriber_id")
 	private final String subscriberId;
-
-	@JsonProperty("reg_view")
 	private final String regView;
-
-	@JsonProperty("clean_session")
 	private final Boolean cleanSession;
-
-	@JsonProperty("max_message_size")
 	private final Integer maxMessageSize;
-
-	@JsonProperty("max_message_rate")
 	private final Integer maxMessageRate;
-
-	@JsonProperty("max_inflight_messages")
 	private final Integer maxInflightMessages;
-
-	@JsonProperty("retry_interval")
 	private final Long retryInterval;
-
-	@JsonProperty("upgrade_qos")
 	private final Boolean upgradeQos;
 
 	private RegisterModifiers(Builder builder) {

@@ -17,7 +17,6 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.v311;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.flux.vernemq.webhook.domain.AuthRequest;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.RegisterRequestDeserializer;
 import tools.jackson.databind.annotation.JsonDeserialize;
@@ -31,22 +30,12 @@ import tools.jackson.databind.annotation.JsonDeserialize;
 @JsonDeserialize(using = RegisterRequestDeserializer.class)
 public class RegisterRequest implements AuthRequest {
 
-	@JsonProperty("client_id")
 	private final String clientId;
-
 	private final String mountpoint;
-
 	private final String username;
-
-	@JsonProperty("peer_addr")
 	private final String peerAddress;
-
-	@JsonProperty("peer_port")
 	private final Integer peerPort;
-
 	private final String password;
-
-	@JsonProperty("clean_session")
 	private final Boolean cleanSession;
 
 	private RegisterRequest(Builder builder) {
@@ -94,20 +83,12 @@ public class RegisterRequest implements AuthRequest {
 	 */
 	public static final class Builder {
 
-		@JsonProperty("peer_addr")
 		private String peerAddress;
-
-		@JsonProperty("peer_port")
 		private Integer peerPort;
-
 		private String username;
 		private String password;
 		private String mountpoint;
-
-		@JsonProperty("client_id")
 		private String clientId;
-
-		@JsonProperty("clean_session")
 		private Boolean cleanSession;
 
 		private Builder() {

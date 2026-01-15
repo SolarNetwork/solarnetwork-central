@@ -1,5 +1,5 @@
 /* ==================================================================
- * TopicSubscriptionSettingDeserializer.java - 16/01/2026 11:11:05 am
+ * TopicListDeserializer.java - 16/01/2026 12:24:28 pm
  * 
  * Copyright 2026 SolarNetwork.net Dev Team
  * 
@@ -20,59 +20,49 @@
  * ==================================================================
  */
 
-package net.solarnetwork.flux.vernemq.webhook.domain.v311.codec;
+package net.solarnetwork.flux.vernemq.webhook.domain.codec;
 
-import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
-import net.solarnetwork.flux.vernemq.webhook.domain.TopicSubscriptionSetting;
+import java.util.ArrayList;
+import java.util.List;
+import net.solarnetwork.flux.vernemq.webhook.domain.TopicList;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
 import tools.jackson.databind.DeserializationContext;
-import tools.jackson.databind.ValueDeserializer;
 import tools.jackson.databind.deser.std.StdDeserializer;
 import tools.jackson.databind.exc.MismatchedInputException;
 
 /**
- * Deserialize {@link TopicSubscriptionSetting} objects.
+ * Deserialize {@link TopicList} objects.
  * 
  * @author matt
  * @version 1.0
  */
-public final class TopicSubscriptionSettingDeserializer
-		extends StdDeserializer<TopicSubscriptionSetting> {
-
-	/** A default instance. */
-	public static final ValueDeserializer<TopicSubscriptionSetting> INSTANCE = new TopicSubscriptionSettingDeserializer();
+public class TopicListDeserializer extends StdDeserializer<TopicList> {
 
 	/**
 	 * Constructor.
 	 */
-	public TopicSubscriptionSettingDeserializer() {
-		super(TopicSubscriptionSetting.class);
+	public TopicListDeserializer() {
+		super(TopicList.class);
 	}
 
 	@Override
-	public TopicSubscriptionSetting deserialize(JsonParser p, DeserializationContext ctxt)
-			throws JacksonException {
+	public TopicList deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
 		JsonToken t = p.currentToken();
 		if ( t == JsonToken.VALUE_NULL ) {
 			return null;
-		} else if ( !p.isExpectedStartObjectToken() ) {
-			throw MismatchedInputException.from(p, "Unable to parse DeliverRequest (not an object)");
+		} else if ( !p.isExpectedStartArrayToken() ) {
+			throw MismatchedInputException.from(p, "Unable to parse TopicList (not an array)");
 		}
 
-		final TopicSubscriptionSetting.Builder builder = TopicSubscriptionSetting.builder();
+		List<String> topics = new ArrayList<>(2);
 
-		while ( (t = p.nextToken()) != JsonToken.END_OBJECT ) {
-			String f = p.currentName();
-			switch (f) {
-				case "topic" -> builder.withTopic(p.nextStringValue());
-				case "qos" -> builder.withQos(Qos.forKey(p.nextIntValue(0)));
-				default -> p.nextValue();
-			}
+		while ( (t = p.nextToken()) != JsonToken.END_ARRAY ) {
+			topics.add(p.getString());
 		}
 
-		return builder.build();
+		return new TopicList(topics);
 	}
 
 }
