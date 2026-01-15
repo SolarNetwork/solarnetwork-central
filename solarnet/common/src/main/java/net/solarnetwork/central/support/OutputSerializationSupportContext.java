@@ -32,7 +32,7 @@ import tools.jackson.databind.ValueSerializer;
  * @param jsonObjectMapper
  *        the ObjectMapper to use for JSON
  * @param cborObjectMapper
- *        the ObjectMapper to ues for CBOR
+ *        the ObjectMapper to use for CBOR
  * @param jsonSerializer
  *        the serializer to use for JSON/CBOR output
  * @param registrar
