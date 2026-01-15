@@ -35,4 +35,17 @@ public enum ResponseStatus {
 	@JsonProperty("next")
 	NEXT;
 
+	/**
+	 * Get this enum as a result status value.
+	 * 
+	 * @return the result status value
+	 */
+	public String toResultValue() {
+		return switch (this) {
+			case OK -> "ok";
+			case ERROR -> "error";
+			case NEXT -> "next";
+		};
+	}
+
 }

@@ -18,17 +18,18 @@
 package net.solarnetwork.flux.vernemq.webhook.domain;
 
 import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-
+import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicListSerializer;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
  * A list of topics, implementing {@link ResponseTopics}.
  * 
  * @author matt
  */
+@JsonSerialize(using = TopicListSerializer.class)
 public class TopicList implements ResponseTopics {
 
 	private final List<String> topics;

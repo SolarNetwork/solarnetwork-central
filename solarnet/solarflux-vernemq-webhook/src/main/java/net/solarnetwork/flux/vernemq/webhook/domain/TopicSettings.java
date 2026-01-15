@@ -18,17 +18,21 @@
 package net.solarnetwork.flux.vernemq.webhook.domain;
 
 import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-
+import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSettingsSerializer;
+import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.TopicSettingsDeserializer;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
  * A list of topic subscription settings.
  * 
  * @author matt
  */
+@JsonDeserialize(using = TopicSettingsDeserializer.class)
+@JsonSerialize(using = TopicSettingsSerializer.class)
 public class TopicSettings implements ResponseTopics {
 
 	private final List<TopicSubscriptionSetting> settings;

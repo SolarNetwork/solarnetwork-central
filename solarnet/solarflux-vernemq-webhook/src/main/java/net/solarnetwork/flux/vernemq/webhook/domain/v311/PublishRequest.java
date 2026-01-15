@@ -18,19 +18,19 @@
 package net.solarnetwork.flux.vernemq.webhook.domain.v311;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.AuthRequest;
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
+import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.PublishRequestDeserializer;
 import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * A publish or auth-publish request model.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
-@JsonDeserialize(builder = PublishRequest.Builder.class)
+@JsonDeserialize(using = PublishRequestDeserializer.class)
 public class PublishRequest implements Message, AuthRequest {
 
 	@JsonProperty("client_id")

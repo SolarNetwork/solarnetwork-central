@@ -19,10 +19,8 @@ package net.solarnetwork.flux.vernemq.webhook.domain;
 
 import java.util.Collections;
 import java.util.Map;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import net.solarnetwork.flux.vernemq.webhook.domain.codec.ResponseSerializer;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
  * A webhook response object.
@@ -30,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * @author matt
  * @version 1.1
  */
-@JsonPropertyOrder(value = { "result", "modifiers" })
+@JsonSerialize(using = ResponseSerializer.class)
 public class Response {
 
 	/**
@@ -135,27 +133,47 @@ public class Response {
 				+ (topics != null ? "topics=" + topics : "") + "}";
 	}
 
-	@JsonProperty(value = "result")
+	/**
+	 * Get the result.
+	 * 
+	 * @return the result
+	 */
 	public Object getResult() {
 		return errorStatus != null ? errorStatus : status;
 	}
 
-	@JsonIgnore
+	/**
+	 * Get the status.
+	 * 
+	 * @return the status
+	 */
 	public ResponseStatus getStatus() {
 		return status;
 	}
 
-	@JsonIgnore
+	/**
+	 * Get the error status.
+	 * 
+	 * @return the error status
+	 */
 	public Map<Object, ?> getErrorStatus() {
 		return errorStatus;
 	}
 
-	@JsonProperty(value = "modifiers")
+	/**
+	 * Get the modifiers.
+	 * 
+	 * @return the modifiers
+	 */
 	public ResponseModifiers getModifiers() {
 		return modifiers;
 	}
 
-	@JsonProperty(value = "topics")
+	/**
+	 * Get the topics.
+	 * 
+	 * @return the topics
+	 */
 	public ResponseTopics getTopics() {
 		return topics;
 	}

@@ -17,18 +17,19 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain;
 
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.TopicSubscriptionSettingDeserializer;
+import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.TopicSubscriptionSettingSerializer;
 import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
  * A topic subscription setting.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
-@JsonPropertyOrder({ "topic", "qos" })
-@JsonDeserialize(builder = TopicSubscriptionSetting.Builder.class)
+@JsonDeserialize(using = TopicSubscriptionSettingDeserializer.class)
+@JsonSerialize(using = TopicSubscriptionSettingSerializer.class)
 public class TopicSubscriptionSetting {
 
 	private final String topic;
