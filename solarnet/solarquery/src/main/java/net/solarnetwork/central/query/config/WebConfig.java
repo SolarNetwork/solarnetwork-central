@@ -64,7 +64,12 @@ import net.solarnetwork.central.datum.support.GeneralNodeDatumMapPropertySeriali
 import net.solarnetwork.central.support.DelegatingParser;
 import net.solarnetwork.central.support.InstantFormatter;
 import net.solarnetwork.central.web.PingController;
-import net.solarnetwork.central.web.support.*;
+import net.solarnetwork.central.web.support.ContentCachingFilter;
+import net.solarnetwork.central.web.support.ContentCachingService;
+import net.solarnetwork.central.web.support.RateLimitingFilter;
+import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
+import net.solarnetwork.central.web.support.WebServiceGlobalControllerSupport;
 import net.solarnetwork.codec.BindingResultSerializer;
 import net.solarnetwork.codec.PropertySerializer;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
@@ -191,16 +196,25 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Override
 	public void configureMessageConverters(ServerBuilder builder) {
-		SimpleCsvHttpMessageConverter csv = new SimpleCsvHttpMessageConverter();
+		var csv = new SimpleCsvHttpMessageConverter();
 		csv.setPropertySerializerRegistrar(propertySerializerRegistrar());
 
-		SimpleXmlHttpMessageConverter xml = new SimpleXmlHttpMessageConverter();
+		var xml = new SimpleXmlHttpMessageConverter();
 		xml.setClassNamesAllowedForNesting(Collections.singleton("net.solarnetwork"));
 		xml.setPropertySerializerRegistrar(xmlPropertySerializerRegistrar());
 
+		var json = new JacksonJsonHttpMessageConverter(jsonMapper);
+		var cbor = new JacksonCborHttpMessageConverter(cborMapper);
+
+		// NOTE json added twice because custom converters ordered BEFORE
+		// the "default" converters like withJsonConverter(); to avoid instantiating
+		// another JSON converter but have JSON handled before CSV, we add both
+		// via withJsonConverter() then addCustomConverter().
+
 		// @formatter:off
-		builder.withJsonConverter(new JacksonJsonHttpMessageConverter(jsonMapper))
-				.withCborConverter(new JacksonCborHttpMessageConverter(cborMapper))
+		builder.withJsonConverter(json)
+				.withCborConverter(cbor)
+				.addCustomConverter(json)
 				.addCustomConverter(csv)
 				.addCustomConverter(xml);
 		// @formatter:on
