@@ -83,8 +83,9 @@ public class UserEventController {
 	 *        the registrar to use (may be {@literal null}
 	 */
 	@Autowired
-	public UserEventController(UserEventBiz userEventBiz, ObjectMapper objectMapper,
-			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
+	public UserEventController(UserEventBiz userEventBiz,
+			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) ObjectMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_STREAMING_MAPPER) ObjectMapper cborObjectMapper,
 			PropertySerializerRegistrar propertySerializerRegistrar) {
 		super();
 		this.userEventBiz = requireNonNullArgument(userEventBiz, "userEventBiz");

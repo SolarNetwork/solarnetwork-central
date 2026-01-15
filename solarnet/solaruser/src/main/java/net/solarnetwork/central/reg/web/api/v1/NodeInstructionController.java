@@ -116,8 +116,9 @@ public class NodeInstructionController {
 	 *        the registrar to use (may be {@literal null}
 	 */
 	public NodeInstructionController(TaskExecutor taskExecutor, InstructorBiz instructorBiz,
-			NodeInstructionDao nodeInstructionDao, ObjectMapper objectMapper,
-			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
+			NodeInstructionDao nodeInstructionDao,
+			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) ObjectMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_STREAMING_MAPPER) ObjectMapper cborObjectMapper,
 			PropertySerializerRegistrar propertySerializerRegistrar) {
 		super();
 		this.taskExecutor = requireNonNullArgument(taskExecutor, "taskExecutor");

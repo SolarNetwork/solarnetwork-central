@@ -77,7 +77,6 @@ public class ObjectMapperFilteredResultsProcessor<R> extends AbstractFilteredRes
 		this.provider = requireNonNullArgument(provider, "provider");
 		this.mimeType = requireNonNullArgument(mimeType, "mimeType");
 		this.serializer = serializer;
-		// FIXME this.generator.enable(StreamWriteFeature.AUTO_CLOSE_TARGET);
 	}
 
 	@Override

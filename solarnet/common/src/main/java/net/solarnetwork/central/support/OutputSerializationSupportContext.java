@@ -29,6 +29,12 @@ import tools.jackson.databind.ValueSerializer;
 /**
  * Supporting services for output serialization.
  * 
+ * <p>
+ * <b>Note</b> that {@code StreamWriteFeature.AUTO_CLOSE_TARGET} should be
+ * enabled on the given mappers for the underlying stream to be closed when
+ * {@code #close()} is called
+ * </p>
+ * 
  * @param jsonObjectMapper
  *        the ObjectMapper to use for JSON
  * @param cborObjectMapper
