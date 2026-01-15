@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Primary;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.codec.jackson.CborUtils;
 import net.solarnetwork.codec.jackson.JsonUtils;
+import tools.jackson.core.StreamWriteFeature;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.dataformat.cbor.CBORMapper;
 
@@ -43,6 +44,12 @@ public class JsonConfig {
 
 	/** A qualifier for CBOR handling. */
 	public static final String CBOR_MAPPER = "cbor";
+
+	/** A qualifier for streaming CBOR handling. */
+	public static final String CBOR_STREAMING_MAPPER = "cbor-streaming";
+
+	/** A qualifier for streaming JSON handling. */
+	public static final String JSON_STREAMING_MAPPER = "json-streaming";
 
 	/**
 	 * Get the primary {@link JsonMapper} to use for JSON processing.
@@ -65,6 +72,28 @@ public class JsonConfig {
 	public CBORMapper cborObjectMapper() {
 		return CborUtils.CBOR_OBJECT_MAPPER.rebuild()
 				.addModules(JsonUtils.DATUM_MODULE, DatumJsonUtils.DATUM_MODULE).build();
+	}
+
+	/**
+	 * Get the {@link JsonMapper} to use for streaming JSON processing.
+	 *
+	 * @return the mapper
+	 */
+	@Bean
+	@Qualifier(JSON_STREAMING_MAPPER)
+	public JsonMapper jsonStreamingMapper(JsonMapper mapper) {
+		return mapper.rebuild().enable(StreamWriteFeature.AUTO_CLOSE_TARGET).build();
+	}
+
+	/**
+	 * Get the {@link CBORMapper} to use for streaming JSON processing.
+	 *
+	 * @return the mapper
+	 */
+	@Bean
+	@Qualifier(CBOR_STREAMING_MAPPER)
+	public CBORMapper cborStreamingMapper(@Qualifier(CBOR_MAPPER) CBORMapper mapper) {
+		return mapper.rebuild().enable(StreamWriteFeature.AUTO_CLOSE_TARGET).build();
 	}
 
 }

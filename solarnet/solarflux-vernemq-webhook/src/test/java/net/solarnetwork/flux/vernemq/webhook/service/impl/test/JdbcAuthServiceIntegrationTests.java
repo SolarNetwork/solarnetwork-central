@@ -17,13 +17,14 @@
 
 package net.solarnetwork.flux.vernemq.webhook.service.impl.test;
 
-import static com.spotify.hamcrest.pojo.IsPojo.pojo;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 import java.time.LocalDateTime;
@@ -48,12 +49,11 @@ import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.Response;
-import net.solarnetwork.flux.vernemq.webhook.domain.ResponseModifiers;
 import net.solarnetwork.flux.vernemq.webhook.domain.ResponseStatus;
-import net.solarnetwork.flux.vernemq.webhook.domain.ResponseTopics;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSettings;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSubscriptionSetting;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.PublishRequest;
+import net.solarnetwork.flux.vernemq.webhook.domain.v311.RegisterModifiers;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.RegisterRequest;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.SubscribeRequest;
 import net.solarnetwork.flux.vernemq.webhook.service.impl.JdbcAuthService;
@@ -137,10 +137,15 @@ public class JdbcAuthServiceIntegrationTests extends TestSupport {
     // when
     Response r = authService.authenticateRequest(req);
 
-    // then
-    assertThat("Result", r.getStatus(), equalTo(ResponseStatus.OK));
-    assertThat("Modifiers", r.getModifiers(),
-        pojo(ResponseModifiers.class).withProperty("cleanSession", equalTo(true)));
+    // THEN
+    // @formatter:off
+    then(r)
+      .as("Result provided")
+      .returns(ResponseStatus.OK, from(Response::getStatus))
+      .extracting(Response::getModifiers, type(RegisterModifiers.class))
+      .returns(true, from(RegisterModifiers::getCleanSession))
+      ;
+    // @formatter:on
   }
 
   @Test
@@ -165,10 +170,15 @@ public class JdbcAuthServiceIntegrationTests extends TestSupport {
     // when
     Response r = authService.authenticateRequest(req);
 
-    // then
-    assertThat("Result", r.getStatus(), equalTo(ResponseStatus.OK));
-    assertThat("Modifiers", r.getModifiers(),
-        pojo(ResponseModifiers.class).withProperty("cleanSession", equalTo(true)));
+    // THEN
+    // @formatter:off
+    then(r)
+      .as("Result provided")
+      .returns(ResponseStatus.OK, from(Response::getStatus))
+      .extracting(Response::getModifiers, type(RegisterModifiers.class))
+      .returns(true, from(RegisterModifiers::getCleanSession))
+      ;
+    // @formatter:on
   }
 
   @Test
@@ -339,10 +349,15 @@ public class JdbcAuthServiceIntegrationTests extends TestSupport {
     // when
     Response r = authService.authenticateRequest(req);
 
-    // then
-    assertThat("Result", r.getStatus(), equalTo(ResponseStatus.OK));
-    assertThat("Modifiers", r.getModifiers(),
-        pojo(ResponseModifiers.class).withProperty("cleanSession", equalTo(true)));
+    // THEN
+    // @formatter:off
+    then(r)
+      .as("Result provided")
+      .returns(ResponseStatus.OK, from(Response::getStatus))
+      .extracting(Response::getModifiers, type(RegisterModifiers.class))
+      .returns(true, from(RegisterModifiers::getCleanSession))
+      ;
+    // @formatter:on
   }
 
   @Test
@@ -462,18 +477,18 @@ public class JdbcAuthServiceIntegrationTests extends TestSupport {
     // when
     Response r = authService.authorizeRequest(req);
 
-    // then
-    assertThat("Result", r.getStatus(), equalTo(ResponseStatus.OK));
-    assertThat("Topics customized", r.getTopics(), notNullValue());
-
+    // THEN
     // @formatter:off
-    assertThat("Topics", r.getTopics(), 
-        pojo(ResponseTopics.class)
-          .withProperty("settings", contains(
-              pojo(TopicSubscriptionSetting.class)
-                .withProperty("topic", equalTo("node/2/datum/0/foo"))
-                .withProperty("qos", equalTo(Qos.NotAllowed))
-        )));
+    then(r)
+      .as("Result provided")
+      .returns(ResponseStatus.OK, from(Response::getStatus))
+      .extracting(Response::getTopics, type(TopicSettings.class))
+      .extracting(TopicSettings::getSettings, list(TopicSubscriptionSetting.class))
+      .hasSize(1)
+      .element(0)
+      .returns("node/2/datum/0/foo", from(TopicSubscriptionSetting::getTopic))
+      .returns(Qos.NotAllowed, from(TopicSubscriptionSetting::getQos))
+      ;
     // @formatter:on
   }
 
@@ -495,21 +510,25 @@ public class JdbcAuthServiceIntegrationTests extends TestSupport {
     // when
     Response r = authService.authorizeRequest(req);
 
-    // then
-    assertThat("Result", r.getStatus(), equalTo(ResponseStatus.OK));
-    assertThat("Topics customized", r.getTopics(), notNullValue());
-
+    // THEN
     // @formatter:off
-    assertThat("Topics", r.getTopics(), 
-        pojo(ResponseTopics.class)
-          .withProperty("settings", contains(
-              pojo(TopicSubscriptionSetting.class)
-                .withProperty("topic", equalTo("node/1/datum/0/foo"))
-                .withProperty("qos", equalTo(Qos.AtLeastOnce)),
-              pojo(TopicSubscriptionSetting.class)
-                .withProperty("topic", equalTo("node/1/datum/0/bar"))
-                .withProperty("qos", equalTo(Qos.NotAllowed))
-        )));
+    then(r)
+      .as("Result provided")
+      .returns(ResponseStatus.OK, from(Response::getStatus))
+      .extracting(Response::getTopics, type(TopicSettings.class))
+      .extracting(TopicSettings::getSettings, list(TopicSubscriptionSetting.class))
+      .hasSize(2)
+      .satisfies(l -> {
+        then(l).element(0)
+          .returns("node/1/datum/0/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.AtLeastOnce, from(TopicSubscriptionSetting::getQos))
+          ;
+        then(l).element(1)
+          .returns("node/1/datum/0/bar", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.NotAllowed, from(TopicSubscriptionSetting::getQos))
+          ;
+      })
+      ;
     // @formatter:on
   }
 

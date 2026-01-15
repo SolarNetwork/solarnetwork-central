@@ -175,7 +175,9 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 * Constructor.
 	 *
 	 * @param generator
-	 *        the generator to use
+	 *        the generator to use; <b>note</b> that
+	 *        {@code StreamWriteFeature.AUTO_CLOSE_TARGET} should be enabled for
+	 *        the underlying stream to be closed when {@code #close()} is called
 	 * @param provider
 	 *        the provider to use
 	 * @throws IllegalArgumentException
@@ -187,7 +189,6 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 		this.generator = requireNonNullArgument(generator, "generator");
 		this.provider = requireNonNullArgument(provider, "provider");
 		this.mimeType = requireNonNullArgument(mimeType, "mimeType");
-		// FIXME this.generator.enable(Feature.AUTO_CLOSE_TARGET);
 	}
 
 	@Override

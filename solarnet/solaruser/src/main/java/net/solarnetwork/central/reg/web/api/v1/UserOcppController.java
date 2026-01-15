@@ -110,8 +110,9 @@ public class UserOcppController {
 	 * @param propertySerializerRegistrar
 	 *        the registrar to use (may be {@literal null}
 	 */
-	public UserOcppController(UserOcppBiz userOcppBiz, ObjectMapper objectMapper,
-			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
+	public UserOcppController(UserOcppBiz userOcppBiz,
+			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) ObjectMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_STREAMING_MAPPER) ObjectMapper cborObjectMapper,
 			PropertySerializerRegistrar propertySerializerRegistrar) {
 		super();
 		this.userOcppBiz = requireNonNullArgument(userOcppBiz, "userOcppBiz");

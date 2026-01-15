@@ -17,19 +17,15 @@
 
 package net.solarnetwork.flux.vernemq.webhook.service.impl.test;
 
-import static com.spotify.hamcrest.pojo.IsPojo.pojo;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.sameInstance;
 
 import java.util.Arrays;
 import java.util.List;
@@ -118,19 +114,42 @@ public class SimpleAuthorizationEvaluatorTests {
     return PublishRequest.builder().withTopic(topic).withQos(Qos.AtLeastOnce).build();
   }
 
+  private void thenSubscribeTopic(TopicSettings request, TopicSettings response, Qos expected,
+      String message) {
+    // @formatter:off
+    then(response)
+      .isNotNull()
+      .extracting(TopicSettings::getSettings, list(TopicSubscriptionSetting.class))
+      .singleElement()
+      .returns(request.getSettings().get(0).getTopic(), from(TopicSubscriptionSetting::getTopic))
+      .as(message)
+      .returns(expected, from(TopicSubscriptionSetting::getQos))
+      ;
+    // @formatter:on
+  }
+
+  private void thenSubscribeUserTopic(TopicSettings request, TopicSettings response, Qos expected,
+      String message) {
+    // @formatter:off
+    then(response)
+      .isNotNull()
+      .extracting(TopicSettings::getSettings, list(TopicSubscriptionSetting.class))
+      .singleElement()
+      .returns("user/1/"+request.getSettings().get(0).getTopic(), from(TopicSubscriptionSetting::getTopic))
+      .as(message)
+      .returns(expected, from(TopicSubscriptionSetting::getQos))
+      ;
+    // @formatter:on
+  }
+
   @Test
   public void subscribeNoPolicyAllowedNode() {
     ActorDetails actor = actor(null, 2L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed via ownership", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce, "Allowed without policy");
   }
 
   @Test
@@ -139,14 +158,9 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("node/2/datum/0/foo");
     service.setMaxQos(Qos.AtMostOnce);
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed via ownership", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtMostOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtMostOnce, "Allowed with downgraded QoS");
   }
 
   @Test
@@ -154,14 +168,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(null, 2L);
     TopicSettings request = requestForTopics("node/3/datum/0/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic denied via ownership", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/3/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed, "Topic denied via ownership");
   }
 
   @Test
@@ -170,15 +179,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed via ownership and empty policy restriction", 
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed via ownership and empty policy restriction");
   }
 
   @Test
@@ -187,14 +191,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed via policy restriction", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce, "Topic allowed via policy restriction");
   }
 
   @Test
@@ -203,14 +202,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic denied via policy restriction", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed, "Topic denied via policy restriction");
   }
 
   @Test
@@ -219,14 +213,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source restriction", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce, "Topic allowed with source restriction");
   }
 
   @Test
@@ -235,14 +224,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/bar");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic deinied via source restriction", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/bar"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed, "Topic deinied via source restriction");
   }
 
   @Test
@@ -251,14 +235,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/+");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic deinied via source restriction", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/+"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed,
+        "Wildcard topic deinied via source restriction");
   }
 
   @Test
@@ -267,14 +247,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/#");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic deinied via source restriction", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/#"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed,
+        "Wildcard topic deinied via source restriction");
   }
 
   @Test
@@ -283,14 +259,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source restriction", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce, "Topic allowed with source restriction");
   }
 
   @Test
@@ -299,14 +270,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/boo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic deinied via source restriction", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/boo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed, "Topic deinied via source restriction");
   }
 
   @Test
@@ -315,14 +281,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/bar/bam");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with multi-level source restriction", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/bar/bam"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed with multi-level source restriction");
   }
 
   @Test
@@ -331,14 +293,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/bim/bam");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic denied via multi-level source restriction", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/bim/bam"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed,
+        "Topic denied via multi-level source restriction");
   }
 
   @Test
@@ -347,14 +305,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/bim/+");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic denied via multi-level source restriction", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/bim/+"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed,
+        "Topic denied via multi-level source restriction");
   }
 
   @Test
@@ -363,14 +317,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/#");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic denied via multi-level source restriction", result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/#"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed,
+        "Topic denied via multi-level source restriction");
   }
 
   @Test
@@ -379,15 +329,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with simple source wildcard restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed with simple source wildcard restriction");
   }
 
   @Test
@@ -396,15 +341,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/z");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic denied via simple source wildcard restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/z"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed,
+        "Topic denied via simple source wildcard restriction");
   }
 
   @Test
@@ -413,15 +353,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/z/bar/bam");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source start step wildcard restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/z/bar/bam"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed with source start step wildcard restriction");
   }
 
   @Test
@@ -430,15 +365,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/z/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic denied via source start wildcard restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/z/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed,
+        "Topic denied via source start wildcard restriction");
   }
 
   @Test
@@ -447,15 +377,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/z/bam");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source middle wildcard restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/z/bam"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed with source middle wildcard restriction");
   }
 
   @Test
@@ -464,15 +389,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/+/bam");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source middle wildcard restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/+/bam"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed with source middle wildcard restriction");
   }
 
   @Test
@@ -481,15 +401,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/#/bam");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source middle wildcard restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/#/bam"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed,
+        "Topic deined with source middle wildcard restriction");
   }
 
   @Test
@@ -498,15 +413,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/z/bim");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic denied via source middle wildcard restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/z/bim"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed,
+        "Topic denied via source middle wildcard restriction");
   }
 
   @Test
@@ -515,15 +425,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/bar/z");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source end step wildcard restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/bar/z"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed with source end step wildcard restriction");
   }
 
   @Test
@@ -532,15 +437,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/bar/+");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source end step wildcard restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/bar/+"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed with source end step wildcard restriction");
   }
 
   @Test
@@ -549,15 +449,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/bar/#");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source end step wildcard restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/bar/#"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed,
+        "Topic denied with source end step wildcard restriction");
   }
 
   @Test
@@ -566,15 +461,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/bim/z");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic denied via source end step wildcard restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/bim/z"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed,
+        "Topic denied via source end step wildcard restriction");
   }
 
   @Test
@@ -583,15 +473,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source path wildcard single step restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed with source path wildcard single step restriction");
   }
 
   @Test
@@ -600,15 +485,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/bar");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source path wildcard multi step restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/bar"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed with source path wildcard multi step restriction");
   }
 
   @Test
@@ -617,15 +497,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/+");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source path wildcard single step restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/+"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed with source path wildcard single step restriction");
   }
 
   @Test
@@ -634,15 +509,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/#");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source path wildcard single step restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/#"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed with source path wildcard single step restriction");
   }
 
   @Test
@@ -651,15 +521,10 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/*/foo/#");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source path wildcard single step restriction",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/*/foo/#"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed with source path wildcard single step restriction");
   }
 
   @Test
@@ -668,15 +533,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/bar");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source path wildcard",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/bar"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce, "Topic allowed with source path wildcard");
   }
 
   @Test
@@ -685,15 +544,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/#");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source path wildcard",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/#"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce, "Topic allowed with source path wildcard");
   }
 
   @Test
@@ -702,15 +555,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/z/bar");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic denied via source path wildcard",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/z/bar"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed, "Topic denied via source path wildcard");
   }
 
   @Test
@@ -719,15 +566,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/z/bar/a/b/c/bam");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source path wildcard",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/z/bar/a/b/c/bam"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce, "Topic allowed with source path wildcard");
   }
 
   @Test
@@ -736,15 +577,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/z/bar/a/b/c");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic denied via source path wildcard",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/z/bar/a/b/c"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed, "Topic denied via source path wildcard");
   }
 
   @Test
@@ -753,15 +588,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/2/datum/0/foo/a/*/b/bam");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with source path wildcard",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo/a/*/b/bam"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce, "Topic allowed with source path wildcard");
   }
 
   @Test
@@ -771,23 +600,24 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("node/2/datum/0/foo", "node/2/datum/h/foo",
         "node/2/datum/d/foo", "node/2/datum/M/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(4)));
+
+    // THEN
     // @formatter:off
-    assertThat("Topic allowed via policy restriction", result.getSettings(), contains(
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/h/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/d/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/M/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce))
-    ));
+    then(result)
+      .isNotNull()
+      .extracting(TopicSettings::getSettings, list(TopicSubscriptionSetting.class))
+      .hasSize(4)
+      .as("All topics allowed via policy restriction")
+      .allSatisfy(s -> {
+        then(s).returns(Qos.AtLeastOnce, from(TopicSubscriptionSetting::getQos));
+      })
+      .satisfies(l -> {
+        then(l).element(0).returns("node/2/datum/0/foo", from(TopicSubscriptionSetting::getTopic));
+        then(l).element(1).returns("node/2/datum/h/foo", from(TopicSubscriptionSetting::getTopic));
+        then(l).element(2).returns("node/2/datum/d/foo", from(TopicSubscriptionSetting::getTopic));
+        then(l).element(3).returns("node/2/datum/M/foo", from(TopicSubscriptionSetting::getTopic));
+      })
+      ;
     // @formatter:on
   }
 
@@ -798,23 +628,33 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("node/2/datum/0/foo", "node/2/datum/h/foo",
         "node/2/datum/d/foo", "node/2/datum/M/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(4)));
+
+    // THEN
     // @formatter:off
-    assertThat("Topic allowed via policy restriction", result.getSettings(), contains(
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/h/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/d/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/M/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce))
-    ));
+    then(result)
+      .isNotNull()
+      .extracting(TopicSettings::getSettings, list(TopicSubscriptionSetting.class))
+      .hasSize(4)
+      .as("Some topics allowed via policy restriction")
+      .satisfies(l -> {
+        then(l).element(0)
+          .returns("node/2/datum/0/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.NotAllowed, from(TopicSubscriptionSetting::getQos))
+          ;
+        then(l).element(1)
+          .returns("node/2/datum/h/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.AtLeastOnce, from(TopicSubscriptionSetting::getQos))
+          ;
+        then(l).element(2)
+          .returns("node/2/datum/d/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.AtLeastOnce, from(TopicSubscriptionSetting::getQos))
+          ;
+        then(l).element(3)
+          .returns("node/2/datum/M/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.AtLeastOnce, from(TopicSubscriptionSetting::getQos))
+          ;
+      })
+      ;
     // @formatter:on
   }
 
@@ -825,23 +665,33 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("node/2/datum/0/foo", "node/2/datum/h/foo",
         "node/2/datum/d/foo", "node/2/datum/M/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(4)));
+
+    // THEN
     // @formatter:off
-    assertThat("Topic allowed via policy restriction", result.getSettings(), contains(
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/h/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/d/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/M/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce))
-    ));
+    then(result)
+      .isNotNull()
+      .extracting(TopicSettings::getSettings, list(TopicSubscriptionSetting.class))
+      .hasSize(4)
+      .as("Some topics allowed via policy restriction")
+      .satisfies(l -> {
+        then(l).element(0)
+          .returns("node/2/datum/0/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.NotAllowed, from(TopicSubscriptionSetting::getQos))
+          ;
+        then(l).element(1)
+          .returns("node/2/datum/h/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.NotAllowed, from(TopicSubscriptionSetting::getQos))
+          ;
+        then(l).element(2)
+          .returns("node/2/datum/d/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.AtLeastOnce, from(TopicSubscriptionSetting::getQos))
+          ;
+        then(l).element(3)
+          .returns("node/2/datum/M/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.AtLeastOnce, from(TopicSubscriptionSetting::getQos))
+          ;
+      })
+      ;
     // @formatter:on
   }
 
@@ -852,23 +702,33 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("node/2/datum/0/foo", "node/2/datum/h/foo",
         "node/2/datum/d/foo", "node/2/datum/M/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(4)));
+
+    // THEN
     // @formatter:off
-    assertThat("Topic allowed via policy restriction", result.getSettings(), contains(
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/h/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/d/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/M/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce))
-    ));
+    then(result)
+      .isNotNull()
+      .extracting(TopicSettings::getSettings, list(TopicSubscriptionSetting.class))
+      .hasSize(4)
+      .as("Some topics allowed via policy restriction")
+      .satisfies(l -> {
+        then(l).element(0)
+          .returns("node/2/datum/0/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.NotAllowed, from(TopicSubscriptionSetting::getQos))
+          ;
+        then(l).element(1)
+          .returns("node/2/datum/h/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.NotAllowed, from(TopicSubscriptionSetting::getQos))
+          ;
+        then(l).element(2)
+          .returns("node/2/datum/d/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.NotAllowed, from(TopicSubscriptionSetting::getQos))
+          ;
+        then(l).element(3)
+          .returns("node/2/datum/M/foo", from(TopicSubscriptionSetting::getTopic))
+          .returns(Qos.AtLeastOnce, from(TopicSubscriptionSetting::getQos))
+          ;
+      })
+      ;
     // @formatter:on
   }
 
@@ -879,23 +739,24 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("node/2/datum/0/foo", "node/2/datum/h/foo",
         "node/2/datum/d/foo", "node/2/datum/M/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(4)));
+
+    // THEN
     // @formatter:off
-    assertThat("Topic allowed via policy restriction", result.getSettings(), contains(
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/h/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/d/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/2/datum/M/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed))
-    ));
+    then(result)
+      .isNotNull()
+      .extracting(TopicSettings::getSettings, list(TopicSubscriptionSetting.class))
+      .hasSize(4)
+      .as("No topics allowed via policy restriction")
+      .allSatisfy(s -> {
+        then(s).returns(Qos.NotAllowed, from(TopicSubscriptionSetting::getQos));
+      })
+      .satisfies(l -> {
+        then(l).element(0).returns("node/2/datum/0/foo", from(TopicSubscriptionSetting::getTopic));
+        then(l).element(1).returns("node/2/datum/h/foo", from(TopicSubscriptionSetting::getTopic));
+        then(l).element(2).returns("node/2/datum/d/foo", from(TopicSubscriptionSetting::getTopic));
+        then(l).element(3).returns("node/2/datum/M/foo", from(TopicSubscriptionSetting::getTopic));
+      })
+      ;
     // @formatter:on
   }
 
@@ -905,15 +766,9 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(policy, 2L, 3L);
     TopicSettings request = requestForTopics("node/+/datum/0/foo");
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic denied from node wildcard",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("node/+/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed, "Topic denied from node wildcard");
   }
 
   @Test
@@ -923,15 +778,9 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("node/+/datum/0/foo");
     service.setUserTopicPrefix(true);
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed with node wildcard",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("user/1/node/+/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeUserTopic(request, result, Qos.AtLeastOnce, "Topic allowed with node wildcard");
   }
 
   @Test
@@ -941,15 +790,10 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("node/2/datum/0/foo");
     service.setUserTopicPrefix(true);
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed and rewritten with user prefix",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("user/1/node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeUserTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed and rewritten with user prefix");
   }
 
   @Test
@@ -959,15 +803,10 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("node/+/datum/0/#");
     service.setUserTopicPrefix(true);
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed and rewritten with user prefix",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("user/1/node/+/datum/0/#"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeUserTopic(request, result, Qos.AtLeastOnce,
+        "Topic allowed and rewritten with user prefix");
   }
 
   @Test
@@ -977,15 +816,9 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("user/1/events");
     service.setUserTopicPrefix(true);
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed and keeps user prefix",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("user/1/events"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.AtLeastOnce, "Topic allowed and keeps user prefix");
   }
 
   @Test
@@ -995,15 +828,9 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("user/1/events");
     service.setUserTopicPrefix(true);
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic not allowed and keeps user prefix",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("user/1/events"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed, "Topic not allowed and keeps user prefix");
   }
 
   @Test
@@ -1013,15 +840,9 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("user/1/events");
     service.setUserTopicPrefix(true);
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic not allowed and keeps user prefix",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("user/1/events"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed, "Topic not allowed and keeps user prefix");
   }
 
   @Test
@@ -1031,15 +852,9 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("events");
     service.setUserTopicPrefix(true);
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic allowed and keeps user prefix",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("user/1/events"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeUserTopic(request, result, Qos.AtLeastOnce, "Topic allowed and keeps user prefix");
   }
 
   @Test
@@ -1049,15 +864,9 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("events");
     service.setUserTopicPrefix(true);
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic not allowed and omits user prefix",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("events"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed, "Topic not allowed and omits user prefix");
   }
 
   @Test
@@ -1067,15 +876,9 @@ public class SimpleAuthorizationEvaluatorTests {
     TopicSettings request = requestForTopics("events");
     service.setUserTopicPrefix(true);
     TopicSettings result = service.evaluateSubscribe(actor, request);
-    assertThat("Result provided", result, notNullValue());
-    assertThat("Topic provided", result.getSettings(), allOf(notNullValue(), hasSize(1)));
-    // @formatter:off
-    assertThat("Topic not allowed and omits user prefix",
-        result.getSettings().get(0),
-        pojo(TopicSubscriptionSetting.class)
-            .withProperty("topic", equalTo("events"))
-            .withProperty("qos", equalTo(Qos.NotAllowed)));
-    // @formatter:on
+
+    // THEN
+    thenSubscribeTopic(request, result, Qos.NotAllowed, "Topic not allowed and omits user prefix");
   }
 
   @Test
@@ -1083,7 +886,7 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(null, false, 2L);
     Message request = requestMessage("node/2/datum/0/foo");
     Message result = service.evaluatePublish(actor, request);
-    assertThat("Result not available", result, nullValue());
+    then(result).as("Result not available").isNull();
   }
 
   @Test
@@ -1091,7 +894,7 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(2L);
     Message request = requestMessage("node/2/datum/0/foo");
     Message result = service.evaluatePublish(actor, request);
-    assertThat("Result Ok", result, sameInstance(request));
+    then(result).as("Result OK").isSameAs(request);
   }
 
   @Test
@@ -1100,13 +903,17 @@ public class SimpleAuthorizationEvaluatorTests {
     Message request = requestMessage("node/2/datum/0/foo");
     service.setMaxQos(Qos.AtMostOnce);
     Message result = service.evaluatePublish(actor, request);
-    assertThat("Result Ok", result, allOf(notNullValue(), not(sameInstance(request))));
+
+    // THEN
     // @formatter:off
-    assertThat("Topic allowed and downgraded Qos",
-        result,
-        pojo(Message.class)
-            .withProperty("topic", equalTo("node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtMostOnce)));
+    then(result)
+      .as("Result provided")
+      .isNotNull()
+      .isNotSameAs(request)
+      .as("Topic allowed and downgraded Qos")
+      .returns("node/2/datum/0/foo", from(Message::getTopic))
+      .returns(Qos.AtMostOnce, from(Message::getQos))
+      ;
     // @formatter:on
   }
 
@@ -1115,7 +922,8 @@ public class SimpleAuthorizationEvaluatorTests {
     ActorDetails actor = actor(2L);
     Message request = requestMessage("node/3/datum/0/foo");
     Message result = service.evaluatePublish(actor, request);
-    assertThat("Result not available", result, nullValue());
+
+    then(result).as("Result not available").isNull();
   }
 
   @Test
@@ -1124,13 +932,17 @@ public class SimpleAuthorizationEvaluatorTests {
     Message request = requestMessage("node/2/datum/0/foo");
     service.setUserTopicPrefix(true);
     Message result = service.evaluatePublish(actor, request);
-    assertThat("Result Ok", result, allOf(notNullValue(), not(sameInstance(request))));
+
+    // THEN
     // @formatter:off
-    assertThat("Topic allowed and rewritten with user prefix",
-        result,
-        pojo(Message.class)
-            .withProperty("topic", equalTo("user/1/node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
+    then(result)
+      .as("Result provided")
+      .isNotNull()
+      .isNotSameAs(request)
+      .as("Topic allowed and rewritten with user prefix")
+      .returns("user/1/node/2/datum/0/foo", from(Message::getTopic))
+      .returns(Qos.AtLeastOnce, from(Message::getQos))
+      ;
     // @formatter:on
   }
 
@@ -1140,13 +952,17 @@ public class SimpleAuthorizationEvaluatorTests {
     Message request = requestMessage("user/1/node/2/datum/0/foo");
     service.setUserTopicPrefix(true);
     Message result = service.evaluatePublish(actor, request);
-    assertThat("Result Ok and unchanged", result, allOf(notNullValue(), is(sameInstance(request))));
+
+    // THEN
     // @formatter:off
-    assertThat("Topic allowed and keeps user prefix",
-        result,
-        pojo(Message.class)
-            .withProperty("topic", equalTo("user/1/node/2/datum/0/foo"))
-            .withProperty("qos", equalTo(Qos.AtLeastOnce)));
+    then(result)
+      .as("Result provided")
+      .isNotNull()
+      .isSameAs(request)
+      .as("Topic allowed and keeps user prefix")
+      .returns("user/1/node/2/datum/0/foo", from(Message::getTopic))
+      .returns(Qos.AtLeastOnce, from(Message::getQos))
+      ;
     // @formatter:on
   }
 

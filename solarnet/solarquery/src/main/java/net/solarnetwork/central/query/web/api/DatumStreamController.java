@@ -72,6 +72,7 @@ import net.solarnetwork.central.query.config.JsonConfig;
 import net.solarnetwork.central.query.domain.StreamDatumResult;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.io.ProvidedOutputStream;
+import net.solarnetwork.util.StringUtils;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.dataformat.cbor.CBORMapper;
@@ -109,8 +110,9 @@ public class DatumStreamController {
 	 *        the mapper to use for CBOR
 	 */
 	@Autowired
-	public DatumStreamController(QueryBiz queryBiz, JsonMapper objectMapper,
-			@Qualifier(JsonConfig.CBOR_MAPPER) CBORMapper cborObjectMapper) {
+	public DatumStreamController(QueryBiz queryBiz,
+			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) JsonMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_STREAMING_MAPPER) CBORMapper cborObjectMapper) {
 		super();
 		this.queryBiz = requireNonNullArgument(queryBiz, "queryBiz");
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
@@ -161,10 +163,12 @@ public class DatumStreamController {
 				processor = new CsvStreamDatumFilteredResultsProcessor(
 						responseWriter(response, acceptEncoding));
 				break;
-			} else {
-				throw new IllegalArgumentException(
-						format("The [%s] media type is not supported.", acceptType));
 			}
+		}
+		if ( processor == null ) {
+			throw new IllegalArgumentException(format("No supported media type within [%s]",
+					StringUtils.commaDelimitedStringFromCollection(acceptTypes)));
+
 		}
 		response.setContentType(processor.getMimeType().toString());
 		return processor;

@@ -17,9 +17,10 @@
 
 package net.solarnetwork.flux.vernemq.webhook.service.impl.test;
 
-import static com.spotify.hamcrest.pojo.IsPojo.pojo;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.BDDMockito.given;
@@ -28,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -95,20 +97,19 @@ public class SnTokenDetailsRowMapperTests extends TestSupport {
     // when
     SnTokenDetails result = new SnTokenDetailsRowMapper(tokenId).mapRow(resultSet, 1);
 
-    // then
-    assertThat("Token ID", result.getTokenId(), equalTo(tokenId));
-    assertThat("User ID", result.getUserId(), equalTo(userId));
-    assertThat("Token type", result.getTokenType(), equalTo(tokenType));
-
+    // THEN
     // @formatter:off
-    assertThat("Policy", result.getPolicy(), 
-        pojo(SecurityPolicy.class)
-            .withProperty("nodeIds", contains(1L, 2L, 3L))
-            .withProperty("sourceIds", contains("one", "two", "three"))
-            .withProperty("minAggregation", equalTo(Aggregation.Month))
-            .withProperty("notAfter", equalTo(
-                Instant.ofEpochMilli(1544388330000L)))
-    );
+    then(result)
+      .isNotNull()
+      .returns(tokenId, from(SnTokenDetails::getTokenId))
+      .returns(userId, from(SnTokenDetails::getUserId))
+      .returns(tokenType, from(SnTokenDetails::getTokenType))
+      .extracting(SnTokenDetails::getPolicy, type(SecurityPolicy.class))
+      .returns(Set.of(1L, 2L, 3L), from(SecurityPolicy::getNodeIds))
+      .returns(Set.of("one", "two", "three"), from(SecurityPolicy::getSourceIds))
+      .returns(Aggregation.Month, from(SecurityPolicy::getMinAggregation))
+      .returns(Instant.ofEpochMilli(1544388330000L), from(SecurityPolicy::getNotAfter))
+      ;
     // @formatter:on
   }
 }
