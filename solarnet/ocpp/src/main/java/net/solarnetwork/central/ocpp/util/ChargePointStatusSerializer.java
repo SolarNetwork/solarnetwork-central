@@ -22,36 +22,32 @@
 
 package net.solarnetwork.central.ocpp.util;
 
-import java.io.IOException;
-import java.io.Serial;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
-import net.solarnetwork.codec.JsonDateUtils.InstantSerializer;
+import net.solarnetwork.codec.jackson.JsonDateUtils.InstantSerializer;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 /**
  * JSON serializer for {@link ChargePointStatus} objects.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class ChargePointStatusSerializer extends StdSerializer<ChargePointStatus> {
 
-	@Serial
-	private static final long serialVersionUID = -7679360882593716740L;
-
 	/** A default instance. */
-	public static final StdSerializer<ChargePointStatus> INSTANCE = new ChargePointStatusSerializer();
+	public static final ValueSerializer<ChargePointStatus> INSTANCE = new ChargePointStatusSerializer();
 
 	public ChargePointStatusSerializer() {
 		super(ChargePointStatus.class);
 	}
 
 	@Override
-	public void serialize(ChargePointStatus status, JsonGenerator generator, SerializerProvider provider)
-			throws IOException, JsonGenerationException {
+	public void serialize(ChargePointStatus status, JsonGenerator generator,
+			SerializationContext provider) throws JacksonException {
 		if ( status == null ) {
 			generator.writeNull();
 			return;
@@ -68,19 +64,19 @@ public class ChargePointStatusSerializer extends StdSerializer<ChargePointStatus
 
 		generator.writeStartObject(status, size);
 		if ( status.getCreated() != null ) {
-			generator.writeFieldName("created");
+			generator.writeName("created");
 			InstantSerializer.INSTANCE.serialize(status.getCreated(), generator, provider);
 		}
-		generator.writeNumberField("userId", status.getUserId());
-		generator.writeNumberField("chargePointId", status.getChargePointId());
+		generator.writeNumberProperty("userId", status.getUserId());
+		generator.writeNumberProperty("chargePointId", status.getChargePointId());
 		if ( status.getConnectedTo() != null ) {
-			generator.writeStringField("connectedTo", status.getConnectedTo());
+			generator.writeStringProperty("connectedTo", status.getConnectedTo());
 		}
 		if ( status.getSessionId() != null ) {
-			generator.writeStringField("sessionId", status.getSessionId());
+			generator.writeStringProperty("sessionId", status.getSessionId());
 		}
 		if ( status.getConnectedDate() != null ) {
-			generator.writeFieldName("connectedDate");
+			generator.writeName("connectedDate");
 			InstantSerializer.INSTANCE.serialize(status.getConnectedDate(), generator, provider);
 		}
 		generator.writeEndObject();

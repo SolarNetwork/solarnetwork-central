@@ -54,7 +54,7 @@ public enum EnphaseGranularity {
 	private final String key;
 	private final TemporalAmount tickAmount;
 
-	private EnphaseGranularity(String key, TemporalAmount tickAmount) {
+	EnphaseGranularity(String key, TemporalAmount tickAmount) {
 		this.key = key;
 		this.tickAmount = tickAmount;
 	}

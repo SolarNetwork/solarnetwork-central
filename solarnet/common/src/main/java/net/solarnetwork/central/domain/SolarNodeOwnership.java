@@ -23,13 +23,13 @@
 package net.solarnetwork.central.domain;
 
 import java.time.ZoneId;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * API for node ownership details.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public interface SolarNodeOwnership extends UserIdRelated {
 

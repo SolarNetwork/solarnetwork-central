@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoUserNodeInstructionService.java - 18/11/2025 11:13:25 am
- * 
+ *
  * Copyright 2025 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -29,7 +29,7 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.central.user.domain.InstructionExpressionEvaluationResult.expressionResult;
-import static net.solarnetwork.codec.JsonUtils.getStringMapFromTree;
+import static net.solarnetwork.codec.jackson.JsonUtils.getStringMapFromTree;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Clock;
@@ -58,8 +58,6 @@ import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.scheduling.support.SimpleTriggerContext;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestClientResponseException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.InMemoryUserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.common.dao.UserServiceConfigurationDao;
@@ -96,12 +94,14 @@ import net.solarnetwork.service.OptionalService;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.DateUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * DAO implementation of {@link UserNodeInstructionService}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class DaoUserNodeInstructionService
 		implements UserNodeInstructionService, ServiceLifecycleObserver, UsersUserEvents {
@@ -284,7 +284,7 @@ public class DaoUserNodeInstructionService
 
 		/**
 		 * Constructor for "real" mode.
-		 * 
+		 *
 		 * @param taskInfo
 		 *        the task to execute
 		 * @throws IllegalArgumentException
@@ -298,7 +298,7 @@ public class DaoUserNodeInstructionService
 
 		/**
 		 * Constructor to support simulation mode.
-		 * 
+		 *
 		 * @param simulation
 		 *        {@code true} if the task is for a simulation
 		 * @param userEventAppenderBiz
@@ -364,7 +364,7 @@ public class DaoUserNodeInstructionService
 					}
 					task.setResultProps(resultProps);
 
-					final var eventData = new LinkedHashMap<String, Object>(resultProps);
+					final var eventData = new LinkedHashMap<>(resultProps);
 					eventData.put(CONFIG_ID_DATA_KEY, task.getConfigId());
 					eventData.put(NODE_ID_DATA_KEY, task.getNodeId());
 					eventData.put(MESSAGE_DATA_KEY, dataErrMsg);
@@ -492,7 +492,7 @@ public class DaoUserNodeInstructionService
 						eventForUserRelatedKey(task.getId(), INSTRUCTION_TAGS, msg, Map.of(
 						// @formatter:off
 								EXECUTE_AT_DATA_KEY, task.getExecuteAt(),
-								NODE_ID_DATA_KEY, (Object) task.getNodeId(),
+								NODE_ID_DATA_KEY, task.getNodeId(),
 								INSTRUCTION_DATA_KEY, getStringMapFromTree(objectMapper.valueToTree(result))
 								// @formatter:on
 						)));
@@ -652,7 +652,7 @@ public class DaoUserNodeInstructionService
 
 	/**
 	 * Get the HTTP operations.
-	 * 
+	 *
 	 * @return the operations
 	 */
 	public HttpOperations getHttpOperations() {
@@ -661,7 +661,7 @@ public class DaoUserNodeInstructionService
 
 	/**
 	 * Set the HTTP operations.
-	 * 
+	 *
 	 * @param httpOperations
 	 *        the operations to set
 	 */
@@ -671,7 +671,7 @@ public class DaoUserNodeInstructionService
 
 	/**
 	 * Get the OAuth client manager.
-	 * 
+	 *
 	 * @return the manager
 	 */
 	public OAuth2AuthorizedClientManager getOauthClientManager() {
@@ -680,7 +680,7 @@ public class DaoUserNodeInstructionService
 
 	/**
 	 * Set the OAuth client manager.
-	 * 
+	 *
 	 * @param oauthClientManager
 	 *        the manager to set
 	 */
@@ -690,7 +690,7 @@ public class DaoUserNodeInstructionService
 
 	/**
 	 * Get a provider of OAuth client managers for simulation use.
-	 * 
+	 *
 	 * @return the provider
 	 */
 	public Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> getSimulationOauthClientManagerProvider() {
@@ -699,7 +699,7 @@ public class DaoUserNodeInstructionService
 
 	/**
 	 * Set a provider of OAuth client managers for simulation use.
-	 * 
+	 *
 	 * @param simulationOauthClientManagerProvider
 	 *        the provider to set
 	 */
@@ -710,7 +710,7 @@ public class DaoUserNodeInstructionService
 
 	/**
 	 * Get the task locks cache.
-	 * 
+	 *
 	 * @return the locks cache
 	 */
 	public OptionalService<Cache<UserLongCompositePK, Lock>> getLocksCache() {
@@ -719,7 +719,7 @@ public class DaoUserNodeInstructionService
 
 	/**
 	 * Set the task locks cache.
-	 * 
+	 *
 	 * @param locksCache
 	 *        the cache to set
 	 */

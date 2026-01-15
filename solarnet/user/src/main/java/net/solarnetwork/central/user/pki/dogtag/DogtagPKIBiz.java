@@ -53,7 +53,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestOperations;
 import org.w3c.dom.Node;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -66,6 +65,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.settings.SettingsChangeObserver;
 import net.solarnetwork.support.XmlSupport;
 import net.solarnetwork.util.CachedResult;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Dogtag implementation of {@link NodePKIBiz}.
@@ -78,7 +78,7 @@ import net.solarnetwork.util.CachedResult;
  * </p>
  *
  * @author matt
- * @version 3.0
+ * @version 4.0
  */
 public class DogtagPKIBiz
 		implements NodePKIBiz, PingTest, SettingsChangeObserver, ServiceLifecycleObserver {
@@ -223,7 +223,6 @@ public class DogtagPKIBiz
 		return (dogtagVersion[0] > major || dogtagVersion[1] > minor || dogtagVersion[2] >= patch);
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public String submitRenewalRequest(X509Certificate certificate) throws BasicSecurityException {
 		BigInteger serialNumber = certificate.getSerialNumber();
@@ -235,7 +234,7 @@ public class DogtagPKIBiz
 			params.put("Renewal", "true");
 			params.put("SerialNumber", serialNumber.toString());
 			HttpHeaders reqHeaders = new HttpHeaders();
-			reqHeaders.setContentType(MediaType.APPLICATION_JSON_UTF8);
+			reqHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON + ";charset=UTF-8");
 			req = new HttpEntity<>(params, reqHeaders);
 		} else {
 			// Dogtag 10.0
@@ -304,7 +303,7 @@ public class DogtagPKIBiz
 		// check if the request is already complete
 		String reqStatus = null;
 		if ( result.getBody() != null ) {
-			reqStatus = result.getBody().path("requestStatus").textValue();
+			reqStatus = result.getBody().path("requestStatus").stringValue();
 		}
 
 		if ( reqStatus == null || REQ_STATUS_PENDING.equalsIgnoreCase(reqStatus) ) {
@@ -419,9 +418,9 @@ public class DogtagPKIBiz
 
 		final var info = new DogtagCertRequestInfo();
 		try {
-			info.setCertURL(new URI(json.path("certURL").textValue()).toURL());
-			info.setRequestURL(new URI(json.path("requestURL").textValue()).toURL());
-			info.setRequestStatus(json.path("requestStatus").textValue());
+			info.setCertURL(new URI(json.path("certURL").stringValue()).toURL());
+			info.setRequestURL(new URI(json.path("requestURL").stringValue()).toURL());
+			info.setRequestStatus(json.path("requestStatus").stringValue());
 		} catch ( MalformedURLException | URISyntaxException e ) {
 			log.warn("Error parsing certificate request info [{}]: {}", json, e.toString());
 		}
@@ -446,10 +445,10 @@ public class DogtagPKIBiz
 
 		final var data = new DogtagCertificateData();
 		try {
-			final String idVal = json.path("id").textValue();
+			final String idVal = json.path("id").stringValue();
 			data.setId(idVal.startsWith("0x") ? new BigInteger(idVal.substring(2), 16)
 					: new BigInteger(idVal));
-			data.setPkcs7Chain(json.path("PKCS7CertChain").textValue());
+			data.setPkcs7Chain(json.path("PKCS7CertChain").stringValue());
 		} catch ( IllegalArgumentException e ) {
 			log.warn("Error parsing certificate data from [{}]: {}", json, e.toString());
 		}
@@ -482,10 +481,10 @@ public class DogtagPKIBiz
 		final var info = new DogtagCertRequestInfo();
 		try {
 			final var entriesJson = json.path("entries");
-			if ( entriesJson.size() > 0 ) {
+			if ( !entriesJson.isEmpty() ) {
 				final var firstEntry = entriesJson.get(0);
-				info.setRequestURL(new URI(firstEntry.path("requestURL").textValue()).toURL());
-				info.setRequestStatus(firstEntry.path("requestStatus").textValue());
+				info.setRequestURL(new URI(firstEntry.path("requestURL").stringValue()).toURL());
+				info.setRequestStatus(firstEntry.path("requestStatus").stringValue());
 			}
 		} catch ( MalformedURLException | URISyntaxException e ) {
 			log.warn("Error parsing certificate request info [{}]: {}", json, e.toString());

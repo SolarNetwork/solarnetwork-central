@@ -205,7 +205,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public boolean putIfAbsent(K key, V value) {
-		CachedValue result = data.compute(key, (k, v) -> {
+		CachedValue result = data.compute(key, (_, v) -> {
 			if ( v == null || !v.isValid() ) {
 				return new CachedValue(key, value);
 			}
@@ -243,7 +243,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	@Override
 	public V getAndReplace(K key, V value) {
 		AtomicReference<V> old = new AtomicReference<>();
-		data.compute(key, (k, v) -> {
+		data.compute(key, (_, v) -> {
 			if ( v != null && v.isValid() ) {
 				old.set(v.getResult());
 				return new CachedValue(key, value);

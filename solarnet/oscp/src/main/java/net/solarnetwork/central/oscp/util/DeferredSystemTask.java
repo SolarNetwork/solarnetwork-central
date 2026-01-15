@@ -281,7 +281,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 				// ignore
 			}
 			if ( tt != null ) {
-				tt.executeWithoutResult((t) -> {
+				tt.executeWithoutResult(_ -> {
 					try {
 						doWork();
 					} catch ( Exception e ) {
@@ -314,8 +314,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 					userEventAppenderBiz.addEvent(configId.getUserId(), event);
 				}
 				if ( taskScheduler != null && retryDelay > 0 ) {
-					@SuppressWarnings("unused")
-					var unused = taskScheduler.schedule(() -> executor.execute(DeferredSystemTask.this),
+					var _ = taskScheduler.schedule(() -> executor.execute(DeferredSystemTask.this),
 							Instant.now().plusMillis(tries * retryDelay));
 				} else {
 					executor.execute(this);

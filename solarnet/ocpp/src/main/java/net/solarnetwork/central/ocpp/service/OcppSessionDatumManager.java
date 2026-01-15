@@ -132,7 +132,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		private final String propertyName;
 		private final DatumSamplesType classification;
 
-		private DatumProperty(String propertyName, DatumSamplesType classification) {
+		DatumProperty(String propertyName, DatumSamplesType classification) {
 			this.propertyName = propertyName;
 			this.classification = classification;
 		}

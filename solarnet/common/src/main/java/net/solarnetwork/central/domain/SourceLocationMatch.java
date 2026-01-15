@@ -38,18 +38,19 @@ public interface SourceLocationMatch extends EntityMatch {
 	 * @return the source name
 	 */
 	String getSourceName();
-	
+
 	/**
 	 * Get the location ID.
 	 * 
 	 * @return the location ID
 	 */
 	Long getLocationId();
-	
+
 	/**
 	 * Get the location name.
+	 * 
 	 * @return the location name
 	 */
 	String getLocationName();
-	
+
 }

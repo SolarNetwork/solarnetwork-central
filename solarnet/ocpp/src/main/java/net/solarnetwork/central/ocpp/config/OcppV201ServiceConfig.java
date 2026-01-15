@@ -35,8 +35,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.transaction.support.TransactionTemplate;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.common.config.VersionedQualifier;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -59,6 +57,8 @@ import ocpp.v201.BootNotificationRequest;
 import ocpp.v201.BootNotificationResponse;
 import ocpp.v201.StatusNotificationRequest;
 import ocpp.v201.StatusNotificationResponse;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * OCPP v2.0.1 controller configuration.

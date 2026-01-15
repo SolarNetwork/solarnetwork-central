@@ -50,7 +50,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.Explode;
@@ -73,12 +72,16 @@ import net.solarnetwork.central.query.config.JsonConfig;
 import net.solarnetwork.central.query.domain.StreamDatumResult;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.io.ProvidedOutputStream;
+import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 /**
  * Controller for querying datum stream related data.
  *
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 @Controller("v1DatumStreamController")
 @RequestMapping({ "/api/v1/pub/datum/stream", "/api/v1/sec/datum/stream" })
@@ -107,8 +110,9 @@ public class DatumStreamController {
 	 *        the mapper to use for CBOR
 	 */
 	@Autowired
-	public DatumStreamController(QueryBiz queryBiz, ObjectMapper objectMapper,
-			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper) {
+	public DatumStreamController(QueryBiz queryBiz,
+			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) JsonMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_STREAMING_MAPPER) CBORMapper cborObjectMapper) {
 		super();
 		this.queryBiz = requireNonNullArgument(queryBiz, "queryBiz");
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
@@ -145,13 +149,13 @@ public class DatumStreamController {
 			if ( MediaType.APPLICATION_CBOR.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
 						cborObjectMapper.createGenerator(responseOutputStream(response, acceptEncoding)),
-						cborObjectMapper.getSerializerProvider(),
+						cborObjectMapper._serializationContext(), // FIXME use "allowed" method
 						MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE));
 				break;
 			} else if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
 						objectMapper.createGenerator(responseOutputStream(response, acceptEncoding)),
-						objectMapper.getSerializerProvider(),
+						objectMapper._serializationContext(), // FIXME use "allowed" method
 						MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE));
 				break;
 			} else if ( CsvStreamDatumFilteredResultsProcessor.TEXT_CSV_MIME_TYPE
@@ -159,10 +163,12 @@ public class DatumStreamController {
 				processor = new CsvStreamDatumFilteredResultsProcessor(
 						responseWriter(response, acceptEncoding));
 				break;
-			} else {
-				throw new IllegalArgumentException(
-						format("The [%s] media type is not supported.", acceptType));
 			}
+		}
+		if ( processor == null ) {
+			throw new IllegalArgumentException(format("No supported media type within [%s]",
+					StringUtils.commaDelimitedStringFromCollection(acceptTypes)));
+
 		}
 		response.setContentType(processor.getMimeType().toString());
 		return processor;

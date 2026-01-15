@@ -1,21 +1,21 @@
 /* ==================================================================
  * S3DestinationProperties.java - 11/04/2018 6:37:43 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,9 +30,9 @@ import software.amazon.awssdk.services.s3.S3Utilities;
 
 /**
  * Service properties for the S3 export destination.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class S3DestinationProperties {
 
@@ -41,7 +41,7 @@ public class S3DestinationProperties {
 
 	/**
 	 * The default value for the {@code storageClass} property.
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	public static final String DEFAULT_STORAGE_CLASS = "STANDARD";
@@ -62,21 +62,21 @@ public class S3DestinationProperties {
 
 	/**
 	 * Test if the configuration appears valid.
-	 * 
+	 *
 	 * <p>
 	 * This simply tests for non-null property values.
 	 * </p>
-	 * 
+	 *
 	 * @return {@literal true} if the configuration appears valid
 	 */
 	public boolean isValid() {
-		return (path != null && path.trim().length() > 0 && filenameTemplate != null
-				&& filenameTemplate.trim().length() > 0);
+		return (path != null && !path.isBlank() && filenameTemplate != null
+				&& !filenameTemplate.isBlank());
 	}
 
 	/**
 	 * Get the S3 path to export to.
-	 * 
+	 *
 	 * @return the S3 path
 	 */
 	public String getPath() {
@@ -85,12 +85,12 @@ public class S3DestinationProperties {
 
 	/**
 	 * Set the S3 path to export to.
-	 * 
+	 *
 	 * <p>
 	 * This should be a fully-qualified S3 path such as
 	 * <code>region-endpoint/bucket-name/prefix</code>.
 	 * </p>
-	 * 
+	 *
 	 * @param path
 	 *        the S3 path to export to
 	 */
@@ -101,7 +101,7 @@ public class S3DestinationProperties {
 
 	/**
 	 * Get a URI from the configured path.
-	 * 
+	 *
 	 * @return the URI
 	 */
 	public synchronized S3Uri getUri() {
@@ -110,7 +110,7 @@ public class S3DestinationProperties {
 			String absUri = path;
 			if ( absUri.startsWith("/") ) {
 				absUri = "s3:/" + absUri;
-			} else if ( absUri.indexOf("://") < 0 ) {
+			} else if ( !absUri.contains("://") ) {
 				absUri = "https://" + absUri;
 			}
 			S3Utilities utils = S3Client.builder().region(Region.US_WEST_2).build().utilities();
@@ -122,7 +122,7 @@ public class S3DestinationProperties {
 
 	/**
 	 * Get a template for the output filename.
-	 * 
+	 *
 	 * @return the filename template
 	 */
 	public String getFilenameTemplate() {
@@ -131,14 +131,14 @@ public class S3DestinationProperties {
 
 	/**
 	 * Set a template for the output filename.
-	 * 
+	 *
 	 * <p>
 	 * This template is allowed to contain parameters in the form
 	 * <code>{key}</code>, which are replaced at runtime by the value of a
 	 * parameter <code>key</code>, or an empty string if no such parameter
 	 * exists.
 	 * </p>
-	 * 
+	 *
 	 * @param filenameTemplate
 	 *        the filename template to use
 	 */
@@ -148,7 +148,7 @@ public class S3DestinationProperties {
 
 	/**
 	 * Get the S3 access key.
-	 * 
+	 *
 	 * @return the access key
 	 */
 	public String getAccessKey() {
@@ -157,7 +157,7 @@ public class S3DestinationProperties {
 
 	/**
 	 * Set the S3 access key.
-	 * 
+	 *
 	 * @param accessKey
 	 *        the key to use
 	 */
@@ -167,7 +167,7 @@ public class S3DestinationProperties {
 
 	/**
 	 * Get the S3 secret key.
-	 * 
+	 *
 	 * @return the S3 secret key
 	 */
 	public String getSecretKey() {
@@ -176,7 +176,7 @@ public class S3DestinationProperties {
 
 	/**
 	 * Set the S3 secret key.
-	 * 
+	 *
 	 * @param secretKey
 	 *        the S3 secret key to use
 	 */
@@ -186,7 +186,7 @@ public class S3DestinationProperties {
 
 	/**
 	 * Get the S3 storage class to use.
-	 * 
+	 *
 	 * @return the S3 storage class; defaults to {@link #DEFAULT_STORAGE_CLASS}
 	 * @since 1.1
 	 */
@@ -196,7 +196,7 @@ public class S3DestinationProperties {
 
 	/**
 	 * Set the S3 storage class to use.
-	 * 
+	 *
 	 * @param storageClass
 	 *        the S3 storage class to set
 	 * @since 1.1

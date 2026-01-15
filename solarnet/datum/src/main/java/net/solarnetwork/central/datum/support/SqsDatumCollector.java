@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.support;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -39,8 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
@@ -73,6 +70,8 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Implementation of {@link DatumWriteOnlyDao} that uses a SQS queue for
@@ -88,21 +87,24 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
  * (like an {@link java.util.concurrent.ArrayBlockingQueue}). The "writer"
  * threads pull from this queue and persist the datum with the configured
  * delegate DAO.
- *
+ * </p>
+ * <p>
  * If a datum cannot be added to the work queue, or does not get persisted
  * within {@code workItemMaxWaitMs}ms, then the datum "overflows" to a SQS
  * queue, encoded into JSON. A configurable number of "reader" threads poll for
  * SQS messages, parse them as JSON back into datum, and then attempt to persist
  * each datum again. If the SQS datum is successfully processed, it's
  * corresponding message is deleted from the SQS queue.
- *
+ * </p>
+ * <p>
  * This design is meant to prioritize saving datum directly, without added to
  * the SQS queue, for maximum performance. There is a small chance for data
  * loss, however, for datum added to the internal work queue but have not yet
  * been persisted and have not yet "overflowed" to SQS. Configuring a smaller
  * work queue and/or shorter {@code workItemMaxWaitMs} reduces the amount of
  * possible data loss, at the expense of an overall decrease in throughput.
- *
+ * </p>
+ * <p>
  * This design also means some datum will be persisted multiple times. First
  * from the chance of a timeout while waiting for a datum that is actively being
  * persisted, and thus "overflows" to SQS even though the datum was successfully
@@ -111,7 +113,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
  * </p>
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLifecycleObserver {
 
@@ -172,7 +174,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	private final DatumWriteOnlyDao datumDao;
 	private final StatTracker stats;
 
-	private BlockingQueue<String> completedSqsMessageHandles = new LinkedHashSetBlockingQueue<>(9);
+	private final BlockingQueue<String> completedSqsMessageHandles = new LinkedHashSetBlockingQueue<>(9);
 
 	private long workItemMaxWaitMs = DEFAULT_WORK_ITEM_MAX_WAIT_MS;
 	private int readConcurrency = DEFAULT_READ_CONCURRENCY;
@@ -468,10 +470,12 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 					}
 				}
 			}
-			if ( writersAlive < writers.length || readersAlive < readers.length ) {
+			if ( (writers != null && writersAlive < writers.length)
+					|| (readers != null && readersAlive < readers.length) ) {
 				return new PingTestResult(false,
 						String.format("Not all threads running: %d/%d writers, %d/%d readers.",
-								writersAlive, writers.length, readersAlive, readers.length),
+								writersAlive, (writers != null ? writers.length : 0), readersAlive,
+								(readers != null ? readers.length : 0)),
 						statMap);
 			}
 		}
@@ -535,12 +539,11 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 					f.get(workItemMaxWaitMs, TimeUnit.MILLISECONDS);
 				} catch ( Exception e ) {
 					f.cancel(false);
-					f = sendToSqs(entity, new CompletableFuture<Object>());
+					f = sendToSqs(entity, new CompletableFuture<>());
 				}
 			}
 		} else {
-			@SuppressWarnings("unused")
-			var unused = sendToSqs(entity, f);
+			var _ = sendToSqs(entity, f);
 		}
 		try {
 			f.get();
@@ -568,8 +571,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 			SendMessageRequest sendMsgRequest = SendMessageRequest.builder().queueUrl(sqsQueueUrl)
 					.messageBody(json).build();
 
-			@SuppressWarnings("unused")
-			var unused = sqsClient.sendMessage(sendMsgRequest).handle((resp, ex) -> {
+			var _ = sqsClient.sendMessage(sendMsgRequest).handle((resp, ex) -> {
 				if ( ex == null ) {
 					stats.increment(BasicCount.SqsQueueAdds);
 					f.complete(resp);
@@ -615,7 +617,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 					stats.increment(BasicCount.DatumFail);
 				}
 				log.warn("Failed to persist datum [{}] after failing to send to SQS queue: {}", entity,
-						e2.toString(), e2);
+						e2, e2);
 				f.completeExceptionally(e);
 			}
 		}
@@ -647,7 +649,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	/**
 	 * A temporary work item.
 	 */
-	public static final record WorkItem(Object entity, CompletableFuture<Object> future) {
+	public record WorkItem(Object entity, CompletableFuture<Object> future) {
 
 	}
 
@@ -715,8 +717,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 			DeleteMessageBatchRequest deleteRequest = DeleteMessageBatchRequest.builder()
 					.queueUrl(sqsQueueUrl).entries(entries).build();
 
-			@SuppressWarnings("unused")
-			var unused = sqsClient.deleteMessageBatch(deleteRequest).handle((resp, ex) -> {
+			var _ = sqsClient.deleteMessageBatch(deleteRequest).handle((resp, ex) -> {
 				if ( ex == null ) {
 					if ( resp != null ) {
 						if ( resp.hasFailed() ) {
@@ -779,29 +780,23 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 						List<String> rejectedReceiptHandles = new ArrayList<>(msgs.size());
 						try {
 							for ( Message msg : msgs ) {
-								try {
-									JsonNode tree = sqsObjectMapper.readTree(msg.body());
-									Object o = DatumJsonUtils.parseDatum(sqsObjectMapper, tree);
-									CompletableFuture<Object> f = new CompletableFuture<Object>();
-									if ( queue.offer(new WorkItem(o, f)) ) {
-										stats.increment(BasicCount.WorkQueueAdds);
-										@SuppressWarnings("unused")
-										var unused = f.thenAccept(r -> {
-											sqsDeleteMessage(msg.receiptHandle());
-										});
-										accepted++;
-									} else {
-										// adjust visibility to 0 to allow reprocessing
-										rejectedReceiptHandles.add(msg.receiptHandle());
-									}
-								} catch ( IOException e ) {
-									throw new RuntimeException(e);
+								JsonNode tree = sqsObjectMapper.readTree(msg.body());
+								Object o = DatumJsonUtils.parseDatum(sqsObjectMapper, tree);
+								CompletableFuture<Object> f = new CompletableFuture<>();
+								if ( queue.offer(new WorkItem(o, f)) ) {
+									stats.increment(BasicCount.WorkQueueAdds);
+									var _ = f.thenAccept(_ -> {
+										sqsDeleteMessage(msg.receiptHandle());
+									});
+									accepted++;
+								} else {
+									// adjust visibility to 0 to allow reprocessing
+									rejectedReceiptHandles.add(msg.receiptHandle());
 								}
 							}
 						} finally {
 							if ( !rejectedReceiptHandles.isEmpty() ) {
-								@SuppressWarnings("unused")
-								var unused = sqsClient.changeMessageVisibilityBatch(changeVizReq -> {
+								var _ = sqsClient.changeMessageVisibilityBatch(changeVizReq -> {
 									List<ChangeMessageVisibilityBatchRequestEntry> entries = rejectedReceiptHandles
 											.stream().map(id -> {
 												return ChangeMessageVisibilityBatchRequestEntry.builder()
@@ -817,7 +812,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 									} else {
 										Throwable t = changeVizEx.getCause();
 										log.warn(
-												"Failed to un-hide {} messages received from SQS queue but rejected by work queue:",
+												"Failed to un-hide {} messages received from SQS queue but rejected by work queue: {}",
 												rejectedReceiptHandles.size(), t.toString());
 									}
 									return changeVizResp;
@@ -901,9 +896,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 					continue;
 				}
 				stats.increment(BasicCount.WorkQueueRemovals, true);
-				if ( item == null ) {
-					continue;
-				}
+
 				if ( item.future.isDone() ) {
 					stats.increment(BasicCount.WorkQueueCancels, true);
 					continue;

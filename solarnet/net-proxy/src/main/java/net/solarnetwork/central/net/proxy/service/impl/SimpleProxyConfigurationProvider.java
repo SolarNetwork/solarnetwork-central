@@ -31,11 +31,7 @@ import java.security.cert.Certificate;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.net.proxy.domain.ProxyConnectionRequest;
@@ -69,8 +65,8 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 	 *
 	 * @see #setExternalServerCommand(String[])
 	 */
-	public static List<String> DEFAULT_EXTERNAL_SERVER_COMMAND = List.of("/usr/local/bin/ncat", "-l",
-			"{port}", "-k", "-c", "/usr/bin/xargs -n1 echo");
+	public static final List<String> DEFAULT_EXTERNAL_SERVER_COMMAND = List.of("/usr/local/bin/ncat",
+			"-l", "{port}", "-k", "-c", "/usr/bin/xargs -n1 echo");
 
 	private static final Logger log = LoggerFactory.getLogger(SimpleProxyConfigurationProvider.class);
 

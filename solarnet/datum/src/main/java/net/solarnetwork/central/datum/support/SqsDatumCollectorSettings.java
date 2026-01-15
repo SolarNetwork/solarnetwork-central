@@ -34,7 +34,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClientBuilder;
  * Settings for the {@link SqsDatumCollector} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SqsDatumCollectorSettings extends SqsProperties {
 
@@ -69,8 +69,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 		SqsAsyncClientBuilder builder = SqsAsyncClient.builder().region(Region.of(getRegion()));
 		String accessKey = getAccessKey();
 		String secretKey = getSecretKey();
-		if ( accessKey != null && accessKey.length() > 0 && secretKey != null
-				&& secretKey.length() > 0 ) {
+		if ( accessKey != null && !accessKey.isBlank() && secretKey != null && !secretKey.isBlank() ) {
 			builder.credentialsProvider(
 					StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)));
 		}

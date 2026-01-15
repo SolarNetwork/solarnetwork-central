@@ -116,7 +116,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 		do {
 			try {
 				if ( transactionTemplate != null ) {
-					processed = transactionTemplate.execute(status -> execute());
+					processed = transactionTemplate.execute(_ -> execute());
 				} else {
 					processed = execute();
 				}
@@ -182,8 +182,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 		} catch ( TimeoutException | InterruptedException | IOException e ) {
 			retry = true;
 			throw new RepeatableTaskException(
-					format("Transient exception handling user node event task %s: %s", event.getId(),
-							e.toString()),
+					format("Transient exception handling user node event task %s: %s", event.getId(), e),
 					e);
 		} catch ( Throwable t ) {
 			Throwable root = t;

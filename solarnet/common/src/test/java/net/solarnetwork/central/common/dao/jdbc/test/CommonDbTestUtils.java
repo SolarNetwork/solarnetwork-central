@@ -155,7 +155,7 @@ public final class CommonDbTestUtils {
 			Iterable<AuditNodeServiceValue> stales) {
 		Map<Aggregation, List<AuditNodeServiceValue>> groups = new HashMap<>(3);
 		for ( AuditNodeServiceValue s : stales ) {
-			groups.computeIfAbsent(s.getAggregation(), a -> new ArrayList<>()).add(s);
+			groups.computeIfAbsent(s.getAggregation(), _ -> new ArrayList<>()).add(s);
 		}
 		for ( Map.Entry<Aggregation, List<AuditNodeServiceValue>> me : groups.entrySet() ) {
 			final Aggregation agg = me.getKey();
@@ -436,7 +436,7 @@ public final class CommonDbTestUtils {
 			Iterable<AuditUserServiceValue> stales) {
 		Map<Aggregation, List<AuditUserServiceValue>> groups = new HashMap<>(3);
 		for ( AuditUserServiceValue s : stales ) {
-			groups.computeIfAbsent(s.getAggregation(), a -> new ArrayList<>()).add(s);
+			groups.computeIfAbsent(s.getAggregation(), _ -> new ArrayList<>()).add(s);
 		}
 		for ( Map.Entry<Aggregation, List<AuditUserServiceValue>> me : groups.entrySet() ) {
 			final Aggregation agg = me.getKey();

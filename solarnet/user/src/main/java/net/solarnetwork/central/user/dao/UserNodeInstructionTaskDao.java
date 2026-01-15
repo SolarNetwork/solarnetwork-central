@@ -81,7 +81,8 @@ public interface UserNodeInstructionTaskDao
 				secureKeys.add(key);
 				result.put(key, e.getValue());
 			}
-			return SecurityUtils.decryptedMap(result, secureKeys, (key) -> secretResolver.apply(id, key));
+			return SecurityUtils.decryptedMap(result, secureKeys,
+					(key) -> secretResolver.apply(id, key));
 		}
 		return result;
 	}

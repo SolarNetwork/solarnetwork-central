@@ -68,7 +68,7 @@ public enum SolrenViewGranularity {
 	private final String key;
 	private final Duration tickDuration;
 
-	private SolrenViewGranularity(String key, Duration tickDuration) {
+	SolrenViewGranularity(String key, Duration tickDuration) {
 		this.key = key;
 		this.tickDuration = tickDuration;
 	}

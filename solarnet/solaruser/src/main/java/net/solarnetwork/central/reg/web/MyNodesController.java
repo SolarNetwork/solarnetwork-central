@@ -233,9 +233,7 @@ public class MyNodesController extends ControllerSupport {
 	 */
 	@ExceptionHandler(CertificateException.class)
 	public void handleCertificateException(CertificateException e, HttpServletResponse res) {
-		if ( log.isWarnEnabled() ) {
-			log.warn("Certificate exception: " + e.getMessage());
-		}
+		log.warn("Certificate exception: {}", e.getMessage());
 		res.setStatus(HttpServletResponse.SC_FORBIDDEN);
 	}
 

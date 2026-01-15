@@ -22,31 +22,26 @@
 
 package net.solarnetwork.central.datum.v2.support;
 
-import java.io.IOException;
-import java.io.Serial;
-import java.io.Serializable;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
-import net.solarnetwork.codec.BasicObjectDatumStreamMetadataField;
+import net.solarnetwork.codec.jackson.BasicObjectDatumStreamMetadataField;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 /**
  * Serializer for {@link ObjectDatumStreamMetadataId}.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  * @since 1.1
  */
 public class BasicObjectDatumStreamMetadataIdSerializer
-		extends StdScalarSerializer<ObjectDatumStreamMetadataId> implements Serializable {
-
-	@Serial
-	private static final long serialVersionUID = -5886091573502558556L;
+		extends StdSerializer<ObjectDatumStreamMetadataId> {
 
 	/** A default instance. */
-	public static final BasicObjectDatumStreamMetadataIdSerializer INSTANCE = new BasicObjectDatumStreamMetadataIdSerializer();
+	public static final ValueSerializer<ObjectDatumStreamMetadataId> INSTANCE = new BasicObjectDatumStreamMetadataIdSerializer();
 
 	/**
 	 * Constructor.
@@ -57,7 +52,7 @@ public class BasicObjectDatumStreamMetadataIdSerializer
 
 	@Override
 	public void serialize(ObjectDatumStreamMetadataId meta, JsonGenerator generator,
-			SerializerProvider provider) throws IOException, JsonGenerationException {
+			SerializationContext provider) throws JacksonException {
 		// @formatter:off
 		final int size =
 				  (meta.getStreamId() != null ? 1 : 0)

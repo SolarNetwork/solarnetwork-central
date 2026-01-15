@@ -1,21 +1,21 @@
 /* ==================================================================
  * DuplicateMessageFilter.java - 8/03/2025 10:56:54 am
- * 
+ *
  * Copyright 2025 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -36,17 +36,17 @@ import ch.qos.logback.core.spi.FilterReply;
 /**
  * Filter out duplicated log messages, taking into consideration parameter
  * values.
- * 
+ *
  * <p>
  * This filter is designed to help eliminate log messages that are repeated
  * frequently. At most {@code cacheSize} messages with at least the configured
  * {@code level} are cached, taking into consideration parameter values.
  * </p>
- * 
+ *
  * <p>
  * Adapted from {@code ch.qos.logback.classic.turbo.DuplicateMessageFilter}.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -110,7 +110,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 	}
 
 	@SuppressWarnings("ArrayRecordComponent")
-	private static record MessageEntry(String format, Object[] params) {
+	private record MessageEntry(String format, Object[] params) {
 
 		@Override
 		public int hashCode() {
@@ -123,8 +123,8 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 
 		@Override
 		public boolean equals(Object o) {
-			return o instanceof MessageEntry m && Objects.equals(format, m.format)
-					&& Arrays.deepEquals(params, m.params);
+			return o instanceof MessageEntry(String f, Object[] p) && Objects.equals(format, f)
+					&& Arrays.deepEquals(params, p);
 		}
 
 		@Override
@@ -143,7 +143,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 
 	}
 
-	private static record MessageMeta(long timestamp, MutableInt count) {
+	private record MessageMeta(long timestamp, MutableInt count) {
 
 	}
 
@@ -205,7 +205,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 
 	/**
 	 * Get the allowed message repetitions.
-	 * 
+	 *
 	 * @return the count; defaults to {@link #DEFAULT_ALLOWED_REPETITIONS}
 	 */
 	public final int getAllowedRepetitions() {
@@ -214,7 +214,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 
 	/**
 	 * Set the allowed message repetitions.
-	 * 
+	 *
 	 * @param allowedRepetitions
 	 *        the count to set
 	 */
@@ -224,7 +224,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 
 	/**
 	 * Get the cache size.
-	 * 
+	 *
 	 * @return the maximum number of cache entries; defaults to
 	 *         {@link #DEFAULT_CACHE_SIZE}
 	 */
@@ -234,7 +234,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 
 	/**
 	 * Set the cache size.
-	 * 
+	 *
 	 * @param cacheSize
 	 *        the maximum number of cache entries to set
 	 */
@@ -244,7 +244,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 
 	/**
 	 * Get the expiration time, in milliseconds.
-	 * 
+	 *
 	 * @return the expiration milliseconds; defaults to
 	 *         {@link #DEFAULT_EXPIRATION_MS}
 	 */
@@ -254,7 +254,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 
 	/**
 	 * Set the expiration time, in milliseconds.
-	 * 
+	 *
 	 * @param expiration
 	 *        the expiration milliseconds to set
 	 */
@@ -264,7 +264,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 
 	/**
 	 * Get the minimum filter level.
-	 * 
+	 *
 	 * @return the level, or {@code null}
 	 */
 	public String getLevel() {
@@ -273,7 +273,7 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 
 	/**
 	 * Set a minimum filter level.
-	 * 
+	 *
 	 * @param level
 	 *        the minimum level, or {@code null} for no minimum
 	 */

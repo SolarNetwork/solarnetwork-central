@@ -47,7 +47,7 @@ public class MyBatisVersionedMessageDao extends BaseMyBatisDao implements Versio
 
 		private final String queryName;
 
-		private QueryName(String queryName) {
+		QueryName(String queryName) {
 			this.queryName = queryName;
 		}
 
@@ -74,7 +74,7 @@ public class MyBatisVersionedMessageDao extends BaseMyBatisDao implements Versio
 		return data.stream().reduce(new Properties(), (p, e) -> {
 			p.put(e.getKey(), e.getValue());
 			return p;
-		}, (l, r) -> l);
+		}, (l, _) -> l);
 	}
 
 }

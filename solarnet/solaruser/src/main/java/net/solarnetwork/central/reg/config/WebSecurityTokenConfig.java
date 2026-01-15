@@ -32,7 +32,7 @@ import net.solarnetwork.central.support.DirectoryCleanerJob;
  * Web security token configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class WebSecurityTokenConfig {
@@ -45,8 +45,7 @@ public class WebSecurityTokenConfig {
 
 	@ConfigurationProperties(prefix = "app.job.security-token-spool.cleaner")
 	@Bean
-	public DirectoryCleanerJob spoolDirectoryCleanerJob() {
-		SecurityTokenFilterSettings settings = tokenAuthenticationFilterSettings();
+	public DirectoryCleanerJob spoolDirectoryCleanerJob(final SecurityTokenFilterSettings settings) {
 		DirectoryCleanerJob job = new DirectoryCleanerJob(settings.getSpoolDirectory());
 		job.setId("SecurityTokenSpoolDirectoryCleaner");
 		job.setGroupId("Housekeeping");

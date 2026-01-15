@@ -74,7 +74,7 @@ public class ExpireDatumJob extends JobSupport {
 				log.error(
 						"Exception deleting datum after {}s for user {} older than {} days matching policy {}: {}",
 						(System.currentTimeMillis() - start) / 1000, config.getUserId(),
-						config.getExpireDays(), config.getFilterJson(), e.toString(), e.getCause());
+						config.getExpireDays(), config.getFilterJson(), e, e.getCause());
 			}
 		}
 	}

@@ -31,10 +31,10 @@ import java.time.ZoneOffset;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumReading;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link ReportingGeneralNodeDatumReading} class.
@@ -56,7 +56,7 @@ public class ReportingGeneralNodeDatumReadingTests {
 
 	@BeforeEach
 	public void setup() {
-		objectMapper = DatumJsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	private ReportingGeneralNodeDatumReading getTestInstance() {

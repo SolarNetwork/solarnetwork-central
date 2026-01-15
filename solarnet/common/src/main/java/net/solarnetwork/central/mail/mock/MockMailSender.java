@@ -127,7 +127,7 @@ public class MockMailSender implements MailSender, JavaMailSender {
 			StringBuilder buf = new StringBuilder();
 			extractContent(mimeMessage.getContent(), buf);
 			log.info("MOCK: sending MIME mail from {} to {} with content:\n{}\n", mimeMessage.getFrom(),
-					mimeMessage.getAllRecipients(), buf.toString());
+					mimeMessage.getAllRecipients(), buf);
 		} catch ( IOException | MessagingException e ) {
 			// ignore
 		}

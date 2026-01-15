@@ -114,7 +114,7 @@ public enum EgaugeTypeCode {
 	private final String unit;
 	private final BigDecimal quantum;
 
-	private EgaugeTypeCode(String key, String unit, BigDecimal quantum) {
+	EgaugeTypeCode(String key, String unit, BigDecimal quantum) {
 		this.key = key;
 		this.unit = unit;
 		this.quantum = quantum;

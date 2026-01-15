@@ -22,26 +22,21 @@
 
 package net.solarnetwork.central.support;
 
-import java.io.IOException;
-import java.io.Serial;
 import java.util.Map;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 /**
  * JSON serializer for {@link UserEvent} objects.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class UserEventSerializer extends StdSerializer<UserEvent> {
-
-	@Serial
-	private static final long serialVersionUID = -193553636996367260L;
 
 	/** A default instance. */
 	public static final UserEventSerializer INSTANCE = new UserEventSerializer();
@@ -51,8 +46,8 @@ public class UserEventSerializer extends StdSerializer<UserEvent> {
 	}
 
 	@Override
-	public void serialize(UserEvent event, JsonGenerator generator, SerializerProvider provider)
-			throws IOException, JsonGenerationException {
+	public void serialize(UserEvent event, JsonGenerator generator, SerializationContext provider)
+			throws JacksonException {
 		if ( event == null ) {
 			generator.writeNull();
 			return;
@@ -62,24 +57,24 @@ public class UserEventSerializer extends StdSerializer<UserEvent> {
 		final boolean haveData = event.getData() != null && !event.getData().isBlank();
 
 		generator.writeStartObject(event, 4 + (haveMessage ? 1 : 0) + (haveData ? 1 : 0));
-		generator.writeNumberField("userId", event.getUserId());
-		generator.writeObjectField("created", event.getCreated());
-		generator.writeStringField("eventId", event.getEventId().toString());
+		generator.writeNumberProperty("userId", event.getUserId());
+		generator.writePOJOProperty("created", event.getCreated());
+		generator.writeStringProperty("eventId", event.getEventId().toString());
 
-		generator.writeFieldName("tags");
+		generator.writeName("tags");
 		generator.writeArray(event.getTags(), 0, event.getTags().length);
 
 		if ( haveMessage ) {
-			generator.writeStringField("message", event.getMessage());
+			generator.writeStringProperty("message", event.getMessage());
 		}
 		if ( haveData ) {
-			generator.writeFieldName("data");
+			generator.writeName("data");
 			try {
 				generator.writeRawValue(event.getData());
 			} catch ( UnsupportedOperationException e ) {
 				// can happen with things like CBOR, so parse as Map
 				Map<String, Object> dataMap = JsonUtils.getStringMap(event.getData());
-				generator.writeObject(dataMap);
+				generator.writePOJO(dataMap);
 			}
 		}
 		generator.writeEndObject();

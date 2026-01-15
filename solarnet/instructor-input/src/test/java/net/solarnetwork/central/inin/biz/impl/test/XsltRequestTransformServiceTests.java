@@ -43,6 +43,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
 import net.sf.saxon.TransformerFactoryImpl;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.inin.biz.TransformConstants;
 import net.solarnetwork.central.inin.biz.impl.DataUriResolver;
 import net.solarnetwork.central.inin.biz.impl.XsltRequestTransformService;
@@ -50,7 +51,6 @@ import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.SharedValueCache;
-import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 import net.solarnetwork.util.CachedResult;
 import net.solarnetwork.util.ClassUtils;
@@ -78,7 +78,7 @@ public class XsltRequestTransformServiceTests {
 		primaryCache = new ConcurrentHashMap<>();
 		sharedCache = new ConcurrentHashMap<>();
 		templatesCache = new BasicSharedValueCache<>(primaryCache, sharedCache);
-		service = new XsltRequestTransformService(dbf, tf, JsonUtils.newDatumObjectMapper(),
+		service = new XsltRequestTransformService(dbf, tf, DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER,
 				Duration.ZERO, templatesCache);
 	}
 

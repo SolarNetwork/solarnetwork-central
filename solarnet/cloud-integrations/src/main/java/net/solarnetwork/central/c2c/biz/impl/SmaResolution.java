@@ -64,7 +64,7 @@ public enum SmaResolution {
 	private final String key;
 	private final TemporalAmount tickAmount;
 
-	private SmaResolution(String key, TemporalAmount tickAmount) {
+	SmaResolution(String key, TemporalAmount tickAmount) {
 		this.key = key;
 		this.tickAmount = tickAmount;
 	}

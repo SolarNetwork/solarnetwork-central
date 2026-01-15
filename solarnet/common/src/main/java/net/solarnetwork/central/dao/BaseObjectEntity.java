@@ -33,7 +33,7 @@ import net.solarnetwork.dao.Entity;
  * primary key.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  * @since 1.34
  */
 public class BaseObjectEntity<K extends Comparable<K> & Serializable> extends BaseObjectIdentity<K>
@@ -44,6 +44,11 @@ public class BaseObjectEntity<K extends Comparable<K> & Serializable> extends Ba
 
 	private Instant created = null;
 	private Instant modified = null;
+
+	@Override
+	public BaseObjectEntity<K> clone() {
+		return (BaseObjectEntity<K>) super.clone();
+	}
 
 	@Override
 	public Instant getCreated() {

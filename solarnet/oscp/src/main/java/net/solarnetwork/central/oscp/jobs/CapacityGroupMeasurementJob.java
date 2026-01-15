@@ -100,7 +100,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 		this.measurementDao = requireNonNullArgument(measurementDao, "measurementDao");
 		this.client = requireNonNullArgument(client, "client");
 		setGroupId("OSCP");
-		setId(this.role.toString() + "-CapacityGroupMeasurement");
+		setId(this.role + "-CapacityGroupMeasurement");
 		setMaximumWaitMs(1800000L);
 	}
 
@@ -132,7 +132,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 		do {
 			processed = false;
 			if ( txTemplate != null ) {
-				processed = txTemplate.execute((tx) -> {
+				processed = txTemplate.execute(_ -> {
 					return exchange(supportedOscpVersions, remainingIterations);
 				});
 			} else {
@@ -223,7 +223,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 			return null;
 		}
 		if ( measurements.size() == 1 ) {
-			return measurements.get(0);
+			return measurements.getFirst();
 		}
 		/*-
 		"value",
@@ -257,7 +257,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 			return null;
 		}
 		if ( measurements.size() == 1 ) {
-			return measurements.get(0);
+			return measurements.getFirst();
 		}
 		/*-
 		"value",
@@ -286,7 +286,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 			return null;
 		}
 		if ( measurements.size() == 1 ) {
-			return measurements.get(0);
+			return measurements.getFirst();
 		}
 		/*-
 		"asset_id",
@@ -299,7 +299,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 		InstantaneousMeasurement inst = combineInstantaneousMeasurements(
 				measurements.stream().map(AssetMeasurement::getInstantaneousMeasurement).toList());
 		AssetMeasurement result = new AssetMeasurement(combinedAssetId,
-				measurements.get(0).getAssetCategory());
+				measurements.getFirst().getAssetCategory());
 		result.setEnergyMeasurement(energy);
 		result.setInstantaneousMeasurement(inst);
 		return result;

@@ -42,7 +42,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * filter.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 3.8
  */
 public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlProvider,
@@ -300,7 +300,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 						// ignore
 				}
 			}
-			if ( group.length() > 0 ) {
+			if ( !group.isEmpty() ) {
 				buf.append("GROUP BY ").append(group.substring(2)).append("\n");
 			}
 		}
@@ -328,7 +328,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 					order.append(", aud_source_id");
 				}
 			}
-			if ( order.length() > 0 ) {
+			if ( !order.isEmpty() ) {
 				buf.append("ORDER BY ").append(order.substring(idx));
 			}
 		}

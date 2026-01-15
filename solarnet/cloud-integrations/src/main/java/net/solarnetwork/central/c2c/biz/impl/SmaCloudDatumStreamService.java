@@ -64,7 +64,6 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -93,12 +92,13 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * SMA implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -153,6 +153,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
@@ -237,8 +238,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(LoggerFactory.getLogger(SmaCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SmaCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager, clock, integrationLocksCache));
+						_ -> SmaCloudIntegrationService.SECURE_SETTINGS, oauthClientManager, clock,
+						integrationLocksCache));
 	}
 
 	@Override
@@ -286,7 +287,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 	private List<CloudDataValue> systems(CloudIntegrationConfiguration integration) {
 		List<CloudDataValue> result = restOpsHelper.httpGet("List systems", integration, JsonNode.class,
-				req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH)
 						.buildAndExpand(integration.getServiceProperties()).toUri(),
 				res -> parseSystems(res.getBody()));
@@ -347,8 +348,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		if ( json == null ) {
 			return List.of();
 		}
-		final String id = json.path("plantId").asText();
-		final String name = json.path("name").asText().trim();
+		final String id = json.path("plantId").asString();
+		final String name = json.path("name").asString().trim();
 
 		final var meta = new LinkedHashMap<String, Object>(4);
 		populateNonEmptyValue(json, "timezone", CloudDataValue.TIME_ZONE_METADATA, meta);
@@ -357,7 +358,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		if ( addrNode.has("street") && addrNode.has("streetNo") ) {
 			meta.put(CloudDataValue.STREET_ADDRESS_METADATA, "%s %s".formatted(
-					addrNode.get("streetNo").textValue(), addrNode.get("street").textValue()));
+					addrNode.get("streetNo").stringValue(), addrNode.get("street").stringValue()));
 		}
 
 		populateNonEmptyValue(addrNode, "city", CloudDataValue.LOCALITY_METADATA, meta);
@@ -386,7 +387,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			final String systemId, Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List system devices", integration, JsonNode.class,
 		// @formatter:off
-				req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SYSTEM_DEVICES_PATH_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
@@ -417,8 +418,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		final List<CloudDataValue> result = new ArrayList<>(8);
 
 		for ( JsonNode devNode : json.path("devices") ) {
-			final String id = devNode.path("deviceId").asText();
-			final String name = devNode.path("name").asText().trim();
+			final String id = devNode.path("deviceId").asString();
+			final String name = devNode.path("name").asString().trim();
 
 			final var meta = new LinkedHashMap<String, Object>(4);
 			populateNonEmptyValue(devNode, "product", CloudDataValue.DEVICE_MODEL_METADATA, meta);
@@ -441,7 +442,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			final String systemId, final String deviceId, Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List device measurement sets", integration, JsonNode.class,
 		// @formatter:off
-				req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(DEVICE_MEASUREMENT_SETS_PATH_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
@@ -476,7 +477,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		final List<CloudDataValue> result = new ArrayList<>(8);
 
 		for ( JsonNode measSetNode : json.path("sets") ) {
-			final String measSetName = measSetNode.textValue();
+			final String measSetName = measSetNode.stringValue();
 			try {
 				final SmaMeasurementSetType measSet = SmaMeasurementSetType.fromValue(measSetName);
 				if ( measSet != null ) {
@@ -580,7 +581,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					for ( Entry<SmaMeasurementSetType, List<ValueRef>> measurementSetEntry : devPlan.measurementSetRefs
 							.entrySet() ) {
 						restOpsHelper.httpGet("List device measurement set data", integration,
-								JsonNode.class, req -> {
+								JsonNode.class, _ -> {
 									UriComponentsBuilder b = fromUri(
 											resolveBaseUrl(integration, BASE_URI))
 													.path(DEVICE_MEASUREMENT_DATA_PATH_TEMPALTE);
@@ -605,7 +606,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			if ( !e.getValue().isEmpty() ) {
 				Instant ts = e.getValue().lastKey();
 				greatestTimestampPerStream.compute(e.getKey(),
-						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
 			}
 			allDatum.addAll(e.getValue().values());
 		}
@@ -687,13 +688,14 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			if ( !dataNode.has("time") ) {
 				continue;
 			}
-			Instant ts = LocalDateTime.parse(dataNode.get("time").textValue()).atZone(zone).toInstant();
+			Instant ts = LocalDateTime.parse(dataNode.get("time").stringValue()).atZone(zone)
+					.toInstant();
 			if ( ts.isBefore(filter.getStartDate()) ) {
 				continue;
 			} else if ( !ts.isBefore(filter.getEndDate()) ) {
 				break;
 			}
-			GeneralDatum datum = resultDatum.computeIfAbsent(sourceId, k -> new TreeMap<>())
+			GeneralDatum datum = resultDatum.computeIfAbsent(sourceId, _ -> new TreeMap<>())
 					.computeIfAbsent(ts,
 							k -> new GeneralDatum(
 									new DatumId(ds.getKind(), ds.getObjectId(), sourceId, k),
@@ -748,9 +750,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/([^/]+)/(.+)");
 
-	private static record ValueRef(String systemId, String deviceId,
-			SmaMeasurementSetType measurementSet, SmaMeasurementType<?> measurement,
-			CloudDatumStreamPropertyConfiguration property) {
+	private record ValueRef(String systemId, String deviceId, SmaMeasurementSetType measurementSet,
+			SmaMeasurementType<?> measurement, CloudDatumStreamPropertyConfiguration property) {
 
 	}
 
@@ -778,7 +779,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		private void addValueRef(ValueRef ref) {
 			assert ref != null;
-			measurementSetRefs.computeIfAbsent(ref.measurementSet, k -> new ArrayList<>(4)).add(ref);
+			measurementSetRefs.computeIfAbsent(ref.measurementSet, _ -> new ArrayList<>(4)).add(ref);
 		}
 	}
 
@@ -788,9 +789,9 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		private void addValueRef(ZoneId zone, ValueRef ref) {
 			assert ref != null;
-			zoneDevicePlans.computeIfAbsent(zone, k -> new LinkedHashMap<>(4))
+			zoneDevicePlans.computeIfAbsent(zone, _ -> new LinkedHashMap<>(4))
 					.computeIfAbsent(ref.deviceId,
-							k -> new DeviceQueryPlan(ref.systemId, ref.deviceId, zone))
+							_ -> new DeviceQueryPlan(ref.systemId, ref.deviceId, zone))
 					.addValueRef(ref);
 		}
 
@@ -881,7 +882,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		result = restOpsHelper.httpGet("Query for system details", integration, JsonNode.class,
 		// @formatter:off
-				headers -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(SYSTEM_VIEW_PATH_TEMPLATE)
 							.buildAndExpand(systemId)
 							.toUri()
@@ -890,7 +891,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					ZoneId zone = ZoneOffset.UTC;
 					var json = res.getBody();
 					String zoneId = json != null
-							? StringUtils.nonEmptyString(json.findValue("timezone").asText())
+							? StringUtils.nonEmptyString(json.findValue("timezone").asString())
 							: null;
 					if ( zoneId != null ) {
 						try {

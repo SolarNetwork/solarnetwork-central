@@ -27,7 +27,7 @@ import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.util.DateUtils;
 
 /**

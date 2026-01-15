@@ -58,7 +58,7 @@ function dinManagement() {
 		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=includeResponseBody]'), inclResBody);
 		
 		SolarReg.Settings.prepareEditServiceForm(modal
-			, type == TRANSFORM_SYS ? transformServices : []
+			, type === TRANSFORM_SYS ? transformServices : []
 			, settingTemplates);
 			
 		// populate transforms, if available
@@ -88,7 +88,7 @@ function dinManagement() {
 	 * @returns {Boolean} `false` to return from event callback
 	 */
 	function modalEditFormSubmit(event, renderFn) {
-		SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(_req, res) {
 			renderFn([res], true);
 		});
 		return false;

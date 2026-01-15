@@ -24,7 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
-import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import java.io.BufferedReader;
@@ -62,8 +62,6 @@ import org.slf4j.Logger;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
 import net.solarnetwork.central.common.dao.jdbc.CommonDbUtils;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
@@ -85,7 +83,7 @@ import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.domain.AuditNodeServiceValue;
 import net.solarnetwork.central.domain.AuditUserServiceValue;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
@@ -94,6 +92,9 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.ObjectReadContext;
+import tools.jackson.core.json.JsonFactory;
 
 /**
  * Utilities for working with datum at the database level.
@@ -447,7 +448,7 @@ public final class DatumDbUtils {
 			Function<AggregateDatum, AggregateDatum> mapper) throws IOException {
 
 		List<AggregateDatum> result = new ArrayList<>();
-		JsonFactory factory = new JsonFactory();
+		JsonFactory factory = JsonFactory.builder().build();
 		try (BufferedReader r = new BufferedReader(
 				new InputStreamReader(clazz.getResourceAsStream(resource), StandardCharsets.UTF_8))) {
 			while ( true ) {
@@ -460,7 +461,7 @@ public final class DatumDbUtils {
 					continue;
 				}
 				if ( AGG.matcher(line).find() ) {
-					JsonParser parser = factory.createParser(line);
+					JsonParser parser = factory.createParser(ObjectReadContext.empty(), line);
 					AggregateDatum d = DatumJsonUtils.parseAggregateDatum(parser, metadataProvider);
 					if ( mapper != null ) {
 						d = mapper.apply(d);
@@ -793,7 +794,7 @@ public final class DatumDbUtils {
 					Object id = datumStmt.getObject(1);
 					UUID streamId = (id instanceof UUID uuid ? uuid
 							: id != null ? UUID.fromString(id.toString()) : null);
-					result.computeIfAbsent(nspk, k -> streamMetadata(jdbcTemplate, streamId));
+					result.computeIfAbsent(nspk, _ -> streamMetadata(jdbcTemplate, streamId));
 				}
 			}
 			return null;

@@ -92,7 +92,7 @@ public final class DbUtils {
         "INSERT INTO solaruser.user_auth_token(auth_token,auth_secret,user_id,status,token_type,jpolicy)"
             + " VALUES (?,?,?,?::solaruser.user_auth_token_status,?::solaruser.user_auth_token_type,?::jsonb)",
         tokenId, tokenSecret, userId, active ? "Active" : "Disabled", type,
-        net.solarnetwork.codec.JsonUtils.getJSONString(policy, null));
+        net.solarnetwork.codec.jackson.JsonUtils.getJSONString(policy, null));
     // CHECKSTYLE ON: LineLength
   }
 

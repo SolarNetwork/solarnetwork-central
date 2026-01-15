@@ -1,21 +1,21 @@
 /* ==================================================================
  * JCacheFactoryBean.java - 31/08/2017 9:22:34 AM
- * 
+ *
  * Copyright 2017 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -46,14 +46,14 @@ import org.springframework.beans.factory.InitializingBean;
 
 /**
  * Factory bean for {@link Cache} instances.
- * 
+ *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, InitializingBean {
 
 	/** Cache expiry policy type. */
-	public static enum ExpiryPolicy {
+	public enum ExpiryPolicy {
 		Accessed,
 		Created,
 		Updated,
@@ -84,7 +84,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param cacheManager
 	 *        the cache manager
 	 * @param keyType
@@ -202,14 +202,9 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 		return (this.cache != null ? this.cache.getClass() : Cache.class);
 	}
 
-	@Override
-	public boolean isSingleton() {
-		return true;
-	}
-
 	/**
 	 * Set the cache name.
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 */
@@ -219,7 +214,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Set the store-by-value flag.
-	 * 
+	 *
 	 * @param storeByValue
 	 *        the store-by-value to set
 	 */
@@ -229,7 +224,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Set the expiry policy.
-	 * 
+	 *
 	 * @param expiryPolicy
 	 *        the expiry policy to set
 	 */
@@ -239,7 +234,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Set the expiry duration.
-	 * 
+	 *
 	 * @param expiryDuration
 	 *        the expiry duration to set
 	 */
@@ -249,7 +244,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Set the read-through flag.
-	 * 
+	 *
 	 * @param readThrough
 	 *        the read-through to set
 	 */
@@ -259,7 +254,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Set the write-through flag.
-	 * 
+	 *
 	 * @param writeThrough
 	 *        the write-through to set
 	 */
@@ -269,7 +264,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Set the statistics-enabled flag.
-	 * 
+	 *
 	 * @param statisticsEnabled
 	 *        the statistics-enabled to set
 	 */
@@ -279,7 +274,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Set the read-through loader factory.
-	 * 
+	 *
 	 * @param readThroughLoaderFactory
 	 *        the loader to set
 	 */
@@ -290,7 +285,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Set the write-through writer factory.
-	 * 
+	 *
 	 * @param writeThroughWriterFactory
 	 *        the writer to set
 	 */
@@ -301,12 +296,12 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Set the maximum entries to store in main memory.
-	 * 
+	 *
 	 * <p>
 	 * This is an EhCache specific vendor extension, that only works if EhCache
 	 * is available on the classpath.
 	 * </p>
-	 * 
+	 *
 	 * @param heapMaxEntries
 	 *        the max heap entries to configure
 	 * @since 1.1
@@ -317,12 +312,12 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Set the maximum size, in MB, to store on disk.
-	 * 
+	 *
 	 * <p>
 	 * This is an EhCache specific vendor extension, that only works if EhCache
 	 * is available on the classpath.
 	 * </p>
-	 * 
+	 *
 	 * @param diskMaxSizeMB
 	 *        the max disk size to store
 	 * @since 1.1
@@ -333,7 +328,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Get the disk persistence setting.
-	 * 
+	 *
 	 * @return {@literal true} if disk storage should be persistent across
 	 *         restarts; defaults to {@literal false}
 	 * @since 1.2
@@ -344,7 +339,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Set the disk persistence setting.
-	 * 
+	 *
 	 * @param diskPersistent
 	 *        {@literal true} if disk storage should be persistent across
 	 *        restarts; defaults to {@literal false}, {@literal false} to clear

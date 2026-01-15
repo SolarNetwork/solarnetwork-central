@@ -22,12 +22,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
-
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.SecurityPolicy;
 import net.solarnetwork.flux.vernemq.webhook.domain.Actor;
 import net.solarnetwork.flux.vernemq.webhook.domain.ActorDetails;
@@ -44,22 +42,22 @@ public class ActorDetailsRowMapper implements RowMapper<Actor> {
   /**
    * The default value for the {@code userIdCol} property.
    */
-  public static int DEFAULT_USER_ID_COL = 1;
+  public static final int DEFAULT_USER_ID_COL = 1;
 
   /**
    * The default value for the {@code tokenTypeCol} property.
    */
-  public static int DEFAULT_TOKEN_TYPE_COL = 2;
+  public static final int DEFAULT_TOKEN_TYPE_COL = 2;
 
   /**
    * The default value for the {@code policyCol} property.
    */
-  public static int DEFAULT_POLICY_COL = 3;
+  public static final int DEFAULT_POLICY_COL = 3;
 
   /**
    * The default value for the {@code nodeIdsCol} property.
    */
-  public static int DEFAULT_NODE_IDS_COL = 4;
+  public static final int DEFAULT_NODE_IDS_COL = 4;
 
   private static final Logger log = LoggerFactory.getLogger(ActorDetailsRowMapper.class);
 

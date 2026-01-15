@@ -63,7 +63,7 @@ public enum ForecastType implements CodedValue {
 
 	private final char code;
 
-	private ForecastType(char code) {
+	ForecastType(char code) {
 		this.code = code;
 	}
 

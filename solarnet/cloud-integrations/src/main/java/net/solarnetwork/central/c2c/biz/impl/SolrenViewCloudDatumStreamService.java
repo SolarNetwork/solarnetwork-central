@@ -224,7 +224,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 				SolrenViewGranularity.FiveMinute.getKey());
 		var granularityTitles = unmodifiableMap(Arrays.stream(SolrenViewGranularity.values())
 				.collect(Collectors.toMap(SolrenViewGranularity::getKey, SolrenViewGranularity::getKey,
-						(l, r) -> r, () -> new LinkedHashMap<>(SolrenViewGranularity.values().length))));
+						(_, r) -> r, () -> new LinkedHashMap<>(SolrenViewGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
 
 		SETTINGS = List.of(granularitySpec, SOURCE_ID_MAP_SETTING_SPECIFIER,
@@ -304,7 +304,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 				new RestOperationsHelper(
 						LoggerFactory.getLogger(SolrenViewCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SolrenViewCloudIntegrationService.SECURE_SETTINGS));
+						_ -> SolrenViewCloudIntegrationService.SECURE_SETTINGS));
 	}
 
 	@Override
@@ -381,7 +381,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/(-?\\d+)/([^/]+)/(.+)");
 
-	private static record ValueRef(Object siteId, String componentId, String fieldName,
+	private record ValueRef(Object siteId, String componentId, String fieldName,
 			CloudDatumStreamPropertyConfiguration property) {
 
 	}
@@ -430,8 +430,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 				Long siteId = Long.valueOf(m.group(1));
 				String componentId = m.group(2);
 				String fieldName = m.group(3);
-				refsBySiteComponent.computeIfAbsent(siteId, k -> new LinkedHashMap<>(8))
-						.computeIfAbsent(componentId, k -> new ArrayList<>(8))
+				refsBySiteComponent.computeIfAbsent(siteId, _ -> new LinkedHashMap<>(8))
+						.computeIfAbsent(componentId, _ -> new ArrayList<>(8))
 						.add(new ValueRef(siteId, componentId, fieldName, config));
 			}
 
@@ -771,8 +771,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			if ( sourceId == null ) {
 				continue;
 			}
-			GeneralDatum datum = datumByTimeSource.computeIfAbsent(ts, k -> new LinkedHashMap<>(8))
-					.compute(sourceId, (s, d) -> {
+			GeneralDatum datum = datumByTimeSource.computeIfAbsent(ts, _ -> new LinkedHashMap<>(8))
+					.compute(sourceId, (_, d) -> {
 						if ( d == null ) {
 							d = new GeneralDatum(new DatumId(datumStream.getKind(),
 									datumStream.getObjectId(), sourceId, ts), new DatumSamples());
@@ -816,7 +816,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		assert refs != null;
 
 		final Map<String, ValueRef> refsByField = refs.stream()
-				.collect(toMap(r -> r.fieldName, identity(), (l, r) -> l));
+				.collect(toMap(r -> r.fieldName, identity(), (l, _) -> l));
 
 		NodeList nodeList = componentNode.getChildNodes();
 		for ( int i = 0, len = nodeList.getLength(); i < len; i++ ) {

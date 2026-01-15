@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.SequencedCollection;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumCollectionFunctions;
@@ -46,7 +45,7 @@ import net.solarnetwork.central.datum.domain.DatumHttpFunctions;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumDateFunctions;
@@ -60,12 +59,13 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.tariff.Tariff;
 import net.solarnetwork.domain.tariff.TariffSchedule;
 import net.solarnetwork.domain.tariff.TariffUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Expression root object for {@link NodeInstruction} processing.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, DatumDateFunctions,
 		DatumHttpFunctions, DatumMathFunctions, DatumStringFunctions {
@@ -339,18 +339,15 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 		}
 
 		TariffSchedule result = null;
-		if ( result == null ) {
-			Object tariffData = meta.metadataAtPath(path);
-			if ( tariffData != null ) {
-				Locale locale = resolveLocale(meta, path);
-				try {
-					result = TariffUtils.parseCsvTemporalRangeSchedule(locale, true, true, null,
-							tariffData);
-				} catch ( Exception e ) {
-					String msg = "Error parsing tariff schedule at metadata path [%s]: %s"
-							.formatted(path, e.getMessage());
-					throw new IllegalArgumentException(msg);
-				}
+		Object tariffData = meta.metadataAtPath(path);
+		if ( tariffData != null ) {
+			Locale locale = resolveLocale(meta, path);
+			try {
+				result = TariffUtils.parseCsvTemporalRangeSchedule(locale, true, true, null, tariffData);
+			} catch ( Exception e ) {
+				String msg = "Error parsing tariff schedule at metadata path [%s]: %s".formatted(path,
+						e.getMessage());
+				throw new IllegalArgumentException(msg);
 			}
 		}
 		return result;
@@ -669,9 +666,6 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 * @return the matching datum, or {@literal null} if not available
 	 */
 	public DatumExpressionRoot datumAt(ObjectDatumStreamMetadata streamMeta, Instant timestamp) {
-		if ( streamMeta == null ) {
-			return null;
-		}
 		if ( datumStreamsAccessor == null || streamMeta == null || timestamp == null ) {
 			return null;
 		}

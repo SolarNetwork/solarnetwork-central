@@ -94,7 +94,8 @@ public abstract class BaseSolcastCloudDatumStreamService
 	protected static final String QUERY_PARAM_USE_LIVE_DATA = "live";
 
 	/**
-	 * An internal parameter map with just the {@link #USE_LIVE_DATA} value set.
+	 * An internal parameter map with just the
+	 * {@link #QUERY_PARAM_USE_LIVE_DATA} value set.
 	 *
 	 * @since 1.2
 	 */
@@ -185,7 +186,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings,
 				new SolcastRestOperationsHelper(restOpsLogger, userEventAppenderBiz, restOps,
 						INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SolcastCloudIntegrationService.SECURE_SETTINGS));
+						_ -> SolcastCloudIntegrationService.SECURE_SETTINGS));
 	}
 
 	/**

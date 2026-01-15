@@ -47,17 +47,17 @@ import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.SharedValueCache;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Base service class for XSLT support.
  *
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServiceInfoProvider
 		implements EntityResolver {
@@ -205,7 +205,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 			}
 		}
 
-		Function<String, Templates> provider = (key) -> {
+		Function<String, Templates> provider = _ -> {
 			try (Reader xsltInput = new StringReader(xslt)) {
 				Document xsltDoc = documentBuilder().parse(new InputSource(xsltInput));
 				return transformerFactory.newTemplates(new DOMSource(xsltDoc));
@@ -225,7 +225,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 			if ( xsltCacheKey != null ) {
 				t = templatesCache.put(xsltCacheKey, xsltSharedKey, provider, cacheTtlSeconds);
 			} else {
-				t = provider.apply(xsltCacheKey);
+				t = provider.apply(null);
 			}
 		} catch ( IllegalStateException e ) {
 			throw new IOException(e.getMessage(), e.getCause());

@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.5.9' apply false
+	id 'org.springframework.boot' version '4.0.1' apply false
 }
 
 apply plugin: 'java-library'
@@ -16,16 +16,10 @@ dependencyManagement {
 }
 
 description = 'SolarNet: User Billing'
-version = '3.0.1'
+version = '4.0.0'
 
 base {
 	archivesName = 'solarnet-user-billing'
-}
-
-configurations {
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-	all*.exclude group: 'xml-apis', module: 'xml-apis'
 }
 
 dependencies {
@@ -37,7 +31,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
 	// DAO
@@ -51,9 +45,8 @@ dependencies {
 
 	// JSON
 	implementation 'com.fasterxml.jackson.core:jackson-annotations'
-	implementation 'com.fasterxml.jackson.core:jackson-core'
-	implementation 'com.fasterxml.jackson.core:jackson-databind'
-	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	implementation 'tools.jackson.core:jackson-core'
+	implementation 'tools.jackson.core:jackson-databind'
 	
 	// PDF Support
 	implementation libraries.batik
@@ -65,7 +58,7 @@ dependencies {
 	
 	
 	// Utilities
-	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation "de.siegmar:fastcsv:${fastCsvVersion}"
 	implementation "org.jsoup:jsoup:${jsoupVersion}"
 	implementation 'org.slf4j:slf4j-api'
 	

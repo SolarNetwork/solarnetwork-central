@@ -91,12 +91,12 @@ public class JdbcAuditService implements AuditService {
   public static final String DEFAULT_NODE_SOURCE_INCREMENT_SQL = "{call solardatm.audit_increment_mqtt_byte_count(?,?,?,?,?)}";
 
   /**
-   * The default value for the {@link mqttServiceName} property.
+   * The default value for the {@code mqttServiceName} property.
    */
   public static final String DEFAULT_AUDIT_MQTT_SERVICE_NAME = "flxi";
 
   /**
-   * The default value for the {@link mqttServiceName} property.
+   * The default value for the {@code mqttServiceName} property.
    *
    * @since 1.2
    */
@@ -218,7 +218,7 @@ public class JdbcAuditService implements AuditService {
   }
 
   private void addCount(DelayedKey key, int count) {
-    counters.computeIfAbsent(key, k -> new AtomicInteger(0)).addAndGet(count);
+    counters.computeIfAbsent(key, _ -> new AtomicInteger(0)).addAndGet(count);
     counterQueue.add(key);
   }
 

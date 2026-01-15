@@ -35,9 +35,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.transaction.TransactionException;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -46,7 +43,7 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
@@ -59,12 +56,15 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * MQTT implementation of upload service.
  *
  * @author matt
- * @version 3.1
+ * @version 4.0
  */
 public class MqttDataCollector extends BaseMqttConnectionObserver implements MqttMessageHandler {
 
@@ -168,9 +168,9 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 			SecurityUtils.becomeNode(nodeId);
 
 			parseMqttMessage(objectMapper, message, topic, nodeId, true);
-		} catch ( IOException e ) {
+		} catch ( JacksonException | IOException e ) {
 			log.debug("Communication error handling message on MQTT topic {}", topic, e);
-			if ( e instanceof JsonParseException ) {
+			if ( e instanceof JacksonException ) {
 				final byte[] payload = message.getPayload();
 				log.warn("Error parsing MQTT topic {} message [{}]: {}", topic,
 						encodeHexString(payload, 0, payload.length, false), e.getMessage());
@@ -253,7 +253,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 			StreamDatum d = objectMapper.treeToValue(node, StreamDatum.class);
 			dataCollectorBiz.postStreamDatum(singleton(d));
 			getMqttStats().increment(SolarInCountStat.StreamDatumReceived);
-		} catch ( IOException e ) {
+		} catch ( JacksonException e ) {
 			log.debug("Unable to parse StreamDatum: {}", e.getMessage());
 		}
 	}
@@ -307,7 +307,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 							: SolarInCountStat.LegacyLocationDatumReceived
 					: checkVersion ? SolarInCountStat.NodeDatumReceived
 							: SolarInCountStat.LegacyNodeDatumReceived);
-		} catch ( IOException e ) {
+		} catch ( JacksonException e ) {
 			log.debug("Unable to parse GeneralDatum: {}", e.getMessage());
 		}
 	}
@@ -332,7 +332,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 
 	private String getStringFieldValue(JsonNode node, String fieldName, String placeholder) {
 		JsonNode child = node.get(fieldName);
-		return (child == null ? placeholder : child.asText());
+		return (child == null ? placeholder : child.asString());
 	}
 
 	/*---------------------

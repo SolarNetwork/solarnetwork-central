@@ -213,16 +213,16 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				.unmodifiableMap(requireNonNullArgument(integrationServices, "integrationServices")
 						.stream().sorted(comparing(CloudIntegrationService::getId))
 						.collect(Collectors.toMap(CloudIntegrationService::getId, Function.identity(),
-								(l, r) -> l, LinkedHashMap::new)));
+								(l, _) -> l, LinkedHashMap::new)));
 		this.datumStreamServices = Collections.unmodifiableMap(integrationServices.stream()
 				.flatMap(s -> StreamSupport.stream(s.datumStreamServices().spliterator(), false))
 				.sorted(comparing(CloudDatumStreamService::getId))
 				.collect(Collectors.toMap(CloudDatumStreamService::getId, Function.identity(),
-						(l, r) -> l, LinkedHashMap::new)));
+						(l, _) -> l, LinkedHashMap::new)));
 		this.controlServices = Collections.unmodifiableMap(integrationServices.stream()
 				.flatMap(s -> StreamSupport.stream(s.controlServices().spliterator(), false))
 				.sorted(comparing(CloudControlService::getId))
-				.collect(Collectors.toMap(CloudControlService::getId, Function.identity(), (l, r) -> l,
+				.collect(Collectors.toMap(CloudControlService::getId, Function.identity(), (l, _) -> l,
 						LinkedHashMap::new)));
 
 		// create a map of all services to their corresponding secure keys
@@ -912,7 +912,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C digestSensitiveInformation(
 			C entity) {
 		if ( entity == null ) {
-			return entity;
+			return null;
 		}
 		if ( entity instanceof UserRelatedStdIdentifiableConfigurationEntity u ) {
 			u.digestSensitiveInformation(serviceSecureKeys::get);

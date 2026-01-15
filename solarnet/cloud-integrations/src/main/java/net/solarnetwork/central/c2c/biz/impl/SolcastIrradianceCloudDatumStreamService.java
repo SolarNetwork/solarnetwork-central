@@ -52,7 +52,6 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -78,13 +77,14 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Solcast implementation of {@link CloudDatumStreamService} using the
  * irradiance API.
  *
  * @author matt
- * @version 1.8
+ * @version 2.0
  */
 public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDatumStreamService {
 
@@ -119,6 +119,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
@@ -336,7 +337,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		}
 
 		return restOpsHelper.httpGet("List irradiance data", integration, JsonNode.class,
-				req -> uriBuilder.buildAndExpand().toUri(), res -> parseDatum(res.getBody(), datumStream,
+				_ -> uriBuilder.buildAndExpand().toUri(), res -> parseDatum(res.getBody(), datumStream,
 						refsByFieldName, resolution, startDate, endDate));
 	}
 
@@ -353,7 +354,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/(.+)");
 
-	private static record ValueRef(String fieldName, SolcastIrradianceType type,
+	private record ValueRef(String fieldName, SolcastIrradianceType type,
 			CloudDatumStreamPropertyConfiguration property) {
 
 	}
@@ -440,11 +441,11 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		*/
 		List<GeneralDatum> result = new ArrayList<>(8);
 		for ( JsonNode node : json.path("estimated_actuals") ) {
-			String end = nonEmptyString(node.path("period_end").asText());
+			String end = nonEmptyString(node.path("period_end").asString());
 			if ( end == null ) {
 				continue;
 			}
-			String per = nonEmptyString(node.path("period").asText());
+			String per = nonEmptyString(node.path("period").asString());
 			Duration d = resolution;
 			if ( per != null ) {
 				d = Duration.parse(per);

@@ -29,14 +29,12 @@ import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSettings;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSubscriptionSetting;
 import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link TopicSettings} class.
@@ -53,7 +51,7 @@ public class TopicSettingsTests extends TestSupport {
   }
 
   @Test
-  public void toJsonFull() throws JsonProcessingException {
+  public void toJsonFull() {
     TopicSettings settings = new TopicSettings(Arrays.asList(
         TopicSubscriptionSetting.builder().withTopic("foo").withQos(Qos.AtLeastOnce).build(),
         TopicSubscriptionSetting.builder().withTopic("bar").withQos(Qos.ExactlyOnce).build()));

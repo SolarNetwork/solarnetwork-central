@@ -27,8 +27,8 @@ package net.solarnetwork.central.domain;
 import java.util.Map;
 
 /**
- * API for a "filter-able" object, that is something that can be searched
- * for by specifying filter keys and associated match values.
+ * API for a "filter-able" object, that is something that can be searched for by
+ * specifying filter keys and associated match values.
  * 
  * @author matt
  * @version 1.0
@@ -41,5 +41,5 @@ public interface Filter {
 	 * @return a filter map
 	 */
 	Map<String, ?> getFilter();
-	
+
 }

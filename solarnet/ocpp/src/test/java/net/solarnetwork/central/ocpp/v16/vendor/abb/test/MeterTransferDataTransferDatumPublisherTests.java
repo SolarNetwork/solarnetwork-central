@@ -53,7 +53,7 @@ import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.v16.vendor.abb.MeterTransferDataTransferDatumPublisher;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.ocpp.domain.ActionMessage;
@@ -101,7 +101,7 @@ public class MeterTransferDataTransferDatumPublisherTests {
 	@BeforeEach
 	public void setup() {
 		publisher = new MeterTransferDataTransferDatumPublisher(chargePointDao, chargePointSettingsDao,
-				chargePointConnectorDao, datumDao, JsonUtils.newObjectMapper());
+				chargePointConnectorDao, datumDao, JsonUtils.JSON_OBJECT_MAPPER);
 		publisher.setFluxPublisher(fluxPublisher);
 	}
 

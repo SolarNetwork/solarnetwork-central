@@ -44,7 +44,7 @@ public enum CloudDatumStreamValueType {
 	private final String key;
 	private final boolean expression;
 
-	private CloudDatumStreamValueType(char key, boolean expression) {
+	CloudDatumStreamValueType(char key, boolean expression) {
 		this.key = String.valueOf(key);
 		this.expression = expression;
 	}
@@ -81,10 +81,10 @@ public enum CloudDatumStreamValueType {
 	 * Get an enum instance for a key value.
 	 *
 	 * @param key
-	 *        the key
+	 * 		the key
 	 * @return the enum
 	 * @throws IllegalArgumentException
-	 *         if {@code key} is not a valid value
+	 * 		if {@code key} is not a valid value
 	 */
 	public static CloudDatumStreamValueType valueOf(char key) {
 		for ( CloudDatumStreamValueType e : CloudDatumStreamValueType.values() ) {
@@ -99,10 +99,10 @@ public enum CloudDatumStreamValueType {
 	 * Get an enum instance for a name or key value.
 	 *
 	 * @param value
-	 *        the enumeration name or key value, case-insensitve
+	 * 		the enumeration name or key value, case-insensitve
 	 * @return the enum, or {@literal null} if value is {@literal null} or empty
 	 * @throws IllegalArgumentException
-	 *         if {@code value} is not a valid value
+	 * 		if {@code value} is not a valid value
 	 */
 	@JsonCreator
 	public static CloudDatumStreamValueType fromValue(String value) {

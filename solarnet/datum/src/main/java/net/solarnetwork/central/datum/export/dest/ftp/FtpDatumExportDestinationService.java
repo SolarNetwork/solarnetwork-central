@@ -118,7 +118,7 @@ public class FtpDatumExportDestinationService extends BaseDatumExportDestination
 		try {
 			uri = new URI(destUrl);
 		} catch ( URISyntaxException e ) {
-			throw new IOException("Invalid URL [" + destUrl + "]: " + e.toString(), e);
+			throw new IOException("Invalid URL [" + destUrl + "]: " + e, e);
 		}
 
 		FTPClient ftp = ("ftps".equalsIgnoreCase(uri.getScheme()) ? new FTPSClient(props.isImplicitTls())

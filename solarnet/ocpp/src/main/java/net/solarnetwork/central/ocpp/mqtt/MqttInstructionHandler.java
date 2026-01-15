@@ -33,8 +33,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -42,7 +40,7 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
@@ -58,12 +56,15 @@ import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
 import net.solarnetwork.service.Identifiable;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Handle OCPP instruction messages by publishing/subscribing them to/from MQTT.
  *
  * @author matt
- * @version 2.5
+ * @version 3.0
  */
 public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqttConnectionObserver
 		implements ActionMessageProcessor<JsonNode, Void>, MqttMessageHandler, CentralOcppUserEvents {
@@ -138,7 +139,8 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 				Future<?> f = conn.publish(msg);
 				f.get(getPublishTimeoutSeconds(), TimeUnit.SECONDS);
 				resultHandler.handleActionMessageResult(message, null, null);
-			} catch ( IOException | TimeoutException | ExecutionException | InterruptedException e ) {
+			} catch ( JacksonException | TimeoutException | ExecutionException
+					| InterruptedException e ) {
 				log.warn(
 						"Error posting OCPP instruction {} action {} to MQTT topic {} for charge point {}: {}",
 						message.getMessageId(), message.getAction(), mqttTopic, message.getClientId(),
@@ -190,7 +192,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 				}
 
 				Action action = null;
-				String actionName = json.path("action").textValue();
+				String actionName = json.path("action").stringValue();
 				JsonNode payload = json.path("message");
 				if ( actionName != null ) {
 					for ( T a : actionClass.getEnumConstants() ) {
@@ -212,55 +214,52 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 								action, payload);
 						log.info("Sending instruction {} action {} to charge point {}", instructionId,
 								action, identity);
-						boolean sent = broker.sendMessageToChargePoint(actionMessage,
-								(msg, res, err) -> {
-									if ( err != null ) {
-										Throwable root = err;
-										while ( root.getCause() != null ) {
-											root = root.getCause();
-										}
-										log.info(
-												"Failed to send instruction {} action {} to charge point {}: {}",
-												instructionId, actionMessage.getAction(),
-												actionMessage.getClientId(), root.getMessage());
-										Map<String, Object> data = singletonMap(ERROR_DATA_KEY,
-												format("Error handling OCPP action %s: %s",
-														actionMessage.getAction(), root.getMessage()));
-										if ( instructionDao.compareAndUpdateInstructionState(
-												instructionId, cp.getNodeId(),
-												InstructionState.Executing, InstructionState.Declined,
-												data) ) {
-											generateUserEvent(cp.getUserId(),
-													CHARGE_POINT_INSTRUCTION_ERROR_TAGS,
-													"Error handling OCPP action", data);
+						boolean sent = broker.sendMessageToChargePoint(actionMessage, (_, res, err) -> {
+							if ( err != null ) {
+								Throwable root = err;
+								while ( root.getCause() != null ) {
+									root = root.getCause();
+								}
+								log.info(
+										"Failed to send instruction {} action {} to charge point {}: {}",
+										instructionId, actionMessage.getAction(),
+										actionMessage.getClientId(), root.getMessage());
+								Map<String, Object> data = singletonMap(ERROR_DATA_KEY,
+										format("Error handling OCPP action %s: %s",
+												actionMessage.getAction(), root.getMessage()));
+								if ( instructionDao.compareAndUpdateInstructionState(instructionId,
+										cp.getNodeId(), InstructionState.Executing,
+										InstructionState.Declined, data) ) {
+									generateUserEvent(cp.getUserId(),
+											CHARGE_POINT_INSTRUCTION_ERROR_TAGS,
+											"Error handling OCPP action", data);
 
-										}
-									} else {
-										Map<String, Object> resultParameters = null;
-										if ( res != null ) {
-											resultParameters = JsonUtils
-													.getStringMapFromTree(objectMapper.valueToTree(res));
-										}
-										log.info("Sent instruction {} action {} to charge point {}.",
-												instructionId, actionMessage.getAction(),
-												actionMessage.getClientId());
-										if ( instructionDao.compareAndUpdateInstructionState(
-												instructionId, cp.getNodeId(),
-												InstructionState.Executing, InstructionState.Completed,
-												resultParameters != null && !resultParameters.isEmpty()
-														? resultParameters
-														: null) ) {
-											Map<String, Object> data = new HashMap<>(4);
-											data.put(ACTION_DATA_KEY, actionMessage.getAction());
-											data.put(CHARGE_POINT_DATA_KEY, identity.getIdentifier());
-											data.put(MESSAGE_DATA_KEY, resultParameters);
-											generateUserEvent(cp.getUserId(),
-													CHARGE_POINT_INSTRUCTION_ACKNOWLEDGED_TAGS, null,
-													data);
-										}
-									}
-									return true;
-								});
+								}
+							} else {
+								Map<String, Object> resultParameters = null;
+								if ( res != null ) {
+									resultParameters = JsonUtils
+											.getStringMapFromTree(objectMapper.valueToTree(res));
+								}
+								log.info("Sent instruction {} action {} to charge point {}.",
+										instructionId, actionMessage.getAction(),
+										actionMessage.getClientId());
+								if ( instructionDao.compareAndUpdateInstructionState(instructionId,
+										cp.getNodeId(), InstructionState.Executing,
+										InstructionState.Completed,
+										resultParameters != null && !resultParameters.isEmpty()
+												? resultParameters
+												: null) ) {
+									Map<String, Object> data = new HashMap<>(4);
+									data.put(ACTION_DATA_KEY, actionMessage.getAction());
+									data.put(CHARGE_POINT_DATA_KEY, identity.getIdentifier());
+									data.put(MESSAGE_DATA_KEY, resultParameters);
+									generateUserEvent(cp.getUserId(),
+											CHARGE_POINT_INSTRUCTION_ACKNOWLEDGED_TAGS, null, data);
+								}
+							}
+							return true;
+						});
 						if ( !sent ) {
 							Map<String, Object> data = new HashMap<>(4);
 							data.put(ACTION_DATA_KEY, actionName);

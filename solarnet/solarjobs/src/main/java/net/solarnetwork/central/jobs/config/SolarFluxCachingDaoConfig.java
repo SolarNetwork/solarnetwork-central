@@ -89,8 +89,7 @@ public class SolarFluxCachingDaoConfig implements SolarJobsAppConfiguration {
 	@Qualifier(CACHING)
 	@Bean
 	@Primary
-	public FluxPublishSettingsDao cachingDatumEndpointConfigurationDao(
-			FluxPublishSettingsDao dao,
+	public FluxPublishSettingsDao cachingDatumEndpointConfigurationDao(FluxPublishSettingsDao dao,
 			@Qualifier(SOLARFLUX_DATUM_PUBLISH_SETTINGS_CACHE) Cache<UserLongStringCompositePK, FluxPublishSettings> cache) {
 		return new CachingFluxPublishSettingsDao(dao, cache);
 	}

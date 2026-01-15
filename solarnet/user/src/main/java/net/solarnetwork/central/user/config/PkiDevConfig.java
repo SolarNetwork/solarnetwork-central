@@ -29,7 +29,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import net.solarnetwork.central.user.biz.NodePKIBiz;
 import net.solarnetwork.central.user.pki.dev.DevNodePKIBiz;
 import net.solarnetwork.service.CertificateService;
 import net.solarnetwork.service.CertificationAuthorityService;
@@ -57,7 +56,7 @@ public class PkiDevConfig {
 	CertificationAuthorityService certificationAuthorityService;
 
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public NodePKIBiz pkiBiz() {
+	public DevNodePKIBiz pkiBiz() {
 		DevNodePKIBiz biz = new DevNodePKIBiz();
 		biz.setCaService(certificationAuthorityService);
 		biz.setCertificateService(certificateService);

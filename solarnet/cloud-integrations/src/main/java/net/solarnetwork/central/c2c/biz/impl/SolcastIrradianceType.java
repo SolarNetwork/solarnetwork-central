@@ -281,7 +281,7 @@ public enum SolcastIrradianceType {
 	private final String unit;
 	private final String description;
 
-	private SolcastIrradianceType(String key, String name, String unit, String description) {
+	SolcastIrradianceType(String key, String name, String unit, String description) {
 		this.key = key;
 		this.name = name;
 		this.unit = unit;

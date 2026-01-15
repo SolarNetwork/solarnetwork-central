@@ -55,7 +55,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlView;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -72,11 +72,10 @@ public class WebConfig implements WebMvcConfigurer {
 
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
 		// @formatter:off
-		configurer.favorPathExtension(true)
+		configurer
 			.favorParameter(false)
 			.ignoreAcceptHeader(false)
 			.useRegisteredExtensionsOnly(true)

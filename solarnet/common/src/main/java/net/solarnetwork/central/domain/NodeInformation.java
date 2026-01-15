@@ -38,14 +38,14 @@ public interface NodeInformation extends NodeIdentity {
 	 * @return generation capacity watts
 	 */
 	Long getGenerationCapacityWatts();
-	
+
 	/**
 	 * Get a theoretical maximum power storage capacity.
 	 * 
 	 * @return storage capacity in watt hours
 	 */
 	Long getStorageCapacityWattHours();
-	
+
 	/**
 	 * Get the location of the node.
 	 * 

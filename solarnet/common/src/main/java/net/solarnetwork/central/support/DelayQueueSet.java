@@ -160,9 +160,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 
 	/**
 	 * Inserts the specified element into this delay queue. As the queue is
-	 * unbounded this method will never block
-	 *
-	 * {@inheritDoc}
+	 * unbounded this method will never block {@inheritDoc}
 	 */
 	@Override
 	public void put(E e) {

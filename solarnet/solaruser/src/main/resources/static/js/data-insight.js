@@ -16,7 +16,7 @@ $(document).ready(function() {
 	}
 	
 	function populateCounts(container, counts) {
-		var i, len, item, prop;
+		var i, len, item;
 		for ( i = 0, len = counts.length; i < len; i+=1 ) {
 			item = counts[i];
 			createLocalizedNumbers(item);

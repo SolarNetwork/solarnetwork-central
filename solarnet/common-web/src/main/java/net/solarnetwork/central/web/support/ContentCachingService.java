@@ -71,7 +71,7 @@ public interface ContentCachingService {
 
 		private final String contentEncoding;
 
-		private CompressionType(String contentEncoding) {
+		CompressionType(String contentEncoding) {
 			this.contentEncoding = contentEncoding;
 		}
 

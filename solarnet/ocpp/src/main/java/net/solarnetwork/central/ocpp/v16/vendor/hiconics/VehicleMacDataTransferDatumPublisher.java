@@ -22,11 +22,8 @@
 
 package net.solarnetwork.central.ocpp.v16.vendor.hiconics;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -36,7 +33,7 @@ import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.service.DatumPublisherSupport;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
@@ -45,6 +42,9 @@ import net.solarnetwork.util.ObjectUtils;
 import ocpp.v16.jakarta.cs.DataTransferRequest;
 import ocpp.v16.jakarta.cs.DataTransferResponse;
 import ocpp.v16.jakarta.cs.DataTransferStatus;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Publish Hiconics data transfer vehicle MAC messages as a datum stream.
@@ -71,7 +71,7 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  * </pre>
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -151,12 +151,12 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 		final JsonNode root;
 		try {
 			root = mapper.readTree(data.trim());
-		} catch ( IOException e ) {
+		} catch ( JacksonException e ) {
 			log.warn("Failed to parse DataTransfer data JSON [{}]: {}", data, e);
 			return null;
 		}
 
-		final String vid = root.path("vehicleId").textValue();
+		final String vid = root.path("vehicleId").stringValue();
 		final Instant ts = JsonUtils.parseDateAttribute(root, "timestamp", DateTimeFormatter.ISO_INSTANT,
 				Instant::from);
 		final int connId = root.path("connectorId").intValue();

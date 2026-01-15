@@ -23,23 +23,23 @@
 package net.solarnetwork.central.support;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.IOException;
 import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Function;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.service.RemoteServiceException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Basic service to publish objects to SolarFlux.
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements Function<T, Future<?>> {
 
@@ -126,12 +126,12 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 						Base64.getEncoder().encodeToString(payload));
 			}
 			return conn.publish(new BasicMqttMessage(topic, retained, qos, payload));
-		} catch ( IOException e ) {
+		} catch ( JacksonException e ) {
 			Throwable root = e;
 			while ( root.getCause() != null ) {
 				root = root.getCause();
 			}
-			log.error("Error publishing {} to SolarFlux topic {}: {}", item, topic, root.toString(), e);
+			log.error("Error publishing {} to SolarFlux topic {}: {}", item, topic, root, e);
 			return CompletableFuture.failedFuture(e);
 		}
 	}

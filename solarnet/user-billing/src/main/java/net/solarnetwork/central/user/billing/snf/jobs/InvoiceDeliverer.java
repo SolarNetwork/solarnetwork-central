@@ -77,7 +77,7 @@ public class InvoiceDeliverer implements AccountTaskHandler {
 		}
 		final Long invoiceId;
 		try {
-			invoiceId = (invoiceIdVal instanceof Number n ? n.longValue()
+			invoiceId = (invoiceIdVal instanceof Number n ? (Long) n.longValue()
 					: Long.valueOf(invoiceIdVal.toString()));
 		} catch ( IllegalArgumentException e ) {
 			log.error(
@@ -87,7 +87,7 @@ public class InvoiceDeliverer implements AccountTaskHandler {
 		}
 		final Long userId;
 		try {
-			userId = (userIdVal instanceof Number n ? n.longValue()
+			userId = (userIdVal instanceof Number n ? (Long) n.longValue()
 					: Long.valueOf(userIdVal.toString()));
 		} catch ( IllegalArgumentException e ) {
 			log.error(

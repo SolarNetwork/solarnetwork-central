@@ -24,7 +24,7 @@ package net.solarnetwork.central.common.http;
 
 import static java.lang.String.format;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
-import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.InetAddress;
 import java.net.URI;
@@ -54,7 +54,7 @@ import net.solarnetwork.central.domain.CommonUserEvents;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.RemoteServiceException;
@@ -298,16 +298,14 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 					req != null ? req.getUrl() : null, e.getStatusCode());
 
 			// try to capture response body
-			if ( e.getResponseBodyAsByteArray() != null ) {
-				try {
-					String respBody = e.getResponseBodyAsString();
-					if ( respBody.length() > USER_EVENT_MAX_RESPONSE_BODY_LENGTH ) {
-						respBody = respBody.substring(0, USER_EVENT_MAX_RESPONSE_BODY_LENGTH);
-					}
-					eventData.put(HTTP_RESPONSE_BODY_DATA_KEY, respBody);
-				} catch ( Exception e2 ) {
-					// forget it, we don't need the drama
+			try {
+				String respBody = e.getResponseBodyAsString();
+				if ( respBody.length() > USER_EVENT_MAX_RESPONSE_BODY_LENGTH ) {
+					respBody = respBody.substring(0, USER_EVENT_MAX_RESPONSE_BODY_LENGTH);
 				}
+				eventData.put(HTTP_RESPONSE_BODY_DATA_KEY, respBody);
+			} catch ( Exception e2 ) {
+				// forget it, we don't need the drama
 			}
 			eventData.put(HTTP_STATUS_CODE_DATA_KEY, e.getStatusCode().value());
 			tags = errorEventTags;

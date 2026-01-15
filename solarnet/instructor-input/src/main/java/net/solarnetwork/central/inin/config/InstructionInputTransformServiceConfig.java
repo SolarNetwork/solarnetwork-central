@@ -34,7 +34,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sf.saxon.TransformerFactoryImpl;
 import net.solarnetwork.central.inin.biz.impl.DataUriResolver;
 import net.solarnetwork.central.inin.biz.impl.XsltRequestTransformService;
@@ -43,12 +42,13 @@ import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.central.support.SharedValueCache;
 import net.solarnetwork.central.support.xslt.RandomUuidFunction;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Configuration for transform services.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 public class InstructionInputTransformServiceConfig {

@@ -36,7 +36,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.net.URI;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,7 +64,7 @@ import net.solarnetwork.domain.Result.ErrorDetail;
  * Test cases for the {@link FroniusCloudIntegrationService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -182,11 +181,11 @@ public class FroniusCloudIntegrationServiceTests {
 			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
 			.as("Request URI for inverter telemetry")
 			.returns(listSystemsUri, from(RequestEntity::getUrl))
-			.extracting(RequestEntity::getHeaders, map(String.class, List.class))
+			.extracting(r -> r.getHeaders().toSingleValueMap(), map(String.class, String.class))
 			.as("Request headers contains API key")
-			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, List.of(apiKey))
+			.containsEntry(FroniusCloudIntegrationService.ACCESS_KEY_ID_HEADER, apiKey)
 			.as("Request headers contains API secret")
-			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, List.of(apiSecret))
+			.containsEntry(FroniusCloudIntegrationService.ACCES_KEY_SECRET_HEADER, apiSecret)
 			;
 
 		and.then(result)

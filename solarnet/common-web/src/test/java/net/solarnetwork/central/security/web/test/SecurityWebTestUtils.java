@@ -251,7 +251,7 @@ public final class SecurityWebTestUtils {
 
 	private static byte[] computeSigningKey(String secretKey, Date date) {
 		/*- signing key is like:
-
+		
 		HMACSHA256(HMACSHA256("SNWS2"+secretKey, "20160301"), "snws2_request")
 		*/
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
@@ -265,7 +265,7 @@ public final class SecurityWebTestUtils {
 
 	private static String computeSignatureData(String canonicalRequestData, Date date) {
 		/*- signature data is like:
-
+		
 		 	SNWS2-HMAC-SHA256\n
 		 	20170301T120000Z\n
 		 	Hex(SHA256(canonicalRequestData))

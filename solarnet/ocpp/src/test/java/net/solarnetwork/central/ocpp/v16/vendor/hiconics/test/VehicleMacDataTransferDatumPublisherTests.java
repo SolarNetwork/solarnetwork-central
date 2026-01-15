@@ -54,7 +54,7 @@ import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.v16.vendor.hiconics.VehicleMacDataTransferDatumPublisher;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.BasicActionMessage;
@@ -101,7 +101,7 @@ public class VehicleMacDataTransferDatumPublisherTests {
 	@BeforeEach
 	public void setup() {
 		publisher = new VehicleMacDataTransferDatumPublisher(chargePointDao, chargePointSettingsDao,
-				chargePointConnectorDao, datumDao, JsonUtils.newObjectMapper());
+				chargePointConnectorDao, datumDao, JsonUtils.JSON_OBJECT_MAPPER);
 		publisher.setFluxPublisher(fluxPublisher);
 	}
 

@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.domain.BaseClaimableJob;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Entity for user-specific datum import jobs.

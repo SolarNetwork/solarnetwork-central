@@ -31,9 +31,9 @@ import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import org.springframework.boot.EnvironmentPostProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor;
-import org.springframework.boot.env.EnvironmentPostProcessor;
 import org.springframework.boot.logging.DeferredLog;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.CommandLinePropertySource;
@@ -41,19 +41,18 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.util.StreamUtils;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.cloud.domain.ContainerMetadata;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.util.ByteUtils;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Load up application metadata into the environment.
  *
  * @author matt
- * @version 1.5
+ * @version 2.0
  */
 public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
@@ -103,7 +102,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 	public void postProcessEnvironment(ConfigurableEnvironment environment,
 			SpringApplication application) {
 		application.addInitializers(
-				ctx -> logger.replayTo(ApplicationMetadataEnvironmentPostProcessor.class));
+				_ -> logger.replayTo(ApplicationMetadataEnvironmentPostProcessor.class));
 
 		Properties appProps = new Properties();
 
@@ -173,9 +172,8 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 	}
 
 	public ContainerMetadata ecsContainerMetadataV4(String uri) {
-		ObjectMapper mapper = JsonUtils.newObjectMapper();
 		try (InputStream in = new URI(uri).toURL().openStream();
-				JsonParser p = mapper.createParser(in)) {
+				JsonParser p = JsonUtils.JSON_OBJECT_MAPPER.createParser(in)) {
 			ObjectNode root = p.readValueAsTree();
 			JsonNode taskArn = root.get("TaskARN");
 			if ( taskArn == null ) {
@@ -183,7 +181,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 						root));
 				return null;
 			}
-			String taskId = taskArn.textValue();
+			String taskId = taskArn.stringValue();
 			if ( taskId == null || taskId.isBlank() ) {
 				logger.error(format("TaskARN empty in ECS container metadata from [%s]: %s", uri, root));
 				return null;
@@ -197,11 +195,9 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 			logger.info(format("Discovered ECS metadata from [%s]: %s", uri, root));
 			return meta;
 		} catch ( URISyntaxException e ) {
-			logger.error(format("URL syntax error for ECS container metadata from [%s]: %s", uri,
-					e.toString()));
+			logger.error(format("URL syntax error for ECS container metadata from [%s]: %s", uri, e));
 		} catch ( IOException e ) {
-			logger.error(
-					format("IO error reading ECS container metadata from [%s]: %s", uri, e.toString()));
+			logger.error(format("IO error reading ECS container metadata from [%s]: %s", uri, e));
 		}
 		return null;
 	}

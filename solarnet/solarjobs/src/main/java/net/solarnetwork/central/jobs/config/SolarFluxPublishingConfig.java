@@ -31,9 +31,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.jdbc.core.JdbcOperations;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.agg.StaleSolarFluxProcessor;
 import net.solarnetwork.central.datum.flux.SolarFluxDatumPublisher;
@@ -42,14 +39,19 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.scheduler.ManagedJob;
 import net.solarnetwork.central.support.UserEventSerializer;
-import net.solarnetwork.codec.CborUtils;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.CborUtils;
+import net.solarnetwork.codec.jackson.JsonDateUtils;
+import tools.jackson.databind.JacksonModule;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 /**
  * Configuration for SolarFlux publishing.
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 @Profile("mqtt")
@@ -75,22 +77,25 @@ public class SolarFluxPublishingConfig {
 	 *
 	 * @since 1.1
 	 */
-	public static final com.fasterxml.jackson.databind.Module SOLARFLUX_MODULE;
+	public static final JacksonModule SOLARFLUX_MODULE;
 	static {
 		SimpleModule m = new SimpleModule("SolarFlux");
 		m.addSerializer(UserEvent.class, UserEventSerializer.INSTANCE);
 		SOLARFLUX_MODULE = m;
 	}
 
+	/**
+	 * A mapper for SolarFlux publishing.
+	 *
+	 * @return the mapper
+	 */
 	@Bean
 	@Qualifier(SOLARFLUX)
-	public ObjectMapper solarFluxObjectMapper() {
-		ObjectMapper mapper = JsonUtils
-				.createObjectMapper(CborUtils.cborFactory(), JsonUtils.JAVA_TIMESTAMP_MODULE)
-				.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-				.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
-		mapper.registerModule(SOLARFLUX_MODULE);
-		return mapper;
+	public CBORMapper solarFluxObjectMapper() {
+		return CborUtils.CBOR_OBJECT_MAPPER.rebuild()
+				.addModules(JsonDateUtils.JAVA_TIMESTAMP_MODULE, SOLARFLUX_MODULE)
+				.enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+				.disable(DateTimeFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS).build();
 	}
 
 	@Bean

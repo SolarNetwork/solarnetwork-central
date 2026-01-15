@@ -31,7 +31,7 @@ import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
@@ -82,7 +82,7 @@ public class MyBatisSolarNodeMetadataDao extends BaseMyBatisGenericDao<SolarNode
 			}).collect(toList());
 		}
 
-		return new BasicFilterResults<SolarNodeMetadataFilterMatch, Long>(rows,
-				Long.valueOf(rows.size()), offset != null ? offset : 0L, rows.size());
+		return new BasicFilterResults<>(rows, Long.valueOf(rows.size()), offset != null ? offset : 0L,
+				rows.size());
 	}
 }

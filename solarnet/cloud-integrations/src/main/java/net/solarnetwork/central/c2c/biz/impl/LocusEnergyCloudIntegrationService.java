@@ -152,8 +152,7 @@ public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudI
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(LocusEnergyCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
-						integrationLocksCache));
+						_ -> SECURE_SETTINGS, oauthClientManager, clock, integrationLocksCache));
 	}
 
 	@Override
@@ -206,7 +205,7 @@ public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudI
 		// validate by requesting the available sites for the partner ID
 		try {
 			final String response = restOpsHelper.httpGet("List sites", integration, String.class,
-					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI)).path(
+					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI)).path(
 							LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
 							.buildAndExpand(integration.getServiceProperties()).toUri(),
 					HttpEntity::getBody);

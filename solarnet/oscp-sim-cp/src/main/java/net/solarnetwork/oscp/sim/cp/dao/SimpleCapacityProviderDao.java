@@ -1,21 +1,21 @@
 /* ==================================================================
  * SimpleCapacityProviderDao.java - 23/08/2022 11:53:49 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,7 +23,6 @@
 package net.solarnetwork.oscp.sim.cp.dao;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,20 +39,21 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.oscp.sim.cp.domain.SystemConfiguration;
 import net.solarnetwork.security.AuthorizationException;
 import net.solarnetwork.security.AuthorizationException.Reason;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Basic implementation of {@link CapacityProviderDao} that saves data to a
  * file.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class SimpleCapacityProviderDao
 		implements CapacityProviderDao, ServiceLifecycleObserver, PingTest {
@@ -124,7 +124,7 @@ public class SimpleCapacityProviderDao
 		if ( Files.isReadable(path) ) {
 			try {
 				return mapper.readValue(path.toFile(), type);
-			} catch ( IOException e ) {
+			} catch ( JacksonException e ) {
 				throw new RuntimeException(
 						"Error loading %s data from [%s]: %s".formatted(name, path, e.toString()));
 			}
@@ -136,7 +136,7 @@ public class SimpleCapacityProviderDao
 		Path path = baseDir.resolve(name + ".json");
 		try {
 			mapper.writeValue(path.toFile(), data);
-		} catch ( IOException e ) {
+		} catch ( JacksonException e ) {
 			throw new RuntimeException(
 					"Error saving %s data to [%s]: %s".formatted(name, path, e.toString()));
 		}
@@ -227,7 +227,7 @@ public class SimpleCapacityProviderDao
 
 	/**
 	 * Get the base directory path.
-	 * 
+	 *
 	 * @return the base directory path
 	 */
 	public Path getBaseDir() {
@@ -236,7 +236,7 @@ public class SimpleCapacityProviderDao
 
 	/**
 	 * Set the base directory path.
-	 * 
+	 *
 	 * @param baseDir
 	 *        the base directory to set
 	 */

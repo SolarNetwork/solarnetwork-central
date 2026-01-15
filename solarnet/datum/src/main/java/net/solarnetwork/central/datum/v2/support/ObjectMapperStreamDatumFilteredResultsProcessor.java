@@ -22,13 +22,13 @@
 
 package net.solarnetwork.central.datum.v2.support;
 
-import static net.solarnetwork.codec.BasicObjectDatumStreamDataSetSerializer.DATA_FIELD_NAME;
-import static net.solarnetwork.codec.BasicObjectDatumStreamDataSetSerializer.META_FIELD_NAME;
-import static net.solarnetwork.codec.BasicObjectDatumStreamDataSetSerializer.RETURNED_RESULT_COUNT_FIELD_NAME;
-import static net.solarnetwork.codec.BasicObjectDatumStreamDataSetSerializer.STARTING_OFFSET_FIELD_NAME;
-import static net.solarnetwork.codec.BasicObjectDatumStreamDataSetSerializer.TOTAL_RESULT_COUNT_FIELD_NAME;
-import static net.solarnetwork.codec.JsonUtils.writeDecimalArrayValues;
-import static net.solarnetwork.codec.JsonUtils.writeStringArrayValues;
+import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerializer.DATA_FIELD_NAME;
+import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerializer.META_FIELD_NAME;
+import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerializer.RETURNED_RESULT_COUNT_FIELD_NAME;
+import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerializer.STARTING_OFFSET_FIELD_NAME;
+import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerializer.TOTAL_RESULT_COUNT_FIELD_NAME;
+import static net.solarnetwork.codec.jackson.JsonUtils.writeDecimalArrayValues;
+import static net.solarnetwork.codec.jackson.JsonUtils.writeStringArrayValues;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Status;
@@ -40,22 +40,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.util.MimeType;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonGenerator.Feature;
-import com.fasterxml.jackson.core.io.SerializedString;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
-import net.solarnetwork.codec.BasicObjectDatumStreamMetadataSerializer;
+import net.solarnetwork.codec.jackson.BasicObjectDatumStreamMetadataSerializer;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.StreamDatum;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.exc.StreamWriteException;
+import tools.jackson.databind.SerializationContext;
 
 /**
  * {@link FilteredResultsProcessor} for encoding overall results into datum
@@ -155,17 +153,17 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </pre>
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  * @since 1.3
  */
 public final class ObjectMapperStreamDatumFilteredResultsProcessor
 		implements StreamDatumFilteredResultsProcessor {
 
 	/** The success array field name. */
-	public static final SerializedString SUCCESS_FIELD_NAME = new SerializedString("success");
+	public static final String SUCCESS_FIELD_NAME = "success";
 
 	private final JsonGenerator generator;
-	private final SerializerProvider provider;
+	private final SerializationContext provider;
 	private final MimeType mimeType;
 
 	private ObjectDatumStreamMetadataProvider metadataProvider;
@@ -177,19 +175,20 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 * Constructor.
 	 *
 	 * @param generator
-	 *        the generator to use
+	 *        the generator to use; <b>note</b> that
+	 *        {@code StreamWriteFeature.AUTO_CLOSE_TARGET} should be enabled for
+	 *        the underlying stream to be closed when {@code #close()} is called
 	 * @param provider
 	 *        the provider to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public ObjectMapperStreamDatumFilteredResultsProcessor(JsonGenerator generator,
-			SerializerProvider provider, MimeType mimeType) {
+			SerializationContext provider, MimeType mimeType) {
 		super();
 		this.generator = requireNonNullArgument(generator, "generator");
 		this.provider = requireNonNullArgument(provider, "provider");
 		this.mimeType = requireNonNullArgument(mimeType, "mimeType");
-		this.generator.enable(Feature.AUTO_CLOSE_TARGET);
 	}
 
 	@Override
@@ -214,24 +213,24 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 				+ (streamIds != null && !streamIds.isEmpty() ? 2 : 0);
 
 		generator.writeStartObject(this, count);
-		generator.writeFieldName(SUCCESS_FIELD_NAME);
+		generator.writeName(SUCCESS_FIELD_NAME);
 		generator.writeBoolean(true);
 
 		if ( expectedResultCount != null ) {
-			generator.writeFieldName(RETURNED_RESULT_COUNT_FIELD_NAME);
+			generator.writeName(RETURNED_RESULT_COUNT_FIELD_NAME);
 			generator.writeNumber(expectedResultCount);
 		}
 		if ( startingOffset != null ) {
-			generator.writeFieldName(STARTING_OFFSET_FIELD_NAME);
+			generator.writeName(STARTING_OFFSET_FIELD_NAME);
 			generator.writeNumber(startingOffset);
 		}
 		if ( totalResultCount != null ) {
-			generator.writeFieldName(TOTAL_RESULT_COUNT_FIELD_NAME);
+			generator.writeName(TOTAL_RESULT_COUNT_FIELD_NAME);
 			generator.writeNumber(totalResultCount);
 		}
 
 		if ( streamIds != null && !streamIds.isEmpty() ) {
-			generator.writeFieldName(META_FIELD_NAME);
+			generator.writeName(META_FIELD_NAME);
 			generator.writeStartArray(metadataProvider, streamIds.size());
 			int i = 0;
 			for ( UUID streamId : streamIds ) {
@@ -242,7 +241,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			}
 			generator.writeEndArray();
 
-			generator.writeFieldName(DATA_FIELD_NAME);
+			generator.writeName(DATA_FIELD_NAME);
 			generator.writeStartArray();
 		}
 	}
@@ -251,7 +250,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	public void handleResultItem(StreamDatum d) throws IOException {
 		final ObjectDatumStreamMetadata meta = metadataProvider.metadataForStreamId(d.getStreamId());
 		if ( meta == null ) {
-			throw new JsonMappingException(generator, String.format(
+			throw new StreamWriteException(generator, String.format(
 					"Metadata for stream %s not available for datum %d", d.getStreamId(), resultIndex));
 		}
 		final String[] iNames = meta.propertyNamesForType(Instantaneous);

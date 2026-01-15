@@ -37,11 +37,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.dao.BasicUserNodeInstructionTaskFilter;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskFilter;
-import net.solarnetwork.central.user.dao.jdbc.sql.DeleteUserNodeInstructionTaskEntity;
-import net.solarnetwork.central.user.dao.jdbc.sql.InsertUserNodeInstructionTaskEntity;
-import net.solarnetwork.central.user.dao.jdbc.sql.SelectUserNodeInstructionTaskEntity;
-import net.solarnetwork.central.user.dao.jdbc.sql.UpdateUserNodeInstructionTaskEntity;
-import net.solarnetwork.central.user.dao.jdbc.sql.UpdateUserNodeInstructionTaskEntityState;
+import net.solarnetwork.central.user.dao.jdbc.sql.*;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
@@ -54,7 +50,7 @@ import net.solarnetwork.domain.SortDescriptor;
  */
 public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDao {
 
-	public static String DEFAULT_CLAIM_JOB_SQL = "{call solaruser.claim_node_instr_task()}";
+	public static final String DEFAULT_CLAIM_JOB_SQL = "{call solaruser.claim_node_instr_task()}";
 
 	private final JdbcOperations jdbcOps;
 	private final String claimTaskSql;

@@ -43,10 +43,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
@@ -70,6 +66,11 @@ import ocpp.v16.jakarta.cp.ChangeAvailabilityResponse;
 import ocpp.v16.jakarta.cp.ChangeConfigurationRequest;
 import ocpp.v16.jakarta.cp.ChangeConfigurationResponse;
 import ocpp.v16.jakarta.cp.ConfigurationStatus;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
 
 /**
  * Test cases for the {@link MattInstructionHandler} class.
@@ -94,9 +95,10 @@ public class MqttInstructionHandlerTests {
 		chargePointRouter = EasyMock.createMock(ChargePointRouter.class);
 		chargePointBroker = EasyMock.createMock(ChargePointBroker.class);
 		mqttConnection = EasyMock.createMock(MqttConnection.class);
-		objectMapper = new ObjectMapper();
-		objectMapper.setDefaultPropertyInclusion(Include.NON_NULL);
-		objectMapper.registerModule(new JakartaXmlBindAnnotationModule());
+		objectMapper = JsonMapper.builder()
+				.changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(Include.NON_NULL))
+				.changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(Include.NON_NULL))
+				.addModule(new JakartaXmlBindAnnotationModule()).build();
 		handler = new MqttInstructionHandler<>(ChargePointAction.class, instructionDao, chargePointDao,
 				objectMapper, chargePointRouter);
 	}
@@ -142,7 +144,7 @@ public class MqttInstructionHandlerTests {
 		replayAll();
 
 		CountDownLatch latch = new CountDownLatch(1);
-		handler.processActionMessage(message, (msg, res, err) -> {
+		handler.processActionMessage(message, (_, _, err) -> {
 			assertThat("No error returned", err, nullValue());
 			latch.countDown();
 			return true;
@@ -157,13 +159,13 @@ public class MqttInstructionHandlerTests {
 
 		JsonNode pubJson = objectMapper.readTree(mqttMessage.getPayload());
 		assertThat("MQTT payload", pubJson, instanceOf(ObjectNode.class));
-		assertThat("Pub action", pubJson.path("action").asText(),
+		assertThat("Pub action", pubJson.path("action").asString(),
 				equalTo(ChargePointAction.ChangeAvailability.getName()));
-		assertThat("Pub charger identifier", pubJson.path("clientId").path("identifier").asText(),
+		assertThat("Pub charger identifier", pubJson.path("clientId").path("identifier").asString(),
 				equalTo(cp.getInfo().getId()));
 		assertThat("Pub charger user", pubJson.path("clientId").path("userIdentifier").asLong(),
 				equalTo(cp.getUserId()));
-		assertThat("Pub message ID", pubJson.path("messageId").asText(),
+		assertThat("Pub message ID", pubJson.path("messageId").asString(),
 				equalTo(instructionId.toString()));
 		assertThat("Pub payload", pubJson.path("message"), equalTo(json));
 	}

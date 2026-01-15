@@ -1,21 +1,21 @@
 /* ==================================================================
  * ConnectorStatusDatumPublisher.java - 2/04/2020 7:29:25 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -42,7 +42,7 @@ import net.solarnetwork.ocpp.domain.StatusNotification;
 
 /**
  * Publish status notification updates as datum.
- * 
+ *
  * @author matt
  * @version 2.3
  */
@@ -53,7 +53,7 @@ public class ConnectorStatusDatumPublisher {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param chargePointDao
 	 *        the charge point DAO to use
 	 * @param chargePointSettingsDao
@@ -106,14 +106,14 @@ public class ConnectorStatusDatumPublisher {
 		private final String propertyName;
 		private final DatumSamplesType classification;
 
-		private DatumProperty(String propertyName, DatumSamplesType classification) {
+		DatumProperty(String propertyName, DatumSamplesType classification) {
 			this.propertyName = propertyName;
 			this.classification = classification;
 		}
 
 		/**
 		 * Get the property name.
-		 * 
+		 *
 		 * @return the property name
 		 */
 		public String getPropertyName() {
@@ -122,7 +122,7 @@ public class ConnectorStatusDatumPublisher {
 
 		/**
 		 * Get the property classification.
-		 * 
+		 *
 		 * @return the classification
 		 */
 		public DatumSamplesType getClassification() {
@@ -133,7 +133,7 @@ public class ConnectorStatusDatumPublisher {
 
 	/**
 	 * Process a status notification.
-	 * 
+	 *
 	 * @param chargePoint
 	 *        the charge point associated with the notification
 	 * @param info
@@ -201,7 +201,7 @@ public class ConnectorStatusDatumPublisher {
 
 	/**
 	 * Set the SolarFlux publisher.
-	 * 
+	 *
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
@@ -211,18 +211,18 @@ public class ConnectorStatusDatumPublisher {
 
 	/**
 	 * Set the source ID template.
-	 * 
+	 *
 	 * <p>
 	 * This template string allows for these parameters:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li><code>{chargePointId}</code> - the Charge Point ID (number)</li>
 	 * <li><code>{chargerIdentifier}</code> - the Charge Point info identifier
 	 * (string)</li>
 	 * <li><code>{connectorId}</code> - the connector ID (integer)</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 */
@@ -232,7 +232,7 @@ public class ConnectorStatusDatumPublisher {
 
 	/**
 	 * Set a suffix to append to the resolved source ID template.
-	 * 
+	 *
 	 * @param sourceIdSuffix
 	 *        the suffix to add
 	 */

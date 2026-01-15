@@ -77,7 +77,7 @@ public class SolarDnp3App {
 	 * @param args
 	 *        command line arguments
 	 */
-	public static void main(String[] args) {
+	static void main(String[] args) {
 		SpringApplication.run(SolarDnp3App.class, args);
 	}
 
@@ -90,7 +90,7 @@ public class SolarDnp3App {
 	 */
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-		return args -> ApplicationContextUtils.traceBeanNames(ctx, LOG);
+		return _ -> ApplicationContextUtils.traceBeanNames(ctx, LOG);
 	}
 
 }

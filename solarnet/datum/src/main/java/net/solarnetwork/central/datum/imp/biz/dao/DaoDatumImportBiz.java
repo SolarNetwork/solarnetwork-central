@@ -311,7 +311,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	private CompletableFuture<Boolean> saveToResourceStorage(File f, UserUuidPK id,
 			ResourceStorageService rss) {
 		final AtomicInteger logCount = new AtomicInteger(0);
-		return rss.saveResource(f.getName(), new FileSystemResource(f), true, (r, amount) -> {
+		return rss.saveResource(f.getName(), new FileSystemResource(f), true, (_, amount) -> {
 			final double percent = amount * 100.0;
 			final int now = (int) percent;
 			final int prev = logCount.get();
@@ -546,7 +546,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	}
 
 	private void cleanupAfterImportDone(File dataFile) {
-		dataFile.delete();
+		var _ = dataFile.delete();
 		final ResourceStorageService rss = this.resourceStorageService;
 		if ( rss != null && rss.isConfigured() ) {
 			try {
@@ -764,7 +764,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				if ( !s.isShutdown() ) {
 					s.shutdown();
 					try {
-						s.awaitTermination(5, TimeUnit.MINUTES);
+						var _ = s.awaitTermination(5, TimeUnit.MINUTES);
 					} catch ( InterruptedException e ) {
 						// ignore this one
 					}
@@ -793,8 +793,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				info.setCompleted(completionDate);
 			}
 			postJobStatusChangedEvent(this, info);
-			@SuppressWarnings("unused")
-			var unused = progressExecutor().submit(new StatusUpdater((DatumImportJobInfo) info.clone()));
+			var _ = progressExecutor().submit(new StatusUpdater((DatumImportJobInfo) info.clone()));
 		}
 
 		@Override
@@ -911,8 +910,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					info.getUserId(), amountComplete);
 			// update progress in different thread, so state updated outside import transaction
 			DatumImportJobInfo info = this.info;
-			@SuppressWarnings("unused")
-			var unused = progressExecutor()
+			var _ = progressExecutor()
 					.submit(new ProgressUpdater(info.getId(), amountComplete, getLoadedCount()));
 			info.setPercentComplete(amountComplete);
 			postJobStatusChangedEvent(this, info);
@@ -974,17 +972,17 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 		@Override
 		public boolean cancel(boolean mayInterruptIfRunning) {
-			return (delegate != null ? delegate.cancel(mayInterruptIfRunning) : false);
+			return (delegate != null && delegate.cancel(mayInterruptIfRunning));
 		}
 
 		@Override
 		public boolean isCancelled() {
-			return (delegate != null ? delegate.isCancelled() : false);
+			return (delegate != null && delegate.isCancelled());
 		}
 
 		@Override
 		public boolean isDone() {
-			return (delegate != null ? delegate.isDone() : false);
+			return (delegate != null && delegate.isDone());
 		}
 
 		@Override

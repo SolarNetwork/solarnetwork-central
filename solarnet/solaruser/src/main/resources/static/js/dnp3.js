@@ -70,7 +70,7 @@ $(document).ready(function() {
 		 * @returns {Boolean} `false` to return from event callback
 		 */
 		function modalEditFormSubmit(event, renderFn) {
-			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(_req, res) {
 				renderFn([res], true);
 			});
 			return false;
@@ -182,7 +182,7 @@ $(document).ready(function() {
 				modal.find('.before').addClass('hidden');
 				modal.find('.upload').removeClass('hidden');
 
-				SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+				SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 					if (Array.isArray(res)) {
 						renderTrustedIssuerConfigs(res, true);
 					}
@@ -432,7 +432,6 @@ $(document).ready(function() {
 		// ***** Server data points import CSV
 		$('#dnp3-server-data-points-import-modal')
 			.on('show.bs.modal', function() {
-				const modal = $(this);
 				/** @type {HTMLFormElement} */
 				const form = this;
 				const config = SolarReg.Templates.findContextItem(this);
@@ -449,7 +448,7 @@ $(document).ready(function() {
 				modal.find('.before').addClass('hidden');
 				modal.find('.upload').removeClass('hidden');
 
-				SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+				SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 					const sys = serverSystems.get(config.id);
 					if ( !sys ) {
 						return;
@@ -485,7 +484,7 @@ $(document).ready(function() {
 			/** @type {Dnp3System} */
 			const sys = serverSys[systemType];
 			
-			var idProperty = undefined;
+			var idProperty;
 			if ( systemType === 'auth' ) {
 				idProperty = 'identifier';
 			} else {

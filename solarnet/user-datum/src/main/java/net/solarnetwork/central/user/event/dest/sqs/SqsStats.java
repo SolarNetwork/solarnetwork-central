@@ -1,21 +1,21 @@
 /* ==================================================================
  * SqsStats.java - 16/06/2020 7:43:25 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Statistics for SQS processing.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -56,7 +56,7 @@ public class SqsStats {
 		private final int index;
 		private final String description;
 
-		private BasicCount(int index, String description) {
+		BasicCount(int index, String description) {
 			this.index = index;
 			this.description = description;
 		}
@@ -89,7 +89,7 @@ public class SqsStats {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param logFrequency
 	 *        a frequency at which to log INFO level statistic messages
 	 */
@@ -99,7 +99,7 @@ public class SqsStats {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param countStats
 	 *        the number of statistics to track (on top of the
 	 *        {@link BasicCount}
@@ -110,7 +110,7 @@ public class SqsStats {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param logFrequency
 	 *        a frequency at which to log INFO level statistic messages
 	 * @param countStats
@@ -123,7 +123,7 @@ public class SqsStats {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param uid
 	 *        the UID
 	 * @param logFrequency
@@ -135,7 +135,7 @@ public class SqsStats {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param uid
 	 *        the UID
 	 * @param logFrequency
@@ -155,7 +155,7 @@ public class SqsStats {
 
 	/**
 	 * Set the log frequency.
-	 * 
+	 *
 	 * @param logFrequency
 	 *        the frequency
 	 */
@@ -165,7 +165,7 @@ public class SqsStats {
 
 	/**
 	 * Get the log frequency.
-	 * 
+	 *
 	 * @return the frequency
 	 */
 	public int getLogFrequency() {
@@ -174,7 +174,7 @@ public class SqsStats {
 
 	/**
 	 * Set the unique ID.
-	 * 
+	 *
 	 * @param uid
 	 *        the unique ID
 	 */
@@ -192,7 +192,7 @@ public class SqsStats {
 
 	/**
 	 * Get a current count value.
-	 * 
+	 *
 	 * @param stat
 	 *        the statistic to get the count for
 	 * @return the current count value
@@ -203,7 +203,7 @@ public class SqsStats {
 
 	/**
 	 * Increment and get the current count value.
-	 * 
+	 *
 	 * @param stat
 	 *        the count to increment and get
 	 * @return the incremented count value

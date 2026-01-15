@@ -109,13 +109,13 @@ public final class VirtualDatumSqlUtils {
 	 * The SQL resource template parameter name for the property combine
 	 * calculation.
 	 */
-	public static String PROPERTY_COMBINE_CALC_PARAM_NAME = "PROPERTY_CALC";
+	public static final String PROPERTY_COMBINE_CALC_PARAM_NAME = "PROPERTY_CALC";
 
 	/**
 	 * The SQL resource template parameter name for the reading difference
 	 * combine calculation.
 	 */
-	public static String READING_DIFF_COMBINE_CALC_PARAM_NAME = "READING_DIFF_CALC";
+	public static final String READING_DIFF_COMBINE_CALC_PARAM_NAME = "READING_DIFF_CALC";
 
 	/**
 	 * Get a SQL group of CTE expressions for combining datum streams into

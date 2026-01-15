@@ -1,21 +1,21 @@
 /* ==================================================================
  * FirmwareStatusDatumPublisher.java - 29/07/2022 12:57:14 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -42,7 +42,7 @@ import ocpp.v16.jakarta.cs.FirmwareStatusNotificationResponse;
 
 /**
  * Publish firmware status notifications as a datum stream.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -55,7 +55,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param chargePointDao
 	 *        the charge point DAO to use
 	 * @param chargePointSettingsDao
@@ -89,14 +89,14 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 		private final String propertyName;
 		private final DatumSamplesType classification;
 
-		private DatumProperty(String propertyName, DatumSamplesType classification) {
+		DatumProperty(String propertyName, DatumSamplesType classification) {
 			this.propertyName = propertyName;
 			this.classification = classification;
 		}
 
 		/**
 		 * Get the property name.
-		 * 
+		 *
 		 * @return the property name
 		 */
 		public String getPropertyName() {
@@ -105,7 +105,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 
 		/**
 		 * Get the property classification.
-		 * 
+		 *
 		 * @return the classification
 		 */
 		public DatumSamplesType getClassification() {
@@ -143,7 +143,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 
 	/**
 	 * Set the SolarFlux publisher.
-	 * 
+	 *
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
@@ -153,18 +153,18 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 
 	/**
 	 * Set the source ID template.
-	 * 
+	 *
 	 * <p>
 	 * This template string allows for these parameters:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li><code>{chargePointId}</code> - the Charge Point ID (number)</li>
 	 * <li><code>{chargerIdentifier}</code> - the Charge Point info identifier
 	 * (string)</li>
 	 * <li><code>{connectorId}</code> - the connector ID (integer)</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 */
@@ -174,7 +174,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 
 	/**
 	 * Set a suffix to append to the resolved source ID template.
-	 * 
+	 *
 	 * @param sourceIdSuffix
 	 *        the suffix to add
 	 */

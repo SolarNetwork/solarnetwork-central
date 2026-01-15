@@ -23,8 +23,8 @@ import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -40,7 +40,7 @@ import net.solarnetwork.flux.vernemq.webhook.service.impl.JdbcAuthService;
  * Configuration for JDBC based services.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @Configuration
 public class JdbcConfiguration {

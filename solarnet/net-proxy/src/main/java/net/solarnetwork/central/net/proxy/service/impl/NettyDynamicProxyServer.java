@@ -75,7 +75,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Netty implementation of {@link DynamicProxyServer}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class NettyDynamicProxyServer
 		implements DynamicProxyServer, ServiceLifecycleObserver, X509KeyManager {
@@ -97,8 +97,11 @@ public class NettyDynamicProxyServer
 	private final SocketAddress[] bindAddresses;
 	private final EventLoopGroup bossGroup;
 	private final EventLoopGroup workerGroup;
+
+	// this field is final because we only support a single alias value
+	private final String[] keyStoreAliases = new String[] { DEFAULT_KEYSTORE_ALIAS };
+
 	private String[] tlsProtocols = DEFAULT_TLS_PROTOCOLS;
-	private String[] keyStoreAliases = new String[] { DEFAULT_KEYSTORE_ALIAS };
 	private KeyStore keyStore;
 	private boolean wireLogging = false;
 
@@ -206,15 +209,15 @@ public class NettyDynamicProxyServer
 				.childOption(ChannelOption.AUTO_READ, false);
 			for ( SocketAddress bindAddress : bindAddresses ) {
 				b.bind(bindAddress).sync()
-				.addListener((f) -> log.info("Proxy server started on {} supporting TLS protocols [{}]", bindAddress,
+				.addListener(_ -> log.info("Proxy server started on {} supporting TLS protocols [{}]", bindAddress,
 						String.join(", ",tlsProtocols)))
-				.channel().closeFuture().addListener((f) -> log.info("Proxy server stopped on {}", bindAddress));
+				.channel().closeFuture().addListener(_ -> log.info("Proxy server stopped on {}", bindAddress));
 			}
 			// @formatter:on
 		} catch ( InterruptedException e ) {
 			log.warn("Proxy server interrupted: shutting down.");
 		} catch ( SSLException e ) {
-			log.error("Proxy server SSL error: {}", e.toString(), e);
+			log.error("Proxy server SSL error: {}", e, e);
 		}
 	}
 
@@ -224,7 +227,7 @@ public class NettyDynamicProxyServer
 			bossGroup.shutdownGracefully();
 			workerGroup.shutdownGracefully();
 		} catch ( Exception e ) {
-			log.warn("Error shutting down proxy server: {}", e.toString(), e);
+			log.warn("Error shutting down proxy server: {}", e, e);
 		}
 	}
 

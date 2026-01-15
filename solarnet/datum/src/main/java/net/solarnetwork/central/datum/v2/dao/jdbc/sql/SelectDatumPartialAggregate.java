@@ -231,11 +231,9 @@ public final class SelectDatumPartialAggregate
 				buf.append("INNER JOIN (\n");
 				buf.append("	SELECT datum.stream_id,\n");
 			}
-			if ( rollup == null ) {
-				buf.append("	date_trunc('").append(sqlAgg(aggregation)).append(
-						"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,\n");
-				DatumSqlUtils.rollupAggDataSql(buf);
-			}
+			buf.append("	date_trunc('").append(sqlAgg(aggregation)).append(
+					"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,\n");
+			DatumSqlUtils.rollupAggDataSql(buf);
 		}
 	}
 

@@ -28,7 +28,7 @@ import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allC
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allConfigurationData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allHeartbeatData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allTokenData;
-import static net.solarnetwork.codec.JsonUtils.getStringMap;
+import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
@@ -224,10 +224,10 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 
 			TransactionTemplate tt = new TransactionTemplate(txManager);
 
-			tt.executeWithoutResult((ts) -> {
+			tt.executeWithoutResult((_) -> {
 				CapacityProviderConfiguration result = dao.getForUpdate(last.getId());
 				Thread t = new Thread(() -> {
-					tt.executeWithoutResult((ts2) -> {
+					tt.executeWithoutResult((_) -> {
 						try {
 							jdbcTemplate.queryForList(
 									"SELECT * FROM solaroscp.oscp_cp_conf WHERE user_id = ? AND id = ? FOR UPDATE NOWAIT",
@@ -544,12 +544,12 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 			TransactionTemplate tt = new TransactionTemplate(txManager);
 			CountDownLatch latch = new CountDownLatch(1);
 
-			tt.executeWithoutResult((ts) -> {
+			tt.executeWithoutResult((_) -> {
 				boolean b = dao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
 					log.info("Locked ID: {}", ctx.config().getId());
 
 					Thread t = new Thread(() -> {
-						tt.executeWithoutResult((ts2) -> {
+						tt.executeWithoutResult((_) -> {
 							try {
 								jdbcTemplate.queryForList(
 										"SELECT * FROM solaroscp.oscp_cp_heartbeat LIMIT 1 FOR UPDATE NOWAIT");
@@ -666,12 +666,12 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 			TransactionTemplate tt = new TransactionTemplate(txManager);
 			CountDownLatch latch = new CountDownLatch(1);
 
-			tt.executeWithoutResult((ts) -> {
+			tt.executeWithoutResult((_) -> {
 				boolean b = dao.processExternalSystemWithExpiredMeasurement((ctx) -> {
 					log.info("Locked ID: {}", ctx.config().getId());
 
 					Thread t = new Thread(() -> {
-						tt.executeWithoutResult((ts2) -> {
+						tt.executeWithoutResult((_) -> {
 							try {
 								jdbcTemplate.queryForList(
 										"SELECT * FROM solaroscp.oscp_cg_cp_meas LIMIT 1 FOR UPDATE NOWAIT");

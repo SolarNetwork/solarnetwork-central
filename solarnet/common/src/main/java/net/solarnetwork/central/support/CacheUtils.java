@@ -1,21 +1,21 @@
 /* ==================================================================
  * CacheUtils.java - 23/05/2024 9:45:17 am
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -37,7 +37,7 @@ import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Utilities for JCache.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -45,24 +45,24 @@ public final class CacheUtils {
 
 	/**
 	 * Listener API for "eviction" events.
-	 * 
+	 *
 	 * <p>
 	 * JCache does not offer an "eviction" event, when the cache removes an
 	 * entry due to a size constraint. This API is provided to work with cache
 	 * implementations that do support such events, like EhCache.
 	 * </p>
-	 * 
+	 *
 	 * @param <K>
 	 *        the cache key type
 	 * @param <V>
 	 *        the cache value type
 	 */
 	@FunctionalInterface
-	public static interface CacheEvictionListener<K, V> {
+	public interface CacheEvictionListener<K, V> {
 
 		/**
 		 * Receive a cache eviction notification.
-		 * 
+		 *
 		 * @param key
 		 *        the evicted key
 		 * @param value
@@ -98,7 +98,7 @@ public final class CacheUtils {
 
 	/**
 	 * Register a cache eviction listener if possible.
-	 * 
+	 *
 	 * @param <K>
 	 *        the cache key type
 	 * @param <V>
@@ -129,7 +129,7 @@ public final class CacheUtils {
 
 	/**
 	 * Remove a previously registered cache eviction listener.
-	 * 
+	 *
 	 * @param <K>
 	 *        the cache key type
 	 * @param <V>

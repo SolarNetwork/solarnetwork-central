@@ -38,6 +38,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.util.MimeType;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.util.UriComponents;
@@ -48,12 +49,13 @@ import net.solarnetwork.central.support.CsvFilteredResultsProcessor;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.support.ObjectMapperFilteredResultsProcessor;
 import net.solarnetwork.central.support.OutputSerializationSupportContext;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Helper utilities for web APIs.
  *
  * @author matt
- * @version 1.5
+ * @version 2.0
  */
 public final class WebUtils {
 
@@ -187,13 +189,13 @@ public final class WebUtils {
 			if ( MediaType.APPLICATION_CBOR.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperFilteredResultsProcessor<>(
 						context.cborObjectMapper().createGenerator(response.getOutputStream()),
-						context.cborObjectMapper().getSerializerProvider(),
+						context.cborObjectMapper()._serializationContext(), // FIXME use "allowed" method
 						MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE), context.jsonSerializer());
 				break;
 			} else if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperFilteredResultsProcessor<>(
 						context.jsonObjectMapper().createGenerator(response.getOutputStream()),
-						context.jsonObjectMapper().getSerializerProvider(),
+						context.jsonObjectMapper()._serializationContext(), // FIXME use "allowed" method
 						MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE), context.jsonSerializer());
 				break;
 			} else if ( TEXT_CSV_MEDIA_TYPE.isCompatibleWith(acceptType) ) {
@@ -205,14 +207,14 @@ public final class WebUtils {
 						new OutputStreamWriter(response.getOutputStream(), cs), TEXT_CSV_MEDIA_TYPE,
 						true, context.registrar());
 				break;
-			} else {
-				throw new IllegalArgumentException(
-						format("The [%s] media type is not supported.", acceptType));
 			}
 		}
-		if ( processor != null ) {
-			response.setContentType(processor.getMimeType().toString());
+		if ( processor == null ) {
+			throw new IllegalArgumentException(format("No supported media type within [%s]",
+					StringUtils.commaDelimitedStringFromCollection(acceptTypes)));
+
 		}
+		response.setContentType(processor.getMimeType().toString());
 		return processor;
 	}
 
@@ -293,7 +295,8 @@ public final class WebUtils {
 		while ( true ) {
 			try {
 				return action.get();
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException
+					| UncategorizedSQLException e ) {
 				handleTransientDataAccessExceptionRetry(req, e, --tries, retryDelay, log);
 			}
 		}
@@ -315,7 +318,7 @@ public final class WebUtils {
 	public static InputStream maxUploadSizeExceededInputStream(InputStream in, long maxLength)
 			throws IOException {
 		return BoundedInputStream.builder().setInputStream(in).setMaxCount(maxLength)
-				.setOnMaxCount((m, c) -> {
+				.setOnMaxCount((_, _) -> {
 					throw new MaxUploadSizeExceededException(maxLength);
 				}).get();
 	}

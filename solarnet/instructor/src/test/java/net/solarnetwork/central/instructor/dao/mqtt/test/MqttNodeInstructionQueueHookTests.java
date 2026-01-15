@@ -43,19 +43,19 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.moquette.interception.messages.InterceptPublishMessage;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.mqtt.MqttNodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.ObservableMqttConnection;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.test.CallingThreadExecutorService;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.test.mqtt.TestingInterceptHandler;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link MqttNodeInstructionQueueHook} class.
@@ -79,7 +79,7 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 	public void setup() throws Exception {
 		setupMqttServer();
 
-		objectMapper = JsonUtils.newDatumObjectMapper();
+		objectMapper = JsonUtils.JSON_OBJECT_MAPPER.rebuild().addModule(JsonUtils.DATUM_MODULE).build();
 		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
 
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();

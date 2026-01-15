@@ -75,7 +75,7 @@ import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskSimulationOutput;
 import net.solarnetwork.central.user.domain.UsersUserEvents;
 import net.solarnetwork.central.user.support.BasicInstructionsExpressionService;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
@@ -134,7 +134,7 @@ public class DaoUserNodeInstructionService_SpelTests implements CommonUserEvents
 
 		expressionService = new BasicInstructionsExpressionService();
 
-		service = new DaoUserNodeInstructionService(clock, executor, JsonUtils.newObjectMapper(),
+		service = new DaoUserNodeInstructionService(clock, executor, JsonUtils.JSON_OBJECT_MAPPER,
 				userEventAppenderBiz, instructorBiz, expressionService, nodeOwnershipDao, taskDao,
 				datumDao, datumStreamMetadataDao);
 	}

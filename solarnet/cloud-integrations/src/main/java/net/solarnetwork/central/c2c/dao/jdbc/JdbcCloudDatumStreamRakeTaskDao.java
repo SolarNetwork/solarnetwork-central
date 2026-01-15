@@ -53,7 +53,8 @@ import net.solarnetwork.domain.SortDescriptor;
  */
 public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTaskDao {
 
-	public static String DEFAULT_CLAIM_JOB_SQL = "{call solardin.claim_datum_stream_rake_task()}";
+	/** The default SQL to use. */
+	public static final String DEFAULT_CLAIM_JOB_SQL = "{call solardin.claim_datum_stream_rake_task()}";
 
 	private final JdbcOperations jdbcOps;
 	private final String claimTaskSql;

@@ -49,7 +49,7 @@ public enum ScheduleType {
 
 	private final char key;
 
-	private ScheduleType(char key) {
+	ScheduleType(char key) {
 		this.key = key;
 	}
 

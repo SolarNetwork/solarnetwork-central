@@ -6,7 +6,7 @@ $(document).ready(function() {
 		$(radio.form).find('.alert-status-help').text(help);
 	}
 	
-	$('.alert-form input[name=status]').on('change', function(event) {
+	$('.alert-form input[name=status]').on('change', function(_event) {
 		setupAlertStatusHelp(this);
 	}).filter(':checked').each(function() {
 		// make sure the form starts with the first selected element
@@ -28,14 +28,14 @@ $(document).ready(function() {
 				} else {
 					sourceListContainer.addClass('hidden');
 				}
-			}).fail(function(xhr, statusText, error) {
+			}).fail(function(_xhr, _statusText, _error) {
 				// just hide the list
 				sourceListContainer.addClass('hidden');
 			});;
 		}
 	}
 	
-	$('.alert-form select[name=nodeId]').on('change', function(event) {
+	$('.alert-form select[name=nodeId]').on('change', function(_event) {
 		populateSourceList($(this).val(), $('#create-node-data-alert-sources-list'));
 	});
 	
@@ -70,10 +70,10 @@ $(document).ready(function() {
 			beforeSend: function(xhr) {
 				SolarReg.csrf(xhr);
             },
-			success: function(json, status, xhr) {
+			success: function(_json, _status, _xhr) {
 				document.location.reload(true);
 			},
-			error: function(xhr, status, statusText) {
+			error: function(_xhr, _status, statusText) {
 				SolarReg.showAlertBefore('#create-node-data-alert-modal .modal-body > *:first-child', 'alert-warning', statusText);
 			}
 		});
@@ -83,7 +83,7 @@ $(document).ready(function() {
 		this.reset();
 		$('#create-node-data-alert-carousel').carousel(0);
 		$('#create-node-data-alert-sources-list').addClass('hidden').find('.sources').empty();
-	}).on('click', 'button.action-delete', function(event) {
+	}).on('click', 'button.action-delete', function(_event) {
 		var form = $('#create-node-data-alert-modal').get(0),
 			alertId = form.elements['id'].value,
 			url = SolarReg.solarUserURL('/sec/alerts/') + alertId;
@@ -94,37 +94,22 @@ $(document).ready(function() {
 			beforeSend: function(xhr) {
 				SolarReg.csrf(xhr);
             },
-			success : function(json, status, xhr) {
+			success : function(_json, _status, _xhr) {
 				document.location.reload(true);
 			},
-			error: function(xhr, status, statusText) {
+			error: function(_xhr, _status, statusText) {
 				SolarReg.showAlertBefore('#create-node-data-alert-modal .modal-body > *:first-child', 'alert-warning', statusText);
 			}
 		});
 	});
 	
-	$('#add-node-data-button').on('click', function(event) {
+	$('#add-node-data-button').on('click', function(_event) {
 		var form = $('#create-node-data-alert-modal');
 		form.get(0).reset(); // doesn't reset hidden fields
 		form.get(0).elements['id'].value = '';
 		form.find('button.action-delete').hide();
 		form.modal('show');
 	});
-	
-	function alertSituationInfoHTML(alert) {
-		if ( !(alert && alert.situation && alert.situration.info) ) {
-			return '';
-		}
-		var info = '<dl>';
-		if ( alert.situation.info.nodeId ) {
-			info += '<dt>Node ID</dt><dd>' +alert.situation.info.nodeId +'</dd>';
-		}
-		if ( alert.situation.info.sourceId ) {
-			info += '<dt>Source ID</dt><dd>' +alert.situation.info.nodeId +'</dd>';
-		}
-		info += '</dl>'
-		return info;
-	}
 	
 	function populateAlertSituationValues(root, alert, nodeName) {
 		// make use of the i18n type/status
@@ -185,7 +170,7 @@ $(document).ready(function() {
 				$('#alert-situation-resolve').data('alert-id', json.data.id);
 			}
 			modal.modal('show');
-		}).fail(function(xhr, statusText, error) {
+		}).fail(function(_xhr, statusText, _error) {
 			SolarReg.showAlertBefore('#alert-situation-modal .modal-body > *:first-child', 'alert-warning', 
 					'Error getting alert situation details. ' +statusText);
 		});
@@ -223,7 +208,7 @@ $(document).ready(function() {
 			alertId = me.data('alert-id');
 		if ( alertId !== undefined ) {
 			var url = alertSituationBaseURL() + '/' + encodeURIComponent(alertId) + '/resolve';
-			$.post(url, {status:'Resolved', _csrf:SolarReg.csrf()}, function(data) {
+			$.post(url, {status:'Resolved', _csrf:SolarReg.csrf()}, function(_data) {
 				document.location.reload(true);
 			}, 'json');
 		}

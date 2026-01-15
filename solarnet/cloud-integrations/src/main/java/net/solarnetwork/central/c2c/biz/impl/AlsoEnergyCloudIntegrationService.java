@@ -130,8 +130,7 @@ public class AlsoEnergyCloudIntegrationService extends BaseRestOperationsCloudIn
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(AlsoEnergyCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
-						integrationLocksCache));
+						_ -> SECURE_SETTINGS, oauthClientManager, clock, integrationLocksCache));
 	}
 
 	@Override
@@ -170,7 +169,7 @@ public class AlsoEnergyCloudIntegrationService extends BaseRestOperationsCloudIn
 		// validate by requesting the available sites
 		try {
 			final String response = restOpsHelper.httpGet("List sites", integration, String.class,
-					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(AlsoEnergyCloudIntegrationService.LIST_SITES_URL).buildAndExpand()
 							.toUri(),
 					HttpEntity::getBody);

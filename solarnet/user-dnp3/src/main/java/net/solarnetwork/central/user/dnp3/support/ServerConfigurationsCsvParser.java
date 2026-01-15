@@ -38,7 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.context.MessageSource;
-import org.supercsv.io.ICsvListReader;
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRecord;
 import net.solarnetwork.central.dnp3.domain.ControlType;
 import net.solarnetwork.central.dnp3.domain.MeasurementType;
 import net.solarnetwork.central.user.dnp3.domain.BaseServerDatumStreamConfigurationInput;
@@ -70,7 +71,7 @@ import net.solarnetwork.domain.CodedValue;
  * </ol>
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class ServerConfigurationsCsvParser {
 
@@ -106,19 +107,19 @@ public class ServerConfigurationsCsvParser {
 	 * @throws IllegalArgumentException
 	 *         if invalid data is parsed
 	 */
-	public ServerConfigurationsInput parse(ICsvListReader csv) throws IOException {
+	public ServerConfigurationsInput parse(CsvReader<CsvRecord> csv) throws IOException {
 		if ( csv == null ) {
 			return null;
 		}
-		csv.getHeader(true); // skip header
-		List<String> row;
-		while ( (row = csv.read()) != null ) {
-			if ( row.isEmpty() || row.size() < 4
-					|| (row.getFirst() != null && row.getFirst().startsWith("#")) ) {
+		csv.skipLines(1); // skip header
+		int rowNum = 1;
+		for ( CsvRecord row : csv ) {
+			rowNum++;
+			if ( row.getFieldCount() < 4 || (row.getFieldCount() > 0 && row.getField(0) != null
+					&& row.getField(0).startsWith("#")) ) {
 				continue;
 			}
-			final int rowLen = row.size();
-			final int rowNum = csv.getRowNumber();
+			final int rowLen = row.getFieldCount();
 
 			final Long nodeId = parseLongValue(row, rowLen, rowNum, NODE_ID, true);
 			final String sourceId = parseStringValue(row, rowLen, rowNum, SOURCE_ID, true);
@@ -161,12 +162,12 @@ public class ServerConfigurationsCsvParser {
 				col.getName(), locale);
 	}
 
-	private String parseStringValue(List<String> row, int rowLen, int rowNum,
+	private String parseStringValue(CsvRecord row, int rowLen, int rowNum,
 			ServerConfigurationsCsvColumn col, boolean required) {
 		final int colNum = col.getCode();
 		String s = null;
 		if ( colNum < rowLen ) {
-			s = row.get(colNum);
+			s = row.getField(colNum);
 			if ( s != null ) {
 				s = s.trim();
 			}
@@ -183,7 +184,7 @@ public class ServerConfigurationsCsvParser {
 		return s;
 	}
 
-	private Integer parseIntegerValue(List<String> row, int rowLen, int rowNum,
+	private Integer parseIntegerValue(CsvRecord row, int rowLen, int rowNum,
 			ServerConfigurationsCsvColumn col, boolean required) {
 		final String s = parseStringValue(row, rowLen, rowNum, col, required);
 		Integer result = null;
@@ -200,8 +201,8 @@ public class ServerConfigurationsCsvParser {
 		return result;
 	}
 
-	private Long parseLongValue(List<String> row, int rowLen, int rowNum,
-			ServerConfigurationsCsvColumn col, boolean required) {
+	private Long parseLongValue(CsvRecord row, int rowLen, int rowNum, ServerConfigurationsCsvColumn col,
+			boolean required) {
 		final String s = parseStringValue(row, rowLen, rowNum, col, required);
 		Long result = null;
 		if ( s != null ) {
@@ -217,7 +218,7 @@ public class ServerConfigurationsCsvParser {
 		return result;
 	}
 
-	private BigDecimal parseBigDecimalValue(List<String> row, int rowLen, int rowNum,
+	private BigDecimal parseBigDecimalValue(CsvRecord row, int rowLen, int rowNum,
 			ServerConfigurationsCsvColumn col, boolean required) {
 		String s = parseStringValue(row, rowLen, rowNum, col, required);
 		if ( s != null ) {
@@ -235,7 +236,7 @@ public class ServerConfigurationsCsvParser {
 
 	private static final String CONTROL_PREFIX = "control";
 
-	private CodedValue parseTypeValue(List<String> row, int rowLen, int rowNum) {
+	private CodedValue parseTypeValue(CsvRecord row, int rowLen, int rowNum) {
 		String s = parseStringValue(row, rowLen, rowNum, TYPE, true);
 		try {
 			return MeasurementType.valueOf(s);

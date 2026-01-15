@@ -59,8 +59,7 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
 			if ( future.isSuccess() ) {
 				ctx.channel().read();
 			} else {
-				@SuppressWarnings("unused")
-				var unused = future.channel().close();
+				var _ = future.channel().close();
 			}
 		});
 	}

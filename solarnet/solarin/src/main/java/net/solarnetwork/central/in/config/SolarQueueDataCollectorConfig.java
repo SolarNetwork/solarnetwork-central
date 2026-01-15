@@ -29,19 +29,17 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.codec.CborUtils;
-import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 /**
  * MQTT instruction publishing configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 @Profile("mqtt")
@@ -53,12 +51,15 @@ public class SolarQueueDataCollectorConfig {
 	@Autowired
 	private DataCollectorBiz dataCollectorBiz;
 
+	@Autowired
+	@Qualifier(JsonConfig.CBOR_MAPPER)
+	private CBORMapper cborMapper;
+
 	@Bean
 	@Qualifier(SOLARQUEUE)
 	@ConfigurationProperties(prefix = "app.solarqueue.data-collector")
 	public MqttDataCollector mqttDataCollector(@Qualifier(SOLARQUEUE) StatTracker mqttStats) {
-		ObjectMapper objectMapper = JsonUtils.newDatumObjectMapper(CborUtils.cborFactory());
-		MqttDataCollector collector = new MqttDataCollector(objectMapper, dataCollectorBiz,
+		MqttDataCollector collector = new MqttDataCollector(cborMapper, dataCollectorBiz,
 				nodeInstructionDao, mqttStats);
 		return collector;
 	}

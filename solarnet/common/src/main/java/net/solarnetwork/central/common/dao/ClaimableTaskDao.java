@@ -38,8 +38,10 @@ public interface ClaimableTaskDao<T extends Entity<K>, K extends Comparable<K>> 
 	/**
 	 * Claim a task.
 	 *
+	 * <p>
 	 * This method will "claim" a task that is currently in a "queued" state,
 	 * changing the state to "claimed".
+	 * </p>
 	 *
 	 * @return a claimed task, or {@literal null} if none could be claimed
 	 */

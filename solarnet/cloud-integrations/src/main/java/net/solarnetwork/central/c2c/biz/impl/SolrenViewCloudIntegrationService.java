@@ -123,7 +123,7 @@ public class SolrenViewCloudIntegrationService extends BaseRestOperationsCloudIn
 				new RestOperationsHelper(
 						LoggerFactory.getLogger(SolrenViewCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS));
+						_ -> SECURE_SETTINGS));
 	}
 
 	@Override

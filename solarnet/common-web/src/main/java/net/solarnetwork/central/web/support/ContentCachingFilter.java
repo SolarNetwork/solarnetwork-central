@@ -291,7 +291,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 		}
 
 		// get a lock for this key
-		final LockAndCount lock = requestLocks.computeIfAbsent(key, k -> {
+		final LockAndCount lock = requestLocks.computeIfAbsent(key, _ -> {
 			try {
 				LockAndCount l = lockPool.poll(requestLockTimeout, TimeUnit.MILLISECONDS);
 				if ( l == null ) {

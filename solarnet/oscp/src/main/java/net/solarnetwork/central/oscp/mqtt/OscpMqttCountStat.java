@@ -75,7 +75,7 @@ public enum OscpMqttCountStat {
 
 	private final String description;
 
-	private OscpMqttCountStat(String description) {
+	OscpMqttCountStat(String description) {
 		this.description = description;
 	}
 

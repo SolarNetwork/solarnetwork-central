@@ -36,13 +36,13 @@ import java.time.ZoneOffset;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.support.UserEventSerializer;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidUtils;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * Test cases for the {@link UserEventSerializer}.
@@ -61,11 +61,9 @@ public class UserEventSerializerTests {
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		ObjectMapper m = JsonUtils.newObjectMapper();
 		SimpleModule mod = new SimpleModule("Test");
 		mod.addSerializer(UserEvent.class, UserEventSerializer.INSTANCE);
-		m.registerModule(mod);
-		return m;
+		return JsonUtils.JSON_OBJECT_MAPPER.rebuild().addModule(mod).build();
 	}
 
 	@BeforeEach

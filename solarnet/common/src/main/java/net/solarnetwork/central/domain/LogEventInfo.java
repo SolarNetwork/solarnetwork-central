@@ -1,21 +1,21 @@
 /* ==================================================================
  * LogEventInfo.java - 4/08/2022 9:58:37 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,7 +27,7 @@ import java.util.List;
 
 /**
  * Standard log event info.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -39,11 +39,11 @@ public class LogEventInfo {
 
 	/**
 	 * Create a new event.
-	 * 
+	 *
 	 * <p>
 	 * This method will merge the base and extra tags into the resulting event.
 	 * </p>
-	 * 
+	 *
 	 * @param baseTags
 	 *        the base tags
 	 * @param message
@@ -73,11 +73,11 @@ public class LogEventInfo {
 
 	/**
 	 * Create a new event.
-	 * 
+	 *
 	 * <p>
 	 * This method will merge the base and extra tags into the resulting event.
 	 * </p>
-	 * 
+	 *
 	 * @param baseTags
 	 *        the base tags
 	 * @param message
@@ -99,7 +99,7 @@ public class LogEventInfo {
 			tags = baseTags.toArray(tags);
 			System.arraycopy(extraTags, 0, tags, baseTags.size(), extraTags.length);
 		} else if ( hasBaseTags ) {
-			tags = baseTags.toArray(new String[baseTags.size()]);
+			tags = baseTags.toArray(String[]::new);
 		} else if ( hasExtraTags ) {
 			tags = extraTags;
 		}
@@ -108,11 +108,11 @@ public class LogEventInfo {
 
 	/**
 	 * Create a new event.
-	 * 
+	 *
 	 * <p>
 	 * This method will merge the base and extra tags into the resulting event.
 	 * </p>
-	 * 
+	 *
 	 * @param baseTags
 	 *        the base tags
 	 * @param message
@@ -132,12 +132,12 @@ public class LogEventInfo {
 		if ( hasBaseTags && hasExtraTags ) {
 			tags = new String[baseTags.size() + extraTags.size()];
 			tags = baseTags.toArray(tags);
-			System.arraycopy(extraTags.toArray(new String[extraTags.size()]), 0, tags, baseTags.size(),
+			System.arraycopy(extraTags.toArray(String[]::new), 0, tags, baseTags.size(),
 					extraTags.size());
 		} else if ( hasBaseTags ) {
-			tags = baseTags.toArray(new String[baseTags.size()]);
+			tags = baseTags.toArray(String[]::new);
 		} else if ( hasExtraTags ) {
-			tags = extraTags.toArray(new String[extraTags.size()]);
+			tags = extraTags.toArray(String[]::new);
 			;
 		}
 		return new LogEventInfo(tags, message, data);
@@ -145,7 +145,7 @@ public class LogEventInfo {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param tags
 	 *        the tags
 	 * @param message
@@ -184,7 +184,7 @@ public class LogEventInfo {
 
 	/**
 	 * Get the tags.
-	 * 
+	 *
 	 * @return the tags
 	 */
 	public String[] getTags() {
@@ -193,7 +193,7 @@ public class LogEventInfo {
 
 	/**
 	 * Get the message.
-	 * 
+	 *
 	 * @return the message
 	 */
 	public String getMessage() {
@@ -202,7 +202,7 @@ public class LogEventInfo {
 
 	/**
 	 * Get the data.
-	 * 
+	 *
 	 * @return the data
 	 */
 	public String getData() {

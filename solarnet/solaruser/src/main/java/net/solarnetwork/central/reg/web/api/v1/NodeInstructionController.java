@@ -51,7 +51,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.async.DeferredResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -68,12 +67,13 @@ import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.domain.InstructionStatus;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.Result;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Controller for node instruction web service API.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 @GlobalExceptionRestController
 @Controller("v1nodeInstructionController")
@@ -116,8 +116,9 @@ public class NodeInstructionController {
 	 *        the registrar to use (may be {@literal null}
 	 */
 	public NodeInstructionController(TaskExecutor taskExecutor, InstructorBiz instructorBiz,
-			NodeInstructionDao nodeInstructionDao, ObjectMapper objectMapper,
-			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
+			NodeInstructionDao nodeInstructionDao,
+			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) ObjectMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_STREAMING_MAPPER) ObjectMapper cborObjectMapper,
 			PropertySerializerRegistrar propertySerializerRegistrar) {
 		super();
 		this.taskExecutor = requireNonNullArgument(taskExecutor, "taskExecutor");

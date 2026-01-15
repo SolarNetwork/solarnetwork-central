@@ -57,7 +57,6 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 
 	/**
 	 * API for querying for a filtered set of results from all possible results.
-	 *
 	 * {@inheritDoc}
 	 */
 	@Override

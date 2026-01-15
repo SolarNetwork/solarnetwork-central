@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.5.9' apply false
+	id 'org.springframework.boot' version '4.0.1' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,16 +14,10 @@ dependencyManagement {
 }
 
 description = 'SolarNet: User Datum Input'
-version = '2.0.0'
+version = '3.0.0'
 
 base {
 	archivesName = 'solarnet-user-datum-input'
-}
-
-configurations {
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'net.sf.supercsv'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 dependencies {
@@ -33,7 +27,7 @@ dependencies {
 
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
-	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	
 	// Testing

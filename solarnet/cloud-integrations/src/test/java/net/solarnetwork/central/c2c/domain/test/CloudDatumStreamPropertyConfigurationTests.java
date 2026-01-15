@@ -33,7 +33,7 @@ import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.util.DateUtils;
 

@@ -31,8 +31,6 @@ import java.util.Collections;
 import java.util.zip.GZIPOutputStream;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.biz.DatumExportService;
@@ -42,16 +40,18 @@ import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatServiceExportContext;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.io.DecompressingResource;
 import net.solarnetwork.io.DeleteOnCloseFileResource;
 import net.solarnetwork.service.ProgressListener;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * JSON implementation of {@link DatumExportOutputFormatService}
  *
  * @author matt
- * @version 2.1
+ * @version 3.0
  * @since 1.23
  */
 public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFormatService {
@@ -74,7 +74,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 	public JsonDatumExportOutputFormatService(ObjectMapper objectMapper) {
 		super("net.solarnetwork.central.datum.export.standard.JsonDatumExportOutputFormatService");
 		if ( objectMapper == null ) {
-			objectMapper = JsonUtils.newObjectMapper();
+			objectMapper = JsonUtils.JSON_OBJECT_MAPPER;
 		}
 		this.objectMapper = objectMapper;
 	}
@@ -119,7 +119,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 				// compress temporary results so don't run out of local disk space
 				out = new GZIPOutputStream(out);
 			}
-			generator = objectMapper.getFactory().createGenerator(out);
+			generator = objectMapper.createGenerator(out);
 		}
 
 		@Override
@@ -130,7 +130,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 				started = true;
 			}
 			for ( GeneralNodeDatumFilterMatch match : iterable ) {
-				generator.writeObject(match);
+				generator.writePOJO(match);
 				incrementProgress(JsonDatumExportOutputFormatService.this, 1, progressListener);
 			}
 		}

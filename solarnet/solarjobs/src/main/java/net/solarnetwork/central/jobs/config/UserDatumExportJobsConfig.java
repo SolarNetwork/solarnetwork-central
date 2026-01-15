@@ -39,7 +39,7 @@ import net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob;
  * User datum export jobs configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class UserDatumExportJobsConfig {
@@ -90,9 +90,9 @@ public class UserDatumExportJobsConfig {
 
 	@ConfigurationProperties(prefix = "app.job.user-datum-export.monthly")
 	@Bean
-	public ManagedJob monthlyTaskPopulatorJob() {
+	public ManagedJob monthlyTaskPopulatorJob(UserExportJobsService userExportJobsService) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Monthly,
-				userExportJobsService());
+				userExportJobsService);
 		job.setId("UserExportTaskPopulatorMonthly");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;

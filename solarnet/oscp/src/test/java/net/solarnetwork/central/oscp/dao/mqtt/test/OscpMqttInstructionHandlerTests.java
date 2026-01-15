@@ -57,7 +57,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -75,13 +74,14 @@ import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructionHandler;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructions;
 import net.solarnetwork.central.oscp.util.TaskContext;
 import net.solarnetwork.central.oscp.web.OscpWebUtils;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.test.CallingThreadExecutorService;
 import net.solarnetwork.util.StatTracker;
 import oscp.v20.GroupCapacityComplianceError;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link OscpMqttInstructionHandler} class.
@@ -138,7 +138,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 
 	@BeforeEach
 	public void setup() {
-		mapper = JsonUtils.newObjectMapper();
+		mapper = JsonUtils.JSON_OBJECT_MAPPER;
 		handler = new OscpMqttInstructionHandler(new StatTracker("SolarOSCP-MQTT", null, log, 1),
 				new CallingThreadExecutorService(), mapper, nodeInstructionDao, capacityGroupDao,
 				capacityOptimizerDao, capacityProviderDao, client);

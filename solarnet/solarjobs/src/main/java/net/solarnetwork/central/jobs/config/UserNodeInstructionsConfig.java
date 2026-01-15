@@ -38,7 +38,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.common.dao.UserServiceConfigurationDao;
@@ -51,19 +50,19 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.user.biz.InstructionsExpressionService;
-import net.solarnetwork.central.user.biz.UserNodeInstructionService;
 import net.solarnetwork.central.user.biz.dao.DaoUserNodeInstructionService;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskDao;
 import net.solarnetwork.central.user.domain.UsersUserEvents;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.StaticOptionalService;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Configuration for user node instructions support.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Profile(USER_INSTRUCTIONS)
 @Configuration(proxyBeanMethods = false)
@@ -127,7 +126,7 @@ public class UserNodeInstructionsConfig implements SolarNetUserConfiguration {
 
 	@ConfigurationProperties(prefix = "app.user-instr.service")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public UserNodeInstructionService userNodeInstructionService() {
+	public DaoUserNodeInstructionService userNodeInstructionService() {
 		var service = new DaoUserNodeInstructionService(Clock.systemUTC(),
 				taskExecutor.getThreadPoolExecutor(), objectMapper, userEventAppenderBiz, instructorBiz,
 				expressionService, nodeOwnershipDao, taskDao, datumDao, datumStreamMetadataDao);

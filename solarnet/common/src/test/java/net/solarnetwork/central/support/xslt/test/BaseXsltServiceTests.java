@@ -38,15 +38,15 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.URIResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sf.saxon.TransformerFactoryImpl;
 import net.solarnetwork.central.support.SharedValueCache;
 import net.solarnetwork.central.support.xslt.BaseXsltService;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.ClassUtils;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link BaseXsltService} class.
@@ -119,7 +119,9 @@ public class BaseXsltServiceTests {
 		tf = new net.sf.saxon.TransformerFactoryImpl();
 		tf.setURIResolver(new TestUriResolver());
 
-		service = new TestXsltService(dbf, tf, JsonUtils.newDatumObjectMapper(), Duration.ofSeconds(60));
+		service = new TestXsltService(dbf, tf,
+				JsonUtils.JSON_OBJECT_MAPPER.rebuild().addModule(JsonUtils.DATUM_MODULE).build(),
+				Duration.ofSeconds(60));
 	}
 
 	@Test

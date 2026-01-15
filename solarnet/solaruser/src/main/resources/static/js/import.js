@@ -165,7 +165,7 @@ $(document).ready(function() {
 			modal.find('.upload').removeClass('hidden');
 		}
 		
-		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, _res) {
 			loadDatumImportJobs(false);
 		}, function serializeDatumImportUploadForm(form) {
 			var inputConfig = SolarReg.Settings.encodeServiceItemForm(form);
@@ -237,7 +237,6 @@ $(document).ready(function() {
 			var sampleTemplate = modal.find('.sample-template .template');
 			// TODO: display estimated row count via json.data.totalResults
 			SolarReg.Templates.populateTemplateItems(container, json.data.results, false, function(item, el) {
-				var itemContainer;
 				if ( item.i ) {
 					renderTemplateProperties(el.find('.instantaneous-sample-container'), sampleTemplate, item.i);
 				}
@@ -251,7 +250,7 @@ $(document).ready(function() {
 					el.find('.tag-list').text(item.t.join(', '));
 				}
 			});
-		}).fail(function(xhr, statusText, error) {
+		}).fail(function(xhr, statusText, _error) {
 			var json = {};
 			if ( xhr.responseJSON ) {
 				json = xhr.responseJSON;
@@ -277,12 +276,12 @@ $(document).ready(function() {
 	})
 	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 	.on('submit', function(event) {
-		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, _res) {
 			loadDatumImportJobs(true);
 		}, function() {
 			return null;
 		}, {
-			urlSerializer: function(url, item) {
+			urlSerializer: function(url, _item) {
 				var id = event.target.elements['id'].value;
 				return SolarReg.replaceTemplateParameters(url, {id:id});
 			}

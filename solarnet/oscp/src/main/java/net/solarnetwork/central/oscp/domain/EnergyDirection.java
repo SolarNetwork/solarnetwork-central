@@ -48,7 +48,7 @@ public enum EnergyDirection implements CodedValue {
 
 	private final char code;
 
-	private EnergyDirection(char code) {
+	EnergyDirection(char code) {
 		this.code = code;
 	}
 

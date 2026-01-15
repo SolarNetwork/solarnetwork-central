@@ -204,7 +204,8 @@ public class AsyncJdbcChargePointActionStatusDao
 						try {
 							Thread.sleep(connectionRecoveryDelay);
 						} catch ( InterruptedException e2 ) {
-							log.info("Writer thread interrupted: exiting now.");
+							log.info(
+									"Writer thread interrupted during connection recovery: exiting now.");
 							keepGoing.set(false);
 						}
 					}
@@ -249,19 +250,9 @@ public class AsyncJdbcChargePointActionStatusDao
 							upd.getAction(), upd.getMessageId(), upd.getDate());
 					stmt.execute();
 					stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted);
-				} catch ( SQLException e ) {
+				} catch ( SQLException | RuntimeException e ) {
 					stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
 					throw e;
-				} catch ( Exception e ) {
-					stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
-					RuntimeException re;
-					if ( e instanceof RuntimeException runtime ) {
-						re = runtime;
-					} else {
-						re = new RuntimeException("Exception flushing OCPP charge point action status",
-								e);
-					}
-					throw re;
 				}
 				if ( updateDelay > 0 ) {
 					Thread.sleep(updateDelay);

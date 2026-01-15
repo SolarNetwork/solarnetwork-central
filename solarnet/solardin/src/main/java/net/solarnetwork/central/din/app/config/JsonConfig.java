@@ -26,42 +26,45 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
-import net.solarnetwork.codec.CborUtils;
+import net.solarnetwork.codec.jackson.CborUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 /**
  * JSON configuration.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 public class JsonConfig {
 
-	/** The {@link ObjectMapper} for CBOR handling. */
+	/** The qualifier for CBOR handling. */
 	public static final String CBOR_MAPPER = "cbor";
 
 	/**
-	 * Get the primary {@link ObjectMapper} to use for JSON processing.
+	 * Get the primary {@link JsonMapper} to use for JSON processing.
 	 *
 	 * @return the mapper
 	 */
 	@Primary
 	@Bean
-	public ObjectMapper objectMapper() {
-		return DatumJsonUtils.newDatumObjectMapper();
+	public JsonMapper jsonMapper() {
+		return DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 	}
 
 	/**
-	 * Get the primary {@link ObjectMapper} to use for CBOR processing.
+	 * Get the primary {@link CBORMapper} to use for CBOR processing.
 	 *
 	 * @return the mapper
 	 */
 	@Bean
 	@Qualifier(CBOR_MAPPER)
-	public ObjectMapper cborObjectMapper() {
-		return DatumJsonUtils.newDatumObjectMapper(CborUtils.cborFactory());
+	public CBORMapper cborObjectMapper() {
+		return CborUtils.CBOR_OBJECT_MAPPER.rebuild()
+				.addModules(JsonUtils.DATUM_MODULE, DatumJsonUtils.DATUM_MODULE).build();
 	}
 
 }

@@ -23,9 +23,7 @@
 package net.solarnetwork.central.instructor.support.test;
 
 import static net.solarnetwork.util.ByteUtils.objectArray;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.arrayWithSize;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -35,14 +33,16 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
-import net.solarnetwork.codec.CborUtils;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.CborUtils;
+import net.solarnetwork.codec.jackson.JsonDateUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 /**
  * Test cases for the {@link NodeInstructionSerializer} class.
@@ -59,11 +59,12 @@ public class NodeInstructionSerializer_CborTests {
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		ObjectMapper m = JsonUtils.newObjectMapper(CborUtils.cborFactory());
 		SimpleModule mod = new SimpleModule("Test");
 		mod.addSerializer(NodeInstruction.class, NodeInstructionSerializer.INSTANCE);
-		m.registerModule(mod);
-		return m;
+		var builder = CBORMapper.builder(CborUtils.cborFactory());
+		JsonUtils.setupMapperBuilder(builder, JsonDateUtils.JAVA_TIME_MODULE, JsonUtils.CORE_MODULE,
+				mod);
+		return builder.build();
 	}
 
 	@BeforeEach
@@ -90,7 +91,7 @@ public class NodeInstructionSerializer_CborTests {
 		Byte[] cbor = objectArray(mapper.writeValueAsBytes(instr));
 
 		// THEN
-		assertThat("CBOR", cbor, is(arrayWithSize(287)));
+		then(cbor).hasSize(287);
 	}
 
 	@Test
@@ -109,7 +110,7 @@ public class NodeInstructionSerializer_CborTests {
 		Byte[] cbor = objectArray(mapper.writeValueAsBytes(instr));
 
 		// THEN
-		assertThat("CBOR", cbor, is(arrayWithSize(204)));
+		then(cbor).hasSize(204);
 	}
 
 	@Test
@@ -132,7 +133,7 @@ public class NodeInstructionSerializer_CborTests {
 		Byte[] cbor = objectArray(mapper.writeValueAsBytes(instr));
 
 		// THEN
-		assertThat("CBOR", cbor, is(arrayWithSize(327)));
+		then(cbor).hasSize(327);
 	}
 
 	@Test
@@ -155,7 +156,7 @@ public class NodeInstructionSerializer_CborTests {
 		Byte[] cbor = objectArray(mapper.writeValueAsBytes(instr));
 
 		// THEN
-		assertThat("CBOR", cbor, is(arrayWithSize(331)));
+		then(cbor).hasSize(331);
 	}
 
 }

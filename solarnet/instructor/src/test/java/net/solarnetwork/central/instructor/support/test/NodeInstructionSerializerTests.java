@@ -34,13 +34,13 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * Test cases for the {@link NodeInstructionSerializer} class.
@@ -58,11 +58,9 @@ public class NodeInstructionSerializerTests {
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		ObjectMapper m = JsonUtils.newObjectMapper();
 		SimpleModule mod = new SimpleModule("Test");
 		mod.addSerializer(NodeInstruction.class, NodeInstructionSerializer.INSTANCE);
-		m.registerModule(mod);
-		return m;
+		return JsonUtils.JSON_OBJECT_MAPPER.rebuild().addModule(mod).build();
 	}
 
 	@BeforeEach

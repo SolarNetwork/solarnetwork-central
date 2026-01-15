@@ -36,7 +36,6 @@ server:
     enabled: true
     mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
     min-response-size: 2048
-  error.whitelabel.enabled: false
   port: 9930
   servlet:
     context-path: "/"
@@ -50,6 +49,9 @@ server:
     threads:
       min-spare: 1
       max: 50
+
+spring:
+  web.error.whitelabel.enabled: false
 
 ---
 spring:

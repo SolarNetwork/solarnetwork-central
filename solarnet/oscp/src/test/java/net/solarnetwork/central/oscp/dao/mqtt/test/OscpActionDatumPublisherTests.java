@@ -47,7 +47,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.OwnedGeneralNodeDatum;
 import net.solarnetwork.central.datum.flux.SolarFluxDatumPublisher;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -60,13 +59,14 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.UserSettings;
 import net.solarnetwork.central.oscp.mqtt.OscpActionDatumPublisher;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.domain.KeyValuePair;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumSamples;
 import oscp.v20.UpdateGroupCapacityForecast;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link OscpActionDatumPublisher} class.
@@ -97,7 +97,7 @@ public class OscpActionDatumPublisherTests {
 
 	@BeforeEach
 	public void setup() {
-		mapper = JsonUtils.newObjectMapper();
+		mapper = JsonUtils.JSON_OBJECT_MAPPER;
 		publisher = new OscpActionDatumPublisher(mapper);
 		publisher.onMqttServerConnectionEstablished(conn, false);
 	}

@@ -44,7 +44,7 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.event.dao.mybatis.MyBatisDatumAppEventAcceptor;
 import net.solarnetwork.central.user.event.dao.mybatis.MyBatisUserNodeEventHookConfigurationDao;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**

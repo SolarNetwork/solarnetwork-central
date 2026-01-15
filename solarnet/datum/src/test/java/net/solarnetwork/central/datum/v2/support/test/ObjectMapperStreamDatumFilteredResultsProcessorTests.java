@@ -44,7 +44,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
@@ -59,6 +58,8 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.util.ByteUtils;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Test cases for the {@link ObjectMapperStreamDatumFilteredResultsProcessor}
@@ -72,8 +73,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		ObjectMapper m = new ObjectMapper();
-		return m;
+		return JsonMapper.shared();
 	}
 
 	@BeforeEach
@@ -113,7 +113,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		// WHEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try (ObjectMapperStreamDatumFilteredResultsProcessor processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
-				mapper.createGenerator(out), mapper.getSerializerProviderInstance(),
+				mapper.createGenerator(out), mapper._serializationContext(),
 				MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE))) {
 			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
 			processor.handleResultItem(d1);
@@ -160,7 +160,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		// WHEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try (ObjectMapperStreamDatumFilteredResultsProcessor processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
-				mapper.createGenerator(out), mapper.getSerializerProviderInstance(),
+				mapper.createGenerator(out), mapper._serializationContext(),
 				MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE))) {
 			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
 			processor.handleResultItem(d1);
@@ -204,7 +204,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		// WHEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try (ObjectMapperStreamDatumFilteredResultsProcessor processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
-				mapper.createGenerator(out), mapper.getSerializerProviderInstance(),
+				mapper.createGenerator(out), mapper._serializationContext(),
 				MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE))) {
 			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
 			processor.handleResultItem(d1);
@@ -246,7 +246,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		// WHEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try (ObjectMapperStreamDatumFilteredResultsProcessor processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
-				mapper.createGenerator(out), mapper.getSerializerProviderInstance(),
+				mapper.createGenerator(out), mapper._serializationContext(),
 				MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE))) {
 			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
 			processor.handleResultItem(d1);

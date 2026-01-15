@@ -26,9 +26,9 @@ import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.
 import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.LATITUDE_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.LONGITUDE_PARAM;
-import static net.solarnetwork.codec.JsonUtils.parseBigDecimalAttribute;
-import static net.solarnetwork.codec.JsonUtils.parseIntegerAttribute;
-import static net.solarnetwork.codec.JsonUtils.parseLongAttribute;
+import static net.solarnetwork.codec.jackson.JsonUtils.parseBigDecimalAttribute;
+import static net.solarnetwork.codec.jackson.JsonUtils.parseIntegerAttribute;
+import static net.solarnetwork.codec.jackson.JsonUtils.parseLongAttribute;
 import static net.solarnetwork.util.NumberUtils.bigDecimalForNumber;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.math.BigDecimal;
@@ -49,7 +49,6 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -76,13 +75,14 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.DateUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Abstract base class for OpenWeatherMap implementations of
  * {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public abstract class BaseOpenWeatherMapCloudDatumStreamService
 		extends BaseRestOperationsCloudDatumStreamService {
@@ -148,7 +148,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings,
 				new OpenWeatherMapRestOperationsHelper(restOpsLogger, userEventAppenderBiz, restOps,
 						INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> OpenWeatherMapCloudIntegrationService.SECURE_SETTINGS));
+						_ -> OpenWeatherMapCloudIntegrationService.SECURE_SETTINGS));
 	}
 
 	@Override

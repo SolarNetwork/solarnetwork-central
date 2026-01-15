@@ -87,7 +87,7 @@ public abstract class DelayedOccasionalProcessor<T>
 	/**
 	 * Processor statistics.
 	 */
-	public static enum Stats {
+	public enum Stats {
 
 		/** Count of items added. */
 		ItemsAdded,

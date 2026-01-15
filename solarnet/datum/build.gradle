@@ -1,7 +1,7 @@
 plugins {
 	id 'java-library'
 	id 'eclipse'
-	id 'org.springframework.boot' version '3.5.9' apply false
+	id 'org.springframework.boot' version '4.0.1' apply false
 }
 
 apply plugin: 'java-library'
@@ -16,17 +16,10 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Datum'
-version = '4.1.0'
+version = '5.0.0'
 
 base {
 	archivesName = 'solarnet-datum'
-}
-
-configurations {
-	all*.exclude group: 'commons-logging'
-	all*.exclude group: 'com.amazonaws'
-	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 dependencies {
@@ -44,7 +37,7 @@ dependencies {
 	// Utilities
 	implementation "commons-io:commons-io:${commonsIoVersion}"
 	implementation 'commons-net:commons-net:3.10.0'
-	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation "de.siegmar:fastcsv:${fastCsvVersion}"
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
     implementation "org.threeten:threeten-extra:${threetenExtraVersion}"
@@ -59,7 +52,7 @@ dependencies {
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
-	testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+	testImplementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
 	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
 	testImplementation 'io.moquette:moquette-broker:0.15'
 	testImplementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"

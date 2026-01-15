@@ -34,11 +34,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.dao.BasicFilterResults;
-import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.dao.OptimizedQueryCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.SortCriteria;
+import net.solarnetwork.dao.*;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.Unique;
 
@@ -359,7 +355,7 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 			return resultsFactory.createFilterResults(filter, sqlProps, rows, totalCount, offset,
 					rows.size());
 		}
-		return new BasicFilterResults<M, K>(rows, totalCount, offset != null ? offset : 0, rows.size());
+		return new BasicFilterResults<>(rows, totalCount, offset != null ? offset : 0, rows.size());
 	}
 
 }

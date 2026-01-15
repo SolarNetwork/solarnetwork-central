@@ -83,7 +83,7 @@ public class InstructionInputCachingDaoConfig
 	public TransformConfigurationDao<RequestTransformConfiguration> cachingInstructionRequestTransformConfigurationDao(
 			TransformConfigurationDao<RequestTransformConfiguration> dao,
 			@Qualifier(REQ_TRANSFORM_CONF) Cache<UserLongCompositePK, RequestTransformConfiguration> cache) {
-		return new CachingTransformConfigurationDao<RequestTransformConfiguration>(dao, cache, executor);
+		return new CachingTransformConfigurationDao<>(dao, cache, executor);
 	}
 
 	/**
@@ -97,8 +97,7 @@ public class InstructionInputCachingDaoConfig
 	public TransformConfigurationDao<ResponseTransformConfiguration> cachingInstructionResponseTransformConfigurationDao(
 			TransformConfigurationDao<ResponseTransformConfiguration> dao,
 			@Qualifier(RES_TRANSFORM_CONF) Cache<UserLongCompositePK, ResponseTransformConfiguration> cache) {
-		return new CachingTransformConfigurationDao<ResponseTransformConfiguration>(dao, cache,
-				executor);
+		return new CachingTransformConfigurationDao<>(dao, cache, executor);
 	}
 
 	/**

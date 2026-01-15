@@ -175,19 +175,16 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 			return null;
 		}
 		TariffSchedule result = null;
-		if ( result == null ) {
-			Object tariffData = meta.metadataAtPath(path);
-			if ( tariffData != null ) {
-				Locale locale = meta.resolveLocale(path);
-				try {
-					result = TariffUtils.parseCsvTemporalRangeSchedule(locale, true, true, null,
-							tariffData);
-				} catch ( Exception e ) {
-					// ignore, continue
-					String msg = "Error parsing tariff schedule at metadata path [%s]: %s"
-							.formatted(path, e.getMessage());
-					throw new IllegalArgumentException(msg);
-				}
+		Object tariffData = meta.metadataAtPath(path);
+		if ( tariffData != null ) {
+			Locale locale = meta.resolveLocale(path);
+			try {
+				result = TariffUtils.parseCsvTemporalRangeSchedule(locale, true, true, null, tariffData);
+			} catch ( Exception e ) {
+				// ignore, continue
+				String msg = "Error parsing tariff schedule at metadata path [%s]: %s".formatted(path,
+						e.getMessage());
+				throw new IllegalArgumentException(msg);
 			}
 		}
 		return result;

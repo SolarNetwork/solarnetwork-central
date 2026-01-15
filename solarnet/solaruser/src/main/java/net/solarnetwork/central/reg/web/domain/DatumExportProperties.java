@@ -83,7 +83,7 @@ public final class DatumExportProperties {
 	 *
 	 * @return the user ID
 	 */
-	public final Long getUserId() {
+	public Long getUserId() {
 		return userId;
 	}
 
@@ -93,7 +93,7 @@ public final class DatumExportProperties {
 	 * @param userId
 	 *        the user ID to set
 	 */
-	public final void setUserId(Long userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 

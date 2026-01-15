@@ -245,7 +245,7 @@ public class UserDatumInputController {
 	/**
 	 * Preview transform input DTO.
 	 */
-	public static record PreviewTransformInput(@JsonProperty("contentType") String contentType,
+	public record PreviewTransformInput(@JsonProperty("contentType") String contentType,
 			@JsonProperty("data") String data, @JsonProperty("query") String query,
 			@JsonProperty(value = "parameters", required = false) Map<String, Object> parameters) {
 

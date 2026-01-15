@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserEventController.java - 6/08/2022 9:12:41 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,7 +25,6 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.List;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
@@ -37,7 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventBiz;
 import net.solarnetwork.central.common.dao.BasicUserEventFilter;
@@ -52,12 +51,13 @@ import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Web service API for user event management.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @GlobalExceptionRestController
 @RestController("v1UserEventsController")
@@ -72,7 +72,7 @@ public class UserEventController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userEventBiz
 	 *        the UserEventBiz to use
 	 * @param objectMapper
@@ -83,8 +83,9 @@ public class UserEventController {
 	 *        the registrar to use (may be {@literal null}
 	 */
 	@Autowired
-	public UserEventController(UserEventBiz userEventBiz, ObjectMapper objectMapper,
-			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
+	public UserEventController(UserEventBiz userEventBiz,
+			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) ObjectMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_STREAMING_MAPPER) ObjectMapper cborObjectMapper,
 			PropertySerializerRegistrar propertySerializerRegistrar) {
 		super();
 		this.userEventBiz = requireNonNullArgument(userEventBiz, "userEventBiz");
@@ -95,7 +96,7 @@ public class UserEventController {
 
 	/**
 	 * Query for a listing of datum.
-	 * 
+	 *
 	 * @param cmd
 	 *        the query criteria
 	 * @param accept
@@ -125,7 +126,7 @@ public class UserEventController {
 
 	/**
 	 * Get the filter validator to use.
-	 * 
+	 *
 	 * @return the validator
 	 */
 	public Validator getFilterValidator() {
@@ -134,7 +135,7 @@ public class UserEventController {
 
 	/**
 	 * Set the filter validator to use.
-	 * 
+	 *
 	 * @param filterValidator
 	 *        the validator to set
 	 * @throws IllegalArgumentException

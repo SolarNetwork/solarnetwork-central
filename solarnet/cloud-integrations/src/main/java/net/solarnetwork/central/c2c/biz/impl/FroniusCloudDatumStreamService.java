@@ -67,7 +67,6 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -95,12 +94,13 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Fronius implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -145,6 +145,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
@@ -234,7 +235,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				new FroniusRestOperationsHelper(
 						LoggerFactory.getLogger(FroniusCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> FroniusCloudIntegrationService.SECURE_SETTINGS));
+						_ -> FroniusCloudIntegrationService.SECURE_SETTINGS));
 	}
 
 	@Override
@@ -284,7 +285,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 	private List<CloudDataValue> systems(CloudIntegrationConfiguration integration) {
 		return restOpsHelper.httpGet("List systems", integration, JsonNode.class,
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(FroniusCloudIntegrationService.LIST_SYSTEMS_URL)
 						.buildAndExpand(integration.getServiceProperties()).toUri(),
 				res -> parseSystems(res.getBody()));
@@ -294,7 +295,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			final String systemId, Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List system devices", integration, JsonNode.class,
 		// @formatter:off
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SYSTEM_DEVICES_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
@@ -308,7 +309,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		Instant startDate = endDate.minus(1, ChronoUnit.DAYS);
 		return restOpsHelper.httpGet("List devices channels", integration, JsonNode.class,
 		// @formatter:off
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(DEVICE_HISTORY_URL_TEMPLATE)
 						.queryParam(START_AT_PARAM, startDate.toString())
 						.queryParam(END_AT_PARAM, endDate.toString())
@@ -371,7 +372,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		}
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode sysNode : json.path("pvSystems") ) {
-			final String id = sysNode.path("pvSystemId").asText();
+			final String id = sysNode.path("pvSystemId").asString();
 			result.add(parseSystem(sysNode, id));
 		}
 		return result;
@@ -381,7 +382,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		if ( sysNode == null ) {
 			return null;
 		}
-		final String name = sysNode.path("name").asText().trim();
+		final String name = sysNode.path("name").asString().trim();
 		final var meta = new LinkedHashMap<String, Object>(4);
 		final JsonNode addrNode = sysNode.path("address");
 		if ( addrNode.isObject() ) {
@@ -435,8 +436,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		final List<CloudDataValue> result = new ArrayList<>(8);
 
 		for ( JsonNode devNode : json.path("devices") ) {
-			final String id = devNode.path("deviceId").asText();
-			final String name = devNode.path("deviceName").asText().trim();
+			final String id = devNode.path("deviceId").asString();
+			final String name = devNode.path("deviceName").asString().trim();
 
 			final var meta = new LinkedHashMap<String, Object>(4);
 			populateNonEmptyValue(devNode, "deviceManufacturer", MANUFACTURER_METADATA, meta);
@@ -500,7 +501,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		final List<CloudDataValue> result = new ArrayList<>(8);
 		for ( JsonNode dataNode : json.path("data") ) {
 			for ( JsonNode channelNode : dataNode.path("channels") ) {
-				final String id = channelNode.path("channelName").asText();
+				final String id = channelNode.path("channelName").asString();
 
 				final var meta = new LinkedHashMap<String, Object>(4);
 				populateNonEmptyValue(channelNode, "channelType", "channelType", meta);
@@ -527,7 +528,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/(.+)");
 
-	private static record ValueRef(String systemId, String deviceId, String channelName,
+	private record ValueRef(String systemId, String deviceId, String channelName,
 			CloudDatumStreamPropertyConfiguration property, String sourceId) {
 
 		private ValueRef(String systemId, String deviceId, String channelName,
@@ -559,7 +560,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		}
 
 		private void addValueRef(ValueRef ref) {
-			deviceValueRefs.computeIfAbsent(ref.deviceId, k -> new ArrayList<>(4)).add(ref);
+			deviceValueRefs.computeIfAbsent(ref.deviceId, _ -> new ArrayList<>(4)).add(ref);
 		}
 
 	}
@@ -678,10 +679,10 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 						d.getObjectId(), d.getSourceId());
 				Instant ts = d.getTimestamp();
 				greatestTimestampPerStream.compute(streamPk,
-						(k, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
+						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
 				finalResult.add(d);
 			}
-			Collections.sort(finalResult, null);
+			finalResult.sort(null);
 
 			// latest datum might not have been reported yet; check latest datum date (per stream), and if
 			// less than expected date make that the next query start date
@@ -713,7 +714,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	private void fetchDatumForSystem(BasicQueryFilter filter, CloudDatumStreamConfiguration datumStream,
 			CloudIntegrationConfiguration integration, Map<String, String> sourceIdMap,
 			SystemQueryPlan queryPlan, List<GeneralDatum> resultDatum) {
-		if ( queryPlan.deviceValueRefs == null ) {
+		if ( queryPlan.deviceValueRefs.isEmpty() ) {
 			return;
 		}
 		for ( Entry<String, List<ValueRef>> deviceEntry : queryPlan.deviceValueRefs.entrySet() ) {
@@ -724,7 +725,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			final var links = new Links();
 			while ( links.hasMore(pageFilter.getOffset()) ) {
 				List<GeneralDatum> datum = restOpsHelper.httpGet("List device data", integration,
-						JsonNode.class, req -> {
+						JsonNode.class, _ -> {
 							var b = fromUri(resolveBaseUrl(integration, BASE_URI))
 									.path(DEVICE_HISTORY_URL_TEMPLATE)
 									.queryParam(START_AT_PARAM, pageFilter.getStartDate())
@@ -769,7 +770,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				return;
 			}
 			var links = json.path("links");
-			next = links.path("next").textValue();
+			next = links.path("next").stringValue();
 			if ( links.hasNonNull("totalItemsCount") ) {
 				count = links.path("totalItemsCount").intValue();
 			}
@@ -813,7 +814,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		for ( JsonNode dataNode : json.path("data") ) {
 			final Instant ts;
 			try {
-				ts = Instant.parse(dataNode.path("logDateTime").textValue());
+				ts = Instant.parse(dataNode.path("logDateTime").stringValue());
 			} catch ( DateTimeParseException e ) {
 				// ignore and continue
 				continue;
@@ -824,7 +825,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			}
 			DatumSamples s = new DatumSamples();
 			for ( JsonNode channelNode : dataNode.path("channels") ) {
-				String channelName = channelNode.path("channelName").textValue();
+				String channelName = channelNode.path("channelName").stringValue();
 				if ( !channelNames.contains(channelName) ) {
 					continue;
 				}
@@ -895,7 +896,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				String deviceId = m.group(2);
 				String channelName = m.group(3);
 
-				SystemQueryPlan plan = result.computeIfAbsent(systemId, id -> {
+				SystemQueryPlan plan = result.computeIfAbsent(systemId, _ -> {
 					return new SystemQueryPlan(systemId);
 				});
 
@@ -920,7 +921,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			var integration = integrationProvider.get();
 			result = restOpsHelper.httpGet("View system information", integration, JsonNode.class,
 			// @formatter:off
-							(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 									.path(SYSTEM_URL_TEMPLATE)
 									.buildAndExpand(systemId).toUri(),
 									// @formatter:on

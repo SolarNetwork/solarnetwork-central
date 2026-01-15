@@ -62,7 +62,7 @@ public class BasicSharedValueCacheTests {
 		UUID val = UUID.randomUUID();
 
 		// WHEN
-		UUID result = cache.put(1, "a", (s) -> val, 60L);
+		UUID result = cache.put(1, "a", (_) -> val, 60L);
 		UUID got = cache.get(1);
 
 		// @formatter:off
@@ -107,7 +107,7 @@ public class BasicSharedValueCacheTests {
 		// GIVEN
 		UUID val = UUID.randomUUID();
 
-		Function<String, UUID> provider = (s) -> val;
+		Function<String, UUID> provider = (_) -> val;
 
 		// WHEN
 		UUID result1 = cache.put(1, "a", provider, 60L);

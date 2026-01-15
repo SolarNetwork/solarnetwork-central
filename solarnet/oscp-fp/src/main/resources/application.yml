@@ -174,7 +174,6 @@ server:
     enabled: true
     mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
     min-response-size: 2048
-  error.whitelabel.enabled: false
   port: 9084
   tomcat.threads:
     min-spare: 1
@@ -191,6 +190,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: "http://localhost/idp/path"
+  web.error.whitelabel.enabled: false
 
 ---
 spring:

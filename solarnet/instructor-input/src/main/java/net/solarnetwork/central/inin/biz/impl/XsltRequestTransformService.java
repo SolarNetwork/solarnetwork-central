@@ -54,8 +54,6 @@ import javax.xml.transform.stream.StreamResult;
 import org.springframework.util.MimeType;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.inin.biz.RequestTransformService;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.BasicSharedValueCache;
@@ -65,12 +63,14 @@ import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextAreaSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * XSLT implementation of {@link RequestTransformService}.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class XsltRequestTransformService extends BaseXsltService implements RequestTransformService {
 

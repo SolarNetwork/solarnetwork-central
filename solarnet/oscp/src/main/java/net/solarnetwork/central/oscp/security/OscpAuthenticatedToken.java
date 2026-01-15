@@ -37,7 +37,7 @@ import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
  * An OSCP authenticated token.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 
@@ -100,26 +100,6 @@ public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 	@Override
 	public String getUsername() {
 		return null;
-	}
-
-	@Override
-	public boolean isAccountNonExpired() {
-		return true;
-	}
-
-	@Override
-	public boolean isAccountNonLocked() {
-		return true;
-	}
-
-	@Override
-	public boolean isCredentialsNonExpired() {
-		return true;
-	}
-
-	@Override
-	public boolean isEnabled() {
-		return true;
 	}
 
 }

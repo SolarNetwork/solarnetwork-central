@@ -31,11 +31,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.ocpp.util.ChargePointStatusSerializer;
 import net.solarnetwork.util.DateUtils;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * Test cases for the {@link ChargePointStatusSerializer} class.
@@ -48,11 +49,9 @@ public class ChargePointStatusSerializerTests {
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
-		ObjectMapper m = new ObjectMapper();
 		SimpleModule mod = new SimpleModule("Test");
 		mod.addSerializer(ChargePointStatus.class, ChargePointStatusSerializer.INSTANCE);
-		m.registerModule(mod);
-		return m;
+		return JsonMapper.builder().addModule(mod).build();
 	}
 
 	@BeforeEach

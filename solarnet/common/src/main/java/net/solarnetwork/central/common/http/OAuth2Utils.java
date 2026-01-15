@@ -23,8 +23,6 @@
 package net.solarnetwork.central.common.http;
 
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
-import static org.springframework.security.oauth2.client.OAuth2AuthorizationContext.PASSWORD_ATTRIBUTE_NAME;
-import static org.springframework.security.oauth2.client.OAuth2AuthorizationContext.USERNAME_ATTRIBUTE_NAME;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,9 +30,11 @@ import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.OAuth2AuthorizationContext;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -44,9 +44,49 @@ import net.solarnetwork.service.RemoteServiceException;
  * OAuth2 utilities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class OAuth2Utils {
+
+	/**
+	 * The (deprecated) password authorization grant type.
+	 * 
+	 * @since 1.1
+	 */
+	public static final AuthorizationGrantType PASSWORD_GRANT_TYPE = new AuthorizationGrantType(
+			"password");
+
+	/**
+	 * The name of an attribute in the context associated to the value for the
+	 * resource owner's username.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String USERNAME_ATTRIBUTE_NAME = OAuth2AuthorizationContext.class.getName()
+			.concat(".USERNAME");
+
+	/**
+	 * The name of an attribute in the context associated to the value for the
+	 * resource owner's password.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String PASSWORD_ATTRIBUTE_NAME = OAuth2AuthorizationContext.class.getName()
+			.concat(".PASSWORD");
+
+	/**
+	 * {@code username} - used in Access Token Request.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String USERNAME_PARAMETER_NAME = "username";
+
+	/**
+	 * {@code password} - used in Access Token Request.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String PASSWORD_PARAMETER_NAME = "password";
 
 	private OAuth2Utils() {
 		// not available

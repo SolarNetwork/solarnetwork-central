@@ -132,7 +132,7 @@ public class MyBatisExceptionTranslator extends org.mybatis.spring.MyBatisExcept
 				String name = m.group(2);
 				String prop = m.group(3);
 				Map<String, String> propMap = sqlStateMap.computeIfAbsent(name,
-						k -> new LinkedHashMap<>());
+						_ -> new LinkedHashMap<>());
 				propMap.put("state", sqlState);
 				propMap.put(prop, me.getValue().toString());
 			}
@@ -152,7 +152,7 @@ public class MyBatisExceptionTranslator extends org.mybatis.spring.MyBatisExcept
 		return result;
 	}
 
-	private static enum ExceptionType {
+	private enum ExceptionType {
 
 		ConcurrencyFailure;
 

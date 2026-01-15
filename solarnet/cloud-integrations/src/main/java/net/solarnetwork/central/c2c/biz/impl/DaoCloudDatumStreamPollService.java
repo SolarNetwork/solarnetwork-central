@@ -510,13 +510,13 @@ public class DaoCloudDatumStreamPollService
 					Map<String, Instant> lastDates = new TreeMap<>(
 							StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT);
 					for ( var datum : polledDatum ) {
-						sourceCounts.compute(datum.getSourceId(), (k, old) -> {
+						sourceCounts.compute(datum.getSourceId(), (_, old) -> {
 							if ( old == null ) {
 								return 1;
 							}
 							return old + 1;
 						});
-						lastDates.compute(datum.getSourceId(), (k, old) -> {
+						lastDates.compute(datum.getSourceId(), (_, old) -> {
 							if ( old == null ) {
 								return datum.getTimestamp();
 							}

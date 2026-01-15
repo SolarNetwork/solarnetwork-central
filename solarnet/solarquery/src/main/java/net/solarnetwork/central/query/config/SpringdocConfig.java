@@ -61,7 +61,7 @@ public class SpringdocConfig {
 			}
 			if ( api.getPaths() != null ) {
 				api.setPaths(api.getPaths().entrySet().stream().sorted(new SwaggerUtils.PathsSorter())
-						.collect(toMap(e -> e.getKey(), e -> e.getValue(), (l, r) -> l, Paths::new)));
+						.collect(toMap(e -> e.getKey(), e -> e.getValue(), (l, _) -> l, Paths::new)));
 			}
 
 		};

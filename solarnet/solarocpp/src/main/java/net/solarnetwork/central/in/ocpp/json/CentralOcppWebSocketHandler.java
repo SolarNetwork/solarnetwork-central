@@ -39,8 +39,6 @@ import org.springframework.context.SmartLifecycle;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.ApplicationMetadata;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -62,12 +60,14 @@ import net.solarnetwork.ocpp.service.ErrorCodeResolver;
 import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandler;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.StatTracker;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
  * 
  * @author matt
- * @version 2.9
+ * @version 3.0
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
@@ -421,7 +421,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			String dataStr;
 			try {
 				dataStr = (data instanceof String s ? s : getObjectMapper().writeValueAsString(data));
-			} catch ( JsonProcessingException e ) {
+			} catch ( JacksonException e ) {
 				dataStr = null;
 			}
 			LogEventInfo event = LogEventInfo.event(tags, message, dataStr);

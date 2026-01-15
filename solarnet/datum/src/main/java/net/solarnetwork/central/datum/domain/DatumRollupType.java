@@ -50,7 +50,7 @@ public enum DatumRollupType {
 
 	private final String key;
 
-	private DatumRollupType(String key) {
+	DatumRollupType(String key) {
 		this.key = key;
 	}
 

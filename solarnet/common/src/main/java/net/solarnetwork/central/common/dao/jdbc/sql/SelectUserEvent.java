@@ -57,7 +57,7 @@ public final class SelectUserEvent
 	 * Constructor.
 	 *
 	 * @param filter
-	 * 		the filter criteria
+	 *        the filter criteria
 	 */
 	public SelectUserEvent(UserEventFilter filter) {
 		this(TimeBasedV7UuidGenerator.INSTANCE_MICROS, filter, DEFAULT_FETCH_SIZE);
@@ -67,11 +67,11 @@ public final class SelectUserEvent
 	 * Constructor.
 	 *
 	 * @param uuidTimestampDecoder
-	 * 		the UUID timestamp decoder
+	 *        the UUID timestamp decoder
 	 * @param filter
-	 * 		the filter criteria
+	 *        the filter criteria
 	 * @param fetchSize
-	 * 		the fetch size to use, or {@literal 0} to leave unspecified
+	 *        the fetch size to use, or {@literal 0} to leave unspecified
 	 */
 	public SelectUserEvent(UuidTimestampDecoder uuidTimestampDecoder, UserEventFilter filter,
 			int fetchSize) {

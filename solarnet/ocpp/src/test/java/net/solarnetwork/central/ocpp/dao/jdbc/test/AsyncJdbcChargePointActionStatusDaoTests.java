@@ -408,7 +408,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 					synchronized ( chargerToActionToMessageIdMap ) {
 						dao.updateActionTimestamp(TEST_USER_ID, ident, evseId, connId, action, messageId,
 								Instant.now());
-						chargerToActionToMessageIdMap.computeIfAbsent(ident, k -> new HashMap<>())
+						chargerToActionToMessageIdMap.computeIfAbsent(ident, _ -> new HashMap<>())
 								.put(action, messageId);
 					}
 				});

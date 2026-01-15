@@ -81,7 +81,7 @@ public class HeartbeatJob extends JobSupport {
 		this.dao = requireNonNullArgument(dao, "dao");
 		this.client = requireNonNullArgument(client, "client");
 		setGroupId("OSCP");
-		setId(this.role.toString() + "-Heartbeat");
+		setId(this.role + "-Heartbeat");
 		setMaximumWaitMs(1800000L);
 	}
 
@@ -113,7 +113,7 @@ public class HeartbeatJob extends JobSupport {
 		do {
 			if ( txTemplate != null ) {
 				processed = txTemplate
-						.execute((tx) -> exchange(supportedOscpVersions, remainingIterations));
+						.execute(_ -> exchange(supportedOscpVersions, remainingIterations));
 			} else {
 				processed = exchange(supportedOscpVersions, remainingIterations);
 			}

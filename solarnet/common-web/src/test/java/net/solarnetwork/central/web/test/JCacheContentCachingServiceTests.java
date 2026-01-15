@@ -397,8 +397,7 @@ public class JCacheContentCachingServiceTests {
 		final String contentType = "text/plain;charset=UTF-8";
 		headers.setContentType(MediaType.parseMediaType(contentType));
 		final String body = "Hello, world.";
-		final SimpleCachedContent content = new SimpleCachedContent(headers, body.getBytes(UTF_8),
-				null);
+		final SimpleCachedContent content = new SimpleCachedContent(headers, body.getBytes(UTF_8), null);
 		expect(cache.get(key)).andReturn(content);
 
 		// when

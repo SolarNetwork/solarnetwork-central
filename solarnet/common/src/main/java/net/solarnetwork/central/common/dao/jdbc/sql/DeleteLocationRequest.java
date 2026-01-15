@@ -86,7 +86,7 @@ public final class DeleteLocationRequest implements PreparedStatementCreator, Sq
 		buf.append("DELETE FROM solarnet.sn_loc_req");
 		StringBuilder where = new StringBuilder(64);
 		LocationRequestSqlUtils.appendLocationRequestCriteria(id, filter, where);
-		if ( where.length() > 0 ) {
+		if ( !where.isEmpty() ) {
 			buf.append(" WHERE").append(where.substring(CommonSqlUtils.WHERE_COMPONENT_PREFIX_LENGTH));
 		}
 		return buf.toString();

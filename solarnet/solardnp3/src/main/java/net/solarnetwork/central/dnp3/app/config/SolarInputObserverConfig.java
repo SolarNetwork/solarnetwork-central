@@ -31,20 +31,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.task.TaskExecutor;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.mqtt.SolarInputDatumObserver;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.codec.CborUtils;
-import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 /**
  * Configuration for the SolarInput observer service.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @Profile("mqtt")
 @Configuration(proxyBeanMethods = false)
@@ -63,6 +61,10 @@ public class SolarInputObserverConfig {
 	@Qualifier(DATUM_METADATA_CACHE)
 	private Cache<DatumId, ObjectDatumStreamMetadata> datumMetadataCache;
 
+	@Autowired
+	@Qualifier(JsonConfig.CBOR_MAPPER)
+	private CBORMapper cborMapper;
+
 	/**
 	 * The SolarInput observer service.
 	 *
@@ -71,8 +73,7 @@ public class SolarInputObserverConfig {
 	@Bean
 	@Qualifier(SOLARQUEUE)
 	public SolarInputDatumObserver solarInputDatumObserver() {
-		ObjectMapper objectMapper = JsonUtils.newDatumObjectMapper(CborUtils.cborFactory());
-		SolarInputDatumObserver service = new SolarInputDatumObserver(taskExecutor, objectMapper,
+		SolarInputDatumObserver service = new SolarInputDatumObserver(taskExecutor, cborMapper,
 				solarNodeOwnershipDao, datumStreamMetadataDao);
 		service.setMetadataCache(datumMetadataCache);
 		return service;

@@ -29,12 +29,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import net.solarnetwork.central.dao.AuditNodeServiceEntity;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.util.DateUtils;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Test cases for the {@link AuditNodeServiceEntity} class.
@@ -45,10 +45,10 @@ import net.solarnetwork.util.DateUtils;
 public class AuditNodeServiceEntityTests {
 
 	public ObjectMapper objectMapper() {
-		ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-		objectMapper.setDefaultPropertyInclusion(Include.NON_NULL);
-		objectMapper.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
-		return objectMapper;
+		return JsonMapper.builder()
+				.changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(Include.NON_NULL))
+				.changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(Include.NON_NULL))
+				.disable(DateTimeFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS).build();
 	}
 
 	@Test

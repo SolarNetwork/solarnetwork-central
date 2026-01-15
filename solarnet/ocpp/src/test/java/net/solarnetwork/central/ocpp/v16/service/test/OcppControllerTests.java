@@ -53,7 +53,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -89,6 +88,7 @@ import ocpp.v16.jakarta.cp.ChangeAvailabilityResponse;
 import ocpp.v16.jakarta.cp.GetConfigurationRequest;
 import ocpp.v16.jakarta.cp.GetConfigurationResponse;
 import ocpp.v16.jakarta.cp.KeyValue;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Test cases for the {@link OcppController} class.

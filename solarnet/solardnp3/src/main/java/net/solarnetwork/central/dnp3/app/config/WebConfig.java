@@ -24,8 +24,13 @@ package net.solarnetwork.central.dnp3.app.config;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.converter.HttpMessageConverters.ServerBuilder;
+import org.springframework.http.converter.cbor.JacksonCborHttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.cors.CorsConfiguration;
@@ -34,16 +39,25 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
 import net.solarnetwork.service.PingTest;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 /**
  * Web layer configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @Configuration(proxyBeanMethods = false)
 @Import({ WebServiceErrorAttributes.class })
 public class WebConfig implements WebMvcConfigurer {
+
+	@Autowired
+	private JsonMapper jsonMapper;
+
+	@Autowired
+	@Qualifier(JsonConfig.CBOR_MAPPER)
+	private CBORMapper cborMapper;
 
 	@Controller
 	@RequestMapping("/ping")
@@ -53,6 +67,12 @@ public class WebConfig implements WebMvcConfigurer {
 			super(tests);
 		}
 
+	}
+
+	@Override
+	public void configureMessageConverters(ServerBuilder builder) {
+		builder.withJsonConverter(new JacksonJsonHttpMessageConverter(jsonMapper))
+				.withCborConverter(new JacksonCborHttpMessageConverter(cborMapper));
 	}
 
 	@Override

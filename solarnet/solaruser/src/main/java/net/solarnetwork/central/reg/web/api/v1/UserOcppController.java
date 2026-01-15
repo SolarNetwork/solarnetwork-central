@@ -48,7 +48,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
@@ -78,12 +77,13 @@ import net.solarnetwork.domain.Result;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargeSession;
 import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Web service API for OCPP management.
  *
  * @author matt
- * @version 2.4
+ * @version 3.0
  */
 @Profile(OCPP_V16)
 @GlobalExceptionRestController
@@ -110,8 +110,9 @@ public class UserOcppController {
 	 * @param propertySerializerRegistrar
 	 *        the registrar to use (may be {@literal null}
 	 */
-	public UserOcppController(UserOcppBiz userOcppBiz, ObjectMapper objectMapper,
-			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
+	public UserOcppController(UserOcppBiz userOcppBiz,
+			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) ObjectMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_STREAMING_MAPPER) ObjectMapper cborObjectMapper,
 			PropertySerializerRegistrar propertySerializerRegistrar) {
 		super();
 		this.userOcppBiz = requireNonNullArgument(userOcppBiz, "userOcppBiz");

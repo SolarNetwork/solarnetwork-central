@@ -38,10 +38,8 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.DefaultMailService;
 import net.solarnetwork.central.mail.support.MailServiceSettings;
-import net.solarnetwork.central.scheduler.ManagedJob;
 import net.solarnetwork.central.user.alert.jobs.EmailNodeStaleDataAlertProcessor;
 import net.solarnetwork.central.user.alert.jobs.UserAlertBatchJob;
-import net.solarnetwork.central.user.alert.jobs.UserAlertBatchProcessor;
 import net.solarnetwork.central.user.alert.jobs.UserAlertSituationCleanerJob;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
@@ -112,7 +110,7 @@ public class UserAlertJobsConfig {
 
 	@ConfigurationProperties(prefix = "app.user-alert.stale-data.processor")
 	@Bean
-	public UserAlertBatchProcessor emailNodeStaleDataAlertProcessor() {
+	public EmailNodeStaleDataAlertProcessor emailNodeStaleDataAlertProcessor() {
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(EmailNodeStaleDataAlertProcessor.class.getName());
 
@@ -122,7 +120,7 @@ public class UserAlertJobsConfig {
 
 	@ConfigurationProperties(prefix = "app.job.user-alert.stale-data.emailer")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public ManagedJob userAlertBatchJob() {
+	public UserAlertBatchJob userAlertBatchJob() {
 		UserAlertBatchJob job = new UserAlertBatchJob(emailNodeStaleDataAlertProcessor(), txTemplate,
 				appSettingDao);
 		job.setId("EmailNodeStaleDataAlertProcessor");
@@ -132,7 +130,7 @@ public class UserAlertJobsConfig {
 
 	@ConfigurationProperties(prefix = "app.job.user-alert.stale-data.cleaner")
 	@Bean
-	public ManagedJob resolvedSituationCleanerJob() {
+	public UserAlertSituationCleanerJob resolvedSituationCleanerJob() {
 		UserAlertSituationCleanerJob job = new UserAlertSituationCleanerJob(Clock.systemUTC(),
 				userAlertSituationDao);
 		job.setId("UserAlertSituationCleaner");

@@ -22,35 +22,30 @@
 
 package net.solarnetwork.central.instructor.support;
 
-import java.io.IOException;
-import java.io.Serial;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.codec.JsonDateUtils.InstantDeserializer;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.codec.jackson.JsonDateUtils.InstantDeserializer;
+import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.databind.exc.MismatchedInputException;
 
 /**
  * Deserializer for {@link NodeInstruction} objects.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction> {
-
-	@Serial
-	private static final long serialVersionUID = -3604500447266382990L;
 
 	/** A default instance. */
 	public static final NodeInstructionDeserializer INSTANCE = new NodeInstructionDeserializer();
@@ -65,7 +60,7 @@ public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	@Override
 	public NodeInstruction deserialize(JsonParser p, DeserializationContext ctxt)
-			throws IOException, JacksonException {
+			throws JacksonException {
 		JsonToken t = p.currentToken();
 		if ( t == JsonToken.VALUE_NULL ) {
 			return null;
@@ -82,7 +77,7 @@ public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction
 			Map<String, Object> resultParameters = null;
 
 			String f;
-			while ( (f = p.nextFieldName()) != null ) {
+			while ( (f = p.nextName()) != null ) {
 				switch (f) {
 					case "id":
 						id = JsonUtils.parseLong(p);
@@ -98,7 +93,7 @@ public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction
 						break;
 
 					case "topic":
-						topic = p.nextTextValue();
+						topic = p.nextStringValue();
 						break;
 
 					case "instructionDate":
@@ -108,7 +103,7 @@ public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction
 
 					case "state":
 						try {
-							state = InstructionStatus.InstructionState.valueOf(p.nextTextValue());
+							state = InstructionStatus.InstructionState.valueOf(p.nextStringValue());
 						} catch ( Exception e ) {
 							state = InstructionStatus.InstructionState.Unknown;
 						}
@@ -155,10 +150,10 @@ public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction
 
 			return result;
 		}
-		throw new JsonParseException(p, "Unable to parse Instruction (not an object)");
+		throw MismatchedInputException.from(p, "Unable to parse NodeInstruction (not an object)");
 	}
 
-	private static List<InstructionParameter> parseParameters(JsonParser p) throws IOException {
+	private static List<InstructionParameter> parseParameters(JsonParser p) throws JacksonException {
 		JsonToken t = p.nextToken();
 		return switch (t) {
 			case START_ARRAY -> parseParameterList(p);
@@ -168,7 +163,7 @@ public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction
 	}
 
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	private static List<InstructionParameter> parseParameterList(JsonParser p) throws IOException {
+	private static List<InstructionParameter> parseParameterList(JsonParser p) throws JacksonException {
 		assert p.currentToken() == JsonToken.START_ARRAY;
 		List<InstructionParameter> result = new ArrayList<>(8);
 		JsonToken t = null;
@@ -177,8 +172,8 @@ public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction
 		while ( (t = p.nextToken()) != JsonToken.END_ARRAY ) {
 			if ( t == JsonToken.START_OBJECT ) {
 				String f;
-				while ( (f = p.nextFieldName()) != null ) {
-					String v = p.nextTextValue();
+				while ( (f = p.nextName()) != null ) {
+					String v = p.nextStringValue();
 					switch (f) {
 						case "name":
 							paramName = v;
@@ -197,12 +192,12 @@ public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction
 		return result;
 	}
 
-	private static List<InstructionParameter> parseParameterMap(JsonParser p) throws IOException {
+	private static List<InstructionParameter> parseParameterMap(JsonParser p) throws JacksonException {
 		assert p.currentToken() == JsonToken.START_OBJECT;
 		List<InstructionParameter> result = new ArrayList<>(8);
 		String f;
-		while ( (f = p.nextFieldName()) != null ) {
-			String s = p.nextTextValue();
+		while ( (f = p.nextName()) != null ) {
+			String s = p.nextStringValue();
 			if ( s != null ) {
 				result.add(new InstructionParameter(f, s));
 			}

@@ -48,7 +48,7 @@ $(document).ready(function() {
 		handleServiceIdentifierChange(event, hookServices);
 	})
 	.on('submit', function(event) {
-		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 			SolarReg.storeServiceConfiguration(res, hookConfigs);
 			populateHookConfigs([res], true);
 		}, function serializeDataConfigForm(form) {

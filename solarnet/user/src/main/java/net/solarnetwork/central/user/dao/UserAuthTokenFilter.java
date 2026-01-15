@@ -95,7 +95,7 @@ public interface UserAuthTokenFilter
 	/**
 	 * Get the token types as an array of enumeration values.
 	 * 
-	 * @return the set of token types, or {@code null}
+	 * @return array of token types, or {@code null}
 	 */
 	default SecurityTokenType[] getTokenTypeEnums() {
 		Set<SecurityTokenType> set = tokenTypesSet();

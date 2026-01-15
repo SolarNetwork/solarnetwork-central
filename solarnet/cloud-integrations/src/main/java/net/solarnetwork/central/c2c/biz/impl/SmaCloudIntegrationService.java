@@ -45,7 +45,6 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
@@ -63,12 +62,13 @@ import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Sma implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -170,13 +170,12 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 				encryptor, SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(LoggerFactory.getLogger(SmaCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
-						integrationLocksCache));
+						_ -> SECURE_SETTINGS, oauthClientManager, clock, integrationLocksCache));
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.rng = requireNonNullArgument(rng, "rng");
 		this.tokenFetchHelper = new RestOperationsHelper(
 				LoggerFactory.getLogger(SmaCloudIntegrationService.class), userEventAppenderBiz, restOps,
-				INTEGRATION_HTTP_ERROR_TAGS, encryptor, integrationServiceIdentifier -> SECURE_SETTINGS);
+				INTEGRATION_HTTP_ERROR_TAGS, encryptor, _ -> SECURE_SETTINGS);
 	}
 
 	@Override
@@ -225,7 +224,7 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 		// validate by requesting the available systems
 		try {
 			final String response = restOpsHelper.httpGet("List systems", integration, String.class,
-					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH).buildAndExpand().toUri(),
 					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
@@ -303,7 +302,7 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 		}
 
 		final var decrypted = integration.copyWithId(integration.getId());
-		decrypted.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
+		decrypted.unmaskSensitiveInformation(_ -> SECURE_SETTINGS, encryptor);
 
 		final JsonNode json = tokenFetchHelper.http("Get OAuth token", HttpMethod.POST, null,
 				integration, JsonNode.class, (req) -> {
@@ -335,13 +334,13 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 			}
 		 */
 
-		final String accessToken = json.path("access_token").textValue();
+		final String accessToken = json.path("access_token").stringValue();
 		if ( accessToken == null ) {
 			String errMsg = ms.getMessage("error.oauth.accessToken.missing", null, locale);
 			throw new IllegalStateException(errMsg);
 		}
 
-		final String refreshToken = json.path("refresh_token").textValue();
+		final String refreshToken = json.path("refresh_token").stringValue();
 		if ( refreshToken == null ) {
 			String errMsg = ms.getMessage("error.oauth.refreshToken.missing", null, locale);
 			throw new IllegalStateException(errMsg);
