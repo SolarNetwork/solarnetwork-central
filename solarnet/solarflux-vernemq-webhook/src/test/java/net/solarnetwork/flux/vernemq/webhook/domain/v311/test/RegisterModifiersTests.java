@@ -33,50 +33,53 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class RegisterModifiersTests {
 
-  private ObjectMapper objectMapper;
+	private ObjectMapper objectMapper;
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
+	@BeforeEach
+	public void setup() {
+		objectMapper = JsonUtils.defaultObjectMapper();
+	}
 
-  @Test
-  public void jsonFull() throws JSONException {
-    RegisterModifiers mods = RegisterModifiers.builder().withCleanSession(true)
-        .withMaxInflightMessages(1).withMaxMessageRate(2).withMaxMessageSize(3).withRegView("foo")
-        .withRetryInterval(4L).withSubscriberId("bar").withUpgradeQos(true).build();
+	@Test
+	public void jsonFull() throws JSONException {
+		RegisterModifiers mods = RegisterModifiers.builder().withCleanSession(true)
+				.withMaxInflightMessages(1).withMaxMessageRate(2).withMaxMessageSize(3)
+				.withRegView("foo").withRetryInterval(4L).withSubscriberId("bar").withUpgradeQos(true)
+				.build();
 
-    String json = objectMapper.writeValueAsString(mods);
-    JSONAssert.assertEquals("""
-        {
-          "clean_session": %s,
-          "max_message_rate": %d,
-          "max_message_size": %d,
-          "max_inflight_messages": %d,
-          "reg_view": "%s",
-          "retry_interval": %d,
-          "subscriber_id": "%s",
-          "upgrade_qos": %s
-        }
-        """.formatted(mods.getCleanSession(), mods.getMaxMessageRate(), mods.getMaxMessageSize(),
-        mods.getMaxInflightMessages(), mods.getRegView(), mods.getRetryInterval(),
-        mods.getSubscriberId(), mods.getUpgradeQos()), json, true);
-  }
+		String json = objectMapper.writeValueAsString(mods);
+		JSONAssert.assertEquals(
+				"""
+						{
+						  "clean_session": %s,
+						  "max_message_rate": %d,
+						  "max_message_size": %d,
+						  "max_inflight_messages": %d,
+						  "reg_view": "%s",
+						  "retry_interval": %d,
+						  "subscriber_id": "%s",
+						  "upgrade_qos": %s
+						}
+						""".formatted(mods.getCleanSession(), mods.getMaxMessageRate(),
+						mods.getMaxMessageSize(), mods.getMaxInflightMessages(), mods.getRegView(),
+						mods.getRetryInterval(), mods.getSubscriberId(), mods.getUpgradeQos()),
+				json, true);
+	}
 
-  @Test
-  public void jsonSome() throws JSONException {
-    RegisterModifiers mods = RegisterModifiers.builder().withMaxMessageSize(1)
-        .withMaxInflightMessages(2).withRetryInterval(3L).build();
+	@Test
+	public void jsonSome() throws JSONException {
+		RegisterModifiers mods = RegisterModifiers.builder().withMaxMessageSize(1)
+				.withMaxInflightMessages(2).withRetryInterval(3L).build();
 
-    String json = objectMapper.writeValueAsString(mods);
-    JSONAssert.assertEquals("""
-        {
-          "max_message_size": %d,
-          "max_inflight_messages": %d,
-          "retry_interval": %d
-        }
-        """.formatted(mods.getMaxMessageSize(), mods.getMaxInflightMessages(),
-        mods.getRetryInterval()), json, true);
-  }
+		String json = objectMapper.writeValueAsString(mods);
+		JSONAssert.assertEquals("""
+				{
+				  "max_message_size": %d,
+				  "max_inflight_messages": %d,
+				  "retry_interval": %d
+				}
+				""".formatted(mods.getMaxMessageSize(), mods.getMaxInflightMessages(),
+				mods.getRetryInterval()), json, true);
+	}
 
 }

@@ -25,29 +25,29 @@ package net.solarnetwork.flux.vernemq.webhook.domain;
  */
 public enum ActorType {
 
-  /** A node token. */
-  Node,
+	/** A node token. */
+	Node,
 
-  /** A read-node-data token. */
-  ReadNodeDataToken,
+	/** A read-node-data token. */
+	ReadNodeDataToken,
 
-  /** A user token. */
-  UserToken;
+	/** A user token. */
+	UserToken;
 
-  /**
-   * Get an enumeration value for a string value.
-   *
-   * @param value
-   *        the string value
-   * @return the enumeration value, or {@literal null} if not known
-   */
-  public static ActorType forValue(String value) {
-    return switch (value) {
-      case "Node" -> Node;
-      case "ReadNodeData" -> ReadNodeDataToken;
-      case "User" -> UserToken;
-      default -> null;
-    };
-  }
+	/**
+	 * Get an enumeration value for a string value.
+	 *
+	 * @param value
+	 *        the string value
+	 * @return the enumeration value, or {@literal null} if not known
+	 */
+	public static ActorType forValue(String value) {
+		return switch (value) {
+			case "Node" -> Node;
+			case "ReadNodeData" -> ReadNodeDataToken;
+			case "User" -> UserToken;
+			default -> null;
+		};
+	}
 
 }

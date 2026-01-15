@@ -35,41 +35,41 @@ import net.solarnetwork.flux.vernemq.webhook.web.config.WebConfig;
  *
  * @author matt
  */
-@SpringBootApplication(scanBasePackageClasses = { Server.class, ServerConfiguration.class,
-    WebConfig.class })
+@SpringBootApplication(
+		scanBasePackageClasses = { Server.class, ServerConfiguration.class, WebConfig.class })
 public class Server {
 
-  private static final Logger LOG = LoggerFactory.getLogger(Server.class);
+	private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
-  /**
-   * Command-line entry point to launching server.
-   *
-   * @param args
-   *        command line arguments
-   */
-  static void main(String[] args) {
-    SpringApplication.run(Server.class, args);
-  }
+	/**
+	 * Command-line entry point to launching server.
+	 *
+	 * @param args
+	 *        command line arguments
+	 */
+	static void main(String[] args) {
+		SpringApplication.run(Server.class, args);
+	}
 
-  /**
-   * Get a command line argument processor.
-   *
-   * @param ctx
-   *        The application context.
-   * @return The command line runner.
-   */
-  @Bean
-  public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-    return _ -> {
-      if (LOG.isTraceEnabled()) {
-        StringBuilder buf = new StringBuilder();
-        String[] beanNames = ctx.getBeanDefinitionNames();
-        Arrays.sort(beanNames);
-        for (String beanName : beanNames) {
-          buf.append(beanName).append('\n');
-        }
-        LOG.trace("Beans provided by Spring Boot:\n{}", buf);
-      }
-    };
-  }
+	/**
+	 * Get a command line argument processor.
+	 *
+	 * @param ctx
+	 *        The application context.
+	 * @return The command line runner.
+	 */
+	@Bean
+	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
+		return _ -> {
+			if ( LOG.isTraceEnabled() ) {
+				StringBuilder buf = new StringBuilder();
+				String[] beanNames = ctx.getBeanDefinitionNames();
+				Arrays.sort(beanNames);
+				for ( String beanName : beanNames ) {
+					buf.append(beanName).append('\n');
+				}
+				LOG.trace("Beans provided by Spring Boot:\n{}", buf);
+			}
+		};
+	}
 }

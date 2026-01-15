@@ -29,62 +29,64 @@ import net.solarnetwork.domain.SecurityPolicy;
  */
 public interface Actor {
 
-  /**
-   * The SolarNetwork security token associated with the actor.
-   * 
-   * @return the token ID
-   */
-  String getTokenId();
+	/**
+	 * The SolarNetwork security token associated with the actor.
+	 * 
+	 * @return the token ID
+	 */
+	String getTokenId();
 
-  /**
-   * The actor type.
-   * 
-   * @return the actor type, or {@literal null} if not known
-   */
-  ActorType getActorType();
+	/**
+	 * The actor type.
+	 * 
+	 * @return the actor type, or {@literal null} if not known
+	 */
+	ActorType getActorType();
 
-  /**
-   * Flag if publishing is allowed for this actor.
-   * 
-   * @return {@literal true} if publishing is allowed
-   */
-  boolean isPublishAllowed();
+	/**
+	 * Flag if publishing is allowed for this actor.
+	 * 
+	 * @return {@literal true} if publishing is allowed
+	 */
+	boolean isPublishAllowed();
 
-  /**
-   * Get the SolarNetwork user ID associated with the actor.
-   * 
-   * <p>
-   * Typically this is the owner of the security token returned by {@link #getTokenId()}.
-   * </p>
-   * 
-   * @return the user ID, never {@literal null}
-   */
-  Long getUserId();
+	/**
+	 * Get the SolarNetwork user ID associated with the actor.
+	 * 
+	 * <p>
+	 * Typically this is the owner of the security token returned by
+	 * {@link #getTokenId()}.
+	 * </p>
+	 * 
+	 * @return the user ID, never {@literal null}
+	 */
+	Long getUserId();
 
-  /**
-   * Get the security policy associated with the actor.
-   * 
-   * @return the policy, or {@literal null} if none available
-   */
-  SecurityPolicy getPolicy();
+	/**
+	 * Get the security policy associated with the actor.
+	 * 
+	 * @return the policy, or {@literal null} if none available
+	 */
+	SecurityPolicy getPolicy();
 
-  /**
-   * Get the complete set of SolarNode IDs the user owns.
-   * 
-   * @return the user's node IDs, never {@literal null}
-   */
-  Set<Long> getUserNodeIds();
+	/**
+	 * Get the complete set of SolarNode IDs the user owns.
+	 * 
+	 * @return the user's node IDs, never {@literal null}
+	 */
+	Set<Long> getUserNodeIds();
 
-  /**
-   * Get the allowed node IDs.
-   * 
-   * <p>
-   * This will return the complete set of node IDs the actor is allowed access to, based on both
-   * {@link SecurityPolicy#getNodeIds()} if a policy is available and {@link #getUserNodeIds()}.
-   * </p>
-   * 
-   * @return the allowed node IDs, never {@literal null}
-   */
-  Set<Long> getAllowedNodeIds();
+	/**
+	 * Get the allowed node IDs.
+	 * 
+	 * <p>
+	 * This will return the complete set of node IDs the actor is allowed access
+	 * to, based on both {@link SecurityPolicy#getNodeIds()} if a policy is
+	 * available and {@link #getUserNodeIds()}.
+	 * </p>
+	 * 
+	 * @return the allowed node IDs, never {@literal null}
+	 */
+	Set<Long> getAllowedNodeIds();
 
 }

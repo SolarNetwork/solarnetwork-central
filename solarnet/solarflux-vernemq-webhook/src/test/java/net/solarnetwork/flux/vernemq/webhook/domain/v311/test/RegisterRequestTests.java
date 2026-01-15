@@ -37,24 +37,24 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class RegisterRequestTests extends TestSupport {
 
-  private ObjectMapper objectMapper;
+	private ObjectMapper objectMapper;
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
+	@BeforeEach
+	public void setup() {
+		objectMapper = JsonUtils.defaultObjectMapper();
+	}
 
-  @Test
-  public void parseFull() throws IOException {
-    RegisterRequest req = objectMapper.readValue(classResourceAsBytes("auth_on_register-01.json"),
-        RegisterRequest.class);
-    assertThat("clean_session", req.getCleanSession(), equalTo(false));
-    assertThat("client_id", req.getClientId(), equalTo("clientid"));
-    assertThat("mountpoint", req.getMountpoint(), equalTo(""));
-    assertThat("password", req.getPassword(), equalTo("password"));
-    assertThat("peerAddress", req.getPeerAddress(), equalTo("127.0.0.1"));
-    assertThat("peerPort", req.getPeerPort(), equalTo(8888));
-    assertThat("username", req.getUsername(), equalTo("username"));
-  }
+	@Test
+	public void parseFull() throws IOException {
+		RegisterRequest req = objectMapper.readValue(classResourceAsBytes("auth_on_register-01.json"),
+				RegisterRequest.class);
+		assertThat("clean_session", req.getCleanSession(), equalTo(false));
+		assertThat("client_id", req.getClientId(), equalTo("clientid"));
+		assertThat("mountpoint", req.getMountpoint(), equalTo(""));
+		assertThat("password", req.getPassword(), equalTo("password"));
+		assertThat("peerAddress", req.getPeerAddress(), equalTo("127.0.0.1"));
+		assertThat("peerPort", req.getPeerPort(), equalTo(8888));
+		assertThat("username", req.getUsername(), equalTo("username"));
+	}
 
 }

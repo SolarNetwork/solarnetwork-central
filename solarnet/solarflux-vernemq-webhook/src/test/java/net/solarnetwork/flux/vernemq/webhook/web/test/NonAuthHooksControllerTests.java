@@ -57,24 +57,24 @@ import net.solarnetwork.flux.vernemq.webhook.web.NonAuthHooksController;
 @WebMvcTest(NonAuthHooksController.class)
 public class NonAuthHooksControllerTests extends TestSupport {
 
-  private static final String OK_RESPONSE_JSON = "{\"result\":\"ok\"}";
+	private static final String OK_RESPONSE_JSON = "{\"result\":\"ok\"}";
 
-  @Autowired
-  private MockMvc mvc;
+	@Autowired
+	private MockMvc mvc;
 
-  @MockitoBean
-  private AuditService authService;
+	@MockitoBean
+	private AuditService authService;
 
-  @Captor
-  private ArgumentCaptor<Message> messageCaptor;
+	@Captor
+	private ArgumentCaptor<Message> messageCaptor;
 
-  @Test
-  public void onDeliver() throws Exception {
-    // GIVEN
+	@Test
+	public void onDeliver() throws Exception {
+		// GIVEN
 
-    // WHEN
+		// WHEN
 
-    // @formatter:off
+	// @formatter:off
     mvc.perform(
         post("/hook")
             .contentType(MediaType.APPLICATION_JSON)
@@ -85,10 +85,10 @@ public class NonAuthHooksControllerTests extends TestSupport {
         .andExpect(content().json(OK_RESPONSE_JSON));
     // @formatter:on
 
-    // THEN
-    then(authService).should().auditDeliverMessage(messageCaptor.capture());
+		// THEN
+		then(authService).should().auditDeliverMessage(messageCaptor.capture());
 
-    // @formatter:off
+	// @formatter:off
     and.then(messageCaptor.getValue())
       .as("Topic from JSON")
       .returns("a/b", from(Message::getTopic))
@@ -96,6 +96,6 @@ public class NonAuthHooksControllerTests extends TestSupport {
       .returns(Base64.getDecoder().decode("aGVsbG8="), from(Message::getPayload))
       ;
     // @formatter:on
-  }
+	}
 
 }

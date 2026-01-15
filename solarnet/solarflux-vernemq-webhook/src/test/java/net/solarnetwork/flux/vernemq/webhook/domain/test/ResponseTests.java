@@ -42,20 +42,20 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class ResponseTests extends TestSupport {
 
-  private ObjectMapper objectMapper;
+	private ObjectMapper objectMapper;
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
+	@BeforeEach
+	public void setup() {
+		objectMapper = JsonUtils.defaultObjectMapper();
+	}
 
-  @Test
-  public void jsonOkSimple() {
-    Response r = new Response();
-    String json = objectMapper.writeValueAsString(r);
-    log.debug("OK simple JSON: {}", json);
+	@Test
+	public void jsonOkSimple() {
+		Response r = new Response();
+		String json = objectMapper.writeValueAsString(r);
+		log.debug("OK simple JSON: {}", json);
 
-    // @formatter:off
+	// @formatter:off
     then(json)
         .asInstanceOf(JSON)
         .as("Result is JSON object")
@@ -65,15 +65,15 @@ public class ResponseTests extends TestSupport {
         .containsEntry("result", "ok")
         ;
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void jsonErrorSimple() {
-    Response r = new Response("fail");
-    String json = objectMapper.writeValueAsString(r);
-    log.debug("Error simple JSON: {}", json);
+	@Test
+	public void jsonErrorSimple() {
+		Response r = new Response("fail");
+		String json = objectMapper.writeValueAsString(r);
+		log.debug("Error simple JSON: {}", json);
 
-    // @formatter:off
+	// @formatter:off
     then(json)
         .asInstanceOf(JSON)
         .as("Result is JSON object")
@@ -87,16 +87,16 @@ public class ResponseTests extends TestSupport {
             .containsEntry("error", "fail")
         ;
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void jsonOkWithModifiers() {
-    RegisterModifiers mods = RegisterModifiers.builder().withUpgradeQos(false).build();
-    Response r = new Response(mods);
-    String json = objectMapper.writeValueAsString(r);
-    log.debug("Ok with mods JSON: {}", json);
+	@Test
+	public void jsonOkWithModifiers() {
+		RegisterModifiers mods = RegisterModifiers.builder().withUpgradeQos(false).build();
+		Response r = new Response(mods);
+		String json = objectMapper.writeValueAsString(r);
+		log.debug("Ok with mods JSON: {}", json);
 
-    // @formatter:off
+	// @formatter:off
     then(json)
         .asInstanceOf(JSON)
         .as("Result is JSON object")
@@ -111,17 +111,17 @@ public class ResponseTests extends TestSupport {
             .containsEntry("upgrade_qos", false)
         ;
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void jsonOkWithTopicSettings() {
-    TopicSettings topics = new TopicSettings(Arrays.asList(
-        TopicSubscriptionSetting.builder().withTopic("foo").withQos(Qos.AtLeastOnce).build()));
-    Response r = new Response(topics);
-    String json = objectMapper.writeValueAsString(r);
-    log.debug("Ok with topic settings JSON: {}", json);
+	@Test
+	public void jsonOkWithTopicSettings() {
+		TopicSettings topics = new TopicSettings(Arrays.asList(
+				TopicSubscriptionSetting.builder().withTopic("foo").withQos(Qos.AtLeastOnce).build()));
+		Response r = new Response(topics);
+		String json = objectMapper.writeValueAsString(r);
+		log.debug("Ok with topic settings JSON: {}", json);
 
-    // @formatter:off
+	// @formatter:off
     then(json)
         .asInstanceOf(JSON)
         .as("Result is JSON object")
@@ -142,16 +142,16 @@ public class ResponseTests extends TestSupport {
             .containsEntry("qos", Qos.AtLeastOnce.getKey())
         ;
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void jsonOkWithTopicList() {
-    TopicList topics = new TopicList(Arrays.asList("foo", "bar"));
-    Response r = new Response(topics);
-    String json = objectMapper.writeValueAsString(r);
-    log.debug("Ok with topics list JSON: {}", json);
+	@Test
+	public void jsonOkWithTopicList() {
+		TopicList topics = new TopicList(Arrays.asList("foo", "bar"));
+		Response r = new Response(topics);
+		String json = objectMapper.writeValueAsString(r);
+		log.debug("Ok with topics list JSON: {}", json);
 
-    // @formatter:off
+	// @formatter:off
     then(json)
         .asInstanceOf(JSON)
         .as("Result is JSON object")
@@ -165,6 +165,6 @@ public class ResponseTests extends TestSupport {
         .containsExactly("foo", "bar")
         ;
     // @formatter:on
-  }
+	}
 
 }

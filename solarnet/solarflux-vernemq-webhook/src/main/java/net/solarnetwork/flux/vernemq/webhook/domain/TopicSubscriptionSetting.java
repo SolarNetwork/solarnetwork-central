@@ -31,86 +31,86 @@ import tools.jackson.databind.annotation.JsonDeserialize;
 @JsonDeserialize(builder = TopicSubscriptionSetting.Builder.class)
 public class TopicSubscriptionSetting {
 
-  private final String topic;
-  private final Qos qos;
+	private final String topic;
+	private final Qos qos;
 
-  private TopicSubscriptionSetting(Builder builder) {
-    this.topic = builder.topic;
-    this.qos = builder.qos;
-  }
+	private TopicSubscriptionSetting(Builder builder) {
+		this.topic = builder.topic;
+		this.qos = builder.qos;
+	}
 
-  /**
-   * Creates builder to build {@link TopicSubscriptionSetting}.
-   *
-   * @return created builder
-   */
-  public static Builder builder() {
-    return new Builder();
-  }
+	/**
+	 * Creates builder to build {@link TopicSubscriptionSetting}.
+	 *
+	 * @return created builder
+	 */
+	public static Builder builder() {
+		return new Builder();
+	}
 
-  /**
-   * Builder to build {@link TopicSubscriptionSetting}.
-   */
-  public static final class Builder {
+	/**
+	 * Builder to build {@link TopicSubscriptionSetting}.
+	 */
+	public static final class Builder {
 
-    private String topic;
-    private Qos qos;
+		private String topic;
+		private Qos qos;
 
-    private Builder() {
-    }
+		private Builder() {
+		}
 
-    public Builder withTopic(String topic) {
-      this.topic = topic;
-      return this;
-    }
+		public Builder withTopic(String topic) {
+			this.topic = topic;
+			return this;
+		}
 
-    public Builder withQos(Qos qos) {
-      this.qos = qos;
-      return this;
-    }
+		public Builder withQos(Qos qos) {
+			this.qos = qos;
+			return this;
+		}
 
-    public TopicSubscriptionSetting build() {
-      return new TopicSubscriptionSetting(this);
-    }
-  }
+		public TopicSubscriptionSetting build() {
+			return new TopicSubscriptionSetting(this);
+		}
+	}
 
-  @Override
-  public String toString() {
-    return topic + "@" + qos;
-  }
+	@Override
+	public String toString() {
+		return topic + "@" + qos;
+	}
 
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((qos == null) ? 0 : qos.hashCode());
-    result = prime * result + ((topic == null) ? 0 : topic.hashCode());
-    return result;
-  }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((qos == null) ? 0 : qos.hashCode());
+		result = prime * result + ((topic == null) ? 0 : topic.hashCode());
+		return result;
+	}
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (!(obj instanceof TopicSubscriptionSetting other)) {
-      return false;
-    }
-    if (qos != other.qos) {
-      return false;
-    }
-    if (topic == null) {
-      return other.topic == null;
-    }
-    return topic.equals(other.topic);
-  }
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !(obj instanceof TopicSubscriptionSetting other) ) {
+			return false;
+		}
+		if ( qos != other.qos ) {
+			return false;
+		}
+		if ( topic == null ) {
+			return other.topic == null;
+		}
+		return topic.equals(other.topic);
+	}
 
-  public String getTopic() {
-    return topic;
-  }
+	public String getTopic() {
+		return topic;
+	}
 
-  public Qos getQos() {
-    return qos;
-  }
+	public Qos getQos() {
+		return qos;
+	}
 
 }

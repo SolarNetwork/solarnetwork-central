@@ -39,20 +39,20 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class TopicListTests extends TestSupport {
 
-  private ObjectMapper objectMapper;
+	private ObjectMapper objectMapper;
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
+	@BeforeEach
+	public void setup() {
+		objectMapper = JsonUtils.defaultObjectMapper();
+	}
 
-  @Test
-  public void toJsonFull() {
-    TopicList list = new TopicList(Arrays.asList("foo", "bar"));
-    String json = objectMapper.writeValueAsString(list);
-    log.debug("Topic settings full JSON: {}", json);
+	@Test
+	public void toJsonFull() {
+		TopicList list = new TopicList(Arrays.asList("foo", "bar"));
+		String json = objectMapper.writeValueAsString(list);
+		log.debug("Topic settings full JSON: {}", json);
 
-    // @formatter:off
+	// @formatter:off
     then(json)
         .asInstanceOf(JSON)
         .as("Result is JSON array")
@@ -61,15 +61,15 @@ public class TopicListTests extends TestSupport {
         .containsExactly("foo", "bar")
         ;
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void fromJson() throws IOException {
-    String json = "[\"bim\",\"bam\"]";
+	@Test
+	public void fromJson() throws IOException {
+		String json = "[\"bim\",\"bam\"]";
 
-    TopicList list = objectMapper.readValue(json, TopicList.class);
+		TopicList list = objectMapper.readValue(json, TopicList.class);
 
-    // @formatter:off
+	// @formatter:off
     then(list)
         .isNotNull()
         .extracting(TopicList::getTopics, list(String.class))
@@ -77,6 +77,6 @@ public class TopicListTests extends TestSupport {
         .containsExactly("bim", "bam")
         ;
     // @formatter:on
-  }
+	}
 
 }

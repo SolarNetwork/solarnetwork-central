@@ -29,18 +29,18 @@ import tools.jackson.databind.ObjectMapper;
  */
 public final class JsonUtils {
 
-  /**
-   * Get a default {@link ObjectMapper} instance.
-   * 
-   * @return the new instance
-   */
-  public static ObjectMapper defaultObjectMapper() {
-    return tools.jackson.databind.json.JsonMapper.builder()
-        .changeDefaultPropertyInclusion(
-            incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
-        .changeDefaultPropertyInclusion(
-            incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
-        .build();
-  }
+	/**
+	 * Get a default {@link ObjectMapper} instance.
+	 * 
+	 * @return the new instance
+	 */
+	public static ObjectMapper defaultObjectMapper() {
+		return tools.jackson.databind.json.JsonMapper.builder()
+				.changeDefaultPropertyInclusion(
+						incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+				.changeDefaultPropertyInclusion(
+						incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
+				.build();
+	}
 
 }

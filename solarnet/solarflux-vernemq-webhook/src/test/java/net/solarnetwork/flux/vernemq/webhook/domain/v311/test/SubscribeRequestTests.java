@@ -40,21 +40,21 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class SubscribeRequestTests extends TestSupport {
 
-  private ObjectMapper objectMapper;
+	private ObjectMapper objectMapper;
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
+	@BeforeEach
+	public void setup() {
+		objectMapper = JsonUtils.defaultObjectMapper();
+	}
 
-  @Test
-  public void parseFull() throws IOException {
-    // WHEN
-    SubscribeRequest req = objectMapper.readValue(classResourceAsBytes("auth_on_subscribe-01.json"),
-        SubscribeRequest.class);
+	@Test
+	public void parseFull() throws IOException {
+		// WHEN
+		SubscribeRequest req = objectMapper.readValue(classResourceAsBytes("auth_on_subscribe-01.json"),
+				SubscribeRequest.class);
 
-    // THEN
-    // @formatter:off
+		// THEN
+	// @formatter:off
     then(req)
       .returns("clientid", from(SubscribeRequest::getClientId))
       .returns("", from(SubscribeRequest::getMountpoint))
@@ -73,6 +73,6 @@ public class SubscribeRequestTests extends TestSupport {
         })
       ;
     // @formatter:on
-  }
+	}
 
 }

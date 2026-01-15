@@ -25,25 +25,25 @@ package net.solarnetwork.flux.vernemq.webhook.domain;
  */
 public interface AuthRequest {
 
-  /**
-   * The MQTT client ID.
-   * 
-   * @return the client ID
-   */
-  String getClientId();
+	/**
+	 * The MQTT client ID.
+	 * 
+	 * @return the client ID
+	 */
+	String getClientId();
 
-  /**
-   * The MQTT mount point.
-   * 
-   * @return the mount point
-   */
-  String getMountpoint();
+	/**
+	 * The MQTT mount point.
+	 * 
+	 * @return the mount point
+	 */
+	String getMountpoint();
 
-  /**
-   * The MQTT username.
-   * 
-   * @return the username
-   */
-  String getUsername();
+	/**
+	 * The MQTT username.
+	 * 
+	 * @return the username
+	 */
+	String getUsername();
 
 }

@@ -31,29 +31,29 @@ import net.solarnetwork.util.StringUtils;
  */
 public class TopicSettings implements ResponseTopics {
 
-  private final List<TopicSubscriptionSetting> settings;
+	private final List<TopicSubscriptionSetting> settings;
 
-  /**
-   * Constructor.
-   * 
-   * @param settings
-   *        the settings
-   */
-  @JsonCreator
-  public TopicSettings(List<TopicSubscriptionSetting> settings) {
-    super();
-    this.settings = settings;
-  }
+	/**
+	 * Constructor.
+	 * 
+	 * @param settings
+	 *        the settings
+	 */
+	@JsonCreator
+	public TopicSettings(List<TopicSubscriptionSetting> settings) {
+		super();
+		this.settings = settings;
+	}
 
-  @JsonValue
-  public List<TopicSubscriptionSetting> getSettings() {
-    return settings;
-  }
+	@JsonValue
+	public List<TopicSubscriptionSetting> getSettings() {
+		return settings;
+	}
 
-  @Override
-  public String toString() {
-    return (settings != null ? StringUtils.commaDelimitedStringFromCollection(settings)
-        : "<<empty>>");
-  }
+	@Override
+	public String toString() {
+		return (settings != null ? StringUtils.commaDelimitedStringFromCollection(settings)
+				: "<<empty>>");
+	}
 
 }

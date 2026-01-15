@@ -32,148 +32,149 @@ import tools.jackson.databind.annotation.JsonDeserialize;
 @JsonDeserialize(builder = DeliverRequest.Builder.class)
 public class DeliverRequest implements Message {
 
-  @JsonProperty("client_id")
-  private final String clientId;
+	@JsonProperty("client_id")
+	private final String clientId;
 
-  private final String mountpoint;
+	private final String mountpoint;
 
-  private final String username;
+	private final String username;
 
-  private final String topic;
+	private final String topic;
 
-  private final byte[] payload;
+	private final byte[] payload;
 
-  private DeliverRequest(Builder builder) {
-    this.clientId = builder.clientId;
-    this.mountpoint = builder.mountpoint;
-    this.username = builder.username;
-    this.topic = builder.topic;
-    this.payload = builder.payload;
-  }
+	private DeliverRequest(Builder builder) {
+		this.clientId = builder.clientId;
+		this.mountpoint = builder.mountpoint;
+		this.username = builder.username;
+		this.topic = builder.topic;
+		this.payload = builder.payload;
+	}
 
-  /**
-   * Creates builder to build {@link DeliverRequest}.
-   * 
-   * @return created builder
-   */
-  public static Builder builder() {
-    return new Builder();
-  }
+	/**
+	 * Creates builder to build {@link DeliverRequest}.
+	 * 
+	 * @return created builder
+	 */
+	public static Builder builder() {
+		return new Builder();
+	}
 
-  /**
-   * Creates a builder to build {@link DeliverRequest} and initialize it with the given object.
-   * 
-   * @param deliverReqeust
-   *        to initialize the builder with
-   * @return created builder
-   */
-  public static Builder builder(DeliverRequest deliverReqeust) {
-    return new Builder(deliverReqeust);
-  }
+	/**
+	 * Creates a builder to build {@link DeliverRequest} and initialize it with
+	 * the given object.
+	 * 
+	 * @param deliverReqeust
+	 *        to initialize the builder with
+	 * @return created builder
+	 */
+	public static Builder builder(DeliverRequest deliverReqeust) {
+		return new Builder(deliverReqeust);
+	}
 
-  /**
-   * Builder to build {@link DeliverRequest}.
-   */
-  public static final class Builder {
+	/**
+	 * Builder to build {@link DeliverRequest}.
+	 */
+	public static final class Builder {
 
-    @JsonProperty("client_id")
-    private String clientId;
-    private String mountpoint;
-    private String username;
-    private String topic;
-    private byte[] payload;
+		@JsonProperty("client_id")
+		private String clientId;
+		private String mountpoint;
+		private String username;
+		private String topic;
+		private byte[] payload;
 
-    private Builder() {
-    }
+		private Builder() {
+		}
 
-    private Builder(DeliverRequest deliverReqeust) {
-      this.clientId = deliverReqeust.clientId;
-      this.mountpoint = deliverReqeust.mountpoint;
-      this.username = deliverReqeust.username;
-      this.topic = deliverReqeust.topic;
-      this.payload = deliverReqeust.payload;
-    }
+		private Builder(DeliverRequest deliverReqeust) {
+			this.clientId = deliverReqeust.clientId;
+			this.mountpoint = deliverReqeust.mountpoint;
+			this.username = deliverReqeust.username;
+			this.topic = deliverReqeust.topic;
+			this.payload = deliverReqeust.payload;
+		}
 
-    public Builder withClientId(String clientId) {
-      this.clientId = clientId;
-      return this;
-    }
+		public Builder withClientId(String clientId) {
+			this.clientId = clientId;
+			return this;
+		}
 
-    public Builder withMountpoint(String mountpoint) {
-      this.mountpoint = mountpoint;
-      return this;
-    }
+		public Builder withMountpoint(String mountpoint) {
+			this.mountpoint = mountpoint;
+			return this;
+		}
 
-    public Builder withUsername(String username) {
-      this.username = username;
-      return this;
-    }
+		public Builder withUsername(String username) {
+			this.username = username;
+			return this;
+		}
 
-    public Builder withTopic(String topic) {
-      this.topic = topic;
-      return this;
-    }
+		public Builder withTopic(String topic) {
+			this.topic = topic;
+			return this;
+		}
 
-    public Builder withPayload(byte[] payload) {
-      this.payload = payload;
-      return this;
-    }
+		public Builder withPayload(byte[] payload) {
+			this.payload = payload;
+			return this;
+		}
 
-    public DeliverRequest build() {
-      return new DeliverRequest(this);
-    }
-  }
+		public DeliverRequest build() {
+			return new DeliverRequest(this);
+		}
+	}
 
-  @Override
-  public String toString() {
-    return "DeliverRequest{" + username + ", " + topic + "}";
-  }
+	@Override
+	public String toString() {
+		return "DeliverRequest{" + username + ", " + topic + "}";
+	}
 
-  /**
-   * Get the client ID.
-   * 
-   * @return the clientId
-   */
-  public String getClientId() {
-    return clientId;
-  }
+	/**
+	 * Get the client ID.
+	 * 
+	 * @return the clientId
+	 */
+	public String getClientId() {
+		return clientId;
+	}
 
-  /**
-   * Get the mount point.
-   * 
-   * @return the mount point
-   */
-  public String getMountpoint() {
-    return mountpoint;
-  }
+	/**
+	 * Get the mount point.
+	 * 
+	 * @return the mount point
+	 */
+	public String getMountpoint() {
+		return mountpoint;
+	}
 
-  /**
-   * Get the username.
-   * 
-   * @return the username
-   */
-  public String getUsername() {
-    return username;
-  }
+	/**
+	 * Get the username.
+	 * 
+	 * @return the username
+	 */
+	public String getUsername() {
+		return username;
+	}
 
-  @Override
-  public String getTopic() {
-    return topic;
-  }
+	@Override
+	public String getTopic() {
+		return topic;
+	}
 
-  @Override
-  public byte[] getPayload() {
-    return payload;
-  }
+	@Override
+	public byte[] getPayload() {
+		return payload;
+	}
 
-  @Override
-  public Qos getQos() {
-    return null;
-  }
+	@Override
+	public Qos getQos() {
+		return null;
+	}
 
-  @Override
-  public Boolean getRetain() {
-    return null;
-  }
+	@Override
+	public Boolean getRetain() {
+		return null;
+	}
 
 }

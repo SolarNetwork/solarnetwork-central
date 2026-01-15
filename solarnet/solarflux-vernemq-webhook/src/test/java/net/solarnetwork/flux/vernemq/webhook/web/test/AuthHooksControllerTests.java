@@ -45,23 +45,23 @@ import net.solarnetwork.flux.vernemq.webhook.web.AuthHooksController;
 @WebMvcTest(AuthHooksController.class)
 public class AuthHooksControllerTests extends TestSupport {
 
-  private static final String OK_RESPONSE_JSON = "{\"result\":\"ok\"}";
+	private static final String OK_RESPONSE_JSON = "{\"result\":\"ok\"}";
 
-  @Autowired
-  private MockMvc mvc;
+	@Autowired
+	private MockMvc mvc;
 
-  @MockitoBean
-  private AuthService authService;
+	@MockitoBean
+	private AuthService authService;
 
-  @Test
-  public void authOnRegister() throws Exception {
-    // given
-    Response resp = new Response();
-    given(authService.authenticateRequest(Mockito.any(RegisterRequest.class))).willReturn(resp);
+	@Test
+	public void authOnRegister() throws Exception {
+		// given
+		Response resp = new Response();
+		given(authService.authenticateRequest(Mockito.any(RegisterRequest.class))).willReturn(resp);
 
-    // when
+		// when
 
-    // @formatter:off
+	// @formatter:off
     mvc.perform(
         post("/hook")
             .contentType(MediaType.APPLICATION_JSON)
@@ -71,17 +71,17 @@ public class AuthHooksControllerTests extends TestSupport {
         .andExpect(status().isOk())
         .andExpect(content().json(OK_RESPONSE_JSON));
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void authOnPublish() throws Exception {
-    // given
-    Response resp = new Response();
-    given(authService.authorizeRequest(Mockito.any(PublishRequest.class))).willReturn(resp);
+	@Test
+	public void authOnPublish() throws Exception {
+		// given
+		Response resp = new Response();
+		given(authService.authorizeRequest(Mockito.any(PublishRequest.class))).willReturn(resp);
 
-    // when
+		// when
 
-    // @formatter:off
+	// @formatter:off
     mvc.perform(
         post("/hook")
             .contentType(MediaType.APPLICATION_JSON)
@@ -91,17 +91,17 @@ public class AuthHooksControllerTests extends TestSupport {
         .andExpect(status().isOk())
         .andExpect(content().json(OK_RESPONSE_JSON));
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void authOnSubscribe() throws Exception {
-    // given
-    Response resp = new Response();
-    given(authService.authorizeRequest(Mockito.any(SubscribeRequest.class))).willReturn(resp);
+	@Test
+	public void authOnSubscribe() throws Exception {
+		// given
+		Response resp = new Response();
+		given(authService.authorizeRequest(Mockito.any(SubscribeRequest.class))).willReturn(resp);
 
-    // when
+		// when
 
-    // @formatter:off
+	// @formatter:off
     mvc.perform(
         post("/hook")
             .contentType(MediaType.APPLICATION_JSON)
@@ -111,6 +111,6 @@ public class AuthHooksControllerTests extends TestSupport {
         .andExpect(status().isOk())
         .andExpect(content().json(OK_RESPONSE_JSON));
     // @formatter:on
-  }
+	}
 
 }

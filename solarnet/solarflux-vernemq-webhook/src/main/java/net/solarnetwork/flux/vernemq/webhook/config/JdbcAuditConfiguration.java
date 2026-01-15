@@ -36,20 +36,20 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnProperty(value = "app.datasource.audit.url", matchIfMissing = false)
 public class JdbcAuditConfiguration {
 
-  @Bean
-  @ConfigurationProperties(prefix = "app.datasource.audit")
-  public DataSourceProperties auditDataSourceProperties() {
-    return new DataSourceProperties();
-  }
+	@Bean
+	@ConfigurationProperties(prefix = "app.datasource.audit")
+	public DataSourceProperties auditDataSourceProperties() {
+		return new DataSourceProperties();
+	}
 
-  @Bean
-  @ConfigurationProperties("app.datasource.audit.tomcat")
-  @Qualifier("audit")
-  public DataSource auditDataSource(
-      @Qualifier("auditDataSourceProperties") DataSourceProperties properties) {
-    DataSource dataSource = properties.initializeDataSourceBuilder()
-        .type(org.apache.tomcat.jdbc.pool.DataSource.class).build();
-    return dataSource;
-  }
+	@Bean
+	@ConfigurationProperties("app.datasource.audit.tomcat")
+	@Qualifier("audit")
+	public DataSource auditDataSource(
+			@Qualifier("auditDataSourceProperties") DataSourceProperties properties) {
+		DataSource dataSource = properties.initializeDataSourceBuilder()
+				.type(org.apache.tomcat.jdbc.pool.DataSource.class).build();
+		return dataSource;
+	}
 
 }

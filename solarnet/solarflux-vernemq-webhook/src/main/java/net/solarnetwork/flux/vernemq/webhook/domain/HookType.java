@@ -27,55 +27,55 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum HookType implements HookNames {
 
-  AuthenticateOnRegister(AUTH_ON_REGISTER),
+	AuthenticateOnRegister(AUTH_ON_REGISTER),
 
-  AuthorizeOnPublish(AUTH_ON_PUBLISH),
+	AuthorizeOnPublish(AUTH_ON_PUBLISH),
 
-  AuthorizeOnSubscribe(AUTH_ON_SUBSCRIBE),
+	AuthorizeOnSubscribe(AUTH_ON_SUBSCRIBE),
 
-  OnDeliver(ON_DELIVER),
+	OnDeliver(ON_DELIVER),
 
-  ;
+	;
 
-  /** The name of the HTTP header that is used to transmit the hook type. */
-  public static final String HOOK_HEADER = "vernemq-hook";
+	/** The name of the HTTP header that is used to transmit the hook type. */
+	public static final String HOOK_HEADER = "vernemq-hook";
 
-  private final String key;
+	private final String key;
 
-  HookType(String key) {
-    this.key = key;
-  }
+	HookType(String key) {
+		this.key = key;
+	}
 
-  /**
-   * Returns the {@code key} value.
-   *
-   * @return the key
-   */
-  @JsonValue
-  public String getKey() {
-    return key;
-  }
+	/**
+	 * Returns the {@code key} value.
+	 *
+	 * @return the key
+	 */
+	@JsonValue
+	public String getKey() {
+		return key;
+	}
 
-  /**
-   * Get an enum from a key value.
-   *
-   * @param key
-   *        the key to get the enum for
-   * @return the enum
-   * @throws IllegalArgumentException
-   *         if {@code key} is not valid
-   */
-  @JsonCreator
-  public static HookType forKey(String key) {
-    for (HookType hook : HookType.values()) {
-      if (hook.key.equals(key)) {
-        return hook;
-      }
-    }
-    throw new IllegalArgumentException("HookType key value not supported: " + key);
-  }
+	/**
+	 * Get an enum from a key value.
+	 *
+	 * @param key
+	 *        the key to get the enum for
+	 * @return the enum
+	 * @throws IllegalArgumentException
+	 *         if {@code key} is not valid
+	 */
+	@JsonCreator
+	public static HookType forKey(String key) {
+		for ( HookType hook : HookType.values() ) {
+			if ( hook.key.equals(key) ) {
+				return hook;
+			}
+		}
+		throw new IllegalArgumentException("HookType key value not supported: " + key);
+	}
 
-  public static String headerFilterValue(HookType type) {
-    return HOOK_HEADER + "=" + type.key;
-  }
+	public static String headerFilterValue(HookType type) {
+		return HOOK_HEADER + "=" + type.key;
+	}
 }

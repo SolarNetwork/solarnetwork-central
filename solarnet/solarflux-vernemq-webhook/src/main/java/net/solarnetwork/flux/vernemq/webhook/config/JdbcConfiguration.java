@@ -45,82 +45,82 @@ import net.solarnetwork.flux.vernemq.webhook.service.impl.JdbcAuthService;
 @Configuration
 public class JdbcConfiguration {
 
-  @Value("${solarnetwork.api.host:data.solarnetwork.net}")
-  private String snHost = "data.solarnetwork.net";
+	@Value("${solarnetwork.api.host:data.solarnetwork.net}")
+	private String snHost = "data.solarnetwork.net";
 
-  @Value("${solarnewtork.api.authPath:/solarflux/auth}")
-  private String snPath = "/solarflux/auth";
+	@Value("${solarnewtork.api.authPath:/solarflux/auth}")
+	private String snPath = "/solarflux/auth";
 
-  @Value("${solarnetwork.api.maxDateSkew:900000}")
-  private long authMaxDateSkew = JdbcAuthService.DEFAULT_MAX_DATE_SKEW;
+	@Value("${solarnetwork.api.maxDateSkew:900000}")
+	private long authMaxDateSkew = JdbcAuthService.DEFAULT_MAX_DATE_SKEW;
 
-  @Value("${mqtt.forceCleanSession:true}")
-  private boolean forceCleanSession = true;
+	@Value("${mqtt.forceCleanSession:true}")
+	private boolean forceCleanSession = true;
 
-  @Value("${auth.nodeIpMask:#{null}}")
-  private String nodeIpMask = null;
+	@Value("${auth.nodeIpMask:#{null}}")
+	private String nodeIpMask = null;
 
-  @Value("${auth.requireTokenClientIdPrefix:true}")
-  private boolean requireTokenClientIdPrefix = true;
+	@Value("${auth.requireTokenClientIdPrefix:true}")
+	private boolean requireTokenClientIdPrefix = true;
 
-  @Value("${auth.allowDirectTokenAuthentication:true}")
-  private boolean allowDirectTokenAuthentication = true;
+	@Value("${auth.allowDirectTokenAuthentication:true}")
+	private boolean allowDirectTokenAuthentication = true;
 
-  @Autowired(required = false)
-  @Qualifier("audit")
-  private DataSource auditDataSource;
+	@Autowired(required = false)
+	@Qualifier("audit")
+	private DataSource auditDataSource;
 
-  @Autowired
-  private AuthorizationEvaluator authorizationEvaluator;
+	@Autowired
+	private AuthorizationEvaluator authorizationEvaluator;
 
-  @Autowired(required = false)
-  @Qualifier("actor")
-  private Cache<String, Actor> actorCache;
+	@Autowired(required = false)
+	@Qualifier("actor")
+	private Cache<String, Actor> actorCache;
 
-  /**
-   * The {@link AuthService}.
-   * 
-   * @return the service
-   */
-  @Bean
-  public JdbcAuthService authService() {
-    JdbcAuthService service = new JdbcAuthService(
-        new JdbcTemplate(primaryDataSource(dataSourceProperties())), authorizationEvaluator,
-        auditService());
-    service.setSnHost(snHost);
-    service.setSnPath(snPath);
-    service.setMaxDateSkew(authMaxDateSkew);
-    service.setForceCleanSession(forceCleanSession);
-    service.setActorCache(actorCache);
-    service.setIpMask(nodeIpMask);
-    service.setRequireTokenClientIdPrefix(requireTokenClientIdPrefix);
-    service.setAllowDirectTokenAuthentication(allowDirectTokenAuthentication);
-    return service;
-  }
+	/**
+	 * The {@link AuthService}.
+	 * 
+	 * @return the service
+	 */
+	@Bean
+	public JdbcAuthService authService() {
+		JdbcAuthService service = new JdbcAuthService(
+				new JdbcTemplate(primaryDataSource(dataSourceProperties())), authorizationEvaluator,
+				auditService());
+		service.setSnHost(snHost);
+		service.setSnPath(snPath);
+		service.setMaxDateSkew(authMaxDateSkew);
+		service.setForceCleanSession(forceCleanSession);
+		service.setActorCache(actorCache);
+		service.setIpMask(nodeIpMask);
+		service.setRequireTokenClientIdPrefix(requireTokenClientIdPrefix);
+		service.setAllowDirectTokenAuthentication(allowDirectTokenAuthentication);
+		return service;
+	}
 
-  @ConfigurationProperties(prefix = "app.audit.jdbc")
-  @Bean(destroyMethod = "disableWriting")
-  public JdbcAuditService auditService() {
-    JdbcAuditService service = new JdbcAuditService(
-        auditDataSource != null ? auditDataSource : primaryDataSource(dataSourceProperties()));
-    service.enableWriting();
-    return service;
-  }
+	@ConfigurationProperties(prefix = "app.audit.jdbc")
+	@Bean(destroyMethod = "disableWriting")
+	public JdbcAuditService auditService() {
+		JdbcAuditService service = new JdbcAuditService(
+				auditDataSource != null ? auditDataSource : primaryDataSource(dataSourceProperties()));
+		service.enableWriting();
+		return service;
+	}
 
-  @Bean
-  @Primary
-  @ConfigurationProperties(prefix = "spring.datasource")
-  public DataSourceProperties dataSourceProperties() {
-    return new DataSourceProperties();
-  }
+	@Bean
+	@Primary
+	@ConfigurationProperties(prefix = "spring.datasource")
+	public DataSourceProperties dataSourceProperties() {
+		return new DataSourceProperties();
+	}
 
-  @Bean
-  @Primary
-  @ConfigurationProperties(prefix = "spring.datasource.tomcat")
-  public DataSource primaryDataSource(DataSourceProperties properties) {
-    DataSource dataSource = properties.initializeDataSourceBuilder()
-        .type(org.apache.tomcat.jdbc.pool.DataSource.class).build();
-    return dataSource;
-  }
+	@Bean
+	@Primary
+	@ConfigurationProperties(prefix = "spring.datasource.tomcat")
+	public DataSource primaryDataSource(DataSourceProperties properties) {
+		DataSource dataSource = properties.initializeDataSourceBuilder()
+				.type(org.apache.tomcat.jdbc.pool.DataSource.class).build();
+		return dataSource;
+	}
 
 }

@@ -46,56 +46,56 @@ import net.solarnetwork.flux.vernemq.webhook.test.DbUtils;
 @AutoConfigureTestDatabase(replace = Replace.NONE)
 public class JdbcAuthServiceIntegrationDirectTokensTests extends JdbcAuthServiceIntegrationTests {
 
-  @Override
-  @BeforeEach
-  public void setup() {
-    super.setup();
-    authService.setAllowDirectTokenAuthentication(true);
-  }
+	@Override
+	@BeforeEach
+	public void setup() {
+		super.setup();
+		authService.setAllowDirectTokenAuthentication(true);
+	}
 
-  private String generateTokenSecret() {
-    return UUID.randomUUID().toString().substring(0, 16);
-  }
+	private String generateTokenSecret() {
+		return UUID.randomUUID().toString().substring(0, 16);
+	}
 
-  @Test
-  public void authenticateOk_directToken() {
-    // given
-    final Long userId = 123L;
-    DbUtils.createUser(jdbcOps, userId);
-    final String tokenId = "test.token";
-    final String tokenSecret = generateTokenSecret();
-    DbUtils.createToken(jdbcOps, tokenId, tokenSecret, userId, true,
-        DbUtils.READ_NODE_DATA_TOKEN_TYPE, null);
+	@Test
+	public void authenticateOk_directToken() {
+		// given
+		final Long userId = 123L;
+		DbUtils.createUser(jdbcOps, userId);
+		final String tokenId = "test.token";
+		final String tokenSecret = generateTokenSecret();
+		DbUtils.createToken(jdbcOps, tokenId, tokenSecret, userId, true,
+				DbUtils.READ_NODE_DATA_TOKEN_TYPE, null);
 
-    RegisterRequest req = RegisterRequest.builder().withClientId(tokenId).withUsername(tokenId)
-        .withPassword(tokenSecret).build();
+		RegisterRequest req = RegisterRequest.builder().withClientId(tokenId).withUsername(tokenId)
+				.withPassword(tokenSecret).build();
 
-    // when
-    Response r = authService.authenticateRequest(req);
+		// when
+		Response r = authService.authenticateRequest(req);
 
-    // then
-    assertThat("Result", r.getStatus(), equalTo(ResponseStatus.OK));
-    assertThat("No modifiers", r.getModifiers(), nullValue());
-  }
+		// then
+		assertThat("Result", r.getStatus(), equalTo(ResponseStatus.OK));
+		assertThat("No modifiers", r.getModifiers(), nullValue());
+	}
 
-  @Test
-  public void authenticateFailed_directToken_badSecret() {
-    // given
-    final Long userId = 123L;
-    DbUtils.createUser(jdbcOps, userId);
-    final String tokenId = "test.token";
-    final String tokenSecret = generateTokenSecret();
-    DbUtils.createToken(jdbcOps, tokenId, tokenSecret, userId, true,
-        DbUtils.READ_NODE_DATA_TOKEN_TYPE, null);
+	@Test
+	public void authenticateFailed_directToken_badSecret() {
+		// given
+		final Long userId = 123L;
+		DbUtils.createUser(jdbcOps, userId);
+		final String tokenId = "test.token";
+		final String tokenSecret = generateTokenSecret();
+		DbUtils.createToken(jdbcOps, tokenId, tokenSecret, userId, true,
+				DbUtils.READ_NODE_DATA_TOKEN_TYPE, null);
 
-    RegisterRequest req = RegisterRequest.builder().withClientId(tokenId).withUsername(tokenId)
-        .withPassword("bad secret").build();
+		RegisterRequest req = RegisterRequest.builder().withClientId(tokenId).withUsername(tokenId)
+				.withPassword("bad secret").build();
 
-    // when
-    Response r = authService.authenticateRequest(req);
+		// when
+		Response r = authService.authenticateRequest(req);
 
-    // then
-    assertThat("Result", r.getStatus(), equalTo(ResponseStatus.NEXT));
-    assertThat("No modifiers", r.getModifiers(), nullValue());
-  }
+		// then
+		assertThat("Result", r.getStatus(), equalTo(ResponseStatus.NEXT));
+		assertThat("No modifiers", r.getModifiers(), nullValue());
+	}
 }

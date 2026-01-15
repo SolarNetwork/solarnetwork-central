@@ -40,25 +40,25 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class PublishRequestTests extends TestSupport {
 
-  private ObjectMapper objectMapper;
+	private ObjectMapper objectMapper;
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
+	@BeforeEach
+	public void setup() {
+		objectMapper = JsonUtils.defaultObjectMapper();
+	}
 
-  @Test
-  public void parseFull() throws IOException {
-    PublishRequest req = objectMapper.readValue(classResourceAsBytes("auth_on_publish-01.json"),
-        PublishRequest.class);
-    assertThat("client_id", req.getClientId(), equalTo("clientid"));
-    assertThat("mountpoint", req.getMountpoint(), equalTo(""));
-    assertThat("payload", Arrays.equals(req.getPayload(), "hello".getBytes(StandardCharsets.UTF_8)),
-        equalTo(true));
-    assertThat("qos", req.getQos(), equalTo(Qos.AtLeastOnce));
-    assertThat("retain", req.getRetain(), equalTo(false));
-    assertThat("topic", req.getTopic(), equalTo("a/b"));
-    assertThat("username", req.getUsername(), equalTo("username"));
-  }
+	@Test
+	public void parseFull() throws IOException {
+		PublishRequest req = objectMapper.readValue(classResourceAsBytes("auth_on_publish-01.json"),
+				PublishRequest.class);
+		assertThat("client_id", req.getClientId(), equalTo("clientid"));
+		assertThat("mountpoint", req.getMountpoint(), equalTo(""));
+		assertThat("payload", Arrays.equals(req.getPayload(), "hello".getBytes(StandardCharsets.UTF_8)),
+				equalTo(true));
+		assertThat("qos", req.getQos(), equalTo(Qos.AtLeastOnce));
+		assertThat("retain", req.getRetain(), equalTo(false));
+		assertThat("topic", req.getTopic(), equalTo("a/b"));
+		assertThat("username", req.getUsername(), equalTo("username"));
+	}
 
 }

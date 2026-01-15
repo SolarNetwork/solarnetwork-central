@@ -29,79 +29,79 @@ import tools.jackson.databind.annotation.JsonDeserialize;
 @JsonDeserialize(builder = SnTokenDetails.Builder.class)
 public class SnTokenDetails {
 
-  private final String tokenId;
-  private final Long userId;
-  private final String tokenType;
-  private final SecurityPolicy policy;
+	private final String tokenId;
+	private final Long userId;
+	private final String tokenType;
+	private final SecurityPolicy policy;
 
-  private SnTokenDetails(Builder builder) {
-    this.tokenId = builder.tokenId;
-    this.userId = builder.userId;
-    this.tokenType = builder.tokenType;
-    this.policy = builder.policy;
-  }
+	private SnTokenDetails(Builder builder) {
+		this.tokenId = builder.tokenId;
+		this.userId = builder.userId;
+		this.tokenType = builder.tokenType;
+		this.policy = builder.policy;
+	}
 
-  /**
-   * Creates builder to build {@link SnTokenDetails}.
-   * 
-   * @return created builder
-   */
-  public static Builder builder() {
-    return new Builder();
-  }
+	/**
+	 * Creates builder to build {@link SnTokenDetails}.
+	 * 
+	 * @return created builder
+	 */
+	public static Builder builder() {
+		return new Builder();
+	}
 
-  /**
-   * Builder to build {@link SnTokenDetails}.
-   */
-  public static final class Builder {
+	/**
+	 * Builder to build {@link SnTokenDetails}.
+	 */
+	public static final class Builder {
 
-    private String tokenId;
-    private Long userId;
-    private String tokenType;
-    private SecurityPolicy policy;
+		private String tokenId;
+		private Long userId;
+		private String tokenType;
+		private SecurityPolicy policy;
 
-    private Builder() {
-    }
+		private Builder() {
+		}
 
-    public Builder withTokenId(String tokenId) {
-      this.tokenId = tokenId;
-      return this;
-    }
+		public Builder withTokenId(String tokenId) {
+			this.tokenId = tokenId;
+			return this;
+		}
 
-    public Builder withUserId(Long userId) {
-      this.userId = userId;
-      return this;
-    }
+		public Builder withUserId(Long userId) {
+			this.userId = userId;
+			return this;
+		}
 
-    public Builder withTokenType(String tokenType) {
-      this.tokenType = tokenType;
-      return this;
-    }
+		public Builder withTokenType(String tokenType) {
+			this.tokenType = tokenType;
+			return this;
+		}
 
-    public Builder withPolicy(SecurityPolicy policy) {
-      this.policy = policy;
-      return this;
-    }
+		public Builder withPolicy(SecurityPolicy policy) {
+			this.policy = policy;
+			return this;
+		}
 
-    public SnTokenDetails build() {
-      return new SnTokenDetails(this);
-    }
-  }
+		public SnTokenDetails build() {
+			return new SnTokenDetails(this);
+		}
+	}
 
-  public String getTokenId() {
-    return tokenId;
-  }
+	public String getTokenId() {
+		return tokenId;
+	}
 
-  public Long getUserId() {
-    return userId;
-  }
+	public Long getUserId() {
+		return userId;
+	}
 
-  public String getTokenType() {
-    return tokenType;
-  }
+	public String getTokenType() {
+		return tokenType;
+	}
 
-  public SecurityPolicy getPolicy() {
-    return policy;
-  }
+	public SecurityPolicy getPolicy() {
+		return policy;
+	}
 
 }

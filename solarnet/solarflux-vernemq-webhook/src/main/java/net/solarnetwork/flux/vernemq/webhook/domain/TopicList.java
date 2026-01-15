@@ -31,28 +31,28 @@ import net.solarnetwork.util.StringUtils;
  */
 public class TopicList implements ResponseTopics {
 
-  private final List<String> topics;
+	private final List<String> topics;
 
-  /**
-   * Constructor.
-   * 
-   * @param topics
-   *        the topics
-   */
-  @JsonCreator
-  public TopicList(List<String> topics) {
-    super();
-    this.topics = topics;
-  }
+	/**
+	 * Constructor.
+	 * 
+	 * @param topics
+	 *        the topics
+	 */
+	@JsonCreator
+	public TopicList(List<String> topics) {
+		super();
+		this.topics = topics;
+	}
 
-  @Override
-  public String toString() {
-    return (topics != null ? StringUtils.commaDelimitedStringFromCollection(topics) : "<<empty>>");
-  }
+	@Override
+	public String toString() {
+		return (topics != null ? StringUtils.commaDelimitedStringFromCollection(topics) : "<<empty>>");
+	}
 
-  @JsonValue
-  public List<String> getTopics() {
-    return topics;
-  }
+	@JsonValue
+	public List<String> getTopics() {
+		return topics;
+	}
 
 }

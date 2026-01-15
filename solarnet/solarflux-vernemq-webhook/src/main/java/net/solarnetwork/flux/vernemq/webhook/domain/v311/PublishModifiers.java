@@ -33,94 +33,94 @@ import tools.jackson.databind.annotation.JsonDeserialize;
 @JsonDeserialize(builder = PublishModifiers.Builder.class)
 public class PublishModifiers implements ResponseModifiers, Message {
 
-  private final String topic;
+	private final String topic;
 
-  private final Qos qos;
+	private final Qos qos;
 
-  private final byte[] payload;
+	private final byte[] payload;
 
-  private final Boolean retain;
+	private final Boolean retain;
 
-  private PublishModifiers(Builder builder) {
-    this.topic = builder.topic;
-    this.qos = builder.qos;
-    this.payload = builder.payload;
-    this.retain = builder.retain;
-  }
+	private PublishModifiers(Builder builder) {
+		this.topic = builder.topic;
+		this.qos = builder.qos;
+		this.payload = builder.payload;
+		this.retain = builder.retain;
+	}
 
-  /**
-   * Creates builder to build {@link PublishModifiers}.
-   * 
-   * @return created builder
-   */
-  public static Builder builder() {
-    return new Builder();
-  }
+	/**
+	 * Creates builder to build {@link PublishModifiers}.
+	 * 
+	 * @return created builder
+	 */
+	public static Builder builder() {
+		return new Builder();
+	}
 
-  /**
-   * Builder to build {@link PublishModifiers}.
-   */
-  public static final class Builder {
+	/**
+	 * Builder to build {@link PublishModifiers}.
+	 */
+	public static final class Builder {
 
-    private String topic;
-    private Qos qos;
-    private byte[] payload;
-    private Boolean retain;
+		private String topic;
+		private Qos qos;
+		private byte[] payload;
+		private Boolean retain;
 
-    private Builder() {
-    }
+		private Builder() {
+		}
 
-    public Builder withTopic(String topic) {
-      this.topic = topic;
-      return this;
-    }
+		public Builder withTopic(String topic) {
+			this.topic = topic;
+			return this;
+		}
 
-    public Builder withQos(Qos qos) {
-      this.qos = qos;
-      return this;
-    }
+		public Builder withQos(Qos qos) {
+			this.qos = qos;
+			return this;
+		}
 
-    public Builder withPayload(byte[] payload) {
-      this.payload = payload;
-      return this;
-    }
+		public Builder withPayload(byte[] payload) {
+			this.payload = payload;
+			return this;
+		}
 
-    public Builder withRetain(Boolean retain) {
-      this.retain = retain;
-      return this;
-    }
+		public Builder withRetain(Boolean retain) {
+			this.retain = retain;
+			return this;
+		}
 
-    public PublishModifiers build() {
-      return new PublishModifiers(this);
-    }
-  }
+		public PublishModifiers build() {
+			return new PublishModifiers(this);
+		}
+	}
 
-  @Override
-  public String toString() {
-    return "PublishModifiers{" + (topic != null ? "topic=" + topic + ", " : "")
-        + (qos != null ? "qos=" + qos + ", " : "")
-        + (payload != null ? "payload=" + Arrays.toString(payload) + ", " : "")
-        + (retain != null ? "retain=" + retain : "") + "}";
-  }
+	@Override
+	public String toString() {
+		return "PublishModifiers{" + (topic != null ? "topic=" + topic + ", " : "")
+				+ (qos != null ? "qos=" + qos + ", " : "")
+				+ (payload != null ? "payload=" + Arrays.toString(payload) + ", " : "")
+				+ (retain != null ? "retain=" + retain : "") + "}";
+	}
 
-  @Override
-  public String getTopic() {
-    return topic;
-  }
+	@Override
+	public String getTopic() {
+		return topic;
+	}
 
-  @Override
-  public Qos getQos() {
-    return qos;
-  }
+	@Override
+	public Qos getQos() {
+		return qos;
+	}
 
-  @Override
-  public byte[] getPayload() {
-    return payload;
-  }
+	@Override
+	public byte[] getPayload() {
+		return payload;
+	}
 
-  @Override
-  public Boolean getRetain() {
-    return retain;
-  }
+	@Override
+	public Boolean getRetain() {
+		return retain;
+	}
 
 }

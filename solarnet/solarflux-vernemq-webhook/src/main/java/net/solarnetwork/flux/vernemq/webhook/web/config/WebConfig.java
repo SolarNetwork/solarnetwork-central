@@ -29,11 +29,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration(proxyBeanMethods = false)
 public class WebConfig implements WebMvcConfigurer {
 
-  @Override
-  public void addCorsMappings(CorsRegistry registry) {
-    registry.addMapping("/**").allowedMethods("GET", "POST")
-        // setting allowCredentials to false to Spring returns Access-Control-Allow-Origin: *
-        .allowCredentials(false);
-  }
+	@Override
+	public void addCorsMappings(CorsRegistry registry) {
+		registry.addMapping("/**").allowedMethods("GET", "POST")
+				// setting allowCredentials to false to Spring returns Access-Control-Allow-Origin: *
+				.allowCredentials(false);
+	}
 
 }

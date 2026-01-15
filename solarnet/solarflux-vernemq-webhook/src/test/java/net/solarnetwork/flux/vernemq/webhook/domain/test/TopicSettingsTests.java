@@ -43,22 +43,22 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class TopicSettingsTests extends TestSupport {
 
-  private ObjectMapper objectMapper;
+	private ObjectMapper objectMapper;
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
+	@BeforeEach
+	public void setup() {
+		objectMapper = JsonUtils.defaultObjectMapper();
+	}
 
-  @Test
-  public void toJsonFull() {
-    TopicSettings settings = new TopicSettings(Arrays.asList(
-        TopicSubscriptionSetting.builder().withTopic("foo").withQos(Qos.AtLeastOnce).build(),
-        TopicSubscriptionSetting.builder().withTopic("bar").withQos(Qos.ExactlyOnce).build()));
-    String json = objectMapper.writeValueAsString(settings);
-    log.debug("Topic settings full JSON: {}", json);
+	@Test
+	public void toJsonFull() {
+		TopicSettings settings = new TopicSettings(Arrays.asList(
+				TopicSubscriptionSetting.builder().withTopic("foo").withQos(Qos.AtLeastOnce).build(),
+				TopicSubscriptionSetting.builder().withTopic("bar").withQos(Qos.ExactlyOnce).build()));
+		String json = objectMapper.writeValueAsString(settings);
+		log.debug("Topic settings full JSON: {}", json);
 
-    // @formatter:off
+	// @formatter:off
     then(json)
         .asInstanceOf(JSON)
         .as("Result is JSON array")
@@ -73,14 +73,14 @@ public class TopicSettingsTests extends TestSupport {
         )
         ;
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void fromJson() throws IOException {
-    String json = "[{\"topic\":\"bim\",\"qos\":0},{\"topic\":\"bam\",\"qos\":1}]";
+	@Test
+	public void fromJson() throws IOException {
+		String json = "[{\"topic\":\"bim\",\"qos\":0},{\"topic\":\"bam\",\"qos\":1}]";
 
-    TopicSettings s = objectMapper.readValue(json, TopicSettings.class);
-    // @formatter:off
+		TopicSettings s = objectMapper.readValue(json, TopicSettings.class);
+	// @formatter:off
     then(s)
         .as("Settings array parsed")
         .extracting(TopicSettings::getSettings, list(TopicSubscriptionSetting.class))
@@ -102,6 +102,6 @@ public class TopicSettingsTests extends TestSupport {
         })
         ;
     // @formatter:on
-  }
+	}
 
 }

@@ -39,37 +39,37 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class QosTests {
 
-  private ObjectMapper objectMapper;
+	private ObjectMapper objectMapper;
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
+	@BeforeEach
+	public void setup() {
+		objectMapper = JsonUtils.defaultObjectMapper();
+	}
 
-  @Test
-  public void toJson() throws JSONException {
-    for (Qos qos : Qos.values()) {
-      String json = objectMapper.writeValueAsString(qos);
+	@Test
+	public void toJson() throws JSONException {
+		for ( Qos qos : Qos.values() ) {
+			String json = objectMapper.writeValueAsString(qos);
 
-      JSONAssert.assertEquals("Qos " + qos, String.valueOf(qos.getKey()), json, true);
-    }
-  }
+			JSONAssert.assertEquals("Qos " + qos, String.valueOf(qos.getKey()), json, true);
+		}
+	}
 
-  @Test
-  public void fromJson() throws IOException {
-    for (Qos qos : Qos.values()) {
-      String json = String.valueOf(qos.getKey());
+	@Test
+	public void fromJson() throws IOException {
+		for ( Qos qos : Qos.values() ) {
+			String json = String.valueOf(qos.getKey());
 
-      Qos q = objectMapper.readValue(json, Qos.class);
-      assertThat("Qos " + qos, q, equalTo(qos));
-    }
-  }
+			Qos q = objectMapper.readValue(json, Qos.class);
+			assertThat("Qos " + qos, q, equalTo(qos));
+		}
+	}
 
-  @Test
-  public void forKeyBadValue() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      Qos.forKey(-1);
-    });
-  }
+	@Test
+	public void forKeyBadValue() {
+		assertThrows(IllegalArgumentException.class, () -> {
+			Qos.forKey(-1);
+		});
+	}
 
 }

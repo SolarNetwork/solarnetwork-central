@@ -26,13 +26,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public enum ResponseStatus {
 
-  @JsonProperty("ok")
-  OK,
+	@JsonProperty("ok")
+	OK,
 
-  @JsonProperty("error")
-  ERROR,
+	@JsonProperty("error")
+	ERROR,
 
-  @JsonProperty("next")
-  NEXT;
+	@JsonProperty("next")
+	NEXT;
 
 }

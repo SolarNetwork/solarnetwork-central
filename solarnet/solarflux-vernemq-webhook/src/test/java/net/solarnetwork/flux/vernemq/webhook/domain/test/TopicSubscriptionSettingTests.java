@@ -40,32 +40,32 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class TopicSubscriptionSettingTests extends TestSupport {
 
-  private ObjectMapper objectMapper;
+	private ObjectMapper objectMapper;
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
+	@BeforeEach
+	public void setup() {
+		objectMapper = JsonUtils.defaultObjectMapper();
+	}
 
-  @Test
-  public void toJsonFull() throws JSONException {
-    TopicSubscriptionSetting topic = TopicSubscriptionSetting.builder().withTopic("foo")
-        .withQos(Qos.AtLeastOnce).build();
-    String json = objectMapper.writeValueAsString(topic);
-    log.debug("Topic setting full JSON: {}", json);
+	@Test
+	public void toJsonFull() throws JSONException {
+		TopicSubscriptionSetting topic = TopicSubscriptionSetting.builder().withTopic("foo")
+				.withQos(Qos.AtLeastOnce).build();
+		String json = objectMapper.writeValueAsString(topic);
+		log.debug("Topic setting full JSON: {}", json);
 
-    JSONAssert.assertEquals("""
-        {"topic": "%s", "qos": %d}
-        """.formatted(topic.getTopic(), topic.getQos().getKey()), json, true);
-  }
+		JSONAssert.assertEquals("""
+				{"topic": "%s", "qos": %d}
+				""".formatted(topic.getTopic(), topic.getQos().getKey()), json, true);
+	}
 
-  @Test
-  public void fromJson() throws IOException {
-    String json = "{\"topic\":\"foobar\",\"qos\":1}";
+	@Test
+	public void fromJson() throws IOException {
+		String json = "{\"topic\":\"foobar\",\"qos\":1}";
 
-    TopicSubscriptionSetting s = objectMapper.readValue(json, TopicSubscriptionSetting.class);
-    assertThat("Topic", s.getTopic(), equalTo("foobar"));
-    assertThat("Qos", s.getQos(), equalTo(Qos.AtLeastOnce));
-  }
+		TopicSubscriptionSetting s = objectMapper.readValue(json, TopicSubscriptionSetting.class);
+		assertThat("Topic", s.getTopic(), equalTo("foobar"));
+		assertThat("Qos", s.getQos(), equalTo(Qos.AtLeastOnce));
+	}
 
 }
