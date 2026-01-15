@@ -88,7 +88,7 @@ public class RegistrationController {
 	}
 
 	@PostMapping(path = "/sim/system/{systemId}/register", consumes = APPLICATION_JSON_VALUE)
-	public SystemConfiguration createSystem(@PathVariable("systemId") UUID systemId,
+	public SystemConfiguration createSystem(@PathVariable UUID systemId,
 			@RequestBody SystemConfiguration input) {
 		if ( !V20.equals(input.getOscpVersion()) ) {
 			throw new IllegalArgumentException("OSCP version [%s] is not supported (must be %s)."

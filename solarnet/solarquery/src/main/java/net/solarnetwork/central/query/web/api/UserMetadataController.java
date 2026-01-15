@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserMetadataController.java - 14/11/2016 11:57:46 AM
- * 
+ *
  * Copyright 2007-2016 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -45,7 +45,7 @@ import net.solarnetwork.domain.Result;
 
 /**
  * Controller for read-only user metadata access.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -59,7 +59,7 @@ public class UserMetadataController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userMetadataBiz
 	 *        the UserMetadataBiz to use
 	 */
@@ -76,7 +76,7 @@ public class UserMetadataController {
 
 	/**
 	 * Get metadata for a specific user ID.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID; if not provided the user ID of the current actor will
 	 *        be used
@@ -88,8 +88,7 @@ public class UserMetadataController {
 					description = "The user ID; if not provided the user ID associated with the active user is assumed."))
 	@ResponseBody
 	@RequestMapping(value = { "", "/", "/{userId}" }, method = RequestMethod.GET)
-	public Result<UserMetadataEntity> getMetadata(
-			@PathVariable(name = "userId", required = false) Long userId) {
+	public Result<UserMetadataEntity> getMetadata(@PathVariable(required = false) Long userId) {
 		if ( userId == null ) {
 			userId = SecurityUtils.getCurrentActorUserId();
 		}

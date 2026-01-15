@@ -148,8 +148,7 @@ public class UserCloudIntegrationsControlsController {
 	 */
 	@RequestMapping(value = "/integrations/{integrationId}/control-data-values",
 			method = RequestMethod.GET)
-	public Result<Iterable<CloudDataValue>> listCloudControlDataValues(
-			@PathVariable("integrationId") Long integrationId,
+	public Result<Iterable<CloudDataValue>> listCloudControlDataValues(@PathVariable Long integrationId,
 			@RequestParam(value = "controlServiceIdentifier",
 					required = false) String controlServiceIdentifier,
 			WebRequest req) {
@@ -194,14 +193,14 @@ public class UserCloudIntegrationsControlsController {
 
 	@RequestMapping(value = "/controls/{cloudControlId}", method = RequestMethod.GET)
 	public Result<CloudControlConfiguration> getCloudControlConfiguration(
-			@PathVariable("cloudControlId") Long cloudControlId) {
+			@PathVariable Long cloudControlId) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), cloudControlId);
 		return success(biz.configurationForId(id, CloudControlConfiguration.class));
 	}
 
 	@RequestMapping(value = "/controls/{cloudControlId}", method = RequestMethod.PUT)
 	public Result<CloudControlConfiguration> updateCloudControlConfiguration(
-			@PathVariable("cloudControlId") Long cloudControlId,
+			@PathVariable Long cloudControlId,
 			@Valid @RequestBody CloudControlConfigurationInput input) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), cloudControlId);
 		return success(biz.saveConfiguration(id, input));
@@ -209,16 +208,14 @@ public class UserCloudIntegrationsControlsController {
 
 	@RequestMapping(value = "/controls/{cloudControlId}/enabled/{enabled}", method = RequestMethod.POST)
 	public Result<CloudControlConfiguration> enableCloudControlConfiguration(
-			@PathVariable("cloudControlId") Long cloudControlId,
-			@PathVariable("enabled") boolean enabled) {
+			@PathVariable Long cloudControlId, @PathVariable boolean enabled) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), cloudControlId);
 		biz.updateConfigurationEnabled(id, enabled, CloudControlConfiguration.class);
 		return success();
 	}
 
 	@RequestMapping(value = "/controls/{cloudControlId}", method = RequestMethod.DELETE)
-	public Result<Void> deleteCloudControlConfiguration(
-			@PathVariable("cloudControlId") Long cloudControlId) {
+	public Result<Void> deleteCloudControlConfiguration(@PathVariable Long cloudControlId) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), cloudControlId);
 		biz.deleteConfiguration(id, CloudControlConfiguration.class);
 		return success();

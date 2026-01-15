@@ -84,7 +84,7 @@ public class DatumMetadataController {
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
 	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
-			@PathVariable("nodeId") Long nodeId, DatumFilterCommand criteria) {
+			@PathVariable Long nodeId, DatumFilterCommand criteria) {
 		return findMetadata(nodeId, null, criteria);
 	}
 
@@ -102,8 +102,7 @@ public class DatumMetadataController {
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.GET)
 	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
-			@PathVariable("nodeId") Long nodeId, @PathVariable("sourceId") String sourceId,
-			DatumFilterCommand criteria) {
+			@PathVariable Long nodeId, @PathVariable String sourceId, DatumFilterCommand criteria) {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
 		filter.setSourceId(sourceId);
@@ -116,7 +115,7 @@ public class DatumMetadataController {
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET, params = { "sourceId" })
 	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadataAlt(
-			@PathVariable("nodeId") Long nodeId, @RequestParam("sourceId") String sourceId,
+			@PathVariable Long nodeId, @RequestParam("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		return findMetadata(nodeId, sourceId, criteria);
 	}
@@ -135,15 +134,15 @@ public class DatumMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.POST)
-	public Result<Object> addMetadata(@PathVariable("nodeId") Long nodeId,
-			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
+	public Result<Object> addMetadata(@PathVariable Long nodeId, @PathVariable String sourceId,
+			@RequestBody GeneralDatumMetadata meta) {
 		datumMetadataBiz.addGeneralNodeDatumMetadata(nodeId, sourceId, meta);
 		return success();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.POST, params = { "sourceId" })
-	public Result<Object> addMetadataAlt(@PathVariable("nodeId") Long nodeId,
+	public Result<Object> addMetadataAlt(@PathVariable Long nodeId,
 			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		return addMetadata(nodeId, sourceId, meta);
 	}
@@ -162,15 +161,15 @@ public class DatumMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.PUT)
-	public Result<Object> replaceMetadata(@PathVariable("nodeId") Long nodeId,
-			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
+	public Result<Object> replaceMetadata(@PathVariable Long nodeId, @PathVariable String sourceId,
+			@RequestBody GeneralDatumMetadata meta) {
 		datumMetadataBiz.storeGeneralNodeDatumMetadata(nodeId, sourceId, meta);
 		return success();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.PUT, params = { "sourceId" })
-	public Result<Object> replaceMetadataAlt(@PathVariable("nodeId") Long nodeId,
+	public Result<Object> replaceMetadataAlt(@PathVariable Long nodeId,
 			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		return replaceMetadata(nodeId, sourceId, meta);
 	}
@@ -186,15 +185,14 @@ public class DatumMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.DELETE)
-	public Result<Object> deleteMetadata(@PathVariable("nodeId") Long nodeId,
-			@PathVariable("sourceId") String sourceId) {
+	public Result<Object> deleteMetadata(@PathVariable Long nodeId, @PathVariable String sourceId) {
 		datumMetadataBiz.removeGeneralNodeDatumMetadata(nodeId, sourceId);
 		return success();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.DELETE, params = { "sourceId" })
-	public Result<Object> deleteMetadataAlt(@PathVariable("nodeId") Long nodeId,
+	public Result<Object> deleteMetadataAlt(@PathVariable Long nodeId,
 			@RequestParam("sourceId") String sourceId) {
 		return deleteMetadata(nodeId, sourceId);
 	}

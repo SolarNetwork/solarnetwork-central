@@ -1,21 +1,21 @@
 /* ==================================================================
  * LocationLookupController.java - Nov 19, 2013 7:30:21 AM
- * 
+ *
  * Copyright 2007-2013 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -47,7 +47,7 @@ import net.solarnetwork.domain.Result;
 
 /**
  * Controller for querying location data.
- * 
+ *
  * @author matt
  * @version 2.5
  */
@@ -60,7 +60,7 @@ public class LocationLookupController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dataCollectorBiz
 	 *        the DataCollectorBiz to use
 	 */
@@ -77,7 +77,7 @@ public class LocationLookupController {
 
 	/**
 	 * Query for general location datum metadata.
-	 * 
+	 *
 	 * @param query
 	 *        a general search query
 	 * @param command
@@ -123,7 +123,7 @@ public class LocationLookupController {
 
 	/**
 	 * Query for general location datum metadata.
-	 * 
+	 *
 	 * @param locationId
 	 *        a location ID
 	 * @param sourceId
@@ -134,8 +134,7 @@ public class LocationLookupController {
 	@ResponseBody
 	@RequestMapping(value = { "/{locationId}" }, method = RequestMethod.GET, params = "sourceId")
 	public Result<GeneralLocationDatumMetadataFilterMatch> getGeneralLocationMetadata(
-			@PathVariable("locationId") Long locationId,
-			@RequestParam(value = "sourceId") String sourceId) {
+			@PathVariable Long locationId, @RequestParam("sourceId") String sourceId) {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setLocationId(locationId);
 		criteria.setSourceId(sourceId);
@@ -149,13 +148,13 @@ public class LocationLookupController {
 
 	/**
 	 * Update a node's own location details.
-	 * 
+	 *
 	 * <p>
 	 * Only authenticated nodes are allowed to call this method. This is
 	 * designed for nodes to be able to update their own GPS coordinates
 	 * primarily.
 	 * </p>
-	 * 
+	 *
 	 * @param location
 	 *        the location details to save
 	 * @return the response
@@ -171,11 +170,11 @@ public class LocationLookupController {
 
 	/**
 	 * Get the location for a node.
-	 * 
+	 *
 	 * <p>
 	 * Only authenticated nodes are allowed to call this method.
 	 * </p>
-	 * 
+	 *
 	 * @return the location details of the node
 	 * @since 2.4
 	 */

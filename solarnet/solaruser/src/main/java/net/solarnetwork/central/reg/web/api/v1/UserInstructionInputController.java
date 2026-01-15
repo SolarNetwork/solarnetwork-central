@@ -157,15 +157,13 @@ public class UserInstructionInputController {
 	}
 
 	@RequestMapping(value = "/credentials/{credentialId}", method = RequestMethod.GET)
-	public Result<CredentialConfiguration> getCredentialConfiguration(
-			@PathVariable("credentialId") Long credentialId) {
+	public Result<CredentialConfiguration> getCredentialConfiguration(@PathVariable Long credentialId) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), credentialId);
 		return success(userInstructionInputBiz.configurationForId(id, CredentialConfiguration.class));
 	}
 
 	@RequestMapping(value = "/credentials/{credentialId}", method = RequestMethod.PUT)
-	public Result<CredentialConfiguration> updateCredentialConfiguration(
-			@PathVariable("credentialId") Long credentialId,
+	public Result<CredentialConfiguration> updateCredentialConfiguration(@PathVariable Long credentialId,
 			@Valid @RequestBody CredentialConfigurationInput input) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), credentialId);
 		CredentialConfiguration result = userInstructionInputBiz.saveConfiguration(id, input);
@@ -173,15 +171,15 @@ public class UserInstructionInputController {
 	}
 
 	@RequestMapping(value = "/credentials/{credentialId}/enabled/{enabled}", method = RequestMethod.POST)
-	public Result<CredentialConfiguration> enableCredentialConfiguration(
-			@PathVariable("credentialId") Long credentialId, @PathVariable("enabled") boolean enabled) {
+	public Result<CredentialConfiguration> enableCredentialConfiguration(@PathVariable Long credentialId,
+			@PathVariable boolean enabled) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), credentialId);
 		userInstructionInputBiz.enableConfiguration(id, enabled, CredentialConfiguration.class);
 		return success();
 	}
 
 	@RequestMapping(value = "/credentials/{credentialId}", method = RequestMethod.DELETE)
-	public Result<Void> deleteCredentialConfiguration(@PathVariable("credentialId") Long credentialId) {
+	public Result<Void> deleteCredentialConfiguration(@PathVariable Long credentialId) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), credentialId);
 		userInstructionInputBiz.deleteConfiguration(id, CredentialConfiguration.class);
 		return success();
@@ -208,7 +206,7 @@ public class UserInstructionInputController {
 
 	@RequestMapping(value = "/request-transforms/{transformId}", method = RequestMethod.GET)
 	public Result<RequestTransformConfiguration> getRequestTransformConfiguration(
-			@PathVariable("transformId") Long transformId) {
+			@PathVariable Long transformId) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
 		return success(
 				userInstructionInputBiz.configurationForId(id, RequestTransformConfiguration.class));
@@ -216,7 +214,7 @@ public class UserInstructionInputController {
 
 	@RequestMapping(value = "/request-transforms/{transformId}", method = RequestMethod.PUT)
 	public Result<RequestTransformConfiguration> updateRequestTransformConfiguration(
-			@PathVariable("transformId") Long transformId,
+			@PathVariable Long transformId,
 			@Valid @RequestBody RequestTransformConfigurationInput input) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
 		RequestTransformConfiguration result = userInstructionInputBiz.saveConfiguration(id, input);
@@ -224,8 +222,7 @@ public class UserInstructionInputController {
 	}
 
 	@RequestMapping(value = "/request-transforms/{transformId}", method = RequestMethod.DELETE)
-	public Result<Void> deleteRequestTransformConfiguration(
-			@PathVariable("transformId") Long transformId) {
+	public Result<Void> deleteRequestTransformConfiguration(@PathVariable Long transformId) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
 		userInstructionInputBiz.deleteConfiguration(id, RequestTransformConfiguration.class);
 		return success();
@@ -252,7 +249,7 @@ public class UserInstructionInputController {
 
 	@RequestMapping(value = "/response-transforms/{transformId}", method = RequestMethod.GET)
 	public Result<ResponseTransformConfiguration> getResponseTransformConfiguration(
-			@PathVariable("transformId") Long transformId) {
+			@PathVariable Long transformId) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
 		return success(
 				userInstructionInputBiz.configurationForId(id, ResponseTransformConfiguration.class));
@@ -260,7 +257,7 @@ public class UserInstructionInputController {
 
 	@RequestMapping(value = "/response-transforms/{transformId}", method = RequestMethod.PUT)
 	public Result<ResponseTransformConfiguration> updateResponseTransformConfiguration(
-			@PathVariable("transformId") Long transformId,
+			@PathVariable Long transformId,
 			@Valid @RequestBody ResponseTransformConfigurationInput input) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
 		ResponseTransformConfiguration result = userInstructionInputBiz.saveConfiguration(id, input);
@@ -268,8 +265,7 @@ public class UserInstructionInputController {
 	}
 
 	@RequestMapping(value = "/response-transforms/{transformId}", method = RequestMethod.DELETE)
-	public Result<Void> deleteResponseTransformConfiguration(
-			@PathVariable("transformId") Long transformId) {
+	public Result<Void> deleteResponseTransformConfiguration(@PathVariable Long transformId) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
 		userInstructionInputBiz.deleteConfiguration(id, ResponseTransformConfiguration.class);
 		return success();
@@ -294,15 +290,13 @@ public class UserInstructionInputController {
 	}
 
 	@RequestMapping(value = "/endpoints/{endpointId}", method = RequestMethod.GET)
-	public Result<EndpointConfiguration> getEndpointConfiguration(
-			@PathVariable("endpointId") UUID endpointId) {
+	public Result<EndpointConfiguration> getEndpointConfiguration(@PathVariable UUID endpointId) {
 		UserUuidPK id = new UserUuidPK(getCurrentActorUserId(), endpointId);
 		return success(userInstructionInputBiz.configurationForId(id, EndpointConfiguration.class));
 	}
 
 	@RequestMapping(value = "/endpoints/{endpointId}", method = RequestMethod.PUT)
-	public Result<EndpointConfiguration> updateEndpointConfiguration(
-			@PathVariable("endpointId") UUID endpointId,
+	public Result<EndpointConfiguration> updateEndpointConfiguration(@PathVariable UUID endpointId,
 			@Valid @RequestBody EndpointConfigurationInput input) {
 		UserUuidPK id = new UserUuidPK(getCurrentActorUserId(), endpointId);
 		EndpointConfiguration result = userInstructionInputBiz.saveConfiguration(id, input);
@@ -310,15 +304,15 @@ public class UserInstructionInputController {
 	}
 
 	@RequestMapping(value = "/endpoints/{endpointId}/enabled/{enabled}", method = RequestMethod.POST)
-	public Result<CredentialConfiguration> enableEndpointConfiguration(
-			@PathVariable("endpointId") UUID endpointId, @PathVariable("enabled") boolean enabled) {
+	public Result<CredentialConfiguration> enableEndpointConfiguration(@PathVariable UUID endpointId,
+			@PathVariable boolean enabled) {
 		UserUuidPK id = new UserUuidPK(getCurrentActorUserId(), endpointId);
 		userInstructionInputBiz.enableConfiguration(id, enabled, EndpointConfiguration.class);
 		return success();
 	}
 
 	@RequestMapping(value = "/endpoints/{endpointId}", method = RequestMethod.DELETE)
-	public Result<Void> deleteEndpointConfiguration(@PathVariable("endpointId") UUID endpointId) {
+	public Result<Void> deleteEndpointConfiguration(@PathVariable UUID endpointId) {
 		UserUuidPK id = new UserUuidPK(getCurrentActorUserId(), endpointId);
 		userInstructionInputBiz.deleteConfiguration(id, EndpointConfiguration.class);
 		return success();
@@ -361,7 +355,7 @@ public class UserInstructionInputController {
 
 	@RequestMapping(value = "/endpoints/{endpointId}/preview", method = RequestMethod.POST,
 			consumes = MediaType.APPLICATION_JSON_VALUE)
-	public Result<TransformOutput> previewEndpointTransform(@PathVariable("endpointId") UUID endpointId,
+	public Result<TransformOutput> previewEndpointTransform(@PathVariable UUID endpointId,
 			@RequestBody PreviewTransformInput previewInput) throws IOException {
 		UserUuidPK id = new UserUuidPK(getCurrentActorUserId(), endpointId);
 
@@ -401,7 +395,7 @@ public class UserInstructionInputController {
 
 	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}", method = RequestMethod.PUT)
 	public ResponseEntity<Result<EndpointAuthConfiguration>> createEndpointAuthConfiguration(
-			@PathVariable("endpointId") UUID endpointId, @PathVariable("credentialId") Long credentialId,
+			@PathVariable UUID endpointId, @PathVariable Long credentialId,
 			@Valid @RequestBody EndpointAuthConfigurationInput input) {
 		UserUuidLongCompositePK id = new UserUuidLongCompositePK(getCurrentActorUserId(), endpointId,
 				credentialId);
@@ -412,9 +406,8 @@ public class UserInstructionInputController {
 	}
 
 	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}", method = RequestMethod.GET)
-	public Result<EndpointAuthConfiguration> getEndpointAuthConfiguration(
-			@PathVariable("endpointId") UUID endpointId,
-			@PathVariable("credentialId") Long credentialId) {
+	public Result<EndpointAuthConfiguration> getEndpointAuthConfiguration(@PathVariable UUID endpointId,
+			@PathVariable Long credentialId) {
 		UserUuidLongCompositePK id = new UserUuidLongCompositePK(getCurrentActorUserId(), endpointId,
 				credentialId);
 		return success(userInstructionInputBiz.configurationForId(id, EndpointAuthConfiguration.class));
@@ -422,9 +415,8 @@ public class UserInstructionInputController {
 
 	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}/enabled/{enabled}",
 			method = RequestMethod.POST)
-	public Result<CredentialConfiguration> enableEndpointAuthConfiguration(
-			@PathVariable("endpointId") UUID endpointId, @PathVariable("credentialId") Long credentialId,
-			@PathVariable("enabled") boolean enabled) {
+	public Result<CredentialConfiguration> enableEndpointAuthConfiguration(@PathVariable UUID endpointId,
+			@PathVariable Long credentialId, @PathVariable boolean enabled) {
 		UserUuidLongCompositePK id = new UserUuidLongCompositePK(getCurrentActorUserId(), endpointId,
 				credentialId);
 		userInstructionInputBiz.enableConfiguration(id, enabled, EndpointAuthConfiguration.class);
@@ -433,8 +425,8 @@ public class UserInstructionInputController {
 
 	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}",
 			method = RequestMethod.DELETE)
-	public Result<Void> deleteEndpointAuthConfiguration(@PathVariable("endpointId") UUID endpointId,
-			@PathVariable("credentialId") Long credentialId) {
+	public Result<Void> deleteEndpointAuthConfiguration(@PathVariable UUID endpointId,
+			@PathVariable Long credentialId) {
 		UserUuidLongCompositePK id = new UserUuidLongCompositePK(getCurrentActorUserId(), endpointId,
 				credentialId);
 		userInstructionInputBiz.deleteConfiguration(id, EndpointAuthConfiguration.class);

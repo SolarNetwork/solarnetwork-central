@@ -1,21 +1,21 @@
 /* ==================================================================
  * LocationMetadataController.java - Oct 19, 2014 5:08:40 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -52,7 +52,7 @@ import net.solarnetwork.domain.Result;
 
 /**
  * Controller for location metadata actions.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -66,7 +66,7 @@ public class LocationMetadataController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumMetadataBiz
 	 *        the DatumMetadataBiz to use
 	 */
@@ -83,7 +83,7 @@ public class LocationMetadataController {
 
 	/**
 	 * Query for metadata.
-	 * 
+	 *
 	 * @param query
 	 *        a general search query
 	 * @param criteria
@@ -134,7 +134,7 @@ public class LocationMetadataController {
 
 	/**
 	 * Find all metadata for a location ID.
-	 * 
+	 *
 	 * @param locationId
 	 *        the location ID
 	 * @param sourceId
@@ -157,7 +157,7 @@ public class LocationMetadataController {
 	@ResponseBody
 	@RequestMapping(value = "/{locationId}", method = RequestMethod.GET)
 	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadataForLocation(
-			@PathVariable("locationId") Long locationId,
+			@PathVariable Long locationId,
 			@RequestParam(name = "sourceId", required = false) String sourceId,
 			DatumFilterCommand criteria) {
 		return success(findForLocationAndSource(locationId, sourceId, criteria));
@@ -165,7 +165,7 @@ public class LocationMetadataController {
 
 	/**
 	 * Get metadata for a single location ID and source ID combination.
-	 * 
+	 *
 	 * @param locationId
 	 *        the location ID
 	 * @param sourceId
@@ -194,8 +194,7 @@ public class LocationMetadataController {
 	@ResponseBody
 	@RequestMapping(value = { "/{locationId}/{sourceId}" }, method = RequestMethod.GET)
 	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadata(
-			@PathVariable("locationId") Long locationId, @PathVariable("sourceId") String sourceId,
-			DatumFilterCommand criteria) {
+			@PathVariable Long locationId, @PathVariable String sourceId, DatumFilterCommand criteria) {
 		return success(findForLocationAndSource(locationId, sourceId, criteria));
 	}
 

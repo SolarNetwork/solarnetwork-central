@@ -137,7 +137,7 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/node/{nodeId}/sources", method = RequestMethod.GET)
 	@ResponseBody
-	public Result<List<String>> availableSourcesForNode(@PathVariable("nodeId") Long nodeId,
+	public Result<List<String>> availableSourcesForNode(@PathVariable Long nodeId,
 			@RequestParam(value = "start", required = false) Instant start,
 			@RequestParam(value = "end", required = false) Instant end) {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -162,8 +162,7 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/node/{nodeId}/situations", method = RequestMethod.GET)
 	@ResponseBody
-	public Result<List<UserAlert>> activeSituationsNode(@PathVariable("nodeId") Long nodeId,
-			Locale locale) {
+	public Result<List<UserAlert>> activeSituationsNode(@PathVariable Long nodeId, Locale locale) {
 		List<UserAlert> results = userAlertBiz.alertSituationsForNode(nodeId);
 		for ( UserAlert alert : results ) {
 			populateUsefulAlertOptions(alert, locale);
@@ -335,7 +334,7 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/situation/{alertId}", method = RequestMethod.GET)
 	@ResponseBody
-	public Result<UserAlert> viewSituation(@PathVariable("alertId") Long alertId, Locale locale) {
+	public Result<UserAlert> viewSituation(@PathVariable Long alertId, Locale locale) {
 		UserAlert alert = userAlertBiz.alertSituation(alertId);
 		populateUsefulAlertOptions(alert, locale);
 		return success(alert);
@@ -354,7 +353,7 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/situation/{alertId}/resolve", method = RequestMethod.POST)
 	@ResponseBody
-	public Result<UserAlert> resolveSituation(@PathVariable("alertId") Long alertId,
+	public Result<UserAlert> resolveSituation(@PathVariable Long alertId,
 			@RequestParam("status") UserAlertSituationStatus status, Locale locale) {
 		UserAlert alert = userAlertBiz.updateSituationStatus(alertId, status);
 		populateUsefulAlertOptions(alert, locale);
@@ -370,7 +369,7 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/{alertId}", method = RequestMethod.DELETE)
 	@ResponseBody
-	public Result<Object> deleteAlert(@PathVariable("alertId") Long alertId) {
+	public Result<Object> deleteAlert(@PathVariable Long alertId) {
 		userAlertBiz.deleteAlert(alertId);
 		return success();
 	}

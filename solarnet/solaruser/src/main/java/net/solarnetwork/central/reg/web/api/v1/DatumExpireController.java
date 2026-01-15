@@ -130,7 +130,7 @@ public class DatumExpireController {
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/data/{id}", method = RequestMethod.DELETE)
-	public Result<Void> deleteDataConfiguration(@PathVariable("id") Long id) {
+	public Result<Void> deleteDataConfiguration(@PathVariable Long id) {
 		if ( expireBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			ExpireUserDataConfiguration config = expireBiz.configurationForUser(userId,
@@ -144,7 +144,7 @@ public class DatumExpireController {
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/data/{id}/preview", method = RequestMethod.GET)
-	public Result<DatumRecordCounts> previewDataConfiguration(@PathVariable("id") Long id) {
+	public Result<DatumRecordCounts> previewDataConfiguration(@PathVariable Long id) {
 		DatumRecordCounts counts = null;
 		if ( expireBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
@@ -201,7 +201,7 @@ public class DatumExpireController {
 
 	@ResponseBody
 	@RequestMapping(value = "/datum-delete/jobs/{id}", method = RequestMethod.GET)
-	public Result<DatumDeleteJobInfo> jobStatus(@PathVariable("id") String id) {
+	public Result<DatumDeleteJobInfo> jobStatus(@PathVariable String id) {
 		DatumDeleteJobInfo result = null;
 		if ( datumDeleteBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
