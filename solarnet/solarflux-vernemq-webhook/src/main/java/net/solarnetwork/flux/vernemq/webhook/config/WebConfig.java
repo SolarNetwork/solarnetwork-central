@@ -15,7 +15,7 @@
  * ========================================================================
  */
 
-package net.solarnetwork.flux.vernemq.webhook.web.config;
+package net.solarnetwork.flux.vernemq.webhook.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

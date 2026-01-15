@@ -18,7 +18,6 @@
 package net.solarnetwork.flux.vernemq.webhook;
 
 import java.util.Arrays;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -26,17 +25,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-
 import net.solarnetwork.flux.vernemq.webhook.config.ServerConfiguration;
-import net.solarnetwork.flux.vernemq.webhook.web.config.WebConfig;
 
 /**
  * Main entry point for the SolarFlux VerneMQ webhook server.
  *
  * @author matt
  */
-@SpringBootApplication(
-		scanBasePackageClasses = { Server.class, ServerConfiguration.class, WebConfig.class })
+@SpringBootApplication(scanBasePackageClasses = { Server.class, ServerConfiguration.class })
 public class Server {
 
 	private static final Logger LOG = LoggerFactory.getLogger(Server.class);
