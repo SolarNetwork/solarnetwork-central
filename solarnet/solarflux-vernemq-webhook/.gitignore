@@ -2,6 +2,7 @@
 /build/
 /logs/
 /var/
+/*.args
 /*.xml
 /*.yml
 /*.log

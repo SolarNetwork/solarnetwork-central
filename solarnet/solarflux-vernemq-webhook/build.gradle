@@ -79,9 +79,35 @@ bootJar {
 }
 
 graalvmNative {
-	binaries.all {
-		buildArgs.add('--enable-native-access=ALL-UNNAMED')
-		buildArgs.add('-O3')
+	binaries.main {
+		def allArgs = []
+
+		// NATIVE_BUILD_ARGS=a,b,c ../gradlew nativeCompile
+        providers.environmentVariable("NATIVE_BUILD_ARGS")
+            .orNull?.split(",")?.each { allArgs << it }
+
+		// pass -PnativeBuildArgs=a,b,c
+        providers.gradleProperty("nativeBuildArgs")
+            .orNull?.split(",")?.each { allArgs << it }
+
+		// pass -PnativeBuildArgsFile=dev.args, or default to native-build.args
+		def argsFile = providers.gradleProperty("nativeBuildArgsFile")
+                .map { file(it) }
+                .orElse(file("native-build.args"))
+                .get()
+        
+        if (argsFile.exists()) {
+            allArgs.addAll(
+                argsFile.readLines()
+                    .findAll { it && !it.startsWith("#") }
+            )
+        }
+
+		if (allArgs.isEmpty()) {
+			buildArgs.addAll(['--enable-native-access=ALL-UNNAMED', '-O3', '-R:MaxHeapSize=128m', '-R:MinHeapSize=128m'])
+		} else {
+	        buildArgs.addAll(allArgs)
+	    }
 	}
 	
 	binaries.main {
