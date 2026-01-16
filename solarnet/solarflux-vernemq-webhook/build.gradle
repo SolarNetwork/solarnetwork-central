@@ -24,7 +24,6 @@ dependencies {
 
 	// DB
 	runtimeOnly 'org.postgresql:postgresql'
-	implementation 'org.apache.tomcat:tomcat-jdbc'
 		
 	// JCache
 	implementation 'javax.cache:cache-api'
@@ -46,7 +45,6 @@ dependencies {
 
 configurations.configureEach {
 	exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-joda'
-	exclude group: 'com.zaxxer', module: 'HikariCP'
 	exclude group: 'io.netty'
 	exclude group: 'net.solarnetwork.common', module: 'net.solarnetwork.common.mqtt'
 	exclude group: 'net.solarnetwork.common', module: 'net.solarnetwork.common.pki.bc'
@@ -84,5 +82,5 @@ graalvmNative {
 }
 
 tasks.withType(org.springframework.boot.gradle.tasks.aot.ProcessAot).configureEach {
-    args('--spring.profiles.active=production')
+    args('--spring.profiles.active=production,audit-datasource')
 }

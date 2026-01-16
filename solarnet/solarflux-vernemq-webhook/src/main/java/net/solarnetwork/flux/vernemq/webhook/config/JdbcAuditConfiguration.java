@@ -17,39 +17,36 @@
 
 package net.solarnetwork.flux.vernemq.webhook.config;
 
-import javax.sql.DataSource;
-
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import com.zaxxer.hikari.HikariDataSource;
 
 /**
  * Conditional data source configuration for auditing.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
-@Configuration
-@ConditionalOnProperty(value = "app.datasource.audit.url", matchIfMissing = false)
+@Configuration(proxyBeanMethods = false)
+@Profile("audit-datasource")
 public class JdbcAuditConfiguration {
 
 	@Bean
 	@ConfigurationProperties(prefix = "app.datasource.audit")
+	@Qualifier("audit")
 	public DataSourceProperties auditDataSourceProperties() {
 		return new DataSourceProperties();
 	}
 
 	@Bean
-	@ConfigurationProperties("app.datasource.audit.tomcat")
+	@ConfigurationProperties("app.datasource.audit.hikari")
 	@Qualifier("audit")
-	public DataSource auditDataSource(
-			@Qualifier("auditDataSourceProperties") DataSourceProperties properties) {
-		DataSource dataSource = properties.initializeDataSourceBuilder()
-				.type(org.apache.tomcat.jdbc.pool.DataSource.class).build();
-		return dataSource;
+	public HikariDataSource auditDataSource(@Qualifier("audit") DataSourceProperties properties) {
+		return properties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
 	}
 
 }
