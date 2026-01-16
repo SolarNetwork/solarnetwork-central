@@ -63,11 +63,19 @@ configurations.configureEach {
 	exclude group: 'software.amazon.awssdk'
 }
 
+def commonManifest = {
+    attributes(
+        'Implementation-Title': 'SolarFlux VerneMQ Webhook Server',
+		'Implementation-Version': project.version
+    )
+}
+
+jar {
+	manifest commonManifest
+}
+
 bootJar {
-	manifest {
-		attributes 	'Implementation-Title': 'SolarFlux VerneMQ Webhook Server',
-					'Implementation-Version': archiveVersion
-	}
+	manifest commonManifest
 }
 
 graalvmNative {
