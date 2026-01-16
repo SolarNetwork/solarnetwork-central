@@ -68,7 +68,10 @@ public final class SubscribeRequestDeserializer extends StdDeserializer<Subscrib
 					p.nextToken();
 					builder.withTopics(TopicSettingsDeserializer.INSTANCE.deserialize(p, ctxt));
 				}
-				default -> p.nextValue();
+				default -> {
+					p.nextValue();
+					p.skipChildren();
+				}
 			}
 		}
 

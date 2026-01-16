@@ -1,0 +1,12 @@
+{
+    "username": "username",
+    "mountpoint": "",
+    "client_id": "client-id",
+    "qos": 1,
+    "topic": "some/topic",
+    "payload": "message payload",
+    "retain": false,
+    "properties": {
+		"foo": "bar"
+    }
+}

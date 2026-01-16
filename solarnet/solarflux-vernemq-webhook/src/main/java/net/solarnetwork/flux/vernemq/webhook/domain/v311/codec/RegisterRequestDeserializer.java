@@ -67,7 +67,10 @@ public final class RegisterRequestDeserializer extends StdDeserializer<RegisterR
 				case "peer_port" -> builder.withPeerPort(p.nextIntValue(0));
 				case "password" -> builder.withPassword(p.nextStringValue());
 				case "clean_session" -> builder.withCleanSession(p.nextBooleanValue());
-				default -> p.nextValue();
+				default -> {
+					p.nextValue();
+					p.skipChildren();
+				}
 			}
 		}
 

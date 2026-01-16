@@ -69,7 +69,10 @@ public final class PublishRequestDeserializer extends StdDeserializer<PublishReq
 				case "topic" -> builder.withTopic(p.nextStringValue());
 				case "payload" -> builder.withPayload(StringUtils.payloadBytes(p.nextStringValue()));
 				case "retain" -> builder.withRetain(p.nextBooleanValue());
-				default -> p.nextValue();
+				default -> {
+					p.nextValue();
+					p.skipChildren();
+				}
 			}
 		}
 

@@ -68,7 +68,10 @@ public final class TopicSubscriptionSettingDeserializer
 			switch (f) {
 				case "topic" -> builder.withTopic(p.nextStringValue());
 				case "qos" -> builder.withQos(Qos.forKey(p.nextIntValue(0)));
-				default -> p.nextValue();
+				default -> {
+					p.nextValue();
+					p.skipChildren();
+				}
 			}
 		}
 

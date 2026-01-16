@@ -66,7 +66,10 @@ public final class DeliverRequestDeserializer extends StdDeserializer<DeliverReq
 				case "username" -> builder.withUsername(p.nextStringValue());
 				case "topic" -> builder.withTopic(p.nextStringValue());
 				case "payload" -> builder.withPayload(StringUtils.payloadBytes(p.nextStringValue()));
-				default -> p.nextValue();
+				default -> {
+					p.nextValue();
+					p.skipChildren();
+				}
 			}
 		}
 
