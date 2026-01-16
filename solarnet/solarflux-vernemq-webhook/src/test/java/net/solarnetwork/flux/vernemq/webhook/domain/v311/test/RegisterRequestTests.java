@@ -59,8 +59,8 @@ public class RegisterRequestTests extends TestSupport {
 		// THEN
 		// @formatter:off
 		then(req)
-			.returns(false, from(RegisterRequest::getCleanSession))
-			.returns("clientid", from(RegisterRequest::getClientId))
+			.returns(true, from(RegisterRequest::getCleanSession))
+			.returns("client-id", from(RegisterRequest::getClientId))
 			.returns("", from(RegisterRequest::getMountpoint))
 			.returns("password", from(RegisterRequest::getPassword))
 			.returns("127.0.0.1", from(RegisterRequest::getPeerAddress))

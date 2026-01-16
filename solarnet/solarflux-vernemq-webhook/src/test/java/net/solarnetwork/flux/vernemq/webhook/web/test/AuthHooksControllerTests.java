@@ -22,16 +22,16 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.test.web.servlet.MockMvc;
-
+import net.solarnetwork.flux.vernemq.webhook.config.JsonConfig;
 import net.solarnetwork.flux.vernemq.webhook.domain.HookType;
 import net.solarnetwork.flux.vernemq.webhook.domain.Response;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.PublishRequest;
@@ -43,6 +43,7 @@ import net.solarnetwork.flux.vernemq.webhook.web.AuthHooksController;
 
 @SpringJUnitConfig
 @WebMvcTest(AuthHooksController.class)
+@Import(JsonConfig.class)
 public class AuthHooksControllerTests extends TestSupport {
 
 	private static final String OK_RESPONSE_JSON = "{\"result\":\"ok\"}";

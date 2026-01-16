@@ -1,5 +1,5 @@
 /* ==================================================================
- * ServiceConfiguration.java - 16/01/2026 3:10:45 pm
+ * ServiceConfig.java - 16/01/2026 3:10:45 pm
  * 
  * Copyright 2026 SolarNetwork.net Dev Team
  * 
@@ -43,7 +43,7 @@ import net.solarnetwork.flux.vernemq.webhook.service.impl.JdbcAuthService;
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-public class ServiceConfiguration {
+public class ServiceConfig {
 
 	@Value("${solarnetwork.api.host:data.solarnetwork.net}")
 	private String snHost = "data.solarnetwork.net";

@@ -81,7 +81,7 @@ public class ResponseTests extends TestSupport {
 	public void jsonOkWithModifiers() {
 		RegisterModifiers mods = RegisterModifiers.builder().withUpgradeQos(false).build();
 		Response r = new Response(mods);
-		String json = objectMapper.writeValueAsString(r);
+		String json = JSON_MAPPER.writeValueAsString(r);
 		log.debug("Ok with mods JSON: {}", json);
 
 	// @formatter:off
@@ -106,7 +106,7 @@ public class ResponseTests extends TestSupport {
 		TopicSettings topics = new TopicSettings(Arrays.asList(
 				TopicSubscriptionSetting.builder().withTopic("foo").withQos(Qos.AtLeastOnce).build()));
 		Response r = new Response(topics);
-		String json = objectMapper.writeValueAsString(r);
+		String json = JSON_MAPPER.writeValueAsString(r);
 		log.debug("Ok with topic settings JSON: {}", json);
 
 	// @formatter:off
@@ -136,7 +136,7 @@ public class ResponseTests extends TestSupport {
 	public void jsonOkWithTopicList() {
 		TopicList topics = new TopicList(Arrays.asList("foo", "bar"));
 		Response r = new Response(topics);
-		String json = objectMapper.writeValueAsString(r);
+		String json = JSON_MAPPER.writeValueAsString(r);
 		log.debug("Ok with topics list JSON: {}", json);
 
 	// @formatter:off

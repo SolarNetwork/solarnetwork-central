@@ -25,28 +25,8 @@ package net.solarnetwork.flux.vernemq.webhook.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import net.solarnetwork.flux.vernemq.webhook.domain.TopicList;
-import net.solarnetwork.flux.vernemq.webhook.domain.TopicSettings;
-import net.solarnetwork.flux.vernemq.webhook.domain.TopicSubscriptionSetting;
-import net.solarnetwork.flux.vernemq.webhook.domain.codec.ResponseSerializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicListDeserializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicListSerializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSettingsDeserializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSubscriptionSettingDeserializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSubscriptionSettingSerializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.DeliverRequest;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.PublishRequest;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.RegisterRequest;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.SubscribeRequest;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.DeliverRequestDeserializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.PublishModifiersSerializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.PublishRequestDeserializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.RegisterModifiersSerializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.RegisterRequestDeserializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.SubscribeRequestDeserializer;
+import net.solarnetwork.flux.vernemq.webhook.support.JsonUtils;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.module.SimpleModule;
 
 /**
  * JSON configuration.
@@ -65,28 +45,7 @@ public class JsonConfig {
 	@Primary
 	@Bean
 	public JsonMapper jsonMapper() {
-		SimpleModule m = new SimpleModule("SolarFlux");
-		m.addSerializer(new ResponseSerializer());
-		m.addSerializer(new TopicListSerializer());
-		m.addSerializer(new TopicListSerializer());
-		m.addSerializer(new TopicSubscriptionSettingSerializer());
-		m.addSerializer(new PublishModifiersSerializer());
-		m.addSerializer(new RegisterModifiersSerializer());
-
-		m.addDeserializer(TopicList.class, new TopicListDeserializer());
-		m.addDeserializer(TopicSettings.class, TopicSettingsDeserializer.INSTANCE);
-		m.addDeserializer(TopicSubscriptionSetting.class, TopicSubscriptionSettingDeserializer.INSTANCE);
-		m.addDeserializer(DeliverRequest.class, new DeliverRequestDeserializer());
-		m.addDeserializer(PublishRequest.class, new PublishRequestDeserializer());
-		m.addDeserializer(RegisterRequest.class, new RegisterRequestDeserializer());
-		m.addDeserializer(SubscribeRequest.class, new SubscribeRequestDeserializer());
-
-		return JsonMapper.builder()
-				.changeDefaultPropertyInclusion(
-						incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
-				.changeDefaultPropertyInclusion(
-						incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
-				.addModule(m).build();
+		return JsonUtils.JSON_MAPPER;
 	}
 
 }

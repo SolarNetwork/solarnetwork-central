@@ -30,6 +30,7 @@ import net.solarnetwork.flux.vernemq.webhook.domain.codec.ResponseSerializer;
 import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicListDeserializer;
 import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicListSerializer;
 import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSettingsDeserializer;
+import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSettingsSerializer;
 import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSubscriptionSettingDeserializer;
 import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSubscriptionSettingSerializer;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.DeliverRequest;
@@ -65,7 +66,7 @@ public final class JsonUtils {
 		SimpleModule m = new SimpleModule("SolarFlux");
 		m.addSerializer(new ResponseSerializer());
 		m.addSerializer(new TopicListSerializer());
-		m.addSerializer(new TopicListSerializer());
+		m.addSerializer(new TopicSettingsSerializer());
 		m.addSerializer(new TopicSubscriptionSettingSerializer());
 		m.addSerializer(new PublishModifiersSerializer());
 		m.addSerializer(new RegisterModifiersSerializer());

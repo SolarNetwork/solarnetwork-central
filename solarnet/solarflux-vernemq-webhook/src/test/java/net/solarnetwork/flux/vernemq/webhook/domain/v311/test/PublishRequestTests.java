@@ -61,12 +61,12 @@ public class PublishRequestTests extends TestSupport {
 		// THEN
 		// @formatter:off
 		then(req)
-			.returns("clientid", from(PublishRequest::getClientId))
+			.returns("client-id", from(PublishRequest::getClientId))
 			.returns("", from(PublishRequest::getMountpoint))
-			.returns("hello".getBytes(UTF_8), from(PublishRequest::getPayload))
+			.returns("message payload".getBytes(UTF_8), from(PublishRequest::getPayload))
 			.returns(Qos.AtLeastOnce, from(PublishRequest::getQos))
 			.returns(false, from(PublishRequest::getRetain))
-			.returns("a/b", from(PublishRequest::getTopic))
+			.returns("some/topic", from(PublishRequest::getTopic))
 			.returns("username", from(PublishRequest::getUsername))
 			;
 		// @formatter:on
