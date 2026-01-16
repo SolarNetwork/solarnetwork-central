@@ -76,11 +76,13 @@ graalvmNative {
 	binaries.all {
 		buildArgs.add('--enable-native-access=ALL-UNNAMED')
 		buildArgs.add('-O3')
-		
-		systemProperties = ['spring.profiles.active': 'production']
 	}
 	
 	binaries.main {
 		imageName = 'solarflux-webhook'
 	}
+}
+
+tasks.withType(org.springframework.boot.gradle.tasks.aot.ProcessAot).configureEach {
+    args('--spring.profiles.active=production')
 }
