@@ -127,23 +127,46 @@ Gradle is used for building. Run the `build` task via `gradlew`:
 
 	$ ../gradlew build -x test
 
-The finished WAR file will be `build/libs/solarflux-vernemq-webook-X.war` where `X` is the
+The finished JAR file will be `build/libs/solarflux-vernemq-webook-X.jar` where `X` is the
 version number.
 
+## Native image
 
-# Running in Servlet Container
+A native image can be built if GraalVM 25+ is installed. The JVM location can be specified
+on the `GRAALVM_HOME` environment variable. Run the `nativeCompile` task to build the app:
 
-If the WAR is deployed into a servlet container (e.g. Tomcat) then a servlet
-context path of `/solarflux-vernemq-webhook` is used by default. Assuming the container is
-listening on port **8080**, to access the app from a browser you would visit
-http://localhost:8080/solarflux-vernemq-webhook/.
+```sh
+export GRAALVM_HOME=/opt/graalvm@25
+../gradlew nativeCompile
+```
+
+### Native image build arguments
+
+You can provide Graal [build arguments](https://www.graalvm.org/latest/reference-manual/native-image/overview/Options/)
+as a comma-delimited list on a `NATIVE_BUILD_ARGS` environment variable or a `-PnativeBuildArgs` command line argument.
+You can also save the build arguments to a file (one argument per line) and include that with a `-PnativeBuildArgsFile`
+command line argument. By default an argument file named `native-build.args` is supported.
+
+For example:
+
+```sh
+# with environment variable
+export NATIVE_BUILD_ARGS=--enable-native-access=ALL-UNNAMED,-Ob
+../gradlew nativeCompile
+
+# with command line arg
+../gradlew nativeCompile -PnativeBuildArgs=--enable-native-access=ALL-UNNAMED,-Ob
+
+# with argument file
+../gradlew nativeCompile -PnativeBuildArgsFile=my-native-build.args
+```
 
 
-# Running Standalone
+# Running
 
-The WAR file can be directly executed like this:
+The JAR file can be directly executed like this:
 
-	$ java -Dspring.profiles.active=development -jar build/libs/solarflux-vernemq-webhook-0.1.war
+	$ java -Dspring.profiles.active=development -jar build/libs/solarflux-vernemq-webhook-0.1.jar
 	
 This will start the web server on port **8080** by default. You can verify the
 app has started up using a browser, or from the command line like this:
@@ -155,7 +178,7 @@ in a container by passing a `server.contextPath` parameter, or change the port
 via a `server.port` parameter, like this:
 
 	$ java -Dserver.contextPath=/solarflux-vernemq-webhook -Dserver.port=8888 \
-	-Dspring.profiles.active=development -jar build/libs/solarflux-vernemq-webhook-0.1.war
+	-Dspring.profiles.active=development -jar build/libs/solarflux-vernemq-webhook-0.1.jar
 
 
 # Tweaking Environment Properties
@@ -195,38 +218,6 @@ The following properties all start with a `spring.datasource.` prefix.
 | `password` | `solarauth` | The JDBC password to use. |
 
 
-# Eclipse setup
-
-The project is configured as an [Eclipse IDE][eclipse] project, and can
-be run as a normal web project using a Tomcat server configuration. The 
-project has the following requirements:
-
- * [Eclipse JEE IDE][eclipse], version Photon or later.
- * The [Buildship][buildship] plugin, version 2.2 or later.
- * The [Checkstyle][checkstyle-eclipse] plugin, version 8.12 or later.
- * [Tomcat][tomcat], version 8.5 or later.
-
-The plugins can be found via the Eclipse Marketplace 
-(**Help > Eclipse Marketplace...**). You can install Tomcat anywhere,
-and then configure it under **Preferences > Server > Runtime Environments**.
-
-When launching Tomcat from within Eclipse, you must update the launch 
-configuration so the desired profile is set. Additionally it helps to define
-the working directory for Tomcat to be the root of the project. Both settings
-are controlled on the Tomcat launch configuration's **Arguments** tab. Add
-the following to the **VM arguments** field:
-
-	-Dspring.profiles.active=development
-	
-Then change the **Working directory** field to **Other** and enter
-
-	${workspace_loc:solarflux-vernemq-webhook}
-
-
-[buildship]: https://projects.eclipse.org/projects/tools.buildship
-[checkstyle-eclipse]: http://eclipse-cs.sourceforge.net
-[eclipse]: https://www.eclipse.org/downloads/packages/eclipse-ide-java-ee-developers/neon3
 [sn-auth-v2]: https://github.com/SolarNetwork/solarnetwork/wiki/SolarNet-API-authentication-scheme-V2
 [solarflux-upload]: https://github.com/SolarNetwork/solarnetwork-node/tree/develop/net.solarnetwork.node.upload.flux
-[tomcat]: https://tomcat.apache.org/download-80.cgi
 [vernemq]: https://vernemq.con
