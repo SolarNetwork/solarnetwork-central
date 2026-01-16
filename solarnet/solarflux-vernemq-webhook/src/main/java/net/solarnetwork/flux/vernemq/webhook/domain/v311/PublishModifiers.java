@@ -21,8 +21,6 @@ import java.util.Arrays;
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.ResponseModifiers;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.PublishModifiersSerializer;
-import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
  * Publish response modifiers.
@@ -30,7 +28,6 @@ import tools.jackson.databind.annotation.JsonSerialize;
  * @author matt
  * @version 2.1
  */
-@JsonSerialize(using = PublishModifiersSerializer.class)
 public class PublishModifiers implements ResponseModifiers, Message {
 
 	private final String topic;

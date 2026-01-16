@@ -18,8 +18,6 @@
 package net.solarnetwork.flux.vernemq.webhook.domain.v311;
 
 import net.solarnetwork.flux.vernemq.webhook.domain.AuthRequest;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.RegisterRequestDeserializer;
-import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * A register or auth-register request model.
@@ -27,7 +25,6 @@ import tools.jackson.databind.annotation.JsonDeserialize;
  * @author matt
  * @version 2.1
  */
-@JsonDeserialize(using = RegisterRequestDeserializer.class)
 public class RegisterRequest implements AuthRequest {
 
 	private final String clientId;

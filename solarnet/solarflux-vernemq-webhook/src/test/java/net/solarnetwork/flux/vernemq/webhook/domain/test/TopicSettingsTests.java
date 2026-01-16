@@ -19,22 +19,17 @@ package net.solarnetwork.flux.vernemq.webhook.domain.test;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
+import static net.solarnetwork.flux.vernemq.webhook.support.JsonUtils.JSON_MAPPER;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
-
 import java.io.IOException;
 import java.util.Arrays;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSettings;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSubscriptionSetting;
-import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link TopicSettings} class.
@@ -43,19 +38,12 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class TopicSettingsTests extends TestSupport {
 
-	private ObjectMapper objectMapper;
-
-	@BeforeEach
-	public void setup() {
-		objectMapper = JsonUtils.defaultObjectMapper();
-	}
-
 	@Test
 	public void toJsonFull() {
 		TopicSettings settings = new TopicSettings(Arrays.asList(
 				TopicSubscriptionSetting.builder().withTopic("foo").withQos(Qos.AtLeastOnce).build(),
 				TopicSubscriptionSetting.builder().withTopic("bar").withQos(Qos.ExactlyOnce).build()));
-		String json = objectMapper.writeValueAsString(settings);
+		String json = JSON_MAPPER.writeValueAsString(settings);
 		log.debug("Topic settings full JSON: {}", json);
 
 	// @formatter:off
@@ -79,7 +67,7 @@ public class TopicSettingsTests extends TestSupport {
 	public void fromJson() throws IOException {
 		String json = "[{\"topic\":\"bim\",\"qos\":0},{\"topic\":\"bam\",\"qos\":1}]";
 
-		TopicSettings s = objectMapper.readValue(json, TopicSettings.class);
+		TopicSettings s = JSON_MAPPER.readValue(json, TopicSettings.class);
 	// @formatter:off
     then(s)
         .as("Settings array parsed")

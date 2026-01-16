@@ -19,8 +19,6 @@ package net.solarnetwork.flux.vernemq.webhook.domain;
 
 import java.util.Collections;
 import java.util.Map;
-import net.solarnetwork.flux.vernemq.webhook.domain.codec.ResponseSerializer;
-import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
  * A webhook response object.
@@ -28,7 +26,6 @@ import tools.jackson.databind.annotation.JsonSerialize;
  * @author matt
  * @version 1.1
  */
-@JsonSerialize(using = ResponseSerializer.class)
 public class Response {
 
 	/**

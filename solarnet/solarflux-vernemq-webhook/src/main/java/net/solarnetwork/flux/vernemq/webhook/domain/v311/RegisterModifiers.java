@@ -18,15 +18,12 @@
 package net.solarnetwork.flux.vernemq.webhook.domain.v311;
 
 import net.solarnetwork.flux.vernemq.webhook.domain.ResponseModifiers;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.RegisterModifiersSerializer;
-import tools.jackson.databind.annotation.JsonSerialize;
 
 /**
  * Registration response modifiers.
  * 
  * @author matt
  */
-@JsonSerialize(using = RegisterModifiersSerializer.class)
 public class RegisterModifiers implements ResponseModifiers {
 
 	private final String subscriberId;

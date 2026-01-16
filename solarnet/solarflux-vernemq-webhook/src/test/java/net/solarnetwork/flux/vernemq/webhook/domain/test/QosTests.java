@@ -17,20 +17,15 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.test;
 
+import static net.solarnetwork.flux.vernemq.webhook.support.JsonUtils.JSON_MAPPER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import java.io.IOException;
-
 import org.json.JSONException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
-import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link Qos} enum.
@@ -39,17 +34,10 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class QosTests {
 
-	private ObjectMapper objectMapper;
-
-	@BeforeEach
-	public void setup() {
-		objectMapper = JsonUtils.defaultObjectMapper();
-	}
-
 	@Test
 	public void toJson() throws JSONException {
 		for ( Qos qos : Qos.values() ) {
-			String json = objectMapper.writeValueAsString(qos);
+			String json = JSON_MAPPER.writeValueAsString(qos);
 
 			JSONAssert.assertEquals("Qos " + qos, String.valueOf(qos.getKey()), json, true);
 		}
@@ -60,7 +48,7 @@ public class QosTests {
 		for ( Qos qos : Qos.values() ) {
 			String json = String.valueOf(qos.getKey());
 
-			Qos q = objectMapper.readValue(json, Qos.class);
+			Qos q = JSON_MAPPER.readValue(json, Qos.class);
 			assertThat("Qos " + qos, q, equalTo(qos));
 		}
 	}

@@ -17,19 +17,12 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain;
 
-import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSubscriptionSettingDeserializer;
-import net.solarnetwork.flux.vernemq.webhook.domain.codec.TopicSubscriptionSettingSerializer;
-import tools.jackson.databind.annotation.JsonDeserialize;
-import tools.jackson.databind.annotation.JsonSerialize;
-
 /**
  * A topic subscription setting.
  *
  * @author matt
  * @version 2.1
  */
-@JsonDeserialize(using = TopicSubscriptionSettingDeserializer.class)
-@JsonSerialize(using = TopicSubscriptionSettingSerializer.class)
 public class TopicSubscriptionSetting {
 
 	private final String topic;

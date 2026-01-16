@@ -17,14 +17,11 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.v311.test;
 
+import static net.solarnetwork.flux.vernemq.webhook.support.JsonUtils.JSON_MAPPER;
 import org.json.JSONException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.RegisterModifiers;
-import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link RegisterModifiers} class.
@@ -33,13 +30,6 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class RegisterModifiersTests {
 
-	private ObjectMapper objectMapper;
-
-	@BeforeEach
-	public void setup() {
-		objectMapper = JsonUtils.defaultObjectMapper();
-	}
-
 	@Test
 	public void jsonFull() throws JSONException {
 		RegisterModifiers mods = RegisterModifiers.builder().withCleanSession(true)
@@ -47,7 +37,7 @@ public class RegisterModifiersTests {
 				.withRegView("foo").withRetryInterval(4L).withSubscriberId("bar").withUpgradeQos(true)
 				.build();
 
-		String json = objectMapper.writeValueAsString(mods);
+		String json = JSON_MAPPER.writeValueAsString(mods);
 		JSONAssert.assertEquals(
 				"""
 						{
@@ -71,7 +61,7 @@ public class RegisterModifiersTests {
 		RegisterModifiers mods = RegisterModifiers.builder().withMaxMessageSize(1)
 				.withMaxInflightMessages(2).withRetryInterval(3L).build();
 
-		String json = objectMapper.writeValueAsString(mods);
+		String json = JSON_MAPPER.writeValueAsString(mods);
 		JSONAssert.assertEquals("""
 				{
 				  "max_message_size": %d,

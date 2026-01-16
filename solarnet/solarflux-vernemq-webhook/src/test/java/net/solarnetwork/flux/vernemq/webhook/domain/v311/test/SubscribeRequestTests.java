@@ -17,21 +17,16 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.v311.test;
 
+import static net.solarnetwork.flux.vernemq.webhook.support.JsonUtils.JSON_MAPPER;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
-
 import java.io.IOException;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSubscriptionSetting;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.SubscribeRequest;
-import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link SubscribeRequest} class.
@@ -40,17 +35,10 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class SubscribeRequestTests extends TestSupport {
 
-	private ObjectMapper objectMapper;
-
-	@BeforeEach
-	public void setup() {
-		objectMapper = JsonUtils.defaultObjectMapper();
-	}
-
 	@Test
 	public void parseFull() throws IOException {
 		// WHEN
-		SubscribeRequest req = objectMapper.readValue(classResourceAsBytes("auth_on_subscribe-01.json"),
+		SubscribeRequest req = JSON_MAPPER.readValue(classResourceAsBytes("auth_on_subscribe-01.json"),
 				SubscribeRequest.class);
 
 		// THEN

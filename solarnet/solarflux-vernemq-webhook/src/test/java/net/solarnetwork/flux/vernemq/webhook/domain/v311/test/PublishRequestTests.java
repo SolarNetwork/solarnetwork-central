@@ -18,16 +18,14 @@
 package net.solarnetwork.flux.vernemq.webhook.domain.v311.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.solarnetwork.flux.vernemq.webhook.support.JsonUtils.JSON_MAPPER;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.io.IOException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.PublishRequest;
-import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link PublishRequest} class.
@@ -36,16 +34,9 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class PublishRequestTests extends TestSupport {
 
-	private ObjectMapper objectMapper;
-
-	@BeforeEach
-	public void setup() {
-		objectMapper = JsonUtils.defaultObjectMapper();
-	}
-
 	@Test
 	public void parseFull() throws IOException {
-		PublishRequest req = objectMapper.readValue(classResourceAsBytes("auth_on_publish-01.json"),
+		PublishRequest req = JSON_MAPPER.readValue(classResourceAsBytes("auth_on_publish-01.json"),
 				PublishRequest.class);
 
 		// THEN
@@ -64,7 +55,7 @@ public class PublishRequestTests extends TestSupport {
 
 	@Test
 	public void parseFull_v5() throws IOException {
-		PublishRequest req = objectMapper.readValue(classResourceAsBytes("auth_on_publish-v5-01.json"),
+		PublishRequest req = JSON_MAPPER.readValue(classResourceAsBytes("auth_on_publish-v5-01.json"),
 				PublishRequest.class);
 
 		// THEN

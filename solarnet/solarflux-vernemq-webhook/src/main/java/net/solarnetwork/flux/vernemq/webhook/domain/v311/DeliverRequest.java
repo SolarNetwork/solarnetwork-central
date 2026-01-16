@@ -19,8 +19,6 @@ package net.solarnetwork.flux.vernemq.webhook.domain.v311;
 
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.DeliverRequestDeserializer;
-import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * A deliver request model.
@@ -28,7 +26,6 @@ import tools.jackson.databind.annotation.JsonDeserialize;
  * @author matt
  * @version 2.1
  */
-@JsonDeserialize(using = DeliverRequestDeserializer.class)
 public class DeliverRequest implements Message {
 
 	private final String clientId;

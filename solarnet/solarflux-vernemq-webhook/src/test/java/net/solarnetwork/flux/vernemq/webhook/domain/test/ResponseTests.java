@@ -18,22 +18,17 @@
 package net.solarnetwork.flux.vernemq.webhook.domain.test;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
+import static net.solarnetwork.flux.vernemq.webhook.support.JsonUtils.JSON_MAPPER;
 import static org.assertj.core.api.BDDAssertions.then;
-
 import java.util.Arrays;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.Response;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicList;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSettings;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSubscriptionSetting;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.RegisterModifiers;
-import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link Response} class.
@@ -42,17 +37,10 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class ResponseTests extends TestSupport {
 
-	private ObjectMapper objectMapper;
-
-	@BeforeEach
-	public void setup() {
-		objectMapper = JsonUtils.defaultObjectMapper();
-	}
-
 	@Test
 	public void jsonOkSimple() {
 		Response r = new Response();
-		String json = objectMapper.writeValueAsString(r);
+		String json = JSON_MAPPER.writeValueAsString(r);
 		log.debug("OK simple JSON: {}", json);
 
 	// @formatter:off
@@ -70,7 +58,7 @@ public class ResponseTests extends TestSupport {
 	@Test
 	public void jsonErrorSimple() {
 		Response r = new Response("fail");
-		String json = objectMapper.writeValueAsString(r);
+		String json = JSON_MAPPER.writeValueAsString(r);
 		log.debug("Error simple JSON: {}", json);
 
 	// @formatter:off

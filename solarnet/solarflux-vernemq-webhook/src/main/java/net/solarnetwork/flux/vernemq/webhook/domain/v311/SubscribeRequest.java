@@ -19,8 +19,6 @@ package net.solarnetwork.flux.vernemq.webhook.domain.v311;
 
 import net.solarnetwork.flux.vernemq.webhook.domain.AuthRequest;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSettings;
-import net.solarnetwork.flux.vernemq.webhook.domain.v311.codec.SubscribeRequestDeserializer;
-import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * A subscribe or auth-subscribe request model.
@@ -28,7 +26,6 @@ import tools.jackson.databind.annotation.JsonDeserialize;
  * @author matt
  * @version 2.1
  */
-@JsonDeserialize(using = SubscribeRequestDeserializer.class)
 public class SubscribeRequest implements AuthRequest {
 
 	private final String clientId;
