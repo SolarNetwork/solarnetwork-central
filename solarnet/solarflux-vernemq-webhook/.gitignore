@@ -2,6 +2,7 @@
 /build/
 /logs/
 /var/
+/*.xml
 /*.yml
 /*.log
 /.gradle/
