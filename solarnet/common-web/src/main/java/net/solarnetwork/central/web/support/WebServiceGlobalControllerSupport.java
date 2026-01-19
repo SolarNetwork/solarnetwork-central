@@ -44,6 +44,7 @@ import org.springframework.dao.TransientDataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConversionException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
@@ -70,7 +71,7 @@ import net.solarnetwork.util.NumberUtils;
  * Global REST controller support.
  *
  * @author matt
- * @version 1.11
+ * @version 1.12
  */
 @RestControllerAdvice
 @Order(1000)
@@ -495,6 +496,40 @@ public class WebServiceGlobalControllerSupport {
 		log.error("HttpMessageConversionException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		return error("WEB.00200", e.getMessage());
+	}
+
+	/**
+	 * Handle a {@link HttpMessageNotWritableException}.
+	 *
+	 * <p>
+	 * This exception implies a response cannot be written, so just log a
+	 * message.
+	 * </p>
+	 *
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @since 1.12
+	 */
+	@ExceptionHandler(HttpMessageNotWritableException.class)
+	public void handleHttpMessageNotWritableException(HttpMessageNotWritableException e,
+			WebRequest request) {
+		Throwable cause = e;
+		while ( cause.getCause() != null ) {
+			cause = cause.getCause();
+			if ( "org.apache.catalina.connector.ClientAbortException"
+					.equals(cause.getClass().getName()) ) {
+				log.debug("ClientAbortException in request {}", requestDescription(request), e);
+				return;
+			} else if ( cause instanceof IOException ) {
+				log.debug("IOException in request {}", requestDescription(request), e);
+				return;
+			}
+		}
+
+		log.warn("HttpMessageNotWritableException in request {}; user [{}]", requestDescription(request),
+				userPrincipalName(request), e);
 	}
 
 	/**
