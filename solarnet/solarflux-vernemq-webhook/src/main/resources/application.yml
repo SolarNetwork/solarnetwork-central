@@ -59,7 +59,6 @@ logging:
 ---
 spring:
   config.activate.on-profile: production
-  datasource:
 
 debugMode: false
 
