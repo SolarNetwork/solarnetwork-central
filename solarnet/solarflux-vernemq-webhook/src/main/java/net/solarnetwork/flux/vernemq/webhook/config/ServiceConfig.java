@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import net.solarnetwork.flux.vernemq.webhook.domain.Actor;
+import net.solarnetwork.flux.vernemq.webhook.service.AuditService;
 import net.solarnetwork.flux.vernemq.webhook.service.AuthService;
 import net.solarnetwork.flux.vernemq.webhook.service.AuthorizationEvaluator;
 import net.solarnetwork.flux.vernemq.webhook.service.impl.JdbcAuditService;
@@ -86,9 +87,9 @@ public class ServiceConfig {
 	 * @return the service
 	 */
 	@Bean
-	public JdbcAuthService authService() {
+	public JdbcAuthService authService(final AuditService auditService) {
 		JdbcAuthService service = new JdbcAuthService(new JdbcTemplate(dataSource),
-				authorizationEvaluator, auditService());
+				authorizationEvaluator, auditService);
 		service.setSnHost(snHost);
 		service.setSnPath(snPath);
 		service.setMaxDateSkew(authMaxDateSkew);
