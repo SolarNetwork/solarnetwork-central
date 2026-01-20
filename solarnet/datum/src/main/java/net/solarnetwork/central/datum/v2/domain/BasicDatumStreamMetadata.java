@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.UUID;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
@@ -33,7 +34,7 @@ import net.solarnetwork.domain.datum.DatumStreamMetadata;
  * Implementation of {@link DatumStreamMetadata}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 2.8
  */
 public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializable {
@@ -110,6 +111,31 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 			Object accumulatingProperties, Object statusProperties) {
 		this(streamId, timeZoneId, (String[]) instantaneousProperties, (String[]) accumulatingProperties,
 				(String[]) statusProperties);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(streamId);
+	}
+
+	/**
+	 * Compare for equality.
+	 *
+	 * <p>
+	 * Only the {@code streamId} is considered.
+	 * </p>
+	 *
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !(obj instanceof BasicDatumStreamMetadata other) ) {
+			return false;
+		}
+		return Objects.equals(streamId, other.streamId);
 	}
 
 	@Override

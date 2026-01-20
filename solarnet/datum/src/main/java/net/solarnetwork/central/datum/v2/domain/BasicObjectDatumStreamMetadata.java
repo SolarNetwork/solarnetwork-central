@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.UUID;
 import net.solarnetwork.central.domain.ObjectDatumIdRelated;
 import net.solarnetwork.domain.BasicLocation;
@@ -36,7 +37,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Basic implementation of {@link ObjectDatumStreamMetadata}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
@@ -188,6 +189,37 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 		this.sourceId = requireNonNullArgument(sourceId, "sourceId");
 		this.location = BasicLocation.locationValue(location);
 		this.metaJson = metaJson;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(kind);
+		return result;
+	}
+
+	/**
+	 * Compare for equality.
+	 *
+	 * <p>
+	 * Only the {@code kind} and {@code streamId} are considered.
+	 * </p>
+	 *
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !super.equals(obj) ) {
+			return false;
+		}
+		if ( !(obj instanceof BasicObjectDatumStreamMetadata other) ) {
+			return false;
+		}
+		return kind == other.kind;
 	}
 
 	@Override
