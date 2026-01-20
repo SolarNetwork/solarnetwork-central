@@ -2,7 +2,7 @@
 CREATE TABLE solardatm.da_datm_meta (
 	stream_id	UUID NOT NULL DEFAULT uuid_generate_v4(),
 	node_id		BIGINT NOT NULL,
-	source_id	CHARACTER VARYING(64) NOT NULL,
+	source_id	CHARACTER VARYING(64) NOT NULL COLLATE solarcommon.naturalsort,
 	created		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	names_i		TEXT[],
@@ -17,7 +17,7 @@ CREATE TABLE solardatm.da_datm_meta (
 CREATE TABLE solardatm.da_loc_datm_meta (
 	stream_id	UUID NOT NULL DEFAULT uuid_generate_v4(),
 	loc_id		BIGINT NOT NULL,
-	source_id	CHARACTER VARYING(64) NOT NULL,
+	source_id	CHARACTER VARYING(64) NOT NULL COLLATE solarcommon.naturalsort,
 	created		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	names_i		TEXT[],
