@@ -26,6 +26,20 @@
 			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="src" output="bin/aotTest" path="build/generated/aotTestResources">
+		<attributes>
+			<attribute name="gradle_scope" value="aotTest"/>
+			<attribute name="gradle_used_by_scope" value="test,aotTest"/>
+			<attribute name="test" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" output="bin/aotTest" path="build/generated/aotTestSources">
+		<attributes>
+			<attribute name="gradle_scope" value="aotTest"/>
+			<attribute name="gradle_used_by_scope" value="test,aotTest"/>
+			<attribute name="test" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="src" output="bin/aot" path="build/generated/aotResources">
 		<attributes>
 			<attribute name="gradle_scope" value="aot"/>
