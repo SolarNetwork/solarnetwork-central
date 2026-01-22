@@ -84,7 +84,7 @@ import tools.jackson.databind.JsonNode;
  * irradiance API.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDatumStreamService {
 
@@ -300,6 +300,10 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 			CloudIntegrationConfiguration integration, final String latitude, final String longitude,
 			final Duration resolution, final Map<String, ValueRef> refsByFieldName, Instant startDate,
 			Instant endDate, final boolean useLiveApi, final Instant now) {
+		if ( !endDate.isAfter(startDate) ) {
+			// sometimes happens from split between historic/live
+			return List.of();
+		}
 		// @formatter:off
 		final UriComponentsBuilder uriBuilder = UriComponentsBuilder
 				.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
