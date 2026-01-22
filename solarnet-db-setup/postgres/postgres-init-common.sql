@@ -1,4 +1,12 @@
 /**
+ * "Natural sort" collation, to sort text with atomic number components and upper case
+ * before lower case, to match Java standard sorting.
+ *
+ * @see https://www.postgresql.org/docs/17/collation.html#ICU-COLLATION-SETTINGS
+ */
+CREATE COLLATION solarcommon.naturalsort (provider = icu, locale = 'und-u-kf-upper-kn');
+
+/**
  * Reduce a 2d array into a set of 1d arrays.
  */
 CREATE OR REPLACE FUNCTION solarcommon.reduce_dim(anyarray)

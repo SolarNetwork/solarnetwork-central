@@ -39,102 +39,103 @@ import net.solarnetwork.flux.vernemq.webhook.domain.ActorType;
  */
 public class ActorDetailsRowMapper implements RowMapper<Actor> {
 
-  /**
-   * The default value for the {@code userIdCol} property.
-   */
-  public static final int DEFAULT_USER_ID_COL = 1;
+	/**
+	 * The default value for the {@code userIdCol} property.
+	 */
+	public static final int DEFAULT_USER_ID_COL = 1;
 
-  /**
-   * The default value for the {@code tokenTypeCol} property.
-   */
-  public static final int DEFAULT_TOKEN_TYPE_COL = 2;
+	/**
+	 * The default value for the {@code tokenTypeCol} property.
+	 */
+	public static final int DEFAULT_TOKEN_TYPE_COL = 2;
 
-  /**
-   * The default value for the {@code policyCol} property.
-   */
-  public static final int DEFAULT_POLICY_COL = 3;
+	/**
+	 * The default value for the {@code policyCol} property.
+	 */
+	public static final int DEFAULT_POLICY_COL = 3;
 
-  /**
-   * The default value for the {@code nodeIdsCol} property.
-   */
-  public static final int DEFAULT_NODE_IDS_COL = 4;
+	/**
+	 * The default value for the {@code nodeIdsCol} property.
+	 */
+	public static final int DEFAULT_NODE_IDS_COL = 4;
 
-  private static final Logger log = LoggerFactory.getLogger(ActorDetailsRowMapper.class);
+	private static final Logger log = LoggerFactory.getLogger(ActorDetailsRowMapper.class);
 
-  private final String tokenId;
-  private final int userIdCol;
-  private final int tokenTypeCol;
-  private final int policyCol;
-  private final int nodeIdsCol;
+	private final String tokenId;
+	private final int userIdCol;
+	private final int tokenTypeCol;
+	private final int policyCol;
+	private final int nodeIdsCol;
 
-  /**
-   * Constructor with default settings.
-   *
-   * @param tokenId
-   *        the token ID
-   */
-  public ActorDetailsRowMapper(String tokenId) {
-    this(tokenId, DEFAULT_USER_ID_COL, DEFAULT_TOKEN_TYPE_COL, DEFAULT_POLICY_COL,
-        DEFAULT_NODE_IDS_COL);
-  }
+	/**
+	 * Constructor with default settings.
+	 *
+	 * @param tokenId
+	 *        the token ID
+	 */
+	public ActorDetailsRowMapper(String tokenId) {
+		this(tokenId, DEFAULT_USER_ID_COL, DEFAULT_TOKEN_TYPE_COL, DEFAULT_POLICY_COL,
+				DEFAULT_NODE_IDS_COL);
+	}
 
-  /**
-   * Constructor.
-   *
-   * @param tokenId
-   *        the token ID
-   * @param userIdCol
-   *        the JDBC column for the user ID
-   * @param tokenTypeCol
-   *        the JDBC column for the token type
-   * @param policyCol
-   *        the JDBC column for the policy
-   * @param nodeIdsCol
-   *        the JDBC column for the node IDs array
-   */
-  public ActorDetailsRowMapper(String tokenId, int userIdCol, int tokenTypeCol, int policyCol,
-      int nodeIdsCol) {
-    super();
-    this.tokenId = tokenId;
-    this.userIdCol = userIdCol;
-    this.tokenTypeCol = tokenTypeCol;
-    this.policyCol = policyCol;
-    this.nodeIdsCol = nodeIdsCol;
-  }
+	/**
+	 * Constructor.
+	 *
+	 * @param tokenId
+	 *        the token ID
+	 * @param userIdCol
+	 *        the JDBC column for the user ID
+	 * @param tokenTypeCol
+	 *        the JDBC column for the token type
+	 * @param policyCol
+	 *        the JDBC column for the policy
+	 * @param nodeIdsCol
+	 *        the JDBC column for the node IDs array
+	 */
+	public ActorDetailsRowMapper(String tokenId, int userIdCol, int tokenTypeCol, int policyCol,
+			int nodeIdsCol) {
+		super();
+		this.tokenId = tokenId;
+		this.userIdCol = userIdCol;
+		this.tokenTypeCol = tokenTypeCol;
+		this.policyCol = policyCol;
+		this.nodeIdsCol = nodeIdsCol;
+	}
 
-  @Override
-  public Actor mapRow(ResultSet rs, int rowNum) throws SQLException {
-    Long userId = rs.getLong(userIdCol);
-    String tokenType = rs.getString(tokenTypeCol);
-    String policyJson = rs.getString(policyCol);
-    SecurityPolicy policy = null;
-    if (policyJson != null) {
-      policy = JsonUtils.getObjectFromJSON(policyJson, SecurityPolicy.class);
-    }
+	@Override
+	public Actor mapRow(ResultSet rs, int rowNum) throws SQLException {
+		Long userId = rs.getLong(userIdCol);
+		String tokenType = rs.getString(tokenTypeCol);
+		String policyJson = rs.getString(policyCol);
+		SecurityPolicy policy = null;
+		if ( policyJson != null ) {
+			policy = JsonUtils.getObjectFromJSON(policyJson, SecurityPolicy.class);
+		}
 
-    ActorType actorType = ActorType.forValue(tokenType);
-    boolean publishAllowed = (actorType == ActorType.Node);
+		ActorType actorType = ActorType.forValue(tokenType);
+		boolean publishAllowed = (actorType == ActorType.Node);
 
-    Set<Long> nodeIds = null;
-    Array dbNodeIds = rs.getArray(nodeIdsCol);
-    if (dbNodeIds != null) {
-      Object data = dbNodeIds.getArray();
-      if (data != null && data.getClass().isArray()) {
-        Object[] arrayData = (Object[]) data;
-        nodeIds = new LinkedHashSet<>(arrayData.length);
-        for (Object val : arrayData) {
-          if (val instanceof Long n) {
-            nodeIds.add(n);
-          } else if (val instanceof Number n) {
-            nodeIds.add(n.longValue());
-          } else {
-            log.warn("Unexpected non-Number node ID array value returned from DB: [{}]", val);
-          }
-        }
-      }
-    }
+		Set<Long> nodeIds = null;
+		Array dbNodeIds = rs.getArray(nodeIdsCol);
+		if ( dbNodeIds != null ) {
+			Object data = dbNodeIds.getArray();
+			if ( data != null && data.getClass().isArray() ) {
+				Object[] arrayData = (Object[]) data;
+				nodeIds = new LinkedHashSet<>(arrayData.length);
+				for ( Object val : arrayData ) {
+					if ( val instanceof Long n ) {
+						nodeIds.add(n);
+					} else if ( val instanceof Number n ) {
+						nodeIds.add(n.longValue());
+					} else {
+						log.warn("Unexpected non-Number node ID array value returned from DB: [{}]",
+								val);
+					}
+				}
+			}
+		}
 
-    return new ActorDetails(this.tokenId, actorType, publishAllowed, userId, policy, nodeIds);
-  }
+		return new ActorDetails(this.tokenId, actorType, publishAllowed, userId, policy, nodeIds);
+	}
 
 }

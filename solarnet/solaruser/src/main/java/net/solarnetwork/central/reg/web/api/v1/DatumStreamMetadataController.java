@@ -122,8 +122,7 @@ public class DatumStreamMetadataController {
 	 */
 	@RequestMapping(method = RequestMethod.PATCH, path = "/node/{streamId}")
 	public Result<ObjectDatumStreamMetadataId> updateNodeDatumStreamMetadataIdAttributesViaPath(
-			@PathVariable("streamId") UUID streamId,
-			@RequestParam(value = "nodeId", required = false) Long nodeId,
+			@PathVariable UUID streamId, @RequestParam(value = "nodeId", required = false) Long nodeId,
 			@RequestParam(value = "sourceId", required = false) String sourceId) {
 		if ( nodeId == null && sourceId == null ) {
 			throw new IllegalArgumentException("One of nodeId or sourceId parameters is required.");
@@ -209,8 +208,7 @@ public class DatumStreamMetadataController {
 	 */
 	@RequestMapping(method = RequestMethod.POST, path = "/node/{streamId}")
 	public Result<ObjectDatumStreamMetadata> updateNodeDatumStreamMetadataAttributesViaPath(
-			@PathVariable("streamId") UUID streamId,
-			@RequestParam(value = "nodeId", required = false) Long nodeId,
+			@PathVariable UUID streamId, @RequestParam(value = "nodeId", required = false) Long nodeId,
 			@RequestParam(value = "sourceId", required = false) String sourceId,
 			@RequestParam(name = "i", required = false) String[] instantaneousProperties,
 			@RequestParam(name = "a", required = false) String[] accumulatingProperties,
@@ -228,7 +226,7 @@ public class DatumStreamMetadataController {
 	 */
 	@RequestMapping(method = RequestMethod.GET, path = "/node/{streamId}")
 	public Result<ObjectDatumStreamMetadata> viewNodeDatumStreamMetadataViaPath(
-			@PathVariable("streamId") UUID streamId) {
+			@PathVariable UUID streamId) {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(streamId);
 		SecurityActor actor = SecurityUtils.getCurrentActor();

@@ -226,9 +226,9 @@ public class DatumImportController {
 	 * @return an asynchronous result
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/jobs/{id}/preview", method = RequestMethod.GET)
+	@RequestMapping(value = "/jobs/{jobId}/preview", method = RequestMethod.GET)
 	public Callable<Result<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>>> previewStagedImport(
-			@PathVariable("id") String jobId,
+			@PathVariable String jobId,
 			@RequestParam(value = "count", required = false, defaultValue = "100") int count) {
 		final Future<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> future;
 		if ( importBiz != null ) {
@@ -309,7 +309,7 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.GET)
-	public Result<DatumImportStatus> jobStatus(@PathVariable("id") String id) {
+	public Result<DatumImportStatus> jobStatus(@PathVariable String id) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
@@ -332,7 +332,7 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}/confirm", method = RequestMethod.POST)
-	public Result<DatumImportStatus> confirmStagedJob(@PathVariable("id") String id) {
+	public Result<DatumImportStatus> confirmStagedJob(@PathVariable String id) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
@@ -358,7 +358,7 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.POST)
-	public Result<DatumImportStatus> updateJob(@PathVariable("id") String id,
+	public Result<DatumImportStatus> updateJob(@PathVariable String id,
 			@RequestBody BasicConfiguration config) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {
@@ -384,7 +384,7 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.DELETE)
-	public Result<DatumImportStatus> retractJob(@PathVariable("id") String id,
+	public Result<DatumImportStatus> retractJob(@PathVariable String id,
 			@RequestParam(name = "force", required = false, defaultValue = "false") boolean force) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {

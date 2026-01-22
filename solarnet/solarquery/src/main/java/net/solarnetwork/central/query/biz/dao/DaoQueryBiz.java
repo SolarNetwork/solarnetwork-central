@@ -93,6 +93,7 @@ import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -191,6 +192,7 @@ public class DaoQueryBiz implements QueryBiz {
 	public Set<NodeSourcePK> findAvailableSources(GeneralNodeDatumFilter filter) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
 		c.setObjectKind(ObjectDatumKind.Node);
+		c.setSorts(SimpleSortDescriptor.sorts("node", "source"));
 		validateDatumCriteria(c);
 		Iterable<ObjectDatumStreamMetadataId> results = metaDao.findDatumStreamMetadataIds(c);
 		return stream(results.spliterator(), false)

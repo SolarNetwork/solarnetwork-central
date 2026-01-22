@@ -101,7 +101,7 @@ public class InstructionInputController {
 	 *         if an IO error occurs
 	 */
 	@RequestMapping(value = "", method = RequestMethod.POST)
-	public void postInstruction(@PathVariable("endpointId") UUID endpointId,
+	public void postInstruction(@PathVariable UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
 			@RequestHeader(value = "Content-Encoding", required = false) String encoding, WebRequest req,
 			InputStream in, @RequestHeader(value = "Accept", required = true) String accept,

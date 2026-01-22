@@ -15,32 +15,25 @@
  * ========================================================================
  */
 
-package net.solarnetwork.flux.vernemq.webhook.test;
+package net.solarnetwork.flux.vernemq.webhook.config;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
-import tools.jackson.databind.ObjectMapper;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * JSON utilities to help with tests.
+ * WebMVC configuration.
  * 
  * @author matt
- * @version 2.0
  */
-public final class JsonUtils {
+@Configuration(proxyBeanMethods = false)
+public class WebConfig implements WebMvcConfigurer {
 
-  /**
-   * Get a default {@link ObjectMapper} instance.
-   * 
-   * @return the new instance
-   */
-  public static ObjectMapper defaultObjectMapper() {
-    return tools.jackson.databind.json.JsonMapper.builder()
-        .changeDefaultPropertyInclusion(
-            incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
-        .changeDefaultPropertyInclusion(
-            incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL))
-        .build();
-  }
+	@Override
+	public void addCorsMappings(CorsRegistry registry) {
+		registry.addMapping("/**").allowedMethods("GET", "POST")
+				// setting allowCredentials to false to Spring returns Access-Control-Allow-Origin: *
+				.allowCredentials(false);
+	}
 
 }

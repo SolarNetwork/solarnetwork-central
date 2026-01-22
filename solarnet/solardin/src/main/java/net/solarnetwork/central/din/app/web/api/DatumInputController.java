@@ -96,8 +96,7 @@ public class DatumInputController {
 	 */
 	@RequestMapping(value = "", method = RequestMethod.POST,
 			consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
-	public ResponseEntity<Result<Collection<DatumId>>> postDatum(
-			@PathVariable("endpointId") UUID endpointId,
+	public ResponseEntity<Result<Collection<DatumId>>> postDatum(@PathVariable UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
 			@RequestHeader(value = "Content-Encoding", required = false) String encoding, WebRequest req,
 			InputStream in) throws IOException {

@@ -35,16 +35,16 @@ import net.solarnetwork.domain.Result;
 @RequestMapping(path = "/api/v1", method = RequestMethod.GET)
 public class PingController {
 
-  /**
-   * Get a simple {@literal allGood} assessment.
-   * 
-   * @return map of properties
-   */
-  @RequestMapping("/ping")
-  public Result<Map<String, ?>> ping() {
-    Map<String, Object> data = new LinkedHashMap<>();
-    data.put("allGood", true);
-    return Result.success(data);
-  }
+	/**
+	 * Get a simple {@literal allGood} assessment.
+	 * 
+	 * @return map of properties
+	 */
+	@RequestMapping("/ping")
+	public Result<Map<String, ?>> ping() {
+		Map<String, Object> data = new LinkedHashMap<>();
+		data.put("allGood", true);
+		return Result.success(data);
+	}
 
 }

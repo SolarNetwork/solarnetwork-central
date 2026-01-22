@@ -205,9 +205,9 @@ public class DatumExportController {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/configs/{id}", method = RequestMethod.POST)
+	@RequestMapping(value = "/configs/{configId}", method = RequestMethod.POST)
 	public Result<UserDatumExportConfiguration> saveExportConfiguration(
-			@RequestBody UserDatumExportConfigurationInput input, @PathVariable("id") Long configId) {
+			@RequestBody UserDatumExportConfigurationInput input, @PathVariable Long configId) {
 		if ( exportBiz != null ) {
 			var config = input.toEntity(new UserLongCompositePK(getCurrentActorUserId(), configId));
 			Long id = exportBiz.saveDatumExportConfiguration(config);
@@ -219,8 +219,8 @@ public class DatumExportController {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/configs/{id}", method = RequestMethod.DELETE)
-	public Result<Void> deleteExportConfiguration(@PathVariable("id") Long id) {
+	@RequestMapping(value = "/configs/{configId}", method = RequestMethod.DELETE)
+	public Result<Void> deleteExportConfiguration(@PathVariable Long id) {
 		if ( exportBiz != null ) {
 			UserDatumExportConfiguration config = exportBiz
 					.datumExportConfigurationForUser(SecurityUtils.getCurrentActorUserId(), id);
@@ -233,8 +233,8 @@ public class DatumExportController {
 
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	@ResponseBody
-	@RequestMapping(value = "/configs/{id}/date", method = RequestMethod.POST)
-	public Result<LocalDateTime> updateExportConfigurationDate(@PathVariable("id") Long id,
+	@RequestMapping(value = "/configs/{configId}/date", method = RequestMethod.POST)
+	public Result<LocalDateTime> updateExportConfigurationDate(@PathVariable Long id,
 			@RequestBody Map<String, Object> body) {
 		LocalDateTime result = null;
 		if ( exportBiz != null ) {
@@ -294,7 +294,7 @@ public class DatumExportController {
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/data/{id}", method = RequestMethod.DELETE)
-	public Result<Void> deleteDataConfiguration(@PathVariable("id") Long id) {
+	public Result<Void> deleteDataConfiguration(@PathVariable Long id) {
 		if ( exportBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			UserDataConfiguration config = exportBiz.configurationForUser(userId,
@@ -326,7 +326,7 @@ public class DatumExportController {
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/output/{id}", method = RequestMethod.DELETE)
-	public Result<Void> deleteOutputConfiguration(@PathVariable("id") Long id) {
+	public Result<Void> deleteOutputConfiguration(@PathVariable Long id) {
 		if ( exportBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			UserOutputConfiguration config = exportBiz.configurationForUser(userId,
@@ -358,7 +358,7 @@ public class DatumExportController {
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/destination/{id}", method = RequestMethod.DELETE)
-	public Result<Void> deleteDestinationConfiguration(@PathVariable("id") Long id) {
+	public Result<Void> deleteDestinationConfiguration(@PathVariable Long id) {
 		if ( exportBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			UserDestinationConfiguration config = exportBiz.configurationForUser(userId,

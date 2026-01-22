@@ -17,163 +17,154 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.v311;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
-import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * A deliver request model.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
-@JsonDeserialize(builder = DeliverRequest.Builder.class)
 public class DeliverRequest implements Message {
 
-  @JsonProperty("client_id")
-  private final String clientId;
+	private final String clientId;
+	private final String mountpoint;
+	private final String username;
+	private final String topic;
+	private final byte[] payload;
 
-  private final String mountpoint;
+	private DeliverRequest(Builder builder) {
+		this.clientId = builder.clientId;
+		this.mountpoint = builder.mountpoint;
+		this.username = builder.username;
+		this.topic = builder.topic;
+		this.payload = builder.payload;
+	}
 
-  private final String username;
+	/**
+	 * Creates builder to build {@link DeliverRequest}.
+	 * 
+	 * @return created builder
+	 */
+	public static Builder builder() {
+		return new Builder();
+	}
 
-  private final String topic;
+	/**
+	 * Creates a builder to build {@link DeliverRequest} and initialize it with
+	 * the given object.
+	 * 
+	 * @param deliverReqeust
+	 *        to initialize the builder with
+	 * @return created builder
+	 */
+	public static Builder builder(DeliverRequest deliverReqeust) {
+		return new Builder(deliverReqeust);
+	}
 
-  private final byte[] payload;
+	/**
+	 * Builder to build {@link DeliverRequest}.
+	 */
+	public static final class Builder {
 
-  private DeliverRequest(Builder builder) {
-    this.clientId = builder.clientId;
-    this.mountpoint = builder.mountpoint;
-    this.username = builder.username;
-    this.topic = builder.topic;
-    this.payload = builder.payload;
-  }
+		private String clientId;
+		private String mountpoint;
+		private String username;
+		private String topic;
+		private byte[] payload;
 
-  /**
-   * Creates builder to build {@link DeliverRequest}.
-   * 
-   * @return created builder
-   */
-  public static Builder builder() {
-    return new Builder();
-  }
+		private Builder() {
+		}
 
-  /**
-   * Creates a builder to build {@link DeliverRequest} and initialize it with the given object.
-   * 
-   * @param deliverReqeust
-   *        to initialize the builder with
-   * @return created builder
-   */
-  public static Builder builder(DeliverRequest deliverReqeust) {
-    return new Builder(deliverReqeust);
-  }
+		private Builder(DeliverRequest deliverReqeust) {
+			this.clientId = deliverReqeust.clientId;
+			this.mountpoint = deliverReqeust.mountpoint;
+			this.username = deliverReqeust.username;
+			this.topic = deliverReqeust.topic;
+			this.payload = deliverReqeust.payload;
+		}
 
-  /**
-   * Builder to build {@link DeliverRequest}.
-   */
-  public static final class Builder {
+		public Builder withClientId(String clientId) {
+			this.clientId = clientId;
+			return this;
+		}
 
-    @JsonProperty("client_id")
-    private String clientId;
-    private String mountpoint;
-    private String username;
-    private String topic;
-    private byte[] payload;
+		public Builder withMountpoint(String mountpoint) {
+			this.mountpoint = mountpoint;
+			return this;
+		}
 
-    private Builder() {
-    }
+		public Builder withUsername(String username) {
+			this.username = username;
+			return this;
+		}
 
-    private Builder(DeliverRequest deliverReqeust) {
-      this.clientId = deliverReqeust.clientId;
-      this.mountpoint = deliverReqeust.mountpoint;
-      this.username = deliverReqeust.username;
-      this.topic = deliverReqeust.topic;
-      this.payload = deliverReqeust.payload;
-    }
+		public Builder withTopic(String topic) {
+			this.topic = topic;
+			return this;
+		}
 
-    public Builder withClientId(String clientId) {
-      this.clientId = clientId;
-      return this;
-    }
+		public Builder withPayload(byte[] payload) {
+			this.payload = payload;
+			return this;
+		}
 
-    public Builder withMountpoint(String mountpoint) {
-      this.mountpoint = mountpoint;
-      return this;
-    }
+		public DeliverRequest build() {
+			return new DeliverRequest(this);
+		}
+	}
 
-    public Builder withUsername(String username) {
-      this.username = username;
-      return this;
-    }
+	@Override
+	public String toString() {
+		return "DeliverRequest{" + username + ", " + topic + "}";
+	}
 
-    public Builder withTopic(String topic) {
-      this.topic = topic;
-      return this;
-    }
+	/**
+	 * Get the client ID.
+	 * 
+	 * @return the clientId
+	 */
+	public String getClientId() {
+		return clientId;
+	}
 
-    public Builder withPayload(byte[] payload) {
-      this.payload = payload;
-      return this;
-    }
+	/**
+	 * Get the mount point.
+	 * 
+	 * @return the mount point
+	 */
+	public String getMountpoint() {
+		return mountpoint;
+	}
 
-    public DeliverRequest build() {
-      return new DeliverRequest(this);
-    }
-  }
+	/**
+	 * Get the username.
+	 * 
+	 * @return the username
+	 */
+	public String getUsername() {
+		return username;
+	}
 
-  @Override
-  public String toString() {
-    return "DeliverRequest{" + username + ", " + topic + "}";
-  }
+	@Override
+	public String getTopic() {
+		return topic;
+	}
 
-  /**
-   * Get the client ID.
-   * 
-   * @return the clientId
-   */
-  public String getClientId() {
-    return clientId;
-  }
+	@Override
+	public byte[] getPayload() {
+		return payload;
+	}
 
-  /**
-   * Get the mount point.
-   * 
-   * @return the mount point
-   */
-  public String getMountpoint() {
-    return mountpoint;
-  }
+	@Override
+	public Qos getQos() {
+		return null;
+	}
 
-  /**
-   * Get the username.
-   * 
-   * @return the username
-   */
-  public String getUsername() {
-    return username;
-  }
-
-  @Override
-  public String getTopic() {
-    return topic;
-  }
-
-  @Override
-  public byte[] getPayload() {
-    return payload;
-  }
-
-  @Override
-  public Qos getQos() {
-    return null;
-  }
-
-  @Override
-  public Boolean getRetain() {
-    return null;
-  }
+	@Override
+	public Boolean getRetain() {
+		return null;
+	}
 
 }

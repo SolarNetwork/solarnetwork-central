@@ -36,16 +36,14 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObje
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumStreamMetadata;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertLocation;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToken;
 import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
-import static org.assertj.core.api.BDDAssertions.then;
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -55,6 +53,9 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -71,11 +72,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
@@ -99,6 +103,7 @@ import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
@@ -107,29 +112,24 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * @author matt
  * @version 2.2
  */
+@SuppressWarnings("static-access")
+@ExtendWith(MockitoExtension.class)
 public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdbcTestSupport {
 
 	private JdbcDatumEntityDao dao;
 
+	@Mock
 	private Cache<UUID, ObjectDatumStreamMetadata> cache;
+
+	@Mock
 	private Cache<UUID, ObjectDatumStreamMetadataId> idCache;
 
-	@SuppressWarnings("unchecked")
+	@Captor
+	private ArgumentCaptor<ObjectDatumStreamMetadata> metaCaptor;
+
 	@BeforeEach
 	public void setup() {
 		dao = new JdbcDatumEntityDao(jdbcTemplate);
-
-		cache = EasyMock.createMock(Cache.class);
-		idCache = EasyMock.createMock(Cache.class);
-	}
-
-	public void replayAll() {
-		EasyMock.replay(cache, idCache);
-	}
-
-	@AfterEach
-	public void teardown() {
-		EasyMock.verify(cache, idCache);
 	}
 
 	@Test
@@ -148,7 +148,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
@@ -186,7 +185,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		}).collect(Collectors.toSet());
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
@@ -216,7 +214,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
@@ -248,7 +245,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta1, meta2, meta3));
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(1L);
 		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
@@ -277,7 +273,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta1, meta2, meta3, meta4));
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSorts(sorts("node", "source"));
@@ -287,6 +282,73 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 				.map(DatumStreamMetadata::getStreamId).collect(toList());
 		assertThat("Results returned in node/source order", metas, contains(meta2.getStreamId(),
 				meta1.getStreamId(), meta3.getStreamId(), meta4.getStreamId()));
+	}
+
+	@Test
+	public void findObjectMetadata_nodes_sortSource() {
+		// GIVEN
+		// @formatter:off
+		List<ObjectDatumStreamMetadata> metas = asList(
+				emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node, 1L, "z9/a/100"),
+				emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node, 1L, "z10/a/100"),
+				emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node, 2L, "z9/a/99"),
+				emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node, 2L, "a/100"),
+				emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node, 2L, "a/99"),
+				emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node, 2L, "10"),
+				emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node, 2L, "9")
+				);
+		// @formatter:on
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, metas);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSorts(sorts("source"));
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		// THEN
+
+		metas.sort((l, r) -> StringUtils.naturalSortCompare(l.getSourceId(), r.getSourceId(), false));
+
+		// @formatter:off
+		and.then(results)
+			.as("Results returned naturally sorted by source ID")
+			.containsExactlyElementsOf(metas)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	@EnabledIfEnvironmentVariable(named = "PG_COLLATION_FIX", matches = "(1|true)",
+			disabledReason = "Postgres ICU collation order not same as Java")
+	public void findObjectMetadata_nodes_sortSource_caseComparison() {
+		// GIVEN
+		// @formatter:off
+		List<ObjectDatumStreamMetadata> metas = asList(
+				emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node, 2L, "a/100"),
+				emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node, 2L, "a/99"),
+				emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node, 2L, "A/100"),
+				emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node, 2L, "A/99")
+				);
+		// @formatter:on
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, metas);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSorts(sorts("source"));
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		// THEN
+
+		metas.sort((l, r) -> StringUtils.naturalSortCompare(l.getSourceId(), r.getSourceId(), false));
+
+		// @formatter:off
+		and.then(results)
+			.as("Results returned naturally sorted by source ID")
+			.containsExactlyElementsOf(metas)
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -303,7 +365,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		DatumDbUtils.insertDatum(log, jdbcTemplate, singleton(datum));
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(1L);
 		filter.setStartDate(datum.getCreated());
@@ -324,7 +385,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		Instant start = datums.get(0).getCreated();
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(1L);
 		filter.setStartDate(start.minusSeconds(1));
@@ -359,7 +419,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 				JsonUtils.getJSONString(policy, null));
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setTokenId(tokenId);
 		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
@@ -393,7 +452,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 				JsonUtils.getJSONString(policy, null));
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setTokenId(tokenId);
 		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
@@ -426,7 +484,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 				JsonUtils.getJSONString(policy, null));
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setTokenId(tokenId);
 		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
@@ -452,7 +509,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
@@ -487,7 +543,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
@@ -518,7 +573,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		DatumDbUtils.insertDatum(log, jdbcTemplate, singleton(datum));
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationId(1L);
 		filter.setStartDate(datum.getCreated());
@@ -545,7 +599,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		DatumDbUtils.insertDatum(log, jdbcTemplate, singleton(datum));
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationId(1L);
 		filter.setStartDate(datum.getCreated().minusSeconds(1));
@@ -575,7 +628,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setObjectKind(ObjectDatumKind.Location);
 		filter.setSorts(sorts("loc"));
@@ -621,7 +673,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setObjectKind(ObjectDatumKind.Location);
 		filter.setSorts(sorts("loc"));
@@ -667,7 +718,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setObjectKind(ObjectDatumKind.Location);
 		filter.setSorts(sorts("loc"));
@@ -702,7 +752,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(UUID.randomUUID());
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
@@ -720,7 +769,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(meta.getStreamId());
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
@@ -739,7 +787,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(meta.getStreamId());
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
@@ -758,17 +805,14 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 				new String[] { "d", "e" }, new String[] { "f" });
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
-		expect(cache.get(meta.getStreamId())).andReturn(null);
-		Capture<ObjectDatumStreamMetadata> metaCaptor = new Capture<>();
-		cache.put(eq(meta.getStreamId()), capture(metaCaptor));
-
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(meta.getStreamId());
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
 
 		// THEN
+		then(cache).should().put(eq(meta.getStreamId()), metaCaptor.capture());
+
 		assertDatumStreamMetadata("returned meta", result, meta);
 		assertDatumStreamMetadata("cached meta", metaCaptor.getValue(), meta);
 	}
@@ -781,10 +825,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
 				new String[] { "d", "e" }, new String[] { "f" });
 
-		expect(cache.get(meta.getStreamId())).andReturn(meta);
+		given(cache.get(meta.getStreamId())).willReturn(meta);
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(meta.getStreamId());
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
@@ -803,7 +846,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(meta.getStreamId());
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
@@ -817,7 +859,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		// GIVEN
 
 		// WHEN
-		replayAll();
 		final String json = "{\"foo\":\"bar\"}";
 		dao.replaceJsonMeta(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), json);
 	}
@@ -839,7 +880,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		final String json = "{\"foo\":\"bar\"}";
 		dao.replaceJsonMeta(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), json);
 
@@ -853,7 +893,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		// GIVEN
 
 		// WHEN
-		replayAll();
 		final String json = "{\"foo\":\"bar\"}";
 		dao.replaceJsonMeta(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), json);
 
@@ -877,7 +916,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		final String json = "{\"foo\":\"bar\"}";
 		dao.replaceJsonMeta(new LocationSourcePK(TEST_LOC_ID, TEST_SOURCE_ID), json);
 
@@ -891,7 +929,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		// GIVEN
 
 		// WHEN
-		replayAll();
 		final String json = "{\"foo\":\"bar\"}";
 		dao.replaceJsonMeta(new LocationSourcePK(TEST_LOC_ID, TEST_SOURCE_ID), json);
 
@@ -914,7 +951,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		m.putInfoValue("floating", new BigDecimal("293487590845639845728947589237.49087"));
 
 		// WHEN
-		replayAll();
 		final String json = JsonUtils.getJSONString(m, null);
 		dao.replaceJsonMeta(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), json);
 
@@ -933,7 +969,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		Long newNodeId = UUID.randomUUID().getLeastSignificantBits();
 		ObjectDatumStreamMetadataId id = dao.updateIdAttributes(meta.getKind(), meta.getStreamId(),
 				newNodeId, null);
@@ -956,10 +991,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 				new String[] { "d", "e" }, new String[] { "f" });
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
-		expect(cache.remove(meta.getStreamId())).andReturn(true);
+		given(cache.remove(meta.getStreamId())).willReturn(true);
 
 		// WHEN
-		replayAll();
 		Long newNodeId = UUID.randomUUID().getLeastSignificantBits();
 		ObjectDatumStreamMetadataId id = dao.updateIdAttributes(meta.getKind(), meta.getStreamId(),
 				newNodeId, null);
@@ -982,7 +1016,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		Long newNodeId = UUID.randomUUID().getLeastSignificantBits();
 		String newSourceId = UUID.randomUUID().toString();
 		ObjectDatumStreamMetadataId id = dao.updateIdAttributes(meta.getKind(), meta.getStreamId(),
@@ -1006,7 +1039,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		Long newLocId = UUID.randomUUID().getLeastSignificantBits();
 		ObjectDatumStreamMetadataId id = dao.updateIdAttributes(meta.getKind(), meta.getStreamId(),
 				newLocId, null);
@@ -1029,7 +1061,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		Long newLocId = UUID.randomUUID().getLeastSignificantBits();
 		String newSourceId = UUID.randomUUID().toString();
 		ObjectDatumStreamMetadataId id = dao.updateIdAttributes(meta.getKind(), meta.getStreamId(),
@@ -1053,7 +1084,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		Long newNodeId = UUID.randomUUID().getLeastSignificantBits();
 		String newSourceId = UUID.randomUUID().toString();
 		String[] newi = new String[] { "aa", "bb", "cc" };
@@ -1065,7 +1095,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 
 		// THEN
 		// @formatter:off
-		then(result)
+		and.then(result)
 			.as("Updated meta returned")
 			.isNotNull()
 			.as("Returned kind matches")
@@ -1075,15 +1105,15 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 			.as("Returned source ID is new value")
 			.returns(newSourceId, from(ObjectDatumStreamMetadata::getSourceId))
 			.satisfies(r -> {
-				then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
+				and.then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
 					.as("Returned i name array is new value")
 					.containsExactly(newi)
 					;
-				then(r.propertyNamesForType(DatumSamplesType.Accumulating))
+				and.then(r.propertyNamesForType(DatumSamplesType.Accumulating))
 					.as("Returned a name array is new value")
 					.containsExactly(newa)
 					;
-				then(r.propertyNamesForType(DatumSamplesType.Status))
+				and.then(r.propertyNamesForType(DatumSamplesType.Status))
 					.as("Returned s name array is new value")
 					.containsExactly(news)
 					;
@@ -1102,7 +1132,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		Long newNodeId = UUID.randomUUID().getLeastSignificantBits();
 		String newSourceId = UUID.randomUUID().toString();
 		String[] newi = new String[] { "aa", "bb", "cc", "i" };
@@ -1114,7 +1143,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 
 		// THEN
 		// @formatter:off
-		then(result)
+		and.then(result)
 			.as("Updated meta returned")
 			.isNotNull()
 			.as("Returned kind matches")
@@ -1124,15 +1153,15 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 			.as("Returned source ID is new value")
 			.returns(newSourceId, from(ObjectDatumStreamMetadata::getSourceId))
 			.satisfies(r -> {
-				then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
+				and.then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
 					.as("Returned i name array is new value")
 					.containsExactly(newi)
 					;
-				then(r.propertyNamesForType(DatumSamplesType.Accumulating))
+				and.then(r.propertyNamesForType(DatumSamplesType.Accumulating))
 					.as("Returned a name array is new value")
 					.containsExactly(newa)
 					;
-				then(r.propertyNamesForType(DatumSamplesType.Status))
+				and.then(r.propertyNamesForType(DatumSamplesType.Status))
 					.as("Returned s name array is new value")
 					.containsExactly(news)
 					;
@@ -1151,7 +1180,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		String[] newNames = new String[] { "aa" };
 
 		ObjectDatumStreamMetadata result = dao.updateAttributes(meta.getKind(), meta.getStreamId(), null,
@@ -1164,12 +1192,12 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 
 		// THEN
 		// @formatter:off
-		then(result)
+		and.then(result)
 			.as("No result returned because names_i update array too short")
 			.isNull()
 			;
 
-		then(persisted)
+		and.then(persisted)
 			.as("Persisted meta returned")
 			.isNotNull()
 			.as("Persisted kind unchanged")
@@ -1179,15 +1207,15 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 			.as("Persisted source ID is unchanged")
 			.returns(meta.getSourceId(), from(ObjectDatumStreamMetadata::getSourceId))
 			.satisfies(r -> {
-				then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
+				and.then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
 					.as("Returned i name array is unchanged")
 					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Instantaneous))
 					;
-				then(r.propertyNamesForType(DatumSamplesType.Accumulating))
+				and.then(r.propertyNamesForType(DatumSamplesType.Accumulating))
 					.as("Returned a name array is unchanged")
 					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Accumulating))
 					;
-				then(r.propertyNamesForType(DatumSamplesType.Status))
+				and.then(r.propertyNamesForType(DatumSamplesType.Status))
 					.as("Returned s name array is unchanged")
 					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Status))
 					;
@@ -1206,7 +1234,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		String[] newNames = new String[] { "aa" };
 
 		ObjectDatumStreamMetadata result = dao.updateAttributes(meta.getKind(), meta.getStreamId(), null,
@@ -1219,12 +1246,12 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 
 		// THEN
 		// @formatter:off
-		then(result)
+		and.then(result)
 			.as("No result returned because names_a update array too short")
 			.isNull()
 			;
 
-		then(persisted)
+		and.then(persisted)
 			.as("Persisted meta returned")
 			.isNotNull()
 			.as("Persisted kind unchanged")
@@ -1234,15 +1261,15 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 			.as("Persisted source ID is unchanged")
 			.returns(meta.getSourceId(), from(ObjectDatumStreamMetadata::getSourceId))
 			.satisfies(r -> {
-				then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
+				and.then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
 					.as("Returned i name array is unchanged")
 					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Instantaneous))
 					;
-				then(r.propertyNamesForType(DatumSamplesType.Accumulating))
+				and.then(r.propertyNamesForType(DatumSamplesType.Accumulating))
 					.as("Returned a name array is unchanged")
 					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Accumulating))
 					;
-				then(r.propertyNamesForType(DatumSamplesType.Status))
+				and.then(r.propertyNamesForType(DatumSamplesType.Status))
 					.as("Returned s name array is unchanged")
 					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Status))
 					;
@@ -1261,7 +1288,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
-		replayAll();
 		String[] newNames = new String[] { "aa" };
 
 		ObjectDatumStreamMetadata result = dao.updateAttributes(meta.getKind(), meta.getStreamId(), null,
@@ -1274,12 +1300,12 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 
 		// THEN
 		// @formatter:off
-		then(result)
+		and.then(result)
 			.as("No result returned because names_a update array too short")
 			.isNull()
 			;
 
-		then(persisted)
+		and.then(persisted)
 			.as("Persisted meta returned")
 			.isNotNull()
 			.as("Persisted kind unchanged")
@@ -1289,15 +1315,15 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 			.as("Persisted source ID is unchanged")
 			.returns(meta.getSourceId(), from(ObjectDatumStreamMetadata::getSourceId))
 			.satisfies(r -> {
-				then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
+				and.then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
 					.as("Returned i name array is unchanged")
 					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Instantaneous))
 					;
-				then(r.propertyNamesForType(DatumSamplesType.Accumulating))
+				and.then(r.propertyNamesForType(DatumSamplesType.Accumulating))
 					.as("Returned a name array is unchanged")
 					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Accumulating))
 					;
-				then(r.propertyNamesForType(DatumSamplesType.Status))
+				and.then(r.propertyNamesForType(DatumSamplesType.Status))
 					.as("Returned s name array is unchanged")
 					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Status))
 					;

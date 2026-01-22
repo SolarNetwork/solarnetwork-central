@@ -28,12 +28,12 @@ import org.slf4j.LoggerFactory;
  */
 public final class Globals {
 
-  /** A global "audit" logger for audit events to be logged to. */
-  public static final Logger AUDIT_LOG = LoggerFactory
-      .getLogger(Globals.class.getPackage().getName() + ".AUDIT");
+	/** A global "audit" logger for audit events to be logged to. */
+	public static final Logger AUDIT_LOG = LoggerFactory
+			.getLogger(Globals.class.getPackage().getName() + ".AUDIT");
 
-  private Globals() {
-    // can't construct me
-  }
+	private Globals() {
+		// can't construct me
+	}
 
 }

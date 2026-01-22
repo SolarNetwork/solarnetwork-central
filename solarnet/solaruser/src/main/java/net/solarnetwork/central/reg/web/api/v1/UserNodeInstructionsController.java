@@ -111,8 +111,7 @@ public class UserNodeInstructionsController {
 	}
 
 	@RequestMapping(value = "/tasks/{taskId}", method = RequestMethod.GET)
-	public Result<UserNodeInstructionTaskEntity> getUserNodeInstructionTask(
-			@PathVariable("taskId") Long taskId) {
+	public Result<UserNodeInstructionTaskEntity> getUserNodeInstructionTask(@PathVariable Long taskId) {
 		final var filter = new BasicUserNodeInstructionTaskFilter();
 		filter.setTaskId(taskId);
 		var result = biz.listControlInstructionTasksForUser(getCurrentActorUserId(), filter);
@@ -120,8 +119,7 @@ public class UserNodeInstructionsController {
 	}
 
 	@RequestMapping(value = "/tasks/{taskId}", method = RequestMethod.PUT)
-	public Result<UserNodeInstructionTaskEntity> updateUserNodeInstructionTask(
-			@PathVariable("taskId") Long taskId,
+	public Result<UserNodeInstructionTaskEntity> updateUserNodeInstructionTask(@PathVariable Long taskId,
 			@Valid @RequestBody UserNodeInstructionTaskEntityInput input) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), taskId);
 		BasicClaimableJobState[] requiredStates = null;
@@ -132,7 +130,7 @@ public class UserNodeInstructionsController {
 	}
 
 	@RequestMapping(value = "/tasks/{taskId}", method = RequestMethod.DELETE)
-	public Result<Void> deleteUserNodeInstructionTask(@PathVariable("taskId") Long taskId) {
+	public Result<Void> deleteUserNodeInstructionTask(@PathVariable Long taskId) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), taskId);
 		biz.deleteControlInstructionTask(id);
 		return success();
@@ -140,8 +138,7 @@ public class UserNodeInstructionsController {
 
 	@RequestMapping(value = "/tasks/{taskId}/state", method = RequestMethod.POST)
 	public Result<UserNodeInstructionTaskEntity> updateUserNodeInstructionTaskState(
-			@PathVariable("taskId") Long taskId,
-			@Valid @RequestBody UserNodeInstructionTaskStateInput input) {
+			@PathVariable Long taskId, @Valid @RequestBody UserNodeInstructionTaskStateInput input) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), taskId);
 		BasicClaimableJobState[] requiredStates = null;
 		if ( input.getRequiredStates() != null && !input.getRequiredStates().isEmpty() ) {
@@ -151,8 +148,8 @@ public class UserNodeInstructionsController {
 	}
 
 	@RequestMapping(value = "/tasks/{taskId}/enabled/{enabled}", method = RequestMethod.POST)
-	public Result<CloudIntegrationConfiguration> enableUserNodeInstructionTask(
-			@PathVariable("taskId") Long taskId, @PathVariable("enabled") boolean enabled) {
+	public Result<CloudIntegrationConfiguration> enableUserNodeInstructionTask(@PathVariable Long taskId,
+			@PathVariable boolean enabled) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), taskId);
 		biz.updateControlInstructionTaskEnabled(id, enabled);
 		return success();

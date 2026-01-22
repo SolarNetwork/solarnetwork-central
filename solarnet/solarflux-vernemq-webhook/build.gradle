@@ -2,14 +2,16 @@ plugins {
 	id 'java'
     id 'eclipse'
 	id 'org.springframework.boot' version '4.0.1'
+	id 'org.graalvm.buildtools.native' version '0.11.1'
 }
 
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
+apply plugin: 'org.graalvm.buildtools.native'
 
 description = 'SolarFlux VerneMQ Webhook'
-version = '5.0.0'
+//version = '5.0.0' see gradle.properties
 
 dependencies {
 	implementation project(':solarnet-common')
@@ -22,7 +24,6 @@ dependencies {
 
 	// DB
 	runtimeOnly 'org.postgresql:postgresql'
-	implementation 'org.apache.tomcat:tomcat-jdbc'
 		
 	// JCache
 	implementation 'javax.cache:cache-api'
@@ -44,7 +45,6 @@ dependencies {
 
 configurations.configureEach {
 	exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-joda'
-	exclude group: 'com.zaxxer', module: 'HikariCP'
 	exclude group: 'io.netty'
 	exclude group: 'net.solarnetwork.common', module: 'net.solarnetwork.common.mqtt'
 	exclude group: 'net.solarnetwork.common', module: 'net.solarnetwork.common.pki.bc'
@@ -63,9 +63,58 @@ configurations.configureEach {
 	exclude group: 'software.amazon.awssdk'
 }
 
+def commonManifest = {
+    attributes(
+        'Implementation-Title': 'SolarFlux VerneMQ Webhook Server',
+		'Implementation-Version': project.version
+    )
+}
+
+jar {
+	manifest commonManifest
+}
+
 bootJar {
-	manifest {
-		attributes 	'Implementation-Title': 'SolarFlux VerneMQ Webhook Server',
-					'Implementation-Version': archiveVersion
+	manifest commonManifest
+}
+
+graalvmNative {
+	binaries.main {
+		def allArgs = []
+
+		// NATIVE_BUILD_ARGS=a,b,c ../gradlew nativeCompile
+        providers.environmentVariable('NATIVE_BUILD_ARGS')
+            .orNull?.split(',')?.each { allArgs << it }
+
+		// pass -PnativeBuildArgs=a,b,c
+        providers.gradleProperty('nativeBuildArgs')
+            .orNull?.split(',')?.each { allArgs << it }
+
+		// pass -PnativeBuildArgsFile=dev.args, or default to native-build.args
+		def argsFile = providers.gradleProperty('nativeBuildArgsFile')
+                .map { file(it) }
+                .orElse(file('native-build.args'))
+                .get()
+        
+        if (argsFile.exists()) {
+            allArgs.addAll(
+                argsFile.readLines()
+                    .findAll { it && !it.startsWith('#') }
+            )
+        }
+
+		if (allArgs.isEmpty()) {
+			buildArgs.addAll(['--enable-native-access=ALL-UNNAMED', '-O3', '-R:MaxHeapSize=128m', '-R:MinHeapSize=128m'])
+		} else {
+	        buildArgs.addAll(allArgs)
+	    }
 	}
+	
+	binaries.main {
+		imageName = 'solarflux-webhook'
+	}
+}
+
+tasks.withType(org.springframework.boot.gradle.tasks.aot.ProcessAot).configureEach {
+    args("${aotProcessArgs}")
 }

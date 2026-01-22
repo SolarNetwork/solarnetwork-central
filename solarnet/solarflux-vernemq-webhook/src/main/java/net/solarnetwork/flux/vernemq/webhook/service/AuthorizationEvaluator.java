@@ -29,40 +29,40 @@ import net.solarnetwork.flux.vernemq.webhook.domain.TopicSettings;
  */
 public interface AuthorizationEvaluator {
 
-  /**
-   * Evaluate a request to subscribe to a set of topics.
-   * 
-   * @param actor
-   *        the authenticated actor
-   * @param topics
-   *        the topics to subscribe to
-   * @return the resulting topics to subscribe to, or {@literal null} if subscribing is not
-   *         authorized for any reason
-   */
-  TopicSettings evaluateSubscribe(Actor actor, TopicSettings topics);
+	/**
+	 * Evaluate a request to subscribe to a set of topics.
+	 * 
+	 * @param actor
+	 *        the authenticated actor
+	 * @param topics
+	 *        the topics to subscribe to
+	 * @return the resulting topics to subscribe to, or {@literal null} if
+	 *         subscribing is not authorized for any reason
+	 */
+	TopicSettings evaluateSubscribe(Actor actor, TopicSettings topics);
 
-  /**
-   * Evaluate a request to publish to a topic.
-   * 
-   * @param actor
-   *        the authenticated actor
-   * @param message
-   *        the message to publish
-   * @return the resulting message to publish; or {@literal null} if publishing is not authorized
-   *         for any reason
-   */
-  Message evaluatePublish(Actor actor, Message message);
+	/**
+	 * Evaluate a request to publish to a topic.
+	 * 
+	 * @param actor
+	 *        the authenticated actor
+	 * @param message
+	 *        the message to publish
+	 * @return the resulting message to publish; or {@literal null} if
+	 *         publishing is not authorized for any reason
+	 */
+	Message evaluatePublish(Actor actor, Message message);
 
-  /**
-   * Extract the source ID from a publish message.
-   * 
-   * @param actor
-   *        the actor
-   * @param message
-   *        the message
-   * @return the source ID, or {@literal null} if one cannot be determined
-   * @since 1.1
-   */
-  String sourceIdForPublish(Actor actor, Message message);
+	/**
+	 * Extract the source ID from a publish message.
+	 * 
+	 * @param actor
+	 *        the actor
+	 * @param message
+	 *        the message
+	 * @return the source ID, or {@literal null} if one cannot be determined
+	 * @since 1.1
+	 */
+	String sourceIdForPublish(Actor actor, Message message);
 
 }

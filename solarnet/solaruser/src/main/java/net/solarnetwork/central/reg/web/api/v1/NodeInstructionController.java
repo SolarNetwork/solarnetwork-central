@@ -320,7 +320,7 @@ public class NodeInstructionController {
 	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "!nodeIds",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public Result<NodeInstruction> queueInstruction(@PathVariable("topic") String topic,
+	public Result<NodeInstruction> queueInstruction(@PathVariable String topic,
 			@RequestParam("nodeId") Long nodeId, Instruction input) {
 		input.setTopic(topic);
 		return queueInstruction(nodeId, input);
@@ -344,7 +344,7 @@ public class NodeInstructionController {
 	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST,
 			consumes = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public Result<NodeInstruction> queueInstructionBody(@PathVariable("topic") String topic,
+	public Result<NodeInstruction> queueInstructionBody(@PathVariable String topic,
 			@RequestBody NodeInstruction input) {
 		input.getInstruction().setTopic(topic);
 		validateInstruction(input);
@@ -391,7 +391,7 @@ public class NodeInstructionController {
 	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "nodeIds",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public Result<List<NodeInstruction>> queueInstruction(@PathVariable("topic") String topic,
+	public Result<List<NodeInstruction>> queueInstruction(@PathVariable String topic,
 			@RequestParam("nodeIds") Set<Long> nodeIds, Instruction input) {
 		input.setTopic(topic);
 		return queueInstruction(nodeIds, input);
@@ -549,7 +549,7 @@ public class NodeInstructionController {
 	@RequestMapping(value = "/exec/{topic}", method = RequestMethod.POST, params = "!nodeIds",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public DeferredResult<Result<NodeInstruction>> execInstruction(@PathVariable("topic") String topic,
+	public DeferredResult<Result<NodeInstruction>> execInstruction(@PathVariable String topic,
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
 			@RequestParam("nodeId") Long nodeId, Instruction input) {
 		input.setTopic(topic);
@@ -576,8 +576,7 @@ public class NodeInstructionController {
 	@RequestMapping(value = "/exec/{topic}", method = RequestMethod.POST,
 			consumes = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public DeferredResult<Result<NodeInstruction>> execInstructionBody(
-			@PathVariable("topic") String topic,
+	public DeferredResult<Result<NodeInstruction>> execInstructionBody(@PathVariable String topic,
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
 			@RequestBody NodeInstruction input) {
 		input.getInstruction().setTopic(topic);
@@ -628,8 +627,8 @@ public class NodeInstructionController {
 	@RequestMapping(value = "/exec/{topic}", method = RequestMethod.POST, params = "nodeIds",
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public DeferredResult<Result<List<NodeInstruction>>> execInstruction(
-			@PathVariable("topic") String topic, @RequestParam("nodeIds") Set<Long> nodeIds,
+	public DeferredResult<Result<List<NodeInstruction>>> execInstruction(@PathVariable String topic,
+			@RequestParam("nodeIds") Set<Long> nodeIds,
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs, Instruction input) {
 		input.setTopic(topic);
 		return execInstruction(nodeIds, maxWaitMs, input);

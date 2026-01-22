@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumMetadataController.java - Oct 3, 2014 2:13:51 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -50,7 +50,7 @@ import net.solarnetwork.domain.Result;
 
 /**
  * Controller for datum metadata actions.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -64,7 +64,7 @@ public class DatumMetadataController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumMetadataBiz
 	 *        the DatumMetadataBiz to use
 	 */
@@ -81,7 +81,7 @@ public class DatumMetadataController {
 
 	/**
 	 * Find all metadata for a node ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
@@ -103,7 +103,7 @@ public class DatumMetadataController {
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
 	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadataForNode(
-			@PathVariable("nodeId") Long nodeId,
+			@PathVariable Long nodeId,
 			@RequestParam(name = "sourceId", required = false) String sourceId,
 			DatumFilterCommand criteria) {
 		return success(findForNodeAndSource(nodeId, sourceId, criteria));
@@ -111,7 +111,7 @@ public class DatumMetadataController {
 
 	/**
 	 * Get metadata for a single node ID and source ID combination.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
@@ -139,8 +139,7 @@ public class DatumMetadataController {
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.GET)
 	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadataForSource(
-			@PathVariable("nodeId") Long nodeId, @PathVariable("sourceId") String sourceId,
-			DatumFilterCommand criteria) {
+			@PathVariable Long nodeId, @PathVariable String sourceId, DatumFilterCommand criteria) {
 		return success(findForNodeAndSource(nodeId, sourceId, criteria));
 	}
 

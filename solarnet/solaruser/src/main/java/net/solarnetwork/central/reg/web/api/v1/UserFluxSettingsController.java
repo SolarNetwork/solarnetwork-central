@@ -153,7 +153,7 @@ public class UserFluxSettingsController {
 	 */
 	@RequestMapping(value = "/agg/pub/settings/{configurationId}", method = RequestMethod.GET)
 	public Result<UserFluxAggregatePublishConfiguration> viewAggregatePublishConfiguration(
-			@PathVariable("configurationId") Long configurationId) {
+			@PathVariable Long configurationId) {
 		var result = userFluxBiz.aggregatePublishConfigurationForUser(getCurrentActorUserId(),
 				configurationId);
 		return success(result);
@@ -170,7 +170,7 @@ public class UserFluxSettingsController {
 	 */
 	@RequestMapping(value = "/agg/pub/settings/{configurationId}", method = RequestMethod.PUT)
 	public Result<UserFluxAggregatePublishConfiguration> updateAggregatePublishConfiguration(
-			@PathVariable("configurationId") Long configurationId,
+			@PathVariable Long configurationId,
 			@Valid @RequestBody UserFluxAggregatePublishConfigurationInput input) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), configurationId);
 		var result = userFluxBiz.saveAggregatePublishConfiguration(id, input);
@@ -186,7 +186,7 @@ public class UserFluxSettingsController {
 	 */
 	@RequestMapping(value = "/agg/pub/settings/{configurationId}", method = RequestMethod.DELETE)
 	public Result<UserFluxAggregatePublishConfiguration> deleteAggregatePublishConfiguration(
-			@PathVariable("configurationId") Long configurationId) {
+			@PathVariable Long configurationId) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), configurationId);
 		userFluxBiz.deleteAggregatePublishConfiguration(id);
 		return success();

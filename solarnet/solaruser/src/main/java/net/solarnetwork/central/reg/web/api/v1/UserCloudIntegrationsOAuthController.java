@@ -139,7 +139,7 @@ public class UserCloudIntegrationsOAuthController {
 	 */
 	@RequestMapping(value = "/integrations/{integrationId}/auth-info", method = RequestMethod.GET)
 	public Result<HttpRequestInfo> getOAuthCloudIntegrationAuthorizationInfo(
-			@PathVariable("integrationId") Long integrationId,
+			@PathVariable Long integrationId,
 			@RequestParam(value = "redirect_uri", required = false) String redirectUri, Locale locale) {
 		final UserCloudIntegrationsBiz biz = biz();
 
@@ -184,9 +184,8 @@ public class UserCloudIntegrationsOAuthController {
 	 * @return the token details
 	 */
 	@RequestMapping(value = "/integrations/{integrationId}/auth-token", method = RequestMethod.POST)
-	public Result<Map<String, ?>> getOAuthTokenForAuthCode(
-			@PathVariable("integrationId") Long integrationId, @RequestParam("code") String code,
-			@RequestParam("state") String state,
+	public Result<Map<String, ?>> getOAuthTokenForAuthCode(@PathVariable Long integrationId,
+			@RequestParam("code") String code, @RequestParam("state") String state,
 			@RequestParam(name = "redirect_uri", required = false) String redirectUri, Locale locale) {
 		final UserCloudIntegrationsBiz biz = biz();
 

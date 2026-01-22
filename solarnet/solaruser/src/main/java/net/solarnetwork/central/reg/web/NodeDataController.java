@@ -68,7 +68,7 @@ public class NodeDataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/{nodeId}/sources", method = RequestMethod.GET)
-	public Result<Set<String>> getAvailableSources(@PathVariable("nodeId") Long nodeId) {
+	public Result<Set<String>> getAvailableSources(@PathVariable Long nodeId) {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(nodeId);
 		Set<ObjectDatumStreamMetadataId> data = datumMetadataBiz.findDatumStreamMetadataIds(filter);

@@ -227,7 +227,7 @@ public class NodesController {
 	@RequestMapping(value = { "/u/sec/my-nodes/cert/{nodeId}", "/api/v1/sec/nodes/cert/{nodeId}" },
 			method = RequestMethod.GET)
 	@ResponseBody
-	public ResponseEntity<byte[]> viewCert(@PathVariable("nodeId") Long nodeId) {
+	public ResponseEntity<byte[]> viewCert(@PathVariable Long nodeId) {
 		UserNodeCertificate cert = userBiz.getUserNodeCertificate(SecurityUtils.getCurrentActorUserId(),
 				nodeId);
 		if ( cert == null ) {
@@ -261,7 +261,7 @@ public class NodesController {
 	@RequestMapping(value = { "/u/sec/my-nodes/cert/{nodeId}", "/api/v1/sec/nodes/cert/{nodeId}" },
 			method = RequestMethod.POST)
 	@ResponseBody
-	public UserNodeCertificate viewCert(@PathVariable("nodeId") Long nodeId,
+	public UserNodeCertificate viewCert(@PathVariable Long nodeId,
 			@RequestParam(value = "password") String password) {
 		UserNodeCertificate cert = userBiz.getUserNodeCertificate(SecurityUtils.getCurrentActorUserId(),
 				nodeId);
@@ -310,7 +310,7 @@ public class NodesController {
 			value = { "/u/sec/my-nodes/cert/renew/{nodeId}", "/api/v1/sec/nodes/cert/renew/{nodeId}" },
 			method = RequestMethod.POST)
 	@ResponseBody
-	public UserNodeCertificate renewCert(@PathVariable("nodeId") final Long nodeId,
+	public UserNodeCertificate renewCert(@PathVariable final Long nodeId,
 			@RequestParam("password") final String password) {
 		UserNode userNode = userBiz.getUserNode(SecurityUtils.getCurrentActorUserId(), nodeId);
 		if ( userNode == null ) {

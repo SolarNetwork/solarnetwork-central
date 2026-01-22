@@ -17,21 +17,15 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain.v311.test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.solarnetwork.flux.vernemq.webhook.support.JsonUtils.JSON_MAPPER;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.PublishRequest;
-import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link PublishRequest} class.
@@ -40,25 +34,42 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class PublishRequestTests extends TestSupport {
 
-  private ObjectMapper objectMapper;
+	@Test
+	public void parseFull() throws IOException {
+		PublishRequest req = JSON_MAPPER.readValue(classResourceAsBytes("auth_on_publish-01.json"),
+				PublishRequest.class);
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
+		// THEN
+		// @formatter:off
+		then(req)
+			.returns("clientid", from(PublishRequest::getClientId))
+			.returns("", from(PublishRequest::getMountpoint))
+			.returns("hello".getBytes(UTF_8), from(PublishRequest::getPayload))
+			.returns(Qos.AtLeastOnce, from(PublishRequest::getQos))
+			.returns(false, from(PublishRequest::getRetain))
+			.returns("a/b", from(PublishRequest::getTopic))
+			.returns("username", from(PublishRequest::getUsername))
+			;
+		// @formatter:on
+	}
 
-  @Test
-  public void parseFull() throws IOException {
-    PublishRequest req = objectMapper.readValue(classResourceAsBytes("auth_on_publish-01.json"),
-        PublishRequest.class);
-    assertThat("client_id", req.getClientId(), equalTo("clientid"));
-    assertThat("mountpoint", req.getMountpoint(), equalTo(""));
-    assertThat("payload", Arrays.equals(req.getPayload(), "hello".getBytes(StandardCharsets.UTF_8)),
-        equalTo(true));
-    assertThat("qos", req.getQos(), equalTo(Qos.AtLeastOnce));
-    assertThat("retain", req.getRetain(), equalTo(false));
-    assertThat("topic", req.getTopic(), equalTo("a/b"));
-    assertThat("username", req.getUsername(), equalTo("username"));
-  }
+	@Test
+	public void parseFull_v5() throws IOException {
+		PublishRequest req = JSON_MAPPER.readValue(classResourceAsBytes("auth_on_publish-v5-01.json"),
+				PublishRequest.class);
+
+		// THEN
+		// @formatter:off
+		then(req)
+			.returns("client-id", from(PublishRequest::getClientId))
+			.returns("", from(PublishRequest::getMountpoint))
+			.returns("message payload".getBytes(UTF_8), from(PublishRequest::getPayload))
+			.returns(Qos.AtLeastOnce, from(PublishRequest::getQos))
+			.returns(false, from(PublishRequest::getRetain))
+			.returns("some/topic", from(PublishRequest::getTopic))
+			.returns("username", from(PublishRequest::getUsername))
+			;
+		// @formatter:on
+	}
 
 }

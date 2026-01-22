@@ -52,53 +52,51 @@ import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
 @ExtendWith(MockitoExtension.class)
 public class SnTokenDetailsRowMapperTests extends TestSupport {
 
-  @Mock
-  private ResultSet resultSet;
+	@Mock
+	private ResultSet resultSet;
 
-  @Test
-  public void rowWithoutPolicy() throws SQLException {
-    // given
-    final Long userId = (long) (Math.random() * Double.MAX_VALUE);
-    given(resultSet.getLong(SnTokenDetailsRowMapper.DEFAULT_USER_ID_COL)).willReturn(userId);
+	@Test
+	public void rowWithoutPolicy() throws SQLException {
+		// given
+		final Long userId = (long) (Math.random() * Double.MAX_VALUE);
+		given(resultSet.getLong(SnTokenDetailsRowMapper.DEFAULT_USER_ID_COL)).willReturn(userId);
 
-    final String tokenType = "ReadNodeData";
-    given(resultSet.getString(SnTokenDetailsRowMapper.DEFAULT_TOKEN_TYPE_COL))
-        .willReturn(tokenType);
+		final String tokenType = "ReadNodeData";
+		given(resultSet.getString(SnTokenDetailsRowMapper.DEFAULT_TOKEN_TYPE_COL)).willReturn(tokenType);
 
-    given(resultSet.getString(SnTokenDetailsRowMapper.DEFAULT_POLICY_COL)).willReturn(null);
+		given(resultSet.getString(SnTokenDetailsRowMapper.DEFAULT_POLICY_COL)).willReturn(null);
 
-    final String tokenId = UUID.randomUUID().toString();
+		final String tokenId = UUID.randomUUID().toString();
 
-    // when
-    SnTokenDetails result = new SnTokenDetailsRowMapper(tokenId).mapRow(resultSet, 1);
+		// when
+		SnTokenDetails result = new SnTokenDetailsRowMapper(tokenId).mapRow(resultSet, 1);
 
-    // then
-    assertThat("Token ID", result.getTokenId(), equalTo(tokenId));
-    assertThat("User ID", result.getUserId(), equalTo(userId));
-    assertThat("Token type", result.getTokenType(), equalTo(tokenType));
-    assertThat("Policy", result.getPolicy(), nullValue());
-  }
+		// then
+		assertThat("Token ID", result.getTokenId(), equalTo(tokenId));
+		assertThat("User ID", result.getUserId(), equalTo(userId));
+		assertThat("Token type", result.getTokenType(), equalTo(tokenType));
+		assertThat("Policy", result.getPolicy(), nullValue());
+	}
 
-  @Test
-  public void rowWithPolicy() throws SQLException {
-    // given
-    final Long userId = (long) (Math.random() * Double.MAX_VALUE);
-    given(resultSet.getLong(SnTokenDetailsRowMapper.DEFAULT_USER_ID_COL)).willReturn(userId);
+	@Test
+	public void rowWithPolicy() throws SQLException {
+		// given
+		final Long userId = (long) (Math.random() * Double.MAX_VALUE);
+		given(resultSet.getLong(SnTokenDetailsRowMapper.DEFAULT_USER_ID_COL)).willReturn(userId);
 
-    final String tokenType = "ReadNodeData";
-    given(resultSet.getString(SnTokenDetailsRowMapper.DEFAULT_TOKEN_TYPE_COL))
-        .willReturn(tokenType);
+		final String tokenType = "ReadNodeData";
+		given(resultSet.getString(SnTokenDetailsRowMapper.DEFAULT_TOKEN_TYPE_COL)).willReturn(tokenType);
 
-    given(resultSet.getString(SnTokenDetailsRowMapper.DEFAULT_POLICY_COL))
-        .willReturn(classResourceAsString("security-policy-01.json", StandardCharsets.UTF_8));
+		given(resultSet.getString(SnTokenDetailsRowMapper.DEFAULT_POLICY_COL))
+				.willReturn(classResourceAsString("security-policy-01.json", StandardCharsets.UTF_8));
 
-    final String tokenId = UUID.randomUUID().toString();
+		final String tokenId = UUID.randomUUID().toString();
 
-    // when
-    SnTokenDetails result = new SnTokenDetailsRowMapper(tokenId).mapRow(resultSet, 1);
+		// when
+		SnTokenDetails result = new SnTokenDetailsRowMapper(tokenId).mapRow(resultSet, 1);
 
-    // THEN
-    // @formatter:off
+		// THEN
+	// @formatter:off
     then(result)
       .isNotNull()
       .returns(tokenId, from(SnTokenDetails::getTokenId))
@@ -111,5 +109,5 @@ public class SnTokenDetailsRowMapperTests extends TestSupport {
       .returns(Instant.ofEpochMilli(1544388330000L), from(SecurityPolicy::getNotAfter))
       ;
     // @formatter:on
-  }
+	}
 }

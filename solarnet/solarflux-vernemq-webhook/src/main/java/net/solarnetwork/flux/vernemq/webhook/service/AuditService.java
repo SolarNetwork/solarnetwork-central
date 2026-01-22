@@ -28,24 +28,24 @@ import net.solarnetwork.flux.vernemq.webhook.domain.Message;
  */
 public interface AuditService {
 
-  /**
-   * Audit the publication of a message by a node.
-   * 
-   * @param actor
-   *        the node actor
-   * @param nodeId
-   *        the node ID
-   * @param message
-   *        the message that is to be published
-   */
-  void auditPublishMessage(Actor actor, Long nodeId, String sourceId, Message message);
+	/**
+	 * Audit the publication of a message by a node.
+	 * 
+	 * @param actor
+	 *        the node actor
+	 * @param nodeId
+	 *        the node ID
+	 * @param message
+	 *        the message that is to be published
+	 */
+	void auditPublishMessage(Actor actor, Long nodeId, String sourceId, Message message);
 
-  /**
-   * Audit the deliver of a message.
-   * 
-   * @param message
-   *        the message being delivered
-   */
-  void auditDeliverMessage(Message message);
+	/**
+	 * Audit the deliver of a message.
+	 * 
+	 * @param message
+	 *        the message being delivered
+	 */
+	void auditDeliverMessage(Message message);
 
 }

@@ -18,10 +18,6 @@
 package net.solarnetwork.flux.vernemq.webhook.domain;
 
 import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -31,28 +27,31 @@ import net.solarnetwork.util.StringUtils;
  */
 public class TopicList implements ResponseTopics {
 
-  private final List<String> topics;
+	private final List<String> topics;
 
-  /**
-   * Constructor.
-   * 
-   * @param topics
-   *        the topics
-   */
-  @JsonCreator
-  public TopicList(List<String> topics) {
-    super();
-    this.topics = topics;
-  }
+	/**
+	 * Constructor.
+	 * 
+	 * @param topics
+	 *        the topics
+	 */
+	public TopicList(List<String> topics) {
+		super();
+		this.topics = topics;
+	}
 
-  @Override
-  public String toString() {
-    return (topics != null ? StringUtils.commaDelimitedStringFromCollection(topics) : "<<empty>>");
-  }
+	@Override
+	public String toString() {
+		return (topics != null ? StringUtils.commaDelimitedStringFromCollection(topics) : "<<empty>>");
+	}
 
-  @JsonValue
-  public List<String> getTopics() {
-    return topics;
-  }
+	/**
+	 * Get the topics.
+	 * 
+	 * @return the topics
+	 */
+	public List<String> getTopics() {
+		return topics;
+	}
 
 }

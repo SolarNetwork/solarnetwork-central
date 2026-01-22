@@ -72,7 +72,7 @@ Thus the canonical headers are `Host` and `X-SN-Date` and these must both be inc
 
 The final signature value must include an additional `Date=D` attribute, where `D`
 is a Unix epoch value, i.e. the number of **seconds** since 1 Jan, 1970. **Note** this is
-not specified in milliseconds, as is the default in programming languages like Java and 
+not specified in milliseconds, as is the default in programming languages like Java and
 JavaScript.
 
 An example MQTT password thus looks like this:
@@ -100,7 +100,7 @@ Date=1545069502,Signature=4d56e33d69300c163f414ee688e9771eabce45d5a425e480a8cc60
 This style of authentication is designed to be used by SolarNode devices posting data to SolarFlux.
 In this scenario, this application does not perform authentication. Instead it assumes the SolarNode
 has connected via TLS to a TLS-terminating proxy server that uses the node's X.509 certificate to
-authenticate the node. This application also assumes that that proxy server has verified that 
+authenticate the node. This application also assumes that that proxy server has verified that
 the MQTT Client ID used to connect is the _node ID_ as presented in the X.509 certificate.
 
 The `auth.nodeIpMask` [application property](#general-properties) should be configured to restrict
@@ -127,24 +127,92 @@ Gradle is used for building. Run the `build` task via `gradlew`:
 
 	$ ../gradlew build -x test
 
-The finished WAR file will be `build/libs/solarflux-vernemq-webook-X.war` where `X` is the
+The finished JAR file will be `build/libs/solarflux-vernemq-webook-X.jar` where `X` is the
 version number.
 
+## Native image
 
-# Running in Servlet Container
+A native image can be built if GraalVM 25+ is installed. The JVM location can be specified
+on the `GRAALVM_HOME` environment variable. Run the `nativeCompile` task to build the app:
 
-If the WAR is deployed into a servlet container (e.g. Tomcat) then a servlet
-context path of `/solarflux-vernemq-webhook` is used by default. Assuming the container is
-listening on port **8080**, to access the app from a browser you would visit
-http://localhost:8080/solarflux-vernemq-webhook/.
+```sh
+export GRAALVM_HOME=/opt/graalvm@25
+../gradlew nativeCompile
+```
+
+### Native image Springp profiles
+
+The Spring AOT process by default activates the `production,audit-datasource` profiles for the
+native image. You can customize this with the `aotProcessArgs` build property. For example:
+
+```
+# use development profile without query auditing in native build
+../gradlew nativeCompile -PaotProcessArgs=--spring.profiles.active=development
+```
+
+### Native image logging configuration
+
+The normal Spring profile-specific application configuration YAML files are supported, so be sure
+the appropriate resources are available during the build, e.g. `application-production.yml` by
+default or `application-development.yml` in the previous example.
+
+**Note** that the logging configuration is compiled statically into the native build, so the
+application configuration must also configure the desired final logging configuration. For example
+an `application-production.yml` file like this:
+
+```yaml
+logging:
+  config: logging-production.xml
+  file.name: /var/log/fluxhook/fluxhook.log
+```
+
+and `logging-production.xml` file like this:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+        <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+        <property name="LOG_FILE" value="${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}/}spring.log}"/>
+        <include resource="org/springframework/boot/logging/logback/file-appender.xml" />
+
+        <root level="INFO">
+            <appender-ref ref="FILE" />
+        </root>
+</configuration>
+```
+
+would log to a `/var/log/fluxhook/fluxhook.log` file. During the Spring AOT phase of the build this
+logging configuration will be activated, so the `/var/log/fluxhook` directory must be available and
+writable by the build user.
+
+### Native image build arguments
+
+You can provide Graal [build arguments](https://www.graalvm.org/latest/reference-manual/native-image/overview/Options/)
+as a comma-delimited list on a `NATIVE_BUILD_ARGS` environment variable or a `-PnativeBuildArgs` command line argument.
+You can also save the build arguments to a file (one argument per line) and include that with a `-PnativeBuildArgsFile`
+command line argument. By default an argument file named `native-build.args` is supported.
+
+For example:
+
+```sh
+# with environment variable
+export NATIVE_BUILD_ARGS=--enable-native-access=ALL-UNNAMED,-Ob
+../gradlew nativeCompile
+
+# with command line arg
+../gradlew nativeCompile -PnativeBuildArgs=--enable-native-access=ALL-UNNAMED,-Ob
+
+# with argument file
+../gradlew nativeCompile -PnativeBuildArgsFile=my-native-build.args
+```
 
 
-# Running Standalone
+# Running (JAR)
 
-The WAR file can be directly executed like this:
+The JAR file can be directly executed like this:
 
-	$ java -Dspring.profiles.active=development -jar build/libs/solarflux-vernemq-webhook-0.1.war
-	
+	$ java -Dspring.profiles.active=development -jar build/libs/solarflux-vernemq-webhook-0.1.jar
+
 This will start the web server on port **8080** by default. You can verify the
 app has started up using a browser, or from the command line like this:
 
@@ -155,17 +223,15 @@ in a container by passing a `server.contextPath` parameter, or change the port
 via a `server.port` parameter, like this:
 
 	$ java -Dserver.contextPath=/solarflux-vernemq-webhook -Dserver.port=8888 \
-	-Dspring.profiles.active=development -jar build/libs/solarflux-vernemq-webhook-0.1.war
+	-Dspring.profiles.active=development -jar build/libs/solarflux-vernemq-webhook-0.1.jar
 
 
 # Tweaking Environment Properties
 
-When running standalone, or deploying Tomcat in Eclipse, you can override
-application properties for the active profile by creating an `application-X.yml`
-file in the root of the project. For example when running the **development**
-profile, create a file named `application-development.yml`. Those settings
-will override any settings from the `src/main/resources/application.yml` file
-included in the app.
+You can override application properties for the active profile by creating an `application-X.yml`
+file in the root of the project. For example when running the **development** profile, create a file
+named `application-development.yml`. Those settings will override any settings from the
+`src/main/resources/application.yml` file included in the app.
 
 ## General properties
 
@@ -190,43 +256,22 @@ The following properties all start with a `spring.datasource.` prefix.
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `url` | `jdbc:postgresql://localhost:5496/solarnetwork` | The JDBC URL to use. |
+| `url` | `jdbc:postgresql://localhost/solarnetwork_unittest` | The JDBC URL to use. |
+| `username` | `solartest` | The JDBC username to use. |
+| `password` | `solartest` | The JDBC password to use. |
+
+### Development profile defaults
+
+The `development` profile by default uses the following `spring.datasource.*` settings:
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `url` | `jdbc:postgresql://localhost/solarnetwork` | The JDBC URL to use. |
 | `username` | `solarauth` | The JDBC username to use. |
 | `password` | `solarauth` | The JDBC password to use. |
 
 
-# Eclipse setup
 
-The project is configured as an [Eclipse IDE][eclipse] project, and can
-be run as a normal web project using a Tomcat server configuration. The 
-project has the following requirements:
-
- * [Eclipse JEE IDE][eclipse], version Photon or later.
- * The [Buildship][buildship] plugin, version 2.2 or later.
- * The [Checkstyle][checkstyle-eclipse] plugin, version 8.12 or later.
- * [Tomcat][tomcat], version 8.5 or later.
-
-The plugins can be found via the Eclipse Marketplace 
-(**Help > Eclipse Marketplace...**). You can install Tomcat anywhere,
-and then configure it under **Preferences > Server > Runtime Environments**.
-
-When launching Tomcat from within Eclipse, you must update the launch 
-configuration so the desired profile is set. Additionally it helps to define
-the working directory for Tomcat to be the root of the project. Both settings
-are controlled on the Tomcat launch configuration's **Arguments** tab. Add
-the following to the **VM arguments** field:
-
-	-Dspring.profiles.active=development
-	
-Then change the **Working directory** field to **Other** and enter
-
-	${workspace_loc:solarflux-vernemq-webhook}
-
-
-[buildship]: https://projects.eclipse.org/projects/tools.buildship
-[checkstyle-eclipse]: http://eclipse-cs.sourceforge.net
-[eclipse]: https://www.eclipse.org/downloads/packages/eclipse-ide-java-ee-developers/neon3
 [sn-auth-v2]: https://github.com/SolarNetwork/solarnetwork/wiki/SolarNet-API-authentication-scheme-V2
 [solarflux-upload]: https://github.com/SolarNetwork/solarnetwork-node/tree/develop/net.solarnetwork.node.upload.flux
-[tomcat]: https://tomcat.apache.org/download-80.cgi
 [vernemq]: https://vernemq.con

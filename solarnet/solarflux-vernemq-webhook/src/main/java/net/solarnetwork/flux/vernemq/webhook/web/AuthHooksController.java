@@ -42,47 +42,47 @@ import net.solarnetwork.flux.vernemq.webhook.service.AuthService;
 @RequestMapping(path = "/hook", method = RequestMethod.POST)
 public class AuthHooksController {
 
-  private final AuthService authService;
+	private final AuthService authService;
 
-  private static final Logger log = LoggerFactory.getLogger(AuthHooksController.class);
+	private static final Logger log = LoggerFactory.getLogger(AuthHooksController.class);
 
-  @Autowired
-  public AuthHooksController(AuthService authService) {
-    super();
-    this.authService = authService;
-  }
+	@Autowired
+	public AuthHooksController(AuthService authService) {
+		super();
+		this.authService = authService;
+	}
 
-  /**
-   * Authenticate on register hook.
-   * 
-   * @return map of properties
-   */
-  @RequestMapping(value = "", headers = "vernemq-hook=auth_on_register")
-  public Response authOnRegister(@RequestBody RegisterRequest request) {
-    if (log.isTraceEnabled()) {
-      log.trace("Register request: {}", JsonUtils.getJSONString(request, null));
-    }
-    return authService.authenticateRequest(request);
-  }
+	/**
+	 * Authenticate on register hook.
+	 * 
+	 * @return map of properties
+	 */
+	@RequestMapping(value = "", headers = "vernemq-hook=auth_on_register")
+	public Response authOnRegister(@RequestBody RegisterRequest request) {
+		if ( log.isTraceEnabled() ) {
+			log.trace("Register request: {}", JsonUtils.getJSONString(request, null));
+		}
+		return authService.authenticateRequest(request);
+	}
 
-  /**
-   * Authorize on publish hook.
-   * 
-   * @return map of properties
-   */
-  @RequestMapping(value = "", headers = "vernemq-hook=auth_on_publish")
-  public Response authOnPublish(@RequestBody PublishRequest request) {
-    return authService.authorizeRequest(request);
-  }
+	/**
+	 * Authorize on publish hook.
+	 * 
+	 * @return map of properties
+	 */
+	@RequestMapping(value = "", headers = "vernemq-hook=auth_on_publish")
+	public Response authOnPublish(@RequestBody PublishRequest request) {
+		return authService.authorizeRequest(request);
+	}
 
-  /**
-   * Authorize on subscribe hook.
-   * 
-   * @return map of properties
-   */
-  @RequestMapping(value = "", headers = "vernemq-hook=auth_on_subscribe")
-  public Response authOnSubscribe(@RequestBody SubscribeRequest request) {
-    return authService.authorizeRequest(request);
-  }
+	/**
+	 * Authorize on subscribe hook.
+	 * 
+	 * @return map of properties
+	 */
+	@RequestMapping(value = "", headers = "vernemq-hook=auth_on_subscribe")
+	public Response authOnSubscribe(@RequestBody SubscribeRequest request) {
+		return authService.authorizeRequest(request);
+	}
 
 }

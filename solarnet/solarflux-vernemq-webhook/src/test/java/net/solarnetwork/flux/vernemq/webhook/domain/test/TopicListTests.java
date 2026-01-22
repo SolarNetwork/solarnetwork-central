@@ -18,19 +18,14 @@
 package net.solarnetwork.flux.vernemq.webhook.domain.test;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
+import static net.solarnetwork.flux.vernemq.webhook.support.JsonUtils.JSON_MAPPER;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
-
 import java.io.IOException;
 import java.util.Arrays;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicList;
-import net.solarnetwork.flux.vernemq.webhook.test.JsonUtils;
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * Test cases for the {@link TopicList} class.
@@ -39,20 +34,13 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class TopicListTests extends TestSupport {
 
-  private ObjectMapper objectMapper;
+	@Test
+	public void toJsonFull() {
+		TopicList list = new TopicList(Arrays.asList("foo", "bar"));
+		String json = JSON_MAPPER.writeValueAsString(list);
+		log.debug("Topic settings full JSON: {}", json);
 
-  @BeforeEach
-  public void setup() {
-    objectMapper = JsonUtils.defaultObjectMapper();
-  }
-
-  @Test
-  public void toJsonFull() {
-    TopicList list = new TopicList(Arrays.asList("foo", "bar"));
-    String json = objectMapper.writeValueAsString(list);
-    log.debug("Topic settings full JSON: {}", json);
-
-    // @formatter:off
+	// @formatter:off
     then(json)
         .asInstanceOf(JSON)
         .as("Result is JSON array")
@@ -61,15 +49,15 @@ public class TopicListTests extends TestSupport {
         .containsExactly("foo", "bar")
         ;
     // @formatter:on
-  }
+	}
 
-  @Test
-  public void fromJson() throws IOException {
-    String json = "[\"bim\",\"bam\"]";
+	@Test
+	public void fromJson() throws IOException {
+		String json = "[\"bim\",\"bam\"]";
 
-    TopicList list = objectMapper.readValue(json, TopicList.class);
+		TopicList list = JSON_MAPPER.readValue(json, TopicList.class);
 
-    // @formatter:off
+	// @formatter:off
     then(list)
         .isNotNull()
         .extracting(TopicList::getTopics, list(String.class))
@@ -77,6 +65,6 @@ public class TopicListTests extends TestSupport {
         .containsExactly("bim", "bam")
         ;
     // @formatter:on
-  }
+	}
 
 }

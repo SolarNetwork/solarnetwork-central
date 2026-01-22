@@ -24,9 +24,7 @@ import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.util.Base64;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -34,11 +32,12 @@ import org.mockito.Captor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.test.web.servlet.MockMvc;
-
+import net.solarnetwork.flux.vernemq.webhook.config.JsonConfig;
 import net.solarnetwork.flux.vernemq.webhook.domain.HookType;
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;
 import net.solarnetwork.flux.vernemq.webhook.service.AuditService;
@@ -55,26 +54,27 @@ import net.solarnetwork.flux.vernemq.webhook.web.NonAuthHooksController;
 @ExtendWith(MockitoExtension.class)
 @SpringJUnitConfig
 @WebMvcTest(NonAuthHooksController.class)
+@Import(JsonConfig.class)
 public class NonAuthHooksControllerTests extends TestSupport {
 
-  private static final String OK_RESPONSE_JSON = "{\"result\":\"ok\"}";
+	private static final String OK_RESPONSE_JSON = "{\"result\":\"ok\"}";
 
-  @Autowired
-  private MockMvc mvc;
+	@Autowired
+	private MockMvc mvc;
 
-  @MockitoBean
-  private AuditService authService;
+	@MockitoBean
+	private AuditService authService;
 
-  @Captor
-  private ArgumentCaptor<Message> messageCaptor;
+	@Captor
+	private ArgumentCaptor<Message> messageCaptor;
 
-  @Test
-  public void onDeliver() throws Exception {
-    // GIVEN
+	@Test
+	public void onDeliver() throws Exception {
+		// GIVEN
 
-    // WHEN
+		// WHEN
 
-    // @formatter:off
+	// @formatter:off
     mvc.perform(
         post("/hook")
             .contentType(MediaType.APPLICATION_JSON)
@@ -85,10 +85,10 @@ public class NonAuthHooksControllerTests extends TestSupport {
         .andExpect(content().json(OK_RESPONSE_JSON));
     // @formatter:on
 
-    // THEN
-    then(authService).should().auditDeliverMessage(messageCaptor.capture());
+		// THEN
+		then(authService).should().auditDeliverMessage(messageCaptor.capture());
 
-    // @formatter:off
+	// @formatter:off
     and.then(messageCaptor.getValue())
       .as("Topic from JSON")
       .returns("a/b", from(Message::getTopic))
@@ -96,6 +96,6 @@ public class NonAuthHooksControllerTests extends TestSupport {
       .returns(Base64.getDecoder().decode("aGVsbG8="), from(Message::getPayload))
       ;
     // @formatter:on
-  }
+	}
 
 }

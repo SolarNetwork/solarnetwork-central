@@ -85,10 +85,10 @@ public class DatumAuxiliaryController {
 	 * @return empty response
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/{type}/{node}/{date}/{source}", method = RequestMethod.GET)
+	@RequestMapping(value = "/{type}/{nodeId}/{date}/{sourceId}", method = RequestMethod.GET)
 	public Result<GeneralNodeDatumAuxiliary> viewNodeDatumAuxiliary(
-			@PathVariable("type") DatumAuxiliaryType type, @PathVariable("node") Long nodeId,
-			@PathVariable("date") Instant date, @PathVariable("source") String sourceId) {
+			@PathVariable DatumAuxiliaryType type, @PathVariable Long nodeId, @PathVariable Instant date,
+			@PathVariable String sourceId) {
 		GeneralNodeDatumAuxiliary aux = datumAuxiliaryBiz.getGeneralNodeDatumAuxiliary(
 				new GeneralNodeDatumAuxiliaryPK(nodeId, date, sourceId, type));
 		return success(aux);
@@ -208,10 +208,9 @@ public class DatumAuxiliaryController {
 	 * @return empty response
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/{type}/{node}/{date}/{source}", method = RequestMethod.DELETE)
-	public Result<Void> removeNodeDatumAuxiliary(@PathVariable("type") DatumAuxiliaryType type,
-			@PathVariable("node") Long nodeId, @PathVariable("date") Instant date,
-			@PathVariable("source") String sourceId) {
+	@RequestMapping(value = "/{type}/{nodeId}/{date}/{sourceId}", method = RequestMethod.DELETE)
+	public Result<Void> removeNodeDatumAuxiliary(@PathVariable DatumAuxiliaryType type,
+			@PathVariable Long nodeId, @PathVariable Instant date, @PathVariable String sourceId) {
 		datumAuxiliaryBiz.removeGeneralNodeDatumAuxiliary(
 				new GeneralNodeDatumAuxiliaryPK(nodeId, date, sourceId, type));
 		return success();

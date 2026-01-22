@@ -44,39 +44,39 @@ import net.solarnetwork.flux.vernemq.webhook.domain.Actor;
 @EnableCaching
 public class CacheConfig {
 
-  /**
-   * A cache name to use for lists of {@link Actor} objects.
-   */
-  public static final String ACTOR_CACHE_NAME = "Actor";
+	/**
+	 * A cache name to use for lists of {@link Actor} objects.
+	 */
+	public static final String ACTOR_CACHE_NAME = "Actor";
 
-  @Autowired(required = false)
-  private javax.cache.CacheManager cacheManager;
+	@Autowired(required = false)
+	private javax.cache.CacheManager cacheManager;
 
-  @Value("${cache.actor.ttl:900}")
-  private int actorCacheSeconds = 900;
+	@Value("${cache.actor.ttl:900}")
+	private int actorCacheSeconds = 900;
 
-  /**
-   * Get the actor cache.
-   * 
-   * @return the actor cache
-   */
-  @Bean
-  @Qualifier("actor")
-  @Profile("!default")
-  public Cache<String, Actor> actorCache() {
-    if (cacheManager == null) {
-      return null;
-    }
-    return cacheManager.createCache(ACTOR_CACHE_NAME, actorCacheConfiguration());
-  }
+	/**
+	 * Get the actor cache.
+	 * 
+	 * @return the actor cache
+	 */
+	@Bean
+	@Qualifier("actor")
+	@Profile("!default")
+	public Cache<String, Actor> actorCache() {
+		if ( cacheManager == null ) {
+			return null;
+		}
+		return cacheManager.createCache(ACTOR_CACHE_NAME, actorCacheConfiguration());
+	}
 
-  // CHECKSTYLE IGNORE LineLength FOR NEXT 1 LINE
-  private javax.cache.configuration.Configuration<String, Actor> actorCacheConfiguration() {
-    MutableConfiguration<String, Actor> conf = new MutableConfiguration<>();
-    conf.setExpiryPolicyFactory(
-        CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.SECONDS, actorCacheSeconds)));
-    conf.setStoreByValue(false);
-    return conf;
-  }
+	// CHECKSTYLE IGNORE LineLength FOR NEXT 1 LINE
+	private javax.cache.configuration.Configuration<String, Actor> actorCacheConfiguration() {
+		MutableConfiguration<String, Actor> conf = new MutableConfiguration<>();
+		conf.setExpiryPolicyFactory(
+				CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.SECONDS, actorCacheSeconds)));
+		conf.setStoreByValue(false);
+		return conf;
+	}
 
 }

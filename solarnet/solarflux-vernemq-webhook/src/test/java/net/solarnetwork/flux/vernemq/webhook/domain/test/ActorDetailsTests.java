@@ -44,66 +44,65 @@ import net.solarnetwork.flux.vernemq.webhook.domain.ActorType;
  */
 public class ActorDetailsTests {
 
-  @Test
-  public void allowedNodeIdsNoPolicyNoNodes() {
-    ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 1L, null, null);
-    assertThat("No allowed nodes", actor.getAllowedNodeIds(), allOf(notNullValue(), hasSize(0)));
-  }
+	@Test
+	public void allowedNodeIdsNoPolicyNoNodes() {
+		ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 1L, null, null);
+		assertThat("No allowed nodes", actor.getAllowedNodeIds(), allOf(notNullValue(), hasSize(0)));
+	}
 
-  @Test
-  public void allowedNodeIdsWithPolicyNoNodes() {
-    SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(singleton(1L)).build();
-    ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 2L, policy, null);
-    assertThat("Policy node rejected", actor.getAllowedNodeIds(),
-        allOf(notNullValue(), hasSize(0)));
-  }
+	@Test
+	public void allowedNodeIdsWithPolicyNoNodes() {
+		SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(singleton(1L)).build();
+		ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 2L, policy, null);
+		assertThat("Policy node rejected", actor.getAllowedNodeIds(), allOf(notNullValue(), hasSize(0)));
+	}
 
-  @Test
-  public void allowedNodeIdsNoPolicyWithNodes() {
-    ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 1L, null, singleton(2L));
-    assertThat("Manual nodes", actor.getAllowedNodeIds(), allOf(notNullValue(), contains(2L)));
-  }
+	@Test
+	public void allowedNodeIdsNoPolicyWithNodes() {
+		ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 1L, null, singleton(2L));
+		assertThat("Manual nodes", actor.getAllowedNodeIds(), allOf(notNullValue(), contains(2L)));
+	}
 
-  @Test
-  public void allowedNodeIdsWithPolicyEmptyWithNodes() {
-    SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(emptySet()).build();
-    ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 1L, policy, singleton(2L));
-    assertThat("Manual nodes", actor.getAllowedNodeIds(), allOf(notNullValue(), contains(2L)));
-  }
+	@Test
+	public void allowedNodeIdsWithPolicyEmptyWithNodes() {
+		SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(emptySet()).build();
+		ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 1L, policy, singleton(2L));
+		assertThat("Manual nodes", actor.getAllowedNodeIds(), allOf(notNullValue(), contains(2L)));
+	}
 
-  @Test
-  public void allowedNodeIdsWithPolicyWithNodesMismatch() {
-    SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(singleton(1L)).build();
-    ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 2L, policy, singleton(3L));
-    assertThat("Policy node restricted by user node", actor.getAllowedNodeIds(),
-        allOf(notNullValue(), hasSize(0)));
-  }
+	@Test
+	public void allowedNodeIdsWithPolicyWithNodesMismatch() {
+		SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(singleton(1L)).build();
+		ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 2L, policy, singleton(3L));
+		assertThat("Policy node restricted by user node", actor.getAllowedNodeIds(),
+				allOf(notNullValue(), hasSize(0)));
+	}
 
-  @Test
-  public void allowedNodeIdsWithPolicyWithNodesMismatchSome() {
-    SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-        .withNodeIds(new HashSet<>(asList(1L, 2L, 3L))).build();
-    ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 4L, policy,
-        new HashSet<>(asList(1L, 3L)));
-    assertThat("Policy nodes restricted by user nodes", actor.getAllowedNodeIds(),
-        allOf(notNullValue(), containsInAnyOrder(1L, 3L)));
-  }
+	@Test
+	public void allowedNodeIdsWithPolicyWithNodesMismatchSome() {
+		SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(new HashSet<>(asList(1L, 2L, 3L))).build();
+		ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 4L, policy,
+				new HashSet<>(asList(1L, 3L)));
+		assertThat("Policy nodes restricted by user nodes", actor.getAllowedNodeIds(),
+				allOf(notNullValue(), containsInAnyOrder(1L, 3L)));
+	}
 
-  @Test
-  public void allowedNodeIdsWithPolicyWithNodesMatch() {
-    SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(singleton(1L)).build();
-    ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 2L, policy, singleton(1L));
-    assertThat("Policy node matches user node", actor.getAllowedNodeIds(),
-        allOf(notNullValue(), contains(1L)));
-  }
+	@Test
+	public void allowedNodeIdsWithPolicyWithNodesMatch() {
+		SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(singleton(1L)).build();
+		ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 2L, policy, singleton(1L));
+		assertThat("Policy node matches user node", actor.getAllowedNodeIds(),
+				allOf(notNullValue(), contains(1L)));
+	}
 
-  @Test
-  public void allowedNodeIdsWithPolicyWithNodesMatchMulti() {
-    SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-        .withNodeIds(new HashSet<>(asList(1L, 2L, 3L))).build();
-    ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 4L, policy,
-        new HashSet<>(asList(1L, 2L, 3L)));
-    assertThat("Policy nodes match user nodes", actor.getAllowedNodeIds(),
-        allOf(notNullValue(), containsInAnyOrder(1L, 2L, 3L)));
-  }
+	@Test
+	public void allowedNodeIdsWithPolicyWithNodesMatchMulti() {
+		SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(new HashSet<>(asList(1L, 2L, 3L))).build();
+		ActorDetails actor = new ActorDetails("foo", ActorType.Node, true, 4L, policy,
+				new HashSet<>(asList(1L, 2L, 3L)));
+		assertThat("Policy nodes match user nodes", actor.getAllowedNodeIds(),
+				allOf(notNullValue(), containsInAnyOrder(1L, 2L, 3L)));
+	}
 }

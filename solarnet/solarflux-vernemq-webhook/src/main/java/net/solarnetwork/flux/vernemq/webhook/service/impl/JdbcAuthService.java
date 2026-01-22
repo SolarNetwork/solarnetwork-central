@@ -53,11 +53,13 @@ import net.solarnetwork.flux.vernemq.webhook.service.AuthorizationEvaluator;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
- * {@link AuthService} implementation that uses JDBC to authenticate and authorize requests.
+ * {@link AuthService} implementation that uses JDBC to authenticate and
+ * authorize requests.
  *
  * <p>
- * Two different authorization paths are performed here, one for subscription and the other for
- * publication events. See {@link #authorizeRequest(SubscribeRequest)} and
+ * Two different authorization paths are performed here, one for subscription
+ * and the other for publication events. See
+ * {@link #authorizeRequest(SubscribeRequest)} and
  * {@link #authorizeRequest(PublishRequest)} for details.
  * </p>
  *
@@ -66,290 +68,291 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  */
 public class JdbcAuthService implements AuthService {
 
-  /**
-   * The password token for the signature value.
-   *
-   * <p>
-   * The signature must be provided as a hex-encoded value.
-   * </p>
-   */
-  public static final String SIGNATURE_PASSWORD_TOKEN = "Signature";
+	/**
+	 * The password token for the signature value.
+	 *
+	 * <p>
+	 * The signature must be provided as a hex-encoded value.
+	 * </p>
+	 */
+	public static final String SIGNATURE_PASSWORD_TOKEN = "Signature";
 
-  /**
-   * The password token for the request date value.
-   *
-   * <p>
-   * The date must be provided as the number of milliseconds since the epoch.
-   * </p>
-   */
-  public static final String DATE_PASSWORD_TOKEN = "Date";
+	/**
+	 * The password token for the request date value.
+	 *
+	 * <p>
+	 * The date must be provided as the number of milliseconds since the epoch.
+	 * </p>
+	 */
+	public static final String DATE_PASSWORD_TOKEN = "Date";
 
-  /**
-   * The default value for the {@code snHost} property.
-   */
-  public static final String DEFAULT_SN_HOST = "data.solarnetwork.net";
+	/**
+	 * The default value for the {@code snHost} property.
+	 */
+	public static final String DEFAULT_SN_HOST = "data.solarnetwork.net";
 
-  /**
-   * The default value for the {@code snHost} property.
-   */
-  public static final String DEFAULT_SN_PATH = "/solarflux/auth";
+	/**
+	 * The default value for the {@code snHost} property.
+	 */
+	public static final String DEFAULT_SN_PATH = "/solarflux/auth";
 
-  // CHECKSTYLE OFF: LineLength
+	// CHECKSTYLE OFF: LineLength
 
-  /**
-   * The default value for the {@code authenticateCall} property.
-   */
-  public static final String DEFAULT_AUTHENTICATE_CALL = "SELECT user_id,token_type,jpolicy FROM solaruser.snws2_find_verified_token_details(?,?,?,?,?)";
+	/**
+	 * The default value for the {@code authenticateCall} property.
+	 */
+	public static final String DEFAULT_AUTHENTICATE_CALL = "SELECT user_id,token_type,jpolicy FROM solaruser.snws2_find_verified_token_details(?,?,?,?,?)";
 
-  /**
-   * The default value for the {@code authorizeNodeCall} property.
-   */
-  public static final String DEFAULT_AUTHORIZE_NODE_CALL = "SELECT user_id,'Node' AS token_type,NULL AS jpolicy,ARRAY[node_id] AS node_ids FROM solaruser.user_node WHERE node_id = ?";
+	/**
+	 * The default value for the {@code authorizeNodeCall} property.
+	 */
+	public static final String DEFAULT_AUTHORIZE_NODE_CALL = "SELECT user_id,'Node' AS token_type,NULL AS jpolicy,ARRAY[node_id] AS node_ids FROM solaruser.user_node WHERE node_id = ?";
 
-  /**
-   * The default value for the {@code authorizeCall} property.
-   */
-  public static final String DEFAULT_AUTHORIZE_CALL = "SELECT user_id,token_type,jpolicy,node_ids FROM solaruser.user_auth_token_node_ids WHERE auth_token = ?";
+	/**
+	 * The default value for the {@code authorizeCall} property.
+	 */
+	public static final String DEFAULT_AUTHORIZE_CALL = "SELECT user_id,token_type,jpolicy,node_ids FROM solaruser.user_auth_token_node_ids WHERE auth_token = ?";
 
-  // CHECKSTYLE ON: LineLength
+	// CHECKSTYLE ON: LineLength
 
-  /**
-   * The default value for the {@code maxDateSkew} property.
-   */
-  public static final long DEFAULT_MAX_DATE_SKEW = 15 * 60 * 1000L;
+	/**
+	 * The default value for the {@code maxDateSkew} property.
+	 */
+	public static final long DEFAULT_MAX_DATE_SKEW = 15 * 60 * 1000L;
 
-  /**
-   * The default value for the {@code publishUsername} property.
-   */
-  public static final String DEFAULT_PUBLISH_USERNAME = "solarnode";
+	/**
+	 * The default value for the {@code publishUsername} property.
+	 */
+	public static final String DEFAULT_PUBLISH_USERNAME = "solarnode";
 
-  /**
-   * The default value for the {@code directTokenSecretRegex} property.
-   *
-   * <p>
-   * This pattern matches the RFC 1924 alphabet used by SolarNetwork when generating tokens.
-   * </p>
-   *
-   * @since 1.1
-   */
-  public static final Pattern DEFAULT_DIRECT_TOKEN_SECRET_REGEX = Pattern
-      .compile("[0-9A-Za-z!#$%&()*+;<=>?@^_`{|}~-]{16,}");
+	/**
+	 * The default value for the {@code directTokenSecretRegex} property.
+	 *
+	 * <p>
+	 * This pattern matches the RFC 1924 alphabet used by SolarNetwork when
+	 * generating tokens.
+	 * </p>
+	 *
+	 * @since 1.1
+	 */
+	public static final Pattern DEFAULT_DIRECT_TOKEN_SECRET_REGEX = Pattern
+			.compile("[0-9A-Za-z!#$%&()*+;<=>?@^_`{|}~-]{16,}");
 
-  private static final Logger log = LoggerFactory.getLogger(JdbcAuthService.class);
+	private static final Logger log = LoggerFactory.getLogger(JdbcAuthService.class);
 
-  private final JdbcOperations jdbcOps;
-  private final AuthorizationEvaluator authEvaluator;
-  private final Pattern directTokenSecretRegex;
-  private final AuditService auditService;
-  private String authenticateCall = DEFAULT_AUTHENTICATE_CALL;
-  private String authorizeNodeCall = DEFAULT_AUTHORIZE_NODE_CALL;
-  private String authorizeCall = DEFAULT_AUTHORIZE_CALL;
-  private String snHost = DEFAULT_SN_HOST;
-  private String snPath = DEFAULT_SN_PATH;
-  private long maxDateSkew = DEFAULT_MAX_DATE_SKEW;
-  private boolean forceCleanSession = false;
-  private String publishUsername = DEFAULT_PUBLISH_USERNAME;
-  private Cache<String, Actor> actorCache;
-  private Cidr4 ipMask = null;
-  private boolean requireTokenClientIdPrefix = true;
-  private boolean allowDirectTokenAuthentication = false;
+	private final JdbcOperations jdbcOps;
+	private final AuthorizationEvaluator authEvaluator;
+	private final Pattern directTokenSecretRegex;
+	private final AuditService auditService;
+	private String authenticateCall = DEFAULT_AUTHENTICATE_CALL;
+	private String authorizeNodeCall = DEFAULT_AUTHORIZE_NODE_CALL;
+	private String authorizeCall = DEFAULT_AUTHORIZE_CALL;
+	private String snHost = DEFAULT_SN_HOST;
+	private String snPath = DEFAULT_SN_PATH;
+	private long maxDateSkew = DEFAULT_MAX_DATE_SKEW;
+	private boolean forceCleanSession = false;
+	private String publishUsername = DEFAULT_PUBLISH_USERNAME;
+	private Cache<String, Actor> actorCache;
+	private Cidr4 ipMask = null;
+	private boolean requireTokenClientIdPrefix = true;
+	private boolean allowDirectTokenAuthentication = false;
 
-  /**
-   * Constructor.
-   *
-   * @param jdbcOps
-   *        the JDBC API
-   * @param authEvaluator
-   *        the authorization evaluator to use
-   */
-  public JdbcAuthService(JdbcOperations jdbcOps, AuthorizationEvaluator authEvaluator) {
-    this(jdbcOps, authEvaluator, new NoOpAuditService());
-  }
+	/**
+	 * Constructor.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC API
+	 * @param authEvaluator
+	 *        the authorization evaluator to use
+	 */
+	public JdbcAuthService(JdbcOperations jdbcOps, AuthorizationEvaluator authEvaluator) {
+		this(jdbcOps, authEvaluator, new NoOpAuditService());
+	}
 
-  /**
-   * Constructor.
-   *
-   * @param jdbcOps
-   *        the JDBC API
-   * @param authEvaluator
-   *        the authorization evaluator to use
-   * @param auditService
-   *        the audit service to use
-   * @since 1.2
-   */
-  public JdbcAuthService(JdbcOperations jdbcOps, AuthorizationEvaluator authEvaluator,
-      AuditService auditService) {
-    this(jdbcOps, authEvaluator, auditService, DEFAULT_DIRECT_TOKEN_SECRET_REGEX);
-  }
+	/**
+	 * Constructor.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC API
+	 * @param authEvaluator
+	 *        the authorization evaluator to use
+	 * @param auditService
+	 *        the audit service to use
+	 * @since 1.2
+	 */
+	public JdbcAuthService(JdbcOperations jdbcOps, AuthorizationEvaluator authEvaluator,
+			AuditService auditService) {
+		this(jdbcOps, authEvaluator, auditService, DEFAULT_DIRECT_TOKEN_SECRET_REGEX);
+	}
 
-  /**
-   * Constructor.
-   *
-   * @param jdbcOps
-   *        the JDBC API
-   * @param authEvaluator
-   *        the authorization evaluator to use
-   * @param auditService
-   *        the audit service to use
-   * @param directTokenSecretRegex
-   *        the regular expression that matches direct token secrets
-   */
-  public JdbcAuthService(JdbcOperations jdbcOps, AuthorizationEvaluator authEvaluator,
-      AuditService auditService, Pattern directTokenSecretRegex) {
-    super();
-    assert jdbcOps != null && authEvaluator != null && auditService != null
-        && directTokenSecretRegex != null;
-    this.jdbcOps = jdbcOps;
-    this.authEvaluator = authEvaluator;
-    this.auditService = auditService;
-    this.directTokenSecretRegex = directTokenSecretRegex;
-  }
+	/**
+	 * Constructor.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC API
+	 * @param authEvaluator
+	 *        the authorization evaluator to use
+	 * @param auditService
+	 *        the audit service to use
+	 * @param directTokenSecretRegex
+	 *        the regular expression that matches direct token secrets
+	 */
+	public JdbcAuthService(JdbcOperations jdbcOps, AuthorizationEvaluator authEvaluator,
+			AuditService auditService, Pattern directTokenSecretRegex) {
+		super();
+		assert jdbcOps != null && authEvaluator != null && auditService != null
+				&& directTokenSecretRegex != null;
+		this.jdbcOps = jdbcOps;
+		this.authEvaluator = authEvaluator;
+		this.auditService = auditService;
+		this.directTokenSecretRegex = directTokenSecretRegex;
+	}
 
-  private boolean isPeerAddressValid(RegisterRequest request) {
-    if (ipMask == null) {
-      return true;
-    }
-    String peerAddress = request.getPeerAddress();
-    if (peerAddress == null) {
-      return false;
-    }
-    try {
-      return ipMask.isInRange(peerAddress, true);
-    } catch (IllegalArgumentException e) {
-      return false;
-    }
-  }
+	private boolean isPeerAddressValid(RegisterRequest request) {
+		if ( ipMask == null ) {
+			return true;
+		}
+		String peerAddress = request.getPeerAddress();
+		if ( peerAddress == null ) {
+			return false;
+		}
+		try {
+			return ipMask.isInRange(peerAddress, true);
+		} catch ( IllegalArgumentException e ) {
+			return false;
+		}
+	}
 
-  private boolean isClientIdValidForTokenAuthentication(RegisterRequest request) {
-    if (!requireTokenClientIdPrefix) {
-      // don't care
-      return true;
-    }
-    if (request == null) {
-      return false;
-    }
-    String tokenId = request.getUsername();
-    String clientId = request.getClientId();
-    if (tokenId == null || tokenId.isEmpty() || clientId == null || clientId.isEmpty()) {
-      return false;
-    }
-    return clientId.startsWith(tokenId);
-  }
+	private boolean isClientIdValidForTokenAuthentication(RegisterRequest request) {
+		if ( !requireTokenClientIdPrefix ) {
+			// don't care
+			return true;
+		}
+		if ( request == null ) {
+			return false;
+		}
+		String tokenId = request.getUsername();
+		String clientId = request.getClientId();
+		if ( tokenId == null || tokenId.isEmpty() || clientId == null || clientId.isEmpty() ) {
+			return false;
+		}
+		return clientId.startsWith(tokenId);
+	}
 
-  private Response authorizeNodeRequest(RegisterRequest request) {
-    if (!isPeerAddressValid(request)) {
-      AUDIT_LOG.info("Access denied to node: peer address {} not allowed",
-          request.getPeerAddress());
-      return Response.NEXT;
-    }
+	private Response authorizeNodeRequest(RegisterRequest request) {
+		if ( !isPeerAddressValid(request) ) {
+			AUDIT_LOG.info("Access denied to node: peer address {} not allowed",
+					request.getPeerAddress());
+			return Response.NEXT;
+		}
 
-    Long nodeId;
-    try {
-      nodeId = Long.valueOf(request.getClientId());
-    } catch (NumberFormatException e) {
-      return Response.NEXT;
-    }
+		Long nodeId;
+		try {
+			nodeId = Long.valueOf(request.getClientId());
+		} catch ( NumberFormatException e ) {
+			return Response.NEXT;
+		}
 
-    Actor actor = actorForNodeId(nodeId);
-    if (actor == null) {
-      AUDIT_LOG.info("Access denied to node [{}]: not found", nodeId);
-      return Response.NEXT;
-    }
+		Actor actor = actorForNodeId(nodeId);
+		if ( actor == null ) {
+			AUDIT_LOG.info("Access denied to node [{}]: not found", nodeId);
+			return Response.NEXT;
+		}
 
-    AUDIT_LOG.info("Authorized node [{}]", nodeId);
-    if (forceCleanSession && (request.getCleanSession() == null || !request.getCleanSession())) {
-      return new Response(RegisterModifiers.builder().withCleanSession(true).build());
-    }
-    return Response.OK;
-  }
+		AUDIT_LOG.info("Authorized node [{}]", nodeId);
+		if ( forceCleanSession && (request.getCleanSession() == null || !request.getCleanSession()) ) {
+			return new Response(RegisterModifiers.builder().withCleanSession(true).build());
+		}
+		return Response.OK;
+	}
 
-  @Override
-  public Response authenticateRequest(RegisterRequest request) {
-    final String username = request.getUsername();
-    if (username == null || username.isEmpty()) {
-      return Response.NEXT;
-    }
+	@Override
+	public Response authenticateRequest(RegisterRequest request) {
+		final String username = request.getUsername();
+		if ( username == null || username.isEmpty() ) {
+			return Response.NEXT;
+		}
 
-    if (publishUsername.equalsIgnoreCase(username)) {
-      // NOTE: we assume that node authentication has already been performed externally,
-      //       e.g. via X.509 certificate; we are simply authorizing based on the existence
-      //       of the provided node ID here
-      return authorizeNodeRequest(request);
-    }
+		if ( publishUsername.equalsIgnoreCase(username) ) {
+			// NOTE: we assume that node authentication has already been performed externally,
+			//       e.g. via X.509 certificate; we are simply authorizing based on the existence
+			//       of the provided node ID here
+			return authorizeNodeRequest(request);
+		}
 
-    if (!isClientIdValidForTokenAuthentication(request)) {
-      AUDIT_LOG.info("Access denied to [{}]: invalid client ID [{}]", username,
-          request.getClientId());
-      return Response.NEXT;
-    }
+		if ( !isClientIdValidForTokenAuthentication(request) ) {
+			AUDIT_LOG.info("Access denied to [{}]: invalid client ID [{}]", username,
+					request.getClientId());
+			return Response.NEXT;
+		}
 
-    final Map<String, String> pwTokens;
-    if (allowDirectTokenAuthentication && request.getPassword() != null
-        && directTokenSecretRegex.matcher(request.getPassword()).matches()) {
-      pwTokens = signTokenCredentials(username, request.getPassword());
-    } else {
-      pwTokens = delimitedStringToMap(request.getPassword(), ",", "=");
-    }
-    if (pwTokens == null || !(pwTokens.containsKey(DATE_PASSWORD_TOKEN)
-        && pwTokens.containsKey(SIGNATURE_PASSWORD_TOKEN))) {
-      return Response.NEXT;
-    }
+		final Map<String, String> pwTokens;
+		if ( allowDirectTokenAuthentication && request.getPassword() != null
+				&& directTokenSecretRegex.matcher(request.getPassword()).matches() ) {
+			pwTokens = signTokenCredentials(username, request.getPassword());
+		} else {
+			pwTokens = delimitedStringToMap(request.getPassword(), ",", "=");
+		}
+		if ( pwTokens == null || !(pwTokens.containsKey(DATE_PASSWORD_TOKEN)
+				&& pwTokens.containsKey(SIGNATURE_PASSWORD_TOKEN)) ) {
+			return Response.NEXT;
+		}
 
-    final long reqDate;
-    try {
-      reqDate = Long.parseLong(pwTokens.get(DATE_PASSWORD_TOKEN)) * 1000L;
-    } catch (NumberFormatException e) {
-      return new Response(
-          "Invalid Date component [" + pwTokens.get(DATE_PASSWORD_TOKEN) + "]: " + e.getMessage());
-    }
+		final long reqDate;
+		try {
+			reqDate = Long.parseLong(pwTokens.get(DATE_PASSWORD_TOKEN)) * 1000L;
+		} catch ( NumberFormatException e ) {
+			return new Response("Invalid Date component [" + pwTokens.get(DATE_PASSWORD_TOKEN) + "]: "
+					+ e.getMessage());
+		}
 
-    final long reqDateSkew = Math.abs(System.currentTimeMillis() - reqDate);
-    if (maxDateSkew >= 0 && reqDateSkew > maxDateSkew) {
-      AUDIT_LOG.info("Access denied to [{}]: date {} skew {} > {} maximum", username, reqDate,
-          reqDateSkew, maxDateSkew);
-      return Response.NEXT;
-    }
+		final long reqDateSkew = Math.abs(System.currentTimeMillis() - reqDate);
+		if ( maxDateSkew >= 0 && reqDateSkew > maxDateSkew ) {
+			AUDIT_LOG.info("Access denied to [{}]: date {} skew {} > {} maximum", username, reqDate,
+					reqDateSkew, maxDateSkew);
+			return Response.NEXT;
+		}
 
-    final String sig = pwTokens.get(SIGNATURE_PASSWORD_TOKEN);
-    if (sig.isEmpty()) {
-      return Response.NEXT;
-    }
+		final String sig = pwTokens.get(SIGNATURE_PASSWORD_TOKEN);
+		if ( sig.isEmpty() ) {
+			return Response.NEXT;
+		}
 
-    log.debug("Authenticating [{}] @ {}{} with [{}]", username, snHost, snPath,
-        pwTokens.get(SIGNATURE_PASSWORD_TOKEN));
-    List<SnTokenDetails> results = jdbcOps.query(con -> {
-      PreparedStatement stmt = con.prepareStatement(authenticateCall, ResultSet.TYPE_FORWARD_ONLY,
-          ResultSet.CONCUR_READ_ONLY);
-      stmt.setString(1, username);
-      stmt.setTimestamp(2, new Timestamp(reqDate));
-      stmt.setString(3, snHost);
-      stmt.setString(4, snPath);
-      stmt.setString(5, sig);
-      return stmt;
-    }, new SnTokenDetailsRowMapper(username));
+		log.debug("Authenticating [{}] @ {}{} with [{}]", username, snHost, snPath,
+				pwTokens.get(SIGNATURE_PASSWORD_TOKEN));
+		List<SnTokenDetails> results = jdbcOps.query(con -> {
+			PreparedStatement stmt = con.prepareStatement(authenticateCall, ResultSet.TYPE_FORWARD_ONLY,
+					ResultSet.CONCUR_READ_ONLY);
+			stmt.setString(1, username);
+			stmt.setTimestamp(2, new Timestamp(reqDate));
+			stmt.setString(3, snHost);
+			stmt.setString(4, snPath);
+			stmt.setString(5, sig);
+			return stmt;
+		}, new SnTokenDetailsRowMapper(username));
 
-    if (results.isEmpty()) {
-      return Response.NEXT;
-    }
+		if ( results.isEmpty() ) {
+			return Response.NEXT;
+		}
 
-    // verify not expired
-    SnTokenDetails details = results.getFirst();
-    if (details.getPolicy() != null && !details.getPolicy().isValidAt(now())) {
-      return Response.NEXT;
-    }
+		// verify not expired
+		SnTokenDetails details = results.getFirst();
+		if ( details.getPolicy() != null && !details.getPolicy().isValidAt(now()) ) {
+			return Response.NEXT;
+		}
 
-    // request is authenticated
-    AUDIT_LOG.info("Authenticated [{}] client [{}] @ {}{}", username, request.getClientId(), snHost,
-        snPath);
-    if (forceCleanSession && (request.getCleanSession() == null || !request.getCleanSession())) {
-      return new Response(RegisterModifiers.builder().withCleanSession(true).build());
-    }
-    return Response.OK;
-  }
+		// request is authenticated
+		AUDIT_LOG.info("Authenticated [{}] client [{}] @ {}{}", username, request.getClientId(), snHost,
+				snPath);
+		if ( forceCleanSession && (request.getCleanSession() == null || !request.getCleanSession()) ) {
+			return new Response(RegisterModifiers.builder().withCleanSession(true).build());
+		}
+		return Response.OK;
+	}
 
-  private Map<String, String> signTokenCredentials(final String tokenId, final String tokenSecret) {
-    final Instant now = now().truncatedTo(ChronoUnit.SECONDS);
-    // @formatter:off
+	private Map<String, String> signTokenCredentials(final String tokenId, final String tokenSecret) {
+		final Instant now = now().truncatedTo(ChronoUnit.SECONDS);
+	// @formatter:off
     final String sig = new Snws2AuthorizationBuilder(tokenId)
         .date(now)
         .useSnDate(true)
@@ -357,119 +360,119 @@ public class JdbcAuthService implements AuthService {
         .path(snPath)
         .build(tokenSecret);
     // @formatter:on
-    final Map<String, String> result = delimitedStringToMap(sig, ",", "=");
-    result.put(DATE_PASSWORD_TOKEN, Long.toString(now.getEpochSecond()));
-    return result;
-  }
+		final Map<String, String> result = delimitedStringToMap(sig, ",", "=");
+		result.put(DATE_PASSWORD_TOKEN, Long.toString(now.getEpochSecond()));
+		return result;
+	}
 
-  private Actor actorForTokenId(String tokenId) {
-    final Cache<String, Actor> cache = getActorCache();
-    final String actorCacheKey = cacheKeyForTokenId(tokenId);
-    if (cache != null && actorCacheKey != null) {
-      Actor actor = cache.get(actorCacheKey);
-      if (actor != null) {
-        return actor;
-      }
-    }
-    List<Actor> results = jdbcOps.query(con -> {
-      PreparedStatement stmt = con.prepareStatement(authorizeCall, ResultSet.TYPE_FORWARD_ONLY,
-          ResultSet.CONCUR_READ_ONLY);
-      stmt.setString(1, tokenId);
-      return stmt;
-    }, new ActorDetailsRowMapper(tokenId));
+	private Actor actorForTokenId(String tokenId) {
+		final Cache<String, Actor> cache = getActorCache();
+		final String actorCacheKey = cacheKeyForTokenId(tokenId);
+		if ( cache != null && actorCacheKey != null ) {
+			Actor actor = cache.get(actorCacheKey);
+			if ( actor != null ) {
+				return actor;
+			}
+		}
+		List<Actor> results = jdbcOps.query(con -> {
+			PreparedStatement stmt = con.prepareStatement(authorizeCall, ResultSet.TYPE_FORWARD_ONLY,
+					ResultSet.CONCUR_READ_ONLY);
+			stmt.setString(1, tokenId);
+			return stmt;
+		}, new ActorDetailsRowMapper(tokenId));
 
-    if (!results.isEmpty()) {
-      Actor actor = results.getFirst();
-      if (cache != null && actorCacheKey != null) {
-        cache.put(actorCacheKey, actor);
-      }
-      return actor;
-    }
-    return null;
-  }
+		if ( !results.isEmpty() ) {
+			Actor actor = results.getFirst();
+			if ( cache != null && actorCacheKey != null ) {
+				cache.put(actorCacheKey, actor);
+			}
+			return actor;
+		}
+		return null;
+	}
 
-  private Actor actorForNodeId(Long nodeId) {
-    final Cache<String, Actor> cache = getActorCache();
-    final String actorCacheKey = cacheKeyForNode(nodeId);
-    if (cache != null && actorCacheKey != null) {
-      Actor actor = cache.get(actorCacheKey);
-      if (actor != null) {
-        return actor;
-      }
-    }
-    List<Actor> results = jdbcOps.query(con -> {
-      PreparedStatement stmt = con.prepareStatement(authorizeNodeCall, ResultSet.TYPE_FORWARD_ONLY,
-          ResultSet.CONCUR_READ_ONLY);
-      stmt.setLong(1, nodeId);
-      return stmt;
-    }, new ActorDetailsRowMapper(null));
+	private Actor actorForNodeId(Long nodeId) {
+		final Cache<String, Actor> cache = getActorCache();
+		final String actorCacheKey = cacheKeyForNode(nodeId);
+		if ( cache != null && actorCacheKey != null ) {
+			Actor actor = cache.get(actorCacheKey);
+			if ( actor != null ) {
+				return actor;
+			}
+		}
+		List<Actor> results = jdbcOps.query(con -> {
+			PreparedStatement stmt = con.prepareStatement(authorizeNodeCall, ResultSet.TYPE_FORWARD_ONLY,
+					ResultSet.CONCUR_READ_ONLY);
+			stmt.setLong(1, nodeId);
+			return stmt;
+		}, new ActorDetailsRowMapper(null));
 
-    if (!results.isEmpty()) {
-      Actor actor = results.getFirst();
-      if (cache != null && actorCacheKey != null) {
-        cache.put(actorCacheKey, actor);
-      }
-      return actor;
-    }
-    return null;
-  }
+		if ( !results.isEmpty() ) {
+			Actor actor = results.getFirst();
+			if ( cache != null && actorCacheKey != null ) {
+				cache.put(actorCacheKey, actor);
+			}
+			return actor;
+		}
+		return null;
+	}
 
-  private String cacheKeyForNode(Long nodeId) {
-    if (nodeId == null) {
-      return null;
-    }
-    return "Node-" + nodeId;
-  }
+	private String cacheKeyForNode(Long nodeId) {
+		if ( nodeId == null ) {
+			return null;
+		}
+		return "Node-" + nodeId;
+	}
 
-  private String cacheKeyForTokenId(String tokenId) {
-    if (tokenId == null) {
-      return null;
-    }
-    return "Token-" + tokenId;
-  }
+	private String cacheKeyForTokenId(String tokenId) {
+		if ( tokenId == null ) {
+			return null;
+		}
+		return "Token-" + tokenId;
+	}
 
-  /**
-   * Authorize a publish request.
-   *
-   * <p>
-   * This implementation assumes the {@code clientId} is the node ID. The {@code username} must be
-   * {@literal solarnode} (case insensitive).
-   * </p>
-   */
-  @Override
-  public Response authorizeRequest(PublishRequest request) {
-    final String username = request.getUsername();
-    if (!publishUsername.equalsIgnoreCase(username)) {
-      return Response.NEXT;
-    }
-    final String clientId = request.getClientId();
-    final Long nodeId;
-    try {
-      nodeId = Long.valueOf(clientId);
-    } catch (NumberFormatException e) {
-      return Response.NEXT;
-    }
+	/**
+	 * Authorize a publish request.
+	 *
+	 * <p>
+	 * This implementation assumes the {@code clientId} is the node ID. The
+	 * {@code username} must be {@literal solarnode} (case insensitive).
+	 * </p>
+	 */
+	@Override
+	public Response authorizeRequest(PublishRequest request) {
+		final String username = request.getUsername();
+		if ( !publishUsername.equalsIgnoreCase(username) ) {
+			return Response.NEXT;
+		}
+		final String clientId = request.getClientId();
+		final Long nodeId;
+		try {
+			nodeId = Long.valueOf(clientId);
+		} catch ( NumberFormatException e ) {
+			return Response.NEXT;
+		}
 
-    log.debug("Authorizing publish request for node {}", request);
-    Actor actor = actorForNodeId(nodeId);
-    // verify not expired
-    if ((actor == null) || (actor.getPolicy() != null && !actor.getPolicy().isValidAt(now()))) {
-      return Response.NEXT;
-    }
+		log.debug("Authorizing publish request for node {}", request);
+		Actor actor = actorForNodeId(nodeId);
+		// verify not expired
+		if ( (actor == null) || (actor.getPolicy() != null && !actor.getPolicy().isValidAt(now())) ) {
+			return Response.NEXT;
+		}
 
-    Message result = authEvaluator.evaluatePublish(actor, request);
-    if (result == null) {
-      return Response.NEXT;
-    }
+		Message result = authEvaluator.evaluatePublish(actor, request);
+		if ( result == null ) {
+			return Response.NEXT;
+		}
 
-    auditService.auditPublishMessage(actor, nodeId, authEvaluator.sourceIdForPublish(actor, result),
-        result);
+		auditService.auditPublishMessage(actor, nodeId, authEvaluator.sourceIdForPublish(actor, result),
+				result);
 
-    if (result == request) {
-      return Response.OK;
-    }
+		if ( result == request ) {
+			return Response.OK;
+		}
 
-    // @formatter:off
+	// @formatter:off
     PublishModifiers mods = PublishModifiers.builder()
         .withTopic(result.getTopic())
         .withQos(result.getQos())
@@ -477,404 +480,425 @@ public class JdbcAuthService implements AuthService {
         .withRetain(result.getRetain())
         .build();
     // @formatter:on
-    return new Response(mods);
-  }
+		return new Response(mods);
+	}
 
-  /**
-   * Authorize a subscribe request.
-   *
-   * <p>
-   * This implementation assumes the {@code username} is a SolarNetwork security token ID. Topics
-   * will be restricted to only use valid for the associated token.
-   * </p>
-   */
-  @Override
-  public Response authorizeRequest(SubscribeRequest request) {
-    final String tokenId = request.getUsername();
-    if (tokenId == null || tokenId.isEmpty()) {
-      return Response.NEXT;
-    }
+	/**
+	 * Authorize a subscribe request.
+	 *
+	 * <p>
+	 * This implementation assumes the {@code username} is a SolarNetwork
+	 * security token ID. Topics will be restricted to only use valid for the
+	 * associated token.
+	 * </p>
+	 */
+	@Override
+	public Response authorizeRequest(SubscribeRequest request) {
+		final String tokenId = request.getUsername();
+		if ( tokenId == null || tokenId.isEmpty() ) {
+			return Response.NEXT;
+		}
 
-    log.debug("Authorizing subscribe request {}", request);
-    Actor actor = actorForTokenId(tokenId);
-    // verify not expired
-    if ((actor == null) || (actor.getPolicy() != null && !actor.getPolicy().isValidAt(now()))) {
-      return Response.NEXT;
-    }
+		log.debug("Authorizing subscribe request {}", request);
+		Actor actor = actorForTokenId(tokenId);
+		// verify not expired
+		if ( (actor == null) || (actor.getPolicy() != null && !actor.getPolicy().isValidAt(now())) ) {
+			return Response.NEXT;
+		}
 
-    TopicSettings result = authEvaluator.evaluateSubscribe(actor, request.getTopics());
-    if (result == null) {
-      return Response.NEXT;
-    } else if (result == request.getTopics()) {
-      return Response.OK;
-    }
+		TopicSettings result = authEvaluator.evaluateSubscribe(actor, request.getTopics());
+		if ( result == null ) {
+			return Response.NEXT;
+		} else if ( result == request.getTopics() ) {
+			return Response.OK;
+		}
 
-    return new Response(result);
-  }
+		return new Response(result);
+	}
 
-  /**
-   * Get the configured authenticate JDBC call.
-   *
-   * @return the authenticate JDBC call; defaults to {@link #DEFAULT_AUTHENTICATE_CALL}
-   */
-  public String getAuthenticateCall() {
-    return authenticateCall;
-  }
+	/**
+	 * Get the configured authenticate JDBC call.
+	 *
+	 * @return the authenticate JDBC call; defaults to
+	 *         {@link #DEFAULT_AUTHENTICATE_CALL}
+	 */
+	public String getAuthenticateCall() {
+		return authenticateCall;
+	}
 
-  /**
-   * Set the authenticate JDBC call to use.
-   *
-   * <p>
-   * This JDBC statement is used to authenticate requests. This JDBC statement is expected to take
-   * the following parameters:
-   * </p>
-   *
-   * <ol>
-   * <li><b>token_id</b> ({@code String}) - the SolarNetwork security token ID</li>
-   * <li><b>req_date</b> ({@link Timestamp}) - the request date</li>
-   * <li><b>host</b> ({@code String}) - the SolarNetwork host</li>
-   * <li><b>path</b> ({@code String}) - the request path</li>
-   * <li><b>signature</b> ({@code String}) - the hex-encoded SolarNetwork token signature</li>
-   * </ol>
-   *
-   * <p>
-   * If the credentials match, a result set with the following columns is expected to be returned:
-   * </p>
-   *
-   * <ol>
-   * <li><b>user_id</b> ({@code Long}) - the SolarNetwork user ID that owns the token</li>
-   * <li><b>token_type</b> ({@code String}) - the SolarNetwork token type, e.g.
-   * {@literal ReadNodeData}</li>
-   * <li><b>jpolicy</b> ({@code String}) - the SolarNetwork security policy associated with the
-   * token</li>
-   * </ol>
-   *
-   * <p>
-   * If the credentials do not match, an empty result set is expected.
-   * </p>
-   *
-   * @param jdbcCall
-   *        the JDBC call
-   * @throws IllegalArgumentException
-   *         if {@code jdbcCall} is {@literal null}
-   */
-  public void setAuthenticateCall(String jdbcCall) {
-    if (jdbcCall == null) {
-      throw new IllegalArgumentException("jdbcCall must not be null");
-    }
-    this.authenticateCall = jdbcCall;
-  }
+	/**
+	 * Set the authenticate JDBC call to use.
+	 *
+	 * <p>
+	 * This JDBC statement is used to authenticate requests. This JDBC statement
+	 * is expected to take the following parameters:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li><b>token_id</b> ({@code String}) - the SolarNetwork security token
+	 * ID</li>
+	 * <li><b>req_date</b> ({@link Timestamp}) - the request date</li>
+	 * <li><b>host</b> ({@code String}) - the SolarNetwork host</li>
+	 * <li><b>path</b> ({@code String}) - the request path</li>
+	 * <li><b>signature</b> ({@code String}) - the hex-encoded SolarNetwork
+	 * token signature</li>
+	 * </ol>
+	 *
+	 * <p>
+	 * If the credentials match, a result set with the following columns is
+	 * expected to be returned:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li><b>user_id</b> ({@code Long}) - the SolarNetwork user ID that owns
+	 * the token</li>
+	 * <li><b>token_type</b> ({@code String}) - the SolarNetwork token type,
+	 * e.g. {@literal ReadNodeData}</li>
+	 * <li><b>jpolicy</b> ({@code String}) - the SolarNetwork security policy
+	 * associated with the token</li>
+	 * </ol>
+	 *
+	 * <p>
+	 * If the credentials do not match, an empty result set is expected.
+	 * </p>
+	 *
+	 * @param jdbcCall
+	 *        the JDBC call
+	 * @throws IllegalArgumentException
+	 *         if {@code jdbcCall} is {@literal null}
+	 */
+	public void setAuthenticateCall(String jdbcCall) {
+		if ( jdbcCall == null ) {
+			throw new IllegalArgumentException("jdbcCall must not be null");
+		}
+		this.authenticateCall = jdbcCall;
+	}
 
-  /**
-   * Get the authorization JDBC call to use.
-   *
-   * @return the JDBC call; defaults to {@link #DEFAULT_AUTHORIZE_CALL}
-   */
-  public String getAuthorizeCall() {
-    return authorizeCall;
-  }
+	/**
+	 * Get the authorization JDBC call to use.
+	 *
+	 * @return the JDBC call; defaults to {@link #DEFAULT_AUTHORIZE_CALL}
+	 */
+	public String getAuthorizeCall() {
+		return authorizeCall;
+	}
 
-  /**
-   * Set the authorization JDBC call to use.
-   *
-   * <p>
-   * This JDBC statement is used to authorize publish/subscribe requests. This JDBC statement is
-   * expected to take the following parameters:
-   * </p>
-   *
-   * <ol>
-   * <li><b>token_id</b> ({@code String}) - the SolarNetwork security token ID</li>
-   * </ol>
-   *
-   * <p>
-   * A result set with the following columns is expected to be returned:
-   * </p>
-   *
-   * <ol>
-   * <li><b>user_id</b> ({@code Long}) - the SolarNetwork user ID that owns the token</li>
-   * <li><b>token_type</b> ({@code String}) - the SolarNetwork token type, e.g.
-   * {@literal ReadNodeData}</li>
-   * <li><b>jpolicy</b> ({@code String}) - the SolarNetwork security policy associated with the
-   * token</li>
-   * <li><b>node_ids</b> ({@code Long[]}) - an array of SolarNode IDs valid for this actor</li>
-   * </ol>
-   *
-   * <p>
-   * If no token is available for {@code token_id}, an empty result set is expected.
-   * </p>
-   *
-   * @param jdbcCall
-   *        the JDBC call
-   * @throws IllegalArgumentException
-   *         if {@code jdbcCall} is {@literal null}
-   */
-  public void setAuthorizeCall(String jdbcCall) {
-    if (jdbcCall == null) {
-      throw new IllegalArgumentException("jdbcCall must not be null");
-    }
-    this.authorizeCall = jdbcCall;
-  }
+	/**
+	 * Set the authorization JDBC call to use.
+	 *
+	 * <p>
+	 * This JDBC statement is used to authorize publish/subscribe requests. This
+	 * JDBC statement is expected to take the following parameters:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li><b>token_id</b> ({@code String}) - the SolarNetwork security token
+	 * ID</li>
+	 * </ol>
+	 *
+	 * <p>
+	 * A result set with the following columns is expected to be returned:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li><b>user_id</b> ({@code Long}) - the SolarNetwork user ID that owns
+	 * the token</li>
+	 * <li><b>token_type</b> ({@code String}) - the SolarNetwork token type,
+	 * e.g. {@literal ReadNodeData}</li>
+	 * <li><b>jpolicy</b> ({@code String}) - the SolarNetwork security policy
+	 * associated with the token</li>
+	 * <li><b>node_ids</b> ({@code Long[]}) - an array of SolarNode IDs valid
+	 * for this actor</li>
+	 * </ol>
+	 *
+	 * <p>
+	 * If no token is available for {@code token_id}, an empty result set is
+	 * expected.
+	 * </p>
+	 *
+	 * @param jdbcCall
+	 *        the JDBC call
+	 * @throws IllegalArgumentException
+	 *         if {@code jdbcCall} is {@literal null}
+	 */
+	public void setAuthorizeCall(String jdbcCall) {
+		if ( jdbcCall == null ) {
+			throw new IllegalArgumentException("jdbcCall must not be null");
+		}
+		this.authorizeCall = jdbcCall;
+	}
 
-  /**
-   * Get the configured SolarNetwork host.
-   *
-   * @return the host; defaults to {@link #DEFAULT_SN_HOST}
-   */
-  public String getSnHost() {
-    return snHost;
-  }
+	/**
+	 * Get the configured SolarNetwork host.
+	 *
+	 * @return the host; defaults to {@link #DEFAULT_SN_HOST}
+	 */
+	public String getSnHost() {
+		return snHost;
+	}
 
-  /**
-   * Set the SolarNetwork host to use.
-   *
-   * @param snHost
-   *        the host
-   * @throws IllegalArgumentException
-   *         if {@code snHost} is {@literal null}
-   */
-  public void setSnHost(String snHost) {
-    if (snHost == null) {
-      throw new IllegalArgumentException("snHost must not be null");
-    }
-    this.snHost = snHost;
-  }
+	/**
+	 * Set the SolarNetwork host to use.
+	 *
+	 * @param snHost
+	 *        the host
+	 * @throws IllegalArgumentException
+	 *         if {@code snHost} is {@literal null}
+	 */
+	public void setSnHost(String snHost) {
+		if ( snHost == null ) {
+			throw new IllegalArgumentException("snHost must not be null");
+		}
+		this.snHost = snHost;
+	}
 
-  /**
-   * Get the configured SolarNetwork path.
-   *
-   * @return the path; defaults to {@link #DEFAULT_SN_PATH}
-   */
-  public String getSnPath() {
-    return snPath;
-  }
+	/**
+	 * Get the configured SolarNetwork path.
+	 *
+	 * @return the path; defaults to {@link #DEFAULT_SN_PATH}
+	 */
+	public String getSnPath() {
+		return snPath;
+	}
 
-  /**
-   * Set the SolarNetwork path to use.
-   *
-   * @param snPath
-   *        the path
-   * @throws IllegalArgumentException
-   *         if {@code snPath} is {@literal null}
-   */
-  public void setSnPath(String snPath) {
-    if (snPath == null) {
-      throw new IllegalArgumentException("snPath must not be null");
-    }
-    this.snPath = snPath;
-  }
+	/**
+	 * Set the SolarNetwork path to use.
+	 *
+	 * @param snPath
+	 *        the path
+	 * @throws IllegalArgumentException
+	 *         if {@code snPath} is {@literal null}
+	 */
+	public void setSnPath(String snPath) {
+		if ( snPath == null ) {
+			throw new IllegalArgumentException("snPath must not be null");
+		}
+		this.snPath = snPath;
+	}
 
-  /**
-   * Get the maximum date skew allowed during authentication.
-   *
-   * @return the maximum date skew, in milliseconds; defaults to {@link #DEFAULT_MAX_DATE_SKEW}
-   */
-  public long getMaxDateSkew() {
-    return maxDateSkew;
-  }
+	/**
+	 * Get the maximum date skew allowed during authentication.
+	 *
+	 * @return the maximum date skew, in milliseconds; defaults to
+	 *         {@link #DEFAULT_MAX_DATE_SKEW}
+	 */
+	public long getMaxDateSkew() {
+		return maxDateSkew;
+	}
 
-  /**
-   * Set the maximum date skew allowed during authentication.
-   *
-   * @param maxDateSkew
-   *        the maximum date skew, in milliseconds
-   */
-  public void setMaxDateSkew(long maxDateSkew) {
-    this.maxDateSkew = maxDateSkew;
-  }
+	/**
+	 * Set the maximum date skew allowed during authentication.
+	 *
+	 * @param maxDateSkew
+	 *        the maximum date skew, in milliseconds
+	 */
+	public void setMaxDateSkew(long maxDateSkew) {
+		this.maxDateSkew = maxDateSkew;
+	}
 
-  /**
-   * Get the flag that forces the "clean session" setting on authentication.
-   *
-   * @return {@literal true} to force the "clean session" setting; defaults to {@literal false}
-   */
-  public boolean isForceCleanSession() {
-    return forceCleanSession;
-  }
+	/**
+	 * Get the flag that forces the "clean session" setting on authentication.
+	 *
+	 * @return {@literal true} to force the "clean session" setting; defaults to
+	 *         {@literal false}
+	 */
+	public boolean isForceCleanSession() {
+		return forceCleanSession;
+	}
 
-  /**
-   * Toggle the flag that forces the "clean session" setting on authentication.
-   *
-   * @param forceCleanSession
-   *        {@literal true} to force the "clean session" setting
-   */
-  public void setForceCleanSession(boolean forceCleanSession) {
-    this.forceCleanSession = forceCleanSession;
-  }
+	/**
+	 * Toggle the flag that forces the "clean session" setting on
+	 * authentication.
+	 *
+	 * @param forceCleanSession
+	 *        {@literal true} to force the "clean session" setting
+	 */
+	public void setForceCleanSession(boolean forceCleanSession) {
+		this.forceCleanSession = forceCleanSession;
+	}
 
-  /**
-   * Get the configured authorize node JDBC call.
-   *
-   * @return the JDBC call; defaults to {@link #DEFAULT_AUTHORIZE_NODE_CALL}
-   */
-  public String getAuthorizeNodeCall() {
-    return authorizeNodeCall;
-  }
+	/**
+	 * Get the configured authorize node JDBC call.
+	 *
+	 * @return the JDBC call; defaults to {@link #DEFAULT_AUTHORIZE_NODE_CALL}
+	 */
+	public String getAuthorizeNodeCall() {
+		return authorizeNodeCall;
+	}
 
-  /**
-   * Set the authorize node JDBC call to use.
-   *
-   * <p>
-   * This JDBC statement is used to authorize node requests. This JDBC statement is expected to take
-   * the following parameters:
-   * </p>
-   *
-   * <ol>
-   * <li><b>node_Id</b> ({@code Long}) - the SolarNetwork node ID</li>
-   * </ol>
-   *
-   * <p>
-   * A result set with the following columns is expected to be returned:
-   * </p>
-   *
-   * <ol>
-   * <li><b>user_id</b> ({@code Long}) - the SolarNetwork user ID that owns the token</li>
-   * <li><b>token_type</b> ({@code String}) - the SolarNetwork token type, e.g. {@literal Node}</li>
-   * <li><b>jpolicy</b> ({@code String}) - the SolarNetwork security policy associated with the
-   * node</li>
-   * <li><b>node_ids</b> ({@code Long[]}) - the node ID, as an array
-   * </ol>
-   *
-   * <p>
-   * If the given {@code nodeId} is not found, an empty result set is expected.
-   * </p>
-   *
-   * @param jdbcCall
-   *        the JDBC call
-   * @throws IllegalArgumentException
-   *         if {@code jdbcCall} is {@literal null}
-   */
-  public void setAuthorizeNodeCall(String jdbcCall) {
-    if (jdbcCall == null) {
-      throw new IllegalArgumentException("jdbcCall must not be null");
-    }
-    this.authorizeNodeCall = jdbcCall;
-  }
+	/**
+	 * Set the authorize node JDBC call to use.
+	 *
+	 * <p>
+	 * This JDBC statement is used to authorize node requests. This JDBC
+	 * statement is expected to take the following parameters:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li><b>node_Id</b> ({@code Long}) - the SolarNetwork node ID</li>
+	 * </ol>
+	 *
+	 * <p>
+	 * A result set with the following columns is expected to be returned:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li><b>user_id</b> ({@code Long}) - the SolarNetwork user ID that owns
+	 * the token</li>
+	 * <li><b>token_type</b> ({@code String}) - the SolarNetwork token type,
+	 * e.g. {@literal Node}</li>
+	 * <li><b>jpolicy</b> ({@code String}) - the SolarNetwork security policy
+	 * associated with the node</li>
+	 * <li><b>node_ids</b> ({@code Long[]}) - the node ID, as an array
+	 * </ol>
+	 *
+	 * <p>
+	 * If the given {@code nodeId} is not found, an empty result set is
+	 * expected.
+	 * </p>
+	 *
+	 * @param jdbcCall
+	 *        the JDBC call
+	 * @throws IllegalArgumentException
+	 *         if {@code jdbcCall} is {@literal null}
+	 */
+	public void setAuthorizeNodeCall(String jdbcCall) {
+		if ( jdbcCall == null ) {
+			throw new IllegalArgumentException("jdbcCall must not be null");
+		}
+		this.authorizeNodeCall = jdbcCall;
+	}
 
-  /**
-   * Get the publish username.
-   *
-   * <p>
-   * This username is required when publishing. The {@code clientId} must be a SolarNode ID.
-   * </p>
-   *
-   * @return the username for publishing
-   */
-  public String getPublishUsername() {
-    return publishUsername;
-  }
+	/**
+	 * Get the publish username.
+	 *
+	 * <p>
+	 * This username is required when publishing. The {@code clientId} must be a
+	 * SolarNode ID.
+	 * </p>
+	 *
+	 * @return the username for publishing
+	 */
+	public String getPublishUsername() {
+		return publishUsername;
+	}
 
-  /**
-   * Set the username required for publishing.
-   *
-   * @param publishUsername
-   *        the publish username
-   * @throws IllegalArgumentException
-   *         if {@code publishUsername} is {@literal null}
-   */
-  public void setPublishUsername(String publishUsername) {
-    if (publishUsername == null) {
-      throw new IllegalArgumentException("publishUsername must not be null");
-    }
-    this.publishUsername = publishUsername;
-  }
+	/**
+	 * Set the username required for publishing.
+	 *
+	 * @param publishUsername
+	 *        the publish username
+	 * @throws IllegalArgumentException
+	 *         if {@code publishUsername} is {@literal null}
+	 */
+	public void setPublishUsername(String publishUsername) {
+		if ( publishUsername == null ) {
+			throw new IllegalArgumentException("publishUsername must not be null");
+		}
+		this.publishUsername = publishUsername;
+	}
 
-  /**
-   * Get the configured actor cache.
-   *
-   * @return the actor cache
-   */
-  public Cache<String, Actor> getActorCache() {
-    return actorCache;
-  }
+	/**
+	 * Get the configured actor cache.
+	 *
+	 * @return the actor cache
+	 */
+	public Cache<String, Actor> getActorCache() {
+		return actorCache;
+	}
 
-  /**
-   * Configure an actor cache.
-   *
-   * @param actorCache
-   *        the cache to use for actors
-   */
-  public void setActorCache(Cache<String, Actor> actorCache) {
-    this.actorCache = actorCache;
-  }
+	/**
+	 * Configure an actor cache.
+	 *
+	 * @param actorCache
+	 *        the cache to use for actors
+	 */
+	public void setActorCache(Cache<String, Actor> actorCache) {
+		this.actorCache = actorCache;
+	}
 
-  /**
-   * Get the IP address mask for node authentication.
-   *
-   * <p>
-   * This is provided in CIDR format, e.g. {@literal 192.168.0.0/24}.
-   * </p>
-   *
-   * @return the IP address mask
-   */
-  public String getIpMask() {
-    return (ipMask != null ? ipMask.getCidrSignature() : null);
-  }
+	/**
+	 * Get the IP address mask for node authentication.
+	 *
+	 * <p>
+	 * This is provided in CIDR format, e.g. {@literal 192.168.0.0/24}.
+	 * </p>
+	 *
+	 * @return the IP address mask
+	 */
+	public String getIpMask() {
+		return (ipMask != null ? ipMask.getCidrSignature() : null);
+	}
 
-  /**
-   * Set the IP address mask for node authentication.
-   *
-   * <p>
-   * If configured, then for node authentication requests the
-   * {@link RegisterRequest#getPeerAddress()} will be compared to this CIDR range, and if it falls
-   * outside {@code ipMask} the request will fail. This is only used for node authentication because
-   * node authentication is actually only authorization, with the assumption that actual
-   * authentication has been performed externally, for example with an X.509 certificate.
-   * </p>
-   *
-   * @param ipMask
-   *        an IP address range to limit requests to, in CIDR format, e.g. {@literal 192.168.0.0/24}
-   * @throws IllegalArgumentException
-   *         if the IP mask cannot be parsed
-   */
-  public void setIpMask(String ipMask) {
-    this.ipMask = (ipMask != null ? new Cidr4(ipMask) : null);
-  }
+	/**
+	 * Set the IP address mask for node authentication.
+	 *
+	 * <p>
+	 * If configured, then for node authentication requests the
+	 * {@link RegisterRequest#getPeerAddress()} will be compared to this CIDR
+	 * range, and if it falls outside {@code ipMask} the request will fail. This
+	 * is only used for node authentication because node authentication is
+	 * actually only authorization, with the assumption that actual
+	 * authentication has been performed externally, for example with an X.509
+	 * certificate.
+	 * </p>
+	 *
+	 * @param ipMask
+	 *        an IP address range to limit requests to, in CIDR format, e.g.
+	 *        {@literal 192.168.0.0/24}
+	 * @throws IllegalArgumentException
+	 *         if the IP mask cannot be parsed
+	 */
+	public void setIpMask(String ipMask) {
+		this.ipMask = (ipMask != null ? new Cidr4(ipMask) : null);
+	}
 
-  /**
-   * Get the token client ID prefix requirement setting.
-   *
-   * @return the setting; default to {@literal true}
-   */
-  public boolean isRequireTokenClientIdPrefix() {
-    return requireTokenClientIdPrefix;
-  }
+	/**
+	 * Get the token client ID prefix requirement setting.
+	 *
+	 * @return the setting; default to {@literal true}
+	 */
+	public boolean isRequireTokenClientIdPrefix() {
+		return requireTokenClientIdPrefix;
+	}
 
-  /**
-   * Toggle the token client ID prefix requirement.
-   *
-   * @param requireTokenClientIdPrefix
-   *        {@literal true} to force token-based authentication to require that the MQTT client ID
-   *        starts with the token ID
-   */
-  public void setRequireTokenClientIdPrefix(boolean requireTokenClientIdPrefix) {
-    this.requireTokenClientIdPrefix = requireTokenClientIdPrefix;
-  }
+	/**
+	 * Toggle the token client ID prefix requirement.
+	 *
+	 * @param requireTokenClientIdPrefix
+	 *        {@literal true} to force token-based authentication to require
+	 *        that the MQTT client ID starts with the token ID
+	 */
+	public void setRequireTokenClientIdPrefix(boolean requireTokenClientIdPrefix) {
+		this.requireTokenClientIdPrefix = requireTokenClientIdPrefix;
+	}
 
-  /**
-   * Get the direct token authentication permission flag.
-   *
-   * @return {@literal true} if direct token secrets can be passed for token credentials; defaults
-   *         to {@literal false}
-   */
-  public boolean isAllowDirectTokenAuthentication() {
-    return allowDirectTokenAuthentication;
-  }
+	/**
+	 * Get the direct token authentication permission flag.
+	 *
+	 * @return {@literal true} if direct token secrets can be passed for token
+	 *         credentials; defaults to {@literal false}
+	 */
+	public boolean isAllowDirectTokenAuthentication() {
+		return allowDirectTokenAuthentication;
+	}
 
-  /**
-   * Set the direct token authentication permission flag.
-   *
-   * <p>
-   * Enabling this setting means that un-hashed raw token secrets can be used for the password in
-   * token-based credentials. If a raw token secret is detected, this service will calculate the
-   * token signature itself during the authentication process.
-   * </p>
-   *
-   * @param allowDirectTokenAuthentication
-   *        {@literal true} to allow token secrets can be passed for token credentials,
-   *        {@literal false} to required pre-signed signatures
-   */
-  public void setAllowDirectTokenAuthentication(boolean allowDirectTokenAuthentication) {
-    this.allowDirectTokenAuthentication = allowDirectTokenAuthentication;
-  }
+	/**
+	 * Set the direct token authentication permission flag.
+	 *
+	 * <p>
+	 * Enabling this setting means that un-hashed raw token secrets can be used
+	 * for the password in token-based credentials. If a raw token secret is
+	 * detected, this service will calculate the token signature itself during
+	 * the authentication process.
+	 * </p>
+	 *
+	 * @param allowDirectTokenAuthentication
+	 *        {@literal true} to allow token secrets can be passed for token
+	 *        credentials, {@literal false} to required pre-signed signatures
+	 */
+	public void setAllowDirectTokenAuthentication(boolean allowDirectTokenAuthentication) {
+		this.allowDirectTokenAuthentication = allowDirectTokenAuthentication;
+	}
 
 }

@@ -130,8 +130,7 @@ public class NodeEventController {
 
 	@ResponseBody
 	@RequestMapping(value = "/node/hooks/{id}", method = RequestMethod.GET)
-	public Result<UserNodeEventHookConfiguration> viewNodeHookConfiguration(
-			@PathVariable("id") Long id) {
+	public Result<UserNodeEventHookConfiguration> viewNodeHookConfiguration(@PathVariable Long id) {
 		UserNodeEventHookConfiguration result = null;
 		if ( eventHookBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
@@ -146,7 +145,7 @@ public class NodeEventController {
 
 	@ResponseBody
 	@RequestMapping(value = "/node/hooks/{id}", method = RequestMethod.DELETE)
-	public Result<Void> deleteNodeHookConfiguration(@PathVariable("id") Long id) {
+	public Result<Void> deleteNodeHookConfiguration(@PathVariable Long id) {
 		if ( eventHookBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			UserNodeEventHookConfiguration config = eventHookBiz.configurationForUser(userId,

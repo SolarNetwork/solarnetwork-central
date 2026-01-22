@@ -112,7 +112,7 @@ public class NodeMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
-	public Result<SolarNodeMetadataFilterMatch> getMetadata(@PathVariable("nodeId") Long nodeId) {
+	public Result<SolarNodeMetadataFilterMatch> getMetadata(@PathVariable Long nodeId) {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
 		FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
@@ -140,7 +140,7 @@ public class NodeMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.POST)
-	public Result<Object> addMetadata(@PathVariable("nodeId") Long nodeId,
+	public Result<Object> addMetadata(@PathVariable Long nodeId,
 			@RequestBody GeneralDatumMetadata meta) {
 		solarNodeMetadataBiz.addSolarNodeMetadata(nodeId, meta);
 		return success();
@@ -158,7 +158,7 @@ public class NodeMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.PUT)
-	public Result<Object> replaceMetadata(@PathVariable("nodeId") Long nodeId,
+	public Result<Object> replaceMetadata(@PathVariable Long nodeId,
 			@RequestBody GeneralDatumMetadata meta) {
 		solarNodeMetadataBiz.storeSolarNodeMetadata(nodeId, meta);
 		return success();
@@ -173,7 +173,7 @@ public class NodeMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.DELETE)
-	public Result<Object> deleteMetadata(@PathVariable("nodeId") Long nodeId) {
+	public Result<Object> deleteMetadata(@PathVariable Long nodeId) {
 		solarNodeMetadataBiz.removeSolarNodeMetadata(nodeId);
 		return success();
 	}
