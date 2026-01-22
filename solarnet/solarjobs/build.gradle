@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarJobs'
-version = '4.0.0'
+version = '4.0.1'
 
 base {
 	archivesName = 'solarjobs'
