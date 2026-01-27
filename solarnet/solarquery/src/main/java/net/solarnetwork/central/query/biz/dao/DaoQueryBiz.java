@@ -394,7 +394,7 @@ public class DaoQueryBiz implements QueryBiz {
 					+ "] is not supported for aggregate level [" + filter.getAggregation() + "]");
 		}
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
-				sortDescriptors, offset, max);
+				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
 		validateDatumCriteria(c);
@@ -414,6 +414,8 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
 		c.setTimeTolerance(tolerance);
+		c.setOffset(limitFilterOffset(c.getOffset()));
+		c.setMax(limitFilterMaximum(c.getMax()));
 		validateDatumCriteria(c);
 		ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> daoResults = readingDao
 				.findDatumReadingFiltered(c);

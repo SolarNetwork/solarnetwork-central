@@ -29,6 +29,8 @@ import static java.util.Collections.singletonMap;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.domain.ObjectDatumStreamMetadataId.idForMetadata;
+import static net.solarnetwork.central.test.CommonTestUtils.RNG;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
@@ -55,6 +57,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.easymock.Capture;
@@ -719,32 +722,41 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 
 		// WHEN
 		replayAll();
-		DatumFilterCommand filter = new DatumFilterCommand();
+		final DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setAggregate(Aggregation.Day);
 		filter.setNodeId(TEST_NODE_ID);
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
-		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
-		FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results = biz
+		final List<SortDescriptor> sortDescriptors = List.of(new SimpleSortDescriptor("created", true));
+		final Long offset = randomLong();
+		final Integer max = RNG.nextInt(biz.getFilteredResultsLimit());
+		final FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results = biz
 				.findFilteredAggregateReading(filter, DatumReadingType.Difference, Period.ofMonths(1),
-						sortDescriptors, 1L, 2);
+						sortDescriptors, offset, max);
 
 		// THEN
-		assertThat("Query reading type", filterCaptor.getValue().getReadingType(),
-				equalTo(DatumReadingType.Difference));
-		assertThat("Query kind is node", filterCaptor.getValue().getObjectKind(),
-				equalTo(ObjectDatumKind.Node));
-		assertThat("Query aggregation", filterCaptor.getValue().getAggregation(),
-				equalTo(filter.getAggregation()));
-		assertThat("Query node IDs", filterCaptor.getValue().getNodeIds(),
-				arrayContaining(filter.getNodeIds()));
-		assertThat("Query start date", filterCaptor.getValue().getStartDate(),
-				equalTo(filter.getStartDate()));
-		assertThat("Query end date", filterCaptor.getValue().getEndDate(), equalTo(filter.getEndDate()));
-		assertThat("Query sorts", filterCaptor.getValue().getSorts(),
-				contains(new net.solarnetwork.domain.SimpleSortDescriptor("created", true)));
-		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1L));
-		assertThat("Query max", filterCaptor.getValue().getMax(), equalTo(2));
+		// @formatter:off
+		then(filterCaptor.getValue())
+			.as("Query reading type from filter")
+			.returns(DatumReadingType.Difference, from(DatumCriteria::getReadingType))
+			.as("Query kind from filter")
+			.returns(ObjectDatumKind.Node, from(DatumCriteria::getObjectKind))
+			.as("Query aggregation from filter")
+			.returns(filter.getAggregation(), from(DatumCriteria::getAggregation))
+			.as("Query node IDs from filter")
+			.returns(filter.getNodeIds(), from(DatumCriteria::getNodeIds))
+			.as("Query start date from filter")
+			.returns(filter.getStartDate(), from(DatumCriteria::getStartDate))
+			.as("Query end date from filter")
+			.returns(filter.getEndDate(), from(DatumCriteria::getEndDate))
+			.as("Sorts from filter")
+			.returns(sortDescriptors, from(DatumCriteria::getSorts))
+			.as("Offset from arg")
+			.returns(offset, from(DatumCriteria::getOffset))
+			.as("Maximum from arg")
+			.returns(max, from(DatumCriteria::getMax))
+			;
+		// @formatter:on
 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
@@ -768,6 +780,64 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 				hasEntry("a1_start", stats.getAccumulating()[0][1]),
 				hasEntry("a1_end", stats.getAccumulating()[0][2])
 		));
+		// @formatter:on
+	}
+
+	@Test
+	public void findFilteredAggregateReading_maxCapped() {
+		// GIVEN
+		Capture<DatumCriteria> filterCaptor = new Capture<>();
+		expect(datumDao.findFiltered(capture(filterCaptor)))
+				.andReturn(new BasicObjectDatumStreamFilterResults<>(Map.of(), List.of()));
+
+		// WHEN
+		replayAll();
+		final DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setAggregate(Aggregation.Day);
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+		final Long offset = randomLong();
+		final Integer max = RNG.nextInt(biz.getFilteredResultsLimit()) + biz.getFilteredResultsLimit();
+		biz.findFilteredAggregateReading(filter, DatumReadingType.Difference, Period.ofMonths(1), null,
+				offset, max);
+
+		// THEN
+		// @formatter:off
+		then(filterCaptor.getValue())
+			.as("Offset from arg")
+			.returns(offset, from(DatumCriteria::getOffset))
+			.as("Maximum capped to FilteredResultsLimit")
+			.returns(biz.getFilteredResultsLimit(), from(DatumCriteria::getMax))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFilteredAggregateReading_maxDefaultEnforced() {
+		// GIVEN
+		Capture<DatumCriteria> filterCaptor = new Capture<>();
+		expect(datumDao.findFiltered(capture(filterCaptor)))
+				.andReturn(new BasicObjectDatumStreamFilterResults<>(Map.of(), List.of()));
+
+		// WHEN
+		replayAll();
+		final DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setAggregate(Aggregation.Day);
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+		biz.findFilteredAggregateReading(filter, DatumReadingType.Difference, Period.ofMonths(1), null,
+				null, null);
+
+		// THEN
+		// @formatter:off
+		then(filterCaptor.getValue())
+			.as("Offset from arg")
+			.returns(0L, from(DatumCriteria::getOffset))
+			.as("Maximum defaults to FilteredResultsLimit")
+			.returns(biz.getFilteredResultsLimit(), from(DatumCriteria::getMax))
+			;
 		// @formatter:on
 	}
 
@@ -798,17 +868,26 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 				.findFilteredReading(filter, DatumReadingType.DifferenceWithin, Period.ofMonths(1));
 
 		// THEN
-		assertThat("Query reading type", filterCaptor.getValue().getReadingType(),
-				equalTo(DatumReadingType.DifferenceWithin));
-		assertThat("Query kind is node", filterCaptor.getValue().getObjectKind(),
-				equalTo(ObjectDatumKind.Node));
-		assertThat("Query aggregation", filterCaptor.getValue().getAggregation(),
-				equalTo(filter.getAggregation()));
-		assertThat("Query node IDs", filterCaptor.getValue().getNodeIds(),
-				arrayContaining(filter.getNodeIds()));
-		assertThat("Query start date", filterCaptor.getValue().getStartDate(),
-				equalTo(filter.getStartDate()));
-		assertThat("Query end date", filterCaptor.getValue().getEndDate(), equalTo(filter.getEndDate()));
+		// @formatter:off
+		then(filterCaptor.getValue())
+			.as("Query reading type from filter")
+			.returns(DatumReadingType.DifferenceWithin, from(DatumCriteria::getReadingType))
+			.as("Query kind from filter")
+			.returns(ObjectDatumKind.Node, from(DatumCriteria::getObjectKind))
+			.as("Query aggregation from filter")
+			.returns(filter.getAggregation(), from(DatumCriteria::getAggregation))
+			.as("Query node IDs from filter")
+			.returns(filter.getNodeIds(), from(DatumCriteria::getNodeIds))
+			.as("Query start date from filter")
+			.returns(filter.getStartDate(), from(DatumCriteria::getStartDate))
+			.as("Query end date from filter")
+			.returns(filter.getEndDate(), from(DatumCriteria::getEndDate))
+			.as("Default offset included")
+			.returns(0L, from(DatumCriteria::getOffset))
+			.as("Default maximum included")
+			.returns(biz.getFilteredResultsLimit(), from(DatumCriteria::getMax))
+			;
+		// @formatter:on
 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
@@ -832,6 +911,92 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 				hasEntry("a1_start", stats.getAccumulating()[0][1]),
 				hasEntry("a1_end", stats.getAccumulating()[0][2])
 		));
+		// @formatter:on
+	}
+
+	@Test
+	public void findFilteredReading_offsetAndMax() {
+		// GIVEN
+		Capture<DatumCriteria> filterCaptor = new Capture<>();
+		expect(readingDao.findDatumReadingFiltered(capture(filterCaptor)))
+				.andReturn(new BasicObjectDatumStreamFilterResults<>(Map.of(), List.of()));
+
+		// WHEN
+		replayAll();
+		final Long offset = randomLong();
+		final Integer max = RNG.nextInt(biz.getFilteredResultsLimit());
+		final DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setAggregate(Aggregation.Day);
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+		filter.setOffset(offset);
+		filter.setMax(max);
+		biz.findFilteredReading(filter, DatumReadingType.DifferenceWithin, Period.ofMonths(1));
+
+		// THEN
+		// @formatter:off
+		then(filterCaptor.getValue())
+			.as("Query reading type from filter")
+			.returns(DatumReadingType.DifferenceWithin, from(DatumCriteria::getReadingType))
+			.as("Query kind from filter")
+			.returns(ObjectDatumKind.Node, from(DatumCriteria::getObjectKind))
+			.as("Query aggregation from filter")
+			.returns(filter.getAggregation(), from(DatumCriteria::getAggregation))
+			.as("Query node IDs from filter")
+			.returns(filter.getNodeIds(), from(DatumCriteria::getNodeIds))
+			.as("Query start date from filter")
+			.returns(filter.getStartDate(), from(DatumCriteria::getStartDate))
+			.as("Query end date from filter")
+			.returns(filter.getEndDate(), from(DatumCriteria::getEndDate))
+			.as("Offset from filter")
+			.returns(offset, from(DatumCriteria::getOffset))
+			.as("Maximum from filter")
+			.returns(max, from(DatumCriteria::getMax))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFilteredReading_maxCapped() {
+		// GIVEN
+		Capture<DatumCriteria> filterCaptor = new Capture<>();
+		expect(readingDao.findDatumReadingFiltered(capture(filterCaptor)))
+				.andReturn(new BasicObjectDatumStreamFilterResults<>(Map.of(), List.of()));
+
+		// WHEN
+		replayAll();
+		final Long offset = randomLong();
+		final Integer max = RNG.nextInt(biz.getFilteredResultsLimit()) + biz.getFilteredResultsLimit();
+		final DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setAggregate(Aggregation.Day);
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+		filter.setOffset(offset);
+		filter.setMax(max);
+		biz.findFilteredReading(filter, DatumReadingType.DifferenceWithin, Period.ofMonths(1));
+
+		// THEN
+		// @formatter:off
+		then(filterCaptor.getValue())
+			.as("Query reading type from filter")
+			.returns(DatumReadingType.DifferenceWithin, from(DatumCriteria::getReadingType))
+			.as("Query kind from filter")
+			.returns(ObjectDatumKind.Node, from(DatumCriteria::getObjectKind))
+			.as("Query aggregation from filter")
+			.returns(filter.getAggregation(), from(DatumCriteria::getAggregation))
+			.as("Query node IDs from filter")
+			.returns(filter.getNodeIds(), from(DatumCriteria::getNodeIds))
+			.as("Query start date from filter")
+			.returns(filter.getStartDate(), from(DatumCriteria::getStartDate))
+			.as("Query end date from filter")
+			.returns(filter.getEndDate(), from(DatumCriteria::getEndDate))
+			.as("Default offset included")
+			.returns(offset, from(DatumCriteria::getOffset))
+			.as("Default maximum included")
+			.returns(biz.getFilteredResultsLimit(), from(DatumCriteria::getMax))
+			;
 		// @formatter:on
 	}
 
