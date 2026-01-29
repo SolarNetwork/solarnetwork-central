@@ -94,6 +94,8 @@ import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics.AccumulatingStatistic;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics.InstantaneousStatistic;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
@@ -108,7 +110,7 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * General datum utility methods.
  *
  * @author matt
- * @version 2.11
+ * @version 2.12
  * @since 2.8
  */
 public final class DatumUtils {
@@ -472,22 +474,29 @@ public final class DatumUtils {
 	/**
 	 * Populate a {@link DatumSamples} instance with property values.
 	 *
+	 * @param meta
+	 *        the stream metadata
 	 * @param s
 	 *        the samples instance to populate
+	 * @param props
+	 *        the properties
 	 * @param propType
 	 *        the property type
-	 * @param propNames
-	 *        the property names
-	 * @param propValues
-	 *        the property values
+	 * @since 2.12
 	 */
-	public static void populateGeneralDatumSamples(DatumSamples s, DatumSamplesType propType,
-			String[] propNames, Object[] propValues) {
-		if ( propNames != null && propValues != null && propValues.length <= propNames.length ) {
-			for ( int i = 0, len = propValues.length; i < len; i++ ) {
-				s.putSampleValue(propType, propNames[i], propValues[i]);
+	public static void populateGeneralDatumSamples(DatumStreamMetadata meta, DatumSamples s,
+			DatumProperties props, DatumSamplesType propType) {
+		final String[] propNames = meta.propertyNamesForType(propType);
+		if ( propNames == null || props == null ) {
+			return;
+		}
+		for ( int i = 0; i < propNames.length; i++ ) {
+			Object val = meta.value(props, propType, i);
+			if ( val != null ) {
+				s.putSampleValue(propType, propNames[i], val);
 			}
 		}
+
 	}
 
 	/**
@@ -502,12 +511,9 @@ public final class DatumUtils {
 	 */
 	public static void populateGeneralDatumSamples(DatumSamples s, DatumProperties props,
 			DatumStreamMetadata meta) {
-		populateGeneralDatumSamples(s, DatumSamplesType.Instantaneous,
-				meta.propertyNamesForType(DatumSamplesType.Instantaneous), props.getInstantaneous());
-		populateGeneralDatumSamples(s, DatumSamplesType.Accumulating,
-				meta.propertyNamesForType(DatumSamplesType.Accumulating), props.getAccumulating());
-		populateGeneralDatumSamples(s, DatumSamplesType.Status,
-				meta.propertyNamesForType(DatumSamplesType.Status), props.getStatus());
+		populateGeneralDatumSamples(meta, s, props, DatumSamplesType.Instantaneous);
+		populateGeneralDatumSamples(meta, s, props, DatumSamplesType.Accumulating);
+		populateGeneralDatumSamples(meta, s, props, DatumSamplesType.Status);
 		if ( props.getTagsLength() > 0 ) {
 			Set<String> tags = new LinkedHashSet<>(props.getTagsLength());
 			Collections.addAll(tags, props.getTags());
@@ -533,23 +539,22 @@ public final class DatumUtils {
 	 */
 	public static void populateGeneralDatumSamplesInstantaneousStatistics(DatumSamples s,
 			DatumPropertiesStatistics stats, ObjectDatumStreamMetadata meta) {
-		final int len = stats.getInstantaneousLength();
-		if ( len < 1 ) {
+		final int statCount = stats.getInstantaneousLength();
+		if ( statCount < 1 ) {
 			return;
 		}
-		BigDecimal[][] iStats = stats.getInstantaneous();
 		String[] propNames = meta.propertyNamesForType(DatumSamplesType.Instantaneous);
 		if ( propNames == null ) {
 			return;
 		}
-		final int max = Math.min(len, propNames.length);
-		for ( int i = 0; i < max; i++ ) {
-			BigDecimal[] propStats = iStats[i]; // count, min, max
-			if ( propStats == null || propStats.length < 3 ) {
-				continue;
+		final int len = Math.min(statCount, propNames.length);
+		for ( int i = 0; i < len; i++ ) {
+			BigDecimal min = meta.stat(stats, InstantaneousStatistic.Minimum, i);
+			BigDecimal max = meta.stat(stats, InstantaneousStatistic.Maximum, i);
+			if ( min != null && max != null ) {
+				s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_min", min);
+				s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_max", max);
 			}
-			s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_min", propStats[1]);
-			s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_max", propStats[2]);
 		}
 	}
 
@@ -572,24 +577,29 @@ public final class DatumUtils {
 	 */
 	public static void populateGeneralDatumSamplesAccumulatingStatistics(DatumSamples s,
 			DatumPropertiesStatistics stats, ObjectDatumStreamMetadata meta) {
-		final int len = stats.getAccumulatingLength();
-		if ( len < 1 ) {
+		final int statCount = stats.getAccumulatingLength();
+		if ( statCount < 1 ) {
 			return;
 		}
-		BigDecimal[][] aStats = stats.getAccumulating();
-		String[] propNames = meta.propertyNamesForType(DatumSamplesType.Accumulating);
+		final String[] propNames = meta.propertyNamesForType(DatumSamplesType.Accumulating);
 		if ( propNames == null ) {
 			return;
 		}
-		final int max = Math.min(len, propNames.length);
-		for ( int i = 0; i < max; i++ ) {
-			BigDecimal[] propStats = aStats[i]; // diff, start, end
-			if ( propStats == null || propStats.length < 3 ) {
-				continue;
+		final int len = Math.min(statCount, propNames.length);
+		for ( int i = 0; i < len; i++ ) {
+			BigDecimal diff = meta.stat(stats, AccumulatingStatistic.Difference, i);
+			BigDecimal start = meta.stat(stats, AccumulatingStatistic.Start, i);
+			BigDecimal end = meta.stat(stats, AccumulatingStatistic.End, i);
+
+			if ( diff != null ) {
+				s.putSampleValue(DatumSamplesType.Accumulating, propNames[i], diff);
 			}
-			s.putSampleValue(DatumSamplesType.Accumulating, propNames[i], propStats[0]);
-			s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_start", propStats[1]);
-			s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_end", propStats[2]);
+			if ( start != null ) {
+				s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_start", start);
+			}
+			if ( end != null ) {
+				s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_end", end);
+			}
 		}
 	}
 

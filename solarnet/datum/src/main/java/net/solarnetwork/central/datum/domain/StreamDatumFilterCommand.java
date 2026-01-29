@@ -53,13 +53,13 @@ import net.solarnetwork.util.StringUtils;
  * Implementation of {@link StreamDatumFilter}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.6
  * @since 1.3
  */
 @JsonPropertyOrder({ "streamIds", "kind", "objectIds", "sourceIds", "userIds", "aggregation",
 		"partialAggregation", "combiningType", "nodeIdMappings", "sourceIdMappings", "rollupTypes",
 		"tags", "metadataFilter", "mostRecent", "startDate", "endDate", "localStartDate", "localEndDate",
-		"max", "offset", "sorts", "withoutTotalResultsCount" })
+		"propertyNames", "max", "offset", "sorts", "withoutTotalResultsCount" })
 public class StreamDatumFilterCommand extends BaseFilterSupport
 		implements StreamDatumFilter, AggregationFilter, CombiningFilter, DatumRollupFilter,
 		NodeMappingFilter, SourceMappingFilter, OptimizedQueryCriteria {
@@ -78,6 +78,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	private LocalDateTime localEndDate;
 	private boolean mostRecent = false;
 
+	private String[] propertyNames;
 	private List<MutableSortDescriptor> sorts;
 	private Long offset;
 	private Integer max;
@@ -100,6 +101,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		result = prime * result + Arrays.hashCode(objectIds);
 		result = prime * result + Arrays.hashCode(sourceIds);
 		result = prime * result + Arrays.hashCode(streamIds);
+		result = prime * result + Arrays.hashCode(propertyNames);
 		result = prime * result + Objects.hash(aggregation, combiningType, endDate, kind, localEndDate,
 				localStartDate, max, mostRecent, nodeIdMappings, offset, partialAggregation, sorts,
 				sourceIdMappings, startDate, withoutTotalResultsCount);
@@ -126,6 +128,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 				&& Arrays.equals(sourceIds, other.sourceIds)
 				&& Objects.equals(startDate, other.startDate)
 				&& Arrays.equals(streamIds, other.streamIds)
+				&& Arrays.equals(propertyNames, other.propertyNames)
 				&& withoutTotalResultsCount == other.withoutTotalResultsCount;
 	}
 
@@ -224,6 +227,11 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 			builder.append(Arrays.toString(datumRollupTypes));
 			builder.append(", ");
 		}
+		if ( propertyNames != null ) {
+			builder.append("propertyNames=");
+			builder.append(Arrays.toString(propertyNames));
+			builder.append(", ");
+		}
 		builder.append("}");
 		return builder.toString();
 	}
@@ -271,6 +279,9 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		}
 		if ( streamIds != null ) {
 			filter.put("streamIds", streamIds);
+		}
+		if ( propertyNames != null ) {
+			filter.put("propertyNames", propertyNames);
 		}
 		return filter;
 	}
@@ -974,6 +985,35 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 */
 	public void setRollupTypes(DatumRollupType[] types) {
 		setDatumRollupTypes(types);
+	}
+
+	@Override
+	public String[] getPropertyNames() {
+		return propertyNames;
+	}
+
+	/**
+	 * Set the property names.
+	 *
+	 * @param propertyNames
+	 *        the propertyNames to set
+	 * @since 1.6
+	 */
+	public void setPropertyNames(String[] propertyNames) {
+		this.propertyNames = propertyNames;
+	}
+
+	/**
+	 * Get the property names as a set.
+	 *
+	 * @return the {@code propertyNames} as a set, or {@code null} if no
+	 *         property names available
+	 * @since 1.6
+	 */
+	public Set<String> allowedPropertyNames() {
+		return (propertyNames != null && propertyNames.length > 0
+				? new LinkedHashSet<>(List.of(propertyNames))
+				: null);
 	}
 
 }

@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.util.MimeType;
 import de.siegmar.fastcsv.writer.CsvWriter;
@@ -165,7 +166,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * }</pre>
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  * @since 1.11
  */
 public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilteredResultsProcessor {
@@ -175,6 +176,9 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 
 	/** The output destination. */
 	private final CsvWriter writer;
+
+	/** A set of allowed output property names. */
+	private final Set<String> allowedPropertyNames;
 
 	/**
 	 * A mapping of column names to associated column index; linked so insertion
@@ -192,11 +196,28 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 	 *
 	 * @param out
 	 *        the output destination
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public CsvStreamDatumFilteredResultsProcessor(Writer out) {
+		this(out, null);
+
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param out
+	 *        the output destination
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code allowedPropertyNames} is
+	 *         {@code null}
+	 * @since 1.5
+	 */
+	public CsvStreamDatumFilteredResultsProcessor(Writer out, Set<String> allowedPropertyNames) {
 		super();
 		this.writer = CsvWriter.builder().build(requireNonNullArgument(out, "out"));
-
+		this.allowedPropertyNames = allowedPropertyNames;
 	}
 
 	@Override
@@ -237,6 +258,10 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 						String[] propNames = meta.propertyNamesForType(Instantaneous);
 						if ( propNames != null ) {
 							for ( String propName : propNames ) {
+								if ( allowedPropertyNames != null
+										&& !allowedPropertyNames.contains(propName) ) {
+									continue;
+								}
 								if ( streamColumnIndexes.putIfAbsent(propName, colIndex) == null ) {
 									colIndex += 1;
 									if ( agg ) {
@@ -253,6 +278,10 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 						propNames = meta.propertyNamesForType(Accumulating);
 						if ( propNames != null ) {
 							for ( String propName : propNames ) {
+								if ( allowedPropertyNames != null
+										&& !allowedPropertyNames.contains(propName) ) {
+									continue;
+								}
 								if ( streamColumnIndexes.putIfAbsent(propName, colIndex) == null ) {
 									colIndex += 1;
 									if ( agg ) {
@@ -267,6 +296,10 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 						propNames = meta.propertyNamesForType(Status);
 						if ( propNames != null ) {
 							for ( String propName : propNames ) {
+								if ( allowedPropertyNames != null
+										&& !allowedPropertyNames.contains(propName) ) {
+									continue;
+								}
 								if ( streamColumnIndexes.putIfAbsent(propName, colIndex) == null ) {
 									colIndex += 1;
 								}

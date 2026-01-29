@@ -1,7 +1,7 @@
 /* ==================================================================
- * GeneralLocationDatumFilter.java - Oct 17, 2014 12:44:06 PM
+ * PropertyNameFilter.java - 29/01/2026 11:36:28 am
  *
- * Copyright 2007-2014 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -22,28 +22,31 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import net.solarnetwork.central.domain.Filter;
+
 /**
- * Filter API for {@link GeneralLocationDatum}.
+ * Filter API for property names.
  *
  * @author matt
- * @version 1.2
+ * @version 1.0
  */
-public interface GeneralLocationDatumFilter extends CommonFilter, PropertyNameFilter {
+public interface PropertyNameFilter extends Filter {
 
 	/**
-	 * Get the first location ID. This returns the first available location ID
-	 * from the {@link #getLocationIds()} array, or <em>null</em> if not
-	 * available.
+	 * Get an array of property names.
 	 *
-	 * @return the location ID, or <em>null</em> if not available
+	 * @return array of properties, or {@code null}
 	 */
-	Long getLocationId();
+	String[] getPropertyNames();
 
 	/**
-	 * Get an array of location IDs.
+	 * Get the first available property name.
 	 *
-	 * @return array of location IDs (may be <em>null</em>)
+	 * @return the first available property name, or {@code null}
 	 */
-	Long[] getLocationIds();
+	default String getPropertyName() {
+		final String[] names = getPropertyNames();
+		return (names != null && names.length > 0 ? names[0] : null);
+	}
 
 }
