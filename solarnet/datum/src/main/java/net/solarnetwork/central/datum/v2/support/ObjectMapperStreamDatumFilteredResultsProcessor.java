@@ -459,7 +459,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			} else {
 				idx = i;
 			}
-			if ( array[idx] != null ) {
+			if ( idx < arrayLen && array[idx] != null ) {
 				generator.writeString(array[idx]);
 			} else {
 				generator.writeNull();
@@ -503,7 +503,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			} else {
 				idx = i;
 			}
-			if ( array[idx] != null ) {
+			if ( idx < arrayLen && array[idx] != null ) {
 				generator.writeNumber(array[idx]);
 			} else {
 				generator.writeNull();

@@ -217,6 +217,88 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 	}
 
 	@Test
+	public void oneStream_datum_propertyRestricted_missingValue() throws IOException {
+		// GIVEN
+		final ObjectDatumStreamMetadata meta = nodeMeta(123L, "test/source", new String[] { "a", "b" },
+				new String[] { "c" }, new String[] { "d" });
+		final Instant start = Instant
+				.from(LocalDateTime.of(2022, 4, 29, 13, 52).atZone(ZoneId.of("Pacific/Auckland")));
+
+		DatumProperties p1 = new DatumProperties();
+		p1.setInstantaneous(decimalArray("1.23", "2.34"));
+		p1.setAccumulating(decimalArray("3.45"));
+		p1.setStatus(new String[] { "foo" });
+		p1.setTags(new String[] { "a" });
+		StreamDatum d1 = new BasicStreamDatum(meta.getStreamId(), start, p1);
+
+		// this datum has no "b" or "c" values
+		DatumProperties p2 = new DatumProperties();
+		p2.setInstantaneous(decimalArray("3.21"));
+		p2.setStatus(new String[] { "bar" });
+		StreamDatum d2 = new BasicStreamDatum(meta.getStreamId(), start.plusSeconds(1), p2);
+
+		final BasicObjectDatumStreamDataSet<StreamDatum> data = dataSet(asList(meta), asList(d1, d2));
+
+		final Set<String> allowedProperties = Set.of("b", "c");
+
+		// WHEN
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try (ObjectMapperStreamDatumFilteredResultsProcessor processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
+				mapper.createGenerator(out), mapper._serializationContext(),
+				MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE), allowedProperties)) {
+			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
+			processor.handleResultItem(d1);
+			processor.handleResultItem(d2);
+		}
+
+		// THEN
+		String json = out.toString(UTF_8);
+		// @formatter:off
+		then(json)
+			.asInstanceOf(JSON)
+			.isObject()
+			.containsEntry("success", true)
+			.hasEntrySatisfying("meta", m -> {
+				then(m).asInstanceOf(JSON)
+					.isArray()
+					.hasSize(1)
+					.element(0)
+					.isObject()
+					.containsOnly(
+						entry("streamId", meta.getStreamId().toString()),
+						entry("zone", meta.getTimeZoneId()),
+						entry("kind", String.valueOf(meta.getKind().getKey())),
+						entry("objectId", meta.getObjectId()),
+						entry("sourceId", meta.getSourceId()),
+						entry("i", new String[] {"b"}),
+						entry("a", new String[] {"c"})
+					)
+					;
+			})
+			.hasEntrySatisfying("data", d -> {
+				then(d).asInstanceOf(JSON)
+					.isArray()
+					.as("All datum returned")
+					.hasSize(2)
+					.satisfies(l -> {
+						then(l).element(0, JSON)
+							.isArray()
+							.as("Meta index, ts, restricted datum properties, and tag provided")
+							.containsExactly(0, d1.getTimestamp().toEpochMilli(), p1.getInstantaneous()[1], p1.getAccumulating()[0], "a")
+							;
+						then(l).element(1, JSON)
+							.isArray()
+							.as("Meta index, ts, and restricted datum properties provided")
+							.containsExactly(0, d2.getTimestamp().toEpochMilli(), null, null)
+							;
+					})
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void oneStream_datum_propertyRestricted_empty() throws IOException {
 		// GIVEN
 		final ObjectDatumStreamMetadata meta = nodeMeta(123L, "test/source", new String[] { "a", "b" },
