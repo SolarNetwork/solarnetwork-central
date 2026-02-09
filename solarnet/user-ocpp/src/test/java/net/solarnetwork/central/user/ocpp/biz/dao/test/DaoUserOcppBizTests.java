@@ -23,24 +23,26 @@
 package net.solarnetwork.central.user.ocpp.biz.dao.test;
 
 import static java.util.Collections.singleton;
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.expect;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.sameInstance;
+import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
@@ -50,14 +52,18 @@ import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
+import net.solarnetwork.central.ocpp.domain.BasicOcppFilter;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointFilter;
 import net.solarnetwork.central.ocpp.domain.CentralChargeSession;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.central.user.ocpp.biz.dao.DaoUserOcppBiz;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargeSession;
 import net.solarnetwork.service.PasswordEncoder;
@@ -66,379 +72,499 @@ import net.solarnetwork.service.PasswordEncoder;
  * Test cases for the {@link DaoUserOcppBiz} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
+@ExtendWith(MockitoExtension.class)
+@SuppressWarnings("static-access")
 public class DaoUserOcppBizTests {
 
+	@Mock
 	private CentralAuthorizationDao authorizationDao;
+
+	@Mock
 	private CentralChargePointDao chargePointDao;
+
+	@Mock
 	private CentralChargePointConnectorDao connectorDao;
+
+	@Mock
 	private CentralSystemUserDao systemUserDao;
+
+	@Mock
 	private CentralChargeSessionDao chargeSessionDao;
+
+	@Mock
 	private UserSettingsDao userSettingsDao;
+
+	@Mock
 	private ChargePointSettingsDao chargePointSettingsDao;
+
+	@Mock
 	private ChargePointStatusDao chargePointStatusDao;
+
+	@Mock
 	private ChargePointActionStatusDao chargePointActionStatusDao;
+
+	@Mock
 	private PasswordEncoder passwordEncoder;
+
+	@Captor
+	private ArgumentCaptor<String> passwordCaptor;
+
+	@Captor
+	private ArgumentCaptor<CentralChargePointFilter> chargePointFilterCaptor;
 
 	private DaoUserOcppBiz biz;
 
 	@BeforeEach
 	public void setup() {
-		authorizationDao = EasyMock.createMock(CentralAuthorizationDao.class);
-		chargePointDao = EasyMock.createMock(CentralChargePointDao.class);
-		connectorDao = EasyMock.createMock(CentralChargePointConnectorDao.class);
-		chargeSessionDao = EasyMock.createMock(CentralChargeSessionDao.class);
-		passwordEncoder = EasyMock.createMock(PasswordEncoder.class);
-		userSettingsDao = EasyMock.createMock(UserSettingsDao.class);
-		chargePointSettingsDao = EasyMock.createMock(ChargePointSettingsDao.class);
-		chargePointStatusDao = EasyMock.createMock(ChargePointStatusDao.class);
-		chargePointActionStatusDao = EasyMock.createMock(ChargePointActionStatusDao.class);
-		systemUserDao = EasyMock.createMock(CentralSystemUserDao.class);
 		biz = new DaoUserOcppBiz(systemUserDao, chargePointDao, connectorDao, authorizationDao,
 				chargeSessionDao, userSettingsDao, chargePointSettingsDao, chargePointStatusDao,
 				chargePointActionStatusDao, passwordEncoder);
 	}
 
-	@AfterEach
-	public void teardown() {
-		EasyMock.verify(authorizationDao, chargePointDao, chargePointStatusDao,
-				chargePointActionStatusDao, chargePointSettingsDao, connectorDao, chargeSessionDao,
-				passwordEncoder, systemUserDao, userSettingsDao);
-	}
-
-	private void replayAll() {
-		EasyMock.replay(authorizationDao, chargePointDao, chargePointStatusDao,
-				chargePointActionStatusDao, chargePointSettingsDao, connectorDao, chargeSessionDao,
-				passwordEncoder, systemUserDao, userSettingsDao);
-	}
-
 	@Test
 	public void availableAuthorizations() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		List<CentralAuthorization> list = Collections.emptyList();
-		expect(authorizationDao.findAllForOwner(userId)).andReturn(list);
+		given(authorizationDao.findAllForOwner(userId)).willReturn(list);
 
 		// WHEN
-		replayAll();
 		Collection<CentralAuthorization> results = biz.authorizationsForUser(userId);
 
 		// THEN
-		assertThat("DAO results returned", results, sameInstance(list));
+		// @formatter:off
+		and.then(results)
+			.as("DAO result returned")
+			.isSameAs(list)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void authorizationForUser_id() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		CentralAuthorization systemUser = new CentralAuthorization(userId, Instant.now(), "foo");
-		Long id = UUID.randomUUID().getLeastSignificantBits();
-		expect(authorizationDao.get(userId, id)).andReturn(systemUser);
+		final Long id = randomLong();
+		given(authorizationDao.get(userId, id)).willReturn(systemUser);
 
 		// WHEN
-		replayAll();
 		CentralAuthorization result = biz.authorizationForUser(userId, id);
 
 		// THEN
-		assertThat("DAO user returned", result, sameInstance(systemUser));
+		// @formatter:off
+		and.then(result)
+			.as("DAO result returned")
+			.isSameAs(systemUser)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void deleteAuthorization() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
-		Long id = UUID.randomUUID().getLeastSignificantBits();
-		authorizationDao.delete(userId, id);
+		final Long userId = randomLong();
+		final Long id = randomLong();
 
 		// WHEN
-		replayAll();
 		biz.deleteUserAuthorization(userId, id);
 
 		// THEN
+		then(authorizationDao).should().delete(userId, id);
 	}
 
 	@Test
 	public void availableSystemUsers() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		List<CentralSystemUser> list = Collections.emptyList();
-		expect(systemUserDao.findAllForOwner(userId)).andReturn(list);
+		given(systemUserDao.findAllForOwner(userId)).willReturn(list);
 
 		// WHEN
-		replayAll();
 		Collection<CentralSystemUser> results = biz.systemUsersForUser(userId);
 
 		// THEN
-		assertThat("DAO results returned", results, sameInstance(list));
+		// @formatter:off
+		and.then(results)
+			.as("DAO result returned")
+			.isSameAs(list)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void saveSystemUser_createWithProvidedPassword() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		String rawPassword = "bar";
 		CentralSystemUser systemUser = new CentralSystemUser(userId, Instant.now(), "foo", rawPassword);
 
 		String encPassword = "encrypted";
-		expect(passwordEncoder.encode(rawPassword)).andReturn(encPassword);
+		given(passwordEncoder.encode(rawPassword)).willReturn(encPassword);
 
-		Long id = UUID.randomUUID().getLeastSignificantBits();
-		expect(systemUserDao.save(systemUser)).andReturn(id);
+		final Long id = randomLong();
+		given(systemUserDao.save(systemUser)).willReturn(id);
 
 		CentralSystemUser savedSystemUser = new CentralSystemUser(systemUser);
 		savedSystemUser.setPassword(null);
-		expect(systemUserDao.get(id)).andReturn(savedSystemUser);
+		given(systemUserDao.get(id)).willReturn(savedSystemUser);
 
 		// WHEN
-		replayAll();
 
 		CentralSystemUser result = biz.saveSystemUser(systemUser);
 
 		// THEN
-		assertThat("DAO instance returned", result, sameInstance(savedSystemUser));
-		assertThat("Password not returned", result.getPassword(), nullValue());
+		// @formatter:off
+		and.then(result)
+			.as("DAO result returned")
+			.isSameAs(savedSystemUser)
+			.as("Password not returned")
+			.returns(null, from(CentralSystemUser::getPassword))
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void saveSystemUser_createWithGeneratedPassword() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		CentralSystemUser systemUser = new CentralSystemUser(userId, Instant.now(), "foo", null);
 
-		Capture<String> genPasswordCaptor = new Capture<>();
 		String encPassword = "encrypted";
-		expect(passwordEncoder.encode(capture(genPasswordCaptor))).andReturn(encPassword);
+		given(passwordEncoder.encode(any())).willReturn(encPassword);
 
-		Long id = UUID.randomUUID().getLeastSignificantBits();
-		expect(systemUserDao.save(systemUser)).andReturn(id);
+		final Long id = randomLong();
+		given(systemUserDao.save(systemUser)).willReturn(id);
 
 		CentralSystemUser savedSystemUser = new CentralSystemUser(systemUser);
 		savedSystemUser.setPassword(null);
-		expect(systemUserDao.get(id)).andReturn(savedSystemUser);
+		given(systemUserDao.get(id)).willReturn(savedSystemUser);
 
 		// WHEN
-		replayAll();
 		CentralSystemUser result = biz.saveSystemUser(systemUser);
 
 		// THEN
-		assertThat("DAO instance returned", result, sameInstance(savedSystemUser));
-		assertThat("Password not returned", result.getPassword(), equalTo(genPasswordCaptor.getValue()));
+		// @formatter:off
+		then(passwordEncoder).should().encode(passwordCaptor.capture());
+		and.then(result.getPassword())
+			.as("Password returned")
+			.isEqualTo(passwordCaptor.getValue())
+			;
+		// @formatter:on
+
+		and.then(result).as("DAO instance returned").isSameAs(savedSystemUser);
 	}
 
 	@Test
 	public void systemUserForUser_id() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		CentralSystemUser systemUser = new CentralSystemUser(userId, Instant.now(), "foo", null);
-		Long id = UUID.randomUUID().getLeastSignificantBits();
-		expect(systemUserDao.get(userId, id)).andReturn(systemUser);
+		final Long id = randomLong();
+		given(systemUserDao.get(userId, id)).willReturn(systemUser);
 
 		// WHEN
-		replayAll();
 		CentralSystemUser result = biz.systemUserForUser(userId, id);
 
 		// THEN
-		assertThat("DAO user returned", result, sameInstance(systemUser));
+		// @formatter:off
+		and.then(result)
+			.as("DAO result returned")
+			.isSameAs(systemUser)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void systemUserForUser_username() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		String username = UUID.randomUUID().toString();
 		CentralSystemUser systemUser = new CentralSystemUser(userId, Instant.now(), username, null);
-		expect(systemUserDao.getForUsername(userId, username)).andReturn(systemUser);
+		given(systemUserDao.getForUsername(userId, username)).willReturn(systemUser);
 
 		// WHEN
-		replayAll();
 		CentralSystemUser result = biz.systemUserForUser(userId, username);
 
 		// THEN
-		assertThat("DAO user returned", result, sameInstance(systemUser));
+		// @formatter:off
+		and.then(result)
+			.as("DAO result returned")
+			.isSameAs(systemUser)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void deleteSystemUser() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
-		Long id = UUID.randomUUID().getLeastSignificantBits();
-		systemUserDao.delete(userId, id);
+		final Long userId = randomLong();
+		final Long id = randomLong();
 
 		// WHEN
-		replayAll();
 		biz.deleteUserSystemUser(userId, id);
 
 		// THEN
+		then(systemUserDao).should().delete(userId, id);
 	}
 
 	@Test
 	public void availableChargePoints() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		List<CentralChargePoint> list = Collections.emptyList();
-		expect(chargePointDao.findAllForOwner(userId)).andReturn(list);
+		given(chargePointDao.findAllForOwner(userId)).willReturn(list);
 
 		// WHEN
-		replayAll();
 		Collection<CentralChargePoint> results = biz.chargePointsForUser(userId);
 
 		// THEN
-		assertThat("DAO results returned", results, sameInstance(list));
+		// @formatter:off
+		and.then(results)
+			.as("DAO result returned")
+			.isSameAs(list)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void listChargePoints_page() {
+		// GIVEN
+		final Long userId = randomLong();
+		final var filter = new BasicOcppFilter();
+		filter.setMax(randomInt());
+		filter.setOffset(randomLong());
+
+		final var daoResults = new BasicFilterResults<CentralChargePoint, Long>(List.of());
+		given(chargePointDao.findFiltered(any())).willReturn(daoResults);
+
+		// WHEN
+		FilterResults<CentralChargePoint, Long> results = biz.listChargePointsForUser(userId, filter);
+
+		// THEN
+		// @formatter:off
+		then(chargePointDao).should().findFiltered(chargePointFilterCaptor.capture());
+		and.then(chargePointFilterCaptor.getValue())
+			.as("Copy of filter passed to DAO")
+			.isNotSameAs(filter)
+			.as("User ID set on filter")
+			.returns(new Long[] {userId}, from(CentralChargePointFilter::getUserIds))
+			.as("Max copied to filter")
+			.returns(filter.getMax(), from(CentralChargePointFilter::getMax))
+			.as("Offset copied to filter")
+			.returns(filter.getOffset(), from(CentralChargePointFilter::getOffset))
+			;
+		
+		and.then(results)
+			.as("DAO result returned")
+			.isSameAs(daoResults)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void availableChargePointConnectors() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		List<CentralChargePointConnector> list = Collections.emptyList();
-		expect(connectorDao.findAllForOwner(userId)).andReturn(list);
+		given(connectorDao.findAllForOwner(userId)).willReturn(list);
 
 		// WHEN
-		replayAll();
 		Collection<CentralChargePointConnector> results = biz.chargePointConnectorsForUser(userId);
 
 		// THEN
-		assertThat("DAO results returned", results, sameInstance(list));
+		// @formatter:off
+		and.then(results)
+			.as("DAO result returned")
+			.isSameAs(list)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void chargePointConnectorsForUser_id() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		ChargePointConnectorKey id = new ChargePointConnectorKey(
 				UUID.randomUUID().getLeastSignificantBits(), 1);
 		CentralChargePointConnector entity = new CentralChargePointConnector(id, userId);
-		expect(connectorDao.get(userId, id)).andReturn(entity);
+		given(connectorDao.get(userId, id)).willReturn(entity);
 
 		// WHEN
-		replayAll();
 		CentralChargePointConnector result = biz.chargePointConnectorForUser(userId, id);
 
 		// THEN
-		assertThat("DAO user returned", result, sameInstance(entity));
+		// @formatter:off
+		and.then(result)
+			.as("DAO result returned")
+			.isSameAs(entity)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void deleteChargePointConnector() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
-		ChargePointConnectorKey id = new ChargePointConnectorKey(
+		final Long userId = randomLong();
+		final ChargePointConnectorKey id = new ChargePointConnectorKey(
 				UUID.randomUUID().getLeastSignificantBits(), 1);
-		connectorDao.delete(userId, id);
 
 		// WHEN
-		replayAll();
 		biz.deleteUserChargePointConnector(userId, id);
 
 		// THEN
+		then(connectorDao).should().delete(userId, id);
 	}
 
 	@Test
 	public void availableChargePointSettings() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		List<ChargePointSettings> list = Collections.emptyList();
-		expect(chargePointSettingsDao.findAllForOwner(userId)).andReturn(list);
+		given(chargePointSettingsDao.findAllForOwner(userId)).willReturn(list);
 
 		// WHEN
-		replayAll();
 		Collection<ChargePointSettings> results = biz.chargePointSettingsForUser(userId);
 
 		// THEN
-		assertThat("DAO results returned", results, sameInstance(list));
+		// @formatter:off
+		and.then(results)
+			.as("DAO result returned")
+			.isSameAs(list)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void chargePointSettingsForUser_id() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
-		Long id = UUID.randomUUID().getLeastSignificantBits();
+		final Long userId = randomLong();
+		final Long id = randomLong();
 		ChargePointSettings entity = new ChargePointSettings(id, userId);
-		expect(chargePointSettingsDao.get(userId, id)).andReturn(entity);
+		given(chargePointSettingsDao.get(userId, id)).willReturn(entity);
 
 		// WHEN
-		replayAll();
 		ChargePointSettings result = biz.chargePointSettingsForUser(userId, id);
 
 		// THEN
-		assertThat("DAO user returned", result, sameInstance(entity));
+		// @formatter:off
+		and.then(result)
+			.as("DAO result returned")
+			.isSameAs(entity)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void deleteChargePointSettings() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
-		Long id = UUID.randomUUID().getLeastSignificantBits();
-		chargePointSettingsDao.delete(userId, id);
+		final Long userId = randomLong();
+		final Long id = randomLong();
 
 		// WHEN
-		replayAll();
 		biz.deleteUserChargePointSettings(userId, id);
 
 		// THEN
+		then(chargePointSettingsDao).should().delete(userId, id);
 	}
 
 	@Test
 	public void userSettingsForUser() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		UserSettings entity = new UserSettings(userId);
-		expect(userSettingsDao.get(userId)).andReturn(entity);
+		given(userSettingsDao.get(userId)).willReturn(entity);
 
 		// WHEN
-		replayAll();
 		UserSettings result = biz.settingsForUser(userId);
 
 		// THEN
-		assertThat("DAO user returned", result, sameInstance(entity));
+		// @formatter:off
+		and.then(result)
+			.as("DAO result returned")
+			.isSameAs(entity)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void deleteUserSettings() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
-		userSettingsDao.delete(userId);
+		final Long userId = randomLong();
 
 		// WHEN
-		replayAll();
 		biz.deleteUserSettings(userId);
 
 		// THEN
+		then(userSettingsDao).should().delete(userId);
 	}
 
 	@Test
 	public void chargeSessionForUser() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 		UUID sessionId = UUID.randomUUID();
 		CentralChargeSession entity = CentralChargeSession.forChargePoint(1);
-		expect(chargeSessionDao.get(sessionId, userId)).andReturn(entity);
+		given(chargeSessionDao.get(sessionId, userId)).willReturn(entity);
 
 		// WHEN
-		replayAll();
 		ChargeSession result = biz.chargeSessionForUser(userId, sessionId);
-		assertThat("DAO session returned", result, sameInstance(entity));
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("DAO result returned")
+			.isSameAs(entity)
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void incompleteChargeSessionsForChargePoint() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
-		Long chargePointId = UUID.randomUUID().getLeastSignificantBits();
+		final Long userId = randomLong();
+		final Long chargePointId = randomLong();
 		CentralChargeSession entity = CentralChargeSession.forChargePoint(1);
-		expect(chargeSessionDao.getIncompleteChargeSessionsForUserForChargePoint(userId, chargePointId))
-				.andReturn(singleton(entity));
+		given(chargeSessionDao.getIncompleteChargeSessionsForUserForChargePoint(userId, chargePointId))
+				.willReturn(singleton(entity));
 
 		// WHEN
-		replayAll();
 		Collection<ChargeSession> result = biz.incompleteChargeSessionsForChargePoint(userId,
 				chargePointId);
-		List<ChargeSession> resultList = result.stream().collect(Collectors.toList());
 
 		// THEN
-		assertThat("Result returned", resultList, hasSize(1));
-		assertThat("DAO session returned", resultList.get(0), sameInstance(entity));
+		// @formatter:off
+		and.then(result)
+			.as("DAO result returned")
+			.hasSize(1)
+			.element(0)
+			.as("DAO result returned")
+			.isSameAs(entity)
+			;
+		// @formatter:on
 	}
 
+	@Test
+	public void chargePointConnectorsForUserAndChargePoint() {
+		// GIVEN
+		final Long userId = randomLong();
+		final long chargePointId = randomLong();
+
+		final List<CentralChargePointConnector> daoResult = new ArrayList<>();
+		given(connectorDao.findByChargePointId(userId, chargePointId)).willReturn(daoResult);
+
+		// WHEN
+		Collection<CentralChargePointConnector> result = biz.chargePointConnectorsForUser(userId,
+				chargePointId);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("DAO result returned")
+			.isSameAs(daoResult)
+			;
+		// @formatter:on
+	}
 }

@@ -433,13 +433,28 @@ public class UserOcppController {
 	}
 
 	/**
-	 * View a specific credential.
+	 * View a specific connector.
+	 *
+	 * @param chargePointId
+	 *        the charge point ID
+	 * @return the connectors
+	 * @since 3.1
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/connectors/{chargePointId}")
+	public Result<Collection<CentralChargePointConnector>> viewConnectorsForCharger(
+			@PathVariable long chargePointId) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return success(userOcppBiz().chargePointConnectorsForUser(userId, chargePointId));
+	}
+
+	/**
+	 * View a specific connector.
 	 *
 	 * @param chargePointId
 	 *        the charge point ID
 	 * @param connectorId
 	 *        the ID of the connector to view
-	 * @return the system user
+	 * @return the connector
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/connectors/{chargePointId}/{connectorId}")
 	public Result<CentralChargePointConnector> viewConnector(@PathVariable long chargePointId,
@@ -450,7 +465,7 @@ public class UserOcppController {
 	}
 
 	/**
-	 * Delete a specific credential.
+	 * Delete a specific connector.
 	 *
 	 * @param chargePointId
 	 *        the ID of the charge point
@@ -468,7 +483,7 @@ public class UserOcppController {
 	}
 
 	/**
-	 * View a specific credential.
+	 * View a specific connector.
 	 *
 	 * @param chargePointId
 	 *        the charge point ID
@@ -489,7 +504,7 @@ public class UserOcppController {
 	}
 
 	/**
-	 * Delete a specific credential.
+	 * Delete a specific connector.
 	 *
 	 * @param chargePointId
 	 *        the ID of the charge point

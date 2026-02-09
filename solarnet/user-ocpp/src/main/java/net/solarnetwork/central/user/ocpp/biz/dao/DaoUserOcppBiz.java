@@ -322,19 +322,27 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Override
 	public CentralChargePointConnector chargePointConnectorForUser(Long userId,
 			ChargePointConnectorKey id) {
-		return connectorDao.get(userId, id);
+		return connectorDao.get(requireNonNullArgument(userId, "userId"),
+				requireNonNullArgument(id, "id"));
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteUserChargePointConnector(Long userId, ChargePointConnectorKey id) {
-		connectorDao.delete(userId, id);
+		connectorDao.delete(requireNonNullArgument(userId, "userId"), requireNonNullArgument(id, "id"));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Collection<CentralChargePointConnector> chargePointConnectorsForUser(Long userId) {
-		return connectorDao.findAllForOwner(userId);
+		return connectorDao.findAllForOwner(requireNonNullArgument(userId, "userId"));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Collection<CentralChargePointConnector> chargePointConnectorsForUser(Long userId,
+			long chargePointId) {
+		return connectorDao.findByChargePointId(requireNonNullArgument(userId, "userId"), chargePointId);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)

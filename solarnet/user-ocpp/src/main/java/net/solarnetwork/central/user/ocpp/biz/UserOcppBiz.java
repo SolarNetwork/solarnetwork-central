@@ -251,6 +251,20 @@ public interface UserOcppBiz {
 	Collection<CentralChargePointConnector> chargePointConnectorsForUser(Long userId);
 
 	/**
+	 * Get the available OCPP connectors for a given charger and user.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get OCPP connectors for
+	 * @param chargePointId
+	 *        the charge point ID to list connectors for
+	 * @return all available connectors for the given charger; never
+	 *         {@code null}
+	 * @since 1.4
+	 */
+	Collection<CentralChargePointConnector> chargePointConnectorsForUser(Long userId,
+			long chargePointId);
+
+	/**
 	 * Create a new OCPP connector, or update an existing connector.
 	 * 
 	 * @param connector
