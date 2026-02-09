@@ -23,11 +23,16 @@
 package net.solarnetwork.central.ocpp.dao.mybatis;
 
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
+import java.util.List;
 import org.springframework.dao.DataRetrievalFailureException;
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointFilter;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.ocpp.domain.ChargePoint;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
@@ -36,9 +41,10 @@ import net.solarnetwork.ocpp.domain.ChargePointInfo;
  * MyBatis implementation of {@link CentralChargePointDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class MyBatisCentralChargePointDao extends BaseMyBatisGenericDaoSupport<ChargePoint, Long>
+public class MyBatisCentralChargePointDao extends
+		BaseMyBatisFilterableDaoSupport<ChargePoint, Long, CentralChargePoint, CentralChargePointFilter>
 		implements CentralChargePointDao {
 
 	/** Query name enumeration. */
@@ -70,7 +76,7 @@ public class MyBatisCentralChargePointDao extends BaseMyBatisGenericDaoSupport<C
 	 * Constructor.
 	 */
 	public MyBatisCentralChargePointDao() {
-		super(CentralChargePoint.class, Long.class);
+		super(CentralChargePoint.class, Long.class, CentralChargePoint.class);
 	}
 
 	@Override
@@ -107,6 +113,13 @@ public class MyBatisCentralChargePointDao extends BaseMyBatisGenericDaoSupport<C
 		if ( count < 1 ) {
 			throw new DataRetrievalFailureException("Entity not found.");
 		}
+	}
+
+	@Override
+	public FilterResults<CentralChargePoint, Long> findFiltered(CentralChargePointFilter filter,
+			List<SortDescriptor> sorts, Long offset, Integer max) {
+		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
+		return doFindFiltered(filter, sorts, offset, max);
 	}
 
 }

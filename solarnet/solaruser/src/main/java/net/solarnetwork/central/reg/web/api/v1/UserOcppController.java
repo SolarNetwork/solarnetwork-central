@@ -53,6 +53,7 @@ import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusFilter;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
+import net.solarnetwork.central.ocpp.domain.BasicOcppFilter;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
@@ -83,7 +84,7 @@ import tools.jackson.databind.ObjectMapper;
  * Web service API for OCPP management.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 @Profile(OCPP_V16)
 @GlobalExceptionRestController
@@ -215,6 +216,19 @@ public class UserOcppController {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralChargePoint> list = userOcppBiz().chargePointsForUser(userId);
 		return success(list);
+	}
+
+	/**
+	 * Find available charge points for the current user and an optional filter
+	 *
+	 * @return the charge points
+	 * @since 3.1
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/chargers/find")
+	public Result<FilterResults<CentralChargePoint, Long>> availableChargePoints(
+			BasicOcppFilter filter) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return success(userOcppBiz().listChargePointsForUser(userId, filter));
 	}
 
 	/**

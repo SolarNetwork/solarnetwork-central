@@ -90,16 +90,30 @@ $(document).ready(function() {
 		/* ============================
 		   Chargers
 		   ============================ */
+		   
 		const chargersContainer = $('#ocpp-chargers-container');
+		const chargerPaginationNav = $('#ocpp-chargers-list-pagination');
+		const chargerPaginationListItems = chargerPaginationNav.find('li');
+		const chargerCountLabel = $('#ocpp-chargers .intro .listCount');
+
 		const chargerConfigs = [];
 		const chargerConfigsMap = new Map();
 
-		function populateChargerConfigs(configs, preserve) {
-			configs = Array.isArray(configs) ? configs : [];
+		const chargerPagination = {
+			page: 0,
+			total: 0,
+			pageSize: 25,
+		};
+
+		function populateChargerConfigs(data, preserve) {
+			const haveRows = !!(data && data.results && data.results.length > 0);
+			const returned = (haveRows ? data.results.length : 0);
+			const total = (data ? data.totalResults : returned);
+			const configs = haveRows ? data.results : [];
 			if ( !preserve ) {
 				chargerConfigsMap.clear();
 			}
-			var items = configs.map(function(config) {
+			const items = configs.map(function(config) {
 				var model = SolarReg.Settings.serviceConfigurationItem(config, []);
 				Object.assign(model, config.info); // copy info props directly onto model
 				model.identifier = model.id; // rename info.id
@@ -126,12 +140,74 @@ $(document).ready(function() {
 				SolarReg.Templates.setContextItem(settingsEditContainer, settingConfig);
 			});
 			SolarReg.saveServiceConfigurations(configs, preserve, chargerConfigs, chargersContainer);
+			
+			// pagination (when not updating rows)
+			if (!preserve) {
+				const offset = (data ? data.startingOffset : 0);
+				const pageCount = Math.ceil(total / chargerPagination.pageSize);
+				const page = (offset / chargerPagination.pageSize);
+				const haveMore = (offset + returned < total);
+	
+				chargerPaginationNav.find('li').not(':first').not(':last').not('.template').remove();
+	
+				let prevItem = chargerPaginationListItems.first();
+				prevItem.toggleClass('disabled', !(offset > 0));
+	
+				let nextItem = chargerPaginationListItems.last();
+				nextItem.toggleClass('disabled', !haveMore);
+	
+				let templateItem = chargerPaginationListItems.filter('.template');
+	
+				let i, len, pageItem;
+				for ( i = 0, len = pageCount; i < len; i += 1 ) {
+					pageItem = templateItem.clone(true).removeClass('template');
+					if ( i === page ) {
+						pageItem.addClass('active');
+					}
+					pageItem.find("[data-tprop='pageNumber']").text(i+1);
+					pageItem.find('a').attr('href', '#'+i);
+					pageItem.insertBefore(nextItem);
+				}
+	
+				chargerPagination.total = total;
+				chargerPagination.page = page;
+	
+				chargerPaginationNav.toggleClass('hidden', pageCount < 2);
+			}
+			
+			chargerCountLabel.text(chargerPagination.total);
+		}
+
+		function loadChargerPage(pageNum) {
+			console.debug('Want page %d', pageNum);
+			return $.getJSON(SolarReg.solarUserURL('/sec/ocpp/chargers/find?offset=' 
+					+(pageNum * chargerPagination.pageSize)
+					+'&max=' +chargerPagination.pageSize), (json) => {
+				console.debug('Got chargers: %o', json);
+				populateChargerConfigs(json.data);
+			});
 		}
 
 		$('#ocpp-chargers-container .list-container').on('click', function(event) {
 			// edit charger or charger settings
 			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
 		});
+		
+		// setup pagination links
+		chargerPaginationListItems.first().find('a').on('click', function(event) {
+			event.preventDefault();
+			loadChargerPage(chargerPagination.page - 1);
+		});
+		chargerPaginationListItems.filter('.template').find('a').on('click', function(event) {
+			event.preventDefault();
+			var page = +this.hash.substring(1);
+			loadChargerPage(page);
+		});
+		chargerPaginationListItems.last().find('a').on('click', function(event) {
+			event.preventDefault();
+			loadChargerPage(chargerPagination.page + 1);
+		});
+
 
 		$('#ocpp-charger-edit-modal').on('show.bs.modal', function(event) {
 			var config = SolarReg.Templates.findContextItem(this),
@@ -142,7 +218,7 @@ $(document).ready(function() {
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 		.on('submit', function(event) {
 			SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
-				populateChargerConfigs([res], true);
+				populateChargerConfigs({"results":[res]}, true);
 			}, function serializeDataConfigForm(form) {
 				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
 
@@ -511,13 +587,11 @@ $(document).ready(function() {
 		   Init
 		   ============================ */
 		(function initOcppManagement() {
-			var loadCountdown = 6;
+			var loadCountdown = 5;
 			var settingConfs = [];
-			var chargerConfs = [];
 			var chargerSettingConfs = [];
 			var authConfs = [];
 			var credentialConfs = [];
-			var connectorConfs = [];
 	
 			function liftoff() {
 				loadCountdown -= 1;
@@ -525,10 +599,8 @@ $(document).ready(function() {
 					populateSettingConfigs(settingConfs);
 					populateAuthConfigs(authConfs);
 					populateCredentialConfigs(credentialConfs);
-					populateConnectorConfigs(connectorConfs);
 
 					populateChargerSettingConfigs(chargerSettingConfs);
-					populateChargerConfigs(chargerConfs);
 				}
 			}
 
@@ -543,12 +615,8 @@ $(document).ready(function() {
 				liftoff();
 			});
 
-			// list all chargers
-			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/chargers'), function(json) {
-				console.debug('Got OCPP chargers: %o', json);
-				if ( json && json.success === true ) {
-					chargerConfs = json.data;
-				}
+			// list fist page of chargers
+			loadChargerPage(0).then(() => {
 				liftoff();
 			});
 
@@ -575,15 +643,6 @@ $(document).ready(function() {
 				console.debug('Got OCPP credentials: %o', json);
 				if ( json && json.success === true ) {
 					credentialConfs = json.data;
-				}
-				liftoff();
-			});
-			
-			// list all connectors
-			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/connectors'), function(json) {
-				console.debug('Got OCPP connectors: %o', json);
-				if ( json && json.success === true ) {
-					connectorConfs = json.data;
 				}
 				liftoff();
 			});

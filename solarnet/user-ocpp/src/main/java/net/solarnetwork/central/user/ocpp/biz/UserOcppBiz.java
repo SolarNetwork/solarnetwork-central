@@ -26,12 +26,14 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusFilter;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
 import net.solarnetwork.central.ocpp.dao.ChargeSessionFilter;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointFilter;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
@@ -48,7 +50,7 @@ import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
  * Service API for SolarUser OCPP support.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface UserOcppBiz {
 
@@ -160,7 +162,23 @@ public interface UserOcppBiz {
 	 *        the SolarUser user ID to get charge points for
 	 * @return all available charge points; never {@literal null}
 	 */
-	Collection<CentralChargePoint> chargePointsForUser(Long userId);
+	default Collection<CentralChargePoint> chargePointsForUser(Long userId) {
+		FilterResults<CentralChargePoint, Long> result = listChargePointsForUser(userId, null);
+		return (result != null ? StreamSupport.stream(result.spliterator(), false).toList() : null);
+	}
+
+	/**
+	 * Get a list of all available charge points for a given user.
+	 *
+	 * @param userId
+	 *        the user ID to get entities for
+	 * @param filter
+	 *        an optional filter
+	 * @return the available entities, never {@literal null}
+	 * @since 1.4
+	 */
+	FilterResults<CentralChargePoint, Long> listChargePointsForUser(Long userId,
+			CentralChargePointFilter filter);
 
 	/**
 	 * Create a new charge point registration, or update an existing

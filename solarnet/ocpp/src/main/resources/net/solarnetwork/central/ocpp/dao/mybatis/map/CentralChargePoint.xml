@@ -125,7 +125,7 @@
 			cp.id = #{id}
 	</select>
 	
-	<sql id="fragment-findall-CentralChargePoint-where">
+	<sql id="fragment-findall-CentralChargePoint-where-ChargePoint">
 		<if test="filter != null">
 			<where>
 				<if test="filter.id != null">
@@ -169,7 +169,7 @@
 			<include refid="fragment-CentralChargePoint-full-result"/>
 		FROM
 			solarev.ocpp_charge_point cp
-		<include refid="fragment-findall-CentralChargePoint-where"/>
+		<include refid="fragment-findall-CentralChargePoint-where-ChargePoint"/>
 		<include refid="fragment-findall-CentralChargePoint-order"/>
 	</select>
 
@@ -186,5 +186,41 @@
 		DELETE FROM solarev.ocpp_charge_point
 		WHERE user_id = #{userId} AND id = #{id}
 	</delete>
+
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<sql id="fragment-findall-CentralChargePoint-where">
+		<where>
+			<if test="filter.userIds != null and filter.userIds.length > 0">
+				AND cp.user_id = ANY(#{filter.userIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+		</where>
+	</sql>
+
+	<select id="findall-CentralChargePoint-CentralChargePoint"
+			resultMap="CentralChargePoint-FullResult"
+			fetchSize="50"
+			resultSetType="FORWARD_ONLY">
+		SELECT 
+			<include refid="fragment-CentralChargePoint-full-result"/>
+		FROM solarev.ocpp_charge_point cp
+		<include refid="fragment-findall-CentralChargePoint-where"/>
+		<include refid="fragment-findall-CentralChargePoint-order"/>
+		<if test="filter.max != null">
+			LIMIT #{filter.max}
+		</if>
+		<if test="filter.offset != null">
+			OFFSET #{filter.offset}
+		</if>
+	</select>
+	
+	<select id="findall-CentralChargePoint-CentralChargePoint-count" resultType="long">
+		SELECT count(*)
+		FROM solarev.ocpp_charge_point cp
+		<include refid="fragment-findall-CentralChargePoint-where"/>
+	</select>
+	
 
 </mapper>

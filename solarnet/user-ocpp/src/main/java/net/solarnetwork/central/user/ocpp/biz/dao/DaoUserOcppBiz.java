@@ -48,9 +48,11 @@ import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
 import net.solarnetwork.central.ocpp.dao.ChargeSessionFilter;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
+import net.solarnetwork.central.ocpp.domain.BasicOcppFilter;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointFilter;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
@@ -280,6 +282,15 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Override
 	public Collection<CentralChargePoint> chargePointsForUser(Long userId) {
 		return chargePointDao.findAllForOwner(userId);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<CentralChargePoint, Long> listChargePointsForUser(Long userId,
+			CentralChargePointFilter filter) {
+		var f = new BasicOcppFilter(filter);
+		f.setUserId(requireNonNullArgument(userId, "userId"));
+		return chargePointDao.findFiltered(f);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)

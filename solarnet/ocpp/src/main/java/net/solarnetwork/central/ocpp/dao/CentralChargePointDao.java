@@ -24,6 +24,8 @@ package net.solarnetwork.central.ocpp.dao;
 
 import java.util.Collection;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointFilter;
+import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
 import net.solarnetwork.ocpp.domain.ChargePoint;
 
@@ -37,9 +39,10 @@ import net.solarnetwork.ocpp.domain.ChargePoint;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface CentralChargePointDao extends ChargePointDao {
+public interface CentralChargePointDao
+		extends ChargePointDao, FilterableDao<CentralChargePoint, Long, CentralChargePointFilter> {
 
 	/**
 	 * Get a charge point by its unique identifier.

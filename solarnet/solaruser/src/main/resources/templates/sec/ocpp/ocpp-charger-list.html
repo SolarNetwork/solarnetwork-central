@@ -20,6 +20,13 @@
 	<p class="intro" data-th-utext="#{ocpp.chargers.intro(0)}">
 		Your chargers are shown here. Use the + button to add new chargers.
 	</p>
+	<nav data-th-aria-label="#{ocpp.chargers.pagination.label}" id="ocpp-chargers-list-pagination" class="hidden">
+		<ul class="pagination">
+			<li><a href="#" data-th-aria-label="#{ocpp.chargers.pagination.prev.label}"><span aria-hidden="true">&laquo;</span></a></li>
+			<li class="template"><a href="#"><span data-tprop="pageNumber">1</span> <span class="sr-only hidden" data-th-text="#{ocpp.chargers.pagination.current.label}">1</span></a></li>
+			<li><a href="#" data-th-aria-label="#{ocpp.chargers.pagination.next.label}"><span aria-hidden="true">&raquo;</span></a></li>
+		</ul>
+	</nav>
 	<table id="ocpp-chargers-container" class="table configs" data-th-classappend="'hidden'">
 		<thead>
 			<tr>
