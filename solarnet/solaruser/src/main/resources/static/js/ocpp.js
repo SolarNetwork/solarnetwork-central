@@ -1,651 +1,729 @@
-$(document).ready(function() {
+function ocppManagement() {
 	'use strict';
+	/**
+	 * Resolve the action directly.
+	 */
+	function actionUrlSerializer(action) {
+		return action;
+	}
 
-	$('#ocpp-management').first().each(function ocppManagement() {
-		
-		/**
-		 * Resolve the action directly.
-		 */
-		function actionUrlSerializer(action) {
-			return action;
-		}
-		
-		/* ============================
-		   Authorizations
-		   ============================ */
-		const authsContainer = $('#ocpp-auths-container');
-		const authConfigs = [];
+	/* ============================
+	   Authorizations
+	   ============================ */
+	const authsContainer = $('#ocpp-auths-container');
+	const authConfigs = [];
 
-		function populateAuthConfigs(configs, preserve) {
-			configs = Array.isArray(configs) ? configs : [];
-			var items = configs.map(function(config) {
-				var model = SolarReg.Settings.serviceConfigurationItem(config, []);
-				model.id = config.id;
-				model.createdDisplay = moment(config.created).format('D MMM YYYY');
-				model.token = config.token;
-				model.expiryDateDisplay = (config.expiryDate ? moment(config.expiryDate).format('D MMM YYYY') : '');
-				model.enabled = config.enabled;
-				model.valid = !config.expired;
-	
-				return model;
-			});
-			SolarReg.Templates.populateTemplateItems(authsContainer, items, preserve);
-			SolarReg.saveServiceConfigurations(configs, preserve, authConfigs, authsContainer);
-		}
-
-		$('#ocpp-auths-container .list-container').on('click', function(event) {
-			// edit auth
-			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
-		});
-
-		$('#ocpp-auth-edit-modal').on('show.bs.modal', function(event) {
-			var config = SolarReg.Templates.findContextItem(this),
-				enabled = (config && config.enabled === true ? true : false);
-			SolarReg.Settings.handleSettingToggleButtonChange($(this).find('button[name=enabled]'), enabled);
-			SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
-		})
-		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
-		.on('submit', function(event) {
-			SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
-				populateAuthConfigs([res], true);
-			}, function serializeDataConfigForm(form) {
-				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
-
-				if ( data.expiryDate ) {
-					// make sure encoded as ISO timestamp
-					data.expiryDate = moment(data.expiryDate).toISOString();
-				}
-
-				if ( !data.userId ) {
-					// use actor user ID, i.e. for new auths
-					data.userId = form.elements['userId'].dataset.userId;
-				}
-
-				return data;
-			}, {
-				urlSerializer: actionUrlSerializer,
-				errorMessageGenerator: function(_xhr, json, form) {
-					var msg;
-					if ( json ) {
-						if ( json.code === 'DAO.00101' ) {
-							// assume this means the given identifier is a duplicate
-							msg = form.elements['token'].dataset['errorDuplicateText'];
-						}
-					}
-					return msg;
-				}
-			});
-			return false;
-		})
-		.on('hidden.bs.modal', function() {
-			SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-auths-container .list-container'), (id, deleted) => {
-				SolarReg.deleteServiceConfiguration(deleted ? id : null, authConfigs, authsContainer);
-			});
-		})
-		.find('button.toggle').each(function() {
-			var toggle = $(this);
-			SolarReg.Settings.setupSettingToggleButton(toggle, false);
-		});
-   
-		/* ============================
-		   Chargers
-		   ============================ */
-		   
-		const chargersContainer = $('#ocpp-chargers-container');
-		const chargerPaginationNav = $('#ocpp-chargers-list-pagination');
-		const chargerPaginationListItems = chargerPaginationNav.find('li');
-		const chargerCountLabel = $('#ocpp-chargers .intro .listCount');
-
-		const chargerConfigs = [];
-		const chargerConfigsMap = new Map();
-
-		const chargerPagination = {
-			page: 0,
-			total: 0,
-			pageSize: 25,
-		};
-
-		function populateChargerConfigs(data, preserve) {
-			const haveRows = !!(data && data.results && data.results.length > 0);
-			const returned = (haveRows ? data.results.length : 0);
-			const total = (data ? data.totalResults : returned);
-			const configs = haveRows ? data.results : [];
-			if ( !preserve ) {
-				chargerConfigsMap.clear();
-			}
-			const items = configs.map(function(config) {
-				var model = SolarReg.Settings.serviceConfigurationItem(config, []);
-				Object.assign(model, config.info); // copy info props directly onto model
-				model.identifier = model.id; // rename info.id
-				model.id = config.id;
-				model.createdDisplay = moment(config.created).format('D MMM YYYY');
-				model.nodeId = config.nodeId;
-				model.enabled = config.enabled;
-				model.registrationStatus = config.registrationStatus;
-				model.connectorCount = config.connectorCount;
-				var settings = chargerSettingConfigsMap.get(config.id);
-				if ( settings ) {
-					model.settings = settings._contextItem;
-					model.sourceIdTemplate = settings.sourceIdTemplate;
-					model.publishToSolarIn = settings.publishToSolarIn;
-					model.publishToSolarFlux = settings.publishToSolarFlux;
-				}
-				chargerConfigsMap.set(config.id, model);
-				return model;
-			});
-			SolarReg.Templates.populateTemplateItems(chargersContainer, items, preserve, (item, el) => {
-				let settingsEditContainer = el.find('.settings-container').toggleClass('hidden', item.settings === undefined).parent();
-				// even if item does not have settings, provide a context item with the charger ID so editing works
-				let settingConfig = (item.settings ? item.settings : {id:item.id,chargePointId:item.id});
-				SolarReg.Templates.setContextItem(settingsEditContainer, settingConfig);
-			});
-			SolarReg.saveServiceConfigurations(configs, preserve, chargerConfigs, chargersContainer);
-			
-			// pagination (when not updating rows)
-			if (!preserve) {
-				const offset = (data ? data.startingOffset : 0);
-				const pageCount = Math.ceil(total / chargerPagination.pageSize);
-				const page = (offset / chargerPagination.pageSize);
-				const haveMore = (offset + returned < total);
-	
-				chargerPaginationNav.find('li').not(':first').not(':last').not('.template').remove();
-	
-				let prevItem = chargerPaginationListItems.first();
-				prevItem.toggleClass('disabled', !(offset > 0));
-	
-				let nextItem = chargerPaginationListItems.last();
-				nextItem.toggleClass('disabled', !haveMore);
-	
-				let templateItem = chargerPaginationListItems.filter('.template');
-	
-				let i, len, pageItem;
-				for ( i = 0, len = pageCount; i < len; i += 1 ) {
-					pageItem = templateItem.clone(true).removeClass('template');
-					if ( i === page ) {
-						pageItem.addClass('active');
-					}
-					pageItem.find("[data-tprop='pageNumber']").text(i+1);
-					pageItem.find('a').attr('href', '#'+i);
-					pageItem.insertBefore(nextItem);
-				}
-	
-				chargerPagination.total = total;
-				chargerPagination.page = page;
-	
-				chargerPaginationNav.toggleClass('hidden', pageCount < 2);
-			}
-			
-			chargerCountLabel.text(chargerPagination.total);
-		}
-
-		function loadChargerPage(pageNum) {
-			console.debug('Want page %d', pageNum);
-			return $.getJSON(SolarReg.solarUserURL('/sec/ocpp/chargers/find?offset=' 
-					+(pageNum * chargerPagination.pageSize)
-					+'&max=' +chargerPagination.pageSize), (json) => {
-				console.debug('Got chargers: %o', json);
-				populateChargerConfigs(json.data);
-			});
-		}
-
-		$('#ocpp-chargers-container .list-container').on('click', function(event) {
-			// edit charger or charger settings
-			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
-		});
-		
-		// setup pagination links
-		chargerPaginationListItems.first().find('a').on('click', function(event) {
-			event.preventDefault();
-			loadChargerPage(chargerPagination.page - 1);
-		});
-		chargerPaginationListItems.filter('.template').find('a').on('click', function(event) {
-			event.preventDefault();
-			var page = +this.hash.substring(1);
-			loadChargerPage(page);
-		});
-		chargerPaginationListItems.last().find('a').on('click', function(event) {
-			event.preventDefault();
-			loadChargerPage(chargerPagination.page + 1);
-		});
-
-
-		$('#ocpp-charger-edit-modal').on('show.bs.modal', function(event) {
-			var config = SolarReg.Templates.findContextItem(this),
-				enabled = (config && config.enabled === true ? true : false);
-			SolarReg.Settings.handleSettingToggleButtonChange($(this).find('button[name=enabled]'), enabled);
-			SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
-		})
-		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
-		.on('submit', function(event) {
-			SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
-				populateChargerConfigs({"results":[res]}, true);
-			}, function serializeDataConfigForm(form) {
-				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
-
-				if ( !data.userId ) {
-					// use actor user ID, i.e. for new chargers
-					data.userId = form.elements['userId'].dataset.userId;
-				}
-
-				return data;
-			}, {
-				urlSerializer: actionUrlSerializer,
-				errorMessageGenerator: function(_xhr, json, form) {
-					var msg;
-					if ( json ) {
-						if ( json.code === 'DAO.00101' ) {
-							// assume this means the given identifier is a duplicate
-							msg = form.elements['info.id'].dataset['errorDuplicateText'];
-						} else if ( json.message === 'UNKNOWN_OBJECT' ) {
-							// assume this means the given node ID is not valid
-							msg = form.elements['nodeId'].dataset['errorInvalidText'];
-						}
-					}
-					return msg;
-				}
-			});
-			return false;
-		})
-		.on('hidden.bs.modal', function() {
-			SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-chargers-container .list-container'), (id, deleted) => {
-				SolarReg.deleteServiceConfiguration(deleted ? id : null, chargerConfigs, chargersContainer);
-				if ( deleted ) {
-					chargerConfigsMap.delete(id);
-					chargerSettingConfigsMap.delete(id);
-				}
-			});
-		})
-		.find('button.toggle').each(function() {
-			var toggle = $(this);
-			SolarReg.Settings.setupSettingToggleButton(toggle, false);
-		});
-
-		/* ============================
-		   Connectors
-		   ============================ */
-		const connectorsContainer = $('#ocpp-connectors-container');
-		const connectorConfigs = [];
-
-		function setupConnectorId(config) {
-			if ( config.id ) {
-				return;
-			}
-			config.id = config.chargePointId + '.' + config.evseId + '.' + config.connectorId;
-			return config;
-		}
-
-		function populateConnectorConfigs(configs, preserve) {
-			configs = Array.isArray(configs) ? configs : [];
-			var items = configs.map(function(config) {
-				var model = SolarReg.Settings.serviceConfigurationItem(setupConnectorId(config), []);
-				Object.assign(model, config.info); // copy info props directly onto model
-				model.id = config.id;
-				model.chargePointId = config.chargePointId;
-				model.createdDisplay = moment(config.created).format('D MMM YYYY');
-				if ( model.timestamp ) {
-					model.timestampDisplay = moment(model.timestamp).format('D MMM YYYY');
-				}	
-				return model;
-			});
-			SolarReg.Templates.populateTemplateItems(connectorsContainer, items, preserve);
-			SolarReg.saveServiceConfigurations(configs, preserve, connectorConfigs, connectorsContainer);
-		}
-
-		$('#ocpp-connectors-container .list-container').on('click', function(event) {
-			// edit connector
-			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
-		});
-
-		$('#ocpp-connector-edit-modal').on('show.bs.modal', function(event) {
-			var config = SolarReg.Templates.findContextItem(this),
-				enabled = (config && config.enabled === true ? true : false);
-			SolarReg.Settings.handleSettingToggleButtonChange($(this).find('button[name=enabled]'), enabled);
-			SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
-		})
-		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
-		.on('submit', function(event) {
-			SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
-				populateConnectorConfigs([res], true);
-			}, function serializeDataConfigForm(form) {
-				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
-
-				if ( !data.userId ) {
-					// use actor user ID, i.e. for new connectors
-					data.userId = form.elements['userId'].dataset.userId;
-				}
-
-				return data;
-			}, {
-				urlSerializer: actionUrlSerializer,
-				errorMessageGenerator: function(_xhr, json, form) {
-					var msg;
-					if ( json ) {
-						if ( json.code === 'DAO.00105' ) {
-							// assume this means the given charger ID is not valid
-							msg = form.elements['chargePointId'].dataset['errorInvalidText'];
-						}
-					}
-					return msg;
-				}
-			});
-			return false;
-		})
-		.on('hidden.bs.modal', function() {
-			SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-connectors-container .list-container'), (id, deleted) => {
-				SolarReg.deleteServiceConfiguration(deleted ? id : null, connectorConfigs, connectorsContainer);
-			});
-		})
-		.find('button.toggle').each(function() {
-			var toggle = $(this);
-			SolarReg.Settings.setupSettingToggleButton(toggle, false);
-		});
-
-		/* ============================
-		   Credentials
-		   ============================ */
-		const credentialsContainer = $('#ocpp-credentials-container');
-		const credentialConfigs = [];
-	
-		function populateCredentialConfigs(configs, preserve) {
-			configs = Array.isArray(configs) ? configs : [];
-			var items = configs.map(function(config) {
-				var model = SolarReg.Settings.serviceConfigurationItem(config, []);
-				model.id = config.id;
-				model.createdDisplay = moment(config.created).format('D MMM YYYY');
-				model.username = config.username;
-	
-				model.allowedChargePoints = Array.isArray(config.allowedChargePoints) && config.allowedChargePoints.length > 0
-					? SolarReg.arrayAsDelimitedString(config.allowedChargePoints.sort(SolarReg.naturalSort))
-					: '*';
-	
-				return model;
-			});
-			SolarReg.Templates.populateTemplateItems(credentialsContainer, items, preserve);
-			SolarReg.saveServiceConfigurations(configs, preserve, credentialConfigs, credentialsContainer);
-		}
-	
-		$('#ocpp-credentials-container .list-container').on('click', function(event) {
-			// edit credentials
-			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
-		});
-
-		$('#ocpp-credential-password-modal').on('hidden.bs.modal', function() {
-			// clear out credentials
-			$(this).find('*[data-tprop]').text('');
-		});
-
-		$('#ocpp-credential-edit-modal').on('show.bs.modal', function(event) {
-			SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
-		})
-		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
-		.on('submit', function(event) {
-			SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
-				if ( res.password ) {
-					// server returned a password, so show that to the user once and delete from config
-					const pwModal = $('#ocpp-credential-password-modal');
-					SolarReg.Templates.replaceTemplateProperties(pwModal.find('table'), res);
-					pwModal.modal('show');
-					delete res.password;
-				}
-				populateCredentialConfigs([res], true);
-			}, function serializeDataConfigForm(form) {
-				var data = SolarReg.Settings.encodeServiceItemForm(form);
-
-				// preserve existing password (or auto-assign for new credential)
-				if ( data.password === "" ) {
-					delete data.password;
-				}
-
-				var allowedChargePoints = (data.allowedChargePoints ? data.allowedChargePoints.split(/\s*,\s*/) : []);
-				if ( allowedChargePoints.length ) {
-					data.allowedChargePoints = allowedChargePoints;
-				} else {
-					delete data.allowedChargePoints;
-				}
-
-				if ( !data.userId ) {
-					// use actor user ID, i.e. for new credentials
-					data.userId = form.elements['userId'].dataset.userId;
-				}
-
-				return data;
-			}, {
-				urlSerializer: actionUrlSerializer
-			});
-			return false;
-		})
-		.on('hidden.bs.modal', function() {
-			SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-credentials-container .list-container'), (id, deleted) => {
-				SolarReg.deleteServiceConfiguration(deleted ? id : null, credentialConfigs, credentialsContainer);
-			});
-		});
-
-		/* ============================
-		   Settings
-		   ============================ */
-		const settingsContainer = $('#ocpp-settings-container');
-		const settingConfigs = []; // only ever one of these, use array for consistency with Settings/Templates functions
-		const chargerSettingConfigsMap = new Map();
-
-		function settingModel(config) {
+	function populateAuthConfigs(configs, preserve) {
+		configs = Array.isArray(configs) ? configs : [];
+		var items = configs.map(function(config) {
 			var model = SolarReg.Settings.serviceConfigurationItem(config, []);
-			if ( config.chargePointId === undefined ) {
-				config.id = 1; // assign arbitrary ID for default settings
-				if ( config.publishToSolarIn === undefined ) {
-					config.publishToSolarIn = true;
-				}
-				if ( config.publishToSolarFlux === undefined ) {
-					config.publishToSolarFlux = true;
-				}
-				if ( config.sourceIdTemplate === undefined ) {
-					config.sourceIdTemplate = '/ocpp/{chargePointId}/{connectorId}/{location}';
-				}
-			} else {
-				config.id = config.chargePointId;
-				model.chargePointId = config.chargePointId;
-			}
 			model.id = config.id;
-			model.hid = config.hid || '-';
-			model.publishToSolarIn = config.publishToSolarIn;
-			model.publishToSolarFlux = config.publishToSolarFlux;
-			model.sourceIdTemplate = config.sourceIdTemplate;
+			model.createdDisplay = moment(config.created).format('D MMM YYYY');
+			model.token = config.token;
+			model.expiryDateDisplay = (config.expiryDate ? moment(config.expiryDate).format('D MMM YYYY') : '');
+			model.enabled = config.enabled;
+			model.valid = !config.expired;
+
 			return model;
-		}
-
-		function populateSettingConfigs(configs, preserve) {
-			configs = Array.isArray(configs) ? configs : [];
-			var items = configs.map(settingModel);
-			SolarReg.Templates.populateTemplateItems(settingsContainer, items, preserve);
-			SolarReg.saveServiceConfigurations(configs, preserve, settingConfigs, settingsContainer);
-		}
-
-		function populateChargerSettingConfigs(configs, preserve) {
-			configs = Array.isArray(configs) ? configs : [];
-			if ( !preserve ) {
-				chargerSettingConfigsMap.clear();
-			}
-			var chargerItems = [];
-			configs.forEach(config => {
-				var model = settingModel(config);
-				chargerSettingConfigsMap.set(model.chargePointId, model);
-				if ( preserve ) {
-					let chargerItem = chargerConfigsMap.get(model.chargePointId);
-					if ( chargerItem ) {
-						chargerItem.settings = model._contextItem;
-						chargerItem.sourceIdTemplate = model.sourceIdTemplate;
-						chargerItem.publishToSolarIn = !!model.publishToSolarIn;
-						chargerItem.publishToSolarFlux = !!model.publishToSolarFlux;
-						chargerItems.push(chargerItem);
-					}
-				}
-				return model;
-			});
-			if ( chargerItems.length > 0 ) {
-				SolarReg.Templates.populateTemplateItems(chargersContainer, chargerItems, true, (item, el) => {
-					let settingsEditContainer = el.find('.settings-container').removeClass('hidden').parent();
-					SolarReg.Templates.setContextItem(settingsEditContainer, item.settings);
-				});
-			}
-		}
-
-		$('#ocpp-settings-edit-modal').on('show.bs.modal', function(event) {
-			// handle both default and charger-specific settings
-			var modal = $(event.target),
-				config = SolarReg.Templates.findContextItem(modal);
-			if ( !config ) {
-				config = (settingConfigs.length > 0 ? settingConfigs[0] : undefined);
-				if (config) {			
-					// remove fake ID property so don't try to append to URL
-					config = Object.assign({}, config);
-					delete config.id;
-				}
-				SolarReg.Templates.setContextItem(modal, config);
-				modal.attr('action', modal.data('action'));
-			} else {
-				modal.attr('action', modal.data('action-charger'));
-			}
-			modal.find('.charger').toggleClass('hidden', config.chargePointId === undefined);
-			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=publishToSolarIn]'), !!config.publishToSolarIn);
-			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=publishToSolarFlux]'), !!config.publishToSolarFlux);
-			SolarReg.Settings.prepareEditServiceForm(modal, [], []);
-		})
-		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
-		.on('submit', function(event) {
-			SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
-				if ( res.chargePointId === undefined ) {
-					populateSettingConfigs([res], true);
-				} else {
-					populateChargerSettingConfigs([res], true);
-				}
-			}, function serializeDataConfigForm(form) {
-				var data = SolarReg.Settings.encodeServiceItemForm(form, true),
-					config = SolarReg.Templates.findContextItem(form);
-
-				if ( !config || config.chargePointId === undefined ) {
-					delete data.chargePointId;
-				}
-
-				delete data.id;
-
-				if ( !data.userId ) {
-					// use actor user ID, i.e. for new settings
-					data.userId = form.elements['userId'].dataset.userId;
-				}
-
-				return data;
-			}, {
-				urlSerializer: actionUrlSerializer
-			});
-			return false;
-		})
-		.on('hidden.bs.modal', function() {
-			SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-settings-container .list-container'), (id, deleted) => {
-				if ( deleted ) {
-					chargerSettingConfigsMap.delete(id);
-					let chargerItem = chargerConfigsMap.get(id);
-					if ( chargerItem ) {
-						delete chargerItem.settings;
-						delete chargerItem.sourceIdTemplate;
-						delete chargerItem.publishToSolarIn;
-						delete chargerItem.publishToSolarFlux;
-						SolarReg.Templates.populateTemplateItems(chargersContainer, [chargerItem], true, (_item, el) => {
-							let settingsEditContainer = el.find('.settings-container').addClass('hidden').parent();
-							SolarReg.Templates.setContextItem(settingsEditContainer, {id:id,chargePointId:id});
-						});
-					}
-				}
-			});
-		})
-		.find('button.toggle').each(function() {
-			var toggle = $(this);
-			SolarReg.Settings.setupSettingToggleButton(toggle, false);
 		});
+		SolarReg.Templates.populateTemplateItems(authsContainer, items, preserve);
+		SolarReg.saveServiceConfigurations(configs, preserve, authConfigs, authsContainer);
+	}
 
-		/* ============================
-		   OCPP entity delete
-		   ============================ */
-		$('.ocpp.edit-config button.delete-config').on('click', function(event) {
-			var options = {};
-			var form = $(event.target).closest('form').get(0);
-			if ( form && form.elements['connectorId'] ) {
-				// connectors have a (chargePointId, evseId, connectorId) ID value
-				options.urlSerializer = action => {
-					return action + '/' + encodeURIComponent(form.elements['chargePointId'].value)
-						+ '/' + encodeURIComponent(form.elements['evseId'].value)
-						+ '/' + encodeURIComponent(form.elements['connectorId'].value);
-				};
-			} else if ( form && form.elements['chargePointId'] && form.elements['sourceIdTemplate'] ) {
-				// charger settings use /chargers/X/settings path
-				options.urlSerializer = action => {
-					return action.replace(/\/settings$/, '/' + form.elements['chargePointId'].value + '/settings');
-				};
-			}
-			SolarReg.Settings.handleEditServiceItemDeleteAction(event, options);
-		});
-
-		/* ============================
-		   Init
-		   ============================ */
-		(function initOcppManagement() {
-			var loadCountdown = 5;
-			var settingConfs = [];
-			var chargerSettingConfs = [];
-			var authConfs = [];
-			var credentialConfs = [];
-	
-			function liftoff() {
-				loadCountdown -= 1;
-				if ( loadCountdown === 0 ) {
-					populateSettingConfigs(settingConfs);
-					populateAuthConfigs(authConfs);
-					populateCredentialConfigs(credentialConfs);
-
-					populateChargerSettingConfigs(chargerSettingConfs);
-				}
-			}
-
-			// get settings
-			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/settings'), function(json) {
-				console.debug('Got OCPP settings: %o', json);
-				if ( json && json.success === true && (typeof json.data === 'object') ) {
-					settingConfs = [json.data];
-				} else {
-					settingConfs = [{}];
-				}
-				liftoff();
-			});
-
-			// list fist page of chargers
-			loadChargerPage(0).then(() => {
-				liftoff();
-			});
-
-			// list all charger settings
-			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/chargers/settings'), function(json) {
-				console.debug('Got OCPP charger settings: %o', json);
-				if ( json && json.success === true ) {
-					chargerSettingConfs = json.data;
-				}
-				liftoff();
-			});
-
-			// list all authorizations
-			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/authorizations'), function(json) {
-				console.debug('Got OCPP authorizations: %o', json);
-				if ( json && json.success === true ) {
-					authConfs = json.data;
-				}
-				liftoff();
-			});
-			
-			// list all credentials
-			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/credentials'), function(json) {
-				console.debug('Got OCPP credentials: %o', json);
-				if ( json && json.success === true ) {
-					credentialConfs = json.data;
-				}
-				liftoff();
-			});
-		})();
+	$('#ocpp-auths-container .list-container').on('click', function(event) {
+		// edit auth
+		SolarReg.Settings.handleEditServiceItemAction(event, [], []);
 	});
+
+	$('#ocpp-auth-edit-modal').on('show.bs.modal', function(event) {
+		var config = SolarReg.Templates.findContextItem(this),
+			enabled = (config && config.enabled === true ? true : false);
+		SolarReg.Settings.handleSettingToggleButtonChange($(this).find('button[name=enabled]'), enabled);
+		SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('submit', function(event) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
+			populateAuthConfigs([res], true);
+		}, function serializeDataConfigForm(form) {
+			var data = SolarReg.Settings.encodeServiceItemForm(form, true);
+
+			if ( data.expiryDate ) {
+				// make sure encoded as ISO timestamp
+				data.expiryDate = moment(data.expiryDate).toISOString();
+			}
+
+			if ( !data.userId ) {
+				// use actor user ID, i.e. for new auths
+				data.userId = form.elements['userId'].dataset.userId;
+			}
+
+			return data;
+		}, {
+			urlSerializer: actionUrlSerializer,
+			errorMessageGenerator: function(_xhr, json, form) {
+				var msg;
+				if ( json ) {
+					if ( json.code === 'DAO.00101' ) {
+						// assume this means the given identifier is a duplicate
+						msg = form.elements['token'].dataset['errorDuplicateText'];
+					}
+				}
+				return msg;
+			}
+		});
+		return false;
+	})
+	.on('hidden.bs.modal', function() {
+		SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-auths-container .list-container'), (id, deleted) => {
+			SolarReg.deleteServiceConfiguration(deleted ? id : null, authConfigs, authsContainer);
+		});
+	})
+	.find('button.toggle').each(function() {
+		var toggle = $(this);
+		SolarReg.Settings.setupSettingToggleButton(toggle, false);
+	});
+
+	/* ============================
+	   Chargers
+	   ============================ */
+
+	/**
+	 * An OCPP charger UI entity model.
+	 *
+	 * @typedef {Object} OcppCharger
+	 * @property {Number} [id] the entity ID
+	 * @property {String} identifier the identifier
+	 * @property {Object} info the info properties
+	 * @property {String} createdDisplay the display creation date
+	 * @property {Number} nodeId the node ID
+	 * @property {Boolean} enabled the enabled state
+	 * @property {String} registrationStatus the registration status
+	 * @property {Number} connectorCount the count of connectors
+	 */
+
+	const chargersContainer = $('#ocpp-chargers-container');
+	const chargerPaginationNav = $('#ocpp-chargers-list-pagination');
+	const chargerPaginationListItems = chargerPaginationNav.find('li');
+	const chargerCountLabel = $('#ocpp-chargers .intro .listCount');
+
+	const chargerConfigs = [];
+	
+	/** @type {Map<Number, OcppCharger>} */
+	const chargerConfigsMap = new Map();
+
+	const chargerPagination = {
+		page: 0,
+		total: 0,
+		pageSize: 25,
+	};
+
+	function populateChargerConfigs(data, preserve) {
+		const haveRows = !!(data && data.results && data.results.length > 0);
+		const returned = (haveRows ? data.results.length : 0);
+		const total = (data ? data.totalResults : returned);
+		const configs = haveRows ? data.results : [];
+		if ( !preserve ) {
+			chargerConfigsMap.clear();
+		}
+		const items = configs.map(function(config) {
+			var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+			Object.assign(model, config.info); // copy info props directly onto model
+			model.identifier = model.id; // rename info.id
+			model.id = config.id;
+			model.createdDisplay = moment(config.created).format('D MMM YYYY');
+			model.nodeId = config.nodeId;
+			model.enabled = config.enabled;
+			model.registrationStatus = config.registrationStatus;
+			model.connectorCount = config.connectorCount;
+			var settings = chargerSettingConfigsMap.get(config.id);
+			if ( settings ) {
+				model.settings = settings._contextItem;
+				model.sourceIdTemplate = settings.sourceIdTemplate;
+				model.publishToSolarIn = settings.publishToSolarIn;
+				model.publishToSolarFlux = settings.publishToSolarFlux;
+			}
+			chargerConfigsMap.set(config.id, model);
+			return model;
+		});
+		SolarReg.Templates.populateTemplateItems(chargersContainer, items, preserve, (item, el) => {
+			let settingsEditContainer = el.find('.settings-container').toggleClass('hidden', item.settings === undefined).parent();
+			// even if item does not have settings, provide a context item with the charger ID so editing works
+			let settingConfig = (item.settings ? item.settings : {id:item.id,chargePointId:item.id});
+			SolarReg.Templates.setContextItem(settingsEditContainer, settingConfig);
+
+			el.find('.connectors-link').on('click', (/** @type {Event} */ event) => {
+				toggleConnectors(item, event.target);
+			});
+		});
+		SolarReg.saveServiceConfigurations(configs, preserve, chargerConfigs, chargersContainer);
+
+		// pagination (when not updating rows)
+		if (!preserve) {
+			const offset = (data ? data.startingOffset : 0);
+			const pageCount = Math.ceil(total / chargerPagination.pageSize);
+			const page = (offset / chargerPagination.pageSize);
+			const haveMore = (offset + returned < total);
+
+			chargerPaginationNav.find('li').not(':first').not(':last').not('.template').remove();
+
+			let prevItem = chargerPaginationListItems.first();
+			prevItem.toggleClass('disabled', !(offset > 0));
+
+			let nextItem = chargerPaginationListItems.last();
+			nextItem.toggleClass('disabled', !haveMore);
+
+			let templateItem = chargerPaginationListItems.filter('.template');
+
+			let i, len, pageItem;
+			for ( i = 0, len = pageCount; i < len; i += 1 ) {
+				pageItem = templateItem.clone(true).removeClass('template');
+				if ( i === page ) {
+					pageItem.addClass('active');
+				}
+				pageItem.find("[data-tprop='pageNumber']").text(i+1);
+				pageItem.find('a').attr('href', '#'+i);
+				pageItem.insertBefore(nextItem);
+			}
+
+			chargerPagination.total = total;
+			chargerPagination.page = page;
+
+			chargerPaginationNav.toggleClass('hidden', pageCount < 2);
+		}
+
+		chargerCountLabel.text(chargerPagination.total);
+	}
+
+	/**
+	 * Load a single charger page.
+	 *
+	 * @param {Number} pageNum the page number, starting from 0
+	 */
+	function loadChargerPage(pageNum) {
+		console.debug('Want page %d', pageNum);
+		return $.getJSON(SolarReg.solarUserURL('/sec/ocpp/chargers/find?offset='
+				+(pageNum * chargerPagination.pageSize)
+				+'&max=' +chargerPagination.pageSize), (json) => {
+			console.debug('Got chargers: %o', json);
+			populateChargerConfigs(json.data);
+		});
+	}
+
+	$('#ocpp-chargers-container .list-container').on('click', function(event) {
+		// edit charger or charger settings
+		SolarReg.Settings.handleEditServiceItemAction(event, [], []);
+	});
+
+	// setup pagination links
+	chargerPaginationListItems.first().find('a').on('click', function(event) {
+		event.preventDefault();
+		loadChargerPage(chargerPagination.page - 1);
+	});
+	chargerPaginationListItems.filter('.template').find('a').on('click', function(event) {
+		event.preventDefault();
+		var page = +this.hash.substring(1);
+		loadChargerPage(page);
+	});
+	chargerPaginationListItems.last().find('a').on('click', function(event) {
+		event.preventDefault();
+		loadChargerPage(chargerPagination.page + 1);
+	});
+
+
+	$('#ocpp-charger-edit-modal').on('show.bs.modal', function(event) {
+		var config = SolarReg.Templates.findContextItem(this),
+			enabled = (config && config.enabled === true ? true : false);
+		SolarReg.Settings.handleSettingToggleButtonChange($(this).find('button[name=enabled]'), enabled);
+		SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('submit', function(event) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
+			populateChargerConfigs({"results":[res]}, true);
+		}, function serializeDataConfigForm(form) {
+			var data = SolarReg.Settings.encodeServiceItemForm(form, true);
+
+			if ( !data.userId ) {
+				// use actor user ID, i.e. for new chargers
+				data.userId = form.elements['userId'].dataset.userId;
+			}
+
+			return data;
+		}, {
+			urlSerializer: actionUrlSerializer,
+			errorMessageGenerator: function(_xhr, json, form) {
+				var msg;
+				if ( json ) {
+					if ( json.code === 'DAO.00101' ) {
+						// assume this means the given identifier is a duplicate
+						msg = form.elements['info.id'].dataset['errorDuplicateText'];
+					} else if ( json.message === 'UNKNOWN_OBJECT' ) {
+						// assume this means the given node ID is not valid
+						msg = form.elements['nodeId'].dataset['errorInvalidText'];
+					}
+				}
+				return msg;
+			}
+		});
+		return false;
+	})
+	.on('hidden.bs.modal', function() {
+		SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-chargers-container .list-container'), (id, deleted) => {
+			SolarReg.deleteServiceConfiguration(deleted ? id : null, chargerConfigs, chargersContainer);
+			if ( deleted ) {
+				chargerConfigsMap.delete(id);
+				chargerSettingConfigsMap.delete(id);
+			}
+		});
+	})
+	.find('button.toggle').each(function() {
+		var toggle = $(this);
+		SolarReg.Settings.setupSettingToggleButton(toggle, false);
+	});
+
+	/* ============================
+	   Connectors
+	   ============================ */
+
+   /**
+    * An OCPP connector UI entity model.
+    *
+    * @typedef {Object} OcppConnector
+    * @property {Number} [id] the entity ID
+    * @property {Number} chargePointId the charge point ID
+    * @property {String} createdDisplay the display creation date
+    * @property {String} timestamp the display timestamp
+    */
+
+	/** @type {Map<Number, HTMLElement>} */
+	const connectorElements = new Map();
+	
+	function setupConnectorId(config) {
+		if ( config.id ) {
+			return;
+		}
+		config.id = config.chargePointId + '.' + config.evseId + '.' + config.connectorId;
+		return config;
+	}
+
+	/**
+	 * Toggle the visibility of a charger's connector configs.
+	 *
+	 * @param {OcppCharger} chargerConfig the charger config
+	 * @param {HTMLButtonElement} toggleBtn the toggle button
+	 */
+	function toggleConnectors(chargerConfig, toggleBtn) {
+		const btn = $(toggleBtn);
+		const show = !btn.hasClass('active');
+		const connRow = btn.closest('tr').next('.connectors-row');
+		const connContainer = connRow.find('.ocpp-connectors-container');
+		
+		connRow.find('.content-loading').removeClass('hidden');
+		connRow.find('.content-empty').addClass('hidden');
+		connRow.find('.content-loaded').addClass('hidden');
+		
+		if (show) {
+			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/connectors/' + chargerConfig.id), (json) => {
+				connectorElements.clear();
+				let count = populateConnectorConfigs(json.data, connContainer);
+				connRow.find('.content-loading').addClass('hidden');
+				connRow.find('.content-empty').toggleClass('hidden', count > 0);
+				connRow.find('.content-loaded').toggleClass('hidden', !(count > 0));
+			});
+		}
+
+		connRow.toggleClass('hidden', !show);
+		btn.text(show ? toggleBtn.dataset.hideText : toggleBtn.dataset.viewText);
+		btn.toggleClass('active', show);
+	}
+
+	/**
+	 * Render connector config rows.
+	 * 
+	 * @param {Array<Object>} configs the connector config data
+	 * @param {jQuery} connectorsContainer the container for the connector UI
+	 * @param {Boolean} [preserve] `true` to preserve existing UI rows
+	 * @returns {Number} number of configurations
+	 */
+	function populateConnectorConfigs(configs, connectorsContainer, preserve) {
+		configs = Array.isArray(configs) ? configs : [];
+		var items = configs.map(function(config) {
+			/** @type {OcppConnector} */
+			var model = SolarReg.Settings.serviceConfigurationItem(setupConnectorId(config), []);
+			Object.assign(model, config.info); // copy info props directly onto model
+			model.id = config.id;
+			model.chargePointId = config.chargePointId;
+			model.createdDisplay = moment(config.created).format('D MMM YYYY');
+			if ( model.timestamp ) {
+				model.timestampDisplay = moment(model.timestamp).format('D MMM YYYY');
+			}
+			connectorElements.set(config.id, connectorsContainer);
+			return model;
+		});
+		SolarReg.Templates.populateTemplateItems(connectorsContainer, items, preserve);
+		return configs.length;
+	}
+
+	//$('#ocpp-connectors-container .list-container').on('click', function(event) {
+	//	// edit connector
+	//	SolarReg.Settings.handleEditServiceItemAction(event, [], []);
+	//});
+
+	$('#ocpp-connector-edit-modal').on('show.bs.modal', function(event) {
+		const config = SolarReg.Templates.findContextItem(this),
+			enabled = (config && config.enabled === true ? true : false);
+		SolarReg.Settings.handleSettingToggleButtonChange($(this).find('button[name=enabled]'), enabled);
+		SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('submit', function(event) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
+			const config = SolarReg.Templates.findContextItem(event.target);
+			populateConnectorConfigs([res], connectorElements.get(config.id), true);
+		}, function serializeDataConfigForm(form) {
+			var data = SolarReg.Settings.encodeServiceItemForm(form, true);
+
+			if ( !data.userId ) {
+				// use actor user ID, i.e. for new connectors
+				data.userId = form.elements['userId'].dataset.userId;
+			}
+
+			return data;
+		}, {
+			urlSerializer: actionUrlSerializer,
+			errorMessageGenerator: function(_xhr, json, form) {
+				var msg;
+				if ( json ) {
+					if ( json.code === 'DAO.00105' ) {
+						// assume this means the given charger ID is not valid
+						msg = form.elements['chargePointId'].dataset['errorInvalidText'];
+					}
+				}
+				return msg;
+			}
+		});
+		return false;
+	})
+	.on('hidden.bs.modal', function() {
+		/** @type {OcppConnector} */
+		const config = SolarReg.Templates.findContextItem(this);
+		SolarReg.Settings.resetEditServiceForm(this, connectorElements.get(config.id).find('.list-container').first());
+	})
+	.find('button.toggle').each(function() {
+		var toggle = $(this);
+		SolarReg.Settings.setupSettingToggleButton(toggle, false);
+	});
+
+	/* ============================
+	   Credentials
+	   ============================ */
+	const credentialsContainer = $('#ocpp-credentials-container');
+	const credentialConfigs = [];
+
+	function populateCredentialConfigs(configs, preserve) {
+		configs = Array.isArray(configs) ? configs : [];
+		var items = configs.map(function(config) {
+			var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+			model.id = config.id;
+			model.createdDisplay = moment(config.created).format('D MMM YYYY');
+			model.username = config.username;
+
+			model.allowedChargePoints = Array.isArray(config.allowedChargePoints) && config.allowedChargePoints.length > 0
+				? SolarReg.arrayAsDelimitedString(config.allowedChargePoints.sort(SolarReg.naturalSort))
+				: '*';
+
+			return model;
+		});
+		SolarReg.Templates.populateTemplateItems(credentialsContainer, items, preserve);
+		SolarReg.saveServiceConfigurations(configs, preserve, credentialConfigs, credentialsContainer);
+	}
+
+	$('#ocpp-credentials-container .list-container').on('click', function(event) {
+		// edit credentials
+		SolarReg.Settings.handleEditServiceItemAction(event, [], []);
+	});
+
+	$('#ocpp-credential-password-modal').on('hidden.bs.modal', function() {
+		// clear out credentials
+		$(this).find('*[data-tprop]').text('');
+	});
+
+	$('#ocpp-credential-edit-modal').on('show.bs.modal', function(event) {
+		SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('submit', function(event) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
+			if ( res.password ) {
+				// server returned a password, so show that to the user once and delete from config
+				const pwModal = $('#ocpp-credential-password-modal');
+				SolarReg.Templates.replaceTemplateProperties(pwModal.find('table'), res);
+				pwModal.modal('show');
+				delete res.password;
+			}
+			populateCredentialConfigs([res], true);
+		}, function serializeDataConfigForm(form) {
+			var data = SolarReg.Settings.encodeServiceItemForm(form);
+
+			// preserve existing password (or auto-assign for new credential)
+			if ( data.password === "" ) {
+				delete data.password;
+			}
+
+			var allowedChargePoints = (data.allowedChargePoints ? data.allowedChargePoints.split(/\s*,\s*/) : []);
+			if ( allowedChargePoints.length ) {
+				data.allowedChargePoints = allowedChargePoints;
+			} else {
+				delete data.allowedChargePoints;
+			}
+
+			if ( !data.userId ) {
+				// use actor user ID, i.e. for new credentials
+				data.userId = form.elements['userId'].dataset.userId;
+			}
+
+			return data;
+		}, {
+			urlSerializer: actionUrlSerializer
+		});
+		return false;
+	})
+	.on('hidden.bs.modal', function() {
+		SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-credentials-container .list-container'), (id, deleted) => {
+			SolarReg.deleteServiceConfiguration(deleted ? id : null, credentialConfigs, credentialsContainer);
+		});
+	});
+
+	/* ============================
+	   Settings
+	   ============================ */
+	const settingsContainer = $('#ocpp-settings-container');
+	const settingConfigs = []; // only ever one of these, use array for consistency with Settings/Templates functions
+	const chargerSettingConfigsMap = new Map();
+
+	function settingModel(config) {
+		var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+		if ( config.chargePointId === undefined ) {
+			config.id = 1; // assign arbitrary ID for default settings
+			if ( config.publishToSolarIn === undefined ) {
+				config.publishToSolarIn = true;
+			}
+			if ( config.publishToSolarFlux === undefined ) {
+				config.publishToSolarFlux = true;
+			}
+			if ( config.sourceIdTemplate === undefined ) {
+				config.sourceIdTemplate = '/ocpp/{chargePointId}/{connectorId}/{location}';
+			}
+		} else {
+			config.id = config.chargePointId;
+			model.chargePointId = config.chargePointId;
+		}
+		model.id = config.id;
+		model.hid = config.hid || '-';
+		model.publishToSolarIn = config.publishToSolarIn;
+		model.publishToSolarFlux = config.publishToSolarFlux;
+		model.sourceIdTemplate = config.sourceIdTemplate;
+		return model;
+	}
+
+	function populateSettingConfigs(configs, preserve) {
+		configs = Array.isArray(configs) ? configs : [];
+		var items = configs.map(settingModel);
+		SolarReg.Templates.populateTemplateItems(settingsContainer, items, preserve);
+		SolarReg.saveServiceConfigurations(configs, preserve, settingConfigs, settingsContainer);
+	}
+
+	function populateChargerSettingConfigs(configs, preserve) {
+		configs = Array.isArray(configs) ? configs : [];
+		if ( !preserve ) {
+			chargerSettingConfigsMap.clear();
+		}
+		var chargerItems = [];
+		configs.forEach(config => {
+			var model = settingModel(config);
+			chargerSettingConfigsMap.set(model.chargePointId, model);
+			if ( preserve ) {
+				let chargerItem = chargerConfigsMap.get(model.chargePointId);
+				if ( chargerItem ) {
+					chargerItem.settings = model._contextItem;
+					chargerItem.sourceIdTemplate = model.sourceIdTemplate;
+					chargerItem.publishToSolarIn = !!model.publishToSolarIn;
+					chargerItem.publishToSolarFlux = !!model.publishToSolarFlux;
+					chargerItems.push(chargerItem);
+				}
+			}
+			return model;
+		});
+		if ( chargerItems.length > 0 ) {
+			SolarReg.Templates.populateTemplateItems(chargersContainer, chargerItems, true, (item, el) => {
+				let settingsEditContainer = el.find('.settings-container').removeClass('hidden').parent();
+				SolarReg.Templates.setContextItem(settingsEditContainer, item.settings);
+			});
+		}
+	}
+
+	$('#ocpp-settings-edit-modal').on('show.bs.modal', function(event) {
+		// handle both default and charger-specific settings
+		var modal = $(event.target),
+			config = SolarReg.Templates.findContextItem(modal);
+		if ( !config ) {
+			config = (settingConfigs.length > 0 ? settingConfigs[0] : undefined);
+			if (config) {
+				// remove fake ID property so don't try to append to URL
+				config = Object.assign({}, config);
+				delete config.id;
+			}
+			SolarReg.Templates.setContextItem(modal, config);
+			modal.attr('action', modal.data('action'));
+		} else {
+			modal.attr('action', modal.data('action-charger'));
+		}
+		modal.find('.charger').toggleClass('hidden', config.chargePointId === undefined);
+		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=publishToSolarIn]'), !!config.publishToSolarIn);
+		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=publishToSolarFlux]'), !!config.publishToSolarFlux);
+		SolarReg.Settings.prepareEditServiceForm(modal, [], []);
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('submit', function(event) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
+			if ( res.chargePointId === undefined ) {
+				populateSettingConfigs([res], true);
+			} else {
+				populateChargerSettingConfigs([res], true);
+			}
+		}, function serializeDataConfigForm(form) {
+			var data = SolarReg.Settings.encodeServiceItemForm(form, true),
+				config = SolarReg.Templates.findContextItem(form);
+
+			if ( !config || config.chargePointId === undefined ) {
+				delete data.chargePointId;
+			}
+
+			delete data.id;
+
+			if ( !data.userId ) {
+				// use actor user ID, i.e. for new settings
+				data.userId = form.elements['userId'].dataset.userId;
+			}
+
+			return data;
+		}, {
+			urlSerializer: actionUrlSerializer
+		});
+		return false;
+	})
+	.on('hidden.bs.modal', function() {
+		SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-settings-container .list-container'), (id, deleted) => {
+			if ( deleted ) {
+				chargerSettingConfigsMap.delete(id);
+				let chargerItem = chargerConfigsMap.get(id);
+				if ( chargerItem ) {
+					delete chargerItem.settings;
+					delete chargerItem.sourceIdTemplate;
+					delete chargerItem.publishToSolarIn;
+					delete chargerItem.publishToSolarFlux;
+					SolarReg.Templates.populateTemplateItems(chargersContainer, [chargerItem], true, (_item, el) => {
+						let settingsEditContainer = el.find('.settings-container').addClass('hidden').parent();
+						SolarReg.Templates.setContextItem(settingsEditContainer, {id:id,chargePointId:id});
+					});
+				}
+			}
+		});
+	})
+	.find('button.toggle').each(function() {
+		var toggle = $(this);
+		SolarReg.Settings.setupSettingToggleButton(toggle, false);
+	});
+
+	/* ============================
+	   OCPP entity delete
+	   ============================ */
+	$('.ocpp.edit-config button.delete-config').on('click', function(event) {
+		var options = {};
+		var form = $(event.target).closest('form').get(0);
+		if ( form && form.elements['connectorId'] ) {
+			// connectors have a (chargePointId, evseId, connectorId) ID value
+			options.urlSerializer = action => {
+				return action + '/' + encodeURIComponent(form.elements['chargePointId'].value)
+					+ '/' + encodeURIComponent(form.elements['evseId'].value)
+					+ '/' + encodeURIComponent(form.elements['connectorId'].value);
+			};
+		} else if ( form && form.elements['chargePointId'] && form.elements['sourceIdTemplate'] ) {
+			// charger settings use /chargers/X/settings path
+			options.urlSerializer = action => {
+				return action.replace(/\/settings$/, '/' + form.elements['chargePointId'].value + '/settings');
+			};
+		}
+		SolarReg.Settings.handleEditServiceItemDeleteAction(event, options);
+	});
+
+	/* ============================
+	   Init
+	   ============================ */
+	(function initOcppManagement() {
+		var loadCountdown = 5;
+		var settingConfs = [];
+		var chargerSettingConfs = [];
+		var authConfs = [];
+		var credentialConfs = [];
+
+		function liftoff() {
+			loadCountdown -= 1;
+			if ( loadCountdown === 0 ) {
+				populateSettingConfigs(settingConfs);
+				populateAuthConfigs(authConfs);
+				populateCredentialConfigs(credentialConfs);
+
+				populateChargerSettingConfigs(chargerSettingConfs);
+			}
+		}
+
+		// get settings
+		$.getJSON(SolarReg.solarUserURL('/sec/ocpp/settings'), function(json) {
+			console.debug('Got OCPP settings: %o', json);
+			if ( json && json.success === true && (typeof json.data === 'object') ) {
+				settingConfs = [json.data];
+			} else {
+				settingConfs = [{}];
+			}
+			liftoff();
+		});
+
+		// list fist page of chargers
+		loadChargerPage(0).then(() => {
+			liftoff();
+		});
+
+		// list all charger settings
+		$.getJSON(SolarReg.solarUserURL('/sec/ocpp/chargers/settings'), function(json) {
+			console.debug('Got OCPP charger settings: %o', json);
+			if ( json && json.success === true ) {
+				chargerSettingConfs = json.data;
+			}
+			liftoff();
+		});
+
+		// list all authorizations
+		$.getJSON(SolarReg.solarUserURL('/sec/ocpp/authorizations'), function(json) {
+			console.debug('Got OCPP authorizations: %o', json);
+			if ( json && json.success === true ) {
+				authConfs = json.data;
+			}
+			liftoff();
+		});
+
+		// list all credentials
+		$.getJSON(SolarReg.solarUserURL('/sec/ocpp/credentials'), function(json) {
+			console.debug('Got OCPP credentials: %o', json);
+			if ( json && json.success === true ) {
+				credentialConfs = json.data;
+			}
+			liftoff();
+		});
+	})();
+}
+
+$(document).ready(() => {
+	$('#ocpp-management').first().each(ocppManagement);
 });
