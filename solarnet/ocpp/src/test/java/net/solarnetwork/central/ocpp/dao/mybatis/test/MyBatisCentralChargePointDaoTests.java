@@ -144,7 +144,7 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		obj3 = dao.get(dao.save(obj3));
 
 		Collection<ChargePoint> results = dao.getAll(null);
-		assertThat("Results found in order", results, contains(obj2, obj1, obj3));
+		assertThat("Results found in order", results, contains(obj1, obj2, obj3));
 	}
 
 	@Test
@@ -166,7 +166,7 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		obj3 = dao.get(dao.save(obj3));
 
 		Collection<CentralChargePoint> results = dao.findAllForOwner(userId);
-		assertThat("Results found in order", results, contains(obj2, obj1));
+		assertThat("Results found in order", results, contains(obj1, obj2));
 	}
 
 	@Test
@@ -295,11 +295,11 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		// @formatter:off
 		then(results1)
 			.as("Single result returned for page 0")
-			.containsExactly(obj2)
+			.containsExactly(obj1)
 			;
 		then(results2)
 			.as("Single result returned for page 1")
-			.containsExactly(obj1)
+			.containsExactly(obj2)
 			;
 		// @formatter:on
 	}

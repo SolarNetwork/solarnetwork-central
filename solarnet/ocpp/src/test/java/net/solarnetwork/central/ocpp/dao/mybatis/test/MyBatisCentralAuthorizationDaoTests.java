@@ -149,7 +149,7 @@ public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestS
 		obj3 = dao.get(dao.save(obj3));
 
 		Collection<Authorization> results = dao.getAll(null);
-		assertThat("Results found in order", results, contains(obj2, obj1, obj3));
+		assertThat("Results found in order", results, contains(obj1, obj2, obj3));
 	}
 
 	@Test
@@ -165,7 +165,7 @@ public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestS
 		obj3 = dao.get(dao.save(obj3));
 
 		Collection<CentralAuthorization> results = dao.findAllForOwner(userId);
-		assertThat("Results found in order", results, contains(obj2, obj1));
+		assertThat("Results found in order", results, contains(obj1, obj2));
 	}
 
 	@Test

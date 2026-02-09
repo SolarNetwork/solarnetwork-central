@@ -159,7 +159,7 @@
 				</foreach>
 			</when>
 			<otherwise>
-				ocpp_charge_point_user_id, ocpp_charge_point_node_id, ocpp_charge_point_created, ocpp_charge_point_id
+				ocpp_charge_point_id
 			</otherwise>
 		</choose>
 	</sql>
