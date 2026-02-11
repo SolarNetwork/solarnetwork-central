@@ -55,6 +55,9 @@ app:
       ping-frequency-secs: 50
       shutdown-task-post-delay: "5s"
       shutdown-task-max-wait: "1m"
+      send-time-limit: "10s"
+      send-buffer-size-limit: "512KB"
+      send-overflow-strategy: "TERMINATE"
   ocpp.v201:
     ws:
       partial-message-maximum-size: 1048576
@@ -62,6 +65,9 @@ app:
       ping-frequency-secs: 50
       shutdown-task-post-delay: "5s"
       shutdown-task-max-wait: "1m"
+      send-time-limit: "10s"
+      send-buffer-size-limit: "512KB"
+      send-overflow-strategy: "TERMINATE"
   solarflux:
     connection:
       uid: "SolarFlux-${app.meta.instance-id}"
