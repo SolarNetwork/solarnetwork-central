@@ -255,7 +255,120 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 								"cloudiness", 44
 							), null , Map.of(
 								"sky", "Rain",
-								"iconId", "10n"
+								"iconId", "10n",
+								"sky_night", "Rain",
+								"iconId_night", "10n"
+							)),
+						Datum::asSampleOperations)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void latestDatum_daytime() throws Exception {
+		// GIVEN
+		final String apiKey = randomString();
+		final BigDecimal lat = new BigDecimal(randomLong());
+		final BigDecimal lon = new BigDecimal(randomLong());
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				OpenWeatherMapCloudIntegrationService.API_KEY_SETTING, apiKey
+		));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(Collections.emptyList());
+
+		// configure datum stream
+		final Long locationId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Location);
+		datumStream.setObjectId(locationId);
+		datumStream.setSourceId(sourceId);
+		// @formatter:off
+		datumStream.setServiceProps(Map.of(
+				BaseOpenWeatherMapCloudDatumStreamService.LATITUDE_SETTING, lat.toPlainString(),
+				BaseOpenWeatherMapCloudDatumStreamService.LONGITUDE_SETTING, lon.toPlainString()
+		));
+		// @formatter:on
+
+		// request data
+		final JsonNode dataJson = objectMapper
+				.readTree(utf8StringResource("openweathermap-weather-02.json", getClass()));
+		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(JsonNode.class))).willReturn(dataRes);
+
+		// WHEN
+		Iterable<Datum> result = service.latestDatum(datumStream);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(httpRequestCaptor.capture(), eq(JsonNode.class));
+
+		and.then(httpRequestCaptor.getValue())
+			.as("HTTP method is GET")
+			.returns(HttpMethod.GET, from(RequestEntity::getMethod))
+			.as("Request URI for data")
+			.returns(UriComponentsBuilder
+					.fromUri(resolveBaseUrl(integration, OpenWeatherMapCloudIntegrationService.BASE_URI))
+					.path(OpenWeatherMapCloudIntegrationService.WEATHER_URL_PATH)
+					.queryParam(UNITS_PARAM, UNITS_METRIC_VALUE)
+					.queryParam(OpenWeatherMapCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
+					.queryParam(OpenWeatherMapCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
+					.queryParam(OpenWeatherMapCloudIntegrationService.APPID_PARAM, apiKey).buildAndExpand()
+					.toUri(), from(RequestEntity::getUrl))
+			;
+
+
+		and.then(result)
+			.as("Latest datum parsed from HTTP response ")
+			.hasSize(1)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), Datum::getKind)
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), Datum::getObjectId)
+					.as("Datum source ID is from DatumStream configuration")
+					.returns(datumStream.getSourceId(), Datum::getSourceId)
+					;
+			})
+			.satisfies(list -> {
+				and.then(list).element(0)
+					.as("Timestamp from data")
+					.returns(Instant.ofEpochSecond(1730400000L), from(Datum::getTimestamp))
+					.as("Datum samples from register data")
+					.returns(new DatumSamples(Map.of(
+								"temp", 14,
+								"atm", 101600,
+								"humidity", 87,
+								"visibility", 10000,
+								"wdir", 350,
+								"wspeed", new BigDecimal("9.8"),
+								"wgust", new BigDecimal("14.9"),
+								"cloudiness", 44
+							), null , Map.of(
+								"sky", "Rain",
+								"iconId", "10n",
+								"sky_day", "Rain",
+								"iconId_day", "10n"
 							)),
 						Datum::asSampleOperations)
 					;

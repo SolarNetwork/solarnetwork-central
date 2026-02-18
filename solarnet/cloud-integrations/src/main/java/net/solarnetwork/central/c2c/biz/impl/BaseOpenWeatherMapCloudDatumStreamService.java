@@ -82,7 +82,7 @@ import tools.jackson.databind.JsonNode;
  * {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public abstract class BaseOpenWeatherMapCloudDatumStreamService
 		extends BaseRestOperationsCloudDatumStreamService {
@@ -107,6 +107,35 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 
 	/** The units URL query parameter value for metric units. */
 	public static final String UNITS_METRIC_VALUE = "metric";
+
+	/**
+	 * The icon ID property name.
+	 *
+	 * @since 2.1
+	 */
+	public static final String ICON_ID_PROP = "iconId";
+
+	/**
+	 * A suffix added to daytime copies of properties.
+	 *
+	 * @since 2.1
+	 */
+	public static final String DAY_SUFFIX = "_day";
+
+	/**
+	 * A suffix added to night-time copies of properties.
+	 *
+	 * @since 2.1
+	 */
+	public static final String NIGHT_SUFFIX = "_night";
+
+	/**
+	 * List of status properties copied to day/night values.
+	 *
+	 * @since 2.1
+	 */
+	public static final List<String> DAYNIGHT_STATUS_PROPS = List.of(AtmosphericDatum.SKY_CONDITIONS_KEY,
+			ICON_ID_PROP);
 
 	/**
 	 * Constructor.
@@ -328,7 +357,8 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 			populateJsonDatumPropertyValue(weather, "main", DatumSamplesType.Status,
 					AtmosphericDatum.SKY_CONDITIONS_KEY, samples);
 
-			populateJsonDatumPropertyValue(weather, "icon", DatumSamplesType.Status, "iconId", samples);
+			populateJsonDatumPropertyValue(weather, "icon", DatumSamplesType.Status, ICON_ID_PROP,
+					samples);
 		}
 
 		JsonNode wind = json.path("wind");
@@ -358,19 +388,25 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 			}
 		}
 
+		// track day/night status
+		Instant sunrise = null;
+		Instant sunset = null;
+
 		JsonNode sys = json.path("sys");
 		Integer tzOffsetSecs = parseIntegerAttribute(json, "timezone");
 		if ( tzOffsetSecs != null ) {
 			ZoneId zone = ZoneOffset.ofTotalSeconds(tzOffsetSecs);
-			JsonNode sunrise = sys.path("sunrise");
-			if ( sunrise.isNumber() ) {
-				samples.putStatusSampleValue(DayDatum.SUNRISE_KEY, DateUtils
-						.format(Instant.ofEpochSecond(sunrise.longValue()).atZone(zone).toLocalTime()));
+			JsonNode rise = sys.path("sunrise");
+			if ( rise.isNumber() ) {
+				sunrise = Instant.ofEpochSecond(rise.longValue());
+				samples.putStatusSampleValue(DayDatum.SUNRISE_KEY,
+						DateUtils.format(sunrise.atZone(zone).toLocalTime()));
 			}
-			JsonNode sunset = sys.path("sunset");
-			if ( sunset.isNumber() ) {
-				samples.putStatusSampleValue(DayDatum.SUNSET_KEY, DateUtils
-						.format(Instant.ofEpochSecond(sunset.longValue()).atZone(zone).toLocalTime()));
+			JsonNode set = sys.path("sunset");
+			if ( set.isNumber() ) {
+				sunset = Instant.ofEpochSecond(set.longValue());
+				samples.putStatusSampleValue(DayDatum.SUNSET_KEY,
+						DateUtils.format(sunset.atZone(zone).toLocalTime()));
 			}
 		}
 
@@ -378,6 +414,19 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 			return null;
 		}
 		Instant ts = parseTimestampNode(json, "dt");
+
+		// populate day/night copies of status properties
+		if ( ts != null && sunrise != null && sunset != null ) {
+			final Map<String, Object> statusProps = samples.getStatus();
+			if ( statusProps != null ) {
+				final String suffix = (ts.isBefore(sunrise) || ts.isAfter(sunset)) ? NIGHT_SUFFIX
+						: DAY_SUFFIX;
+				for ( String propName : DAYNIGHT_STATUS_PROPS ) {
+					statusProps.put(propName + suffix, statusProps.get(propName));
+				}
+			}
+		}
+
 		return new GeneralDatum(new DatumId(kind, objectId, sourceId, ts), samples);
 	}
 
