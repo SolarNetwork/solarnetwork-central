@@ -60,6 +60,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
+import net.solarnetwork.central.datum.support.GeneralDatumMapPropertySerializer;
 import net.solarnetwork.central.datum.support.GeneralNodeDatumMapPropertySerializer;
 import net.solarnetwork.central.support.DelegatingParser;
 import net.solarnetwork.central.support.InstantFormatter;
@@ -160,22 +161,26 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Bean
 	public PropertySerializerRegistrar propertySerializerRegistrar() {
-		PropertySerializerRegistrar reg = new PropertySerializerRegistrar();
+		final PropertySerializerRegistrar reg = new PropertySerializerRegistrar();
 
-		GeneralNodeDatumMapPropertySerializer datumMapSerializer = new GeneralNodeDatumMapPropertySerializer();
+		final GeneralNodeDatumMapPropertySerializer nodeDatumMapSerializer = new GeneralNodeDatumMapPropertySerializer();
+		final GeneralDatumMapPropertySerializer generalDatumMapSerializer = new GeneralDatumMapPropertySerializer();
 
-		Map<String, PropertySerializer> classSerializers = new LinkedHashMap<>(4);
+		final Map<String, PropertySerializer> classSerializers = new LinkedHashMap<>(4);
 		classSerializers.put("sun.util.calendar.ZoneInfo", timeZonePropertySerializer());
 		classSerializers.put("org.springframework.validation.BeanPropertyBindingResult",
 				bindingResultSerializer());
 		classSerializers.put("net.solarnetwork.central.datum.domain.GeneralNodeDatum",
-				datumMapSerializer);
+				nodeDatumMapSerializer);
 		classSerializers.put("net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch",
-				datumMapSerializer);
+				nodeDatumMapSerializer);
 		classSerializers.put("net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum",
-				datumMapSerializer);
+				nodeDatumMapSerializer);
 		classSerializers.put("net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumReading",
-				datumMapSerializer);
+				nodeDatumMapSerializer);
+		classSerializers.put("net.solarnetwork.domain.datum.GeneralDatum", generalDatumMapSerializer);
+		classSerializers.put("net.solarnetwork.central.datum.v2.domain.ObjectDatum",
+				generalDatumMapSerializer);
 		reg.setClassSerializers(classSerializers);
 
 		return reg;

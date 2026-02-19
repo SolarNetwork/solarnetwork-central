@@ -1,7 +1,7 @@
 /* ==================================================================
- * GeneralNodeDatumMapPropertySerializer.java - Sep 5, 2014 7:12:44 AM
+ * GeneralDatumMapPropertySerializer.java - 20/02/2026 8:56:34 am
  *
- * Copyright 2007-2014 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -24,73 +24,53 @@ package net.solarnetwork.central.datum.support;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.datum.domain.ReadingDatum;
-import net.solarnetwork.central.datum.domain.ReportingDatum;
 import net.solarnetwork.codec.PropertySerializer;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.GeneralDatum;
+import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.util.StringUtils;
 
 /**
- * Serialize a {@link GeneralNodeDatum} to a {@code Map}.
+ * Serialize a {@link GeneralDatum} to a {@code Map}.
  *
  * <p>
- * The {@link ReportingDatum} API is also supported (those properties will be
- * added to the output if a {@link GeneralNodeDatum} subclass implements that
- * interface). Similarly, the {@link ReadingDatum} API is supported and all
- * start and final properties will be added to the resulting map, adding the
- * {@link ReadingDatum#START_PROPERTY_SUFFIX} and
- * {@link ReadingDatum#FINAL_PROPERTY_SUFFIX} property name suffix as
- * appropriate.
+ * The {@link StreamDatum} API is also supported to include a {@code streamId}
+ * property.
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public class GeneralNodeDatumMapPropertySerializer implements PropertySerializer {
+public class GeneralDatumMapPropertySerializer implements PropertySerializer {
 
 	/**
 	 * Constructor.
 	 */
-	public GeneralNodeDatumMapPropertySerializer() {
+	public GeneralDatumMapPropertySerializer() {
 		super();
 	}
 
 	@Override
 	public Object serialize(Object data, String propertyName, Object propertyValue) {
-		GeneralNodeDatum datum = (GeneralNodeDatum) propertyValue;
+		final GeneralDatum datum = (GeneralDatum) propertyValue;
 		Map<String, Object> props = new LinkedHashMap<>(8);
-		props.put("created", datum.getCreated());
-		if ( datum instanceof ReportingDatum rd ) {
-			props.put("localDate", rd.getLocalDate());
-			props.put("localTime", rd.getLocalTime());
+		if ( datum.getTimestamp() != null ) {
+			props.put("created", datum.getTimestamp());
 		}
-		if ( datum instanceof ReadingDatum rd ) {
-			Map<String, ?> dataStart = rd.getSampleDataStart();
-			if ( dataStart != null ) {
-				for ( Map.Entry<String, ?> me : dataStart.entrySet() ) {
-					String key = me.getKey();
-					if ( key == null ) {
-						continue;
-					}
-					props.put(key + ReadingDatum.START_PROPERTY_SUFFIX, me.getValue());
-				}
-			}
-
-			Map<String, ?> dataFinal = rd.getSampleDataFinal();
-			if ( dataFinal != null ) {
-				for ( Map.Entry<String, ?> me : dataFinal.entrySet() ) {
-					String key = me.getKey();
-					if ( key == null ) {
-						continue;
-					}
-					props.put(key + ReadingDatum.FINAL_PROPERTY_SUFFIX, me.getValue());
-				}
+		if ( datum.getKind() != null ) {
+			props.put("kind", datum.getKind());
+		}
+		if ( datum.getObjectId() != null ) {
+			props.put("objectId", datum.getObjectId());
+		}
+		if ( datum.getSourceId() != null ) {
+			props.put("sourceId", datum.getSourceId());
+		}
+		if ( datum instanceof StreamDatum sd ) {
+			if ( sd.getStreamId() != null ) {
+				props.put("streamId", sd.getStreamId());
 			}
 		}
-		props.put("nodeId", datum.getNodeId());
-		props.put("sourceId", datum.getSourceId());
-
 		DatumSamples samples = datum.getSamples();
 		if ( samples != null ) {
 			addProps(props, samples.getInstantaneous());

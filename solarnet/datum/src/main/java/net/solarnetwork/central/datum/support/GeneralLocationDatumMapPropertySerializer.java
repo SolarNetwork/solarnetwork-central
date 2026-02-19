@@ -41,6 +41,13 @@ import net.solarnetwork.util.StringUtils;
  */
 public class GeneralLocationDatumMapPropertySerializer implements PropertySerializer {
 
+	/**
+	 * Constructor.
+	 */
+	public GeneralLocationDatumMapPropertySerializer() {
+		super();
+	}
+
 	@Override
 	public Object serialize(Object data, String propertyName, Object propertyValue) {
 		GeneralLocationDatum datum = (GeneralLocationDatum) propertyValue;
@@ -66,12 +73,12 @@ public class GeneralLocationDatumMapPropertySerializer implements PropertySerial
 		return props;
 	}
 
-	private void addProps(Map<String, Object> props, Map<String, ?> data) {
+	private static void addProps(Map<String, Object> props, Map<String, ?> data) {
 		if ( data == null ) {
 			return;
 		}
 		for ( Map.Entry<String, ?> me : data.entrySet() ) {
-			if ( !props.containsKey(me.getKey()) ) {
+			if ( !props.containsKey(me.getKey()) && me.getValue() != null ) {
 				props.put(me.getKey(), me.getValue());
 			}
 		}
