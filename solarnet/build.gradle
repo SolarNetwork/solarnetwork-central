@@ -6,7 +6,7 @@ buildscript {
 }
 
 plugins {
-	id 'net.ltgt.errorprone' version '4.2.0' apply false
+	id 'net.ltgt.errorprone' version '5.0.0' apply false
 }
 
 ext {
@@ -56,6 +56,10 @@ subprojects {
 	
 	compileJava {
 		it.options.errorprone.enabled = !(rootProject.hasProperty('errorProneDisabled') && rootProject.errorProneDisabled.toBoolean());
+		it.options.errorprone {
+			error("NullAway")
+			option("NullAway:OnlyNullMarked", "true")
+		}
 	}
 
 	compileTestJava {
@@ -142,6 +146,7 @@ subprojects {
 				'org.junit.platform:junit-platform-launcher'
 		
 		errorprone 'com.google.errorprone:error_prone_core:2.45.0'
+		errorprone 'com.uber.nullaway:nullaway:0.13.1'
 	}
 
 	configurations {
@@ -177,8 +182,6 @@ subprojects {
 		}
 	}
 	
-	// Disable JavaDoc doclint on Java 8. It's annoying.
-	// For jdk10+ we must explicitly choose between html4 and html5, otherwise we get a warning
 	allprojects {
 		tasks.withType(Javadoc) {
 			options.addStringOption('Xdoclint:none', '-quiet')
