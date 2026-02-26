@@ -24,7 +24,6 @@ package net.solarnetwork.central.query.domain;
 
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.v3.oas.annotations.media.Schema;
 import net.solarnetwork.domain.Result;
 
 /**
@@ -38,7 +37,7 @@ import net.solarnetwork.domain.Result;
  * @version 1.0
  */
 @JsonPropertyOrder({ "success", "code", "message", "errors", "meta", "data" })
-public class StreamDatumResult extends Result<List<List<Number>>> {
+public class StreamDatumResult extends Result<StreamDatumListData> {
 
 	private final List<ObjectDatumStreamMetadataResult> meta;
 
@@ -50,7 +49,7 @@ public class StreamDatumResult extends Result<List<List<Number>>> {
 	 * @param meta
 	 *        the metadata
 	 */
-	public StreamDatumResult(List<List<Number>> data, List<ObjectDatumStreamMetadataResult> meta) {
+	public StreamDatumResult(StreamDatumListData data, List<ObjectDatumStreamMetadataResult> meta) {
 		super(data);
 		this.meta = meta;
 	}
@@ -62,24 +61,6 @@ public class StreamDatumResult extends Result<List<List<Number>>> {
 	 */
 	public List<ObjectDatumStreamMetadataResult> getMeta() {
 		return meta;
-	}
-
-	@Schema(description = """
-			The list of stream data values. Each list item as an array of values, in the following order:
-
-			* **meta index** - the `0`-based offset within the `meta` list, representing the datum stream metadata associated with this datum
-			* **timestamp** - the datum timestamp, as a millisecond epoch or an array of `[start, end]` millisecond epoch values for aggregate results
-			* **instantaneous property values** - ordered by the `meta.i` array of the associated datum stream metadata
-			* **accumulating property values** - ordered by the `meta.a` array of the associated datum stream metadata
-			* **status property values** - string status values ordered by the `meta.s` array of the associated datum stream metadata
-			* **tags** - any tags associated with the datum
-
-			**Note** that the data is declared as `number[][]` but really the type of status property values is `string`, and the **timestamp**
-			value can also be represented as an array of `[start, end]` millisecond epoch values for aggregate results.
-			""")
-	@Override
-	public List<List<Number>> getData() {
-		return super.getData();
 	}
 
 }
