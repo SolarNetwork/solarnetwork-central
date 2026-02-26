@@ -48,7 +48,7 @@ public class InstantFormatter implements Formatter<Instant> {
 	 * @param formatter
 	 *        the formatter to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InstantFormatter(DateTimeFormatter formatter) {
 		this(formatter, (DateTimeFormatter[]) null);
@@ -62,7 +62,7 @@ public class InstantFormatter implements Formatter<Instant> {
 	 * @param fallbackFormatters
 	 *        optional fallback formatters to use during parsing
 	 * @throws IllegalArgumentException
-	 *         if {@code formatter} is {@literal null}
+	 *         if {@code formatter} is {@code null}
 	 */
 	public InstantFormatter(DateTimeFormatter formatter, DateTimeFormatter... fallbackFormatters) {
 		super();

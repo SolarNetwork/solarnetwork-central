@@ -83,7 +83,7 @@ public class UserStringStringCompositePK extends BasePK implements
 	 * @param entityId
 	 *        the entity ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserStringStringCompositePK(Long userId, String groupId, String entityId) {
 		super();

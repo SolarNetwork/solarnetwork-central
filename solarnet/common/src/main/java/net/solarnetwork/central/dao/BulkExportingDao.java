@@ -81,7 +81,7 @@ public interface BulkExportingDao<T> {
 		 * </p>
 		 *
 		 * @param totalResultCountEstimate
-		 *        the total result count estimate, or {@literal null} if not
+		 *        the total result count estimate, or {@code null} if not
 		 *        known
 		 */
 		void didBegin(Long totalResultCountEstimate);

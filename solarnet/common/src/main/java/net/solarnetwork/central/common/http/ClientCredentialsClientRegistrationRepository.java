@@ -69,7 +69,7 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 	 * @param secretResolver
 	 *        function to decrypt values with
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ClientCredentialsClientRegistrationRepository(
 			UserServiceConfigurationDao<UserLongCompositePK> configurationDao,

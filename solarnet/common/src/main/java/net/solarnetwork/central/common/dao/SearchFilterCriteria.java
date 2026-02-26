@@ -61,7 +61,7 @@ public interface SearchFilterCriteria {
 	/**
 	 * Parse the search filter string into a {@link SearchFilter} instance.
 	 * 
-	 * @return the instance, or {@literal null} if no search filter is defined
+	 * @return the instance, or {@code null} if no search filter is defined
 	 *         or the filter has an invalid syntax
 	 */
 	default SearchFilter searchFilter() {

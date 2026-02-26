@@ -35,10 +35,10 @@ public interface CertificateCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available subject DN from the
-	 * {@link #getSubjectDns()} array, or {@literal null} if not available.
+	 * {@link #getSubjectDns()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first subject DN, or {@literal null} if not available
+	 * @return the first subject DN, or {@code null} if not available
 	 */
 	default String getSubjectDn() {
 		final String[] array = getSubjectDns();
@@ -48,7 +48,7 @@ public interface CertificateCriteria {
 	/**
 	 * Get an array of subject DNs.
 	 * 
-	 * @return array of subject DNs (may be {@literal null})
+	 * @return array of subject DNs (may be {@code null})
 	 */
 	String[] getSubjectDns();
 

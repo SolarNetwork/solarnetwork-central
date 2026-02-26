@@ -42,7 +42,7 @@ public interface NodeEventObservationRegistrar<T> {
 	 * @param nodeIds
 	 *        the IDs of the nodes to observe
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	void registerNodeObserver(Consumer<T> observer, Long... nodeIds);
 
@@ -52,7 +52,7 @@ public interface NodeEventObservationRegistrar<T> {
 	 * @param observer
 	 *        the observer to unregister
 	 * @param nodeIds
-	 *        the IDs of the node to stop observing, or {@literal null} to stop
+	 *        the IDs of the node to stop observing, or {@code null} to stop
 	 *        observing all node IDs
 	 */
 	void unregisterNodeObserver(Consumer<T> observer, Long... nodeIds);

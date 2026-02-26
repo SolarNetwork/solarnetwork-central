@@ -56,12 +56,12 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 	 * @param bundleNames
 	 *        the bundle names
 	 * @param version
-	 *        the desired version; if {@literal null} the system date will be
+	 *        the desired version; if {@code null} the system date will be
 	 *        used
 	 * @param cache
 	 *        the optional cache
 	 * @throws IllegalArgumentException
-	 *         if {@code dao} or {@code bundleNames} are {@literal null}
+	 *         if {@code dao} or {@code bundleNames} are {@code null}
 	 */
 	public VersionedMessageDaoMessageSource(VersionedMessageDao dao, String[] bundleNames,
 			Instant version, Cache<String, VersionedMessages> cache) {
@@ -102,7 +102,7 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 	 *
 	 * @param locale
 	 *        the locale of the messages to get
-	 * @return the properties or {@literal null} if none available
+	 * @return the properties or {@code null} if none available
 	 */
 	public Properties propertiesForLocale(Locale locale) {
 		final String origLocaleCode = locale.toString();

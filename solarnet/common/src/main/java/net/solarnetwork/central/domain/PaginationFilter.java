@@ -43,14 +43,14 @@ public interface PaginationFilter {
 	/**
 	 * Get the desired starting offset.
 	 *
-	 * @return the offset, or {@literal null}
+	 * @return the offset, or {@code null}
 	 */
 	Long getOffset();
 
 	/**
 	 * Get the maximum desired results.
 	 *
-	 * @return the max, or {@literal null} for all results
+	 * @return the max, or {@code null} for all results
 	 */
 	Integer getMax();
 

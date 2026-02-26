@@ -71,7 +71,7 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseIdentifiableUserModifiableEntity(K id, Instant created) {
 		super(id, created);
@@ -168,7 +168,7 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
+	 * @return a JSON encoded string, or {@code null} if no service
 	 *         properties available
 	 */
 	@JsonIgnore

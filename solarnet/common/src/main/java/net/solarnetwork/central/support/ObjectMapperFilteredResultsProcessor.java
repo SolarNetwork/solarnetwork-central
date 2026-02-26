@@ -65,10 +65,10 @@ public class ObjectMapperFilteredResultsProcessor<R> extends AbstractFilteredRes
 	 * @param mimeType
 	 *        the MIME type
 	 * @param serializer
-	 *        the serializer to use, or {@literal null} to rely on the
+	 *        the serializer to use, or {@code null} to rely on the
 	 *        {@link JsonGenerator}
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code serializer} is {@literal null}
+	 *         if any argument other than {@code serializer} is {@code null}
 	 */
 	public ObjectMapperFilteredResultsProcessor(JsonGenerator generator, SerializationContext provider,
 			MimeType mimeType, ValueSerializer<R> serializer) {

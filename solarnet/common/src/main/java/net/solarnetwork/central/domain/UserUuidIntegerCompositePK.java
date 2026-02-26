@@ -84,7 +84,7 @@ public class UserUuidIntegerCompositePK extends BasePK implements
 	 * @param entityId
 	 *        the entity ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserUuidIntegerCompositePK(Long userId, UUID groupId, Integer entityId) {
 		super();

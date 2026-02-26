@@ -70,7 +70,7 @@ public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidP
 	 * <li>id</li>
 	 * </ol>
 	 *
-	 * {@literal null} values will be sorted before non-{@literal null} values.
+	 * {@code null} values will be sorted before non-{@code null} values.
 	 */
 	@Override
 	public int compareTo(UserUuidPK o) {

@@ -44,7 +44,7 @@ public final class JobKey implements Comparable<JobKey> {
 	 * @param id
 	 *        the ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JobKey(String groupId, String id) {
 		super();

@@ -54,7 +54,7 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	 *        the value
 	 * @return the new instance
 	 * @throws IllegalArgumentException
-	 *         if {@code key} or {@code type} are {@literal null}
+	 *         if {@code key} or {@code type} are {@code null}
 	 */
 	public static AppSetting appSetting(String key, String type, String value) {
 		return new AppSetting(key, type, null, null, value);
@@ -72,7 +72,7 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	 * @param value
 	 *        the value
 	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
+	 *         if {@code id} is {@code null}
 	 */
 	public AppSetting(KeyTypePK id, Instant created, Instant modified, String value) {
 		super(requireNonNullArgument(id, "id"), created);
@@ -94,7 +94,7 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	 * @param value
 	 *        the value
 	 * @throws IllegalArgumentException
-	 *         any argument other than {@code value} is {@literal null}
+	 *         any argument other than {@code value} is {@code null}
 	 */
 	public AppSetting(String key, String type, Instant created, Instant modified, String value) {
 		this(new KeyTypePK(key, type), created, modified, value);
@@ -137,7 +137,7 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	/**
 	 * Get the modification date.
 	 *
-	 * @return the modification date, or {@literal null}
+	 * @return the modification date, or {@code null}
 	 */
 	public Instant getModified() {
 		return modified;
@@ -164,7 +164,7 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	/**
 	 * Get the value.
 	 *
-	 * @return the value, or {@literal null}
+	 * @return the value, or {@code null}
 	 */
 	public String getValue() {
 		return value;

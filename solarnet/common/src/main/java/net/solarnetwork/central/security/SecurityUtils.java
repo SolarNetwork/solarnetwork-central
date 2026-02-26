@@ -215,7 +215,7 @@ public class SecurityUtils {
 	/**
 	 * Get the current active authentication.
 	 *
-	 * @return the active Authentication, or {@literal null} if none available
+	 * @return the active Authentication, or {@code null} if none available
 	 */
 	public static Authentication getCurrentAuthentication() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -229,7 +229,7 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityActor}.
 	 *
-	 * @return the current actor, never {@literal null}
+	 * @return the current actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 */
@@ -242,7 +242,7 @@ public class SecurityUtils {
 	 *
 	 * @param principal
 	 *        the principal
-	 * @return the actor, never {@literal null}
+	 * @return the actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 * @since 2.5
@@ -261,7 +261,7 @@ public class SecurityUtils {
 	 *
 	 * @param auth
 	 *        the authentication
-	 * @return the actor, never {@literal null}
+	 * @return the actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 * @since 2.1
@@ -281,7 +281,7 @@ public class SecurityUtils {
 	 * Get the current {@link SecurityActor}'s {@code userId}.
 	 *
 	 * @return The user ID of the current {@link SecurityActor} (never
-	 *         {@literal null}).
+	 *         {@code null}).
 	 * @throws BasicSecurityException
 	 *         If the user ID is not available.
 	 * @since 1.3
@@ -296,7 +296,7 @@ public class SecurityUtils {
 	 * @param principal
 	 *        the user principal
 	 * @return the ID of the user associated with the actor, never
-	 *         {@literal null}
+	 *         {@code null}
 	 * @throws BasicSecurityException
 	 *         if the user ID is not available
 	 * @since 2.1
@@ -320,7 +320,7 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityToken}.
 	 *
-	 * @return the current actor, never {@literal null}
+	 * @return the current actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 */
@@ -333,7 +333,7 @@ public class SecurityUtils {
 	 *
 	 * @param auth
 	 *        the authentication
-	 * @return the token actor, never {@literal null}
+	 * @return the token actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available or not a token
 	 * @since 2.1
@@ -350,7 +350,7 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityToken#getToken()}, if available.
 	 *
-	 * @return the token, or {@literal null} if a token is not available
+	 * @return the token, or {@code null} if a token is not available
 	 * @since 2.2
 	 */
 	public static String currentTokenId() {
@@ -364,7 +364,7 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityUser}.
 	 *
-	 * @return the current user, never {@literal null}
+	 * @return the current user, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the user is not available
 	 */
@@ -377,7 +377,7 @@ public class SecurityUtils {
 	 *
 	 * @param auth
 	 *        the authentication
-	 * @return the user actor, never {@literal null}
+	 * @return the user actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available or is not a user
 	 * @since 2.1
@@ -394,7 +394,7 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityNode}.
 	 *
-	 * @return the current node, never {@literal null}
+	 * @return the current node, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the node is not available
 	 */
@@ -407,7 +407,7 @@ public class SecurityUtils {
 	 *
 	 * @param auth
 	 *        the authentication
-	 * @return the node actor, never {@literal null}
+	 * @return the node actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available or is not a node
 	 * @since 2.1

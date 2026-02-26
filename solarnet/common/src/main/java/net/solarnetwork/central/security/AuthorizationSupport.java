@@ -58,7 +58,7 @@ public class AuthorizationSupport {
 	 * @param nodeOwnershipDao
 	 *        the ownership DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public AuthorizationSupport(SolarNodeOwnershipDao nodeOwnershipDao) {
 		super();

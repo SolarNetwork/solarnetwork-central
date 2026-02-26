@@ -38,17 +38,17 @@ public interface LocationCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available location ID from the
-	 * {@link #getLocationIds()} array, or {@literal null} if not available.
+	 * {@link #getLocationIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the location ID, or {@literal null} if not available
+	 * @return the location ID, or {@code null} if not available
 	 */
 	Long getLocationId();
 
 	/**
 	 * Get an array of location IDs.
 	 * 
-	 * @return array of locations IDs (may be {@literal null})
+	 * @return array of locations IDs (may be {@code null})
 	 */
 	Long[] getLocationIds();
 

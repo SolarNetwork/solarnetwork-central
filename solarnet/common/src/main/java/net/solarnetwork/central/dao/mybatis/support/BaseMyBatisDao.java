@@ -127,7 +127,7 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 *        the name of the SQL statement to execute
 	 * @param parameters
 	 *        any parameters to pass to the statement
-	 * @return the result as a long, or {@literal null}
+	 * @return the result as a long, or {@code null}
 	 * @since 1.1
 	 */
 	protected Long selectLong(final String statement, final Object parameters) {
@@ -144,7 +144,7 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 * <p>
 	 * If the query throws an {@link IllegalArgumentException} this method
 	 * assumes that means the query name was not found, and will simply return
-	 * {@literal null}.
+	 * {@code null}.
 	 * </p>
 	 *
 	 * @param countQueryName
@@ -270,11 +270,11 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 * descriptors, those will be set as the SQL parameter
 	 * {@link BaseMyBatisGenericDaoSupport#SORT_DESCRIPTORS_PROPERTY}.
 	 * Otherwise, the {@code sorts} argument will be set.</li>
-	 * <li>If {@code propertyProcessor} is not {@literal null} invoke that.</li>
+	 * <li>If {@code propertyProcessor} is not {@code null} invoke that.</li>
 	 * <li>If {@code filter} implements {@link PaginationCriteria} and provides
 	 * pagination values, those will be used in preference to the {@code offset}
 	 * and {@code max} method arguments.</li>
-	 * <li>If {@code max} is not {@literal null}, and if filter implements
+	 * <li>If {@code max} is not {@code null}, and if filter implements
 	 * {@link OptimizedQueryCriteria} and does not disable a total results
 	 * count, then call {@link #executeCountQuery(String, Map)}</li>
 	 * <li>Call {@link #selectList(String, Object, Long, Integer)}</li>

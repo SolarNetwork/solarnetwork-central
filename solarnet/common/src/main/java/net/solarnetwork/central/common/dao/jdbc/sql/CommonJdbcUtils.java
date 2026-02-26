@@ -168,8 +168,8 @@ public final class CommonJdbcUtils {
 	 *        the expected array type, e.g. {@code Long[].class}
 	 * @param o
 	 *        the {@link Array} instance
-	 * @return the array value, or {@literal null} if {@code o} is
-	 *         {@literal null} or not a {@link Array}
+	 * @return the array value, or {@code null} if {@code o} is
+	 *         {@code null} or not a {@link Array}
 	 * @throws ClassCastException
 	 *         if a casting error occurs
 	 */
@@ -199,7 +199,7 @@ public final class CommonJdbcUtils {
 	 *        the result set to read from
 	 * @param column
 	 *        the column number to get as a UUID
-	 * @return the UUID, or {@literal null} if the column value is null
+	 * @return the UUID, or {@code null} if the column value is null
 	 * @throws SQLException
 	 *         if an error occurs
 	 * @throws IllegalArgumentException
@@ -221,7 +221,7 @@ public final class CommonJdbcUtils {
 	 *        {@link CountPreparedStatementCreatorProvider} then
 	 *        {@link CountPreparedStatementCreatorProvider#countPreparedStatementCreator()}
 	 *        will be used
-	 * @return the result, or {@literal null} if no result count is available
+	 * @return the result, or {@code null} if no result count is available
 	 */
 	public static Long executeCountQuery(JdbcOperations jdbcTemplate, PreparedStatementCreator creator) {
 		return jdbcTemplate.query(creator, rs -> rs.next() ? rs.getLong(1) : null);
@@ -242,7 +242,7 @@ public final class CommonJdbcUtils {
 	 *        the SQL to execute
 	 * @param mapper
 	 *        the row mapper to use
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static <M extends Unique<K>, K extends Comparable<K>> FilterResults<M, K> executeFilterQuery(
 			JdbcOperations jdbcTemplate, PaginationCriteria filter, PreparedStatementCreator sql,
@@ -301,13 +301,13 @@ public final class CommonJdbcUtils {
 	 * @param mapper
 	 *        the row mapper
 	 * @param totalResultCount
-	 *        the total result count (or {@literal null})
+	 *        the total result count (or {@code null})
 	 * @param startingOffset
-	 *        the starting offset (or {@literal null})
+	 *        the starting offset (or {@code null})
 	 * @param expectedResultCount
-	 *        the expected result count (or {@literal null})
+	 *        the expected result count (or {@code null})
 	 * @param attributes
-	 *        the attributes (or {@literal null})
+	 *        the attributes (or {@code null})
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @since 1.2
@@ -348,7 +348,7 @@ public final class CommonJdbcUtils {
 	 *        the SQL to execute
 	 * @param keyColumnName
 	 *        the name of the generated key column to extract
-	 * @return the generated key value, or {@literal null} if the key is not
+	 * @return the generated key value, or {@code null} if the key is not
 	 *         returned or is not a {@code Long} instance
 	 * @since 1.1
 	 */
@@ -402,7 +402,7 @@ public final class CommonJdbcUtils {
 	 *        the result set to read from
 	 * @param column
 	 *        the column number to get as an Instant
-	 * @return the instant, or {@literal null} if the column value is null
+	 * @return the instant, or {@code null} if the column value is null
 	 * @throws SQLException
 	 *         if an error occurs
 	 * @since 1.3

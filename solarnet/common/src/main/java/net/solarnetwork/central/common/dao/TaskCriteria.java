@@ -35,10 +35,10 @@ public interface TaskCriteria {
 	 *
 	 * <p>
 	 * This returns the first available task ID from the {@link #getTaskIds()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first task ID, or {@literal null} if not available
+	 * @return the first task ID, or {@code null} if not available
 	 */
 	default Long getTaskId() {
 		final Long[] array = getTaskIds();
@@ -48,7 +48,7 @@ public interface TaskCriteria {
 	/**
 	 * Get an array of task IDs.
 	 *
-	 * @return array of task IDs (may be {@literal null})
+	 * @return array of task IDs (may be {@code null})
 	 */
 	Long[] getTaskIds();
 

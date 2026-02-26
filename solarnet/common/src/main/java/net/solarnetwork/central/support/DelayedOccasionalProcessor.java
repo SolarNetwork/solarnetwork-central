@@ -120,7 +120,7 @@ public abstract class DelayedOccasionalProcessor<T>
 	 * @param items
 	 *        the item buffer; this must support concurrent access
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DelayedOccasionalProcessor(Clock clock, StatTracker stats, TaskScheduler scheduler,
 			Queue<T> items) {

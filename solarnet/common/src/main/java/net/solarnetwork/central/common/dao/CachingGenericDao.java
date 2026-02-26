@@ -69,7 +69,7 @@ public class CachingGenericDao<T extends Entity<K>, K extends Comparable<K> & Se
 	 * @param executor
 	 *        task executor
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CachingGenericDao(D delegate, Cache<K, T> cache, Executor executor) {
 		super();

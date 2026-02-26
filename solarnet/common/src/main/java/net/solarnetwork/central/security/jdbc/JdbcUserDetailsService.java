@@ -96,7 +96,7 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 	 * @param objectMapper
 	 *        the mapper to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcUserDetailsService(ObjectMapper objectMapper) {
 		super();

@@ -35,7 +35,7 @@ public interface HumanIdDao<T> {
 	 *
 	 * @param hid
 	 *        the human ID of the object to retrieve
-	 * @return the domain object, or {@literal null} if not found
+	 * @return the domain object, or {@code null} if not found
 	 */
 	T getForHid(String hid);
 

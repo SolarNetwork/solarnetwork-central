@@ -79,7 +79,7 @@ public interface BulkLoadingDao<T extends Entity<K>, K extends Serializable & Co
 		 * If specified, perform loading in batches of this size.
 		 * </p>
 		 *
-		 * @return a batch size, or {@literal null} for no hint
+		 * @return a batch size, or {@code null} for no hint
 		 */
 		Integer getBatchSize();
 

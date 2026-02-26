@@ -50,7 +50,7 @@ public final class DeleteAppSetting implements PreparedStatementCreator, SqlProv
 	 *        the key
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static DeleteAppSetting deleteForKey(String key) {
 		return new DeleteAppSetting(new String[] { requireNonNullArgument(key, "key") }, null);
@@ -65,7 +65,7 @@ public final class DeleteAppSetting implements PreparedStatementCreator, SqlProv
 	 *        the type
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static DeleteAppSetting deleteForKeyType(String key, String type) {
 		return new DeleteAppSetting(new String[] { requireNonNullArgument(key, "key") },

@@ -68,19 +68,19 @@ public class AuthorizationException extends BasicSecurityException {
 	}
 
 	/**
-	 * Helper for validating an object is not {@literal null}, throwing an
+	 * Helper for validating an object is not {@code null}, throwing an
 	 * exception otherwise.
 	 *
 	 * @param <T>
 	 *        the object type
 	 * @param object
-	 *        the object that must not be {@literal null}
+	 *        the object that must not be {@code null}
 	 * @param id
 	 *        the ID associated with the object
 	 * @return {@code object}
 	 * @throws AuthorizationException
 	 *         with a {@link Reason#UNKNOWN_OBJECT} if {@code object} is
-	 *         {@literal null}
+	 *         {@code null}
 	 * @since 1.2
 	 */
 	public static <T> T requireNonNullObject(T object, Object id) {
@@ -145,7 +145,7 @@ public class AuthorizationException extends BasicSecurityException {
 	/**
 	 * Get the attempted login.
 	 *
-	 * @return login value (or <em>null</em> if not available)
+	 * @return login value (or {@code null} if not available)
 	 */
 	public String getEmail() {
 		return email;
@@ -154,7 +154,7 @@ public class AuthorizationException extends BasicSecurityException {
 	/**
 	 * Get the primary key.
 	 *
-	 * @return the primary key (or <em>null</em> if not available)
+	 * @return the primary key (or {@code null} if not available)
 	 */
 	public Object getId() {
 		return id;

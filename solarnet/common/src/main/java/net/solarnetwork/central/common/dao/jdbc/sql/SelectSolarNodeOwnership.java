@@ -63,7 +63,7 @@ public final class SelectSolarNodeOwnership implements PreparedStatementCreator,
 	 *        the node ID
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if {@code nodeId} is {@literal null}
+	 *         if {@code nodeId} is {@code null}
 	 */
 	public static SelectSolarNodeOwnership selectForNode(Long nodeId) {
 		return new SelectSolarNodeOwnership(new Long[] { requireNonNullArgument(nodeId, "nodeId") },
@@ -77,7 +77,7 @@ public final class SelectSolarNodeOwnership implements PreparedStatementCreator,
 	 *        the user ID
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if {@code userId} is {@literal null}
+	 *         if {@code userId} is {@code null}
 	 */
 	public static SelectSolarNodeOwnership selectForUser(Long userId) {
 		return new SelectSolarNodeOwnership(null,
@@ -93,7 +93,7 @@ public final class SelectSolarNodeOwnership implements PreparedStatementCreator,
 	 *        the user ID
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if {@code nodeId} or {@code userId} is {@literal null}
+	 *         if {@code nodeId} or {@code userId} is {@code null}
 	 */
 	public static SelectSolarNodeOwnership selectForNodeUser(Long nodeId, Long userId) {
 		return new SelectSolarNodeOwnership(new Long[] { requireNonNullArgument(nodeId, "nodeId") },

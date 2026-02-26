@@ -53,7 +53,7 @@ public interface AppSettingDao extends GenericDao<AppSetting, KeyTypePK> {
 	 *        the type of the setting to lock
 	 * @return the locked setting
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	AppSetting lockForUpdate(String key, String type);
 
@@ -64,7 +64,7 @@ public interface AppSettingDao extends GenericDao<AppSetting, KeyTypePK> {
 	 *        the key of the setting to lock
 	 * @return the locked settings
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	Collection<AppSetting> lockForUpdate(String key);
 

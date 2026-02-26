@@ -65,7 +65,7 @@ public class ClientAccessTokenEntity
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ClientAccessTokenEntity(UserStringStringCompositePK id, Instant created) {
 		super(id, created);
@@ -83,7 +83,7 @@ public class ClientAccessTokenEntity
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ClientAccessTokenEntity(Long userId, String registrationId, String principalName,
 			Instant created) {
@@ -242,7 +242,7 @@ public class ClientAccessTokenEntity
 	 * Set the access token scopes.
 	 *
 	 * @param accessTokenScopes
-	 *        the scopes to set, or {@literal null}
+	 *        the scopes to set, or {@code null}
 	 */
 	public final void setAccessTokenScopes(Set<String> accessTokenScopes) {
 		this.accessTokenScopes = accessTokenScopes;
@@ -257,7 +257,7 @@ public class ClientAccessTokenEntity
 	 * Set the refresh token.
 	 *
 	 * @param refreshToken
-	 *        the refresh token to set, or {@literal null}
+	 *        the refresh token to set, or {@code null}
 	 */
 	public final void setRefreshToken(byte[] refreshToken) {
 		this.refreshToken = refreshToken;
@@ -272,7 +272,7 @@ public class ClientAccessTokenEntity
 	 * Set the refresh token issue date.
 	 *
 	 * @param refreshTokenIssuedAt
-	 *        the date to set, or {@literal null}
+	 *        the date to set, or {@code null}
 	 */
 	public final void setRefreshTokenIssuedAt(Instant refreshTokenIssuedAt) {
 		this.refreshTokenIssuedAt = refreshTokenIssuedAt;

@@ -64,7 +64,7 @@ public interface HttpOperations {
 	 * @param runtimeData
 	 *        optional runtime information, the supported keys will be
 	 *        implementation specific
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
 	<I, O> ResponseEntity<O> http(HttpMethod method, URI uri, HttpHeaders headers, I body,
 			Class<O> responseType, Object context, Map<String, ?> runtimeData);
@@ -86,7 +86,7 @@ public interface HttpOperations {
 	 * @param runtimeData
 	 *        optional runtime information, the supported keys will be
 	 *        implementation specific
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
 	default <O> Result<O> httpGet(String uri, Map<String, ?> parameters, Map<String, ?> headers,
 			Class<O> responseType, Object context, Map<String, ?> runtimeData) {

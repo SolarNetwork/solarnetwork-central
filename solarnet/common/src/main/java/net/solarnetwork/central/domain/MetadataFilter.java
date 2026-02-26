@@ -40,7 +40,7 @@ public interface MetadataFilter extends Filter {
 	 * {@code (t=foo)}, or <code>(&amp;(/&#42;&#42;/foo=bar)(t=special))</code>.
 	 * </p>
 	 * 
-	 * @return the metadata filter to use (may be {@literal null})
+	 * @return the metadata filter to use (may be {@code null})
 	 */
 	String getMetadataFilter();
 

@@ -126,7 +126,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 * @param errorEventTags
 	 *        the error event tags
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BasicHttpOperations(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags) {
@@ -428,7 +428,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	/**
 	 * Get the REST operations.
 	 *
-	 * @return the REST operations, never {@literal null}
+	 * @return the REST operations, never {@code null}
 	 */
 	public final RestOperations getRestOps() {
 		return restOps;
@@ -458,7 +458,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	/**
 	 * Get the user service auditor.
 	 *
-	 * @return the auditor, or {@literal null}
+	 * @return the auditor, or {@code null}
 	 */
 	public final UserServiceAuditor getUserServiceAuditor() {
 		return userServiceAuditor;
@@ -468,7 +468,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 * Set the user service auditor.
 	 *
 	 * @param userServiceAuditor
-	 *        the auditor to set, or {@literal null}; requires
+	 *        the auditor to set, or {@code null}; requires
 	 *        {@code #setUserServiceKey(String)} be configured
 	 */
 	public final void setUserServiceAuditor(UserServiceAuditor userServiceAuditor) {

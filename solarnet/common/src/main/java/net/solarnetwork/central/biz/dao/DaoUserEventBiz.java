@@ -46,7 +46,7 @@ public class DaoUserEventBiz implements UserEventBiz {
 	 * @param userEventDao
 	 *        the user event DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserEventBiz(UserEventDao userEventDao) {
 		super();

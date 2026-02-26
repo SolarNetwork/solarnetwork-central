@@ -37,11 +37,11 @@ public interface ClaimableJobStateCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available state from the
-	 * {@link #getClaimableJobStates()} set, or {@literal null} if not
+	 * {@link #getClaimableJobStates()} set, or {@code null} if not
 	 * available.
 	 * </p>
 	 * 
-	 * @return the first state, or {@literal null} if not available
+	 * @return the first state, or {@code null} if not available
 	 */
 	default ClaimableJobState getClaimableJobState() {
 		ClaimableJobState[] states = getClaimableJobStates();
@@ -51,7 +51,7 @@ public interface ClaimableJobStateCriteria {
 	/**
 	 * Get a set of claimable job states.
 	 * 
-	 * @return array of states (may be {@literal null})
+	 * @return array of states (may be {@code null})
 	 */
 	ClaimableJobState[] getClaimableJobStates();
 

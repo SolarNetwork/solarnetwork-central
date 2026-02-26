@@ -47,7 +47,7 @@ public class CodedValueTypeHandler<E extends Enum<E> & CodedValue> extends BaseT
 	 * {@link CodedValue} enum handler that defaults to code {@literal 0}.
 	 * <p>
 	 * This will attempt to resolve a code value {@literal 0} for a default
-	 * value, falling back to {@literal null} if that is not found.
+	 * value, falling back to {@code null} if that is not found.
 	 * </p>
 	 * 
 	 * @param <E>
@@ -75,7 +75,7 @@ public class CodedValueTypeHandler<E extends Enum<E> & CodedValue> extends BaseT
 	 * 
 	 * <p>
 	 * This will attempt to resolve a code value {@literal 0} for a default
-	 * value, falling back to {@literal null} if that is not found.
+	 * value, falling back to {@code null} if that is not found.
 	 * </p>
 	 * 
 	 * @param type
@@ -143,7 +143,7 @@ public class CodedValueTypeHandler<E extends Enum<E> & CodedValue> extends BaseT
 	/**
 	 * Get the class type.
 	 * 
-	 * @return the type, never {@literal null}
+	 * @return the type, never {@code null}
 	 */
 	public Class<E> getType() {
 		return type;

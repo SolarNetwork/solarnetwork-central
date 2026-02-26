@@ -42,7 +42,7 @@ public interface NodeOwnershipCriteria {
 	 * </p>
 	 * 
 	 * @return the {@literal true} or {@literal false} to filter by that state,
-	 *         or {@literal null} to not filter
+	 *         or {@code null} to not filter
 	 */
 	Boolean getValidNodeOwnership();
 

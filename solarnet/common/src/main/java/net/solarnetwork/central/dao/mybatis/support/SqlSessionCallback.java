@@ -37,7 +37,7 @@ public interface SqlSessionCallback<T> {
 	 * 
 	 * @param session
 	 *        the session object
-	 * @return some object (possibly <em>null</em>)
+	 * @return some object (possibly {@code null})
 	 */
 	T doWithSqlSession(SqlSession session);
 

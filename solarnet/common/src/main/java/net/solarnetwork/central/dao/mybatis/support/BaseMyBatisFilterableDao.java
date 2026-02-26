@@ -124,7 +124,7 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<K>, M extends Fi
 	 * <p>
 	 * If the query throws an {@link IllegalArgumentException} this method
 	 * assumes that means the query name was not found, and will simply return
-	 * {@literal null}.
+	 * {@code null}.
 	 * </p>
 	 *
 	 * @param countQueryName

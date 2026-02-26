@@ -45,7 +45,7 @@ public interface SharedValueCache<K, V, S> {
 	 *
 	 * @param key
 	 *        the key of the value to get
-	 * @return the value, or {@literal null} if not available (or expired)
+	 * @return the value, or {@code null} if not available (or expired)
 	 */
 	V get(K key);
 

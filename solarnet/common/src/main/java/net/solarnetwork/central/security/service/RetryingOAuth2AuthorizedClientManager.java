@@ -55,7 +55,7 @@ public class RetryingOAuth2AuthorizedClientManager implements OAuth2AuthorizedCl
 	 * @param clientService
 	 *        the client service
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public RetryingOAuth2AuthorizedClientManager(OAuth2AuthorizedClientManager delegate,
 			OAuth2AuthorizedClientService clientService) {

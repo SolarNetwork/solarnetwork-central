@@ -45,7 +45,7 @@ public interface GenericCompositeKeyFilterableDao<T extends Entity<K>, K extends
 	 * 
 	 * <p>
 	 * Only key components that are assigned are used to filter the result. The
-	 * {@code sortDescriptors} parameter can be {@literal null}, in which case
+	 * {@code sortDescriptors} parameter can be {@code null}, in which case
 	 * the sort order is not defined and implementation specific.
 	 * </p>
 	 * 

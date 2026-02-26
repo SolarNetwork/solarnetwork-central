@@ -65,7 +65,7 @@ public enum MetadataKind {
 	 *
 	 * @param key
 	 *        the key value
-	 * @return the enum, or {@literal null} if {@code key} is {@literal null} or
+	 * @return the enum, or {@code null} if {@code key} is {@code null} or
 	 *         empty
 	 * @throws IllegalArgumentException
 	 *         if {@code key} is not supported

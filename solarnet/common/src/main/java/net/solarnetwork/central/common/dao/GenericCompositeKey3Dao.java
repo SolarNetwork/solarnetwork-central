@@ -70,7 +70,7 @@ public interface GenericCompositeKey3Dao<T extends Entity<K>, K extends Comparab
 	 * optionally sorted in some way.
 	 * 
 	 * <p>
-	 * The {@code sortDescriptors} parameter can be {@literal null}, in which
+	 * The {@code sortDescriptors} parameter can be {@code null}, in which
 	 * case the sort order is not defined and implementation specific.
 	 * </p>
 	 * 

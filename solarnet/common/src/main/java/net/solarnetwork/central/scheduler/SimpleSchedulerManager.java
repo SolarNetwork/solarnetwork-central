@@ -87,7 +87,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	 * @param taskScheduler
 	 *        the scheduler
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SimpleSchedulerManager(TaskScheduler taskScheduler) {
 		super();

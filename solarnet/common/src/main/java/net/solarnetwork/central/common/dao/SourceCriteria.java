@@ -36,17 +36,17 @@ public interface SourceCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available source ID from the
-	 * {@link #getSourceIds()} array, or {@literal null} if not available.
+	 * {@link #getSourceIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first source ID, or {@literal null} if not available
+	 * @return the first source ID, or {@code null} if not available
 	 */
 	String getSourceId();
 
 	/**
 	 * Get an array of source IDs.
 	 * 
-	 * @return array of source IDs (may be {@literal null})
+	 * @return array of source IDs (may be {@code null})
 	 */
 	String[] getSourceIds();
 

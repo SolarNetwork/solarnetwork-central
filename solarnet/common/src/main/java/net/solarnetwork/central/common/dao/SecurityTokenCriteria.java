@@ -36,17 +36,17 @@ public interface SecurityTokenCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available token ID from the {@link #getTokenIds()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first token ID, or {@literal null} if not available
+	 * @return the first token ID, or {@code null} if not available
 	 */
 	String getTokenId();
 
 	/**
 	 * Get an array of token IDs.
 	 * 
-	 * @return array of token IDs (may be {@literal null})
+	 * @return array of token IDs (may be {@code null})
 	 */
 	String[] getTokenIds();
 

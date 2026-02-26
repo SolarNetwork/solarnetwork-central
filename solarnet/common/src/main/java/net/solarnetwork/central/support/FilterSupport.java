@@ -167,10 +167,10 @@ public class FilterSupport extends BaseFilterSupport
 	 *
 	 * <p>
 	 * This returns the first available source ID from the {@code sourceIds}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first source ID, or {@literal null}
+	 * @return the first source ID, or {@code null}
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonIgnore
@@ -181,7 +181,7 @@ public class FilterSupport extends BaseFilterSupport
 	/**
 	 * Get all source IDs to filter on.
 	 *
-	 * @return The source IDs, or {@literal null}.
+	 * @return The source IDs, or {@code null}.
 	 */
 	public String[] getSourceIds() {
 		return sourceIds;
@@ -222,10 +222,10 @@ public class FilterSupport extends BaseFilterSupport
 	 *
 	 * <p>
 	 * This returns the first available location ID from the {@code locationIds}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first location ID, or {@literal null}
+	 * @return the first location ID, or {@code null}
 	 */
 	@JsonIgnore
 	public Long getLocationId() {
@@ -235,7 +235,7 @@ public class FilterSupport extends BaseFilterSupport
 	/**
 	 * Get all location IDs to filter on.
 	 *
-	 * @return The location IDs, or {@literal null}.
+	 * @return The location IDs, or {@code null}.
 	 */
 	public Long[] getLocationIds() {
 		return locationIds;

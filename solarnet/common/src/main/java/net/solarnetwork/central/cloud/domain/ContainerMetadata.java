@@ -40,7 +40,7 @@ public class ContainerMetadata {
 	 * @param containerId
 	 *        the unique container ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ContainerMetadata(String containerId) {
 		super();
@@ -50,7 +50,7 @@ public class ContainerMetadata {
 	/**
 	 * Get the unique container ID.
 	 * 
-	 * @return the container ID, never {@literal null}
+	 * @return the container ID, never {@code null}
 	 */
 	public String getContainerId() {
 		return containerId;

@@ -63,7 +63,7 @@ public final class SelectAppSetting implements PreparedStatementCreator, SqlProv
 	 *        the key
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static SelectAppSetting selectForKey(String key) {
 		return selectForKey(key, false);
@@ -78,7 +78,7 @@ public final class SelectAppSetting implements PreparedStatementCreator, SqlProv
 	 *        {@literal true} to use "for update" locking semantics
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static SelectAppSetting selectForKey(String key, boolean forUpdate) {
 		return new SelectAppSetting(new String[] { requireNonNullArgument(key, "key") }, null,
@@ -94,7 +94,7 @@ public final class SelectAppSetting implements PreparedStatementCreator, SqlProv
 	 *        the type
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static SelectAppSetting selectForKeyType(String key, String type) {
 		return selectForKeyType(key, type, false);
@@ -111,7 +111,7 @@ public final class SelectAppSetting implements PreparedStatementCreator, SqlProv
 	 *        {@literal true} to use "for update" locking semantics
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static SelectAppSetting selectForKeyType(String key, String type, boolean forUpdate) {
 		return new SelectAppSetting(new String[] { requireNonNullArgument(key, "key") },

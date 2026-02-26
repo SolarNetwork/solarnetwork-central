@@ -35,7 +35,7 @@ public interface UserFilter extends Filter {
 	/**
 	 * Get an email criteria.
 	 *
-	 * @return the email, or {@literal null}
+	 * @return the email, or {@code null}
 	 */
 	String getEmail();
 

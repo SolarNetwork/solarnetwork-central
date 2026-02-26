@@ -66,7 +66,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 	 * @param directory
 	 *        the directory to remove files from
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DirectoryCleanerJob(Path directory) {
 		super();
@@ -162,7 +162,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 	 * Set the minimum age of files that can be deleted.
 	 *
 	 * @param minimumAge
-	 *        the age to set; if {@literal null} then
+	 *        the age to set; if {@code null} then
 	 *        {@link #DEFAULT_MINIMUM_AGE} will be set instead
 	 */
 	public void setMinimumAge(Duration minimumAge) {

@@ -51,7 +51,7 @@ public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends
 	 * @param id
 	 *        the ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BasicUserEntity(K id) {
 		super(requireNonNullArgument(id, "id"), null);
@@ -68,7 +68,7 @@ public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends
 	 * @param modified
 	 *        the modification date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BasicUserEntity(K id, Instant created, Instant modified) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));

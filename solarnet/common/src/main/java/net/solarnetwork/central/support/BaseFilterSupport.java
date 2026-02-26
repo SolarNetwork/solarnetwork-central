@@ -152,10 +152,10 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 *
 	 * <p>
 	 * This returns the first available user ID from the {@code userIds} array,
-	 * or {@literal null} if not available.
+	 * or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first user ID, or {@literal null}
+	 * @return the first user ID, or {@code null}
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonIgnore
@@ -166,7 +166,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	/**
 	 * Get all user IDs to filter on.
 	 *
-	 * @return The user IDs, or {@literal null}.
+	 * @return The user IDs, or {@code null}.
 	 */
 	public Long[] getUserIds() {
 		return userIds;
@@ -191,7 +191,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 * Set a metadata search filter, in LDAP search filter syntax.
 	 *
 	 * @param metadataFilter
-	 *        the metadata filter to use, or {@literal null}
+	 *        the metadata filter to use, or {@code null}
 	 */
 	public void setMetadataFilter(String metadataFilter) {
 		this.metadataFilter = metadataFilter;

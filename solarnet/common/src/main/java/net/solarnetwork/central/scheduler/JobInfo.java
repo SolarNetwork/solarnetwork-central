@@ -73,7 +73,7 @@ public interface JobInfo {
 	 * started.
 	 * </p>
 	 * 
-	 * @return the previous execution time, or {@literal null} if the job has
+	 * @return the previous execution time, or {@code null} if the job has
 	 *         never run before
 	 */
 	Instant getPreviousExecutionTime();
@@ -81,7 +81,7 @@ public interface JobInfo {
 	/**
 	 * Get the next execution time of the job.
 	 * 
-	 * @return the next execution time, or {@literal null} if no more executions
+	 * @return the next execution time, or {@code null} if no more executions
 	 *         are scheduled
 	 */
 	Instant getNextExecutionTime();

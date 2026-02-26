@@ -54,7 +54,7 @@ public class CachingUserMetadataDao extends CachingGenericDao<UserMetadataEntity
 	 * @param executor
 	 *        task executor
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CachingUserMetadataDao(UserMetadataDao delegate, Cache<Long, UserMetadataEntity> cache,
 			Executor executor, Cache<UserStringCompositePK, String> metadataPathCache) {

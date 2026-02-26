@@ -43,14 +43,14 @@ public interface MessageDataSource {
 	/**
 	 * Get the message body.
 	 * 
-	 * @return the message body, or {@literal null} if none
+	 * @return the message body, or {@code null} if none
 	 */
 	String getBody();
 
 	/**
 	 * Get a collection of message attachments.
 	 * 
-	 * @return the attachments, or {@literal null} if none
+	 * @return the attachments, or {@code null} if none
 	 */
 	Iterable<Resource> getAttachments();
 

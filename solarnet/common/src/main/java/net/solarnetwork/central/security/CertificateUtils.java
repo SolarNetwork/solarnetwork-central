@@ -110,9 +110,9 @@ public final class CertificateUtils {
 	 *
 	 * @param cert
 	 *        the certificate to extract the email from
-	 * @return the extracted email, or {@literal null} if none available
+	 * @return the extracted email, or {@code null} if none available
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @throws CertificateParsingException
 	 *         if an error parsing the subject alternative names occurs
 	 */
@@ -140,7 +140,7 @@ public final class CertificateUtils {
 	 *        the certificate to extract the canonical subject DN value from
 	 * @return the canonical subject DN
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static String canonicalSubjectDn(X509Certificate cert) {
 		return requireNonNullArgument(cert, "cert").getSubjectX500Principal().getName(RFC2253,
@@ -187,7 +187,7 @@ public final class CertificateUtils {
 	 *        the path to the PEM encoded, unencrypted private key
 	 * @param alias
 	 *        the key store alias to use for the certificate
-	 * @return the key store, or {@literal null} if no settings are available
+	 * @return the key store, or {@code null} if no settings are available
 	 * @throws net.solarnetwork.service.CertificateException
 	 *         if an error occurs initializing the key store
 	 */

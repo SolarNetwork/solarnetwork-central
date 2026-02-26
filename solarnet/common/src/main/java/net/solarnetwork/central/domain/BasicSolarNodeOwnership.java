@@ -63,7 +63,7 @@ public class BasicSolarNodeOwnership
 	 *        the user ID
 	 * @return the new ownership
 	 * @throws IllegalArgumentException
-	 *         if {@code nodeId} or {@code userId} is {@literal null}
+	 *         if {@code nodeId} or {@code userId} is {@code null}
 	 */
 	public static BasicSolarNodeOwnership ownershipFor(Long nodeId, Long userId) {
 		return new BasicSolarNodeOwnership(nodeId, userId, null, ZoneOffset.UTC, false, false);
@@ -88,7 +88,7 @@ public class BasicSolarNodeOwnership
 	 *        the time zone ID
 	 * @return the new ownership
 	 * @throws IllegalArgumentException
-	 *         if {@code nodeId} or {@code userId} is {@literal null}
+	 *         if {@code nodeId} or {@code userId} is {@code null}
 	 */
 	public static BasicSolarNodeOwnership ownershipFor(Long nodeId, Long userId, String country,
 			String timeZoneId) {
@@ -111,7 +111,7 @@ public class BasicSolarNodeOwnership
 	 *        the user ID
 	 * @return the new ownership
 	 * @throws IllegalArgumentException
-	 *         if {@code nodeId} or {@code userId} is {@literal null}
+	 *         if {@code nodeId} or {@code userId} is {@code null}
 	 */
 	public static BasicSolarNodeOwnership privateOwnershipFor(Long nodeId, Long userId) {
 		return new BasicSolarNodeOwnership(nodeId, userId, null, ZoneOffset.UTC, true, false);
@@ -136,7 +136,7 @@ public class BasicSolarNodeOwnership
 	 *        the time zone ID
 	 * @return the new ownership
 	 * @throws IllegalArgumentException
-	 *         if {@code nodeId} or {@code userId} is {@literal null}
+	 *         if {@code nodeId} or {@code userId} is {@code null}
 	 */
 	public static BasicSolarNodeOwnership privateOwnershipFor(Long nodeId, Long userId, String country,
 			String timeZoneId) {
@@ -154,14 +154,14 @@ public class BasicSolarNodeOwnership
 	 * @param country
 	 *        the country code
 	 * @param zone
-	 *        the zone, or {@literal null} to use {@literal UTC}
+	 *        the zone, or {@code null} to use {@literal UTC}
 	 * @param requiresAuthorization
 	 *        {@literal true} if authorization is required to access the node's
 	 *        data
 	 * @param archived
 	 *        {@literal true} if the node has been archived
 	 * @throws IllegalArgumentException
-	 *         if {@code nodeId} or {@code userId} is {@literal null}
+	 *         if {@code nodeId} or {@code userId} is {@code null}
 	 */
 	public BasicSolarNodeOwnership(Long nodeId, Long userId, String country, ZoneId zone,
 			boolean requiresAuthorization, boolean archived) {

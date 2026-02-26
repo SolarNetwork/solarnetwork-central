@@ -89,7 +89,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K extend
 	 * @param keyType
 	 *        the key type
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public BaseMyBatisGenericDaoSupport(Class<? extends T> objectType, Class<? extends K> keyType) {
 		super();
@@ -113,7 +113,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K extend
 	/**
 	 * Get the main domain object type.
 	 *
-	 * @return the object type, never {@literal null}
+	 * @return the object type, never {@code null}
 	 */
 	@Override
 	public Class<? extends T> getObjectType() {
@@ -123,7 +123,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K extend
 	/**
 	 * Get the primary key type.
 	 *
-	 * @return the key type, never {@literal null}
+	 * @return the key type, never {@code null}
 	 */
 	public Class<? extends K> getKeyType() {
 		return keyType;

@@ -73,7 +73,7 @@ public final class LongStringCompositePK extends BasePK implements Serializable,
 	 * @param entityId
 	 *        the entity ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public LongStringCompositePK(Long groupId, String entityId) {
 		super();

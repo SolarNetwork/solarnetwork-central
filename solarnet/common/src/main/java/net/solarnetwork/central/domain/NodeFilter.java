@@ -33,16 +33,16 @@ public interface NodeFilter extends Filter {
 
 	/**
 	 * Get the first node ID. This returns the first available node ID from the
-	 * {@link #getNodeIds()} array, or {@literal null} if not available.
+	 * {@link #getNodeIds()} array, or {@code null} if not available.
 	 *
-	 * @return the node ID, or {@literal null} if not available
+	 * @return the node ID, or {@code null} if not available
 	 */
 	Long getNodeId();
 
 	/**
 	 * Get an array of node IDs.
 	 *
-	 * @return array of node IDs (may be {@literal null})
+	 * @return array of node IDs (may be {@code null})
 	 */
 	Long[] getNodeIds();
 

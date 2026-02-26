@@ -413,7 +413,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	 * @param parentId
 	 *        the ID of the parent entity
 	 * @param newList
-	 *        the list of related objects to persist (may be <em>null</em>)
+	 *        the list of related objects to persist (may be {@code null})
 	 * @param relationClass
 	 *        the Class of the related object
 	 * @param additionalProperties
@@ -501,7 +501,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	 * @param parentId
 	 *        the ID of the parent entity
 	 * @param newObject
-	 *        the related object to persist (may be <em>null</em>)
+	 *        the related object to persist (may be {@code null})
 	 * @param relationClass
 	 *        the Class of the related object
 	 * @param additionalProperties
@@ -574,7 +574,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	 * @param parent
 	 *        the parent entity
 	 * @param child
-	 *        the child object to persist (may be <em>null</em>)
+	 *        the child object to persist (may be {@code null})
 	 * @param relationClass
 	 *        the Class of the related object
 	 * @return the child entity's primary key
@@ -639,7 +639,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	 *        the original exception
 	 * @param errorObject
 	 *        a validation error object
-	 * @return an exception, never <em>null</em> and might be the exception
+	 * @return an exception, never {@code null} and might be the exception
 	 *         instance passed in
 	 */
 	protected RuntimeException mapSqlMapException(final RuntimeException e, final Object errorObject) {

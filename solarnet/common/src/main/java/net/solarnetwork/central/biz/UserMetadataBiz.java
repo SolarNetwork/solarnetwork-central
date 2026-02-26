@@ -80,7 +80,7 @@ public interface UserMetadataBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@code null}
 	 */
 	FilterResults<UserMetadataEntity, Long> findUserMetadata(UserMetadataFilter criteria,
 			List<SortDescriptor> sortDescriptors, Long offset, Integer max);

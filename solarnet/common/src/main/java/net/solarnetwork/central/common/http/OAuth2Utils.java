@@ -98,7 +98,7 @@ public final class OAuth2Utils {
 	 *
 	 * @param authReq
 	 *        the request to provide the context attributes for
-	 * @return the attributes, never {@literal null}
+	 * @return the attributes, never {@code null}
 	 */
 	public static Map<String, Object> principalCredentialsContextAttributes(
 			OAuth2AuthorizeRequest authReq) {

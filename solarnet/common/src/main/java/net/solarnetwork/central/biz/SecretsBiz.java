@@ -46,7 +46,7 @@ public interface SecretsBiz {
 	 *
 	 * @param secretName
 	 *        the unique name of the secret to get
-	 * @return the secret value, or {@literal null} if one does not exist
+	 * @return the secret value, or {@code null} if one does not exist
 	 */
 	String getSecret(String secretName);
 
@@ -69,7 +69,7 @@ public interface SecretsBiz {
 	 *
 	 * @param secretName
 	 *        the unique name of the secret to get
-	 * @return the secret data, or {@literal null} if one does not exist
+	 * @return the secret data, or {@code null} if one does not exist
 	 * @since 1.1
 	 */
 	byte[] getSecretData(String secretName);
@@ -103,7 +103,7 @@ public interface SecretsBiz {
 	 * <p>
 	 * This method will interpret the associated secret value as a JSON object
 	 * string, and return that as a Map. If the secret value exists but cannot
-	 * be decoded as a JSON object, {@literal null} will be returned.
+	 * be decoded as a JSON object, {@code null} will be returned.
 	 * </p>
 	 *
 	 * @param secretName

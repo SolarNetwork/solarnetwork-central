@@ -44,7 +44,7 @@ public interface NetworkAssociationDao {
 	 *        the username used when generating the confirmation code
 	 * @param confirmationCode
 	 *        the confirmation code
-	 * @return the association, or <em>null</em> if none available
+	 * @return the association, or {@code null} if none available
 	 */
 	NetworkAssociation getNetworkAssociationForConfirmationKey(String username, String confirmationCode);
 

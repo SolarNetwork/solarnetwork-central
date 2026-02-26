@@ -44,7 +44,7 @@ public interface LocationRequestDao extends GenericDao<LocationRequest, Long>,
 	 *        the primary key to retrieve
 	 * @param filter
 	 *        the optional filter
-	 * @return the domain object, or {@literal null} if not available
+	 * @return the domain object, or {@code null} if not available
 	 */
 	List<LocationRequest> find(Long id, LocationRequestCriteria filter);
 

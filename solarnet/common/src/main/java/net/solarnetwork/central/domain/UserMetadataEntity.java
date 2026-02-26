@@ -67,7 +67,7 @@ public class UserMetadataEntity extends net.solarnetwork.dao.BasicEntity<Long>
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserMetadataEntity(Long id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));

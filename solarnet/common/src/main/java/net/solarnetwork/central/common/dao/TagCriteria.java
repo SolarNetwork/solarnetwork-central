@@ -43,7 +43,7 @@ public interface TagCriteria {
 	/**
 	 * Get an array of tags.
 	 * 
-	 * @return array of tags (may be {@literal null})
+	 * @return array of tags (may be {@code null})
 	 */
 	String[] getTags();
 
@@ -52,10 +52,10 @@ public interface TagCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available tag from the {@link #getTags()} array,
-	 * or {@literal null} if not available.
+	 * or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the tag, or {@literal null} if not available
+	 * @return the tag, or {@code null} if not available
 	 */
 	default String getTag() {
 		String[] kinds = getTags();

@@ -75,7 +75,7 @@ public final class UserUuidPK extends BasePK
 	 * @param uuid
 	 *        the UUID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserUuidPK(Long userId, UUID uuid) {
 		super();

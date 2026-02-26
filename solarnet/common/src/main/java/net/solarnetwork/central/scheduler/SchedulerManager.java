@@ -53,7 +53,7 @@ public interface SchedulerManager {
 	/**
 	 * Get a collection of all available scheduled jobs.
 	 * 
-	 * @return the collection of jobs; never {@literal null}
+	 * @return the collection of jobs; never {@code null}
 	 */
 	Collection<JobInfo> allJobInfos();
 

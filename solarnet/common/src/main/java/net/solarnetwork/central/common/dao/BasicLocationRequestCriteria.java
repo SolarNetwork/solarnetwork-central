@@ -82,7 +82,7 @@ public class BasicLocationRequestCriteria extends BasicCoreCriteria implements L
 	 * </p>
 	 *
 	 * @param status
-	 *        the status to set, or {@literal null} to remove all statuses
+	 *        the status to set, or {@code null} to remove all statuses
 	 */
 	public void setRequestStatus(LocationRequestStatus status) {
 		setRequestStatuses(status != null ? Collections.singleton(status) : null);

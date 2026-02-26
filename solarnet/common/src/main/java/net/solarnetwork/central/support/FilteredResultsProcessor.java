@@ -53,10 +53,10 @@ public interface FilteredResultsProcessor<R> extends Closeable, Flushable {
 	 * 
 	 * @param totalResultCount
 	 *        the total number of results that match the given query, or
-	 *        {@literal null} if the count is not known
+	 *        {@code null} if the count is not known
 	 * @param startingOffset
 	 *        a starting offset within the total result count, or
-	 *        {@literal null} if not known
+	 *        {@code null} if not known
 	 * @param expectedResultCount
 	 *        the expected number of results to be returned to
 	 *        {@link #handleResultItem(Object)}

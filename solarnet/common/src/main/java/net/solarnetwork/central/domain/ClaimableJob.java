@@ -62,7 +62,7 @@ public interface ClaimableJob<C, R, S extends ClaimableJobState, K extends Compa
 	/**
 	 * Get the authorization token associated with this job, if any.
 	 *
-	 * @return the authorization token, or {@literal null} if none
+	 * @return the authorization token, or {@code null} if none
 	 * @since 2.1
 	 */
 	default String getTokenId() {
@@ -78,7 +78,7 @@ public interface ClaimableJob<C, R, S extends ClaimableJobState, K extends Compa
 	 * provides a way to synchronize multiple related jobs in a reliable manner.
 	 * </p>
 	 *
-	 * @return the group key, or {@literal null} for the "default" group
+	 * @return the group key, or {@code null} for the "default" group
 	 * @since 1.1
 	 */
 	String getGroupKey();
@@ -93,14 +93,14 @@ public interface ClaimableJob<C, R, S extends ClaimableJobState, K extends Compa
 	/**
 	 * Get the date the job started execution.
 	 *
-	 * @return the started date or {@literal null} if not started
+	 * @return the started date or {@code null} if not started
 	 */
 	Instant getStarted();
 
 	/**
 	 * Get the completed date.
 	 *
-	 * @return the completed date, or {@literal null} if not complete
+	 * @return the completed date, or {@code null} if not complete
 	 */
 	Instant getCompleted();
 
@@ -115,7 +115,7 @@ public interface ClaimableJob<C, R, S extends ClaimableJobState, K extends Compa
 	 * returned. Otherwise, a zero-duration value is returned.
 	 * </p>
 	 *
-	 * @return the duration, never {@literal null}
+	 * @return the duration, never {@code null}
 	 */
 	default Duration getJobDuration() {
 		Instant s = getStarted();
@@ -131,7 +131,7 @@ public interface ClaimableJob<C, R, S extends ClaimableJobState, K extends Compa
 	/**
 	 * Get a success flag.
 	 *
-	 * @return the success flag, or {@literal null} if not known
+	 * @return the success flag, or {@code null} if not known
 	 */
 	Boolean getJobSuccess();
 

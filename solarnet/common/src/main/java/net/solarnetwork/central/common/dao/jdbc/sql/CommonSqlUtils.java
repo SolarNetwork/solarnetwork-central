@@ -64,7 +64,7 @@ public final class CommonSqlUtils {
 	 * non-array parameter if the array holds a single object.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -90,7 +90,7 @@ public final class CommonSqlUtils {
 	 * non-array parameter if the array holds a single object.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -124,7 +124,7 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
@@ -140,7 +140,7 @@ public final class CommonSqlUtils {
 	 * non-array parameter if the array holds a single object.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -174,7 +174,7 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
@@ -190,7 +190,7 @@ public final class CommonSqlUtils {
 	 * non-array parameter if the array holds a single object.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -225,7 +225,7 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
@@ -241,7 +241,7 @@ public final class CommonSqlUtils {
 	 * parameter if the array holds a single object.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -279,7 +279,7 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
@@ -305,7 +305,7 @@ public final class CommonSqlUtils {
 	 * Prepare a SQL statement {@code INTEGER} array parameter.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -339,7 +339,7 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
@@ -354,7 +354,7 @@ public final class CommonSqlUtils {
 	 * Prepare a SQL statement {@code BIGINT} array parameter.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -388,7 +388,7 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
@@ -403,7 +403,7 @@ public final class CommonSqlUtils {
 	 * Prepare a SQL statement {@code TEXT} array parameter.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -437,7 +437,7 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
@@ -452,7 +452,7 @@ public final class CommonSqlUtils {
 	 * Prepare a SQL statement {@code UUID} array parameter.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -486,7 +486,7 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
@@ -501,7 +501,7 @@ public final class CommonSqlUtils {
 	 * Prepare a SQL statement array parameter.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -539,7 +539,7 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
@@ -577,7 +577,7 @@ public final class CommonSqlUtils {
 	 * @param skipLocked
 	 *        {@literal true} to include the {@literal SKIP LOCKED} clause
 	 * @param tableNames
-	 *        explicit table names to lock, or {@literal null} for default (all
+	 *        explicit table names to lock, or {@code null} for default (all
 	 *        referenced tables)
 	 * @param buf
 	 *        the buffer to append the SQL to
@@ -863,7 +863,7 @@ public final class CommonSqlUtils {
 	 *        the zero-based starting JDBC statement parameter offset
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code data} serializes
-	 *        to {@literal null}, or {@literal false} to skip the parameter
+	 *        to {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
@@ -890,10 +890,10 @@ public final class CommonSqlUtils {
 	 * @param value
 	 *        the value to set
 	 * @param defaultValue
-	 *        the value to set if {@code value} is {@literal null}
+	 *        the value to set if {@code value} is {@code null}
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null} and {@literal defaultValue} is {@literal null}, or
+	 *        {@code null} and {@literal defaultValue} is {@code null}, or
 	 *        {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
@@ -921,10 +921,10 @@ public final class CommonSqlUtils {
 	 * @param value
 	 *        the value to set
 	 * @param defaultValue
-	 *        the value to set if {@code value} is {@literal null}
+	 *        the value to set if {@code value} is {@code null}
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null} and {@literal defaultValue} is {@literal null}, or
+	 *        {@code null} and {@literal defaultValue} is {@code null}, or
 	 *        {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
@@ -954,7 +954,7 @@ public final class CommonSqlUtils {
 	 *        the values to set
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code values} is
-	 *        {@literal null} and {@literal defaultValue} is {@literal null}, or
+	 *        {@code null} and {@literal defaultValue} is {@code null}, or
 	 *        {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException

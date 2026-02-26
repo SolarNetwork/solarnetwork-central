@@ -103,7 +103,7 @@ public enum BasicClaimableJobState implements ClaimableJobState {
 	 *
 	 * @param value
 	 *        the enumeration name or key value, case-insensitive
-	 * @return the enum, or {@literal null} if value is {@literal null} or empty
+	 * @return the enum, or {@code null} if value is {@code null} or empty
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value
 	 * @since 1.1

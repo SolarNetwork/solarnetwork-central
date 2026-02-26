@@ -44,7 +44,7 @@ public class DelegatingParser<T> implements Parser<T> {
 	 * @param delegates
 	 *        the delegates to parse with
 	 * @throws IllegalArgumentException
-	 *         if {@code delegates} is {@literal null} or empty
+	 *         if {@code delegates} is {@code null} or empty
 	 */
 	@SafeVarargs
 	@SuppressWarnings("varargs")

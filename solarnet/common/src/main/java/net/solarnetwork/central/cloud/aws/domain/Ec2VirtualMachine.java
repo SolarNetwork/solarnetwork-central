@@ -79,7 +79,7 @@ public final class Ec2VirtualMachine extends BasicUnique<String> implements Virt
 	 *
 	 * @param instance
 	 *        the instance to get the display name for
-	 * @return the name, never {@literal null}
+	 * @return the name, never {@code null}
 	 */
 	public static String displayNameForInstance(Instance instance) {
 		List<Tag> tags = instance.tags();
@@ -96,7 +96,7 @@ public final class Ec2VirtualMachine extends BasicUnique<String> implements Virt
 	 *
 	 * @param state
 	 *        the state
-	 * @return the state enum value, never {@literal null}
+	 * @return the state enum value, never {@code null}
 	 */
 	public static VirtualMachineState virtualMachineStateForInstanceState(InstanceState state) {
 		if ( state == null ) {

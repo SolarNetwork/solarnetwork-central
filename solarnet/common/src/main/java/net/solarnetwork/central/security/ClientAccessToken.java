@@ -103,21 +103,21 @@ public interface ClientAccessToken {
 	/**
 	 * Get the access token scopes.
 	 *
-	 * @return the scopes, or {@literal null}
+	 * @return the scopes, or {@code null}
 	 */
 	Set<String> getAccessTokenScopes();
 
 	/**
 	 * Get the refresh token.
 	 *
-	 * @return the refresh token, or {@literal null}
+	 * @return the refresh token, or {@code null}
 	 */
 	byte[] getRefreshToken();
 
 	/**
 	 * Get the refresh token as a UTF-8 string value.
 	 *
-	 * @return the refresh token string value, or {@literal null}
+	 * @return the refresh token string value, or {@code null}
 	 */
 	default String getRefreshTokenValue() {
 		byte[] val = getRefreshToken();
@@ -127,7 +127,7 @@ public interface ClientAccessToken {
 	/**
 	 * Get the refresh token issue date.
 	 *
-	 * @return the issue date, or {@literal null}
+	 * @return the issue date, or {@code null}
 	 */
 	Instant getRefreshTokenIssuedAt();
 

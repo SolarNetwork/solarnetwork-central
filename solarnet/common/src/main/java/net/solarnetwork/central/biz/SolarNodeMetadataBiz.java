@@ -80,7 +80,7 @@ public interface SolarNodeMetadataBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@code null}
 	 */
 	FilterResults<SolarNodeMetadataFilterMatch, Long> findSolarNodeMetadata(
 			SolarNodeMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,

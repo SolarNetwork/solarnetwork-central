@@ -40,7 +40,7 @@ public interface SolarNodeOwnershipDao {
 	 *
 	 * @param nodeId
 	 *        the ID of the node to find the ownership of
-	 * @return the ownership, or {@literal null} if not available
+	 * @return the ownership, or {@code null} if not available
 	 */
 	SolarNodeOwnership ownershipForNodeId(Long nodeId);
 
@@ -49,7 +49,7 @@ public interface SolarNodeOwnershipDao {
 	 *
 	 * @param userId
 	 *        the ID of the owner to find node ownership for
-	 * @return the ownerships, or {@literal null} if none available
+	 * @return the ownerships, or {@code null} if none available
 	 */
 	SolarNodeOwnership[] ownershipsForUserId(Long userId);
 
@@ -59,7 +59,7 @@ public interface SolarNodeOwnershipDao {
 	 *
 	 * @param tokenId
 	 *        the security token ID
-	 * @return the node IDs; never {@literal null}
+	 * @return the node IDs; never {@code null}
 	 */
 	Long[] nonArchivedNodeIdsForToken(String tokenId);
 
@@ -68,7 +68,7 @@ public interface SolarNodeOwnershipDao {
 	 * 
 	 * @param streamIds
 	 *        the stream IDs to look up metadata IDs for
-	 * @return the mapping, never {@literal null}
+	 * @return the mapping, never {@code null}
 	 * @since 1.1
 	 */
 	Map<UUID, ObjectDatumStreamMetadataId> getDatumStreamMetadataIds(UUID... streamIds);

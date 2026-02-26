@@ -194,7 +194,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @param subscribeQos
 	 *        the subscribe QoS to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
 	public void setSubscribeQos(MqttQos subscribeQos) {
 		this.subscribeQos = requireNonNullArgument(subscribeQos, "subscribeQos");
@@ -266,7 +266,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @param publishQos
 	 *        the QoS to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
 	public void setPublishQos(MqttQos publishQos) {
 		this.publishQos = requireNonNullArgument(publishQos, "publishQos");

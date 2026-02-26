@@ -56,7 +56,7 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseUserCertificate(UserStringCompositePK id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
@@ -72,7 +72,7 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseUserCertificate(Long userId, String subjectDn, Instant created) {
 		super(new UserStringCompositePK(userId, subjectDn), created);
@@ -92,7 +92,7 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseUserCertificate(Long userId, X509Certificate certificate, Instant created) {
 		super(new UserStringCompositePK(userId, canonicalSubjectDn(certificate)), created);
@@ -155,7 +155,7 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	/**
 	 * Get the certificate expiration date.
 	 *
-	 * @return the expiration date, or {@literal null} if the certificate is not
+	 * @return the expiration date, or {@code null} if the certificate is not
 	 *         set
 	 */
 	public Instant getExpires() {

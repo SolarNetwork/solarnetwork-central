@@ -98,10 +98,10 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 * @param objectMapper
 	 *        the object mapper
 	 * @param templatesCacheTtl
-	 *        the TTL for the templates cache, or {@literal null} or
+	 *        the TTL for the templates cache, or {@code null} or
 	 *        {@literal 0} for no caching
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseXsltService(String serviceId, DocumentBuilderFactory documentBuilderFactory,
 			TransformerFactory transformerFactory, ObjectMapper objectMapper,
@@ -127,12 +127,12 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 * @param objectMapper
 	 *        the object mapper
 	 * @param templatesCacheTtl
-	 *        the TTL for the templates cache, or {@literal null} or
+	 *        the TTL for the templates cache, or {@code null} or
 	 *        {@literal 0} for no caching
 	 * @param templatesCache
 	 *        the templates cache to use
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code templatesCache} is {@literal null}
+	 *         if any argument except {@code templatesCache} is {@code null}
 	 */
 	public BaseXsltService(String serviceId, DocumentBuilderFactory documentBuilderFactory,
 			TransformerFactory transformerFactory, ObjectMapper objectMapper, Duration templatesCacheTtl,
@@ -180,7 +180,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 * @param cacheKey
 	 *        optional cache key to use (will be converted to a string),
 	 *        otherwise generate a key based on the XSLT itself
-	 * @return the templates, never {@literal null}
+	 * @return the templates, never {@code null}
 	 * @throws IOException
 	 *         if any error occurs parsing the XSLT
 	 */
@@ -279,7 +279,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 *        the input, can be an {@link InputStream}, {@link Reader}, or
 	 *        anything else will have {@link Object#toString()} invoked; UTF-8
 	 *        will be assumed for streams
-	 * @return the text value, never {@literal null}
+	 * @return the text value, never {@code null}
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */

@@ -55,7 +55,7 @@ public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntit
 	 * @param id
 	 *        the ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 1.2
 	 */
 	public BaseUserModifiableEntity(K id) {
@@ -70,7 +70,7 @@ public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntit
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseUserModifiableEntity(K id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));

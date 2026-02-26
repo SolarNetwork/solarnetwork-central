@@ -35,10 +35,10 @@ public interface ControlCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available control ID from the
-	 * {@link #getControlIds()} array, or {@literal null} if not available.
+	 * {@link #getControlIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first control ID, or {@literal null} if not available
+	 * @return the first control ID, or {@code null} if not available
 	 */
 	default String getControlId() {
 		final String[] array = getControlIds();
@@ -48,7 +48,7 @@ public interface ControlCriteria {
 	/**
 	 * Get an array of control IDs.
 	 * 
-	 * @return array of control IDs (may be {@literal null})
+	 * @return array of control IDs (may be {@code null})
 	 */
 	String[] getControlIds();
 

@@ -47,11 +47,11 @@ public interface LocationRequestCriteria extends LocationCriteria, UserCriteria,
 	 * 
 	 * <p>
 	 * This returns the first available status from the
-	 * {@link #getRequestStatuses()} set in iteration order, or {@literal null}
+	 * {@link #getRequestStatuses()} set in iteration order, or {@code null}
 	 * if not available.
 	 * </p>
 	 * 
-	 * @return the first status, or {@literal null} if not available
+	 * @return the first status, or {@code null} if not available
 	 */
 	default LocationRequestStatus getRequestStatus() {
 		Set<LocationRequestStatus> s = getRequestStatuses();

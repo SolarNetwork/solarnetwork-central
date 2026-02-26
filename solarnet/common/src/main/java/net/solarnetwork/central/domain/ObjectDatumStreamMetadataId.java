@@ -50,9 +50,9 @@ public class ObjectDatumStreamMetadataId
 	 *
 	 * @param meta
 	 *        the metadata to create the ID instance for
-	 * @return the ID, never {@literal null}
+	 * @return the ID, never {@code null}
 	 * @throws IllegalArgumentException
-	 *         if {@code meta} is {@literal null}
+	 *         if {@code meta} is {@code null}
 	 * @since 1.1
 	 */
 	public static ObjectDatumStreamMetadataId idForMetadata(ObjectDatumStreamMetadata meta) {

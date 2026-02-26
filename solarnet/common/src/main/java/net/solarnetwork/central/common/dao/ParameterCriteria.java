@@ -35,7 +35,7 @@ public interface ParameterCriteria {
 	/**
 	 * Get a map of parameter values.
 	 * 
-	 * @return parameters (may be {@literal null})
+	 * @return parameters (may be {@code null})
 	 */
 	Map<String, ?> getParameters();
 

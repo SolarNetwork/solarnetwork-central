@@ -55,7 +55,7 @@ public interface AggregationFilterableDao<M extends Unique<K>, K extends Compara
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@code null}
 	 */
 	FilterResults<M, K> findAggregationFiltered(F filter, List<SortDescriptor> sortDescriptors,
 			Long offset, Integer max);

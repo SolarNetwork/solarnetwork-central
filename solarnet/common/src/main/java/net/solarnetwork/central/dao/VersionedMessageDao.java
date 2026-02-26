@@ -67,7 +67,7 @@ public interface VersionedMessageDao {
 		 * @param properties
 		 *        the properties
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
 		public VersionedMessages(Instant version, String[] bundleNames, String locale,
 				Properties properties) {
@@ -81,7 +81,7 @@ public interface VersionedMessageDao {
 		/**
 		 * Get the version of these messages.
 		 *
-		 * @return the version, never {@literal null}
+		 * @return the version, never {@code null}
 		 */
 		public Instant getVersion() {
 			return version;
@@ -90,7 +90,7 @@ public interface VersionedMessageDao {
 		/**
 		 * Get the bundle names associated with these messages.
 		 *
-		 * @return the bundle names, never {@literal null}
+		 * @return the bundle names, never {@code null}
 		 */
 		public String[] getBundleNames() {
 			return bundleNames;
@@ -99,7 +99,7 @@ public interface VersionedMessageDao {
 		/**
 		 * Get the locale associated with these messages.
 		 *
-		 * @return the locale, never {@literal null}
+		 * @return the locale, never {@code null}
 		 */
 		public String getLocale() {
 			return locale;
@@ -108,7 +108,7 @@ public interface VersionedMessageDao {
 		/**
 		 * Get the messages.
 		 *
-		 * @return the messages, never {@literal null}
+		 * @return the messages, never {@code null}
 		 */
 		public Properties getProperties() {
 			return properties;

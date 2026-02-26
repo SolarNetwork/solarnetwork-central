@@ -185,7 +185,7 @@ public class DefaultMailService implements MailService {
 	/**
 	 * Get the template to use as a starting point for all messages.
 	 *
-	 * @return the template message, or {@literal null}
+	 * @return the template message, or {@code null}
 	 */
 	public SimpleMailMessage getTemplateMessage() {
 		return templateMessage;

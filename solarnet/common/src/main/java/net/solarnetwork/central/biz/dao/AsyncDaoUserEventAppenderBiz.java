@@ -152,7 +152,7 @@ public class AsyncDaoUserEventAppenderBiz
 	 * @param uuidGenerator
 	 *        the UUID generator to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public AsyncDaoUserEventAppenderBiz(ExecutorService executorService, UserEventAppenderDao dao,
 			BlockingQueue<UserEvent> queue, StatTracker stats, UuidGenerator uuidGenerator) {

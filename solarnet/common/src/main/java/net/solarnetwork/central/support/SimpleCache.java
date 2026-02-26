@@ -90,7 +90,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	 * @param data
 	 *        the map to use to store the cached data in
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public SimpleCache(String name, ConcurrentMap<K, ? extends CachedResult<V>> data) {

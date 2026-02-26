@@ -58,7 +58,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	 * @param trigger
 	 *        the job trigger
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ScheduledJob(JobKey key, Runnable task, Trigger trigger) {
 		super(requireNonNullArgument(key, "key").getGroupId(), key.getId(),
@@ -139,7 +139,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	/**
 	 * Get the last completion time.
 	 * 
-	 * @return the last completion time, or {@literal null} if never completed
+	 * @return the last completion time, or {@code null} if never completed
 	 */
 	public Instant getLastCompletionTime() {
 		return lastCompletionTime;

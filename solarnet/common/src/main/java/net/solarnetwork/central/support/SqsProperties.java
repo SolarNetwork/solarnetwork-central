@@ -56,7 +56,7 @@ public class SqsProperties {
 	 * 
 	 * @param serviceProperties
 	 *        the service properties
-	 * @return the new instance, never {@literal null}
+	 * @return the new instance, never {@code null}
 	 */
 	public static SqsProperties ofServiceProperties(Map<String, ?> serviceProperties) {
 		SqsProperties props = new SqsProperties();

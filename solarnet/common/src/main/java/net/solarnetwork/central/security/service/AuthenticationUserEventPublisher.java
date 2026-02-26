@@ -71,7 +71,7 @@ public class AuthenticationUserEventPublisher {
 	 * @param userEventAppenderBiz
 	 *        the appender
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public AuthenticationUserEventPublisher(String context, UserEventAppenderBiz userEventAppenderBiz) {
 		super();

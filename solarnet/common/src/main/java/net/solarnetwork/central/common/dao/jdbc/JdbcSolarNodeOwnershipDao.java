@@ -198,7 +198,7 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 	/**
 	 * Get the cache of node IDs to associated node ownership.
 	 *
-	 * @return the cache, or {@literal null} if not available
+	 * @return the cache, or {@code null} if not available
 	 */
 	public Cache<Long, SolarNodeOwnership> getNodeOwnershipCache() {
 		return nodeOwnershipCache;
@@ -217,7 +217,7 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 	/**
 	 * Get the stream metadata ID cache.
 	 *
-	 * @return the cache, or {@literal null}
+	 * @return the cache, or {@code null}
 	 * @since 1.1
 	 */
 	public Cache<UUID, ObjectDatumStreamMetadataId> getStreamMetadataIdCache() {

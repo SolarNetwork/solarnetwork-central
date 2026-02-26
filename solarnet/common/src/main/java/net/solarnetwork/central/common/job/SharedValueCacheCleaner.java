@@ -46,7 +46,7 @@ public class SharedValueCacheCleaner extends JobSupport {
 	 * @param groupId
 	 *        the group ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SharedValueCacheCleaner(SharedValueCache<?, ?, ?> cache, String cacheName, String groupId) {
 		super();

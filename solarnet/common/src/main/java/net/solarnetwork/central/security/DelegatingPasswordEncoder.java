@@ -52,7 +52,7 @@ public class DelegatingPasswordEncoder
 	 * @param encoders
 	 *        the encoders to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DelegatingPasswordEncoder(
 			Map<String, org.springframework.security.crypto.password.PasswordEncoder> encoders) {

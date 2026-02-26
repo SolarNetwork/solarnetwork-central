@@ -58,7 +58,7 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 	 * @param taskDescription
 	 *        a description of the task to use in log statements
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public TieredStoredProcedureStaleRecordProcessor(JdbcOperations jdbcOps, String taskDescription) {
 		super(jdbcOps, taskDescription);

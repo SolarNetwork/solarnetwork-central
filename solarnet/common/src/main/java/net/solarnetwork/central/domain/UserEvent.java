@@ -68,7 +68,7 @@ public final class UserEvent extends BasicSerializableIdentity<UserUuidPK>
 	 * @param data
 	 *        the JSON data
 	 * @throws IllegalArgumentException
-	 *         if {@code id} or {@code tags} are {@literal null}
+	 *         if {@code id} or {@code tags} are {@code null}
 	 */
 	public UserEvent(UserUuidPK id, String[] tags, String message, String data) {
 		super(requireNonNullArgument(id, "id"));
@@ -91,7 +91,7 @@ public final class UserEvent extends BasicSerializableIdentity<UserUuidPK>
 	 * @param data
 	 *        the JSON data
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null} other than {@code message} or
+	 *         if any argument is {@code null} other than {@code message} or
 	 *         {@code data}
 	 */
 	public UserEvent(Long userId, UUID eventId, String[] tags, String message, String data) {

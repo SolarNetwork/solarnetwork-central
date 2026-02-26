@@ -80,8 +80,8 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 *        the user ID
 	 * @param components
 	 *        the components to include
-	 * @return the system identifier, or {@literal null} if {@code userId} is
-	 *         {@literal null}
+	 * @return the system identifier, or {@code null} if {@code userId} is
+	 *         {@code null}
 	 */
 	static String userIdSystemIdentifier(Long userId, Object... components) {
 		if ( userId == null ) {
@@ -112,8 +112,8 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 *
 	 * @param systemIdentifier
 	 *        the system identifier to extract the user ID from
-	 * @return the extracted user ID, or {@literal null} if
-	 *         {@code systemIdentifier} is {@literal null} or empty
+	 * @return the extracted user ID, or {@code null} if
+	 *         {@code systemIdentifier} is {@code null} or empty
 	 */
 	static Long userIdFromSystemIdentifier(String systemIdentifier) {
 		if ( systemIdentifier == null || systemIdentifier.isEmpty() ) {
@@ -142,7 +142,7 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 * @param systemIdentifier
 	 *        the system identifier to decompose
 	 * @param omitNulls
-	 *        {@literal true} to omit {@literal null} values from the returned
+	 *        {@literal true} to omit {@code null} values from the returned
 	 *        list
 	 * @param mapper
 	 *        a function to map each string component to a value
@@ -205,7 +205,7 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 * <p>
 	 * The {@code systemIdentifier} will be split on the
 	 * {@link #ID_COMPONENT_DELIMITER}. Components that cannot be parsed as a
-	 * {@link Long} will be returned as {@literal null}.
+	 * {@link Long} will be returned as {@code null}.
 	 * </p>
 	 *
 	 * @param systemIdentifier
@@ -222,14 +222,14 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 * <p>
 	 * The {@code systemIdentifier} will be split on the
 	 * {@link #ID_COMPONENT_DELIMITER}. Components that cannot be parsed as a
-	 * {@link Long} will be returned as {@literal null} or omitted, depending on
+	 * {@link Long} will be returned as {@code null} or omitted, depending on
 	 * the {@code omitNulls} value.
 	 * </p>
 	 *
 	 * @param systemIdentifier
 	 *        the system identifier to decompose
 	 * @param omitNulls
-	 *        {@literal true} to omit {@literal null} values from the returned
+	 *        {@literal true} to omit {@code null} values from the returned
 	 *        list
 	 * @return the system identifier components
 	 */

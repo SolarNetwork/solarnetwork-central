@@ -53,7 +53,7 @@ public interface FilterResultsFactory<M extends Unique<K>, K extends Comparable<
 	 * @param rows
 	 *        the resulting rows
 	 * @param totalCount
-	 *        the total count (or {@literal null} if not known)
+	 *        the total count (or {@code null} if not known)
 	 * @param offset
 	 *        the offset of the first result
 	 * @param returnedCount

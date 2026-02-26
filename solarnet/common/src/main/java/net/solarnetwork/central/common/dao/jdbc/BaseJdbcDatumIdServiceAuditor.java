@@ -126,7 +126,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 *        the clock to use; a tick-based clock is typical, to align updates
 	 *        to time-based "buckets"
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseJdbcDatumIdServiceAuditor(DataSource dataSource,
 			ConcurrentMap<DatumId, AtomicInteger> serviceCounters, Clock clock,

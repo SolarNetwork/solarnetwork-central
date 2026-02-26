@@ -48,7 +48,7 @@ public final class DeleteLocationRequest implements PreparedStatementCreator, Sq
 	 * @param id
 	 *        the ID to delete
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DeleteLocationRequest(Long id) {
 		this(requireNonNullArgument(id, "id"), null);
@@ -60,7 +60,7 @@ public final class DeleteLocationRequest implements PreparedStatementCreator, Sq
 	 * @param filter
 	 *        filter to limit the query to
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DeleteLocationRequest(LocationRequestCriteria filter) {
 		this(null, requireNonNullArgument(filter, "filter"));

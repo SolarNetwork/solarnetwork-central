@@ -51,7 +51,7 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 	 *        the type
 	 * @return the key
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static KeyTypePK keyType(String key, String type) {
 		return new KeyTypePK(key, type);
@@ -65,7 +65,7 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 	 * @param type
 	 *        the type
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public KeyTypePK(String key, String type) {
 		super();

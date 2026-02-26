@@ -41,7 +41,7 @@ public interface VirtualMachineBiz extends Identifiable {
 	 * 
 	 * @param name
 	 *        the name of the machine to get
-	 * @return the machine, or {@literal null} if not available
+	 * @return the machine, or {@code null} if not available
 	 */
 	VirtualMachine virtualMachineForName(String name);
 
@@ -60,7 +60,7 @@ public interface VirtualMachineBiz extends Identifiable {
 	 * @param ids
 	 *        the IDs of the machines to get the state for
 	 * @return a mapping of machine IDs to associated states; never
-	 *         {@literal null}
+	 *         {@code null}
 	 */
 	Map<String, VirtualMachineState> stateForVirtualMachines(Set<String> ids);
 

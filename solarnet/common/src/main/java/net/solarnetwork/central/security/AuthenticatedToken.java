@@ -55,7 +55,7 @@ public class AuthenticatedToken extends User implements SecurityToken {
 	 * @param policy
 	 *        optional policy associated with the token
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code policy} is {@literal null}
+	 *         if any argument other than {@code policy} is {@code null}
 	 */
 	public AuthenticatedToken(UserDetails user, SecurityTokenType tokenType, Long userId,
 			SecurityPolicy policy) {
