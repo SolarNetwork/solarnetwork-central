@@ -39,6 +39,7 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+import de.siegmar.fastcsv.util.Nullable;
 
 /**
  * Base test for Spring-managed transactional tests in JUnit 5.
@@ -228,7 +229,8 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 *        the location ID to use
 	 * @since 1.3
 	 */
-	protected String setupTestUser(Long userId, String username, String password, Long locationId) {
+	protected String setupTestUser(Long userId, String username, String password,
+			@Nullable Long locationId) {
 		String dispName = String.format("Tester %d", userId);
 		jdbcTemplate.update(
 				"insert into solaruser.user_user (id, disp_name, email, password, loc_id) values (?,?,?,?,?)",
@@ -247,7 +249,7 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 *        the location ID to use
 	 * @since 1.2
 	 */
-	protected String setupTestUser(Long userId, String username, Long locationId) {
+	protected String setupTestUser(Long userId, String username, @Nullable Long locationId) {
 		return setupTestUser(userId, username, "password-" + userId, locationId);
 	}
 

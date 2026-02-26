@@ -27,6 +27,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
@@ -267,7 +268,7 @@ public final class CommonDbTestUtils {
 	 *        the time zone ID to use
 	 */
 	public static void insertLocation(JdbcOperations jdbcTemplate, Long id, String country,
-			String region, String postalCode, String timeZoneId) {
+			@Nullable String region, @Nullable String postalCode, String timeZoneId) {
 		jdbcTemplate.update(
 				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
 				id, country, region, postalCode, timeZoneId);
@@ -339,13 +340,13 @@ public final class CommonDbTestUtils {
 		jdbcOps.execute("""
 				INSERT INTO solaruser.user_role (user_id, role_name)
 				VALUES (?,?)
-				""", (PreparedStatementCallback<Void>) ps -> {
+				""", (PreparedStatementCallback<?>) ps -> {
 			ps.setObject(1, userId);
 			for ( String role : roles ) {
 				ps.setString(2, role);
 				ps.executeUpdate();
 			}
-			return null;
+			return true;
 		});
 	}
 
