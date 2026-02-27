@@ -21,7 +21,7 @@
  */
 
 /**
- * SolarNetwork common test utilities.
+ * SolarNetwork common domain.
  */
 
 @NullMarked

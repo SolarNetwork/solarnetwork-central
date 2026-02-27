@@ -21,7 +21,7 @@
  */
 
 /**
- * SolarNetwork common test utilities.
+ * SolarNetwork common DAO APIs.
  */
 
 @NullMarked
