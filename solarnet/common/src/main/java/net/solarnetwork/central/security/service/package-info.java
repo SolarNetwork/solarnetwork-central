@@ -21,10 +21,10 @@
  */
 
 /**
- * SolarNetwork common security APIs and support.
+ * SolarNetwork common security services.
  */
 
 @NullMarked
-package net.solarnetwork.central.security;
+package net.solarnetwork.central.security.service;
 
 import org.jspecify.annotations.NullMarked;

@@ -25,6 +25,7 @@ package net.solarnetwork.central.security.jdbc;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdFromSystemIdentifier;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
 import java.sql.Connection;
@@ -35,6 +36,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataRetrievalFailureException;
@@ -195,8 +197,8 @@ public class JdbcOAuth2AuthorizedClientService
 
 	@Override
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
-	public <T extends OAuth2AuthorizedClient> T loadAuthorizedClient(String clientRegistrationId,
-			String principalName) {
+	public <T extends OAuth2AuthorizedClient> @Nullable T loadAuthorizedClient(
+			String clientRegistrationId, String principalName) {
 		final Long userId = userIdFromSystemIdentifier(clientRegistrationId);
 		if ( userId == null ) {
 			return null;
@@ -238,11 +240,11 @@ public class JdbcOAuth2AuthorizedClientService
 		}
 		final var sql = new UpsertAuthorizedClient(entity);
 		jdbcOperations.update(sql);
-		return entity.getId();
+		return nonnull(entity.getId(), "id");
 	}
 
 	@Override
-	public ClientAccessTokenEntity get(UserStringStringCompositePK id) {
+	public @Nullable ClientAccessTokenEntity get(UserStringStringCompositePK id) {
 		final var sql = new SelectAuthorizedClient(id.getUserId(), id.getGroupId(), id.getEntityId());
 		List<ClientAccessTokenEntity> result = this.jdbcOperations.query(sql,
 				this.clientAccessTokenRowMapper);
@@ -250,7 +252,7 @@ public class JdbcOAuth2AuthorizedClientService
 	}
 
 	@Override
-	public List<ClientAccessTokenEntity> getAll(List<SortDescriptor> sortDescriptors) {
+	public List<ClientAccessTokenEntity> getAll(@Nullable List<SortDescriptor> sortDescriptors) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -303,7 +305,7 @@ public class JdbcOAuth2AuthorizedClientService
 			refreshTokenValue = encryptor.encrypt(refreshToken.getTokenValue().getBytes(UTF_8));
 		}
 		var entity = new ClientAccessTokenEntity(
-				userIdFromSystemIdentifier(clientRegistration.getRegistrationId()),
+				nonnull(userIdFromSystemIdentifier(clientRegistration.getRegistrationId()), "userId"),
 				clientRegistration.getRegistrationId(), principal.getName(), Instant.now(),
 				accessToken.getTokenType().getValue(), accessToken.getTokenValue().getBytes(UTF_8),
 				accessToken.getIssuedAt(), accessToken.getExpiresAt());

@@ -24,6 +24,7 @@ package net.solarnetwork.central.security.service;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 
@@ -54,7 +55,7 @@ public class CachingOAuth2ClientRegistrationRepository implements ClientRegistra
 	}
 
 	@Override
-	public ClientRegistration findByRegistrationId(String registrationId) {
+	public @Nullable ClientRegistration findByRegistrationId(String registrationId) {
 		ClientRegistration result = cache.get(registrationId);
 		if ( result != null ) {
 			return result;
