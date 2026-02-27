@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import org.springframework.format.Formatter;
 
 /**
@@ -40,7 +41,7 @@ import org.springframework.format.Formatter;
 public class InstantFormatter implements Formatter<Instant> {
 
 	private final DateTimeFormatter formatter;
-	private final DateTimeFormatter[] fallbackFormatters;
+	private final DateTimeFormatter @Nullable [] fallbackFormatters;
 
 	/**
 	 * Constructor.
@@ -64,7 +65,8 @@ public class InstantFormatter implements Formatter<Instant> {
 	 * @throws IllegalArgumentException
 	 *         if {@code formatter} is {@code null}
 	 */
-	public InstantFormatter(DateTimeFormatter formatter, DateTimeFormatter... fallbackFormatters) {
+	public InstantFormatter(DateTimeFormatter formatter,
+			DateTimeFormatter @Nullable... fallbackFormatters) {
 		super();
 		this.formatter = requireNonNullArgument(formatter, "formatter");
 		this.fallbackFormatters = fallbackFormatters;

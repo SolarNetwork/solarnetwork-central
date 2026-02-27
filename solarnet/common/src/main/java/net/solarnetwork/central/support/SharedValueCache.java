@@ -23,6 +23,7 @@
 package net.solarnetwork.central.support;
 
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Cache API where cached values are shared on a secondary key.
@@ -47,6 +48,7 @@ public interface SharedValueCache<K, V, S> {
 	 *        the key of the value to get
 	 * @return the value, or {@code null} if not available (or expired)
 	 */
+	@Nullable
 	V get(K key);
 
 	/**

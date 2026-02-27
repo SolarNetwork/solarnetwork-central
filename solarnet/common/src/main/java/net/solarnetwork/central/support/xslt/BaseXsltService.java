@@ -42,6 +42,7 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.FileCopyUtils;
 import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
@@ -84,7 +85,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	protected final Duration templatesCacheTtl;
 
 	/** A cache for templates. */
-	protected final SharedValueCache<String, Templates, String> templatesCache;
+	protected final @Nullable SharedValueCache<String, Templates, String> templatesCache;
 
 	/**
 	 * Constructor.
@@ -98,8 +99,8 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 * @param objectMapper
 	 *        the object mapper
 	 * @param templatesCacheTtl
-	 *        the TTL for the templates cache, or {@code null} or
-	 *        {@literal 0} for no caching
+	 *        the TTL for the templates cache, or {@code null} or {@literal 0}
+	 *        for no caching
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
@@ -127,8 +128,8 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 * @param objectMapper
 	 *        the object mapper
 	 * @param templatesCacheTtl
-	 *        the TTL for the templates cache, or {@code null} or
-	 *        {@literal 0} for no caching
+	 *        the TTL for the templates cache, or {@code null} or {@literal 0}
+	 *        for no caching
 	 * @param templatesCache
 	 *        the templates cache to use
 	 * @throws IllegalArgumentException
@@ -136,7 +137,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 */
 	public BaseXsltService(String serviceId, DocumentBuilderFactory documentBuilderFactory,
 			TransformerFactory transformerFactory, ObjectMapper objectMapper, Duration templatesCacheTtl,
-			SharedValueCache<String, Templates, String> templatesCache) {
+			@Nullable SharedValueCache<String, Templates, String> templatesCache) {
 		super(serviceId);
 		this.documentBuilderFactory = requireNonNullArgument(documentBuilderFactory,
 				"documentBuilderFactory");
@@ -148,7 +149,8 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	}
 
 	@Override
-	public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
+	public @Nullable InputSource resolveEntity(String publicId, String systemId)
+			throws SAXException, IOException {
 		return null;
 	}
 
@@ -186,13 +188,13 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 */
 	protected Templates templates(String xslt, IdentifiableConfiguration config, Object cacheKey)
 			throws IOException {
-		final long cacheTtlSeconds = templatesCacheTtlSeconds(config);
+		final long cacheTtlSeconds = (templatesCache != null ? templatesCacheTtlSeconds(config) : 0L);
 
 		String xsltCacheKey = null;
 		String xsltSharedKey = null;
 		Templates t;
 
-		if ( cacheTtlSeconds > 0 ) {
+		if ( templatesCache != null && cacheTtlSeconds > 0 ) {
 			if ( cacheKey != null ) {
 				xsltCacheKey = cacheKey.toString();
 			} else {
@@ -222,7 +224,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 			xsltSharedKey = DigestUtils.sha256Hex(xslt);
 		}
 		try {
-			if ( xsltCacheKey != null ) {
+			if ( templatesCache != null && xsltCacheKey != null ) {
 				t = templatesCache.put(xsltCacheKey, xsltSharedKey, provider, cacheTtlSeconds);
 			} else {
 				t = provider.apply(null);

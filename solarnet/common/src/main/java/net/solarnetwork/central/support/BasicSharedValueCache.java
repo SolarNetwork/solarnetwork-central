@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -29,8 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.util.CachedResult;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Basic implementation of {@link SharedValueCache} using {@link ConcurrentMap}
@@ -63,22 +64,18 @@ public class BasicSharedValueCache<K, V, S> implements SharedValueCache<K, V, S>
 	public BasicSharedValueCache(ConcurrentMap<K, CachedResult<V>> cache,
 			ConcurrentMap<S, V> sharedCache) {
 		super();
-		this.cache = ObjectUtils.requireNonNullArgument(cache, "cache");
-		this.sharedCache = ObjectUtils.requireNonNullArgument(sharedCache, "sharedCache");
+		this.cache = requireNonNullArgument(cache, "cache");
+		this.sharedCache = requireNonNullArgument(sharedCache, "sharedCache");
 	}
 
 	@Override
-	public V get(K key) {
+	public @Nullable V get(K key) {
 		CachedResult<V> entry = cache.get(key);
 		return (entry != null && entry.isValid() ? entry.getResult() : null);
 	}
 
 	@Override
 	public V put(K key, S shareKey, Function<S, V> valueProvider, long ttl) {
-		if ( ttl < 1 ) {
-			CachedResult<V> entry = cache.remove(key);
-			return entry != null ? entry.getResult() : null;
-		}
 		V sharedValue = sharedCache.computeIfAbsent(shareKey, valueProvider);
 		CachedResult<V> entry = new CachedResult<>(sharedValue, ttl, TimeUnit.SECONDS);
 		cache.put(key, entry);

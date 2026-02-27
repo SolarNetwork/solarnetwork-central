@@ -116,8 +116,10 @@ public class LocationLookupController {
 			}
 		}
 		FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> results = dataCollectorBiz
-				.findGeneralLocationDatumMetadata(criteria, command.getSortDescriptors(),
-						command.getOffset(), command.getMax());
+				.findGeneralLocationDatumMetadata(criteria,
+						(command != null ? command.getSortDescriptors() : null),
+						(command != null ? command.getOffset() : null),
+						(command != null ? command.getMax() : null));
 		return success(results);
 	}
 

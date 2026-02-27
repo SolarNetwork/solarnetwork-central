@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import java.text.ParseException;
 import java.util.Locale;
 import org.springframework.format.Parser;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A parser that delegates to a set of other parsers, returning the first
@@ -50,13 +50,11 @@ public class DelegatingParser<T> implements Parser<T> {
 	@SuppressWarnings("varargs")
 	public DelegatingParser(Parser<T>... delegates) {
 		super();
-		this.delegates = ObjectUtils.requireNonNullArgument(delegates, "delegates");
-		if ( delegates.length < 1 ) {
-			throw new IllegalArgumentException("At least one delegate parser must be provided.");
-		}
+		this.delegates = requireNonEmptyArgument(delegates, "delegates");
 	}
 
 	@Override
+	@SuppressWarnings("NullAway")
 	public T parse(String text, Locale locale) throws ParseException {
 		ParseException exception = null;
 		RuntimeException runtimeException = null;

@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.Filter;
@@ -46,9 +47,9 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	@Serial
 	private static final long serialVersionUID = 4146553587756173455L;
 
-	private Long[] userIds;
-	private String[] tags;
-	private String metadataFilter;
+	private Long @Nullable [] userIds;
+	private String @Nullable [] tags;
+	private @Nullable String metadataFilter;
 
 	@Override
 	public Map<String, ?> getFilter() {
@@ -87,9 +88,31 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 		return builder.toString();
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(tags);
+		result = prime * result + Arrays.hashCode(userIds);
+		result = prime * result + Objects.hash(metadataFilter);
+		return result;
+	}
+
+	@Override
+	public boolean equals(@Nullable Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !(obj instanceof BaseFilterSupport other) ) {
+			return false;
+		}
+		return Arrays.equals(tags, other.tags) && Arrays.equals(userIds, other.userIds)
+				&& Objects.equals(metadataFilter, other.metadataFilter);
+	}
+
 	@JsonIgnore
 	@Override
-	public String getTag() {
+	public final @Nullable String getTag() {
 		return (this.tags == null || this.tags.length < 1 ? null : this.tags[0]);
 	}
 
@@ -108,12 +131,12 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setTag(String tag) {
+	public final void setTag(@Nullable String tag) {
 		this.tags = (tag == null ? null : new String[] { tag });
 	}
 
 	@Override
-	public String[] getTags() {
+	public final String @Nullable [] getTags() {
 		return tags;
 	}
 
@@ -123,7 +146,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 * @param tags
 	 *        the tags to filter on
 	 */
-	public void setTags(String[] tags) {
+	public final void setTags(String @Nullable [] tags) {
 		this.tags = tags;
 	}
 
@@ -143,7 +166,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setUserId(Long userId) {
+	public final void setUserId(@Nullable Long userId) {
 		this.userIds = (userId == null ? null : new Long[] { userId });
 	}
 
@@ -159,7 +182,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonIgnore
-	public Long getUserId() {
+	public final @Nullable Long getUserId() {
 		return (this.userIds == null || this.userIds.length < 1 ? null : this.userIds[0]);
 	}
 
@@ -168,7 +191,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 *
 	 * @return The user IDs, or {@code null}.
 	 */
-	public Long[] getUserIds() {
+	public final Long @Nullable [] getUserIds() {
 		return userIds;
 	}
 
@@ -178,12 +201,12 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 * @param userIds
 	 *        The user IDs to filter on.
 	 */
-	public void setUserIds(Long[] userIds) {
+	public final void setUserIds(Long @Nullable [] userIds) {
 		this.userIds = userIds;
 	}
 
 	@Override
-	public String getMetadataFilter() {
+	public final @Nullable String getMetadataFilter() {
 		return metadataFilter;
 	}
 
@@ -193,30 +216,8 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 * @param metadataFilter
 	 *        the metadata filter to use, or {@code null}
 	 */
-	public void setMetadataFilter(String metadataFilter) {
+	public final void setMetadataFilter(@Nullable String metadataFilter) {
 		this.metadataFilter = metadataFilter;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + Arrays.hashCode(tags);
-		result = prime * result + Arrays.hashCode(userIds);
-		result = prime * result + Objects.hash(metadataFilter);
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if ( this == obj ) {
-			return true;
-		}
-		if ( !(obj instanceof BaseFilterSupport other) ) {
-			return false;
-		}
-		return Arrays.equals(tags, other.tags) && Arrays.equals(userIds, other.userIds)
-				&& Objects.equals(metadataFilter, other.metadataFilter);
 	}
 
 }

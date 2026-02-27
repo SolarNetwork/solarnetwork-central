@@ -29,6 +29,7 @@ import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerial
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.core.io.SerializedString;
@@ -48,7 +49,7 @@ public class ObjectMapperFilteredResultsProcessor<R> extends AbstractFilteredRes
 
 	private final JsonGenerator generator;
 	private final SerializationContext provider;
-	private final ValueSerializer<R> serializer;
+	private final @Nullable ValueSerializer<R> serializer;
 	private final MimeType mimeType;
 
 	private int resultIndex = 0;
@@ -71,7 +72,7 @@ public class ObjectMapperFilteredResultsProcessor<R> extends AbstractFilteredRes
 	 *         if any argument other than {@code serializer} is {@code null}
 	 */
 	public ObjectMapperFilteredResultsProcessor(JsonGenerator generator, SerializationContext provider,
-			MimeType mimeType, ValueSerializer<R> serializer) {
+			MimeType mimeType, @Nullable ValueSerializer<R> serializer) {
 		super();
 		this.generator = requireNonNullArgument(generator, "generator");
 		this.provider = requireNonNullArgument(provider, "provider");
@@ -80,13 +81,14 @@ public class ObjectMapperFilteredResultsProcessor<R> extends AbstractFilteredRes
 	}
 
 	@Override
-	public MimeType getMimeType() {
+	public final MimeType getMimeType() {
 		return mimeType;
 	}
 
 	@Override
-	public void start(final Long totalResultCount, final Integer startingOffset,
-			final Integer expectedResultCount, Map<String, ?> attributes) throws IOException {
+	public void start(final @Nullable Long totalResultCount, final @Nullable Integer startingOffset,
+			final @Nullable Integer expectedResultCount, @Nullable Map<String, ?> attributes)
+			throws IOException {
 		int count = 1 + (expectedResultCount != null ? 1 : 0) + (startingOffset != null ? 1 : 0)
 				+ (totalResultCount != null ? 1 : 0);
 

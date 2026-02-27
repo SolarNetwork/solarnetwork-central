@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.support;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import tools.jackson.core.JacksonException;
@@ -42,7 +43,7 @@ public class GeneralDatumMetadataSerializer extends StdSerializer<GeneralDatumMe
 	}
 
 	@Override
-	public void serialize(GeneralDatumMetadata meta, JsonGenerator generator,
+	public void serialize(@Nullable GeneralDatumMetadata meta, JsonGenerator generator,
 			SerializationContext provider) throws JacksonException {
 		JsonUtils.writeMetadata(generator, meta);
 	}

@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.commons.lang3.mutable.MutableInt;
+import org.jspecify.annotations.Nullable;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.filter.Filter;
@@ -71,9 +72,9 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 	private int allowedRepetitions = DEFAULT_ALLOWED_REPETITIONS;
 	private int cacheSize = DEFAULT_CACHE_SIZE;
 	private long expiration = DEFAULT_EXPIRATION_MS;
-	private Level level = Level.toLevel(DEFAULT_LEVEL);
+	private @Nullable Level level = Level.toLevel(DEFAULT_LEVEL);
 
-	private LRUMessageCache msgCache;
+	private @Nullable LRUMessageCache msgCache;
 
 	/**
 	 * Constructor.
@@ -90,8 +91,11 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 
 	@Override
 	public void stop() {
-		msgCache.clear();
-		msgCache = null;
+		final LRUMessageCache cache = this.msgCache;
+		if ( cache != null ) {
+			cache.clear();
+			this.msgCache = null;
+		}
 		super.stop();
 	}
 
@@ -100,8 +104,9 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 		if ( !isStarted() || (level != null && !event.getLevel().isGreaterOrEqual(level)) ) {
 			return FilterReply.NEUTRAL;
 		}
-		int count = msgCache.getMessageCountAndThenIncrement(event.getMessage(),
-				event.getArgumentArray());
+		int count = (msgCache != null
+				? msgCache.getMessageCountAndThenIncrement(event.getMessage(), event.getArgumentArray())
+				: 0);
 		if ( count <= allowedRepetitions ) {
 			return FilterReply.NEUTRAL;
 		} else {
@@ -265,9 +270,9 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 	/**
 	 * Get the minimum filter level.
 	 *
-	 * @return the level, or {@code null}
+	 * @return the level, or {@code null}; defaults to {@link #DEFAULT_LEVEL}
 	 */
-	public String getLevel() {
+	public final @Nullable String getLevel() {
 		return (level != null ? level.toString() : null);
 	}
 
@@ -277,8 +282,8 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 	 * @param level
 	 *        the minimum level, or {@code null} for no minimum
 	 */
-	public void setLevel(String level) {
-		this.level = Level.toLevel(level);
+	public final void setLevel(@Nullable String level) {
+		this.level = (level != null ? Level.toLevel(level) : null);
 	}
 
 }

@@ -18,6 +18,7 @@
 
 package net.solarnetwork.central.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.AbstractQueue;
 import java.util.Collection;
 import java.util.Iterator;
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A blocking queue implementation backed by a linked hash set for predictable
@@ -78,9 +80,11 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 	 *        the delegate
 	 * @param capacity
 	 *        the queue capacity
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public LinkedHashSetBlockingQueue(SequencedSet<E> delegate, int capacity) {
-		this.delegate = delegate;
+		this.delegate = requireNonNullArgument(delegate, "delegate");
 		this.capacity = capacity;
 	}
 
@@ -197,7 +201,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 	}
 
 	@Override
-	public E poll(long timeout, TimeUnit unit) throws InterruptedException {
+	public @Nullable E poll(long timeout, TimeUnit unit) throws InterruptedException {
 		E x;
 		final int c;
 		long nanos = unit.toNanos(timeout);
@@ -267,7 +271,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 	}
 
 	@Override
-	public E poll() {
+	public @Nullable E poll() {
 		final AtomicInteger count = this.count;
 		if ( count.get() == 0 ) {
 			return null;
@@ -295,7 +299,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 	}
 
 	@Override
-	public E peek() {
+	public @Nullable E peek() {
 		final AtomicInteger count = this.count;
 		if ( count.get() == 0 ) {
 			return null;
@@ -361,7 +365,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 	}
 
 	@Override
-	public boolean remove(Object o) {
+	public boolean remove(@Nullable Object o) {
 		if ( o == null ) {
 			return false;
 		}

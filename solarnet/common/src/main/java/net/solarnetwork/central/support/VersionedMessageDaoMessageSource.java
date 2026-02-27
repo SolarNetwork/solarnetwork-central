@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.Locale;
 import java.util.Properties;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.context.support.AbstractMessageSource;
 import net.solarnetwork.central.dao.VersionedMessageDao;
@@ -46,7 +47,7 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 	private final VersionedMessageDao dao;
 	private final String[] bundleNames;
 	private final Instant version;
-	private final Cache<String, VersionedMessages> cache;
+	private final @Nullable Cache<String, VersionedMessages> cache;
 
 	/**
 	 * Constructor.
@@ -56,15 +57,14 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 	 * @param bundleNames
 	 *        the bundle names
 	 * @param version
-	 *        the desired version; if {@code null} the system date will be
-	 *        used
+	 *        the desired version; if {@code null} the system date will be used
 	 * @param cache
 	 *        the optional cache
 	 * @throws IllegalArgumentException
 	 *         if {@code dao} or {@code bundleNames} are {@code null}
 	 */
 	public VersionedMessageDaoMessageSource(VersionedMessageDao dao, String[] bundleNames,
-			Instant version, Cache<String, VersionedMessages> cache) {
+			Instant version, @Nullable Cache<String, VersionedMessages> cache) {
 		super();
 		this.dao = requireNonNullArgument(dao, "dao");
 		this.bundleNames = requireNonNullArgument(bundleNames, "bundleNames");
@@ -74,7 +74,7 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 	}
 
 	@Override
-	protected MessageFormat resolveCode(String code, Locale locale) {
+	protected @Nullable MessageFormat resolveCode(String code, Locale locale) {
 		Properties props = propertiesForLocale(locale);
 		if ( props == null ) {
 			return null;
@@ -104,7 +104,7 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 	 *        the locale of the messages to get
 	 * @return the properties or {@code null} if none available
 	 */
-	public Properties propertiesForLocale(Locale locale) {
+	public @Nullable Properties propertiesForLocale(Locale locale) {
 		final String origLocaleCode = locale.toString();
 
 		Properties props = null;
@@ -139,7 +139,7 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 		return props;
 	}
 
-	private Properties getPropsForLocale(String locale) {
+	private @Nullable Properties getPropsForLocale(String locale) {
 		// check cache first
 		VersionedMessages msgs = null;
 		String cacheKey = null;

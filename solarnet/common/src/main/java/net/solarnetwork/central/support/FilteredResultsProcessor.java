@@ -26,6 +26,7 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 
 /**
@@ -55,19 +56,20 @@ public interface FilteredResultsProcessor<R> extends Closeable, Flushable {
 	 *        the total number of results that match the given query, or
 	 *        {@code null} if the count is not known
 	 * @param startingOffset
-	 *        a starting offset within the total result count, or
-	 *        {@code null} if not known
+	 *        a starting offset within the total result count, or {@code null}
+	 *        if not known
 	 * @param expectedResultCount
 	 *        the expected number of results to be returned to
-	 *        {@link #handleResultItem(Object)}
+	 *        {@link #handleResultItem(Object)}, or {@code null} if not known
 	 * @param attributes
 	 *        optional implementation-specific attributes to pass to the
 	 *        processor
 	 * @throws IOException
 	 *         if an IO error occurs
 	 */
-	void start(Long totalResultCount, Integer startingOffset, Integer expectedResultCount,
-			Map<String, ?> attributes) throws IOException;
+	void start(@Nullable Long totalResultCount, @Nullable Integer startingOffset,
+			@Nullable Integer expectedResultCount, @Nullable Map<String, ?> attributes)
+			throws IOException;
 
 	/**
 	 * Process a result item.
