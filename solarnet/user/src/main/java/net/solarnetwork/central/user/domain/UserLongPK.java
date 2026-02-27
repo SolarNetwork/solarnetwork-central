@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.domain;
 
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.CompositeKey2;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
@@ -51,8 +52,8 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	@Serial
 	private static final long serialVersionUID = -4475927214213411061L;
 
-	private Long id;
-	private Long userId;
+	private @Nullable Long id;
+	private @Nullable Long userId;
 
 	/**
 	 * Default constructor.
@@ -86,7 +87,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	 * {@literal null} values will be sorted before non-{@literal null} values.
 	 */
 	@Override
-	public int compareTo(UserLongPK o) {
+	public int compareTo(@Nullable UserLongPK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -166,7 +167,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
-	public <T> T keyComponentValue(int index, Object val) {
+	public <T> T keyComponentValue(int index, @Nullable Object val) {
 		try {
 			if ( index == 0 || index == 1 ) {
 				return switch (val) {
@@ -184,7 +185,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	}
 
 	@Override
-	public UserLongPK createKey(CompositeKey template, Object... components) {
+	public UserLongPK createKey(@Nullable CompositeKey template, Object... components) {
 		Object v1 = (components != null && components.length > 0 ? components[0]
 				: template != null ? template.keyComponent(0) : null);
 		Object v2 = (components != null && components.length > 1 ? components[1]
@@ -219,7 +220,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	 *
 	 * @return the ID
 	 */
-	public Long getId() {
+	public final @Nullable Long getId() {
 		return id;
 	}
 
@@ -229,7 +230,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	 * @param id
 	 *        the ID to set
 	 */
-	public void setId(Long id) {
+	public final void setId(Long id) {
 		this.id = id;
 	}
 
@@ -239,7 +240,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	 * @param userId
 	 *        the user ID to set
 	 */
-	public void setUserId(Long userId) {
+	public final void setUserId(Long userId) {
 		this.userId = userId;
 	}
 

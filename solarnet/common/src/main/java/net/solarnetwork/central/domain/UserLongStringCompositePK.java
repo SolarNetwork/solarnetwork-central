@@ -25,6 +25,7 @@ package net.solarnetwork.central.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Basic implementation of a Long, Long, String composite key.
@@ -93,7 +94,7 @@ public final class UserLongStringCompositePK extends BasePK implements
 	}
 
 	@Override
-	public int compareTo(UserLongStringCompositePK o) {
+	public int compareTo(@Nullable UserLongStringCompositePK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -136,7 +137,7 @@ public final class UserLongStringCompositePK extends BasePK implements
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -152,7 +153,7 @@ public final class UserLongStringCompositePK extends BasePK implements
 	 *
 	 * @return the user ID
 	 */
-	public Long getGroupId() {
+	public final Long getGroupId() {
 		return groupId;
 	}
 
@@ -161,22 +162,22 @@ public final class UserLongStringCompositePK extends BasePK implements
 	 *
 	 * @return the entity ID
 	 */
-	public String getEntityId() {
+	public final String getEntityId() {
 		return entityId;
 	}
 
 	@Override
-	public Long keyComponent1() {
+	public final Long keyComponent1() {
 		return userId;
 	}
 
 	@Override
-	public Long keyComponent2() {
+	public final Long keyComponent2() {
 		return groupId;
 	}
 
 	@Override
-	public String keyComponent3() {
+	public final String keyComponent3() {
 		return entityId;
 	}
 
@@ -213,7 +214,7 @@ public final class UserLongStringCompositePK extends BasePK implements
 
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
-	public <T> T keyComponentValue(int index, Object val) {
+	public <T> T keyComponentValue(int index, @Nullable Object val) {
 		try {
 			if ( index == 0 || index == 1 ) {
 				return switch (val) {
@@ -237,7 +238,7 @@ public final class UserLongStringCompositePK extends BasePK implements
 	}
 
 	@Override
-	public UserLongStringCompositePK createKey(CompositeKey template, Object... components) {
+	public UserLongStringCompositePK createKey(@Nullable CompositeKey template, Object... components) {
 		Object v1 = (components != null && components.length > 0 ? components[0]
 				: template != null ? template.keyComponent(0) : null);
 		Object v2 = (components != null && components.length > 1 ? components[1]

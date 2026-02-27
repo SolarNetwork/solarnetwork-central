@@ -23,8 +23,10 @@
 package net.solarnetwork.central.dao;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.dao.BasicEntity;
@@ -43,7 +45,7 @@ public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends
 	@Serial
 	private static final long serialVersionUID = 1520924063897057459L;
 
-	private final Instant modified;
+	private final @Nullable Instant modified;
 
 	/**
 	 * Constructor.
@@ -94,10 +96,10 @@ public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
-	public abstract boolean isSameAs(C other);
+	public abstract boolean isSameAs(@Nullable C other);
 
 	@Override
-	public boolean differsFrom(C other) {
+	public boolean differsFrom(@Nullable C other) {
 		return !isSameAs(other);
 	}
 
@@ -107,9 +109,8 @@ public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends
 	}
 
 	@Override
-	public Long getUserId() {
-		K pk = getId();
-		return (pk != null ? (Long) pk.keyComponent(0) : null);
+	public final Long getUserId() {
+		return nonnull(getId(), "id").getUserId();
 	}
 
 	/**
@@ -134,7 +135,7 @@ public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends
 	 * 
 	 * @return the modified date
 	 */
-	public Instant getModified() {
+	public final @Nullable Instant getModified() {
 		return modified;
 	}
 

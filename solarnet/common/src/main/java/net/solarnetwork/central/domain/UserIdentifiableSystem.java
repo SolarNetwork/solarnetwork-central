@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 
 /**
  * API for something that provides a "system identity".
@@ -80,15 +81,11 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 *        the user ID
 	 * @param components
 	 *        the components to include
-	 * @return the system identifier, or {@code null} if {@code userId} is
-	 *         {@code null}
+	 * @return the system identifier
 	 */
-	static String userIdSystemIdentifier(Long userId, Object... components) {
-		if ( userId == null ) {
-			return null;
-		}
+	static String userIdSystemIdentifier(Long userId, Object @Nullable... components) {
 		StringBuilder buf = new StringBuilder(32);
-		buf.append(userId).append(ID_COMPONENT_DELIMITER_CHAR);
+		buf.append(requireNonNullArgument(userId, "userId")).append(ID_COMPONENT_DELIMITER_CHAR);
 		if ( components != null ) {
 			boolean added = false;
 			for ( Object o : components ) {
@@ -115,7 +112,7 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 * @return the extracted user ID, or {@code null} if
 	 *         {@code systemIdentifier} is {@code null} or empty
 	 */
-	static Long userIdFromSystemIdentifier(String systemIdentifier) {
+	static @Nullable Long userIdFromSystemIdentifier(@Nullable String systemIdentifier) {
 		if ( systemIdentifier == null || systemIdentifier.isEmpty() ) {
 			return null;
 		}
@@ -142,14 +139,13 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 * @param systemIdentifier
 	 *        the system identifier to decompose
 	 * @param omitNulls
-	 *        {@literal true} to omit {@code null} values from the returned
-	 *        list
+	 *        {@literal true} to omit {@code null} values from the returned list
 	 * @param mapper
 	 *        a function to map each string component to a value
 	 * @return the system identifier components
 	 */
-	static <T> List<T> systemIdentifierComponents(String systemIdentifier, boolean omitNulls,
-			Function<String, T> mapper) {
+	static <T> @Nullable List<T> systemIdentifierComponents(@Nullable String systemIdentifier,
+			boolean omitNulls, Function<String, T> mapper) {
 		if ( systemIdentifier == null || systemIdentifier.isEmpty() ) {
 			return null;
 		}
@@ -195,7 +191,7 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 *        the system identifier to decompose
 	 * @return the system identifier components
 	 */
-	static List<String> systemIdentifierComponents(String systemIdentifier) {
+	static @Nullable List<String> systemIdentifierComponents(@Nullable String systemIdentifier) {
 		return systemIdentifierComponents(systemIdentifier, false, Function.identity());
 	}
 
@@ -212,7 +208,7 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 *        the system identifier to decompose
 	 * @return the system identifier components
 	 */
-	static List<Long> systemIdentifierLongComponents(String systemIdentifier) {
+	static @Nullable List<Long> systemIdentifierLongComponents(@Nullable String systemIdentifier) {
 		return systemIdentifierLongComponents(systemIdentifier, false);
 	}
 
@@ -229,11 +225,11 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 * @param systemIdentifier
 	 *        the system identifier to decompose
 	 * @param omitNulls
-	 *        {@literal true} to omit {@code null} values from the returned
-	 *        list
+	 *        {@literal true} to omit {@code null} values from the returned list
 	 * @return the system identifier components
 	 */
-	static List<Long> systemIdentifierLongComponents(String systemIdentifier, boolean omitNulls) {
+	static @Nullable List<Long> systemIdentifierLongComponents(@Nullable String systemIdentifier,
+			boolean omitNulls) {
 		return systemIdentifierComponents(systemIdentifier, omitNulls, (s) -> {
 			if ( s != null ) {
 				try {

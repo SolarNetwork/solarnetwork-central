@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.time.LocalDateTime;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Filter API for a local date range.
@@ -45,6 +46,7 @@ public interface LocalDateRangeFilter extends Filter {
 	 * 
 	 * @return the local start date
 	 */
+	@Nullable
 	LocalDateTime getLocalStartDate();
 
 	/**
@@ -52,6 +54,7 @@ public interface LocalDateRangeFilter extends Filter {
 	 * 
 	 * @return the local end date
 	 */
+	@Nullable
 	LocalDateTime getLocalEndDate();
 
 }

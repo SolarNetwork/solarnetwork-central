@@ -25,6 +25,8 @@ package net.solarnetwork.central.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.Objects;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Immutable primary key for user-related entities using a Long entity key.
@@ -81,7 +83,7 @@ public final class UserLongCompositePK extends BasePK
 	}
 
 	@Override
-	public int compareTo(UserLongCompositePK o) {
+	public int compareTo(@Nullable UserLongCompositePK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -117,7 +119,7 @@ public final class UserLongCompositePK extends BasePK
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -132,17 +134,19 @@ public final class UserLongCompositePK extends BasePK
 	 *
 	 * @return the entity ID
 	 */
-	public Long getEntityId() {
+	public final Long getEntityId() {
 		return entityId;
 	}
 
 	@Override
-	public Long keyComponent1() {
+	@NonNull
+	public final Long keyComponent1() {
 		return userId;
 	}
 
 	@Override
-	public Long keyComponent2() {
+	@NonNull
+	public final Long keyComponent2() {
 		return entityId;
 	}
 
@@ -168,7 +172,7 @@ public final class UserLongCompositePK extends BasePK
 
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
-	public <T> T keyComponentValue(int index, Object val) {
+	public <T> T keyComponentValue(int index, @Nullable Object val) {
 		try {
 			if ( index == 0 || index == 1 ) {
 				return switch (val) {
@@ -186,7 +190,7 @@ public final class UserLongCompositePK extends BasePK
 	}
 
 	@Override
-	public UserLongCompositePK createKey(CompositeKey template, Object... components) {
+	public UserLongCompositePK createKey(@Nullable CompositeKey template, Object... components) {
 		Object v1 = (components != null && components.length > 0 ? components[0]
 				: template != null ? template.keyComponent(0) : null);
 		Object v2 = (components != null && components.length > 1 ? components[1]

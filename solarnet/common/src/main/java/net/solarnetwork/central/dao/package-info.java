@@ -1,7 +1,7 @@
 /* ==================================================================
- * SecurityTokenDao.java - 1/11/2023 8:23:01 am
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2023 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,27 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork common test utilities.
+ */
+
+@NullMarked
 package net.solarnetwork.central.dao;
 
-import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.security.SecurityToken;
-
-/**
- * DAO API for {@link SecurityToken} instances.
- *
- * @author matt
- * @version 1.0
- */
-public interface SecurityTokenDao {
-
-	/**
-	 * Get a security token for a given ID.
-	 *
-	 * @param tokenId
-	 *        the token ID
-	 * @return the token
-	 */
-	@Nullable
-	SecurityToken securityTokenForId(String tokenId);
-
-}
+import org.jspecify.annotations.NullMarked;

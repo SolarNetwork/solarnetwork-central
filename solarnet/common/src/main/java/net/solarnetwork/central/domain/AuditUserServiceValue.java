@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Instant;
 import net.solarnetwork.domain.Unique;
 import net.solarnetwork.domain.datum.Aggregation;
@@ -52,8 +53,8 @@ public interface AuditUserServiceValue extends Unique<DatumId>, UserIdRelated {
 	 */
 	@Override
 	default Long getUserId() {
-		DatumId id = getId();
-		return id != null ? id.getObjectId() : null;
+		return nonnull(nonnull(getId(), "id").getObjectId(),
+				"id.objectId");
 	}
 
 	/**
@@ -66,8 +67,8 @@ public interface AuditUserServiceValue extends Unique<DatumId>, UserIdRelated {
 	 * @return the service
 	 */
 	default String getService() {
-		DatumId id = getId();
-		return id != null ? id.getSourceId() : null;
+		return nonnull(nonnull(getId(), "id").getSourceId(),
+				"id.sourceId");
 	}
 
 	/**
@@ -85,8 +86,8 @@ public interface AuditUserServiceValue extends Unique<DatumId>, UserIdRelated {
 	 * @return the timestamp for this datum
 	 */
 	default Instant getTimestamp() {
-		DatumId id = getId();
-		return id != null ? id.getTimestamp() : null;
+		return nonnull(nonnull(getId(), "id").getTimestamp(),
+				"id.timestamp");
 	}
 
 	/**

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dao;
 
 import java.util.Collection;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.AppSetting;
 import net.solarnetwork.central.domain.KeyTypePK;
 import net.solarnetwork.dao.GenericDao;
@@ -51,10 +52,12 @@ public interface AppSettingDao extends GenericDao<AppSetting, KeyTypePK> {
 	 *        the key of the setting to lock
 	 * @param type
 	 *        the type of the setting to lock
-	 * @return the locked setting
+	 * @return the locked setting, or {@code null} if no setting exists for the
+	 *         given arguments
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
+	@Nullable
 	AppSetting lockForUpdate(String key, String type);
 
 	/**

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Arrays;
@@ -111,18 +112,18 @@ public class ClientAccessTokenEntity
 
 	@Override
 	public boolean isSameAs(ClientAccessTokenEntity other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.accessTokenType, other.accessTokenType)
-				&& Objects.equals(this.accessTokenIssuedAt, other.accessTokenIssuedAt)
-				&& Objects.equals(this.accessTokenExpiresAt, other.accessTokenExpiresAt)
-				&& Objects.equals(this.accessTokenScopes, other.accessTokenScopes)
-				&& Objects.equals(this.refreshTokenIssuedAt, other.refreshTokenIssuedAt)
-				&& Arrays.equals(this.accessToken, other.accessToken)
-				&& Arrays.equals(this.refreshToken, other.refreshToken)
+		return Objects.equals(this.accessTokenType, o.accessTokenType)
+				&& Objects.equals(this.accessTokenIssuedAt, o.accessTokenIssuedAt)
+				&& Objects.equals(this.accessTokenExpiresAt, o.accessTokenExpiresAt)
+				&& Objects.equals(this.accessTokenScopes, o.accessTokenScopes)
+				&& Objects.equals(this.refreshTokenIssuedAt, o.refreshTokenIssuedAt)
+				&& Arrays.equals(this.accessToken, o.accessToken)
+				&& Arrays.equals(this.refreshToken, o.refreshToken)
 				;
 		// @formatter:on
 	}

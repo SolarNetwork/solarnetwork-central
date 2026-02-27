@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dao;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -38,20 +39,21 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public abstract class BaseUserRelatedStdIdentifiableConfigurationInput<C extends BaseIdentifiableUserModifiableEntity<C, K>, K extends UserRelatedCompositeKey<K>>
 		extends BaseUserRelatedStdInput<C, K> {
 
 	@NotNull
 	@NotBlank
 	@Size(max = 64)
-	private String name;
+	private @Nullable String name;
 
 	@NotNull
 	@NotBlank
 	@Size(max = 128)
-	private String serviceIdentifier;
+	private @Nullable String serviceIdentifier;
 
-	private Map<String, Object> serviceProperties;
+	private @Nullable Map<String, Object> serviceProperties;
 
 	/**
 	 * Constructor.
@@ -73,7 +75,7 @@ public abstract class BaseUserRelatedStdIdentifiableConfigurationInput<C extends
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
@@ -83,7 +85,7 @@ public abstract class BaseUserRelatedStdIdentifiableConfigurationInput<C extends
 	 * @param name
 	 *        the name to set
 	 */
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
@@ -92,7 +94,7 @@ public abstract class BaseUserRelatedStdIdentifiableConfigurationInput<C extends
 	 *
 	 * @return the identifier
 	 */
-	public String getServiceIdentifier() {
+	public final @Nullable String getServiceIdentifier() {
 		return serviceIdentifier;
 	}
 
@@ -102,7 +104,7 @@ public abstract class BaseUserRelatedStdIdentifiableConfigurationInput<C extends
 	 * @param serviceIdentifier
 	 *        the identifier to use
 	 */
-	public void setServiceIdentifier(String serviceIdentifier) {
+	public final void setServiceIdentifier(@Nullable String serviceIdentifier) {
 		this.serviceIdentifier = serviceIdentifier;
 	}
 
@@ -111,7 +113,7 @@ public abstract class BaseUserRelatedStdIdentifiableConfigurationInput<C extends
 	 *
 	 * @return the service properties
 	 */
-	public Map<String, Object> getServiceProperties() {
+	public final @Nullable Map<String, Object> getServiceProperties() {
 		return serviceProperties;
 	}
 
@@ -121,7 +123,7 @@ public abstract class BaseUserRelatedStdIdentifiableConfigurationInput<C extends
 	 * @param serviceProperties
 	 *        the service properties to set
 	 */
-	public void setServiceProperties(Map<String, Object> serviceProperties) {
+	public final void setServiceProperties(@Nullable Map<String, Object> serviceProperties) {
 		this.serviceProperties = serviceProperties;
 	}
 

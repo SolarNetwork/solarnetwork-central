@@ -25,6 +25,7 @@ package net.solarnetwork.central.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Basic implementation of a user-related Long, String, String composite key.
@@ -93,7 +94,7 @@ public class UserStringStringCompositePK extends BasePK implements
 	}
 
 	@Override
-	public int compareTo(UserStringStringCompositePK o) {
+	public int compareTo(@Nullable UserStringStringCompositePK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -136,7 +137,7 @@ public class UserStringStringCompositePK extends BasePK implements
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -213,7 +214,7 @@ public class UserStringStringCompositePK extends BasePK implements
 
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
-	public <T> T keyComponentValue(int index, Object val) {
+	public <T> T keyComponentValue(int index, @Nullable Object val) {
 		try {
 			if ( index == 0 ) {
 				return switch (val) {
@@ -236,7 +237,7 @@ public class UserStringStringCompositePK extends BasePK implements
 	}
 
 	@Override
-	public UserStringStringCompositePK createKey(CompositeKey template, Object... components) {
+	public UserStringStringCompositePK createKey(@Nullable CompositeKey template, Object... components) {
 		Object v1 = (components != null && components.length > 0 ? components[0]
 				: template != null ? template.keyComponent(0) : null);
 		Object v2 = (components != null && components.length > 1 ? components[1]

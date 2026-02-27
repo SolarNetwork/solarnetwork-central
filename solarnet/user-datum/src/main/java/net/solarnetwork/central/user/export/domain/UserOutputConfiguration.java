@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.export.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
@@ -95,11 +96,11 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 
 	@Override
 	public boolean isSameAs(UserOutputConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
-		return Objects.equals(compressionType, other.getCompressionType());
+		final var o = nonnull(other, "other");
+		return Objects.equals(compressionType, o.getCompressionType());
 	}
 
 	@JsonIgnore

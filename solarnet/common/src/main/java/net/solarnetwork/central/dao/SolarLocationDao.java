@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -46,6 +47,7 @@ public interface SolarLocationDao
 	 *        the time zone ID
 	 * @return the SolarLocation, or {@code null} if none found
 	 */
+	@Nullable
 	SolarLocation getSolarLocationForTimeZone(String country, String timeZoneId);
 
 	/**
@@ -56,6 +58,7 @@ public interface SolarLocationDao
 	 *        the search criteria
 	 * @return the matching location, or {@code null} if not found
 	 */
+	@Nullable
 	SolarLocation getSolarLocationForLocation(Location criteria);
 
 	/**
@@ -66,6 +69,7 @@ public interface SolarLocationDao
 	 * @return the location, or {@code null} if not found
 	 * @since 1.4
 	 */
+	@Nullable
 	SolarLocation getSolarLocationForNode(Long nodeId);
 
 }

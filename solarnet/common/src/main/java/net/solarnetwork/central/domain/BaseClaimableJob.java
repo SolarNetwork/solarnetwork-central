@@ -25,6 +25,7 @@ package net.solarnetwork.central.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseObjectEntity;
 
 /**
@@ -39,7 +40,7 @@ import net.solarnetwork.central.dao.BaseObjectEntity;
  * @param <K>
  *        the job entity primary key type
  * @author matt
- * @version 3.0
+ * @version 3.1
  * @since 1.44
  */
 public abstract class BaseClaimableJob<C, R, S extends ClaimableJobState, K extends Comparable<K> & Serializable>
@@ -48,19 +49,26 @@ public abstract class BaseClaimableJob<C, R, S extends ClaimableJobState, K exte
 	@Serial
 	private static final long serialVersionUID = 6518967007802666051L;
 
-	private S jobState;
-	private C configuration;
-	private R result;
-	private String tokenId;
-	private String groupKey;
-	private Boolean jobSuccess;
-	private String message;
-	private Instant started;
-	private Instant completed;
+	private @Nullable S jobState;
+	private @Nullable C configuration;
+	private @Nullable R result;
+	private @Nullable String tokenId;
+	private @Nullable String groupKey;
+	private @Nullable Boolean jobSuccess;
+	private @Nullable String message;
+	private @Nullable Instant started;
+	private @Nullable Instant completed;
 	private double percentComplete;
 
+	/**
+	 * Constructor.
+	 */
+	public BaseClaimableJob() {
+		super();
+	}
+
 	@Override
-	public S getJobState() {
+	public final @Nullable S getJobState() {
 		return jobState;
 	}
 
@@ -70,35 +78,116 @@ public abstract class BaseClaimableJob<C, R, S extends ClaimableJobState, K exte
 	 * @return the key value, or {@link ClaimableJobState#UNKNOWN_KEY} if not
 	 *         known
 	 */
-	public char getJobStateKey() {
+	public final char getJobStateKey() {
 		S state = getJobState();
 		return (state != null ? state.getKey() : ClaimableJobState.UNKNOWN_KEY);
 	}
 
-	public void setJobState(S jobState) {
+	public final void setJobState(@Nullable S jobState) {
 		this.jobState = jobState;
 	}
 
+	/**
+	 * Get the configuration.
+	 * 
+	 * <p>
+	 * This will call {@link #didGetConfiguration(Object)} and return the result
+	 * of that method.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 * 
+	 * @see #didGetConfiguration(Object)
+	 */
 	@Override
-	public C getConfiguration() {
+	public final @Nullable C getConfiguration() {
+		return didGetConfiguration(configuration);
+	}
+
+	/**
+	 * Hook called after configuration is accessed.
+	 * 
+	 * @param configuration
+	 *        the configuration that was accessed
+	 * @return the configuration to actually return
+	 * @see #getConfiguration()
+	 * @since 3.1
+	 */
+	protected @Nullable C didGetConfiguration(@Nullable C configuration) {
 		return configuration;
 	}
 
-	public void setConfiguration(C configuration) {
+	/**
+	 * Set the configuration.
+	 * 
+	 * <p>
+	 * This will call {@link #didSetConfiguration(Object)}, passing
+	 * {@code configuration}.
+	 * </p>
+	 * 
+	 * @param configuration
+	 *        the configuration to set
+	 * @see #didSetConfiguration(Object)
+	 * @see #replaceConfiguration(Object)
+	 * @since 3.1
+	 */
+	public final void setConfiguration(@Nullable C configuration) {
+		this.configuration = configuration;
+		didSetConfiguration(configuration);
+	}
+
+	/**
+	 * Hook called after configuration is set.
+	 * 
+	 * @param configuration
+	 *        the configuration
+	 * @see #setConfiguration(Object)
+	 * @since 3.1
+	 */
+	protected void didSetConfiguration(@Nullable C configuration) {
+		// extending classes can override
+	}
+
+	/**
+	 * Get the configuration.
+	 * 
+	 * <p>
+	 * This method does not call {@link #didGetConfiguration(Object)}.
+	 * </p>
+	 * 
+	 * @return the configuration
+	 * @since 3.1
+	 */
+	protected final @Nullable C configuration() {
+		return this.configuration;
+	}
+
+	/**
+	 * Replace the configuration.
+	 * 
+	 * <p>
+	 * This method does not call {@link #didSetConfiguration(Object)}.
+	 * </p>
+	 * 
+	 * @param configuration
+	 *        the configuration to set
+	 * @since 3.1
+	 */
+	protected final void replaceConfiguration(@Nullable C configuration) {
 		this.configuration = configuration;
 	}
 
 	@Override
-	public R getResult() {
+	public final @Nullable R getResult() {
 		return result;
 	}
 
-	public void setResult(R result) {
+	public final void setResult(@Nullable R result) {
 		this.result = result;
 	}
 
 	@Override
-	public String getTokenId() {
+	public final @Nullable String getTokenId() {
 		return tokenId;
 	}
 
@@ -109,16 +198,16 @@ public abstract class BaseClaimableJob<C, R, S extends ClaimableJobState, K exte
 	 *        the token ID to set
 	 * @since 2.1
 	 */
-	public void setTokenId(String tokenId) {
+	public final void setTokenId(@Nullable String tokenId) {
 		this.tokenId = tokenId;
 	}
 
 	@Override
-	public Boolean getJobSuccess() {
+	public final @Nullable Boolean getJobSuccess() {
 		return jobSuccess;
 	}
 
-	public void setJobSuccess(Boolean jobSuccess) {
+	public final void setJobSuccess(@Nullable Boolean jobSuccess) {
 		this.jobSuccess = jobSuccess;
 	}
 
@@ -133,47 +222,47 @@ public abstract class BaseClaimableJob<C, R, S extends ClaimableJobState, K exte
 	}
 
 	@Override
-	public String getMessage() {
+	public final @Nullable String getMessage() {
 		return message;
 	}
 
-	public void setMessage(String message) {
+	public final void setMessage(@Nullable String message) {
 		this.message = message;
 	}
 
 	@Override
-	public Instant getStarted() {
+	public final @Nullable Instant getStarted() {
 		return started;
 	}
 
-	public void setStarted(Instant started) {
+	public final void setStarted(@Nullable Instant started) {
 		this.started = started;
 	}
 
 	@Override
-	public Instant getCompleted() {
+	public final @Nullable Instant getCompleted() {
 		return completed;
 	}
 
-	public void setCompleted(Instant completed) {
+	public final void setCompleted(@Nullable Instant completed) {
 		this.completed = completed;
 	}
 
 	@Override
-	public double getPercentComplete() {
+	public final double getPercentComplete() {
 		return percentComplete;
 	}
 
-	public void setPercentComplete(double percentComplete) {
+	public final void setPercentComplete(double percentComplete) {
 		this.percentComplete = percentComplete;
 	}
 
 	@Override
-	public String getGroupKey() {
+	public final @Nullable String getGroupKey() {
 		return groupKey;
 	}
 
-	public void setGroupKey(String groupKey) {
+	public final void setGroupKey(@Nullable String groupKey) {
 		this.groupKey = groupKey;
 	}
 

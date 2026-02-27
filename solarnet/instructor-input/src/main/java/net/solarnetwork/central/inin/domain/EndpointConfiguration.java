@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.inin.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
@@ -112,19 +113,19 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 
 	@Override
 	public boolean isSameAs(EndpointConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.name)
-				&& Objects.equals(this.nodeIds, other.nodeIds)
-				&& Objects.equals(this.requestTransformId, other.requestTransformId)
-				&& Objects.equals(this.responseTransformId, other.responseTransformId)
-				&& this.maxExecutionSeconds == other.maxExecutionSeconds
-				&& Objects.equals(this.userMetadataPath, other.userMetadataPath)
-				&& Objects.equals(requestContentType, other.requestContentType)
-				&& Objects.equals(responseContentType, other.responseContentType)
+		return Objects.equals(this.name, o.name)
+				&& Objects.equals(this.nodeIds, o.nodeIds)
+				&& Objects.equals(this.requestTransformId, o.requestTransformId)
+				&& Objects.equals(this.responseTransformId, o.responseTransformId)
+				&& this.maxExecutionSeconds == o.maxExecutionSeconds
+				&& Objects.equals(this.userMetadataPath, o.userMetadataPath)
+				&& Objects.equals(requestContentType, o.requestContentType)
+				&& Objects.equals(responseContentType, o.responseContentType)
 				;
 		// @formatter:on
 	}

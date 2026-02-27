@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.export.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -125,16 +126,17 @@ public class UserDatumExportConfiguration
 		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.getName())
-				&& Objects.equals(this.schedule, other.getSchedule())
-				&& this.hourDelayOffset == other.getHourDelayOffset()
-				&& Objects.equals(this.userDataConfiguration, other.getUserDataConfiguration())
-				&& Objects.equals(this.userOutputConfiguration, other.getOutputConfiguration())
-				&& Objects.equals(this.userDestinationConfiguration, other.getUserDestinationConfiguration())
-				&& Objects.equals(this.minimumExportDate, other.getMinimumExportDate())
-				&& Objects.equals(this.timeZoneId, other.getTimeZoneId())
-				&& Objects.equals(this.tokenId, other.getTokenId())
+		return Objects.equals(this.name, o.getName())
+				&& Objects.equals(this.schedule, o.getSchedule())
+				&& this.hourDelayOffset == o.getHourDelayOffset()
+				&& Objects.equals(this.userDataConfiguration, o.getUserDataConfiguration())
+				&& Objects.equals(this.userOutputConfiguration, o.getOutputConfiguration())
+				&& Objects.equals(this.userDestinationConfiguration, o.getUserDestinationConfiguration())
+				&& Objects.equals(this.minimumExportDate, o.getMinimumExportDate())
+				&& Objects.equals(this.timeZoneId, o.getTimeZoneId())
+				&& Objects.equals(this.tokenId, o.getTokenId())
 				;
 		// @formatter:on
 

@@ -1,7 +1,7 @@
 /* ==================================================================
- * MinMaxRange.java - Aug 8, 2010 9:38:27 PM
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2007-2010 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -18,34 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
- * $Revision$
- * ==================================================================
  */
-
-package net.solarnetwork.central.dao;
 
 /**
- * A range specification.
- *
- * @author matt
- * @version 1.0
- * @param <T>
- *        the range type
+ * SolarNetwork common test utilities.
  */
-public interface MinMaxRange<T extends Number> {
 
-	/**
-	 * The minimum value.
-	 *
-	 * @return minimum
-	 */
-	T getMinimum();
+@NullMarked
+package net.solarnetwork.central.domain;
 
-	/**
-	 * The maximum value.
-	 *
-	 * @return maximum
-	 */
-	T getMaximum();
-
-}
+import org.jspecify.annotations.NullMarked;

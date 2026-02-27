@@ -118,7 +118,7 @@ public class ObjectDatumStreamMetadataId
 	 *
 	 * @return the stream ID
 	 */
-	public UUID getStreamId() {
+	public final UUID getStreamId() {
 		return streamId;
 	}
 

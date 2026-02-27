@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
@@ -40,6 +41,7 @@ public interface AggregationFilter extends Filter {
 	 *
 	 * @return the aggregation, or {@code null} for default
 	 */
+	@Nullable
 	Aggregation getAggregation();
 
 	/**
@@ -77,6 +79,7 @@ public interface AggregationFilter extends Filter {
 	 * @return the partial aggregation, or {@code null} for none
 	 * @since 1.1
 	 */
+	@Nullable
 	Aggregation getPartialAggregation();
 
 	/**
@@ -84,6 +87,7 @@ public interface AggregationFilter extends Filter {
 	 *
 	 * @return the start date
 	 */
+	@Nullable
 	Instant getStartDate();
 
 	/**
@@ -91,6 +95,7 @@ public interface AggregationFilter extends Filter {
 	 *
 	 * @return the end date
 	 */
+	@Nullable
 	Instant getEndDate();
 
 }

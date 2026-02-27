@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * API for a metadata search filter.
  * 
@@ -42,6 +44,7 @@ public interface MetadataFilter extends Filter {
 	 * 
 	 * @return the metadata filter to use (may be {@code null})
 	 */
+	@Nullable
 	String getMetadataFilter();
 
 }

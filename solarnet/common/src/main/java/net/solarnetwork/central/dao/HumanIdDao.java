@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * DAO with "human ID" support.
  *
@@ -37,6 +39,7 @@ public interface HumanIdDao<T> {
 	 *        the human ID of the object to retrieve
 	 * @return the domain object, or {@code null} if not found
 	 */
+	@Nullable
 	T getForHid(String hid);
 
 }

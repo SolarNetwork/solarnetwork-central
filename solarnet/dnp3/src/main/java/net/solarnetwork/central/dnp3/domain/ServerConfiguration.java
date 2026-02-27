@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dnp3.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
@@ -91,11 +92,11 @@ public class ServerConfiguration
 
 	@Override
 	public boolean isSameAs(ServerConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
-		return Objects.equals(this.name, other.getName());
+		final var o = nonnull(other, "other");
+		return Objects.equals(this.name, o.getName());
 	}
 
 	@Override

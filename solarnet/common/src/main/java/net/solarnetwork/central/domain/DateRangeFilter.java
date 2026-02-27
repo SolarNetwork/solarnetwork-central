@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Filter API for a date range.
@@ -38,6 +39,7 @@ public interface DateRangeFilter extends Filter {
 	 * 
 	 * @return the start date
 	 */
+	@Nullable
 	Instant getStartDate();
 
 	/**
@@ -45,6 +47,7 @@ public interface DateRangeFilter extends Filter {
 	 * 
 	 * @return the end date
 	 */
+	@Nullable
 	Instant getEndDate();
 
 }

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
@@ -38,6 +39,7 @@ public interface NodeMetadata {
 	 * 
 	 * @return the node ID
 	 */
+	@Nullable
 	Long getNodeId();
 
 	/**
@@ -45,6 +47,7 @@ public interface NodeMetadata {
 	 * 
 	 * @return the creation date
 	 */
+	@Nullable
 	Instant getCreated();
 
 	/**
@@ -52,6 +55,7 @@ public interface NodeMetadata {
 	 * 
 	 * @return the updated date
 	 */
+	@Nullable
 	Instant getUpdated();
 
 	/**
@@ -59,6 +63,7 @@ public interface NodeMetadata {
 	 * 
 	 * @return the metadata
 	 */
+	@Nullable
 	GeneralDatumMetadata getMetadata();
 
 }

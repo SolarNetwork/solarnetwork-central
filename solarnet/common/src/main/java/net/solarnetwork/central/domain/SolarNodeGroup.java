@@ -25,6 +25,7 @@ package net.solarnetwork.central.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseEntity;
 
 /**
@@ -45,8 +46,8 @@ public class SolarNodeGroup extends BaseEntity implements Cloneable, Serializabl
 	@Serial
 	private static final long serialVersionUID = 1843734913796373879L;
 
-	private Long locationId = null;
-	private String name;
+	private @Nullable Long locationId;
+	private @Nullable String name;
 
 	/**
 	 * Default constructor.
@@ -65,7 +66,7 @@ public class SolarNodeGroup extends BaseEntity implements Cloneable, Serializabl
 	 * @param name
 	 *        the name
 	 */
-	public SolarNodeGroup(Long id, Long locationId, String name) {
+	public SolarNodeGroup(@Nullable Long id, @Nullable Long locationId, @Nullable String name) {
 		super();
 		setId(id);
 		setCreated(Instant.now());
@@ -83,7 +84,7 @@ public class SolarNodeGroup extends BaseEntity implements Cloneable, Serializabl
 	 * 
 	 * @return the name
 	 */
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
@@ -93,7 +94,7 @@ public class SolarNodeGroup extends BaseEntity implements Cloneable, Serializabl
 	 * @param name
 	 *        the name to set
 	 */
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
@@ -102,7 +103,7 @@ public class SolarNodeGroup extends BaseEntity implements Cloneable, Serializabl
 	 * 
 	 * @return the location ID
 	 */
-	public Long getLocationId() {
+	public final @Nullable Long getLocationId() {
 		return locationId;
 	}
 
@@ -112,7 +113,7 @@ public class SolarNodeGroup extends BaseEntity implements Cloneable, Serializabl
 	 * @param locationId
 	 *        the location ID to set
 	 */
-	public void setLocationId(Long locationId) {
+	public final void setLocationId(@Nullable Long locationId) {
 		this.locationId = locationId;
 	}
 

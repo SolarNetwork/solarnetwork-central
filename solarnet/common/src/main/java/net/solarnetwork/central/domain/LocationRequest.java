@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonRawValue;
@@ -42,12 +43,12 @@ public class LocationRequest extends BasicLongEntity {
 	@Serial
 	private static final long serialVersionUID = 7700770585486402946L;
 
-	private Instant modified;
-	private Long userId;
-	private LocationRequestStatus status;
-	private Long locationId;
-	private String message;
-	private String jsonData;
+	private @Nullable Instant modified;
+	private @Nullable Long userId;
+	private @Nullable LocationRequestStatus status;
+	private @Nullable Long locationId;
+	private @Nullable String message;
+	private @Nullable String jsonData;
 
 	/**
 	 * Default constructor.
@@ -64,7 +65,7 @@ public class LocationRequest extends BasicLongEntity {
 	 * @param created
 	 *        the creation date
 	 */
-	public LocationRequest(Long id, Instant created) {
+	public LocationRequest(@Nullable Long id, @Nullable Instant created) {
 		super(id, created);
 	}
 
@@ -133,7 +134,7 @@ public class LocationRequest extends BasicLongEntity {
 	 *
 	 * @return the modified
 	 */
-	public Instant getModified() {
+	public final @Nullable Instant getModified() {
 		return modified;
 	}
 
@@ -143,7 +144,7 @@ public class LocationRequest extends BasicLongEntity {
 	 * @param modified
 	 *        the modified to set
 	 */
-	public void setModified(Instant modified) {
+	public final void setModified(@Nullable Instant modified) {
 		this.modified = modified;
 	}
 
@@ -152,7 +153,7 @@ public class LocationRequest extends BasicLongEntity {
 	 *
 	 * @return the userId
 	 */
-	public Long getUserId() {
+	public final @Nullable Long getUserId() {
 		return userId;
 	}
 
@@ -162,7 +163,7 @@ public class LocationRequest extends BasicLongEntity {
 	 * @param userId
 	 *        the userId to set
 	 */
-	public void setUserId(Long userId) {
+	public final void setUserId(@Nullable Long userId) {
 		this.userId = userId;
 	}
 
@@ -171,7 +172,7 @@ public class LocationRequest extends BasicLongEntity {
 	 *
 	 * @return the status
 	 */
-	public LocationRequestStatus getStatus() {
+	public final @Nullable LocationRequestStatus getStatus() {
 		return status;
 	}
 
@@ -181,7 +182,7 @@ public class LocationRequest extends BasicLongEntity {
 	 * @param status
 	 *        the status to set
 	 */
-	public void setStatus(LocationRequestStatus status) {
+	public final void setStatus(@Nullable LocationRequestStatus status) {
 		this.status = status;
 	}
 
@@ -190,7 +191,7 @@ public class LocationRequest extends BasicLongEntity {
 	 *
 	 * @return the locationId
 	 */
-	public Long getLocationId() {
+	public final @Nullable Long getLocationId() {
 		return locationId;
 	}
 
@@ -200,7 +201,7 @@ public class LocationRequest extends BasicLongEntity {
 	 * @param locationId
 	 *        the locationId to set
 	 */
-	public void setLocationId(Long locationId) {
+	public final void setLocationId(@Nullable Long locationId) {
 		this.locationId = locationId;
 	}
 
@@ -209,7 +210,7 @@ public class LocationRequest extends BasicLongEntity {
 	 *
 	 * @return the message
 	 */
-	public String getMessage() {
+	public final @Nullable String getMessage() {
 		return message;
 	}
 
@@ -219,7 +220,7 @@ public class LocationRequest extends BasicLongEntity {
 	 * @param message
 	 *        the message to set
 	 */
-	public void setMessage(String message) {
+	public final void setMessage(@Nullable String message) {
 		this.message = message;
 	}
 
@@ -230,7 +231,7 @@ public class LocationRequest extends BasicLongEntity {
 	 */
 	@JsonProperty("data")
 	@JsonRawValue
-	public String getJsonData() {
+	public final @Nullable String getJsonData() {
 		return jsonData;
 	}
 
@@ -241,7 +242,7 @@ public class LocationRequest extends BasicLongEntity {
 	 *        the jsonData to set
 	 */
 	@JsonProperty("data")
-	public void setJsonData(String jsonData) {
+	public final void setJsonData(@Nullable String jsonData) {
 		this.jsonData = jsonData;
 	}
 

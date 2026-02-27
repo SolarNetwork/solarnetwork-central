@@ -25,6 +25,7 @@ package net.solarnetwork.central.dao;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BaseStringIdentity;
 import net.solarnetwork.dao.Entity;
 
@@ -40,7 +41,7 @@ public class BaseStringEntity extends BaseStringIdentity
 	@Serial
 	private static final long serialVersionUID = 5907827905456392556L;
 
-	private Instant created = null;
+	private @Nullable Instant created;
 
 	@Override
 	public BaseStringEntity clone() {
@@ -48,11 +49,11 @@ public class BaseStringEntity extends BaseStringIdentity
 	}
 
 	@Override
-	public Instant getCreated() {
+	public final @Nullable Instant getCreated() {
 		return created;
 	}
 
-	public void setCreated(Instant created) {
+	public final void setCreated(@Nullable Instant created) {
 		this.created = created;
 	}
 

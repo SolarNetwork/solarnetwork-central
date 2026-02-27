@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -117,17 +118,17 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public boolean isSameAs(CloudDatumStreamPropertyConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.propertyType, other.propertyType)
-				&& Objects.equals(this.propertyName, other.propertyName)
-				&& Objects.equals(this.valueType, other.valueType)
-				&& Objects.equals(this.valueReference, other.valueReference)
-				&& ObjectUtils.comparativelyEqual(this.multiplier, other.multiplier)
-				&& Objects.equals(this.scale, other.scale)
+		return Objects.equals(this.propertyType, o.propertyType)
+				&& Objects.equals(this.propertyName, o.propertyName)
+				&& Objects.equals(this.valueType, o.valueType)
+				&& Objects.equals(this.valueReference, o.valueReference)
+				&& ObjectUtils.comparativelyEqual(this.multiplier, o.multiplier)
+				&& Objects.equals(this.scale, o.scale)
 				;
 		// @formatter:on
 	}

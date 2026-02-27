@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Filter API for user related entities.
@@ -37,6 +38,7 @@ public interface UserFilter extends Filter {
 	 *
 	 * @return the email, or {@code null}
 	 */
+	@Nullable
 	String getEmail();
 
 	/**
@@ -44,6 +46,7 @@ public interface UserFilter extends Filter {
 	 *
 	 * @return the internal data criteria
 	 */
+	@Nullable
 	Map<String, Object> getInternalData();
 
 }

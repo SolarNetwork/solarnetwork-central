@@ -25,6 +25,7 @@ package net.solarnetwork.central.dao;
 import java.util.List;
 import java.util.concurrent.Executor;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.CachingGenericDao;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserMetadataFilter;
@@ -65,12 +66,12 @@ public class CachingUserMetadataDao extends CachingGenericDao<UserMetadataEntity
 
 	@Override
 	public FilterResults<UserMetadataEntity, Long> findFiltered(UserMetadataFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		return delegate.findFiltered(filter, sorts, offset, max);
 	}
 
 	@Override
-	public String jsonMetadataAtPath(Long userId, String path) {
+	public @Nullable String jsonMetadataAtPath(Long userId, String path) {
 		final UserStringCompositePK key = new UserStringCompositePK(userId, path);
 		String result = metadataPathCache.get(key);
 		if ( result == null ) {

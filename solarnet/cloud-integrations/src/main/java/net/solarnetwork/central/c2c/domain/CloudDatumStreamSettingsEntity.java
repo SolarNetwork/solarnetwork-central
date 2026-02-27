@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -100,13 +101,13 @@ public final class CloudDatumStreamSettingsEntity
 
 	@Override
 	public boolean isSameAs(CloudDatumStreamSettingsEntity other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return publishToSolarIn == other.publishToSolarIn
-				&& publishToSolarFlux == other.publishToSolarFlux
+		return publishToSolarIn == o.publishToSolarIn
+				&& publishToSolarFlux == o.publishToSolarFlux
 				;
 		// @formatter:on
 	}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.Unique;
 
 /**
@@ -45,6 +46,7 @@ public interface SolarCapabilityInformation<K> extends Unique<K> {
 	 * 
 	 * @return the name
 	 */
+	@Nullable
 	String getName();
 
 	/**
@@ -52,6 +54,7 @@ public interface SolarCapabilityInformation<K> extends Unique<K> {
 	 * 
 	 * @return generation capacity watts
 	 */
+	@Nullable
 	Long getGenerationCapacityWatts();
 
 	/**
@@ -59,6 +62,7 @@ public interface SolarCapabilityInformation<K> extends Unique<K> {
 	 * 
 	 * @return storage capacity in watt hours
 	 */
+	@Nullable
 	Long getStorageCapacityWattHours();
 
 	/**
@@ -66,6 +70,7 @@ public interface SolarCapabilityInformation<K> extends Unique<K> {
 	 * 
 	 * @return location
 	 */
+	@Nullable
 	Location getLocation();
 
 }

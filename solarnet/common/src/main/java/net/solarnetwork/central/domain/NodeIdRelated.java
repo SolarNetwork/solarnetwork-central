@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * API for objects related to a node entity by way of a node ID.
  * 
@@ -35,6 +37,7 @@ public interface NodeIdRelated {
 	 * 
 	 * @return the node ID
 	 */
+	@Nullable
 	Long getNodeId();
 
 }

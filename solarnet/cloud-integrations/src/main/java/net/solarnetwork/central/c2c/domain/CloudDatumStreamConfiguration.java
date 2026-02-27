@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
@@ -123,16 +124,16 @@ public final class CloudDatumStreamConfiguration
 
 	@Override
 	public boolean isSameAs(CloudDatumStreamConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.datumStreamMappingId, other.datumStreamMappingId)
-				&& Objects.equals(this.schedule, other.schedule)
-				&& Objects.equals(this.kind, other.kind)
-				&& Objects.equals(this.objectId, other.objectId)
-				&& Objects.equals(this.sourceId, other.sourceId)
+		return Objects.equals(this.datumStreamMappingId, o.datumStreamMappingId)
+				&& Objects.equals(this.schedule, o.schedule)
+				&& Objects.equals(this.kind, o.kind)
+				&& Objects.equals(this.objectId, o.objectId)
+				&& Objects.equals(this.sourceId, o.sourceId)
 				;
 		// @formatter:on
 	}

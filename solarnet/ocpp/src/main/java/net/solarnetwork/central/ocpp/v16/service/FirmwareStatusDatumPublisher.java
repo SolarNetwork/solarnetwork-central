@@ -115,30 +115,30 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 	}
 
 	@Override
-	public void processActionMessage(ActionMessage<FirmwareStatusNotificationRequest> message,
-			ActionMessageResultHandler<FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse> resultHandler) {
-		if ( message != null && message.getMessage() != null ) {
-			FirmwareStatusNotificationRequest notif = message.getMessage();
-			DatumSamples s = new DatumSamples();
-			if ( notif.getStatus() != null ) {
-				s.putSampleValue(DatumProperty.Status.getClassification(),
-						DatumProperty.Status.getPropertyName(), notif.getStatus().toString());
-			}
-
-			if ( !s.isEmpty() ) {
-				final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
-				final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(),
-						cp.getId());
-
-				GeneralNodeDatum d = new GeneralNodeDatum();
-				d.setCreated(Instant.now());
-				d.setNodeId(cp.getNodeId());
-				d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
-				d.setSamples(s);
-				pubSupport.publishDatum(cps, d);
-			}
+	protected void handleActionMessage(final ActionMessage<FirmwareStatusNotificationRequest> message,
+			final ActionMessageResultHandler<FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse> resultHandler,
+			final FirmwareStatusNotificationRequest req) {
+		DatumSamples s = null;
+		if ( req.getStatus() != null ) {
+			s = new DatumSamples();
+			s.putSampleValue(DatumProperty.Status.getClassification(),
+					DatumProperty.Status.getPropertyName(), req.getStatus().toString());
 		}
-		super.processActionMessage(message, resultHandler);
+
+		if ( s != null && !s.isEmpty() ) {
+			final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
+			final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(),
+					cp.getId());
+
+			GeneralNodeDatum d = new GeneralNodeDatum();
+			d.setCreated(Instant.now());
+			d.setNodeId(cp.getNodeId());
+			d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
+			d.setSamples(s);
+			pubSupport.publishDatum(cps, d);
+		}
+
+		super.handleActionMessage(message, resultHandler, req);
 	}
 
 	/**

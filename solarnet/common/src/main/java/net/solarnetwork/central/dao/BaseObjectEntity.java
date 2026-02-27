@@ -25,6 +25,7 @@ package net.solarnetwork.central.dao;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BaseObjectIdentity;
 import net.solarnetwork.dao.Entity;
 
@@ -42,8 +43,8 @@ public class BaseObjectEntity<K extends Comparable<K> & Serializable> extends Ba
 	@Serial
 	private static final long serialVersionUID = 3752078598919814010L;
 
-	private Instant created = null;
-	private Instant modified = null;
+	private @Nullable Instant created;
+	private @Nullable Instant modified;
 
 	@Override
 	public BaseObjectEntity<K> clone() {
@@ -51,7 +52,7 @@ public class BaseObjectEntity<K extends Comparable<K> & Serializable> extends Ba
 	}
 
 	@Override
-	public Instant getCreated() {
+	public final @Nullable Instant getCreated() {
 		return created;
 	}
 
@@ -61,7 +62,7 @@ public class BaseObjectEntity<K extends Comparable<K> & Serializable> extends Ba
 	 * @param created
 	 *        the created to set
 	 */
-	public void setCreated(Instant created) {
+	public final void setCreated(@Nullable Instant created) {
 		this.created = created;
 	}
 
@@ -70,7 +71,7 @@ public class BaseObjectEntity<K extends Comparable<K> & Serializable> extends Ba
 	 *
 	 * @return the modification date
 	 */
-	public Instant getModified() {
+	public final @Nullable Instant getModified() {
 		return modified;
 	}
 
@@ -80,7 +81,7 @@ public class BaseObjectEntity<K extends Comparable<K> & Serializable> extends Ba
 	 * @param modified
 	 *        the modification date to set
 	 */
-	public void setModified(Instant modified) {
+	public final void setModified(@Nullable Instant modified) {
 		this.modified = modified;
 	}
 

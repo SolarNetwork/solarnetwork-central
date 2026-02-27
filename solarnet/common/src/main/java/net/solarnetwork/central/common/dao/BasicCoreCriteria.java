@@ -25,6 +25,7 @@ package net.solarnetwork.central.common.dao;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.dao.PaginationCriteria;
@@ -121,7 +122,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param criteria
 	 *        the criteria to copy
 	 */
-	public void copyFrom(PaginationCriteria criteria) {
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		if ( criteria == null ) {
 			return;
 		}

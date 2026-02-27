@@ -31,8 +31,9 @@ import static net.solarnetwork.domain.datum.DatumSamplesType.Status;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.support.GeneralDatumMapPropertySerializer;
@@ -86,7 +87,7 @@ public class GeneralDatumMapPropertySerializerTests {
 		final GeneralDatum d = new GeneralDatum(
 				DatumId.nodeId(randomLong(), randomString(), Instant.now()),
 				new DatumSamples(Map.of("a", 1, "b", 2), Map.of("c", 3), Map.of("d", "four")));
-		d.getSamples().setTags(Set.of("foo", "bar"));
+		d.getSamples().setTags(new LinkedHashSet<>(List.of("foo", "bar")));
 
 		// WHEN
 		final Object result = new GeneralDatumMapPropertySerializer().serialize(null, null, d);

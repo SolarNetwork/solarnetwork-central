@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.Differentiable;
 
 /**
@@ -44,7 +45,7 @@ public class BasicSolarNodeOwnership
 
 	private final Long nodeId;
 	private final Long userId;
-	private final String country;
+	private final @Nullable String country;
 	private final ZoneId zone;
 	private final boolean requiresAuthorization;
 	private final boolean archived;
@@ -90,8 +91,8 @@ public class BasicSolarNodeOwnership
 	 * @throws IllegalArgumentException
 	 *         if {@code nodeId} or {@code userId} is {@code null}
 	 */
-	public static BasicSolarNodeOwnership ownershipFor(Long nodeId, Long userId, String country,
-			String timeZoneId) {
+	public static BasicSolarNodeOwnership ownershipFor(Long nodeId, Long userId,
+			@Nullable String country, @Nullable String timeZoneId) {
 		return new BasicSolarNodeOwnership(nodeId, userId, country,
 				(timeZoneId != null ? ZoneId.of(timeZoneId) : ZoneOffset.UTC), false, false);
 	}
@@ -138,8 +139,8 @@ public class BasicSolarNodeOwnership
 	 * @throws IllegalArgumentException
 	 *         if {@code nodeId} or {@code userId} is {@code null}
 	 */
-	public static BasicSolarNodeOwnership privateOwnershipFor(Long nodeId, Long userId, String country,
-			String timeZoneId) {
+	public static BasicSolarNodeOwnership privateOwnershipFor(Long nodeId, Long userId,
+			@Nullable String country, @Nullable String timeZoneId) {
 		return new BasicSolarNodeOwnership(nodeId, userId, country,
 				(timeZoneId != null ? ZoneId.of(timeZoneId) : ZoneOffset.UTC), true, false);
 	}
@@ -163,8 +164,8 @@ public class BasicSolarNodeOwnership
 	 * @throws IllegalArgumentException
 	 *         if {@code nodeId} or {@code userId} is {@code null}
 	 */
-	public BasicSolarNodeOwnership(Long nodeId, Long userId, String country, ZoneId zone,
-			boolean requiresAuthorization, boolean archived) {
+	public BasicSolarNodeOwnership(Long nodeId, Long userId, @Nullable String country,
+			@Nullable ZoneId zone, boolean requiresAuthorization, boolean archived) {
 		super();
 		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
 		this.userId = requireNonNullArgument(userId, "userId");
@@ -183,7 +184,7 @@ public class BasicSolarNodeOwnership
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(SolarNodeOwnership other) {
+	public boolean isSameAs(@Nullable SolarNodeOwnership other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -198,7 +199,7 @@ public class BasicSolarNodeOwnership
 	}
 
 	@Override
-	public boolean differsFrom(SolarNodeOwnership other) {
+	public boolean differsFrom(@Nullable SolarNodeOwnership other) {
 		return !isSameAs(other);
 	}
 
@@ -245,7 +246,7 @@ public class BasicSolarNodeOwnership
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -256,22 +257,22 @@ public class BasicSolarNodeOwnership
 	}
 
 	@Override
-	public Long getNodeId() {
+	public final Long getNodeId() {
 		return nodeId;
 	}
 
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 
 	@Override
-	public String getCountry() {
+	public final @Nullable String getCountry() {
 		return country;
 	}
 
 	@Override
-	public ZoneId getZone() {
+	public final ZoneId getZone() {
 		return zone;
 	}
 

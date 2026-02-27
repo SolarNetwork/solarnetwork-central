@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Primary key based on a key/type string tuple.
@@ -114,7 +115,7 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -143,7 +144,7 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 	 *         object.
 	 */
 	@Override
-	public int compareTo(KeyTypePK o) {
+	public int compareTo(@Nullable KeyTypePK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -159,7 +160,7 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 	 *
 	 * @return the key
 	 */
-	public String getKey() {
+	public final String getKey() {
 		return key;
 	}
 
@@ -168,7 +169,7 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 	 *
 	 * @return the type
 	 */
-	public String getType() {
+	public final String getType() {
 		return type;
 	}
 

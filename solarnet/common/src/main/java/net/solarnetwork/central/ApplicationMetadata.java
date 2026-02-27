@@ -23,6 +23,7 @@
 package net.solarnetwork.central;
 
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.util.ObjectUtils;
 
 /**
@@ -41,18 +42,18 @@ public class ApplicationMetadata {
 	 * Constructor.
 	 *
 	 * @param name
-	 *        the application name, must not be {@literal null}
+	 *        the application name, must not be {@code null}
 	 * @param version
-	 *        the application version; if {@literal null} an empty string will
+	 *        the application version; if {@code null} an empty string will
 	 *        be set
 	 * @param instanceId
 	 *        a unique application instance ID, to differentiate multiple
-	 *        instances of the same application; if {@literal null} a UUID-based
+	 *        instances of the same application; if {@code null} a UUID-based
 	 *        value will be assigned
 	 * @throws IllegalArgumentException
-	 *         if {@code name} is {@literal null}
+	 *         if {@code name} is {@code null}
 	 */
-	public ApplicationMetadata(String name, String version, String instanceId) {
+	public ApplicationMetadata(String name, @Nullable String version, @Nullable String instanceId) {
 		super();
 		this.name = ObjectUtils.requireNonNullArgument(name, "name");
 		this.version = (version != null ? version : "");
@@ -80,9 +81,9 @@ public class ApplicationMetadata {
 	/**
 	 * Get the name.
 	 *
-	 * @return the name, never {@literal null}
+	 * @return the name, never {@code null}
 	 */
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -91,16 +92,16 @@ public class ApplicationMetadata {
 	 *
 	 * @return the version
 	 */
-	public String getVersion() {
+	public final String getVersion() {
 		return version;
 	}
 
 	/**
 	 * Get the instance ID.
 	 *
-	 * @return the instance ID, never {@literal null}
+	 * @return the instance ID, never {@code null}
 	 */
-	public String getInstanceId() {
+	public final String getInstanceId() {
 		return instanceId;
 	}
 

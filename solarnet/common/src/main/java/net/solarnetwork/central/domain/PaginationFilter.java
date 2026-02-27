@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -38,6 +39,7 @@ public interface PaginationFilter {
 	 *
 	 * @return the sorts
 	 */
+	@Nullable
 	List<SortDescriptor> getSorts();
 
 	/**
@@ -45,6 +47,7 @@ public interface PaginationFilter {
 	 *
 	 * @return the offset, or {@code null}
 	 */
+	@Nullable
 	Long getOffset();
 
 	/**
@@ -52,6 +55,7 @@ public interface PaginationFilter {
 	 *
 	 * @return the max, or {@code null} for all results
 	 */
+	@Nullable
 	Integer getMax();
 
 	/**

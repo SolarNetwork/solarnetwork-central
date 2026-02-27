@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -118,15 +119,15 @@ public final class CloudDatumStreamMappingConfiguration extends
 
 	@Override
 	public boolean isSameAs(CloudDatumStreamMappingConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.getName())
-				&& Objects.equals(this.integrationId, other.integrationId)
+		return Objects.equals(this.name, o.getName())
+				&& Objects.equals(this.integrationId, o.integrationId)
 				// compare decoded JSON, as JSON key order not assumed
-				&& Objects.equals(getServiceProperties(), other.getServiceProperties())
+				&& Objects.equals(getServiceProperties(), o.getServiceProperties())
 				;
 		// @formatter:on
 	}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.flux.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Arrays;
@@ -100,17 +101,17 @@ public class UserFluxAggregatePublishConfiguration
 
 	@Override
 	public boolean isSameAs(UserFluxAggregatePublishConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-	return Arrays.equals(this.nodeIds, other.nodeIds)
-			&& Arrays.equals(this.sourceIds, other.sourceIds)
-			&& publish == other.publish
-			&& retain == other.retain
-			;
-	// @formatter:on
+		return Arrays.equals(this.nodeIds, o.nodeIds)
+				&& Arrays.equals(this.sourceIds, o.sourceIds)
+				&& publish == o.publish
+				&& retain == o.retain
+				;
+		// @formatter:on
 	}
 
 	/**

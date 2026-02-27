@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Filter API for {@link SolarNodeMetadata}.
  * 
@@ -41,6 +43,7 @@ public interface SolarNodeMetadataFilter extends Filter, MetadataFilter, TagFilt
 	 * 
 	 * @return the node ID, or {@code null} if not available
 	 */
+	@Nullable
 	Long getNodeId();
 
 	/**
@@ -48,6 +51,6 @@ public interface SolarNodeMetadataFilter extends Filter, MetadataFilter, TagFilt
 	 * 
 	 * @return array of node IDs (may be {@code null})
 	 */
-	Long[] getNodeIds();
+	Long @Nullable [] getNodeIds();
 
 }

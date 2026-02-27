@@ -27,6 +27,7 @@ import static net.solarnetwork.central.common.http.HttpConstants.OAUTH_TOKEN_URL
 import static net.solarnetwork.central.common.http.HttpConstants.USERNAME_SETTING;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
 import static net.solarnetwork.util.CollectionUtils.getMapString;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -160,21 +161,21 @@ public class UserNodeInstructionTaskEntity
 
 	@Override
 	public boolean isSameAs(UserNodeInstructionTaskEntity other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.name)
-				&& Objects.equals(this.nodeId, other.nodeId)
-				&& Objects.equals(this.topic, other.topic)
-				&& Objects.equals(this.schedule, other.schedule)
-				&& Objects.equals(this.state, other.state)
-				&& Objects.equals(this.executeAt, other.executeAt)
-				&& Objects.equals(this.lastExecuteAt, other.lastExecuteAt)
-				&& Objects.equals(this.message, other.message)
-				&& Objects.equals(getServiceProperties(), other.getServiceProperties())
-				&& Objects.equals(getResultProperties(), other.getResultProperties())
+		return Objects.equals(this.name, o.name)
+				&& Objects.equals(this.nodeId, o.nodeId)
+				&& Objects.equals(this.topic, o.topic)
+				&& Objects.equals(this.schedule, o.schedule)
+				&& Objects.equals(this.state, o.state)
+				&& Objects.equals(this.executeAt, o.executeAt)
+				&& Objects.equals(this.lastExecuteAt, o.lastExecuteAt)
+				&& Objects.equals(this.message, o.message)
+				&& Objects.equals(getServiceProperties(), o.getServiceProperties())
+				&& Objects.equals(getResultProperties(), o.getResultProperties())
 				;
 		// @formatter:on
 	}

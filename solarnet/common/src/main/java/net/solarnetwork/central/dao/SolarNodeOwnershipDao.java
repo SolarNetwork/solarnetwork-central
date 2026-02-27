@@ -24,6 +24,7 @@ package net.solarnetwork.central.dao;
 
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 
@@ -42,6 +43,7 @@ public interface SolarNodeOwnershipDao {
 	 *        the ID of the node to find the ownership of
 	 * @return the ownership, or {@code null} if not available
 	 */
+	@Nullable
 	SolarNodeOwnership ownershipForNodeId(Long nodeId);
 
 	/**
@@ -51,7 +53,7 @@ public interface SolarNodeOwnershipDao {
 	 *        the ID of the owner to find node ownership for
 	 * @return the ownerships, or {@code null} if none available
 	 */
-	SolarNodeOwnership[] ownershipsForUserId(Long userId);
+	SolarNodeOwnership @Nullable [] ownershipsForUserId(Long userId);
 
 	/**
 	 * Get the available non-archived node IDs associated with a security token

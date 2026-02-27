@@ -23,6 +23,7 @@
 package net.solarnetwork.central.inin.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -211,15 +212,15 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 
 	@Override
 	public boolean isSameAs(C other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.getName())
-				&& Objects.equals(this.phase, other.getPhase())
-				&& Objects.equals(this.serviceIdentifier, other.getServiceIdentifier())
-				&& Objects.equals(this.servicePropsJson, other.getServicePropsJson())
+		return Objects.equals(this.name, o.getName())
+				&& Objects.equals(this.phase, o.getPhase())
+				&& Objects.equals(this.serviceIdentifier, o.getServiceIdentifier())
+				&& Objects.equals(this.servicePropsJson, o.getServicePropsJson())
 				;
 		// @formatter:on
 	}

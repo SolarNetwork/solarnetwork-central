@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.inin.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
@@ -104,15 +105,15 @@ public class CredentialConfiguration
 
 	@Override
 	public boolean isSameAs(CredentialConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.username, other.username)
-				&& Objects.equals(this.password, other.password)
-				&& this.oauth == other.oauth
-				&& Objects.equals(this.expires, other.expires)
+		return Objects.equals(this.username, o.username)
+				&& Objects.equals(this.password, o.password)
+				&& this.oauth == o.oauth
+				&& Objects.equals(this.expires, o.expires)
 				;
 		// @formatter:on
 	}

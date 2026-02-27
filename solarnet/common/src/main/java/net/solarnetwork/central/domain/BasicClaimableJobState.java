@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -109,7 +110,7 @@ public enum BasicClaimableJobState implements ClaimableJobState {
 	 * @since 1.1
 	 */
 	@JsonCreator
-	public static BasicClaimableJobState fromValue(String value) {
+	public static @Nullable BasicClaimableJobState fromValue(@Nullable String value) {
 		if ( value == null || value.isEmpty() ) {
 			return null;
 		}

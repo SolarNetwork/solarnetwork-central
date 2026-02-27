@@ -34,7 +34,9 @@ public interface UserIdRelated {
 	 * Get the user ID this entity is related to.
 	 * 
 	 * @return the user ID
+	 * @throws IllegalStateException
+	 *         if the user ID is not available
 	 */
-	Long getUserId();
+	Long getUserId() throws IllegalStateException;
 
 }

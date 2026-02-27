@@ -118,3 +118,7 @@ graalvmNative {
 tasks.withType(org.springframework.boot.gradle.tasks.aot.ProcessAot).configureEach {
     args("${aotProcessArgs}")
 }
+
+compileAotTestJava {
+	options.errorprone.enabled = false
+}

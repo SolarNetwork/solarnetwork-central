@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -108,14 +109,14 @@ public class TransformConfiguration
 
 	@Override
 	public boolean isSameAs(TransformConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.name)
-				&& Objects.equals(this.serviceIdentifier, other.serviceIdentifier)
-				&& Objects.equals(this.servicePropsJson, other.servicePropsJson)
+		return Objects.equals(this.name, o.name)
+				&& Objects.equals(this.serviceIdentifier, o.serviceIdentifier)
+				&& Objects.equals(this.servicePropsJson, o.servicePropsJson)
 				;
 		// @formatter:on
 	}

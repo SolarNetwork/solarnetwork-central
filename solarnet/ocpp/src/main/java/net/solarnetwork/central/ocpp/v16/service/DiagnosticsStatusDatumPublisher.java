@@ -115,30 +115,30 @@ public class DiagnosticsStatusDatumPublisher extends DiagnosticsStatusNotificati
 	}
 
 	@Override
-	public void processActionMessage(ActionMessage<DiagnosticsStatusNotificationRequest> message,
-			ActionMessageResultHandler<DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse> resultHandler) {
-		if ( message != null && message.getMessage() != null ) {
-			DiagnosticsStatusNotificationRequest notif = message.getMessage();
-			DatumSamples s = new DatumSamples();
-			if ( notif.getStatus() != null ) {
-				s.putSampleValue(DatumProperty.Status.getClassification(),
-						DatumProperty.Status.getPropertyName(), notif.getStatus().toString());
-			}
-
-			if ( !s.isEmpty() ) {
-				final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
-				final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(),
-						cp.getId());
-
-				GeneralNodeDatum d = new GeneralNodeDatum();
-				d.setCreated(Instant.now());
-				d.setNodeId(cp.getNodeId());
-				d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
-				d.setSamples(s);
-				pubSupport.publishDatum(cps, d);
-			}
+	protected void handleActionMessage(final ActionMessage<DiagnosticsStatusNotificationRequest> message,
+			final ActionMessageResultHandler<DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse> resultHandler,
+			final DiagnosticsStatusNotificationRequest req) {
+		DatumSamples s = null;
+		if ( req.getStatus() != null ) {
+			s = new DatumSamples();
+			s.putSampleValue(DatumProperty.Status.getClassification(),
+					DatumProperty.Status.getPropertyName(), req.getStatus().toString());
 		}
-		super.processActionMessage(message, resultHandler);
+
+		if ( s != null && !s.isEmpty() ) {
+			final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
+			final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(),
+					cp.getId());
+
+			GeneralNodeDatum d = new GeneralNodeDatum();
+			d.setCreated(Instant.now());
+			d.setNodeId(cp.getNodeId());
+			d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
+			d.setSamples(s);
+			pubSupport.publishDatum(cps, d);
+		}
+
+		super.handleActionMessage(message, resultHandler, req);
 	}
 
 	/**

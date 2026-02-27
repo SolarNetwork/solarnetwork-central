@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.export.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
@@ -99,13 +100,13 @@ public class UserDataConfiguration extends BaseExportConfigurationEntity<UserDat
 
 	@Override
 	public boolean isSameAs(UserDataConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
 		return  // compare decoded JSON, as JSON key order not assumed
-				Objects.equals(getFilter(), other.getFilter())
+				Objects.equals(getFilter(), o.getFilter())
 				;
 		// @formatter:on
 	}

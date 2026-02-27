@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
@@ -115,15 +116,15 @@ public class CloudControlConfiguration
 
 	@Override
 	public boolean isSameAs(CloudControlConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.integrationId, other.integrationId)
-				&& Objects.equals(this.nodeId, other.nodeId)
-				&& Objects.equals(this.controlId, other.controlId)
-				&& Objects.equals(this.controlReference, other.controlReference)
+		return Objects.equals(this.integrationId, o.integrationId)
+				&& Objects.equals(this.nodeId, o.nodeId)
+				&& Objects.equals(this.controlId, o.controlId)
+				&& Objects.equals(this.controlReference, o.controlReference)
 				;
 		// @formatter:on
 	}

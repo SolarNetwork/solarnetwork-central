@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.Location;
 
@@ -36,10 +37,10 @@ import net.solarnetwork.domain.Location;
 @JsonPropertyOrder({ "locationId", "sourceId", "features", "location" })
 public class LocationRequestInfo implements Cloneable {
 
-	private Long locationId;
-	private Location location;
-	private String sourceId;
-	private Set<String> features;
+	private @Nullable Long locationId;
+	private @Nullable Location location;
+	private @Nullable String sourceId;
+	private @Nullable Set<String> features;
 
 	@Override
 	public LocationRequestInfo clone() {
@@ -56,7 +57,7 @@ public class LocationRequestInfo implements Cloneable {
 	 * 
 	 * @return the locationId
 	 */
-	public Long getLocationId() {
+	public final @Nullable Long getLocationId() {
 		return locationId;
 	}
 
@@ -66,7 +67,7 @@ public class LocationRequestInfo implements Cloneable {
 	 * @param locationId
 	 *        the locationId to set
 	 */
-	public void setLocationId(Long locationId) {
+	public final void setLocationId(@Nullable Long locationId) {
 		this.locationId = locationId;
 	}
 
@@ -75,7 +76,7 @@ public class LocationRequestInfo implements Cloneable {
 	 * 
 	 * @return the location
 	 */
-	public Location getLocation() {
+	public final @Nullable Location getLocation() {
 		return location;
 	}
 
@@ -85,7 +86,7 @@ public class LocationRequestInfo implements Cloneable {
 	 * @param location
 	 *        the location to set
 	 */
-	public void setLocation(Location location) {
+	public final void setLocation(@Nullable Location location) {
 		this.location = location;
 	}
 
@@ -94,7 +95,7 @@ public class LocationRequestInfo implements Cloneable {
 	 * 
 	 * @return the sourceId
 	 */
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return sourceId;
 	}
 
@@ -104,7 +105,7 @@ public class LocationRequestInfo implements Cloneable {
 	 * @param sourceId
 	 *        the sourceId to set
 	 */
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(@Nullable String sourceId) {
 		this.sourceId = sourceId;
 	}
 
@@ -113,7 +114,7 @@ public class LocationRequestInfo implements Cloneable {
 	 * 
 	 * @return the features
 	 */
-	public Set<String> getFeatures() {
+	public final @Nullable Set<String> getFeatures() {
 		return features;
 	}
 
@@ -123,7 +124,7 @@ public class LocationRequestInfo implements Cloneable {
 	 * @param features
 	 *        the features to set
 	 */
-	public void setFeatures(Set<String> features) {
+	public final void setFeatures(@Nullable Set<String> features) {
 		this.features = features;
 	}
 

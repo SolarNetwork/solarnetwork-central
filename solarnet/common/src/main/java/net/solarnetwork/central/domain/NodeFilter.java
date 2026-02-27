@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Filter API for node related data.
  *
@@ -37,6 +39,7 @@ public interface NodeFilter extends Filter {
 	 *
 	 * @return the node ID, or {@code null} if not available
 	 */
+	@Nullable
 	Long getNodeId();
 
 	/**
@@ -44,6 +47,6 @@ public interface NodeFilter extends Filter {
 	 *
 	 * @return array of node IDs (may be {@code null})
 	 */
-	Long[] getNodeIds();
+	Long @Nullable [] getNodeIds();
 
 }

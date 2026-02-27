@@ -25,6 +25,7 @@ package net.solarnetwork.central.dao;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.ClaimableJob;
 import net.solarnetwork.central.domain.ClaimableJobState;
 
@@ -57,6 +58,7 @@ public interface ClaimableJobDao<C, R, S extends ClaimableJobState, T extends Cl
 	 *
 	 * @return a claimed job, or {@code null} if none could be claimed
 	 */
+	@Nullable
 	T claimQueuedJob();
 
 	/**
@@ -88,7 +90,7 @@ public interface ClaimableJobDao<C, R, S extends ClaimableJobState, T extends Cl
 	 *        current state of the job does not matter
 	 * @return {@literal true} if the job state was changed
 	 */
-	boolean updateJobState(K id, S desiredState, Set<S> expectedStates);
+	boolean updateJobState(K id, S desiredState, @Nullable Set<S> expectedStates);
 
 	/**
 	 * Update the configuration for a specific job.
@@ -115,8 +117,8 @@ public interface ClaimableJobDao<C, R, S extends ClaimableJobState, T extends Cl
 	 * @param percentComplete
 	 *        the percent complete, from 0 to 1
 	 * @param result
-	 *        the result
+	 *        the result, if available
 	 * @return {@literal true} if the job progress was updated
 	 */
-	boolean updateJobProgress(K id, double percentComplete, R result);
+	boolean updateJobProgress(K id, double percentComplete, @Nullable R result);
 }

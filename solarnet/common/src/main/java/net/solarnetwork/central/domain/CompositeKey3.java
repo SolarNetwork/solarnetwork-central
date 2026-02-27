@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * API for a composite key with three components.
  *
@@ -41,6 +43,7 @@ public interface CompositeKey3<K1, K2, K3> extends CompositeKey {
 	 *
 	 * @return the first key component
 	 */
+	@Nullable
 	K1 keyComponent1();
 
 	/**
@@ -48,6 +51,7 @@ public interface CompositeKey3<K1, K2, K3> extends CompositeKey {
 	 *
 	 * @return the second key component
 	 */
+	@Nullable
 	K2 keyComponent2();
 
 	/**
@@ -55,6 +59,7 @@ public interface CompositeKey3<K1, K2, K3> extends CompositeKey {
 	 *
 	 * @return the third key component
 	 */
+	@Nullable
 	K3 keyComponent3();
 
 	@Override
@@ -73,7 +78,7 @@ public interface CompositeKey3<K1, K2, K3> extends CompositeKey {
 	}
 
 	@Override
-	default Object keyComponent(int index) {
+	default @Nullable Object keyComponent(int index) {
 		if ( !keyComponentIsAssigned(index) ) {
 			return null;
 		}

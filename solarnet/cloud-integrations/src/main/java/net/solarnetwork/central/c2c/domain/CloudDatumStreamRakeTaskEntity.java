@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -47,7 +48,7 @@ import net.solarnetwork.codec.jackson.JsonUtils;
 @JsonIgnoreProperties({ "id", "enabled" })
 @JsonPropertyOrder({ "userId", "configId", "datumStreamId", "state", "executeAt", "offset", "message",
 		"serviceProperties" })
-public class CloudDatumStreamRakeTaskEntity
+public final class CloudDatumStreamRakeTaskEntity
 		extends BaseUserModifiableEntity<CloudDatumStreamRakeTaskEntity, UserLongCompositePK>
 		implements CloudDatumStreamIdRelated {
 
@@ -121,16 +122,16 @@ public class CloudDatumStreamRakeTaskEntity
 
 	@Override
 	public boolean isSameAs(CloudDatumStreamRakeTaskEntity other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.state, other.state)
-				&& Objects.equals(this.executeAt, other.executeAt)
-				&& Objects.equals(this.offset, other.offset)
-				&& Objects.equals(this.message, other.message)
-				&& Objects.equals(getServiceProperties(), other.getServiceProperties())
+		return Objects.equals(this.state, o.state)
+				&& Objects.equals(this.executeAt, o.executeAt)
+				&& Objects.equals(this.offset, o.offset)
+				&& Objects.equals(this.message, o.message)
+				&& Objects.equals(getServiceProperties(), o.getServiceProperties())
 				;
 		// @formatter:on
 	}

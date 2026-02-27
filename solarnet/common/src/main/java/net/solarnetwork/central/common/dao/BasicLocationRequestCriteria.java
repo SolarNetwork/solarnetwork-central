@@ -24,6 +24,7 @@ package net.solarnetwork.central.common.dao;
 
 import java.util.Collections;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.LocationRequestStatus;
 import net.solarnetwork.dao.PaginationCriteria;
 
@@ -36,7 +37,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  */
 public class BasicLocationRequestCriteria extends BasicCoreCriteria implements LocationRequestCriteria {
 
-	private Set<LocationRequestStatus> requestStatuses;
+	private @Nullable Set<LocationRequestStatus> requestStatuses;
 
 	/**
 	 * Default constructor.
@@ -48,12 +49,12 @@ public class BasicLocationRequestCriteria extends BasicCoreCriteria implements L
 	/**
 	 * Copy constructor.
 	 */
-	public BasicLocationRequestCriteria(LocationRequestCriteria other) {
+	public BasicLocationRequestCriteria(@Nullable LocationRequestCriteria other) {
 		super(other);
 	}
 
 	@Override
-	public void copyFrom(PaginationCriteria criteria) {
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof LocationRequestCriteria c ) {
 			setRequestStatuses(c.getRequestStatuses());
@@ -84,12 +85,12 @@ public class BasicLocationRequestCriteria extends BasicCoreCriteria implements L
 	 * @param status
 	 *        the status to set, or {@code null} to remove all statuses
 	 */
-	public void setRequestStatus(LocationRequestStatus status) {
+	public final void setRequestStatus(@Nullable LocationRequestStatus status) {
 		setRequestStatuses(status != null ? Collections.singleton(status) : null);
 	}
 
 	@Override
-	public Set<LocationRequestStatus> getRequestStatuses() {
+	public final @Nullable Set<LocationRequestStatus> getRequestStatuses() {
 		return requestStatuses;
 	}
 
@@ -99,7 +100,7 @@ public class BasicLocationRequestCriteria extends BasicCoreCriteria implements L
 	 * @param requestStatuses
 	 *        the statuses to set
 	 */
-	public void setRequestStatuses(Set<LocationRequestStatus> requestStatuses) {
+	public final void setRequestStatuses(@Nullable Set<LocationRequestStatus> requestStatuses) {
 		this.requestStatuses = requestStatuses;
 	}
 

@@ -25,6 +25,7 @@ package net.solarnetwork.central.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.Identity;
 
 /**
@@ -41,7 +42,7 @@ public class BaseObjectIdentity<K extends Comparable<K> & Serializable>
 	@Serial
 	private static final long serialVersionUID = -2183771061512318513L;
 
-	private K id = null;
+	private @Nullable K id;
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -68,7 +69,7 @@ public class BaseObjectIdentity<K extends Comparable<K> & Serializable>
 	 */
 	@SuppressWarnings("EqualsGetClass")
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -86,7 +87,7 @@ public class BaseObjectIdentity<K extends Comparable<K> & Serializable>
 	 * @return the id
 	 */
 	@Override
-	public K getId() {
+	public final @Nullable K getId() {
 		return id;
 	}
 
@@ -96,7 +97,7 @@ public class BaseObjectIdentity<K extends Comparable<K> & Serializable>
 	 * @param id
 	 *        the id to set
 	 */
-	public void setId(K id) {
+	public final void setId(@Nullable K id) {
 		this.id = id;
 	}
 

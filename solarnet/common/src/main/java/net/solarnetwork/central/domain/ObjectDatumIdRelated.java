@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
@@ -39,6 +40,7 @@ public interface ObjectDatumIdRelated {
 	 * 
 	 * @return the kind
 	 */
+	@Nullable
 	ObjectDatumKind getKind();
 
 	/**
@@ -46,6 +48,7 @@ public interface ObjectDatumIdRelated {
 	 * 
 	 * @return the object ID
 	 */
+	@Nullable
 	Long getObjectId();
 
 	/**
@@ -69,7 +72,7 @@ public interface ObjectDatumIdRelated {
 	 * @return the node ID, or {@code null} if not node ID related or the ID is
 	 *         {@code null}
 	 */
-	default Long nodeId() {
+	default @Nullable Long nodeId() {
 		return (isNodeId() ? getObjectId() : null);
 	}
 
@@ -102,7 +105,7 @@ public interface ObjectDatumIdRelated {
 	 * @return the location ID, or {@code null} if not location ID related or
 	 *         the ID is {@code null}
 	 */
-	default Long locationId() {
+	default @Nullable Long locationId() {
 		return (isLocationId() ? getObjectId() : null);
 	}
 

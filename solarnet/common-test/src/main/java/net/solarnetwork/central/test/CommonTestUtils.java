@@ -285,7 +285,7 @@ public final class CommonTestUtils {
 	 */
 	public static String utf8StringResource(String resource, Class<?> clazz) {
 		try (InputStream in = clazz.getResourceAsStream(resource)) {
-			if ( in != null ) {
+			if ( in == null ) {
 				throw new RuntimeException(
 						"Resource [%s] not found from class %s".formatted(resource, clazz));
 			}
