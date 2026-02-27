@@ -285,11 +285,8 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 		final String accessTokenValue = nonEmptyString(
 				tokenRes != null ? tokenRes.path(JWT_PROPERTY).asString() : null);
 		if ( accessTokenValue != null ) {
-			var registration = new ClientAccessTokenEntity(accessTokenId, clock.instant());
-			registration.setAccessTokenIssuedAt(authReqTime);
-			registration.setAccessTokenType("Bearer");
-			registration.setAccessToken(accessTokenValue.getBytes(UTF_8));
-			registration.setAccessTokenExpiresAt(authReqTime.plus(ACCESS_TOKEN_TTL));
+			var registration = new ClientAccessTokenEntity(accessTokenId, clock.instant(), "Bearer",
+					accessTokenValue.getBytes(UTF_8), authReqTime, authReqTime.plus(ACCESS_TOKEN_TTL));
 			clientAccessTokenDao.save(registration);
 			headers.setBearerAuth(accessTokenValue);
 		}

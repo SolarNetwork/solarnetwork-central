@@ -50,13 +50,14 @@ import java.util.List;
 import java.util.Map;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.service.CertificateException;
 
 /**
  * Certificate utilities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class CertificateUtils {
 
@@ -75,32 +76,17 @@ public final class CertificateUtils {
 		CANONICAL_DN_MAPPING = Map.of("1.2.840.113549.1.9.1", "emailAddress");
 	}
 
-	private static final CertificateFactory X509_CERT_FACTORY = defaultX509CertificateFactory();
-
-	private static CertificateFactory defaultX509CertificateFactory() {
-		try {
-			return CertificateFactory.getInstance(X509_CERTIFICATE_TYPE);
-		} catch ( Exception e ) {
-			// damn
-			return null;
-		}
-	}
-
 	/**
-	 * Get a certificate factory for X.509 certificates.
-	 *
-	 * @return the factory
-	 * @throws CertificateException
-	 *         if unable to instantiate the factory
+	 * The X.509 certificate factory.
+	 * 
+	 * @since 1.1
 	 */
-	public static CertificateFactory x509CertificateFactory() {
-		if ( X509_CERT_FACTORY != null ) {
-			return X509_CERT_FACTORY;
-		}
+	public static final CertificateFactory X509_CERTIFICATE_FACTORY;
+	static {
 		try {
-			return CertificateFactory.getInstance(X509_CERTIFICATE_TYPE);
-		} catch ( Exception e ) {
-			throw new CertificateException("Error obtaining X.509 certificate factory.", e);
+			X509_CERTIFICATE_FACTORY = CertificateFactory.getInstance(X509_CERTIFICATE_TYPE);
+		} catch ( java.security.cert.CertificateException e ) {
+			throw new IllegalStateException("Unable to get X.509 CertificateFactory.", e);
 		}
 	}
 
@@ -116,7 +102,7 @@ public final class CertificateUtils {
 	 * @throws CertificateParsingException
 	 *         if an error parsing the subject alternative names occurs
 	 */
-	public static String emailSubjectAlternativeName(X509Certificate cert)
+	public static @Nullable String emailSubjectAlternativeName(X509Certificate cert)
 			throws CertificateParsingException {
 		Collection<List<?>> alts = requireNonNullArgument(cert, "cert").getSubjectAlternativeNames();
 		if ( alts == null ) {
@@ -191,7 +177,8 @@ public final class CertificateUtils {
 	 * @throws net.solarnetwork.service.CertificateException
 	 *         if an error occurs initializing the key store
 	 */
-	public static KeyStore serverKeyStore(Path certificatePath, Path certificateKey, String alias)
+	public static @Nullable KeyStore serverKeyStore(@Nullable Path certificatePath,
+			@Nullable Path certificateKey, @Nullable String alias)
 			throws net.solarnetwork.service.CertificateException {
 		if ( certificatePath == null || certificateKey == null || alias == null ) {
 			return null;
@@ -239,8 +226,7 @@ public final class CertificateUtils {
 	public static PKIXCertPathValidatorResult validateCertificateChain(KeyStore trustStore,
 			X509Certificate[] chain) throws net.solarnetwork.service.CertificateException {
 		try {
-			CertificateFactory cf = CertificateFactory.getInstance("X.509");
-			CertPath path = cf.generateCertPath(Arrays.asList(chain));
+			CertPath path = X509_CERTIFICATE_FACTORY.generateCertPath(Arrays.asList(chain));
 			PKIXParameters pkixParams = new PKIXParameters(trustStore);
 			pkixParams.setRevocationEnabled(false); // possibly enable in future
 			CertPathValidator validator = CertPathValidator.getInstance("PKIX");

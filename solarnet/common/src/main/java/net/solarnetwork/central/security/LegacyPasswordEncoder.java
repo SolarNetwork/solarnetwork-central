@@ -23,6 +23,7 @@
 package net.solarnetwork.central.security;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Password encoder using unsalted SHA-256 hashes.
@@ -36,15 +37,17 @@ import org.apache.commons.codec.digest.DigestUtils;
 public class LegacyPasswordEncoder
 		implements org.springframework.security.crypto.password.PasswordEncoder {
 
+	@Deprecated
 	@Override
-	public String encode(CharSequence rawPassword) {
+	public @Nullable String encode(@Nullable CharSequence rawPassword) {
 		return (rawPassword == null ? null : "{SHA}" + DigestUtils.sha256Hex(rawPassword.toString()));
 	}
 
+	@Deprecated
 	@Override
-	public boolean matches(CharSequence rawPassword, String encodedPassword) {
-		return (rawPassword != null && encodedPassword != null
-				&& encode(rawPassword).equals(encodedPassword));
+	public boolean matches(@Nullable CharSequence rawPassword, @Nullable String encodedPassword) {
+		final String enc = encode(rawPassword);
+		return (enc != null && enc.equals(encodedPassword));
 	}
 
 }

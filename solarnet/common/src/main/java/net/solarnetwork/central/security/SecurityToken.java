@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.domain.SecurityPolicy;
 
@@ -60,5 +61,6 @@ public interface SecurityToken extends SecurityActor, UserIdRelated {
 	 * 
 	 * @return optional security policy
 	 */
+	@Nullable
 	SecurityPolicy getPolicy();
 }

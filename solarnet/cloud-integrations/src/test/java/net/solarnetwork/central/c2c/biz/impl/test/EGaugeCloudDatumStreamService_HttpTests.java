@@ -348,11 +348,9 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 		// make access token available
 		ClientAccessTokenEntity accessToken = new ClientAccessTokenEntity(TEST_USER_ID,
 				userIdSystemIdentifier(TEST_USER_ID, CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, deviceId),
-				"owner", Instant.now());
-		accessToken.setAccessTokenType("Bearer");
-		accessToken.setAccessToken("TOKEN".getBytes(StandardCharsets.UTF_8));
-		accessToken.setAccessTokenIssuedAt(clock.instant().minus(5L, ChronoUnit.MINUTES));
-		accessToken.setAccessTokenExpiresAt(clock.instant().plus(1, ChronoUnit.HOURS));
+				"owner", Instant.now(), "Bearer", "TOKEN".getBytes(StandardCharsets.UTF_8),
+				clock.instant().minus(5L, ChronoUnit.MINUTES),
+				clock.instant().plus(1, ChronoUnit.HOURS));
 		given(clientAccessTokenDao.get(accessToken.getId())).willReturn(accessToken);
 
 		// list registers fails with 401
@@ -529,11 +527,9 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 		// make access token available
 		ClientAccessTokenEntity accessToken = new ClientAccessTokenEntity(TEST_USER_ID,
 				userIdSystemIdentifier(TEST_USER_ID, CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, deviceId),
-				"owner", Instant.now());
-		accessToken.setAccessTokenType("Bearer");
-		accessToken.setAccessToken("TOKEN".getBytes(StandardCharsets.UTF_8));
-		accessToken.setAccessTokenIssuedAt(clock.instant().minus(5L, ChronoUnit.MINUTES));
-		accessToken.setAccessTokenExpiresAt(clock.instant().plus(1, ChronoUnit.HOURS));
+				"owner", Instant.now(), "Bearer", "TOKEN".getBytes(StandardCharsets.UTF_8),
+				clock.instant().minus(5L, ChronoUnit.MINUTES),
+				clock.instant().plus(1, ChronoUnit.HOURS));
 		given(clientAccessTokenDao.get(accessToken.getId())).willReturn(accessToken);
 
 		// list registers fails with 404

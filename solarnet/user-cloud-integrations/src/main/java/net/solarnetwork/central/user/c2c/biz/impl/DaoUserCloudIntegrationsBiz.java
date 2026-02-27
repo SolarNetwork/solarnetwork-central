@@ -399,11 +399,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 		var tokenId = new UserStringStringCompositePK(config.getUserId(), config.systemIdentifier(),
 				clientId);
-		var registration = new ClientAccessTokenEntity(tokenId, clock.instant());
-		registration.setAccessTokenType("Bearer");
-		registration.setAccessToken(accessTokenValue.getBytes(UTF_8));
-		registration.setAccessTokenIssuedAt(accessTokenIssuedAt);
-		registration.setAccessTokenExpiresAt(accessTokenExpiresAt);
+		var registration = new ClientAccessTokenEntity(tokenId, clock.instant(), "Bearer",
+				accessTokenValue.getBytes(UTF_8), accessTokenIssuedAt, accessTokenExpiresAt);
 		registration.setRefreshToken(refreshTokenValue.getBytes(UTF_8));
 		registration.setRefreshTokenIssuedAt(refreshTokenIssuedAt);
 		clientAccessTokenDao.save(registration);

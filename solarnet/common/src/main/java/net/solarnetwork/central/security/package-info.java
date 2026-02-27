@@ -1,7 +1,7 @@
 /* ==================================================================
- * BasicSecurityException.java - Dec 18, 2009 4:31:14 PM
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2007-2009 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,36 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork common test utilities.
+ */
+
+@NullMarked
 package net.solarnetwork.central.security;
 
-import java.io.Serial;
-import org.jspecify.annotations.Nullable;
-
-/**
- * Exception for security errors.
- *
- * @author matt
- * @version 1.0
- */
-public class BasicSecurityException extends RuntimeException {
-
-	@Serial
-	private static final long serialVersionUID = 4715317846353024503L;
-
-	public BasicSecurityException() {
-		super();
-	}
-
-	public BasicSecurityException(String msg, @Nullable Throwable t) {
-		super(msg, t);
-	}
-
-	public BasicSecurityException(String msg) {
-		super(msg);
-	}
-
-	public BasicSecurityException(@Nullable Throwable t) {
-		super(t);
-	}
-
-}
+import org.jspecify.annotations.NullMarked;

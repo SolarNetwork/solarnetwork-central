@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.aop.test;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.privateOwnershipFor;
@@ -121,7 +122,7 @@ public class QuerySecurityAspectTests {
 	}
 
 	private AuthenticatedNode setAuthenticatedNode(final Long nodeId) {
-		AuthenticatedNode node = new AuthenticatedNode(nodeId, null, false);
+		AuthenticatedNode node = new AuthenticatedNode(nodeId, emptyList(), false);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(node, "foobar", "ROLE_NODE");
 		setUser(auth);
 		return node;

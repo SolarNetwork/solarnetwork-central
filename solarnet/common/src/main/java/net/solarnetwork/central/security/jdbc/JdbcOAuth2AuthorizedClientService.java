@@ -304,11 +304,9 @@ public class JdbcOAuth2AuthorizedClientService
 		}
 		var entity = new ClientAccessTokenEntity(
 				userIdFromSystemIdentifier(clientRegistration.getRegistrationId()),
-				clientRegistration.getRegistrationId(), principal.getName(), Instant.now());
-		entity.setAccessTokenType(accessToken.getTokenType().getValue());
-		entity.setAccessToken(accessToken.getTokenValue().getBytes(UTF_8));
-		entity.setAccessTokenIssuedAt(accessToken.getIssuedAt());
-		entity.setAccessTokenExpiresAt(accessToken.getExpiresAt());
+				clientRegistration.getRegistrationId(), principal.getName(), Instant.now(),
+				accessToken.getTokenType().getValue(), accessToken.getTokenValue().getBytes(UTF_8),
+				accessToken.getIssuedAt(), accessToken.getExpiresAt());
 		entity.setAccessTokenScopes(accessToken.getScopes());
 		entity.setRefreshToken(refreshTokenValue);
 		if ( refreshToken != null ) {
@@ -453,12 +451,8 @@ public class JdbcOAuth2AuthorizedClientService
 			String principalName = rs.getString(3);
 			Instant created = getTimestampInstant(rs, 11);
 			var result = new ClientAccessTokenEntity(userId, clientRegistrationId, principalName,
-					created);
-
-			result.setAccessTokenType(rs.getString(4));
-			result.setAccessToken(rs.getBytes(5));
-			result.setAccessTokenIssuedAt(getTimestampInstant(rs, 6));
-			result.setAccessTokenExpiresAt(getTimestampInstant(rs, 7));
+					created, rs.getString(4), rs.getBytes(5), getTimestampInstant(rs, 6),
+					getTimestampInstant(rs, 7));
 			result.setAccessTokenScopes(StringUtils.commaDelimitedListToSet(rs.getString(8)));
 			byte[] refreshTokenValue = rs.getBytes(9);
 			if ( refreshTokenValue != null ) {

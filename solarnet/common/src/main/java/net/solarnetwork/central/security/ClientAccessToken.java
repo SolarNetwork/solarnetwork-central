@@ -23,9 +23,11 @@
 package net.solarnetwork.central.security;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 
 /**
  * API for an opaque client access token.
@@ -67,10 +69,11 @@ public interface ClientAccessToken {
 	 * Get the access token as a UTF-8 string value.
 	 *
 	 * @return the access token string value
+	 * @throws IllegalStateException
+	 *         if {@link #getAccessToken()} is {@code null}
 	 */
-	default String getAccessTokenValue() {
-		byte[] val = getAccessToken();
-		return (val != null ? new String(val, UTF_8) : null);
+	default String getAccessTokenValue() throws IllegalStateException {
+		return new String(nonnull(getAccessToken(), "accessToken"), UTF_8);
 	}
 
 	/**
@@ -105,6 +108,7 @@ public interface ClientAccessToken {
 	 *
 	 * @return the scopes, or {@code null}
 	 */
+	@Nullable
 	Set<String> getAccessTokenScopes();
 
 	/**
@@ -112,14 +116,14 @@ public interface ClientAccessToken {
 	 *
 	 * @return the refresh token, or {@code null}
 	 */
-	byte[] getRefreshToken();
+	byte @Nullable [] getRefreshToken();
 
 	/**
 	 * Get the refresh token as a UTF-8 string value.
 	 *
 	 * @return the refresh token string value, or {@code null}
 	 */
-	default String getRefreshTokenValue() {
+	default @Nullable String getRefreshTokenValue() {
 		byte[] val = getRefreshToken();
 		return (val != null ? new String(val, UTF_8) : null);
 	}
@@ -129,6 +133,7 @@ public interface ClientAccessToken {
 	 *
 	 * @return the issue date, or {@code null}
 	 */
+	@Nullable
 	Instant getRefreshTokenIssuedAt();
 
 }

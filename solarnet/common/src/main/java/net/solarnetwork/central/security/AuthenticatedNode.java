@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.security;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.Collection;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -42,7 +44,7 @@ public class AuthenticatedNode implements UserDetails, SecurityNode {
 	private final Long nodeId;
 	private final Collection<GrantedAuthority> authorities;
 	private final String username;
-	private final String password;
+	private final @Nullable String password;
 	private final boolean authenticatedWithToken;
 
 	/**
@@ -54,10 +56,13 @@ public class AuthenticatedNode implements UserDetails, SecurityNode {
 	 *        the granted authorities
 	 * @param authenticatedWithToken
 	 *        the authenticated with token flag
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public AuthenticatedNode(Long nodeId, Collection<GrantedAuthority> auths,
 			boolean authenticatedWithToken) {
-		this(nodeId, nodeId.toString(), "", auths, authenticatedWithToken);
+		this(requireNonNullArgument(nodeId, "nodeId"), nodeId.toString(), "", auths,
+				authenticatedWithToken);
 	}
 
 	/**
@@ -73,14 +78,16 @@ public class AuthenticatedNode implements UserDetails, SecurityNode {
 	 *        the granted authorities
 	 * @param authenticatedWithToken
 	 *        the authenticated with token flag
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code password} is {@code null}
 	 */
-	public AuthenticatedNode(Long nodeId, String username, String password,
+	public AuthenticatedNode(Long nodeId, String username, @Nullable String password,
 			Collection<GrantedAuthority> auths, boolean authenticatedWithToken) {
 		super();
-		this.username = username;
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
+		this.authorities = requireNonNullArgument(auths, "auths");
+		this.username = requireNonNullArgument(username, "username");
 		this.password = password;
-		this.nodeId = nodeId;
-		this.authorities = auths;
 		this.authenticatedWithToken = authenticatedWithToken;
 	}
 
@@ -98,7 +105,7 @@ public class AuthenticatedNode implements UserDetails, SecurityNode {
 	}
 
 	@Override
-	public String getPassword() {
+	public @Nullable String getPassword() {
 		return password;
 	}
 

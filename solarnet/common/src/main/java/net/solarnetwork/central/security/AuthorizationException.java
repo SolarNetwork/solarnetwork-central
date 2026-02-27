@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.security;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.Arrays;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Exception thrown when authorization to some resource fails.
@@ -83,7 +85,7 @@ public class AuthorizationException extends BasicSecurityException {
 	 *         {@code null}
 	 * @since 1.2
 	 */
-	public static <T> T requireNonNullObject(T object, Object id) {
+	public static <T> T requireNonNullObject(@Nullable T object, @Nullable Object id) {
 		if ( object == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);
 		}
@@ -91,8 +93,8 @@ public class AuthorizationException extends BasicSecurityException {
 	}
 
 	private final Reason reason;
-	private final String email;
-	private final Object id;
+	private final @Nullable String email;
+	private final @Nullable Object id;
 
 	/**
 	 * Construct authorization exception.
@@ -101,10 +103,12 @@ public class AuthorizationException extends BasicSecurityException {
 	 *        the attempted login
 	 * @param reason
 	 *        the reason for the exception
+	 * @throws IllegalArgumentException
+	 *         if {@code reason} is {@code null}
 	 */
-	public AuthorizationException(String username, Reason reason) {
+	public AuthorizationException(@Nullable String username, Reason reason) {
 		super();
-		this.reason = reason;
+		this.reason = requireNonNullArgument(reason, "reason");
 		this.email = username;
 		this.id = null;
 	}
@@ -116,10 +120,12 @@ public class AuthorizationException extends BasicSecurityException {
 	 *        the reason for the exception
 	 * @param id
 	 *        the object ID
+	 * @throws IllegalArgumentException
+	 *         if {@code reason} is {@code null}
 	 */
-	public AuthorizationException(Reason reason, Object id) {
+	public AuthorizationException(Reason reason, @Nullable Object id) {
 		super();
-		this.reason = reason;
+		this.reason = requireNonNullArgument(reason, "reason");
 		this.email = null;
 		this.id = id;
 	}
@@ -134,10 +140,12 @@ public class AuthorizationException extends BasicSecurityException {
 	 * @param cause
 	 *        a cause
 	 * @since 1.3
+	 * @throws IllegalArgumentException
+	 *         if {@code reason} is {@code null}
 	 */
-	public AuthorizationException(Reason reason, Object id, Throwable cause) {
+	public AuthorizationException(Reason reason, @Nullable Object id, @Nullable Throwable cause) {
 		super(cause);
-		this.reason = reason;
+		this.reason = requireNonNullArgument(reason, "reason");
 		this.email = null;
 		this.id = id;
 	}
@@ -147,7 +155,7 @@ public class AuthorizationException extends BasicSecurityException {
 	 *
 	 * @return login value (or {@code null} if not available)
 	 */
-	public String getEmail() {
+	public @Nullable String getEmail() {
 		return email;
 	}
 
@@ -156,7 +164,7 @@ public class AuthorizationException extends BasicSecurityException {
 	 *
 	 * @return the primary key (or {@code null} if not available)
 	 */
-	public Object getId() {
+	public @Nullable Object getId() {
 		return id;
 	}
 
@@ -170,7 +178,7 @@ public class AuthorizationException extends BasicSecurityException {
 	}
 
 	@Override
-	public String getMessage() {
+	public @Nullable String getMessage() {
 		return (reason == null ? null
 				: reason + " [" + (email == null
 						? (id != null && id.getClass().isArray() ? Arrays.toString((Object[]) id) : id)

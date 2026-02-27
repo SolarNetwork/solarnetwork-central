@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.biz.dao.test;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
@@ -1070,7 +1071,7 @@ public class DaoRegistrationBizTests {
 	}
 
 	private AuthenticatedNode setAuthenticatedNode(final Long nodeId) {
-		AuthenticatedNode node = new AuthenticatedNode(nodeId, null, false);
+		AuthenticatedNode node = new AuthenticatedNode(nodeId, emptyList(), false);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(node, "foobar", "ROLE_NODE");
 		SecurityContextHolder.getContext().setAuthentication(auth);
 		return node;
