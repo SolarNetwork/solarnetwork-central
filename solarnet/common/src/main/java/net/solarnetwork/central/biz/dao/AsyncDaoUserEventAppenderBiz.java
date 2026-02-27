@@ -34,6 +34,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.uuid.UUIDComparator;
@@ -121,7 +122,7 @@ public class AsyncDaoUserEventAppenderBiz
 	private final StatTracker stats;
 	private final BlockingQueue<UserEvent> queue;
 	private final UuidGenerator uuidGenerator;
-	private MqttJsonPublisher<UserEvent> solarFluxPublisher;
+	private @Nullable MqttJsonPublisher<UserEvent> solarFluxPublisher;
 	private int queueLagAlertThreshold = DEFAULT_QUEUE_LAG_ALERT_THRESHOLD;
 
 	/**
@@ -271,7 +272,7 @@ public class AsyncDaoUserEventAppenderBiz
 	 * @return the threshold; defaults to
 	 *         {@link #DEFAULT_QUEUE_LAG_ALERT_THRESHOLD}
 	 */
-	public int getQueueLagAlertThreshold() {
+	public final int getQueueLagAlertThreshold() {
 		return queueLagAlertThreshold;
 	}
 
@@ -281,7 +282,7 @@ public class AsyncDaoUserEventAppenderBiz
 	 * @param queueLagAlertThreshold
 	 *        the threshold to set
 	 */
-	public void setQueueLagAlertThreshold(int queueLagAlertThreshold) {
+	public final void setQueueLagAlertThreshold(int queueLagAlertThreshold) {
 		this.queueLagAlertThreshold = queueLagAlertThreshold;
 	}
 
@@ -290,7 +291,7 @@ public class AsyncDaoUserEventAppenderBiz
 	 *
 	 * @return the publisher
 	 */
-	public MqttJsonPublisher<UserEvent> getSolarFluxPublisher() {
+	public final @Nullable MqttJsonPublisher<UserEvent> getSolarFluxPublisher() {
 		return solarFluxPublisher;
 	}
 
@@ -300,7 +301,7 @@ public class AsyncDaoUserEventAppenderBiz
 	 * @param solarFluxPublisher
 	 *        the publisher to set
 	 */
-	public void setSolarFluxPublisher(MqttJsonPublisher<UserEvent> solarFluxPublisher) {
+	public final void setSolarFluxPublisher(@Nullable MqttJsonPublisher<UserEvent> solarFluxPublisher) {
 		this.solarFluxPublisher = solarFluxPublisher;
 	}
 

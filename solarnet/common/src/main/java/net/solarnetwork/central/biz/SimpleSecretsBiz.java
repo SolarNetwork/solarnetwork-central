@@ -23,6 +23,10 @@
 package net.solarnetwork.central.biz;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -36,13 +40,13 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.encrypt.AesBytesEncryptor;
 import org.springframework.security.crypto.encrypt.AesBytesEncryptor.CipherAlgorithm;
 import org.springframework.security.crypto.encrypt.BytesEncryptor;
 import org.springframework.security.crypto.keygen.BytesKeyGenerator;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 import net.solarnetwork.codec.jackson.JsonUtils;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A very basic implementation of {@link SecretsBiz} designed for testing and
@@ -74,20 +78,25 @@ public class SimpleSecretsBiz implements SecretsBiz {
 	 */
 	public SimpleSecretsBiz(Path dir, String password) {
 		super();
-		this.dir = ObjectUtils.requireNonNullArgument(dir, "dir");
+		this.dir = requireNonNullArgument(dir, "dir");
+		this.password = requireNonNullArgument(password, "password");
 		this.data = new ConcurrentHashMap<>(8, 0.9f, 2);
 		this.binaryData = new ConcurrentHashMap<>(8, 0.9f, 2);
-		this.password = password;
 
 		Path metaPath = dir.resolve(SECRETS_META);
 		if ( Files.exists(metaPath) ) {
 			try {
-				Map<String, Object> meta = JsonUtils.getStringMap(Files.readString(metaPath));
-				salt = (String) meta.get("salt");
+				Map<String, Object> meta = getStringMap(Files.readString(metaPath));
+				if ( meta == null ) {
+					throw new IllegalStateException(
+							"Metadata not available in [%s]".formatted(metaPath));
+				}
+				String salt = (String) meta.get("salt");
 				String ivString = (String) meta.get("iv");
 				if ( salt == null || ivString == null ) {
-					throw new RuntimeException("Missing metadata in [%s]".formatted(metaPath));
+					throw new IllegalStateException("Missing metadata in [%s]".formatted(metaPath));
 				}
+				this.salt = salt;
 				final byte[] ivData = HexFormat.of().parseHex(ivString);
 				iv = new BytesKeyGenerator() {
 
@@ -114,7 +123,7 @@ public class SimpleSecretsBiz implements SecretsBiz {
 				byte[] ivData = iv.generateKey();
 				Map<String, Object> meta = Map.of("salt", salt, "iv", HexFormat.of().formatHex(ivData));
 				Path parent = metaPath.getParent();
-				if ( !Files.isDirectory(parent) ) {
+				if ( parent != null && !Files.isDirectory(parent) ) {
 					Files.createDirectories(parent);
 				}
 				Files.writeString(metaPath, JsonUtils.getJSONString(meta, "{}"));
@@ -129,8 +138,8 @@ public class SimpleSecretsBiz implements SecretsBiz {
 			BytesEncryptor encryptor = new AesBytesEncryptor(password, salt, iv, CipherAlgorithm.GCM);
 			try {
 				byte[] enc = Files.readAllBytes(dataPath);
-				Map<String, Object> map = JsonUtils
-						.getStringMap(new String(encryptor.decrypt(enc), UTF_8));
+				Map<String, Object> map = nonnull(
+						getStringMap(new String(encryptor.decrypt(enc), UTF_8)), "Metadata");
 				map.forEach((k, v) -> {
 					if ( "__data__".equals(k) && v instanceof Map<?, ?> m ) {
 						for ( Entry<?, ?> e : m.entrySet() ) {
@@ -154,7 +163,7 @@ public class SimpleSecretsBiz implements SecretsBiz {
 	}
 
 	@Override
-	public String getSecret(String secretName) {
+	public @Nullable String getSecret(String secretName) {
 		return data.get(secretName);
 	}
 
@@ -165,7 +174,7 @@ public class SimpleSecretsBiz implements SecretsBiz {
 	}
 
 	@Override
-	public byte[] getSecretData(String secretName) {
+	public byte @Nullable [] getSecretData(String secretName) {
 		byte[] data = binaryData.get(secretName);
 		return (data != null ? data.clone() : null);
 	}
@@ -187,12 +196,13 @@ public class SimpleSecretsBiz implements SecretsBiz {
 		Path dataPath = dir.resolve(SECRETS_DATA);
 		var encoder = Base64.getEncoder();
 		try {
-			String json = JsonUtils
-					.getJSONString(
-							Map.of("__data__", data, "__binaryData__",
-									binaryData.entrySet().stream().collect(Collectors.toMap(
-											Entry::getKey, e -> encoder.encodeToString(e.getValue())))),
-							"{}");
+			String json = nonnull(
+					getJSONString(Map.of("__data__", data, "__binaryData__",
+							binaryData.entrySet().stream()
+									.collect(Collectors.toMap(Entry::getKey,
+											e -> encoder.encodeToString(e.getValue())))),
+							"{}"),
+					"Metadata");
 			BytesEncryptor encryptor = new AesBytesEncryptor(password, salt, iv, CipherAlgorithm.GCM);
 			byte[] enc = encryptor.encrypt(json.getBytes(StandardCharsets.UTF_8));
 			Files.write(dataPath, enc);

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.biz;
 
 import java.util.function.Consumer;
+import org.jspecify.annotations.Nullable;
 
 /**
  * API for a registry of node-based event observers.
@@ -55,6 +56,6 @@ public interface NodeEventObservationRegistrar<T> {
 	 *        the IDs of the node to stop observing, or {@code null} to stop
 	 *        observing all node IDs
 	 */
-	void unregisterNodeObserver(Consumer<T> observer, Long... nodeIds);
+	void unregisterNodeObserver(Consumer<T> observer, Long @Nullable... nodeIds);
 
 }

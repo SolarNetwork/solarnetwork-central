@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.biz;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserEvent;
 
@@ -48,8 +49,7 @@ public interface UserEventAppenderBiz {
 	 * Helper function to add an event to an optional appender.
 	 * 
 	 * <p>
-	 * If {@code biz} is {@code null}, this method simply returns
-	 * {@code null}.
+	 * If {@code biz} is {@code null}, this method simply returns {@code null}.
 	 * </p>
 	 * 
 	 * @param biz
@@ -61,7 +61,8 @@ public interface UserEventAppenderBiz {
 	 * @return the generated event, or {@code null} if {@code biz} is
 	 *         {@code null}
 	 */
-	static UserEvent addUserEvent(UserEventAppenderBiz biz, Long userId, LogEventInfo info) {
+	static @Nullable UserEvent addUserEvent(@Nullable UserEventAppenderBiz biz, Long userId,
+			LogEventInfo info) {
 		if ( biz == null ) {
 			return null;
 		}
