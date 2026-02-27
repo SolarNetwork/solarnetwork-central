@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.cloud.aws.domain.Ec2VirtualMachine;
@@ -79,9 +80,12 @@ public class AwsVirtualMachineBiz extends BasicIdentifiable implements VirtualMa
 	 *        the access key
 	 * @param accessKeySecret
 	 *        the access key secret
+	 * @throws IllegalArgumentException
+	 *         if {@code region} is {@code null}
 	 */
-	public AwsVirtualMachineBiz(String region, String accessKey, String accessKeySecret) {
-		this(Region.of(region), StaticCredentialsProvider
+	public AwsVirtualMachineBiz(String region, @Nullable String accessKey,
+			@Nullable String accessKeySecret) {
+		this(Region.of(requireNonNullArgument(region, "region")), StaticCredentialsProvider
 				.create(AwsBasicCredentials.create(accessKey, accessKeySecret)));
 	}
 
@@ -92,6 +96,8 @@ public class AwsVirtualMachineBiz extends BasicIdentifiable implements VirtualMa
 	 *        the AWS region
 	 * @param credentialsProvider
 	 *        the credentials provider
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public AwsVirtualMachineBiz(Region region, AwsCredentialsProvider credentialsProvider) {
 		super();
@@ -105,7 +111,7 @@ public class AwsVirtualMachineBiz extends BasicIdentifiable implements VirtualMa
 	}
 
 	@Override
-	public VirtualMachine virtualMachineForName(String name) {
+	public @Nullable VirtualMachine virtualMachineForName(String name) {
 		DescribeTagsRequest tagReq = DescribeTagsRequest.builder()
 				.filters(Filter.builder().name("key").values("Name").build(),
 						Filter.builder().name("resource-type").values("instance").build())

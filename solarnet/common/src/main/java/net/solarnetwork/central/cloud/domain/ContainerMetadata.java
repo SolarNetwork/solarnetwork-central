@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.cloud.domain;
 
-import net.solarnetwork.util.ObjectUtils;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 
 /**
  * General metadata about a container application.
@@ -44,16 +44,7 @@ public class ContainerMetadata {
 	 */
 	public ContainerMetadata(String containerId) {
 		super();
-		this.containerId = ObjectUtils.requireNonNullArgument(containerId, "containerId");
-	}
-
-	/**
-	 * Get the unique container ID.
-	 * 
-	 * @return the container ID, never {@code null}
-	 */
-	public String getContainerId() {
-		return containerId;
+		this.containerId = requireNonNullArgument(containerId, "containerId");
 	}
 
 	@Override
@@ -63,6 +54,15 @@ public class ContainerMetadata {
 		builder.append("containerId=").append(containerId);
 		builder.append("}");
 		return builder.toString();
+	}
+
+	/**
+	 * Get the unique container ID.
+	 * 
+	 * @return the container ID, never {@code null}
+	 */
+	public final String getContainerId() {
+		return containerId;
 	}
 
 }
