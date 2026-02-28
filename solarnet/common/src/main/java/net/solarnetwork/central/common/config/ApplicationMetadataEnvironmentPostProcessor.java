@@ -31,6 +31,7 @@ import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.EnvironmentPostProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor;
@@ -162,7 +163,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 		props.put(APP_PROP_PREFIX + key, value);
 	}
 
-	private String exec(String[] command) {
+	private @Nullable String exec(String[] command) {
 		try (InputStream in = Runtime.getRuntime().exec(command).getInputStream()) {
 			return StreamUtils.copyToString(in, ByteUtils.UTF8).trim();
 		} catch ( Exception e ) {
@@ -171,7 +172,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 		}
 	}
 
-	public ContainerMetadata ecsContainerMetadataV4(String uri) {
+	public @Nullable ContainerMetadata ecsContainerMetadataV4(String uri) {
 		try (InputStream in = new URI(uri).toURL().openStream();
 				JsonParser p = JsonUtils.JSON_OBJECT_MAPPER.createParser(in)) {
 			ObjectNode root = p.readValueAsTree();
