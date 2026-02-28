@@ -92,15 +92,13 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 	public CapacityGroupMeasurementJob(OscpRole role, ExternalSystemConfigurationDao<?> dao,
 			CapacityGroupConfigurationDao capacityGroupDao, AssetConfigurationDao assetDao,
 			MeasurementDao measurementDao, ExternalSystemClient client) {
-		super();
+		super("OSCP", requireNonNullArgument(role, "role") + "-CapacityGroupMeasurement");
 		this.role = requireNonNullArgument(role, "role");
 		this.dao = requireNonNullArgument(dao, "dao");
 		this.capacityGroupDao = requireNonNullArgument(capacityGroupDao, "capacityGroupDao");
 		this.assetDao = requireNonNullArgument(assetDao, "assetDao");
 		this.measurementDao = requireNonNullArgument(measurementDao, "measurementDao");
 		this.client = requireNonNullArgument(client, "client");
-		setGroupId("OSCP");
-		setId(this.role + "-CapacityGroupMeasurement");
 		setMaximumWaitMs(1800000L);
 	}
 

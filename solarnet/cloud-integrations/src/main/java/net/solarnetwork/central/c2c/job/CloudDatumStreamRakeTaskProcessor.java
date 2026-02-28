@@ -49,10 +49,8 @@ public class CloudDatumStreamRakeTaskProcessor extends JobSupport {
 	 *         if any argument is {@literal null}
 	 */
 	public CloudDatumStreamRakeTaskProcessor(CloudDatumStreamRakeService service) {
-		super();
+		super("CloudIntegrations", "DatumStreamRakeTaskProcessor");
 		this.service = requireNonNullArgument(service, "service");
-		setGroupId("CloudIntegrations");
-		setId("DatumStreamRakeTaskProcessor");
 	}
 
 	@Override

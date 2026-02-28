@@ -56,10 +56,9 @@ public class UserAlertSituationCleanerJob extends JobSupport {
 	 */
 	public UserAlertSituationCleanerJob(InstantSource clock,
 			UserAlertSituationDao userAlertSituationDao) {
-		super();
+		super("UserAlert", "UserAlertSituationCleaner");
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.dao = requireNonNullArgument(userAlertSituationDao, "userAlertSituationDao");
-		setGroupId("UserAlert");
 	}
 
 	@Override

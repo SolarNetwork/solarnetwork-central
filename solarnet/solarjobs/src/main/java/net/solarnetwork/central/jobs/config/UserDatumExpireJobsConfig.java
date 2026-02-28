@@ -60,7 +60,6 @@ public class UserDatumExpireJobsConfig {
 	@Bean
 	public ManagedJob datumDeleteJobInfoCleanerJob() {
 		DatumDeleteJobInfoCleanerJob job = new DatumDeleteJobInfoCleanerJob(userDatumDeleteJobBiz);
-		job.setId("DatumDeleteJobInfoCleaner");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -70,7 +69,6 @@ public class UserDatumExpireJobsConfig {
 	public ManagedJob datumDeleteProcessorJob() {
 		DatumDeleteProcessorJob job = new DatumDeleteProcessorJob(userDatumDeleteJobBiz,
 				userDatumDeleteJobInfoDao);
-		job.setId("DatumDeleteProcessor");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -79,7 +77,6 @@ public class UserDatumExpireJobsConfig {
 	@Bean
 	public ManagedJob expireDatumJob() {
 		ExpireDatumJob job = new ExpireDatumJob(expireUserDataConfigurationDao);
-		job.setId("ExpireDatum");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}

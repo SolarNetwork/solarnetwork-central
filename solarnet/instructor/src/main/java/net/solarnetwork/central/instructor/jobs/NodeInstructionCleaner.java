@@ -55,8 +55,7 @@ public class NodeInstructionCleaner extends JobSupport {
 	 *         if any argument is {@literal null}
 	 */
 	public NodeInstructionCleaner(NodeInstructionDao dao) {
-		super();
-		setGroupId("Instruction");
+		super("Instruction", "NodeInstructionCleaner");
 		this.dao = requireNonNullArgument(dao, "dao");
 	}
 

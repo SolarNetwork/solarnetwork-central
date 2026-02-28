@@ -41,7 +41,6 @@ import net.solarnetwork.central.datum.export.jobs.DatumExportTaskCleanerJob;
  */
 public class DatumExportTaskCleanerTests {
 
-	private static final String JOB_ID = "test.job";
 	private static final int EXPIRE_MINS = 10;
 
 	private DatumExportTaskInfoDao taskDao;
@@ -53,7 +52,6 @@ public class DatumExportTaskCleanerTests {
 		taskDao = EasyMock.createMock(DatumExportTaskInfoDao.class);
 
 		job = new DatumExportTaskCleanerJob(taskDao);
-		job.setId(JOB_ID);
 		job.setMinimumAgeMinutes(EXPIRE_MINS);
 	}
 

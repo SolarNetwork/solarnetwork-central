@@ -69,11 +69,9 @@ public class UserNodeInstructionTaskResetAbandoned extends JobSupport {
 	 *         if any argument is {@literal null}
 	 */
 	public UserNodeInstructionTaskResetAbandoned(Clock clock, UserNodeInstructionService service) {
-		super();
+		super("User", "UserNodeInstructionTaskResetAbandoned");
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.service = requireNonNullArgument(service, "service");
-		setGroupId("User");
-		setId("UserNodeInstructionTaskResetAbandoned");
 	}
 
 	@Override

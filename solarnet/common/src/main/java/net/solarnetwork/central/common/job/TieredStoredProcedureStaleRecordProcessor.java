@@ -55,13 +55,18 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 	 * 
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
+	 * @param groupId
+	 *        the group ID to use
+	 * @param id
+	 *        the job ID
 	 * @param taskDescription
 	 *        a description of the task to use in log statements
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public TieredStoredProcedureStaleRecordProcessor(JdbcOperations jdbcOps, String taskDescription) {
-		super(jdbcOps, taskDescription);
+	public TieredStoredProcedureStaleRecordProcessor(JdbcOperations jdbcOps, String groupId, String id,
+			String taskDescription) {
+		super(jdbcOps, groupId, id, taskDescription);
 	}
 
 	private static final Pattern CALL_RETURN_COUNT = Pattern.compile("\\?\\s=\\s*call\\s+",

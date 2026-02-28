@@ -54,13 +54,18 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	 *
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
+	 * @param groupId
+	 *        the group ID to use
+	 * @param id
+	 *        the job ID
 	 * @param taskDescription
 	 *        a description of the task to use in log statements
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public TieredStaleRecordProcessor(JdbcOperations jdbcOps, String taskDescription) {
-		super(jdbcOps);
+	public TieredStaleRecordProcessor(JdbcOperations jdbcOps, String groupId, String id,
+			String taskDescription) {
+		super(jdbcOps, groupId, id);
 		this.taskDescription = requireNonNullArgument(taskDescription, "taskDescription");
 		setMaximumIterations(1);
 		setParallelism(1);
@@ -106,7 +111,7 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	 *
 	 * @return the type; defaults to {@literal "h"}
 	 */
-	public String getTierProcessType() {
+	public final String getTierProcessType() {
 		return tierProcessType;
 	}
 
@@ -120,7 +125,7 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	 * @param tierProcessType
 	 *        the type to set
 	 */
-	public void setTierProcessType(String tierProcessType) {
+	public final void setTierProcessType(String tierProcessType) {
 		this.tierProcessType = tierProcessType;
 	}
 
@@ -129,7 +134,7 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	 *
 	 * @return the maximum row count, or {@code null} for no explicit limit
 	 */
-	public Integer getTierProcessMax() {
+	public final Integer getTierProcessMax() {
 		return tierProcessMax;
 	}
 
@@ -137,16 +142,16 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	 * Set the maximum number of tier rows to process per procedure call.
 	 *
 	 * <p>
-	 * If this value is not {@code null}, then it will be passed as the
-	 * second parameter passed to the JDBC procedure. When {@code null} then
-	 * the JDBC procedure is expected to take only one argument.
+	 * If this value is not {@code null}, then it will be passed as the second
+	 * parameter passed to the JDBC procedure. When {@code null} then the JDBC
+	 * procedure is expected to take only one argument.
 	 * </p>
 	 *
 	 * @param tierProcessMax
-	 *        the maximum number of rows, or {@code null} for no explicit
-	 *        limit; default is {@code null}
+	 *        the maximum number of rows, or {@code null} for no explicit limit;
+	 *        default is {@code null}
 	 */
-	public void setTierProcessMax(Integer tierProcessMax) {
+	public final void setTierProcessMax(Integer tierProcessMax) {
 		this.tierProcessMax = tierProcessMax;
 	}
 

@@ -24,6 +24,7 @@ package net.solarnetwork.central.scheduler;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A basic job key.
@@ -90,7 +91,7 @@ public final class JobKey implements Comparable<JobKey> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -105,7 +106,7 @@ public final class JobKey implements Comparable<JobKey> {
 	 *
 	 * @return the group ID.
 	 */
-	public String getGroupId() {
+	public final String getGroupId() {
 		return groupId;
 	}
 
@@ -114,7 +115,7 @@ public final class JobKey implements Comparable<JobKey> {
 	 *
 	 * @return the job ID
 	 */
-	public String getId() {
+	public final String getId() {
 		return id;
 	}
 

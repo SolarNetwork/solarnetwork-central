@@ -26,6 +26,7 @@ import static net.solarnetwork.central.scheduler.SchedulerUtils.extractExecution
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.concurrent.ScheduledFuture;
+import org.jspecify.annotations.Nullable;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.SimpleTriggerContext;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -42,11 +43,11 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	private final Runnable task;
 	private final Trigger trigger;
 
-	private ScheduledFuture<?> future;
+	private @Nullable ScheduledFuture<?> future;
 	private volatile boolean paused = false;
-	private volatile Throwable exception;
-	private volatile Instant lastActualExecutionTime;
-	private volatile Instant lastCompletionTime;
+	private volatile @Nullable Throwable exception;
+	private volatile @Nullable Instant lastActualExecutionTime;
+	private volatile @Nullable Instant lastCompletionTime;
 
 	/**
 	 * Constructor.
@@ -63,13 +64,13 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	public ScheduledJob(JobKey key, Runnable task, Trigger trigger) {
 		super(requireNonNullArgument(key, "key").getGroupId(), key.getId(),
 				extractExecutionScheduleDescription(requireNonNullArgument(trigger, "trigger")));
-		this.key = key;
+		this.key = requireNonNullArgument(key, "key");
 		this.task = requireNonNullArgument(task, "task");
-		this.trigger = trigger;
+		this.trigger = requireNonNullArgument(trigger, "trigger");
 	}
 
 	@Override
-	public void run() {
+	public final void run() {
 		if ( paused ) {
 			return;
 		}
@@ -86,7 +87,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	}
 
 	@Override
-	public JobStatus getJobStatus() {
+	public final JobStatus getJobStatus() {
 		if ( exception != null ) {
 			return JobStatus.Error;
 		} else if ( paused ) {
@@ -96,19 +97,19 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	}
 
 	@Override
-	public boolean isExecuting() {
+	public final boolean isExecuting() {
 		final Instant lastStart = getPreviousExecutionTime();
 		final Instant lastComplete = getLastCompletionTime();
 		return (lastStart != null && (lastComplete == null || lastComplete.isBefore(lastStart)));
 	}
 
 	@Override
-	public Instant getPreviousExecutionTime() {
+	public final @Nullable Instant getPreviousExecutionTime() {
 		return lastActualExecutionTime;
 	}
 
 	@Override
-	public Instant getNextExecutionTime() {
+	public final @Nullable Instant getNextExecutionTime() {
 		if ( paused ) {
 			return null;
 		}
@@ -123,7 +124,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	 * @return the job key
 	 */
 	@JsonIgnore
-	public JobKey getKey() {
+	public final JobKey getKey() {
 		return key;
 	}
 
@@ -132,7 +133,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	 * 
 	 * @return the trigger
 	 */
-	public Trigger getTrigger() {
+	public final Trigger getTrigger() {
 		return trigger;
 	}
 
@@ -141,7 +142,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	 * 
 	 * @return the last completion time, or {@code null} if never completed
 	 */
-	public Instant getLastCompletionTime() {
+	public final @Nullable Instant getLastCompletionTime() {
 		return lastCompletionTime;
 	}
 
@@ -150,7 +151,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	 * 
 	 * @return {@literal true} if this job is paused
 	 */
-	public boolean isPaused() {
+	public final boolean isPaused() {
 		return paused;
 	}
 
@@ -160,7 +161,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	 * @param paused
 	 *        {@literal true} if this job is paused
 	 */
-	public void setPaused(boolean paused) {
+	public final void setPaused(boolean paused) {
 		this.paused = paused;
 	}
 
@@ -170,7 +171,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	 * @return the job future
 	 */
 	@JsonIgnore
-	public ScheduledFuture<?> getFuture() {
+	public final @Nullable ScheduledFuture<?> getFuture() {
 		return future;
 	}
 
@@ -180,7 +181,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	 * @param future
 	 *        the job future
 	 */
-	public void setFuture(ScheduledFuture<?> future) {
+	public final void setFuture(@Nullable ScheduledFuture<?> future) {
 		this.future = future;
 	}
 

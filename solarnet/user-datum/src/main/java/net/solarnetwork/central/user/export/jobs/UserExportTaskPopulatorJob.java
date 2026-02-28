@@ -49,10 +49,9 @@ public class UserExportTaskPopulatorJob extends JobSupport {
 	 *         if any argument is {@literal null}
 	 */
 	public UserExportTaskPopulatorJob(ScheduleType scheduleType, UserExportJobsService jobsService) {
-		super();
+		super("UserExport", "UserExportTaskPopulator-" + scheduleType);
 		this.scheduleType = requireNonNullArgument(scheduleType, "scheduleType");
 		this.jobsService = requireNonNullArgument(jobsService, "jobsService");
-		setGroupId("UserExport");
 	}
 
 	@Override

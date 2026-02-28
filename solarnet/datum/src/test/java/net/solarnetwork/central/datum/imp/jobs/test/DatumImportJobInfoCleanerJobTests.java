@@ -41,7 +41,6 @@ import net.solarnetwork.central.datum.imp.jobs.DatumImportJobInfoCleanerJob;
  */
 public class DatumImportJobInfoCleanerJobTests {
 
-	private static final String JOB_ID = "test.job";
 	private static final int EXPIRE_MINS = 10;
 
 	private DatumImportJobBiz importJobBiz;
@@ -53,7 +52,6 @@ public class DatumImportJobInfoCleanerJobTests {
 		importJobBiz = EasyMock.createMock(DatumImportJobBiz.class);
 
 		job = new DatumImportJobInfoCleanerJob(importJobBiz);
-		job.setId(JOB_ID);
 		job.setMinimumAgeMinutes(EXPIRE_MINS);
 	}
 

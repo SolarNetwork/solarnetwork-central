@@ -46,13 +46,16 @@ public class JdbcCallJob extends JobSupport {
 	 *
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
+	 * @param groupId
+	 *        the group ID to use
+	 * @param id
+	 *        the job ID
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public JdbcCallJob(JdbcOperations jdbcOps) {
-		super();
+	public JdbcCallJob(JdbcOperations jdbcOps, String groupId, String id) {
+		super(groupId, id);
 		this.jdbcOps = requireNonNullArgument(jdbcOps, "jdbcOps");
-		setGroupId("Datum");
 		setMaximumWaitMs(1800000L);
 	}
 

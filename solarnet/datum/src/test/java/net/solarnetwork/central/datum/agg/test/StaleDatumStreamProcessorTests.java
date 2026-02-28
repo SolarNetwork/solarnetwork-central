@@ -81,7 +81,7 @@ public class StaleDatumStreamProcessorTests {
 		private final ThreadPoolTaskExecutor executor;
 
 		private TestProcessor(JdbcOperations jdbcOps) {
-			super(jdbcOps);
+			super(jdbcOps, TEST_JOB_ID);
 			executor = new ThreadPoolTaskExecutor();
 			executor.setCorePoolSize(10);
 			executor.setAllowCoreThreadTimeOut(true);
@@ -108,8 +108,6 @@ public class StaleDatumStreamProcessorTests {
 		jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
 
 		job = new TestProcessor(jdbcTemplate);
-		job.setGroupId("Test");
-		job.setId(TEST_JOB_ID);
 		job.setMaximumIterations(10);
 		job.setAggregateProcessType("h");
 

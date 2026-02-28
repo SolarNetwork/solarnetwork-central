@@ -53,12 +53,10 @@ public class RateLimitExpiredCleanupJob extends JobSupport {
 	 */
 	public RateLimitExpiredCleanupJob(ExpiredEntriesCleaner proxyManager, int maxRemovePerTransaction,
 			int continueRemovingThreshold) {
-		super();
+		super("RateLimit", "RateLimitExpiredCleanup");
 		this.proxyManager = requireNonNullArgument(proxyManager, "proxyManager");
 		this.maxRemovePerTransaction = maxRemovePerTransaction;
 		this.continueRemovingThreshold = continueRemovingThreshold;
-		setId("RateLimitExpiredCleanup");
-		setGroupId("RateLimit");
 	}
 
 	@Override

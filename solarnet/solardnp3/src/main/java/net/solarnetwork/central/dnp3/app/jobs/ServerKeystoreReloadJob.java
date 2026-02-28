@@ -57,11 +57,9 @@ public class ServerKeystoreReloadJob extends JobSupport {
 	 *         if any argument is {@literal null}
 	 */
 	public ServerKeystoreReloadJob(TlsServerSettings settings, NettyDynamicProxyServer server) {
-		super();
+		super("DNP3", "ServerKeystoreReload");
 		this.settings = requireNonNullArgument(settings, "settings");
 		this.server = requireNonNullArgument(server, "server");
-		setGroupId("DNP3");
-		setId("ServerKeystoreReload");
 	}
 
 	@Override

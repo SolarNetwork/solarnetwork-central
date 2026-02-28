@@ -58,11 +58,9 @@ public class ChargeSessionCleanerJob extends JobSupport {
 	 *         if any argument is {@literal null}
 	 */
 	public ChargeSessionCleanerJob(Clock clock, CentralChargeSessionDao chargeSessionDao) {
-		super();
+		super("OCPP", "ChargeSessionCleaner");
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.chargeSessionDao = requireNonNullArgument(chargeSessionDao, "chargeSessionDao");
-		setGroupId("OCPP");
-		setId("ChargeSessionCleaner");
 		setMaximumWaitMs(1800000L);
 	}
 

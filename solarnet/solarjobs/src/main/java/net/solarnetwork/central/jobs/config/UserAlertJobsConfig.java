@@ -123,7 +123,6 @@ public class UserAlertJobsConfig {
 	public UserAlertBatchJob userAlertBatchJob() {
 		UserAlertBatchJob job = new UserAlertBatchJob(emailNodeStaleDataAlertProcessor(), txTemplate,
 				appSettingDao);
-		job.setId("EmailNodeStaleDataAlertProcessor");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -133,7 +132,6 @@ public class UserAlertJobsConfig {
 	public UserAlertSituationCleanerJob resolvedSituationCleanerJob() {
 		UserAlertSituationCleanerJob job = new UserAlertSituationCleanerJob(Clock.systemUTC(),
 				userAlertSituationDao);
-		job.setId("UserAlertSituationCleaner");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}

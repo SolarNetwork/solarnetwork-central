@@ -49,10 +49,8 @@ public class CloudDatumStreamPollTaskProcessor extends JobSupport {
 	 *         if any argument is {@literal null}
 	 */
 	public CloudDatumStreamPollTaskProcessor(CloudDatumStreamPollService service) {
-		super();
+		super("CloudIntegrations", "DatumStreamPollTaskProcessor");
 		this.service = requireNonNullArgument(service, "service");
-		setGroupId("CloudIntegrations");
-		setId("DatumStreamPollTaskProcessor");
 	}
 
 	@Override

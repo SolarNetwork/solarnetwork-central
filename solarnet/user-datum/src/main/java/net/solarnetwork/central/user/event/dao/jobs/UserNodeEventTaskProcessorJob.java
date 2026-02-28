@@ -84,11 +84,10 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 	 */
 	public UserNodeEventTaskProcessorJob(TransactionTemplate transactionTemplate,
 			UserNodeEventTaskDao taskDao, List<UserNodeEventHookService> hookServices) {
-		super();
+		super("UserNodeEvent", "UserNodeEventTaskProcessor");
 		this.transactionTemplate = transactionTemplate;
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.hookServices = requireNonNullArgument(hookServices, "hookServices");
-		setGroupId("UserNodeEvent");
 	}
 
 	private UserNodeEventHookService resolveService(String serviceId) {

@@ -81,11 +81,10 @@ public class UserAlertBatchJob extends JobSupport implements ServiceLifecycleObs
 	 */
 	public UserAlertBatchJob(UserAlertBatchProcessor processor, TransactionTemplate txTemplate,
 			AppSettingDao appSettingDao) {
-		super();
+		super("UserAlert", "EmailNodeStaleDataAlertProcessor");
 		this.processor = requireNonNullArgument(processor, "processor");
 		this.txTemplate = requireNonNullArgument(txTemplate, "txTemplate");
 		this.appSettingDao = requireNonNullArgument(appSettingDao, "appSettingDao");
-		setGroupId("UserAlert");
 		setMaximumWaitMs(1800000L);
 	}
 

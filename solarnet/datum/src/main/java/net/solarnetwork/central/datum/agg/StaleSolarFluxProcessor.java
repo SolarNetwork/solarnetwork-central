@@ -88,10 +88,9 @@ public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 	 */
 	public StaleSolarFluxProcessor(JdbcOperations jdbcOps, DatumEntityDao datumDao,
 			DatumProcessor publisher) {
-		super(jdbcOps, "stale SolarFlux data");
+		super(jdbcOps, "Datum", "StaleSolarFluxProcessor", "stale SolarFlux data");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 		this.publisher = requireNonNullArgument(publisher, "publisher");
-		setGroupId("Datum");
 		setMaximumWaitMs(1800000L);
 		setTierProcessType("*");
 		setJdbcCall(SelectStaleFluxDatum.ANY_ONE_FOR_UPDATE.getSql());

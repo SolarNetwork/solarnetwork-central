@@ -55,9 +55,8 @@ public class StaleNodeStateUpdater extends JobSupport {
 	 *         if any argument is {@literal null}
 	 */
 	public StaleNodeStateUpdater(NodeInstructionDao dao) {
-		super();
+		super("Instruction", "StaleNodeStateUpdater");
 		this.dao = requireNonNullArgument(dao, "dao");
-		setGroupId("Instruction");
 		setSecondsOlder(DEFAULT_SECONDS_OLDER);
 		setExpectedState(null);
 		setState(null);

@@ -69,11 +69,9 @@ public class CloudDatumStreamPollTaskResetAbandoned extends JobSupport {
 	 *         if any argument is {@literal null}
 	 */
 	public CloudDatumStreamPollTaskResetAbandoned(Clock clock, CloudDatumStreamPollService service) {
-		super();
+		super("CloudIntegrations", "CloudDatumStreamPollTaskResetAbandoned");
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.service = requireNonNullArgument(service, "service");
-		setGroupId("CloudIntegrations");
-		setId("CloudDatumStreamPollTaskResetAbandoned");
 	}
 
 	@Override

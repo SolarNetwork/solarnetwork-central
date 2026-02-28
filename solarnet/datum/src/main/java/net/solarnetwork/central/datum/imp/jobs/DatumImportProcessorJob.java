@@ -48,8 +48,8 @@ public class DatumImportProcessorJob extends JobSupport {
 	 *        the service to use
 	 */
 	public DatumImportProcessorJob(DatumImportJobBiz importJobBiz) {
+		super("DatumImport", "DatumImportProcessor");
 		this.importJobBiz = ObjectUtils.requireNonNullArgument(importJobBiz, "importJobBiz");
-		setGroupId("DatumImport");
 		setMaximumWaitMs(5400000L);
 	}
 

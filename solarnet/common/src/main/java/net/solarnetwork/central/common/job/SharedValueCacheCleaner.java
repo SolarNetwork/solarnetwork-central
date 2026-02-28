@@ -49,10 +49,8 @@ public class SharedValueCacheCleaner extends JobSupport {
 	 *         if any argument is {@code null}
 	 */
 	public SharedValueCacheCleaner(SharedValueCache<?, ?, ?> cache, String cacheName, String groupId) {
-		super();
+		super(groupId, "SharedValueCacheCleaner-" + requireNonNullArgument(cacheName, "cacheName"));
 		this.cache = requireNonNullArgument(cache, "cache");
-		setGroupId(groupId);
-		setId("SharedValueCacheCleaner-" + requireNonNullArgument(cacheName, "cacheName"));
 	}
 
 	@Override

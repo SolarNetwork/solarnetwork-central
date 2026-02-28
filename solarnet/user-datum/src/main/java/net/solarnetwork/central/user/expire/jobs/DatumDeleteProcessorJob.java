@@ -53,10 +53,9 @@ public class DatumDeleteProcessorJob extends JobSupport {
 	 */
 	public DatumDeleteProcessorJob(UserDatumDeleteJobBiz datumDeleteJobBiz,
 			UserDatumDeleteJobInfoDao jobInfoDao) {
-		super();
+		super("UserExpire", "DatumDeleteProcessor");
 		this.datumDeleteJobBiz = requireNonNullArgument(datumDeleteJobBiz, "datumDeleteJobBiz");
 		this.jobInfoDao = requireNonNullArgument(jobInfoDao, "jobInfoDao");
-		setGroupId("UserExpire");
 		setMaximumWaitMs(5400000L);
 		setMaximumIterations(1);
 	}

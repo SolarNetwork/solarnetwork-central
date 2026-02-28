@@ -52,7 +52,6 @@ public class DatumImportProcessorJobTests {
 	@Mock
 	private DatumImportJobBiz importJobBiz;
 
-	private static final String JOB_ID = "test.job";
 	private static final Long TEST_USER_ID = 123L;
 
 	private DatumImportProcessorJob job;
@@ -60,7 +59,6 @@ public class DatumImportProcessorJobTests {
 	@BeforeEach
 	public void setup() {
 		job = new DatumImportProcessorJob(importJobBiz);
-		job.setId(JOB_ID);
 		job.setMaximumIterations(2);
 	}
 

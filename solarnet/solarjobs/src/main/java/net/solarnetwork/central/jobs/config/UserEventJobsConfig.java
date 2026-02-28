@@ -61,7 +61,6 @@ public class UserEventJobsConfig {
 	public ManagedJob userNodeEventTaskProcessorJob() {
 		UserNodeEventTaskProcessorJob job = new UserNodeEventTaskProcessorJob(transactionTemplate,
 				userNodeEventTaskDao, userNodeEventHookServices);
-		job.setId("UserNodeEventTaskProcessor");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -70,7 +69,6 @@ public class UserEventJobsConfig {
 	@Bean
 	public ManagedJob userNodeEventTaskCleanerJob() {
 		UserNodeEventTaskCleanerJob job = new UserNodeEventTaskCleanerJob(userNodeEventTaskDao);
-		job.setId("UserNodeEventTaskCleaner");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}

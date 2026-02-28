@@ -50,9 +50,9 @@ public class DatumExportProcessorJob extends JobSupport {
 	 *        the export service to use
 	 */
 	public DatumExportProcessorJob(DatumExportTaskInfoDao taskDao, DatumExportBiz datumExportBiz) {
+		super("DatumExport", "DatumExportProcessor");
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.datumExportBiz = requireNonNullArgument(datumExportBiz, "datumExportBiz");
-		setGroupId("DatumExport");
 		setMaximumWaitMs(1800000L);
 	}
 

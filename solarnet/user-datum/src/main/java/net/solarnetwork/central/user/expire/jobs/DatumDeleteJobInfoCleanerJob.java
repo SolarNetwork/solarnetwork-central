@@ -51,9 +51,8 @@ public class DatumDeleteJobInfoCleanerJob extends JobSupport {
 	 *         if any argument is {@literal null}
 	 */
 	public DatumDeleteJobInfoCleanerJob(UserDatumDeleteJobBiz datumDeleteBiz) {
-		super();
+		super("UserExpire", "DatumDeleteJobInfoCleaner");
 		this.datumDeleteBiz = requireNonNullArgument(datumDeleteBiz, "datumDeleteBiz");
-		setGroupId("UserExpire");
 		setMinimumAgeMinutes(DEFAULT_MINIMUM_AGE_MINUTES);
 	}
 

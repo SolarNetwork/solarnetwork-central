@@ -47,9 +47,8 @@ public class ExpireDatumJob extends JobSupport {
 	 *         if any argument is {@literal null}
 	 */
 	public ExpireDatumJob(ExpireUserDataConfigurationDao configDao) {
-		super();
+		super("UserExpire", "ExpireDatum");
 		this.configDao = requireNonNullArgument(configDao, "configDao");
-		setGroupId("UserExpire");
 	}
 
 	@Override

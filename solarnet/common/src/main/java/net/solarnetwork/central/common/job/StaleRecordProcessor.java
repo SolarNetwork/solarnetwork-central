@@ -46,11 +46,15 @@ public class StaleRecordProcessor extends JdbcCallJob {
 	 *
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
+	 * @param groupId
+	 *        the group ID to use
+	 * @param id
+	 *        the job ID
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public StaleRecordProcessor(JdbcOperations jdbcOps) {
-		super(jdbcOps);
+	public StaleRecordProcessor(JdbcOperations jdbcOps, String groupId, String id) {
+		super(jdbcOps, groupId, id);
 		setMaximumIterations(5);
 	}
 

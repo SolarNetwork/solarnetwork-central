@@ -38,6 +38,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
@@ -79,7 +80,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 
 	private SchedulerStatus status = SchedulerStatus.Starting;
 
-	private List<StartupScheduledFuture> startupFutures;
+	private @Nullable List<StartupScheduledFuture> startupFutures;
 
 	/**
 	 * Constructor.
@@ -117,7 +118,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 
 	@Override
 	public void updateStatus(SchedulerStatus desiredStatus) {
-		this.status = desiredStatus;
+		this.status = requireNonNullArgument(desiredStatus, "desiredStatus");
 	}
 
 	@Override
@@ -142,8 +143,8 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	}
 
 	@Override
-	public synchronized ScheduledFuture<?> scheduleJob(String groupId, String id, Runnable task,
-			Trigger trigger) {
+	public synchronized @Nullable ScheduledFuture<?> scheduleJob(String groupId, String id,
+			Runnable task, Trigger trigger) {
 		if ( this.status == SchedulerStatus.Starting ) {
 			if ( startupFutures == null ) {
 				startupFutures = new ArrayList<>();
@@ -164,8 +165,8 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 		return scheduleJobInternal(groupId, id, task, trigger);
 	}
 
-	private synchronized ScheduledFuture<?> scheduleJobInternal(String groupId, String id, Runnable task,
-			Trigger trigger) {
+	private synchronized @Nullable ScheduledFuture<?> scheduleJobInternal(String groupId, String id,
+			Runnable task, Trigger trigger) {
 		try {
 			final JobKey key = new JobKey(groupId, id);
 			unscheduleJob(key);
@@ -285,7 +286,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 		return new PingTestResult(true, msg);
 	}
 
-	public long getBlockedJobMaxSeconds() {
+	public final long getBlockedJobMaxSeconds() {
 		return blockedJobMaxSeconds;
 	}
 
@@ -295,7 +296,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	 * @param blockedJobMaxSeconds
 	 *        The number of seconds.
 	 */
-	public void setBlockedJobMaxSeconds(long blockedJobMaxSeconds) {
+	public final void setBlockedJobMaxSeconds(long blockedJobMaxSeconds) {
 		this.blockedJobMaxSeconds = blockedJobMaxSeconds;
 	}
 
@@ -307,7 +308,8 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	 *        {@link #DEFAULT_PING_TEST_MAX_EXECUTION}
 	 * @since 1.7
 	 */
-	public void setPingTestMaximumExecutionMilliseconds(long pingTestMaximumExecutionMilliseconds) {
+	public final void setPingTestMaximumExecutionMilliseconds(
+			long pingTestMaximumExecutionMilliseconds) {
 		this.pingTestMaximumExecutionMilliseconds = pingTestMaximumExecutionMilliseconds;
 	}
 
@@ -316,7 +318,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	 * 
 	 * @return the delay; defaults to {@link #DEFAULT_SCHEDULE_DELAY}
 	 */
-	public Duration getScheduleDelay() {
+	public final Duration getScheduleDelay() {
 		return scheduleDelay;
 	}
 
@@ -326,7 +328,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	 * @param scheduleDelay
 	 *        the delay to set
 	 */
-	public void setScheduleDelay(Duration scheduleDelay) {
+	public final void setScheduleDelay(Duration scheduleDelay) {
 		this.scheduleDelay = scheduleDelay;
 	}
 

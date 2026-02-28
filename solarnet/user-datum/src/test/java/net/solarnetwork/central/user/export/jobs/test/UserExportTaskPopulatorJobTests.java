@@ -46,15 +46,12 @@ import net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob;
  */
 public class UserExportTaskPopulatorJobTests {
 
-	private static final String JOB_ID = "test.job";
-
 	private UserExportJobsService jobsService;
 
 	private UserExportTaskPopulatorJob job;
 
 	private UserExportTaskPopulatorJob jobForSchedule(ScheduleType type) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(type, jobsService);
-		job.setId(JOB_ID);
 		return job;
 	}
 

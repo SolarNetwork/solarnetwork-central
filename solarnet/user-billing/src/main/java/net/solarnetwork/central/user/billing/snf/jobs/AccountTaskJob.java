@@ -62,14 +62,13 @@ public class AccountTaskJob extends JobSupport {
 	public AccountTaskJob(TransactionTemplate transactionTemplate, AccountTaskDao taskDao,
 			AccountTaskHandler generateInvoiceTaskHandler,
 			AccountTaskHandler deliverInvoiceTaskHandler) {
-		super();
+		super("Billing", "AccountTaskProcessor");
 		this.transactionTemplate = transactionTemplate;
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.generateInvoiceTaskHandler = requireNonNullArgument(generateInvoiceTaskHandler,
 				"generateInvoiceTaskHandler");
 		this.deliverInvoiceTaskHandler = requireNonNullArgument(deliverInvoiceTaskHandler,
 				"deliverInvoiceTaskHandler");
-		setGroupId("Billing");
 	}
 
 	@Override
