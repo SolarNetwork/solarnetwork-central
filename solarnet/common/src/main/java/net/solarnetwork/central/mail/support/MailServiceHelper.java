@@ -27,6 +27,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.mail.MailAddress;
 import net.solarnetwork.central.mail.MessageTemplateDataSource;
 
@@ -51,7 +52,7 @@ public class MailServiceHelper implements Serializable {
 	 *        the email address
 	 * @return new MailAddress
 	 */
-	public MailAddress createAddress(String toName, String toAddress) {
+	public MailAddress createAddress(@Nullable String toName, String toAddress) {
 		return new BasicMailAddress(toName, toAddress);
 	}
 
@@ -67,6 +68,8 @@ public class MailServiceHelper implements Serializable {
 	 * @param params
 	 *        the message template parameters
 	 * @return new MessageTemplateDataSource
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public MessageTemplateDataSource createResourceDataSource(String subject, String resourcePath,
 			Locale locale, Object... params) {

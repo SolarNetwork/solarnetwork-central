@@ -22,12 +22,14 @@
 
 package net.solarnetwork.central.mail.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.commons.text.WordUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -53,10 +55,10 @@ import net.solarnetwork.central.mail.MessageDataSource;
 public class DefaultMailService implements MailService {
 
 	private final JavaMailSender mailSender;
-	private SimpleMailMessage templateMessage;
-	private int hardWrapColumnIndex = 0;
-	private boolean html = false;
-	private Map<String, String> headers;
+	private @Nullable SimpleMailMessage templateMessage;
+	private int hardWrapColumnIndex;
+	private boolean html;
+	private @Nullable Map<String, String> headers;
 
 	private final Logger log = LoggerFactory.getLogger(DefaultMailService.class);
 
@@ -65,9 +67,11 @@ public class DefaultMailService implements MailService {
 	 *
 	 * @param mailSender
 	 *        the {@link MailSender} to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public DefaultMailService(JavaMailSender mailSender) {
-		this.mailSender = mailSender;
+		this.mailSender = requireNonNullArgument(mailSender, "mailSender");
 	}
 
 	/**
@@ -76,7 +80,7 @@ public class DefaultMailService implements MailService {
 	 * @param settings
 	 *        the settings to apply
 	 */
-	public void applySettings(MailServiceSettings settings) {
+	public void applySettings(@Nullable MailServiceSettings settings) {
 		if ( settings == null ) {
 			return;
 		}
@@ -151,7 +155,10 @@ public class DefaultMailService implements MailService {
 				msg = new MimeMailMessage(new MimeMessageHelper(mailSender.createMimeMessage(),
 						MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED));
 				if ( html ) {
-					msg.getMimeMessageHelper().setText(messageDataSource.getBody(), true);
+					final String b = messageDataSource.getBody();
+					if ( b != null ) {
+						msg.getMimeMessageHelper().setText(b, true);
+					}
 				}
 			} else {
 				msg = new MimeMailMessage(new MimeMessageHelper(mailSender.createMimeMessage(),
@@ -161,7 +168,7 @@ public class DefaultMailService implements MailService {
 			if ( attachments != null ) {
 				while ( attachments.hasNext() ) {
 					Resource att = attachments.next();
-					if ( att == null ) {
+					if ( att == null || att.getFilename() == null ) {
 						continue;
 					}
 					msg.getMimeMessageHelper().addAttachment(att.getFilename(), att);
@@ -176,7 +183,7 @@ public class DefaultMailService implements MailService {
 		} catch ( MessagingException e ) {
 			String err = String.format("Error preparing mail [%s] to %s: %s",
 					messageDataSource.getSubject() != null ? messageDataSource.getSubject()
-							: templateMessage.getSubject(),
+							: templateMessage != null ? templateMessage.getSubject() : "No subject",
 					Arrays.toString(address.getTo()), e.getMessage());
 			throw new RuntimeException(err, e);
 		}
@@ -187,7 +194,7 @@ public class DefaultMailService implements MailService {
 	 *
 	 * @return the template message, or {@code null}
 	 */
-	public SimpleMailMessage getTemplateMessage() {
+	public final @Nullable SimpleMailMessage getTemplateMessage() {
 		return templateMessage;
 	}
 
@@ -201,7 +208,7 @@ public class DefaultMailService implements MailService {
 	 * @param templateMessage
 	 *        the template to use
 	 */
-	public void setTemplateMessage(SimpleMailMessage templateMessage) {
+	public final void setTemplateMessage(@Nullable SimpleMailMessage templateMessage) {
 		this.templateMessage = templateMessage;
 	}
 
@@ -211,7 +218,7 @@ public class DefaultMailService implements MailService {
 	 * @return The hard-wrap column.
 	 * @since 1.1
 	 */
-	public int getHardWrapColumnIndex() {
+	public final int getHardWrapColumnIndex() {
 		return hardWrapColumnIndex;
 	}
 
@@ -224,7 +231,7 @@ public class DefaultMailService implements MailService {
 	 *        to disable hard wrapping.
 	 * @since 1.1
 	 */
-	public void setHardWrapColumnIndex(int hardWrapColumnIndex) {
+	public final void setHardWrapColumnIndex(int hardWrapColumnIndex) {
 		this.hardWrapColumnIndex = hardWrapColumnIndex;
 	}
 
@@ -235,7 +242,7 @@ public class DefaultMailService implements MailService {
 	 *         plain text; defaults to {@literal false}
 	 * @since 1.3
 	 */
-	public boolean isHtml() {
+	public final boolean isHtml() {
 		return html;
 	}
 
@@ -247,7 +254,7 @@ public class DefaultMailService implements MailService {
 	 *        plain text
 	 * @since 1.3
 	 */
-	public void setHtml(boolean html) {
+	public final void setHtml(boolean html) {
 		this.html = html;
 	}
 
@@ -256,7 +263,7 @@ public class DefaultMailService implements MailService {
 	 * 
 	 * @return the headers
 	 */
-	public Map<String, String> getHeaders() {
+	public final @Nullable Map<String, String> getHeaders() {
 		return headers;
 	}
 
@@ -266,7 +273,7 @@ public class DefaultMailService implements MailService {
 	 * @param headers
 	 *        the headers to set
 	 */
-	public void setHeaders(Map<String, String> headers) {
+	public final void setHeaders(@Nullable Map<String, String> headers) {
 		this.headers = headers;
 	}
 

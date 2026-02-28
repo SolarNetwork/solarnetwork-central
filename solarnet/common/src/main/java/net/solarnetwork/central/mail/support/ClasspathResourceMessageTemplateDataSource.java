@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.mail.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 import org.apache.commons.text.WordUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
@@ -61,8 +63,8 @@ public class ClasspathResourceMessageTemplateDataSource extends SimpleMessageDat
 	private final Locale locale;
 	private final String resource;
 	private final Map<String, ?> model;
-	private ClassLoader classLoader;
-	private Integer wordWrapCharacterIndex;
+	private @Nullable ClassLoader classLoader;
+	private @Nullable Integer wordWrapCharacterIndex;
 
 	/**
 	 * Construct with values.
@@ -75,13 +77,16 @@ public class ClasspathResourceMessageTemplateDataSource extends SimpleMessageDat
 	 *        the resource path to the message template
 	 * @param model
 	 *        the mail merge model to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public ClasspathResourceMessageTemplateDataSource(Locale locale, String subject, String resource,
 			Map<String, ?> model) {
-		super(subject, null);
-		this.locale = locale;
-		this.resource = resource;
-		this.model = model;
+		super(subject);
+		this.locale = requireNonNullArgument(locale, "locale");
+		this.resource = requireNonNullArgument(resource, "resource");
+		this.model = requireNonNullArgument(model, "model");
+		setBodySupplier(this::body);
 	}
 
 	@Override
@@ -120,8 +125,7 @@ public class ClasspathResourceMessageTemplateDataSource extends SimpleMessageDat
 		return model;
 	}
 
-	@Override
-	public String getBody() {
+	private String body() {
 		try {
 			String msgText = StringMerger.mergeResource(getMessageTemplate(), getModel());
 			int wrapColumn = (getWordWrapCharacterIndex() != null ? getWordWrapCharacterIndex() : 0);
@@ -151,7 +155,7 @@ public class ClasspathResourceMessageTemplateDataSource extends SimpleMessageDat
 	 * @return classLoader The ClassLoader to use.
 	 * @since 1.1
 	 */
-	public ClassLoader getClassLoader() {
+	public final @Nullable ClassLoader getClassLoader() {
 		return classLoader;
 	}
 
@@ -162,12 +166,12 @@ public class ClasspathResourceMessageTemplateDataSource extends SimpleMessageDat
 	 *        The ClassLoader to use.
 	 * @since 1.1
 	 */
-	public void setClassLoader(ClassLoader classLoader) {
+	public final void setClassLoader(@Nullable ClassLoader classLoader) {
 		this.classLoader = classLoader;
 	}
 
 	@Override
-	public Integer getWordWrapCharacterIndex() {
+	public final @Nullable Integer getWordWrapCharacterIndex() {
 		return wordWrapCharacterIndex;
 	}
 
@@ -179,7 +183,7 @@ public class ClasspathResourceMessageTemplateDataSource extends SimpleMessageDat
 	 * @see MessageTemplateDataSource#getWordWrapCharacterIndex()
 	 * @since 1.1
 	 */
-	public void setWordWrapCharacterIndex(Integer wordWrapCharacterIndex) {
+	public final void setWordWrapCharacterIndex(@Nullable Integer wordWrapCharacterIndex) {
 		this.wordWrapCharacterIndex = wordWrapCharacterIndex;
 	}
 

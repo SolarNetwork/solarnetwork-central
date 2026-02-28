@@ -24,6 +24,7 @@ package net.solarnetwork.central.mail;
 
 import java.util.Locale;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 
 /**
@@ -78,6 +79,7 @@ public interface MessageTemplateDataSource extends MessageDataSource {
 	 *         unspecified.
 	 * @since 1.1
 	 */
+	@Nullable
 	Integer getWordWrapCharacterIndex();
 
 }
