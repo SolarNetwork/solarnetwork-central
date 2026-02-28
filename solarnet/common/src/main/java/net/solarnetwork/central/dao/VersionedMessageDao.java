@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Properties;
+import org.jspecify.annotations.Nullable;
 
 /**
  * DAO API for a resource bundle-like set of messages.
@@ -131,8 +132,10 @@ public interface VersionedMessageDao {
 	 *        the message bundle names to get
 	 * @param locale
 	 *        the desired locale
-	 * @return the resolved messages
+	 * @return the resolved messages, or {@code null} if no messages are
+	 *         available
 	 */
+	@Nullable
 	Properties findMessages(Instant version, String[] bundleNames, String locale);
 
 }

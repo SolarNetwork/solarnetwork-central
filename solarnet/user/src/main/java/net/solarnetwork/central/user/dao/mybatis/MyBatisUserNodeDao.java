@@ -109,11 +109,11 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	}
 
 	@Override
-	protected Long handleInsert(UserNode datum) {
-		super.handleInsert(datum);
-		// as our primary key is actually the node ID, return that
+	protected void preprocessInsert(UserNode datum) {
+		super.preprocessInsert(datum);
 		assert datum.getNode() != null;
-		return datum.getNode().getId();
+		// set node ID as primary key for result
+		datum.setId(datum.getNode().getId());
 	}
 
 	@Override

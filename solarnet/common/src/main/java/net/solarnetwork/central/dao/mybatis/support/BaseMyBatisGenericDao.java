@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao.mybatis.support;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.ibatis.session.SqlSession;
+import org.jspecify.annotations.Nullable;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -199,7 +201,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	private String childUpdate;
 	private String childDelete;
 
-	private MessageSource messageSource;
+	private @Nullable MessageSource messageSource;
 
 	/**
 	 * Constructor.
@@ -248,12 +250,12 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	}
 
 	@Override
-	public T get(K id) {
+	public @Nullable T get(K id) {
 		return getSqlSession().selectOne(this.queryForId, id);
 	}
 
 	@Override
-	public List<T> getAll(List<SortDescriptor> sortDescriptors) {
+	public List<T> getAll(@Nullable List<SortDescriptor> sortDescriptors) {
 		List<T> results;
 		if ( sortDescriptors != null && !sortDescriptors.isEmpty() ) {
 			Map<String, Object> params = new HashMap<>(1);
@@ -297,7 +299,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 			preprocessInsert(datum);
 			getSqlSession().insert(getInsert(), datum);
 		}
-		return datum.getId();
+		return nonnull(datum.getId(), "id");
 	}
 
 	/**
@@ -335,7 +337,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	 */
 	protected K handleUpdate(T datum) {
 		getSqlSession().update(this.update, datum);
-		return datum.getId();
+		return nonnull(datum.getId(), "id");
 	}
 
 	/**
@@ -353,7 +355,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	protected K handleInsert(T datum) {
 		int updated = getSqlSession().insert(this.insert, datum);
 		log.debug("Insert of {} updated {} rows", datum, updated);
-		return datum.getId();
+		return nonnull(datum.getId(), "id");
 	}
 
 	@Override
@@ -419,8 +421,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	 * @param additionalProperties
 	 *        optional properties to pass to all queries
 	 */
-	protected <E> void handleRelation(Long parentId, List<E> newList, Class<? extends E> relationClass,
-			Map<String, ?> additionalProperties) {
+	protected <E> void handleRelation(@Nullable Long parentId, @Nullable List<E> newList,
+			Class<? extends E> relationClass, @Nullable Map<String, ?> additionalProperties) {
 		if ( parentId == null ) {
 			return;
 		}
@@ -507,8 +509,9 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	 * @param additionalProperties
 	 *        optional properties to pass to all queries
 	 */
-	protected <E extends Identity<Long>> void handleRelation(Long parentId, E newObject,
-			Class<? extends E> relationClass, Map<String, ?> additionalProperties) {
+	protected <E extends Identity<Long>> void handleRelation(@Nullable Long parentId,
+			@Nullable E newObject, Class<? extends E> relationClass,
+			@Nullable Map<String, ?> additionalProperties) {
 		if ( parentId == null ) {
 			return;
 		}
@@ -579,8 +582,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	 *        the Class of the related object
 	 * @return the child entity's primary key
 	 */
-	protected <E extends Identity<Long>> Long handleChildRelation(T parent, E child,
-			Class<? extends E> relationClass) {
+	protected <E extends Identity<Long>> @Nullable Long handleChildRelation(@Nullable T parent,
+			@Nullable E child, Class<? extends E> relationClass) {
 		if ( parent == null ) {
 			return null;
 		}
@@ -623,7 +626,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	 *         {@link SqlSessionCallback#doWithSqlSession(org.apache.ibatis.session.SqlSession)}
 	 * @see #mapSqlMapException(RuntimeException, Object)
 	 */
-	protected <R> R execute(final SqlSessionCallback<R> callback, final Object errorObject) {
+	protected <R extends @Nullable Object> @Nullable R execute(final SqlSessionCallback<R> callback,
+			final Object errorObject) {
 		try {
 			return callback.doWithSqlSession(getSqlSession());
 		} catch ( RuntimeException e ) {
@@ -645,7 +649,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	protected RuntimeException mapSqlMapException(final RuntimeException e, final Object errorObject) {
 		RuntimeException result = e;
 		Errors errors = new org.springframework.validation.BindException(errorObject, "filter");
-		if ( e.getMessage().contains("no statement named") ) {
+		if ( e.getMessage() != null && e.getMessage().contains("no statement named") ) {
 			errors.reject("error.unknown.query", "Unknown query");
 		}
 		if ( errors.hasErrors() ) {
@@ -684,7 +688,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	 *        the buffer to append to
 	 * @return <em>true</em> if {@code value} was appended to {@code buf}
 	 */
-	protected final boolean spaceAppend(String value, StringBuilder buf) {
+	protected final boolean spaceAppend(@Nullable String value, StringBuilder buf) {
 		if ( value == null ) {
 			return false;
 		}
@@ -699,119 +703,120 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 		return true;
 	}
 
-	public String getQueryForId() {
+	public final String getQueryForId() {
 		return queryForId;
 	}
 
-	public void setQueryForId(String queryForId) {
+	public final void setQueryForId(String queryForId) {
 		this.queryForId = queryForId;
 	}
 
-	public String getInsert() {
+	public final String getInsert() {
 		return insert;
 	}
 
-	public void setInsert(String insert) {
+	public final void setInsert(String insert) {
 		this.insert = insert;
 	}
 
-	public String getUpdate() {
+	public final String getUpdate() {
 		return update;
 	}
 
-	public void setUpdate(String update) {
+	public final void setUpdate(String update) {
 		this.update = update;
 	}
 
-	public Class<? extends T> getDomainClass() {
+	public final Class<? extends T> getDomainClass() {
 		return domainClass;
 	}
 
-	public String getQueryForAll() {
+	public final String getQueryForAll() {
 		return queryForAll;
 	}
 
-	public void setQueryForAll(String queryForAll) {
+	public final void setQueryForAll(String queryForAll) {
 		this.queryForAll = queryForAll;
 	}
 
-	public String getDelete() {
+	public final String getDelete() {
 		return delete;
 	}
 
-	public void setDelete(String delete) {
+	public final void setDelete(String delete) {
 		this.delete = delete;
 	}
 
-	public String getRelationQueryForParent() {
+	public final String getRelationQueryForParent() {
 		return relationQueryForParent;
 	}
 
-	public void setRelationQueryForParent(String relationQueryForParent) {
+	public final void setRelationQueryForParent(String relationQueryForParent) {
 		this.relationQueryForParent = relationQueryForParent;
 	}
 
-	public String getRelationInsert() {
+	public final String getRelationInsert() {
 		return relationInsert;
 	}
 
-	public void setRelationInsert(String relationInsert) {
+	public final void setRelationInsert(String relationInsert) {
 		this.relationInsert = relationInsert;
 	}
 
-	public String getRelationUpdate() {
+	public final String getRelationUpdate() {
 		return relationUpdate;
 	}
 
-	public void setRelationUpdate(String relationUpdate) {
+	public final void setRelationUpdate(String relationUpdate) {
 		this.relationUpdate = relationUpdate;
 	}
 
-	public String getRelationDelete() {
+	public final String getRelationDelete() {
 		return relationDelete;
 	}
 
-	public void setRelationDelete(String relationDelete) {
+	public final void setRelationDelete(String relationDelete) {
 		this.relationDelete = relationDelete;
 	}
 
-	public String getRelationObjectQueryForParent() {
+	public final String getRelationObjectQueryForParent() {
 		return relationObjectQueryForParent;
 	}
 
-	public void setRelationObjectQueryForParent(String relationObjectQueryForParent) {
+	public final void setRelationObjectQueryForParent(String relationObjectQueryForParent) {
 		this.relationObjectQueryForParent = relationObjectQueryForParent;
 	}
 
-	public String getChildInsert() {
+	public final String getChildInsert() {
 		return childInsert;
 	}
 
-	public void setChildInsert(String childInsert) {
+	public final void setChildInsert(String childInsert) {
 		this.childInsert = childInsert;
 	}
 
-	public String getChildUpdate() {
+	public final String getChildUpdate() {
 		return childUpdate;
 	}
 
-	public void setChildUpdate(String childUpdate) {
+	public final void setChildUpdate(String childUpdate) {
 		this.childUpdate = childUpdate;
 	}
 
-	public String getChildDelete() {
+	public final String getChildDelete() {
 		return childDelete;
 	}
 
-	public void setChildDelete(String childDelete) {
+	public final void setChildDelete(String childDelete) {
 		this.childDelete = childDelete;
 	}
 
-	public MessageSource getMessageSource() {
+	public final @Nullable MessageSource getMessageSource() {
 		return messageSource;
 	}
 
-	public void setMessageSource(MessageSource messageSource) {
+	public final void setMessageSource(@Nullable MessageSource messageSource) {
 		this.messageSource = messageSource;
 	}
+
 }

@@ -24,6 +24,7 @@ package net.solarnetwork.central.dao.mybatis;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.Location;
@@ -79,7 +80,7 @@ public class MyBatisSolarLocationDao
 	}
 
 	@Override
-	public SolarLocation getSolarLocationForTimeZone(String country, String timeZoneId) {
+	public @Nullable SolarLocation getSolarLocationForTimeZone(String country, String timeZoneId) {
 		Map<String, String> params = new HashMap<>(2);
 		params.put("country", country);
 		params.put("timeZoneId", timeZoneId);
@@ -87,7 +88,7 @@ public class MyBatisSolarLocationDao
 	}
 
 	@Override
-	public SolarLocation getSolarLocationForLocation(Location criteria) {
+	public @Nullable SolarLocation getSolarLocationForLocation(Location criteria) {
 		return selectFirst(QUERY_FOR_EXACT_LOCATION, criteria);
 	}
 
@@ -106,7 +107,7 @@ public class MyBatisSolarLocationDao
 	}
 
 	@Override
-	public SolarLocation getSolarLocationForNode(Long nodeId) {
+	public @Nullable SolarLocation getSolarLocationForNode(Long nodeId) {
 		return selectFirst(QUERY_FOR_NODE, nodeId);
 	}
 

@@ -24,6 +24,7 @@ package net.solarnetwork.central.dao.mybatis.support;
 
 import java.io.Serializable;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Unique;
 
@@ -60,7 +61,8 @@ public interface FilterResultsFactory<M extends Unique<K>, K extends Comparable<
 	 *        the number of results returned
 	 * @return the result instance
 	 */
-	FilterResults<M, K> createFilterResults(F filter, Map<String, Object> sqlProps, Iterable<M> rows,
-			Long totalCount, Long offset, Integer returnedCount);
+	FilterResults<M, K> createFilterResults(F filter, @Nullable Map<String, Object> sqlProps,
+			Iterable<M> rows, @Nullable Long totalCount, @Nullable Long offset,
+			@Nullable Integer returnedCount);
 
 }

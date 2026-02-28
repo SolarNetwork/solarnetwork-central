@@ -70,7 +70,7 @@ public class SolarNode extends BaseEntity implements Cloneable, Serializable, No
 		super();
 		setId(id);
 		setCreated(Instant.now());
-		setLocationId(locationId);
+		this.locationId = locationId;
 	}
 
 	@Override

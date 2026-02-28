@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -91,8 +92,8 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<K>, M extends Fi
 	}
 
 	@Override
-	public FilterResults<M, K> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max) {
+	public FilterResults<M, K> findFiltered(F filter, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max) {
 		final String filterDomain = getMemberDomainKey(filterResultClass);
 		final String query = getFilteredQuery(filterDomain, filter);
 		Map<String, Object> sqlProps = new HashMap<>(1);
@@ -135,8 +136,8 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<K>, M extends Fi
 	 *        the SQL properties
 	 * @return the count
 	 */
-	protected Long executeFilterCountQuery(final String countQueryName, F filter,
-			final Map<String, ?> sqlProps) {
+	protected @Nullable Long executeFilterCountQuery(final String countQueryName, final F filter,
+			final @Nullable Map<String, ?> sqlProps) {
 		try {
 			return selectLong(countQueryName, sqlProps);
 		} catch ( RuntimeException e ) {
