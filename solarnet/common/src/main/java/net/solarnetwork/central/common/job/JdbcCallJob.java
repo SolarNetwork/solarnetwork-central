@@ -25,9 +25,11 @@ package net.solarnetwork.central.common.job;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.sql.Types;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.scheduler.JobSupport;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Job to execute a stored procedure that returns a BIGINT result.
@@ -39,7 +41,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
 public class JdbcCallJob extends JobSupport {
 
 	private final JdbcOperations jdbcOps;
-	private String jdbcCall;
+	private @Nullable String jdbcCall;
 
 	/**
 	 * Construct with properties.
@@ -61,9 +63,10 @@ public class JdbcCallJob extends JobSupport {
 
 	@Override
 	public void run() {
-		log.info("Job {} executing JDBC call {}...", getId(), getJdbcCall());
+		final String jdbcCall = ObjectUtils.nonnull(this.jdbcCall, "jdbcCall");
+		log.info("Job {} executing JDBC call {}...", getId(), jdbcCall);
 		final Long result = jdbcOps.execute(con -> {
-			CallableStatement call = con.prepareCall(getJdbcCall());
+			CallableStatement call = con.prepareCall(jdbcCall);
 			call.registerOutParameter(1, Types.BIGINT);
 			return call;
 		}, (CallableStatementCallback<Long>) cs -> {
@@ -78,7 +81,7 @@ public class JdbcCallJob extends JobSupport {
 	 *
 	 * @return the operations
 	 */
-	public JdbcOperations getJdbcOps() {
+	public final JdbcOperations getJdbcOps() {
 		return jdbcOps;
 	}
 
@@ -87,7 +90,7 @@ public class JdbcCallJob extends JobSupport {
 	 *
 	 * @return the call
 	 */
-	public String getJdbcCall() {
+	public final @Nullable String getJdbcCall() {
 		return jdbcCall;
 	}
 
@@ -97,7 +100,7 @@ public class JdbcCallJob extends JobSupport {
 	 * @param jdbcCall
 	 *        the call
 	 */
-	public void setJdbcCall(String jdbcCall) {
+	public final void setJdbcCall(@Nullable String jdbcCall) {
 		this.jdbcCall = jdbcCall;
 	}
 

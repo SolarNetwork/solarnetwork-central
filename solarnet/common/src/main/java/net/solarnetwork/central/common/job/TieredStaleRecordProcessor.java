@@ -24,6 +24,7 @@ package net.solarnetwork.central.common.job;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.jdbc.core.JdbcOperations;
 
@@ -47,7 +48,7 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 
 	private final String taskDescription;
 	private String tierProcessType = "h";
-	private Integer tierProcessMax;
+	private @Nullable Integer tierProcessMax;
 
 	/**
 	 * Constructor.
@@ -124,9 +125,11 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	 *
 	 * @param tierProcessType
 	 *        the type to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public final void setTierProcessType(String tierProcessType) {
-		this.tierProcessType = tierProcessType;
+		this.tierProcessType = requireNonNullArgument(tierProcessType, "tierProcessType");
 	}
 
 	/**
@@ -134,7 +137,7 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	 *
 	 * @return the maximum row count, or {@code null} for no explicit limit
 	 */
-	public final Integer getTierProcessMax() {
+	public final @Nullable Integer getTierProcessMax() {
 		return tierProcessMax;
 	}
 
@@ -151,7 +154,7 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	 *        the maximum number of rows, or {@code null} for no explicit limit;
 	 *        default is {@code null}
 	 */
-	public final void setTierProcessMax(Integer tierProcessMax) {
+	public final void setTierProcessMax(@Nullable Integer tierProcessMax) {
 		this.tierProcessMax = tierProcessMax;
 	}
 

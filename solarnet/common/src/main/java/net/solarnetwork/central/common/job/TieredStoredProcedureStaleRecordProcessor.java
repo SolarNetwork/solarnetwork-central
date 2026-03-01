@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.job;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -82,7 +83,7 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 
 				@Override
 				public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-					final String sql = getJdbcCall();
+					final String sql = nonnull(getJdbcCall(), "jdbcCall");
 					final int paramCount = (int) sql.chars().filter(ch -> ch == '?').count();
 					try (CallableStatement call = con.prepareCall(sql)) {
 						int idx = 0;
