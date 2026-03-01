@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.common.mail.javamail;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Consumer;
+import org.jspecify.annotations.Nullable;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -40,12 +42,32 @@ import net.solarnetwork.util.ClassUtils;
  * {@link JavaMailSenderImpl} dynamically.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.3
  */
 public class ManagedJavaMailSender implements JavaMailSender {
 
-	private JavaMailSenderImpl delegate = new JavaMailSenderImpl();
+	private JavaMailSenderImpl delegate;
+
+	/**
+	 * Constructor.
+	 */
+	public ManagedJavaMailSender() {
+		this(new JavaMailSenderImpl());
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param delegate
+	 *        the delegate
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @since 1.2
+	 */
+	public ManagedJavaMailSender(JavaMailSenderImpl delegate) {
+		this.delegate = requireNonNullArgument(delegate, "delegate");
+	}
 
 	/**
 	 * Callback after properties have been changed.
@@ -53,7 +75,7 @@ public class ManagedJavaMailSender implements JavaMailSender {
 	 * @param properties
 	 *        the changed properties
 	 */
-	public synchronized void configurationChanged(Map<String, Object> properties) {
+	public synchronized void configurationChanged(@Nullable Map<String, Object> properties) {
 		// JavaMailSenderImpl does not expose a way for us to re-create the mail Session, so we
 		// re-create a whole new JavaMailSenderImpl from scratch here
 		Map<String, Object> settings = ClassUtils.getSimpleBeanProperties(delegate, null);
