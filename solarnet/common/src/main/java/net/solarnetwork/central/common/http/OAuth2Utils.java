@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizationContext;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -137,7 +138,7 @@ public final class OAuth2Utils {
 	public static Entry<String, String> oauthBearerAuthorization(final UserLongCompositePK configId,
 			final String registrationId, final String principalName,
 			final OAuth2AuthorizedClientManager oauthClientManager,
-			final Function<UserLongCompositePK, Lock> lockProvider) {
+			final @Nullable Function<UserLongCompositePK, Lock> lockProvider) {
 		final OAuth2AuthorizeRequest.Builder authReq = OAuth2AuthorizeRequest
 				.withClientRegistrationId(registrationId).principal(principalName);
 

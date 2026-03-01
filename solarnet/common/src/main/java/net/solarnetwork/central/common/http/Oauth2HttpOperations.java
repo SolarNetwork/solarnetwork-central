@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -80,9 +81,9 @@ public class Oauth2HttpOperations implements HttpOperations {
 	}
 
 	@Override
-	public <I, O> ResponseEntity<O> http(final HttpMethod method, final URI uri,
-			final HttpHeaders headers, final I body, final Class<O> responseType, final Object context,
-			final Map<String, ?> runtimeData) {
+	public <I extends @Nullable Object, O> ResponseEntity<O> http(HttpMethod method, URI uri,
+			@Nullable HttpHeaders headers, @Nullable I body, Class<O> responseType,
+			@Nullable Object context, @Nullable Map<String, ?> runtimeData) {
 		final Cache<UserLongCompositePK, Lock> lockCache = service(locksCache);
 
 		// @formatter:off
@@ -109,9 +110,9 @@ public class Oauth2HttpOperations implements HttpOperations {
 	}
 
 	@Override
-	public <O> Result<O> httpGet(final String uri, final Map<String, ?> parameters,
-			final Map<String, ?> headers, final Class<O> responseType, final Object context,
-			final Map<String, ?> runtimeData) {
+	public <O> Result<O> httpGet(String uri, @Nullable Map<String, ?> parameters,
+			@Nullable Map<String, ?> headers, Class<O> responseType, @Nullable Object context,
+			@Nullable Map<String, ?> runtimeData) {
 		final Cache<UserLongCompositePK, Lock> lockCache = service(locksCache);
 
 		// @formatter:off

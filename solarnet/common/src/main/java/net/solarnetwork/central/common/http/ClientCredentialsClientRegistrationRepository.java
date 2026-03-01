@@ -34,6 +34,7 @@ import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -132,7 +133,7 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 		return builder.build();
 	}
 
-	private ClientAuthenticationMethod clientAuthMethod(String authMethod) {
+	private ClientAuthenticationMethod clientAuthMethod(@Nullable String authMethod) {
 		OAuth2AuthenticationMethod method = OAuth2AuthenticationMethod.ClientSecretBasic;
 		if ( authMethod != null ) {
 			try {

@@ -25,6 +25,7 @@ package net.solarnetwork.central.common.http;
 import static java.lang.String.format;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.InetAddress;
 import java.net.URI;
@@ -36,6 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -68,7 +70,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicHttpOperations implements HttpOperations, CommonUserEvents, HttpUserEvents {
 
@@ -95,24 +97,24 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	/** The REST operations. */
 	protected final RestOperations restOps;
 
-	private final ThreadLocal<AtomicLong> responseLengthTracker;
+	private final @Nullable ThreadLocal<AtomicLong> responseLengthTracker;
 	private final List<String> errorEventTags;
 	private final List<String> eventTags;
 
 	private boolean allowLocalHosts;
-	private Cache<CachableRequestEntity, Result<?>> httpCache;
+	private @Nullable Cache<CachableRequestEntity, Result<?>> httpCache;
 
 	/**
 	 * An optional user service key to audit, if {@code userServiceAuditor}
 	 * configured.
 	 */
-	private String userServiceKey;
+	private @Nullable String userServiceKey;
 
 	/**
 	 * An optional user service auditor, for response body counts, if
 	 * {@code userServiceKey} configured.
 	 */
-	private UserServiceAuditor userServiceAuditor;
+	private @Nullable UserServiceAuditor userServiceAuditor;
 
 	/**
 	 * Constructor.
@@ -152,9 +154,16 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	}
 
 	@Override
-	public <I, O> ResponseEntity<O> http(HttpMethod method, URI uri, HttpHeaders headers, I body,
-			Class<O> responseType, Object context, Map<String, ?> runtimeData) {
-		final RequestEntity<I> req = RequestEntity.method(method, uri).headers(headers).body(body);
+	public <I extends @Nullable Object, O extends @Nullable Object> ResponseEntity<O> http(
+			HttpMethod method, URI uri, @Nullable HttpHeaders headers, @Nullable I body,
+			Class<O> responseType, @Nullable Object context, @Nullable Map<String, ?> runtimeData) {
+		final RequestEntity.BodyBuilder reqBuilder = RequestEntity.method(method, uri).headers(headers);
+		final RequestEntity<?> req;
+		if ( body == null ) {
+			req = reqBuilder.build();
+		} else {
+			req = reqBuilder.body(body);
+		}
 		return exchange(() -> req, responseType, context, runtimeData,
 				BasicHttpOperations::defaultRequestEventMessage,
 				BasicHttpOperations::defaultRequestErrorEventMessage);
@@ -162,23 +171,26 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <O> Result<O> httpGet(String uri, Map<String, ?> parameters, Map<String, ?> headers,
-			Class<O> responseType, Object context, Map<String, ?> runtimeData) {
+	public <O extends @Nullable Object> Result<O> httpGet(String uri,
+			@Nullable Map<String, ?> parameters, @Nullable Map<String, ?> headers, Class<O> responseType,
+			@Nullable Object context, @Nullable Map<String, ?> runtimeData) {
 		URI u = HttpOperations.uri(uri, parameters);
 		HttpHeaders h = HttpOperations.headersForMap(headers);
-		CachableRequestEntity req = new CachableRequestEntity(context, h, HttpMethod.GET, u);
+		RequestEntity<Void> req = (httpCache != null && context != null
+				? new CachableRequestEntity(context, h, HttpMethod.GET, u)
+				: new RequestEntity<>(null, h, HttpMethod.GET, u));
 
 		Result<O> result = null;
-		if ( httpCache != null ) {
-			result = (Result<O>) httpCache.get(req);
+		if ( httpCache != null && req instanceof CachableRequestEntity cacheableReq ) {
+			result = (Result<O>) httpCache.get(cacheableReq);
 		}
 		if ( result == null ) {
 			ResponseEntity<O> res = exchange(() -> req, responseType, context, runtimeData,
 					BasicHttpOperations::defaultRequestEventMessage,
 					BasicHttpOperations::defaultRequestErrorEventMessage);
 			result = Result.success(res.getBody());
-			if ( httpCache != null ) {
-				httpCache.put(req, result);
+			if ( httpCache != null && req instanceof CachableRequestEntity cacheableReq ) {
+				httpCache.put(cacheableReq, result);
 			}
 		}
 
@@ -222,14 +234,12 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 * Make an HTTP request, with standard user event logging and exception
 	 * handling.
 	 * 
-	 * @param <I>
-	 *        the input body type
 	 * @param <O>
 	 *        the output body type
 	 * @param reqProvider
 	 *        the request provider
 	 * @param responseType
-	 *        the desired response type
+	 *        the desired response type, or {@code Void.class} for no content
 	 * @param context
 	 *        a user-related context item, such as the user ID or a user-related
 	 * @param runtimeData
@@ -242,8 +252,9 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 *        {@link #defaultRequestErrorEventMessage(Throwable)}
 	 * @return the HTTP response entity
 	 */
-	protected final <I, O> ResponseEntity<O> exchange(final Supplier<RequestEntity<I>> reqProvider,
-			final Class<O> responseType, final Object context, final Map<String, ?> runtimeData,
+	protected final <O extends @Nullable Object> ResponseEntity<O> exchange(
+			final Supplier<RequestEntity<?>> reqProvider, final Class<O> responseType,
+			final @Nullable Object context, final @Nullable Map<String, ?> runtimeData,
 			final Supplier<String> eventMessageProvider,
 			final Function<Throwable, String> errorEventMessageProvider) {
 		// cache some log/event details
@@ -265,11 +276,13 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 		List<String> tags = eventTags;
 		String eventMsg = eventDescription;
 
-		RequestEntity<I> req = null;
+		RequestEntity<?> req = null;
 		try {
 			req = reqProvider.get();
 
-			eventData.put(HTTP_METHOD_DATA_KEY, req.getMethod().toString());
+			if ( req.getMethod() != null ) {
+				eventData.put(HTTP_METHOD_DATA_KEY, req.getMethod().toString());
+			}
 			eventData.put(HTTP_URI_DATA_KEY, req.getUrl().toString());
 			if ( req.getBody() != null ) {
 				eventData.put(HTTP_BODY_DATA_KEY, req.getBody() instanceof String s ? s
@@ -286,16 +299,16 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 			return result;
 		} catch ( ResourceAccessException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of a communication error: {}",
-					eventDescription, context.getClass().getSimpleName(), confIdDesc,
-					req != null ? req.getUrl() : null, e.getMessage());
+					eventDescription, (context != null ? context.getClass().getSimpleName() : null),
+					confIdDesc, req != null ? req.getUrl() : null, e.getMessage());
 			tags = errorEventTags;
 			eventMsg = errorEventMessageProvider.apply(e);
 			throw new RemoteServiceException("%s failed because of a communication error: %s"
 					.formatted(eventDescription, e.getMessage()), e);
 		} catch ( RestClientResponseException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because the HTTP status {} was returned.",
-					eventDescription, context.getClass().getSimpleName(), confIdDesc,
-					req != null ? req.getUrl() : null, e.getStatusCode());
+					eventDescription, (context != null ? context.getClass().getSimpleName() : null),
+					confIdDesc, req != null ? req.getUrl() : null, e.getStatusCode());
 
 			// try to capture response body
 			try {
@@ -321,18 +334,22 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 				// so treat this more like a RestClientResponseException
 				log.warn(
 						"[{}] for {} {} failed at [{}] because the HTTP status {} was returned (with unexpected Content-Type [{}]).",
-						eventDescription, context.getClass().getSimpleName(), confIdDesc,
-						req != null ? req.getUrl() : null, e.getStatusCode(), e.getContentType());
+						eventDescription, (context != null ? context.getClass().getSimpleName() : null),
+						confIdDesc, req != null ? req.getUrl() : null, e.getStatusCode(),
+						e.getContentType());
 				throw new RemoteServiceException(
 						"%s failed because an invalid HTTP status (with unexpected Content-Type [%s]) was returned: %s"
 								.formatted(eventDescription, e.getContentType(), e.getStatusCode()),
 						HttpClientErrorException.create(e.getMessage(), e.getStatusCode(),
-								e.getStatusText(), e.getResponseHeaders(), e.getResponseBody(), null));
+								e.getStatusText(),
+								e.getResponseHeaders() != null ? e.getResponseHeaders()
+										: new HttpHeaders(),
+								e.getResponseBody(), null));
 			} else {
 				log.warn(
 						"[{}] for {} {} failed at [{}] because the response Content-Type [{}] is not supported.",
-						eventDescription, context.getClass().getSimpleName(), confIdDesc,
-						req != null ? req.getUrl() : null, e.getContentType());
+						eventDescription, (context != null ? context.getClass().getSimpleName() : null),
+						confIdDesc, req != null ? req.getUrl() : null, e.getContentType());
 				throw new RemoteServiceException(
 						"%s failed because the respones Content-Type is not supported: %s"
 								.formatted(context, e.getContentType()),
@@ -340,8 +357,8 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 			}
 		} catch ( OAuth2AuthorizationException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of an OAuth error: {}", eventDescription,
-					context.getClass().getSimpleName(), confIdDesc, req != null ? req.getUrl() : null,
-					e.getMessage());
+					(context != null ? context.getClass().getSimpleName() : null), confIdDesc,
+					req != null ? req.getUrl() : null, e.getMessage());
 			tags = errorEventTags;
 			eventMsg = errorEventMessageProvider.apply(e);
 			throw new RemoteServiceException("%s failed because of an authorization error: %s"
@@ -370,7 +387,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	}
 
 	private void populateResponseBodyEventData(ResponseEntity<?> result, Map<String, Object> eventData) {
-		String respBody = result.hasBody() ? result.getBody().toString() : null;
+		String respBody = result.hasBody() ? nonnull(result.getBody(), "result.body").toString() : null;
 		if ( respBody == null ) {
 			return;
 		}
@@ -379,7 +396,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 		}
 	}
 
-	private Long contextUserId(Object context) {
+	private @Nullable Long contextUserId(@Nullable Object context) {
 		final Long userId = switch (context) {
 			case null -> null;
 			case Long id -> id;
@@ -412,7 +429,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 * 
 	 * @return the tags
 	 */
-	public List<String> getErrorEventTags() {
+	public final List<String> getErrorEventTags() {
 		return errorEventTags;
 	}
 
@@ -421,7 +438,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 * 
 	 * @return the tags
 	 */
-	public List<String> getEventTags() {
+	public final List<String> getEventTags() {
 		return eventTags;
 	}
 
@@ -439,7 +456,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 * 
 	 * @return the key
 	 */
-	public String getUserServiceKey() {
+	public final @Nullable String getUserServiceKey() {
 		return userServiceKey;
 	}
 
@@ -450,7 +467,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 *        the key to set; requires
 	 *        {@link #setUserServiceAuditor(UserServiceAuditor)} be configured
 	 */
-	public void setUserServiceKey(String userServiceKey) {
+	public final void setUserServiceKey(@Nullable String userServiceKey) {
 		this.userServiceKey = userServiceKey != null && !userServiceKey.isBlank() ? userServiceKey
 				: null;
 	}
@@ -460,7 +477,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 *
 	 * @return the auditor, or {@code null}
 	 */
-	public final UserServiceAuditor getUserServiceAuditor() {
+	public final @Nullable UserServiceAuditor getUserServiceAuditor() {
 		return userServiceAuditor;
 	}
 
@@ -471,7 +488,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 *        the auditor to set, or {@code null}; requires
 	 *        {@code #setUserServiceKey(String)} be configured
 	 */
-	public final void setUserServiceAuditor(UserServiceAuditor userServiceAuditor) {
+	public final void setUserServiceAuditor(@Nullable UserServiceAuditor userServiceAuditor) {
 		this.userServiceAuditor = userServiceAuditor;
 	}
 
@@ -480,7 +497,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 *
 	 * @return the cache
 	 */
-	public final Cache<CachableRequestEntity, Result<?>> getHttpCache() {
+	public final @Nullable Cache<CachableRequestEntity, Result<?>> getHttpCache() {
 		return httpCache;
 	}
 
@@ -490,7 +507,7 @@ public class BasicHttpOperations implements HttpOperations, CommonUserEvents, Ht
 	 * @param httpCache
 	 *        the cache to set
 	 */
-	public final void setHttpCache(Cache<CachableRequestEntity, Result<?>> httpCache) {
+	public final void setHttpCache(@Nullable Cache<CachableRequestEntity, Result<?>> httpCache) {
 		this.httpCache = httpCache;
 	}
 
