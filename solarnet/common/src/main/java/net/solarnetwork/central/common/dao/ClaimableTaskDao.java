@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.dao;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.dao.Entity;
 
@@ -45,6 +46,7 @@ public interface ClaimableTaskDao<T extends Entity<K>, K extends Comparable<K>> 
 	 *
 	 * @return a claimed task, or {@code null} if none could be claimed
 	 */
+	@Nullable
 	T claimQueuedTask();
 
 	/**
@@ -56,12 +58,12 @@ public interface ClaimableTaskDao<T extends Entity<K>, K extends Comparable<K>> 
 	 *        the state to update the task to
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to {@code desiredState}, or {@code null} if
-	 *        the current state of the task does not matter
+	 *        order to change it to {@code desiredState}, or {@code null} if the
+	 *        current state of the task does not matter
 	 * @return {@literal true} if the task state was changed
 	 */
 	boolean updateTaskState(K id, BasicClaimableJobState desiredState,
-			BasicClaimableJobState... expectedStates);
+			BasicClaimableJobState @Nullable... expectedStates);
 
 	/**
 	 * Update a specific task.
@@ -70,11 +72,11 @@ public interface ClaimableTaskDao<T extends Entity<K>, K extends Comparable<K>> 
 	 *        the info to save
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to the info's given state, or {@code null}
-	 *        if the current state of the task does not matter
+	 *        order to change it to the info's given state, or {@code null} if
+	 *        the current state of the task does not matter
 	 * @return {@literal true} if the task state was changed
 	 */
-	boolean updateTask(T info, BasicClaimableJobState... expectedStates);
+	boolean updateTask(T info, BasicClaimableJobState @Nullable... expectedStates);
 
 	/**
 	 * Reset tasks that are in the executing state but have an execute date

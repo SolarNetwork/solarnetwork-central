@@ -25,6 +25,7 @@ package net.solarnetwork.central.common.dao;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.GenericDao;
@@ -45,8 +46,8 @@ public interface GenericCompositeKeyFilterableDao<T extends Entity<K>, K extends
 	 * 
 	 * <p>
 	 * Only key components that are assigned are used to filter the result. The
-	 * {@code sortDescriptors} parameter can be {@code null}, in which case
-	 * the sort order is not defined and implementation specific.
+	 * {@code sortDescriptors} parameter can be {@code null}, in which case the
+	 * sort order is not defined and implementation specific.
 	 * </p>
 	 * 
 	 * @param filter
@@ -55,6 +56,6 @@ public interface GenericCompositeKeyFilterableDao<T extends Entity<K>, K extends
 	 *        list of sort descriptors to sort the results by
 	 * @return list of all persisted entities, or empty list if none available
 	 */
-	Collection<T> findAllForKey(K filter, List<SortDescriptor> sorts);
+	Collection<T> findAllForKey(K filter, @Nullable List<SortDescriptor> sorts);
 
 }

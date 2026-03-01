@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.Location;
 
 /**
@@ -43,6 +44,7 @@ public interface LocationCriteria {
 	 * 
 	 * @return the location ID, or {@code null} if not available
 	 */
+	@Nullable
 	Long getLocationId();
 
 	/**
@@ -50,7 +52,7 @@ public interface LocationCriteria {
 	 * 
 	 * @return array of locations IDs (may be {@code null})
 	 */
-	Long[] getLocationIds();
+	Long @Nullable [] getLocationIds();
 
 	/**
 	 * Get a location to use as geographic criteria.
@@ -58,6 +60,7 @@ public interface LocationCriteria {
 	 * @return the location whose properties represent geographic search
 	 *         criteria
 	 */
+	@Nullable
 	Location getLocation();
 
 	/**

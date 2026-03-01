@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -75,7 +76,7 @@ public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 
 	@Override
 	public FilterResults<UserEvent, UserUuidPK> findFiltered(UserEventFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		SelectUserEvent sql = new SelectUserEvent(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, UserEventRowMapper.INSTANCE);
 	}
@@ -86,6 +87,7 @@ public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 		return jdbcOps.update(sql);
 	}
 
+	@SuppressWarnings("NullAway") // until NullAway supports <? extends @Nullable Object>
 	@Override
 	public void findFilteredStream(UserEventFilter filter, FilteredResultsProcessor<UserEvent> processor)
 			throws IOException {

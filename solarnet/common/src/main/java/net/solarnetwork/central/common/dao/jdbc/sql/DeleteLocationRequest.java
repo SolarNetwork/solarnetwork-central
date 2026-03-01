@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
@@ -39,8 +40,8 @@ import net.solarnetwork.central.common.dao.LocationRequestCriteria;
  */
 public final class DeleteLocationRequest implements PreparedStatementCreator, SqlProvider {
 
-	private final Long id;
-	private final LocationRequestCriteria filter;
+	private final @Nullable Long id;
+	private final @Nullable LocationRequestCriteria filter;
 
 	/**
 	 * Constructor.
@@ -74,7 +75,7 @@ public final class DeleteLocationRequest implements PreparedStatementCreator, Sq
 	 * @param filter
 	 *        an optional filter to limit the query to
 	 */
-	public DeleteLocationRequest(Long id, LocationRequestCriteria filter) {
+	public DeleteLocationRequest(@Nullable Long id, @Nullable LocationRequestCriteria filter) {
 		super();
 		this.id = id;
 		this.filter = filter;

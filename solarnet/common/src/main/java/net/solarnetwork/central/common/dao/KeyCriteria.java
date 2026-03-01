@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Criteria API for keyed entities.
  * 
@@ -35,14 +37,14 @@ public interface KeyCriteria {
 	 * 
 	 * @return the keys
 	 */
-	String[] getKeys();
+	String @Nullable [] getKeys();
 
 	/**
 	 * Get a single key criteria.
 	 * 
 	 * @return the first available key criteria
 	 */
-	default String getKey() {
+	default @Nullable String getKey() {
 		String[] keys = getKeys();
 		return (keys != null && keys.length > 0 ? keys[0] : null);
 	}

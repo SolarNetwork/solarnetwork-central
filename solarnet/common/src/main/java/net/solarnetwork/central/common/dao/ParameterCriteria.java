@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.dao;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Search criteria for arbitrary parameters.
@@ -37,6 +38,7 @@ public interface ParameterCriteria {
 	 * 
 	 * @return parameters (may be {@code null})
 	 */
+	@Nullable
 	Map<String, ?> getParameters();
 
 	/**
@@ -70,7 +72,7 @@ public interface ParameterCriteria {
 	 * @return the parameter value, or {@code null} if not found
 	 * @since 1.2
 	 */
-	default Object parameter(String key) {
+	default @Nullable Object parameter(String key) {
 		final var params = getParameters();
 		return params != null ? params.get(key) : null;
 	}

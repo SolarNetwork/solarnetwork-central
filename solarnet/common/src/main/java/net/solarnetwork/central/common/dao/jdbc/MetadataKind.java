@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * The type of metadata to parse.
  *
@@ -65,12 +67,11 @@ public enum MetadataKind {
 	 *
 	 * @param key
 	 *        the key value
-	 * @return the enum, or {@code null} if {@code key} is {@code null} or
-	 *         empty
+	 * @return the enum, or {@code null} if {@code key} is {@code null} or empty
 	 * @throws IllegalArgumentException
 	 *         if {@code key} is not supported
 	 */
-	public static MetadataKind forKey(String key) {
+	public static @Nullable MetadataKind forKey(String key) {
 		if ( key == null || key.isEmpty() ) {
 			return null;
 		}

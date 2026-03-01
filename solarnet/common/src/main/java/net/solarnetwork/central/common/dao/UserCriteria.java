@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for user related data.
  * 
@@ -41,6 +43,7 @@ public interface UserCriteria {
 	 * 
 	 * @return the first user ID, or {@code null} if not available
 	 */
+	@Nullable
 	Long getUserId();
 
 	/**
@@ -48,7 +51,7 @@ public interface UserCriteria {
 	 * 
 	 * @return array of user IDs (may be {@code null})
 	 */
-	Long[] getUserIds();
+	Long @Nullable [] getUserIds();
 
 	/**
 	 * Test if this filter has any user criteria.

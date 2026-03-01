@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Criteria API for topical entities.
  * 
@@ -45,7 +47,7 @@ public interface TopicCriteria {
 	 * 
 	 * @return array of topics (may be {@code null})
 	 */
-	String[] getTopics();
+	String @Nullable [] getTopics();
 
 	/**
 	 * Get the first topic.
@@ -57,7 +59,7 @@ public interface TopicCriteria {
 	 * 
 	 * @return the topic, or {@code null} if not available
 	 */
-	default String getTopic() {
+	default @Nullable String getTopic() {
 		String[] ids = getTopics();
 		return (ids != null && ids.length > 0 ? ids[0] : null);
 	}

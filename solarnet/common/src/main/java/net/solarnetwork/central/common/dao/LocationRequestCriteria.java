@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.dao;
 
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.LocationRequestStatus;
 import net.solarnetwork.dao.PaginationCriteria;
 
@@ -40,6 +41,7 @@ public interface LocationRequestCriteria extends LocationCriteria, UserCriteria,
 	 * 
 	 * @return the request statuses
 	 */
+	@Nullable
 	Set<LocationRequestStatus> getRequestStatuses();
 
 	/**
@@ -47,13 +49,13 @@ public interface LocationRequestCriteria extends LocationCriteria, UserCriteria,
 	 * 
 	 * <p>
 	 * This returns the first available status from the
-	 * {@link #getRequestStatuses()} set in iteration order, or {@code null}
-	 * if not available.
+	 * {@link #getRequestStatuses()} set in iteration order, or {@code null} if
+	 * not available.
 	 * </p>
 	 * 
 	 * @return the first status, or {@code null} if not available
 	 */
-	default LocationRequestStatus getRequestStatus() {
+	default @Nullable LocationRequestStatus getRequestStatus() {
 		Set<LocationRequestStatus> s = getRequestStatuses();
 		return (s != null && !s.isEmpty() ? s.iterator().next() : null);
 	}

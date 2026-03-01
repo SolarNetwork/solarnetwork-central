@@ -91,6 +91,7 @@ public final class CommonDbUtils {
 	 * @param metas
 	 *        the metadata to insert
 	 */
+	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static void insertObjectDatumStreamMetadata(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<? extends ObjectDatumStreamMetadata> metas) {
 		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {

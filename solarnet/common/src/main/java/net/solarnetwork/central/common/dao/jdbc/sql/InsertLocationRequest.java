@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -109,7 +110,7 @@ public final class InsertLocationRequest
 		} else {
 			ps.setNull(2, Types.BIGINT);
 		}
-		ps.setString(3, String.valueOf((char) req.getStatus().getCode()));
+		ps.setString(3, String.valueOf((char) nonnull(req.getStatus(), "request.status").getCode()));
 		ps.setString(4, req.getJsonData());
 	}
 

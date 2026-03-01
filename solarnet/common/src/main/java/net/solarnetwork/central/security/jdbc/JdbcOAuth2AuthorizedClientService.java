@@ -451,10 +451,11 @@ public class JdbcOAuth2AuthorizedClientService
 			Long userId = rs.getObject(1, Long.class);
 			String clientRegistrationId = rs.getString(2);
 			String principalName = rs.getString(3);
-			Instant created = getTimestampInstant(rs, 11);
+			Instant created = nonnull(getTimestampInstant(rs, 11), "created");
 			var result = new ClientAccessTokenEntity(userId, clientRegistrationId, principalName,
-					created, rs.getString(4), rs.getBytes(5), getTimestampInstant(rs, 6),
-					getTimestampInstant(rs, 7));
+					created, rs.getString(4), rs.getBytes(5),
+					nonnull(getTimestampInstant(rs, 6), "issuedAt"),
+					nonnull(getTimestampInstant(rs, 7), "expiresAt"));
 			result.setAccessTokenScopes(StringUtils.commaDelimitedListToSet(rs.getString(8)));
 			byte[] refreshTokenValue = rs.getBytes(9);
 			if ( refreshTokenValue != null ) {

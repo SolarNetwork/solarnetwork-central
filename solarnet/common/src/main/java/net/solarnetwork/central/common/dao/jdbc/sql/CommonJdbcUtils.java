@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.postgresql.util.PGInterval;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
@@ -97,7 +98,7 @@ public final class CommonJdbcUtils {
 	 *         if a casting error occurs
 	 */
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
-	public static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
+	public static <T> @Nullable T getArray(ResultSet rs, int colNum) throws SQLException {
 		Array a = rs.getArray(colNum);
 		if ( a == null ) {
 			return null;
@@ -168,13 +169,13 @@ public final class CommonJdbcUtils {
 	 *        the expected array type, e.g. {@code Long[].class}
 	 * @param o
 	 *        the {@link Array} instance
-	 * @return the array value, or {@code null} if {@code o} is
-	 *         {@code null} or not a {@link Array}
+	 * @return the array value, or {@code null} if {@code o} is {@code null} or
+	 *         not a {@link Array}
 	 * @throws ClassCastException
 	 *         if a casting error occurs
 	 */
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
-	public static <T> T arrayValue(Object o) {
+	public static <T> @Nullable T arrayValue(Object o) {
 		if ( o instanceof Array a ) {
 			try {
 				return (T) a.getArray();
@@ -206,7 +207,7 @@ public final class CommonJdbcUtils {
 	 *         if the column value is non-null but does not conform to the
 	 *         string representation as described in {@link UUID#toString()}
 	 */
-	public static UUID getUuid(ResultSet rs, int column) throws SQLException {
+	public static @Nullable UUID getUuid(ResultSet rs, int column) throws SQLException {
 		Object sid = rs.getObject(column);
 		return (sid instanceof UUID uuid ? uuid : sid != null ? UUID.fromString(sid.toString()) : null);
 	}
@@ -223,7 +224,9 @@ public final class CommonJdbcUtils {
 	 *        will be used
 	 * @return the result, or {@code null} if no result count is available
 	 */
-	public static Long executeCountQuery(JdbcOperations jdbcTemplate, PreparedStatementCreator creator) {
+	@SuppressWarnings("NullAway") // does not handle Spring's <T extends @Nullable Object> signature
+	public static @Nullable Long executeCountQuery(JdbcOperations jdbcTemplate,
+			PreparedStatementCreator creator) {
 		return jdbcTemplate.query(creator, rs -> rs.next() ? rs.getLong(1) : null);
 	}
 
@@ -312,10 +315,12 @@ public final class CommonJdbcUtils {
 	 *         if any IO error occurs
 	 * @since 1.2
 	 */
+	@SuppressWarnings("NullAway") // does not handle Spring's <T extends @Nullable Object> signature
 	public static <T> void executeStreamingQuery(JdbcOperations jdbcOps,
 			FilteredResultsProcessor<T> processor, PreparedStatementCreator sql, RowMapper<T> mapper,
-			Long totalResultCount, Integer startingOffset, Integer expectedResultCount,
-			Map<String, ?> attributes) throws IOException {
+			@Nullable Long totalResultCount, @Nullable Integer startingOffset,
+			@Nullable Integer expectedResultCount, @Nullable Map<String, ?> attributes)
+			throws IOException {
 		processor.start(totalResultCount, startingOffset, expectedResultCount, attributes);
 		try {
 			jdbcOps.execute(sql, (PreparedStatementCallback<Void>) ps -> {
@@ -352,8 +357,8 @@ public final class CommonJdbcUtils {
 	 *         returned or is not a {@code Long} instance
 	 * @since 1.1
 	 */
-	public static Long updateWithGeneratedLong(JdbcOperations jdbcTemplate, PreparedStatementCreator sql,
-			String keyColumnName) {
+	public static @Nullable Long updateWithGeneratedLong(JdbcOperations jdbcTemplate,
+			PreparedStatementCreator sql, String keyColumnName) {
 		KeyHolder keyHolder = new GeneratedKeyHolder();
 		jdbcTemplate.update(sql, keyHolder);
 		Map<String, Object> keys = keyHolder.getKeys();
@@ -376,8 +381,8 @@ public final class CommonJdbcUtils {
 	 *         if any SQL error occurs
 	 * @since 1.1
 	 */
-	public static <T extends Enum<T> & CodedValue> Set<T> getCodedValueSet(ResultSet rs, int colNum,
-			Class<T> clazz) throws SQLException {
+	public static <T extends Enum<T> & CodedValue> @Nullable Set<T> getCodedValueSet(ResultSet rs,
+			int colNum, Class<T> clazz) throws SQLException {
 		Number[] codes = getArray(rs, colNum);
 		if ( codes == null ) {
 			return null;
@@ -407,7 +412,7 @@ public final class CommonJdbcUtils {
 	 *         if an error occurs
 	 * @since 1.3
 	 */
-	public static Instant getTimestampInstant(ResultSet rs, int column) throws SQLException {
+	public static @Nullable Instant getTimestampInstant(ResultSet rs, int column) throws SQLException {
 		Timestamp ts = rs.getTimestamp(column);
 		return (ts != null ? ts.toInstant() : null);
 	}
@@ -426,7 +431,7 @@ public final class CommonJdbcUtils {
 	 *         if an error occurs
 	 * @since 2.2
 	 */
-	public static Period getIntervalPeriod(ResultSet rs, int column) throws SQLException {
+	public static @Nullable Period getIntervalPeriod(ResultSet rs, int column) throws SQLException {
 		Object o = rs.getObject(column);
 		try {
 			return getIntervalPeriod(o);
@@ -446,7 +451,7 @@ public final class CommonJdbcUtils {
 	 *         if {@code value} is not of a supported type
 	 * @since 2.2
 	 */
-	public static Period getIntervalPeriod(Object value) {
+	public static @Nullable Period getIntervalPeriod(Object value) {
 		if ( value == null ) {
 			return null;
 		} else if ( value instanceof PGInterval pg ) {

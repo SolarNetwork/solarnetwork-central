@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for {@code Identifiable} related data.
  * 
@@ -40,7 +42,7 @@ public interface IdentifiableCriteria {
 	 * 
 	 * @return the first service identifier, or {@code null} if not available
 	 */
-	default String getServiceIdentifier() {
+	default @Nullable String getServiceIdentifier() {
 		String[] idents = getServiceIdentifiers();
 		return (idents != null && idents.length > 0 ? idents[0] : null);
 	}
@@ -50,7 +52,7 @@ public interface IdentifiableCriteria {
 	 * 
 	 * @return array of service identifiers (may be {@code null})
 	 */
-	String[] getServiceIdentifiers();
+	String @Nullable [] getServiceIdentifiers();
 
 	/**
 	 * Test if this filter has any service identifier criteria.

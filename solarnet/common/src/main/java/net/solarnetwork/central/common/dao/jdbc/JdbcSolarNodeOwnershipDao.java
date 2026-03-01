@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.SelectSolarNodeOwnership;
@@ -61,8 +62,8 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 			""";
 
 	private final JdbcOperations jdbcOps;
-	private Cache<Long, SolarNodeOwnership> nodeOwnershipCache;
-	private Cache<UUID, ObjectDatumStreamMetadataId> streamMetadataIdCache;
+	private @Nullable Cache<Long, SolarNodeOwnership> nodeOwnershipCache;
+	private @Nullable Cache<UUID, ObjectDatumStreamMetadataId> streamMetadataIdCache;
 
 	/**
 	 * Metadata ID provider implementation that returns an empty map.
@@ -89,7 +90,7 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 	}
 
 	@Override
-	public SolarNodeOwnership ownershipForNodeId(Long nodeId) {
+	public @Nullable SolarNodeOwnership ownershipForNodeId(Long nodeId) {
 		if ( nodeId == null ) {
 			return null;
 		}
@@ -114,7 +115,7 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 	}
 
 	@Override
-	public SolarNodeOwnership[] ownershipsForUserId(Long userId) {
+	public SolarNodeOwnership @Nullable [] ownershipsForUserId(Long userId) {
 		if ( userId == null ) {
 			return null;
 		}
@@ -162,7 +163,7 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 			return Collections.unmodifiableMap(result);
 		}
 
-		jdbcOps.execute((ConnectionCallback<Void>) con -> {
+		jdbcOps.execute((ConnectionCallback<Boolean>) con -> {
 
 			try (PreparedStatement stmt = con.prepareStatement(FIND_METADATA_IDS_FOR_STREAM_ID)) {
 				int resultNum = 0;
@@ -181,7 +182,7 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 				}
 			}
 
-			return null;
+			return true;
 		});
 		return Collections.unmodifiableMap(result);
 	}
@@ -200,7 +201,7 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 	 *
 	 * @return the cache, or {@code null} if not available
 	 */
-	public Cache<Long, SolarNodeOwnership> getNodeOwnershipCache() {
+	public final @Nullable Cache<Long, SolarNodeOwnership> getNodeOwnershipCache() {
 		return nodeOwnershipCache;
 	}
 
@@ -210,7 +211,8 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 	 * @param nodeOwnershipCache
 	 *        the cache to set
 	 */
-	public void setNodeOwnershipCache(Cache<Long, SolarNodeOwnership> nodeOwnershipCache) {
+	public final void setNodeOwnershipCache(
+			@Nullable Cache<Long, SolarNodeOwnership> nodeOwnershipCache) {
 		this.nodeOwnershipCache = nodeOwnershipCache;
 	}
 
@@ -220,7 +222,7 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 	 * @return the cache, or {@code null}
 	 * @since 1.1
 	 */
-	public Cache<UUID, ObjectDatumStreamMetadataId> getStreamMetadataIdCache() {
+	public final @Nullable Cache<UUID, ObjectDatumStreamMetadataId> getStreamMetadataIdCache() {
 		return streamMetadataIdCache;
 	}
 
@@ -231,8 +233,8 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 	 *        the cache to set
 	 * @since 1.1
 	 */
-	public void setStreamMetadataIdCache(
-			Cache<UUID, ObjectDatumStreamMetadataId> streamMetadataIdCache) {
+	public final void setStreamMetadataIdCache(
+			@Nullable Cache<UUID, ObjectDatumStreamMetadataId> streamMetadataIdCache) {
 		this.streamMetadataIdCache = streamMetadataIdCache;
 	}
 

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.dao.FilterableDao;
 
@@ -41,6 +42,7 @@ public interface SolarNodeMetadataReadOnlyDao
 	 *        the ID of the node to get the metadata for
 	 * @return the metadata, or {@code null} if none available
 	 */
+	@Nullable
 	SolarNodeMetadata get(Long nodeId);
 
 }

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for control related data.
  * 
@@ -40,7 +42,7 @@ public interface ControlCriteria {
 	 * 
 	 * @return the first control ID, or {@code null} if not available
 	 */
-	default String getControlId() {
+	default @Nullable String getControlId() {
 		final String[] array = getControlIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -50,7 +52,7 @@ public interface ControlCriteria {
 	 * 
 	 * @return array of control IDs (may be {@code null})
 	 */
-	String[] getControlIds();
+	String @Nullable [] getControlIds();
 
 	/**
 	 * Test if this filter has any control criteria.

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for identifier related data.
  * 
@@ -35,7 +37,7 @@ public interface IdentifierCriteria {
 	 * 
 	 * @return array of identifiers (may be {@code null})
 	 */
-	String[] getIdentifiers();
+	String @Nullable [] getIdentifiers();
 
 	/**
 	 * Get the first identifier.
@@ -47,7 +49,7 @@ public interface IdentifierCriteria {
 	 * 
 	 * @return the first identifier, or {@code null} if not available
 	 */
-	default String getIdentifier() {
+	default @Nullable String getIdentifier() {
 		String[] a = getIdentifiers();
 		return (a != null && a.length > 0 ? a[0] : null);
 	}

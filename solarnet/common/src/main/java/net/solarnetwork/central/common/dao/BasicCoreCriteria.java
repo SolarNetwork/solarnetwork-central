@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -45,15 +46,15 @@ public class BasicCoreCriteria extends SimplePagination
 		SourceCriteria, UserCriteria, SecurityTokenCriteria, SearchFilterCriteria, EnabledCriteria,
 		NodeOwnershipCriteria, SolarNodeMetadataFilter {
 
-	private Long[] locationIds;
-	private Long[] nodeIds;
-	private String[] sourceIds;
-	private Long[] userIds;
-	private String[] tokenIds;
-	private SimpleLocation location;
-	private String searchFilter;
-	private Boolean enabled;
-	private Boolean validNodeOwnership;
+	private Long @Nullable [] locationIds;
+	private Long @Nullable [] nodeIds;
+	private String @Nullable [] sourceIds;
+	private Long @Nullable [] userIds;
+	private String @Nullable [] tokenIds;
+	private @Nullable SimpleLocation location;
+	private @Nullable String searchFilter;
+	private @Nullable Boolean enabled;
+	private @Nullable Boolean validNodeOwnership;
 
 	/**
 	 * Default constructor.
@@ -65,7 +66,7 @@ public class BasicCoreCriteria extends SimplePagination
 	/**
 	 * Copy constructor.
 	 */
-	public BasicCoreCriteria(PaginationCriteria criteria) {
+	public BasicCoreCriteria(@Nullable PaginationCriteria criteria) {
 		super();
 		copyFrom(criteria);
 	}
@@ -96,7 +97,7 @@ public class BasicCoreCriteria extends SimplePagination
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -206,18 +207,18 @@ public class BasicCoreCriteria extends SimplePagination
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setLocationId(Long locationId) {
+	public final void setLocationId(@Nullable Long locationId) {
 		setLocationIds(locationId == null ? null : new Long[] { locationId });
 	}
 
 	@Override
 	@JsonIgnore
-	public Long getLocationId() {
+	public final @Nullable Long getLocationId() {
 		return (locationIds != null && locationIds.length > 0 ? locationIds[0] : null);
 	}
 
 	@Override
-	public Long[] getLocationIds() {
+	public final Long @Nullable [] getLocationIds() {
 		return locationIds;
 	}
 
@@ -227,7 +228,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param locationIds
 	 *        the location IDs to set
 	 */
-	public void setLocationIds(Long[] locationIds) {
+	public final void setLocationIds(Long @Nullable [] locationIds) {
 		this.locationIds = locationIds;
 	}
 
@@ -246,18 +247,18 @@ public class BasicCoreCriteria extends SimplePagination
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		setNodeIds(nodeId == null ? null : new Long[] { nodeId });
 	}
 
 	@JsonIgnore
 	@Override
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return (this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0]);
 	}
 
 	@Override
-	public Long[] getNodeIds() {
+	public final Long @Nullable [] getNodeIds() {
 		return nodeIds;
 	}
 
@@ -267,7 +268,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param nodeIds
 	 *        the nodeIds to set
 	 */
-	public void setNodeIds(Long[] nodeIds) {
+	public final void setNodeIds(Long @Nullable [] nodeIds) {
 		this.nodeIds = nodeIds;
 	}
 
@@ -287,18 +288,18 @@ public class BasicCoreCriteria extends SimplePagination
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(@Nullable String sourceId) {
 		setSourceIds(sourceId == null ? null : new String[] { sourceId });
 	}
 
 	@Override
 	@JsonIgnore
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return (this.sourceIds == null || this.sourceIds.length < 1 ? null : this.sourceIds[0]);
 	}
 
 	@Override
-	public String[] getSourceIds() {
+	public final String @Nullable [] getSourceIds() {
 		return sourceIds;
 	}
 
@@ -308,7 +309,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param sourceIds
 	 *        the sourceIds to set
 	 */
-	public void setSourceIds(String[] sourceIds) {
+	public final void setSourceIds(String @Nullable [] sourceIds) {
 		this.sourceIds = sourceIds;
 	}
 
@@ -328,18 +329,18 @@ public class BasicCoreCriteria extends SimplePagination
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setUserId(Long userId) {
+	public final void setUserId(@Nullable Long userId) {
 		this.userIds = (userId == null ? null : new Long[] { userId });
 	}
 
 	@Override
 	@JsonIgnore
-	public Long getUserId() {
+	public final @Nullable Long getUserId() {
 		return (this.userIds == null || this.userIds.length < 1 ? null : this.userIds[0]);
 	}
 
 	@Override
-	public Long[] getUserIds() {
+	public final Long @Nullable [] getUserIds() {
 		return userIds;
 	}
 
@@ -349,7 +350,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param userIds
 	 *        The user IDs to filter on.
 	 */
-	public void setUserIds(Long[] userIds) {
+	public final void setUserIds(Long @Nullable [] userIds) {
 		this.userIds = userIds;
 	}
 
@@ -368,18 +369,18 @@ public class BasicCoreCriteria extends SimplePagination
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setTokenId(String tokenId) {
+	public final void setTokenId(@Nullable String tokenId) {
 		setTokenIds(tokenId == null ? null : new String[] { tokenId.trim() });
 	}
 
 	@Override
 	@JsonIgnore
-	public String getTokenId() {
+	public final @Nullable String getTokenId() {
 		return (this.tokenIds == null || this.tokenIds.length < 1 ? null : this.tokenIds[0]);
 	}
 
 	@Override
-	public String[] getTokenIds() {
+	public final String @Nullable [] getTokenIds() {
 		return tokenIds;
 	}
 
@@ -389,12 +390,12 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param tokenIds
 	 *        the tokenIds to set
 	 */
-	public void setTokenIds(String[] tokenIds) {
+	public final void setTokenIds(String @Nullable [] tokenIds) {
 		this.tokenIds = tokenIds;
 	}
 
 	@Override
-	public SimpleLocation getLocation() {
+	public final @Nullable SimpleLocation getLocation() {
 		return location;
 	}
 
@@ -404,12 +405,12 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param location
 	 *        the location to set
 	 */
-	public void setLocation(SimpleLocation location) {
+	public final void setLocation(@Nullable SimpleLocation location) {
 		this.location = location;
 	}
 
 	@Override
-	public String getSearchFilter() {
+	public final @Nullable String getSearchFilter() {
 		return searchFilter;
 	}
 
@@ -419,7 +420,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param searchFilter
 	 *        the filter to set
 	 */
-	public void setSearchFilter(String searchFilter) {
+	public final void setSearchFilter(@Nullable String searchFilter) {
 		this.searchFilter = searchFilter;
 	}
 
@@ -437,12 +438,13 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @return the order-by list
 	 * @since 1.2
 	 */
-	public List<String> getOrderBy() {
+	public final @Nullable List<String> getOrderBy() {
 		List<SortDescriptor> sorts = getSorts();
 		if ( sorts == null || sorts.isEmpty() ) {
 			return null;
 		}
-		return sorts.stream().map(s -> s.isDescending() ? s.getSortKey().concat("~") : s.getSortKey())
+		return sorts.stream().filter(s -> s.getSortKey() != null).map(
+				s -> s.isDescending() ? nonnull(s.getSortKey(), "sortKey").concat("~") : s.getSortKey())
 				.toList();
 	}
 
@@ -461,7 +463,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @see #getOrderBy()
 	 * @since 1.2
 	 */
-	public void setOrderBy(List<String> orderBys) {
+	public final void setOrderBy(@Nullable List<String> orderBys) {
 		if ( orderBys == null || orderBys.isEmpty() ) {
 			setSorts(null);
 			return;
@@ -475,7 +477,7 @@ public class BasicCoreCriteria extends SimplePagination
 	}
 
 	@Override
-	public Boolean getEnabled() {
+	public final @Nullable Boolean getEnabled() {
 		return enabled;
 	}
 
@@ -486,12 +488,12 @@ public class BasicCoreCriteria extends SimplePagination
 	 *        the enabled to set
 	 * @since 1.3
 	 */
-	public void setEnabled(Boolean enabled) {
+	public final void setEnabled(@Nullable Boolean enabled) {
 		this.enabled = enabled;
 	}
 
 	@Override
-	public Boolean getValidNodeOwnership() {
+	public final @Nullable Boolean getValidNodeOwnership() {
 		return validNodeOwnership;
 	}
 
@@ -502,7 +504,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 *        the flag to set
 	 * @since 1.3
 	 */
-	public void setValidNodeOwnership(Boolean validNodeOwnership) {
+	public final void setValidNodeOwnership(@Nullable Boolean validNodeOwnership) {
 		this.validNodeOwnership = validNodeOwnership;
 	}
 

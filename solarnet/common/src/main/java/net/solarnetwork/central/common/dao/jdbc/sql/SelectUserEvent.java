@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.UserEventFilter;
@@ -51,7 +52,7 @@ public final class SelectUserEvent
 	private final UuidTimestampDecoder uuidTimestampDecoder;
 	private final UserEventFilter filter;
 	private final int fetchSize;
-	private final SearchFilter searchFilter;
+	private final @Nullable SearchFilter searchFilter;
 
 	/**
 	 * Constructor.

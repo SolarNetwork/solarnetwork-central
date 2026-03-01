@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for source related data.
  * 
@@ -41,6 +43,7 @@ public interface SourceCriteria {
 	 * 
 	 * @return the first source ID, or {@code null} if not available
 	 */
+	@Nullable
 	String getSourceId();
 
 	/**
@@ -48,7 +51,7 @@ public interface SourceCriteria {
 	 * 
 	 * @return array of source IDs (may be {@code null})
 	 */
-	String[] getSourceIds();
+	String @Nullable [] getSourceIds();
 
 	/**
 	 * Test if this filter has any source criteria.

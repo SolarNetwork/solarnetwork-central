@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for security token related data.
  * 
@@ -41,6 +43,7 @@ public interface SecurityTokenCriteria {
 	 * 
 	 * @return the first token ID, or {@code null} if not available
 	 */
+	@Nullable
 	String getTokenId();
 
 	/**
@@ -48,7 +51,7 @@ public interface SecurityTokenCriteria {
 	 * 
 	 * @return array of token IDs (may be {@code null})
 	 */
-	String[] getTokenIds();
+	String @Nullable [] getTokenIds();
 
 	/**
 	 * Test if this filter has any token criteria.
