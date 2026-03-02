@@ -69,15 +69,11 @@ public class DogtagPKIBizTests {
 
 	@BeforeEach
 	public void setup() throws Exception {
-		biz = new DogtagPKIBiz();
-		biz.setBaseUrl(baseUrl);
-
 		certificateService = new BCCertificateService();
 		certificateService.setCertificateExpireDays(365);
 		certificateService.setSignatureAlgorithm("SHA256WithRSA");
-		biz.setCertificateService(certificateService);
 
-		biz.setRestOps(restOperations);
+		biz = new DogtagPKIBiz(certificateService, restOperations, baseUrl);
 
 		User userDetails = new User("test@localhost", "foobar", AuthorityUtils.NO_AUTHORITIES);
 		AuthenticatedUser user = new AuthenticatedUser(userDetails, -1L, "Test User", false);

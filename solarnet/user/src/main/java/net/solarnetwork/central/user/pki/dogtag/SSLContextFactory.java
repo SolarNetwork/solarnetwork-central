@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.pki.dogtag;
 
 import static net.solarnetwork.util.ArrayUtils.filterByEnabledDisabled;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
@@ -43,6 +44,7 @@ import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
 import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
 import org.apache.hc.core5.reactor.ssl.SSLBufferMode;
 import org.apache.hc.core5.ssl.SSLContexts;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -53,6 +55,7 @@ import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.util.CachedResult;
+import net.solarnetwork.util.ObjectUtils;
 import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
 
 /**
@@ -64,15 +67,32 @@ import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
  */
 public class SSLContextFactory implements PingTest {
 
-	private Resource keystoreResource;
-	private String keystorePassword;
-	private int trustedCertificateExpireWarningDays = 30;
-	private String[] enabledProtocols = null;
-	private String[] disabledProtocols = null;
-	private String[] enabledCipherSuites = null;
-	private String[] disabledCipherSuites = null;
+	private final Resource keystoreResource;
+	private final String keystorePassword;
 
-	private CachedResult<PingTest.Result> cachedResult;
+	private int trustedCertificateExpireWarningDays = 30;
+	private String @Nullable [] enabledProtocols;
+	private String @Nullable [] disabledProtocols;
+	private String @Nullable [] enabledCipherSuites;
+	private String @Nullable [] disabledCipherSuites;
+
+	private @Nullable CachedResult<PingTest.Result> cachedResult;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param keystoreResource
+	 *        the resource
+	 * @param keystorePassword
+	 *        the password
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public SSLContextFactory(Resource keystoreResource, String keystorePassword) {
+		super();
+		this.keystoreResource = requireNonNullArgument(keystoreResource, "keystoreResource");
+		this.keystorePassword = requireNonNullArgument(keystorePassword, "keystorePassword");
+	}
 
 	/**
 	 * Get a {@link SSLContext} configured to use the
@@ -167,8 +187,9 @@ public class SSLContextFactory implements PingTest {
 	@SuppressWarnings("JavaUtilDate")
 	@Override
 	public PingTest.Result performPingTest() throws Exception {
+		final CachedResult<Result> cachedResult = this.cachedResult;
 		if ( cachedResult != null && cachedResult.isValid() ) {
-			return cachedResult.getResult();
+			return ObjectUtils.nonnull(cachedResult.getResult(), "Cached result");
 		}
 		if ( keystoreResource == null ) {
 			return new PingTestResult(false, "No keystore configured");
@@ -234,31 +255,19 @@ public class SSLContextFactory implements PingTest {
 		CachedResult<PingTest.Result> cached = new CachedResult<>(result,
 				(result.isSuccess() ? 1L : 30L),
 				(result.isSuccess() ? TimeUnit.DAYS : TimeUnit.MINUTES));
-		cachedResult = cached;
+		this.cachedResult = cached;
 		return result;
 	}
 
-	public Resource getKeystoreResource() {
+	public final Resource getKeystoreResource() {
 		return keystoreResource;
 	}
 
-	public void setKeystoreResource(Resource keystoreResource) {
-		this.keystoreResource = keystoreResource;
-	}
-
-	public String getKeystorePassword() {
-		return keystorePassword;
-	}
-
-	public void setKeystorePassword(String keystorePassword) {
-		this.keystorePassword = keystorePassword;
-	}
-
-	public int getTrustedCertificateExpireWarningDays() {
+	public final int getTrustedCertificateExpireWarningDays() {
 		return trustedCertificateExpireWarningDays;
 	}
 
-	public void setTrustedCertificateExpireWarningDays(int trustedCertificateExpireWarningDays) {
+	public final void setTrustedCertificateExpireWarningDays(int trustedCertificateExpireWarningDays) {
 		this.trustedCertificateExpireWarningDays = trustedCertificateExpireWarningDays;
 	}
 
@@ -268,7 +277,7 @@ public class SSLContextFactory implements PingTest {
 	 * @return the enabled SSL protocols
 	 * @since 1.5
 	 */
-	public String[] getEnabledProtocols() {
+	public final String @Nullable [] getEnabledProtocols() {
 		return enabledProtocols;
 	}
 
@@ -283,7 +292,7 @@ public class SSLContextFactory implements PingTest {
 	 *        a list of regular expressions for the SSL protocols to enable
 	 * @since 1.5
 	 */
-	public void setEnabledProtocols(String[] enabledProtocols) {
+	public final void setEnabledProtocols(String @Nullable [] enabledProtocols) {
 		this.enabledProtocols = enabledProtocols;
 	}
 
@@ -293,7 +302,7 @@ public class SSLContextFactory implements PingTest {
 	 * @return the disabled SSL protocols
 	 * @since 1.5
 	 */
-	public String[] getDisabledProtocols() {
+	public final String @Nullable [] getDisabledProtocols() {
 		return disabledProtocols;
 	}
 
@@ -309,7 +318,7 @@ public class SSLContextFactory implements PingTest {
 	 *        a list of regular expressions for the SSL protocols to disable
 	 * @since 1.5
 	 */
-	public void setDisabledProtocols(String[] disabledProtocols) {
+	public final void setDisabledProtocols(String @Nullable [] disabledProtocols) {
 		this.disabledProtocols = disabledProtocols;
 	}
 
@@ -319,7 +328,7 @@ public class SSLContextFactory implements PingTest {
 	 * @return the enabled SSL cipher suites
 	 * @since 1.5
 	 */
-	public String[] getEnabledCipherSuites() {
+	public final String @Nullable [] getEnabledCipherSuites() {
 		return enabledCipherSuites;
 	}
 
@@ -334,7 +343,7 @@ public class SSLContextFactory implements PingTest {
 	 *        a list of regular expressions for the SSL cipher suites to enable
 	 * @since 1.5
 	 */
-	public void setEnabledCipherSuites(String[] enabledCipherSuites) {
+	public final void setEnabledCipherSuites(String @Nullable [] enabledCipherSuites) {
 		this.enabledCipherSuites = enabledCipherSuites;
 	}
 
@@ -344,7 +353,7 @@ public class SSLContextFactory implements PingTest {
 	 * @return the disabled SSL cipher suites
 	 * @since 1.5
 	 */
-	public String[] getDisabledCipherSuites() {
+	public final String @Nullable [] getDisabledCipherSuites() {
 		return disabledCipherSuites;
 	}
 
@@ -360,7 +369,7 @@ public class SSLContextFactory implements PingTest {
 	 *        a list of regular expressions for the SSL cipher suites to disable
 	 * @since 1.5
 	 */
-	public void setDisabledCipherSuites(String[] disabledCipherSuites) {
+	public final void setDisabledCipherSuites(String @Nullable [] disabledCipherSuites) {
 		this.disabledCipherSuites = disabledCipherSuites;
 	}
 
