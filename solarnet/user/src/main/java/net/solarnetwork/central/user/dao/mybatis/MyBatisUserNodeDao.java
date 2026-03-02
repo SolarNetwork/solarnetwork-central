@@ -28,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
@@ -136,7 +137,7 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	}
 
 	@Override
-	public UserNodeTransfer getUserNodeTransfer(UserNodePK pk) {
+	public @Nullable UserNodeTransfer getUserNodeTransfer(UserNodePK pk) {
 		return getSqlSession().selectOne(QUERY_USER_NODE_TRANSFERS_FOR_ID, pk);
 	}
 

@@ -90,7 +90,7 @@ public class UserNodeInstructionTaskEntity
 	private @Nullable String topic;
 
 	/** The job state. */
-	private @Nullable BasicClaimableJobState state;
+	private BasicClaimableJobState state;
 
 	/** The next time the job should execute. */
 	private @Nullable Instant executeAt;
@@ -123,6 +123,7 @@ public class UserNodeInstructionTaskEntity
 	 */
 	public UserNodeInstructionTaskEntity(UserLongCompositePK id) {
 		super(id);
+		this.state = BasicClaimableJobState.Unknown;
 	}
 
 	/**
@@ -381,9 +382,9 @@ public class UserNodeInstructionTaskEntity
 	/**
 	 * Get the job state.
 	 *
-	 * @return the state
+	 * @return the state; defaults to {@link BasicClaimableJobState#Unknown}
 	 */
-	public final @Nullable BasicClaimableJobState getState() {
+	public final BasicClaimableJobState getState() {
 		return state;
 	}
 
@@ -394,7 +395,7 @@ public class UserNodeInstructionTaskEntity
 	 *        the state to set
 	 */
 	public final void setState(@Nullable BasicClaimableJobState state) {
-		this.state = state;
+		this.state = (state != null ? state : BasicClaimableJobState.Unknown);
 	}
 
 	/**

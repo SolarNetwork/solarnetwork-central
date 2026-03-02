@@ -55,7 +55,7 @@ public class UserNodePK implements Serializable, Cloneable, Comparable<UserNodeP
 	 * @param nodeId
 	 *        the node ID
 	 */
-	public UserNodePK(Long userId, Long nodeId) {
+	public UserNodePK(@Nullable Long userId, @Nullable Long nodeId) {
 		super();
 		this.nodeId = nodeId;
 		this.userId = userId;

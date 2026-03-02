@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiFunction;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.ClaimableTaskDao;
 import net.solarnetwork.central.common.dao.FilterableDeleteDao;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
@@ -55,8 +56,8 @@ public interface UserNodeInstructionTaskDao
 		UserServiceConfigurationDao<UserLongCompositePK> {
 
 	@Override
-	default Map<String, Object> serviceConfiguration(UserLongCompositePK id,
-			BiFunction<UserLongCompositePK, String, String> secretResolver) {
+	default @Nullable Map<String, Object> serviceConfiguration(UserLongCompositePK id,
+			@Nullable BiFunction<UserLongCompositePK, String, String> secretResolver) {
 		final UserNodeInstructionTaskEntity task = get(id);
 		if ( task == null ) {
 			return null;
@@ -82,7 +83,7 @@ public interface UserNodeInstructionTaskDao
 				result.put(key, e.getValue());
 			}
 			return SecurityUtils.decryptedMap(result, secureKeys,
-					(key) -> secretResolver.apply(id, key));
+					(key) -> secretResolver != null ? secretResolver.apply(id, key) : key);
 		}
 		return result;
 	}

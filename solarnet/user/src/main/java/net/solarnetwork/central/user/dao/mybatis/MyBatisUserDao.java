@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.UserFilter;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -93,7 +94,7 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	}
 
 	@Override
-	public User getUserByEmail(String email) {
+	public @Nullable User getUserByEmail(String email) {
 		return selectFirst(QUERY_FOR_EMAIL, email == null ? null : email.trim());
 	}
 
@@ -122,7 +123,7 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	 * @since 1.2
 	 */
 	@Override
-	public Map<String, Object> getInternalData(Long userId) {
+	public @Nullable Map<String, Object> getInternalData(Long userId) {
 		User user = selectFirst(QUERY_INTERNAL_DATA, userId);
 		return (user != null ? user.getInternalData() : null);
 	}
@@ -133,7 +134,7 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	 * @since 1.2
 	 */
 	@Override
-	public void storeInternalData(Long userId, Map<String, Object> data) {
+	public void storeInternalData(Long userId, @Nullable Map<String, Object> data) {
 		Map<String, Object> sqlParams = new HashMap<>(3);
 		sqlParams.put("userId", userId);
 		sqlParams.put("dataJson", JsonUtils.getJSONString(data, "{}"));

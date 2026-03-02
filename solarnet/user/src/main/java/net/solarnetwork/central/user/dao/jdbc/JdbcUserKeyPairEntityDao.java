@@ -24,9 +24,11 @@ package net.solarnetwork.central.user.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.domain.UserStringCompositePK;
@@ -77,12 +79,12 @@ public class JdbcUserKeyPairEntityDao implements UserKeyPairEntityDao {
 	@Override
 	public UserStringCompositePK create(Long userId, UserKeyPairEntity entity) {
 		final var sql = new UpsertUserKeyPairEntity(userId, entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? new UserStringCompositePK(userId, entity.getKey()) : null);
+		jdbcOps.update(sql);
+		return new UserStringCompositePK(userId, entity.getKey());
 	}
 
 	@Override
-	public Collection<UserKeyPairEntity> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<UserKeyPairEntity> findAll(Long userId, @Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicUserSecretFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectUserKeyPairEntity(filter);
@@ -92,7 +94,7 @@ public class JdbcUserKeyPairEntityDao implements UserKeyPairEntityDao {
 
 	@Override
 	public FilterResults<UserKeyPairEntity, UserStringCompositePK> findFiltered(UserKeyPairFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectUserKeyPairEntity(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, UserKeyPairEntityRowMapper.INSTANCE);
@@ -104,7 +106,7 @@ public class JdbcUserKeyPairEntityDao implements UserKeyPairEntityDao {
 	}
 
 	@Override
-	public UserKeyPairEntity get(UserStringCompositePK id) {
+	public @Nullable UserKeyPairEntity get(UserStringCompositePK id) {
 		var filter = new BasicUserSecretFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -115,7 +117,7 @@ public class JdbcUserKeyPairEntityDao implements UserKeyPairEntityDao {
 	}
 
 	@Override
-	public Collection<UserKeyPairEntity> getAll(List<SortDescriptor> sorts) {
+	public Collection<UserKeyPairEntity> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -125,7 +127,8 @@ public class JdbcUserKeyPairEntityDao implements UserKeyPairEntityDao {
 	@Override
 	public void delete(UserKeyPairEntity entity) {
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+				nonnull(requireNonNullArgument(entity, "entity").getId(), "id"), TABLE_NAME,
+				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 

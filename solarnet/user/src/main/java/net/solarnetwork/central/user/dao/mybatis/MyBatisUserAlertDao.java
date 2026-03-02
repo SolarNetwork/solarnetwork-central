@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.domain.UserAlert;
@@ -78,8 +79,8 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	}
 
 	@Override
-	public List<UserAlert> findAlertsToProcess(UserAlertType type, Long startingId, Instant validDate,
-			Integer max) {
+	public List<UserAlert> findAlertsToProcess(UserAlertType type, @Nullable Long startingId,
+			@Nullable Instant validDate, @Nullable Integer max) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("type", type);
 		if ( startingId != null ) {
@@ -103,7 +104,7 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	}
 
 	@Override
-	public UserAlert getAlertSituation(Long alertId) {
+	public @Nullable UserAlert getAlertSituation(Long alertId) {
 		return selectFirst(QUERY_FOR_SITUATION, alertId);
 	}
 

@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao;
 
 import java.util.List;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
@@ -141,6 +142,7 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 	 * @return The matching UserNodeTransfer, or {@code null} if not available.
 	 * @since 1.2
 	 */
+	@Nullable
 	UserNodeTransfer getUserNodeTransfer(UserNodePK pk);
 
 	/**

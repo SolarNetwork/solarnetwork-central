@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.dao.mybatis;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.domain.User;
@@ -57,7 +58,7 @@ public class MyBatisUserNodeConfirmationDao extends BaseMyBatisGenericDao<UserNo
 	}
 
 	@Override
-	public UserNodeConfirmation getConfirmationForKey(Long userId, String key) {
+	public @Nullable UserNodeConfirmation getConfirmationForKey(Long userId, String key) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("userId", userId);
 		params.put("key", key);

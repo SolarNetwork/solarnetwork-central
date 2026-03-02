@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.dao;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.dao.GenericDao;
@@ -55,6 +56,7 @@ public interface UserNodeConfirmationDao extends GenericDao<UserNodeConfirmation
 	 *        the confirmation key
 	 * @return the found UserNodeConfirmation, or {@code null} if not found
 	 */
+	@Nullable
 	UserNodeConfirmation getConfirmationForKey(Long userId, String key);
 
 }

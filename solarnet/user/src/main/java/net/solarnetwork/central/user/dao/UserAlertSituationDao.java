@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.dao;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 import net.solarnetwork.dao.GenericDao;
@@ -45,6 +46,7 @@ public interface UserAlertSituationDao extends GenericDao<UserAlertSituation, Lo
 	 * @return The found {@link UserAlertSituation}, or {@code null} if none
 	 *         available.
 	 */
+	@Nullable
 	UserAlertSituation getActiveAlertSituationForAlert(Long alertId);
 
 	/**

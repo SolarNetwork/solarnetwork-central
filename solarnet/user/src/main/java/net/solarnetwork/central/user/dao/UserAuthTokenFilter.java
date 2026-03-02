@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.dao;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.ActiveCriteria;
 import net.solarnetwork.central.common.dao.IdentifierCriteria;
 import net.solarnetwork.central.common.dao.UserCriteria;
@@ -54,7 +55,7 @@ public interface UserAuthTokenFilter
 	 * 
 	 * @return array of topics (may be {@code null})
 	 */
-	String[] getTokenTypes();
+	String @Nullable [] getTokenTypes();
 
 	/**
 	 * Get the first token type.
@@ -66,7 +67,7 @@ public interface UserAuthTokenFilter
 	 * 
 	 * @return the token type, or {@code null} if not available
 	 */
-	default String getTokenType() {
+	default @Nullable String getTokenType() {
 		String[] a = getTokenTypes();
 		return (a != null && a.length > 0 ? a[0] : null);
 	}
@@ -74,7 +75,7 @@ public interface UserAuthTokenFilter
 	/**
 	 * Get the token types as a set of enumeration values.
 	 * 
-	 * @return the valid token types as a set
+	 * @return the valid token types as a set, never {@code null}
 	 */
 	default Set<SecurityTokenType> tokenTypesSet() {
 		String[] a = getTokenTypes();
@@ -97,7 +98,7 @@ public interface UserAuthTokenFilter
 	 * 
 	 * @return array of token types, or {@code null}
 	 */
-	default SecurityTokenType[] getTokenTypeEnums() {
+	default SecurityTokenType @Nullable [] getTokenTypeEnums() {
 		Set<SecurityTokenType> set = tokenTypesSet();
 		if ( set.isEmpty() ) {
 			return null;

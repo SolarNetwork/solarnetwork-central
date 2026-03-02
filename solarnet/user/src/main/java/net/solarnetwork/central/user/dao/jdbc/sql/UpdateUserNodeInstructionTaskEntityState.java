@@ -32,6 +32,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -57,7 +58,7 @@ public class UpdateUserNodeInstructionTaskEntityState implements PreparedStateme
 
 	private final BasicClaimableJobState desiredState;
 	private final UserNodeInstructionTaskFilter filter;
-	private final UserNodeInstructionTaskEntity data;
+	private final @Nullable UserNodeInstructionTaskEntity data;
 
 	/**
 	 * Constructor.
@@ -94,7 +95,7 @@ public class UpdateUserNodeInstructionTaskEntityState implements PreparedStateme
 	 *         if any argument except {@code data} is {@literal null}
 	 */
 	public UpdateUserNodeInstructionTaskEntityState(BasicClaimableJobState desiredState,
-			UserNodeInstructionTaskFilter filter, UserNodeInstructionTaskEntity data) {
+			UserNodeInstructionTaskFilter filter, @Nullable UserNodeInstructionTaskEntity data) {
 		super();
 		this.desiredState = requireNonNullArgument(desiredState, "desiredState");
 		this.filter = requireNonNullArgument(filter, "filter");

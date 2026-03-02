@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.util.function.BiFunction;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.user.domain.UserKeyPair;
 import net.solarnetwork.central.user.domain.UserSecret;
@@ -50,6 +51,7 @@ public interface UserSecretAccessDao {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
+	@Nullable
 	UserSecret getUserSecret(Long userId, String topicId, String key);
 
 	/**
