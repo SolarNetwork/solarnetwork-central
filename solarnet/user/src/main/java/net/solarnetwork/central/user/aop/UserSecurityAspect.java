@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.aop;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -30,6 +31,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.security.AuthorizationSupport;
@@ -149,10 +151,11 @@ public class UserSecurityAspect extends AuthorizationSupport {
 		return restrictNodesToPolicy(result, getActiveSecurityPolicy());
 	}
 
-	private List<UserNode> restrictNodesToPolicy(List<UserNode> nodes, SecurityPolicy policy) {
+	private List<UserNode> restrictNodesToPolicy(@Nullable List<UserNode> nodes,
+			@Nullable SecurityPolicy policy) {
 		if ( nodes == null || nodes.isEmpty() || policy == null || policy.getNodeIds() == null
 				|| policy.getNodeIds().isEmpty() ) {
-			return nodes;
+			return (nodes != null ? nodes : Collections.emptyList());
 		}
 		final Set<Long> policyNodeIds = policy.getNodeIds();
 		final List<UserNode> result = new ArrayList<>(nodes.size());
@@ -183,10 +186,10 @@ public class UserSecurityAspect extends AuthorizationSupport {
 	}
 
 	private List<UserNodeConfirmation> restrictNodeConfirmationsToPolicy(
-			List<UserNodeConfirmation> nodes, SecurityPolicy policy) {
+			@Nullable List<UserNodeConfirmation> nodes, @Nullable SecurityPolicy policy) {
 		if ( nodes == null || nodes.isEmpty() || policy == null || policy.getNodeIds() == null
 				|| policy.getNodeIds().isEmpty() ) {
-			return nodes;
+			return (nodes != null ? nodes : Collections.emptyList());
 		}
 		final Set<Long> policyNodeIds = policy.getNodeIds();
 		final List<UserNodeConfirmation> result = new ArrayList<>(nodes.size());
