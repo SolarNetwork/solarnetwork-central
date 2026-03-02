@@ -79,9 +79,8 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 
 	@Test
 	public void storeNew() {
-		UserNodeConfirmation newUserNodeConf = new UserNodeConfirmation();
+		UserNodeConfirmation newUserNodeConf = new UserNodeConfirmation(this.user);
 		newUserNodeConf.setCreated(Instant.now());
-		newUserNodeConf.setUser(this.user);
 		newUserNodeConf.setConfirmationKey(String.valueOf(testNodeId));
 		newUserNodeConf.setSecurityPhrase("test phrase");
 		newUserNodeConf.setCountry("NZ");

@@ -46,7 +46,7 @@ public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 	 * @param startingId
 	 *        An optional {@link UserAlert} ID value to start from. Only alerts
 	 *        with an ID value <em>higher</em> than this ID will be considered.
-	 *        If <em>null</em> then consider all alerts.
+	 *        If {@code null} then consider all alerts.
 	 * @param validDate
 	 *        A timestamp to use for the validity check date. If
 	 *        {@code startingId} is provided, this value can be provided to
@@ -93,7 +93,7 @@ public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 	 *
 	 * @param alertId
 	 *        The ID of the alert to get.
-	 * @return The found alert, or <em>null</em> if not available.
+	 * @return The found alert, or {@code null} if not available.
 	 */
 	UserAlert getAlertSituation(Long alertId);
 

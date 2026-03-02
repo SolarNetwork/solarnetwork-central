@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -124,9 +125,8 @@ public class UserNodeTransfer extends BaseObjectEntity<UserNodePK>
 	 * @return the userId
 	 */
 	@Override
-	public final @Nullable Long getUserId() {
-		UserNodePK id = getId();
-		return (id == null ? null : id.getUserId());
+	public final Long getUserId() {
+		return nonnull(nonnull(getId(), "id").getUserId(), "id.userId");
 	}
 
 	/**

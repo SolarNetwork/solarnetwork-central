@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,7 +78,7 @@ public class UserNodeCertificate extends BaseObjectEntity<UserNodePK>
 	 *
 	 * @param keyStore
 	 *        the keystore
-	 * @return the certificate, or <em>null</em> if not available
+	 * @return the certificate, or {@code null} if not available
 	 */
 	public @Nullable X509Certificate getNodeCertificate(KeyStore keyStore) {
 		X509Certificate nodeCert;
@@ -95,7 +96,7 @@ public class UserNodeCertificate extends BaseObjectEntity<UserNodePK>
 	 *
 	 * @param keyStore
 	 *        the keystore
-	 * @return the certificate chain, or <em>null</em> if not available
+	 * @return the certificate chain, or {@code null} if not available
 	 */
 	public X509Certificate @Nullable [] getNodeCertificateChain(KeyStore keyStore) {
 		Certificate[] chain;
@@ -119,7 +120,7 @@ public class UserNodeCertificate extends BaseObjectEntity<UserNodePK>
 	 * Open the key store from {@link #getKeystoreData()}.
 	 *
 	 * @param password
-	 *        the password to use to open, or <em>null</em> for no password
+	 *        the password to use to open, or {@code null} for no password
 	 * @return the KeyStore
 	 */
 	public KeyStore getKeyStore(@Nullable String password) {
@@ -185,9 +186,8 @@ public class UserNodeCertificate extends BaseObjectEntity<UserNodePK>
 	 * @return the userId
 	 */
 	@Override
-	public final @Nullable Long getUserId() {
-		UserNodePK id = getId();
-		return (id == null ? null : id.getUserId());
+	public final Long getUserId() {
+		return nonnull(nonnull(getId(), "id").getUserId(), "id.userId");
 	}
 
 	/**

@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.codec.jackson.JsonUtils;
@@ -63,20 +64,20 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	private final Long userId;
 
 	// a general metadata object, for example user metadata
-	private final DatumMetadataOperations metadata;
+	private final @Nullable DatumMetadataOperations metadata;
 
 	// a function to lookup metadata based on an object ID
-	private final Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider;
+	private final @Nullable Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider;
 
 	// a function to parse a metadata tariff schedule associated with an object ID
-	private final BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider;
+	private final @Nullable BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider;
 
-	private final DatumStreamsAccessor datumStreamsAccessor;
+	private final @Nullable DatumStreamsAccessor datumStreamsAccessor;
 
-	private final HttpOperations httpOperations;
+	private final @Nullable HttpOperations httpOperations;
 
 	// a function to return decrypted user secrets based on a key
-	private final BiFunction<Long, String, byte[]> secretProvider;
+	private final @Nullable BiFunction<Long, String, byte[]> secretProvider;
 
 	/**
 	 * Constructor.
@@ -106,12 +107,14 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @param secretProvider
 	 *        the secret provider
 	 */
-	public DatumExpressionRoot(Long userId, Datum datum, DatumSamplesOperations sample,
-			Map<String, ?> parameters, DatumMetadataOperations metadata,
-			DatumStreamsAccessor datumStreamsAccessor,
-			Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
-			BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider,
-			HttpOperations httpOperations, BiFunction<Long, String, byte[]> secretProvider) {
+	public DatumExpressionRoot(Long userId, @Nullable Datum datum,
+			@Nullable DatumSamplesOperations sample, @Nullable Map<String, ?> parameters,
+			@Nullable DatumMetadataOperations metadata,
+			@Nullable DatumStreamsAccessor datumStreamsAccessor,
+			@Nullable Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
+			@Nullable BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider,
+			@Nullable HttpOperations httpOperations,
+			@Nullable BiFunction<Long, String, byte[]> secretProvider) {
 		super(datum, sample, parameters);
 		this.userId = ObjectUtils.requireNonNullArgument(userId, "userId");
 		this.metadata = metadata;
@@ -133,7 +136,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        the datum
 	 * @return a new instance using {@code datum}
 	 */
-	public DatumExpressionRoot copyWith(Datum datum) {
+	public DatumExpressionRoot copyWith(@Nullable Datum datum) {
 		return copyWith(datum, null, null);
 	}
 
@@ -149,8 +152,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the new instance using {@code datum}, {@code samples}, and
 	 *         {@code parameters}
 	 */
-	public DatumExpressionRoot copyWith(Datum datum, DatumSamplesOperations samples,
-			Map<String, ?> parameters) {
+	public DatumExpressionRoot copyWith(@Nullable Datum datum, @Nullable DatumSamplesOperations samples,
+			@Nullable Map<String, ?> parameters) {
 		return new DatumExpressionRoot(userId, datum, samples, parameters, metadata,
 				datumStreamsAccessor, metadataProvider, tariffScheduleProvider, httpOperations,
 				secretProvider);
@@ -171,7 +174,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *
 	 * @return the general metadata, or {@code null} if none available
 	 */
-	public DatumMetadataOperations metadata() {
+	public @Nullable DatumMetadataOperations metadata() {
 		return metadata;
 	}
 
@@ -182,7 +185,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        the metadata path to extract
 	 * @return the extracted metadata value, or {@code null} if none available
 	 */
-	public Object metadata(String path) {
+	public @Nullable Object metadata(@Nullable String path) {
 		DatumMetadataOperations metadata = metadata();
 		return (metadata != null ? metadata.metadataAtPath(path) : null);
 	}
@@ -193,7 +196,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the metadata for {@link #getDatum()}'s object ID, or {@code null}
 	 *         if none available
 	 */
-	public DatumMetadataOperations nodeMetadata() {
+	public @Nullable DatumMetadataOperations nodeMetadata() {
 		final Datum d = getDatum();
 		return (d != null && d.getKind() == ObjectDatumKind.Node && metadataProvider != null
 				? metadataProvider.apply(
@@ -208,7 +211,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        the metadata path to extract
 	 * @return the extracted metadata value, or {@code null} if none available
 	 */
-	public Object nodeMetadata(String path) {
+	public @Nullable Object nodeMetadata(@Nullable String path) {
 		DatumMetadataOperations metadata = nodeMetadata();
 		return (metadata != null ? metadata.metadataAtPath(path) : null);
 	}
@@ -224,7 +227,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the schedule, or {@code node} if none available
 	 * @since 1.3
 	 */
-	public TariffSchedule tariffSchedule(DatumMetadataOperations meta, String path) {
+	public @Nullable TariffSchedule tariffSchedule(@Nullable DatumMetadataOperations meta,
+			@Nullable String path) {
 		final Datum d = getDatum();
 		return (d != null && meta != null && tariffScheduleProvider != null
 				? tariffScheduleProvider.apply(meta,
@@ -245,7 +249,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *         not available
 	 * @since 1.3
 	 */
-	public BigDecimal resolveTariffScheduleRate(DatumMetadataOperations meta, String path) {
+	public @Nullable BigDecimal resolveTariffScheduleRate(@Nullable DatumMetadataOperations meta,
+			@Nullable String path) {
 		return resolveTariffScheduleRate(meta, path, LocalDateTime.now(UTC), null);
 	}
 
@@ -263,8 +268,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the first available rate, or {@code null} if not available
 	 * @since 1.3
 	 */
-	public BigDecimal resolveTariffScheduleRate(DatumMetadataOperations meta, String path,
-			LocalDateTime date) {
+	public @Nullable BigDecimal resolveTariffScheduleRate(@Nullable DatumMetadataOperations meta,
+			@Nullable String path, LocalDateTime date) {
 		return resolveTariffScheduleRate(meta, path, date, null);
 	}
 
@@ -284,8 +289,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the rate, or {@code null} if not available
 	 * @since 1.3
 	 */
-	public BigDecimal resolveTariffScheduleRate(DatumMetadataOperations meta, String path,
-			LocalDateTime date, String rateName) {
+	public @Nullable BigDecimal resolveTariffScheduleRate(@Nullable DatumMetadataOperations meta,
+			@Nullable String path, LocalDateTime date, @Nullable String rateName) {
 		BigDecimal result = null;
 		TariffSchedule schedule = tariffSchedule(meta, path);
 		if ( schedule != null ) {
@@ -309,12 +314,12 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *  DatumStreamsAccessor
 	 *  ============================= */
 
-	private ObjectDatumKind datumKind() {
+	private @Nullable ObjectDatumKind datumKind() {
 		final Datum d = getDatum();
 		return d != null ? d.getKind() : null;
 	}
 
-	private Long datumObjectId() {
+	private @Nullable Long datumObjectId() {
 		final Datum d = getDatum();
 		return d != null ? d.getObjectId() : null;
 	}
@@ -330,7 +335,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        {@code 1} the next later, and so on
 	 * @return the matching datum, never {@code null}
 	 */
-	public Collection<DatumExpressionRoot> offsetMatching(String sourceIdPattern, int offset) {
+	public Collection<DatumExpressionRoot> offsetMatching(@Nullable String sourceIdPattern, int offset) {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null ) {
 			return emptyList();
 		}
@@ -354,7 +359,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        {@code 1} the next later, and so on
 	 * @return {@code true} if at least one matching datum is available
 	 */
-	public boolean hasOffsetMatching(String sourceIdPattern, int offset) {
+	public boolean hasOffsetMatching(@Nullable String sourceIdPattern, int offset) {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null ) {
 			return false;
 		}
@@ -378,7 +383,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the matching datum, never {@code null}
 	 * @since 1.1
 	 */
-	public Collection<DatumExpressionRoot> offsetMatching(String sourceIdPattern, int offset,
+	public Collection<DatumExpressionRoot> offsetMatching(@Nullable String sourceIdPattern, int offset,
 			Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
 			return emptyList();
@@ -406,7 +411,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return {@code true} if at least one matching datum is available
 	 * @since 1.1
 	 */
-	public boolean hasOffsetMatching(String sourceIdPattern, int offset, Instant timestamp) {
+	public boolean hasOffsetMatching(@Nullable String sourceIdPattern, int offset,
+			@Nullable Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
 			return false;
 		}
@@ -427,7 +433,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the matching datum, never {@literal null}
 	 * @see #offsetMatching(String, int)
 	 */
-	public Collection<DatumExpressionRoot> latestMatching(String sourceIdPattern) {
+	public Collection<DatumExpressionRoot> latestMatching(@Nullable String sourceIdPattern) {
 		return offsetMatching(sourceIdPattern, 0);
 	}
 
@@ -445,7 +451,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return {@code true} if at least one matching datum is available
 	 * @see #hasOffsetMatching(String, int)
 	 */
-	public boolean hasLatestMatching(String sourceIdPattern) {
+	public boolean hasLatestMatching(@Nullable String sourceIdPattern) {
 		return hasOffsetMatching(sourceIdPattern, 0);
 	}
 
@@ -465,7 +471,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @see #offsetMatching(String, int, Instant)
 	 * @since 1.1
 	 */
-	public Collection<DatumExpressionRoot> latestMatching(String sourceIdPattern, Instant timestamp) {
+	public Collection<DatumExpressionRoot> latestMatching(@Nullable String sourceIdPattern,
+			@Nullable Instant timestamp) {
 		return offsetMatching(sourceIdPattern, 0, timestamp);
 	}
 
@@ -486,7 +493,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @see #hasOffsetMatching(String, int, Instant)
 	 * @since 1.1
 	 */
-	public boolean hasLatestMatching(String sourceIdPattern, Instant timestamp) {
+	public boolean hasLatestMatching(@Nullable String sourceIdPattern, Instant timestamp) {
 		return hasOffsetMatching(sourceIdPattern, 0, timestamp);
 	}
 
@@ -501,7 +508,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        {@code 1} the next later, and so on
 	 * @return the matching datum, or {@literal null} if not available
 	 */
-	public DatumExpressionRoot offset(String sourceId, int offset) {
+	public @Nullable DatumExpressionRoot offset(String sourceId, int offset) {
 		if ( datumStreamsAccessor == null || sourceId == null ) {
 			return null;
 		}
@@ -542,7 +549,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the matching datum, or {@literal null} if not available
 	 * @since 1.1
 	 */
-	public DatumExpressionRoot offset(String sourceId, int offset, Instant timestamp) {
+	public @Nullable DatumExpressionRoot offset(String sourceId, int offset, Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
 			return null;
 		}
@@ -581,7 +588,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        {@code 1} the next later, and so on
 	 * @return the matching datum, or {@literal null} if not available
 	 */
-	public DatumExpressionRoot offset(int offset) {
+	public @Nullable DatumExpressionRoot offset(int offset) {
 		Datum me = getDatum();
 		if ( me == null ) {
 			return null;
@@ -619,7 +626,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the matching datum, or {@literal null} if not available
 	 * @since 1.1
 	 */
-	public DatumExpressionRoot offset(int offset, Instant timestamp) {
+	public @Nullable DatumExpressionRoot offset(int offset, Instant timestamp) {
 		Datum me = getDatum();
 		if ( me == null ) {
 			return null;
@@ -660,7 +667,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the matching datum, or {@literal null} if not available
 	 * @see #offset(String, int)
 	 */
-	public DatumExpressionRoot latest(String sourceId) {
+	public @Nullable DatumExpressionRoot latest(String sourceId) {
 		return offset(sourceId, 0);
 	}
 
@@ -695,7 +702,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @see #offset(String, int, Instant)
 	 * @since 1.1
 	 */
-	public DatumExpressionRoot latest(String sourceId, Instant timestamp) {
+	public @Nullable DatumExpressionRoot latest(String sourceId, Instant timestamp) {
 		return offset(sourceId, 0, timestamp);
 	}
 
@@ -729,7 +736,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the matching datum, or {@literal null} if not available
 	 * @since 1.6
 	 */
-	public DatumExpressionRoot datumAt(String sourceId, Instant timestamp) {
+	public @Nullable DatumExpressionRoot datumAt(String sourceId, Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
 			return null;
 		}
@@ -766,9 +773,10 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the matching datum, never {@literal null}
 	 * @since 1.6
 	 */
-	public Collection<DatumExpressionRoot> datumAtMatching(String sourceIdPattern, Instant timestamp) {
+	public Collection<DatumExpressionRoot> datumAtMatching(@Nullable String sourceIdPattern,
+			Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
-			return null;
+			return emptyList();
 		}
 		Collection<Datum> found = datumStreamsAccessor.atMatching(datumKind(), datumObjectId(),
 				sourceIdPattern, timestamp);
@@ -788,7 +796,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the matching datum, never {@literal null}
 	 * @since 1.6
 	 */
-	public boolean hasDatumAtMatching(String sourceIdPattern, Instant timestamp) {
+	public boolean hasDatumAtMatching(@Nullable String sourceIdPattern, Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
 			return false;
 		}
@@ -812,7 +820,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @see #deltaAt(String, Instant, String, boolean)
 	 * @since 1.6
 	 */
-	public Number deltaAt(String sourceId, Instant timestamp, String key) {
+	public @Nullable Number deltaAt(String sourceId, Instant timestamp, String key) {
 		return deltaAt(sourceId, timestamp, key, false);
 	}
 
@@ -840,7 +848,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the calculated property value difference
 	 * @since 1.6
 	 */
-	public Number deltaAt(String sourceId, Instant timestamp, String key, boolean fallbackToZero) {
+	public @Nullable Number deltaAt(String sourceId, Instant timestamp, String key,
+			boolean fallbackToZero) {
 		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
 			return null;
 		}
@@ -861,7 +870,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 		return n.subtract(n1);
 	}
 
-	private Number numberPropertyValue(Datum d, String key, Number defaultValue) {
+	private @Nullable Number numberPropertyValue(Datum d, String key, @Nullable Number defaultValue) {
 		Object val = d.asSampleOperations().findSampleValue(key);
 		return switch (val) {
 			case Number num -> num;
@@ -895,7 +904,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the result, never {@literal null}
 	 * @since 1.3
 	 */
-	public Result<Map<String, Object>> httpGet(String uri, Map<String, ?> parameters) {
+	public Result<Map<String, Object>> httpGet(String uri, @Nullable Map<String, ?> parameters) {
 		return httpGet(uri, parameters, null);
 	}
 
@@ -912,8 +921,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the result, never {@literal null}
 	 * @since 1.3
 	 */
-	public Result<Map<String, Object>> httpGet(String uri, Map<String, ?> parameters,
-			Map<String, ?> headers) {
+	public Result<Map<String, Object>> httpGet(String uri, @Nullable Map<String, ?> parameters,
+			@Nullable Map<String, ?> headers) {
 		if ( httpOperations == null ) {
 			return Result.error("DXR.00001", "HTTP not supported");
 		}
@@ -937,7 +946,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the secret value as a string, or {@code null}
 	 * @since 1.4
 	 */
-	public String secret(String key) {
+	public @Nullable String secret(String key) {
 		byte[] secret = secretData(key);
 		if ( secret == null ) {
 			return null;
@@ -958,7 +967,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the secret value, or {@code null}
 	 * @since 1.4
 	 */
-	public byte[] secretData(String key) {
+	public byte @Nullable [] secretData(String key) {
 		return (secretProvider != null ? secretProvider.apply(getUserId(), key) : null);
 	}
 

@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -39,6 +40,7 @@ import net.solarnetwork.central.domain.validation.StartStopClaimableJobState;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class UserNodeInstructionTaskEntityInput {
 
 	private boolean enabled;
@@ -46,31 +48,31 @@ public class UserNodeInstructionTaskEntityInput {
 	@NotNull
 	@NotBlank
 	@Size(max = 64)
-	private String name;
+	private @Nullable String name;
 
 	@NotNull
-	private Long nodeId;
-
-	@NotNull
-	@NotBlank
-	@Size(max = 64)
-	private String topic;
+	private @Nullable Long nodeId;
 
 	@NotNull
 	@NotBlank
 	@Size(max = 64)
-	private String schedule;
+	private @Nullable String topic;
+
+	@NotNull
+	@NotBlank
+	@Size(max = 64)
+	private @Nullable String schedule;
 
 	@NotNull
 	@StartStopClaimableJobState
-	private BasicClaimableJobState state;
+	private @Nullable BasicClaimableJobState state;
 
 	@NotNull
-	private Instant executeAt;
+	private @Nullable Instant executeAt;
 
-	private Map<String, Object> serviceProperties;
+	private @Nullable Map<String, Object> serviceProperties;
 
-	private Set<BasicClaimableJobState> requiredStates;
+	private @Nullable Set<BasicClaimableJobState> requiredStates;
 
 	/**
 	 * Constructor.
@@ -105,7 +107,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 * 
 	 * @return the enabled state
 	 */
-	public boolean isEnabled() {
+	public final boolean isEnabled() {
 		return enabled;
 	}
 
@@ -115,7 +117,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 * @param enabled
 	 *        the state to set
 	 */
-	public void setEnabled(boolean enabled) {
+	public final void setEnabled(boolean enabled) {
 		this.enabled = enabled;
 	}
 
@@ -124,7 +126,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
@@ -134,7 +136,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 * @param name
 	 *        the name to set
 	 */
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
@@ -143,7 +145,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 * 
 	 * @return the node ID
 	 */
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
@@ -153,7 +155,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
@@ -162,7 +164,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 *
 	 * @return the topic
 	 */
-	public String getTopic() {
+	public final @Nullable String getTopic() {
 		return topic;
 	}
 
@@ -172,7 +174,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 * @param topic
 	 *        the topic to set
 	 */
-	public void setTopic(String topic) {
+	public final void setTopic(@Nullable String topic) {
 		this.topic = topic;
 	}
 
@@ -181,7 +183,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 *
 	 * @return the schedule, as either a cron schedule or a number of seconds
 	 */
-	public String getSchedule() {
+	public final @Nullable String getSchedule() {
 		return schedule;
 	}
 
@@ -192,7 +194,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 *        the schedule to set, as either a cron schedule or a number of
 	 *        seconds
 	 */
-	public void setSchedule(String schedule) {
+	public final void setSchedule(@Nullable String schedule) {
 		this.schedule = schedule;
 	}
 
@@ -201,7 +203,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 *
 	 * @return the state
 	 */
-	public final BasicClaimableJobState getState() {
+	public final @Nullable BasicClaimableJobState getState() {
 		return state;
 	}
 
@@ -211,7 +213,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 * @param state
 	 *        the state to set
 	 */
-	public final void setState(BasicClaimableJobState state) {
+	public final void setState(@Nullable BasicClaimableJobState state) {
 		this.state = state;
 	}
 
@@ -220,7 +222,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 *
 	 * @return the date
 	 */
-	public final Instant getExecuteAt() {
+	public final @Nullable Instant getExecuteAt() {
 		return executeAt;
 	}
 
@@ -230,7 +232,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 * @param executeAt
 	 *        the date to set
 	 */
-	public final void setExecuteAt(Instant executeAt) {
+	public final void setExecuteAt(@Nullable Instant executeAt) {
 		this.executeAt = executeAt;
 	}
 
@@ -239,7 +241,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 *
 	 * @return the service properties
 	 */
-	public Map<String, Object> getServiceProperties() {
+	public final @Nullable Map<String, Object> getServiceProperties() {
 		return serviceProperties;
 	}
 
@@ -249,7 +251,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 * @param serviceProperties
 	 *        the service properties to set
 	 */
-	public void setServiceProperties(Map<String, Object> serviceProperties) {
+	public final void setServiceProperties(@Nullable Map<String, Object> serviceProperties) {
 		this.serviceProperties = serviceProperties;
 	}
 
@@ -258,7 +260,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 *
 	 * @return the states, or {@literal null}
 	 */
-	public final Set<BasicClaimableJobState> getRequiredStates() {
+	public final @Nullable Set<BasicClaimableJobState> getRequiredStates() {
 		return requiredStates;
 	}
 
@@ -268,7 +270,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 * @param requiredStates
 	 *        the states to set, or {@literal null}
 	 */
-	public final void setRequiredStates(Set<BasicClaimableJobState> requiredStates) {
+	public final void setRequiredStates(@Nullable Set<BasicClaimableJobState> requiredStates) {
 		this.requiredStates = requiredStates;
 	}
 

@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.instructor.domain.Instruction;
 
@@ -35,10 +37,10 @@ import net.solarnetwork.central.instructor.domain.Instruction;
 public class UserNodeInstructionTaskSimulationOutput {
 
 	private final UserNodeInstructionTaskEntity task;
-	private final Instruction instruction;
-	private final List<UserEvent> events;
-	private final List<InstructionExpressionEvaluationResult> expressionResults;
-	private final String message;
+	private final @Nullable Instruction instruction;
+	private final @Nullable List<UserEvent> events;
+	private final @Nullable List<InstructionExpressionEvaluationResult> expressionResults;
+	private final @Nullable String message;
 
 	/**
 	 * Constructor.
@@ -53,12 +55,15 @@ public class UserNodeInstructionTaskSimulationOutput {
 	 *        expression evaluations results
 	 * @param message
 	 *        an error message
+	 * @throws IllegalArgumentException
+	 *         if {@code task} is {@code null}
 	 */
-	public UserNodeInstructionTaskSimulationOutput(UserNodeInstructionTaskEntity task,
-			Instruction instruction, List<UserEvent> events,
-			List<InstructionExpressionEvaluationResult> expressionResults, String message) {
+	public UserNodeInstructionTaskSimulationOutput(@Nullable UserNodeInstructionTaskEntity task,
+			@Nullable Instruction instruction, @Nullable List<UserEvent> events,
+			@Nullable List<InstructionExpressionEvaluationResult> expressionResults,
+			@Nullable String message) {
 		super();
-		this.task = task;
+		this.task = requireNonNullArgument(task, "task");
 		this.instruction = instruction;
 		this.events = events;
 		this.expressionResults = expressionResults;
@@ -70,7 +75,7 @@ public class UserNodeInstructionTaskSimulationOutput {
 	 * 
 	 * @return the task
 	 */
-	public UserNodeInstructionTaskEntity getTask() {
+	public final UserNodeInstructionTaskEntity getTask() {
 		return task;
 	}
 
@@ -79,7 +84,7 @@ public class UserNodeInstructionTaskSimulationOutput {
 	 * 
 	 * @return the instruction
 	 */
-	public Instruction getInstruction() {
+	public final @Nullable Instruction getInstruction() {
 		return instruction;
 	}
 
@@ -88,7 +93,7 @@ public class UserNodeInstructionTaskSimulationOutput {
 	 * 
 	 * @return the events
 	 */
-	public List<UserEvent> getEvents() {
+	public final @Nullable List<UserEvent> getEvents() {
 		return events;
 	}
 
@@ -97,7 +102,7 @@ public class UserNodeInstructionTaskSimulationOutput {
 	 * 
 	 * @return the expressionResults
 	 */
-	public List<InstructionExpressionEvaluationResult> getExpressionResults() {
+	public final @Nullable List<InstructionExpressionEvaluationResult> getExpressionResults() {
 		return expressionResults;
 	}
 
@@ -106,7 +111,7 @@ public class UserNodeInstructionTaskSimulationOutput {
 	 * 
 	 * @return the message
 	 */
-	public String getMessage() {
+	public final @Nullable String getMessage() {
 		return message;
 	}
 

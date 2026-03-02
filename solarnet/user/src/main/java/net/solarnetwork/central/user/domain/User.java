@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.dao.BaseEntity;
@@ -45,17 +46,17 @@ public class User extends BaseEntity implements UserInfo {
 	@Serial
 	private static final long serialVersionUID = -1968822608256484455L;
 
-	private String name;
-	private String email;
-	private String password;
-	private Boolean enabled;
-	private Map<String, Object> internalData;
-	private Long locationId = null;
+	private @Nullable String name;
+	private @Nullable String email;
+	private @Nullable String password;
+	private @Nullable Boolean enabled;
+	private @Nullable Map<String, Object> internalData;
+	private @Nullable Long locationId;
 
-	private String internalDataJson;
-	private SolarLocation location;
+	private @Nullable String internalDataJson;
+	private @Nullable SolarLocation location;
 
-	private Set<String> roles;
+	private @Nullable Set<String> roles;
 
 	/**
 	 * Default constructor.
@@ -88,51 +89,6 @@ public class User extends BaseEntity implements UserInfo {
 		return "User{email=" + email + '}';
 	}
 
-	@Override
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	@Override
-	public String getEmail() {
-		return email;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
-	}
-
-	@JsonIgnore
-	@SerializeIgnore
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-	@Override
-	public Boolean getEnabled() {
-		return enabled;
-	}
-
-	public void setEnabled(Boolean enabled) {
-		this.enabled = enabled;
-	}
-
-	public Set<String> getRoles() {
-		return roles;
-	}
-
-	public void setRoles(Set<String> roles) {
-		this.roles = roles;
-	}
-
 	/**
 	 * Get a {@link TimeZone} instance from this user's location.
 	 *
@@ -144,10 +100,55 @@ public class User extends BaseEntity implements UserInfo {
 	 * @return the TimeZone, or {@literal null} if none available
 	 * @since 1.4
 	 */
-	public TimeZone getTimeZone() {
+	public @Nullable TimeZone getTimeZone() {
 		return (this.location != null && this.location.getTimeZoneId() != null
 				? TimeZone.getTimeZone(this.location.getTimeZoneId())
 				: null);
+	}
+
+	@Override
+	public final @Nullable String getName() {
+		return name;
+	}
+
+	public final void setName(@Nullable String name) {
+		this.name = name;
+	}
+
+	@Override
+	public final @Nullable String getEmail() {
+		return email;
+	}
+
+	public final void setEmail(@Nullable String email) {
+		this.email = email;
+	}
+
+	@JsonIgnore
+	@SerializeIgnore
+	public final @Nullable String getPassword() {
+		return password;
+	}
+
+	public final void setPassword(@Nullable String password) {
+		this.password = password;
+	}
+
+	@Override
+	public final @Nullable Boolean getEnabled() {
+		return enabled;
+	}
+
+	public final void setEnabled(@Nullable Boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public final @Nullable Set<String> getRoles() {
+		return roles;
+	}
+
+	public final void setRoles(@Nullable Set<String> roles) {
+		this.roles = roles;
 	}
 
 	/**
@@ -156,7 +157,7 @@ public class User extends BaseEntity implements UserInfo {
 	 * @since 1.4
 	 */
 	@Override
-	public Long getLocationId() {
+	public final @Nullable Long getLocationId() {
 		return locationId;
 	}
 
@@ -172,7 +173,7 @@ public class User extends BaseEntity implements UserInfo {
 	 * @since 1.4
 	 */
 	@SuppressWarnings("InvalidParam")
-	public void setLocationId(Long locationId) {
+	public final void setLocationId(@Nullable Long locationId) {
 		this.locationId = locationId;
 		if ( (locationId == null && this.location != null) || (locationId != null
 				&& this.location != null && !locationId.equals(location.getId())) ) {
@@ -193,7 +194,7 @@ public class User extends BaseEntity implements UserInfo {
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public SolarLocation getLocation() {
+	public final @Nullable SolarLocation getLocation() {
 		return location;
 	}
 
@@ -210,7 +211,7 @@ public class User extends BaseEntity implements UserInfo {
 	 * @since 1.4
 	 */
 	@SuppressWarnings("InvalidParam")
-	public void setLocation(SolarLocation location) {
+	public final void setLocation(@Nullable SolarLocation location) {
 		this.location = location;
 		if ( location != null && location.getId() != null ) {
 			this.locationId = location.getId();
@@ -225,7 +226,7 @@ public class User extends BaseEntity implements UserInfo {
 	@Override
 	@JsonIgnore
 	@SerializeIgnore
-	public Map<String, Object> getInternalData() {
+	public final @Nullable Map<String, Object> getInternalData() {
 		if ( internalData == null && internalDataJson != null ) {
 			internalData = JsonUtils.getStringMap(internalDataJson);
 			internalDataJson = null;
@@ -240,7 +241,7 @@ public class User extends BaseEntity implements UserInfo {
 	 *        the internal data to set
 	 * @since 1.4
 	 */
-	public void setInternalData(Map<String, Object> internalData) {
+	public final void setInternalData(@Nullable Map<String, Object> internalData) {
 		this.internalData = internalData;
 	}
 
@@ -252,7 +253,7 @@ public class User extends BaseEntity implements UserInfo {
 	 * @return the value, or {@literal null} if not available
 	 * @since 1.4
 	 */
-	public Object getInternalDataValue(String key) {
+	public final @Nullable Object getInternalDataValue(String key) {
 		Map<String, Object> map = getInternalData();
 		return (map != null ? map.get(key) : null);
 	}
@@ -268,7 +269,7 @@ public class User extends BaseEntity implements UserInfo {
 	 *         {@literal null} if none
 	 * @since 1.4
 	 */
-	public Object putInternalDataValue(String key, Object data) {
+	public final @Nullable Object putInternalDataValue(String key, @Nullable Object data) {
 		Map<String, Object> map = getInternalData();
 		if ( map == null ) {
 			if ( data == null ) {
@@ -292,7 +293,7 @@ public class User extends BaseEntity implements UserInfo {
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public String getInternalDataJson() {
+	public final @Nullable String getInternalDataJson() {
 		if ( internalDataJson == null ) {
 			internalDataJson = JsonUtils.getJSONString(internalData, null);
 		}
@@ -314,7 +315,7 @@ public class User extends BaseEntity implements UserInfo {
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setInternalDataJson(String json) {
+	public final void setInternalDataJson(@Nullable String json) {
 		internalDataJson = json;
 		internalData = null;
 	}

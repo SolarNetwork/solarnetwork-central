@@ -27,6 +27,7 @@ import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMet
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.BDDMockito.given;
@@ -97,7 +98,7 @@ public class NodeInstructionExpressionRootTests {
 						.returns(owner.getNodeId(), from(ObjectDatumStreamMetadataId::getObjectId))
 						;
 					// @formatter:on
-					return (id.getSourceId() == null ? nodeMetadata
+					return (nonEmptyString(id.getSourceId()) == null ? nodeMetadata
 							: sourceMetadatas != null ? sourceMetadatas.get(id.getSourceId()) : null);
 				}, tariffScheduleProvider, secretProvider);
 	}

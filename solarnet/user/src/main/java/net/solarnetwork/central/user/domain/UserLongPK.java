@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.CompositeKey;
@@ -135,7 +136,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -197,12 +198,12 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 
 	@Override
 	public final Long keyComponent1() {
-		return userId;
+		return nonnull(userId, "userId");
 	}
 
 	@Override
 	public final Long keyComponent2() {
-		return id;
+		return nonnull(id, "id");
 	}
 
 	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })

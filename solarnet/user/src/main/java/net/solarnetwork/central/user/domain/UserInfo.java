@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.domain;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * API for user information.
@@ -38,6 +39,7 @@ public interface UserInfo {
 	 * 
 	 * @return the ID
 	 */
+	@Nullable
 	Long getId();
 
 	/**
@@ -45,6 +47,7 @@ public interface UserInfo {
 	 * 
 	 * @return the name
 	 */
+	@Nullable
 	String getName();
 
 	/**
@@ -52,6 +55,7 @@ public interface UserInfo {
 	 * 
 	 * @return the email
 	 */
+	@Nullable
 	String getEmail();
 
 	/**
@@ -59,6 +63,7 @@ public interface UserInfo {
 	 * 
 	 * @return the enabled flag
 	 */
+	@Nullable
 	Boolean getEnabled();
 
 	/**
@@ -66,6 +71,7 @@ public interface UserInfo {
 	 * 
 	 * @return the location ID, or {@literal null} if not available
 	 */
+	@Nullable
 	Long getLocationId();
 
 	/**
@@ -79,6 +85,7 @@ public interface UserInfo {
 	 * 
 	 * @return the internal data
 	 */
+	@Nullable
 	Map<String, Object> getInternalData();
 
 }

@@ -137,7 +137,7 @@ public class UserAuthTokenController {
 			@RequestParam(value = "name", required = false) String name,
 			@RequestParam(value = "description", required = false) String description) {
 		final Long actorUserId = getActorUserId(principal);
-		UserAuthToken info = new UserAuthToken();
+		UserAuthToken info = new UserAuthToken(tokenId, actorUserId);
 		info.setName(name != null && !name.isBlank() ? name : null);
 		info.setDescription(description != null && !description.isBlank() ? description : null);
 		userBiz.updateUserAuthTokenInfo(actorUserId, tokenId, info);

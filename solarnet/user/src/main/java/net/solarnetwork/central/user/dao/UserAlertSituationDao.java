@@ -42,7 +42,7 @@ public interface UserAlertSituationDao extends GenericDao<UserAlertSituation, Lo
 	 * 
 	 * @param alertId
 	 *        The ID of the {@link UserAlert} to get the active situations for.
-	 * @return The found {@link UserAlertSituation}, or <em>null</em> if none
+	 * @return The found {@link UserAlertSituation}, or {@code null} if none
 	 *         available.
 	 */
 	UserAlertSituation getActiveAlertSituationForAlert(Long alertId);

@@ -284,7 +284,7 @@ public class DaoRegistrationBizTests {
 	@Test
 	public void cancelNodeAssociation() {
 		final Long testConfId = -1L;
-		final UserNodeConfirmation conf = new UserNodeConfirmation();
+		final UserNodeConfirmation conf = new UserNodeConfirmation(testUser);
 		conf.setId(testConfId);
 		expect(userNodeConfirmationDao.get(testConfId)).andReturn(conf);
 		userNodeConfirmationDao.delete(conf);
@@ -380,15 +380,12 @@ public class DaoRegistrationBizTests {
 
 	@Test
 	public void confirmNodeAssociation() throws IOException {
-		final UserNodeConfirmation conf = new UserNodeConfirmation();
-		conf.setUser(testUser);
+		final UserNodeConfirmation conf = new UserNodeConfirmation(testUser);
 		conf.setCreated(Instant.now());
 		conf.setCountry("NZ");
 		conf.setTimeZoneId("Pacific/Auckland");
 		final SolarLocation loc = new SolarLocation();
 		loc.setId(TEST_LOC_ID);
-		final UserNode userNode = new UserNode();
-		userNode.setId(TEST_NODE_ID);
 
 		final Instant now = Instant.now();
 
@@ -432,8 +429,7 @@ public class DaoRegistrationBizTests {
 
 	@Test
 	public void confirmNodeAssociationForNewSolarLocation() throws IOException {
-		final UserNodeConfirmation conf = new UserNodeConfirmation();
-		conf.setUser(testUser);
+		final UserNodeConfirmation conf = new UserNodeConfirmation(testUser);
 		conf.setCreated(Instant.now());
 		conf.setCountry("NZ");
 		conf.setTimeZoneId("Pacific/Auckland");
@@ -441,8 +437,6 @@ public class DaoRegistrationBizTests {
 		loc.setId(TEST_LOC_ID);
 		loc.setCountry(conf.getCountry());
 		loc.setTimeZoneId(conf.getTimeZoneId());
-		final UserNode userNode = new UserNode();
-		userNode.setId(TEST_NODE_ID);
 
 		final Instant now = Instant.now();
 
@@ -491,16 +485,13 @@ public class DaoRegistrationBizTests {
 
 	@Test
 	public void confirmNodeAssociationPreassignedNodeId() throws IOException {
-		final UserNodeConfirmation conf = new UserNodeConfirmation();
-		conf.setUser(testUser);
+		final UserNodeConfirmation conf = new UserNodeConfirmation(testUser);
 		conf.setCreated(Instant.now());
 		conf.setCountry("NZ");
 		conf.setTimeZoneId("Pacific/Auckland");
 		conf.setNodeId(TEST_NODE_ID); // pre-assign node ID
 		final SolarLocation loc = new SolarLocation();
 		loc.setId(TEST_LOC_ID);
-		final UserNode userNode = new UserNode();
-		userNode.setId(TEST_NODE_ID);
 
 		final Instant now = Instant.now();
 
@@ -543,8 +534,7 @@ public class DaoRegistrationBizTests {
 
 	@Test
 	public void confirmNodeAssociationPrepopulatedNode() throws IOException {
-		final UserNodeConfirmation conf = new UserNodeConfirmation();
-		conf.setUser(testUser);
+		final UserNodeConfirmation conf = new UserNodeConfirmation(testUser);
 		conf.setCreated(Instant.now());
 		conf.setCountry("NZ");
 		conf.setTimeZoneId("Pacific/Auckland");
@@ -553,8 +543,6 @@ public class DaoRegistrationBizTests {
 		node.setId(TEST_NODE_ID);
 		final SolarLocation loc = new SolarLocation();
 		loc.setId(TEST_LOC_ID);
-		final UserNode userNode = new UserNode();
-		userNode.setId(TEST_NODE_ID);
 
 		final Instant now = Instant.now();
 
@@ -596,8 +584,7 @@ public class DaoRegistrationBizTests {
 
 	@Test
 	public void confirmNodeAssociationPrepopulatedNodeAndUserNode() throws IOException {
-		final UserNodeConfirmation conf = new UserNodeConfirmation();
-		conf.setUser(testUser);
+		final UserNodeConfirmation conf = new UserNodeConfirmation(testUser);
 		conf.setCreated(Instant.now());
 		conf.setCountry("NZ");
 		conf.setTimeZoneId("Pacific/Auckland");
@@ -606,7 +593,7 @@ public class DaoRegistrationBizTests {
 		node.setId(TEST_NODE_ID);
 		final SolarLocation loc = new SolarLocation();
 		loc.setId(TEST_LOC_ID);
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser, node);
 		userNode.setId(TEST_NODE_ID);
 
 		final Instant now = Instant.now();
@@ -665,8 +652,7 @@ public class DaoRegistrationBizTests {
 
 	@Test
 	public void confirmNodeAssociationAlreadyConfirmed() throws IOException {
-		final UserNodeConfirmation conf = new UserNodeConfirmation();
-		conf.setUser(testUser);
+		final UserNodeConfirmation conf = new UserNodeConfirmation(testUser);
 		conf.setNodeId(TEST_NODE_ID);
 		conf.setCreated(Instant.now());
 		conf.setConfirmationDate(Instant.now()); // mark as confirmed
@@ -748,8 +734,7 @@ public class DaoRegistrationBizTests {
 	@Test
 	public void confirmNodeAssociationWithCertificateRequest()
 			throws IOException, NoSuchAlgorithmException {
-		final UserNodeConfirmation conf = new UserNodeConfirmation();
-		conf.setUser(testUser);
+		final UserNodeConfirmation conf = new UserNodeConfirmation(testUser);
 		conf.setCreated(Instant.now());
 		conf.setCountry("NZ");
 		conf.setTimeZoneId("Pacific/Auckland");
@@ -757,8 +742,6 @@ public class DaoRegistrationBizTests {
 		loc.setId(TEST_LOC_ID);
 		loc.setCountry(conf.getCountry());
 		loc.setTimeZoneId(conf.getTimeZoneId());
-		final UserNode userNode = new UserNode();
-		userNode.setId(TEST_NODE_ID);
 
 		final String nodeSubjectDN = String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString());
 
@@ -974,9 +957,8 @@ public class DaoRegistrationBizTests {
 		final X509Certificate caCert = certificateService.generateCertificationAuthorityCertificate(
 				TEST_CA_DN, caKeypair.getPublic(), caKeypair.getPrivate());
 
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser);
 		userNode.setId(TEST_NODE_ID);
-		userNode.setUser(testUser);
 
 		final UserNodePK userNodePK = new UserNodePK(TEST_USER_ID, TEST_NODE_ID);
 
@@ -1179,9 +1161,8 @@ public class DaoRegistrationBizTests {
 
 		final String confirmationKey = TEST_INSTRUCTION_ID.toString();
 
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser);
 		userNode.setId(TEST_NODE_ID);
-		userNode.setUser(testUser);
 
 		NodeInstruction instr = new NodeInstruction(
 				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, Instant.now(), userNode.getId());
@@ -1212,9 +1193,8 @@ public class DaoRegistrationBizTests {
 
 		final String confirmationKey = TEST_INSTRUCTION_ID.toString();
 
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser);
 		userNode.setId(TEST_NODE_ID);
-		userNode.setUser(testUser);
 
 		NodeInstruction instr = new NodeInstruction(
 				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, Instant.now(), userNode.getId());
@@ -1241,9 +1221,8 @@ public class DaoRegistrationBizTests {
 
 		final String confirmationKey = TEST_INSTRUCTION_ID.toString();
 
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser);
 		userNode.setId(TEST_NODE_ID);
-		userNode.setUser(testUser);
 
 		NodeInstruction instr = new NodeInstruction(
 				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, Instant.now(), userNode.getId());
@@ -1270,9 +1249,8 @@ public class DaoRegistrationBizTests {
 
 		final String confirmationKey = TEST_INSTRUCTION_ID.toString();
 
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser);
 		userNode.setId(TEST_NODE_ID);
-		userNode.setUser(testUser);
 
 		NodeInstruction instr = new NodeInstruction(
 				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, Instant.now(), userNode.getId());
@@ -1298,9 +1276,8 @@ public class DaoRegistrationBizTests {
 
 		final String confirmationKey = TEST_INSTRUCTION_ID.toString();
 
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser);
 		userNode.setId(TEST_NODE_ID);
-		userNode.setUser(testUser);
 
 		NodeInstruction instr = new NodeInstruction(
 				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, Instant.now(), userNode.getId());

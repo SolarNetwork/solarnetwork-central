@@ -101,13 +101,11 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 
 	@Test
 	public void storeNew() {
-		UserAuthToken authToken = new UserAuthToken();
+		UserAuthToken authToken = new UserAuthToken(TEST_TOKEN, this.user.getId(),
+				SecurityTokenType.User);
 		authToken.setCreated(Instant.now());
-		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret(TEST_SECRET);
-		authToken.setAuthToken(TEST_TOKEN);
 		authToken.setStatus(SecurityTokenStatus.Active);
-		authToken.setType(SecurityTokenType.User);
 		String id = userAuthTokenDao.save(authToken);
 		assertThat("ID returned", id, is(notNullValue()));
 		this.userAuthToken = authToken;
@@ -115,13 +113,11 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 
 	@Test
 	public void storeNewWithNodeId() {
-		UserAuthToken authToken = new UserAuthToken();
+		UserAuthToken authToken = new UserAuthToken(TEST_TOKEN, this.user.getId(),
+				SecurityTokenType.ReadNodeData);
 		authToken.setCreated(Instant.now());
-		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret(TEST_SECRET);
-		authToken.setAuthToken(TEST_TOKEN);
 		authToken.setStatus(SecurityTokenStatus.Active);
-		authToken.setType(SecurityTokenType.ReadNodeData);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(Collections.singleton(node.getId())).build());
 		String id = userAuthTokenDao.save(authToken);
@@ -133,13 +129,11 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 	public void storeNewWithNodeIds() {
 		final Long nodeId2 = -2L;
 		setupTestNode(nodeId2);
-		UserAuthToken authToken = new UserAuthToken();
+		UserAuthToken authToken = new UserAuthToken(TEST_TOKEN, this.user.getId(),
+				SecurityTokenType.ReadNodeData);
 		authToken.setCreated(Instant.now());
-		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret(TEST_SECRET);
-		authToken.setAuthToken(TEST_TOKEN);
 		authToken.setStatus(SecurityTokenStatus.Active);
-		authToken.setType(SecurityTokenType.ReadNodeData);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(new HashSet<Long>(Arrays.asList(node.getId(), nodeId2))).build());
 		String id = userAuthTokenDao.save(authToken);
@@ -149,13 +143,11 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 
 	@Test
 	public void storeNewWithInfo() {
-		UserAuthToken authToken = new UserAuthToken();
+		UserAuthToken authToken = new UserAuthToken(TEST_TOKEN, this.user.getId(),
+				SecurityTokenType.User);
 		authToken.setCreated(Instant.now());
-		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret(TEST_SECRET);
-		authToken.setAuthToken(TEST_TOKEN);
 		authToken.setStatus(SecurityTokenStatus.Active);
-		authToken.setType(SecurityTokenType.User);
 		authToken.setName(UUID.randomUUID().toString());
 		authToken.setDescription(UUID.randomUUID().toString());
 		String id = userAuthTokenDao.save(authToken);

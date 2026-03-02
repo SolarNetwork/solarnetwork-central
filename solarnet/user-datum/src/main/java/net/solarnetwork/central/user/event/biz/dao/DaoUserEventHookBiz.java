@@ -179,7 +179,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 
 	@SuppressWarnings("unchecked")
 	private <T extends UserLongIdentifiableConfigurationEntity<?>> T mergeServiceProperties(T entity) {
-		if ( entity == null || entity.getId() == null || entity.getId().keyComponent2() == null ) {
+		if ( entity == null || !entity.hasId() || entity.getId().keyComponent2() == null ) {
 			return entity;
 		}
 		Map<String, ?> serviceProps = entity.getServiceProperties();

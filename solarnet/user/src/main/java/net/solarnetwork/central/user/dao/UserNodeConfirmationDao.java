@@ -53,7 +53,7 @@ public interface UserNodeConfirmationDao extends GenericDao<UserNodeConfirmation
 	 *        the user ID
 	 * @param key
 	 *        the confirmation key
-	 * @return the found UserNodeConfirmation, or <em>null</em> if not found
+	 * @return the found UserNodeConfirmation, or {@code null} if not found
 	 */
 	UserNodeConfirmation getConfirmationForKey(Long userId, String key);
 

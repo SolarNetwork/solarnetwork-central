@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserNodeCertificateStatus.java - Nov 29, 2012 8:29:37 PM
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2007-2012 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,38 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork user domain.
+ */
+
+@NullMarked
 package net.solarnetwork.central.user.domain;
 
-/**
- * A status enum for {@link UserNodeCertificate}.
- *
- * @author matt
- * @version 1.0
- */
-public enum UserNodeCertificateStatus {
-
-	/** The certificate has been requested, but has not been generated yet. */
-	a("Requested"),
-
-	/** The certificate is active. */
-	v("Active"),
-
-	/** The certificate is disabled and should not be used. */
-	z("Disabled");
-
-	private final String value;
-
-	UserNodeCertificateStatus(String value) {
-		this.value = value;
-	}
-
-	/**
-	 * Get the value.
-	 * 
-	 * @return the value
-	 */
-	public String getValue() {
-		return value;
-	}
-
-}
+import org.jspecify.annotations.NullMarked;

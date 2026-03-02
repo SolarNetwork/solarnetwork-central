@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Primary key based on a user ID and node ID.
@@ -36,8 +37,8 @@ public class UserNodePK implements Serializable, Cloneable, Comparable<UserNodeP
 	@Serial
 	private static final long serialVersionUID = -2661140310545544324L;
 
-	private Long nodeId;
-	private Long userId;
+	private @Nullable Long nodeId;
+	private @Nullable Long userId;
 
 	/**
 	 * Default constructor.
@@ -68,10 +69,10 @@ public class UserNodePK implements Serializable, Cloneable, Comparable<UserNodeP
 	 * <li>nodeId</li>
 	 * </ol>
 	 *
-	 * <em>Null</em> values will be sorted before non-<em>null</em> values.
+	 * <em>Null</em> values will be sorted before non-{@code null} values.
 	 */
 	@Override
-	public int compareTo(UserNodePK o) {
+	public int compareTo(@Nullable UserNodePK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -119,7 +120,7 @@ public class UserNodePK implements Serializable, Cloneable, Comparable<UserNodeP
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -149,19 +150,19 @@ public class UserNodePK implements Serializable, Cloneable, Comparable<UserNodeP
 		}
 	}
 
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
-	public Long getUserId() {
+	public final @Nullable Long getUserId() {
 		return userId;
 	}
 
-	public void setUserId(Long userId) {
+	public final void setUserId(@Nullable Long userId) {
 		this.userId = userId;
 	}
 

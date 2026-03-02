@@ -28,6 +28,7 @@ import static net.solarnetwork.central.common.http.HttpConstants.USERNAME_SETTIN
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
 import static net.solarnetwork.util.CollectionUtils.getMapString;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -39,6 +40,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -76,40 +78,40 @@ public class UserNodeInstructionTaskEntity
 	private static final long serialVersionUID = -8913216603960129724L;
 
 	/** The name. */
-	private String name;
+	private @Nullable String name;
 
 	/** The node ID. */
-	private Long nodeId;
+	private @Nullable Long nodeId;
 
 	/** A cron schedule, or number or seconds. */
-	private String schedule;
+	private @Nullable String schedule;
 
 	/** The instruction topic. */
-	private String topic;
+	private @Nullable String topic;
 
 	/** The job state. */
-	private BasicClaimableJobState state;
+	private @Nullable BasicClaimableJobState state;
 
 	/** The next time the job should execute. */
-	private Instant executeAt;
+	private @Nullable Instant executeAt;
 
 	/** The service properties as JSON. */
-	private String servicePropsJson;
+	private @Nullable String servicePropsJson;
 
 	/** The service properties. */
-	private volatile transient Map<String, Object> serviceProps;
+	private volatile transient @Nullable Map<String, Object> serviceProps;
 
 	/** The last time the job executed. */
-	private Instant lastExecuteAt;
+	private @Nullable Instant lastExecuteAt;
 
 	/** A status message. */
-	private String message;
+	private @Nullable String message;
 
 	/** The last execution result properties as JSON. */
-	private String resultPropsJson;
+	private @Nullable String resultPropsJson;
 
 	/** The last execution result properties. */
-	private volatile transient Map<String, Object> resultProps;
+	private volatile transient @Nullable Map<String, Object> resultProps;
 
 	/**
 	 * Constructor.
@@ -138,8 +140,8 @@ public class UserNodeInstructionTaskEntity
 	}
 
 	@Override
-	public UserNodeInstructionTaskEntity copyWithId(UserLongCompositePK id) {
-		var copy = new UserNodeInstructionTaskEntity(id);
+	public UserNodeInstructionTaskEntity copyWithId(@Nullable UserLongCompositePK id) {
+		var copy = new UserNodeInstructionTaskEntity(requireNonNullArgument(id, "id"));
 		copyTo(copy);
 		return copy;
 	}
@@ -160,7 +162,7 @@ public class UserNodeInstructionTaskEntity
 	}
 
 	@Override
-	public boolean isSameAs(UserNodeInstructionTaskEntity other) {
+	public boolean isSameAs(@Nullable UserNodeInstructionTaskEntity other) {
 		if ( !super.isSameAs(other) ) {
 			return false;
 		}
@@ -270,7 +272,7 @@ public class UserNodeInstructionTaskEntity
 	 * 
 	 * @return the identity, or {@code null} if no OAuth identity is available
 	 */
-	public OAuth2ClientIdentity oauthClientIdentity() {
+	public @Nullable OAuth2ClientIdentity oauthClientIdentity() {
 		final Map<String, Object> props = getServiceProps();
 		if ( props == null || !(props.get(EXPRESSION_SETTINGS_PROP) instanceof Map<?, ?> s) ) {
 			return null;
@@ -283,10 +285,11 @@ public class UserNodeInstructionTaskEntity
 		}
 		final String username = nonEmptyString(getMapString(USERNAME_SETTING, settings));
 		final String clientId = nonEmptyString(getMapString(OAUTH_CLIENT_ID_SETTING, settings));
-		return new OAuth2ClientIdentity(getId(),
+		final UserLongCompositePK id = nonnull(getId(), "id");
+		return new OAuth2ClientIdentity(id,
 				userIdSystemIdentifier(getUserId(), OAUTH_SYSTEM_NAME, getConfigId()),
 				username != null ? username
-						: clientId != null ? clientId : "%s %s".formatted(getId().ident(), getName()));
+						: clientId != null ? clientId : "%s %s".formatted(id.ident(), getName()));
 	}
 
 	/**
@@ -294,7 +297,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
@@ -304,7 +307,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param name
 	 *        the name to set
 	 */
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
@@ -313,9 +316,8 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the configuration ID
 	 */
-	public Long getConfigId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getConfigId() {
+		return nonnull(getId(), "id").getEntityId();
 	}
 
 	/**
@@ -323,7 +325,7 @@ public class UserNodeInstructionTaskEntity
 	 * 
 	 * @return the node ID
 	 */
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
@@ -333,7 +335,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
@@ -342,7 +344,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the topic
 	 */
-	public String getTopic() {
+	public final @Nullable String getTopic() {
 		return topic;
 	}
 
@@ -352,7 +354,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param topic
 	 *        the topic to set
 	 */
-	public void setTopic(String topic) {
+	public final void setTopic(@Nullable String topic) {
 		this.topic = topic;
 	}
 
@@ -361,7 +363,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the schedule, as either a cron schedule or a number of seconds
 	 */
-	public String getSchedule() {
+	public final @Nullable String getSchedule() {
 		return schedule;
 	}
 
@@ -372,7 +374,7 @@ public class UserNodeInstructionTaskEntity
 	 *        the schedule to set, as either a cron schedule or a number of
 	 *        seconds
 	 */
-	public void setSchedule(String schedule) {
+	public final void setSchedule(@Nullable String schedule) {
 		this.schedule = schedule;
 	}
 
@@ -381,7 +383,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the state
 	 */
-	public BasicClaimableJobState getState() {
+	public final @Nullable BasicClaimableJobState getState() {
 		return state;
 	}
 
@@ -391,7 +393,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param state
 	 *        the state to set
 	 */
-	public void setState(BasicClaimableJobState state) {
+	public final void setState(@Nullable BasicClaimableJobState state) {
 		this.state = state;
 	}
 
@@ -400,7 +402,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the date
 	 */
-	public Instant getExecuteAt() {
+	public final @Nullable Instant getExecuteAt() {
 		return executeAt;
 	}
 
@@ -410,7 +412,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param executeAt
 	 *        the date to set
 	 */
-	public void setExecuteAt(Instant executeAt) {
+	public final void setExecuteAt(@Nullable Instant executeAt) {
 		this.executeAt = executeAt;
 	}
 
@@ -419,7 +421,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the date
 	 */
-	public Instant getLastExecuteAt() {
+	public final @Nullable Instant getLastExecuteAt() {
 		return lastExecuteAt;
 	}
 
@@ -429,7 +431,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param lastExecuteAt
 	 *        the date to set
 	 */
-	public void setLastExecuteAt(Instant lastExecuteAt) {
+	public final void setLastExecuteAt(@Nullable Instant lastExecuteAt) {
 		this.lastExecuteAt = lastExecuteAt;
 	}
 
@@ -438,7 +440,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the message
 	 */
-	public String getMessage() {
+	public final @Nullable String getMessage() {
 		return message;
 	}
 
@@ -448,7 +450,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param message
 	 *        the message to set
 	 */
-	public void setMessage(String message) {
+	public final void setMessage(@Nullable String message) {
 		this.message = message;
 	}
 
@@ -459,7 +461,7 @@ public class UserNodeInstructionTaskEntity
 	 *         properties available
 	 */
 	@JsonIgnore
-	public String getServicePropsJson() {
+	public final @Nullable String getServicePropsJson() {
 		return servicePropsJson;
 	}
 
@@ -477,7 +479,7 @@ public class UserNodeInstructionTaskEntity
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setServicePropsJson(String json) {
+	public final void setServicePropsJson(@Nullable String json) {
 		servicePropsJson = json;
 		serviceProps = null;
 	}
@@ -493,7 +495,7 @@ public class UserNodeInstructionTaskEntity
 	 * @return the service properties
 	 */
 	@JsonIgnore
-	public Map<String, Object> getServiceProps() {
+	public final @Nullable Map<String, Object> getServiceProps() {
 		if ( serviceProps == null && servicePropsJson != null ) {
 			serviceProps = JsonUtils.getStringMap(servicePropsJson);
 		}
@@ -512,7 +514,7 @@ public class UserNodeInstructionTaskEntity
 	 *        the service properties to set
 	 */
 	@JsonSetter("serviceProperties")
-	public void setServiceProps(Map<String, Object> serviceProps) {
+	public final void setServiceProps(@Nullable Map<String, Object> serviceProps) {
 		this.serviceProps = serviceProps;
 		servicePropsJson = JsonUtils.getJSONString(serviceProps, null);
 	}
@@ -523,7 +525,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param props
 	 *        the properties to add
 	 */
-	public void putServiceProps(Map<String, Object> props) {
+	public final void putServiceProps(@Nullable Map<String, Object> props) {
 		Map<String, Object> serviceProps = getServiceProps();
 		if ( serviceProps == null ) {
 			serviceProps = props;
@@ -538,7 +540,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the service properties
 	 */
-	public Map<String, ?> getServiceProperties() {
+	public final @Nullable Map<String, ?> getServiceProperties() {
 		return getServiceProps();
 	}
 
@@ -549,7 +551,7 @@ public class UserNodeInstructionTaskEntity
 	 *         available
 	 */
 	@JsonIgnore
-	public String getResultPropsJson() {
+	public final @Nullable String getResultPropsJson() {
 		return resultPropsJson;
 	}
 
@@ -567,7 +569,7 @@ public class UserNodeInstructionTaskEntity
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setResultPropsJson(String json) {
+	public final void setResultPropsJson(@Nullable String json) {
 		resultPropsJson = json;
 		resultProps = null;
 	}
@@ -583,7 +585,7 @@ public class UserNodeInstructionTaskEntity
 	 * @return the result properties
 	 */
 	@JsonIgnore
-	public Map<String, Object> getResultProps() {
+	public final @Nullable Map<String, Object> getResultProps() {
 		if ( resultProps == null && resultPropsJson != null ) {
 			resultProps = JsonUtils.getStringMap(resultPropsJson);
 		}
@@ -602,7 +604,7 @@ public class UserNodeInstructionTaskEntity
 	 *        the result properties to set
 	 */
 	@JsonSetter("resultProperties")
-	public void setResultProps(Map<String, Object> resultProps) {
+	public final void setResultProps(@Nullable Map<String, Object> resultProps) {
 		this.resultProps = resultProps;
 		resultPropsJson = JsonUtils.getJSONString(resultProps, null);
 	}
@@ -613,7 +615,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param props
 	 *        the properties to add
 	 */
-	public void putResultProps(Map<String, Object> props) {
+	public final void putResultProps(@Nullable Map<String, Object> props) {
 		Map<String, Object> resultProps = getResultProps();
 		if ( resultProps == null ) {
 			resultProps = props;
@@ -628,7 +630,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the result properties
 	 */
-	public Map<String, ?> getResultProperties() {
+	public final @Nullable Map<String, ?> getResultProperties() {
 		return getResultProps();
 	}
 

@@ -51,7 +51,7 @@ public interface UserBiz {
 	 *
 	 * @param id
 	 *        the ID of the User to get
-	 * @return the User, or <em>null</em> if not found
+	 * @return the User, or {@code null} if not found
 	 */
 	User getUser(Long id) throws AuthorizationException;
 
@@ -145,7 +145,7 @@ public interface UserBiz {
 	 *
 	 * @param userNodeConfirmationId
 	 *        the ID of the pending confirmation
-	 * @return the pending confirmation, or <em>null</em> if not found
+	 * @return the pending confirmation, or {@code null} if not found
 	 */
 	UserNodeConfirmation getPendingUserNodeConfirmation(Long userNodeConfirmationId);
 
@@ -156,7 +156,7 @@ public interface UserBiz {
 	 *        the user ID
 	 * @param nodeId
 	 *        the node ID
-	 * @return the certificate, or <em>null</em> if not available
+	 * @return the certificate, or {@code null} if not available
 	 */
 	UserNodeCertificate getUserNodeCertificate(Long userId, Long nodeId);
 

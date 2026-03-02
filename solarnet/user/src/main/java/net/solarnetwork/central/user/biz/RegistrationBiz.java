@@ -289,7 +289,7 @@ public interface RegistrationBiz {
 	 * @param confirmationKey
 	 *        a confirmation key previously returned by
 	 *        {@link RegistrationBiz#renewNodeCertificate(UserNode, String)}
-	 * @return the network certificate renewal, or <em>null</em> if not
+	 * @return the network certificate renewal, or {@code null} if not
 	 *         available
 	 * @throws AuthorizationException
 	 *         if the details do not match those returned from a previous call
@@ -304,7 +304,7 @@ public interface RegistrationBiz {
 	 *
 	 * <p>
 	 * The {@link User#getId()} value must be populated with the ID of the user
-	 * to update, and then any modifiable fields that are not <em>null</em> will
+	 * to update, and then any modifiable fields that are not {@code null} will
 	 * be updated with the provided value.
 	 * </p>
 	 *

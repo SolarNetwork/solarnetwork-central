@@ -397,9 +397,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		details.setTermsOfService(ident.getTermsOfService());
 
 		// create UserNodeConfirmation now
-		UserNodeConfirmation conf = new UserNodeConfirmation();
+		UserNodeConfirmation conf = new UserNodeConfirmation(user);
 		conf.setCreated(now);
-		conf.setUser(user);
 		conf.setConfirmationKey(confKey);
 		conf.setSecurityPhrase(request.getSecurityPhrase());
 		conf.setCountry(request.getLocale().getCountry());
@@ -891,9 +890,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		// create UserNode now if it doesn't already exist
 		UserNode userNode = userNodeDao.get(nodeId);
 		if ( userNode == null ) {
-			userNode = new UserNode();
-			userNode.setNode(node);
-			userNode.setUser(user);
+			userNode = new UserNode(user, node);
 			userNodeDao.save(userNode);
 		}
 
