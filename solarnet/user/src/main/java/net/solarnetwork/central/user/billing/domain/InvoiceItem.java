@@ -60,7 +60,7 @@ public interface InvoiceItem extends Entity<String> {
 	/**
 	 * Get metadata associated with this item.
 	 *
-	 * @return the metadata, or {@literal null} if none
+	 * @return the metadata, or {@code null} if none
 	 */
 	Map<String, Object> getMetadata();
 

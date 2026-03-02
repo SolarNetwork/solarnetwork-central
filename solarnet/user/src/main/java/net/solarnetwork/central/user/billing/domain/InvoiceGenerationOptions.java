@@ -34,7 +34,7 @@ import java.time.YearMonth;
 public interface InvoiceGenerationOptions {
 
 	/**
-	 * Get the year-month to generate the invoice for, or {@literal null} for
+	 * Get the year-month to generate the invoice for, or {@code null} for
 	 * the "current" month.
 	 * 
 	 * @return the year month

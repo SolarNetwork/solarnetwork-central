@@ -38,21 +38,21 @@ public interface NamedCost {
 	/**
 	 * Get the resource name.
 	 *
-	 * @return the name, never {@literal null}
+	 * @return the name, never {@code null}
 	 */
 	String getName();
 
 	/**
 	 * Get the resource quantity.
 	 *
-	 * @return the quantity, never {@literal null}
+	 * @return the quantity, never {@code null}
 	 */
 	BigInteger getQuantity();
 
 	/**
 	 * Get the cost.
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 */
 	BigDecimal getCost();
 

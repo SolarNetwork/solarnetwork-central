@@ -30,6 +30,7 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
 import static net.solarnetwork.central.user.domain.InstructionExpressionEvaluationResult.expressionResult;
 import static net.solarnetwork.codec.jackson.JsonUtils.getStringMapFromTree;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Clock;
@@ -51,6 +52,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.Trigger;
@@ -132,11 +134,11 @@ public class DaoUserNodeInstructionService
 	private final DatumStreamMetadataDao datumStreamMetadataDao;
 
 	private Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
-	private QueryAuditor queryAuditor;
-	private HttpOperations httpOperations;
-	private OAuth2AuthorizedClientManager oauthClientManager;
-	private Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> simulationOauthClientManagerProvider;
-	private OptionalService<Cache<UserLongCompositePK, Lock>> locksCache;
+	private @Nullable QueryAuditor queryAuditor;
+	private @Nullable HttpOperations httpOperations;
+	private @Nullable OAuth2AuthorizedClientManager oauthClientManager;
+	private @Nullable Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> simulationOauthClientManagerProvider;
+	private @Nullable OptionalService<Cache<UserLongCompositePK, Lock>> locksCache;
 
 	/**
 	 * Constructor.
@@ -163,7 +165,7 @@ public class DaoUserNodeInstructionService
 	 * @param datumStreamMetadataDao
 	 *        the datum stream metadata DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserNodeInstructionService(Clock clock, ExecutorService executor,
 			ObjectMapper objectMapper, UserEventAppenderBiz userEventAppenderBiz,
@@ -244,7 +246,7 @@ public class DaoUserNodeInstructionService
 	}
 
 	@Override
-	public UserNodeInstructionTaskEntity claimQueuedTask() {
+	public @Nullable UserNodeInstructionTaskEntity claimQueuedTask() {
 		if ( executorService.isShutdown() ) {
 			return null;
 		}
@@ -259,9 +261,10 @@ public class DaoUserNodeInstructionService
 			log.debug("User instruction task execution rejected, resetting state to Queued: {}",
 					e.getMessage());
 			// go back to queued
-			if ( !taskDao.updateTaskState(task.getId(), Queued, task.getState()) ) {
+			final var taskId = nonnull(task.getId(), "Task ID");
+			if ( !taskDao.updateTaskState(taskId, Queued, task.getState()) ) {
 				log.warn("Failed to update rejected user instruction task {} state from {} to Queued",
-						task.getId().ident(), task.getState());
+						taskId.ident(), task.getState());
 			}
 			throw e;
 		}
@@ -279,8 +282,10 @@ public class DaoUserNodeInstructionService
 		private final UserNodeInstructionTaskDao taskDao;
 		private final BiFunction<Long, Instruction, NodeInstruction> instructionHandler;
 		private final UserNodeInstructionTaskEntity task;
+		private final UserLongCompositePK taskId;
+		private final String taskIdent;
 		private final BasicClaimableJobState startState;
-		private final List<InstructionExpressionEvaluationResult> expressionResults;
+		private final @Nullable List<InstructionExpressionEvaluationResult> expressionResults;
 
 		/**
 		 * Constructor for "real" mode.
@@ -318,7 +323,7 @@ public class DaoUserNodeInstructionService
 		private UserNodeInstructionTask(boolean simulation, UserNodeInstructionTaskEntity taskInfo,
 				UserEventAppenderBiz userEventAppenderBiz, UserNodeInstructionTaskDao taskDao,
 				BiFunction<Long, Instruction, NodeInstruction> instructionHandler,
-				List<InstructionExpressionEvaluationResult> expressionResults) {
+				@Nullable List<InstructionExpressionEvaluationResult> expressionResults) {
 			super();
 			this.simulation = simulation;
 			this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz,
@@ -326,6 +331,8 @@ public class DaoUserNodeInstructionService
 			this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 			this.instructionHandler = requireNonNullArgument(instructionHandler, "instructorBiz");
 			this.task = requireNonNullArgument(taskInfo, "task").clone();
+			this.taskId = nonnull(this.task.getId(), "Task ID");
+			this.taskIdent = this.taskId.ident();
 			this.startState = requireNonNullArgument(taskInfo.getState(), "task.state");
 			this.expressionResults = expressionResults;
 		}
@@ -342,11 +349,10 @@ public class DaoUserNodeInstructionService
 				try {
 					if ( log.isDebugEnabled() || !(e instanceof RemoteServiceException) ) {
 						// log full stack trace when debug enabled or not a RemoteServiceException
-						log.warn("Error executing instruction task {}", task.getId().ident(), e);
+						log.warn("Error executing instruction task {}", taskIdent, e);
 					} else {
 						// otherwise just print exception message, to cut down on log clutter
-						log.warn("Error executing instruction task {}: {}", task.getId().ident(),
-								e.toString());
+						log.warn("Error executing instruction task {}: {}", taskIdent, e.toString());
 					}
 					final var dataErrMsg = (e instanceof RemoteServiceException ? e : t).getMessage();
 
@@ -373,7 +379,7 @@ public class DaoUserNodeInstructionService
 						// reset back to queued to try again if HTTP client or IO error
 						log.info(
 								"Resetting instruction task {} by changing state from {} to {} after error: {}",
-								task.getId().ident(), oldState, Queued, e.toString());
+								taskIdent, oldState, Queued, e.toString());
 						task.setState(Queued);
 						if ( task.getExecuteAt().isBefore(clock.instant()) ) {
 							// bump date into future by 1 minute so we do not immediately try to process again
@@ -384,19 +390,18 @@ public class DaoUserNodeInstructionService
 						// stop processing job if not what appears to be an API IO exception
 						log.info(
 								"Stopping instruction task {} by changing state from {} to {} after error: {}",
-								task.getId().ident(), oldState, Completed, e.toString());
+								taskIdent, oldState, Completed, e.toString());
 						task.setState(Completed);
 					}
-					userEventAppenderBiz.addEvent(task.getUserId(), eventForUserRelatedKey(task.getId(),
+					userEventAppenderBiz.addEvent(task.getUserId(), eventForUserRelatedKey(taskId,
 							INSTRUCTION_ERROR_TAGS, EXCEPTION_TASK_MESSAGE, eventData));
 					if ( !taskDao.updateTask(task, oldState) ) {
 						log.warn(
 								"Unable to update instruction task {} info with expected state {} with details: {}",
-								task.getId().ident(), oldState, task);
+								taskIdent, oldState, task);
 					}
 				} catch ( Exception e2 ) {
-					log.warn("Error updating instruction task {} state after error",
-							task.getId().ident(), e2);
+					log.warn("Error updating instruction task {} state after error", taskIdent, e2);
 					// ignore, return original
 				}
 				throw e;
@@ -406,12 +411,12 @@ public class DaoUserNodeInstructionService
 		private UserNodeInstructionTaskEntity executeTask() throws Exception {
 			final Instant execTime = clock.instant();
 			final Instant execDate = task.getExecuteAt();
-			final String taskIdent = task.getId().ident();
 			final String topic = requireNonNullArgument(task.getTopic(), "topic");
 
 			task.setLastExecuteAt(execTime);
 
-			final Trigger schedule = triggerForSchedule(task.getSchedule());
+			final Trigger schedule = (task.getSchedule() != null ? triggerForSchedule(task.getSchedule())
+					: null);
 			if ( schedule == null ) {
 				task.putResultProps(Map.of(SOURCE_DATA_KEY, (Object) task.getSchedule()));
 				throw new IllegalArgumentException(ERROR_MIMSSING_TASK_SCHEDULE);
@@ -427,13 +432,15 @@ public class DaoUserNodeInstructionService
 			}
 
 			// validate node ID allowed
-			final SolarNodeOwnership owner = nodeOwnershipDao.ownershipForNodeId(task.getNodeId());
+			final SolarNodeOwnership owner = (task.getNodeId() != null
+					? nodeOwnershipDao.ownershipForNodeId(task.getNodeId())
+					: null);
 			if ( owner == null || !task.getUserId().equals(owner.getUserId()) ) {
 				throw new AuthorizationException(Reason.ACCESS_DENIED, task.getNodeId());
 			}
 
 			// copy task configuration to instruction
-			instrInput.setNodeId(task.getNodeId());
+			instrInput.setNodeId(owner.getNodeId());
 			instrInput.getInstruction().setTopic(topic);
 
 			final KeyValuePair[] expressions = objectMapper.treeToValue(json.path("expressions"),
@@ -441,17 +448,17 @@ public class DaoUserNodeInstructionService
 			evaluateExpressions(owner, instrInput, expressions);
 
 			// save task state to Executing
-			if ( !taskDao.updateTaskState(task.getId(), Executing, startState) ) {
+			if ( !taskDao.updateTaskState(taskId, Executing, startState) ) {
 				log.warn("Failed to update instruction task {} state to Executing @ {}", taskIdent,
 						task.getExecuteAt());
 				var errMsg = "Failed to update task state from Claimed to Executing.";
 				userEventAppenderBiz.addEvent(task.getUserId(),
-						eventForUserRelatedKey(task.getId(), INSTRUCTION_ERROR_TAGS, errMsg, Map.of()));
+						eventForUserRelatedKey(taskId, INSTRUCTION_ERROR_TAGS, errMsg, Map.of()));
 				return task;
 			}
 			task.setState(Executing);
 
-			final NodeInstruction result = instructionHandler.apply(task.getNodeId(),
+			final NodeInstruction result = instructionHandler.apply(owner.getNodeId(),
 					instrInput.getInstruction());
 
 			// success: update task info to start again tomorrow
@@ -485,11 +492,11 @@ public class DaoUserNodeInstructionService
 				var errMsg = "Failed to reset task state.";
 				var errData = Map.of("executeAt", task.getExecuteAt());
 				userEventAppenderBiz.addEvent(task.getUserId(),
-						eventForUserRelatedKey(task.getId(), INSTRUCTION_ERROR_TAGS, errMsg, errData));
+						eventForUserRelatedKey(taskId, INSTRUCTION_ERROR_TAGS, errMsg, errData));
 			} else {
 				var msg = "Reset task state";
 				userEventAppenderBiz.addEvent(task.getUserId(),
-						eventForUserRelatedKey(task.getId(), INSTRUCTION_TAGS, msg, Map.of(
+						eventForUserRelatedKey(taskId, INSTRUCTION_TAGS, msg, Map.of(
 						// @formatter:off
 								EXECUTE_AT_DATA_KEY, task.getExecuteAt(),
 								NODE_ID_DATA_KEY, task.getNodeId(),
@@ -517,8 +524,8 @@ public class DaoUserNodeInstructionService
 				OAuth2ClientIdentity oauthIdent = task.oauthClientIdentity();
 				if ( oauthIdent != null ) {
 					OAuth2AuthorizedClientManager manager = (simulation
-							? simulationOauthClientManagerProvider.apply(taskDao)
-							: oauthClientManager);
+							? nonnull(simulationOauthClientManagerProvider, "Provider").apply(taskDao)
+							: nonnull(oauthClientManager, "Client manager"));
 					http = new Oauth2HttpOperations(http, manager, locksCache, oauthIdent);
 				}
 			}
@@ -600,7 +607,7 @@ public class DaoUserNodeInstructionService
 		}
 	}
 
-	private Trigger triggerForSchedule(final String schedule) {
+	private @Nullable Trigger triggerForSchedule(final String schedule) {
 		assert schedule != null;
 		Trigger t = SchedulerUtils.triggerForExpression(schedule, TimeUnit.SECONDS, false);
 		if ( t instanceof PeriodicTrigger pt ) {
@@ -613,7 +620,7 @@ public class DaoUserNodeInstructionService
 	 * Get the maximum length of time to wait for executing tasks to complete
 	 * when {@link #serviceDidShutdown()} is invoked.
 	 *
-	 * @return the maximum wait time, never {@literal null}
+	 * @return the maximum wait time, never {@code null}
 	 */
 	public final Duration getShutdownMaxWait() {
 		return shutdownMaxWait;
@@ -624,10 +631,10 @@ public class DaoUserNodeInstructionService
 	 * when {@link #serviceDidShutdown()} is invoked.
 	 *
 	 * @param shutdownMaxWait
-	 *        the maximum wait time to set; if {@literal null} then
+	 *        the maximum wait time to set; if {@code null} then
 	 *        {@link #DEFAULT_SHUTDOWN_MAX_WAIT} will be used
 	 */
-	public final void setShutdownMaxWait(Duration shutdownMaxWait) {
+	public final void setShutdownMaxWait(@Nullable Duration shutdownMaxWait) {
 		this.shutdownMaxWait = (shutdownMaxWait != null ? shutdownMaxWait : DEFAULT_SHUTDOWN_MAX_WAIT);
 	}
 
@@ -636,7 +643,7 @@ public class DaoUserNodeInstructionService
 	 *
 	 * @return the auditor
 	 */
-	public final QueryAuditor getQueryAuditor() {
+	public final @Nullable QueryAuditor getQueryAuditor() {
 		return queryAuditor;
 	}
 
@@ -646,7 +653,7 @@ public class DaoUserNodeInstructionService
 	 * @param queryAuditor
 	 *        the auditor to set
 	 */
-	public final void setQueryAuditor(QueryAuditor queryAuditor) {
+	public final void setQueryAuditor(@Nullable QueryAuditor queryAuditor) {
 		this.queryAuditor = queryAuditor;
 	}
 
@@ -655,7 +662,7 @@ public class DaoUserNodeInstructionService
 	 *
 	 * @return the operations
 	 */
-	public HttpOperations getHttpOperations() {
+	public final @Nullable HttpOperations getHttpOperations() {
 		return httpOperations;
 	}
 
@@ -665,7 +672,7 @@ public class DaoUserNodeInstructionService
 	 * @param httpOperations
 	 *        the operations to set
 	 */
-	public void setHttpOperations(HttpOperations httpOperations) {
+	public final void setHttpOperations(@Nullable HttpOperations httpOperations) {
 		this.httpOperations = httpOperations;
 	}
 
@@ -674,7 +681,7 @@ public class DaoUserNodeInstructionService
 	 *
 	 * @return the manager
 	 */
-	public OAuth2AuthorizedClientManager getOauthClientManager() {
+	public final @Nullable OAuth2AuthorizedClientManager getOauthClientManager() {
 		return oauthClientManager;
 	}
 
@@ -684,7 +691,7 @@ public class DaoUserNodeInstructionService
 	 * @param oauthClientManager
 	 *        the manager to set
 	 */
-	public void setOauthClientManager(OAuth2AuthorizedClientManager oauthClientManager) {
+	public final void setOauthClientManager(@Nullable OAuth2AuthorizedClientManager oauthClientManager) {
 		this.oauthClientManager = oauthClientManager;
 	}
 
@@ -693,7 +700,7 @@ public class DaoUserNodeInstructionService
 	 *
 	 * @return the provider
 	 */
-	public Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> getSimulationOauthClientManagerProvider() {
+	public final @Nullable Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> getSimulationOauthClientManagerProvider() {
 		return simulationOauthClientManagerProvider;
 	}
 
@@ -703,8 +710,8 @@ public class DaoUserNodeInstructionService
 	 * @param simulationOauthClientManagerProvider
 	 *        the provider to set
 	 */
-	public void setSimulationOauthClientManagerProvider(
-			Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> simulationOauthClientManagerProvider) {
+	public final void setSimulationOauthClientManagerProvider(
+			@Nullable Function<UserServiceConfigurationDao<UserLongCompositePK>, OAuth2AuthorizedClientManager> simulationOauthClientManagerProvider) {
 		this.simulationOauthClientManagerProvider = simulationOauthClientManagerProvider;
 	}
 
@@ -713,7 +720,7 @@ public class DaoUserNodeInstructionService
 	 *
 	 * @return the locks cache
 	 */
-	public OptionalService<Cache<UserLongCompositePK, Lock>> getLocksCache() {
+	public final @Nullable OptionalService<Cache<UserLongCompositePK, Lock>> getLocksCache() {
 		return locksCache;
 	}
 
@@ -723,7 +730,8 @@ public class DaoUserNodeInstructionService
 	 * @param locksCache
 	 *        the cache to set
 	 */
-	public void setLocksCache(OptionalService<Cache<UserLongCompositePK, Lock>> locksCache) {
+	public final void setLocksCache(
+			@Nullable OptionalService<Cache<UserLongCompositePK, Lock>> locksCache) {
 		this.locksCache = locksCache;
 	}
 

@@ -127,7 +127,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *         if {@code owner} or {@code instruction} are {@code null}
 	 */
 	public NodeInstructionExpressionRoot(SolarNodeOwnership owner, NodeInstruction instruction,
-			Map<String, ?> parameters, @Nullable DatumStreamsAccessor datumStreamsAccessor,
+			@Nullable Map<String, ?> parameters, @Nullable DatumStreamsAccessor datumStreamsAccessor,
 			@Nullable HttpOperations httpOperations,
 			@Nullable Function<Long, DatumMetadataOperations> userMetadataProvider,
 			@Nullable Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
@@ -483,7 +483,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *
 	 * @param uri
 	 *        the URL to request
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
 	public Result<Map<String, Object>> httpGet(String uri) {
 		return httpGet(uri, null, null);
@@ -497,7 +497,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the URL to request
 	 * @param parameters
 	 *        optional query parameters to include in the URL
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
 	public Result<Map<String, Object>> httpGet(String uri, @Nullable Map<String, ?> parameters) {
 		return httpGet(uri, parameters, null);
@@ -513,7 +513,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        optional query parameters to include in the URL
 	 * @param headers
 	 *        optional HTTP headers to include
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
 	public Result<Map<String, Object>> httpGet(String uri, @Nullable Map<String, ?> parameters,
 			@Nullable Map<String, ?> headers) {
@@ -656,7 +656,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the source ID to find the datum for
 	 * @param timestamp
 	 *        the timestamp to find the datum for
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
 	public @Nullable DatumExpressionRoot datumAt(String sourceId, Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceId == null || sourceId.isEmpty()
@@ -674,7 +674,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the stream metadata to find the datum for
 	 * @param timestamp
 	 *        the timestamp to find the datum for
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
 	public @Nullable DatumExpressionRoot datumAt(ObjectDatumStreamMetadata streamMeta,
 			Instant timestamp) {
@@ -697,7 +697,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        latest and {@code 1} the next later, and so on
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
 	public @Nullable DatumExpressionRoot datumOffset(String sourceId, int offset, Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
@@ -717,7 +717,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        latest and {@code 1} the next later, and so on
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
 	public @Nullable DatumExpressionRoot datumOffset(ObjectDatumStreamMetadata streamMeta, int offset,
 			Instant timestamp) {
@@ -736,7 +736,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the stream metadata to find the datum for
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
 	public @Nullable DatumExpressionRoot datumNear(ObjectDatumStreamMetadata streamMeta,
 			Instant timestamp) {
@@ -753,7 +753,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the minimum datum timestamp (inclusive)
 	 * @param to
 	 *        the maximum datum timestamp (exclusive)
-	 * @return the matching datum, never {@literal null}
+	 * @return the matching datum, never {@code null}
 	 */
 	public Collection<DatumExpressionRoot> datumRange(@Nullable String sourceIdPattern, Instant from,
 			Instant to) {
@@ -775,7 +775,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the minimum datum timestamp (inclusive)
 	 * @param to
 	 *        the maximum datum timestamp (exclusive)
-	 * @return the matching datum, never {@literal null}
+	 * @return the matching datum, never {@code null}
 	 */
 	public Collection<DatumExpressionRoot> datumRange(ObjectDatumStreamMetadata streamMeta, Instant from,
 			Instant to) {

@@ -85,7 +85,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	 * <li>id</li>
 	 * </ol>
 	 *
-	 * {@literal null} values will be sorted before non-{@literal null} values.
+	 * {@code null} values will be sorted before non-{@code null} values.
 	 */
 	@Override
 	public int compareTo(@Nullable UserLongPK o) {

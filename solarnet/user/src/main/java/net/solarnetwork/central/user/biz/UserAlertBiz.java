@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.biz;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
@@ -74,6 +75,7 @@ public interface UserAlertBiz {
 	 *        The ID of the alert to get.
 	 * @return The alert, or {@code null} if not available.
 	 */
+	@Nullable
 	UserAlert alertSituation(Long alertId);
 
 	/**
@@ -87,6 +89,7 @@ public interface UserAlertBiz {
 	 * @return The updated alert, or {@code null} if not available. The
 	 *         {@link UserAlertSituation} will be populated, if one was updated.
 	 */
+	@Nullable
 	UserAlert updateSituationStatus(Long alertId, UserAlertSituationStatus status);
 
 	/**

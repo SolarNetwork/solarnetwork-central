@@ -55,7 +55,6 @@ public interface UserInfo {
 	 * 
 	 * @return the email
 	 */
-	@Nullable
 	String getEmail();
 
 	/**
@@ -69,7 +68,7 @@ public interface UserInfo {
 	/**
 	 * Get the user's location ID.
 	 * 
-	 * @return the location ID, or {@literal null} if not available
+	 * @return the location ID, or {@code null} if not available
 	 */
 	@Nullable
 	Long getLocationId();

@@ -153,9 +153,7 @@ public class DaoRegistrationBizTests {
 	public void setup() {
 		networkIdentity = new BasicNetworkIdentity("key", "tos", "host", 80, false);
 		networkIdentityBiz = EasyMock.createMock(NetworkIdentificationBiz.class);
-		testUser = new User();
-		testUser.setEmail(TEST_EMAIL);
-		testUser.setId(TEST_USER_ID);
+		testUser = new User(TEST_USER_ID, TEST_EMAIL);
 		testUser.setCreated(Instant.now());
 		testUser.setPassword(TEST_ENC_PASSWORD);
 		userDao = EasyMock.createMock(UserDao.class);
@@ -168,21 +166,12 @@ public class DaoRegistrationBizTests {
 		nodePKIBiz = EasyMock.createMock(NodePKIBiz.class);
 		executorService = EasyMock.createMock(ExecutorService.class);
 		instructorBiz = EasyMock.createMock(InstructorBiz.class);
-		registrationBiz = new DaoRegistrationBiz();
-		registrationBiz.setNetworkIdentificationBiz(networkIdentityBiz);
-		registrationBiz.setUserDao(userDao);
-		registrationBiz.setUserNodeConfirmationDao(userNodeConfirmationDao);
-		registrationBiz.setSolarNodeDao(nodeDao);
-		registrationBiz.setSolarLocationDao(solarLocationDao);
-		registrationBiz.setUserNodeCertificateDao(userNodeCertificateDao);
-		registrationBiz.setUserNodeDao(userNodeDao);
+		registrationBiz = new DaoRegistrationBiz(userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao, nodeDao, solarLocationDao, networkIdentityBiz,
+				certificateService, nodePKIBiz, instructorBiz, passwordEncoder);
 		registrationBiz.setNetworkCertificateSubjectFormat(TEST_DN_FORMAT);
-		registrationBiz.setPasswordEncoder(passwordEncoder);
-		registrationBiz.setNodePKIBiz(nodePKIBiz);
 		registrationBiz.setExecutorService(executorService);
-		registrationBiz.setCertificateService(certificateService);
 		registrationBiz.setNodeCertificateRenewalPeriod(null); // disable renew period check
-		registrationBiz.setInstructorBiz(instructorBiz);
 	}
 
 	private void replayAll() {

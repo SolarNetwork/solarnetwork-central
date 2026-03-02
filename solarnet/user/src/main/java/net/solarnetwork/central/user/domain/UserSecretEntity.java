@@ -58,7 +58,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @param secret
 	 *        the secret value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSecretEntity(UserStringStringCompositePK id, byte[] secret) {
 		super(id);
@@ -77,7 +77,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @param secret
 	 *        the secret value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSecretEntity(UserStringStringCompositePK id, Instant created, Instant modified,
 			byte[] secret) {
@@ -101,7 +101,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @param secret
 	 *        the secret value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSecretEntity(Long userId, String topic, String key, Instant created, Instant modified,
 			byte[] secret) {
@@ -120,7 +120,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @param secretValue
 	 *        the secret value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSecretEntity(UserStringStringCompositePK id, String secretValue) {
 		this(id, requireNonNullArgument(secretValue, "secretValue").getBytes(UTF_8));
@@ -140,7 +140,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @param secretValue
 	 *        the secret value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSecretEntity(UserStringStringCompositePK id, Instant created, Instant modified,
 			String secretValue) {
@@ -165,7 +165,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @param secretValue
 	 *        the secret value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSecretEntity(Long userId, String topic, String key, Instant created, Instant modified,
 			String secretValue) {

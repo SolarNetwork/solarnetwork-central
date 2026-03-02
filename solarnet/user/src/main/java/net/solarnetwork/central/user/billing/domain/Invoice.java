@@ -56,7 +56,7 @@ public interface Invoice extends Entity<String> {
 	 * Get the month that represents the date range of this invoice, if the
 	 * invoice represents a month period.
 	 * 
-	 * @return the month, or {@literal null} if the invoice is not for a month
+	 * @return the month, or {@code null} if the invoice is not for a month
 	 *         period
 	 * @since 1.2
 	 */
@@ -105,7 +105,7 @@ public interface Invoice extends Entity<String> {
 	/**
 	 * Get the total amount of all credit invoice items.
 	 * 
-	 * @return the total credit amount, or {@literal null} if none
+	 * @return the total credit amount, or {@code null} if none
 	 * @since 1.3
 	 */
 	BigDecimal getCreditAmount();
@@ -113,7 +113,7 @@ public interface Invoice extends Entity<String> {
 	/**
 	 * Get the total amount of account credit remaining.
 	 * 
-	 * @return the total credit amount remaining, or {@literal null} if none
+	 * @return the total credit amount remaining, or {@code null} if none
 	 * @since 1.3
 	 */
 	BigDecimal getRemainingCreditAmount();

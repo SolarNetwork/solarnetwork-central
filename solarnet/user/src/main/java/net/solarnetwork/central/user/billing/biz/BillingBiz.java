@@ -46,7 +46,7 @@ public interface BillingBiz {
 	 * 
 	 * @param userId
 	 *        the ID of the user to get the billing system for
-	 * @return the billing system, or {@literal null} if no system is configured
+	 * @return the billing system, or {@code null} if no system is configured
 	 *         or available
 	 */
 	BillingSystem billingSystemForUser(Long userId);
@@ -56,7 +56,7 @@ public interface BillingBiz {
 	 * 
 	 * @param key
 	 *        the key of the system to get
-	 * @return the system, or {@literal null} if no system available for the
+	 * @return the system, or {@code null} if no system available for the
 	 *         given {@code key}
 	 * @since 1.2
 	 */
@@ -71,7 +71,7 @@ public interface BillingBiz {
 	 *        the invoice ID to get
 	 * @param locale
 	 *        the desired output locale
-	 * @return the invoice, or {@literal null} if not available
+	 * @return the invoice, or {@code null} if not available
 	 */
 	Invoice getInvoice(Long userId, String invoiceId, Locale locale);
 
@@ -86,7 +86,7 @@ public interface BillingBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	FilterResults<InvoiceMatch, String> findFilteredInvoices(InvoiceFilter filter,
 			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
@@ -102,7 +102,7 @@ public interface BillingBiz {
 	 *        the desired output type, e.g. {@literal text/html}
 	 * @param locale
 	 *        the desired output locale
-	 * @return a resource with the result data, or {@literal null} if the
+	 * @return a resource with the result data, or {@code null} if the
 	 *         invoice is not available
 	 * @throws IllegalArgumentException
 	 *         if {@code outputType} is not supported
@@ -118,7 +118,7 @@ public interface BillingBiz {
 	 *        the options
 	 * @param locale
 	 *        the desired output locale
-	 * @return the invoice, or {@literal null} if not available
+	 * @return the invoice, or {@code null} if not available
 	 * @since 1.1
 	 */
 	Invoice getPreviewInvoice(Long userId, InvoiceGenerationOptions options, Locale locale);
@@ -134,7 +134,7 @@ public interface BillingBiz {
 	 *        the desired output type, e.g. {@literal text/html}
 	 * @param locale
 	 *        the desired output locale
-	 * @return a resource with the result data, or {@literal null} if the
+	 * @return a resource with the result data, or {@code null} if the
 	 *         invoice is not available
 	 * @throws IllegalArgumentException
 	 *         if {@code outputType} is not supported

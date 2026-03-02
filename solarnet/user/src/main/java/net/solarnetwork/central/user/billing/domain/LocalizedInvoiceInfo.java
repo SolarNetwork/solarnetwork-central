@@ -156,7 +156,7 @@ public interface LocalizedInvoiceInfo {
 	/**
 	 * Get the first available localized invoice usage record.
 	 *
-	 * @return the first available usage record, or {@literal null}
+	 * @return the first available usage record, or {@code null}
 	 * @since 1.3
 	 */
 	@JsonIgnore

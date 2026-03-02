@@ -42,19 +42,14 @@ public class UserMatch extends User implements UserFilterMatch {
 	private static final long serialVersionUID = -3527259710501547791L;
 
 	/**
-	 * Default constructor.
-	 */
-	public UserMatch() {
-		super();
-	}
-
-	/**
 	 * Construct with values.
 	 *
 	 * @param userId
 	 *        the user ID
 	 * @param email
 	 *        the email
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public UserMatch(Long userId, String email) {
 		super(userId, email);

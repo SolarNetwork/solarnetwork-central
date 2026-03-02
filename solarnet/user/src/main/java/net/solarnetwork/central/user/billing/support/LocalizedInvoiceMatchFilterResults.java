@@ -79,7 +79,7 @@ public class LocalizedInvoiceMatchFilterResults
 	 *        the desired locale
 	 * @param currencyCode
 	 *        the currency code to use; will default to {@literal NZD} if
-	 *        {@literal null}
+	 *        {@code null}
 	 */
 	public LocalizedInvoiceMatchFilterResults(FilterResults<InvoiceMatch, String> delegate,
 			Locale locale, String currencyCode) {

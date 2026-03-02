@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -46,8 +47,8 @@ public class User extends BaseEntity implements UserInfo {
 	@Serial
 	private static final long serialVersionUID = -1968822608256484455L;
 
+	private String email;
 	private @Nullable String name;
-	private @Nullable String email;
 	private @Nullable String password;
 	private @Nullable Boolean enabled;
 	private @Nullable Map<String, Object> internalData;
@@ -59,10 +60,16 @@ public class User extends BaseEntity implements UserInfo {
 	private @Nullable Set<String> roles;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
+	 * 
+	 * @param email
+	 *        the email
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public User() {
+	public User(String email) {
 		super();
+		this.email = requireNonNullArgument(email, "email");
 	}
 
 	/**
@@ -72,11 +79,12 @@ public class User extends BaseEntity implements UserInfo {
 	 *        the user ID
 	 * @param email
 	 *        the email
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public User(Long userId, String email) {
-		super();
-		setId(userId);
-		setEmail(email);
+		this(email);
+		setId(requireNonNullArgument(userId, "userId"));
 	}
 
 	@Override
@@ -97,7 +105,7 @@ public class User extends BaseEntity implements UserInfo {
 	 * {@link SolarLocation#getTimeZoneId()}.
 	 * <p>
 	 *
-	 * @return the TimeZone, or {@literal null} if none available
+	 * @return the TimeZone, or {@code null} if none available
 	 * @since 1.4
 	 */
 	public @Nullable TimeZone getTimeZone() {
@@ -116,12 +124,12 @@ public class User extends BaseEntity implements UserInfo {
 	}
 
 	@Override
-	public final @Nullable String getEmail() {
+	public final String getEmail() {
 		return email;
 	}
 
-	public final void setEmail(@Nullable String email) {
-		this.email = email;
+	public final void setEmail(String email) {
+		this.email = requireNonNullArgument(email, "email");
 	}
 
 	@JsonIgnore
@@ -166,7 +174,7 @@ public class User extends BaseEntity implements UserInfo {
 	 *
 	 * <p>
 	 * If the provided {@code locationId} differs from the configured
-	 * {@code location} ID, {@code location} will be set to {@literal null}.
+	 * {@code location} ID, {@code location} will be set to {@code null}.
 	 *
 	 * @param locationId
 	 *        the location ID to set
@@ -189,7 +197,7 @@ public class User extends BaseEntity implements UserInfo {
 	 * value.
 	 * </p>
 	 *
-	 * @return the location, or {@literal null}
+	 * @return the location, or {@code null}
 	 * @since 1.4
 	 */
 	@SerializeIgnore
@@ -203,7 +211,7 @@ public class User extends BaseEntity implements UserInfo {
 	 *
 	 * <p>
 	 * The {@code locationId} property will be replaced by the provided
-	 * location's {@code id} if that is not {@literal null}.
+	 * location's {@code id} if that is not {@code null}.
 	 * </p>
 	 *
 	 * @param location
@@ -250,7 +258,7 @@ public class User extends BaseEntity implements UserInfo {
 	 *
 	 * @param key
 	 *        the key of the internal data property to get
-	 * @return the value, or {@literal null} if not available
+	 * @return the value, or {@code null} if not available
 	 * @since 1.4
 	 */
 	public final @Nullable Object getInternalDataValue(String key) {
@@ -264,9 +272,9 @@ public class User extends BaseEntity implements UserInfo {
 	 * @param key
 	 *        the key to update
 	 * @param data
-	 *        the data to store, or if {@literal null} the key to delete
-	 * @return the value previously associated with {@code key}, or
-	 *         {@literal null} if none
+	 *        the data to store, or if {@code null} the key to delete
+	 * @return the value previously associated with {@code key}, or {@code null}
+	 *         if none
 	 * @since 1.4
 	 */
 	public final @Nullable Object putInternalDataValue(String key, @Nullable Object data) {
@@ -288,7 +296,7 @@ public class User extends BaseEntity implements UserInfo {
 	/**
 	 * Get the internal data as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null}
+	 * @return a JSON encoded string, or {@code null}
 	 * @since 1.4
 	 */
 	@SerializeIgnore

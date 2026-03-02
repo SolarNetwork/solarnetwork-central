@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.biz.dao;
 
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.security.KeyPair;
 import java.time.Instant;
@@ -30,6 +31,7 @@ import java.time.InstantSource;
 import java.util.Base64;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.codec.digest.HmacUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.encrypt.BytesEncryptor;
 import org.springframework.security.crypto.encrypt.RsaAlgorithm;
 import org.springframework.security.crypto.encrypt.RsaSecretEncryptor;
@@ -76,7 +78,7 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 
 	private final HmacUtils keyPairPasswordHmac;
 
-	private Validator validator;
+	private @Nullable Validator validator;
 
 	/**
 	 * Constructor.
@@ -115,25 +117,27 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public UserKeyPair saveUserKeyPair(Long userId, UserKeyPairInput input) {
-		requireNonNullArgument(userId, "id");
+		final Long uId = requireNonNullArgument(userId, "id");
+		final UserKeyPairInput in = requireNonNullArgument(input, "input");
 
-		validateInput(requireNonNullArgument(input, "input"));
+		validateInput(in);
 
 		Instant now = clock.instant();
 
-		var keyPair = RsaKeyHelper.parseKeyPair(input.getKeyPem());
+		var keyPair = RsaKeyHelper.parseKeyPair(requireNonNullArgument(in.getKeyPem(), "keyPem"));
 
 		// use hash of provided password, so we know it is of a known length
-		var passwordHash = keyPairPasswordHmac.hmac(input.getPassword());
+		var passwordHash = keyPairPasswordHmac.hmac(in.getPassword());
 		var password = Base64.getUrlEncoder().encodeToString(passwordHash);
 
-		UserKeyPairEntity entity = UserKeyPairEntity.withKeyPair(userId, input.getKey(), now, now,
-				keyPair, password, certificateService);
+		UserKeyPairEntity entity = UserKeyPairEntity.withKeyPair(uId,
+				requireNonNullArgument(in.getKey(), "key"), now, now, keyPair, password,
+				certificateService);
 
 		secretsBiz.putSecret(entity.secretsBizKey(), password);
 
-		var id = keyPairDao.create(userId, entity);
-		return (id != null ? keyPairDao.get(id) : null);
+		var id = nonnull(keyPairDao.create(uId, entity), "UserKeyPair ID");
+		return nonnull(keyPairDao.get(id), "UserKeyPair");
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -152,7 +156,7 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	@Override
 	public FilterResults<? extends UserKeyPair, UserStringCompositePK> listKeyPairsForUser(Long userId,
-			UserKeyPairFilter filter) {
+			@Nullable UserKeyPairFilter filter) {
 		BasicUserSecretFilter f = new BasicUserSecretFilter(filter);
 		f.setUserId(userId);
 		return keyPairDao.findFiltered(f);
@@ -161,14 +165,17 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public UserSecret saveUserSecret(Long userId, UserSecretInput input) {
-		requireNonNullArgument(userId, "id");
+		final Long uId = requireNonNullArgument(userId, "id");
+		final UserSecretInput in = requireNonNullArgument(input, "input");
 
-		validateInput(requireNonNullArgument(input, "input"));
+		validateInput(in);
 
-		Instant now = clock.instant();
+		final String topic = nonnull(in.getTopic(), "topic");
+
+		final Instant now = clock.instant();
 
 		// lookup KeyPairEntity using key derived from topic ID
-		var keyPairId = new UserStringCompositePK(userId, input.getTopic());
+		var keyPairId = new UserStringCompositePK(uId, topic);
 		UserKeyPairEntity keyPair = requireNonNullObject(keyPairDao.get(keyPairId), keyPairId);
 
 		// lookup key pair password from SecretsBiz
@@ -178,15 +185,15 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 
 		var encryptor = encryptor(keyPair, keyPairPassword);
 
-		UserSecretEntity entity = new UserSecretEntity(userId, input.getTopic(), input.getKey(), now,
-				now, encryptor.encrypt(input.getSecret()));
-		var id = secretDao.create(userId, input.getTopic(), entity);
-		return (id != null ? secretDao.get(id) : null);
+		UserSecretEntity entity = new UserSecretEntity(uId, topic, nonnull(in.getKey(), "key"), now, now,
+				encryptor.encrypt(nonnull(input.getSecret(), "secret")));
+		var id = secretDao.create(uId, topic, entity);
+		return nonnull(secretDao.get(id), "UserSecret");
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
-	public void deleteUserSecret(Long userId, String topicId, String key) {
+	public void deleteUserSecret(Long userId, @Nullable String topicId, @Nullable String key) {
 		requireNonNullArgument(userId, "id");
 
 		var pk = secretDao.entityKey(new UserStringStringCompositePK(userId,
@@ -199,7 +206,7 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	@Override
 	public FilterResults<UserSecretEntity, UserStringStringCompositePK> listSecretsForUser(Long userId,
-			UserSecretFilter filter) {
+			@Nullable UserSecretFilter filter) {
 		BasicUserSecretFilter f = new BasicUserSecretFilter(filter);
 		f.setUserId(userId);
 		return secretDao.findFiltered(f);
@@ -213,11 +220,11 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 		return new RsaSecretEncryptor(keyPair, RsaAlgorithm.DEFAULT, secretEncryptionSalt, true);
 	}
 
-	private void validateInput(final Object input) {
+	private void validateInput(final @Nullable Object input) {
 		validateInput(input, getValidator());
 	}
 
-	private static void validateInput(final Object input, final Validator v) {
+	private static void validateInput(final @Nullable Object input, final @Nullable Validator v) {
 		if ( input == null || v == null ) {
 			return;
 		}
@@ -237,7 +244,7 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 	 *
 	 * @return the validator
 	 */
-	public Validator getValidator() {
+	public final @Nullable Validator getValidator() {
 		return validator;
 	}
 
@@ -247,7 +254,7 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 	 * @param validator
 	 *        the validator to set
 	 */
-	public void setValidator(Validator validator) {
+	public final void setValidator(@Nullable Validator validator) {
 		this.validator = validator;
 	}
 

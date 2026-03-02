@@ -82,7 +82,7 @@ public interface LocalizedInvoiceUsageRecordInfo {
 	/**
 	 * Get the first available usage record, if available.
 	 *
-	 * @return the first usage record, or {@literal null}
+	 * @return the first usage record, or {@code null}
 	 */
 	@JsonIgnore
 	default LocalizedInvoiceItemUsageRecordInfo getFirstLocalizedUsageRecord() {

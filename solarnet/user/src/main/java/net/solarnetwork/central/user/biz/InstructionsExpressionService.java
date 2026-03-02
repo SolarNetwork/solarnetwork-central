@@ -23,7 +23,9 @@
 package net.solarnetwork.central.user.biz;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionException;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
@@ -47,7 +49,7 @@ public interface InstructionsExpressionService {
 	/**
 	 * Get a {@link PathMatcher} that can be used for source ID matching.
 	 *
-	 * @return the matcher, never {@literal null}
+	 * @return the matcher, never {@code null}
 	 */
 	PathMatcher sourceIdPathMatcher();
 
@@ -67,8 +69,9 @@ public interface InstructionsExpressionService {
 	 * @return the root
 	 */
 	NodeInstructionExpressionRoot createNodeInstructionExpressionRoot(SolarNodeOwnership owner,
-			NodeInstruction instruction, Map<String, ?> parameters,
-			DatumStreamsAccessor datumStreamsAccessor, HttpOperations httpOperations);
+			NodeInstruction instruction, @Nullable Map<String, ?> parameters,
+			@Nullable DatumStreamsAccessor datumStreamsAccessor,
+			@Nullable HttpOperations httpOperations);
 
 	/**
 	 * Parse an expression into an {@link Expression} instance.
@@ -76,8 +79,10 @@ public interface InstructionsExpressionService {
 	 * @param expression
 	 *        the expression source to parse
 	 * @return the expression instance
+	 * @throws ExpressionException
+	 *         if any error occurs
 	 */
-	Expression parseExpression(String expression);
+	Expression parseExpression(String expression) throws ExpressionException;
 
 	/**
 	 * Evaluate an expression.
@@ -94,8 +99,8 @@ public interface InstructionsExpressionService {
 	 *        the result type
 	 * @return the result
 	 */
-	<T> T evaluateExpression(Expression expression, Object root, Map<String, Object> variables,
-			Class<T> resultClass);
+	<T> @Nullable T evaluateExpression(Expression expression, @Nullable Object root,
+			@Nullable Map<String, Object> variables, Class<T> resultClass);
 
 	/**
 	 * Parse and evaluate an expression.
@@ -117,8 +122,8 @@ public interface InstructionsExpressionService {
 	 *        the result type
 	 * @return the result
 	 */
-	default <T> T evaulateExpression(String expression, Object root, Map<String, Object> variables,
-			Class<T> resultClass) {
+	default <T> @Nullable T evaulateExpression(String expression, @Nullable Object root,
+			@Nullable Map<String, Object> variables, Class<T> resultClass) {
 		return evaluateExpression(parseExpression(expression), root, variables, resultClass);
 	}
 

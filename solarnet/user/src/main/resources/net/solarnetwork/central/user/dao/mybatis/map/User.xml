@@ -50,10 +50,12 @@
 	</resultMap>
 	
 	<resultMap id="UserFullResult" type="User">
-		<id property="id" column="user_id"/>
+		<constructor>
+			<idArg column="user_id" javaType="long"/>
+			<arg column="user_email" javaType="string"/>
+		</constructor>
 		<result property="created" column="user_created"/>
 		<result property="name" column="user_disp_name"/>
-		<result property="email" column="user_email"/>
 		<result property="password" column="user_password"/>
 		<result property="enabled" column="user_enabled"/>
 		<result property="locationId" column="user_loc_id"/>

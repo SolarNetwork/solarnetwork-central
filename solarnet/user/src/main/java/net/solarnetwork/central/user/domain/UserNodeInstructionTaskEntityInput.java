@@ -88,6 +88,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 *        the ID to assign to the entity
 	 * @return the entity
 	 */
+	@SuppressWarnings("NullAway")
 	public UserNodeInstructionTaskEntity toEntity(UserLongCompositePK id) {
 		UserNodeInstructionTaskEntity conf = new UserNodeInstructionTaskEntity(
 				requireNonNullArgument(id, "id"));
@@ -258,7 +259,7 @@ public class UserNodeInstructionTaskEntityInput {
 	/**
 	 * Get a list of states the job must have in order to perform an update.
 	 *
-	 * @return the states, or {@literal null}
+	 * @return the states, or {@code null}
 	 */
 	public final @Nullable Set<BasicClaimableJobState> getRequiredStates() {
 		return requiredStates;
@@ -268,7 +269,7 @@ public class UserNodeInstructionTaskEntityInput {
 	 * Set a list of states the job must have in order to perform an update.
 	 *
 	 * @param requiredStates
-	 *        the states to set, or {@literal null}
+	 *        the states to set, or {@code null}
 	 */
 	public final void setRequiredStates(@Nullable Set<BasicClaimableJobState> requiredStates) {
 		this.requiredStates = requiredStates;

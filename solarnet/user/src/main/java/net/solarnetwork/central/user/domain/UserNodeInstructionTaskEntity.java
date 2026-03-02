@@ -78,22 +78,22 @@ public class UserNodeInstructionTaskEntity
 	private static final long serialVersionUID = -8913216603960129724L;
 
 	/** The name. */
-	private @Nullable String name;
+	private String name;
 
 	/** The node ID. */
-	private @Nullable Long nodeId;
+	private Long nodeId;
 
 	/** A cron schedule, or number or seconds. */
-	private @Nullable String schedule;
+	private String schedule;
 
 	/** The instruction topic. */
-	private @Nullable String topic;
+	private String topic;
 
 	/** The job state. */
 	private BasicClaimableJobState state;
 
 	/** The next time the job should execute. */
-	private @Nullable Instant executeAt;
+	private Instant executeAt;
 
 	/** The service properties as JSON. */
 	private @Nullable String servicePropsJson;
@@ -119,8 +119,9 @@ public class UserNodeInstructionTaskEntity
 	 * @param id
 	 *        the primary key
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
+	@SuppressWarnings("NullAway")
 	public UserNodeInstructionTaskEntity(UserLongCompositePK id) {
 		super(id);
 		this.state = BasicClaimableJobState.Unknown;
@@ -134,7 +135,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param configId
 	 *        the configuration ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserNodeInstructionTaskEntity(Long userId, Long configId) {
 		this(new UserLongCompositePK(userId, configId));
@@ -298,7 +299,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the name
 	 */
-	public final @Nullable String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -308,7 +309,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param name
 	 *        the name to set
 	 */
-	public final void setName(@Nullable String name) {
+	public final void setName(String name) {
 		this.name = name;
 	}
 
@@ -326,7 +327,7 @@ public class UserNodeInstructionTaskEntity
 	 * 
 	 * @return the node ID
 	 */
-	public final @Nullable Long getNodeId() {
+	public final Long getNodeId() {
 		return nodeId;
 	}
 
@@ -336,7 +337,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public final void setNodeId(@Nullable Long nodeId) {
+	public final void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
@@ -345,7 +346,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the topic
 	 */
-	public final @Nullable String getTopic() {
+	public final String getTopic() {
 		return topic;
 	}
 
@@ -355,7 +356,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param topic
 	 *        the topic to set
 	 */
-	public final void setTopic(@Nullable String topic) {
+	public final void setTopic(String topic) {
 		this.topic = topic;
 	}
 
@@ -364,7 +365,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the schedule, as either a cron schedule or a number of seconds
 	 */
-	public final @Nullable String getSchedule() {
+	public final String getSchedule() {
 		return schedule;
 	}
 
@@ -375,7 +376,7 @@ public class UserNodeInstructionTaskEntity
 	 *        the schedule to set, as either a cron schedule or a number of
 	 *        seconds
 	 */
-	public final void setSchedule(@Nullable String schedule) {
+	public final void setSchedule(String schedule) {
 		this.schedule = schedule;
 	}
 
@@ -403,7 +404,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the date
 	 */
-	public final @Nullable Instant getExecuteAt() {
+	public final Instant getExecuteAt() {
 		return executeAt;
 	}
 
@@ -413,7 +414,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param executeAt
 	 *        the date to set
 	 */
-	public final void setExecuteAt(@Nullable Instant executeAt) {
+	public final void setExecuteAt(Instant executeAt) {
 		this.executeAt = executeAt;
 	}
 
@@ -458,8 +459,8 @@ public class UserNodeInstructionTaskEntity
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
-	 *         properties available
+	 * @return a JSON encoded string, or {@code null} if no service properties
+	 *         available
 	 */
 	@JsonIgnore
 	public final @Nullable String getServicePropsJson() {
@@ -548,7 +549,7 @@ public class UserNodeInstructionTaskEntity
 	/**
 	 * Get the result properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no result properties
+	 * @return a JSON encoded string, or {@code null} if no result properties
 	 *         available
 	 */
 	@JsonIgnore

@@ -45,7 +45,7 @@ public interface UserDao
 	 * 
 	 * @param email
 	 *        the email address to lookup
-	 * @return the found User, or {@literal null} if not found
+	 * @return the found User, or {@code null} if not found
 	 */
 	@Nullable
 	User getUserByEmail(String email);
@@ -83,7 +83,7 @@ public interface UserDao
 	 * 
 	 * @param userId
 	 *        the ID of the user to get
-	 * @return the internal data, or {@literal null} if none available
+	 * @return the internal data, or {@code null} if none available
 	 */
 	@Nullable
 	Map<String, Object> getInternalData(Long userId);
@@ -92,7 +92,7 @@ public interface UserDao
 	 * Add, update, or remove properties from the internal data of a user.
 	 * 
 	 * <p>
-	 * To remove properties, pass in {@literal null} values.
+	 * To remove properties, pass in {@code null} values.
 	 * </p>
 	 * 
 	 * @param userId

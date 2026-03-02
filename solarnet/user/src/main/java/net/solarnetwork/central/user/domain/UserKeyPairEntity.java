@@ -79,7 +79,7 @@ public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserSt
 	 * @param keystore
 	 *        the keystore value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserKeyPairEntity(UserStringCompositePK id, byte[] keystore) {
 		super(id);
@@ -98,7 +98,7 @@ public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserSt
 	 * @param keystore
 	 *        the keystore value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserKeyPairEntity(UserStringCompositePK id, Instant created, Instant modified,
 			byte[] keystore) {
@@ -120,7 +120,7 @@ public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserSt
 	 * @param keystore
 	 *        the keystore value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserKeyPairEntity(Long userId, String key, Instant created, Instant modified,
 			byte[] keystore) {

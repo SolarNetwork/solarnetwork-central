@@ -1,7 +1,7 @@
 /* ==================================================================
- * InvoiceUsageRecord.java - 23/05/2021 4:25:03 PM
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,47 +20,11 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.billing.domain;
-
-import java.util.List;
-
 /**
- * A usage record associated with an invoice.
- *
- * @param <T>
- *        the invoice key type
- * @author matt
- * @version 1.1
- * @since 1.3
+ * SolarNetwork user DAO.
  */
-public interface InvoiceUsageRecord<T> {
 
-	/**
-	 * Get a key for the list of associated usage records.
-	 *
-	 * <p>
-	 * A key might be a node ID, source ID, stream ID, etc.
-	 * </p>
-	 *
-	 * @return the usage key
-	 */
-	T getUsageKey();
+@NullMarked
+package net.solarnetwork.central.user.biz.dao;
 
-	/**
-	 * Get a description for the usage record.
-	 *
-	 * @return the description, or {@code null}
-	 * @since 1.1
-	 */
-	default String getDescription() {
-		return null;
-	}
-
-	/**
-	 * Get the usage records associated with the invoice.
-	 *
-	 * @return the usage records
-	 */
-	List<InvoiceItemUsageRecord> getUsageRecords();
-
-}
+import org.jspecify.annotations.NullMarked;

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.support;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserMetadata;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -37,15 +38,15 @@ import tools.jackson.databind.ser.std.StdSerializer;
  * @author matt
  * @version 2.0
  */
-public class UserMetadataSerializer extends StdSerializer<UserMetadata> {
+public class UserMetadataSerializer extends StdSerializer<@Nullable UserMetadata> {
 
 	public UserMetadataSerializer() {
 		super(UserMetadata.class);
 	}
 
 	@Override
-	public void serialize(UserMetadata meta, JsonGenerator generator, SerializationContext provider)
-			throws JacksonException {
+	public void serialize(@Nullable UserMetadata meta, JsonGenerator generator,
+			SerializationContext provider) throws JacksonException {
 		if ( meta == null ) {
 			generator.writeNull();
 			return;

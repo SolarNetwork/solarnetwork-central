@@ -68,7 +68,7 @@ public class UpdateUserNodeInstructionTaskEntityState implements PreparedStateme
 	 * @param filter
 	 *        a filter to restrict the update to
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateUserNodeInstructionTaskEntityState(BasicClaimableJobState desiredState,
 			UserNodeInstructionTaskFilter filter) {
@@ -92,7 +92,7 @@ public class UpdateUserNodeInstructionTaskEntityState implements PreparedStateme
 	 * @param data
 	 *        optional runtime properties to update
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code data} is {@literal null}
+	 *         if any argument except {@code data} is {@code null}
 	 */
 	public UpdateUserNodeInstructionTaskEntityState(BasicClaimableJobState desiredState,
 			UserNodeInstructionTaskFilter filter, @Nullable UserNodeInstructionTaskEntity data) {

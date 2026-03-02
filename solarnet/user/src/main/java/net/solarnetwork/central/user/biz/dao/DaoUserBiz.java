@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
+import static java.util.Collections.emptyList;
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.central.user.dao.BasicUserAuthTokenFilter.filterForIdentifier;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -31,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
@@ -77,20 +81,60 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	private UserDao userDao;
-	private UserAlertDao userAlertDao;
-	private UserNodeDao userNodeDao;
-	private UserNodeConfirmationDao userNodeConfirmationDao;
-	private UserNodeCertificateDao userNodeCertificateDao;
-	private UserAuthTokenDao userAuthTokenDao;
-	private SolarLocationDao solarLocationDao;
-	private SolarNodeDao solarNodeDao;
+	private final UserDao userDao;
+	private final UserAlertDao userAlertDao;
+	private final UserNodeDao userNodeDao;
+	private final UserNodeConfirmationDao userNodeConfirmationDao;
+	private final UserNodeCertificateDao userNodeCertificateDao;
+	private final UserAuthTokenDao userAuthTokenDao;
+	private final SolarLocationDao solarLocationDao;
+	private final SolarNodeDao solarNodeDao;
 
-	private Cache<UserStringCompositePK, UserAuthToken> userAuthTokenCache;
+	private @Nullable Cache<UserStringCompositePK, UserAuthToken> userAuthTokenCache;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param userDao
+	 *        the user DAO
+	 * @param userNodeDao
+	 *        the user node DAO
+	 * @param userNodeConfirmationDao
+	 *        the user node confirmation DAO
+	 * @param userNodeCertificateDao
+	 *        the user node certificate DAO
+	 * @param solarNodeDao
+	 *        the SolarNode DAO
+	 * @param solarLocationDao
+	 *        the location DAO
+	 * @param userAuthTokenDao
+	 *        the user token DAO
+	 * @param userAlertDao
+	 *        the user alert DAO
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public DaoUserBiz(UserDao userDao, UserNodeDao userNodeDao,
+			UserNodeConfirmationDao userNodeConfirmationDao,
+			UserNodeCertificateDao userNodeCertificateDao, SolarNodeDao solarNodeDao,
+			SolarLocationDao solarLocationDao, UserAuthTokenDao userAuthTokenDao,
+			UserAlertDao userAlertDao) {
+		super();
+		this.userDao = requireNonNullArgument(userDao, "userDao");
+		this.userNodeDao = requireNonNullArgument(userNodeDao, "userNodeDao");
+		this.userNodeConfirmationDao = requireNonNullArgument(userNodeConfirmationDao,
+				"userNodeConfirmationDao");
+		this.userNodeCertificateDao = requireNonNullArgument(userNodeCertificateDao,
+				"userNodeCertificateDao");
+		this.solarNodeDao = requireNonNullArgument(solarNodeDao, "solarNodeDao");
+		this.solarLocationDao = requireNonNullArgument(solarLocationDao, "solarLocationDao");
+		this.userAuthTokenDao = requireNonNullArgument(userAuthTokenDao, "userAuthTokenDao");
+		this.userAlertDao = requireNonNullArgument(userAlertDao, "userAlertDao");
+	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public User getUser(Long id) {
+	public @Nullable User getUser(Long id) {
 		return userDao.get(id);
 	}
 
@@ -109,7 +153,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		if ( result == null ) {
 			throw new AuthorizationException(nodeId.toString(), Reason.UNKNOWN_OBJECT);
 		}
-		if ( !result.getUser().getId().equals(userId) ) {
+		if ( !result.getUserId().equals(userId) ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 		}
 		return result;
@@ -146,9 +190,9 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 				SolarLocation locEntity = solarLocationDao.getSolarLocationForLocation(norm);
 				if ( locEntity == null ) {
 					log.debug("Saving new SolarLocation {}", norm);
-					locEntity = solarLocationDao.get(solarLocationDao.save(norm));
+					locEntity = nonnull(solarLocationDao.get(solarLocationDao.save(norm)), "Location");
 				}
-				if ( !locEntity.getId().equals(node.getLocationId()) ) {
+				if ( !nonnull(locEntity.getId(), "Location ID").equals(node.getLocationId()) ) {
 					log.debug("Updating node {} location from {} to {}", node.getId(),
 							node.getLocationId(), locEntity.getId());
 					node.setLocationId(locEntity.getId());
@@ -179,18 +223,20 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNodeConfirmation> getPendingUserNodeConfirmations(Long userId) {
 		User user = userDao.get(userId);
-		return userNodeConfirmationDao.findPendingConfirmationsForUser(user);
+		return (user != null ? userNodeConfirmationDao.findPendingConfirmationsForUser(user)
+				: emptyList());
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public UserNodeConfirmation getPendingUserNodeConfirmation(final Long userNodeConfirmationId) {
+	public @Nullable UserNodeConfirmation getPendingUserNodeConfirmation(
+			final Long userNodeConfirmationId) {
 		return userNodeConfirmationDao.get(userNodeConfirmationId);
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public UserNodeCertificate getUserNodeCertificate(Long userId, Long nodeId) {
+	public @Nullable UserNodeCertificate getUserNodeCertificate(Long userId, Long nodeId) {
 		assert userId != null;
 		assert nodeId != null;
 		return userNodeCertificateDao.get(new UserNodePK(userId, nodeId));
@@ -225,7 +271,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 						if ( userNode == null ) {
 							throw new AuthorizationException(Reason.UNKNOWN_OBJECT, nodeId);
 						}
-						if ( !userNode.getUser().getId().equals(userId) ) {
+						if ( !userNode.getUserId().equals(userId) ) {
 							throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 						}
 					}
@@ -255,15 +301,16 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public FilterResults<UserAuthToken, String> listUserAuthTokensForUser(Long userId,
-			UserAuthTokenFilter filter) {
+			@Nullable UserAuthTokenFilter filter) {
 		requireNonNullArgument(userId, "userId");
 
 		final Cache<UserStringCompositePK, UserAuthToken> cache = getUserAuthTokenCache();
 
 		UserStringCompositePK cacheKey = null;
-		if ( cache != null && filter.hasIdentifierCriteria()
+		if ( cache != null && filter != null && filter.hasIdentifierCriteria()
 				&& filterForIdentifier(filter).equals(filter) ) {
-			cacheKey = new UserStringCompositePK(userId, filter.getIdentifier());
+			cacheKey = new UserStringCompositePK(userId,
+					nonnull(filter.getIdentifier(), "Filter identifier"));
 			var result = cache.get(cacheKey);
 			if ( result != null ) {
 				return new BasicFilterResults<>(List.of(result));
@@ -275,7 +322,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
 		var result = userAuthTokenDao.findFiltered(f);
 
-		if ( cacheKey != null && result.getReturnedResultCount() == 1 ) {
+		if ( cache != null && cacheKey != null && result.getReturnedResultCount() == 1 ) {
 			cache.put(cacheKey, result.getResults().iterator().next());
 		}
 
@@ -301,10 +348,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	public UserAuthToken updateUserAuthTokenStatus(Long userId, String tokenId,
 			SecurityTokenStatus newStatus) {
 		assert userId != null;
-		UserAuthToken token = userAuthTokenDao.get(tokenId);
-		if ( token == null ) {
-			return null;
-		}
+		final UserAuthToken token = requireNonNullObject(userAuthTokenDao.get(tokenId), tokenId);
 		if ( !userId.equals(token.getUserId()) ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
 		}
@@ -320,10 +364,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	public UserAuthToken updateUserAuthTokenPolicy(Long userId, String tokenId, SecurityPolicy newPolicy,
 			boolean replace) {
 		assert userId != null;
-		UserAuthToken token = userAuthTokenDao.get(tokenId);
-		if ( token == null ) {
-			return null;
-		}
+		final UserAuthToken token = requireNonNullObject(userAuthTokenDao.get(tokenId), tokenId);
 		if ( !userId.equals(token.getUserId()) ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
 		}
@@ -345,10 +386,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	public UserAuthToken updateUserAuthTokenInfo(Long userId, String tokenId, UserAuthToken info) {
 		assert userId != null;
-		UserAuthToken token = userAuthTokenDao.get(tokenId);
-		if ( token == null ) {
-			return null;
-		}
+		final UserAuthToken token = requireNonNullObject(userAuthTokenDao.get(tokenId), tokenId);
 		if ( !userId.equals(token.getUserId()) ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
 		}
@@ -368,7 +406,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public UserNodeTransfer getNodeOwnershipTransfer(Long userId, Long nodeId) {
+	public @Nullable UserNodeTransfer getNodeOwnershipTransfer(Long userId, Long nodeId) {
 		return userNodeDao.getUserNodeTransfer(new UserNodePK(userId, nodeId));
 	}
 
@@ -396,20 +434,12 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	public UserNodeTransfer confirmNodeOwnershipTransfer(Long userId, Long nodeId, boolean accept)
 			throws AuthorizationException {
-		UserNodePK pk = new UserNodePK(userId, nodeId);
-		UserNodeTransfer xfer = userNodeDao.getUserNodeTransfer(pk);
+		final UserNodePK pk = new UserNodePK(userId, nodeId);
+		final UserNodeTransfer xfer = requireNonNullObject(userNodeDao.getUserNodeTransfer(pk), pk);
 		if ( accept ) {
-			if ( xfer == null ) {
-				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, pk);
-			}
-			UserNode userNode = userNodeDao.get(nodeId);
-			if ( userNode == null ) {
-				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, nodeId);
-			}
-			User recipient = userDao.getUserByEmail(xfer.getEmail());
-			if ( recipient == null ) {
-				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, xfer.getEmail());
-			}
+			UserNode userNode = requireNonNullObject(userNodeDao.get(nodeId), nodeId);
+			User recipient = requireNonNullObject(
+					userDao.getUserByEmail(nonnull(xfer.getEmail(), "Transfer email")), xfer.getEmail());
 
 			// at this point, we can delete the transfer request
 			userNodeDao.deleteUserNodeTransfer(xfer);
@@ -445,7 +475,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			}
 
 			// and now, transfer ownership
-			if ( !recipient.getId().equals(userNode.getUser().getId()) ) {
+			if ( !userNode.getUserId().equals(recipient.getId()) ) {
 				userNode.setUser(recipient);
 				userNodeDao.save(userNode);
 			}
@@ -458,8 +488,8 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public Snws2AuthorizationBuilder createSnws2AuthorizationBuilder(Long userId, String tokenId,
-			Instant signingDate) {
+	public @Nullable Snws2AuthorizationBuilder createSnws2AuthorizationBuilder(Long userId,
+			String tokenId, Instant signingDate) {
 		assert userId != null;
 		UserAuthToken token = userAuthTokenDao.get(tokenId);
 		if ( token == null ) {
@@ -471,44 +501,12 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		return userAuthTokenDao.createSnws2AuthorizationBuilder(tokenId, signingDate);
 	}
 
-	public void setUserDao(UserDao userDao) {
-		this.userDao = userDao;
-	}
-
-	public void setUserNodeDao(UserNodeDao userNodeDao) {
-		this.userNodeDao = userNodeDao;
-	}
-
-	public void setUserNodeConfirmationDao(UserNodeConfirmationDao userNodeConfirmationDao) {
-		this.userNodeConfirmationDao = userNodeConfirmationDao;
-	}
-
-	public void setUserNodeCertificateDao(UserNodeCertificateDao userNodeCertificateDao) {
-		this.userNodeCertificateDao = userNodeCertificateDao;
-	}
-
-	public void setUserAuthTokenDao(UserAuthTokenDao userAuthTokenDao) {
-		this.userAuthTokenDao = userAuthTokenDao;
-	}
-
-	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {
-		this.solarLocationDao = solarLocationDao;
-	}
-
-	public void setSolarNodeDao(SolarNodeDao solarNodeDao) {
-		this.solarNodeDao = solarNodeDao;
-	}
-
-	public void setUserAlertDao(UserAlertDao userAlertDao) {
-		this.userAlertDao = userAlertDao;
-	}
-
 	/**
 	 * Get the token cache.
 	 * 
 	 * @return the cache
 	 */
-	public Cache<UserStringCompositePK, UserAuthToken> getUserAuthTokenCache() {
+	public @Nullable Cache<UserStringCompositePK, UserAuthToken> getUserAuthTokenCache() {
 		return userAuthTokenCache;
 	}
 
@@ -518,7 +516,8 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	 * @param userAuthTokenCache
 	 *        the cache to set
 	 */
-	public void setUserAuthTokenCache(Cache<UserStringCompositePK, UserAuthToken> userAuthTokenCache) {
+	public void setUserAuthTokenCache(
+			@Nullable Cache<UserStringCompositePK, UserAuthToken> userAuthTokenCache) {
 		this.userAuthTokenCache = userAuthTokenCache;
 	}
 

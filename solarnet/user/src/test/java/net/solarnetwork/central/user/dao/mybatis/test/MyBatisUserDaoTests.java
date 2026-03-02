@@ -72,9 +72,8 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	 */
 	@Test
 	public void storeNewUser() {
-		User newUser = new User();
+		User newUser = new User(TEST_EMAIL);
 		newUser.setCreated(Instant.now());
-		newUser.setEmail(TEST_EMAIL);
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
@@ -221,9 +220,8 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	}
 
 	private Long storeTestUser(String email) {
-		User newUser = new User();
+		User newUser = new User(email);
 		newUser.setCreated(Instant.now());
-		newUser.setEmail(email);
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);

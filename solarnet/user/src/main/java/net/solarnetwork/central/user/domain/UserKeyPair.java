@@ -83,7 +83,7 @@ public interface UserKeyPair extends Unique<UserStringCompositePK>, UserIdRelate
 	 * 
 	 * @param password
 	 *        the password to use
-	 * @return the key pair, never {@literal null}
+	 * @return the key pair, never {@code null}
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 * @throws IllegalStateException

@@ -72,6 +72,8 @@ import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenFilter;
 import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
+import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
@@ -127,6 +129,12 @@ public class DaoUserBizTests {
 	private UserAlertDao userAlertDao;
 
 	@Mock
+	private UserNodeConfirmationDao userNodeConfirmationDao;
+
+	@Mock
+	private UserNodeCertificateDao userNodeCertificateDao;
+
+	@Mock
 	private Cache<UserStringCompositePK, UserAuthToken> tokenCache;
 
 	@Captor
@@ -149,9 +157,7 @@ public class DaoUserBizTests {
 
 	@BeforeEach
 	public void setup() throws Exception {
-		testUser = new User();
-		testUser.setEmail(TEST_EMAIL);
-		testUser.setId(TEST_USER_ID);
+		testUser = new User(TEST_USER_ID, TEST_EMAIL);
 		testUser.setName(TEST_NAME);
 		testUser.setPassword(TEST_ENC_PASSWORD);
 
@@ -162,13 +168,8 @@ public class DaoUserBizTests {
 		testUserRoles = new HashSet<String>();
 		testUserRoles.add(TEST_ROLE);
 
-		userBiz = new DaoUserBiz();
-		userBiz.setSolarLocationDao(solarLocationDao);
-		userBiz.setSolarNodeDao(solarNodeDao);
-		userBiz.setUserDao(userDao);
-		userBiz.setUserAuthTokenDao(userAuthTokenDao);
-		userBiz.setUserNodeDao(userNodeDao);
-		userBiz.setUserAlertDao(userAlertDao);
+		userBiz = new DaoUserBiz(userDao, userNodeDao, userNodeConfirmationDao, userNodeCertificateDao,
+				solarNodeDao, solarLocationDao, userAuthTokenDao, userAlertDao);
 		userBiz.setUserAuthTokenCache(tokenCache);
 	}
 

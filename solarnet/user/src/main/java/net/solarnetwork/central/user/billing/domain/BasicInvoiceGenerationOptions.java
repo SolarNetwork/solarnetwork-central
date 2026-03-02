@@ -50,7 +50,7 @@ public class BasicInvoiceGenerationOptions implements InvoiceGenerationOptions {
 	 * Constructor.
 	 * 
 	 * @param month
-	 *        the month, or {@literal null} for current month
+	 *        the month, or {@code null} for current month
 	 * @param useAccountCredit
 	 *        {@literal true} to use any available account credit
 	 */

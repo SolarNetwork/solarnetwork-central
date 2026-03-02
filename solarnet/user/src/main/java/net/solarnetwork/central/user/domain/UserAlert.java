@@ -212,7 +212,7 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 	/**
 	 * Get the {@link UserAlertOptions#EMAIL_TOS} list as an array.
 	 *
-	 * @return the email list, or {@literal null} if the option is not available
+	 * @return the email list, or {@code null} if the option is not available
 	 * @since 2.1
 	 */
 	public final String @Nullable [] optionEmailTos() {
@@ -233,7 +233,7 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 	/**
 	 * Get the {@link UserAlertOptions#SOURCE_IDS} list.
 	 *
-	 * @return the source ID list, or {@literal null} if the option is not
+	 * @return the source ID list, or {@code null} if the option is not
 	 *         available
 	 * @since 2.2
 	 */

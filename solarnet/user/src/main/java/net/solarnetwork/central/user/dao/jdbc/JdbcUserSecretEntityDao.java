@@ -59,7 +59,7 @@ public class JdbcUserSecretEntityDao implements UserSecretEntityDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcUserSecretEntityDao(JdbcOperations jdbcOps) {
 		super();

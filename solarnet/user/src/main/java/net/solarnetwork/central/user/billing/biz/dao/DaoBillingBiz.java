@@ -62,7 +62,7 @@ public class DaoBillingBiz implements BillingBiz {
 	 * @param billingSystems
 	 *        the billing systems
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoBillingBiz(UserDao userDao, List<BillingSystem> billingSystems) {
 		super();

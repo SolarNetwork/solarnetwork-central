@@ -94,7 +94,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	/**
 	 * Get the mutable sort descriptors.
 	 *
-	 * @return the sort descriptors, or {@literal null}
+	 * @return the sort descriptors, or {@code null}
 	 */
 	public List<MutableSortDescriptor> getSorts() {
 		return sorts;
@@ -115,7 +115,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 *
 	 * <p>
 	 * This returns a copy of the {@code sorts} list or an empty list if that is
-	 * {@literal null}.
+	 * {@code null}.
 	 * </p>
 	 *
 	 * @return the sort descriptors, never {@code null}
@@ -130,7 +130,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	/**
 	 * Get the result starting offset.
 	 *
-	 * @return the starting offset, or {@literal null} for no offset
+	 * @return the starting offset, or {@code null} for no offset
 	 */
 	public Long getOffset() {
 		return offset;
@@ -159,7 +159,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 * Set the maximum desired results.
 	 *
 	 * @param max
-	 *        the maximum desired result count, or {@literal null} for no limit
+	 *        the maximum desired result count, or {@code null} for no limit
 	 */
 	public void setMax(Integer max) {
 		this.max = max;

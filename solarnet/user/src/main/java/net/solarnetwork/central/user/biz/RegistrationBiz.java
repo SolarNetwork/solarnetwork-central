@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.biz;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Period;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.domain.NewNodeRequest;
 import net.solarnetwork.central.user.domain.PasswordEntry;
@@ -167,8 +168,8 @@ public interface RegistrationBiz {
 	 * @param userNodeConfirmationId
 	 *        the UserNodeConfirmation ID to create the details for
 	 * @throws AuthorizationException
-	 *         if the acting user does not have permission to view the requested
-	 *         confirmation then
+	 *         if the acting user does not have permission to cancel the
+	 *         requested confirmation then
 	 *         {@link AuthorizationException.Reason#ACCESS_DENIED}
 	 */
 	void cancelNodeAssociation(Long userNodeConfirmationId) throws AuthorizationException;
@@ -250,6 +251,7 @@ public interface RegistrationBiz {
 	 *         no limit.
 	 * @since 2.0
 	 */
+	@Nullable
 	Period getNodeCertificateRenewalPeriod();
 
 	/**
@@ -289,13 +291,13 @@ public interface RegistrationBiz {
 	 * @param confirmationKey
 	 *        a confirmation key previously returned by
 	 *        {@link RegistrationBiz#renewNodeCertificate(UserNode, String)}
-	 * @return the network certificate renewal, or {@code null} if not
-	 *         available
+	 * @return the network certificate renewal, or {@code null} if not available
 	 * @throws AuthorizationException
 	 *         if the details do not match those returned from a previous call
 	 *         to {@link #confirmNodeAssociation(NetworkAssociation)}
 	 * @since 1.4
 	 */
+	@Nullable
 	UserNodeCertificateRenewal getPendingNodeCertificateRenewal(UserNode userNode,
 			String confirmationKey);
 
