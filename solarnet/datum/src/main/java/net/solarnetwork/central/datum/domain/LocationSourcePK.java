@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Primary key based on a location ID and source ID.
@@ -37,8 +38,8 @@ public class LocationSourcePK
 	@Serial
 	private static final long serialVersionUID = 2535992672383477286L;
 
-	private Long locationId;
-	private String sourceId;
+	private @Nullable Long locationId;
+	private @Nullable String sourceId;
 
 	/**
 	 * Default constructor.
@@ -55,7 +56,7 @@ public class LocationSourcePK
 	 * @param sourceId
 	 *        the source ID
 	 */
-	public LocationSourcePK(Long locationId, String sourceId) {
+	public LocationSourcePK(@Nullable Long locationId, @Nullable String sourceId) {
 		super();
 		this.locationId = locationId;
 		this.sourceId = sourceId;
@@ -72,7 +73,7 @@ public class LocationSourcePK
 	 * <em>Null</em> values will be sorted before non-<em>null</em> values.
 	 */
 	@Override
-	public int compareTo(LocationSourcePK o) {
+	public int compareTo(@Nullable LocationSourcePK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -120,7 +121,7 @@ public class LocationSourcePK
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -150,11 +151,11 @@ public class LocationSourcePK
 		}
 	}
 
-	public Long getLocationId() {
+	public final @Nullable Long getLocationId() {
 		return locationId;
 	}
 
-	public void setLocationId(Long locationId) {
+	public final void setLocationId(@Nullable Long locationId) {
 		this.locationId = locationId;
 	}
 
@@ -168,16 +169,16 @@ public class LocationSourcePK
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Long getObjectId() {
+	public final @Nullable Long getObjectId() {
 		return getLocationId();
 	}
 
 	@Override
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return sourceId;
 	}
 
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(@Nullable String sourceId) {
 		this.sourceId = sourceId;
 	}
 

@@ -1,7 +1,7 @@
 /* ==================================================================
- * GeneralNodeDatumFilterMatch.java - Aug 27, 2014 7:08:17 PM
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2007-2014 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,27 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork datum domain.
+ */
+
+@NullMarked
 package net.solarnetwork.central.datum.domain;
 
-import java.util.Map;
-import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.domain.FilterMatch;
-
-/**
- * API for a GeneralNodeDatum search or filter match result.
- *
- * @author matt
- * @version 1.1
- */
-public interface GeneralNodeDatumFilterMatch extends FilterMatch<GeneralNodeDatumPK>, ReportingDatum {
-
-	/**
-	 * Get all available sample data as a Map.
-	 *
-	 * @return the sample data as a Map, or <em>null</em> if no sample data
-	 *         available
-	 */
-	@Nullable
-	Map<String, ?> getSampleData();
-
-}
+import org.jspecify.annotations.NullMarked;

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.Filter;
 
 /**
@@ -39,6 +40,7 @@ public interface SourceFilter extends Filter {
 	 *
 	 * @return the first source ID, or {@literal null} if not available
 	 */
+	@Nullable
 	String getSourceId();
 
 	/**
@@ -46,6 +48,6 @@ public interface SourceFilter extends Filter {
 	 *
 	 * @return array of source IDs (may be {@literal null})
 	 */
-	String[] getSourceIds();
+	String @Nullable [] getSourceIds();
 
 }

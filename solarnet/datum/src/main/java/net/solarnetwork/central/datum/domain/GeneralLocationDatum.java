@@ -27,6 +27,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -55,81 +56,27 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	@Serial
 	private static final long serialVersionUID = 7682061775759924209L;
 
-	private GeneralLocationDatumPK id = new GeneralLocationDatumPK();
-	private DatumSamples samples;
-	private Instant posted;
-	private String sampleJson;
+	private final GeneralLocationDatumPK id = new GeneralLocationDatumPK();
+	private @Nullable DatumSamples samples;
+	private @Nullable Instant posted;
+	private @Nullable String sampleJson;
 
 	/**
-	 * Convenience getter for {@link GeneralLocationDatumPK#getLocationId()}.
-	 *
-	 * @return the locationId
+	 * Constructor.
 	 */
-	public Long getLocationId() {
-		return (id == null ? null : id.getLocationId());
-	}
-
-	/**
-	 * Convenience setter for {@link GeneralLocationDatumPK#setLocationId(Long)}
-	 * .
-	 *
-	 * @param locationId
-	 *        the locationId to set
-	 */
-	public void setLocationId(Long locationId) {
-		if ( id == null ) {
-			id = new GeneralLocationDatumPK();
-		}
-		id.setLocationId(locationId);
-	}
-
-	/**
-	 * Convenience getter for {@link GeneralLocationDatumPK#getSourceId()}.
-	 *
-	 * @return the sourceId
-	 */
-	public String getSourceId() {
-		return (id == null ? null : id.getSourceId());
-	}
-
-	/**
-	 * Convenience setter for {@link GeneralLocationDatumPK#setSourceId(String)}
-	 * .
-	 *
-	 * @param sourceId
-	 *        the sourceId to set
-	 */
-	public void setSourceId(String sourceId) {
-		if ( id == null ) {
-			id = new GeneralLocationDatumPK();
-		}
-		id.setSourceId(sourceId);
-	}
-
-	/**
-	 * Convenience setter for
-	 * {@link GeneralLocationDatumPK#setCreated(Instant)}.
-	 *
-	 * @param created
-	 *        the created to set
-	 */
-	public void setCreated(Instant created) {
-		if ( id == null ) {
-			id = new GeneralLocationDatumPK();
-		}
-		id.setCreated(created);
+	public GeneralLocationDatum() {
+		super();
 	}
 
 	@Override
-	public Instant getCreated() {
-		return (id == null ? null : id.getCreated());
-	}
-
-	@Override
-	@JsonIgnore
-	@SerializeIgnore
-	public GeneralLocationDatumPK getId() {
-		return id;
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("GeneralLocationDatum{id=");
+		builder.append(id);
+		builder.append(", samples=");
+		builder.append(samples == null ? "null" : samples.getSampleData());
+		builder.append("}");
+		return builder.toString();
 	}
 
 	/**
@@ -139,13 +86,13 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	 */
 	@JsonUnwrapped
 	@JsonAnyGetter
-	public Map<String, ?> getSampleData() {
+	public @Nullable Map<String, ?> getSampleData() {
 		DatumSamples s = getSamples();
 		return (s == null ? null : s.getSampleData());
 	}
 
 	@Override
-	public GeneralLocationDatum clone() {
+	public final GeneralLocationDatum clone() {
 		try {
 			return (GeneralLocationDatum) super.clone();
 		} catch ( CloneNotSupportedException e ) {
@@ -158,13 +105,13 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + id.hashCode();
 		return result;
 	}
 
 	@SuppressWarnings("EqualsGetClass")
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -172,10 +119,70 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 			return false;
 		}
 		GeneralLocationDatum other = (GeneralLocationDatum) obj;
-		if ( id == null ) {
-			return other.id == null;
-		}
 		return id.equals(other.id);
+	}
+
+	/**
+	 * Convenience getter for {@link GeneralLocationDatumPK#getLocationId()}.
+	 *
+	 * @return the locationId
+	 */
+	public final @Nullable Long getLocationId() {
+		return id.getLocationId();
+	}
+
+	/**
+	 * Convenience setter for {@link GeneralLocationDatumPK#setLocationId(Long)}
+	 * .
+	 *
+	 * @param locationId
+	 *        the locationId to set
+	 */
+	public final void setLocationId(@Nullable Long locationId) {
+		id.setLocationId(locationId);
+	}
+
+	/**
+	 * Convenience getter for {@link GeneralLocationDatumPK#getSourceId()}.
+	 *
+	 * @return the sourceId
+	 */
+	public final @Nullable String getSourceId() {
+		return id.getSourceId();
+	}
+
+	/**
+	 * Convenience setter for {@link GeneralLocationDatumPK#setSourceId(String)}
+	 * .
+	 *
+	 * @param sourceId
+	 *        the sourceId to set
+	 */
+	public final void setSourceId(@Nullable String sourceId) {
+		id.setSourceId(sourceId);
+	}
+
+	/**
+	 * Convenience setter for
+	 * {@link GeneralLocationDatumPK#setCreated(Instant)}.
+	 *
+	 * @param created
+	 *        the created to set
+	 */
+	public final void setCreated(@Nullable Instant created) {
+		id.setCreated(created);
+	}
+
+	@Override
+	public final @Nullable Instant getCreated() {
+		return id.getCreated();
+	}
+
+	@Override
+	@JsonIgnore
+	@SerializeIgnore
+	public final GeneralLocationDatumPK getId() {
+		return id;
 	}
 
 	/**
@@ -189,7 +196,7 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public String getSampleJson() {
+	public final String getSampleJson() {
 		if ( sampleJson == null ) {
 			sampleJson = DatumUtils.getJSONString(samples, "{}");
 		}
@@ -211,27 +218,29 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setSampleJson(String json) {
+	public final void setSampleJson(@Nullable String json) {
 		sampleJson = json;
 		samples = null;
 	}
 
 	@SerializeIgnore
 	@JsonIgnore
-	public Instant getPosted() {
+	public final @Nullable Instant getPosted() {
 		return posted;
 	}
 
-	public void setPosted(Instant posted) {
+	public final void setPosted(@Nullable Instant posted) {
 		this.posted = posted;
 	}
 
 	@Override
 	@SerializeIgnore
 	@JsonIgnore
-	public DatumSamples getSamples() {
+	public final DatumSamples getSamples() {
 		if ( samples == null && sampleJson != null ) {
 			samples = DatumUtils.getObjectFromJSON(sampleJson, DatumSamples.class);
+		} else if ( samples == null ) {
+			samples = new DatumSamples();
 		}
 		return samples;
 	}
@@ -249,20 +258,9 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setSamples(DatumSamples samples) {
+	public final void setSamples(@Nullable DatumSamples samples) {
 		this.samples = samples;
 		sampleJson = null;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("GeneralLocationDatum{id=");
-		builder.append(id);
-		builder.append(", samples=");
-		builder.append(samples == null ? "null" : samples.getSampleData());
-		builder.append("}");
-		return builder.toString();
 	}
 
 }

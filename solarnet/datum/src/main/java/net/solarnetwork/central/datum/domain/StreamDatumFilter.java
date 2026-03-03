@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.DateRangeFilter;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.LocalDateRangeFilter;
@@ -48,6 +49,7 @@ public interface StreamDatumFilter extends Filter, DateRangeFilter, LocalDateRan
 	 *
 	 * @return the first stream ID, or {@literal null} if not available
 	 */
+	@Nullable
 	UUID getStreamId();
 
 	/**
@@ -55,13 +57,14 @@ public interface StreamDatumFilter extends Filter, DateRangeFilter, LocalDateRan
 	 *
 	 * @return array of stream IDs (may be {@literal null})
 	 */
-	UUID[] getStreamIds();
+	UUID @Nullable [] getStreamIds();
 
 	/**
 	 * Get the stream object kind.
 	 *
 	 * @return the object kind (may be {@literal null})
 	 */
+	@Nullable
 	ObjectDatumKind getKind();
 
 	/**
@@ -74,6 +77,7 @@ public interface StreamDatumFilter extends Filter, DateRangeFilter, LocalDateRan
 	 *
 	 * @return the first object ID, or {@literal null} if not available
 	 */
+	@Nullable
 	Long getObjectId();
 
 	/**
@@ -81,6 +85,6 @@ public interface StreamDatumFilter extends Filter, DateRangeFilter, LocalDateRan
 	 *
 	 * @return array of object IDs (may be {@literal null})
 	 */
-	Long[] getObjectIds();
+	Long @Nullable [] getObjectIds();
 
 }

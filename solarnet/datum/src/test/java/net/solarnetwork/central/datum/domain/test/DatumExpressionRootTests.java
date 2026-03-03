@@ -182,7 +182,7 @@ public class DatumExpressionRootTests {
 		// WHEN
 		DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId, null, (id) -> {
 			if ( id != null && id.getKind() == ObjectDatumKind.Node && nodeId.equals(id.getObjectId())
-					&& id.getSourceId() == null ) {
+					&& id.getSourceId().isEmpty() ) {
 				return meta;
 			}
 			return null;

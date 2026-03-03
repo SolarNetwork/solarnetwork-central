@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Extension of {@link GeneralNodeDatum} with account ownership information.
@@ -47,7 +47,7 @@ public class OwnedGeneralNodeDatum extends GeneralNodeDatum {
 	 */
 	public OwnedGeneralNodeDatum(Long userId) {
 		super();
-		this.userId = ObjectUtils.requireNonNullArgument(userId, "userId");
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**

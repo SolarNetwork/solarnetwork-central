@@ -26,6 +26,8 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Basic primary key composed of a node ID and source ID and date.
@@ -40,7 +42,7 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	@Serial
 	private static final long serialVersionUID = 4113556533271163661L;
 
-	private Instant created;
+	private @Nullable Instant created;
 
 	/**
 	 * Default constructor.
@@ -59,7 +61,8 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	 * @param created
 	 *        the creation date
 	 */
-	public BasicNodeSourceDatePK(Long nodeId, String sourceId, Instant created) {
+	public BasicNodeSourceDatePK(@Nullable Long nodeId, @Nullable String sourceId,
+			@Nullable Instant created) {
 		super();
 		setNodeId(nodeId);
 		setSourceId(sourceId);
@@ -80,7 +83,7 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -123,11 +126,12 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	 *         less than, equal to, or l to, or greater than the specified
 	 *         object.
 	 */
-	public int compareTo(BasicNodeSourceDatePK o) {
+	public int compareTo(@Nullable BasicNodeSourceDatePK o) {
 		int comparison = super.compareTo(o);
 		if ( comparison != 0 ) {
 			return comparison;
 		}
+		o = ObjectUtils.nonnull(o, "other");
 		if ( o.created == null ) {
 			return 1;
 		} else if ( created == null ) {
@@ -164,7 +168,7 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	 *
 	 * @return the creation time
 	 */
-	public Instant getCreated() {
+	public final @Nullable Instant getCreated() {
 		return created;
 	}
 
@@ -174,7 +178,7 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	 * @param created
 	 *        the time
 	 */
-	public void setCreated(Instant created) {
+	public final void setCreated(@Nullable Instant created) {
 		this.created = created;
 	}
 

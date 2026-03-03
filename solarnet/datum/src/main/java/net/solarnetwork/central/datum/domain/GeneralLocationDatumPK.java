@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -57,7 +58,8 @@ public class GeneralLocationDatumPK extends BasicLocationSourceDatePK
 	 *        the source ID
 	 * @since 1.3
 	 */
-	public GeneralLocationDatumPK(Long locationId, Instant created, String sourceId) {
+	public GeneralLocationDatumPK(@Nullable Long locationId, @Nullable Instant created,
+			@Nullable String sourceId) {
 		super(locationId, sourceId, created);
 	}
 
@@ -82,7 +84,7 @@ public class GeneralLocationDatumPK extends BasicLocationSourceDatePK
 	 * {@literal null} values will be sorted before non-{@literal null} values.
 	 */
 	@Override
-	public int compareTo(GeneralLocationDatumPK o) {
+	public int compareTo(@Nullable GeneralLocationDatumPK o) {
 		return super.compareTo(o);
 	}
 
@@ -92,12 +94,12 @@ public class GeneralLocationDatumPK extends BasicLocationSourceDatePK
 	}
 
 	@Override
-	public Long getObjectId() {
+	public @Nullable Long getObjectId() {
 		return getLocationId();
 	}
 
 	@Override
-	public Instant getTimestamp() {
+	public @Nullable Instant getTimestamp() {
 		return getCreated();
 	}
 

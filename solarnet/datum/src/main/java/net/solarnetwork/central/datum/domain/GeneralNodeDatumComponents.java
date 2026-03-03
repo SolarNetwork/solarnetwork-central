@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import java.io.Serial;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import net.solarnetwork.domain.datum.DatumSamples;
 
@@ -63,7 +64,7 @@ public class GeneralNodeDatumComponents extends GeneralNodeDatum {
 	}
 
 	@JsonUnwrapped
-	public DatumSamples getSampleComponents() {
+	public @Nullable DatumSamples getSampleComponents() {
 		return getSamples();
 	}
 
@@ -72,7 +73,7 @@ public class GeneralNodeDatumComponents extends GeneralNodeDatum {
 	 * during serialization.
 	 */
 	@Override
-	public Map<String, ?> getSampleData() {
+	public @Nullable Map<String, ?> getSampleData() {
 		return null;
 	}
 

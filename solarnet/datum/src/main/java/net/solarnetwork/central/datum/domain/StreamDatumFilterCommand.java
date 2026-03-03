@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -32,8 +33,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.SequencedMap;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -67,31 +70,31 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	@Serial
 	private static final long serialVersionUID = 5720733579900923990L;
 
-	private UUID[] streamIds;
-	private ObjectDatumKind kind;
-	private Long[] objectIds;
-	private String[] sourceIds;
+	private UUID @Nullable [] streamIds;
+	private @Nullable ObjectDatumKind kind;
+	private Long @Nullable [] objectIds;
+	private String @Nullable [] sourceIds;
 
-	private Instant startDate;
-	private Instant endDate;
-	private LocalDateTime localStartDate;
-	private LocalDateTime localEndDate;
+	private @Nullable Instant startDate;
+	private @Nullable Instant endDate;
+	private @Nullable LocalDateTime localStartDate;
+	private @Nullable LocalDateTime localEndDate;
 	private boolean mostRecent = false;
 
-	private String[] propertyNames;
-	private List<MutableSortDescriptor> sorts;
-	private Long offset;
-	private Integer max;
+	private String @Nullable [] propertyNames;
+	private @Nullable List<MutableSortDescriptor> sorts;
+	private @Nullable Long offset;
+	private @Nullable Integer max;
 
-	private Aggregation aggregation;
-	private Aggregation partialAggregation;
+	private @Nullable Aggregation aggregation;
+	private @Nullable Aggregation partialAggregation;
 	private boolean withoutTotalResultsCount;
 
-	private CombiningType combiningType;
-	private Map<Long, Set<Long>> nodeIdMappings;
-	private Map<String, Set<String>> sourceIdMappings;
+	private @Nullable CombiningType combiningType;
+	private @Nullable Map<Long, Set<Long>> nodeIdMappings;
+	private @Nullable Map<String, Set<String>> sourceIdMappings;
 
-	private DatumRollupType[] datumRollupTypes;
+	private DatumRollupType @Nullable [] datumRollupTypes;
 
 	@Override
 	public int hashCode() {
@@ -109,7 +112,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -288,7 +291,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	@Override
 	@JsonIgnore
-	public ObjectDatumKind getKind() {
+	public final @Nullable ObjectDatumKind getKind() {
 		return kind;
 	}
 
@@ -299,7 +302,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 *        the kind
 	 */
 	@JsonIgnore
-	public void setKind(ObjectDatumKind kind) {
+	public final void setKind(@Nullable ObjectDatumKind kind) {
 		this.kind = kind;
 	}
 
@@ -309,7 +312,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @return the kind
 	 */
 	@JsonGetter("kind")
-	public String getKindValue() {
+	public final @Nullable String getKindValue() {
 		final ObjectDatumKind kind = getKind();
 		return (kind != null ? String.valueOf(kind.getKey()) : null);
 	}
@@ -321,7 +324,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 *        the kind
 	 */
 	@JsonSetter("kind")
-	public void setKindValue(String value) {
+	public final void setKindValue(@Nullable String value) {
 		ObjectDatumKind kind = null;
 		if ( value != null && !value.isEmpty() ) {
 			kind = ObjectDatumKind.forKey(value);
@@ -330,7 +333,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	}
 
 	@Override
-	public UUID[] getStreamIds() {
+	public final UUID @Nullable [] getStreamIds() {
 		return streamIds;
 	}
 
@@ -340,7 +343,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param streamIds
 	 *        the stream IDs to set
 	 */
-	public void setStreamIds(UUID[] streamIds) {
+	public final void setStreamIds(UUID @Nullable [] streamIds) {
 		this.streamIds = streamIds;
 	}
 
@@ -360,18 +363,18 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setStreamId(UUID streamId) {
+	public final void setStreamId(@Nullable UUID streamId) {
 		this.streamIds = (streamId == null ? null : new UUID[] { streamId });
 	}
 
 	@Override
 	@JsonIgnore
-	public UUID getStreamId() {
+	public final @Nullable UUID getStreamId() {
 		return (this.streamIds == null || this.streamIds.length < 1 ? null : this.streamIds[0]);
 	}
 
 	@Override
-	public Long[] getObjectIds() {
+	public final Long @Nullable [] getObjectIds() {
 		return objectIds;
 	}
 
@@ -381,7 +384,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param objectIds
 	 *        the object IDs to set
 	 */
-	public void setObjectIds(Long[] objectIds) {
+	public final void setObjectIds(Long @Nullable [] objectIds) {
 		this.objectIds = objectIds;
 	}
 
@@ -401,13 +404,13 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setObjectId(Long objectId) {
+	public final void setObjectId(@Nullable Long objectId) {
 		this.objectIds = (objectId == null ? null : new Long[] { objectId });
 	}
 
 	@Override
 	@JsonIgnore
-	public Long getObjectId() {
+	public final @Nullable Long getObjectId() {
 		return (this.objectIds == null || this.objectIds.length < 1 ? null : this.objectIds[0]);
 	}
 
@@ -417,7 +420,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		setKind(ObjectDatumKind.Node);
 		setObjectId(nodeId);
 	}
@@ -428,7 +431,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param nodeIds
 	 *        the node IDs to set
 	 */
-	public void setNodeIds(Long[] nodeIds) {
+	public final void setNodeIds(Long @Nullable [] nodeIds) {
 		setKind(ObjectDatumKind.Node);
 		setObjectIds(nodeIds);
 	}
@@ -439,7 +442,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param locId
 	 *        the node ID to set
 	 */
-	public void setLocationId(Long locId) {
+	public final void setLocationId(@Nullable Long locId) {
 		setKind(ObjectDatumKind.Location);
 		setObjectId(locId);
 	}
@@ -450,13 +453,13 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param locIds
 	 *        the node IDs to set
 	 */
-	public void setLocationIds(Long[] locIds) {
+	public final void setLocationIds(Long @Nullable [] locIds) {
 		setKind(ObjectDatumKind.Location);
 		setObjectIds(locIds);
 	}
 
 	@Override
-	public String[] getSourceIds() {
+	public final String @Nullable [] getSourceIds() {
 		return sourceIds;
 	}
 
@@ -466,7 +469,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param sourceIds
 	 *        the source IDs to set
 	 */
-	public void setSourceIds(String[] sourceIds) {
+	public final void setSourceIds(String @Nullable [] sourceIds) {
 		this.sourceIds = sourceIds;
 	}
 
@@ -486,81 +489,81 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(@Nullable String sourceId) {
 		this.sourceIds = (sourceId == null ? null : new String[] { sourceId });
 	}
 
 	@Override
 	@JsonIgnore
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return (this.sourceIds == null || this.sourceIds.length < 1 ? null : this.sourceIds[0]);
 	}
 
 	@Override
-	public Instant getStartDate() {
+	public final @Nullable Instant getStartDate() {
 		return startDate;
 	}
 
-	public void setStartDate(Instant startDate) {
+	public final void setStartDate(@Nullable Instant startDate) {
 		this.startDate = startDate;
 	}
 
 	@Override
-	public Instant getEndDate() {
+	public final @Nullable Instant getEndDate() {
 		return endDate;
 	}
 
-	public void setEndDate(Instant endDate) {
+	public final void setEndDate(@Nullable Instant endDate) {
 		this.endDate = endDate;
 	}
 
 	@Override
-	public LocalDateTime getLocalStartDate() {
+	public final @Nullable LocalDateTime getLocalStartDate() {
 		return localStartDate;
 	}
 
-	public void setLocalStartDate(LocalDateTime localStartDate) {
+	public final void setLocalStartDate(@Nullable LocalDateTime localStartDate) {
 		this.localStartDate = localStartDate;
 	}
 
 	@Override
-	public LocalDateTime getLocalEndDate() {
+	public final @Nullable LocalDateTime getLocalEndDate() {
 		return localEndDate;
 	}
 
-	public void setLocalEndDate(LocalDateTime localEndDate) {
+	public final void setLocalEndDate(@Nullable LocalDateTime localEndDate) {
 		this.localEndDate = localEndDate;
 	}
 
-	public List<MutableSortDescriptor> getSorts() {
+	public final @Nullable List<MutableSortDescriptor> getSorts() {
 		return sorts;
 	}
 
-	public void setSorts(List<MutableSortDescriptor> sorts) {
+	public final void setSorts(@Nullable List<MutableSortDescriptor> sorts) {
 		this.sorts = sorts;
 	}
 
 	@JsonIgnore
-	public List<SortDescriptor> getSortDescriptors() {
+	public final List<SortDescriptor> getSortDescriptors() {
 		if ( sorts == null ) {
 			return new ArrayList<>(2);
 		}
 		return new ArrayList<>(sorts);
 	}
 
-	public Long getOffset() {
+	public final @Nullable Long getOffset() {
 		return offset;
 	}
 
-	public void setOffset(Long offset) {
+	public final void setOffset(@Nullable Long offset) {
 		this.offset = offset;
 	}
 
-	public Integer getMax() {
+	public final @Nullable Integer getMax() {
 		return max;
 	}
 
-	public void setMax(Integer max) {
+	public final void setMax(@Nullable Integer max) {
 		this.max = max;
 		if ( this.offset == null ) {
 			this.offset = 0L;
@@ -568,7 +571,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	}
 
 	@Override
-	public Aggregation getAggregation() {
+	public final @Nullable Aggregation getAggregation() {
 		return aggregation;
 	}
 
@@ -578,7 +581,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param aggregation
 	 *        the aggregation to set
 	 */
-	public void setAggregation(Aggregation aggregation) {
+	public final void setAggregation(@Nullable Aggregation aggregation) {
 		this.aggregation = aggregation;
 	}
 
@@ -589,7 +592,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param aggregate
 	 *        the aggregation to set
 	 */
-	public void setAggregate(Aggregation aggregate) {
+	public final void setAggregate(@Nullable Aggregation aggregate) {
 		setAggregation(aggregate);
 	}
 
@@ -599,7 +602,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @return the aggregation key, never {@literal null}
 	 */
 	@JsonIgnore
-	public String getAggregationKey() {
+	public final @Nullable String getAggregationKey() {
 		Aggregation agg = getAggregation();
 		return (agg != null ? agg : Aggregation.None).getKey();
 	}
@@ -615,7 +618,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param key
 	 *        the key to set
 	 */
-	public void setAggregationKey(String key) {
+	public final void setAggregationKey(@Nullable String key) {
 		Aggregation agg;
 		try {
 			agg = Aggregation.forKey(key);
@@ -626,7 +629,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	}
 
 	@Override
-	public Aggregation getPartialAggregation() {
+	public final @Nullable Aggregation getPartialAggregation() {
 		return partialAggregation;
 	}
 
@@ -636,7 +639,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param partialAggregation
 	 *        the aggregation to set
 	 */
-	public void setPartialAggregation(Aggregation partialAggregation) {
+	public final void setPartialAggregation(@Nullable Aggregation partialAggregation) {
 		this.partialAggregation = partialAggregation;
 	}
 
@@ -646,7 +649,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @return the aggregation key, never {@literal null}
 	 */
 	@JsonIgnore
-	public String getPartialAggregationKey() {
+	public final @Nullable String getPartialAggregationKey() {
 		Aggregation agg = getPartialAggregation();
 		return (agg != null ? agg : Aggregation.None).getKey();
 	}
@@ -663,7 +666,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 *        the key to set
 	 */
 	@JsonSetter
-	public void setPartialAggregationKey(String key) {
+	public final void setPartialAggregationKey(@Nullable String key) {
 		Aggregation agg;
 		try {
 			agg = Aggregation.forKey(key);
@@ -674,7 +677,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	}
 
 	@Override
-	public boolean isMostRecent() {
+	public final boolean isMostRecent() {
 		return mostRecent;
 	}
 
@@ -684,12 +687,12 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param mostRecent
 	 *        {@literal true} to return only the most recent matching data
 	 */
-	public void setMostRecent(boolean mostRecent) {
+	public final void setMostRecent(boolean mostRecent) {
 		this.mostRecent = mostRecent;
 	}
 
 	@Override
-	public boolean isWithoutTotalResultsCount() {
+	public final boolean isWithoutTotalResultsCount() {
 		return withoutTotalResultsCount;
 	}
 
@@ -699,12 +702,12 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param withoutTotalResultsCount
 	 *        the value to set
 	 */
-	public void setWithoutTotalResultsCount(boolean withoutTotalResultsCount) {
+	public final void setWithoutTotalResultsCount(boolean withoutTotalResultsCount) {
 		this.withoutTotalResultsCount = withoutTotalResultsCount;
 	}
 
 	@Override
-	public CombiningType getCombiningType() {
+	public final @Nullable CombiningType getCombiningType() {
 		return combiningType;
 	}
 
@@ -714,7 +717,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param combiningType
 	 *        the type
 	 */
-	public void setCombiningType(CombiningType combiningType) {
+	public final void setCombiningType(@Nullable CombiningType combiningType) {
 		this.combiningType = combiningType;
 	}
 
@@ -724,7 +727,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @return the combining type key, or {@literal null} if not defined
 	 */
 	@JsonIgnore
-	public String getCombiningTypeKey() {
+	public final @Nullable String getCombiningTypeKey() {
 		CombiningType type = getCombiningType();
 		return (type != null ? type.getKey() : null);
 	}
@@ -741,7 +744,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 *        the key to set
 	 */
 	@JsonSetter
-	public void setCombiningTypeKey(String key) {
+	public final void setCombiningTypeKey(@Nullable String key) {
 		CombiningType type;
 		try {
 			type = CombiningType.forKey(key);
@@ -752,7 +755,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	}
 
 	@Override
-	public Map<Long, Set<Long>> getNodeIdMappings() {
+	public final @Nullable Map<Long, Set<Long>> getNodeIdMappings() {
 		return nodeIdMappings;
 	}
 
@@ -762,7 +765,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param nodeIdMappings
 	 *        the mappings to set
 	 */
-	public void setNodeIdMappings(Map<Long, Set<Long>> nodeIdMappings) {
+	public final void setNodeIdMappings(@Nullable Map<Long, Set<Long>> nodeIdMappings) {
 		this.nodeIdMappings = nodeIdMappings;
 	}
 
@@ -783,8 +786,8 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param mappings
 	 *        the mappings to set
 	 */
-	public void setNodeIdMaps(String[] mappings) {
-		Map<Long, Set<Long>> result;
+	public final void setNodeIdMaps(String @Nullable [] mappings) {
+		SequencedMap<Long, Set<Long>> result;
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
@@ -794,7 +797,8 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
 					// special case, when Spring maps single query param into 3 fields split on comma like 1:2, 3, 4
 					try {
-						result.get(result.keySet().iterator().next()).add(Long.valueOf(map));
+						Set<Long> firstValue = nonnull(result.firstEntry(), "First result").getValue();
+						firstValue.add(Long.valueOf(map));
 					} catch ( NumberFormatException e ) {
 						// ignore
 					}
@@ -806,21 +810,23 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 					Long vId = Long.valueOf(map.substring(0, vIdDelimIdx));
 					Set<String> rIds = StringUtils
 							.commaDelimitedStringToSet(map.substring(vIdDelimIdx + 1));
-					Set<Long> rNodeIds = new LinkedHashSet<>(rIds.size());
-					for ( String rId : rIds ) {
-						rNodeIds.add(Long.valueOf(rId));
+					if ( rIds != null ) {
+						Set<Long> rNodeIds = new LinkedHashSet<>(rIds.size());
+						for ( String rId : rIds ) {
+							rNodeIds.add(Long.valueOf(rId));
+						}
+						result.put(vId, rNodeIds);
 					}
-					result.put(vId, rNodeIds);
 				} catch ( NumberFormatException e ) {
 					// ignore and continue
 				}
 			}
 		}
-		setNodeIdMappings(result.isEmpty() ? null : result);
+		setNodeIdMappings(result == null || result.isEmpty() ? null : result);
 	}
 
 	@Override
-	public Map<String, Set<String>> getSourceIdMappings() {
+	public final @Nullable Map<String, Set<String>> getSourceIdMappings() {
 		return sourceIdMappings;
 	}
 
@@ -830,7 +836,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param sourceIdMappings
 	 *        the mappings to set
 	 */
-	public void setSourceIdMappings(Map<String, Set<String>> sourceIdMappings) {
+	public final void setSourceIdMappings(@Nullable Map<String, Set<String>> sourceIdMappings) {
 		this.sourceIdMappings = sourceIdMappings;
 	}
 
@@ -853,8 +859,8 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param mappings
 	 *        the mappings to set
 	 */
-	public void setSourceIdMaps(String[] mappings) {
-		Map<String, Set<String>> result;
+	public final void setSourceIdMaps(String @Nullable [] mappings) {
+		SequencedMap<String, Set<String>> result;
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
@@ -864,7 +870,8 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
 					// special case, when Spring maps single query param into 3 fields split on comma like A:B, C, D
 					try {
-						result.get(result.keySet().iterator().next()).add(map);
+						Set<String> firstValue = nonnull(result.firstEntry(), "First result").getValue();
+						firstValue.add(map);
 					} catch ( NumberFormatException e ) {
 						// ignore
 					}
@@ -878,12 +885,12 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 				result.put(vId, rSourceIds);
 			}
 		}
-		setSourceIdMappings(result.isEmpty() ? null : result);
+		setSourceIdMappings(result == null || result.isEmpty() ? null : result);
 	}
 
 	@JsonIgnore
 	@Override
-	public DatumRollupType getDatumRollupType() {
+	public final @Nullable DatumRollupType getDatumRollupType() {
 		return datumRollupTypes != null && datumRollupTypes.length > 0 ? datumRollupTypes[0] : null;
 	}
 
@@ -894,7 +901,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 */
 	@JsonIgnore
 	@Override
-	public DatumRollupType[] getDatumRollupTypes() {
+	public final DatumRollupType @Nullable [] getDatumRollupTypes() {
 		return datumRollupTypes;
 	}
 
@@ -905,7 +912,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 *        the rollup types
 	 */
 	@JsonIgnore
-	public void setDatumRollupTypes(DatumRollupType[] datumRollupTypes) {
+	public final void setDatumRollupTypes(DatumRollupType @Nullable [] datumRollupTypes) {
 		this.datumRollupTypes = datumRollupTypes;
 	}
 
@@ -916,7 +923,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 *         defined
 	 */
 	@JsonIgnore
-	public String[] getDatumRollupTypeKeys() {
+	public final String @Nullable [] getDatumRollupTypeKeys() {
 		DatumRollupType[] types = getDatumRollupTypes();
 		String[] keys = null;
 		if ( types != null && types.length > 0 ) {
@@ -937,7 +944,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @since 1.4
 	 */
 	@JsonIgnore
-	public DatumRollupType getRollupType() {
+	public final @Nullable DatumRollupType getRollupType() {
 		final DatumRollupType[] types = getDatumRollupTypes();
 		return (types != null && types.length > 0 ? types[0] : null);
 	}
@@ -952,7 +959,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 */
 	@JsonSetter
 	@SuppressWarnings("InvalidParam")
-	public void setRollupType(DatumRollupType datumRollupType) {
+	public final void setRollupType(@Nullable DatumRollupType datumRollupType) {
 		setDatumRollupTypes(datumRollupType == null ? null : new DatumRollupType[] { datumRollupType });
 	}
 
@@ -967,7 +974,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @see #getDatumRollupTypes()
 	 * @since 1.5
 	 */
-	public DatumRollupType[] getRollupTypes() {
+	public final DatumRollupType @Nullable [] getRollupTypes() {
 		return getDatumRollupTypes();
 	}
 
@@ -983,12 +990,12 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @see #setDatumRollupTypes(DatumRollupType[])
 	 * @since 1.5
 	 */
-	public void setRollupTypes(DatumRollupType[] types) {
+	public final void setRollupTypes(DatumRollupType @Nullable [] types) {
 		setDatumRollupTypes(types);
 	}
 
 	@Override
-	public String[] getPropertyNames() {
+	public final String @Nullable [] getPropertyNames() {
 		return propertyNames;
 	}
 
@@ -999,7 +1006,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 *        the propertyNames to set
 	 * @since 1.6
 	 */
-	public void setPropertyNames(String[] propertyNames) {
+	public final void setPropertyNames(String @Nullable [] propertyNames) {
 		this.propertyNames = propertyNames;
 	}
 
@@ -1010,7 +1017,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 *         property names available
 	 * @since 1.6
 	 */
-	public Set<String> allowedPropertyNames() {
+	public final @Nullable Set<String> allowedPropertyNames() {
 		return (propertyNames != null && propertyNames.length > 0
 				? new LinkedHashSet<>(List.of(propertyNames))
 				: null);

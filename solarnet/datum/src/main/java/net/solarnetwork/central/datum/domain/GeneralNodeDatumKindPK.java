@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A primary key based on a node, source, date, and "kind" flag.
@@ -40,7 +42,7 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	@Serial
 	private static final long serialVersionUID = 8861820278176468489L;
 
-	private String kind;
+	private @Nullable String kind;
 
 	/**
 	 * Default constructor.
@@ -61,7 +63,8 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	 * @param kind
 	 *        the kind
 	 */
-	public GeneralNodeDatumKindPK(Long nodeId, Instant created, String sourceId, String kind) {
+	public GeneralNodeDatumKindPK(@Nullable Long nodeId, @Nullable Instant created,
+			@Nullable String sourceId, @Nullable String kind) {
 		super(nodeId, sourceId, created);
 		setKind(kind);
 	}
@@ -80,7 +83,7 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -111,11 +114,12 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	}
 
 	@Override
-	public int compareTo(GeneralNodeDatumKindPK o) {
+	public int compareTo(@Nullable GeneralNodeDatumKindPK o) {
 		int result = super.compareTo(o);
 		if ( result != 0 ) {
 			return result;
 		}
+		o = nonnull(o, "other");
 		if ( o.kind == null ) {
 			return 1;
 		} else if ( kind == null ) {
@@ -124,11 +128,11 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 		return kind.compareTo(o.kind);
 	}
 
-	public String getKind() {
+	public final @Nullable String getKind() {
 		return kind;
 	}
 
-	public void setKind(String kind) {
+	public final void setKind(@Nullable String kind) {
 		this.kind = kind;
 	}
 

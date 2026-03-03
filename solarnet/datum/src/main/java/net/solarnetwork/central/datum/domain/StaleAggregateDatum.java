@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseObjectEntity;
@@ -47,51 +48,6 @@ public class StaleAggregateDatum extends BaseObjectEntity<GeneralNodeDatumKindPK
 		setId(new GeneralNodeDatumKindPK());
 	}
 
-	private GeneralNodeDatumKindPK getOrCreateId() {
-		GeneralNodeDatumKindPK pk = getId();
-		if ( pk == null ) {
-			pk = new GeneralNodeDatumKindPK();
-			setId(pk);
-		}
-		return pk;
-	}
-
-	public Long getNodeId() {
-		GeneralNodeDatumKindPK pk = getId();
-		return (pk != null ? pk.getNodeId() : null);
-	}
-
-	public void setNodeId(Long nodeId) {
-		getOrCreateId().setNodeId(nodeId);
-	}
-
-	public String getSourceId() {
-		GeneralNodeDatumKindPK pk = getId();
-		return (pk != null ? pk.getSourceId() : null);
-	}
-
-	public void setSourceId(String sourceId) {
-		getOrCreateId().setSourceId(sourceId);
-	}
-
-	public Instant getStartDate() {
-		GeneralNodeDatumKindPK pk = getId();
-		return (pk != null ? pk.getCreated() : null);
-	}
-
-	public void setStartDate(Instant date) {
-		getOrCreateId().setCreated(date);
-	}
-
-	public String getKind() {
-		GeneralNodeDatumKindPK pk = getId();
-		return (pk != null ? pk.getKind() : null);
-	}
-
-	public void setKind(String kind) {
-		getOrCreateId().setKind(kind);
-	}
-
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
@@ -102,6 +58,51 @@ public class StaleAggregateDatum extends BaseObjectEntity<GeneralNodeDatumKindPK
 		builder.append(", created=").append(getCreated());
 		builder.append("}");
 		return builder.toString();
+	}
+
+	private GeneralNodeDatumKindPK getOrCreateId() {
+		GeneralNodeDatumKindPK pk = getId();
+		if ( pk == null ) {
+			pk = new GeneralNodeDatumKindPK();
+			setId(pk);
+		}
+		return pk;
+	}
+
+	public final @Nullable Long getNodeId() {
+		GeneralNodeDatumKindPK pk = getId();
+		return (pk != null ? pk.getNodeId() : null);
+	}
+
+	public final void setNodeId(@Nullable Long nodeId) {
+		getOrCreateId().setNodeId(nodeId);
+	}
+
+	public final @Nullable String getSourceId() {
+		GeneralNodeDatumKindPK pk = getId();
+		return (pk != null ? pk.getSourceId() : null);
+	}
+
+	public final void setSourceId(@Nullable String sourceId) {
+		getOrCreateId().setSourceId(sourceId);
+	}
+
+	public final @Nullable Instant getStartDate() {
+		GeneralNodeDatumKindPK pk = getId();
+		return (pk != null ? pk.getCreated() : null);
+	}
+
+	public final void setStartDate(@Nullable Instant date) {
+		getOrCreateId().setCreated(date);
+	}
+
+	public final @Nullable String getKind() {
+		GeneralNodeDatumKindPK pk = getId();
+		return (pk != null ? pk.getKind() : null);
+	}
+
+	public final void setKind(@Nullable String kind) {
+		getOrCreateId().setKind(kind);
 	}
 
 }

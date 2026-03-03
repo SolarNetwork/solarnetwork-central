@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.Filter;
 
 /**
@@ -39,6 +40,7 @@ public interface UserFilter extends Filter {
 	 *
 	 * @return the first user ID, or {@literal null} if not available
 	 */
+	@Nullable
 	Long getUserId();
 
 	/**
@@ -46,6 +48,6 @@ public interface UserFilter extends Filter {
 	 *
 	 * @return array of user IDs (may be {@literal null})
 	 */
-	Long[] getUserIds();
+	Long @Nullable [] getUserIds();
 
 }

@@ -123,9 +123,8 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 		createHookConf(user.getId(), new Long[] { TEST_NODE_ID }, new String[] { TEST_SOURCE_ID });
 
 		// WHEN		
-		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
-		info.setAggregation(Aggregation.Hour);
-		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
+				Instant.now().truncatedTo(ChronoUnit.HOURS));
 		BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC,
 				info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
 		acceptor.offerDatumEvent(event);
@@ -258,9 +257,8 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 		Instant ts = null;
 		for ( int i = 0; i < 3; i++ ) {
 			ts = Instant.now();
-			AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
-			info.setAggregation(Aggregation.Hour);
-			info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+			AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
+					Instant.now().truncatedTo(ChronoUnit.HOURS));
 			lastEventInfo = info;
 			BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC, ts,
 					info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
@@ -289,9 +287,8 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 		Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS);
 		for ( int i = 0; i < 3; i++ ) {
 			ts = ts.plusSeconds(60);
-			AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
-			info.setAggregation(Aggregation.Hour);
-			info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+			AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
+					Instant.now().truncatedTo(ChronoUnit.HOURS));
 			lastEventInfo = info;
 			BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC, ts,
 					info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
@@ -329,9 +326,8 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 		Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS);
 		for ( int i = 0; i < 4; i++ ) {
 			ts = ts.plusSeconds(60);
-			AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
-			info.setAggregation(Aggregation.Hour);
-			info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+			AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
+					Instant.now().truncatedTo(ChronoUnit.HOURS));
 			lastEventInfo = info;
 			BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC, ts,
 					info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);

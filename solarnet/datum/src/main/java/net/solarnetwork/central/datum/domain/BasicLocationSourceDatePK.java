@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Basic primary key composed of a location ID and source ID and date.
@@ -40,7 +42,7 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 	@Serial
 	private static final long serialVersionUID = 8552882329808995996L;
 
-	private Instant created;
+	private @Nullable Instant created;
 
 	/**
 	 * Default constructor.
@@ -59,7 +61,8 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 	 * @param created
 	 *        the creation date
 	 */
-	public BasicLocationSourceDatePK(Long locationId, String sourceId, Instant created) {
+	public BasicLocationSourceDatePK(@Nullable Long locationId, @Nullable String sourceId,
+			@Nullable Instant created) {
 		super();
 		setLocationId(locationId);
 		setSourceId(sourceId);
@@ -80,7 +83,7 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -123,11 +126,12 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 	 *         less than, equal to, or l to, or greater than the specified
 	 *         object.
 	 */
-	public int compareTo(BasicLocationSourceDatePK o) {
+	public int compareTo(@Nullable BasicLocationSourceDatePK o) {
 		int comparison = super.compareTo(o);
 		if ( comparison != 0 ) {
 			return comparison;
 		}
+		o = nonnull(o, "other");
 		if ( o.created == null ) {
 			return 1;
 		} else if ( created == null ) {
@@ -159,11 +163,11 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 		}
 	}
 
-	public Instant getCreated() {
+	public final @Nullable Instant getCreated() {
 		return created;
 	}
 
-	public void setCreated(Instant created) {
+	public final void setCreated(@Nullable Instant created) {
 		this.created = created;
 	}
 

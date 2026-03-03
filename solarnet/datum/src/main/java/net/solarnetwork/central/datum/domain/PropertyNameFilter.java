@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.Filter;
 
 /**
@@ -37,14 +38,14 @@ public interface PropertyNameFilter extends Filter {
 	 *
 	 * @return array of properties, or {@code null}
 	 */
-	String[] getPropertyNames();
+	String @Nullable [] getPropertyNames();
 
 	/**
 	 * Get the first available property name.
 	 *
 	 * @return the first available property name, or {@code null}
 	 */
-	default String getPropertyName() {
+	default @Nullable String getPropertyName() {
 		final String[] names = getPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
 	}

@@ -26,6 +26,7 @@ import java.io.Serial;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -45,10 +46,10 @@ public class ReportingGeneralNodeDatum extends GeneralNodeDatum
 	@Serial
 	private static final long serialVersionUID = -8529409354188959691L;
 
-	private LocalDateTime localDateTime;
+	private @Nullable LocalDateTime localDateTime;
 
 	@Override
-	public LocalDate getLocalDate() {
+	public final @Nullable LocalDate getLocalDate() {
 		if ( localDateTime == null ) {
 			return null;
 		}
@@ -57,7 +58,7 @@ public class ReportingGeneralNodeDatum extends GeneralNodeDatum
 
 	@JsonFormat(pattern = "HH:mm")
 	@Override
-	public LocalTime getLocalTime() {
+	public final @Nullable LocalTime getLocalTime() {
 		if ( localDateTime == null ) {
 			return null;
 		}
@@ -66,11 +67,11 @@ public class ReportingGeneralNodeDatum extends GeneralNodeDatum
 
 	@JsonIgnore
 	@SerializeIgnore
-	public LocalDateTime getLocalDateTime() {
+	public final @Nullable LocalDateTime getLocalDateTime() {
 		return localDateTime;
 	}
 
-	public void setLocalDateTime(LocalDateTime localDateTime) {
+	public final void setLocalDateTime(@Nullable LocalDateTime localDateTime) {
 		this.localDateTime = localDateTime;
 	}
 

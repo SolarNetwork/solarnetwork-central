@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
@@ -33,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.SequencedMap;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -801,7 +803,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 1.10
 	 */
 	public final void setNodeIdMaps(String @Nullable [] mappings) {
-		Map<Long, Set<Long>> result;
+		SequencedMap<Long, Set<Long>> result;
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
@@ -811,7 +813,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
 					// special case, when Spring maps single query param into 3 fields split on comma like 1:2, 3, 4
 					try {
-						result.get(result.keySet().iterator().next()).add(Long.valueOf(map));
+						Set<Long> firstValue = nonnull(result.firstEntry(), "First result").getValue();
+						firstValue.add(Long.valueOf(map));
 					} catch ( NumberFormatException e ) {
 						// ignore
 					}
@@ -823,11 +826,13 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 					Long vId = Long.valueOf(map.substring(0, vIdDelimIdx));
 					Set<String> rIds = StringUtils
 							.commaDelimitedStringToSet(map.substring(vIdDelimIdx + 1));
-					Set<Long> rNodeIds = new LinkedHashSet<>(rIds.size());
-					for ( String rId : rIds ) {
-						rNodeIds.add(Long.valueOf(rId));
+					if ( rIds != null ) {
+						Set<Long> rNodeIds = new LinkedHashSet<>(rIds.size());
+						for ( String rId : rIds ) {
+							rNodeIds.add(Long.valueOf(rId));
+						}
+						result.put(vId, rNodeIds);
 					}
-					result.put(vId, rNodeIds);
 				} catch ( NumberFormatException e ) {
 					// ignore and continue
 				}
@@ -878,7 +883,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 1.10
 	 */
 	public final void setSourceIdMaps(String @Nullable [] mappings) {
-		Map<String, Set<String>> result;
+		SequencedMap<String, Set<String>> result;
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
@@ -888,7 +893,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
 					// special case, when Spring maps single query param into 3 fields split on comma like A:B, C, D
 					try {
-						result.get(result.keySet().iterator().next()).add(map);
+						Set<String> firstValue = nonnull(result.firstEntry(), "First result").getValue();
+						firstValue.add(map);
 					} catch ( NumberFormatException e ) {
 						// ignore
 					}
@@ -1104,7 +1110,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the names to set
 	 * @since 2.4
 	 */
-	public final void setInstantaneousPropertyNames(@Nullable String[] instantaneousPropertyNames) {
+	public final void setInstantaneousPropertyNames(String @Nullable [] instantaneousPropertyNames) {
 		this.instantaneousPropertyNames = instantaneousPropertyNames;
 	}
 

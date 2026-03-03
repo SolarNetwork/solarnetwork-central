@@ -26,6 +26,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -52,15 +53,15 @@ public final class AuditDatumRecordCounts
 	@Serial
 	private static final long serialVersionUID = -1393664537620448888L;
 
-	private GeneralNodeDatumPK id = new GeneralNodeDatumPK();
-	private Instant processed;
-	private Long datumCount;
-	private Long datumHourlyCount;
-	private Integer datumDailyCount;
-	private Integer datumMonthlyCount;
-	private Long datumPropertyPostedCount;
-	private Long datumPostedCount;
-	private Long datumQueryCount;
+	private final GeneralNodeDatumPK id = new GeneralNodeDatumPK();
+	private @Nullable Instant processed;
+	private @Nullable Long datumCount;
+	private @Nullable Long datumHourlyCount;
+	private @Nullable Integer datumDailyCount;
+	private @Nullable Integer datumMonthlyCount;
+	private @Nullable Long datumPropertyPostedCount;
+	private @Nullable Long datumPostedCount;
+	private @Nullable Long datumQueryCount;
 
 	/**
 	 * Default constructor.
@@ -81,8 +82,8 @@ public final class AuditDatumRecordCounts
 	 * @param datumMonthlyCount
 	 *        the monthly count
 	 */
-	public AuditDatumRecordCounts(Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
-			Integer datumMonthlyCount) {
+	public AuditDatumRecordCounts(@Nullable Long datumCount, @Nullable Long datumHourlyCount,
+			@Nullable Integer datumDailyCount, @Nullable Integer datumMonthlyCount) {
 		this(null, null, datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount);
 	}
 
@@ -102,8 +103,9 @@ public final class AuditDatumRecordCounts
 	 * @param datumMonthlyCount
 	 *        the monthly count
 	 */
-	public AuditDatumRecordCounts(Long nodeId, String sourceId, Long datumCount, Long datumHourlyCount,
-			Integer datumDailyCount, Integer datumMonthlyCount) {
+	public AuditDatumRecordCounts(@Nullable Long nodeId, @Nullable String sourceId,
+			@Nullable Long datumCount, @Nullable Long datumHourlyCount,
+			@Nullable Integer datumDailyCount, @Nullable Integer datumMonthlyCount) {
 		super();
 		if ( nodeId != null ) {
 			setNodeId(nodeId);
@@ -147,7 +149,7 @@ public final class AuditDatumRecordCounts
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -162,8 +164,8 @@ public final class AuditDatumRecordCounts
 	 *
 	 * @return the nodeId
 	 */
-	public Long getNodeId() {
-		return (id == null ? null : id.getNodeId());
+	public final @Nullable Long getNodeId() {
+		return id.getNodeId();
 	}
 
 	/**
@@ -172,10 +174,7 @@ public final class AuditDatumRecordCounts
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
-	public void setNodeId(Long nodeId) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumPK();
-		}
+	public final void setNodeId(@Nullable Long nodeId) {
 		id.setNodeId(nodeId);
 	}
 
@@ -184,8 +183,8 @@ public final class AuditDatumRecordCounts
 	 *
 	 * @return the sourceId
 	 */
-	public String getSourceId() {
-		return (id == null ? null : id.getSourceId());
+	public final @Nullable String getSourceId() {
+		return id.getSourceId();
 	}
 
 	/**
@@ -194,10 +193,7 @@ public final class AuditDatumRecordCounts
 	 * @param sourceId
 	 *        the sourceId to set
 	 */
-	public void setSourceId(String sourceId) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumPK();
-		}
+	public final void setSourceId(@Nullable String sourceId) {
 		id.setSourceId(sourceId);
 	}
 
@@ -208,31 +204,28 @@ public final class AuditDatumRecordCounts
 	 *        the created to set
 	 */
 	@JsonProperty("ts")
-	public void setCreated(Instant created) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumPK();
-		}
+	public final void setCreated(@Nullable Instant created) {
 		id.setCreated(created);
 	}
 
 	@Override
 	@JsonProperty("ts")
-	public Instant getCreated() {
-		return (id == null ? null : id.getCreated());
+	public final @Nullable Instant getCreated() {
+		return id.getCreated();
 	}
 
 	@Override
 	@JsonIgnore
 	@SerializeIgnore
-	public GeneralNodeDatumPK getId() {
+	public final GeneralNodeDatumPK getId() {
 		return id;
 	}
 
-	public Instant getProcessed() {
+	public final @Nullable Instant getProcessed() {
 		return processed;
 	}
 
-	public void setProcessed(Instant processed) {
+	public final void setProcessed(@Nullable Instant processed) {
 		this.processed = processed;
 	}
 
@@ -241,7 +234,7 @@ public final class AuditDatumRecordCounts
 	 *
 	 * @return the sum total of the datum count properties
 	 */
-	public long getDatumTotalCount() {
+	public final long getDatumTotalCount() {
 		long t = 0;
 		if ( datumCount != null ) {
 			t += datumCount;
@@ -258,59 +251,59 @@ public final class AuditDatumRecordCounts
 		return t;
 	}
 
-	public Long getDatumPropertyPostedCount() {
+	public final @Nullable Long getDatumPropertyPostedCount() {
 		return datumPropertyPostedCount;
 	}
 
-	public void setDatumPropertyPostedCount(Long datumPropertyPostedCount) {
+	public final void setDatumPropertyPostedCount(@Nullable Long datumPropertyPostedCount) {
 		this.datumPropertyPostedCount = datumPropertyPostedCount;
 	}
 
-	public Long getDatumPostedCount() {
+	public final @Nullable Long getDatumPostedCount() {
 		return datumPostedCount;
 	}
 
-	public void setDatumPostedCount(Long datumPostedCount) {
+	public final void setDatumPostedCount(@Nullable Long datumPostedCount) {
 		this.datumPostedCount = datumPostedCount;
 	}
 
-	public Long getDatumQueryCount() {
+	public final @Nullable Long getDatumQueryCount() {
 		return datumQueryCount;
 	}
 
-	public void setDatumQueryCount(Long datumQueryCount) {
+	public final void setDatumQueryCount(@Nullable Long datumQueryCount) {
 		this.datumQueryCount = datumQueryCount;
 	}
 
-	public Long getDatumCount() {
+	public final @Nullable Long getDatumCount() {
 		return datumCount;
 	}
 
-	public void setDatumCount(Long datumCount) {
+	public final void setDatumCount(@Nullable Long datumCount) {
 		this.datumCount = datumCount;
 	}
 
-	public Long getDatumHourlyCount() {
+	public final @Nullable Long getDatumHourlyCount() {
 		return datumHourlyCount;
 	}
 
-	public void setDatumHourlyCount(Long datumHourlyCount) {
+	public final void setDatumHourlyCount(@Nullable Long datumHourlyCount) {
 		this.datumHourlyCount = datumHourlyCount;
 	}
 
-	public Integer getDatumDailyCount() {
+	public final @Nullable Integer getDatumDailyCount() {
 		return datumDailyCount;
 	}
 
-	public void setDatumDailyCount(Integer datumDailyCount) {
+	public final void setDatumDailyCount(@Nullable Integer datumDailyCount) {
 		this.datumDailyCount = datumDailyCount;
 	}
 
-	public Integer getDatumMonthlyCount() {
+	public final @Nullable Integer getDatumMonthlyCount() {
 		return datumMonthlyCount;
 	}
 
-	public void setDatumMonthlyCount(Integer datumMonthlyCount) {
+	public final void setDatumMonthlyCount(@Nullable Integer datumMonthlyCount) {
 		this.datumMonthlyCount = datumMonthlyCount;
 	}
 

@@ -33,7 +33,6 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -286,7 +285,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 				assertThat("Node ID", d.getNodeId(), equalTo(123L));
 				assertThat("Source ID not parsed from invalid column 0", d.getSourceId(),
 						equalTo("/DE/G1/B600/GEN/100"));
-				assertThat("Watts", d.getSamples(), nullValue());
+				assertThat("Watts", d.getSamples().isEmpty(), equalTo(true));
 				count++;
 			}
 			assertThat("Row count", count, equalTo(1));

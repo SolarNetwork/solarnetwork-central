@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Primary key for a general node datum auxiliary entity.
@@ -40,7 +42,7 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	@Serial
 	private static final long serialVersionUID = 5523741563653967531L;
 
-	private DatumAuxiliaryType type;
+	private @Nullable DatumAuxiliaryType type;
 
 	/**
 	 * Default constructor.
@@ -63,7 +65,8 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	 * @param sourceId
 	 *        the source ID
 	 */
-	public GeneralNodeDatumAuxiliaryPK(Long nodeId, Instant created, String sourceId) {
+	public GeneralNodeDatumAuxiliaryPK(@Nullable Long nodeId, @Nullable Instant created,
+			@Nullable String sourceId) {
 		this(nodeId, created, sourceId, DatumAuxiliaryType.Reset);
 	}
 
@@ -79,8 +82,8 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	 * @param type
 	 *        the type
 	 */
-	public GeneralNodeDatumAuxiliaryPK(Long nodeId, Instant created, String sourceId,
-			DatumAuxiliaryType type) {
+	public GeneralNodeDatumAuxiliaryPK(@Nullable Long nodeId, @Nullable Instant created,
+			@Nullable String sourceId, @Nullable DatumAuxiliaryType type) {
 		super(nodeId, sourceId, created);
 		this.type = type;
 	}
@@ -99,7 +102,7 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -130,11 +133,12 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	}
 
 	@Override
-	public int compareTo(GeneralNodeDatumAuxiliaryPK o) {
+	public int compareTo(@Nullable GeneralNodeDatumAuxiliaryPK o) {
 		int result = super.compareTo(o);
 		if ( result != 0 ) {
 			return result;
 		}
+		o = nonnull(o, "other");
 		if ( o.type == null ) {
 			return 1;
 		} else if ( type == null ) {
@@ -143,11 +147,11 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 		return type.compareTo(o.type);
 	}
 
-	public DatumAuxiliaryType getType() {
+	public final @Nullable DatumAuxiliaryType getType() {
 		return type;
 	}
 
-	public void setType(DatumAuxiliaryType type) {
+	public final void setType(@Nullable DatumAuxiliaryType type) {
 		this.type = type;
 	}
 

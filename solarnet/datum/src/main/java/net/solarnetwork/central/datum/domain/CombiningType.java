@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * An action to perform when combining data elements.
  *
@@ -83,7 +85,7 @@ public enum CombiningType {
 	 * @throws IllegalArgumentException
 	 *         if {@code key} is not supported
 	 */
-	public static CombiningType forKey(String key) {
+	public static CombiningType forKey(@Nullable String key) {
 		if ( key == null || key.isEmpty() ) {
 			return Sum;
 		}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.Location;
 
 /**
@@ -40,6 +41,7 @@ public interface GeneralLocationDatumMetadataFilter extends GeneralDatumMetadata
 	 *
 	 * @return the location filter
 	 */
+	@Nullable
 	Location getLocation();
 
 	/**
@@ -49,6 +51,7 @@ public interface GeneralLocationDatumMetadataFilter extends GeneralDatumMetadata
 	 *
 	 * @return the location ID, or {@literal null} if not available
 	 */
+	@Nullable
 	Long getLocationId();
 
 	/**
@@ -56,6 +59,6 @@ public interface GeneralLocationDatumMetadataFilter extends GeneralDatumMetadata
 	 *
 	 * @return array of location IDs (may be {@literal null})
 	 */
-	Long[] getLocationIds();
+	Long @Nullable [] getLocationIds();
 
 }

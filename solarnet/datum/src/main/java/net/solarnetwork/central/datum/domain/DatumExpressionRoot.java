@@ -26,6 +26,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Collections.emptyList;
 import static net.solarnetwork.util.NumberUtils.bigDecimalForNumber;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -199,9 +200,10 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	public @Nullable DatumMetadataOperations nodeMetadata() {
 		final Datum d = getDatum();
 		return (d != null && d.getKind() == ObjectDatumKind.Node && metadataProvider != null
-				? metadataProvider.apply(
-						new ObjectDatumStreamMetadataId(d.getKind(), d.getObjectId(), null))
-				: null);
+				&& d.getObjectId() != null
+						? metadataProvider.apply(new ObjectDatumStreamMetadataId(ObjectDatumKind.Node,
+								d.getObjectId(), ""))
+						: null);
 	}
 
 	/**
@@ -230,10 +232,11 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	public @Nullable TariffSchedule tariffSchedule(@Nullable DatumMetadataOperations meta,
 			@Nullable String path) {
 		final Datum d = getDatum();
-		return (d != null && meta != null && tariffScheduleProvider != null
-				? tariffScheduleProvider.apply(meta,
-						new ObjectDatumStreamMetadataId(d.getKind(), d.getObjectId(), path))
-				: null);
+		return (d != null && meta != null && tariffScheduleProvider != null && path != null
+				&& d.getKind() != null && d.getObjectId() != null
+						? tariffScheduleProvider.apply(meta,
+								new ObjectDatumStreamMetadataId(d.getKind(), d.getObjectId(), path))
+						: null);
 	}
 
 	/**
@@ -384,7 +387,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @since 1.1
 	 */
 	public Collection<DatumExpressionRoot> offsetMatching(@Nullable String sourceIdPattern, int offset,
-			Instant timestamp) {
+			@Nullable Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
 			return emptyList();
 		}
@@ -508,7 +511,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        {@code 1} the next later, and so on
 	 * @return the matching datum, or {@literal null} if not available
 	 */
-	public @Nullable DatumExpressionRoot offset(String sourceId, int offset) {
+	public @Nullable DatumExpressionRoot offset(@Nullable String sourceId, int offset) {
 		if ( datumStreamsAccessor == null || sourceId == null ) {
 			return null;
 		}
@@ -527,7 +530,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        {@code 1} the next later, and so on
 	 * @return {@code true} if a matching datum exists
 	 */
-	public boolean hasOffset(String sourceId, int offset) {
+	public boolean hasOffset(@Nullable String sourceId, int offset) {
 		if ( datumStreamsAccessor == null || sourceId == null ) {
 			return false;
 		}
@@ -549,7 +552,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the matching datum, or {@literal null} if not available
 	 * @since 1.1
 	 */
-	public @Nullable DatumExpressionRoot offset(String sourceId, int offset, Instant timestamp) {
+	public @Nullable DatumExpressionRoot offset(@Nullable String sourceId, int offset,
+			@Nullable Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
 			return null;
 		}
@@ -571,7 +575,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return {@code true} if a matching datum exists
 	 * @since 1.1
 	 */
-	public boolean hasOffset(String sourceId, int offset, Instant timestamp) {
+	public boolean hasOffset(@Nullable String sourceId, int offset, @Nullable Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
 			return false;
 		}
@@ -848,7 +852,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the calculated property value difference
 	 * @since 1.6
 	 */
-	public @Nullable Number deltaAt(String sourceId, Instant timestamp, String key,
+	public @Nullable Number deltaAt(@Nullable String sourceId, @Nullable Instant timestamp, String key,
 			boolean fallbackToZero) {
 		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
 			return null;
@@ -865,8 +869,10 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 			return numberPropertyValue(d, key, 0);
 		}
 
-		BigDecimal n = bigDecimalForNumber(numberPropertyValue(d, key, BigDecimal.ZERO));
-		BigDecimal n1 = bigDecimalForNumber(numberPropertyValue(d1, key, BigDecimal.ZERO));
+		BigDecimal n = nonnull(bigDecimalForNumber(numberPropertyValue(d, key, BigDecimal.ZERO)),
+				"Value");
+		BigDecimal n1 = nonnull(bigDecimalForNumber(numberPropertyValue(d1, key, BigDecimal.ZERO)),
+				"Previous value");
 		return n.subtract(n1);
 	}
 

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Filter API for {@link GeneralNodeDatumMetadata}.
  *
@@ -36,6 +38,7 @@ public interface GeneralNodeDatumMetadataFilter extends GeneralDatumMetadataFilt
 	 *
 	 * @return the node ID, or {@literal null} if not available
 	 */
+	@Nullable
 	Long getNodeId();
 
 	/**
@@ -43,6 +46,6 @@ public interface GeneralNodeDatumMetadataFilter extends GeneralDatumMetadataFilt
 	 *
 	 * @return array of node IDs (may be {@literal null})
 	 */
-	Long[] getNodeIds();
+	Long @Nullable [] getNodeIds();
 
 }

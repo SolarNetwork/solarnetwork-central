@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasePK;
 
 /**
@@ -40,8 +41,8 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	@Serial
 	private static final long serialVersionUID = 5041677194630502340L;
 
-	private Long locationId;
-	private String sourceId;
+	private @Nullable Long locationId;
+	private @Nullable String sourceId;
 
 	/**
 	 * Default constructor.
@@ -58,7 +59,7 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	 * @param sourceId
 	 *        the source ID
 	 */
-	public BasicLocationSourcePK(Long locationId, String sourceId) {
+	public BasicLocationSourcePK(@Nullable Long locationId, @Nullable String sourceId) {
 		super();
 		this.locationId = locationId;
 		this.sourceId = sourceId;
@@ -105,7 +106,7 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -135,7 +136,7 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	 *         less than, equal to, or l to, or greater than the specified
 	 *         object.
 	 */
-	public int compareTo(BasicLocationSourcePK o) {
+	public int compareTo(@Nullable BasicLocationSourcePK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -158,19 +159,19 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 		return sourceId.compareToIgnoreCase(o.sourceId);
 	}
 
-	public Long getLocationId() {
+	public final @Nullable Long getLocationId() {
 		return locationId;
 	}
 
-	public void setLocationId(Long locationId) {
+	public final void setLocationId(@Nullable Long locationId) {
 		this.locationId = locationId;
 	}
 
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return sourceId;
 	}
 
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(@Nullable String sourceId) {
 		this.sourceId = sourceId;
 	}
 

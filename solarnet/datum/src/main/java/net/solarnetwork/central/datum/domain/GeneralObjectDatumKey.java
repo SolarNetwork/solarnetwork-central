@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -46,6 +47,7 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 *
 	 * @return the object ID, or {@literal null}
 	 */
+	@Nullable
 	Long getObjectId();
 
 	/**
@@ -55,6 +57,7 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 *
 	 * @return the timestamp
 	 */
+	@Nullable
 	Instant getTimestamp();
 
 	/**
@@ -66,6 +69,7 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 *
 	 * @return the source ID
 	 */
+	@Nullable
 	String getSourceId();
 
 }

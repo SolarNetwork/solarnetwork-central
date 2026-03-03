@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.NodeMappingFilter;
 import net.solarnetwork.central.domain.SourceMappingFilter;
 
@@ -41,6 +42,7 @@ public interface GeneralNodeDatumFilter extends CommonFilter, CombiningFilter, D
 	 *
 	 * @return the node ID, or <em>null</em> if not available
 	 */
+	@Nullable
 	Long getNodeId();
 
 	/**
@@ -48,7 +50,7 @@ public interface GeneralNodeDatumFilter extends CommonFilter, CombiningFilter, D
 	 *
 	 * @return array of node IDs (may be <em>null</em>)
 	 */
-	Long[] getNodeIds();
+	Long @Nullable [] getNodeIds();
 
 	/**
 	 * Get the first user ID. This returns the first available user ID from the
@@ -57,6 +59,7 @@ public interface GeneralNodeDatumFilter extends CommonFilter, CombiningFilter, D
 	 * @return the first user ID, or <em>null</em> if not available
 	 * @since 1.2
 	 */
+	@Nullable
 	Long getUserId();
 
 	/**
@@ -65,6 +68,6 @@ public interface GeneralNodeDatumFilter extends CommonFilter, CombiningFilter, D
 	 * @return array of user IDs (may be <em>null</em>)
 	 * @since 1.2
 	 */
-	Long[] getUserIds();
+	Long @Nullable [] getUserIds();
 
 }

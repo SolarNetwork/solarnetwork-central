@@ -22,6 +22,7 @@ package net.solarnetwork.central.datum.domain;
 
 import java.util.Map;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A standardized enumeration of weather sky conditions.
@@ -135,7 +136,8 @@ public enum SkyCondition {
 	 *        the mapping of expressions to SkyCondition objects
 	 * @return the first matching result, or <em>null</em> if no match is found
 	 */
-	public static SkyCondition mapStringValue(String condition, Map<Pattern, SkyCondition> mapping) {
+	public static @Nullable SkyCondition mapStringValue(String condition,
+			Map<Pattern, SkyCondition> mapping) {
 		if ( condition == null || condition.isEmpty() ) {
 			return null;
 		}

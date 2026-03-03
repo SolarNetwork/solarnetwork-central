@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * API for an aggregate (reporting) {@link GeneralLocationDatumFilterMatch}.
@@ -39,6 +40,7 @@ public interface ReportingGeneralLocationDatumMatch
 	 * @return the sample data as a Map, or <em>null</em> if no sample data
 	 *         available
 	 */
+	@Nullable
 	Map<String, ?> getSampleData();
 
 }
