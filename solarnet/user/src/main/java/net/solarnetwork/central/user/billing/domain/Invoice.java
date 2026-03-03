@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.domain;
 import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.dao.Entity;
 
 /**
@@ -60,6 +61,7 @@ public interface Invoice extends Entity<String> {
 	 *         period
 	 * @since 1.2
 	 */
+	@Nullable
 	YearMonth getInvoiceMonth();
 
 	/**
@@ -108,6 +110,7 @@ public interface Invoice extends Entity<String> {
 	 * @return the total credit amount, or {@code null} if none
 	 * @since 1.3
 	 */
+	@Nullable
 	BigDecimal getCreditAmount();
 
 	/**
@@ -116,6 +119,7 @@ public interface Invoice extends Entity<String> {
 	 * @return the total credit amount remaining, or {@code null} if none
 	 * @since 1.3
 	 */
+	@Nullable
 	BigDecimal getRemainingCreditAmount();
 
 	/**

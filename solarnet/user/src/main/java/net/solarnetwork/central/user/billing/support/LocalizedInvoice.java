@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.support;
 
 import static net.solarnetwork.central.user.billing.support.MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.YearMonth;
@@ -39,6 +40,7 @@ import java.util.Locale;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.domain.InvoiceUsageRecord;
@@ -78,11 +80,13 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	 *        the invoice to localize
 	 * @param locale
 	 *        the locale to localize to
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public LocalizedInvoice(Invoice invoice, Locale locale) {
 		super();
-		this.invoice = invoice;
-		this.locale = locale;
+		this.invoice = requireNonNullArgument(invoice, "invoice");
+		this.locale = requireNonNullArgument(locale, "locale");
 	}
 
 	@Override
@@ -100,7 +104,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 		YearMonth month = invoice.getInvoiceMonth();
 		if ( month == null ) {
 			// no range available
-			return null;
+			return "";
 		}
 		// @formatter:off
 		DateTimeFormatter fmt = new DateTimeFormatterBuilder()
@@ -147,17 +151,17 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	}
 
 	@Override
-	public BigDecimal getCreditAmount() {
+	public @Nullable BigDecimal getCreditAmount() {
 		return invoice.getCreditAmount();
 	}
 
 	@Override
-	public BigDecimal getRemainingCreditAmount() {
+	public @Nullable BigDecimal getRemainingCreditAmount() {
 		return invoice.getRemainingCreditAmount();
 	}
 
 	@Override
-	public String getLocalizedCreditAmount() {
+	public @Nullable String getLocalizedCreditAmount() {
 		BigDecimal d = getCreditAmount();
 		return (d != null
 				? formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(), d)
@@ -165,7 +169,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	}
 
 	@Override
-	public String getLocalizedRemainingCreditAmount() {
+	public @Nullable String getLocalizedRemainingCreditAmount() {
 		BigDecimal d = getRemainingCreditAmount();
 		return (d != null
 				? formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(), d)
@@ -173,12 +177,12 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	}
 
 	@Override
-	public Instant getCreated() {
+	public @Nullable Instant getCreated() {
 		return invoice.getCreated();
 	}
 
 	@Override
-	public YearMonth getInvoiceMonth() {
+	public @Nullable YearMonth getInvoiceMonth() {
 		return invoice.getInvoiceMonth();
 	}
 
@@ -198,7 +202,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	}
 
 	@Override
-	public String getId() {
+	public @Nullable String getId() {
 		return invoice.getId();
 	}
 
@@ -230,9 +234,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	@Override
 	public List<LocalizedInvoiceItemInfo> getLocalizedInvoiceItems() {
 		List<InvoiceItem> items = getInvoiceItems();
-		if ( items == null ) {
-			return null;
-		} else if ( items.isEmpty() ) {
+		if ( items == null || items.isEmpty() ) {
 			return Collections.emptyList();
 		}
 		return localizedItems(items.stream());
@@ -273,7 +275,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	public List<LocalizedInvoiceItemInfo> getLocalizedTaxInvoiceItemsGroupedByDescription() {
 		List<InvoiceItem> taxItems = getTaxInvoiceItemsStream().toList();
 		if ( taxItems.isEmpty() ) {
-			return null;
+			return Collections.emptyList();
 		}
 
 		// maintain ordering based on original invoice items
@@ -293,7 +295,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	public List<LocalizedInvoiceUsageRecordInfo> getLocalizedInvoiceUsageRecords() {
 		List<InvoiceUsageRecord<Long>> recs = getNodeUsageRecords();
 		if ( recs == null ) {
-			return null;
+			return Collections.emptyList();
 		}
 		return recs.stream().map(r -> LocalizedInvoiceUsageRecord.of(r, locale, getCurrencyCode()))
 				.collect(Collectors.toList());

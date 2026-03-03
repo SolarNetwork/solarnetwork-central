@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemInfo;
@@ -48,10 +50,10 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemUsageRec
  */
 public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemInfo {
 
-	private final String localizedDescription;
 	private final InvoiceItem item;
 	private final Locale locale;
-	private final String[] localizedUsageTierDescriptions;
+	private final String localizedDescription;
+	private final String @Nullable [] localizedUsageTierDescriptions;
 
 	/**
 	 * Convenience builder.
@@ -61,6 +63,8 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	 * @param locale
 	 *        the locale to localize to
 	 * @return the localized invoice
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public static LocalizedInvoiceItem of(InvoiceItem item, Locale locale) {
 		return new LocalizedInvoiceItem(item, locale);
@@ -73,6 +77,8 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	 *        the item to localize
 	 * @param locale
 	 *        the locale to localize to
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public LocalizedInvoiceItem(InvoiceItem item, Locale locale) {
 		this(item, locale, null);
@@ -87,8 +93,10 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	 *        the locale to localize to
 	 * @param localizedDescription
 	 *        the localized description
+	 * @throws IllegalArgumentException
+	 *         if {@code item} or {@code locale} is {@code null}
 	 */
-	public LocalizedInvoiceItem(InvoiceItem item, Locale locale, String localizedDescription) {
+	public LocalizedInvoiceItem(InvoiceItem item, Locale locale, @Nullable String localizedDescription) {
 		this(item, locale, localizedDescription, null);
 	}
 
@@ -103,14 +111,17 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	 *        the localized description
 	 * @param localizedUsageTierDescriptions
 	 *        the localized tier usage descriptions
+	 * @throws IllegalArgumentException
+	 *         if {@code item} or {@code locale} is {@code null}
 	 * @since 1.1
 	 */
-	public LocalizedInvoiceItem(InvoiceItem item, Locale locale, String localizedDescription,
-			String[] localizedUsageTierDescriptions) {
+	public LocalizedInvoiceItem(InvoiceItem item, Locale locale, @Nullable String localizedDescription,
+			String @Nullable [] localizedUsageTierDescriptions) {
 		super();
-		this.item = item;
-		this.locale = locale;
-		this.localizedDescription = localizedDescription;
+		this.item = requireNonNullArgument(item, "item");
+		this.locale = requireNonNullArgument(locale, "locale");
+		this.localizedDescription = (localizedDescription != null ? localizedDescription
+				: item.getDescription());
 		this.localizedUsageTierDescriptions = localizedUsageTierDescriptions;
 	}
 
@@ -146,7 +157,7 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	}
 
 	@Override
-	public Instant getCreated() {
+	public @Nullable Instant getCreated() {
 		return item.getCreated();
 	}
 
@@ -156,12 +167,12 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	}
 
 	@Override
-	public String getId() {
+	public @Nullable String getId() {
 		return item.getId();
 	}
 
 	@Override
-	public Map<String, Object> getMetadata() {
+	public @Nullable Map<String, Object> getMetadata() {
 		return item.getMetadata();
 	}
 
@@ -218,9 +229,7 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	@Override
 	public List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedInvoiceItemUsageRecords() {
 		List<InvoiceItemUsageRecord> recs = getItemUsageRecords();
-		if ( recs == null ) {
-			return null;
-		} else if ( recs.isEmpty() ) {
+		if ( recs == null || recs.isEmpty() ) {
 			return Collections.emptyList();
 		}
 		return recs.stream().map(record -> {

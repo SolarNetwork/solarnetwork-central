@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.dao.Entity;
 
 /**
@@ -62,6 +63,7 @@ public interface InvoiceItem extends Entity<String> {
 	 *
 	 * @return the metadata, or {@code null} if none
 	 */
+	@Nullable
 	Map<String, Object> getMetadata();
 
 	/**

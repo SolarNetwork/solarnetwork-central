@@ -22,12 +22,14 @@
 
 package net.solarnetwork.central.user.billing.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceMatchInfo;
 
@@ -50,6 +52,8 @@ public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatc
 	 * @param locale
 	 *        the locale to localize to
 	 * @return the localized match
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public static LocalizedInvoiceMatch of(InvoiceMatch match, Locale locale) {
 		return new LocalizedInvoiceMatch(match, locale);
@@ -62,11 +66,13 @@ public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatc
 	 *        the match to localize
 	 * @param locale
 	 *        the locale to localize to
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public LocalizedInvoiceMatch(InvoiceMatch match, Locale locale) {
 		super();
-		this.match = match;
-		this.locale = locale;
+		this.match = requireNonNullArgument(match, "match");
+		this.locale = requireNonNullArgument(locale, "locale");
 	}
 
 	@Override
@@ -112,7 +118,7 @@ public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatc
 	}
 
 	@Override
-	public String getId() {
+	public @Nullable String getId() {
 		return match.getId();
 	}
 

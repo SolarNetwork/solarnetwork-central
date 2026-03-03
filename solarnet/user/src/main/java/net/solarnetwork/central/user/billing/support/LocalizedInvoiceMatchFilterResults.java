@@ -23,6 +23,8 @@
 package net.solarnetwork.central.user.billing.support;
 
 import static net.solarnetwork.central.user.billing.support.MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.List;
@@ -32,6 +34,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatchFilterResults;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceMatchFilterResultsInfo;
@@ -64,9 +67,11 @@ public class LocalizedInvoiceMatchFilterResults
 	 *        the results
 	 * @param locale
 	 *        the desired locale
+	 * @throws IllegalArgumentException
+	 *         if {@code delegate} is {@code null}
 	 */
 	public LocalizedInvoiceMatchFilterResults(FilterResults<InvoiceMatch, String> delegate,
-			Locale locale) {
+			@Nullable Locale locale) {
 		this(delegate, locale, currencyCodeFromInvoices(delegate));
 	}
 
@@ -76,27 +81,24 @@ public class LocalizedInvoiceMatchFilterResults
 	 * @param delegate
 	 *        the results
 	 * @param locale
-	 *        the desired locale
+	 *        the desired locale, or {@code null} to use the system default
 	 * @param currencyCode
 	 *        the currency code to use; will default to {@literal NZD} if
 	 *        {@code null}
+	 * @throws IllegalArgumentException
+	 *         if {@code delegate} is {@code null}
 	 */
 	public LocalizedInvoiceMatchFilterResults(FilterResults<InvoiceMatch, String> delegate,
-			Locale locale, String currencyCode) {
+			@Nullable Locale locale, @Nullable String currencyCode) {
 		super();
-		assert delegate != null;
-		this.delegate = localizedInvoices(delegate, locale);
-		if ( locale == null ) {
-			locale = Locale.getDefault();
-		}
-		this.locale = locale;
-		if ( currencyCode == null ) {
-			currencyCode = "NZD";
-		}
-		this.currencyCode = currencyCode;
+		final Locale l = (locale != null ? locale : Locale.getDefault());
+		this.delegate = localizedInvoices(requireNonNullArgument(delegate, "delegate"), l);
+		this.currencyCode = (currencyCode != null ? currencyCode : "NZD");
+		this.locale = l;
 	}
 
-	private static String currencyCodeFromInvoices(FilterResults<InvoiceMatch, String> delegate) {
+	private static @Nullable String currencyCodeFromInvoices(
+			FilterResults<InvoiceMatch, String> delegate) {
 		// take currency code from first invoice
 		assert delegate != null;
 		Iterator<InvoiceMatch> itr = delegate.iterator();
@@ -108,15 +110,13 @@ public class LocalizedInvoiceMatchFilterResults
 
 	private static FilterResults<InvoiceMatch, String> localizedInvoices(
 			FilterResults<InvoiceMatch, String> delegate, Locale locale) {
-		if ( delegate == null ) {
-			return null;
-		}
-		List<InvoiceMatch> list = StreamSupport.stream(delegate.spliterator(), false).map(item -> {
-			if ( item instanceof LocalizedInvoiceMatchInfo ) {
-				return item;
-			}
-			return new LocalizedInvoiceMatch(item, locale);
-		}).toList();
+		List<InvoiceMatch> list = StreamSupport
+				.stream(nonnull(delegate, "Invoice results").spliterator(), false).map(item -> {
+					if ( item instanceof LocalizedInvoiceMatchInfo ) {
+						return item;
+					}
+					return new LocalizedInvoiceMatch(item, locale);
+				}).toList();
 		return new BasicFilterResults<>(list, delegate.getTotalResults(), delegate.getStartingOffset(),
 				delegate.getReturnedResultCount());
 	}
@@ -137,7 +137,7 @@ public class LocalizedInvoiceMatchFilterResults
 	}
 
 	@Override
-	public Long getTotalResults() {
+	public @Nullable Long getTotalResults() {
 		return delegate.getTotalResults();
 	}
 
@@ -209,9 +209,6 @@ public class LocalizedInvoiceMatchFilterResults
 
 	@Override
 	public Iterable<LocalizedInvoiceMatchInfo> getLocalizedInvoices() {
-		if ( delegate == null ) {
-			return null;
-		}
 		return StreamSupport.stream(spliterator(), false).map(item -> {
 			if ( item instanceof LocalizedInvoiceMatchInfo li ) {
 				return li;

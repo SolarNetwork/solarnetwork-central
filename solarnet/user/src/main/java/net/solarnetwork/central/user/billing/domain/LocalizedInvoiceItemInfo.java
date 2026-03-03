@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
  * API for invoice item information that has been localized.
@@ -73,6 +74,7 @@ public interface LocalizedInvoiceItemInfo {
 	 * @return the formatted usage amount
 	 * @since 1.1
 	 */
+	@Nullable
 	String getLocalizedTotalUsageAmount();
 
 	/**

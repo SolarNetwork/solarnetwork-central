@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A usage record associated with an invoice.
@@ -52,7 +53,7 @@ public interface InvoiceUsageRecord<T> {
 	 * @return the description, or {@code null}
 	 * @since 1.1
 	 */
-	default String getDescription() {
+	default @Nullable String getDescription() {
 		return null;
 	}
 

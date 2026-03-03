@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
@@ -85,7 +86,7 @@ public interface LocalizedInvoiceUsageRecordInfo {
 	 * @return the first usage record, or {@code null}
 	 */
 	@JsonIgnore
-	default LocalizedInvoiceItemUsageRecordInfo getFirstLocalizedUsageRecord() {
+	default @Nullable LocalizedInvoiceItemUsageRecordInfo getFirstLocalizedUsageRecord() {
 		List<LocalizedInvoiceItemUsageRecordInfo> records = getLocalizedUsageRecords();
 		return (records != null && !records.isEmpty() ? records.getFirst() : null);
 	}

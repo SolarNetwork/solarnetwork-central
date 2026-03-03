@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.domain;
 
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,6 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseStringEntity;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
@@ -51,7 +53,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	private static final long serialVersionUID = 6864680090286557577L;
 
 	private final SnfInvoice invoice;
-	private final List<InvoiceItem> items;
+	private final @Nullable List<InvoiceItem> items;
 
 	/**
 	 * Constructor.
@@ -77,10 +79,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	 */
 	public InvoiceImpl(SnfInvoice invoice, List<InvoiceItem> items) {
 		super();
-		if ( invoice == null ) {
-			throw new IllegalArgumentException("The invoice argument must not be null.");
-		}
-		this.invoice = invoice;
+		this.invoice = requireNonNullArgument(invoice, "invoice");
 		this.items = items;
 		setId(invoice.getId().getId().toString());
 		setCreated(invoice.getCreated());

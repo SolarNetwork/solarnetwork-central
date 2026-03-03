@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
@@ -98,18 +99,22 @@ public interface LocalizedInvoiceInfo {
 	 * Get the total amount of all credit invoice items, as a formatted and
 	 * localized string.
 	 *
-	 * @return the formatted total credit amount
+	 * @return the formatted total credit amount, or {@code null} if no credit
+	 *         available
 	 * @since 1.3
 	 */
+	@Nullable
 	String getLocalizedCreditAmount();
 
 	/**
 	 * Get the total amount of account credit remaining, as a formatted and
 	 * localized string.
 	 *
-	 * @return the formatted total credit amount remaining
+	 * @return the formatted total credit amount remaining, or {@code null} if
+	 *         no remaining credit available
 	 * @since 1.3
 	 */
+	@Nullable
 	String getLocalizedRemainingCreditAmount();
 
 	/**
@@ -160,7 +165,7 @@ public interface LocalizedInvoiceInfo {
 	 * @since 1.3
 	 */
 	@JsonIgnore
-	default LocalizedInvoiceUsageRecordInfo getFirstLocalizedInvoiceUsageRecord() {
+	default @Nullable LocalizedInvoiceUsageRecordInfo getFirstLocalizedInvoiceUsageRecord() {
 		List<LocalizedInvoiceUsageRecordInfo> records = getLocalizedInvoiceUsageRecords();
 		return (records != null && !records.isEmpty() ? records.getFirst() : null);
 	}

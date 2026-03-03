@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.time.YearMonth;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Basic implementation of {@link InvoiceGenerationOptions}.
@@ -33,7 +34,7 @@ import java.time.YearMonth;
  */
 public class BasicInvoiceGenerationOptions implements InvoiceGenerationOptions {
 
-	private final YearMonth month;
+	private final @Nullable YearMonth month;
 	private final boolean useAccountCredit;
 
 	/**
@@ -54,14 +55,14 @@ public class BasicInvoiceGenerationOptions implements InvoiceGenerationOptions {
 	 * @param useAccountCredit
 	 *        {@literal true} to use any available account credit
 	 */
-	public BasicInvoiceGenerationOptions(YearMonth month, boolean useAccountCredit) {
+	public BasicInvoiceGenerationOptions(@Nullable YearMonth month, boolean useAccountCredit) {
 		super();
 		this.month = month;
 		this.useAccountCredit = useAccountCredit;
 	}
 
 	@Override
-	public YearMonth getMonth() {
+	public @Nullable YearMonth getMonth() {
 		return month;
 	}
 

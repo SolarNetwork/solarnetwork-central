@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.time.YearMonth;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Options to use when generating an invoice.
@@ -34,11 +35,12 @@ import java.time.YearMonth;
 public interface InvoiceGenerationOptions {
 
 	/**
-	 * Get the year-month to generate the invoice for, or {@code null} for
-	 * the "current" month.
+	 * Get the year-month to generate the invoice for, or {@code null} for the
+	 * "current" month.
 	 * 
 	 * @return the year month
 	 */
+	@Nullable
 	YearMonth getMonth();
 
 	/**
