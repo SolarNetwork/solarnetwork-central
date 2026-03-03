@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.user.billing.snf.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Job to create {@link AccountTaskType#GenerateInvoice} task entities.
@@ -46,7 +46,7 @@ public class InvoiceGenerationTaskCreatorJob extends JobSupport {
 	 */
 	public InvoiceGenerationTaskCreatorJob(InvoiceGenerationTaskCreator creator) {
 		super("Billing", "InvoiceGEnerationTaskCreator");
-		this.creator = ObjectUtils.requireNonNullArgument(creator, "creator");
+		this.creator = requireNonNullArgument(creator, "creator");
 	}
 
 	@Override

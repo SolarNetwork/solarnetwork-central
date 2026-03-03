@@ -71,7 +71,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	 * @param id
 	 *        the ID
 	 */
-	public UserLongPK(Long userId, @Nullable Long id) {
+	public UserLongPK(@Nullable Long userId, @Nullable Long id) {
 		super();
 		this.id = id;
 		this.userId = userId;

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
@@ -50,10 +51,7 @@ public class InvoiceDeliverer implements AccountTaskHandler {
 	 *         if any argument is {@literal null}
 	 */
 	public InvoiceDeliverer(SnfInvoicingSystem invoicingSystem) {
-		if ( invoicingSystem == null ) {
-			throw new IllegalArgumentException("The invoicingSystem argument must not be null.");
-		}
-		this.invoicingSystem = invoicingSystem;
+		this.invoicingSystem = requireNonNullArgument(invoicingSystem, "invoicingSystem");
 	}
 
 	@Override
