@@ -27,6 +27,7 @@ import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.DEFAULT_ITEM_ORDER;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -153,7 +154,9 @@ public final class SnfBillingUtils {
 	public static InvoiceImpl invoiceForSnfInvoice(final SnfInvoice invoice,
 			final MessageSource messageSource, final Locale locale) {
 		List<InvoiceItem> invoiceItems;
-		if ( locale != null ) {
+		if ( invoice.getItems() == null ) {
+			invoiceItems = Collections.emptyList();
+		} else if ( locale != null ) {
 			invoiceItems = invoice.getItems().stream().sorted(DEFAULT_ITEM_ORDER).map(e -> {
 				String desc = messageSource.getMessage(e.getKey() + ".item", null, null, locale);
 				InvoiceItemImpl item;

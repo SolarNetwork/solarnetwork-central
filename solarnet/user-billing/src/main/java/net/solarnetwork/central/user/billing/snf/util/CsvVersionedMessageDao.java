@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.util;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -29,6 +30,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import de.siegmar.fastcsv.reader.CsvReader;
 import de.siegmar.fastcsv.reader.CsvRecord;
@@ -83,10 +85,7 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 	 */
 	public CsvVersionedMessageDao(Iterable<Resource> resources) {
 		super();
-		if ( resources == null ) {
-			throw new IllegalArgumentException("The resources argument must not be null.");
-		}
-		this.resources = resources;
+		this.resources = requireNonNullArgument(resources, "resources");
 	}
 
 	private record Row(Instant version, String name, String template) {
@@ -94,7 +93,7 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 	}
 
 	@Override
-	public Properties findMessages(Instant version, String[] bundleNames, String locale) {
+	public @Nullable Properties findMessages(Instant version, String[] bundleNames, String locale) {
 		Map<String, Row> rows = new LinkedHashMap<>(64);
 		for ( Resource r : resources ) {
 			try (CsvReader<CsvRecord> reader = CsvReader.builder().ofCsvRecord(r.getInputStream())) {

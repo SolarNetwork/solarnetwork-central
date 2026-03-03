@@ -130,7 +130,8 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	public static final Long DRAFT_INVOICE_ID = Long.valueOf(Invoice.DRAFT_INVOICE_ID);
 
 	/** The invoice number used for dry-run (draft) invoice generation. */
-	public static final String DRAFT_INVOICE_NUMBER = SnfBillingUtils.invoiceNumForId(DRAFT_INVOICE_ID);
+	public static final String DRAFT_INVOICE_NUMBER = nonnull(
+			SnfBillingUtils.invoiceNumForId(DRAFT_INVOICE_ID), "Draft invoice number");
 
 	private static final String[] MESSAGE_BUNDLE_NAMES = new String[] { GLOBAL_MESSAGE_BUNDLE_NAME,
 			MESSAGE_BUNDLE_NAME };
