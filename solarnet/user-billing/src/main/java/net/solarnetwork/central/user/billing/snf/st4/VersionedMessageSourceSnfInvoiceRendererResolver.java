@@ -1,32 +1,34 @@
 /* ==================================================================
  * VersionedMessageSourceSnfInvoiceRendererResolver.java - 26/07/2020 5:05:00 PM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.billing.snf.st4;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.dao.VersionedMessageDao;
@@ -41,12 +43,12 @@ import net.solarnetwork.service.TemplateRenderer;
 /**
  * {@link SnfInvoiceRendererResolver} that resolves {@link ST4TemplateRenderer}
  * renderers using a {@link MessageSourceGroup} for templates.
- * 
+ *
  * <p>
  * The start and end delimiters for ST are both configured as the {@literal $}
  * character.
  * </p>
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -61,7 +63,7 @@ public class VersionedMessageSourceSnfInvoiceRendererResolver implements SnfInvo
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param bundleName
 	 *        the message bundle name to use
 	 * @param rootTemplateName
@@ -82,34 +84,17 @@ public class VersionedMessageSourceSnfInvoiceRendererResolver implements SnfInvo
 			Cache<String, VersionedMessages> messageCache,
 			Cache<String, ST4TemplateRenderer> templateCache) {
 		super();
-		if ( bundleName == null ) {
-			throw new IllegalArgumentException("The bundleName argument must be provided.");
-		}
-		this.bundleNames = new String[] { bundleName };
-		if ( rootTemplateName == null ) {
-			throw new IllegalArgumentException("The rootTemplateName argument must be provided.");
-		}
-		this.rootTemplateName = rootTemplateName;
-		if ( messageDao == null ) {
-			throw new IllegalArgumentException("The messageDao argument must be provided.");
-		}
-		this.messageDao = messageDao;
-		if ( mimeType == null ) {
-			throw new IllegalArgumentException("The mimeType argument must be provided.");
-		}
-		this.mimeTypes = Collections.singletonList(mimeType);
-		if ( messageCache == null ) {
-			throw new IllegalArgumentException("The messageCache argument must be provided.");
-		}
-		this.messageCache = messageCache;
-		if ( templateCache == null ) {
-			throw new IllegalArgumentException("The templateCache argument must be provided.");
-		}
-		this.templateCache = templateCache;
+		this.bundleNames = new String[] { requireNonNullArgument(bundleName, "bundleName") };
+		this.rootTemplateName = requireNonNullArgument(rootTemplateName, "rootTemplateName");
+		this.messageDao = requireNonNullArgument(messageDao, "messageDao");
+		this.mimeTypes = Collections.singletonList(requireNonNullArgument(mimeType, "mimeType"));
+		this.messageCache = requireNonNullArgument(messageCache, "messageCache");
+		this.templateCache = requireNonNullArgument(templateCache, "templateCache");
 	}
 
 	@Override
-	public TemplateRenderer rendererForInvoice(SnfInvoice invoice, MimeType mimeType, Locale locale) {
+	public @Nullable TemplateRenderer rendererForInvoice(SnfInvoice invoice, MimeType mimeType,
+			Locale locale) {
 		boolean mimeMatch = false;
 		for ( MimeType allowed : mimeTypes ) {
 			if ( allowed.isCompatibleWith(mimeType) ) {
