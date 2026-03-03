@@ -74,11 +74,12 @@ public interface BillingSystem {
 	 * Get all available named cost tiers.
 	 * 
 	 * @param locale
-	 *        the desired locale
+	 *        the desired locale, or {@code null} for the default locale
 	 * @return the named cost tiers, or {@code null} if none supported
 	 * @since 1.2
 	 */
-	List<? extends NamedCostTiers> namedCostTiers(Locale locale);
+	@Nullable
+	List<? extends NamedCostTiers> namedCostTiers(@Nullable Locale locale);
 
 	/**
 	 * Search for invoices.

@@ -1,7 +1,7 @@
 /* ==================================================================
- * NamedCostTiers.java - 16/08/2024 2:48:33 pm
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2024 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,36 +20,11 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.billing.domain;
-
-import java.time.LocalDate;
-import java.util.List;
-
 /**
- * A set of named costs associated with a date.
- *
- * @author matt
- * @version 1.0
+ * SolarNetwork user SNF billing APIs.
  */
-public interface NamedCostTiers {
 
-	/**
-	 * Get the tiers.
-	 *
-	 * @return the tiers (unmodifiable)
-	 */
-	List<? extends NamedCost> getTiers();
+@NullMarked
+package net.solarnetwork.central.user.billing.snf;
 
-	/**
-	 * Get the tiers date.
-	 *
-	 * <p>
-	 * The {@code date} might be interpreted as an effective date for this
-	 * collection of tiers.
-	 * </p>
-	 *
-	 * @return the date
-	 */
-	LocalDate getDate();
-
-}
+import org.jspecify.annotations.NullMarked;

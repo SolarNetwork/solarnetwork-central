@@ -278,9 +278,9 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * @since 1.5
 	 */
 	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, @Nullable Instant created,
-			String description, @Nullable BigInteger datumPropertiesIn, @Nullable BigInteger datumOut,
-			@Nullable BigInteger datumDaysStored, @Nullable BigInteger instructionsIssued,
-			@Nullable BigInteger fluxDataIn) {
+			@Nullable String description, @Nullable BigInteger datumPropertiesIn,
+			@Nullable BigInteger datumOut, @Nullable BigInteger datumDaysStored,
+			@Nullable BigInteger instructionsIssued, @Nullable BigInteger fluxDataIn) {
 		this(new SnfInvoiceRelatedPK(invoiceId, nodeId), created, description, datumPropertiesIn,
 				datumOut, datumDaysStored, instructionsIssued, fluxDataIn);
 	}

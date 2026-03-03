@@ -35,7 +35,6 @@ import static net.solarnetwork.central.user.billing.snf.test.SnfMatchers.matches
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isNull;
 import static org.easymock.EasyMock.same;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -236,8 +235,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		Capture<TaxCodeFilter> taxCodeFilterCaptor = new Capture<>();
 		BasicFilterResults<TaxCode, Long> taxCodeResults = new BasicFilterResults<>(emptyList());
-		expect(taxCodeDao.findFiltered(EasyMock.capture(taxCodeFilterCaptor), isNull(), isNull(),
-				isNull())).andReturn(taxCodeResults);
+		expect(taxCodeDao.findFiltered(EasyMock.capture(taxCodeFilterCaptor))).andReturn(taxCodeResults);
 
 		// WHEN
 		replayAll();
@@ -310,8 +308,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 				LocalDate.of(2020, 1, 1).atStartOfDay(addr.getTimeZone()).toInstant(), null);
 		BasicFilterResults<TaxCode, Long> taxCodeResults = new BasicFilterResults<>(
 				asList(datumPropsTax, datumOutTax, datumStoredTax));
-		expect(taxCodeDao.findFiltered(EasyMock.capture(taxCodeFilterCaptor), isNull(), isNull(),
-				isNull())).andReturn(taxCodeResults);
+		expect(taxCodeDao.findFiltered(EasyMock.capture(taxCodeFilterCaptor))).andReturn(taxCodeResults);
 
 		final BigDecimal expectedTax = usage.getDatumPropertiesInCost().multiply(datumPropsTax.getRate())
 				.add(usage.getDatumOutCost().multiply(datumOutTax.getRate()))
@@ -392,8 +389,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 				LocalDate.of(2020, 1, 1).atStartOfDay(addr.getTimeZone()).toInstant(), null);
 		BasicFilterResults<TaxCode, Long> taxCodeResults = new BasicFilterResults<>(
 				asList(datumPropsTax, datumOutTax, datumStoredTax));
-		expect(taxCodeDao.findFiltered(EasyMock.capture(taxCodeFilterCaptor), isNull(), isNull(),
-				isNull())).andReturn(taxCodeResults);
+		expect(taxCodeDao.findFiltered(EasyMock.capture(taxCodeFilterCaptor))).andReturn(taxCodeResults);
 
 		final BigDecimal expectedTax = usage.getDatumPropertiesInCost().multiply(datumPropsTax.getRate())
 				.add(usage.getDatumOutCost().multiply(datumOutTax.getRate()))
@@ -489,8 +485,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 				LocalDate.of(2020, 1, 1).atStartOfDay(addr.getTimeZone()).toInstant(), null);
 		BasicFilterResults<TaxCode, Long> taxCodeResults = new BasicFilterResults<>(
 				asList(datumPropsTax, datumOutTax, datumStoredTax));
-		expect(taxCodeDao.findFiltered(EasyMock.capture(taxCodeFilterCaptor), isNull(), isNull(),
-				isNull())).andReturn(taxCodeResults);
+		expect(taxCodeDao.findFiltered(EasyMock.capture(taxCodeFilterCaptor))).andReturn(taxCodeResults);
 
 		final BigDecimal expectedTax = usage.getDatumPropertiesInCost().multiply(datumPropsTax.getRate())
 				.add(usage.getDatumOutCost().multiply(datumOutTax.getRate()))

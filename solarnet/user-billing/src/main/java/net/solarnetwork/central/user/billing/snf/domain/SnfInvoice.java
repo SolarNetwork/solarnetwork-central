@@ -33,6 +33,7 @@ import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -216,7 +217,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	}
 
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return nonnull(getId(), "id").getUserId();
 	}
 
@@ -226,11 +227,36 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 * @param userId
 	 *        the user ID
 	 */
-	public void setUserId(Long userId) {
+	public final void setUserId(Long userId) {
 		final UserLongPK id = getId();
 		if ( id != null ) {
 			id.setUserId(userId);
 		}
+	}
+
+	/**
+	 * Get the invoice ID.
+	 *
+	 * @return the invoice ID
+	 * @throws IllegalStateException
+	 *         if the invoice ID is not available
+	 */
+	@JsonIgnore
+	public final Long getInvoiceId() {
+		return nonnull(nonnull(getId(), "Invoice PK").getId(), "Invoice ID");
+	}
+
+	/**
+	 * Set the invoice ID.
+	 *
+	 * @param invoiceId
+	 *        the invoice ID to set
+	 * @throws IllegalStateException
+	 *         if the invoice primary key is not available
+	 */
+	@JsonIgnore
+	public final void setInvoiceId(Long invoiceId) {
+		nonnull(getId(), "Invoice PK").setId(invoiceId);
 	}
 
 	/**
@@ -319,6 +345,21 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 			return Collections.emptyMap();
 		}
 		return items.stream().collect(Collectors.toMap(SnfInvoiceItem::getId, e -> e));
+	}
+
+	/**
+	 * Add an invoice item.
+	 *
+	 * @param item
+	 *        the item to add
+	 */
+	public final void addItem(SnfInvoiceItem item) {
+		Set<SnfInvoiceItem> items = getItems();
+		if ( items == null ) {
+			items = new LinkedHashSet<>(4);
+			setItems(items);
+		}
+		items.add(item);
 	}
 
 	/**

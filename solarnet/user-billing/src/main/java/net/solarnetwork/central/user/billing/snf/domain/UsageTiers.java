@@ -45,23 +45,7 @@ import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
 public class UsageTiers implements NamedCostTiers {
 
 	private final List<UsageTier> tiers;
-	private final @Nullable LocalDate date;
-
-	/**
-	 * Constructor.
-	 *
-	 * <p>
-	 * The tiers will be sorted by {@code quantity}.
-	 * </p>
-	 *
-	 * @param tiers
-	 *        the tiers; the list will be copied
-	 * @throws IllegalArgumentException
-	 *         if {@code tiers} is {@literal null}
-	 */
-	public UsageTiers(List<UsageTier> tiers) {
-		this(tiers, null, UsageTier.SORT_BY_KEY_QUANTITY);
-	}
+	private final LocalDate date;
 
 	/**
 	 * Constructor.
@@ -75,9 +59,9 @@ public class UsageTiers implements NamedCostTiers {
 	 * @param date
 	 *        the date
 	 * @throws IllegalArgumentException
-	 *         if {@code tiers} is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public UsageTiers(List<UsageTier> tiers, @Nullable LocalDate date) {
+	public UsageTiers(List<UsageTier> tiers, LocalDate date) {
 		this(tiers, date, UsageTier.SORT_BY_KEY_QUANTITY);
 	}
 
@@ -92,9 +76,9 @@ public class UsageTiers implements NamedCostTiers {
 	 *        an optional comparator to sort the tiers with, or {@literal null}
 	 *        to not sort
 	 * @throws IllegalArgumentException
-	 *         if {@code tiers} is {@literal null}
+	 *         if {@code tiers} or {@code date} is {@literal null}
 	 */
-	public UsageTiers(List<UsageTier> tiers, @Nullable LocalDate date,
+	public UsageTiers(List<UsageTier> tiers, LocalDate date,
 			@Nullable Comparator<UsageTier> comparator) {
 		super();
 		final List<UsageTier> t = requireNonNullArgument(tiers, "tiers");
@@ -105,7 +89,7 @@ public class UsageTiers implements NamedCostTiers {
 		} else {
 			this.tiers = Collections.unmodifiableList(t);
 		}
-		this.date = date;
+		this.date = requireNonNullArgument(date, "date");
 	}
 
 	@Override
@@ -166,10 +150,10 @@ public class UsageTiers implements NamedCostTiers {
 	 * collection of tiers.
 	 * </p>
 	 *
-	 * @return the date, or {@literal null}
+	 * @return the date
 	 */
 	@Override
-	public final @Nullable LocalDate getDate() {
+	public final LocalDate getDate() {
 		return date;
 	}
 

@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
@@ -70,6 +71,7 @@ public interface SnfInvoicingSystem {
 	 *        the ID of the user to get the account for
 	 * @return the account, or {@literal null} if not available
 	 */
+	@Nullable
 	Account accountForUser(Long userId);
 
 	/**
@@ -80,6 +82,7 @@ public interface SnfInvoicingSystem {
 	 * @return the latest available invoice, or {@literal null} if none
 	 *         available
 	 */
+	@Nullable
 	SnfInvoice findLatestInvoiceForAccount(UserLongPK accountId);
 
 	/**
@@ -98,6 +101,7 @@ public interface SnfInvoicingSystem {
 	 * @return the generated invoice, or {@literal null} if no invoice is
 	 *         necessary (i.e. no charges)
 	 */
+	@Nullable
 	SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate,
 			InvoiceGenerationOptions options);
 
@@ -146,8 +150,7 @@ public interface SnfInvoicingSystem {
 	 *        the desired output type
 	 * @param locale
 	 *        the output locale
-	 * @return a resource with the result data, or {@literal null} if the
-	 *         invoice is not available
+	 * @return a resource with the result data
 	 * @throws IllegalArgumentException
 	 *         if {@code outputType} is not supported
 	 */

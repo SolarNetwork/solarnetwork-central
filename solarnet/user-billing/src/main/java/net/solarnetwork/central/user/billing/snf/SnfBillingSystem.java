@@ -23,7 +23,7 @@
 package net.solarnetwork.central.user.billing.snf;
 
 import static java.util.stream.Collectors.toList;
-import static net.solarnetwork.central.user.billing.snf.SnfBillingUtils.invoiceForSnfInvoice;
+import static net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils.invoiceForSnfInvoice;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -76,6 +77,8 @@ public class SnfBillingSystem implements BillingSystem {
 	/** The {@literal accounting} billing data value for SNF. */
 	public static final String ACCOUNTING_SYSTEM_KEY = "snf";
 
+	public static final String ANY_CURRENCY_CODE = "*";
+
 	private final AccountDao accountDao;
 	private final SnfInvoiceDao invoiceDao;
 	private final SnfInvoicingSystem invoicingSystem;
@@ -117,25 +120,28 @@ public class SnfBillingSystem implements BillingSystem {
 	}
 
 	@Override
-	public BillingSystemInfo getInfo(Locale locale) {
+	public BillingSystemInfo getInfo(@Nullable Locale locale) {
 		return new BasicBillingSystemInfo(getAccountingSystemKey());
 	}
 
 	@Override
-	public List<? extends NamedCostTiers> namedCostTiers(Locale locale) {
-		List<? extends NamedCostTiers> tiers = nodeUsageDao.effectiveUsageTiers();
+	public @Nullable List<? extends NamedCostTiers> namedCostTiers(@Nullable Locale locale) {
+		final List<? extends NamedCostTiers> tiers = nodeUsageDao.effectiveUsageTiers();
 		if ( tiers == null || tiers.isEmpty() ) {
 			return tiers;
 		}
 
+		final Locale loc = (locale != null ? locale : Locale.getDefault());
+
 		// localize tiers
-		List<NamedCostTiers> result = new ArrayList<>(tiers.size());
+		final List<NamedCostTiers> result = new ArrayList<>(tiers.size());
 		for ( NamedCostTiers t : tiers ) {
 			MessageSource msg = invoicingSystem
 					.messageSourceForDate(t.getDate().atStartOfDay(ZoneOffset.UTC).toInstant());
 			List<LocalizedNamedCost> locTiers = new ArrayList<>(t.getTiers().size());
 			for ( NamedCost c : t.getTiers() ) {
-				String desc = msg.getMessage(c.getName() + ".item", null, c.getName(), locale);
+				String desc = msg.getMessage(c.getName() + ".item", null, c.getName(), loc);
+				@SuppressWarnings("NullAway")
 				LocalizedNamedCost locCost = new LocalizedNamedCost(new NamedCost() {
 
 					@Override
@@ -202,9 +208,10 @@ public class SnfBillingSystem implements BillingSystem {
 
 	@Override
 	public FilterResults<InvoiceMatch, String> findFilteredInvoices(InvoiceFilter filter,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max) {
 		// get account
-		Account account = accountDao.getForUser(filter.getUserId());
+		final Account account = accountDao.getForUser(filter.getUserId());
 		if ( account == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, filter.getUserId());
 		}
@@ -220,33 +227,37 @@ public class SnfBillingSystem implements BillingSystem {
 				results.getReturnedResultCount());
 	}
 
-	private SnfInvoice getSnfInvoice(Long userId, String invoiceId) {
+	private @Nullable SnfInvoice getSnfInvoice(final Long userId, final String invoiceId)
+			throws AuthorizationException {
 		final UserLongPK id = new UserLongPK(userId, Long.valueOf(invoiceId));
-		final SnfInvoice invoice = invoiceDao.get(id);
-		if ( invoice == null ) {
-			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId);
-		}
-		return invoice;
+		return invoiceDao.get(id);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
+	public @Nullable Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
 		final SnfInvoice invoice = getSnfInvoice(userId, invoiceId);
+		if ( invoice == null ) {
+			return null;
+		}
 		final MessageSource messageSource = invoicingSystem.messageSourceForInvoice(invoice);
 		return invoiceForSnfInvoice(invoice, messageSource, locale);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale) {
+	public @Nullable Resource renderInvoice(Long userId, String invoiceId, MimeType outputType,
+			Locale locale) {
 		SnfInvoice invoice = getSnfInvoice(userId, invoiceId);
+		if ( invoice == null ) {
+			return null;
+		}
 		return invoicingSystem.renderInvoice(invoice, outputType, locale);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	@Override
-	public Invoice getPreviewInvoice(Long userId,
+	public @Nullable Invoice getPreviewInvoice(Long userId,
 			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
 			Locale locale) {
 		SnfInvoice invoice = createPreviewInvoice(userId, options);
@@ -259,7 +270,7 @@ public class SnfBillingSystem implements BillingSystem {
 
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	@Override
-	public Resource previewInvoice(Long userId,
+	public @Nullable Resource previewInvoice(Long userId,
 			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
 			MimeType outputType, Locale locale) {
 		SnfInvoice invoice = createPreviewInvoice(userId, options);
@@ -269,7 +280,7 @@ public class SnfBillingSystem implements BillingSystem {
 		return invoicingSystem.renderInvoice(invoice, outputType, locale);
 	}
 
-	private SnfInvoice createPreviewInvoice(Long userId,
+	private @Nullable SnfInvoice createPreviewInvoice(Long userId,
 			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options) {
 		Account account = accountDao.getForUser(userId);
 		if ( account == null ) {

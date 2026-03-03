@@ -114,6 +114,18 @@ public class Account extends BasicEntity<UserLongPK>
 	}
 
 	/**
+	 * Get the account ID.
+	 *
+	 * @return the account ID
+	 * @throws IllegalStateException
+	 *         if the account ID is not available
+	 */
+	@JsonIgnore
+	public Long getAccountId() {
+		return nonnull(nonnull(getId(), "Account PK").getId(), "Account ID");
+	}
+
+	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
 	 *

@@ -33,6 +33,7 @@ import java.time.YearMonth;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
@@ -89,7 +90,7 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 
 	@Override
 	public CompletableFuture<Result<Object>> deliverInvoice(SnfInvoice invoice, Account account,
-			IdentifiableConfiguration configuration) {
+			@Nullable IdentifiableConfiguration configuration) {
 		final CompletableFuture<Result<Object>> result = new CompletableFuture<>();
 		executor.execute(() -> {
 			try {
