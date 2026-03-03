@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.Differentiable;
 import net.solarnetwork.domain.SimplePagination;
 
@@ -36,10 +37,10 @@ import net.solarnetwork.domain.SimplePagination;
  */
 public class TaxCodeFilter extends SimplePagination implements Differentiable<TaxCodeFilter> {
 
-	private String[] zones;
-	private String itemKey;
-	private String code;
-	private Instant date;
+	private String @Nullable [] zones;
+	private @Nullable String itemKey;
+	private @Nullable String code;
+	private @Nullable Instant date;
 
 	/**
 	 * Create a filter for a given date and list of zones.
@@ -50,7 +51,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 *        the zones
 	 * @return the filter, never {@literal null}
 	 */
-	public static TaxCodeFilter filterFor(Instant date, String... zones) {
+	public static TaxCodeFilter filterFor(Instant date, String @Nullable... zones) {
 		TaxCodeFilter f = new TaxCodeFilter();
 		f.setDate(date);
 		f.setZones(zones);
@@ -70,7 +71,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(TaxCodeFilter other) {
+	public boolean isSameAs(@Nullable TaxCodeFilter other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -83,7 +84,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	}
 
 	@Override
-	public boolean differsFrom(TaxCodeFilter other) {
+	public boolean differsFrom(@Nullable TaxCodeFilter other) {
 		return !isSameAs(other);
 	}
 
@@ -119,7 +120,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 *
 	 * @return the zones
 	 */
-	public String[] getZones() {
+	public final String @Nullable [] getZones() {
 		return zones;
 	}
 
@@ -129,7 +130,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 * @param zones
 	 *        the zones to set
 	 */
-	public void setZones(String[] zones) {
+	public final void setZones(String @Nullable [] zones) {
 		this.zones = zones;
 	}
 
@@ -142,7 +143,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 *
 	 * @return the zone
 	 */
-	public String getZone() {
+	public final @Nullable String getZone() {
 		String[] zones = getZones();
 		return zones != null && zones.length > 0 ? zones[0] : null;
 	}
@@ -160,7 +161,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 *        the zone to set
 	 */
 	@SuppressWarnings("InvalidParam")
-	public void setZone(String zone) {
+	public final void setZone(@Nullable String zone) {
 		setZones(zone != null ? new String[] { zone } : null);
 	}
 
@@ -169,7 +170,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 *
 	 * @return the item key
 	 */
-	public String getItemKey() {
+	public final @Nullable String getItemKey() {
 		return itemKey;
 	}
 
@@ -179,7 +180,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 * @param itemKey
 	 *        the item key to set
 	 */
-	public void setItemKey(String itemKey) {
+	public final void setItemKey(@Nullable String itemKey) {
 		this.itemKey = itemKey;
 	}
 
@@ -188,7 +189,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 *
 	 * @return the code
 	 */
-	public String getCode() {
+	public final @Nullable String getCode() {
 		return code;
 	}
 
@@ -198,7 +199,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 * @param code
 	 *        the code to set
 	 */
-	public void setCode(String code) {
+	public final void setCode(@Nullable String code) {
 		this.code = code;
 	}
 
@@ -207,7 +208,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 *
 	 * @return the date
 	 */
-	public Instant getDate() {
+	public final @Nullable Instant getDate() {
 		return date;
 	}
 
@@ -217,7 +218,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 * @param date
 	 *        the date to set
 	 */
-	public void setDate(Instant date) {
+	public final void setDate(@Nullable Instant date) {
 		this.date = date;
 	}
 

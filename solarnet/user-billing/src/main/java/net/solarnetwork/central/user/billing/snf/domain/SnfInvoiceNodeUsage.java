@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static java.math.BigInteger.ZERO;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -29,6 +32,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
 import net.solarnetwork.central.user.billing.domain.InvoiceUsageRecord;
 import net.solarnetwork.dao.BasicEntity;
@@ -46,7 +50,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	@Serial
 	private static final long serialVersionUID = -3504454077400331557L;
 
-	private final String description;
+	private final @Nullable String description;
 	private final BigInteger datumPropertiesIn;
 	private final BigInteger datumOut;
 	private final BigInteger datumDaysStored;
@@ -73,8 +77,10 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * @param fluxDataIn
 	 *        the SolarFlux data in count
 	 * @return the new instance
+	 * @throws IllegalArgumentException
+	 *         if {@code invoiceId} or {@code nodeId} is {@code null}
 	 */
-	public static SnfInvoiceNodeUsage nodeUsage(Long invoiceId, Long nodeId, Instant created,
+	public static SnfInvoiceNodeUsage nodeUsage(Long invoiceId, Long nodeId, @Nullable Instant created,
 			long datumPropertiesIn, long datumOut, long datumDaysStored, long instructionsIssued,
 			long fluxDataIn) {
 		return new SnfInvoiceNodeUsage(invoiceId, nodeId, created, BigInteger.valueOf(datumPropertiesIn),
@@ -101,9 +107,12 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the datum out count
 	 * @param datumDaysStored
 	 *        the datum days stored count
+	 * @throws IllegalArgumentException
+	 *         if {@code invoiceId} or {@code nodeId} is {@code null}
 	 */
-	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, Instant created,
-			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored) {
+	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, @Nullable Instant created,
+			@Nullable BigInteger datumPropertiesIn, @Nullable BigInteger datumOut,
+			@Nullable BigInteger datumDaysStored) {
 		this(new SnfInvoiceRelatedPK(invoiceId, nodeId), created, datumPropertiesIn, datumOut,
 				datumDaysStored);
 	}
@@ -129,11 +138,13 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the datum days stored count
 	 * @param instructionsIssued
 	 *        the instructions issued count
+	 * @throws IllegalArgumentException
+	 *         if {@code invoiceId} or {@code nodeId} is {@code null}
 	 * @since 1.4
 	 */
-	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, Instant created,
-			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
-			BigInteger instructionsIssued) {
+	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, @Nullable Instant created,
+			@Nullable BigInteger datumPropertiesIn, @Nullable BigInteger datumOut,
+			@Nullable BigInteger datumDaysStored, @Nullable BigInteger instructionsIssued) {
 		this(new SnfInvoiceRelatedPK(invoiceId, nodeId), created, datumPropertiesIn, datumOut,
 				datumDaysStored, instructionsIssued);
 	}
@@ -161,11 +172,14 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the instructions issued count
 	 * @param fluxDataIn
 	 *        the SolarFlux data in count
+	 * @throws IllegalArgumentException
+	 *         if {@code invoiceId} or {@code nodeId} is {@code null}
 	 * @since 1.5
 	 */
-	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, Instant created,
-			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
-			BigInteger instructionsIssued, BigInteger fluxDataIn) {
+	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, @Nullable Instant created,
+			@Nullable BigInteger datumPropertiesIn, @Nullable BigInteger datumOut,
+			@Nullable BigInteger datumDaysStored, @Nullable BigInteger instructionsIssued,
+			@Nullable BigInteger fluxDataIn) {
 		this(new SnfInvoiceRelatedPK(invoiceId, nodeId), created, datumPropertiesIn, datumOut,
 				datumDaysStored, instructionsIssued);
 	}
@@ -191,9 +205,12 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the datum out count
 	 * @param datumDaysStored
 	 *        the datum days stored count
+	 * @throws IllegalArgumentException
+	 *         if {@code invoiceId} or {@code nodeId} is {@code null}
 	 */
-	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, Instant created, String description,
-			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored) {
+	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, @Nullable Instant created,
+			@Nullable String description, @Nullable BigInteger datumPropertiesIn,
+			@Nullable BigInteger datumOut, @Nullable BigInteger datumDaysStored) {
 		this(new SnfInvoiceRelatedPK(invoiceId, nodeId), created, description, datumPropertiesIn,
 				datumOut, datumDaysStored);
 	}
@@ -221,11 +238,14 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the datum days stored count
 	 * @param instructionsIssued
 	 *        the instruction issued count
+	 * @throws IllegalArgumentException
+	 *         if {@code invoiceId} or {@code nodeId} is {@code null}
 	 * @since 1.4
 	 */
-	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, Instant created, String description,
-			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
-			BigInteger instructionsIssued) {
+	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, @Nullable Instant created,
+			@Nullable String description, @Nullable BigInteger datumPropertiesIn,
+			@Nullable BigInteger datumOut, @Nullable BigInteger datumDaysStored,
+			@Nullable BigInteger instructionsIssued) {
 		this(new SnfInvoiceRelatedPK(invoiceId, nodeId), created, description, datumPropertiesIn,
 				datumOut, datumDaysStored, instructionsIssued);
 	}
@@ -254,12 +274,13 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * @param instructionsIssued
 	 *        the instruction issued count
 	 * @param fluxDataIn
-	 *        the SolarFlux data in count
+	 *        if {@code invoiceId} or {@code nodeId} is {@code null}
 	 * @since 1.5
 	 */
-	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, Instant created, String description,
-			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
-			BigInteger instructionsIssued, BigInteger fluxDataIn) {
+	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, @Nullable Instant created,
+			String description, @Nullable BigInteger datumPropertiesIn, @Nullable BigInteger datumOut,
+			@Nullable BigInteger datumDaysStored, @Nullable BigInteger instructionsIssued,
+			@Nullable BigInteger fluxDataIn) {
 		this(new SnfInvoiceRelatedPK(invoiceId, nodeId), created, description, datumPropertiesIn,
 				datumOut, datumDaysStored, instructionsIssued, fluxDataIn);
 	}
@@ -281,9 +302,12 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the datum out count
 	 * @param datumDaysStored
 	 *        the datum days stored count
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@code null}
 	 */
-	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, BigInteger datumPropertiesIn,
-			BigInteger datumOut, BigInteger datumDaysStored) {
+	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, @Nullable Instant created,
+			@Nullable BigInteger datumPropertiesIn, @Nullable BigInteger datumOut,
+			@Nullable BigInteger datumDaysStored) {
 		this(id, created, (String) null, datumPropertiesIn, datumOut, datumDaysStored);
 	}
 
@@ -306,10 +330,13 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the datum days stored count
 	 * @param instructionsIssued
 	 *        the instructions issued count
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@code null}
 	 * @since 1.4
 	 */
-	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, BigInteger datumPropertiesIn,
-			BigInteger datumOut, BigInteger datumDaysStored, BigInteger instructionsIssued) {
+	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, @Nullable Instant created,
+			@Nullable BigInteger datumPropertiesIn, @Nullable BigInteger datumOut,
+			@Nullable BigInteger datumDaysStored, @Nullable BigInteger instructionsIssued) {
 		this(id, created, null, datumPropertiesIn, datumOut, datumDaysStored, instructionsIssued);
 	}
 
@@ -332,9 +359,12 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the datum out count
 	 * @param datumDaysStored
 	 *        the datum days stored count
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@code null}
 	 */
-	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, String description,
-			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored) {
+	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, @Nullable Instant created,
+			@Nullable String description, @Nullable BigInteger datumPropertiesIn,
+			@Nullable BigInteger datumOut, @Nullable BigInteger datumDaysStored) {
 		this(id, created, description, datumPropertiesIn, datumOut, datumDaysStored, null);
 	}
 
@@ -359,11 +389,14 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the datum days stored count
 	 * @param instructionsIssued
 	 *        the instructions issued count
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@code null}
 	 * @since 1.4
 	 */
-	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, String description,
-			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
-			BigInteger instructionsIssued) {
+	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, @Nullable Instant created,
+			@Nullable String description, @Nullable BigInteger datumPropertiesIn,
+			@Nullable BigInteger datumOut, @Nullable BigInteger datumDaysStored,
+			@Nullable BigInteger instructionsIssued) {
 		this(id, created, description, datumPropertiesIn, datumOut, datumDaysStored, instructionsIssued,
 				null);
 	}
@@ -391,18 +424,21 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the instructions issued count
 	 * @param fluxDataIn
 	 *        the SolarFlux data in count
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@code null}
 	 * @since 1.5
 	 */
-	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, String description,
-			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
-			BigInteger instructionsIssued, BigInteger fluxDataIn) {
-		super(id, created);
+	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, @Nullable Instant created,
+			@Nullable String description, @Nullable BigInteger datumPropertiesIn,
+			@Nullable BigInteger datumOut, @Nullable BigInteger datumDaysStored,
+			@Nullable BigInteger instructionsIssued, @Nullable BigInteger fluxDataIn) {
+		super(requireNonNullArgument(id, "id"), created);
 		this.description = description;
-		this.datumPropertiesIn = (datumPropertiesIn != null ? datumPropertiesIn : BigInteger.ZERO);
-		this.datumOut = (datumOut != null ? datumOut : BigInteger.ZERO);
-		this.datumDaysStored = (datumDaysStored != null ? datumDaysStored : BigInteger.ZERO);
-		this.instructionsIssued = instructionsIssued != null ? instructionsIssued : BigInteger.ZERO;
-		this.fluxDataIn = fluxDataIn != null ? fluxDataIn : BigInteger.ZERO;
+		this.datumPropertiesIn = (datumPropertiesIn != null ? datumPropertiesIn : ZERO);
+		this.datumOut = (datumOut != null ? datumOut : ZERO);
+		this.datumDaysStored = (datumDaysStored != null ? datumDaysStored : ZERO);
+		this.instructionsIssued = instructionsIssued != null ? instructionsIssued : ZERO;
+		this.fluxDataIn = fluxDataIn != null ? fluxDataIn : ZERO;
 	}
 
 	/**
@@ -418,7 +454,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(SnfInvoiceNodeUsage other) {
+	public boolean isSameAs(@Nullable SnfInvoiceNodeUsage other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -434,7 +470,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	}
 
 	@Override
-	public boolean differsFrom(SnfInvoiceNodeUsage other) {
+	public boolean differsFrom(@Nullable SnfInvoiceNodeUsage other) {
 		return !isSameAs(other);
 	}
 
@@ -503,9 +539,8 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *
 	 * @return the invoice ID
 	 */
-	public Long getInvoiceId() {
-		SnfInvoiceRelatedPK id = getId();
-		return (id != null ? id.getInvoiceId() : null);
+	public final Long getInvoiceId() {
+		return nonnull(getId(), "id").getInvoiceId();
 	}
 
 	/**
@@ -517,9 +552,8 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *
 	 * @return the node ID
 	 */
-	public Long getNodeId() {
-		SnfInvoiceRelatedPK id = getId();
-		return (id != null ? id.getId() : null);
+	public final Long getNodeId() {
+		return nonnull(getId(), "id").getId();
 	}
 
 	/**
@@ -527,7 +561,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *
 	 * @return the count, never {@literal null}
 	 */
-	public BigInteger getDatumPropertiesIn() {
+	public final BigInteger getDatumPropertiesIn() {
 		return datumPropertiesIn;
 	}
 
@@ -536,7 +570,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *
 	 * @return the count, never {@literal null}
 	 */
-	public BigInteger getDatumOut() {
+	public final BigInteger getDatumOut() {
 		return datumOut;
 	}
 
@@ -545,12 +579,12 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *
 	 * @return the count, never {@literal null}
 	 */
-	public BigInteger getDatumDaysStored() {
+	public final BigInteger getDatumDaysStored() {
 		return datumDaysStored;
 	}
 
 	@Override
-	public String getDescription() {
+	public final @Nullable String getDescription() {
 		return description;
 	}
 
@@ -560,7 +594,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * @return the count, never {@literal null}
 	 * @since 1.4
 	 */
-	public BigInteger getInstructionsIssued() {
+	public final BigInteger getInstructionsIssued() {
 		return instructionsIssued;
 	}
 

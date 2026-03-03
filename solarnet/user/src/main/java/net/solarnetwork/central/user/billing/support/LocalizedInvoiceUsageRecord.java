@@ -111,7 +111,7 @@ public class LocalizedInvoiceUsageRecord<T>
 	}
 
 	@Override
-	public T getUsageKey() {
+	public @Nullable T getUsageKey() {
 		return usage.getUsageKey();
 	}
 

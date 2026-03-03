@@ -23,11 +23,13 @@
 package net.solarnetwork.central.user.billing.snf.test;
 
 import static java.lang.String.format;
+import static java.time.Instant.now;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions.dryRunOptions;
 import static net.solarnetwork.central.user.billing.snf.test.SnfMatchers.matchesFilter;
 import static org.easymock.EasyMock.capture;
@@ -108,7 +110,8 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		UserLongPK pk = new UserLongPK(randomUUID().getMostSignificantBits(),
 				randomUUID().getMostSignificantBits());
 		Capture<SnfInvoiceFilter> filterCaptor = new Capture<>();
-		SnfInvoice inv = new SnfInvoice(pk.getId());
+		SnfInvoice inv = new SnfInvoice(pk.getId(), randomLong(), Instant.now(), LocalDate.now(),
+				LocalDate.now(), "NZD");
 		expect(invoiceDao.findFiltered(capture(filterCaptor),
 				same(SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING), eq(0L), eq(1)))
 						.andReturn(new BasicFilterResults<>(singleton(inv)));
@@ -140,7 +143,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 	@Test
 	public void accountForUser_found() {
 		// GIVEN
-		final Account account = new Account(userId, Instant.now());
+		final Account account = new Account(randomLong(), userId, now(), "NZD", "en_NZ");
 		expect(accountDao.getForUser(userId)).andReturn(account);
 
 		// WHEN
@@ -205,11 +208,8 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 	@Test
 	public void generateInvoice_basic_dryRun() {
 		// GIVEN
-		final Address addr = new Address();
-		addr.setCountry("NZ");
-		addr.setTimeZoneId("Pacific/Auckland");
-		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
-				Instant.now());
+		final Address addr = new Address(userId, "Test", "test@localhost", "NZ", "Pacific/Auckland");
+		final Account account = new Account(randomLong(), userId, now(), "NZD", "en_NZ");
 		account.setAddress(addr);
 		expect(accountDao.getForUser(userId, endDate)).andReturn(account);
 
@@ -273,11 +273,8 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 	@Test
 	public void generateInvoice_withTax_dryRun() {
 		// GIVEN
-		final Address addr = new Address();
-		addr.setCountry("NZ");
-		addr.setTimeZoneId("Pacific/Auckland");
-		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
-				Instant.now());
+		final Address addr = new Address(userId, "Test", "test@localhost", "NZ", "Pacific/Auckland");
+		final Account account = new Account(randomLong(), userId, now(), "NZD", "en_NZ");
 		account.setAddress(addr);
 		expect(accountDao.getForUser(userId, endDate)).andReturn(account);
 
@@ -358,11 +355,8 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 	@Test
 	public void generateInvoice_withTax_withFullCredit_dryRun() {
 		// GIVEN
-		final Address addr = new Address();
-		addr.setCountry("NZ");
-		addr.setTimeZoneId("Pacific/Auckland");
-		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
-				Instant.now());
+		final Address addr = new Address(userId, "Test", "test@localhost", "NZ", "Pacific/Auckland");
+		final Account account = new Account(randomLong(), userId, now(), "NZD", "en_NZ");
 		account.setAddress(addr);
 		expect(accountDao.getForUser(userId, endDate)).andReturn(account);
 
@@ -458,11 +452,8 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 	@Test
 	public void generateInvoice_withTax_withPartialCredit_dryRun() {
 		// GIVEN
-		final Address addr = new Address();
-		addr.setCountry("NZ");
-		addr.setTimeZoneId("Pacific/Auckland");
-		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
-				Instant.now());
+		final Address addr = new Address(userId, "Test", "test@localhost", "NZ", "Pacific/Auckland");
+		final Account account = new Account(randomLong(), userId, now(), "NZD", "en_NZ");
 		account.setAddress(addr);
 		expect(accountDao.getForUser(userId, endDate)).andReturn(account);
 

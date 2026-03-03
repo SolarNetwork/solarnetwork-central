@@ -22,15 +22,18 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.dao.BasicLongEntity;
+import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.Differentiable;
 
 /**
@@ -40,7 +43,7 @@ import net.solarnetwork.domain.Differentiable;
  * @version 1.3
  */
 public class Address extends BasicLongEntity
-		implements UserRelatedEntity<Long>, Differentiable<Address> {
+		implements UserRelatedEntity<Long>, Differentiable<Address>, CopyingIdentity<Address, Long> {
 
 	@Serial
 	private static final long serialVersionUID = -8287306387880683563L;
@@ -50,29 +53,86 @@ public class Address extends BasicLongEntity
 	private String email;
 	private String country;
 	private String timeZoneId;
-	private String region;
-	private String stateOrProvince;
-	private String locality;
-	private String postalCode;
-	private String[] street;
+	private @Nullable String region;
+	private @Nullable String stateOrProvince;
+	private @Nullable String locality;
+	private @Nullable String postalCode;
+	private String @Nullable [] street;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param name
+	 *        the name
+	 * @param email
+	 *        the email
+	 * @param country
+	 *        the country
+	 * @param timeZoneId
+	 *        the time zone ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public Address() {
-		super();
+	public Address(Long userId, String name, String email, String country, String timeZoneId) {
+		this(null, null, userId, name, email, country, timeZoneId);
 	}
 
 	/**
 	 * Constructor.
 	 *
 	 * @param id
-	 *        the primary key
+	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param userId
+	 *        the user ID
+	 * @param name
+	 *        the name
+	 * @param email
+	 *        the email
+	 * @param country
+	 *        the country
+	 * @param timeZoneId
+	 *        the time zone ID
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code id} and {@code created} is
+	 *         {@code null}
 	 */
-	public Address(Long id, Instant created) {
+	public Address(@Nullable Long id, @Nullable Instant created, Long userId, String name, String email,
+			String country, String timeZoneId) {
 		super(id, created);
+		this.userId = requireNonNullArgument(userId, "userId");
+		this.name = requireNonNullArgument(name, "name");
+		this.email = requireNonNullArgument(email, "email");
+		this.country = requireNonNullArgument(country, "country");
+		this.timeZoneId = requireNonNullArgument(timeZoneId, "timeZoneId");
+	}
+
+	@Override
+	public Address clone() {
+		return (Address) super.clone();
+	}
+
+	@Override
+	public Address copyWithId(@Nullable Long id) {
+		Address copy = new Address(requireNonNullArgument(id, "id"), getCreated(), userId, name, email,
+				country, timeZoneId);
+		copyTo(copy);
+		return copy;
+	}
+
+	@Override
+	public void copyTo(@Nullable Address other) {
+		if ( other == null ) {
+			return;
+		}
+		other.region = region;
+		other.stateOrProvince = stateOrProvince;
+		other.locality = locality;
+		other.postalCode = postalCode;
+		other.street = (street != null ? Arrays.copyOf(street, street.length) : null);
 	}
 
 	/**
@@ -89,7 +149,7 @@ public class Address extends BasicLongEntity
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(Address other) {
+	public boolean isSameAs(@Nullable Address other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -107,7 +167,7 @@ public class Address extends BasicLongEntity
 	}
 
 	@Override
-	public boolean differsFrom(Address other) {
+	public boolean differsFrom(@Nullable Address other) {
 		return !isSameAs(other);
 	}
 
@@ -134,7 +194,7 @@ public class Address extends BasicLongEntity
 	}
 
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 
@@ -143,9 +203,11 @@ public class Address extends BasicLongEntity
 	 *
 	 * @param userId
 	 *        the user ID to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setUserId(Long userId) {
-		this.userId = userId;
+	public final void setUserId(Long userId) {
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
@@ -153,7 +215,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -162,9 +224,12 @@ public class Address extends BasicLongEntity
 	 *
 	 * @param name
 	 *        the name to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
+		;
 	}
 
 	/**
@@ -172,7 +237,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the email
 	 */
-	public String getEmail() {
+	public final String getEmail() {
 		return email;
 	}
 
@@ -181,9 +246,12 @@ public class Address extends BasicLongEntity
 	 *
 	 * @param email
 	 *        the email to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setEmail(String email) {
-		this.email = email;
+	public final void setEmail(String email) {
+		this.email = requireNonNullArgument(email, "email");
+		;
 	}
 
 	/**
@@ -191,7 +259,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the country
 	 */
-	public String getCountry() {
+	public final String getCountry() {
 		return country;
 	}
 
@@ -200,9 +268,12 @@ public class Address extends BasicLongEntity
 	 *
 	 * @param country
 	 *        the country to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setCountry(String country) {
-		this.country = country;
+	public final void setCountry(String country) {
+		this.country = requireNonNullArgument(country, "country");
+		;
 	}
 
 	/**
@@ -210,7 +281,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the timeZoneId
 	 */
-	public String getTimeZoneId() {
+	public final String getTimeZoneId() {
 		return timeZoneId;
 	}
 
@@ -219,9 +290,12 @@ public class Address extends BasicLongEntity
 	 *
 	 * @param timeZoneId
 	 *        the timeZoneId to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setTimeZoneId(String timeZoneId) {
-		this.timeZoneId = timeZoneId;
+	public final void setTimeZoneId(String timeZoneId) {
+		this.timeZoneId = requireNonNullArgument(timeZoneId, "timeZoneId");
+		;
 	}
 
 	/**
@@ -230,7 +304,7 @@ public class Address extends BasicLongEntity
 	 * @return the time zone, or {@literal null} if not available
 	 */
 	@JsonIgnore
-	public ZoneId getTimeZone() {
+	public final @Nullable ZoneId getTimeZone() {
 		String tz = getTimeZoneId();
 		if ( tz != null ) {
 			try {
@@ -247,7 +321,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the region
 	 */
-	public String getRegion() {
+	public final @Nullable String getRegion() {
 		return region;
 	}
 
@@ -257,7 +331,7 @@ public class Address extends BasicLongEntity
 	 * @param region
 	 *        the region to set
 	 */
-	public void setRegion(String region) {
+	public final void setRegion(@Nullable String region) {
 		this.region = region;
 	}
 
@@ -266,7 +340,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the stateOrProvince
 	 */
-	public String getStateOrProvince() {
+	public final @Nullable String getStateOrProvince() {
 		return stateOrProvince;
 	}
 
@@ -276,7 +350,7 @@ public class Address extends BasicLongEntity
 	 * @param stateOrProvince
 	 *        the stateOrProvince to set
 	 */
-	public void setStateOrProvince(String stateOrProvince) {
+	public final void setStateOrProvince(@Nullable String stateOrProvince) {
 		this.stateOrProvince = stateOrProvince;
 	}
 
@@ -285,7 +359,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the locality
 	 */
-	public String getLocality() {
+	public final @Nullable String getLocality() {
 		return locality;
 	}
 
@@ -295,7 +369,7 @@ public class Address extends BasicLongEntity
 	 * @param locality
 	 *        the locality to set
 	 */
-	public void setLocality(String locality) {
+	public final void setLocality(@Nullable String locality) {
 		this.locality = locality;
 	}
 
@@ -304,7 +378,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the postalCode
 	 */
-	public String getPostalCode() {
+	public final @Nullable String getPostalCode() {
 		return postalCode;
 	}
 
@@ -314,7 +388,7 @@ public class Address extends BasicLongEntity
 	 * @param postalCode
 	 *        the postalCode to set
 	 */
-	public void setPostalCode(String postalCode) {
+	public final void setPostalCode(@Nullable String postalCode) {
 		this.postalCode = postalCode;
 	}
 
@@ -323,7 +397,7 @@ public class Address extends BasicLongEntity
 	 *
 	 * @return the street
 	 */
-	public String[] getStreet() {
+	public final String @Nullable [] getStreet() {
 		return street;
 	}
 
@@ -333,7 +407,7 @@ public class Address extends BasicLongEntity
 	 * @param street
 	 *        the street to set
 	 */
-	public void setStreet(String[] street) {
+	public final void setStreet(String @Nullable [] street) {
 		this.street = street;
 	}
 

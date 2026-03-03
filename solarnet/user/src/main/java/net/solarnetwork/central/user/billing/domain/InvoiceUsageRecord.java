@@ -43,8 +43,9 @@ public interface InvoiceUsageRecord<T> {
 	 * A key might be a node ID, source ID, stream ID, etc.
 	 * </p>
 	 *
-	 * @return the usage key
+	 * @return the usage key, or {@code null}
 	 */
+	@Nullable
 	T getUsageKey();
 
 	/**

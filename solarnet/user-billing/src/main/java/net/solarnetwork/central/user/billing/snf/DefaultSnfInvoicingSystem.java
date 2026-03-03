@@ -237,11 +237,9 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		}
 
 		// turn usage into invoice items
-		final SnfInvoice invoice = new SnfInvoice(account.getId().getId(), userId, Instant.now());
+		final SnfInvoice invoice = new SnfInvoice(account.getId().getId(), userId, Instant.now(),
+				startDate, endDate, account.getCurrencyCode());
 		invoice.setAddress(account.getAddress());
-		invoice.setCurrencyCode(account.getCurrencyCode());
-		invoice.setStartDate(startDate);
-		invoice.setEndDate(endDate);
 
 		// query for node usage counts
 		final List<NodeUsage> nodeUsages = usageDao.findNodeUsageForAccount(userId, startDate, endDate);

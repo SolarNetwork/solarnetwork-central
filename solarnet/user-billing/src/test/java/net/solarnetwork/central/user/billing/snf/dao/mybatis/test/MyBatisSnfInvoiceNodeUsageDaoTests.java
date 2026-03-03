@@ -84,11 +84,9 @@ public class MyBatisSnfInvoiceNodeUsageDaoTests extends AbstractMyBatisDaoTestSu
 		saveNodeName(TEST_NODE_ID, TEST_NODE_DESCRIPTION);
 
 		SnfInvoice entity = new SnfInvoice(account.getId().getId(), account.getUserId(),
-				Instant.ofEpochMilli(System.currentTimeMillis()));
+				Instant.ofEpochMilli(System.currentTimeMillis()), LocalDate.of(2019, 12, 1),
+				LocalDate.of(2020, 1, 1), "NZD");
 		entity.setAddress(address);
-		entity.setCurrencyCode("NZD");
-		entity.setStartDate(LocalDate.of(2019, 12, 1));
-		entity.setEndDate(LocalDate.of(2020, 1, 1));
 		return invoiceDao.get(invoiceDao.save(entity));
 	}
 

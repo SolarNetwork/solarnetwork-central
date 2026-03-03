@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.billing.snf.domain.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
@@ -29,6 +31,7 @@ import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * Test cases for the {@link Account} class.
@@ -41,7 +44,7 @@ public class AccountTests {
 	@Test
 	public void zone_notPresent() {
 		// GIVEN
-		Account account = new Account();
+		Account account = new Account((UserLongPK) null, null, "", "");
 
 		// WHEN
 		ZoneId zone = account.getTimeZone();
@@ -53,8 +56,9 @@ public class AccountTests {
 	@Test
 	public void zone_invalidValue() {
 		// GIVEN
-		Account account = new Account();
-		Address addr = new Address();
+		Account account = new Account((UserLongPK) null, null, "", "");
+		Address addr = new Address(randomLong(), randomString(), randomString(), randomString(),
+				randomString());
 		addr.setTimeZoneId("foo/bar");
 		account.setAddress(addr);
 
@@ -68,8 +72,9 @@ public class AccountTests {
 	@Test
 	public void zone_valid() {
 		// GIVEN
-		Account account = new Account();
-		Address addr = new Address();
+		Account account = new Account((UserLongPK) null, null, "", "");
+		Address addr = new Address(randomLong(), randomString(), randomString(), randomString(),
+				randomString());
 		addr.setTimeZoneId("Pacific/Auckland");
 		account.setAddress(addr);
 

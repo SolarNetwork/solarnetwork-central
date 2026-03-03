@@ -25,6 +25,8 @@ package net.solarnetwork.central.user.billing.snf.jobs.test;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -96,16 +98,12 @@ public class InvoiceGenerationTaskCreatorTests {
 	}
 
 	private static Address createAddress(String country, String timeZoneId) {
-		final Address addr = new Address(randomUUID().getMostSignificantBits(), Instant.now());
-		addr.setCountry(country);
-		addr.setTimeZoneId(timeZoneId);
+		Address addr = new Address(randomLong(), randomString(), randomString(), country, timeZoneId);
 		return addr;
 	}
 
 	private static Account createAccount(Long userId, String locale, Address address) {
-		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
-				Instant.now());
-		account.setLocale(locale);
+		final Account account = new Account(randomLong(), userId, Instant.now(), "NZD", locale);
 		account.setAddress(address);
 		return account;
 	}
@@ -213,9 +211,8 @@ public class InvoiceGenerationTaskCreatorTests {
 		// get latest invoice for account, which is a few months behind
 		SnfInvoice lastInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
 				account.getUserId(), account.getId().getId(),
-				Instant.ofEpochMilli(System.currentTimeMillis()));
-		lastInvoice.setStartDate(LocalDate.of(2019, 9, 1));
-		lastInvoice.setEndDate(LocalDate.of(2019, 10, 1));
+				Instant.ofEpochMilli(System.currentTimeMillis()), LocalDate.of(2019, 9, 1),
+				LocalDate.of(2019, 10, 1), "NZD");
 		lastInvoice.setAddress(account.getAddress());
 		expect(invoicingSystem.findLatestInvoiceForAccount(account.getId())).andReturn(lastInvoice);
 

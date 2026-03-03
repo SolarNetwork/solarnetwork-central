@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.domain.UserLongPK;
@@ -46,16 +49,9 @@ public class Account extends BasicEntity<UserLongPK>
 	@Serial
 	private static final long serialVersionUID = 717659020214827158L;
 
-	private Address address;
 	private String currencyCode;
 	private String locale;
-
-	/**
-	 * Default constructor.
-	 */
-	public Account() {
-		super(new UserLongPK(), Instant.now());
-	}
+	private @Nullable Address address;
 
 	/**
 	 * Constructor.
@@ -64,21 +60,17 @@ public class Account extends BasicEntity<UserLongPK>
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param currencyCode
+	 *        the currency code
+	 * @param locale
+	 *        the locale
+	 * @throws IllegalArgumentException
+	 *         if {@code currencyCode} or {@code locale} is {@code null}
 	 */
-	public Account(UserLongPK id, Instant created) {
+	public Account(UserLongPK id, Instant created, String currencyCode, String locale) {
 		super(id, created);
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param userId
-	 *        the user ID
-	 * @param created
-	 *        the creation date
-	 */
-	public Account(Long userId, Instant created) {
-		this(new UserLongPK(userId, null), created);
+		this.currencyCode = requireNonNullArgument(currencyCode, "currencyCode");
+		this.locale = requireNonNullArgument(locale, "locale");
 	}
 
 	/**
@@ -90,21 +82,22 @@ public class Account extends BasicEntity<UserLongPK>
 	 *        the user ID
 	 * @param created
 	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if {@code currencyCode} or {@code locale} is {@code null}
 	 */
-	public Account(Long id, Long userId, Instant created) {
-		this(new UserLongPK(userId, id), created);
+	public Account(Long id, Long userId, Instant created, String currencyCode, String locale) {
+		this(new UserLongPK(userId, id), created, currencyCode, locale);
 	}
 
 	@Override
 	public boolean hasId() {
 		UserLongPK id = getId();
-		return (id != null && id.getId() != null && id.getUserId() != null);
+		return (id != null && id.getId() != null && id.userIdIsAssigned());
 	}
 
 	@Override
 	public Long getUserId() {
-		final UserLongPK id = getId();
-		return id != null ? id.getUserId() : null;
+		return nonnull(getId(), "id").getUserId();
 	}
 
 	/**
@@ -134,7 +127,7 @@ public class Account extends BasicEntity<UserLongPK>
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(Account other) {
+	public boolean isSameAs(@Nullable Account other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -146,7 +139,7 @@ public class Account extends BasicEntity<UserLongPK>
 	}
 
 	@Override
-	public boolean differsFrom(Account other) {
+	public boolean differsFrom(@Nullable Account other) {
 		return !isSameAs(other);
 	}
 
@@ -184,7 +177,7 @@ public class Account extends BasicEntity<UserLongPK>
 	 * @return the time zone, or {@literal null} if not available
 	 */
 	@JsonIgnore
-	public ZoneId getTimeZone() {
+	public @Nullable ZoneId getTimeZone() {
 		Address addr = getAddress();
 		if ( addr != null && addr.getTimeZoneId() != null ) {
 			try {
@@ -201,7 +194,7 @@ public class Account extends BasicEntity<UserLongPK>
 	 *
 	 * @return the address
 	 */
-	public Address getAddress() {
+	public @Nullable Address getAddress() {
 		return address;
 	}
 
@@ -211,7 +204,7 @@ public class Account extends BasicEntity<UserLongPK>
 	 * @param address
 	 *        the address to set
 	 */
-	public void setAddress(Address address) {
+	public void setAddress(@Nullable Address address) {
 		this.address = address;
 	}
 
@@ -229,9 +222,11 @@ public class Account extends BasicEntity<UserLongPK>
 	 *
 	 * @param currencyCode
 	 *        the currencyCode to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public void setCurrencyCode(String currencyCode) {
-		this.currencyCode = currencyCode;
+		this.currencyCode = requireNonNullArgument(currencyCode, "currencyCode");
 	}
 
 	/**
@@ -248,9 +243,11 @@ public class Account extends BasicEntity<UserLongPK>
 	 *
 	 * @param locale
 	 *        the locale to set, as a BCP 47 language tag
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public void setLocale(String locale) {
-		this.locale = locale;
+		this.locale = requireNonNullArgument(locale, "locale");
 	}
 
 	/**

@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.util.Comparator;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A default sorting implementation for invoice items.
@@ -45,7 +46,8 @@ import java.util.UUID;
 public class SnfInvoiceItemDefaultComparator implements Comparator<SnfInvoiceItem> {
 
 	@SuppressWarnings("unchecked")
-	private <T> T metaValue(SnfInvoiceItem item, String key, Class<? extends T> clazz) {
+	private <T> @Nullable T metaValue(@Nullable SnfInvoiceItem item, String key,
+			Class<? extends T> clazz) {
 		Object v = (item != null && item.getMetadata() != null ? item.getMetadata().get(key) : null);
 		return (v != null && clazz.isAssignableFrom(v.getClass()) ? (T) v : null);
 	}

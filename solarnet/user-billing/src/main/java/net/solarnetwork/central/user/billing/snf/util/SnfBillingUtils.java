@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf.util;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Utility methods for SNF Billing.
@@ -57,7 +58,7 @@ public final class SnfBillingUtils {
 	 *         invoice number
 	 * @see #invoiceNumForId(Long)
 	 */
-	public static Long invoiceIdForNum(String num) {
+	public static @Nullable Long invoiceIdForNum(@Nullable String num) {
 		if ( num == null ) {
 			return null;
 		}
@@ -86,7 +87,7 @@ public final class SnfBillingUtils {
 	 * @return the invoice number, or {@literal null} if {@code id} is
 	 *         {@literal null}
 	 */
-	public static String invoiceNumForId(Long id) {
+	public static @Nullable String invoiceNumForId(@Nullable Long id) {
 		if ( id == null ) {
 			return null;
 		}

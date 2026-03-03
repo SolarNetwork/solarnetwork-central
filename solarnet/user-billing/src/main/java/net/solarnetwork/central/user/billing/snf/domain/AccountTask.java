@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.dao.BasicUuidEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -53,7 +55,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 
 	private final AccountTaskType taskType;
 	private final Long accountId;
-	private final Map<String, Object> taskData;
+	private final @Nullable Map<String, Object> taskData;
 
 	/**
 	 * Create a new task instance.
@@ -65,6 +67,8 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	 * @param accountId
 	 *        the account ID
 	 * @return the new task instance, with a new ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public static AccountTask newTask(Instant date, AccountTaskType taskType, Long accountId) {
 		return newTask(date, taskType, accountId, null);
@@ -82,10 +86,14 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	 * @param taskData
 	 *        the task data, or {@literal null}
 	 * @return the new task instance, with a new ID
+	 * @throws IllegalArgumentException
+	 *         if {@code date} or {@code taskType} or {@code accountId} are
+	 *         {@literal null}
 	 */
 	public static AccountTask newTask(Instant date, AccountTaskType taskType, Long accountId,
-			Map<String, Object> taskData) {
-		return new AccountTask(UUID.randomUUID(), date, taskType, accountId, taskData);
+			@Nullable Map<String, Object> taskData) {
+		return new AccountTask(UUID.randomUUID(), requireNonNullArgument(date, "date"), taskType,
+				accountId, taskData);
 	}
 
 	/**
@@ -96,7 +104,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	 * @param accountId
 	 *        the account ID
 	 * @throws IllegalArgumentException
-	 *         if {@code taskType} or {@code accountId} are {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public AccountTask(final AccountTaskType taskType, Long accountId) {
 		this(taskType, accountId, null);
@@ -114,7 +122,8 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	 * @throws IllegalArgumentException
 	 *         if {@code taskType} or {@code accountId} are {@literal null}
 	 */
-	public AccountTask(final AccountTaskType taskType, Long accountId, Map<String, Object> taskData) {
+	public AccountTask(final AccountTaskType taskType, Long accountId,
+			@Nullable Map<String, Object> taskData) {
 		this(null, null, taskType, accountId, taskData);
 	}
 
@@ -134,17 +143,11 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	 * @throws IllegalArgumentException
 	 *         if {@code taskType} or {@code accountId} are {@literal null}
 	 */
-	public AccountTask(UUID id, Instant created, final AccountTaskType taskType, Long accountId,
-			Map<String, Object> taskData) {
+	public AccountTask(@Nullable UUID id, @Nullable Instant created, final AccountTaskType taskType,
+			Long accountId, @Nullable Map<String, Object> taskData) {
 		super(id, created);
-		if ( taskType == null ) {
-			throw new IllegalArgumentException("The taskType argument must not be null.");
-		}
-		this.taskType = taskType;
-		if ( accountId == null ) {
-			throw new IllegalArgumentException("The accountId argument must not be null.");
-		}
-		this.accountId = accountId;
+		this.taskType = requireNonNullArgument(taskType, "taskType");
+		this.accountId = requireNonNullArgument(accountId, "accountId");
 		this.taskData = taskData;
 	}
 
@@ -162,7 +165,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(AccountTask other) {
+	public boolean isSameAs(@Nullable AccountTask other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -174,7 +177,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	}
 
 	@Override
-	public boolean differsFrom(AccountTask other) {
+	public boolean differsFrom(@Nullable AccountTask other) {
 		return !isSameAs(other);
 	}
 
@@ -211,7 +214,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	 *
 	 * @return the task type, never {@literal null}
 	 */
-	public AccountTaskType getTaskType() {
+	public final AccountTaskType getTaskType() {
 		return taskType;
 	}
 
@@ -220,7 +223,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	 *
 	 * @return the account ID, never {@literal null}
 	 */
-	public Long getAccountId() {
+	public final Long getAccountId() {
 		return accountId;
 	}
 
@@ -229,7 +232,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	 *
 	 * @return the task data
 	 */
-	public Map<String, Object> getTaskData() {
+	public final @Nullable Map<String, Object> getTaskData() {
 		return taskData;
 	}
 

@@ -64,10 +64,10 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	public static final Comparator<SnfInvoice> SORT_BY_DATE = new SnfInvoiceStartDateComparator();
 
 	private final Long accountId;
+	private final LocalDate startDate;
+	private final LocalDate endDate;
+	private final String currencyCode;
 	private @Nullable Address address;
-	private @Nullable LocalDate startDate;
-	private @Nullable LocalDate endDate;
-	private @Nullable String currencyCode;
 	private @Nullable Set<SnfInvoiceItem> items;
 	private @Nullable Set<SnfInvoiceNodeUsage> usages;
 
@@ -80,24 +80,11 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 		public int compare(SnfInvoice o1, SnfInvoice o2) {
 			int result = o1.startDate.compareTo(o2.startDate);
 			if ( result == 0 ) {
-				result = o1.getId().compareTo(o2.getId());
+				result = nonnull(o1.getId(), "Left ID").compareTo(nonnull(o2.getId(), "Right ID"));
 			}
 			return result;
 		}
 
-	}
-
-	/**
-	 * Default constructor.
-	 *
-	 * @param accountId
-	 *        the account ID
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null}
-	 */
-	public SnfInvoice(Long accountId) {
-		super(new UserLongPK(), Instant.now());
-		this.accountId = requireNonNullArgument(accountId, "accountId");
 	}
 
 	/**
@@ -109,12 +96,22 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *        the account ID
 	 * @param created
 	 *        the creation date
+	 * @param startDate
+	 *        the start date
+	 * @param endDate
+	 *        the end date
+	 * @param currencyCode
+	 *        the currency code
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public SnfInvoice(UserLongPK id, Long accountId, Instant created) {
+	public SnfInvoice(UserLongPK id, Long accountId, Instant created, LocalDate startDate,
+			LocalDate endDate, String currencyCode) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
 		this.accountId = requireNonNullArgument(accountId, "accountId");
+		this.startDate = requireNonNullArgument(startDate, "startDate");
+		this.endDate = requireNonNullArgument(endDate, "endDate");
+		this.currencyCode = requireNonNullArgument(currencyCode, "currencyCode");
 	}
 
 	/**
@@ -126,11 +123,18 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *        the user ID
 	 * @param created
 	 *        the creation date
+	 * @param startDate
+	 *        the start date
+	 * @param endDate
+	 *        the end date
+	 * @param currencyCode
+	 *        the currency code
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public SnfInvoice(Long accountId, Long userId, Instant created) {
-		this(new UserLongPK(userId, null), accountId, created);
+	public SnfInvoice(Long accountId, Long userId, Instant created, LocalDate startDate,
+			LocalDate endDate, String currencyCode) {
+		this(new UserLongPK(userId, null), accountId, created, startDate, endDate, currencyCode);
 	}
 
 	/**
@@ -144,9 +148,18 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *        the account ID
 	 * @param created
 	 *        the creation date
+	 * @param startDate
+	 *        the start date
+	 * @param endDate
+	 *        the end date
+	 * @param currencyCode
+	 *        the currency code
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public SnfInvoice(Long id, Long userId, Long accountId, Instant created) {
-		this(new UserLongPK(userId, id), accountId, created);
+	public SnfInvoice(Long id, Long userId, Long accountId, Instant created, LocalDate startDate,
+			LocalDate endDate, String currencyCode) {
+		this(new UserLongPK(userId, id), accountId, created, startDate, endDate, currencyCode);
 	}
 
 	@Override
@@ -191,7 +204,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 * @return the time zone, or {@literal null} if not available
 	 */
 	@JsonIgnore
-	public ZoneId getTimeZone() {
+	public @Nullable ZoneId getTimeZone() {
 		Address addr = getAddress();
 		return (addr != null ? addr.getTimeZone() : null);
 	}
@@ -262,10 +275,12 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 			return false;
 		}
 		Map<UUID, SnfInvoiceItem> otherItems = other.itemMap();
-		for ( SnfInvoiceItem item : items ) {
-			SnfInvoiceItem otherItem = otherItems.remove(item.getId());
-			if ( item.differsFrom(otherItem) ) {
-				return false;
+		if ( items != null ) {
+			for ( SnfInvoiceItem item : items ) {
+				SnfInvoiceItem otherItem = otherItems.remove(item.getId());
+				if ( item.differsFrom(otherItem) ) {
+					return false;
+				}
 			}
 		}
 		if ( !otherItems.isEmpty() ) {
@@ -278,10 +293,12 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 			return false;
 		}
 		Map<Long, SnfInvoiceNodeUsage> otherUsages = other.usageMap();
-		for ( SnfInvoiceNodeUsage usage : usages ) {
-			SnfInvoiceNodeUsage otherUsage = otherUsages.remove(usage.getNodeId());
-			if ( usage.differsFrom(otherUsage) ) {
-				return false;
+		if ( usages != null ) {
+			for ( SnfInvoiceNodeUsage usage : usages ) {
+				SnfInvoiceNodeUsage otherUsage = otherUsages.remove(usage.getNodeId());
+				if ( usage.differsFrom(otherUsage) ) {
+					return false;
+				}
 			}
 		}
 		return otherUsages.isEmpty();
@@ -337,18 +354,8 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *
 	 * @return the starting date (inclusive)
 	 */
-	public final @Nullable LocalDate getStartDate() {
+	public final LocalDate getStartDate() {
 		return startDate;
-	}
-
-	/**
-	 * Set the starting date.
-	 *
-	 * @param startDate
-	 *        the starting date to set (inclusive)
-	 */
-	public final void setStartDate(@Nullable LocalDate startDate) {
-		this.startDate = startDate;
 	}
 
 	/**
@@ -356,18 +363,8 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *
 	 * @return the ending date (exclusive)
 	 */
-	public final @Nullable LocalDate getEndDate() {
+	public final LocalDate getEndDate() {
 		return endDate;
-	}
-
-	/**
-	 * Set the ending date.
-	 *
-	 * @param endDate
-	 *        the ending date to set (exclusive)
-	 */
-	public final void setEndDate(@Nullable LocalDate endDate) {
-		this.endDate = endDate;
 	}
 
 	/**
@@ -375,18 +372,8 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *
 	 * @return the currency code
 	 */
-	public final @Nullable String getCurrencyCode() {
+	public final String getCurrencyCode() {
 		return currencyCode;
-	}
-
-	/**
-	 * Set the currency code.
-	 *
-	 * @param currencyCode
-	 *        the currency code to set
-	 */
-	public final void setCurrencyCode(@Nullable String currencyCode) {
-		this.currencyCode = currencyCode;
 	}
 
 	/**

@@ -22,11 +22,15 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static java.math.BigDecimal.ZERO;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
 import net.solarnetwork.domain.Differentiable;
 
@@ -51,7 +55,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 * @return the usage, or {@literal null} if {@code usage} is {@literal null}
 	 *         or does not contain valid property values
 	 */
-	public static UsageInfo of(Map<String, ?> usage) {
+	public static @Nullable UsageInfo of(@Nullable Map<String, ?> usage) {
 		return of(usage, null);
 	}
 
@@ -65,7 +69,8 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 * @return the usage, or {@literal null} if {@code usage} is {@literal null}
 	 *         or does not contain valid property values
 	 */
-	public static UsageInfo of(Map<String, ?> usage, List<Map<String, ?>> tiers) {
+	public static @Nullable UsageInfo of(@Nullable Map<String, ?> usage,
+			@Nullable List<Map<String, ?>> tiers) {
 		if ( usage == null ) {
 			return null;
 		}
@@ -102,7 +107,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 *         if {@code unitType} is {@literal null}
 	 * @since 1.1
 	 */
-	public UsageInfo(String unitType, BigDecimal amount) {
+	public UsageInfo(String unitType, @Nullable BigDecimal amount) {
 		this(unitType, amount, null);
 	}
 
@@ -121,7 +126,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 * @throws IllegalArgumentException
 	 *         if {@code unitType} is {@literal null}
 	 */
-	public UsageInfo(String unitType, BigDecimal amount, BigDecimal cost) {
+	public UsageInfo(String unitType, @Nullable BigDecimal amount, @Nullable BigDecimal cost) {
 		this(unitType, amount, cost, null);
 	}
 
@@ -143,15 +148,13 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 *         if {@code unitType} is {@literal null}
 	 * @since 1.1
 	 */
-	public UsageInfo(String unitType, BigDecimal amount, BigDecimal cost, List<NamedCost> tiers) {
+	public UsageInfo(String unitType, @Nullable BigDecimal amount, @Nullable BigDecimal cost,
+			@Nullable List<NamedCost> tiers) {
 		super();
-		if ( unitType == null ) {
-			throw new IllegalArgumentException("The unitType argument must be provided.");
-		}
-		this.unitType = unitType;
-		this.amount = amount != null ? amount : BigDecimal.ZERO;
-		this.cost = cost != null ? cost : BigDecimal.ZERO;
-		this.tiers = tiers;
+		this.unitType = requireNonNullArgument(unitType, "unitType");
+		this.amount = amount != null ? amount : ZERO;
+		this.cost = cost != null ? cost : ZERO;
+		this.tiers = tiers != null ? tiers : Collections.emptyList();
 	}
 
 	@Override
@@ -204,12 +207,12 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(UsageInfo other) {
+	public boolean isSameAs(@Nullable UsageInfo other) {
 		return equals(other);
 	}
 
 	@Override
-	public boolean differsFrom(UsageInfo other) {
+	public boolean differsFrom(@Nullable UsageInfo other) {
 		return !isSameAs(other);
 	}
 
@@ -219,7 +222,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -231,23 +234,23 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	}
 
 	@Override
-	public String getUnitType() {
+	public final String getUnitType() {
 		return unitType;
 	}
 
 	@Override
-	public BigDecimal getAmount() {
+	public final BigDecimal getAmount() {
 		return amount;
 	}
 
 	@Override
-	public BigDecimal getCost() {
+	public final BigDecimal getCost() {
 		return cost;
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public List<net.solarnetwork.central.user.billing.domain.NamedCost> getUsageTiers() {
+	public final List<net.solarnetwork.central.user.billing.domain.NamedCost> getUsageTiers() {
 		return (List) tiers;
 	}
 

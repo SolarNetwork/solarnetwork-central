@@ -47,10 +47,10 @@
 			<arg column="bill_account_user_id" javaType="Long"/>
 			<arg column="bill_payment_acct_id" javaType="Long"/>
 			<arg column="bill_payment_created" javaType="java.time.Instant"/>
+			<arg column="bill_payment_pay_type" javaType="net.solarnetwork.central.user.billing.snf.domain.PaymentType" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+			<arg column="bill_payment_amount" javaType="java.math.BigDecimal"/>
+			<arg column="bill_payment_currency" javaType="String"/>
 		</constructor>
-		<result property="paymentType" column="bill_payment_pay_type" javaType="net.solarnetwork.central.user.billing.snf.domain.PaymentType" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
-		<result property="amount" column="bill_payment_amount"/>
-		<result property="currencyCode" column="bill_payment_currency"/>
 		<result property="externalKey" column="bill_payment_ext_key"/>
 		<result property="reference" column="bill_payment_ref"/>
 	</resultMap>

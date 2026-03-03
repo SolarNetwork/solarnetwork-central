@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.domain;
 
 import static java.lang.String.format;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,8 +32,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A collection of ordered {@link UsageTier} objects.
@@ -44,7 +45,7 @@ import net.solarnetwork.util.ObjectUtils;
 public class UsageTiers implements NamedCostTiers {
 
 	private final List<UsageTier> tiers;
-	private final LocalDate date;
+	private final @Nullable LocalDate date;
 
 	/**
 	 * Constructor.
@@ -76,7 +77,7 @@ public class UsageTiers implements NamedCostTiers {
 	 * @throws IllegalArgumentException
 	 *         if {@code tiers} is {@literal null}
 	 */
-	public UsageTiers(List<UsageTier> tiers, LocalDate date) {
+	public UsageTiers(List<UsageTier> tiers, @Nullable LocalDate date) {
 		this(tiers, date, UsageTier.SORT_BY_KEY_QUANTITY);
 	}
 
@@ -93,16 +94,31 @@ public class UsageTiers implements NamedCostTiers {
 	 * @throws IllegalArgumentException
 	 *         if {@code tiers} is {@literal null}
 	 */
-	public UsageTiers(List<UsageTier> tiers, LocalDate date, Comparator<UsageTier> comparator) {
+	public UsageTiers(List<UsageTier> tiers, @Nullable LocalDate date,
+			@Nullable Comparator<UsageTier> comparator) {
 		super();
-		ObjectUtils.requireNonNullArgument(tiers, "tiers");
+		final List<UsageTier> t = requireNonNullArgument(tiers, "tiers");
 		if ( comparator != null ) {
-			List<UsageTier> sorted = new ArrayList<>(tiers);
+			List<UsageTier> sorted = new ArrayList<>(t);
 			sorted.sort(UsageTier.SORT_BY_KEY_QUANTITY);
-			tiers = sorted;
+			this.tiers = sorted;
+		} else {
+			this.tiers = Collections.unmodifiableList(t);
 		}
-		this.tiers = Collections.unmodifiableList(tiers);
 		this.date = date;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		buf.append(format("| %-20s | %9s | %-12s |\n", "Key", "Quantity", "Cost"));
+		buf.append("|----------------------|-----------|--------------|");
+		for ( UsageTier tier : tiers ) {
+			buf.append("\n");
+			buf.append(format("| %-20s | %,9d | %0,9.10f |", tier.getKey(), tier.getQuantity(),
+					tier.getCost()));
+		}
+		return buf.toString();
 	}
 
 	/**
@@ -112,7 +128,7 @@ public class UsageTiers implements NamedCostTiers {
 	 *        the key of the tiers to get
 	 * @return the matching tiers, never {@literal null}
 	 */
-	public List<UsageTier> tiers(String key) {
+	public final List<UsageTier> tiers(String key) {
 		return tiers.stream().filter(t -> key.equals(t.getKey())).collect(Collectors.toList());
 	}
 
@@ -121,7 +137,7 @@ public class UsageTiers implements NamedCostTiers {
 	 *
 	 * @return the tier map
 	 */
-	public Map<String, List<UsageTier>> tierMap() {
+	public final Map<String, List<UsageTier>> tierMap() {
 		return tiers.stream().collect(Collectors.toMap(UsageTier::getKey, t -> {
 			List<UsageTier> l = new ArrayList<>(4);
 			l.add(t);
@@ -138,7 +154,7 @@ public class UsageTiers implements NamedCostTiers {
 	 * @return the tiers (unmodifiable)
 	 */
 	@Override
-	public List<UsageTier> getTiers() {
+	public final List<UsageTier> getTiers() {
 		return tiers;
 	}
 
@@ -153,21 +169,8 @@ public class UsageTiers implements NamedCostTiers {
 	 * @return the date, or {@literal null}
 	 */
 	@Override
-	public LocalDate getDate() {
+	public final @Nullable LocalDate getDate() {
 		return date;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder buf = new StringBuilder();
-		buf.append(format("| %-20s | %9s | %-12s |\n", "Key", "Quantity", "Cost"));
-		buf.append("|----------------------|-----------|--------------|");
-		for ( UsageTier tier : tiers ) {
-			buf.append("\n");
-			buf.append(format("| %-20s | %,9d | %0,9.10f |", tier.getKey(), tier.getQuantity(),
-					tier.getCost()));
-		}
-		return buf.toString();
 	}
 
 }

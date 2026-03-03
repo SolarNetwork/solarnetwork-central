@@ -127,11 +127,8 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractJUnit5Centra
 	 * @since 2.1
 	 */
 	protected Address createTestAddress(Instant created) {
-		Address s = new Address(null, created);
-		s.setName("Tester Dude");
-		s.setEmail("test@localhost");
-		s.setCountry("NZ");
-		s.setTimeZoneId("Pacific/Auckland");
+		Address s = new Address(null, created, TEST_USER_ID, "Tester Dude", "test@localhost", "NZ",
+				"Pacific/Auckland");
 		s.setRegion("Region");
 		s.setStateOrProvince("State");
 		s.setLocality("Wellington");
@@ -150,10 +147,8 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractJUnit5Centra
 	 */
 	protected Account createTestAccount(Address address) {
 		Account account = new Account(null, TEST_USER_ID,
-				Instant.ofEpochMilli(System.currentTimeMillis()));
+				Instant.ofEpochMilli(System.currentTimeMillis()), "NZD", "en_NZ");
 		account.setAddress(address);
-		account.setCurrencyCode("NZD");
-		account.setLocale("en_NZ");
 		return account;
 	}
 

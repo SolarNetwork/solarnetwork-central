@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.domain;
 
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -77,16 +78,18 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	 * @throws IllegalArgumentException
 	 *         if {@code invoice} is {@literal null}
 	 */
-	public InvoiceImpl(SnfInvoice invoice, List<InvoiceItem> items) {
+	public InvoiceImpl(SnfInvoice invoice, @Nullable List<InvoiceItem> items) {
 		super();
-		this.invoice = requireNonNullArgument(invoice, "invoice");
+		final SnfInvoice inv = requireNonNullArgument(invoice, "invoice");
+		this.invoice = inv;
 		this.items = items;
-		setId(invoice.getId().getId().toString());
+		setId(requireNonNullArgument(requireNonNullArgument(inv.getId(), "invoice.id").getId(),
+				"invoice.id.id").toString());
 		setCreated(invoice.getCreated());
 	}
 
 	@Override
-	public YearMonth getInvoiceMonth() {
+	public @Nullable YearMonth getInvoiceMonth() {
 		// as long as the start/end date range is two consecutive start-of-month values (day 1) then return the month
 		LocalDate startDate = invoice.getStartDate();
 		LocalDate endDate = invoice.getEndDate();
@@ -99,13 +102,13 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 
 	@Override
 	public String getTimeZoneId() {
-		Address addr = invoice.getAddress();
-		return (addr != null ? addr.getTimeZoneId() : null);
+		return nonnull(invoice.getAddress(), "address").getTimeZoneId();
 	}
 
 	@Override
 	public String getInvoiceNumber() {
-		return SnfBillingUtils.invoiceNumForId(invoice.getId().getId());
+		return nonnull(SnfBillingUtils.invoiceNumForId(nonnull(invoice.getId(), "invoice.id").getId()),
+				"invoice.id.id");
 	}
 
 	@Override
@@ -129,7 +132,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	}
 
 	@Override
-	public BigDecimal getCreditAmount() {
+	public @Nullable BigDecimal getCreditAmount() {
 		Set<SnfInvoiceItem> items = invoice.getItems();
 		if ( items == null ) {
 			items = Collections.emptySet();
@@ -140,7 +143,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	}
 
 	@Override
-	public BigDecimal getRemainingCreditAmount() {
+	public @Nullable BigDecimal getRemainingCreditAmount() {
 		Set<SnfInvoiceItem> items = invoice.getItems();
 		if ( items == null ) {
 			items = Collections.emptySet();

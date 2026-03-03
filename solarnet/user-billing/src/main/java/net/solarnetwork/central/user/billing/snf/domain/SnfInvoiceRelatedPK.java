@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A primary key for an object related to an invoice.
@@ -38,8 +40,8 @@ public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<
 	@Serial
 	private static final long serialVersionUID = -8685042516164424904L;
 
-	private final Long id;
 	private final Long invoiceId;
+	private final Long id;
 
 	/**
 	 * Construct with values.
@@ -51,8 +53,8 @@ public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<
 	 */
 	public SnfInvoiceRelatedPK(Long invoiceId, Long id) {
 		super();
-		this.id = id;
-		this.invoiceId = invoiceId;
+		this.invoiceId = requireNonNullArgument(invoiceId, "invoiceId");
+		this.id = requireNonNullArgument(id, "id");
 	}
 
 	/**
@@ -67,7 +69,7 @@ public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<
 	 * {@literal null} values will be sorted before non-{@literal null} values.
 	 */
 	@Override
-	public int compareTo(SnfInvoiceRelatedPK o) {
+	public int compareTo(@Nullable SnfInvoiceRelatedPK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -121,7 +123,7 @@ public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -136,7 +138,7 @@ public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<
 	 *
 	 * @return the related ID
 	 */
-	public Long getId() {
+	public final Long getId() {
 		return id;
 	}
 
@@ -145,7 +147,7 @@ public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<
 	 *
 	 * @return the invoice ID
 	 */
-	public Long getInvoiceId() {
+	public final Long getInvoiceId() {
 		return invoiceId;
 	}
 

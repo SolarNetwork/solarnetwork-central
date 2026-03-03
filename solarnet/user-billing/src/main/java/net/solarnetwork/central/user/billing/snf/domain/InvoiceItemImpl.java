@@ -22,14 +22,18 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseStringEntity;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
@@ -48,7 +52,7 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 
 	private final SnfInvoice invoice;
 	private final SnfInvoiceItem item;
-	private final List<InvoiceItemUsageRecord> itemUsageRecords;
+	private final @Nullable List<InvoiceItemUsageRecord> itemUsageRecords;
 	private final LocalDate startDate;
 	private final LocalDate endDate;
 
@@ -79,16 +83,10 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 	 *         if {@code invoice} or {@code item} are {@literal null}
 	 */
 	public InvoiceItemImpl(SnfInvoice invoice, SnfInvoiceItem item,
-			List<InvoiceItemUsageRecord> itemUsageRecords) {
+			@Nullable List<InvoiceItemUsageRecord> itemUsageRecords) {
 		super();
-		if ( invoice == null ) {
-			throw new IllegalArgumentException("The invoice argument must not be null.");
-		}
-		this.invoice = invoice;
-		if ( item == null ) {
-			throw new IllegalArgumentException("The item argument must not be null.");
-		}
-		this.item = item;
+		this.invoice = requireNonNullArgument(invoice, "invoice");
+		this.item = requireNonNullArgument(item, "item");
 		this.itemUsageRecords = itemUsageRecords;
 		this.startDate = invoice.getStartDate();
 		this.endDate = invoice.getEndDate();
@@ -102,14 +100,13 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 	}
 
 	@Override
-	public Map<String, Object> getMetadata() {
+	public @Nullable Map<String, Object> getMetadata() {
 		return item.getMetadata();
 	}
 
 	@Override
 	public String getTimeZoneId() {
-		Address addr = invoice.getAddress();
-		return (addr != null ? addr.getTimeZoneId() : null);
+		return nonnull(invoice.getAddress(), "Address").getTimeZoneId();
 	}
 
 	@Override
@@ -119,8 +116,7 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 
 	@Override
 	public String getItemType() {
-		InvoiceItemType type = item.getItemType();
-		return (type != null ? type.toString().toUpperCase(Locale.ENGLISH) : null);
+		return nonnull(item.getItemType(), "itemType").toString().toUpperCase(Locale.ENGLISH);
 	}
 
 	@Override
@@ -150,7 +146,7 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 
 	@Override
 	public Instant getEnded() {
-		return null;
+		return endDate.atStartOfDay(ZoneId.of(getTimeZoneId())).toInstant();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -167,7 +163,7 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 				return Collections.singletonList(usage);
 			}
 		}
-		return null;
+		return Collections.emptyList();
 	}
 
 	@Override

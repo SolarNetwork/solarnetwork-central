@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.dao.BasicLongEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -45,7 +47,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	private final String code;
 	private final BigDecimal rate;
 	private final Instant validFrom;
-	private final Instant validTo;
+	private final @Nullable Instant validTo;
 
 	/**
 	 * Constructor.
@@ -67,7 +69,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 *         if any argument other than {@code validTo} is {@literal null}
 	 */
 	public TaxCode(String zone, String itemKey, String code, BigDecimal rate, Instant validFrom,
-			Instant validTo) {
+			@Nullable Instant validTo) {
 		this(null, Instant.now(), zone, itemKey, code, rate, validFrom, validTo);
 	}
 
@@ -95,29 +97,14 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 *         if any argument other than {@code id}, {@code created}, or
 	 *         {@code validTo} are {@literal null}
 	 */
-	public TaxCode(Long id, Instant created, String zone, String itemKey, String code, BigDecimal rate,
-			Instant validFrom, Instant validTo) {
+	public TaxCode(@Nullable Long id, @Nullable Instant created, String zone, String itemKey,
+			String code, BigDecimal rate, Instant validFrom, @Nullable Instant validTo) {
 		super(id, created);
-		if ( zone == null ) {
-			throw new IllegalArgumentException("The zone argument must be provided.");
-		}
-		this.zone = zone;
-		if ( itemKey == null ) {
-			throw new IllegalArgumentException("The itemKey argument must be provided.");
-		}
-		this.itemKey = itemKey;
-		if ( code == null ) {
-			throw new IllegalArgumentException("The code argument must be provided.");
-		}
-		this.code = code;
-		if ( rate == null ) {
-			throw new IllegalArgumentException("The rate argument must be provided.");
-		}
-		this.rate = rate;
-		if ( validFrom == null ) {
-			throw new IllegalArgumentException("The validFrom argument must be provided.");
-		}
-		this.validFrom = validFrom;
+		this.zone = requireNonNullArgument(zone, "zone");
+		this.itemKey = requireNonNullArgument(itemKey, "itemKey");
+		this.code = requireNonNullArgument(code, "code");
+		this.rate = requireNonNullArgument(rate, "rate");
+		this.validFrom = requireNonNullArgument(validFrom, "validFrom");
 		this.validTo = validTo;
 	}
 
@@ -155,7 +142,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 *         the other
 	 */
 	@SuppressWarnings("ReferenceEquality")
-	public boolean isSameAs(TaxCode other) {
+	public boolean isSameAs(@Nullable TaxCode other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -169,7 +156,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	}
 
 	@Override
-	public boolean differsFrom(TaxCode other) {
+	public boolean differsFrom(@Nullable TaxCode other) {
 		return !isSameAs(other);
 	}
 
@@ -178,7 +165,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 *
 	 * @return the zone, never {@literal null}
 	 */
-	public String getZone() {
+	public final String getZone() {
 		return zone;
 	}
 
@@ -187,7 +174,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 *
 	 * @return the item key, never {@literal null}
 	 */
-	public String getItemKey() {
+	public final String getItemKey() {
 		return itemKey;
 	}
 
@@ -196,7 +183,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 *
 	 * @return the code, never {@literal null}
 	 */
-	public String getCode() {
+	public final String getCode() {
 		return code;
 	}
 
@@ -205,7 +192,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 *
 	 * @return the rate, never {@literal null}
 	 */
-	public BigDecimal getRate() {
+	public final BigDecimal getRate() {
 		return rate;
 	}
 
@@ -214,7 +201,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 *
 	 * @return the date, never {@literal null}
 	 */
-	public Instant getValidFrom() {
+	public final Instant getValidFrom() {
 		return validFrom;
 	}
 
@@ -224,7 +211,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 * @return the date, or {@literal null} if the tax code is applicable
 	 *         "forever"
 	 */
-	public Instant getValidTo() {
+	public final @Nullable Instant getValidTo() {
 		return validTo;
 	}
 

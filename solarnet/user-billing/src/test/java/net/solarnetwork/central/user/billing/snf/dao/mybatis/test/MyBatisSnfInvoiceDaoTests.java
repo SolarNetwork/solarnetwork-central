@@ -103,11 +103,9 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		Address address = addressDao.get(addressDao.save(createTestAddress()));
 		Account account = accountDao.get(accountDao.save(createTestAccount(address)));
 		SnfInvoice entity = new SnfInvoice(account.getId().getId(), account.getUserId(),
-				Instant.ofEpochMilli(System.currentTimeMillis()));
+				Instant.ofEpochMilli(System.currentTimeMillis()), LocalDate.of(2019, 12, 1),
+				LocalDate.of(2020, 1, 1), "NZD");
 		entity.setAddress(address);
-		entity.setCurrencyCode("NZD");
-		entity.setStartDate(LocalDate.of(2019, 12, 1));
-		entity.setEndDate(LocalDate.of(2020, 1, 1));
 		UserLongPK pk = dao.save(entity);
 		assertThat("PK created", pk.getId(), notNullValue());
 		getSqlSessionTemplate().flushStatements();
@@ -163,11 +161,9 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		List<SnfInvoice> result = new ArrayList<>(count);
 		for ( int i = 0; i < count; i++ ) {
 			SnfInvoice invoice = new SnfInvoice(account.getId().getId(), account.getUserId(),
-					Instant.ofEpochMilli(System.currentTimeMillis()));
+					Instant.ofEpochMilli(System.currentTimeMillis()), start.plusMonths(i),
+					start.plusMonths(i + 1), currencyCode);
 			invoice.setAddress(address);
-			invoice.setCurrencyCode(currencyCode);
-			invoice.setStartDate(start.plusMonths(i));
-			invoice.setEndDate(start.plusMonths(i + 1));
 			UserLongPK invoiceId = dao.save(invoice);
 
 			SnfInvoiceItem item1 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
@@ -189,11 +185,9 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 	private SnfInvoice createInvoiceWithCreditUse(Account account, Address address, String currencyCode,
 			LocalDate date, BigDecimal fixed, BigDecimal credit) {
 		SnfInvoice invoice = new SnfInvoice(account.getId().getId(), account.getUserId(),
-				Instant.ofEpochMilli(System.currentTimeMillis()));
+				Instant.ofEpochMilli(System.currentTimeMillis()), date, date.plusMonths(1),
+				currencyCode);
 		invoice.setAddress(address);
-		invoice.setCurrencyCode(currencyCode);
-		invoice.setStartDate(date);
-		invoice.setEndDate(date.plusMonths(1));
 		UserLongPK invoiceId = dao.save(invoice);
 
 		SnfInvoiceItem item1 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE, fixed);
@@ -209,11 +203,9 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 	private SnfInvoice createInvoiceWithCreditGrant(Account account, Address address,
 			String currencyCode, LocalDate date, BigDecimal credit) {
 		SnfInvoice invoice = new SnfInvoice(account.getId().getId(), account.getUserId(),
-				Instant.ofEpochMilli(System.currentTimeMillis()));
+				Instant.ofEpochMilli(System.currentTimeMillis()), date, date.plusMonths(1),
+				currencyCode);
 		invoice.setAddress(address);
-		invoice.setCurrencyCode(currencyCode);
-		invoice.setStartDate(date);
-		invoice.setEndDate(date.plusMonths(1));
 		UserLongPK invoiceId = dao.save(invoice);
 
 		SnfInvoiceItem item1 = newItem(invoice, Credit, "account-credit-add", BigDecimal.ONE, credit);
