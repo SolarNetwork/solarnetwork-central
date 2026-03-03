@@ -445,7 +445,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @return the first available location ID
 	 * @since 3.0
 	 */
-	private @Nullable Long locationId() {
+	@JsonIgnore
+	public @Nullable Long locationId() {
 		final Long[] ids = locationIds();
 		return (ids != null && ids.length > 0 ? ids[0] : null);
 	}
@@ -457,6 +458,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @return the location IDs
 	 * @since 3.0
 	 */
+	@JsonIgnore
 	public Long @Nullable [] locationIds() {
 		final Long[] locationIds = super.getLocationIds();
 		if ( locationIds != null ) {
