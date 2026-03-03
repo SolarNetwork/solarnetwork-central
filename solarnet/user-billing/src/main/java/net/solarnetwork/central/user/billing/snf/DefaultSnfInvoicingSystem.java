@@ -399,14 +399,17 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 						invoiceTotal);
 				if ( credit.compareTo(BigDecimal.ZERO) > 0 ) {
 					AccountBalance balance = accountDao.getBalanceForUser(invoice.getUserId());
-					SnfInvoiceItem creditItem = SnfInvoiceItem.newItem(invoice, InvoiceItemType.Credit,
-							accountCreditKey, BigDecimal.ONE, credit.negate());
-					creditItem.setMetadata(Collections.singletonMap(META_AVAILABLE_CREDIT,
-							balance.getAvailableCredit().toPlainString()));
-					if ( !dryRun ) {
-						invoiceItemDao.save(creditItem);
+					if ( balance != null ) {
+						SnfInvoiceItem creditItem = SnfInvoiceItem.newItem(invoice,
+								InvoiceItemType.Credit, accountCreditKey, BigDecimal.ONE,
+								credit.negate());
+						creditItem.setMetadata(Collections.singletonMap(META_AVAILABLE_CREDIT,
+								balance.getAvailableCredit().toPlainString()));
+						if ( !dryRun ) {
+							invoiceItemDao.save(creditItem);
+						}
+						invoice.addItem(creditItem);
 					}
-					invoice.addItem(creditItem);
 				}
 			}
 		}

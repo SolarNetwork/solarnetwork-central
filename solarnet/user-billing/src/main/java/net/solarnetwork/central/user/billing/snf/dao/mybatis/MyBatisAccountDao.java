@@ -27,6 +27,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
@@ -87,18 +88,18 @@ public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, Use
 	}
 
 	@Override
-	public Account getForUser(Long userId) {
+	public @Nullable Account getForUser(Long userId) {
 		return selectFirst(QueryName.GetForUser.getQueryName(), userId);
 	}
 
 	@Override
-	public Account getForUser(Long userId, LocalDate at) {
+	public @Nullable Account getForUser(Long userId, LocalDate at) {
 		Map<String, Object> params = Map.of("userId", userId, "date", Date.valueOf(at));
 		return selectFirst(QueryName.GetForUserAtDate.getQueryName(), params);
 	}
 
 	@Override
-	public AccountBalance getBalanceForUser(Long userId) {
+	public @Nullable AccountBalance getBalanceForUser(Long userId) {
 		return selectFirst(QueryName.GetAccountBalanceForUser.getQueryName(), userId);
 	}
 

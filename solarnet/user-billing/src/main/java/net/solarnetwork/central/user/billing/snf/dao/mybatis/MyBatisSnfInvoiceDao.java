@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
 import java.util.List;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
@@ -81,7 +82,7 @@ public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoic
 
 	@Override
 	public FilterResults<SnfInvoice, UserLongPK> findFiltered(SnfInvoiceFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		if ( offset != null || max != null || sorts != null ) {
 			filter = filter.clone();
 			filter.setSorts(sorts);

@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.dao;
 
 import java.time.LocalDate;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.UsageTiers;
 
@@ -43,6 +44,7 @@ public interface NodeUsageDao {
 	 * @return the tiers, or {@literal null} if no tiers are available
 	 * @since 2.0
 	 */
+	@Nullable
 	UsageTiers effectiveUsageTiers(LocalDate date);
 
 	/**
@@ -51,6 +53,7 @@ public interface NodeUsageDao {
 	 * @return the tiers, or {@literal null} if no tiers are available
 	 * @since 2.1
 	 */
+	@Nullable
 	List<UsageTiers> effectiveUsageTiers();
 
 	/**
