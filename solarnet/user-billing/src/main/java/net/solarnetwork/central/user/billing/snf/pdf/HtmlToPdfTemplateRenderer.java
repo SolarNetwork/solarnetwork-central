@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.pdf;
 
 import static java.util.Collections.singletonList;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -36,6 +37,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.W3CDom;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 import org.w3c.dom.Document;
@@ -130,14 +132,8 @@ public class HtmlToPdfTemplateRenderer extends BasicIdentity<String> implements 
 	 */
 	public HtmlToPdfTemplateRenderer(String id, String baseUri, TemplateRenderer htmlRenderer) {
 		super(id);
-		if ( baseUri == null ) {
-			throw new IllegalArgumentException("The baseUri argument must be provided.");
-		}
-		this.baseUri = baseUri;
-		if ( htmlRenderer == null ) {
-			throw new IllegalArgumentException("The htmlRenderer argument must be provided.");
-		}
-		this.htmlRenderer = htmlRenderer;
+		this.baseUri = requireNonNullArgument(baseUri, "baseUri");
+		this.htmlRenderer = requireNonNullArgument(htmlRenderer, "htmlRenderer");
 		this.w3cDom = new W3CDom();
 	}
 
@@ -152,8 +148,8 @@ public class HtmlToPdfTemplateRenderer extends BasicIdentity<String> implements 
 	}
 
 	@Override
-	public void render(Locale locale, MimeType mimeType, Map<String, ?> parameters, OutputStream out)
-			throws IOException {
+	public void render(@Nullable Locale locale, MimeType mimeType, @Nullable Map<String, ?> parameters,
+			OutputStream out) throws IOException {
 		// render HTML to memory
 		try (ByteArrayOutputStream byos = new ByteArrayOutputStream(8192)) {
 			htmlRenderer.render(locale, MimeTypeUtils.TEXT_HTML, parameters, byos);
@@ -177,9 +173,6 @@ public class HtmlToPdfTemplateRenderer extends BasicIdentity<String> implements 
 	}
 
 	private String replaceImgDataSvg(String html) throws IOException {
-		if ( html == null ) {
-			return null;
-		}
 		StringBuilder buf = new StringBuilder(html.length());
 		Matcher m = SVG_DATA_IMG_PAT.matcher(html);
 		int pos = 0;
