@@ -94,7 +94,7 @@ public class ExternalSystemClientRegistrationRepository implements ClientRegistr
 			}
 		}
 		if ( secret == null ) {
-			throw new IllegalArgumentException(
+			throw new IllegalStateException(
 					"%s %s configured to use OAuth but does not have client secret available."
 							.formatted(role.role(), role.id().ident()));
 		}
