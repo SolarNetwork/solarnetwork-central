@@ -1,36 +1,39 @@
 /* ==================================================================
  * ZonedStreamsTimeRange.java - 14/11/2020 7:39:16 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An absolute date range for a specific time zone and set of stream IDs.
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 2.8
@@ -40,11 +43,11 @@ public class ZonedStreamsTimeRange {
 	private final Instant startDate;
 	private final Instant endDate;
 	private final String timeZoneId;
-	private final UUID[] streamIds;
+	private final UUID @Nullable [] streamIds;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param startDate
 	 *        the start date
 	 * @param endDate
@@ -53,14 +56,16 @@ public class ZonedStreamsTimeRange {
 	 *        the time zone ID
 	 * @param streamIds
 	 *        the stream IDs
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code streamIds} is {@code null}
 	 */
 	public ZonedStreamsTimeRange(Instant startDate, Instant endDate, String timeZoneId,
-			UUID... streamIds) {
+			UUID @Nullable... streamIds) {
 		super();
-		this.startDate = startDate;
-		this.endDate = endDate;
-		this.timeZoneId = timeZoneId;
-		this.streamIds = streamIds;
+		this.startDate = requireNonNullArgument(startDate, "startDate");
+		this.endDate = requireNonNullArgument(endDate, "endDate");
+		this.timeZoneId = requireNonNullArgument(timeZoneId, "timeZoneId");
+		this.streamIds = requireNonNullArgument(streamIds, "streamIds");
 	}
 
 	@Override
@@ -92,51 +97,51 @@ public class ZonedStreamsTimeRange {
 
 	/**
 	 * Get the start date.
-	 * 
+	 *
 	 * @return the start date
 	 */
-	public Instant getStartDate() {
+	public final Instant getStartDate() {
 		return startDate;
 	}
 
 	/**
 	 * Get the end date.
-	 * 
+	 *
 	 * @return the end date
 	 */
-	public Instant getEndDate() {
+	public final Instant getEndDate() {
 		return endDate;
 	}
 
 	/**
 	 * Get the time zone ID.
-	 * 
+	 *
 	 * @return the time zone ID
 	 */
-	public String getTimeZoneId() {
+	public final String getTimeZoneId() {
 		return timeZoneId;
 	}
 
 	/**
 	 * Get a {@link ZoneId} for the configured time zone ID.
-	 * 
+	 *
 	 * @return the zone, or {@literal null} if one cannot be determined
 	 */
-	public ZoneId zoneId() {
+	public final ZoneId zoneId() {
 		try {
 			return ZoneId.of(timeZoneId);
 		} catch ( DateTimeException | NullPointerException e ) {
 			// ignore
-			return null;
+			return ZoneOffset.UTC;
 		}
 	}
 
 	/**
 	 * Get the stream IDs.
-	 * 
+	 *
 	 * @return the stream IDs
 	 */
-	public UUID[] getStreamIds() {
+	public final UUID @Nullable [] getStreamIds() {
 		return streamIds;
 	}
 

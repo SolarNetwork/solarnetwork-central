@@ -24,10 +24,12 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getArray;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
@@ -62,7 +64,8 @@ import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 public class ReadingDatumEntityRowMapper implements RowMapper<ReadingDatum> {
 
 	/** A default instance for null aggregates. */
-	public static final RowMapper<ReadingDatum> INSTANCE = new ReadingDatumEntityRowMapper(null);
+	public static final RowMapper<ReadingDatum> INSTANCE = new ReadingDatumEntityRowMapper(
+			Aggregation.None);
 
 	/** A default instance for hourly aggregates. */
 	public static final RowMapper<ReadingDatum> HOUR_INSTANCE = new ReadingDatumEntityRowMapper(
@@ -91,8 +94,8 @@ public class ReadingDatumEntityRowMapper implements RowMapper<ReadingDatum> {
 
 	@Override
 	public ReadingDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = getUuid(rs, 1);
-		Timestamp ts = rs.getTimestamp(2);
+		UUID streamId = nonnull(getUuid(rs, 1), "Stream ID");
+		Instant ts = nonnull(rs.getTimestamp(2), "Timestamp").toInstant();
 		Timestamp tsEnd = rs.getTimestamp(3);
 		BigDecimal[] data_i = getArray(rs, 4);
 		BigDecimal[] data_a = getArray(rs, 5);
@@ -101,7 +104,7 @@ public class ReadingDatumEntityRowMapper implements RowMapper<ReadingDatum> {
 		BigDecimal[][] stat_i = getArray(rs, 8);
 		BigDecimal[][] stat_a = getArray(rs, 9);
 
-		return new ReadingDatumEntity(streamId, ts != null ? ts.toInstant() : null, aggregation,
+		return new ReadingDatumEntity(streamId, ts, aggregation,
 				tsEnd != null ? tsEnd.toInstant() : null,
 				DatumProperties.propertiesOf(data_i, data_a, data_s, data_t),
 				DatumPropertiesStatistics.statisticsOf(stat_i, stat_a));

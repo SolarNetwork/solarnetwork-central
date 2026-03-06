@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.NonNull;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.StreamDatum;
@@ -39,6 +40,15 @@ import net.solarnetwork.domain.datum.StreamDatum;
 public interface Datum extends Identity<DatumPK>, StreamDatum {
 
 	/**
+	 * Get the primary key.
+	 *
+	 * @return the key
+	 */
+	@Override
+	@NonNull
+	DatumPK getId();
+
+	/**
 	 * Get the unique ID of the stream this datum is a part of.
 	 *
 	 * <p>
@@ -48,7 +58,9 @@ public interface Datum extends Identity<DatumPK>, StreamDatum {
 	 * @return the stream ID
 	 */
 	@Override
-	UUID getStreamId();
+	default UUID getStreamId() {
+		return getId().getStreamId();
+	}
 
 	/**
 	 * Get the associated timestamp of this datum.
@@ -65,7 +77,9 @@ public interface Datum extends Identity<DatumPK>, StreamDatum {
 	 * @return the timestamp for this datum
 	 */
 	@Override
-	Instant getTimestamp();
+	default Instant getTimestamp() {
+		return getId().getTimestamp();
+	}
 
 	/**
 	 * Get the properties associated with this datum.

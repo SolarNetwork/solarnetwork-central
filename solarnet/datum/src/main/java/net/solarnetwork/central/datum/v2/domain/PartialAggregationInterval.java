@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
@@ -77,13 +78,13 @@ public class PartialAggregationInterval {
 		this.intervals = unmodifiableList(buildIntervals());
 	}
 
-	private static ChronoUnit unit(Aggregation agg) {
+	private static @Nullable ChronoUnit unit(Aggregation agg) {
 		return switch (agg) {
 			case Year -> ChronoUnit.YEARS;
 			case Month -> ChronoUnit.MONTHS;
 			case Day -> ChronoUnit.DAYS;
 			case Hour -> ChronoUnit.HOURS;
-			default -> null;
+			case null, default -> null;
 		};
 	}
 

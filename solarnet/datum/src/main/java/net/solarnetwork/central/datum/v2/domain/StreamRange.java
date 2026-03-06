@@ -1,21 +1,21 @@
 /* ==================================================================
  * StreamRange.java - 2/12/2020 12:46:40 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,11 +27,12 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Helper DTO for node and source date ranges.
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 2.8
@@ -39,17 +40,17 @@ import net.solarnetwork.domain.datum.Aggregation;
 public class StreamRange {
 
 	private final UUID streamId;
-	private Instant startDate;
-	private Instant endDate;
-	private String timeZoneId;
-	private Integer timeZoneOffset;
-	private LocalDateTime localStartDate;
-	private LocalDateTime localEndDate;
-	private Aggregation aggregation;
+	private @Nullable Instant startDate;
+	private @Nullable Instant endDate;
+	private @Nullable String timeZoneId;
+	private @Nullable Integer timeZoneOffset;
+	private @Nullable LocalDateTime localStartDate;
+	private @Nullable LocalDateTime localEndDate;
+	private @Nullable Aggregation aggregation;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @throws IllegalArgumentException
@@ -62,7 +63,7 @@ public class StreamRange {
 
 	/**
 	 * Create a new range.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @param start
@@ -72,8 +73,11 @@ public class StreamRange {
 	 * @param aggregation
 	 *        the aggregation
 	 * @return the new range
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} is {@literal null}
 	 */
-	public static StreamRange range(UUID streamId, Instant start, Instant end, Aggregation aggregation) {
+	public static StreamRange range(UUID streamId, @Nullable Instant start, @Nullable Instant end,
+			@Nullable Aggregation aggregation) {
 		StreamRange r = new StreamRange(streamId);
 		r.setStartDate(start);
 		r.setEndDate(end);
@@ -83,7 +87,7 @@ public class StreamRange {
 
 	/**
 	 * Create a new local range.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @param start
@@ -94,8 +98,8 @@ public class StreamRange {
 	 *        the aggregation
 	 * @return the new range
 	 */
-	public static StreamRange range(UUID streamId, LocalDateTime start, LocalDateTime end,
-			Aggregation aggregation) {
+	public static StreamRange range(UUID streamId, @Nullable LocalDateTime start,
+			@Nullable LocalDateTime end, @Nullable Aggregation aggregation) {
 		StreamRange r = new StreamRange(streamId);
 		r.setLocalStartDate(start);
 		r.setLocalEndDate(end);
@@ -152,10 +156,10 @@ public class StreamRange {
 
 	/**
 	 * Get an interval out of the start/end date range.
-	 * 
+	 *
 	 * @return the interval
 	 */
-	public DateInterval getInterval() {
+	public final @Nullable DateInterval getInterval() {
 		if ( startDate == null || endDate == null ) {
 			return null;
 		}
@@ -169,143 +173,143 @@ public class StreamRange {
 
 	/**
 	 * Get the stream ID.
-	 * 
+	 *
 	 * @return the stream ID (never {@literal null}
 	 */
-	public UUID getStreamId() {
+	public final UUID getStreamId() {
 		return streamId;
 	}
 
 	/**
 	 * Get the start date.
-	 * 
+	 *
 	 * @return the start date
 	 */
-	public Instant getStartDate() {
+	public final @Nullable Instant getStartDate() {
 		return startDate;
 	}
 
 	/**
 	 * Set the start date.
-	 * 
+	 *
 	 * @param startDate
 	 *        the date to set
 	 */
-	public void setStartDate(Instant startDate) {
+	public final void setStartDate(@Nullable Instant startDate) {
 		this.startDate = startDate;
 	}
 
 	/**
 	 * Get the end date.
-	 * 
+	 *
 	 * @return the end date
 	 */
-	public Instant getEndDate() {
+	public final @Nullable Instant getEndDate() {
 		return endDate;
 	}
 
 	/**
 	 * Set the end date.
-	 * 
+	 *
 	 * @param endDate
 	 *        the date to set
 	 */
-	public void setEndDate(Instant endDate) {
+	public final void setEndDate(@Nullable Instant endDate) {
 		this.endDate = endDate;
 	}
 
 	/**
 	 * Get the time zone ID.
-	 * 
+	 *
 	 * @return the time zone ID
 	 */
-	public String getTimeZoneId() {
+	public final @Nullable String getTimeZoneId() {
 		return timeZoneId;
 	}
 
 	/**
 	 * Set the time zone ID.
-	 * 
+	 *
 	 * @param timeZone
 	 *        the time zone ID
 	 */
-	public void setTimeZoneId(String timeZone) {
+	public final void setTimeZoneId(@Nullable String timeZone) {
 		this.timeZoneId = timeZone;
 	}
 
 	/**
 	 * Get the time zone offset.
-	 * 
+	 *
 	 * @return the time zone offset
 	 */
-	public Integer getTimeZoneOffset() {
+	public final @Nullable Integer getTimeZoneOffset() {
 		return timeZoneOffset;
 	}
 
 	/**
 	 * Set the time zone offset.
-	 * 
+	 *
 	 * @param timeZoneOffset
 	 *        the offset to set
 	 */
-	public void setTimeZoneOffset(Integer timeZoneOffset) {
+	public final void setTimeZoneOffset(@Nullable Integer timeZoneOffset) {
 		this.timeZoneOffset = timeZoneOffset;
 	}
 
 	/**
 	 * Get the local start date.
-	 * 
+	 *
 	 * @return the start date
 	 */
-	public LocalDateTime getLocalStartDate() {
+	public final @Nullable LocalDateTime getLocalStartDate() {
 		return localStartDate;
 	}
 
 	/**
 	 * Set the local start date.
-	 * 
+	 *
 	 * @param localStartDate
 	 *        the start date
 	 */
-	public void setLocalStartDate(LocalDateTime localStartDate) {
+	public final void setLocalStartDate(@Nullable LocalDateTime localStartDate) {
 		this.localStartDate = localStartDate;
 	}
 
 	/**
 	 * Get the local end date.
-	 * 
+	 *
 	 * @return the end date
 	 */
-	public LocalDateTime getLocalEndDate() {
+	public final @Nullable LocalDateTime getLocalEndDate() {
 		return localEndDate;
 	}
 
 	/**
 	 * Get the local end date.
-	 * 
+	 *
 	 * @param localEndDate
 	 *        the end date
 	 */
-	public void setLocalEndDate(LocalDateTime localEndDate) {
+	public final void setLocalEndDate(@Nullable LocalDateTime localEndDate) {
 		this.localEndDate = localEndDate;
 	}
 
 	/**
 	 * Get the aggregation.
-	 * 
+	 *
 	 * @return the aggregation
 	 */
-	public Aggregation getAggregation() {
+	public final @Nullable Aggregation getAggregation() {
 		return aggregation;
 	}
 
 	/**
 	 * Set the aggregation.
-	 * 
+	 *
 	 * @param aggregation
 	 *        the aggregation to set
 	 */
-	public void setAggregation(Aggregation aggregation) {
+	public final void setAggregation(@Nullable Aggregation aggregation) {
 		this.aggregation = aggregation;
 	}
 

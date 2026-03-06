@@ -23,13 +23,14 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
+import net.solarnetwork.domain.datum.BasicObjectDatumStreamIdentity;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -50,7 +51,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </ol>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class DatumDateIntervalRowMapper implements RowMapper<DatumDateInterval> {
@@ -60,7 +61,7 @@ public class DatumDateIntervalRowMapper implements RowMapper<DatumDateInterval> 
 
 	@Override
 	public DatumDateInterval mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = getUuid(rs, 1);
+		UUID streamId = nonnull(getUuid(rs, 1), "Stream ID");
 		Timestamp start = rs.getTimestamp(2);
 		Timestamp end = rs.getTimestamp(3);
 		Object objId = rs.getObject(4);
@@ -73,7 +74,7 @@ public class DatumDateIntervalRowMapper implements RowMapper<DatumDateInterval> 
 
 		return new DatumDateInterval(start != null ? start.toInstant() : null,
 				end != null ? end.toInstant() : null, timeZoneId,
-				new ObjectDatumId(kind, streamId, objectId, sourceId, null, null));
+				new BasicObjectDatumStreamIdentity(streamId, kind, objectId, sourceId));
 	}
 
 }

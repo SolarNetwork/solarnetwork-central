@@ -43,7 +43,9 @@ import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.domain.datum.Aggregation.Day;
 import static net.solarnetwork.domain.datum.Aggregation.Hour;
+import static net.solarnetwork.domain.datum.DatumProperties.emptyProperties;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
+import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.emptyStatistics;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
@@ -195,14 +197,14 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		List<AggregateDatum> result = aggDatum(Aggregation.Hour);
 		assertThat("Hour rollup result stored database", result, hasSize(1));
 		assertAggregateDatumId("Hour rollup", result.get(0), new AggregateDatumEntity(meta.getStreamId(),
-				hour.toInstant(), Aggregation.Hour, null, null));
+				hour.toInstant(), Aggregation.Hour, emptyProperties(), emptyStatistics()));
 
 		// should have deleted stale Hour and inserted stale Day
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("One stale aggregate record remains for next rollup level", staleRows, hasSize(1));
 		assertStaleAggregateDatum("Day rollup created", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(),
-						hour.truncatedTo(ChronoUnit.DAYS).toInstant(), Aggregation.Day, null));
+						hour.truncatedTo(ChronoUnit.DAYS).toInstant(), Aggregation.Day, now()));
 
 		// should not have created stale SolarFlux Hour because not current hour
 		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Hour);
@@ -308,7 +310,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		List<AggregateDatum> result = aggDatum(Aggregation.Hour);
 		assertThat("Hour rollup result stored database", result, hasSize(1));
 		assertAggregateDatumId("Hour rollup", result.get(0), new AggregateDatumEntity(meta.getStreamId(),
-				hour.toInstant(), Aggregation.Hour, null, null));
+				hour.toInstant(), Aggregation.Hour, emptyProperties(), emptyStatistics()));
 
 		staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("Only locked row remains", staleRows, hasSize(1));
@@ -319,7 +321,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		assertThat("One stale aggregate record remains for next rollup level", staleRows, hasSize(1));
 		assertStaleAggregateDatum("Day rollup created", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(),
-						hour.truncatedTo(ChronoUnit.DAYS).toInstant(), Aggregation.Day, null));
+						hour.truncatedTo(ChronoUnit.DAYS).toInstant(), Aggregation.Day, now()));
 
 		// should not have created stale SolarFlux Hour because not current hour
 		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Hour);
@@ -387,7 +389,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		List<AggregateDatum> result = aggDatum(Aggregation.Day);
 		assertThat("Day rollup result stored database", result, hasSize(1));
 		assertAggregateDatumId("Day rollup", result.get(0), new AggregateDatumEntity(meta.getStreamId(),
-				day.toInstant(), Aggregation.Day, null, null));
+				day.toInstant(), Aggregation.Day, emptyProperties(), emptyStatistics()));
 
 		// should have deleted stale Hour and inserted stale Day
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -395,7 +397,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		assertStaleAggregateDatum("Month rollup created", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(),
 						day.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant(),
-						Aggregation.Month, null));
+						Aggregation.Month, now()));
 
 		// should have inserted None, Hour, and Day stale audit records
 		List<StaleAuditDatum> staleAuditRows = listStaleAuditDatum(jdbcTemplate);
@@ -466,8 +468,9 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		// should have stored rollup in Month table
 		List<AggregateDatum> result = aggDatum(Aggregation.Month);
 		assertThat("Month rollup result stored database", result, hasSize(1));
-		assertAggregateDatumId("Month rollup", result.get(0), new AggregateDatumEntity(
-				meta.getStreamId(), month.toInstant(), Aggregation.Month, null, null));
+		assertAggregateDatumId("Month rollup", result.get(0),
+				new AggregateDatumEntity(meta.getStreamId(), month.toInstant(), Aggregation.Month,
+						emptyProperties(), emptyStatistics()));
 
 		// should have deleted stale Month
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);

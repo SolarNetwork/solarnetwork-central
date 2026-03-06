@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.support;
 
+import static net.solarnetwork.central.datum.v2.domain.ObjectDatumPK.unassignedStream;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.math.BigInteger;
@@ -496,8 +497,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 		submitWorkOrAddToSqsQueue(entity);
 
 		// note the stream ID is not known at this point
-		return new ObjectDatumPK(id.getKind(), id.getObjectId(), id.getSourceId(), id.getTimestamp(),
-				null);
+		return unassignedStream(id.getKind(), id.getObjectId(), id.getSourceId(), id.getTimestamp());
 	}
 
 	@Override
@@ -515,10 +515,10 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	@Override
 	public DatumPK store(Datum datum) {
 		// note the stream ID is not known at this point
-		final ObjectDatumPK id = new ObjectDatumPK(requireNonNullArgument(datum.getKind(), "datum.kind"),
+		final ObjectDatumPK id = unassignedStream(requireNonNullArgument(datum.getKind(), "datum.kind"),
 				requireNonNullArgument(datum.getObjectId(), "datum.objectId"),
 				requireNonNullArgument(datum.getSourceId(), "datum.sourceId"),
-				requireNonNullArgument(datum.getTimestamp(), "datum.timestamp"), null);
+				requireNonNullArgument(datum.getTimestamp(), "datum.timestamp"));
 		if ( datum.getKind() == ObjectDatumKind.Location ) {
 			stats.increment(BasicCount.LocationDatumReceived);
 		} else {

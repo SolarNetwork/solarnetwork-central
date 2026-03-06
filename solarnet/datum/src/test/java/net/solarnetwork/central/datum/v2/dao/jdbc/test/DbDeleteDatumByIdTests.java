@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAggregateDatum;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -160,7 +161,7 @@ public class DbDeleteDatumByIdTests extends BaseDatumJdbcTestSupport {
 		// @formatter:off
 		then(staleRows)
 			.as("Stale row inserted")
-			.containsExactly(new StaleAggregateDatumEntity(streamId, tsToDelete.truncatedTo(HOURS), Aggregation.Hour, null))
+			.containsExactly(new StaleAggregateDatumEntity(streamId, tsToDelete.truncatedTo(HOURS), Aggregation.Hour, now()))
 			;
 		// @formatter:on
 	}

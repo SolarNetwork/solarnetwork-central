@@ -208,8 +208,37 @@ public final class CommonJdbcUtils {
 	 *         string representation as described in {@link UUID#toString()}
 	 */
 	public static @Nullable UUID getUuid(ResultSet rs, int column) throws SQLException {
+		return getUuid(rs, column, null);
+	}
+
+	/**
+	 * Get a UUID column value.
+	 *
+	 * <p>
+	 * This method can be more efficient than calling
+	 * {@link ResultSet#getString(int)} if the JDBC driver returns a UUID
+	 * instance natively. Otherwise, this method will call {@code toString()} on
+	 * the column value and parse that as a UUID.
+	 * </p>
+	 *
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as a UUID
+	 * @param defaultValue
+	 *        the default value to use if the UUID column value is {@code null}
+	 * @return the UUID, or {@code defaultValue} if the column value is null
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @throws IllegalArgumentException
+	 *         if the column value is non-null but does not conform to the
+	 *         string representation as described in {@link UUID#toString()}
+	 */
+	public static @Nullable UUID getUuid(ResultSet rs, int column, @Nullable UUID defaultValue)
+			throws SQLException {
 		Object sid = rs.getObject(column);
-		return (sid instanceof UUID uuid ? uuid : sid != null ? UUID.fromString(sid.toString()) : null);
+		return (sid instanceof UUID uuid ? uuid
+				: sid != null ? UUID.fromString(sid.toString()) : defaultValue);
 	}
 
 	/**

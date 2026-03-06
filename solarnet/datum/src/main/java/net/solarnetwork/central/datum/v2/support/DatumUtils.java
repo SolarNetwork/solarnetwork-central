@@ -43,6 +43,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.CombiningFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
@@ -127,7 +128,7 @@ public final class DatumUtils {
 	 * @return the criteria, or {@literal null} if {@code filter} is
 	 *         {@literal null}
 	 */
-	public static BasicDatumCriteria criteriaFromFilter(Filter filter) {
+	public static @Nullable BasicDatumCriteria criteriaFromFilter(@Nullable Filter filter) {
 		return criteriaFromFilter(filter, null, null, null);
 	}
 
@@ -145,8 +146,9 @@ public final class DatumUtils {
 	 * @return the criteria, or {@literal null} if {@code filter} is
 	 *         {@literal null}
 	 */
-	public static BasicDatumCriteria criteriaFromFilter(Filter filter,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
+	public static @Nullable BasicDatumCriteria criteriaFromFilter(@Nullable Filter filter,
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max) {
 		if ( filter == null ) {
 			return null;
 		}
@@ -318,7 +320,7 @@ public final class DatumUtils {
 	 * @return the metadata search filter, or {@code null}
 	 * @since 2.11
 	 */
-	public static String generateTagsSearchFilter(String... tags) {
+	public static @Nullable String generateTagsSearchFilter(String @Nullable... tags) {
 		if ( tags == null || tags.length < 1 ) {
 			return null;
 		}
@@ -340,7 +342,7 @@ public final class DatumUtils {
 	 * @return the criteria, or {@literal null} if {@code filter} is
 	 *         {@literal null} or has only empty values
 	 */
-	public static SimpleLocation locationFromFilter(Location location) {
+	public static @Nullable SimpleLocation locationFromFilter(@Nullable Location location) {
 		if ( location == null ) {
 			return null;
 		}
@@ -374,7 +376,7 @@ public final class DatumUtils {
 	 * @return the new criteria
 	 */
 	public static ObjectStreamCriteria criteriaWithoutDates(ObjectStreamCriteria criteria) {
-		requireNonNullArgument(criteria, "criteria");
+		criteria = requireNonNullArgument(criteria, "criteria");
 		BasicDatumCriteria result;
 		if ( criteria instanceof BasicDatumCriteria c ) {
 			result = c.clone();
@@ -399,7 +401,8 @@ public final class DatumUtils {
 	 *         {@link BasicDatumCriteria} instance it will be returned directly
 	 * @since 2.1
 	 */
-	public static BasicDatumCriteria toBasicDatumCriteria(ObjectStreamCriteria criteria) {
+	public static @Nullable BasicDatumCriteria toBasicDatumCriteria(
+			@Nullable ObjectStreamCriteria criteria) {
 		BasicDatumCriteria c;
 		if ( criteria == null ) {
 			return null;
@@ -440,7 +443,7 @@ public final class DatumUtils {
 	 *        aggregation
 	 * @return the aggregation, or {@literal null} if none
 	 */
-	public static Aggregation aggregationForType(Filter criteria) {
+	public static @Nullable Aggregation aggregationForType(@Nullable Filter criteria) {
 		Aggregation result = null;
 		if ( criteria instanceof DatumFilter f ) {
 			String type = f.getType();
@@ -464,7 +467,7 @@ public final class DatumUtils {
 	 * @param filter
 	 *        the criteria to populate the {@link Aggregation} on
 	 */
-	public static void populateAggregationType(Filter criteria, BasicDatumCriteria filter) {
+	public static void populateAggregationType(@Nullable Filter criteria, BasicDatumCriteria filter) {
 		Aggregation agg = aggregationForType(criteria);
 		if ( agg != null ) {
 			filter.setAggregation(agg);
@@ -485,7 +488,7 @@ public final class DatumUtils {
 	 * @since 2.12
 	 */
 	public static void populateGeneralDatumSamples(DatumStreamMetadata meta, DatumSamples s,
-			DatumProperties props, DatumSamplesType propType) {
+			@Nullable DatumProperties props, DatumSamplesType propType) {
 		final String[] propNames = meta.propertyNamesForType(propType);
 		if ( propNames == null || props == null ) {
 			return;
@@ -509,7 +512,7 @@ public final class DatumUtils {
 	 * @param meta
 	 *        the metadata
 	 */
-	public static void populateGeneralDatumSamples(DatumSamples s, DatumProperties props,
+	public static void populateGeneralDatumSamples(DatumSamples s, @Nullable DatumProperties props,
 			DatumStreamMetadata meta) {
 		populateGeneralDatumSamples(meta, s, props, DatumSamplesType.Instantaneous);
 		populateGeneralDatumSamples(meta, s, props, DatumSamplesType.Accumulating);
@@ -615,7 +618,7 @@ public final class DatumUtils {
 	 *         not {@code Node}
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	public static ReportingGeneralNodeDatum toGeneralNodeDatum(Datum datum,
+	public static @Nullable ReportingGeneralNodeDatum toGeneralNodeDatum(@Nullable Datum datum,
 			ObjectDatumStreamMetadata meta) {
 		if ( datum == null || meta.getKind() != ObjectDatumKind.Node ) {
 			return null;
@@ -634,7 +637,7 @@ public final class DatumUtils {
 		// populate instantaneous statistics data if available
 		if ( datum instanceof AggregateDatum agg ) {
 			DatumPropertiesStatistics stats = agg.getStatistics();
-			if ( stats != null ) {
+			if ( stats != null && !stats.isEmpty() ) {
 				populateGeneralDatumSamplesInstantaneousStatistics(s, stats, meta);
 			}
 
@@ -670,7 +673,7 @@ public final class DatumUtils {
 		if ( datum instanceof ReadingDatum read ) {
 			// populate reading (accumulating) data from stats when available
 			DatumPropertiesStatistics stats = read.getStatistics();
-			if ( stats != null ) {
+			if ( stats != null && !stats.isEmpty() ) {
 				if ( s.getA() != null ) {
 					s.getA().clear();
 				}
@@ -701,8 +704,8 @@ public final class DatumUtils {
 	 * @return the general metadata, or {@literal null} if {@code meta} is
 	 *         {@literal null}
 	 */
-	public static GeneralNodeDatumMetadataMatch toGeneralNodeDatumMetadataMatch(
-			ObjectDatumStreamMetadata meta) {
+	public static @Nullable GeneralNodeDatumMetadataMatch toGeneralNodeDatumMetadataMatch(
+			@Nullable ObjectDatumStreamMetadata meta) {
 		if ( meta == null ) {
 			return null;
 		}
@@ -724,8 +727,8 @@ public final class DatumUtils {
 	 * @return the general datum auxiliary, or {@literal null} if either
 	 *         {@code datum} or {@code meta} is {@literal null}
 	 */
-	public static GeneralNodeDatumAuxiliary toGeneralNodeDatumAuxiliary(DatumAuxiliary datum,
-			ObjectDatumStreamMetadata meta) {
+	public static @Nullable GeneralNodeDatumAuxiliary toGeneralNodeDatumAuxiliary(
+			@Nullable DatumAuxiliary datum, @Nullable ObjectDatumStreamMetadata meta) {
 		if ( datum == null || meta == null ) {
 			return null;
 		}
@@ -787,7 +790,7 @@ public final class DatumUtils {
 	 *         {@literal null} or {@link ObjectDatumStreamMetadata#getKind()} is
 	 *         not {@code Location}
 	 */
-	public static ReportingGeneralLocationDatum toGeneralLocationDatum(Datum datum,
+	public static @Nullable ReportingGeneralLocationDatum toGeneralLocationDatum(@Nullable Datum datum,
 			ObjectDatumStreamMetadata meta) {
 		if ( datum == null || meta.getKind() != ObjectDatumKind.Location ) {
 			return null;
@@ -835,8 +838,8 @@ public final class DatumUtils {
 	 * @return the general metadata, or {@literal null} if {@code meta} is
 	 *         {@literal null}
 	 */
-	public static GeneralLocationDatumMetadataMatch toGeneralLocationDatumMetadataMatch(
-			ObjectDatumStreamMetadata meta) {
+	public static @Nullable GeneralLocationDatumMetadataMatch toGeneralLocationDatumMetadataMatch(
+			@Nullable ObjectDatumStreamMetadata meta) {
 		if ( meta == null ) {
 			return null;
 		}
@@ -915,7 +918,7 @@ public final class DatumUtils {
 	 *        the source ID
 	 * @return the UUID, or {@literal null} if any argument is {@literal null}
 	 */
-	public static UUID virtualStreamId(Long objectId, String sourceId) {
+	public static @Nullable UUID virtualStreamId(@Nullable Long objectId, @Nullable String sourceId) {
 		if ( objectId == null || sourceId == null ) {
 			return null;
 		}
@@ -997,8 +1000,8 @@ public final class DatumUtils {
 	 * @return the legacy instace, or {@literal null} if {@code counts} is
 	 *         {@literal null}
 	 */
-	public static net.solarnetwork.central.datum.domain.DatumRecordCounts toRecordCounts(
-			DatumRecordCounts counts) {
+	public static net.solarnetwork.central.datum.domain.@Nullable DatumRecordCounts toRecordCounts(
+			@Nullable DatumRecordCounts counts) {
 		if ( counts == null ) {
 			return null;
 		}
@@ -1024,8 +1027,8 @@ public final class DatumUtils {
 	 *         {@literal null}
 	 * @since 1.7
 	 */
-	public static BasicObjectDatumStreamMetadata toCommonObjectDatumStreamMetadata(
-			ObjectDatumStreamMetadata meta) {
+	public static @Nullable BasicObjectDatumStreamMetadata toCommonObjectDatumStreamMetadata(
+			@Nullable ObjectDatumStreamMetadata meta) {
 		if ( meta == null ) {
 			return null;
 		}
@@ -1046,8 +1049,8 @@ public final class DatumUtils {
 	 *         {@literal null}
 	 * @since 2.0
 	 */
-	public static FilterResults<AuditDatumRecordCounts, GeneralNodeDatumPK> toAuditDatumRecordCountsFilterResults(
-			FilterResults<AuditDatumRollup, DatumPK> results) {
+	public static @Nullable FilterResults<AuditDatumRecordCounts, GeneralNodeDatumPK> toAuditDatumRecordCountsFilterResults(
+			@Nullable FilterResults<AuditDatumRollup, DatumPK> results) {
 		if ( results == null ) {
 			return null;
 		}

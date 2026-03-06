@@ -176,10 +176,23 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Node);
 		validateDatumCriteria(c);
 		Iterable<DatumDateInterval> results = datumDao.findAvailableInterval(c);
+		ReportableInterval result = null;
 		for ( DatumDateInterval interval : results ) {
-			return new ReportableInterval(interval.getStart(), interval.getEnd(), interval.getZone());
+			if ( result == null ) {
+				result = new ReportableInterval(interval.getStart(), interval.getEnd(),
+						interval.getZone());
+			} else {
+				if ( interval.getStart().isBefore(result.startDate().toInstant()) ) {
+					result = new ReportableInterval(interval.getStart(), result.endDate().toInstant(),
+							result.getTimeZone());
+				}
+				if ( interval.getEnd().isAfter(result.endDate().toInstant()) ) {
+					result = new ReportableInterval(result.startDate().toInstant(), interval.getEnd(),
+							result.getTimeZone());
+				}
+			}
 		}
-		return null;
+		return result;
 	}
 
 	@Override

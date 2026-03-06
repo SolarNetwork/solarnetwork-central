@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.test;
 
+import static java.time.Instant.EPOCH;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup.accumulativeAuditDatumRollup;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -55,7 +56,7 @@ public class AuditDatumEntityRollupTests {
 
 	@Test
 	public void jsonPropertyOrder() throws Exception {
-		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, null, 1L, 2L, 3, 4);
+		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, EPOCH, 1L, 2L, 3, 4);
 		String json = JsonUtils.getJSONString(c, null);
 		assertThat("JSON", json, equalTo("""
 				{"aggregation":"RunningTotal","datumTotalCount":10,"datumCount":1,"datumHourlyCount":2\
@@ -82,32 +83,32 @@ public class AuditDatumEntityRollupTests {
 
 	@Test
 	public void totalCount_allNull() {
-		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, null, null, null, null,
+		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, EPOCH, null, null, null,
 				null);
 		assertThat("Total count", c.getDatumTotalCount(), equalTo(0L));
 	}
 
 	@Test
 	public void totalCount_datum() {
-		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, null, 1L, null, null, null);
+		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, EPOCH, 1L, null, null, null);
 		assertThat("Total count", c.getDatumTotalCount(), equalTo(1L));
 	}
 
 	@Test
 	public void totalCount_datumAndHourly() {
-		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, null, 1L, 3L, null, null);
+		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, EPOCH, 1L, 3L, null, null);
 		assertThat("Total count", c.getDatumTotalCount(), equalTo(4L));
 	}
 
 	@Test
 	public void totalCount_datumAndHourlyAndDaily() {
-		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, null, 1L, 3L, 5, null);
+		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, EPOCH, 1L, 3L, 5, null);
 		assertThat("Total count", c.getDatumTotalCount(), equalTo(9L));
 	}
 
 	@Test
 	public void totalCount_datumAndHourlyAndDailyAndMonthly() {
-		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, null, 1L, 3L, 5, 7);
+		AuditDatumEntityRollup c = accumulativeAuditDatumRollup(null, null, EPOCH, 1L, 3L, 5, 7);
 		assertThat("Total count", c.getDatumTotalCount(), equalTo(16L));
 	}
 

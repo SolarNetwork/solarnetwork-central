@@ -322,7 +322,7 @@ public final class DatumJsonUtils {
 
 		// write timestamp
 		Instant ts = datum.getTimestamp();
-		if ( ts != null ) {
+		if ( ts != null && Instant.EPOCH.compareTo(ts) != 0 ) {
 			generator.writeNumber(ts.toEpochMilli());
 		} else {
 			generator.writeNull();
@@ -477,7 +477,7 @@ public final class DatumJsonUtils {
 
 		// write timestamp
 		Instant ts = datum.getTimestamp();
-		if ( ts != null ) {
+		if ( ts != null && Instant.EPOCH.compareTo(ts) != 0 ) {
 			generator.writeNumber(ts.toEpochMilli());
 		} else {
 			generator.writeNull();

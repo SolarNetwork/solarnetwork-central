@@ -134,6 +134,7 @@ import net.solarnetwork.dao.jdbc.JdbcBulkLoadingContextSupport;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -640,8 +641,8 @@ public class JdbcDatumEntityDao
 			FilterResults<Datum, DatumPK> datumResults = executeFilterQuery(jdbcTemplate, filter, sql,
 					DatumEntityRowMapper.INSTANCE);
 			List<ReadingDatum> readingDatum = stream(datumResults.spliterator(), false)
-					.map(e -> new ReadingDatumEntity(e.getStreamId(), e.getTimestamp(), null, null,
-							e.getProperties(), null))
+					.map(e -> new ReadingDatumEntity(e.getStreamId(), e.getTimestamp(), Aggregation.None,
+							null, e.getProperties(), new DatumPropertiesStatistics()))
 					.collect(Collectors.toList());
 			results = new BasicFilterResults<>(readingDatum, datumResults.getTotalResults(),
 					datumResults.getStartingOffset(), datumResults.getReturnedResultCount());

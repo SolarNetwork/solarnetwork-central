@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.domain.datum.DatumId;
@@ -36,7 +38,6 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.StreamDatum;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A {@link net.solarnetwork.domain.datum.Datum} that also implements
@@ -85,14 +86,15 @@ public final class ObjectDatum extends GeneralDatum implements StreamDatum, User
 	@SuppressWarnings("unchecked")
 	public static ObjectDatum forDatum(net.solarnetwork.domain.datum.Datum datum, Long userId,
 			DatumId id, ObjectDatumStreamMetadata meta, boolean ignorePropertyErrors) {
-		DatumProperties p;
+		DatumProperties p = null;
 		try {
 			p = DatumProperties.propertiesFrom(datum, meta);
 		} catch ( IllegalArgumentException e ) {
 			if ( !ignorePropertyErrors ) {
 				throw e;
 			}
-			// just use empty props
+		}
+		if ( p == null ) {
 			p = new DatumProperties();
 		}
 		if ( datum instanceof GeneralDatum gd ) {
@@ -123,32 +125,10 @@ public final class ObjectDatum extends GeneralDatum implements StreamDatum, User
 	 */
 	public static ObjectDatum forStreamDatum(net.solarnetwork.domain.datum.StreamDatum datum,
 			Long userId, DatumId id, ObjectDatumStreamMetadata meta) {
-		DatumProperties p = datum.getProperties();
+		DatumProperties p = requireNonNullArgument(datum, "datum").getProperties();
 		DatumSamples s = new DatumSamples();
 		DatumUtils.populateGeneralDatumSamples(s, p, meta);
 		return new ObjectDatum(id, s, userId, meta.getStreamId(), p);
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * <p>
-	 * The {@code userId} will be unassigned.
-	 * </p>
-	 *
-	 * @param id
-	 *        the ID
-	 * @param samples
-	 *        the samples
-	 * @param streamId
-	 *        the stream ID
-	 * @param properties
-	 *        the properties
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
-	 */
-	public ObjectDatum(DatumId id, DatumSamples samples, UUID streamId, DatumProperties properties) {
-		this(id, samples, null, streamId, properties);
 	}
 
 	/**
@@ -165,14 +145,14 @@ public final class ObjectDatum extends GeneralDatum implements StreamDatum, User
 	 * @param properties
 	 *        the properties
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code userId} is {@literal null}
+	 *         if any argument is {@literal null}
 	 */
 	public ObjectDatum(DatumId id, DatumSamples samples, Long userId, UUID streamId,
 			DatumProperties properties) {
 		super(id, samples);
-		this.userId = userId;
-		this.streamId = ObjectUtils.requireNonNullArgument(streamId, "streamId");
-		this.properties = ObjectUtils.requireNonNullArgument(properties, "properties");
+		this.userId = requireNonNullArgument(userId, "userId");
+		this.streamId = requireNonNullArgument(streamId, "streamId");
+		this.properties = requireNonNullArgument(properties, "properties");
 	}
 
 	@Override
@@ -181,7 +161,7 @@ public final class ObjectDatum extends GeneralDatum implements StreamDatum, User
 	}
 
 	@Override
-	public Instant getCreated() {
+	public @Nullable Instant getCreated() {
 		return getTimestamp();
 	}
 

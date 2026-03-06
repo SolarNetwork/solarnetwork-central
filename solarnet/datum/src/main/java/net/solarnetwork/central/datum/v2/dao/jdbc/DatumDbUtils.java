@@ -58,6 +58,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -182,8 +183,8 @@ public final class DatumDbUtils {
 	 *        the aggregate statistics
 	 * @return the datum
 	 */
-	public static ReadingDatum readingWith(UUID streamId, Aggregation agg, ZonedDateTime start,
-			ZonedDateTime end, BigDecimal[]... stats) {
+	public static ReadingDatum readingWith(UUID streamId, @Nullable Aggregation agg, ZonedDateTime start,
+			ZonedDateTime end, BigDecimal[] @Nullable... stats) {
 		BigDecimal[] acc = new BigDecimal[stats.length];
 		for ( int i = 0; i < stats.length; i++ ) {
 			acc[i] = stats[i][0];
@@ -208,9 +209,10 @@ public final class DatumDbUtils {
 	 *        the aggregate statistics
 	 * @return the datum
 	 */
-	public static ReadingDatum readingWith(UUID streamId, Aggregation agg, ZonedDateTime start,
-			ZonedDateTime end, BigDecimal[] acc, BigDecimal[][] stats) {
-		return new ReadingDatumEntity(streamId, start.toInstant(), agg, end.toInstant(),
+	public static ReadingDatum readingWith(UUID streamId, @Nullable Aggregation agg, ZonedDateTime start,
+			ZonedDateTime end, BigDecimal @Nullable [] acc, BigDecimal @Nullable [][] stats) {
+		return new ReadingDatumEntity(streamId, start.toInstant(),
+				(agg != null ? agg : Aggregation.None), end.toInstant(),
 				propertiesOf(null, acc, null, null), statisticsOf(null, stats));
 	}
 
@@ -445,7 +447,7 @@ public final class DatumDbUtils {
 	 */
 	public static List<AggregateDatum> loadJsonAggregateDatumResource(String resource, Class<?> clazz,
 			ObjectDatumStreamMetadataProvider metadataProvider,
-			Function<AggregateDatum, AggregateDatum> mapper) throws IOException {
+			@Nullable Function<AggregateDatum, AggregateDatum> mapper) throws IOException {
 
 		List<AggregateDatum> result = new ArrayList<>();
 		JsonFactory factory = JsonFactory.builder().build();

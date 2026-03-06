@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.ioAuditDatum;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -106,7 +107,7 @@ public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSuppo
 		DatumTestUtils.assertStaleAuditDatum("Stale", stale.get(0),
 				new StaleAuditDatumEntity(meta.getStreamId(),
 						now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS).toInstant(),
-						Aggregation.Day, null));
+						Aggregation.Day, now()));
 	}
 
 	@Test
@@ -134,7 +135,7 @@ public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSuppo
 		DatumTestUtils.assertStaleAuditDatum("Stale", stale.get(0),
 				new StaleAuditDatumEntity(meta.getStreamId(),
 						now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS).toInstant(),
-						Aggregation.Day, null));
+						Aggregation.Day, now()));
 	}
 
 }

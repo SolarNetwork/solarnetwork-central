@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.domain.test;
 
-import static org.assertj.core.api.BDDAssertions.catchIllegalArgumentException;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.UserIdentifiableSystem;
@@ -63,9 +63,9 @@ public class UserIdentifiableSystemTests {
 	@Test
 	public void userIdSystemIdentifier_null() {
 		// WHEN
-		catchIllegalArgumentException(() -> {
+		thenThrownBy(() -> {
 			UserIdentifiableSystem.userIdSystemIdentifier(null);
-		});
+		}, "Null input throws").isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test

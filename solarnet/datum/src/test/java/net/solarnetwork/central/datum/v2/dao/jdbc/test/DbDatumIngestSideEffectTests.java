@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.ioAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.ingestDatumAuxiliary;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.ingestDatumStream;
@@ -51,7 +52,6 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -109,7 +109,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		assertStaleAggregateDatum("First datum", staleRows.get(0), new StaleAggregateDatumEntity(
-				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, null));
+				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, now()));
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for lone datm", auditHourly, hasSize(1));
@@ -131,7 +131,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		assertStaleAggregateDatum("First datum", staleRows.get(0), new StaleAggregateDatumEntity(
-				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, null));
+				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, now()));
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for lone datm", auditHourly, hasSize(1));
@@ -154,7 +154,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		assertStaleAggregateDatum("Two datum in same hour", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour.toInstant(), Aggregation.Hour,
-						null));
+						now()));
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for two datum in same hour", auditHourly, hasSize(1));
@@ -176,7 +176,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("One stale aggregate record created for lone datm", staleRows, hasSize(1));
 		assertStaleAggregateDatum("One datum in hour", staleRows.get(0), new StaleAggregateDatumEntity(
-				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, null));
+				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, now()));
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for one datum", auditHourly, hasSize(1));
@@ -193,7 +193,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		assertThat("One stale aggregate record created for re-ingested datum", staleRows, hasSize(1));
 		assertStaleAggregateDatum("Same datum ingested twice produces same salt agg record",
 				staleRows.get(0), new StaleAggregateDatumEntity(meta.getStreamId(), hour.toInstant(),
-						Aggregation.Hour, null));
+						Aggregation.Hour, now()));
 
 		auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("Same datum ingested twice updates audit IO data", auditHourly, hasSize(1));
@@ -218,10 +218,10 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		ZonedDateTime hour1 = ZonedDateTime.of(2020, 6, 1, 11, 0, 0, 0, ZoneOffset.UTC);
 		assertStaleAggregateDatum("First datum in first hour", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour1.toInstant(), Aggregation.Hour,
-						null));
+						now()));
 		assertStaleAggregateDatum("Second datum in second hour", staleRows.get(1),
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour1.plusHours(1).toInstant(),
-						Aggregation.Hour, null));
+						Aggregation.Hour, now()));
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for two datum", auditHourly, hasSize(1));
@@ -245,13 +245,13 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		ZonedDateTime hour1 = ZonedDateTime.of(2020, 6, 1, 11, 0, 0, 0, ZoneOffset.UTC);
 		assertStaleAggregateDatum("First datum in first hour", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour1.toInstant(), Aggregation.Hour,
-						null));
+						now()));
 		assertStaleAggregateDatum("Middle datum in second hour", staleRows.get(1),
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour1.plusHours(1).toInstant(),
-						Aggregation.Hour, null));
+						Aggregation.Hour, now()));
 		assertStaleAggregateDatum("Last datum in third hour", staleRows.get(2),
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour1.plusHours(2).toInstant(),
-						Aggregation.Hour, null));
+						Aggregation.Hour, now()));
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("One hourly audit record created for all datum", auditHourly, hasSize(1));
@@ -279,9 +279,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		ZonedDateTime hour1 = ZonedDateTime.of(2020, 6, 1, 11, 0, 0, 0, ZoneOffset.UTC);
 		assertStaleAggregateDatum("Reset in hour before", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour1.toInstant(), Aggregation.Hour,
-						null));
+						now()));
 		assertStaleAggregateDatum("Reset in hour", staleRows.get(1), new StaleAggregateDatumEntity(
-				meta.getStreamId(), hour1.plusHours(1).toInstant(), Aggregation.Hour, null));
+				meta.getStreamId(), hour1.plusHours(1).toInstant(), Aggregation.Hour, now()));
 	}
 
 	@Test
@@ -303,7 +303,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		assertStaleAggregateDatum("Reset in hour", staleRows.get(0), new StaleAggregateDatumEntity(
-				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, null));
+				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, now()));
 	}
 
 	@Test
@@ -325,9 +325,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		ZonedDateTime hour1 = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		assertStaleAggregateDatum("Reset in hour", staleRows.get(0), new StaleAggregateDatumEntity(
-				meta.getStreamId(), hour1.toInstant(), Aggregation.Hour, null));
+				meta.getStreamId(), hour1.toInstant(), Aggregation.Hour, now()));
 		assertStaleAggregateDatum("Reset in hour after", staleRows.get(1), new StaleAggregateDatumEntity(
-				meta.getStreamId(), hour1.plusHours(1).toInstant(), Aggregation.Hour, null));
+				meta.getStreamId(), hour1.plusHours(1).toInstant(), Aggregation.Hour, now()));
 	}
 
 	@Test
@@ -365,7 +365,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		assertStaleAggregateDatum("Reset in hour", staleRows.get(0), new StaleAggregateDatumEntity(
-				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, null));
+				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, now()));
 	}
 
 	@Test
@@ -414,10 +414,10 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		assertStaleAggregateDatum("Reset in hour node 1", streamToStale.get(meta.getStreamId()),
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour.toInstant(), Aggregation.Hour,
-						null));
+						now()));
 		assertStaleAggregateDatum("Reset in hour node 2", streamToStale.get(meta2.getStreamId()),
 				new StaleAggregateDatumEntity(meta2.getStreamId(), hour.toInstant(), Aggregation.Hour,
-						null));
+						now()));
 	}
 
 	@Test

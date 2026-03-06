@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.query.biz.dao.test;
 
+import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
+import static java.time.temporal.ChronoUnit.HOURS;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
@@ -35,10 +37,12 @@ import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -228,6 +232,123 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 			.returns(filter.getStartDate(), from(DatumStreamCriteria::getStartDate))
 			.as("Query for end date from filter")
 			.returns(filter.getEndDate(), from(DatumStreamCriteria::getEndDate))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findReportableInterval_node_two_startExtend() {
+		// GIVEN
+		final DatumDateInterval range1 = DatumDateInterval.streamInterval(
+				now().truncatedTo(ChronoUnit.HOURS), Instant.now(), UTC, ObjectDatumKind.Node,
+				UUID.randomUUID(), TEST_NODE_ID, TEST_SOURCE_ID);
+
+		// second range that starts before but ends before previous
+		final DatumDateInterval range2 = DatumDateInterval.streamInterval(
+				now().atZone(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS).minusDays(30).toInstant(),
+				now().minusSeconds(30), "UTC", ObjectDatumKind.Node, UUID.randomUUID(), TEST_NODE_ID,
+				TEST_SOURCE_ID);
+
+		final Capture<DatumStreamCriteria> filterCaptor = new Capture<>();
+		expect(datumDao.findAvailableInterval(capture(filterCaptor))).andReturn(List.of(range1, range2));
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+
+		ReportableInterval result = biz.findReportableInterval(filter);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Result available")
+			.isNotNull()
+			.as("Result range is union of input ranges")
+			.isEqualTo(new ReportableInterval(range2.getStart(), range1.getEnd(), UTC))
+			;
+
+		final DatumStreamCriteria c = filterCaptor.getValue();
+		then(c)
+			.as("Query for node type")
+			.returns(ObjectDatumKind.Node, from(DatumStreamCriteria::getObjectKind))
+			.as("Query for node IDs from filter")
+			.returns(filter.getNodeIds(), from(DatumStreamCriteria::getNodeIds))
+			.as("Query for source IDs from filter")
+			.returns(null, from(DatumStreamCriteria::getSourceIds))
+			.as("Query for start date from filter")
+			.returns(null, from(DatumStreamCriteria::getStartDate))
+			.as("Query for end date from filter")
+			.returns(null, from(DatumStreamCriteria::getEndDate))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findReportableInterval_node_two_endExtend() {
+		// GIVEN
+		final DatumDateInterval range1 = DatumDateInterval.streamInterval(
+				now().truncatedTo(HOURS).minusSeconds(60), now(), "UTC", Node, randomUUID(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+
+		// second range that starts before but ends after previous
+		final DatumDateInterval range2 = DatumDateInterval.streamInterval(
+				range1.getStart().plusSeconds(1), range1.getEnd().plusSeconds(1), UTC, Node,
+				randomUUID(), TEST_NODE_ID, TEST_SOURCE_ID);
+
+		expect(datumDao.findAvailableInterval(anyObject())).andReturn(List.of(range1, range2));
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+
+		ReportableInterval result = biz.findReportableInterval(filter);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Result available")
+			.isNotNull()
+			.as("Result range is union of input ranges")
+			.isEqualTo(new ReportableInterval(range1.getStart(), range2.getEnd(), UTC))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findReportableInterval_node_two_startAndEndExtend() {
+		// GIVEN
+		final DatumDateInterval range1 = DatumDateInterval.streamInterval(
+				now().truncatedTo(HOURS).minusSeconds(60), now(), "UTC", Node, randomUUID(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+
+		// second range that starts before but ends before previous
+		final DatumDateInterval range2 = DatumDateInterval.streamInterval(
+				range1.getStart().minusSeconds(1), range1.getEnd().minusSeconds(1), UTC, Node,
+				randomUUID(), TEST_NODE_ID, TEST_SOURCE_ID);
+
+		// third range that starts after but ends after previous
+		final DatumDateInterval range3 = DatumDateInterval.streamInterval(
+				range1.getStart().plusSeconds(1), range1.getEnd().plusSeconds(1), UTC, Node,
+				randomUUID(), TEST_NODE_ID, TEST_SOURCE_ID);
+
+		expect(datumDao.findAvailableInterval(anyObject())).andReturn(List.of(range1, range2, range3));
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+
+		ReportableInterval result = biz.findReportableInterval(filter);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Result available")
+			.isNotNull()
+			.as("Result range is union of input ranges")
+			.isEqualTo(new ReportableInterval(range2.getStart(), range3.getEnd(), UTC))
 			;
 		// @formatter:on
 	}

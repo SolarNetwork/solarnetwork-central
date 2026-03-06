@@ -26,6 +26,8 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * Primary key for a datum stream.
@@ -46,6 +48,8 @@ public class DatumPK extends StreamPK implements Serializable, Cloneable, Compar
 	 *        the stream ID
 	 * @param timestamp
 	 *        the time stamp
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public DatumPK(UUID streamId, Instant timestamp) {
 		super(streamId, timestamp);
@@ -67,8 +71,19 @@ public class DatumPK extends StreamPK implements Serializable, Cloneable, Compar
 	 * {@inheritDoc}
 	 */
 	@Override
-	public int compareTo(DatumPK o) {
+	public int compareTo(@Nullable DatumPK o) {
 		return super.compareWith(o);
+	}
+
+	/**
+	 * Test if the stream ID is assigned.
+	 *
+	 * @return {@code true} if {@link #getStreamId()} is not {@code null} and
+	 *         not equal to {@link StreamDatum#UNASSIGNED_STREAM_ID}
+	 * @see StreamDatum#isStreamIdAssigned(UUID)
+	 */
+	public boolean streamIdIsAssigned() {
+		return StreamDatum.isStreamIdAssigned(getStreamId());
 	}
 
 }

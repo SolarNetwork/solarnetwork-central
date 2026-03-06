@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.support.test;
 
 import static java.time.Instant.now;
+import static net.solarnetwork.central.datum.v2.domain.ObjectDatumPK.unassignedStream;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
@@ -57,7 +58,6 @@ import net.solarnetwork.central.datum.support.SqsDatumCollector;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumPK;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
@@ -318,8 +318,8 @@ public class SqsDatumCollectorTests {
 				.willReturn(recvFromSqsFutureEmpty);
 
 		// store datum
-		given(delegateDao.store(any(Datum.class))).willReturn(new ObjectDatumPK(d.getKind(),
-				d.getObjectId(), d.getSourceId(), d.getTimestamp(), null));
+		given(delegateDao.store(any(Datum.class))).willReturn(
+				unassignedStream(d.getKind(), d.getObjectId(), d.getSourceId(), d.getTimestamp()));
 
 		// WHEN
 		collector.serviceDidStartup();
@@ -373,8 +373,8 @@ public class SqsDatumCollectorTests {
 				.willReturn(recvFromSqsFutureEmpty);
 
 		// store datum
-		given(delegateDao.store(any(Datum.class))).willReturn(new ObjectDatumPK(d.getKind(),
-				d.getObjectId(), d.getSourceId(), d.getTimestamp(), null));
+		given(delegateDao.store(any(Datum.class))).willReturn(
+				unassignedStream(d.getKind(), d.getObjectId(), d.getSourceId(), d.getTimestamp()));
 
 		// WHEN
 		collector.serviceDidStartup();
@@ -418,8 +418,8 @@ public class SqsDatumCollectorTests {
 		d.setSourceId(randomString());
 		d.setCreated(now().truncatedTo(ChronoUnit.MILLIS));
 		d.setSamples(new DatumSamples(Map.of("a", 1), Map.of("b", 2), null));
-		final DatumPK datumId = new ObjectDatumPK(d.getId().getKind(), d.getId().getObjectId(),
-				d.getId().getSourceId(), d.getId().getTimestamp(), null);
+		final DatumPK datumId = unassignedStream(d.getId().getKind(), d.getId().getObjectId(),
+				d.getId().getSourceId(), d.getId().getTimestamp());
 		given(delegateDao.persist(same(d))).willAnswer(_ -> {
 			log.info("Sleeping on delegateDao.store() to simulate slow performance...");
 			Thread.sleep(250);

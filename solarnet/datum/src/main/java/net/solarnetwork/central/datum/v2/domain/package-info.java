@@ -1,7 +1,7 @@
 /* ==================================================================
- * AuditDatumRollup.java - 16/11/2020 4:42:12 am
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,32 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork datum V2 domain.
+ */
+
+@NullMarked
 package net.solarnetwork.central.datum.v2.domain;
 
-import org.jspecify.annotations.Nullable;
-
-/**
- * Extension of {@link AuditDatum} to support aggregate rollups.
- *
- * @author matt
- * @version 1.0
- */
-public interface AuditDatumRollup extends AuditDatum {
-
-	/**
-	 * Get the node ID, when rolled up by node.
-	 *
-	 * @return the node ID
-	 */
-	@Nullable
-	Long getNodeId();
-
-	/**
-	 * Get the source ID, when rolled up by source.
-	 *
-	 * @return the source ID
-	 */
-	@Nullable
-	String getSourceId();
-
-}
+import org.jspecify.annotations.NullMarked;

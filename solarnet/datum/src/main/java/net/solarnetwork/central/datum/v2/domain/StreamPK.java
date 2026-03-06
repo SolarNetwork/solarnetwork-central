@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasePK;
 
 /**
@@ -51,11 +53,13 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 	 *        the stream ID
 	 * @param timestamp
 	 *        the time stamp
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public StreamPK(UUID streamId, Instant timestamp) {
 		super();
-		this.streamId = streamId;
-		this.timestamp = timestamp;
+		this.streamId = requireNonNullArgument(streamId, "streamId");
+		this.timestamp = requireNonNullArgument(timestamp, "timestamp");
 	}
 
 	@Override
@@ -82,7 +86,7 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 	 *         than, equal to, or greater than this object
 	 */
 	@SuppressWarnings("ReferenceEquality")
-	public int compareWith(StreamPK o) {
+	public int compareWith(@Nullable StreamPK o) {
 		if ( this == o ) {
 			return 0;
 		}
@@ -147,7 +151,7 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -162,7 +166,7 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 	 *
 	 * @return the stream ID
 	 */
-	public UUID getStreamId() {
+	public final UUID getStreamId() {
 		return streamId;
 	}
 
@@ -171,7 +175,7 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 	 *
 	 * @return the timestamp
 	 */
-	public Instant getTimestamp() {
+	public final Instant getTimestamp() {
 		return timestamp;
 	}
 

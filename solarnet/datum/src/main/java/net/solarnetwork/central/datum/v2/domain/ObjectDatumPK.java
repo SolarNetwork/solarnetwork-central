@@ -26,14 +26,16 @@ import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * Extension of {@link DatumPK} to act also as a {@link GeneralObjectDatumKey}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 
@@ -43,6 +45,27 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 	private final ObjectDatumKind kind;
 	private final Long objectId;
 	private final String sourceId;
+
+	/**
+	 * Create a new instance with an unassigned stream ID.
+	 *
+	 * @param kind
+	 *        the kind
+	 * @param objectId
+	 *        the object ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param timestamp
+	 *        the timestamp
+	 * @return the new instance
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @since 1.1
+	 */
+	public static ObjectDatumPK unassignedStream(ObjectDatumKind kind, Long objectId, String sourceId,
+			Instant timestamp) {
+		return new ObjectDatumPK(kind, objectId, sourceId, timestamp, StreamDatum.UNASSIGNED_STREAM_ID);
+	}
 
 	/**
 	 * Constructor.
@@ -57,6 +80,8 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 	 *        the timestamp
 	 * @param streamId
 	 *        the stream ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public ObjectDatumPK(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp,
 			UUID streamId) {
@@ -85,7 +110,7 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 	 */
 	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
-	public int compareTo(DatumPK o) {
+	public int compareTo(@Nullable DatumPK o) {
 		if ( o instanceof ObjectDatumPK id && objectId != null ) {
 			int result;
 			if ( objectId != id.objectId ) {
@@ -129,7 +154,7 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -141,17 +166,17 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 	}
 
 	@Override
-	public ObjectDatumKind getKind() {
+	public final ObjectDatumKind getKind() {
 		return kind;
 	}
 
 	@Override
-	public Long getObjectId() {
+	public final Long getObjectId() {
 		return objectId;
 	}
 
 	@Override
-	public String getSourceId() {
+	public final String getSourceId() {
 		return sourceId;
 	}
 

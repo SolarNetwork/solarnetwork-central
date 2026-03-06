@@ -61,10 +61,7 @@ public final class InsertDatum implements PreparedStatementCreator, SqlProvider 
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		buf.append("INSERT INTO solardatm.da_datm (stream_id");
-		if ( datum.getTimestamp() != null ) {
-			buf.append(", ts");
-		}
+		buf.append("INSERT INTO solardatm.da_datm (stream_id, ts");
 		if ( datum.getReceived() != null ) {
 			buf.append(", received");
 		}
@@ -91,9 +88,7 @@ public final class InsertDatum implements PreparedStatementCreator, SqlProvider 
 		PreparedStatement stmt = con.prepareStatement(getSql());
 		int p = 0;
 		stmt.setObject(++p, datum.getStreamId(), Types.OTHER);
-		if ( datum.getTimestamp() != null ) {
-			stmt.setTimestamp(++p, Timestamp.from(datum.getTimestamp()));
-		}
+		stmt.setTimestamp(++p, Timestamp.from(datum.getTimestamp()));
 		if ( datum.getReceived() != null ) {
 			stmt.setTimestamp(++p, Timestamp.from(datum.getReceived()));
 		}

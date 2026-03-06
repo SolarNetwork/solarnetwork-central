@@ -84,19 +84,6 @@ public class InsertDatumTests {
 	}
 
 	@Test
-	public void sql_insert_noTimestamp() {
-		// GIVEN
-		DatumEntity d = new DatumEntity(UUID.randomUUID(), null, Instant.now(), testProps());
-
-		// WHEN
-		String sql = new InsertDatum(d).getSql();
-
-		// THEN
-		assertThat("SQL matches", sql,
-				equalToTextResource("insert-datum-noTimestamp.sql", TestSqlResources.class));
-	}
-
-	@Test
 	public void sql_insert_noReceived() {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -108,19 +95,6 @@ public class InsertDatumTests {
 		// THEN
 		assertThat("SQL matches", sql,
 				equalToTextResource("insert-datum-noReceived.sql", TestSqlResources.class));
-	}
-
-	@Test
-	public void sql_insert_noTimestampOrReceived() {
-		// GIVEN
-		DatumEntity d = new DatumEntity(UUID.randomUUID(), null, null, testProps());
-
-		// WHEN
-		String sql = new InsertDatum(d).getSql();
-
-		// THEN
-		assertThat("SQL matches", sql,
-				equalToTextResource("insert-datum-noTimestampOrReceived.sql", TestSqlResources.class));
 	}
 
 	@Test

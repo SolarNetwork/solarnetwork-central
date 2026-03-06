@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.lang.String.valueOf;
+import static java.time.Instant.now;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
@@ -1094,7 +1095,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 				.map(AggregateDatum.class::cast).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(1));
 		DatumTestUtils.assertAggregateDatum("Running total", datumList.get(0),
-				new AggregateDatumEntity(streamId, null, Aggregation.RunningTotal,
+				new AggregateDatumEntity(streamId, now(), Aggregation.RunningTotal,
 						propertiesOf(decimalArray("1.31046979865771812081"), decimalArray("945"), null,
 								null),
 						statisticsOf(new BigDecimal[][] { decimalArray("13410", "1.1", "3.3") },
@@ -1128,7 +1129,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 				.map(AggregateDatum.class::cast).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(1));
 		DatumTestUtils.assertAggregateDatum("Running total", datumList.get(0),
-				new AggregateDatumEntity(streamId, null, Aggregation.RunningTotal,
+				new AggregateDatumEntity(streamId, now(), Aggregation.RunningTotal,
 						propertiesOf(decimalArray("1.2038910505836576"), decimalArray("202"), null,
 								null),
 						statisticsOf(new BigDecimal[][] { decimalArray("4626", "1.1", "3.3") },
@@ -1167,7 +1168,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		// stream 1 (order by node)
 		AggregateDatum d = datumList.get(0);
 		DatumTestUtils.assertAggregateDatum("Running total", d,
-				new AggregateDatumEntity(meta_1.getStreamId(), null, Aggregation.RunningTotal,
+				new AggregateDatumEntity(meta_1.getStreamId(), now(), Aggregation.RunningTotal,
 						propertiesOf(decimalArray("1.31046979865771812081"), decimalArray("945"), null,
 								null),
 						statisticsOf(new BigDecimal[][] { decimalArray("13410", "1.1", "3.3") },
@@ -1175,7 +1176,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		// stream 2
 		d = datumList.get(1);
 		DatumTestUtils.assertAggregateDatum("Running total", d,
-				new AggregateDatumEntity(meta_2.getStreamId(), null, Aggregation.RunningTotal,
+				new AggregateDatumEntity(meta_2.getStreamId(), now(), Aggregation.RunningTotal,
 						propertiesOf(decimalArray("10.314496644295302"), decimalArray("9450"), null,
 								null),
 						statisticsOf(new BigDecimal[][] { decimalArray("13410", "10.1", "30.3") },

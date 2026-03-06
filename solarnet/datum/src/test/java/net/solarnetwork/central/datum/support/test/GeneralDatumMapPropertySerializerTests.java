@@ -119,7 +119,7 @@ public class GeneralDatumMapPropertySerializerTests {
 		final ObjectDatum d = new ObjectDatum(
 				DatumId.nodeId(randomLong(), randomString(), Instant.now()),
 				new DatumSamples(Map.of("a", 1, "b", 2), Map.of("c", 3), Map.of("d", "four")),
-				UUID.randomUUID(), new DatumProperties());
+				randomLong(), UUID.randomUUID(), new DatumProperties());
 
 		// WHEN
 		final Object result = new GeneralDatumMapPropertySerializer().serialize(null, null, d);
