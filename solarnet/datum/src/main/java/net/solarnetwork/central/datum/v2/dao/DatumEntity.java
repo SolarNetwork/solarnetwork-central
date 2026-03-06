@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
@@ -69,7 +70,7 @@ public class DatumEntity extends BasicSerializableIdentity<DatumPK>
 	 * @throws IllegalArgumentException
 	 *         if any argument except {@code received} is {@code null}
 	 */
-	public DatumEntity(DatumPK id, Instant received, DatumProperties properties) {
+	public DatumEntity(DatumPK id, @Nullable Instant received, DatumProperties properties) {
 		super(requireNonNullArgument(id, "id"));
 		this.received = received;
 		this.properties = requireNonNullArgument(properties, "properties");
@@ -89,7 +90,8 @@ public class DatumEntity extends BasicSerializableIdentity<DatumPK>
 	 * @throws IllegalArgumentException
 	 *         if any argument except {@code received} is {@code null}
 	 */
-	public DatumEntity(UUID streamId, Instant timestamp, Instant received, DatumProperties properties) {
+	public DatumEntity(UUID streamId, Instant timestamp, @Nullable Instant received,
+			DatumProperties properties) {
 		this(new DatumPK(streamId, timestamp), received, properties);
 	}
 
@@ -132,11 +134,11 @@ public class DatumEntity extends BasicSerializableIdentity<DatumPK>
 
 	@Override
 	public boolean hasId() {
-		return getId().streamIdIsAssigned();
+		return nonnull(getId(), "ID").streamIdIsAssigned();
 	}
 
 	@Override
-	public Instant getCreated() {
+	public final Instant getCreated() {
 		return getTimestamp();
 	}
 
@@ -145,7 +147,7 @@ public class DatumEntity extends BasicSerializableIdentity<DatumPK>
 	 *
 	 * @return the received date
 	 */
-	public @Nullable Instant getReceived() {
+	public final @Nullable Instant getReceived() {
 		return received;
 	}
 
@@ -155,7 +157,7 @@ public class DatumEntity extends BasicSerializableIdentity<DatumPK>
 	 * @return the property values
 	 */
 	@Override
-	public DatumProperties getProperties() {
+	public final DatumProperties getProperties() {
 		return properties;
 	}
 

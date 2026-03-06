@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
@@ -43,7 +44,7 @@ public interface PropertyNameCriteria {
 	 * @return the property name, or {@code null} if not available
 	 */
 	@JsonIgnore
-	default String getPropertyName() {
+	default @Nullable String getPropertyName() {
 		String[] names = getPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
 	}
@@ -53,7 +54,7 @@ public interface PropertyNameCriteria {
 	 *
 	 * @return array of property names (may be {@code null})
 	 */
-	String[] getPropertyNames();
+	String @Nullable [] getPropertyNames();
 
 	/**
 	 * Get the first instantaneous property name.
@@ -64,11 +65,10 @@ public interface PropertyNameCriteria {
 	 * available.
 	 * </p>
 	 *
-	 * @return the instantaneous property name, or {@code null} if not
-	 *         available
+	 * @return the instantaneous property name, or {@code null} if not available
 	 */
 	@JsonIgnore
-	default String getInstantaneousPropertyName() {
+	default @Nullable String getInstantaneousPropertyName() {
 		String[] names = getInstantaneousPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
 	}
@@ -78,7 +78,7 @@ public interface PropertyNameCriteria {
 	 *
 	 * @return array of instantaneous property names (may be {@code null})
 	 */
-	String[] getInstantaneousPropertyNames();
+	String @Nullable [] getInstantaneousPropertyNames();
 
 	/**
 	 * Get the first accumulating property name.
@@ -89,11 +89,10 @@ public interface PropertyNameCriteria {
 	 * available.
 	 * </p>
 	 *
-	 * @return the accumulating property name, or {@code null} if not
-	 *         available
+	 * @return the accumulating property name, or {@code null} if not available
 	 */
 	@JsonIgnore
-	default String getAccumulatingPropertyName() {
+	default @Nullable String getAccumulatingPropertyName() {
 		String[] names = getAccumulatingPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
 	}
@@ -103,7 +102,7 @@ public interface PropertyNameCriteria {
 	 *
 	 * @return array of accumulating property names (may be {@code null})
 	 */
-	String[] getAccumulatingPropertyNames();
+	String @Nullable [] getAccumulatingPropertyNames();
 
 	/**
 	 * Get the first status property name.
@@ -117,7 +116,7 @@ public interface PropertyNameCriteria {
 	 * @return the status property name, or {@code null} if not available
 	 */
 	@JsonIgnore
-	default String getStatusPropertyName() {
+	default @Nullable String getStatusPropertyName() {
 		String[] names = getStatusPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
 	}
@@ -127,7 +126,7 @@ public interface PropertyNameCriteria {
 	 *
 	 * @return array of status property names (may be {@code null})
 	 */
-	String[] getStatusPropertyNames();
+	String @Nullable [] getStatusPropertyNames();
 
 	/**
 	 * Test if this filter has any property name criteria.

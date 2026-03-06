@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -32,6 +33,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
@@ -91,11 +93,13 @@ public class VirtualAggregateDatumEntityRowMapper
 	 *        the aggregation kind to assign
 	 * @param kind
 	 *        the object kind
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public VirtualAggregateDatumEntityRowMapper(Aggregation aggregation, ObjectDatumKind kind) {
 		super();
-		this.aggregation = aggregation;
-		this.kind = kind;
+		this.aggregation = requireNonNullArgument(aggregation, "aggregation");
+		this.kind = requireNonNullArgument(kind, "kind");
 		this.metadata = new LinkedHashMap<>(4);
 	}
 
@@ -130,12 +134,12 @@ public class VirtualAggregateDatumEntityRowMapper
 	}
 
 	@Override
-	public ObjectDatumStreamMetadata metadataForStreamId(UUID streamId) {
+	public @Nullable ObjectDatumStreamMetadata metadataForStreamId(UUID streamId) {
 		return metadata.get(streamId);
 	}
 
 	@Override
-	public ObjectDatumStreamMetadata metadataForObjectSource(Long objectId, String sourceId) {
+	public @Nullable ObjectDatumStreamMetadata metadataForObjectSource(Long objectId, String sourceId) {
 		for ( ObjectDatumStreamMetadata meta : metadata.values() ) {
 			if ( objectId.equals(meta.getObjectId()) && sourceId.equals(meta.getSourceId()) ) {
 				return meta;

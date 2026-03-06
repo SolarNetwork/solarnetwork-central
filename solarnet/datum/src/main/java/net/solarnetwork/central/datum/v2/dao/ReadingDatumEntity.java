@@ -161,7 +161,7 @@ public class ReadingDatumEntity extends AggregateDatumEntity
 	}
 
 	@Override
-	public @Nullable Instant getEndTimestamp() {
+	public final @Nullable Instant getEndTimestamp() {
 		return endTimestamp;
 	}
 

@@ -84,8 +84,9 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	public static DatumRecordCounts datumRecordCounts(Instant timestamp, @Nullable Long datumCount,
 			@Nullable Long datumHourlyCount, @Nullable Integer datumDailyCount,
 			@Nullable Integer datumMonthlyCount) {
-		return new AuditDatumEntity(StreamDatum.UNASSIGNED_STREAM_ID, timestamp, null, datumCount,
-				datumHourlyCount, datumDailyCount, datumMonthlyCount, null, null, null, null);
+		return new AuditDatumEntity(StreamDatum.UNASSIGNED_STREAM_ID, timestamp, Aggregation.None,
+				datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount, null, null, null,
+				null);
 	}
 
 	/**
@@ -327,7 +328,7 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	 *
 	 * @return the timestamp, or {@code null}
 	 */
-	public final Instant getTs() {
+	public final @Nullable Instant getTs() {
 		Instant ts = getTimestamp();
 		return (ts == null || Instant.EPOCH.compareTo(ts) == 0 ? null : ts);
 	}

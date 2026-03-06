@@ -316,7 +316,8 @@ public class JdbcDatumEntityDao
 		} else if ( filter.getReadingType() == DatumReadingType.CalculatedAt
 				|| filter.hasDatumRollupCriteria() ) {
 			return DatumEntityRowMapper.INSTANCE;
-		} else if ( filter.hasIdMappings() ) {
+		} else if ( filter.hasIdMappings() && filter.getAggregation() != null
+				&& filter.getAggregation() != Aggregation.None ) {
 			return (RowMapper) new VirtualAggregateDatumEntityRowMapper(filter.getAggregation(),
 					filter.getObjectKind() == ObjectDatumKind.Location ? ObjectDatumKind.Location
 							: ObjectDatumKind.Node);

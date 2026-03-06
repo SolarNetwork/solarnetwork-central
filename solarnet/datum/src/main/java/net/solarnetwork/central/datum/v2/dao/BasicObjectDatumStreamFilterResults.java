@@ -22,10 +22,11 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
@@ -55,41 +56,45 @@ public class BasicObjectDatumStreamFilterResults<M extends Identity<K>, K extend
 	 *        the starting offset
 	 * @param returnedResultCount
 	 *        the count of objects in {@code results}
+	 * @throws IllegalArgumentException
+	 *         if {@code streamMetadata} is {@code null}
 	 */
 	public BasicObjectDatumStreamFilterResults(Map<UUID, ObjectDatumStreamMetadata> streamMetadata,
 			Iterable<M> results, Long totalResults, long startingOffset, int returnedResultCount) {
 		super(results, totalResults, startingOffset, returnedResultCount);
-		this.streamMetadata = streamMetadata;
+		this.streamMetadata = requireNonNullArgument(streamMetadata, "streamMetadata");
 	}
 
 	/**
 	 * Constructor.
 	 *
 	 * <p>
-	 * This total results count will be set to {@code null}, the starting
-	 * offset to {@literal 0}, and the returned result count will be derived
-	 * from the number of items in {@code results}.
+	 * This total results count will be set to {@code null}, the starting offset
+	 * to {@literal 0}, and the returned result count will be derived from the
+	 * number of items in {@code results}.
 	 * </p>
 	 *
 	 * @param streamMetadata
 	 *        the stream metadata to associate with the results
 	 * @param results
 	 *        the results iterable
+	 * @throws IllegalArgumentException
+	 *         if {@code streamMetadata} is {@code null}
 	 */
 	public BasicObjectDatumStreamFilterResults(Map<UUID, ObjectDatumStreamMetadata> streamMetadata,
 			Iterable<M> results) {
 		super(results);
-		this.streamMetadata = streamMetadata;
+		this.streamMetadata = requireNonNullArgument(streamMetadata, "streamMetadata");
 	}
 
 	@Override
 	public Collection<UUID> metadataStreamIds() {
-		return (streamMetadata != null ? streamMetadata.keySet() : Collections.emptySet());
+		return streamMetadata.keySet();
 	}
 
 	@Override
-	public ObjectDatumStreamMetadata metadataForStreamId(UUID streamId) {
-		return (streamMetadata != null ? streamMetadata.get(streamId) : null);
+	public @Nullable ObjectDatumStreamMetadata metadataForStreamId(UUID streamId) {
+		return streamMetadata.get(streamId);
 	}
 
 }

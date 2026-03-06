@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Search criteria for streams.
@@ -43,13 +44,16 @@ public interface StreamCriteria {
 	 *
 	 * @return the datum stream ID, or {@code null} if not available
 	 */
-	UUID getStreamId();
+	default @Nullable UUID getStreamId() {
+		final var array = getStreamIds();
+		return (array != null && array.length > 0 ? array[0] : null);
+	}
 
 	/**
 	 * Get the datum stream IDs to filter by.
 	 *
 	 * @return the datum stream IDs
 	 */
-	UUID[] getStreamIds();
+	UUID @Nullable [] getStreamIds();
 
 }

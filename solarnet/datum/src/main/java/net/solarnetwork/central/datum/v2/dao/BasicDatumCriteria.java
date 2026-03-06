@@ -68,7 +68,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	private @Nullable DatumAuxiliaryType datumAuxiliaryType;
 
-	private @Nullable DatumRollupType[] datumRollupTypes;
+	private DatumRollupType @Nullable [] datumRollupTypes;
 
 	private @Nullable CombiningType combiningType;
 	private @Nullable Map<Long, Set<Long>> objectIdMappings;
@@ -144,6 +144,9 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 */
 	public void copyFrom(@Nullable ObjectStreamCriteria criteria) {
 		super.copyFrom(criteria);
+		if ( criteria == null ) {
+			return;
+		}
 		setStreamIds(criteria.getStreamIds());
 		setStartDate(criteria.getStartDate());
 		setEndDate(criteria.getEndDate());

@@ -354,7 +354,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		DatumAuxiliaryPK from = new DatumAuxiliaryPK(meta.getStreamId(), fromAux.getCreated(),
 				DatumAuxiliaryType.Reset);
 		DatumAuxiliary to = new DatumAuxiliaryEntity(from.getStreamId(),
-				from.getTimestamp().plusSeconds(60), from.getKind(), null, f, s, fromAux.getNotes(),
+				from.getTimestamp().plusSeconds(60), from.getKind(), now(), f, s, fromAux.getNotes(),
 				fromAux.getMeta());
 
 		boolean moved = moveDatumAuxiliary(log, jdbcTemplate, from, to);
@@ -396,7 +396,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		DatumAuxiliaryPK from = new DatumAuxiliaryPK(meta.getStreamId(), fromAux.getCreated(),
 				DatumAuxiliaryType.Reset);
 		DatumAuxiliary to = new DatumAuxiliaryEntity(meta2.getStreamId(), from.getTimestamp(),
-				from.getKind(), null, fromAux.getSamplesFinal(), fromAux.getSamplesStart(),
+				from.getKind(), now(), fromAux.getSamplesFinal(), fromAux.getSamplesStart(),
 				fromAux.getNotes(), fromAux.getMeta());
 
 		boolean moved = moveDatumAuxiliary(log, jdbcTemplate, from, to);

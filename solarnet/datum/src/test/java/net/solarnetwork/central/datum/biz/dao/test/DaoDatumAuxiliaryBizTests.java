@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.biz.dao.test;
 
+import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static org.easymock.EasyMock.capture;
@@ -129,7 +130,7 @@ public class DaoDatumAuxiliaryBizTests {
 
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
 		meta.putInfoValue("bim", "pow");
-		return new DatumAuxiliaryEntity(streamId, date, DatumAuxiliaryType.Reset, null, sf, ss, "Note.",
+		return new DatumAuxiliaryEntity(streamId, date, DatumAuxiliaryType.Reset, now(), sf, ss, "Note.",
 				meta);
 	}
 

@@ -152,7 +152,7 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 * @since 1.3
 	 */
 	public static AuditDatumEntityRollup monthlyAuditDatumRollup(@Nullable Long nodeId,
-			@Nullable String sourceId, @Nullable Instant timestamp, @Nullable Long datumCount,
+			@Nullable String sourceId, Instant timestamp, @Nullable Long datumCount,
 			@Nullable Long datumHourlyCount, @Nullable Integer datumDailyCount,
 			@Nullable Integer datumMonthlyCount, @Nullable Long datumPropertyCount,
 			@Nullable Long datumQueryCount, @Nullable Long datumPropertyUpdateCount,
@@ -291,12 +291,12 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	}
 
 	@Override
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
 	@Override
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return sourceId;
 	}
 

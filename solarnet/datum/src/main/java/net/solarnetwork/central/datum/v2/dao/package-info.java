@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumAuxiliaryCriteria.java - 28/11/2020 8:44:10 am
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,36 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork datum V2 DAO APIs.
+ */
+
+@NullMarked
 package net.solarnetwork.central.datum.v2.dao;
 
-import org.jspecify.annotations.Nullable;
-import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
-
-/**
- * Search criteria for datum auxiliary streams.
- *
- * @author matt
- * @version 1.1
- * @since 2.8
- */
-public interface DatumAuxiliaryCriteria extends ObjectStreamCriteria {
-
-	/**
-	 * Get an auxiliary type.
-	 *
-	 * @return the type
-	 */
-	@Nullable
-	DatumAuxiliaryType getDatumAuxiliaryType();
-
-	/**
-	 * Test if a datum auxiliary type criteria is available.
-	 *
-	 * @return {@code true} if a {@link DatumAuxiliaryType} is specified
-	 * @since 1.1
-	 */
-	default boolean hasDatumAuxiliaryTypeCriteria() {
-		return getDatumAuxiliaryType() != null;
-	}
-
-}
+import org.jspecify.annotations.NullMarked;

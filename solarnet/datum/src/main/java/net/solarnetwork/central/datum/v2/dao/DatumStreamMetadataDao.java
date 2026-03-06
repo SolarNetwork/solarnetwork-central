@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.ObjectSourcePK;
 import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -44,6 +45,7 @@ public interface DatumStreamMetadataDao {
 	 *        the search filter
 	 * @return the metadata, or {@code null} if not available
 	 */
+	@Nullable
 	ObjectDatumStreamMetadata findStreamMetadata(StreamMetadataCriteria filter);
 
 	/**
@@ -93,7 +95,7 @@ public interface DatumStreamMetadataDao {
 	 * @param json
 	 *        the new JSON, or {@code null} to remove
 	 */
-	void replaceJsonMeta(ObjectSourcePK id, String json);
+	void replaceJsonMeta(ObjectSourcePK id, @Nullable String json);
 
 	/**
 	 * Update the object and/or source IDs associated with a stream.
@@ -106,15 +108,16 @@ public interface DatumStreamMetadataDao {
 	 *        the object ID to set, or {@code null} to keep unchanged
 	 * @param sourceId
 	 *        the source ID to set, or {@code null} to keep unchanged
-	 * @return the updated stream metadata ID, or {@code null} if the
-	 *         metadata was not updated
+	 * @return the updated stream metadata ID, or {@code null} if the metadata
+	 *         was not updated
 	 * @throws IllegalArgumentException
 	 *         if either {@code kind} or {@code streamId} is {@code null} or
 	 *         both {@code objectId} and {@code sourceId} are {@code null}
 	 * @since 2.1
 	 */
-	ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
-			String sourceId);
+	@Nullable
+	ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId,
+			@Nullable Long objectId, @Nullable String sourceId);
 
 	/**
 	 * Update the object and/or source IDs associated with a stream.
@@ -134,23 +137,25 @@ public interface DatumStreamMetadataDao {
 	 * @param sourceId
 	 *        the source ID to set, or {@code null} to keep unchanged
 	 * @param instantaneousProperties
-	 *        the instantaneous property names to set, or {@code null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param accumulatingProperties
-	 *        the instantaneous property names to set, or {@code null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param statusProperties
-	 *        the instantaneous property names to set, or {@code null} to
-	 *        keep unchanged
-	 * @return the updated stream metadata, or {@code null} if the metadata
-	 *         was not updated
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
+	 * @return the updated stream metadata, or {@code null} if the metadata was
+	 *         not updated
 	 * @throws IllegalArgumentException
-	 *         if either {@code kind} or {@code streamId} is {@code null} or
-	 *         all other arguments are {@code null}
+	 *         if either {@code kind} or {@code streamId} is {@code null} or all
+	 *         other arguments are {@code null}
 	 * @since 2.3
 	 */
-	ObjectDatumStreamMetadata updateAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
-			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,
-			String[] statusProperties);
+	@Nullable
+	ObjectDatumStreamMetadata updateAttributes(ObjectDatumKind kind, UUID streamId,
+			@Nullable Long objectId, @Nullable String sourceId,
+			String @Nullable [] instantaneousProperties, String @Nullable [] accumulatingProperties,
+			String @Nullable [] statusProperties);
 
 }

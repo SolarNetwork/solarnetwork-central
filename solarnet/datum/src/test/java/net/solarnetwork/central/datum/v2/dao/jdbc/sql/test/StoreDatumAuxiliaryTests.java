@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
+import static java.time.Instant.now;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -71,7 +72,7 @@ public class StoreDatumAuxiliaryTests {
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
 		meta.putInfoValue("bim", "pow");
 		return new DatumAuxiliaryEntity(UUID.randomUUID(), Instant.now().truncatedTo(ChronoUnit.HOURS),
-				DatumAuxiliaryType.Reset, null, sf, ss, "Note.", meta);
+				DatumAuxiliaryType.Reset, now(), sf, ss, "Note.", meta);
 	}
 
 	@Test

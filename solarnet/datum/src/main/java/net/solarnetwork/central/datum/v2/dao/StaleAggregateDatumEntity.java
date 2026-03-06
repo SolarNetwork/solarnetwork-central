@@ -97,7 +97,7 @@ public class StaleAggregateDatumEntity extends BasicIdentity<StreamKindPK>
 	}
 
 	@Override
-	public Instant getCreated() {
+	public final Instant getCreated() {
 		return created;
 	}
 

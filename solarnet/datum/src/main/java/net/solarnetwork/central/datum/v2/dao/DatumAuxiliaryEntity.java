@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
@@ -51,8 +54,8 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 	private final Instant updated;
 	private final DatumSamples samplesFinal;
 	private final DatumSamples samplesStart;
-	private final String notes;
-	private final GeneralDatumMetadata metadata;
+	private final @Nullable String notes;
+	private final @Nullable GeneralDatumMetadata metadata;
 
 	/**
 	 * Constructor.
@@ -69,13 +72,16 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 	 *        the notes
 	 * @param metadata
 	 *        the metadata
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code notes} or {@code metadata} is
+	 *         {@code null}
 	 */
 	public DatumAuxiliaryEntity(DatumAuxiliaryPK id, Instant updated, DatumSamples samplesFinal,
-			DatumSamples samplesStart, String notes, GeneralDatumMetadata metadata) {
-		super(id);
-		this.updated = updated;
-		this.samplesFinal = samplesFinal;
-		this.samplesStart = samplesStart;
+			DatumSamples samplesStart, @Nullable String notes, @Nullable GeneralDatumMetadata metadata) {
+		super(requireNonNullArgument(id, "id"));
+		this.updated = requireNonNullArgument(updated, "updated");
+		this.samplesFinal = requireNonNullArgument(samplesFinal, "samplesFinal");
+		this.samplesStart = requireNonNullArgument(samplesStart, "samplesStart");
 		this.notes = notes;
 		this.metadata = metadata;
 	}
@@ -99,10 +105,13 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 	 *        the notes
 	 * @param metadata
 	 *        the metadata
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code notes} or {@code metadata} is
+	 *         {@code null}
 	 */
 	public DatumAuxiliaryEntity(UUID streamId, Instant timestamp, DatumAuxiliaryType kind,
-			Instant updated, DatumSamples samplesFinal, DatumSamples samplesStart, String notes,
-			GeneralDatumMetadata metadata) {
+			Instant updated, DatumSamples samplesFinal, DatumSamples samplesStart,
+			@Nullable String notes, @Nullable GeneralDatumMetadata metadata) {
 		this(new DatumAuxiliaryPK(streamId, timestamp, kind), updated, samplesFinal, samplesStart, notes,
 				metadata);
 	}
@@ -141,14 +150,7 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 	}
 
 	@Override
-	public boolean hasId() {
-		DatumAuxiliaryPK id = getId();
-		return (id != null && id.getStreamId() != null && id.getTimestamp() != null
-				&& id.getKind() != null);
-	}
-
-	@Override
-	public Instant getCreated() {
+	public final Instant getCreated() {
 		return getTimestamp();
 	}
 
@@ -157,7 +159,7 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 	 *
 	 * @return the updated date
 	 */
-	public Instant getUpdated() {
+	public final Instant getUpdated() {
 		return updated;
 	}
 
@@ -171,9 +173,8 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 	 * @return the stream ID
 	 */
 	@Override
-	public UUID getStreamId() {
-		DatumAuxiliaryPK id = getId();
-		return (id != null ? id.getStreamId() : null);
+	public final UUID getStreamId() {
+		return nonnull(getId(), "ID").getStreamId();
 	}
 
 	/**
@@ -187,9 +188,8 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 	 * @return the datum timestamp
 	 */
 	@Override
-	public Instant getTimestamp() {
-		DatumAuxiliaryPK id = getId();
-		return (id != null ? id.getTimestamp() : null);
+	public final Instant getTimestamp() {
+		return nonnull(getId(), "ID").getTimestamp();
 	}
 
 	/**
@@ -202,28 +202,27 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 	 * @return the datum auxiliary type
 	 */
 	@Override
-	public DatumAuxiliaryType getType() {
-		DatumAuxiliaryPK id = getId();
-		return (id != null ? id.getKind() : null);
+	public final DatumAuxiliaryType getType() {
+		return nonnull(getId(), "ID").getKind();
 	}
 
 	@Override
-	public DatumSamples getSamplesFinal() {
+	public final DatumSamples getSamplesFinal() {
 		return samplesFinal;
 	}
 
 	@Override
-	public DatumSamples getSamplesStart() {
+	public final DatumSamples getSamplesStart() {
 		return samplesStart;
 	}
 
 	@Override
-	public String getNotes() {
+	public final @Nullable String getNotes() {
 		return notes;
 	}
 
 	@Override
-	public GeneralDatumMetadata getMetadata() {
+	public final @Nullable GeneralDatumMetadata getMetadata() {
 		return metadata;
 	}
 

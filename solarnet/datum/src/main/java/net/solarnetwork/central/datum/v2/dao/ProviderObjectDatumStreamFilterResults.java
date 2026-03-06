@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
@@ -56,31 +58,35 @@ public class ProviderObjectDatumStreamFilterResults<M extends Identity<K>, K ext
 	 *        the starting offset
 	 * @param returnedResultCount
 	 *        the count of objects in {@code results}
+	 * @throws IllegalArgumentException
+	 *         if {@code metadataProvider} is {@code null}
 	 */
 	public ProviderObjectDatumStreamFilterResults(ObjectDatumStreamMetadataProvider metadataProvider,
 			Iterable<M> results, Long totalResults, long startingOffset, int returnedResultCount) {
 		super(results, totalResults, startingOffset, returnedResultCount);
-		this.metadataProvider = metadataProvider;
+		this.metadataProvider = requireNonNullArgument(metadataProvider, "metadataProvider");
 	}
 
 	/**
 	 * Constructor.
 	 *
 	 * <p>
-	 * This total results count will be set to {@code null}, the starting
-	 * offset to {@literal 0}, and the returned result count will be derived
-	 * from the number of items in {@code results}.
+	 * This total results count will be set to {@code null}, the starting offset
+	 * to {@literal 0}, and the returned result count will be derived from the
+	 * number of items in {@code results}.
 	 * </p>
 	 *
 	 * @param metadataProvider
 	 *        the stream metadata provider
 	 * @param results
 	 *        the results iterable
+	 * @throws IllegalArgumentException
+	 *         if {@code metadataProvider} is {@code null}
 	 */
 	public ProviderObjectDatumStreamFilterResults(ObjectDatumStreamMetadataProvider metadataProvider,
 			Iterable<M> results) {
 		super(results);
-		this.metadataProvider = metadataProvider;
+		this.metadataProvider = requireNonNullArgument(metadataProvider, "metadataProvider");
 	}
 
 	@Override
@@ -89,12 +95,12 @@ public class ProviderObjectDatumStreamFilterResults<M extends Identity<K>, K ext
 	}
 
 	@Override
-	public ObjectDatumStreamMetadata metadataForStreamId(UUID streamId) {
+	public @Nullable ObjectDatumStreamMetadata metadataForStreamId(UUID streamId) {
 		return metadataProvider.metadataForStreamId(streamId);
 	}
 
 	@Override
-	public ObjectDatumStreamMetadata metadataForObjectSource(Long objectId, String sourceId) {
+	public @Nullable ObjectDatumStreamMetadata metadataForObjectSource(Long objectId, String sourceId) {
 		return metadataProvider.metadataForObjectSource(objectId, sourceId);
 	}
 
