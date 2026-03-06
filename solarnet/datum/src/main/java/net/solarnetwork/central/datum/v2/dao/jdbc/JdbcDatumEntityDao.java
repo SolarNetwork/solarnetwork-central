@@ -191,7 +191,7 @@ public class JdbcDatumEntityDao
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @throws IllegalArgumentException
-	 *         if {@code jdbcTemplate} is {@literal null}
+	 *         if {@code jdbcTemplate} is {@code null}
 	 */
 	public JdbcDatumEntityDao(JdbcOperations jdbcTemplate) {
 		super();
@@ -1004,7 +1004,7 @@ public class JdbcDatumEntityDao
 	/**
 	 * Get the stream metadata cache.
 	 *
-	 * @return the cache, or {@literal null}
+	 * @return the cache, or {@code null}
 	 */
 	public Cache<UUID, ObjectDatumStreamMetadata> getStreamMetadataCache() {
 		return streamMetadataCache;

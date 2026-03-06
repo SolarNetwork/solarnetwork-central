@@ -63,7 +63,7 @@ public class HttpDestinationProperties {
 	/**
 	 * Get the method as an {@link HttpMethod} instance.
 	 *
-	 * @return the instance, never {@literal null}
+	 * @return the instance, never {@code null}
 	 */
 	public HttpMethod method() {
 		try {
@@ -178,7 +178,7 @@ public class HttpDestinationProperties {
 	 * </p>
 	 *
 	 * @param multipartFilenameTemplate
-	 *        the multipart filename template to use, or {@literal null} for a
+	 *        the multipart filename template to use, or {@code null} for a
 	 *        normal HTTP request
 	 */
 	public void setMultipartFilenameTemplate(String multipartFilenameTemplate) {

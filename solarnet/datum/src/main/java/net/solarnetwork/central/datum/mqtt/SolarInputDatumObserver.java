@@ -120,7 +120,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	 * @param datumStreamMetadataDao
 	 *        the stream metadata DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SolarInputDatumObserver(Executor executor, ObjectMapper objectMapper,
 			SolarNodeOwnershipDao nodeOwnershipDao, DatumStreamMetadataDao datumStreamMetadataDao) {
@@ -142,7 +142,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	 * @param datumStreamMetadataDao
 	 *        the stream metadata DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SolarInputDatumObserver(
 			ConcurrentMap<Long, CopyOnWriteArrayList<Consumer<ObjectDatum>>> observers,
@@ -440,7 +440,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	 * </p>
 	 *
 	 * @param nodeDatumTopicTemplate
-	 *        the template to set; if {@literal null} then
+	 *        the template to set; if {@code null} then
 	 *        {@link #DEFAULT_NODE_DATUM_TOPIC_TEMPLATE} will be set instead
 	 */
 	public void setNodeDatumTopicTemplate(String nodeDatumTopicTemplate) {
@@ -467,7 +467,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	 * </p>
 	 *
 	 * @param nodeDatumTopicRegex
-	 *        the nodeDatumTopicRegex to set; if {@literal null} then
+	 *        the nodeDatumTopicRegex to set; if {@code null} then
 	 *        {@link #DEFAULT_NODE_TOPIC_REGEX} will be set instead
 	 */
 	public void setNodeDatumTopicRegex(Pattern nodeDatumTopicRegex) {

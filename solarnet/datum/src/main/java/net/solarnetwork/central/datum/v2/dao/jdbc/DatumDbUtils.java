@@ -225,7 +225,7 @@ public final class DatumDbUtils {
 	 *        the list to extract from
 	 * @param clazz
 	 *        the class of elements to extract
-	 * @return the list, never {@literal null}
+	 * @return the list, never {@code null}
 	 */
 	public static <T> List<T> elementsOf(List<?> list, Class<T> clazz) {
 		return list.stream().filter(clazz::isInstance).map(clazz::cast).collect(Collectors.toList());
@@ -248,7 +248,7 @@ public final class DatumDbUtils {
 	 *        the name of the resource to load
 	 * @param clazz
 	 *        the class to load the resource from
-	 * @return the loaded data, never {@literal null}
+	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 */
@@ -275,7 +275,7 @@ public final class DatumDbUtils {
 	 *        the name of the resource to load
 	 * @param clazz
 	 *        the class to load the resource from
-	 * @return the loaded data, never {@literal null}
+	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 */
@@ -292,7 +292,7 @@ public final class DatumDbUtils {
 	 *        the name of the resource to load
 	 * @param clazz
 	 *        the class to load the resource from
-	 * @return the loaded data, never {@literal null}
+	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 * @see #loadJsonDatumAndAuxiliaryResource(String, Class, Consumer,
@@ -333,7 +333,7 @@ public final class DatumDbUtils {
 	 *        optional consumer to adjust datum with
 	 * @param auxMapper
 	 *        optional consumer to adjust auxiliary datum with
-	 * @return the loaded data, never {@literal null}
+	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 */
@@ -396,7 +396,7 @@ public final class DatumDbUtils {
 	 *        the class to load the resource from
 	 * @param metadataProvider
 	 *        the metadata provider
-	 * @return the loaded data, never {@literal null}
+	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 * @see DatumJsonUtils#parseAggregateDatum(JsonParser,
@@ -439,7 +439,7 @@ public final class DatumDbUtils {
 	 *        the metadata provider
 	 * @param mapper
 	 *        an optional function to map the parsed datum with
-	 * @return the loaded data, never {@literal null}
+	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 * @see DatumJsonUtils#parseAggregateDatum(JsonParser,
@@ -1574,7 +1574,7 @@ public final class DatumDbUtils {
 	 *        the JDBC accessor
 	 * @param streamId
 	 *        the stream ID to get metadata for
-	 * @return the metadata, or {@literal null}
+	 * @return the metadata, or {@code null}
 	 */
 	public static ObjectDatumStreamMetadata streamMetadata(JdbcOperations jdbcTemplate, UUID streamId) {
 		List<ObjectDatumStreamMetadata> results = jdbcTemplate.query(
@@ -1588,7 +1588,7 @@ public final class DatumDbUtils {
 	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<DatumAuxiliary> listDatumAuxiliary(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
@@ -1601,7 +1601,7 @@ public final class DatumDbUtils {
 	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<StaleAggregateDatum> listStaleAggregateDatum(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
@@ -1616,7 +1616,7 @@ public final class DatumDbUtils {
 	 *        the JDBC accessor
 	 * @param type
 	 *        the type of stale aggregate records to get
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<StaleAggregateDatum> listStaleAggregateDatum(JdbcOperations jdbcTemplate,
 			Aggregation type) {
@@ -1630,7 +1630,7 @@ public final class DatumDbUtils {
 	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<StaleAuditDatum> listStaleAuditDatum(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
@@ -1645,7 +1645,7 @@ public final class DatumDbUtils {
 	 *        the JDBC accessor
 	 * @param type
 	 *        the type of stale audit records to get
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<StaleAuditDatum> listStaleAuditDatum(JdbcOperations jdbcTemplate,
 			Aggregation type) {
@@ -1661,7 +1661,7 @@ public final class DatumDbUtils {
 	 *        the JDBC accessor
 	 * @param type
 	 *        the type of stale flux records to get
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<StaleFluxDatum> listStaleFluxDatum(JdbcOperations jdbcTemplate,
 			Aggregation type) {
@@ -1675,7 +1675,7 @@ public final class DatumDbUtils {
 	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<Datum> listDatum(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query("SELECT * FROM solardatm.da_datm ORDER BY stream_id, ts",
@@ -1687,7 +1687,7 @@ public final class DatumDbUtils {
 	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<ObjectDatumStreamMetadata> listNodeMetadata(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
@@ -1704,7 +1704,7 @@ public final class DatumDbUtils {
 	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<ObjectDatumStreamMetadata> listLocationMetadata(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
@@ -1723,7 +1723,7 @@ public final class DatumDbUtils {
 	 * @param kind
 	 *        the aggregation kind to load, e.g. {@code Hour}, {@code Day}, or
 	 *        {@code Month}
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<AggregateDatum> listAggregateDatum(JdbcOperations jdbcTemplate,
 			Aggregation kind) {
@@ -1758,7 +1758,7 @@ public final class DatumDbUtils {
 	 * @param kind
 	 *        the aggregation kind to load, e.g. {@code Hour}, {@code Day}, or
 	 *        {@code Month}
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<AuditDatum> listAuditDatum(JdbcOperations jdbcTemplate, Aggregation kind) {
 		String tableName;

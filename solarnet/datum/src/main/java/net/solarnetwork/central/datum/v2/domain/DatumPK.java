@@ -65,7 +65,7 @@ public class DatumPK extends StreamPK implements Serializable, Cloneable, Compar
 	 *
 	 * <p>
 	 * This compares stream ID values followed by timestamp values. Both are
-	 * ordered in ascending order with {@literal null} values ordered last.
+	 * ordered in ascending order with {@code null} values ordered last.
 	 * </p>
 	 *
 	 * {@inheritDoc}

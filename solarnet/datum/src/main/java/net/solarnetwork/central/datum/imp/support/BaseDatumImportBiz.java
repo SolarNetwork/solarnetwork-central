@@ -131,7 +131,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 *        the collection of services to search in
 	 * @param config
 	 *        the service configuration to find a matching service for
-	 * @return the found service, or {@literal null} if not found
+	 * @return the found service, or {@code null} if not found
 	 */
 	protected <T extends Identity<String>> T optionalService(List<T> collection,
 			IdentifiableConfiguration config) {
@@ -189,7 +189,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * @param workDirectory
 	 *        the directory to use
 	 * @throws IllegalArgumentException
-	 *         if {@code workDirectory} is {@literal null}
+	 *         if {@code workDirectory} is {@code null}
 	 */
 	public void setWorkDirectory(File workDirectory) {
 		this.workDirectory = requireNonNullArgument(workDirectory, "workDirectory");
@@ -212,7 +212,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 *        the path of the directory to set, or an empty string to use a
 	 *        default work directory
 	 * @throws IllegalArgumentException
-	 *         if {@code path} is {@literal null}
+	 *         if {@code path} is {@code null}
 	 */
 	public void setWorkPath(String path) {
 		if ( path == null ) {

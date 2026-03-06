@@ -215,10 +215,10 @@ public class GeneralNodeDatumAuxiliary
 	 * Get the final {@link DatumSamples} object as a JSON string.
 	 *
 	 * <p>
-	 * This method will ignore {@literal null} values.
+	 * This method will ignore {@code null} values.
 	 * </p>
 	 *
-	 * @return a JSON encoded string, never {@literal null}
+	 * @return a JSON encoded string, never {@code null}
 	 */
 	@SerializeIgnore
 	@JsonIgnore
@@ -276,7 +276,7 @@ public class GeneralNodeDatumAuxiliary
 	/**
 	 * Convenience method for final {@link DatumSamples#getSampleData()}.
 	 *
-	 * @return the sample data, or {@literal null} if none available
+	 * @return the sample data, or {@code null} if none available
 	 */
 	@SerializeIgnore
 	@JsonIgnore
@@ -289,10 +289,10 @@ public class GeneralNodeDatumAuxiliary
 	 * Get the start {@link DatumSamples} object as a JSON string.
 	 *
 	 * <p>
-	 * This method will ignore {@literal null} values.
+	 * This method will ignore {@code null} values.
 	 * </p>
 	 *
-	 * @return a JSON encoded string, never {@literal null}
+	 * @return a JSON encoded string, never {@code null}
 	 */
 	@SerializeIgnore
 	@JsonIgnore
@@ -350,7 +350,7 @@ public class GeneralNodeDatumAuxiliary
 	/**
 	 * Convenience method for final {@link DatumSamples#getSampleData()}.
 	 *
-	 * @return the sample data, or {@literal null} if none available
+	 * @return the sample data, or {@code null} if none available
 	 */
 	@JsonIgnore
 	@SerializeIgnore

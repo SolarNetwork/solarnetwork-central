@@ -39,7 +39,7 @@ public interface GeneralNodeDatumAuxiliaryFilterMatch
 	/**
 	 * Get all available starting sample data as a Map.
 	 *
-	 * @return the sample data as a Map, or {@literal null} if no sample data
+	 * @return the sample data as a Map, or {@code null} if no sample data
 	 *         available
 	 */
 	@Nullable
@@ -48,7 +48,7 @@ public interface GeneralNodeDatumAuxiliaryFilterMatch
 	/**
 	 * Get all available final sample data as a Map.
 	 *
-	 * @return the sample data as a Map, or {@literal null} if no sample data
+	 * @return the sample data as a Map, or {@code null} if no sample data
 	 *         available
 	 */
 	@Nullable

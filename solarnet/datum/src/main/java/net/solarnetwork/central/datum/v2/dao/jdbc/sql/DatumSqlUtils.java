@@ -1612,10 +1612,10 @@ public final class DatumSqlUtils {
 	 *        if provided, then an extra clause to add after each local date
 	 *        parameter placeholder
 	 * @param startRoundingMode
-	 *        the rounding mode to apply to the start date, or {@literal null}
+	 *        the rounding mode to apply to the start date, or {@code null}
 	 *        for none
 	 * @param endRoundingMode
-	 *        the rounding mode to apply to the end date, or {@literal null}
+	 *        the rounding mode to apply to the end date, or {@code null}
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
@@ -1650,7 +1650,7 @@ public final class DatumSqlUtils {
 	 *
 	 * <p>
 	 * The output is along the lines of {@literal date_trunc('day', ?)}. If no
-	 * rounding mode is needed (because {@code roundingMode} is {@literal null}
+	 * rounding mode is needed (because {@code roundingMode} is {@code null}
 	 * or {@literal UNNECESSARY}) then a simple {@literal ?} placeholder will be
 	 * generated.
 	 * </p>
@@ -1702,7 +1702,7 @@ public final class DatumSqlUtils {
 	 *        the interval count
 	 * @return the SQL clause
 	 * @throws IllegalArgumentException
-	 *         if {@code aggregation} is {@literal null} or not supported
+	 *         if {@code aggregation} is {@code null} or not supported
 	 */
 	public static String sqlInterval(Aggregation aggregation, int count) {
 		if ( aggregation == null ) {
@@ -1733,7 +1733,7 @@ public final class DatumSqlUtils {
 	 *        the aggregation to get the type for
 	 * @return the type
 	 * @throws IllegalArgumentException
-	 *         if {@code aggregation} is {@literal null} or not supported
+	 *         if {@code aggregation} is {@code null} or not supported
 	 */
 	public static String sqlDateRoundingInterval(Aggregation aggregation) {
 		return switch (aggregation) {
@@ -1838,7 +1838,7 @@ public final class DatumSqlUtils {
 	 *        the filter
 	 * @param sortKeyMapping
 	 *        the sort mapping to use if sorts are included in the filter
-	 * @return the cache key, as a string, or {@literal null} if one cannot be
+	 * @return the cache key, as a string, or {@code null} if one cannot be
 	 *         generated
 	 */
 	public static String streamMetadataCacheKey(StreamMetadataCriteria filter,

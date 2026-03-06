@@ -55,7 +55,7 @@ public final class SelectDatumAuxiliary
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectDatumAuxiliary(DatumAuxiliaryCriteria filter) {
 		super();

@@ -51,7 +51,7 @@ public class ProviderObjectDatumStreamFilterResults<M extends Identity<K>, K ext
 	 * @param results
 	 *        the results iterable
 	 * @param totalResults
-	 *        the total available results, or {@literal null}
+	 *        the total available results, or {@code null}
 	 * @param startingOffset
 	 *        the starting offset
 	 * @param returnedResultCount
@@ -67,7 +67,7 @@ public class ProviderObjectDatumStreamFilterResults<M extends Identity<K>, K ext
 	 * Constructor.
 	 *
 	 * <p>
-	 * This total results count will be set to {@literal null}, the starting
+	 * This total results count will be set to {@code null}, the starting
 	 * offset to {@literal 0}, and the returned result count will be derived
 	 * from the number of items in {@code results}.
 	 * </p>

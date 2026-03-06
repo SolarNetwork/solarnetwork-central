@@ -153,7 +153,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *
 	 * @param row
 	 *        the row data
-	 * @return the parsed object, or {@literal null} to skip row and continue
+	 * @return the parsed object, or {@code null} to skip row and continue
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
@@ -166,7 +166,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *        the row of column values
 	 * @param col
 	 *        the 1-based column number to get
-	 * @return the column value, or {@literal null} if the column isn't
+	 * @return the column value, or {@code null} if the column isn't
 	 *         available
 	 */
 	protected String getColumnValue(CsvRecord row, Integer col) {
@@ -185,7 +185,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *        the 1-based column numbers to get
 	 * @param delimiter
 	 *        a delimiter to join the columns with
-	 * @return the columns combined value, or {@literal null} if the columns
+	 * @return the columns combined value, or {@code null} if the columns
 	 *         aren't available
 	 */
 	protected String getColumnsValue(CsvRecord row, List<Integer> cols, String delimiter) {
@@ -220,7 +220,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *        the data row
 	 * @param col
 	 *        the column to parse as a JSON map
-	 * @return the map, or {@literal null} if the column is not available or the
+	 * @return the map, or {@code null} if the column is not available or the
 	 *         resulting map would be empty
 	 */
 	protected Map<String, Object> parseMap(CsvRecord row, Integer col) {
@@ -242,7 +242,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *        the data row
 	 * @param col
 	 *        the column to parse as a JSON number map
-	 * @return the map, or {@literal null} if the column is not available or the
+	 * @return the map, or {@code null} if the column is not available or the
 	 *         resulting map would be empty
 	 */
 	protected Map<String, Number> parseNumberMap(CsvRecord row, Integer col) {
@@ -268,7 +268,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *        the data row
 	 * @param col
 	 *        the column to parse as a JSON array
-	 * @return the list, or {@literal null} if the column is not available or
+	 * @return the list, or {@code null} if the column is not available or
 	 *         the resulting list would be empty
 	 */
 	protected List<String> parseList(CsvRecord row, Integer col) {
@@ -296,7 +296,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *        the data row
 	 * @param col
 	 *        the column to parse as a JSON array
-	 * @return the list, or {@literal null} if the column is not available or
+	 * @return the list, or {@code null} if the column is not available or
 	 *         the resulting list would be empty
 	 */
 	protected Set<String> parseSet(CsvRecord row, Integer col) {

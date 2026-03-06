@@ -48,7 +48,7 @@ public interface DatumImportBiz {
 	/**
 	 * Get a list of all available input format services.
 	 *
-	 * @return the available services, never {@literal null}
+	 * @return the available services, never {@code null}
 	 */
 	Iterable<DatumImportInputFormatService> availableInputFormatServices();
 
@@ -90,7 +90,7 @@ public interface DatumImportBiz {
 	 * @param request
 	 *        the request details
 	 * @return a sample of datum extracted from the import request data, never
-	 *         {@literal null}
+	 *         {@code null}
 	 */
 	Future<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> previewStagedImportRequest(
 			DatumImportPreviewRequest request);
@@ -102,7 +102,7 @@ public interface DatumImportBiz {
 	 *        the user ID that owns the job
 	 * @param jobId
 	 *        the ID of the job to get
-	 * @return the job status, or {@literal null} if not available
+	 * @return the job status, or {@code null} if not available
 	 */
 	DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId);
 
@@ -120,7 +120,7 @@ public interface DatumImportBiz {
 	 *        the ID of the job to get
 	 * @param configuration
 	 *        the configuration to save with the job
-	 * @return the job status, or {@literal null} if not available
+	 * @return the job status, or {@code null} if not available
 	 */
 	DatumImportStatus updateDatumImportJobConfigurationForUser(Long userId, String jobId,
 			Configuration configuration);
@@ -131,9 +131,9 @@ public interface DatumImportBiz {
 	 * @param userId
 	 *        the ID of the user to find the job statuses for
 	 * @param states
-	 *        the specific states to limit the results to, or {@literal null}
+	 *        the specific states to limit the results to, or {@code null}
 	 *        for all states
-	 * @return the job statuses, never {@literal null}
+	 * @return the job statuses, never {@code null}
 	 */
 	Collection<DatumImportStatus> datumImportJobStatusesForUser(Long userId,
 			Set<DatumImportState> states);
@@ -149,9 +149,9 @@ public interface DatumImportBiz {
 	 *        the state to change the job to
 	 * @param expectedStates
 	 *        a set of states that must include the job's current state in order
-	 *        to change it to {@code desiredState}, or {@literal null} if the
+	 *        to change it to {@code desiredState}, or {@code null} if the
 	 *        current state of the job does not matter
-	 * @return the job status, or {@literal null} if not available
+	 * @return the job status, or {@code null} if not available
 	 */
 	DatumImportStatus updateDatumImportJobStateForUser(Long userId, String jobId,
 			DatumImportState desiredState, Set<DatumImportState> expectedStates);
@@ -169,7 +169,7 @@ public interface DatumImportBiz {
 	 *        the set of job IDs to delete
 	 * @return the job statuses specified by {@code jobIds} that were <b>not</b>
 	 *         removed, i.e. because of their current execution state, never
-	 *         {@literal null}
+	 *         {@code null}
 	 */
 	Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId, Set<String> jobIds);
 
@@ -184,7 +184,7 @@ public interface DatumImportBiz {
 	 *        if {@code true} then also delete claimed or executing jobs
 	 * @return the job statuses specified by {@code jobIds} that were <b>not</b>
 	 *         removed, i.e. because of their current execution state, never
-	 *         {@literal null}
+	 *         {@code null}
 	 * @since 1.2
 	 */
 	Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId, Set<String> jobIds,

@@ -110,7 +110,7 @@ public class BasicOutputConfiguration extends BasicIdentifiableConfiguration
 	 * Get the compression type key value.
 	 *
 	 * @return the compression type; if {@link #getCompressionType()} is
-	 *         {@literal null} this will return the key value for
+	 *         {@code null} this will return the key value for
 	 *         {@link OutputCompressionType#None}
 	 */
 	public char getCompressionTypeKey() {

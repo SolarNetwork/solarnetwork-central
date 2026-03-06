@@ -62,7 +62,7 @@ public interface DatumMaintenanceBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 * @since 1.1
 	 */
 	FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK> findStaleAggregateDatum(

@@ -125,8 +125,8 @@ public final class DatumUtils {
 	 *
 	 * @param filter
 	 *        the filter to convert
-	 * @return the criteria, or {@literal null} if {@code filter} is
-	 *         {@literal null}
+	 * @return the criteria, or {@code null} if {@code filter} is
+	 *         {@code null}
 	 */
 	public static @Nullable BasicDatumCriteria criteriaFromFilter(@Nullable Filter filter) {
 		return criteriaFromFilter(filter, null, null, null);
@@ -143,8 +143,8 @@ public final class DatumUtils {
 	 *        the optional offset
 	 * @param max
 	 *        the optional max
-	 * @return the criteria, or {@literal null} if {@code filter} is
-	 *         {@literal null}
+	 * @return the criteria, or {@code null} if {@code filter} is
+	 *         {@code null}
 	 */
 	public static @Nullable BasicDatumCriteria criteriaFromFilter(@Nullable Filter filter,
 			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
@@ -339,8 +339,8 @@ public final class DatumUtils {
 	 *
 	 * @param location
 	 *        the location
-	 * @return the criteria, or {@literal null} if {@code filter} is
-	 *         {@literal null} or has only empty values
+	 * @return the criteria, or {@code null} if {@code filter} is
+	 *         {@code null} or has only empty values
 	 */
 	public static @Nullable SimpleLocation locationFromFilter(@Nullable Location location) {
 		if ( location == null ) {
@@ -396,8 +396,8 @@ public final class DatumUtils {
 	 *
 	 * @param criteria
 	 *        the criteria to convert
-	 * @return the basic datum criteria, or {@literal null} if {@code criteria}
-	 *         is {@literal null}; if {@code criteria} is already a
+	 * @return the basic datum criteria, or {@code null} if {@code criteria}
+	 *         is {@code null}; if {@code criteria} is already a
 	 *         {@link BasicDatumCriteria} instance it will be returned directly
 	 * @since 2.1
 	 */
@@ -441,7 +441,7 @@ public final class DatumUtils {
 	 *        the criteria to extract the type from; if instance of
 	 *        {@link DatumFilter} then the "type" value will be converted to an
 	 *        aggregation
-	 * @return the aggregation, or {@literal null} if none
+	 * @return the aggregation, or {@code null} if none
 	 */
 	public static @Nullable Aggregation aggregationForType(@Nullable Filter criteria) {
 		Aggregation result = null;
@@ -613,8 +613,8 @@ public final class DatumUtils {
 	 *        the datum to convert
 	 * @param meta
 	 *        the datum metadata
-	 * @return the general datum, or {@literal null} if {@code datum} is
-	 *         {@literal null} or {@link ObjectDatumStreamMetadata#getKind()} is
+	 * @return the general datum, or {@code null} if {@code datum} is
+	 *         {@code null} or {@link ObjectDatumStreamMetadata#getKind()} is
 	 *         not {@code Node}
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
@@ -701,8 +701,8 @@ public final class DatumUtils {
 	 *
 	 * @param meta
 	 *        the metadata to convert
-	 * @return the general metadata, or {@literal null} if {@code meta} is
-	 *         {@literal null}
+	 * @return the general metadata, or {@code null} if {@code meta} is
+	 *         {@code null}
 	 */
 	public static @Nullable GeneralNodeDatumMetadataMatch toGeneralNodeDatumMetadataMatch(
 			@Nullable ObjectDatumStreamMetadata meta) {
@@ -724,8 +724,8 @@ public final class DatumUtils {
 	 *        the datum to convert
 	 * @param meta
 	 *        the metadata
-	 * @return the general datum auxiliary, or {@literal null} if either
-	 *         {@code datum} or {@code meta} is {@literal null}
+	 * @return the general datum auxiliary, or {@code null} if either
+	 *         {@code datum} or {@code meta} is {@code null}
 	 */
 	public static @Nullable GeneralNodeDatumAuxiliary toGeneralNodeDatumAuxiliary(
 			@Nullable DatumAuxiliary datum, @Nullable ObjectDatumStreamMetadata meta) {
@@ -786,8 +786,8 @@ public final class DatumUtils {
 	 *        the datum to convert
 	 * @param meta
 	 *        the datum metadata
-	 * @return the general datum, or {@literal null} if {@code datum} is
-	 *         {@literal null} or {@link ObjectDatumStreamMetadata#getKind()} is
+	 * @return the general datum, or {@code null} if {@code datum} is
+	 *         {@code null} or {@link ObjectDatumStreamMetadata#getKind()} is
 	 *         not {@code Location}
 	 */
 	public static @Nullable ReportingGeneralLocationDatum toGeneralLocationDatum(@Nullable Datum datum,
@@ -835,8 +835,8 @@ public final class DatumUtils {
 	 *
 	 * @param meta
 	 *        the metadata to convert
-	 * @return the general metadata, or {@literal null} if {@code meta} is
-	 *         {@literal null}
+	 * @return the general metadata, or {@code null} if {@code meta} is
+	 *         {@code null}
 	 */
 	public static @Nullable GeneralLocationDatumMetadataMatch toGeneralLocationDatumMetadataMatch(
 			@Nullable ObjectDatumStreamMetadata meta) {
@@ -916,7 +916,7 @@ public final class DatumUtils {
 	 *        the object ID
 	 * @param sourceId
 	 *        the source ID
-	 * @return the UUID, or {@literal null} if any argument is {@literal null}
+	 * @return the UUID, or {@code null} if any argument is {@code null}
 	 */
 	public static @Nullable UUID virtualStreamId(@Nullable Long objectId, @Nullable String sourceId) {
 		if ( objectId == null || sourceId == null ) {
@@ -997,8 +997,8 @@ public final class DatumUtils {
 	 *
 	 * @param counts
 	 *        the counts to convert
-	 * @return the legacy instace, or {@literal null} if {@code counts} is
-	 *         {@literal null}
+	 * @return the legacy instace, or {@code null} if {@code counts} is
+	 *         {@code null}
 	 */
 	public static net.solarnetwork.central.datum.domain.@Nullable DatumRecordCounts toRecordCounts(
 			@Nullable DatumRecordCounts counts) {
@@ -1023,8 +1023,8 @@ public final class DatumUtils {
 	 *
 	 * @param meta
 	 *        the metadata to convert
-	 * @return the converted instance, or {@literal null} if {@code meta} is
-	 *         {@literal null}
+	 * @return the converted instance, or {@code null} if {@code meta} is
+	 *         {@code null}
 	 * @since 1.7
 	 */
 	public static @Nullable BasicObjectDatumStreamMetadata toCommonObjectDatumStreamMetadata(
@@ -1045,8 +1045,8 @@ public final class DatumUtils {
 	 *
 	 * @param results
 	 *        the results to conver
-	 * @return the converted results, or {@literal null} if {@code results} is
-	 *         {@literal null}
+	 * @return the converted results, or {@code null} if {@code results} is
+	 *         {@code null}
 	 * @since 2.0
 	 */
 	public static @Nullable FilterResults<AuditDatumRecordCounts, GeneralNodeDatumPK> toAuditDatumRecordCountsFilterResults(

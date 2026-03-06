@@ -37,10 +37,10 @@ public interface PropertyNameCriteria {
 	 *
 	 * <p>
 	 * This returns the first available property name from the
-	 * {@link #getPropertyNames()} array, or {@literal null} if not available.
+	 * {@link #getPropertyNames()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the property name, or {@literal null} if not available
+	 * @return the property name, or {@code null} if not available
 	 */
 	@JsonIgnore
 	default String getPropertyName() {
@@ -51,7 +51,7 @@ public interface PropertyNameCriteria {
 	/**
 	 * Get an array of property names.
 	 *
-	 * @return array of property names (may be {@literal null})
+	 * @return array of property names (may be {@code null})
 	 */
 	String[] getPropertyNames();
 
@@ -60,11 +60,11 @@ public interface PropertyNameCriteria {
 	 *
 	 * <p>
 	 * This returns the first available instantaneous property name from the
-	 * {@link #getInstantaneousPropertyNames()} array, or {@literal null} if not
+	 * {@link #getInstantaneousPropertyNames()} array, or {@code null} if not
 	 * available.
 	 * </p>
 	 *
-	 * @return the instantaneous property name, or {@literal null} if not
+	 * @return the instantaneous property name, or {@code null} if not
 	 *         available
 	 */
 	@JsonIgnore
@@ -76,7 +76,7 @@ public interface PropertyNameCriteria {
 	/**
 	 * Get an array of instantaneous property names.
 	 *
-	 * @return array of instantaneous property names (may be {@literal null})
+	 * @return array of instantaneous property names (may be {@code null})
 	 */
 	String[] getInstantaneousPropertyNames();
 
@@ -85,11 +85,11 @@ public interface PropertyNameCriteria {
 	 *
 	 * <p>
 	 * This returns the first available accumulating property name from the
-	 * {@link #getAccumulatingPropertyNames()} array, or {@literal null} if not
+	 * {@link #getAccumulatingPropertyNames()} array, or {@code null} if not
 	 * available.
 	 * </p>
 	 *
-	 * @return the accumulating property name, or {@literal null} if not
+	 * @return the accumulating property name, or {@code null} if not
 	 *         available
 	 */
 	@JsonIgnore
@@ -101,7 +101,7 @@ public interface PropertyNameCriteria {
 	/**
 	 * Get an array of accumulating property names.
 	 *
-	 * @return array of accumulating property names (may be {@literal null})
+	 * @return array of accumulating property names (may be {@code null})
 	 */
 	String[] getAccumulatingPropertyNames();
 
@@ -110,11 +110,11 @@ public interface PropertyNameCriteria {
 	 *
 	 * <p>
 	 * This returns the first available status property name from the
-	 * {@link #getStatusPropertyNames()} array, or {@literal null} if not
+	 * {@link #getStatusPropertyNames()} array, or {@code null} if not
 	 * available.
 	 * </p>
 	 *
-	 * @return the status property name, or {@literal null} if not available
+	 * @return the status property name, or {@code null} if not available
 	 */
 	@JsonIgnore
 	default String getStatusPropertyName() {
@@ -125,7 +125,7 @@ public interface PropertyNameCriteria {
 	/**
 	 * Get an array of status property names.
 	 *
-	 * @return array of status property names (may be {@literal null})
+	 * @return array of status property names (may be {@code null})
 	 */
 	String[] getStatusPropertyNames();
 

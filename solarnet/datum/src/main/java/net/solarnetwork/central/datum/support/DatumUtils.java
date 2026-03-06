@@ -113,7 +113,7 @@ public final class DatumUtils {
 	 * Filter a set of node sources using a source ID path pattern.
 	 *
 	 * <p>
-	 * If any arguments are {@literal null}, or {@code pathMatcher} is not a
+	 * If any arguments are {@code null}, or {@code pathMatcher} is not a
 	 * path pattern, then {@code sources} will be returned without filtering.
 	 * </p>
 	 *
@@ -140,7 +140,7 @@ public final class DatumUtils {
 	 * Filter a set of sources using a source ID path pattern.
 	 *
 	 * <p>
-	 * If any arguments are {@literal null}, or {@code pathMatcher} is not a
+	 * If any arguments are {@code null}, or {@code pathMatcher} is not a
 	 * path pattern, then {@code sources} will be returned without filtering.
 	 * </p>
 	 *
@@ -169,8 +169,8 @@ public final class DatumUtils {
 	 *
 	 * @param datum
 	 *        the datum to convert
-	 * @return the converted datum, or {@literal null} if {@code datum} is
-	 *         {@literal null}
+	 * @return the converted datum, or {@code null} if {@code datum} is
+	 *         {@code null}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static GeneralObjectDatum<?> convertGeneralDatum(Datum datum) {

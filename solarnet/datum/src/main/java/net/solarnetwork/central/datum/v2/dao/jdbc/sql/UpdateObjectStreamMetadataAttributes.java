@@ -60,12 +60,12 @@ public final class UpdateObjectStreamMetadataAttributes
 	 * @param streamId
 	 *        the ID of the stream metadata to update
 	 * @param objectId
-	 *        the object ID to set, or {@literal null} to leave unchanged
+	 *        the object ID to set, or {@code null} to leave unchanged
 	 * @param sourceId
-	 *        the source ID to set, or {@literal null} to leave unchanged
+	 *        the source ID to set, or {@code null} to leave unchanged
 	 * @throws IllegalArgumentException
-	 *         if either {@code streamId} or {@code kind} is {@literal null}, or
-	 *         both {@code objectId} and {@code sourceId} are {@literal null}
+	 *         if either {@code streamId} or {@code kind} is {@code null}, or
+	 *         both {@code objectId} and {@code sourceId} are {@code null}
 	 */
 	public UpdateObjectStreamMetadataAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
 			String sourceId) {
@@ -80,21 +80,21 @@ public final class UpdateObjectStreamMetadataAttributes
 	 * @param streamId
 	 *        the ID of the stream metadata to update
 	 * @param objectId
-	 *        the object ID to set, or {@literal null} to leave unchanged
+	 *        the object ID to set, or {@code null} to leave unchanged
 	 * @param sourceId
-	 *        the source ID to set, or {@literal null} to leave unchanged
+	 *        the source ID to set, or {@code null} to leave unchanged
 	 * @param instantaneousProperties
-	 *        the instantaneous property names to set, or {@literal null} to
+	 *        the instantaneous property names to set, or {@code null} to
 	 *        keep unchanged
 	 * @param accumulatingProperties
-	 *        the instantaneous property names to set, or {@literal null} to
+	 *        the instantaneous property names to set, or {@code null} to
 	 *        keep unchanged
 	 * @param statusProperties
-	 *        the instantaneous property names to set, or {@literal null} to
+	 *        the instantaneous property names to set, or {@code null} to
 	 *        keep unchanged
 	 * @throws IllegalArgumentException
-	 *         if either {@code streamId} or {@code kind} is {@literal null}, or
-	 *         all other arguments are {@literal null}
+	 *         if either {@code streamId} or {@code kind} is {@code null}, or
+	 *         all other arguments are {@code null}
 	 */
 	public UpdateObjectStreamMetadataAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
 			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,

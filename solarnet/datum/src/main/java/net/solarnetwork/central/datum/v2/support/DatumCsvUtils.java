@@ -95,7 +95,7 @@ public final class DatumCsvUtils {
 	 *        the kind to treat the results as
 	 * @param zone
 	 *        a time zone to use, if the data does not include one
-	 * @return the list of metadata, never {@literal null}
+	 * @return the list of metadata, never {@code null}
 	 * @throws IOException
 	 *         if any parsing error occurs
 	 */
@@ -206,7 +206,7 @@ public final class DatumCsvUtils {
 	 *        the input to parse as CSV
 	 * @param aggregation
 	 *        the aggregate type
-	 * @return the list of aggregate datum, never {@literal null}
+	 * @return the list of aggregate datum, never {@code null}
 	 * @throws IOException
 	 *         if any parsing error occurs
 	 */
@@ -256,9 +256,9 @@ public final class DatumCsvUtils {
 	 * @param metaProvider
 	 *        the metadata provider
 	 * @param formatter
-	 *        the formatter; if {@literal null} then a standard ISO 8601
+	 *        the formatter; if {@code null} then a standard ISO 8601
 	 *        timestamp will be assumed
-	 * @return the iterator, never {@literal null}
+	 * @return the iterator, never {@code null}
 	 * @since 2.0
 	 */
 	public static CloseableIterator<Datum> datumResourceIterator(Class<?> clazz, String resource,

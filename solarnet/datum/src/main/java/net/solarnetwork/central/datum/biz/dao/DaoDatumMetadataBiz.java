@@ -103,7 +103,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	 * @param objectMapper
 	 *        the mapper to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoDatumMetadataBiz(DatumStreamMetadataDao metaDao, LocationRequestDao locationRequestDao,
 			ObjectMapper objectMapper) {

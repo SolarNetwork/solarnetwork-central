@@ -68,7 +68,7 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	/**
 	 * Get the state of the export job.
 	 * 
-	 * @return the state, never {@literal null}
+	 * @return the state, never {@code null}
 	 */
 	DatumExportState getJobState();
 
@@ -89,7 +89,7 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	/**
 	 * Create a job status changed event out of this instance.
 	 * 
-	 * @return the event, never {@literal null}
+	 * @return the event, never {@code null}
 	 * @see #createJobStatusChangedEvent(DatumExportStatus)
 	 */
 	default AppEvent asJobStatusChangedEvent() {
@@ -101,7 +101,7 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 * 
 	 * @param result
 	 *        a specific result to use
-	 * @return the event, never {@literal null}
+	 * @return the event, never {@code null}
 	 * @see #createJobStatusChangedEvent(DatumExportStatus, DatumExportResult)
 	 */
 	default AppEvent asJobStatusChangedEvent(DatumExportResult result) {
@@ -118,7 +118,7 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 * 
 	 * @param status
 	 *        the status instance to create the event for
-	 * @return the event, never {@literal null}
+	 * @return the event, never {@code null}
 	 */
 	static AppEvent createJobStatusChangedEvent(DatumExportStatus status) {
 		DatumExportResult result = null;
@@ -142,7 +142,7 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 * 
 	 * @param status
 	 *        the status instance to create the event for
-	 * @return the event, never {@literal null}
+	 * @return the event, never {@code null}
 	 */
 	static AppEvent createJobStatusChangedEvent(DatumExportStatus status, DatumExportResult result) {
 		Map<String, Object> props = new HashMap<>(4);

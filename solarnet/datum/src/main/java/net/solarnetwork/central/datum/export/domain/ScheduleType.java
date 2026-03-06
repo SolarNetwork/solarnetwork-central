@@ -88,7 +88,7 @@ public enum ScheduleType {
 	 * given this schedule type.
 	 * </p>
 	 *
-	 * @return the property, never {@literal null}
+	 * @return the property, never {@code null}
 	 */
 	public ChronoUnit temporalUnit() {
 		return switch (this) {
@@ -110,11 +110,11 @@ public enum ScheduleType {
 	 *
 	 * <p>
 	 * Note for the {@code Adhoc} type {@code date} will be returned, or the
-	 * current time if {@literal null}.
+	 * current time if {@code null}.
 	 * </p>
 	 *
 	 * @param date
-	 *        the date to get an export date for, or {@literal null} for the
+	 *        the date to get an export date for, or {@code null} for the
 	 *        current date
 	 * @return the export date
 	 */
@@ -139,7 +139,7 @@ public enum ScheduleType {
 	 * Get the "next" export date for a given date.
 	 *
 	 * @param date
-	 *        the date to get the "next" export date for, or {@literal null} for
+	 *        the date to get the "next" export date for, or {@code null} for
 	 *        the current date
 	 * @return the "next" export date
 	 * @see #offsetExportDate(ZonedDateTime, int)
@@ -152,7 +152,7 @@ public enum ScheduleType {
 	 * Get the "previous" export date for a given date.
 	 *
 	 * @param date
-	 *        the date to get the "previous" export date for, or {@literal null}
+	 *        the date to get the "previous" export date for, or {@code null}
 	 *        for the current date
 	 * @return the "previous" export date
 	 * @see #offsetExportDate(ZonedDateTime, int)
@@ -170,7 +170,7 @@ public enum ScheduleType {
 	 * </p>
 	 *
 	 * @param date
-	 *        the date to get the offset export date for, or {@literal null} for
+	 *        the date to get the offset export date for, or {@code null} for
 	 *        the current date
 	 * @param offset
 	 *        the schedule period offset

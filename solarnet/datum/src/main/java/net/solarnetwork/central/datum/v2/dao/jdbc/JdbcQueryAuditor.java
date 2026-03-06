@@ -140,7 +140,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * @param nodeSourceCounters
 	 *        the map to use for tracking counts for node datum
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public JdbcQueryAuditor(DataSource dataSource,
 			ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters) {
@@ -159,7 +159,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * @param nodeSourceCounters
 	 *        the map to use for tracking counts for node datum
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 * @since 2.1
 	 */
 	public JdbcQueryAuditor(Clock clock, DataSource dataSource,

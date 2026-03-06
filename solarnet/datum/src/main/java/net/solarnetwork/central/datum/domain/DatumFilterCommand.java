@@ -580,7 +580,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	/**
 	 * Get the aggregation key.
 	 *
-	 * @return the aggregation key, never {@literal null}
+	 * @return the aggregation key, never {@code null}
 	 * @since 1.9
 	 */
 	public final String getAggregationKey() {
@@ -635,7 +635,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	/**
 	 * Get the aggregation key.
 	 *
-	 * @return the aggregation key, never {@literal null}
+	 * @return the aggregation key, never {@code null}
 	 * @since 1.15
 	 */
 	public final String getPartialAggregationKey() {
@@ -733,7 +733,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	/**
 	 * Get the combining type key.
 	 *
-	 * @return the combining type key, or {@literal null} if not defined
+	 * @return the combining type key, or {@code null} if not defined
 	 * @since 1.10
 	 */
 	public final @Nullable String getCombiningTypeKey() {
@@ -746,7 +746,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *
 	 * <p>
 	 * If {@literal key} is not a supported {@link CombiningType} key value,
-	 * then {@literal null} will be used.
+	 * then {@code null} will be used.
 	 * </p>
 	 *
 	 * @param key
@@ -938,7 +938,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	/**
 	 * Get the datum rollups as key values.
 	 *
-	 * @return the datum rollup type key values, or {@literal null} if not
+	 * @return the datum rollup type key values, or {@code null} if not
 	 *         defined
 	 * @since 1.11
 	 */

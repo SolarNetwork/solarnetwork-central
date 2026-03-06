@@ -69,7 +69,7 @@ public class GeneralLocationDatumComponents extends GeneralLocationDatum {
 	}
 
 	/**
-	 * This implementation returns {@literal null} so the data is not unwrapped
+	 * This implementation returns {@code null} so the data is not unwrapped
 	 * during serialization.
 	 */
 	@Override

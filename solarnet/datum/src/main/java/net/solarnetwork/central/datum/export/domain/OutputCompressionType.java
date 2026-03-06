@@ -67,7 +67,7 @@ public enum OutputCompressionType {
 	 * Get the filename extension.
 	 *
 	 * @return the extension, which may be an empty string but never
-	 *         {@literal null}
+	 *         {@code null}
 	 */
 	public String getFilenameExtension() {
 		return ext;

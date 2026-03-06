@@ -77,7 +77,7 @@ public class S3DatumExportDestinationService extends BaseDatumExportDestinationS
 	 * @param executorService
 	 *        the executor service
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public S3DatumExportDestinationService(ExecutorService executorService) {
 		super("net.solarnetwork.central.datum.export.dest.s3.S3DatumExportDestinationService");

@@ -81,7 +81,7 @@ public final class ObjectDatum extends GeneralDatum implements StreamDatum, User
 	 *        metadata, and instead use an empty instance
 	 * @return the datum
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	@SuppressWarnings("unchecked")
 	public static ObjectDatum forDatum(net.solarnetwork.domain.datum.Datum datum, Long userId,
@@ -121,7 +121,7 @@ public final class ObjectDatum extends GeneralDatum implements StreamDatum, User
 	 *        the metadata
 	 * @return the datum
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static ObjectDatum forStreamDatum(net.solarnetwork.domain.datum.StreamDatum datum,
 			Long userId, DatumId id, ObjectDatumStreamMetadata meta) {
@@ -145,7 +145,7 @@ public final class ObjectDatum extends GeneralDatum implements StreamDatum, User
 	 * @param properties
 	 *        the properties
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ObjectDatum(DatumId id, DatumSamples samples, Long userId, UUID streamId,
 			DatumProperties properties) {

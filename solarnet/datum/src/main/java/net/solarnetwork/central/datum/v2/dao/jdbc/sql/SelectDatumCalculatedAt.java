@@ -58,7 +58,7 @@ public final class SelectDatumCalculatedAt implements PreparedStatementCreator, 
 	 * @param filter
 	 *        the filter
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectDatumCalculatedAt(DatumCriteria filter) {
 		super();

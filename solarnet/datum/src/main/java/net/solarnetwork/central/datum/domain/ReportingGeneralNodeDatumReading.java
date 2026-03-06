@@ -122,10 +122,10 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	 * Get the final {@link DatumSamples} object as a JSON string.
 	 *
 	 * <p>
-	 * This method will ignore {@literal null} values.
+	 * This method will ignore {@code null} values.
 	 * </p>
 	 *
-	 * @return a JSON encoded string, never {@literal null}
+	 * @return a JSON encoded string, never {@code null}
 	 */
 	@SerializeIgnore
 	@JsonIgnore
@@ -184,7 +184,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	/**
 	 * Convenience method for final {@link DatumSamples#getSampleData()}.
 	 *
-	 * @return the sample data, or {@literal null} if none available
+	 * @return the sample data, or {@code null} if none available
 	 */
 	@Override
 	@SerializeIgnore
@@ -198,10 +198,10 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	 * Get the start {@link DatumSamples} object as a JSON string.
 	 *
 	 * <p>
-	 * This method will ignore {@literal null} values.
+	 * This method will ignore {@code null} values.
 	 * </p>
 	 *
-	 * @return a JSON encoded string, never {@literal null}
+	 * @return a JSON encoded string, never {@code null}
 	 */
 	@SerializeIgnore
 	@JsonIgnore
@@ -260,7 +260,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	/**
 	 * Convenience method for final {@link DatumSamples#getSampleData()}.
 	 *
-	 * @return the sample data, or {@literal null} if none available
+	 * @return the sample data, or {@code null} if none available
 	 */
 	@Override
 	@JsonIgnore

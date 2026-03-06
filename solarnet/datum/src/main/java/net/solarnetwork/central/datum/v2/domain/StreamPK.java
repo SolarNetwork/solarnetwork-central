@@ -72,7 +72,7 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 	 *
 	 * <p>
 	 * This compares stream ID values followed by timestamp values. Both are
-	 * ordered in ascending order with {@literal null} values ordered last.
+	 * ordered in ascending order with {@code null} values ordered last.
 	 * </p>
 	 *
 	 * <p>

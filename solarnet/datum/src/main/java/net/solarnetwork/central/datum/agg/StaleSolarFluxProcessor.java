@@ -84,7 +84,7 @@ public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 	 * @param publisher
 	 *        the processor to publish the stale SolarFlux data
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public StaleSolarFluxProcessor(JdbcOperations jdbcOps, DatumEntityDao datumDao,
 			DatumProcessor publisher) {

@@ -53,7 +53,7 @@ public final class SelectStreamMetadata implements PreparedStatementCreator, Sql
 	 * @param filter
 	 *        the filter
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectStreamMetadata(StreamMetadataCriteria filter) {
 		this(filter, null, null);
@@ -65,11 +65,11 @@ public final class SelectStreamMetadata implements PreparedStatementCreator, Sql
 	 * @param filter
 	 *        the filter
 	 * @param cacheTtl
-	 *        a cache time-to-live value, or {@literal null} for none
+	 *        a cache time-to-live value, or {@code null} for none
 	 * @param cacheTti
-	 *        a cache time-to-idle value, or {@literal null} for none
+	 *        a cache time-to-idle value, or {@code null} for none
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectStreamMetadata(StreamMetadataCriteria filter, Long cacheTtl, Long cacheTti) {
 		super();

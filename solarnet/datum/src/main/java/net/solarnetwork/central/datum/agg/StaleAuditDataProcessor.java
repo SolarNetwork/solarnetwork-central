@@ -45,7 +45,7 @@ public class StaleAuditDataProcessor extends TieredStoredProcedureStaleRecordPro
 	 * @param id
 	 *        the job ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public StaleAuditDataProcessor(JdbcOperations jdbcOps, String id) {
 		super(jdbcOps, "Audit", id, "stale audit data");

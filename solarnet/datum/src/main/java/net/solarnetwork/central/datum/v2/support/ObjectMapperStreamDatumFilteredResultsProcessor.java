@@ -131,7 +131,7 @@ import tools.jackson.databind.SerializationContext;
  * millisecond epoch form</li>
  * <li>4-element arrays with the property value, count, minimum, and maximum,
  * for each instantaneous property value (elements in order of the
- * {@code meta.i} array); values may be {@literal null} if no instantaneous
+ * {@code meta.i} array); values may be {@code null} if no instantaneous
  * property data is available</li>
  * <li>3-element arrays with the accumulating property value, starting value,
  * ending value, for each accumulating property value (elements in order of the
@@ -185,7 +185,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 * @param provider
 	 *        the provider to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ObjectMapperStreamDatumFilteredResultsProcessor(JsonGenerator generator,
 			SerializationContext provider, MimeType mimeType) {
@@ -206,7 +206,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 *        {@code null} to allow all properties
 	 * @throws IllegalArgumentException
 	 *         if any argument except {@code allowedPropertyNames} is
-	 *         {@literal null}
+	 *         {@code null}
 	 * @since 2.1
 	 */
 	public ObjectMapperStreamDatumFilteredResultsProcessor(JsonGenerator generator,
@@ -432,7 +432,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 * <p>
 	 * This method does not write any starting or ending JSON array, it only
 	 * writes the values. It always writes {@code count} values, regardless of
-	 * the length of {@code array}. JSON {@literal null} values will be written
+	 * the length of {@code array}. JSON {@code null} values will be written
 	 * for any missing {@code array} values.
 	 * </p>
 	 *
@@ -476,7 +476,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 * <p>
 	 * This method does not write any starting or ending JSON array, it only
 	 * writes the values. It always writes {@code count} values, regardless of
-	 * the length of {@code array}. JSON {@literal null} values will be written
+	 * the length of {@code array}. JSON {@code null} values will be written
 	 * for any missing {@code array} values.
 	 * </p>
 	 *

@@ -69,7 +69,7 @@ public class GeneralNodeDatumComponents extends GeneralNodeDatum {
 	}
 
 	/**
-	 * This implementation returns {@literal null} so the data is not unwrapped
+	 * This implementation returns {@code null} so the data is not unwrapped
 	 * during serialization.
 	 */
 	@Override

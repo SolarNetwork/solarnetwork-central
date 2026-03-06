@@ -128,7 +128,7 @@ public class BasicNodeSourcePK extends BasePK implements Serializable, Cloneable
 	 * <li>sourceId</li>
 	 * </ol>
 	 *
-	 * {@literal null} values will be sorted before non-{@literal null} values.
+	 * {@code null} values will be sorted before non-{@code null} values.
 	 *
 	 * @param o
 	 *        the object to compare to

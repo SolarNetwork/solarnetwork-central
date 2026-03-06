@@ -72,7 +72,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	 * @param id
 	 *        the job ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public StaleDatumStreamProcessor(JdbcOperations jdbcOps, String id) {
 		super(jdbcOps, "Datum", id, "stale datum");

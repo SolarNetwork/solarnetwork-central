@@ -40,7 +40,7 @@ public interface DatumAppEventAcceptor {
 	 * @param event
 	 *        the event to accept
 	 * @throws IllegalArgumentException
-	 *         if {@code event} is {@literal null}
+	 *         if {@code event} is {@code null}
 	 */
 	void offerDatumEvent(DatumAppEvent event);
 

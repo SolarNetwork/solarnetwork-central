@@ -213,7 +213,7 @@ public interface DatumMetadataBiz {
 	 *
 	 * @param filter
 	 *        the search filter
-	 * @return the matching results, never {@literal null}
+	 * @return the matching results, never {@code null}
 	 * @since 1.3
 	 */
 	Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectStreamCriteria filter);
@@ -230,7 +230,7 @@ public interface DatumMetadataBiz {
 	 *
 	 * @param filter
 	 *        the search filter
-	 * @return the matching results, never {@literal null}
+	 * @return the matching results, never {@code null}
 	 * @since 2.0
 	 */
 	Set<ObjectDatumStreamMetadataId> findDatumStreamMetadataIds(ObjectStreamCriteria filter);
@@ -248,7 +248,7 @@ public interface DatumMetadataBiz {
 	 *        optional starting offset
 	 * @param max
 	 *        optional max number of results
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 * @since 2.1
 	 */
 	net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(Long userId,
@@ -262,7 +262,7 @@ public interface DatumMetadataBiz {
 	 *        the user ID to get the request for
 	 * @param id
 	 *        the request ID
-	 * @return the matching entity, or {@literal null} if not found
+	 * @return the matching entity, or {@code null} if not found
 	 * @since 2.1
 	 */
 	LocationRequest getLocationRequest(Long userId, Long id);

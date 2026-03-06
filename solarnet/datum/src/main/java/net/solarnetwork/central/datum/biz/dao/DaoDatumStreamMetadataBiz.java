@@ -59,7 +59,7 @@ public class DaoDatumStreamMetadataBiz implements DatumStreamMetadataBiz {
 	 * @param metaDao
 	 *        the metadata DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoDatumStreamMetadataBiz(DatumStreamMetadataDao metaDao) {
 		super();

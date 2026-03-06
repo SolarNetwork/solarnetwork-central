@@ -55,7 +55,7 @@ public interface DatumExportBiz {
 	 *
 	 * @param jobId
 	 *        the identifier of the job to get the status of
-	 * @return the status, or {@literal null} if status not found
+	 * @return the status, or {@code null} if status not found
 	 */
 	DatumExportStatus statusForJob(String jobId);
 

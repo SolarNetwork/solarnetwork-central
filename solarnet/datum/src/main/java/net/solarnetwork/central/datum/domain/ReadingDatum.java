@@ -49,7 +49,7 @@ public interface ReadingDatum {
 	/**
 	 * Get all available "start" reading sample data as a Map.
 	 *
-	 * @return the sample data as a Map, or {@literal null} if no final sample
+	 * @return the sample data as a Map, or {@code null} if no final sample
 	 *         data available
 	 */
 	@Nullable
@@ -58,7 +58,7 @@ public interface ReadingDatum {
 	/**
 	 * Get all available "final" reading sample data as a Map.
 	 *
-	 * @return the sample data as a Map, or {@literal null} if no final sample
+	 * @return the sample data as a Map, or {@code null} if no final sample
 	 *         data available
 	 */
 	@Nullable

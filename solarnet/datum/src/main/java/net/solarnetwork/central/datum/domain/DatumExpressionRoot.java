@@ -130,7 +130,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * Create a copy with a given datum value.
 	 *
 	 * <p>
-	 * The samples and parameters values will be set to {@literal null}.
+	 * The samples and parameters values will be set to {@code null}.
 	 * </p>
 	 *
 	 * @param datum
@@ -433,7 +433,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *
 	 * @param sourceIdPattern
 	 *        an optional Ant-style source ID pattern to filter by
-	 * @return the matching datum, never {@literal null}
+	 * @return the matching datum, never {@code null}
 	 * @see #offsetMatching(String, int)
 	 */
 	public Collection<DatumExpressionRoot> latestMatching(@Nullable String sourceIdPattern) {
@@ -470,7 +470,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        an optional Ant-style source ID pattern to filter by
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, never {@literal null}
+	 * @return the matching datum, never {@code null}
 	 * @see #offsetMatching(String, int, Instant)
 	 * @since 1.1
 	 */
@@ -509,7 +509,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @param offset
 	 *        the offset from the latest, {@code 0} being the latest and
 	 *        {@code 1} the next later, and so on
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
 	public @Nullable DatumExpressionRoot offset(@Nullable String sourceId, int offset) {
 		if ( datumStreamsAccessor == null || sourceId == null ) {
@@ -549,7 +549,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        latest and {@code 1} the next later, and so on
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 * @since 1.1
 	 */
 	public @Nullable DatumExpressionRoot offset(@Nullable String sourceId, int offset,
@@ -590,7 +590,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @param offset
 	 *        the offset from the latest, {@code 0} being the latest and
 	 *        {@code 1} the next later, and so on
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
 	public @Nullable DatumExpressionRoot offset(int offset) {
 		Datum me = getDatum();
@@ -627,7 +627,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        latest and {@code 1} the next later, and so on
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 * @since 1.1
 	 */
 	public @Nullable DatumExpressionRoot offset(int offset, Instant timestamp) {
@@ -668,7 +668,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *
 	 * @param sourceId
 	 *        the source ID to find
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 * @see #offset(String, int)
 	 */
 	public @Nullable DatumExpressionRoot latest(String sourceId) {
@@ -702,7 +702,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        the source ID to find
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 * @see #offset(String, int, Instant)
 	 * @since 1.1
 	 */
@@ -737,7 +737,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        the source ID to find the datum for
 	 * @param timestamp
 	 *        the timestamp to find the datum for
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 * @since 1.6
 	 */
 	public @Nullable DatumExpressionRoot datumAt(String sourceId, Instant timestamp) {
@@ -774,7 +774,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        an optional Ant-style source ID pattern to filter by
 	 * @param timestamp
 	 *        the timestamp to find the datum for
-	 * @return the matching datum, never {@literal null}
+	 * @return the matching datum, never {@code null}
 	 * @since 1.6
 	 */
 	public Collection<DatumExpressionRoot> datumAtMatching(@Nullable String sourceIdPattern,
@@ -797,7 +797,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        an optional Ant-style source ID pattern to filter by
 	 * @param timestamp
 	 *        the timestamp to find the datum for
-	 * @return the matching datum, never {@literal null}
+	 * @return the matching datum, never {@code null}
 	 * @since 1.6
 	 */
 	public boolean hasDatumAtMatching(@Nullable String sourceIdPattern, Instant timestamp) {
@@ -892,7 +892,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *
 	 * @param uri
 	 *        the URL to request
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 * @since 1.3
 	 */
 	public Result<Map<String, Object>> httpGet(String uri) {
@@ -907,7 +907,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        the URL to request
 	 * @param parameters
 	 *        optional query parameters to include in the URL
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 * @since 1.3
 	 */
 	public Result<Map<String, Object>> httpGet(String uri, @Nullable Map<String, ?> parameters) {
@@ -924,7 +924,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        optional query parameters to include in the URL
 	 * @param headers
 	 *        optional HTTP headers to include
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 * @since 1.3
 	 */
 	public Result<Map<String, Object>> httpGet(String uri, @Nullable Map<String, ?> parameters,

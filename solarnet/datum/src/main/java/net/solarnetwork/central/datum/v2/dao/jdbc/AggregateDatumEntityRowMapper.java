@@ -128,7 +128,7 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 	 *        the kind of aggregation
 	 * @param readingMode
 	 *        {@literal true} to create {@link ReadingDatumEntity} instances
-	 * @return the mapper, never {@literal null}
+	 * @return the mapper, never {@code null}
 	 */
 	public static RowMapper<AggregateDatum> mapperForAggregate(Aggregation kind, boolean readingMode) {
 		RowMapper<AggregateDatum> mapper = switch (kind) {

@@ -45,7 +45,7 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	/**
 	 * Get a domain-specific ID related to the object kind.
 	 *
-	 * @return the object ID, or {@literal null}
+	 * @return the object ID, or {@code null}
 	 */
 	@Nullable
 	Long getObjectId();

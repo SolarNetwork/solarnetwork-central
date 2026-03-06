@@ -76,8 +76,8 @@ public class CombiningConfig {
 	 *
 	 * @param filter
 	 *        the criteria
-	 * @return the config, or {@literal null} if {@code filter} is
-	 *         {@literal null} or has no combining configuration
+	 * @return the config, or {@code null} if {@code filter} is
+	 *         {@code null} or has no combining configuration
 	 */
 	public static CombiningConfig configFromCriteria(ObjectStreamCriteria filter) {
 		if ( filter == null || !filter.hasIdMappings() ) {
@@ -132,7 +132,7 @@ public class CombiningConfig {
 	 *        the expected IDs configuration type
 	 * @param key
 	 *        the configuration key to get
-	 * @return the configuration, or {@literal null} if not available
+	 * @return the configuration, or {@code null} if not available
 	 * @throws ClassCastException
 	 *         if the value cannot be cast to {@code T}
 	 */

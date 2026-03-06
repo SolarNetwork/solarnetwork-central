@@ -102,7 +102,7 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 	 * <p>
 	 * If {@code objectId} is populated, then this compares {@code objectId},
 	 * {@code sourceId}, and then {@code timestamp} values, all in ascending
-	 * order with {@literal null} values ordered first. Otherwise, the super
+	 * order with {@code null} values ordered first. Otherwise, the super
 	 * implementation is invoked.
 	 * </p>
 	 *

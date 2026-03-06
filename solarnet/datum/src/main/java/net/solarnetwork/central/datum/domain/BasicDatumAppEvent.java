@@ -55,14 +55,14 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 	 * @param topic
 	 *        the event topic
 	 * @param eventProperties
-	 *        the event properties, or {@literal null}
+	 *        the event properties, or {@code null}
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
 	 *        the source ID
 	 * @throws IllegalArgumentException
 	 *         if {@code topic} or {@code nodeId} or {@code sourceId} are
-	 *         {@literal null} or empty
+	 *         {@code null} or empty
 	 */
 	public BasicDatumAppEvent(String topic, @Nullable Map<String, ?> eventProperties, Long nodeId,
 			String sourceId) {
@@ -75,17 +75,17 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 	 * @param topic
 	 *        the event topic
 	 * @param created
-	 *        the event creation date, or {@literal null} to use the current
+	 *        the event creation date, or {@code null} to use the current
 	 *        time
 	 * @param eventProperties
-	 *        the event properties, or {@literal null}
+	 *        the event properties, or {@code null}
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
 	 *        the source ID
 	 * @throws IllegalArgumentException
 	 *         if {@code topic} or {@code nodeId} or {@code sourceId} are
-	 *         {@literal null} or empty
+	 *         {@code null} or empty
 	 */
 	public BasicDatumAppEvent(String topic, @Nullable Instant created,
 			@Nullable Map<String, ?> eventProperties, Long nodeId, String sourceId) {

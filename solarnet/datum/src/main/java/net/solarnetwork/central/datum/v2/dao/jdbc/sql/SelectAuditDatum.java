@@ -76,7 +76,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectAuditDatum(AuditDatumCriteria filter) {
 		this(filter, aggregation(filter));
@@ -90,7 +90,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	 * @param aggregation
 	 *        the aggregation
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	protected SelectAuditDatum(AuditDatumCriteria filter, Aggregation aggregation) {
 		super();

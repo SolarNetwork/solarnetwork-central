@@ -94,7 +94,7 @@ public class AggregateUpdatedEventInfo {
 	/**
 	 * Get this object as an event property map.
 	 *
-	 * @return the event property map, never {@literal null}
+	 * @return the event property map, never {@code null}
 	 */
 	public Map<String, Object> toEventProperties() {
 		Map<String, Object> m = new HashMap<>(2);
@@ -132,7 +132,7 @@ public class AggregateUpdatedEventInfo {
 	/**
 	 * Get the aggregation key value.
 	 *
-	 * @return the aggregation key, never {@literal null}
+	 * @return the aggregation key, never {@code null}
 	 */
 	public String getAggregationKey() {
 		Aggregation a = getAggregation();

@@ -125,7 +125,7 @@ public class ZonedStreamsTimeRange {
 	/**
 	 * Get a {@link ZoneId} for the configured time zone ID.
 	 *
-	 * @return the zone, or {@literal null} if one cannot be determined
+	 * @return the zone, or {@code null} if one cannot be determined
 	 */
 	public final ZoneId zoneId() {
 		try {

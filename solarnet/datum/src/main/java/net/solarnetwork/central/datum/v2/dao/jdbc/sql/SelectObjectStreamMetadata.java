@@ -63,7 +63,7 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 	 * @param filter
 	 *        the filter
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectObjectStreamMetadata(ObjectStreamCriteria filter) {
 		this(filter, filter.getObjectKind() != null ? filter.getObjectKind() : ObjectDatumKind.Node);
@@ -77,7 +77,7 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 	 * @param kind
 	 *        the datum kind
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} or {@code kind} are {@literal null}
+	 *         if {@code filter} or {@code kind} are {@code null}
 	 */
 	public SelectObjectStreamMetadata(ObjectStreamCriteria filter, ObjectDatumKind kind) {
 		this(filter, kind, null);
@@ -93,7 +93,7 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 	 * @param style
 	 *        the select style
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} or {@code kind} are {@literal null}
+	 *         if {@code filter} or {@code kind} are {@code null}
 	 */
 	public SelectObjectStreamMetadata(ObjectStreamCriteria filter, ObjectDatumKind kind,
 			MetadataSelectStyle style) {

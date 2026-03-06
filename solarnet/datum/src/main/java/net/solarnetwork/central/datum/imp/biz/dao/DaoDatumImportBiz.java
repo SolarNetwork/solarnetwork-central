@@ -175,7 +175,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * @param datumDao
 	 *        the datum DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoDatumImportBiz(TaskScheduler scheduler, AsyncTaskExecutor executor,
 			SolarNodeOwnershipDao nodeOwnershipDao, SecurityTokenDao securityTokenDao,
@@ -1061,10 +1061,10 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * Get a {@link SecurityToken} for a given token ID.
 	 *
 	 * @param tokenId
-	 *        the ID of the token to get, or {@literal null}
-	 * @return the token, or {@literal null} if {@code token} is {@literal null}
+	 *        the ID of the token to get, or {@code null}
+	 * @return the token, or {@code null} if {@code token} is {@code null}
 	 * @throws AuthorizationException
-	 *         if {@code token} is not {@literal null} but a
+	 *         if {@code token} is not {@code null} but a
 	 *         {@link SecurityToken} is not found for it
 	 */
 	private SecurityToken tokenForId(String tokenId) throws AuthorizationException {
@@ -1082,11 +1082,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * Get a {@link SecurityPolicy} for a given token ID.
 	 *
 	 * @param tokenId
-	 *        the ID of the token to get, or {@literal null}
-	 * @return the policy, or {@literal null} if {@code token} is
-	 *         {@literal null} or the token has no policy
+	 *        the ID of the token to get, or {@code null}
+	 * @return the policy, or {@code null} if {@code token} is
+	 *         {@code null} or the token has no policy
 	 * @throws AuthorizationException
-	 *         if {@code token} is not {@literal null} but a
+	 *         if {@code token} is not {@code null} but a
 	 *         {@link SecurityToken} is not found for it
 	 */
 	private SecurityPolicy tokenPolicyForId(String tokenId) throws AuthorizationException {

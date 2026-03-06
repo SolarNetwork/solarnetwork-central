@@ -79,8 +79,8 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 *
 	 * <p>
 	 * All arguments except {@code streamId}, {@code kind}, {@code objectId},
-	 * and {@code sourceId} are allowed to be {@literal null}. If any array is
-	 * empty, it will be treated as if it were {@literal null}.
+	 * and {@code sourceId} are allowed to be {@code null}. If any array is
+	 * empty, it will be treated as if it were {@code null}.
 	 * </p>
 	 *
 	 * @param streamId
@@ -101,7 +101,7 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 *        the status property names
 	 * @throws IllegalArgumentException
 	 *         if {@code streamId} or {@code kind} or {@code objectId} or
-	 *         {@code sourceId} is {@literal null}
+	 *         {@code sourceId} is {@code null}
 	 */
 	public BasicObjectDatumStreamMetadata(UUID streamId, @Nullable String timeZoneId,
 			ObjectDatumKind kind, Long objectId, String sourceId,
@@ -116,8 +116,8 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 *
 	 * <p>
 	 * All arguments except {@code streamId}, {@code kind}, {@code objectId},
-	 * and {@code sourceId} are allowed to be {@literal null}. If any array is
-	 * empty, it will be treated as if it were {@literal null}.
+	 * and {@code sourceId} are allowed to be {@code null}. If any array is
+	 * empty, it will be treated as if it were {@code null}.
 	 * </p>
 	 *
 	 * @param streamId
@@ -140,7 +140,7 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 *        the JSON metadata
 	 * @throws IllegalArgumentException
 	 *         if {@code streamId} or {@code kind} or {@code objectId} or
-	 *         {@code sourceId} is {@literal null}
+	 *         {@code sourceId} is {@code null}
 	 */
 	public BasicObjectDatumStreamMetadata(UUID streamId, @Nullable String timeZoneId,
 			ObjectDatumKind kind, Long objectId, String sourceId,
@@ -155,8 +155,8 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 *
 	 * <p>
 	 * All arguments except {@code streamId}, {@code kind}, {@code objectId},
-	 * and {@code sourceId} are allowed to be {@literal null}. If any array is
-	 * empty, it will be treated as if it were {@literal null}.
+	 * and {@code sourceId} are allowed to be {@code null}. If any array is
+	 * empty, it will be treated as if it were {@code null}.
 	 * </p>
 	 *
 	 * @param streamId
@@ -181,7 +181,7 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 *        the JSON metadata
 	 * @throws IllegalArgumentException
 	 *         if {@code streamId} or {@code kind} or {@code objectId} or
-	 *         {@code sourceId} is {@literal null}
+	 *         {@code sourceId} is {@code null}
 	 */
 	public BasicObjectDatumStreamMetadata(UUID streamId, @Nullable String timeZoneId,
 			ObjectDatumKind kind, Long objectId, String sourceId, @Nullable Location location,

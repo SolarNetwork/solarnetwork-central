@@ -56,7 +56,7 @@ public final class UpdateObjectStreamMetadataJson implements PreparedStatementCr
 	 * @param json
 	 *        the JSON to save
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public UpdateObjectStreamMetadataJson(ObjectMetadataCriteria filter, String json) {
 		this(filter, filter.getObjectKind() != null ? filter.getObjectKind() : ObjectDatumKind.Node,
@@ -74,7 +74,7 @@ public final class UpdateObjectStreamMetadataJson implements PreparedStatementCr
 	 *        the JSON to save
 	 *
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public UpdateObjectStreamMetadataJson(ObjectMetadataCriteria filter, ObjectDatumKind kind,
 			String json) {

@@ -44,7 +44,7 @@ public interface DatumAuxiliaryBiz {
 	 *
 	 * @param id
 	 *        the primary key of the data to get
-	 * @return the datum, or {@literal null} if not found
+	 * @return the datum, or {@code null} if not found
 	 */
 	GeneralNodeDatumAuxiliary getGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id);
 
@@ -98,7 +98,7 @@ public interface DatumAuxiliaryBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	FilterResults<GeneralNodeDatumAuxiliaryFilterMatch, GeneralNodeDatumAuxiliaryPK> findGeneralNodeDatumAuxiliary(
 			GeneralNodeDatumAuxiliaryFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,

@@ -41,7 +41,7 @@ public interface DatumRollupFilter {
 	 * {@link #getDatumRollupTypes()}.
 	 * </p>
 	 *
-	 * @return the rollup, or {@literal null} for no rollup
+	 * @return the rollup, or {@code null} for no rollup
 	 */
 	@Nullable
 	DatumRollupType getDatumRollupType();
@@ -49,7 +49,7 @@ public interface DatumRollupFilter {
 	/**
 	 * Get an ordered list of rollup types.
 	 *
-	 * @return the rollup values, or {@literal null} for no rollup
+	 * @return the rollup values, or {@code null} for no rollup
 	 */
 	DatumRollupType @Nullable [] getDatumRollupTypes();
 

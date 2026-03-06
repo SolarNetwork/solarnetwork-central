@@ -73,7 +73,7 @@ public final class SelectDatum
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null} or invalid
+	 *         if {@code filter} is {@code null} or invalid
 	 */
 	public SelectDatum(DatumCriteria filter) {
 		this(filter, DEFAULT_FETCH_SIZE);
@@ -87,7 +87,7 @@ public final class SelectDatum
 	 * @param fetchSize
 	 *        the row fetch size
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null} or invalid
+	 *         if {@code filter} is {@code null} or invalid
 	 * @since 1.2
 	 */
 	public SelectDatum(DatumCriteria filter, int fetchSize) {

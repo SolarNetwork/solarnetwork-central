@@ -267,7 +267,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * @param datumDao
 	 *        the datum DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SqsDatumCollector(SqsAsyncClient sqsClient, String sqsQueueUrl, ObjectMapper sqsObjectMapper,
 			BlockingQueue<WorkItem> queue, DatumWriteOnlyDao datumDao) {
@@ -291,7 +291,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * @param stats
 	 *        the stats to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SqsDatumCollector(SqsAsyncClient sqsClient, String sqsQueueUrl, ObjectMapper sqsObjectMapper,
 			BlockingQueue<WorkItem> queue, DatumWriteOnlyDao datumDao, StatTracker stats) {

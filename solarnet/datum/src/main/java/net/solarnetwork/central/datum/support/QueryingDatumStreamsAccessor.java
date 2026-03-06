@@ -107,7 +107,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	 * @param auditor
 	 *        the optional auditor
 	 * @throws IllegalArgumentException
-	 *         if {@code pathMatcher} or {@code datumDao} or {@literal null}
+	 *         if {@code pathMatcher} or {@code datumDao} or {@code null}
 	 */
 	public QueryingDatumStreamsAccessor(PathMatcher pathMatcher, Collection<? extends Datum> datum,
 			Long userId, InstantSource clock, DatumEntityDao datumDao, DatumStreamMetadataDao metaDao,

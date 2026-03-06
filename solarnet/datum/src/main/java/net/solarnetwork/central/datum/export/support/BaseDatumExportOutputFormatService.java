@@ -123,7 +123,7 @@ public abstract class BaseDatumExportOutputFormatService extends
 	 * @param temporaryDir
 	 *        the temporary directory to set
 	 * @throws IllegalArgumentException
-	 *         if {@code temporaryDir} is {@literal null}
+	 *         if {@code temporaryDir} is {@code null}
 	 */
 	public void setTemporaryDir(File temporaryDir) {
 		this.temporaryDir = requireNonNullArgument(temporaryDir, "temporaryDir");
@@ -133,7 +133,7 @@ public abstract class BaseDatumExportOutputFormatService extends
 	 * Set the temporary directory as a path string.
 	 *
 	 * @param path
-	 *        the path to use, or {@literal null} or an empty string to use the
+	 *        the path to use, or {@code null} or an empty string to use the
 	 *        system property {@literal java.io.tmpdir}
 	 */
 	public void setTemporaryPath(String path) {

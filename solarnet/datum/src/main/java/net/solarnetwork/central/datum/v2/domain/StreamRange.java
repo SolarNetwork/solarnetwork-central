@@ -54,7 +54,7 @@ public class StreamRange {
 	 * @param streamId
 	 *        the stream ID
 	 * @throws IllegalArgumentException
-	 *         if {@code streamId} is {@literal null}
+	 *         if {@code streamId} is {@code null}
 	 */
 	public StreamRange(UUID streamId) {
 		super();
@@ -74,7 +74,7 @@ public class StreamRange {
 	 *        the aggregation
 	 * @return the new range
 	 * @throws IllegalArgumentException
-	 *         if {@code streamId} is {@literal null}
+	 *         if {@code streamId} is {@code null}
 	 */
 	public static StreamRange range(UUID streamId, @Nullable Instant start, @Nullable Instant end,
 			@Nullable Aggregation aggregation) {
@@ -174,7 +174,7 @@ public class StreamRange {
 	/**
 	 * Get the stream ID.
 	 *
-	 * @return the stream ID (never {@literal null}
+	 * @return the stream ID (never {@code null}
 	 */
 	public final UUID getStreamId() {
 		return streamId;

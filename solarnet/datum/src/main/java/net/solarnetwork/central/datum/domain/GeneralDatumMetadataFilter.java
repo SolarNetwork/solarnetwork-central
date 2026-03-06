@@ -36,9 +36,9 @@ public interface GeneralDatumMetadataFilter extends Filter {
 
 	/**
 	 * Get the first source ID. This returns the first available source ID from
-	 * the {@link #getSourceIds()} array, or {@literal null} if not available.
+	 * the {@link #getSourceIds()} array, or {@code null} if not available.
 	 *
-	 * @return the first source ID, or {@literal null} if not available
+	 * @return the first source ID, or {@code null} if not available
 	 */
 	default @Nullable String getSourceId() {
 		String[] array = getSourceIds();
@@ -48,15 +48,15 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	/**
 	 * Get an array of source IDs.
 	 *
-	 * @return array of source IDs (may be {@literal null})
+	 * @return array of source IDs (may be {@code null})
 	 */
 	String @Nullable [] getSourceIds();
 
 	/**
 	 * Get the first tag. This returns the first available tag from the
-	 * {@link #getTags()} array, or {@literal null} if not available.
+	 * {@link #getTags()} array, or {@code null} if not available.
 	 *
-	 * @return the first tag, or {@literal null} if not available
+	 * @return the first tag, or {@code null} if not available
 	 */
 	default @Nullable String getTag() {
 		String[] array = getTags();
@@ -66,7 +66,7 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	/**
 	 * Get an array of tags.
 	 *
-	 * @return array of tags (may be {@literal null})
+	 * @return array of tags (may be {@code null})
 	 */
 	String @Nullable [] getTags();
 
@@ -75,10 +75,10 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	 *
 	 * <p>
 	 * This returns the first available property name from the
-	 * {@link #getPropertyNames()} array, or {@literal null} if not available.
+	 * {@link #getPropertyNames()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the property name, or {@literal null} if not available
+	 * @return the property name, or {@code null} if not available
 	 */
 	default @Nullable String getPropertyName() {
 		String[] names = getPropertyNames();
@@ -88,7 +88,7 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	/**
 	 * Get an array of property names.
 	 *
-	 * @return array of property names (may be {@literal null})
+	 * @return array of property names (may be {@code null})
 	 */
 	String @Nullable [] getPropertyNames();
 
@@ -97,11 +97,11 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	 *
 	 * <p>
 	 * This returns the first available instantaneous property name from the
-	 * {@link #getInstantaneousPropertyNames()} array, or {@literal null} if not
+	 * {@link #getInstantaneousPropertyNames()} array, or {@code null} if not
 	 * available.
 	 * </p>
 	 *
-	 * @return the instantaneous property name, or {@literal null} if not
+	 * @return the instantaneous property name, or {@code null} if not
 	 *         available
 	 */
 	default @Nullable String getInstantaneousPropertyName() {
@@ -112,7 +112,7 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	/**
 	 * Get an array of instantaneous property names.
 	 *
-	 * @return array of instantaneous property names (may be {@literal null})
+	 * @return array of instantaneous property names (may be {@code null})
 	 */
 	String @Nullable [] getInstantaneousPropertyNames();
 
@@ -121,11 +121,11 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	 *
 	 * <p>
 	 * This returns the first available accumulating property name from the
-	 * {@link #getAccumulatingPropertyNames()} array, or {@literal null} if not
+	 * {@link #getAccumulatingPropertyNames()} array, or {@code null} if not
 	 * available.
 	 * </p>
 	 *
-	 * @return the accumulating property name, or {@literal null} if not
+	 * @return the accumulating property name, or {@code null} if not
 	 *         available
 	 */
 	default @Nullable String getAccumulatingPropertyName() {
@@ -136,7 +136,7 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	/**
 	 * Get an array of accumulating property names.
 	 *
-	 * @return array of accumulating property names (may be {@literal null})
+	 * @return array of accumulating property names (may be {@code null})
 	 */
 	String @Nullable [] getAccumulatingPropertyNames();
 
@@ -145,11 +145,11 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	 *
 	 * <p>
 	 * This returns the first available status property name from the
-	 * {@link #getStatusPropertyNames()} array, or {@literal null} if not
+	 * {@link #getStatusPropertyNames()} array, or {@code null} if not
 	 * available.
 	 * </p>
 	 *
-	 * @return the status property name, or {@literal null} if not available
+	 * @return the status property name, or {@code null} if not available
 	 */
 	default @Nullable String getStatusPropertyName() {
 		String[] names = getStatusPropertyNames();
@@ -159,7 +159,7 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	/**
 	 * Get an array of status property names.
 	 *
-	 * @return array of status property names (may be {@literal null})
+	 * @return array of status property names (may be {@code null})
 	 */
 	String @Nullable [] getStatusPropertyNames();
 

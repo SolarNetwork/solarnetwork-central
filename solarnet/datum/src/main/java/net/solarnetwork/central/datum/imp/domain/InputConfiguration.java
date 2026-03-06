@@ -48,7 +48,7 @@ public interface InputConfiguration extends IdentifiableConfiguration, UserIdRel
 	 * data imported.
 	 * </p>
 	 *
-	 * @return the time zone to apply to all imported data, or {@literal null}
+	 * @return the time zone to apply to all imported data, or {@code null}
 	 *         if the data already has time zone information
 	 */
 	String getTimeZoneId();

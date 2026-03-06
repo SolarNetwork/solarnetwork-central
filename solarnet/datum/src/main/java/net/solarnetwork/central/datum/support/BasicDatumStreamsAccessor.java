@@ -218,7 +218,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	 *        the list of available datum
 	 * @param offset
 	 *        the desired offset (will be higher than {@code list.size()})
-	 * @return the resolved datum, or {@literal null}
+	 * @return the resolved datum, or {@code null}
 	 * @since 2.0
 	 */
 	protected Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
@@ -244,7 +244,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	 * @param referenceIndex
 	 *        the index within {@code list} for a datum found already for the
 	 *        given {@code timestamp}, or {@code -1} if not found
-	 * @return the resolved datum, or {@literal null}
+	 * @return the resolved datum, or {@code null}
 	 * @since 2.0
 	 */
 	protected Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
@@ -268,7 +268,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	 * @param referenceIndex
 	 *        the index within {@code list} the resolved datum should be
 	 *        inserted at
-	 * @return the resolved datum, or {@literal null}
+	 * @return the resolved datum, or {@code null}
 	 * @since 2.1
 	 */
 	protected Datum atMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,

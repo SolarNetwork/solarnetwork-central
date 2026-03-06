@@ -38,17 +38,17 @@ public interface ObjectCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available object ID from the
-	 * {@link #getObjectIds()} array, or {@literal null} if not available.
+	 * {@link #getObjectIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the object ID, or {@literal null} if not available
+	 * @return the object ID, or {@code null} if not available
 	 */
 	Long getObjectId();
 
 	/**
 	 * Get an array of object IDs.
 	 * 
-	 * @return array of object IDs (may be {@literal null})
+	 * @return array of object IDs (may be {@code null})
 	 */
 	Long[] getObjectIds();
 

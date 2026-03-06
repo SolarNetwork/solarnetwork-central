@@ -272,7 +272,7 @@ public final class DatumJsonUtils {
 	 *
 	 * <ul>
 	 * <li>The datum timestamp, as a millisecond epoch number value, or a
-	 * literal {@literal null}.</li>
+	 * literal {@code null}.</li>
 	 * <li>All instantaneous property values, as numbers.</li>
 	 * <li>All accumulating property values, as numbers.</li>
 	 * <li>All status property values, as strings.</li>
@@ -280,9 +280,9 @@ public final class DatumJsonUtils {
 	 * </ul>
 	 *
 	 * <p>
-	 * If any property array is {@literal null} or empty, no elements will be
-	 * contributed to the output JSON array. Any {@literal null} values
-	 * <i>within</i> a property array will contribute {@literal null} literals
+	 * If any property array is {@code null} or empty, no elements will be
+	 * contributed to the output JSON array. Any {@code null} values
+	 * <i>within</i> a property array will contribute {@code null} literals
 	 * to the output JSON array.
 	 * </p>
 	 *
@@ -430,7 +430,7 @@ public final class DatumJsonUtils {
 	 *
 	 * <ul>
 	 * <li>The datum timestamp, as a millisecond epoch number value, or a
-	 * literal {@literal null}.</li>
+	 * literal {@code null}.</li>
 	 * <li>All instantaneous property statistics, as arrays of {@code [min, max,
 	 * count]} numbers.</li>
 	 * <li>All accumulating property values, as arrays of {@code [start, end]}
@@ -438,9 +438,9 @@ public final class DatumJsonUtils {
 	 * </ul>
 	 *
 	 * <p>
-	 * If any property array is {@literal null} or empty, no elements will be
-	 * contributed to the output JSON array. Any {@literal null} values
-	 * <i>within</i> a property array will contribute {@literal null} literals
+	 * If any property array is {@code null} or empty, no elements will be
+	 * contributed to the output JSON array. Any {@code null} values
+	 * <i>within</i> a property array will contribute {@code null} literals
 	 * to the output JSON array.
 	 * </p>
 	 *

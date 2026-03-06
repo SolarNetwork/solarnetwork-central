@@ -70,7 +70,7 @@ public interface SourceMappingCriteria {
 	 *
 	 * @param mappings
 	 *        the mappings to decode
-	 * @return the mappings, or {@literal null} if {@code mappings} is empty
+	 * @return the mappings, or {@code null} if {@code mappings} is empty
 	 */
 	static Map<String, Set<String>> mappingsFrom(String[] mappings) {
 		Map<String, Set<String>> result;

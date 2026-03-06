@@ -46,10 +46,10 @@ public interface GeneralLocationDatumMetadataFilter extends GeneralDatumMetadata
 
 	/**
 	 * Get the first location ID. This returns the first available location ID
-	 * from the {@link #getLocationIds()} array, or {@literal null} if not
+	 * from the {@link #getLocationIds()} array, or {@code null} if not
 	 * available.
 	 *
-	 * @return the location ID, or {@literal null} if not available
+	 * @return the location ID, or {@code null} if not available
 	 */
 	@Nullable
 	Long getLocationId();
@@ -57,7 +57,7 @@ public interface GeneralLocationDatumMetadataFilter extends GeneralDatumMetadata
 	/**
 	 * Get an array of location IDs.
 	 *
-	 * @return array of location IDs (may be {@literal null})
+	 * @return array of location IDs (may be {@code null})
 	 */
 	Long @Nullable [] getLocationIds();
 

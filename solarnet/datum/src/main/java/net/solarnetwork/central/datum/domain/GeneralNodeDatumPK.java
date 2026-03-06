@@ -81,7 +81,7 @@ public class GeneralNodeDatumPK extends BasicNodeSourceDatePK
 	 * <li>created</li>
 	 * </ol>
 	 *
-	 * {@literal null} values will be sorted before non-{@literal null} values.
+	 * {@code null} values will be sorted before non-{@code null} values.
 	 */
 	@Override
 	public int compareTo(@Nullable GeneralNodeDatumPK o) {

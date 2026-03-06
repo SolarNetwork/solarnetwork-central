@@ -101,7 +101,7 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumCsvIterator(CsvReader<CsvRecord> reader, ObjectDatumStreamMetadataProvider metaProvider)
 			throws IOException {
@@ -120,7 +120,7 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumCsvIterator(CsvReader<CsvRecord> reader, ObjectDatumStreamMetadataProvider metaProvider,
 			DateTimeFormatter dateFormatter) throws IOException {
@@ -212,7 +212,7 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 	 *
 	 * @param row
 	 *        the row data
-	 * @return the parsed object, or {@literal null} to skip row and continue
+	 * @return the parsed object, or {@code null} to skip row and continue
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */

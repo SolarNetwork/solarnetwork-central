@@ -40,7 +40,7 @@ public interface DatumImportReceipt {
 	/**
 	 * Get the state of the import job.
 	 * 
-	 * @return the state, never {@literal null}
+	 * @return the state, never {@code null}
 	 */
 	DatumImportState getJobState();
 

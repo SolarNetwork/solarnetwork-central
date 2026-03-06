@@ -51,7 +51,7 @@ public final class InsertDatum implements PreparedStatementCreator, SqlProvider 
 	 * @param datum
 	 *        the datum to store
 	 * @throws IllegalArgumentException
-	 *         if {@code datum} is {@literal null}
+	 *         if {@code datum} is {@code null}
 	 */
 	public InsertDatum(DatumEntity datum) {
 		super();

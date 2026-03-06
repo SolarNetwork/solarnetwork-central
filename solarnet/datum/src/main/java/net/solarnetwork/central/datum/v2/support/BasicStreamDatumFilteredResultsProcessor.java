@@ -77,7 +77,7 @@ public class BasicStreamDatumFilteredResultsProcessor implements StreamDatumFilt
 	/**
 	 * Get the collected data.
 	 * 
-	 * @return the data, never {@literal null}
+	 * @return the data, never {@code null}
 	 */
 	public List<StreamDatum> getData() {
 		return data;

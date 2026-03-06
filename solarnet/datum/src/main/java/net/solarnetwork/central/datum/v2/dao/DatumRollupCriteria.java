@@ -41,14 +41,14 @@ public interface DatumRollupCriteria {
 	 * {@link #getDatumRollupTypes()}.
 	 * </p>
 	 * 
-	 * @return the rollup, or {@literal null} for no rollup
+	 * @return the rollup, or {@code null} for no rollup
 	 */
 	DatumRollupType getDatumRollupType();
 
 	/**
 	 * Get an ordered list of rollup types.
 	 * 
-	 * @return the rollup values, or {@literal null} for no rollup
+	 * @return the rollup values, or {@code null} for no rollup
 	 */
 	DatumRollupType[] getDatumRollupTypes();
 

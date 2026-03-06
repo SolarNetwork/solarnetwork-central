@@ -116,7 +116,7 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 	 * determined.
 	 * </p>
 	 *
-	 * @return the character set name, never {@literal null}
+	 * @return the character set name, never {@code null}
 	 */
 	protected String getResourceCharset() {
 		String charset = "UTF-8";

@@ -147,7 +147,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	 *        the destination services
 	 * @throws IllegalArgumentException
 	 *         if any argument other than {@code transactionTemplate} is
-	 *         {@literal null}
+	 *         {@code null}
 	 */
 	public DaoDatumExportBiz(DatumExportTaskInfoDao taskDao, DatumEntityDao datumDao,
 			TaskScheduler scheduler, AsyncTaskExecutor executor, TextEncryptor textEncryptor,

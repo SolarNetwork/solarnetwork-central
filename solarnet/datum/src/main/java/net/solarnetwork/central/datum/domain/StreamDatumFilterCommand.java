@@ -599,7 +599,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	/**
 	 * Get the aggregation key.
 	 *
-	 * @return the aggregation key, never {@literal null}
+	 * @return the aggregation key, never {@code null}
 	 */
 	@JsonIgnore
 	public final @Nullable String getAggregationKey() {
@@ -646,7 +646,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	/**
 	 * Get the aggregation key.
 	 *
-	 * @return the aggregation key, never {@literal null}
+	 * @return the aggregation key, never {@code null}
 	 */
 	@JsonIgnore
 	public final @Nullable String getPartialAggregationKey() {
@@ -724,7 +724,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	/**
 	 * Get the combining type key.
 	 *
-	 * @return the combining type key, or {@literal null} if not defined
+	 * @return the combining type key, or {@code null} if not defined
 	 */
 	@JsonIgnore
 	public final @Nullable String getCombiningTypeKey() {
@@ -737,7 +737,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 *
 	 * <p>
 	 * If {@literal key} is not a supported {@link CombiningType} key value,
-	 * then {@literal null} will be used.
+	 * then {@code null} will be used.
 	 * </p>
 	 *
 	 * @param key
@@ -919,7 +919,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	/**
 	 * Get the datum rollups as key values.
 	 *
-	 * @return the datum rollup type key values, or {@literal null} if not
+	 * @return the datum rollup type key values, or {@code null} if not
 	 *         defined
 	 */
 	@JsonIgnore

@@ -44,10 +44,10 @@ public interface StreamDatumFilter extends Filter, DateRangeFilter, LocalDateRan
 	 *
 	 * <p>
 	 * This returns the first available stream ID from the
-	 * {@link #getStreamIds()} array, or {@literal null} if not available.
+	 * {@link #getStreamIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first stream ID, or {@literal null} if not available
+	 * @return the first stream ID, or {@code null} if not available
 	 */
 	@Nullable
 	UUID getStreamId();
@@ -55,14 +55,14 @@ public interface StreamDatumFilter extends Filter, DateRangeFilter, LocalDateRan
 	/**
 	 * Get an array of stream IDs.
 	 *
-	 * @return array of stream IDs (may be {@literal null})
+	 * @return array of stream IDs (may be {@code null})
 	 */
 	UUID @Nullable [] getStreamIds();
 
 	/**
 	 * Get the stream object kind.
 	 *
-	 * @return the object kind (may be {@literal null})
+	 * @return the object kind (may be {@code null})
 	 */
 	@Nullable
 	ObjectDatumKind getKind();
@@ -72,10 +72,10 @@ public interface StreamDatumFilter extends Filter, DateRangeFilter, LocalDateRan
 	 *
 	 * <p>
 	 * This returns the first available object ID from the
-	 * {@link #getObjectIds()} array, or {@literal null} if not available.
+	 * {@link #getObjectIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first object ID, or {@literal null} if not available
+	 * @return the first object ID, or {@code null} if not available
 	 */
 	@Nullable
 	Long getObjectId();
@@ -83,7 +83,7 @@ public interface StreamDatumFilter extends Filter, DateRangeFilter, LocalDateRan
 	/**
 	 * Get an array of object IDs.
 	 *
-	 * @return array of object IDs (may be {@literal null})
+	 * @return array of object IDs (may be {@code null})
 	 */
 	Long @Nullable [] getObjectIds();
 

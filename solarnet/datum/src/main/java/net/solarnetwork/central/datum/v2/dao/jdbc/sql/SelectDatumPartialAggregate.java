@@ -75,7 +75,7 @@ public final class SelectDatumPartialAggregate
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null} or invalid
+	 *         if {@code filter} is {@code null} or invalid
 	 */
 	public SelectDatumPartialAggregate(DatumCriteria filter) {
 		this(filter, filter.getPartialAggregation());
@@ -89,7 +89,7 @@ public final class SelectDatumPartialAggregate
 	 * @param partial
 	 *        the partial aggregation to use
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null} or invalid
+	 *         if {@code filter} is {@code null} or invalid
 	 */
 	public SelectDatumPartialAggregate(DatumCriteria filter, Aggregation partial) {
 		super();

@@ -53,8 +53,8 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * Constructor.
 	 *
 	 * <p>
-	 * All arguments except {@code streamId} are allowed to be {@literal null}.
-	 * If any array is empty, it will be treated as if it were {@literal null}.
+	 * All arguments except {@code streamId} are allowed to be {@code null}.
+	 * If any array is empty, it will be treated as if it were {@code null}.
 	 * </p>
 	 *
 	 * @param streamId
@@ -68,7 +68,7 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * @param statusProperties
 	 *        the status property names
 	 * @throws IllegalArgumentException
-	 *         if {@code streamId} is {@literal null}
+	 *         if {@code streamId} is {@code null}
 	 */
 	public BasicDatumStreamMetadata(UUID streamId, @Nullable String timeZoneId,
 			String @Nullable [] instantaneousProperties, String @Nullable [] accumulatingProperties,
@@ -90,10 +90,10 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * Constructor.
 	 *
 	 * <p>
-	 * All arguments except {@code streamId} are allowed to be {@literal null}.
+	 * All arguments except {@code streamId} are allowed to be {@code null}.
 	 * The other arguments are {@code Object} to work around MyBatis mapping
 	 * issues. If any array is empty, it will be treated as if it were
-	 * {@literal null}.
+	 * {@code null}.
 	 * </p>
 	 *
 	 * @param streamId
@@ -107,7 +107,7 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * @param statusProperties
 	 *        the status property names; must be a {@code String[]}
 	 * @throws IllegalArgumentException
-	 *         if {@code streamId} is {@literal null}
+	 *         if {@code streamId} is {@code null}
 	 */
 	public BasicDatumStreamMetadata(UUID streamId, @Nullable String timeZoneId,
 			@Nullable Object instantaneousProperties, @Nullable Object accumulatingProperties,

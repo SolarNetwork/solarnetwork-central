@@ -38,10 +38,10 @@ public interface StreamCriteria {
 	 *
 	 * <p>
 	 * This returns the first available datum stream ID from the
-	 * {@link #getStreamIds()} array, or {@literal null} if not available.
+	 * {@link #getStreamIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the datum stream ID, or {@literal null} if not available
+	 * @return the datum stream ID, or {@code null} if not available
 	 */
 	UUID getStreamId();
 

@@ -58,7 +58,7 @@ public final class SelectReadingDifference
 	 * @param filter
 	 *        the filter
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectReadingDifference(DatumCriteria filter) {
 		super();

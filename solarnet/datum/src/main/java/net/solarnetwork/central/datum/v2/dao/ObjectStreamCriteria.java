@@ -134,7 +134,7 @@ public interface ObjectStreamCriteria
 	 * be returned.
 	 * </p>
 	 * 
-	 * @return the effective object kind, never {@literal null}
+	 * @return the effective object kind, never {@code null}
 	 */
 	default ObjectDatumKind effectiveObjectKind() {
 		ObjectDatumKind kind = getObjectKind();
