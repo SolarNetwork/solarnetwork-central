@@ -29,6 +29,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
@@ -44,8 +45,8 @@ import net.solarnetwork.util.Cachable;
 public final class SelectStreamMetadata implements PreparedStatementCreator, SqlProvider, Cachable {
 
 	private final StreamMetadataCriteria filter;
-	private final Long cacheTti;
-	private final Long cacheTtl;
+	private final @Nullable Long cacheTti;
+	private final @Nullable Long cacheTtl;
 
 	/**
 	 * Constructor.
@@ -71,7 +72,8 @@ public final class SelectStreamMetadata implements PreparedStatementCreator, Sql
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@code null}
 	 */
-	public SelectStreamMetadata(StreamMetadataCriteria filter, Long cacheTtl, Long cacheTti) {
+	public SelectStreamMetadata(StreamMetadataCriteria filter, @Nullable Long cacheTtl,
+			@Nullable Long cacheTti) {
 		super();
 		if ( filter == null || filter.getStreamIds() == null || filter.getStreamIds().length < 1 ) {
 			throw new IllegalArgumentException("The filter argument and stream IDs must not be null.");
@@ -112,7 +114,7 @@ public final class SelectStreamMetadata implements PreparedStatementCreator, Sql
 	}
 
 	@Override
-	public String getCacheKey() {
+	public @Nullable String getCacheKey() {
 		if ( cacheTtl == null && cacheTti == null ) {
 			// caching not supported
 			return null;
@@ -121,12 +123,12 @@ public final class SelectStreamMetadata implements PreparedStatementCreator, Sql
 	}
 
 	@Override
-	public Long getTtl() {
+	public @Nullable Long getTtl() {
 		return cacheTtl;
 	}
 
 	@Override
-	public Long getTti() {
+	public @Nullable Long getTti() {
 		return cacheTti;
 	}
 

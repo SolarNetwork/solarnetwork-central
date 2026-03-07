@@ -125,24 +125,15 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 	}
 
 	/**
-	 * Store a datum, treating as input from a node.
-	 *
-	 * @param datum
-	 *        the datum to store
-	 * @return the stored primary key
-	 * @since 1.1
-	 */
-	@Override
-	DatumPK store(StreamDatum datum);
-
-	/**
 	 * Store a general node datum, saving as a datum entity, treating as input
 	 * from a node.
 	 *
 	 * @param datum
 	 *        the datum to store
-	 * @return the stored primary key
+	 * @return the stored primary key, or {@code null} if the datum was not
+	 *         stored, for example it had no properties
 	 */
+	@Nullable
 	DatumPK store(GeneralNodeDatum datum);
 
 	/**
@@ -151,8 +142,10 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 	 *
 	 * @param datum
 	 *        the datum to store
-	 * @return the stored primary key
+	 * @return the stored primary key, or {@code null} if the datum was not
+	 *         stored, for example it had no properties
 	 */
+	@Nullable
 	DatumPK store(GeneralLocationDatum datum);
 
 	/**

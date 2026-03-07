@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.lang.String.format;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -32,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
@@ -65,8 +68,8 @@ public final class SelectDatumPartialAggregate
 
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
-	private final CombiningConfig combine;
-	private final DatumRollupType rollup;
+	private final @Nullable CombiningConfig combine;
+	private final @Nullable DatumRollupType rollup;
 	private final List<DatumCriteria> intervalFilters;
 
 	/**
@@ -78,7 +81,9 @@ public final class SelectDatumPartialAggregate
 	 *         if {@code filter} is {@code null} or invalid
 	 */
 	public SelectDatumPartialAggregate(DatumCriteria filter) {
-		this(filter, filter.getPartialAggregation());
+		this(filter,
+				requireNonNullArgument(requireNonNullArgument(filter, "filter").getPartialAggregation(),
+						"filter.partialAggregation"));
 	}
 
 	/**
@@ -244,7 +249,7 @@ public final class SelectDatumPartialAggregate
 	}
 
 	private String sqlTableName(DatumCriteria filter) {
-		return switch (filter.getAggregation()) {
+		return switch (nonnull(filter.getAggregation(), "aggregation")) {
 			case Hour -> "solardatm.agg_datm_hourly";
 			case Day -> "solardatm.agg_datm_daily";
 			case Month, Year -> "solardatm.agg_datm_monthly";

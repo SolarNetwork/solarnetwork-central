@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
@@ -64,13 +65,15 @@ public class DatumAuxiliaryEntityRowMapper implements RowMapper<DatumAuxiliary> 
 	/** A default mapper instance. */
 	public static final RowMapper<DatumAuxiliary> INSTANCE = new DatumAuxiliaryEntityRowMapper();
 
-	private static DatumSamples accumulatingSamplesForJson(String json) {
+	private static @Nullable DatumSamples accumulatingSamplesForJson(@Nullable String json) {
 		DatumSamples s = new DatumSamples();
 		if ( json != null ) {
 			Map<String, ?> afMap = JsonUtils.getStringMap(json);
-			for ( Map.Entry<String, ?> e : afMap.entrySet() ) {
-				if ( e.getValue() instanceof Number ) {
-					s.putAccumulatingSampleValue(e.getKey(), (Number) e.getValue());
+			if ( afMap != null ) {
+				for ( Map.Entry<String, ?> e : afMap.entrySet() ) {
+					if ( e.getValue() instanceof Number ) {
+						s.putAccumulatingSampleValue(e.getKey(), (Number) e.getValue());
+					}
 				}
 			}
 		}

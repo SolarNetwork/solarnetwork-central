@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getArray;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -86,10 +87,12 @@ public class ReadingDatumEntityRowMapper implements RowMapper<ReadingDatum> {
 	 *
 	 * @param aggregation
 	 *        the aggregation kind to assign
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public ReadingDatumEntityRowMapper(Aggregation aggregation) {
 		super();
-		this.aggregation = aggregation;
+		this.aggregation = requireNonNullArgument(aggregation, "aggregation");
 	}
 
 	@Override

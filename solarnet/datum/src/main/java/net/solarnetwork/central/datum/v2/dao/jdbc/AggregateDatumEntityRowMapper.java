@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getArray;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -80,7 +81,7 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 
 	/** A default reading instance for null aggregates. */
 	public static final RowMapper<AggregateDatum> READING_INSTANCE = new AggregateDatumEntityRowMapper(
-			null, true);
+			Aggregation.None, true);
 
 	/** A default reading instance for hourly aggregates. */
 	public static final RowMapper<AggregateDatum> READING_HOUR_INSTANCE = new AggregateDatumEntityRowMapper(
@@ -102,6 +103,8 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 	 *
 	 * @param aggregation
 	 *        the aggregation kind to assign
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public AggregateDatumEntityRowMapper(Aggregation aggregation) {
 		this(aggregation, false);
@@ -114,11 +117,13 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 	 *        the aggregation kind to assign
 	 * @param readingMode
 	 *        {@literal true} to create {@link ReadingDatumEntity} instances
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public AggregateDatumEntityRowMapper(Aggregation aggregation, boolean readingMode) {
 		super();
-		this.aggregation = aggregation;
-		this.readingMode = readingMode;
+		this.aggregation = requireNonNullArgument(aggregation, "aggregation");
+		this.readingMode = requireNonNullArgument(readingMode, "readingMode");
 	}
 
 	/**

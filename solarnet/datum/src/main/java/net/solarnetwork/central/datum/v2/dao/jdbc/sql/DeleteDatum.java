@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -50,13 +51,10 @@ public final class DeleteDatum implements PreparedStatementCreator, SqlProvider 
 	 */
 	public DeleteDatum(ObjectStreamCriteria filter) {
 		super();
-		if ( filter == null ) {
-			throw new IllegalArgumentException("The filter argument not be null.");
-		}
-		if ( !filter.hasLocalDateRange() ) {
+		this.filter = requireNonNullArgument(filter, "filter");
+		if ( !this.filter.hasLocalDateRange() ) {
 			throw new IllegalArgumentException("The filter must provide a local date range.");
 		}
-		this.filter = filter;
 	}
 
 	private void sqlCte(StringBuilder buf) {

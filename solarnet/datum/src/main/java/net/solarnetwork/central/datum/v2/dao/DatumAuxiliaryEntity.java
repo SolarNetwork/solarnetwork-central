@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
@@ -52,8 +51,8 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 	private static final long serialVersionUID = -3932363566089537924L;
 
 	private final Instant updated;
-	private final DatumSamples samplesFinal;
-	private final DatumSamples samplesStart;
+	private final @Nullable DatumSamples samplesFinal;
+	private final @Nullable DatumSamples samplesStart;
 	private final @Nullable String notes;
 	private final @Nullable GeneralDatumMetadata metadata;
 
@@ -76,12 +75,13 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 	 *         if any argument except {@code notes} or {@code metadata} is
 	 *         {@code null}
 	 */
-	public DatumAuxiliaryEntity(DatumAuxiliaryPK id, Instant updated, DatumSamples samplesFinal,
-			DatumSamples samplesStart, @Nullable String notes, @Nullable GeneralDatumMetadata metadata) {
+	public DatumAuxiliaryEntity(DatumAuxiliaryPK id, Instant updated,
+			@Nullable DatumSamples samplesFinal, @Nullable DatumSamples samplesStart,
+			@Nullable String notes, @Nullable GeneralDatumMetadata metadata) {
 		super(requireNonNullArgument(id, "id"));
 		this.updated = requireNonNullArgument(updated, "updated");
-		this.samplesFinal = requireNonNullArgument(samplesFinal, "samplesFinal");
-		this.samplesStart = requireNonNullArgument(samplesStart, "samplesStart");
+		this.samplesFinal = samplesFinal;
+		this.samplesStart = samplesStart;
 		this.notes = notes;
 		this.metadata = metadata;
 	}
@@ -110,7 +110,7 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 	 *         {@code null}
 	 */
 	public DatumAuxiliaryEntity(UUID streamId, Instant timestamp, DatumAuxiliaryType kind,
-			Instant updated, DatumSamples samplesFinal, DatumSamples samplesStart,
+			Instant updated, @Nullable DatumSamples samplesFinal, @Nullable DatumSamples samplesStart,
 			@Nullable String notes, @Nullable GeneralDatumMetadata metadata) {
 		this(new DatumAuxiliaryPK(streamId, timestamp, kind), updated, samplesFinal, samplesStart, notes,
 				metadata);
@@ -163,56 +163,13 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 		return updated;
 	}
 
-	/**
-	 * Get the datum stream ID.
-	 *
-	 * <p>
-	 * This method is a shortcut for {@code getId().getStreamId()}.
-	 * </p>
-	 *
-	 * @return the stream ID
-	 */
 	@Override
-	public final UUID getStreamId() {
-		return nonnull(getId(), "ID").getStreamId();
-	}
-
-	/**
-	 * Get the datum timestamp.
-	 *
-	 * <p>
-	 * The {@link #getCreated()} method is an alias for this method. This method
-	 * is a shortcut for {@code getId().getTimestamp()}.
-	 * </p>
-	 *
-	 * @return the datum timestamp
-	 */
-	@Override
-	public final Instant getTimestamp() {
-		return nonnull(getId(), "ID").getTimestamp();
-	}
-
-	/**
-	 * Get the datum auxiliary type.
-	 *
-	 * <p>
-	 * This method is a shortcut for {@code getId().getKind()}.
-	 * </p>
-	 *
-	 * @return the datum auxiliary type
-	 */
-	@Override
-	public final DatumAuxiliaryType getType() {
-		return nonnull(getId(), "ID").getKind();
-	}
-
-	@Override
-	public final DatumSamples getSamplesFinal() {
+	public final @Nullable DatumSamples getSamplesFinal() {
 		return samplesFinal;
 	}
 
 	@Override
-	public final DatumSamples getSamplesStart() {
+	public final @Nullable DatumSamples getSamplesStart() {
 		return samplesStart;
 	}
 

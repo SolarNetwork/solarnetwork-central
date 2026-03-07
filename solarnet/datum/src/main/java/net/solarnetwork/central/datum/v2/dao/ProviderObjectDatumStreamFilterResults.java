@@ -62,7 +62,8 @@ public class ProviderObjectDatumStreamFilterResults<M extends Identity<K>, K ext
 	 *         if {@code metadataProvider} is {@code null}
 	 */
 	public ProviderObjectDatumStreamFilterResults(ObjectDatumStreamMetadataProvider metadataProvider,
-			Iterable<M> results, Long totalResults, long startingOffset, int returnedResultCount) {
+			Iterable<M> results, @Nullable Long totalResults, long startingOffset,
+			int returnedResultCount) {
 		super(results, totalResults, startingOffset, returnedResultCount);
 		this.metadataProvider = requireNonNullArgument(metadataProvider, "metadataProvider");
 	}

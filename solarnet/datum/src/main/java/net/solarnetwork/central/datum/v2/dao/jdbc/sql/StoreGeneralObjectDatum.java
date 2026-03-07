@@ -33,6 +33,7 @@ import java.util.Map.Entry;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
+import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -59,6 +60,7 @@ public final class StoreGeneralObjectDatum implements CallableStatementCreator, 
 	public static final String STORE_LOC_DATUM_SQL = "{? = call solardatm.store_loc_datum(?,?,?,?,?)}";
 
 	private final GeneralObjectDatum<?> datum;
+	private final GeneralObjectDatumKey pk;
 	private final Instant timestamp;
 
 	/**
@@ -66,17 +68,19 @@ public final class StoreGeneralObjectDatum implements CallableStatementCreator, 
 	 *
 	 * @param datum
 	 *        the datum to store
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public StoreGeneralObjectDatum(GeneralObjectDatum<?> datum) {
 		super();
 		this.datum = requireNonNullArgument(datum, "datum");
+		this.pk = requireNonNullArgument(datum.getId(), "datum.id");
 		this.timestamp = (datum.getCreated() != null ? datum.getCreated() : Instant.now());
 	}
 
 	@Override
 	public String getSql() {
-		return datum.getId().getKind() == ObjectDatumKind.Location ? STORE_LOC_DATUM_SQL
-				: STORE_NODE_DATUM_SQL;
+		return pk.getKind() == ObjectDatumKind.Location ? STORE_LOC_DATUM_SQL : STORE_NODE_DATUM_SQL;
 	}
 
 	@Override
@@ -84,8 +88,8 @@ public final class StoreGeneralObjectDatum implements CallableStatementCreator, 
 		CallableStatement stmt = con.prepareCall(getSql());
 		stmt.registerOutParameter(1, Types.OTHER);
 		stmt.setTimestamp(2, Timestamp.from(this.timestamp));
-		stmt.setObject(3, datum.getId().getObjectId());
-		stmt.setString(4, datum.getId().getSourceId());
+		stmt.setObject(3, pk.getObjectId());
+		stmt.setString(4, pk.getSourceId());
 		stmt.setTimestamp(5, Timestamp.from(Instant.now()));
 
 		final DatumSamples s = samplesWithOnlyFiniteNumbers(datum.getSamples());
@@ -105,9 +109,6 @@ public final class StoreGeneralObjectDatum implements CallableStatementCreator, 
 	 * @return {@code samples} or a copy with non-finite numbers removed
 	 */
 	private DatumSamples samplesWithOnlyFiniteNumbers(DatumSamples s) {
-		if ( s == null ) {
-			return null;
-		}
 		DatumSamples copy = null;
 		if ( s.getInstantaneous() != null ) {
 			for ( Entry<String, Number> e : s.getInstantaneous().entrySet() ) {
@@ -119,7 +120,8 @@ public final class StoreGeneralObjectDatum implements CallableStatementCreator, 
 					copy.putInstantaneousSampleValue(e.getKey(), null);
 				}
 			}
-			if ( copy != null && copy.getInstantaneous().isEmpty() ) {
+			if ( copy != null
+					&& (copy.getInstantaneous() == null || copy.getInstantaneous().isEmpty()) ) {
 				copy.setInstantaneous(null);
 			}
 		}
@@ -133,7 +135,7 @@ public final class StoreGeneralObjectDatum implements CallableStatementCreator, 
 					copy.putAccumulatingSampleValue(e.getKey(), null);
 				}
 			}
-			if ( copy != null && copy.getAccumulating().isEmpty() ) {
+			if ( copy != null && (copy.getAccumulating() == null || copy.getAccumulating().isEmpty()) ) {
 				copy.setAccumulating(null);
 			}
 		}
@@ -147,7 +149,7 @@ public final class StoreGeneralObjectDatum implements CallableStatementCreator, 
 					copy.putStatusSampleValue(e.getKey(), null);
 				}
 			}
-			if ( copy != null && copy.getStatus().isEmpty() ) {
+			if ( copy != null && (copy.getStatus() == null || copy.getStatus().isEmpty()) ) {
 				copy.setStatus(null);
 			}
 		}
@@ -168,7 +170,7 @@ public final class StoreGeneralObjectDatum implements CallableStatementCreator, 
 	 *
 	 * @return the timestamp computed for the datum
 	 */
-	public Instant getTimestamp() {
+	public final Instant getTimestamp() {
 		return timestamp;
 	}
 

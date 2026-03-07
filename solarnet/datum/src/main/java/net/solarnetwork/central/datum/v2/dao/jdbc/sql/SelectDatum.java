@@ -33,6 +33,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDate;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
@@ -63,8 +64,8 @@ public final class SelectDatum
 
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
-	private final CombiningConfig combine;
-	private final DatumRollupType rollup;
+	private final @Nullable CombiningConfig combine;
+	private final @Nullable DatumRollupType rollup;
 	private final int fetchSize;
 
 	/**

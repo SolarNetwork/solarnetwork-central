@@ -60,7 +60,8 @@ public class BasicObjectDatumStreamFilterResults<M extends Identity<K>, K extend
 	 *         if {@code streamMetadata} is {@code null}
 	 */
 	public BasicObjectDatumStreamFilterResults(Map<UUID, ObjectDatumStreamMetadata> streamMetadata,
-			Iterable<M> results, Long totalResults, long startingOffset, int returnedResultCount) {
+			Iterable<M> results, @Nullable Long totalResults, long startingOffset,
+			int returnedResultCount) {
 		super(results, totalResults, startingOffset, returnedResultCount);
 		this.streamMetadata = requireNonNullArgument(streamMetadata, "streamMetadata");
 	}

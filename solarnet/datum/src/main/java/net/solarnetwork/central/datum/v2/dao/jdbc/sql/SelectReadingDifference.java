@@ -25,7 +25,12 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 import static java.time.Instant.now;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Period;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
@@ -51,6 +56,7 @@ public final class SelectReadingDifference
 	public static final Period DEFAULT_NEAREST_DIFFERENCE_TIME_TOLERANCE = Period.ofMonths(3);
 
 	private final DatumCriteria filter;
+	private final net.solarnetwork.central.datum.domain.DatumReadingType readingType;
 
 	/**
 	 * Constructor.
@@ -66,6 +72,7 @@ public final class SelectReadingDifference
 			throw new IllegalArgumentException("The filter argument and reading type must not be null.");
 		}
 		this.filter = filter;
+		this.readingType = filter.getReadingType();
 	}
 
 	private void appendCoreSql(StringBuilder buf) {
@@ -79,7 +86,7 @@ public final class SelectReadingDifference
 		buf.append("\t, min(d.ts) AS ts, min(s.node_id) AS node_id, min(s.source_id) AS source_id\n");
 		buf.append("FROM s\n");
 		buf.append("INNER JOIN solardatm.");
-		buf.append(switch (filter.getReadingType()) {
+		buf.append(switch (readingType) {
 			case Difference -> "find_datm_diff_rows";
 			case NearestDifference -> "find_datm_diff_near_rows";
 			case DifferenceWithin -> "find_datm_diff_within_rows";
@@ -127,8 +134,8 @@ public final class SelectReadingDifference
 			stmt.setTimestamp(++p,
 					Timestamp.from(filter.getEndDate() != null ? filter.getEndDate() : now()));
 		}
-		if ( filter.getReadingType() == DatumReadingType.NearestDifference
-				|| filter.getReadingType() == DatumReadingType.CalculatedAtDifference ) {
+		if ( readingType == DatumReadingType.NearestDifference
+				|| readingType == DatumReadingType.CalculatedAtDifference ) {
 			Period t = filter.getTimeTolerance();
 			if ( t == null ) {
 				t = DEFAULT_NEAREST_DIFFERENCE_TIME_TOLERANCE;

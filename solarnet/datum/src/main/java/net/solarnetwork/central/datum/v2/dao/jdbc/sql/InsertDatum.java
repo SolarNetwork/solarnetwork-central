@@ -51,11 +51,15 @@ public final class InsertDatum implements PreparedStatementCreator, SqlProvider 
 	 * @param datum
 	 *        the datum to store
 	 * @throws IllegalArgumentException
-	 *         if {@code datum} is {@code null}
+	 *         if {@code datum} is {@code null} or does not have an assigned
+	 *         stream ID
 	 */
 	public InsertDatum(DatumEntity datum) {
 		super();
 		this.datum = requireNonNullArgument(datum, "datum");
+		if ( !datum.hasId() ) {
+			throw new IllegalArgumentException("The stream ID must be assigned.");
+		}
 	}
 
 	@Override

@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -82,10 +83,12 @@ public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {
 	 *        the type of metadata to parse; if {@link MetadataKind#Dynamic}
 	 *        then an extra {@literal kind} row must be provided by the query
 	 *        results
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code nulL}
 	 */
 	public ObjectDatumIdRowMapper(MetadataKind kind) {
 		super();
-		this.kind = kind;
+		this.kind = requireNonNullArgument(kind, "kind");
 	}
 
 	@Override

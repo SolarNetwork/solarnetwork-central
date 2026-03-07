@@ -62,18 +62,17 @@ public class DatumDateIntervalRowMapper implements RowMapper<DatumDateInterval> 
 	@Override
 	public DatumDateInterval mapRow(ResultSet rs, int rowNum) throws SQLException {
 		UUID streamId = nonnull(getUuid(rs, 1), "Stream ID");
-		Timestamp start = rs.getTimestamp(2);
-		Timestamp end = rs.getTimestamp(3);
+		Timestamp start = nonnull(rs.getTimestamp(2), "Start");
+		Timestamp end = nonnull(rs.getTimestamp(3), "End");
 		Object objId = rs.getObject(4);
-		String sourceId = rs.getString(5);
-		String timeZoneId = rs.getString(6);
+		String sourceId = nonnull(rs.getString(5), "Source ID");
+		String timeZoneId = nonnull(rs.getString(6), "Time Zone ID");
 
 		ObjectDatumKind kind = ObjectDatumKind.forKey(rs.getString(7));
 
-		Long objectId = objId instanceof Number n ? n.longValue() : null;
+		Long objectId = nonnull(objId instanceof Number n ? n.longValue() : null, "Object ID");
 
-		return new DatumDateInterval(start != null ? start.toInstant() : null,
-				end != null ? end.toInstant() : null, timeZoneId,
+		return new DatumDateInterval(start.toInstant(), end.toInstant(), timeZoneId,
 				new BasicObjectDatumStreamIdentity(streamId, kind, objectId, sourceId));
 	}
 

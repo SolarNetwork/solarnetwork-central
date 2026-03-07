@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -90,12 +91,12 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	 * @param aggregation
 	 *        the aggregation
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@code null}
+	 *         if any argument is {@code null}
 	 */
 	protected SelectAuditDatum(AuditDatumCriteria filter, Aggregation aggregation) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
-		this.aggregation = aggregation;
+		this.aggregation = requireNonNullArgument(aggregation, "aggregation");
 	}
 
 	/**
@@ -282,7 +283,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	private void sqlRollupGroup(StringBuilder buf) {
 		if ( filter.hasDatumRollupCriteria() && !filter.hasDatumRollupType(DatumRollupType.All) ) {
 			StringBuilder group = new StringBuilder();
-			for ( DatumRollupType t : filter.getDatumRollupTypes() ) {
+			for ( DatumRollupType t : nonnull(filter.getDatumRollupTypes(), "datumRollupTypes") ) {
 				switch (t) {
 					case Time:
 						group.append(", datum.ts_start");
