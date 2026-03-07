@@ -235,7 +235,8 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	public final DatumSamples getSamples() {
 		if ( samples == null && sampleJson != null ) {
 			samples = DatumUtils.getObjectFromJSON(sampleJson, DatumSamples.class);
-		} else if ( samples == null ) {
+		}
+		if ( samples == null ) {
 			samples = new DatumSamples();
 		}
 		return samples;

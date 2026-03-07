@@ -27,6 +27,7 @@ import java.io.Serial;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.CompositeKey2;
+import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
@@ -42,7 +43,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	 * A special "not a value" instance to be used for generated user ID values
 	 * yet to be generated.
 	 */
-	public static final Long UNASSIGNED_USER_ID = Long.MIN_VALUE;
+	public static final Long UNASSIGNED_USER_ID = UserIdRelated.UNASSIGNED_USER_ID;
 
 	/**
 	 * A special "not a value" instance to be used for generated entity ID

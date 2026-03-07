@@ -53,6 +53,7 @@ public interface UserRelatedCompositeKey<K extends UserIdRelated & CompositeKey 
 	 * @return {@literal true} if the user ID value is assigned,
 	 *         {@literal false} if it is considered "not a value"
 	 */
+	@Override
 	default boolean userIdIsAssigned() {
 		return keyComponentIsAssigned(0);
 	}

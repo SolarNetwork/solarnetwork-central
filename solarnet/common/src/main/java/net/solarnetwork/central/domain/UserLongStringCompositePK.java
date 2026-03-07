@@ -43,7 +43,7 @@ public final class UserLongStringCompositePK extends BasePK implements
 	 * A special "not a value" instance to be used for generated user ID values
 	 * yet to be generated.
 	 */
-	public static final Long UNASSIGNED_USER_ID = Long.MIN_VALUE;
+	public static final Long UNASSIGNED_USER_ID = UserIdRelated.UNASSIGNED_USER_ID;
 
 	/**
 	 * A special "not a value" instance to be used for generated group ID values

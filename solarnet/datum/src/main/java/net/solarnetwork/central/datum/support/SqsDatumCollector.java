@@ -23,9 +23,11 @@
 package net.solarnetwork.central.datum.support;
 
 import static net.solarnetwork.central.datum.v2.domain.ObjectDatumPK.unassignedStream;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +38,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -186,10 +189,10 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	private long readSleepMaxMs = DEFAULT_READ_SLEEP_MAX_MS;
 	private long readSleepThrottleStepMs = DEFAULT_READ_SLEEP_THROTTLE_STEP_MS;
 	private int shutdownWaitSecs;
-	private UncaughtExceptionHandler exceptionHandler;
+	private @Nullable UncaughtExceptionHandler exceptionHandler;
 
-	private DatumWriterThread[] writerThreads;
-	private QueueReaderThread[] readerThreads;
+	private DatumWriterThread @Nullable [] writerThreads;
+	private QueueReaderThread @Nullable [] readerThreads;
 	private volatile boolean writeEnabled = false;
 
 	/** Basic counted fields. */
@@ -427,7 +430,8 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 					.get(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES_NOT_VISIBLE.toString());
 		} catch ( Exception e ) {
 			Throwable t = e.getCause();
-			log.warn("Failed to request SQS queue [{}] attributes: {}", sqsQueueUrl, t.toString());
+			log.warn("Failed to request SQS queue [{}] attributes: {}", sqsQueueUrl,
+					(t != null ? t.toString() : e.toString()));
 		}
 
 		long recvCount = stats.get(BasicCount.ObjectsReceived);
@@ -487,9 +491,14 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	}
 
 	@Override
-	public DatumPK persist(GeneralObjectDatum<? extends GeneralObjectDatumKey> entity) {
+	public @Nullable DatumPK persist(GeneralObjectDatum<? extends GeneralObjectDatumKey> entity) {
 		final GeneralObjectDatumKey id = requireNonNullArgument(entity.getId(), "entity.id");
-		if ( entity.getId().getKind() == ObjectDatumKind.Location ) {
+		final ObjectDatumKind kind = id.getKind() == ObjectDatumKind.Location ? ObjectDatumKind.Location
+				: ObjectDatumKind.Node;
+		final Long objectId = requireNonNullArgument(id.getObjectId(), "entity.id.objectId");
+		final String sourceId = requireNonNullArgument(id.getSourceId(), "entity.id.sourceId");
+		final Instant ts = requireNonNullArgument(id.getTimestamp(), "entity.id.timestamp");
+		if ( kind == ObjectDatumKind.Location ) {
 			stats.increment(BasicCount.LocationDatumReceived);
 		} else {
 			stats.increment(BasicCount.DatumReceived);
@@ -497,11 +506,11 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 		submitWorkOrAddToSqsQueue(entity);
 
 		// note the stream ID is not known at this point
-		return unassignedStream(id.getKind(), id.getObjectId(), id.getSourceId(), id.getTimestamp());
+		return unassignedStream(kind, objectId, sourceId, ts);
 	}
 
 	@Override
-	public DatumPK store(StreamDatum datum) {
+	public @Nullable DatumPK store(StreamDatum datum) {
 		DatumPK id = switch (datum) {
 			case DatumEntity d -> requireNonNullArgument(d.getId(), "entity.id");
 			default -> new DatumPK(requireNonNullArgument(datum.getStreamId(), "datum.streamId"),
@@ -513,7 +522,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	}
 
 	@Override
-	public DatumPK store(Datum datum) {
+	public @Nullable DatumPK store(Datum datum) {
 		// note the stream ID is not known at this point
 		final ObjectDatumPK id = unassignedStream(requireNonNullArgument(datum.getKind(), "datum.kind"),
 				requireNonNullArgument(datum.getObjectId(), "datum.objectId"),
@@ -560,9 +569,15 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 		try {
 			String json;
 			if ( entity instanceof GeneralObjectDatum<?> d ) {
+				final GeneralObjectDatumKey id = requireNonNullArgument(d.getId(), "entity.id");
+				final ObjectDatumKind kind = id.getKind() == ObjectDatumKind.Location
+						? ObjectDatumKind.Location
+						: ObjectDatumKind.Node;
+				final Long objectId = requireNonNullArgument(id.getObjectId(), "entity.id.objectId");
+				final String sourceId = requireNonNullArgument(id.getSourceId(), "entity.id.sourceId");
+				final Instant ts = requireNonNullArgument(id.getTimestamp(), "entity.id.timestamp");
 				// to ensure consistent JSON serialization, convert this to a GeneralDatum instance
-				GeneralDatum gd = new GeneralDatum(new DatumId(d.getId().getKind(),
-						d.getId().getObjectId(), d.getId().getSourceId(), d.getId().getTimestamp()),
+				GeneralDatum gd = new GeneralDatum(new DatumId(kind, objectId, sourceId, ts),
 						d.getSamples());
 				json = sqsObjectMapper.writeValueAsString(gd);
 			} else {
@@ -610,7 +625,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 				if ( entity instanceof StreamDatum ) {
 					stats.increment(BasicCount.StreamDatumFail);
 				} else if ( (entity instanceof GeneralObjectDatum<?> gd
-						&& gd.getId().getKind() == ObjectDatumKind.Location)
+						&& nonnull(gd.getId(), "ID").getKind() == ObjectDatumKind.Location)
 						|| (entity instanceof Datum d && d.getKind() == ObjectDatumKind.Location) ) {
 					stats.increment(BasicCount.LocationDatumFail);
 				} else {
@@ -638,7 +653,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 		if ( entity instanceof StreamDatum ) {
 			stats.increment(BasicCount.StreamDatumStored);
 		} else if ( (entity instanceof GeneralObjectDatum<?> gd
-				&& gd.getId().getKind() == ObjectDatumKind.Location)
+				&& nonnull(gd.getId(), "ID").getKind() == ObjectDatumKind.Location)
 				|| (entity instanceof Datum d && d.getKind() == ObjectDatumKind.Location) ) {
 			stats.increment(BasicCount.LocationDatumStored);
 		} else {
@@ -690,7 +705,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * @param force
 	 *        {@code true} to force the deletion of all pending handles
 	 */
-	private void sqsDeleteMessage(final String receiptHandle, final boolean force) {
+	private void sqsDeleteMessage(final @Nullable String receiptHandle, final boolean force) {
 		final boolean rejected = (receiptHandle != null
 				? !completedSqsMessageHandles.offer(receiptHandle)
 				: false);
@@ -722,7 +737,8 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 					if ( resp != null ) {
 						if ( resp.hasFailed() ) {
 							resp.failed().forEach(entry -> {
-								String handleId = batchIdToReceiptHandlers.get(entry.id());
+								String handleId = nonnull(batchIdToReceiptHandlers.get(entry.id()),
+										"Batch handleId");
 								log.warn(
 										"Failed to delete message from SQS queue (will retry): {}; receiptHandle: {}",
 										entry.message(), handleId);
@@ -783,7 +799,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 								JsonNode tree = sqsObjectMapper.readTree(msg.body());
 								Object o = DatumJsonUtils.parseDatum(sqsObjectMapper, tree);
 								CompletableFuture<Object> f = new CompletableFuture<>();
-								if ( queue.offer(new WorkItem(o, f)) ) {
+								if ( o != null && queue.offer(new WorkItem(o, f)) ) {
 									stats.increment(BasicCount.WorkQueueAdds);
 									var _ = f.thenAccept(_ -> {
 										sqsDeleteMessage(msg.receiptHandle());
@@ -813,7 +829,8 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 										Throwable t = changeVizEx.getCause();
 										log.warn(
 												"Failed to un-hide {} messages received from SQS queue but rejected by work queue: {}",
-												rejectedReceiptHandles.size(), t.toString());
+												rejectedReceiptHandles.size(),
+												(t != null ? t.toString() : changeVizEx.toString()));
 									}
 									return changeVizResp;
 								});
@@ -856,13 +873,13 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 								e.getMessage());
 					} else if ( !(t instanceof InterruptedException) ) {
 						log.error("Fatal error in datum collector SQS queue [{}]: {}", sqsQueueUrl,
-								t.toString(), t);
+								(t != null ? t.toString() : ex), (t != null ? t : ex));
 						return;
 					}
 					if ( sleep < readSleepMaxMs ) {
 						sleep = Math.min(sleep + readSleepThrottleStepMs, readSleepMaxMs);
 						log.info("Increased read throttle from SQS queue to {}ms after exception: {}",
-								sleep, t.getMessage());
+								sleep, (t != null ? t : ex).getMessage());
 					}
 				}
 				if ( writeEnabled && sleep > 0 ) {
@@ -937,7 +954,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * @return the number of reader threads; defaults to
 	 *         {@link #DEFAULT_READ_CONCURRENCY}
 	 */
-	public int getReadConcurrency() {
+	public final int getReadConcurrency() {
 		return readConcurrency;
 	}
 
@@ -948,7 +965,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 *        the number of reader threads, or {@code 0} to disable reading;
 	 *        anything less than {@literal 0} will be treated as {@literal 0}
 	 */
-	public void setReadConcurrency(int readConcurrency) {
+	public final void setReadConcurrency(int readConcurrency) {
 		if ( readConcurrency < 0 ) {
 			readConcurrency = 0;
 		}
@@ -961,7 +978,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * @return the number of writer threads; defaults to
 	 *         {@link #DEFAULT_WRITE_CONCURRENCY}
 	 */
-	public int getWriteConcurrency() {
+	public final int getWriteConcurrency() {
 		return writeConcurrency;
 	}
 
@@ -972,7 +989,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 *        the number of writer threads; anything less than {@literal 1} will
 	 *        be treated as {@literal 1}
 	 */
-	public void setWriteConcurrency(int writeConcurrency) {
+	public final void setWriteConcurrency(int writeConcurrency) {
 		if ( writeConcurrency < 1 ) {
 			writeConcurrency = 1;
 		}
@@ -984,7 +1001,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 *
 	 * @return the configured handler
 	 */
-	public UncaughtExceptionHandler getExceptionHandler() {
+	public final @Nullable UncaughtExceptionHandler getExceptionHandler() {
 		return exceptionHandler;
 	}
 
@@ -994,7 +1011,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * @param exceptionHandler
 	 *        the handler to use
 	 */
-	public void setExceptionHandler(UncaughtExceptionHandler exceptionHandler) {
+	public final void setExceptionHandler(@Nullable UncaughtExceptionHandler exceptionHandler) {
 		this.exceptionHandler = exceptionHandler;
 	}
 
@@ -1004,7 +1021,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 *
 	 * @return the wait secs
 	 */
-	public int getShutdownWaitSecs() {
+	public final int getShutdownWaitSecs() {
 		return shutdownWaitSecs;
 	}
 
@@ -1016,7 +1033,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 *        the wait secs; anything less than {@literal 0} will be treated as
 	 *        {@literal 0}
 	 */
-	public void setShutdownWaitSecs(int shutdownWaitSecs) {
+	public final void setShutdownWaitSecs(int shutdownWaitSecs) {
 		if ( shutdownWaitSecs < 0 ) {
 			shutdownWaitSecs = 0;
 		}
@@ -1028,7 +1045,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 *
 	 * @return the maximum time, in milliseconds
 	 */
-	public long getWorkItemMaxWaitMs() {
+	public final long getWorkItemMaxWaitMs() {
 		return workItemMaxWaitMs;
 	}
 
@@ -1038,7 +1055,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * @param workItemMaxWaitMs
 	 *        the maximum time to set, in milliseconds
 	 */
-	public void setWorkItemMaxWaitMs(long workItemMaxWaitMs) {
+	public final void setWorkItemMaxWaitMs(long workItemMaxWaitMs) {
 		this.workItemMaxWaitMs = workItemMaxWaitMs;
 	}
 
@@ -1047,7 +1064,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 *
 	 * @return the count; defaults to {@link #DEFAULT_READ_MAX_MESSAGE_COUNT}
 	 */
-	public int getReadMaxMessageCount() {
+	public final int getReadMaxMessageCount() {
 		return readMaxMessageCount;
 	}
 
@@ -1058,7 +1075,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 *        the count to set; see AWS documentation for valid range (e.g.
 	 *        1-10)
 	 */
-	public void setReadMaxMessageCount(int readMaxMessageCount) {
+	public final void setReadMaxMessageCount(int readMaxMessageCount) {
 		this.readMaxMessageCount = readMaxMessageCount;
 	}
 
@@ -1067,7 +1084,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 *
 	 * @return the seconds; defaults to {@link #DEFAULT_READ_MAX_WAIT_TIME_SECS}
 	 */
-	public int getReadMaxWaitTimeSecs() {
+	public final int getReadMaxWaitTimeSecs() {
 		return readMaxWaitTimeSecs;
 	}
 
@@ -1078,7 +1095,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 *        the seconds to set; see AWS documentation for valid range (e.g.
 	 *        1-20)
 	 */
-	public void setReadMaxWaitTimeSecs(int readMaxWaitTimeSecs) {
+	public final void setReadMaxWaitTimeSecs(int readMaxWaitTimeSecs) {
 		this.readMaxWaitTimeSecs = readMaxWaitTimeSecs;
 	}
 
@@ -1088,7 +1105,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 *
 	 * @return the minimum sleep amount, in milliseconds
 	 */
-	public long getReadSleepMinMs() {
+	public final long getReadSleepMinMs() {
 		return readSleepMinMs;
 	}
 
@@ -1099,7 +1116,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * @param readSleepMinMs
 	 *        the minimum sleep amount to set, in milliseconds
 	 */
-	public void setReadSleepMinMs(long readSleepMinMs) {
+	public final void setReadSleepMinMs(long readSleepMinMs) {
 		this.readSleepMinMs = readSleepMinMs;
 	}
 
@@ -1109,7 +1126,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 *
 	 * @return the minimum sleep amount, in milliseconds
 	 */
-	public long getReadSleepMaxMs() {
+	public final long getReadSleepMaxMs() {
 		return readSleepMaxMs;
 	}
 
@@ -1120,7 +1137,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * @param readSleepMaxMs
 	 *        the maximum sleep amount to set, in milliseconds
 	 */
-	public void setReadSleepMaxMs(long readSleepMaxMs) {
+	public final void setReadSleepMaxMs(long readSleepMaxMs) {
 		this.readSleepMaxMs = readSleepMaxMs;
 	}
 
@@ -1132,7 +1149,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * @return the step amount, in milliseconds; defaults to
 	 *         {@link #DEFAULT_READ_SLEEP_THROTTLE_STEP_MS}
 	 */
-	public long getReadSleepThrottleStepMs() {
+	public final long getReadSleepThrottleStepMs() {
 		return readSleepThrottleStepMs;
 	}
 
@@ -1154,7 +1171,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * @param readSleepThrottleStepMs
 	 *        the step amount to set, in milliseconds
 	 */
-	public void setReadSleepThrottleStepMs(long readSleepThrottleStepMs) {
+	public final void setReadSleepThrottleStepMs(long readSleepThrottleStepMs) {
 		this.readSleepThrottleStepMs = readSleepThrottleStepMs;
 	}
 

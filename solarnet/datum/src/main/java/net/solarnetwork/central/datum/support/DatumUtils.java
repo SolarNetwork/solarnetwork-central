@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.support;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
@@ -84,7 +85,8 @@ public final class DatumUtils {
 	 * @see JsonUtils#getJSONString(Object, String)
 	 * @since 1.1
 	 */
-	public static String getJSONString(final Object o, final String defaultValue) {
+	public static @Nullable String getJSONString(final @Nullable Object o,
+			final @Nullable String defaultValue) {
 		return JsonUtils.getJSONString(o, defaultValue);
 	}
 
@@ -105,7 +107,7 @@ public final class DatumUtils {
 	 * @see JsonUtils#getJSONString(Object, String)
 	 * @since 1.1
 	 */
-	public static <T> T getObjectFromJSON(final String json, Class<T> clazz) {
+	public static <T> @Nullable T getObjectFromJSON(final @Nullable String json, Class<T> clazz) {
 		return JsonUtils.getObjectFromJSON(json, clazz);
 	}
 
@@ -113,8 +115,8 @@ public final class DatumUtils {
 	 * Filter a set of node sources using a source ID path pattern.
 	 *
 	 * <p>
-	 * If any arguments are {@code null}, or {@code pathMatcher} is not a
-	 * path pattern, then {@code sources} will be returned without filtering.
+	 * If any arguments are {@code null}, or {@code pathMatcher} is not a path
+	 * pattern, then {@code sources} will be returned without filtering.
 	 * </p>
 	 *
 	 * @param sources
@@ -126,13 +128,14 @@ public final class DatumUtils {
 	 * @return the filtered sources
 	 * @since 1.3
 	 */
-	public static Set<NodeSourcePK> filterNodeSources(Set<NodeSourcePK> sources, PathMatcher pathMatcher,
-			String pattern) {
+	public static @Nullable Set<NodeSourcePK> filterNodeSources(@Nullable Set<NodeSourcePK> sources,
+			@Nullable PathMatcher pathMatcher, @Nullable String pattern) {
 		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
 				|| !pathMatcher.isPattern(pattern) ) {
 			return sources;
 		}
-		sources.removeIf(pk -> !pathMatcher.match(pattern, pk.getSourceId()));
+		sources.removeIf(
+				pk -> pk.getSourceId() == null || !pathMatcher.match(pattern, pk.getSourceId()));
 		return sources;
 	}
 
@@ -140,8 +143,8 @@ public final class DatumUtils {
 	 * Filter a set of sources using a source ID path pattern.
 	 *
 	 * <p>
-	 * If any arguments are {@code null}, or {@code pathMatcher} is not a
-	 * path pattern, then {@code sources} will be returned without filtering.
+	 * If any arguments are {@code null}, or {@code pathMatcher} is not a path
+	 * pattern, then {@code sources} will be returned without filtering.
 	 * </p>
 	 *
 	 * @param sources
@@ -153,8 +156,8 @@ public final class DatumUtils {
 	 * @return the filtered sources
 	 * @since 1.3
 	 */
-	public static Set<String> filterSources(Set<String> sources, PathMatcher pathMatcher,
-			String pattern) {
+	public static @Nullable Set<String> filterSources(@Nullable Set<String> sources,
+			@Nullable PathMatcher pathMatcher, @Nullable String pattern) {
 		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
 				|| !pathMatcher.isPattern(pattern) ) {
 			return sources;
@@ -173,7 +176,7 @@ public final class DatumUtils {
 	 *         {@code null}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static GeneralObjectDatum<?> convertGeneralDatum(Datum datum) {
+	public static @Nullable GeneralObjectDatum<?> convertGeneralDatum(@Nullable Datum datum) {
 		if ( datum == null ) {
 			return null;
 		}

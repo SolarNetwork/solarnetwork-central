@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -200,7 +201,7 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 		if ( sampleJson == null ) {
 			sampleJson = DatumUtils.getJSONString(samples, "{}");
 		}
-		return sampleJson;
+		return nonnull(sampleJson, "sampleJson");
 	}
 
 	/**
@@ -239,7 +240,8 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	public final DatumSamples getSamples() {
 		if ( samples == null && sampleJson != null ) {
 			samples = DatumUtils.getObjectFromJSON(sampleJson, DatumSamples.class);
-		} else if ( samples == null ) {
+		}
+		if ( samples == null ) {
 			samples = new DatumSamples();
 		}
 		return samples;

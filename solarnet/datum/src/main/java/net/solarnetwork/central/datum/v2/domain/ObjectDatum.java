@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
@@ -163,6 +165,11 @@ public final class ObjectDatum extends GeneralDatum implements StreamDatum, User
 	@Override
 	public @Nullable Instant getCreated() {
 		return getTimestamp();
+	}
+
+	@Override
+	public @NonNull Instant getTimestamp() {
+		return nonnull(super.getTimestamp(), "Timestamp");
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumCacheSettings.java - 4/10/2021 4:50:12 PM
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,45 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork datum V2 DAO support.
+ */
+
+@NullMarked
 package net.solarnetwork.central.datum.support;
 
-import net.solarnetwork.central.support.CacheSettings;
-
-/**
- * Settings for a datum cache.
- *
- * @author matt
- * @version 1.0
- */
-public class DatumCacheSettings extends CacheSettings {
-
-	private int tempMaxEntries = 100;
-
-	/**
-	 * Constructor.
-	 */
-	public DatumCacheSettings() {
-		super();
-		setDiskPersistent(true);
-	}
-
-	/**
-	 * Get the temporary max entries count.
-	 *
-	 * @return the count
-	 */
-	public final int getTempMaxEntries() {
-		return tempMaxEntries;
-	}
-
-	/**
-	 * Set the temporary max entries count.
-	 *
-	 * @param tempMaxEntries
-	 *        the count to set
-	 */
-	public final void setTempMaxEntries(int tempMaxEntries) {
-		this.tempMaxEntries = tempMaxEntries;
-	}
-
-}
+import org.jspecify.annotations.NullMarked;

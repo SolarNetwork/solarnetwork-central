@@ -22,12 +22,14 @@
 
 package net.solarnetwork.central.datum.support;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +37,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.PathMatcher;
@@ -48,6 +51,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
@@ -84,7 +88,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	private final InstantSource clock;
 	private final DatumEntityDao datumDao;
 	private final DatumStreamMetadataDao metaDao;
-	private final QueryAuditor auditor;
+	private final @Nullable QueryAuditor auditor;
 
 	private Duration maxStartDateDuration = DEFAULT_MAX_START_DATE_DURATION;
 	private int maxResults = DEFAULT_MAX_RESULTS;
@@ -107,11 +111,12 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	 * @param auditor
 	 *        the optional auditor
 	 * @throws IllegalArgumentException
-	 *         if {@code pathMatcher} or {@code datumDao} or {@code null}
+	 *         if any argument except {@code datum} and {@code auditor} is
+	 *         {@code null}
 	 */
-	public QueryingDatumStreamsAccessor(PathMatcher pathMatcher, Collection<? extends Datum> datum,
-			Long userId, InstantSource clock, DatumEntityDao datumDao, DatumStreamMetadataDao metaDao,
-			QueryAuditor auditor) {
+	public QueryingDatumStreamsAccessor(PathMatcher pathMatcher,
+			@Nullable Collection<? extends Datum> datum, Long userId, InstantSource clock,
+			DatumEntityDao datumDao, DatumStreamMetadataDao metaDao, @Nullable QueryAuditor auditor) {
 		super(pathMatcher, datum);
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.clock = requireNonNullArgument(clock, "clock");
@@ -121,8 +126,8 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	}
 
 	@Override
-	protected Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
-			int offset) {
+	protected @Nullable Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId,
+			List<Datum> list, int offset) {
 		final Datum oldestDatum = (!list.isEmpty() ? list.getLast() : null);
 		final int max = 1 + (offset > list.size() ? offset - list.size() : offset);
 
@@ -130,18 +135,19 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	}
 
 	@Override
-	protected Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
-			Instant timestamp, int offset, int referenceIndex) {
+	protected @Nullable Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId,
+			List<Datum> list, Instant timestamp, int offset, int referenceIndex) {
 		final Datum oldestDatum = (!list.isEmpty() ? list.getLast() : null);
 		final int max = 1 + (referenceIndex >= 0 ? offset - list.size() + referenceIndex : offset);
 
 		return query(kind, objectId, sourceId, list, oldestDatum, timestamp, max);
 	}
 
-	private Datum query(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
-			Datum oldestDatum, Instant timestamp, int max) {
+	private @Nullable Datum query(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
+			@Nullable Datum oldestDatum, @Nullable Instant timestamp, int max) {
 		final int maxAllowedResults = getMaxResults();
-		final Long userId = kind == ObjectDatumKind.Node ? this.userId : null;
+		final Long userId = kind == ObjectDatumKind.Node ? this.userId
+				: UserIdRelated.UNASSIGNED_USER_ID;
 
 		BasicDatumCriteria c = new BasicDatumCriteria();
 		c.setObjectKind(kind);
@@ -154,15 +160,17 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 		c.setSorts(SORT_BY_DATE_DESCENDING);
 		c.setUserId(userId);
 
-		if ( oldestDatum != null
+		final Instant endDate;
+		if ( oldestDatum != null && oldestDatum.getTimestamp() != null
 				&& (timestamp == null || !timestamp.isBefore(oldestDatum.getTimestamp())) ) {
-			c.setEndDate(oldestDatum.getTimestamp()); // < existing
+			endDate = oldestDatum.getTimestamp(); // < existing
 		} else if ( timestamp != null ) {
-			c.setEndDate(timestamp.plusMillis(1)); // <= timestamp
+			endDate = timestamp.plusMillis(1); // <= timestamp
 		} else {
-			c.setEndDate(clock.instant().plusMillis(1)); // <= now
+			endDate = clock.instant().plusMillis(1); // <= now
 		}
-		c.setStartDate(c.getEndDate().minus(maxStartDateDuration));
+		c.setStartDate(endDate.minus(maxStartDateDuration));
+		c.setEndDate(endDate);
 
 		// set max to 1 < max < maxAllowed
 		c.setMax(Math.max(1, maxAllowedResults > 0 ? Math.min(max, maxAllowedResults) : max));
@@ -201,21 +209,24 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	private void processQueryResults(final Long userId, ObjectDatumKind kind, Long objectId,
 			String sourceId, List<Datum> list,
 			ObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK> daoResults,
-			final QueryAuditor auditor) {
+			final @Nullable QueryAuditor auditor) {
 		for ( var daoDatum : daoResults ) {
-			ObjectDatumStreamMetadata meta = daoResults.metadataForStreamId(daoDatum.getStreamId());
-			var d = ObjectDatum.forStreamDatum(daoDatum, userId,
-					new DatumId(kind, objectId, sourceId, daoDatum.getTimestamp()), meta);
-			if ( auditor != null ) {
-				auditor.auditNodeDatum(d);
+			final ObjectDatumStreamMetadata meta = daoResults
+					.metadataForStreamId(daoDatum.getStreamId());
+			if ( meta != null ) {
+				var d = ObjectDatum.forStreamDatum(daoDatum, userId,
+						new DatumId(kind, objectId, sourceId, daoDatum.getTimestamp()), meta);
+				if ( auditor != null ) {
+					auditor.auditNodeDatum(d);
+				}
+				list.add(d);
 			}
-			list.add(d);
 		}
 	}
 
 	@Override
-	protected Datum atMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
-			Instant timestamp, int referenceIndex) {
+	protected @Nullable Datum atMiss(ObjectDatumKind kind, Long objectId, String sourceId,
+			List<Datum> list, Instant timestamp, int referenceIndex) {
 		BasicDatumCriteria c = new BasicDatumCriteria();
 		c.setObjectKind(kind);
 		if ( kind == ObjectDatumKind.Node ) {
@@ -241,17 +252,22 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 
 		final QueryAuditor auditor = (kind == ObjectDatumKind.Node ? this.auditor : null);
 
-		var daoDatum = daoResults.iterator().next();
-		ObjectDatumStreamMetadata meta = daoResults.metadataForStreamId(daoDatum.getStreamId());
-		var d = ObjectDatum.forStreamDatum(daoDatum, userId,
-				new DatumId(kind, objectId, sourceId, daoDatum.getTimestamp()), meta);
-		if ( auditor != null ) {
-			auditor.auditNodeDatum(d);
+		final var daoDatum = daoResults.iterator().next();
+		final ObjectDatumStreamMetadata meta = daoResults.metadataForStreamId(daoDatum.getStreamId());
+		if ( meta == null ) {
+			return null;
 		}
-		if ( referenceIndex >= list.size() ) {
-			list.add(d);
-		} else {
-			list.add(referenceIndex, d);
+		final var d = ObjectDatum.forStreamDatum(daoDatum, userId,
+				new DatumId(kind, objectId, sourceId, daoDatum.getTimestamp()), meta);
+		if ( d != null ) {
+			if ( auditor != null ) {
+				auditor.auditNodeDatum(d);
+			}
+			if ( referenceIndex >= list.size() ) {
+				list.add(d);
+			} else {
+				list.add(referenceIndex, d);
+			}
 		}
 		return d;
 	}
@@ -285,11 +301,13 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 		// @formatter:on
 	}
 
+	@SuppressWarnings("MixedMutabilityReturnType")
 	@Override
 	protected Collection<Datum> rangeMatching(ObjectDatumKind kind, Long objectId,
-			String sourceIdPattern, Instant from, Instant to, Map<String, List<Datum>> datumBySourceId) {
+			@Nullable String sourceIdPattern, Instant from, Instant to,
+			Map<String, List<Datum>> datumBySourceId) {
 		// check if already loaded this range, to avoid loading again
-		if ( isRangeLoaded(kind, objectId, sourceIdPattern, from, to) ) {
+		if ( isRangeLoaded(kind, objectId, sourceIdPattern != null ? sourceIdPattern : "", from, to) ) {
 			return super.rangeMatching(kind, objectId, sourceIdPattern, from, to, datumBySourceId);
 		}
 
@@ -311,14 +329,14 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 				.findFiltered(c);
 		if ( daoResults == null ) {
 			// not expected
-			return List.of();
+			return Collections.emptyList();
 		}
 
 		log.debug("Query user {} node {} source [{}] range [{} - {}] found {}", userId, objectId,
 				sourceIdPattern, from, to, daoResults.getReturnedResultCount());
 
 		if ( daoResults.getReturnedResultCount() < 1 ) {
-			return null;
+			return Collections.emptyList();
 		}
 
 		final QueryAuditor auditor = (kind == ObjectDatumKind.Node ? this.auditor : null);
@@ -327,31 +345,41 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 		final Set<String> seenSourceIds = new HashSet<>(4);
 
 		for ( var daoDatum : daoResults ) {
-			ObjectDatumStreamMetadata meta = daoResults.metadataForStreamId(daoDatum.getStreamId());
+			final ObjectDatumStreamMetadata meta = daoResults
+					.metadataForStreamId(daoDatum.getStreamId());
+			if ( meta == null ) {
+				continue;
+			}
 			var d = ObjectDatum.forStreamDatum(daoDatum, userId,
 					new DatumId(kind, objectId, meta.getSourceId(), daoDatum.getTimestamp()), meta);
-			if ( auditor != null ) {
-				auditor.auditNodeDatum(d);
-			}
+			if ( d != null ) {
+				if ( auditor != null ) {
+					auditor.auditNodeDatum(d);
+				}
 
-			result.add(d);
-			if ( !seenSourceIds.contains(d.getSourceId()) ) {
-				seenSourceIds.add(d.getSourceId());
-			}
+				result.add(d);
+				if ( !seenSourceIds.contains(d.getSourceId()) ) {
+					seenSourceIds.add(d.getSourceId());
+				}
 
-			final List<Datum> list = datumBySourceId.computeIfAbsent(d.getSourceId(),
-					_ -> new ArrayList<>(daoResults.getReturnedResultCount()));
-			list.add(d);
+				final List<Datum> list = datumBySourceId.computeIfAbsent(d.getSourceId(),
+						_ -> new ArrayList<>(daoResults.getReturnedResultCount()));
+				list.add(d);
+			}
 		}
 
 		// re-sort datum lists, remove any duplicates
 		for ( String sourceId : seenSourceIds ) {
 			List<Datum> list = datumBySourceId.get(sourceId);
-			list.sort((l, r) -> r.getTimestamp().compareTo(l.getTimestamp()));
+			if ( list == null ) {
+				continue;
+			}
+			list.sort(
+					(l, r) -> nonnull(r.getTimestamp(), "Right timestamp").compareTo(l.getTimestamp()));
 			Datum prev = null;
 			for ( ListIterator<Datum> itr = list.listIterator(); itr.hasNext(); ) {
 				Datum d = itr.next();
-				if ( prev != null ) {
+				if ( prev != null && prev.getTimestamp() != null ) {
 					if ( prev.getTimestamp().equals(d.getTimestamp()) ) {
 						itr.remove();
 					}
@@ -360,7 +388,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 			}
 		}
 
-		markRangeLoaded(kind, objectId, sourceIdPattern, from, to);
+		markRangeLoaded(kind, objectId, sourceIdPattern != null ? sourceIdPattern : "", from, to);
 
 		return result;
 
@@ -368,7 +396,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 
 	@Override
 	public Collection<ObjectDatumStreamMetadata> findStreams(ObjectDatumKind kind, String query,
-			String sourceIdPattern, String... tags) {
+			@Nullable String sourceIdPattern, String @Nullable... tags) {
 		BasicDatumCriteria criteria = new BasicDatumCriteria();
 		criteria.setObjectKind(kind);
 		criteria.setSourceId(sourceIdPattern);

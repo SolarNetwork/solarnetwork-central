@@ -26,9 +26,17 @@ package net.solarnetwork.central.domain;
  * API for objects related to a user entity by way of a user ID.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserIdRelated {
+
+	/**
+	 * A special "not a value" instance to be used for generated user ID values
+	 * yet to be generated.
+	 * 
+	 * @since 1.1
+	 */
+	Long UNASSIGNED_USER_ID = Long.MIN_VALUE;
 
 	/**
 	 * Get the user ID this entity is related to.
@@ -38,5 +46,18 @@ public interface UserIdRelated {
 	 *         if the user ID is not available
 	 */
 	Long getUserId() throws IllegalStateException;
+
+	/**
+	 * Test if the user ID is assigned.
+	 * 
+	 * @return {@literal true} if the user ID value is assigned,
+	 *         {@literal false} if it is considered "not a value"
+	 * @since 1.1
+	 */
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
+	default boolean userIdIsAssigned() {
+		final Long userId = getUserId();
+		return userId != null && userId != UNASSIGNED_USER_ID;
+	}
 
 }

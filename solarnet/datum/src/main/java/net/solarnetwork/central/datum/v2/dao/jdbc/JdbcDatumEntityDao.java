@@ -247,6 +247,9 @@ public class JdbcDatumEntityDao
 			return null;
 		}
 		var d = convertGeneralDatum(datum);
+		if ( d == null ) {
+			return null;
+		}
 		return persist(d);
 	}
 
@@ -721,7 +724,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-		
+
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/
