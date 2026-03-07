@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.support;
 
 import static java.lang.String.format;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -125,8 +126,7 @@ public final class DatumUtils {
 	 *
 	 * @param filter
 	 *        the filter to convert
-	 * @return the criteria, or {@code null} if {@code filter} is
-	 *         {@code null}
+	 * @return the criteria, or {@code null} if {@code filter} is {@code null}
 	 */
 	public static @Nullable BasicDatumCriteria criteriaFromFilter(@Nullable Filter filter) {
 		return criteriaFromFilter(filter, null, null, null);
@@ -143,8 +143,7 @@ public final class DatumUtils {
 	 *        the optional offset
 	 * @param max
 	 *        the optional max
-	 * @return the criteria, or {@code null} if {@code filter} is
-	 *         {@code null}
+	 * @return the criteria, or {@code null} if {@code filter} is {@code null}
 	 */
 	public static @Nullable BasicDatumCriteria criteriaFromFilter(@Nullable Filter filter,
 			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
@@ -297,7 +296,9 @@ public final class DatumUtils {
 		if ( s != null && !s.isEmpty() ) {
 			List<SortDescriptor> sorts = new ArrayList<>(s.size());
 			for ( SortDescriptor sd : s ) {
-				sorts.add(new SimpleSortDescriptor(sd.getSortKey(), sd.isDescending()));
+				if ( sd.getSortKey() != null ) {
+					sorts.add(new SimpleSortDescriptor(sd.getSortKey(), sd.isDescending()));
+				}
 			}
 			c.setSorts(sorts);
 		} else if ( sortDescriptors != null && !sortDescriptors.isEmpty() ) {
@@ -339,8 +340,8 @@ public final class DatumUtils {
 	 *
 	 * @param location
 	 *        the location
-	 * @return the criteria, or {@code null} if {@code filter} is
-	 *         {@code null} or has only empty values
+	 * @return the criteria, or {@code null} if {@code filter} is {@code null}
+	 *         or has only empty values
 	 */
 	public static @Nullable SimpleLocation locationFromFilter(@Nullable Location location) {
 		if ( location == null ) {
@@ -381,7 +382,7 @@ public final class DatumUtils {
 		if ( criteria instanceof BasicDatumCriteria c ) {
 			result = c.clone();
 		} else {
-			result = toBasicDatumCriteria(criteria);
+			result = nonnull(toBasicDatumCriteria(criteria), "Criteria");
 		}
 		result.setStartDate(null);
 		result.setEndDate(null);
@@ -396,8 +397,8 @@ public final class DatumUtils {
 	 *
 	 * @param criteria
 	 *        the criteria to convert
-	 * @return the basic datum criteria, or {@code null} if {@code criteria}
-	 *         is {@code null}; if {@code criteria} is already a
+	 * @return the basic datum criteria, or {@code null} if {@code criteria} is
+	 *         {@code null}; if {@code criteria} is already a
 	 *         {@link BasicDatumCriteria} instance it will be returned directly
 	 * @since 2.1
 	 */
@@ -517,7 +518,7 @@ public final class DatumUtils {
 		populateGeneralDatumSamples(meta, s, props, DatumSamplesType.Instantaneous);
 		populateGeneralDatumSamples(meta, s, props, DatumSamplesType.Accumulating);
 		populateGeneralDatumSamples(meta, s, props, DatumSamplesType.Status);
-		if ( props.getTagsLength() > 0 ) {
+		if ( props != null && props.getTagsLength() > 0 ) {
 			Set<String> tags = new LinkedHashSet<>(props.getTagsLength());
 			Collections.addAll(tags, props.getTags());
 			s.setTags(tags);

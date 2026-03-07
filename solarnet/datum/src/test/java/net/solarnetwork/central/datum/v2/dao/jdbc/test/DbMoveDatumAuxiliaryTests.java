@@ -76,7 +76,6 @@ public class DbMoveDatumAuxiliaryTests extends BaseDatumJdbcTestSupport {
 
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
 		meta.putInfoValue("bim", "pow");
-		final Instant ts = Instant.now().truncatedTo(ChronoUnit.HOURS);
 		return new DatumAuxiliaryEntity(UUID.randomUUID(), now().truncatedTo(ChronoUnit.HOURS),
 				DatumAuxiliaryType.Reset, now(), sf, ss, "Note.", meta);
 	}

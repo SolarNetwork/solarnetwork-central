@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import de.siegmar.fastcsv.reader.CsvReader;
 import de.siegmar.fastcsv.reader.CsvRecord;
 import de.siegmar.fastcsv.reader.CsvRecordHandler;
@@ -145,7 +146,7 @@ public final class DatumCsvUtils {
 		return result;
 	}
 
-	private static String[] parseArrayValue(String value) {
+	private static String @Nullable [] parseArrayValue(@Nullable String value) {
 		if ( value == null || value.isEmpty() ) {
 			return null;
 		}
@@ -158,7 +159,10 @@ public final class DatumCsvUtils {
 		return commaDelimitedListToStringArray(value);
 	}
 
-	private static String[][] parse2dArrayValue(String value) {
+	private static String @Nullable [][] parse2dArrayValue(@Nullable String value) {
+		if ( value == null ) {
+			return null;
+		}
 		if ( value.startsWith("{") ) {
 			value = value.substring(1);
 		}
@@ -173,7 +177,7 @@ public final class DatumCsvUtils {
 		return result;
 	}
 
-	private static BigDecimal[][] parase2dDecimalArray(String[][] strings) {
+	private static BigDecimal @Nullable [][] parase2dDecimalArray(String @Nullable [][] strings) {
 		if ( strings == null ) {
 			return null;
 		}
@@ -256,13 +260,13 @@ public final class DatumCsvUtils {
 	 * @param metaProvider
 	 *        the metadata provider
 	 * @param formatter
-	 *        the formatter; if {@code null} then a standard ISO 8601
-	 *        timestamp will be assumed
+	 *        the formatter; if {@code null} then a standard ISO 8601 timestamp
+	 *        will be assumed
 	 * @return the iterator, never {@code null}
 	 * @since 2.0
 	 */
 	public static CloseableIterator<Datum> datumResourceIterator(Class<?> clazz, String resource,
-			ObjectDatumStreamMetadataProvider metaProvider, DateTimeFormatter formatter) {
+			ObjectDatumStreamMetadataProvider metaProvider, @Nullable DateTimeFormatter formatter) {
 		try {
 			InputStream is = clazz.getResourceAsStream(resource);
 			if ( is == null ) {
@@ -302,6 +306,9 @@ public final class DatumCsvUtils {
 	 *        the CSV resource to load
 	 * @param metaProvider
 	 *        the metadata provider
+	 * @param formatter
+	 *        the formatter; if {@code null} then a standard ISO 8601 timestamp
+	 *        will be assumed
 	 * @return the list
 	 * @throws RuntimeException
 	 *         if any parsing error occurs

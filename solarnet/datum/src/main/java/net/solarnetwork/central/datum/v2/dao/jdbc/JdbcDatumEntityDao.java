@@ -770,8 +770,12 @@ public class JdbcDatumEntityDao
 				}
 				metaCriteria.setStreamId(d.getStreamId());
 				ObjectDatumStreamMetadata meta = findStreamMetadata(metaCriteria);
-				ReportingGeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(d, meta);
-				callback.handle(gnd);
+				if ( meta != null ) {
+					ReportingGeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(d, meta);
+					if ( gnd != null ) {
+						callback.handle(gnd);
+					}
+				}
 			}
 			return new BasicBulkExportResult(count);
 		}

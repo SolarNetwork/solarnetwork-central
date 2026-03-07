@@ -23,6 +23,9 @@
 package net.solarnetwork.central.datum.v2.support;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static net.solarnetwork.domain.datum.DatumProperties.emptyProperties;
+import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.emptyStatistics;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -34,6 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
@@ -102,7 +106,7 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
-	public static void writeJsonArrayValues(JsonGenerator generator, BigDecimal[] array)
+	public static void writeJsonArrayValues(JsonGenerator generator, BigDecimal @Nullable [] array)
 			throws JacksonException {
 		if ( array == null ) {
 			return;
@@ -128,8 +132,8 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
-	public static void writeJsonArrayValues(JsonGenerator generator, BigDecimal[][] arrayOfArrays)
-			throws JacksonException {
+	public static void writeJsonArrayValues(JsonGenerator generator,
+			BigDecimal @Nullable [][] arrayOfArrays) throws JacksonException {
 		if ( arrayOfArrays == null ) {
 			return;
 		}
@@ -159,7 +163,7 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
-	public static void writeJsonArrayValues(JsonGenerator generator, String[] array)
+	public static void writeJsonArrayValues(JsonGenerator generator, String @Nullable [] array)
 			throws JacksonException {
 		if ( array == null ) {
 			return;
@@ -199,8 +203,8 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
-	public static void writeStreamMetadata(JsonGenerator generator, DatumStreamMetadata metadata)
-			throws JacksonException {
+	public static void writeStreamMetadata(JsonGenerator generator,
+			@Nullable DatumStreamMetadata metadata) throws JacksonException {
 		if ( metadata == null ) {
 			generator.writeNull();
 			return;
@@ -282,8 +286,8 @@ public final class DatumJsonUtils {
 	 * <p>
 	 * If any property array is {@code null} or empty, no elements will be
 	 * contributed to the output JSON array. Any {@code null} values
-	 * <i>within</i> a property array will contribute {@code null} literals
-	 * to the output JSON array.
+	 * <i>within</i> a property array will contribute {@code null} literals to
+	 * the output JSON array.
 	 * </p>
 	 *
 	 * <p>
@@ -305,7 +309,7 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
-	public static void writePropertyValuesArray(JsonGenerator generator, Datum datum)
+	public static void writePropertyValuesArray(JsonGenerator generator, @Nullable Datum datum)
 			throws JacksonException {
 		if ( datum == null ) {
 			generator.writeNull();
@@ -389,7 +393,7 @@ public final class DatumJsonUtils {
 	 * @see #writePropertyValuesArray(JsonGenerator, Datum)
 	 */
 	public static void writeStream(JsonGenerator generator, UUID streamId, DatumStreamMetadata metadata,
-			Iterator<Datum> datum, int datumLength) throws JacksonException {
+			@Nullable Iterator<Datum> datum, int datumLength) throws JacksonException {
 		if ( datum == null ) {
 			generator.writeNull();
 			return;
@@ -440,8 +444,8 @@ public final class DatumJsonUtils {
 	 * <p>
 	 * If any property array is {@code null} or empty, no elements will be
 	 * contributed to the output JSON array. Any {@code null} values
-	 * <i>within</i> a property array will contribute {@code null} literals
-	 * to the output JSON array.
+	 * <i>within</i> a property array will contribute {@code null} literals to
+	 * the output JSON array.
 	 * </p>
 	 *
 	 * <p>
@@ -460,7 +464,7 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
-	public static void writeStatisticValuesArray(JsonGenerator generator, AggregateDatum datum)
+	public static void writeStatisticValuesArray(JsonGenerator generator, @Nullable AggregateDatum datum)
 			throws JacksonException {
 		if ( datum == null ) {
 			generator.writeNull();
@@ -551,7 +555,7 @@ public final class DatumJsonUtils {
 	 * @see #writeStatisticValuesArray(JsonGenerator, AggregateDatum)
 	 */
 	public static void writeAggregateStream(JsonGenerator generator, UUID streamId,
-			DatumStreamMetadata metadata, Iterator<AggregateDatum> datum, int datumLength)
+			DatumStreamMetadata metadata, @Nullable Iterator<AggregateDatum> datum, int datumLength)
 			throws JacksonException {
 		if ( datum == null ) {
 			generator.writeNull();
@@ -625,10 +629,10 @@ public final class DatumJsonUtils {
 	 *         if any parsing error occurs
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	public static Datum parseDatum(JsonParser parser,
+	public static @Nullable Datum parseDatum(JsonParser parser,
 			ObjectDatumStreamMetadataProvider metadataProvider) {
 		// read up to the next object end
-		UUID streamId = null;
+		UUID streamId = StreamDatum.UNASSIGNED_STREAM_ID;
 		Instant timestamp = null;
 		Instant received = null;
 
@@ -676,7 +680,7 @@ public final class DatumJsonUtils {
 
 					case "samples":
 						if ( parser.currentToken() == JsonToken.START_OBJECT ) {
-							props = parseDatumSamples(parser, meta);
+							props = parseDatumSamples(parser, nonnull(meta, "Stream metadata"));
 						}
 						break;
 
@@ -684,8 +688,12 @@ public final class DatumJsonUtils {
 			}
 		}
 
+		if ( timestamp == null ) {
+			return null;
+		}
+
 		return new DatumEntity(meta != null ? meta.getStreamId() : streamId, timestamp,
-				received != null ? received : Instant.now(), props);
+				received != null ? received : Instant.now(), props != null ? props : emptyProperties());
 	}
 
 	/**
@@ -738,10 +746,10 @@ public final class DatumJsonUtils {
 	 *         if any parsing error occurs
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	public static AggregateDatum parseAggregateDatum(JsonParser parser,
+	public static @Nullable AggregateDatum parseAggregateDatum(JsonParser parser,
 			ObjectDatumStreamMetadataProvider metadataProvider) throws JacksonException {
 		// read up to the next object end
-		UUID streamId = null;
+		UUID streamId = StreamDatum.UNASSIGNED_STREAM_ID;
 		Instant timestamp = null;
 		Aggregation kind = null;
 
@@ -790,13 +798,14 @@ public final class DatumJsonUtils {
 
 					case "samples":
 						if ( parser.currentToken() == JsonToken.START_OBJECT ) {
-							props = parseDatumSamples(parser, meta);
+							props = parseDatumSamples(parser, nonnull(meta, "Stream metadata"));
 						}
 						break;
 
 					case "stats":
 						if ( parser.currentToken() == JsonToken.START_OBJECT ) {
-							stats = parseDatumSamplesStatistics(parser, meta);
+							stats = parseDatumSamplesStatistics(parser,
+									nonnull(meta, "Stream metadata"));
 						}
 						break;
 
@@ -804,8 +813,12 @@ public final class DatumJsonUtils {
 			}
 		}
 
-		return new AggregateDatumEntity(meta != null ? meta.getStreamId() : streamId, timestamp, kind,
-				props, stats);
+		if ( timestamp == null ) {
+			return null;
+		}
+		return new AggregateDatumEntity(meta != null ? meta.getStreamId() : streamId, timestamp,
+				kind != null ? kind : Aggregation.None, props != null ? props : emptyProperties(),
+				stats != null ? stats : emptyStatistics());
 	}
 
 	/**
@@ -845,8 +858,8 @@ public final class DatumJsonUtils {
 	 *         if any parsing error occurs
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	public static DatumProperties parseDatumSamples(JsonParser parser, ObjectDatumStreamMetadata meta)
-			throws JacksonException {
+	public static @Nullable DatumProperties parseDatumSamples(JsonParser parser,
+			ObjectDatumStreamMetadata meta) throws JacksonException {
 		BigDecimal[] instantaneous = null;
 		BigDecimal[] accumulating = null;
 		String[] status = null;
@@ -915,7 +928,7 @@ public final class DatumJsonUtils {
 	 *         if any parsing error occurs
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	public static DatumPropertiesStatistics parseDatumSamplesStatistics(JsonParser parser,
+	public static @Nullable DatumPropertiesStatistics parseDatumSamplesStatistics(JsonParser parser,
 			ObjectDatumStreamMetadata meta) throws JacksonException {
 		BigDecimal[][] instantaneous = null;
 		BigDecimal[][] accumulating = null;
@@ -942,7 +955,7 @@ public final class DatumJsonUtils {
 		return DatumPropertiesStatistics.statisticsOf(instantaneous, accumulating);
 	}
 
-	private static BigDecimal[] parseDecimalArrayForSamplesType(JsonParser parser,
+	private static BigDecimal @Nullable [] parseDecimalArrayForSamplesType(JsonParser parser,
 			ObjectDatumStreamMetadata meta, DatumSamplesType type) throws JacksonException {
 		BigDecimal[] result = null;
 		if ( parser.currentToken() == JsonToken.START_OBJECT ) {
@@ -958,7 +971,7 @@ public final class DatumJsonUtils {
 		return result;
 	}
 
-	private static String[] parseStringArrayForSamplesType(JsonParser parser,
+	private static String @Nullable [] parseStringArrayForSamplesType(JsonParser parser,
 			ObjectDatumStreamMetadata meta, DatumSamplesType type) throws JacksonException {
 		String[] result = null;
 		if ( type == DatumSamplesType.Tag ) {
@@ -987,7 +1000,7 @@ public final class DatumJsonUtils {
 		return result;
 	}
 
-	private static BigDecimal[][] parseDecimalArrayOfArraysForSamplesType(JsonParser parser,
+	private static BigDecimal @Nullable [][] parseDecimalArrayOfArraysForSamplesType(JsonParser parser,
 			ObjectDatumStreamMetadata meta, DatumSamplesType type) throws JacksonException {
 		BigDecimal[][] result = null;
 		if ( parser.currentToken() == JsonToken.START_OBJECT ) {
@@ -1036,7 +1049,7 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
-	public static Map<String, BigDecimal> parseDecimalsObject(JsonParser parser)
+	public static @Nullable Map<String, BigDecimal> parseDecimalsObject(JsonParser parser)
 			throws JacksonException {
 		Map<String, BigDecimal> map = new LinkedHashMap<>(8);
 		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
@@ -1091,7 +1104,8 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
-	public static Map<String, String> parseStringsObject(JsonParser parser) throws JacksonException {
+	public static @Nullable Map<String, String> parseStringsObject(JsonParser parser)
+			throws JacksonException {
 		Map<String, String> map = new LinkedHashMap<>(8);
 		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
 			JsonToken t = parser.currentToken();
@@ -1136,7 +1150,7 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
-	public static Map<String, BigDecimal[]> parseDecimalArraysObject(JsonParser parser)
+	public static @Nullable Map<String, BigDecimal[]> parseDecimalArraysObject(JsonParser parser)
 			throws JacksonException {
 		Map<String, BigDecimal[]> map = new LinkedHashMap<>(8);
 		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
@@ -1172,7 +1186,7 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
-	public static BigDecimal[] parseDecimalArray(JsonParser parser) throws JacksonException {
+	public static BigDecimal @Nullable [] parseDecimalArray(JsonParser parser) throws JacksonException {
 		List<BigDecimal> list = new ArrayList<>(3);
 		while ( parser.nextToken() != JsonToken.END_ARRAY ) {
 			JsonToken t = parser.currentToken();
@@ -1209,7 +1223,7 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any parsing error occurs
 	 */
-	public static Instant parseInstant(JsonParser parser) throws JacksonException {
+	public static @Nullable Instant parseInstant(JsonParser parser) throws JacksonException {
 		Instant timestamp = null;
 		if ( parser.currentToken() == JsonToken.VALUE_NUMBER_INT ) {
 			// parse as millisecond epoch value
@@ -1266,7 +1280,8 @@ public final class DatumJsonUtils {
 	 *         does not exist
 	 * @since 2.5
 	 */
-	public static String getStringFieldValue(JsonNode node, String fieldName, String placeholder) {
+	public static @Nullable String getStringFieldValue(JsonNode node, String fieldName,
+			@Nullable String placeholder) {
 		JsonNode child = node.get(fieldName);
 		return (child == null ? placeholder : child.asString());
 	}
@@ -1289,7 +1304,8 @@ public final class DatumJsonUtils {
 	 *         if a parsing error occurs
 	 * @since 2.5
 	 */
-	public static Object parseDatum(ObjectMapper mapper, JsonNode node) throws JacksonException {
+	public static @Nullable Object parseDatum(ObjectMapper mapper, JsonNode node)
+			throws JacksonException {
 		if ( node.isArray() ) {
 			return parseStreamDatum(mapper, node);
 		} else {
@@ -1315,7 +1331,7 @@ public final class DatumJsonUtils {
 	 *         if the node cannot be parsed
 	 * @since 2.5
 	 */
-	public static StreamDatum parseStreamDatum(ObjectMapper mapper, JsonNode node)
+	public static @Nullable StreamDatum parseStreamDatum(ObjectMapper mapper, JsonNode node)
 			throws JacksonException {
 		return mapper.treeToValue(node, StreamDatum.class);
 	}
@@ -1332,7 +1348,7 @@ public final class DatumJsonUtils {
 	 *         if the node cannot be parsed
 	 * @since 2.5
 	 */
-	public static net.solarnetwork.domain.datum.Datum parseGeneralDatum(ObjectMapper mapper,
+	public static net.solarnetwork.domain.datum.@Nullable Datum parseGeneralDatum(ObjectMapper mapper,
 			JsonNode node) throws JacksonException {
 		return mapper.treeToValue(node, net.solarnetwork.domain.datum.Datum.class);
 	}

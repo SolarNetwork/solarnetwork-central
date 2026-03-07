@@ -30,6 +30,7 @@ import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerial
 import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Status;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -38,6 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
@@ -166,13 +168,13 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	private final JsonGenerator generator;
 	private final SerializationContext provider;
 	private final MimeType mimeType;
-	private final Set<String> allowedPropertyNames;
+	private final @Nullable Set<String> allowedPropertyNames;
 
-	private final Map<UUID, PropertyRestrictedObjectDatumStreamMetadata> restrictedMetadata;
+	private final @Nullable Map<UUID, PropertyRestrictedObjectDatumStreamMetadata> restrictedMetadata;
 
-	private ObjectDatumStreamMetadataProvider metadataProvider;
-	private Collection<UUID> streamIds;
-	private Map<UUID, Integer> metaIndexMap;
+	private @Nullable ObjectDatumStreamMetadataProvider metadataProvider;
+	private @Nullable Collection<UUID> streamIds;
+	private @Nullable Map<UUID, Integer> metaIndexMap;
 	private int resultIndex = 0;
 
 	/**
@@ -210,7 +212,8 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 * @since 2.1
 	 */
 	public ObjectMapperStreamDatumFilteredResultsProcessor(JsonGenerator generator,
-			SerializationContext provider, MimeType mimeType, Set<String> allowedPropertyNames) {
+			SerializationContext provider, MimeType mimeType,
+			@Nullable Set<String> allowedPropertyNames) {
 		super();
 		this.generator = requireNonNullArgument(generator, "generator");
 		this.provider = requireNonNullArgument(provider, "provider");
@@ -225,14 +228,14 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	}
 
 	@Override
-	public void start(final Long totalResultCount, final Integer startingOffset,
-			final Integer expectedResultCount, Map<String, ?> attributes) throws IOException {
-		if ( attributes == null || !(attributes
-				.get(METADATA_PROVIDER_ATTR) instanceof ObjectDatumStreamMetadataProvider) ) {
+	public void start(final @Nullable Long totalResultCount, final @Nullable Integer startingOffset,
+			final @Nullable Integer expectedResultCount, @Nullable Map<String, ?> attributes)
+			throws IOException {
+		if ( attributes == null || !(attributes.get(
+				METADATA_PROVIDER_ATTR) instanceof ObjectDatumStreamMetadataProvider metaProvider) ) {
 			throw new IllegalArgumentException("No metadata provider provided.");
 		}
-		this.metadataProvider = (ObjectDatumStreamMetadataProvider) attributes
-				.get(METADATA_PROVIDER_ATTR);
+		this.metadataProvider = metaProvider;
 		this.streamIds = metadataProvider.metadataStreamIds();
 		this.metaIndexMap = new HashMap<>(streamIds != null ? streamIds.size() : 0);
 
@@ -274,7 +277,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 		}
 	}
 
-	private ObjectDatumStreamMetadata metadataForStreamId(UUID streamId) {
+	private @Nullable ObjectDatumStreamMetadata metadataForStreamId(UUID streamId) {
 		ObjectDatumStreamMetadata result = null;
 		if ( restrictedMetadata != null ) {
 			result = restrictedMetadata.get(streamId);
@@ -282,8 +285,11 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 				return result;
 			}
 		}
+		if ( metadataProvider == null ) {
+			return null;
+		}
 		result = metadataProvider.metadataForStreamId(streamId);
-		if ( restrictedMetadata != null ) {
+		if ( result != null && restrictedMetadata != null && allowedPropertyNames != null ) {
 			var restricted = new PropertyRestrictedObjectDatumStreamMetadata(result,
 					allowedPropertyNames);
 			restrictedMetadata.put(streamId, restricted);
@@ -323,8 +329,11 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			iMapping = aMapping = sMapping = null;
 		}
 
+		final Integer metaIdx = nonnull(nonnull(metaIndexMap, "metaIndexMap").get(d.getStreamId()),
+				"Metadata index");
+
 		generator.writeStartArray(d, totalLen);
-		generator.writeNumber(metaIndexMap.get(d.getStreamId()));
+		generator.writeNumber(metaIdx);
 		if ( d instanceof AggregateDatum agg ) {
 			generator.writeStartArray(d, 2);
 			generator.writeNumber(ts);
@@ -380,8 +389,8 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 *         if any IO error occurs
 	 */
 	private static void writeAggregateProperty(final JsonGenerator generator,
-			final DatumSamplesType type, final boolean reading, final BigDecimal[] values,
-			final BigDecimal[][] statValues, final int len, final int[] mapping)
+			final DatumSamplesType type, final boolean reading, final BigDecimal @Nullable [] values,
+			final BigDecimal @Nullable [][] statValues, final int len, final int @Nullable [] mapping)
 			throws JacksonException {
 		for ( int i = 0, idx = 0; i < len; i++ ) {
 			if ( mapping != null && i < mapping.length ) {
@@ -432,8 +441,8 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 * <p>
 	 * This method does not write any starting or ending JSON array, it only
 	 * writes the values. It always writes {@code count} values, regardless of
-	 * the length of {@code array}. JSON {@code null} values will be written
-	 * for any missing {@code array} values.
+	 * the length of {@code array}. JSON {@code null} values will be written for
+	 * any missing {@code array} values.
 	 * </p>
 	 *
 	 * @param generator
@@ -449,8 +458,9 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
-	private static void writeStringArrayValues(final JsonGenerator generator, final String[] array,
-			final int count, final int[] mapping) throws JacksonException {
+	private static void writeStringArrayValues(final JsonGenerator generator,
+			final String @Nullable [] array, final int count, final int @Nullable [] mapping)
+			throws JacksonException {
 		int i, idx;
 		final int arrayLen = (array != null ? array.length : 0);
 		for ( i = 0; i < count && i < arrayLen; i++ ) {
@@ -459,7 +469,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			} else {
 				idx = i;
 			}
-			if ( idx < arrayLen && array[idx] != null ) {
+			if ( array != null && idx < arrayLen && array[idx] != null ) {
 				generator.writeString(array[idx]);
 			} else {
 				generator.writeNull();
@@ -476,8 +486,8 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 * <p>
 	 * This method does not write any starting or ending JSON array, it only
 	 * writes the values. It always writes {@code count} values, regardless of
-	 * the length of {@code array}. JSON {@code null} values will be written
-	 * for any missing {@code array} values.
+	 * the length of {@code array}. JSON {@code null} values will be written for
+	 * any missing {@code array} values.
 	 * </p>
 	 *
 	 * @param generator
@@ -493,8 +503,9 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
-	private static void writeDecimalArrayValues(final JsonGenerator generator, final BigDecimal[] array,
-			final int count, final int[] mapping) throws JacksonException {
+	private static void writeDecimalArrayValues(final JsonGenerator generator,
+			final BigDecimal @Nullable [] array, final int count, final int @Nullable [] mapping)
+			throws JacksonException {
 		int i, idx;
 		final int arrayLen = (array != null ? array.length : 0);
 		for ( i = 0; i < count && i < arrayLen; i++ ) {
@@ -503,7 +514,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			} else {
 				idx = i;
 			}
-			if ( idx < arrayLen && array[idx] != null ) {
+			if ( array != null && idx < arrayLen && array[idx] != null ) {
 				generator.writeNumber(array[idx]);
 			} else {
 				generator.writeNull();
