@@ -64,7 +64,7 @@ public final class UpdateCredentialConfiguration implements PreparedStatementCre
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateCredentialConfiguration(UserLongCompositePK id, CredentialConfiguration entity) {
 		super();

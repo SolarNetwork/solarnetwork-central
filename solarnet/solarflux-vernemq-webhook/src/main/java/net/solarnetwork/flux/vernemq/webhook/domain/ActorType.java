@@ -39,7 +39,7 @@ public enum ActorType {
 	 *
 	 * @param value
 	 *        the string value
-	 * @return the enumeration value, or {@literal null} if not known
+	 * @return the enumeration value, or {@code null} if not known
 	 */
 	public static ActorType forValue(String value) {
 		return switch (value) {

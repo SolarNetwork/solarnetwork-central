@@ -68,7 +68,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 *        the action name
 	 * @return the new key
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static ChargePointActionStatusKey keyFor(long userId, long chargePointId, int connectorId,
 			String action) {
@@ -90,7 +90,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 *        the action name
 	 * @return the new key
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 1.1
 	 */
 	public static ChargePointActionStatusKey keyFor(long userId, long chargePointId, int evseId,
@@ -110,7 +110,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 * @param action
 	 *        the action name
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ChargePointActionStatusKey(long userId, long chargePointId, int connectorId, String action) {
 		this(userId, chargePointId, 0, connectorId, action);
@@ -130,7 +130,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 * @param action
 	 *        the action name
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 1.1
 	 */
 	public ChargePointActionStatusKey(long userId, long chargePointId, int evseId, int connectorId,
@@ -243,7 +243,7 @@ public class ChargePointActionStatusKey extends BasePK
 	/**
 	 * Get the action.
 	 *
-	 * @return the action, never {@literal null}
+	 * @return the action, never {@code null}
 	 */
 	public String getAction() {
 		return action;

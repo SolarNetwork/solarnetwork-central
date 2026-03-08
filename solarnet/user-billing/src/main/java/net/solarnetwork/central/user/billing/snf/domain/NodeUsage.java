@@ -100,7 +100,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Constructor.
 	 *
 	 * <p>
-	 * This creates a {@literal null} node ID, for usage not associated with a
+	 * This creates a {@code null} node ID, for usage not associated with a
 	 * specific node.
 	 * </p>
 	 */
@@ -282,7 +282,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the node usage costs.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 */
 	@JsonIgnore
 	public final NodeUsageCost getCosts() {
@@ -292,7 +292,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the count of datum properties added.
 	 *
-	 * @return the count, never {@literal null}
+	 * @return the count, never {@code null}
 	 */
 	public final BigInteger getDatumPropertiesIn() {
 		return datumPropertiesIn;
@@ -302,7 +302,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of datum properties added.
 	 *
 	 * @param datumPropertiesIn
-	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        the count to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 */
 	public final void setDatumPropertiesIn(@Nullable BigInteger datumPropertiesIn) {
@@ -344,7 +344,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of datum stored per day (accumulating).
 	 *
 	 * @param datumDaysStored
-	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        the count to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 */
 	public final void setDatumDaysStored(BigInteger datumDaysStored) {
@@ -386,7 +386,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of datum queried.
 	 *
 	 * @param datumOut
-	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        the count to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 */
 	public final void setDatumOut(BigInteger datumOut) {
@@ -418,7 +418,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the overall cost.
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 */
 	public final BigDecimal getTotalCost() {
 		return totalCost;
@@ -428,7 +428,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the overall cost.
 	 *
 	 * @param totalCost
-	 *        the cost to set; if {@literal null} then {@literal 0} will be
+	 *        the cost to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 */
 	public final void setTotalCost(BigDecimal totalCost) {
@@ -448,7 +448,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of OCPP Chargers.
 	 *
 	 * @param ocppChargers
-	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        the count to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 */
 	public final void setOcppChargers(BigInteger ocppChargers) {
@@ -490,7 +490,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of OSCP Capacity Groups.
 	 *
 	 * @param oscpCapacityGroups
-	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        the count to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 */
 	public final void setOscpCapacityGroups(BigInteger oscpCapacityGroups) {
@@ -584,7 +584,7 @@ public class NodeUsage extends BasicLongEntity
 	 * <li>{@link #CLOUD_INTEGRATIONS_DATA_KEY}</li>
 	 * </ol>
 	 *
-	 * @return the map, never {@literal null}
+	 * @return the map, never {@code null}
 	 */
 	public final Map<String, List<NamedCost>> getTiersCostBreakdown() {
 		Map<String, List<NamedCost>> result = new LinkedHashMap<>(4);
@@ -624,7 +624,7 @@ public class NodeUsage extends BasicLongEntity
 	 * <li>{@link #CLOUD_INTEGRATIONS_DATA_KEY}</li>
 	 * </ol>
 	 *
-	 * @return the map, never {@literal null}
+	 * @return the map, never {@code null}
 	 */
 	public final Map<String, UsageInfo> getUsageInfo() {
 		Map<String, UsageInfo> result = new LinkedHashMap<>(4);
@@ -678,7 +678,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the node datum properties tier cost breakdown.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 */
 	@JsonIgnore
 	public final List<NamedCost> getDatumPropertiesInTiersCostBreakdown() {
@@ -746,7 +746,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the node datum properties tier cost breakdown.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 */
 	@JsonIgnore
 	public final List<NamedCost> getDatumDaysStoredTiersCostBreakdown() {
@@ -815,7 +815,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the node datum properties tier cost breakdown.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 */
 	@JsonIgnore
 	public final List<NamedCost> getDatumOutTiersCostBreakdown() {
@@ -882,7 +882,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the OCPP Chargers tier cost breakdown.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 */
 	@JsonIgnore
 	public final List<NamedCost> getOcppChargersTiersCostBreakdown() {
@@ -949,7 +949,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the OSCP Capacity Groups tier cost breakdown.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 */
 	@JsonIgnore
 	public final List<NamedCost> getOscpCapacityGroupsTiersCostBreakdown() {
@@ -1029,7 +1029,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of DNP3 Data Points.
 	 *
 	 * @param dnp3DataPoints
-	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        the count to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 * @since 2.3
 	 */
@@ -1064,7 +1064,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the DNP3 Data Points tier cost breakdown.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 * @since 2.3
 	 */
 	@JsonIgnore
@@ -1148,7 +1148,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of Instructions issued.
 	 *
 	 * @param instructionsIssued
-	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        the count to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 * @since 2.4
 	 */
@@ -1183,7 +1183,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the Instructions issued tier cost breakdown.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 * @since 2.4
 	 */
 	@JsonIgnore
@@ -1269,7 +1269,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of OSCP capacity .
 	 *
 	 * @param oscpCapacity
-	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        the count to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 * @since 2.5
 	 */
@@ -1304,7 +1304,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the OSCP capacity tier cost breakdown.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 * @since 2.5
 	 */
 	@JsonIgnore
@@ -1388,7 +1388,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of SolarFlux data in.
 	 *
 	 * @param fluxDataIn
-	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        the count to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 * @since 2.6
 	 */
@@ -1423,7 +1423,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the SolarFlux data in tier cost breakdown.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 * @since 2.6
 	 */
 	@JsonIgnore
@@ -1507,7 +1507,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of SolarFlux data out.
 	 *
 	 * @param fluxDataOut
-	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        the count to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 * @since 2.6
 	 */
@@ -1542,7 +1542,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the SolarFlux data out tier cost breakdown.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 * @since 2.6
 	 */
 	@JsonIgnore
@@ -1626,7 +1626,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of OAuth client credentials.
 	 *
 	 * @param oauthClientCredentials
-	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        the count to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 * @since 2.6
 	 */
@@ -1661,7 +1661,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the OAuth client credentials tier cost breakdown.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 * @since 2.6
 	 */
 	@JsonIgnore
@@ -1749,7 +1749,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of Cloud Integrations data.
 	 *
 	 * @param cloudIntegrationsData
-	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        the count to set; if {@code null} then {@literal 0} will be
 	 *        stored
 	 * @since 2.7
 	 */
@@ -1784,7 +1784,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Get the Cloud Integrations data tier cost breakdown.
 	 *
-	 * @return the costs, never {@literal null}
+	 * @return the costs, never {@code null}
 	 * @since 2.7
 	 */
 	@JsonIgnore

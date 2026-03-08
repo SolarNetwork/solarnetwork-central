@@ -74,7 +74,7 @@ public final class SnfBillingUtils {
 	 *
 	 * @param num
 	 *        the value to parse
-	 * @return the ID, or {@literal null} if {@code num} cannot be parsed as an
+	 * @return the ID, or {@code null} if {@code num} cannot be parsed as an
 	 *         invoice number
 	 * @see #invoiceNumForId(Long)
 	 */
@@ -104,8 +104,8 @@ public final class SnfBillingUtils {
 	 *
 	 * @param id
 	 *        the invoice ID to format
-	 * @return the invoice number, or {@literal null} if {@code id} is
-	 *         {@literal null}
+	 * @return the invoice number, or {@code null} if {@code id} is
+	 *         {@code null}
 	 */
 	public static @Nullable String invoiceNumForId(@Nullable Long id) {
 		if ( id == null ) {
@@ -149,7 +149,7 @@ public final class SnfBillingUtils {
 	 *        the message source
 	 * @param locale
 	 *        the locale
-	 * @return the invoice, never {@literal null}
+	 * @return the invoice, never {@code null}
 	 */
 	public static InvoiceImpl invoiceForSnfInvoice(final SnfInvoice invoice,
 			final MessageSource messageSource, final Locale locale) {

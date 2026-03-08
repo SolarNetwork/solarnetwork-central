@@ -124,7 +124,7 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 	 * @param datumDao
 	 *        the datum DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DlbMeterDataTransferDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,

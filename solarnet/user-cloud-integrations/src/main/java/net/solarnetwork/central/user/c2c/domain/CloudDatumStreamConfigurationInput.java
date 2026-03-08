@@ -107,7 +107,7 @@ public class CloudDatumStreamConfigurationInput extends
 	 * Get the schedule at which to poll for data.
 	 *
 	 * @return the schedule, as either a cron schedule or a number of seconds,
-	 *         or {@literal null} if polling is not used
+	 *         or {@code null} if polling is not used
 	 */
 	public final String getSchedule() {
 		return schedule;
@@ -118,7 +118,7 @@ public class CloudDatumStreamConfigurationInput extends
 	 *
 	 * @param schedule
 	 *        the schedule to set, as either a cron schedule or a number of
-	 *        seconds, or {@literal null} if polling is not used
+	 *        seconds, or {@code null} if polling is not used
 	 */
 	public final void setSchedule(String schedule) {
 		this.schedule = schedule;

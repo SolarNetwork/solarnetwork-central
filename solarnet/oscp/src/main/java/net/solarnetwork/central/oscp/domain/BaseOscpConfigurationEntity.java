@@ -71,7 +71,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseOscpConfigurationEntity(UserLongCompositePK id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
@@ -87,7 +87,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseOscpConfigurationEntity(Long userId, Long entityId, Instant created) {
 		super(new UserLongCompositePK(userId, entityId), created);
@@ -138,7 +138,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	/**
 	 * Get OAuth client settings, if available.
 	 *
-	 * @return the OAuth client settings, or {@literal null} if not available
+	 * @return the OAuth client settings, or {@code null} if not available
 	 */
 	public OAuthClientSettings oauthClientSettings() {
 		final Map<String, Object> props = getServiceProps();
@@ -162,7 +162,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 * Test if OAuth client settings are available.
 	 *
 	 * @return {@literal true} if {@link #oauthClientSettings()} would return a
-	 *         non-{@literal null} instance
+	 *         non-{@code null} instance
 	 */
 	public boolean hasOauthClientSettings() {
 		final Map<String, Object> props = getServiceProps();
@@ -178,7 +178,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *
 	 * @param name
 	 *        the unique name of the custom URL path to get
-	 * @return the associated custom URL path, or {@literal null} if not
+	 * @return the associated custom URL path, or {@code null} if not
 	 *         available
 	 */
 	public String customUrlPath(String name) {
@@ -215,7 +215,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	/**
 	 * Get the extra HTTP headers if available.
 	 *
-	 * @return the extra HTTP headers, or {@literal null}
+	 * @return the extra HTTP headers, or {@code null}
 	 */
 	@SuppressWarnings("unchecked")
 	public Map<String, ?> extraHttpHeaders() {
@@ -327,15 +327,15 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 * Add or remove a service property value.
 	 *
 	 * @param key
-	 *        the key to add, or remove if {@code value} is {@literal null}
+	 *        the key to add, or remove if {@code value} is {@code null}
 	 * @param value
-	 *        the value to set, or {@literal null} if {@code key} should be
+	 *        the value to set, or {@code null} if {@code key} should be
 	 *        removed
 	 * @return any previous value associated with {@code key} before adding or
-	 *         removing it from the service properties map, or {@literal null}
+	 *         removing it from the service properties map, or {@code null}
 	 *         if nothing was removed
 	 * @throws IllegalArgumentException
-	 *         if {@code key} is {@literal null}
+	 *         if {@code key} is {@code null}
 	 * @since 1.1
 	 */
 	public Object putServiceProp(String key, Object value) {
@@ -360,7 +360,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *
 	 * @param key
 	 *        the key of the property to get
-	 * @return the value associated with {@code key}, or {@literal null} if none
+	 * @return the value associated with {@code key}, or {@code null} if none
 	 *         associated
 	 * @since 1.1
 	 */

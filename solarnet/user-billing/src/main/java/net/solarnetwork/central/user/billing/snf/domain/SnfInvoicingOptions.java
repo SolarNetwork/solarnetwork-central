@@ -42,7 +42,7 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 	 * {@code useAccountCredit} will be {@literal true}.
 	 * </p>
 	 *
-	 * @return the options, never {@literal null}
+	 * @return the options, never {@code null}
 	 */
 	public static SnfInvoicingOptions defaultOptions() {
 		return new SnfInvoicingOptions();
@@ -56,7 +56,7 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 	 * {@code useAccountCredit} will be {@literal false}.
 	 * </p>
 	 *
-	 * @return the options, never {@literal null}
+	 * @return the options, never {@code null}
 	 */
 	public static SnfInvoicingOptions dryRunOptions() {
 		return new SnfInvoicingOptions(true, false);

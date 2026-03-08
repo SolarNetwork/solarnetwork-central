@@ -48,7 +48,7 @@ public class DatumDeleteJobInfoCleanerJob extends JobSupport {
 	 * @param datumDeleteBiz
 	 *        the service to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumDeleteJobInfoCleanerJob(UserDatumDeleteJobBiz datumDeleteBiz) {
 		super("UserExpire", "DatumDeleteJobInfoCleaner");

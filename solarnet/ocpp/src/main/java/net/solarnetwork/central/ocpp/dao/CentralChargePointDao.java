@@ -51,7 +51,7 @@ public interface CentralChargePointDao
 	 *        the owner user ID to find
 	 * @param identifier
 	 *        the charge point identifier to look for
-	 * @return the matching charge point, or {@literal null} if not found
+	 * @return the matching charge point, or {@code null} if not found
 	 */
 	ChargePoint getForIdentifier(Long userId, String identifier);
 
@@ -60,7 +60,7 @@ public interface CentralChargePointDao
 	 * 
 	 * @param userId
 	 *        the owner ID
-	 * @return the available charge points; never {@literal null}
+	 * @return the available charge points; never {@code null}
 	 */
 	Collection<CentralChargePoint> findAllForOwner(Long userId);
 
@@ -71,7 +71,7 @@ public interface CentralChargePointDao
 	 *        the owner ID
 	 * @param id
 	 *        the ID to look for
-	 * @return the matching entity; never {@literal null}
+	 * @return the matching entity; never {@code null}
 	 * @throws RuntimeException
 	 *         if the entity cannot be found
 	 */

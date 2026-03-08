@@ -72,7 +72,7 @@ public final class UpsertCloudDatumStreamPollTaskEntity
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertCloudDatumStreamPollTaskEntity(Long userId, Long datumStreamId,
 			CloudDatumStreamPollTaskEntity entity) {

@@ -38,24 +38,24 @@ public interface ChargeSessionEndReasonCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available end reason from the
-	 * {@link #getEndReasons()} array, or {@literal null} if not available.
+	 * {@link #getEndReasons()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first end reason, or {@literal null} if not available
+	 * @return the first end reason, or {@code null} if not available
 	 */
 	ChargeSessionEndReason getEndReason();
 
 	/**
 	 * Get an array of end reasons.
 	 * 
-	 * @return array of end reasons (may be {@literal null})
+	 * @return array of end reasons (may be {@code null})
 	 */
 	ChargeSessionEndReason[] getEndReasons();
 
 	/**
 	 * Get an array of end reason code values.
 	 * 
-	 * @return array of end reason code values (may be {@literal null})
+	 * @return array of end reason code values (may be {@code null})
 	 */
 	@JsonIgnore
 	default Integer[] getEndReasonCodes() {

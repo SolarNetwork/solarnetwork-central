@@ -58,7 +58,7 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcEndpointAuthConfigurationDao(JdbcOperations jdbcOps) {
 		super();

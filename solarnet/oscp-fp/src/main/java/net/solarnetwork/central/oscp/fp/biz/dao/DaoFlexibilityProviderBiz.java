@@ -178,7 +178,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoFlexibilityProviderBiz(Executor executor, ExternalSystemClient externalSystemClient,
 			UserEventAppenderBiz userEventAppenderBiz, FlexibilityProviderDao flexibilityProviderDao,
@@ -511,7 +511,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		 *        the datum supplier
 		 * @param sourceIdParameters
 		 *        additional source ID template parameters
-		 * @return the published event, or {@literal null} if not published
+		 * @return the published event, or {@code null} if not published
 		 */
 		@SuppressWarnings("EffectivelyPrivate")
 		protected DatumPublishEvent publish(String action, String sourceIdSuffix,
@@ -881,7 +881,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 * @param versionUrlMap
 	 *        the URL mapping to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
 	public void setVersionUrlMap(Map<String, String> versionUrlMap) {
 		this.versionUrlMap = requireNonNullArgument(versionUrlMap, "versionUrlMap");
@@ -1008,7 +1008,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	/**
 	 * Get the SolarFlux publisher.
 	 *
-	 * @return the publisher, or {@literal null}
+	 * @return the publisher, or {@code null}
 	 */
 	public Consumer<DatumPublishEvent> getFluxPublisher() {
 		return fluxPublisher;

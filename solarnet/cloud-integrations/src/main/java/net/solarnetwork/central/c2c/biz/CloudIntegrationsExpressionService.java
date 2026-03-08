@@ -50,7 +50,7 @@ public interface CloudIntegrationsExpressionService {
 	/**
 	 * Get a {@link PathMatcher} that can be used for source ID matching.
 	 *
-	 * @return the matcher, never {@literal null}
+	 * @return the matcher, never {@code null}
 	 * @since 1.1
 	 */
 	PathMatcher sourceIdPathMatcher();

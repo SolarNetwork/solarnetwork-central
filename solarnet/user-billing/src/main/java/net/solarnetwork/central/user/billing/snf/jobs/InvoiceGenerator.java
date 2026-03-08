@@ -68,7 +68,7 @@ public class InvoiceGenerator implements AccountTaskHandler {
 	 * @param invoicingSystem
 	 *        the invoicing system
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InvoiceGenerator(AccountDao accountDao, AccountTaskDao taskDao,
 			SnfInvoicingSystem invoicingSystem) {

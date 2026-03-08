@@ -55,7 +55,7 @@ public class SelectAuthenticatedEndpointCredentials implements PreparedStatement
 	 *        {@literal true} to lookup OAuth credentials, {@literal false} for
 	 *        non-OAuth credentials
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectAuthenticatedEndpointCredentials(UUID endpointId, String username, boolean oauth) {
 		super();
@@ -74,7 +74,7 @@ public class SelectAuthenticatedEndpointCredentials implements PreparedStatement
 	 * @param username
 	 *        the username
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectAuthenticatedEndpointCredentials(String username) {
 		super();

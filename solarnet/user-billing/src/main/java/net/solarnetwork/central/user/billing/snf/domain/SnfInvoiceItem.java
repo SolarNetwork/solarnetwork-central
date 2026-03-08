@@ -97,7 +97,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 *        the quantity
 	 * @param amount
 	 *        the amount
-	 * @return the new item, never {@literal null}
+	 * @return the new item, never {@code null}
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
@@ -122,7 +122,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 *        the quantity
 	 * @param amount
 	 *        the amount
-	 * @return the new item, never {@literal null}
+	 * @return the new item, never {@code null}
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
@@ -146,7 +146,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 *        the amount
 	 * @param date
 	 *        the date
-	 * @return the new item, never {@literal null}
+	 * @return the new item, never {@code null}
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
@@ -172,7 +172,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 *        the date
 	 * @param metadata
 	 *        the metadata
-	 * @return the new item, never {@literal null}
+	 * @return the new item, never {@code null}
 	 * @throws IllegalArgumentException
 	 *         if any argument except {@code metadata} is {@code null}
 	 */
@@ -277,7 +277,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	/**
 	 * Get usage information, if available.
 	 *
-	 * @return the usage info, or {@literal null} if none available
+	 * @return the usage info, or {@code null} if none available
 	 */
 	@SuppressWarnings("unchecked")
 	@JsonIgnore
@@ -330,7 +330,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 * the individual quantity cost.
 	 * </p>
 	 *
-	 * @return the amount, never {@literal null}
+	 * @return the amount, never {@code null}
 	 */
 	public final BigDecimal getAmount() {
 		return amount != null ? amount : BigDecimal.ZERO;
@@ -358,7 +358,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	/**
 	 * Get the quantity.
 	 *
-	 * @return the quantity, never {@literal null}
+	 * @return the quantity, never {@code null}
 	 */
 	public final BigDecimal getQuantity() {
 		return quantity != null ? quantity : BigDecimal.ONE;

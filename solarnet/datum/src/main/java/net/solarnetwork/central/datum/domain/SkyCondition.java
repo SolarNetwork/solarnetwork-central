@@ -134,7 +134,7 @@ public enum SkyCondition {
 	 *        the string to map
 	 * @param mapping
 	 *        the mapping of expressions to SkyCondition objects
-	 * @return the first matching result, or <em>null</em> if no match is found
+	 * @return the first matching result, or {@code null} if no match is found
 	 */
 	public static @Nullable SkyCondition mapStringValue(String condition,
 			Map<Pattern, SkyCondition> mapping) {

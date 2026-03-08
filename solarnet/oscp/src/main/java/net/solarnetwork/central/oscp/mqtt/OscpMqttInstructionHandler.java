@@ -122,7 +122,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	 * @param client
 	 *        the client to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OscpMqttInstructionHandler(StatTracker stats, Executor taskExecutor,
 			ObjectMapper objectMapper, NodeInstructionDao nodeInstructionDao,
@@ -407,7 +407,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	 * Set the MQTT topic to publish to.
 	 *
 	 * @param mqttTopic
-	 *        the topic; if {@literal null} or blank then
+	 *        the topic; if {@code null} or blank then
 	 *        {@link #MQTT_TOPIC_V20} will be set instead
 	 */
 	public void setMqttTopic(String mqttTopic) {

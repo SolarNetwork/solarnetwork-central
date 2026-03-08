@@ -63,7 +63,7 @@ public final class UpsertUserSettingsEntity implements PreparedStatementCreator,
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertUserSettingsEntity(Long userId, UserSettingsEntity entity) {
 		super();

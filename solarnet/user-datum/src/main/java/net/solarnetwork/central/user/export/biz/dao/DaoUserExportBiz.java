@@ -128,7 +128,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	 * @param destinationServices
 	 *        the destination services
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserExportBiz(UserDatumExportConfigurationDao datumExportConfigDao,
 			UserDataConfigurationDao dataConfigDao, UserDestinationConfigurationDao destinationConfigDao,

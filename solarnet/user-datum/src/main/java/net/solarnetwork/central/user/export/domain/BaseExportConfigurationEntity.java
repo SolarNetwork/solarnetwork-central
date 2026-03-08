@@ -50,7 +50,7 @@ public abstract class BaseExportConfigurationEntity<C extends BaseIdentifiableUs
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseExportConfigurationEntity(UserLongCompositePK id, Instant created) {
 		super(id, created);

@@ -245,8 +245,8 @@ public class Instruction extends BaseEntity {
 	/**
 	 * Get the instruction parameters as a single-valued map.
 	 *
-	 * @return the parameters as a map, or {@literal null} if
-	 *         {@link #getParameters()} is {@literal null}
+	 * @return the parameters as a map, or {@code null} if
+	 *         {@link #getParameters()} is {@code null}
 	 * @since 1.3
 	 */
 	@JsonIgnore
@@ -325,7 +325,7 @@ public class Instruction extends BaseEntity {
 	/**
 	 * Get the result parameters object as a JSON string.
 	 *
-	 * @return a JSON encoded string, never <em>null</em>
+	 * @return a JSON encoded string, never {@code null}
 	 */
 	@JsonGetter("resultParameters")
 	@JsonRawValue

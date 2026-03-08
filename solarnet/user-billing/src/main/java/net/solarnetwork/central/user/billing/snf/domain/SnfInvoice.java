@@ -184,7 +184,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	/**
 	 * Get the total amount of all invoice items.
 	 *
-	 * @return the total cost, never {@literal null}
+	 * @return the total cost, never {@code null}
 	 */
 	public BigDecimal getTotalAmount() {
 		BigDecimal result = BigDecimal.ZERO;
@@ -202,7 +202,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 * This returns the time zone of the configured address.
 	 * </p>
 	 *
-	 * @return the time zone, or {@literal null} if not available
+	 * @return the time zone, or {@code null} if not available
 	 */
 	@JsonIgnore
 	public @Nullable ZoneId getTimeZone() {
@@ -429,8 +429,8 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	/**
 	 * Get all invoice items as a map using item key values as map keys.
 	 *
-	 * @return the map, or {@literal null} if {@link #getItems()} returns
-	 *         {@literal null}
+	 * @return the map, or {@code null} if {@link #getItems()} returns
+	 *         {@code null}
 	 */
 	public final @Nullable Map<String, SnfInvoiceItem> getItemsByKey() {
 		Map<String, SnfInvoiceItem> result = null;

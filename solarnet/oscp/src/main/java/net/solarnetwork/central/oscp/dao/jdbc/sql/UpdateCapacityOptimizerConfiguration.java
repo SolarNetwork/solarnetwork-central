@@ -56,7 +56,7 @@ public final class UpdateCapacityOptimizerConfiguration
 	 * @param entity
 	 *        the entity data to update
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateCapacityOptimizerConfiguration(UserLongCompositePK id,
 			CapacityOptimizerConfiguration entity) {

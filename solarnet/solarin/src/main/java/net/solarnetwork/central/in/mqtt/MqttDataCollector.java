@@ -126,7 +126,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 	 * @param mqttStats
 	 *        the stats
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public MqttDataCollector(ObjectMapper objectMapper, DataCollectorBiz dataCollectorBiz,
 			NodeInstructionDao nodeInstructionDao, StatTracker mqttStats) {

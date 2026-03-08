@@ -45,7 +45,7 @@ public class PaymentFilter extends SimplePagination {
 	 *
 	 * @param userId
 	 *        the user ID to set
-	 * @return the filter, never {@literal null}
+	 * @return the filter, never {@code null}
 	 */
 	public static PaymentFilter forUser(Long userId) {
 		PaymentFilter f = new PaymentFilter();
@@ -58,7 +58,7 @@ public class PaymentFilter extends SimplePagination {
 	 *
 	 * @param accountId
 	 *        the account ID to set
-	 * @return the filter, never {@literal null}
+	 * @return the filter, never {@code null}
 	 */
 	public static PaymentFilter forAccount(Long accountId) {
 		PaymentFilter f = new PaymentFilter();
@@ -71,7 +71,7 @@ public class PaymentFilter extends SimplePagination {
 	 *
 	 * @param account
 	 *        the account to extract the ID and userId from
-	 * @return the filter, never {@literal null}
+	 * @return the filter, never {@code null}
 	 */
 	public static PaymentFilter forAccount(Account account) {
 		PaymentFilter f = new PaymentFilter();

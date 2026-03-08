@@ -59,7 +59,7 @@ public final class UpsertInputDataEntity implements PreparedStatementCreator, Sq
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertInputDataEntity(InputDataEntity entity) {
 		super();

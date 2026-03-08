@@ -62,7 +62,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseOscpExternalSystemConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -78,7 +78,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseOscpExternalSystemConfiguration(Long userId, Long entityId, Instant created) {
 		super(userId, entityId, created);

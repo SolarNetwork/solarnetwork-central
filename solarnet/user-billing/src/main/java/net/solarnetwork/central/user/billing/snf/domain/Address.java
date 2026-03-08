@@ -301,7 +301,7 @@ public class Address extends BasicLongEntity
 	/**
 	 * Get the address time zone.
 	 *
-	 * @return the time zone, or {@literal null} if not available
+	 * @return the time zone, or {@code null} if not available
 	 */
 	@JsonIgnore
 	public final @Nullable ZoneId getTimeZone() {

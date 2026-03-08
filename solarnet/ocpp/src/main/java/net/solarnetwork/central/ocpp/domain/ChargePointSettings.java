@@ -199,7 +199,7 @@ public class ChargePointSettings extends BasicLongEntity
 	/**
 	 * Set the source ID template.
 	 *
-	 * @return the template, or {@literal null}
+	 * @return the template, or {@code null}
 	 */
 	public String getSourceIdTemplate() {
 		return sourceIdTemplate;

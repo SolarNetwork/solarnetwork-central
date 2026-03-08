@@ -67,7 +67,7 @@ public final class UpdateCloudDatumStreamPollTaskEntity
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateCloudDatumStreamPollTaskEntity(UserLongCompositePK id,
 			CloudDatumStreamPollTaskEntity entity) {
@@ -84,7 +84,7 @@ public final class UpdateCloudDatumStreamPollTaskEntity
 	 * @param filter
 	 *        an optional filter to restrict the update to
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}, other than {@code filter}
+	 *         if any argument is {@code null}, other than {@code filter}
 	 */
 	public UpdateCloudDatumStreamPollTaskEntity(UserLongCompositePK id,
 			CloudDatumStreamPollTaskEntity entity, CloudDatumStreamPollTaskFilter filter) {

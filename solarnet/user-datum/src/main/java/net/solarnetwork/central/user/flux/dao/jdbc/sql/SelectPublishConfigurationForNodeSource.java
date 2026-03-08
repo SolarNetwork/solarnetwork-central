@@ -58,7 +58,7 @@ public final class SelectPublishConfigurationForNodeSource
 	 * @param sourceId
 	 *        the source ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static SelectPublishConfigurationForNodeSource forUserNodeSource(Long userId, Long nodeId,
 			String sourceId) {
@@ -72,7 +72,7 @@ public final class SelectPublishConfigurationForNodeSource
 	 * @param key
 	 *        the user, node, and source ID primary key to query
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectPublishConfigurationForNodeSource(UserLongStringCompositePK key) {
 		super();

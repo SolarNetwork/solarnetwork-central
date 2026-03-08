@@ -169,7 +169,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 	 * @param phase
 	 *        the phase
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcTransformConfigurationDao(JdbcOperations jdbcOps, Class<C> entityType,
 			TransformPhase phase) {

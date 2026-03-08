@@ -68,7 +68,7 @@ public final class CloudIntegrationConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudIntegrationConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -84,7 +84,7 @@ public final class CloudIntegrationConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudIntegrationConfiguration(Long userId, Long configId, Instant created) {
 		this(new UserLongCompositePK(userId, configId), created);

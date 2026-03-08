@@ -48,7 +48,7 @@ public class JdbcUserSettingsEntityDao implements UserSettingsEntityDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcUserSettingsEntityDao(JdbcOperations jdbcOps) {
 		super();

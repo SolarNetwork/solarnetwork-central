@@ -43,7 +43,7 @@ public interface AccountDao extends GenericDao<Account, UserLongPK> {
 	 *
 	 * @param userId
 	 *        the ID of the user to get the account for
-	 * @return the account, or {@literal null} if not available
+	 * @return the account, or {@code null} if not available
 	 */
 	@Nullable
 	Account getForUser(Long userId);
@@ -54,7 +54,7 @@ public interface AccountDao extends GenericDao<Account, UserLongPK> {
 	 *
 	 * @param userId
 	 *        the ID of the user to get the account for
-	 * @return the account, or {@literal null} if not available
+	 * @return the account, or {@code null} if not available
 	 * @since 1.1
 	 */
 	@Nullable
@@ -65,7 +65,7 @@ public interface AccountDao extends GenericDao<Account, UserLongPK> {
 	 *
 	 * @param userId
 	 *        the ID of the user to get the account balance for
-	 * @return the account balance, or {@literal null} if not available
+	 * @return the account balance, or {@code null} if not available
 	 */
 	@Nullable
 	AccountBalance getBalanceForUser(Long userId);
@@ -81,9 +81,9 @@ public interface AccountDao extends GenericDao<Account, UserLongPK> {
 	 * @param accountId
 	 *        the account ID to claim credit from
 	 * @param max
-	 *        the maximum amount of credit to claim, or {@literal null} to claim
+	 *        the maximum amount of credit to claim, or {@code null} to claim
 	 *        all available credit
-	 * @return the claimed credit, never {@literal null} but possibly less than
+	 * @return the claimed credit, never {@code null} but possibly less than
 	 *         the requested {@code max} if not enough credit is available
 	 */
 	BigDecimal claimAccountBalanceCredit(Long accountId, BigDecimal max);

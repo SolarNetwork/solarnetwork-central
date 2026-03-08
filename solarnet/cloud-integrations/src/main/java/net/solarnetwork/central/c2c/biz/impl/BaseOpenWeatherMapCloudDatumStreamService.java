@@ -163,7 +163,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseOpenWeatherMapCloudDatumStreamService(String serviceIdentifier, String displayName,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
@@ -273,7 +273,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 	 *        the datum stream object ID
 	 * @param sourceId
 	 *        the datum stream source ID
-	 * @return the datum, or {@literal null}
+	 * @return the datum, or {@code null}
 	 */
 	public static GeneralDatum parseWeatherData(JsonNode json, ObjectDatumKind kind, Long objectId,
 			String sourceId) {
@@ -437,7 +437,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 	 *        the node
 	 * @param key
 	 *        the field name to parse
-	 * @return the date, or {@literal null}
+	 * @return the date, or {@code null}
 	 */
 	public static Instant parseTimestampNode(JsonNode node, String key) {
 		Long val = parseLongAttribute(node, key);

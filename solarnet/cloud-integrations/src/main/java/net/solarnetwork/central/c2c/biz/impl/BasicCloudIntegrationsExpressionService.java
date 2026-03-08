@@ -241,7 +241,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 * The keys of the cache are SHA hashes of the expression value.
 	 * </p>
 	 *
-	 * @return the expression cache, or {@literal null}
+	 * @return the expression cache, or {@code null}
 	 */
 	public final Cache<String, Expression> getExpressionCache() {
 		return expressionCache;

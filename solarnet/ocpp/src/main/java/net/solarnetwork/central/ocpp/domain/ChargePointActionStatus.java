@@ -67,7 +67,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code created} is {@literal null}
+	 *         if any argument other than {@code created} is {@code null}
 	 */
 	public ChargePointActionStatus(long userId, long chargePointId, int connectorId, String action,
 			Instant created) {
@@ -90,7 +90,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code created} is {@literal null}
+	 *         if any argument other than {@code created} is {@code null}
 	 * @since 1.1
 	 */
 	public ChargePointActionStatus(long userId, long chargePointId, int evseId, int connectorId,
@@ -107,7 +107,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code created} is {@literal null}
+	 *         if any argument other than {@code created} is {@code null}
 	 */
 	public ChargePointActionStatus(ChargePointActionStatusKey id, Instant created) {
 		super(ObjectUtils.requireNonNullArgument(id, "id"), created);
@@ -149,7 +149,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	/**
 	 * Get the action.
 	 *
-	 * @return the action, never {@literal null}
+	 * @return the action, never {@code null}
 	 */
 	public String getAction() {
 		return getId().getAction();

@@ -85,7 +85,7 @@ public class SecurityTokenFilterSettings {
 	/**
 	 * Get the maximum request body size.
 	 * 
-	 * @return the maximum size, never {@literal null} ; defaults to
+	 * @return the maximum size, never {@code null} ; defaults to
 	 *         {@link #DEFAULT_MAX_REQUEST_BODY_SIZE}
 	 */
 	public DataSize getMaxRequestBodySize() {
@@ -96,7 +96,7 @@ public class SecurityTokenFilterSettings {
 	 * Set the maximum request body size.
 	 * 
 	 * @param maxRequestBodySize
-	 *        the maximum size to set; if {@literal null} then
+	 *        the maximum size to set; if {@code null} then
 	 *        {@link #DEFAULT_MAX_REQUEST_BODY_SIZE} will be set
 	 */
 	public void setMaxRequestBodySize(DataSize maxRequestBodySize) {

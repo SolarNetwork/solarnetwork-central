@@ -116,7 +116,7 @@ public class UserDnp3Controller {
 	/**
 	 * Get the {@link UserDnp3Biz}.
 	 *
-	 * @return the service; never {@literal null}
+	 * @return the service; never {@code null}
 	 * @throws UnsupportedOperationException
 	 *         if the service is not available
 	 */

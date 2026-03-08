@@ -100,7 +100,7 @@ public class UserInstructionInputController {
 	 * @param userInstructionInputBiz
 	 *        the service
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserInstructionInputController(UserInstructionInputBiz userInstructionInputBiz,
 			@Value("${app.inin.max-input-length}") long maxInstructionInputLength) {

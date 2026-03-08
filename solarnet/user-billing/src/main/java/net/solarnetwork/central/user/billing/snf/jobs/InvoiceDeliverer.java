@@ -48,7 +48,7 @@ public class InvoiceDeliverer implements AccountTaskHandler {
 	 * @param invoicingSystem
 	 *        the invoicing system
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InvoiceDeliverer(SnfInvoicingSystem invoicingSystem) {
 		this.invoicingSystem = requireNonNullArgument(invoicingSystem, "invoicingSystem");

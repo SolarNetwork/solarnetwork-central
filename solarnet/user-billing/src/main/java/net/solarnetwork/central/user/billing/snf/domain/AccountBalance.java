@@ -64,11 +64,11 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 * @param created
 	 *        the creation date
 	 * @param chargeTotal
-	 *        the charge total; {@literal null} will be stored as {@literal 0}
+	 *        the charge total; {@code null} will be stored as {@literal 0}
 	 * @param paymentTotal
-	 *        the payment total; {@literal null} will be stored as {@literal 0}
+	 *        the payment total; {@code null} will be stored as {@literal 0}
 	 * @param availableCredit
-	 *        the available credit; {@literal null} will be stored as
+	 *        the available credit; {@code null} will be stored as
 	 *        {@literal 0}
 	 */
 	public AccountBalance(@Nullable UserLongPK id, @Nullable Instant created,
@@ -90,11 +90,11 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 * @param created
 	 *        the creation date
 	 * @param chargeTotal
-	 *        the charge total; {@literal null} will be stored as {@literal 0}
+	 *        the charge total; {@code null} will be stored as {@literal 0}
 	 * @param paymentTotal
-	 *        the payment total; {@literal null} will be stored as {@literal 0}
+	 *        the payment total; {@code null} will be stored as {@literal 0}
 	 * @param availableCredit
-	 *        the available credit; {@literal null} will be stored as
+	 *        the available credit; {@code null} will be stored as
 	 *        {@literal 0}
 	 */
 	public AccountBalance(Long accountId, Long userId, @Nullable Instant created,

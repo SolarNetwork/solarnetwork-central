@@ -49,7 +49,7 @@ public interface UserDatumExportConfigurationDao
 	 *        the export date
 	 * @param scheduleType
 	 *        the schedule type to find
-	 * @return the configurations, never {@literal null}
+	 * @return the configurations, never {@code null}
 	 */
 	List<UserDatumExportConfiguration> findForExecution(Instant exportDate, ScheduleType scheduleType);
 

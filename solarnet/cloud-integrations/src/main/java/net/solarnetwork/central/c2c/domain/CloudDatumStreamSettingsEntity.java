@@ -58,7 +58,7 @@ public final class CloudDatumStreamSettingsEntity
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamSettingsEntity(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -74,7 +74,7 @@ public final class CloudDatumStreamSettingsEntity
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamSettingsEntity(Long userId, Long datumStreamId, Instant created) {
 		this(new UserLongCompositePK(userId, datumStreamId), created);

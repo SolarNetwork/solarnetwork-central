@@ -39,13 +39,13 @@ import oscp.v20.InstantaneousMeasurement;
  * @param measureTime
  *        the timestamp of the measurement
  * @param energyType
- *        for energy measurements the energy type, otherwise {@literal null}
+ *        for energy measurements the energy type, otherwise {@code null}
  * @param energyDirection
  *        for energy measurements the energy direction, otherwise
- *        {@literal null}
+ *        {@code null}
  * @param startMeasureTime
  *        for energy measurements the start of the measurement period, otherwise
- *        {@literal null}
+ *        {@code null}
  * @author matt
  * @version 1.0
  */
@@ -129,7 +129,7 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 	 * This only checks for a non-null {@code energyType} property value.
 	 * </p>
 	 *
-	 * @return {@literal true} if {@code energyType} is not {@literal null}
+	 * @return {@literal true} if {@code energyType} is not {@code null}
 	 */
 	public boolean isEnergyMeasurement() {
 		return energyType != null;

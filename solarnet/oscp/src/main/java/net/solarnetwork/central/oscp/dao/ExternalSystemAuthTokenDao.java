@@ -63,7 +63,7 @@ public interface ExternalSystemAuthTokenDao {
 	 * @param configurationId
 	 *        the ID of the external system configuration to get the
 	 *        authorization token for
-	 * @return the authorization token, or {@literal null} if one is not
+	 * @return the authorization token, or {@code null} if one is not
 	 *         available
 	 */
 	String getExternalSystemAuthToken(UserLongCompositePK configurationId);

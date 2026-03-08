@@ -65,7 +65,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 	 * @param datumDao
 	 *        the datum DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public FirmwareStatusDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,

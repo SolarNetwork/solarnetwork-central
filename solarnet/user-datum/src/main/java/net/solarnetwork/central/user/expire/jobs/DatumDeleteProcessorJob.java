@@ -49,7 +49,7 @@ public class DatumDeleteProcessorJob extends JobSupport {
 	 * @param jobInfoDao
 	 *        the DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumDeleteProcessorJob(UserDatumDeleteJobBiz datumDeleteJobBiz,
 			UserDatumDeleteJobInfoDao jobInfoDao) {

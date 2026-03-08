@@ -73,9 +73,9 @@ public final class OcppInstructionUtils {
 		 * @param e
 		 *        if any error occurs
 		 * @param jsonPayload
-		 *        the raw JSON message, or {@literal null} if an error occurred
+		 *        the raw JSON message, or {@code null} if an error occurred
 		 * @param payload
-		 *        the decoded OCPP message payload, or {@literal null} if an
+		 *        the decoded OCPP message payload, or {@code null} if an
 		 *        error occurred
 		 * @return the result
 		 */

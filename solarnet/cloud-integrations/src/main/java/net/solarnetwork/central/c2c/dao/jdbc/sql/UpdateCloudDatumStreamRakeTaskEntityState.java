@@ -63,7 +63,7 @@ public class UpdateCloudDatumStreamRakeTaskEntityState implements PreparedStatem
 	 * @param filter
 	 *        a filter to restrict the update to
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateCloudDatumStreamRakeTaskEntityState(BasicClaimableJobState desiredState,
 			CloudDatumStreamRakeTaskFilter filter) {
@@ -87,7 +87,7 @@ public class UpdateCloudDatumStreamRakeTaskEntityState implements PreparedStatem
 	 * @param data
 	 *        optional runtime properties to update
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code data} is {@literal null}
+	 *         if any argument except {@code data} is {@code null}
 	 * @since 1.1
 	 */
 	public UpdateCloudDatumStreamRakeTaskEntityState(BasicClaimableJobState desiredState,

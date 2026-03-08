@@ -34,9 +34,9 @@ public interface AuditDatumFilter extends CommonFilter {
 
 	/**
 	 * Get the first node ID. This returns the first available node ID from the
-	 * {@link #getNodeIds()} array, or <em>null</em> if not available.
+	 * {@link #getNodeIds()} array, or {@code null} if not available.
 	 *
-	 * @return the node ID, or <em>null</em> if not available
+	 * @return the node ID, or {@code null} if not available
 	 */
 	@Nullable
 	Long getNodeId();
@@ -44,7 +44,7 @@ public interface AuditDatumFilter extends CommonFilter {
 	/**
 	 * Get an array of node IDs.
 	 *
-	 * @return array of node IDs (may be <em>null</em>)
+	 * @return array of node IDs (may be {@code null})
 	 */
 	Long @Nullable [] getNodeIds();
 

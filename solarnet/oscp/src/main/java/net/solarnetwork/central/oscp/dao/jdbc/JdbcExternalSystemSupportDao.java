@@ -49,7 +49,7 @@ public class JdbcExternalSystemSupportDao implements ExternalSystemSupportDao {
 	 * @param capacityOptimizerDao
 	 *        the capacity optimizer DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcExternalSystemSupportDao(CapacityProviderConfigurationDao capacityProviderDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao) {

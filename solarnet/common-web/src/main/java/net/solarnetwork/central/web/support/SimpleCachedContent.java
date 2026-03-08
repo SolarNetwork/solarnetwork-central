@@ -67,7 +67,7 @@ public class SimpleCachedContent implements CachedContent {
 	 * @param data
 	 *        the data
 	 * @param contentEncoding
-	 *        the content encoding, or {@literal null}
+	 *        the content encoding, or {@code null}
 	 */
 	public SimpleCachedContent(HttpHeaders headers, byte[] data, String contentEncoding) {
 		this(headers, data, contentEncoding, null);
@@ -81,9 +81,9 @@ public class SimpleCachedContent implements CachedContent {
 	 * @param data
 	 *        the data
 	 * @param contentEncoding
-	 *        the content encoding, or {@literal null}
+	 *        the content encoding, or {@code null}
 	 * @param metadata
-	 *        the metadata, or {@literal null}; must be fully serializable
+	 *        the metadata, or {@code null}; must be fully serializable
 	 */
 	public SimpleCachedContent(HttpHeaders headers, byte[] data, String contentEncoding,
 			Map<String, ?> metadata) {

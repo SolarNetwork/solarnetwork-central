@@ -35,11 +35,11 @@ public interface CloudDatumStreamMappingCriteria {
 	 *
 	 * <p>
 	 * This returns the first available datum stream mapping ID from the
-	 * {@link #getDatumStreamMappingIds()} array, or {@literal null} if not
+	 * {@link #getDatumStreamMappingIds()} array, or {@code null} if not
 	 * available.
 	 * </p>
 	 *
-	 * @return the first datum stream mapping ID, or {@literal null} if not
+	 * @return the first datum stream mapping ID, or {@code null} if not
 	 *         available
 	 */
 	default Long getDatumStreamMappingId() {
@@ -50,7 +50,7 @@ public interface CloudDatumStreamMappingCriteria {
 	/**
 	 * Get an array of datum stream mapping IDs.
 	 *
-	 * @return array of datum stream mapping IDs (may be {@literal null})
+	 * @return array of datum stream mapping IDs (may be {@code null})
 	 */
 	Long[] getDatumStreamMappingIds();
 

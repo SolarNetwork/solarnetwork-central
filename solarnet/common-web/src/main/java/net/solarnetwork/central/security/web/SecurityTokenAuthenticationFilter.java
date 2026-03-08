@@ -113,12 +113,12 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 * Construct with a {@link PathMatcher}.
 	 *
 	 * @param pathMatcher
-	 *        the matcher to use, or {@literal null} if not supported
+	 *        the matcher to use, or {@code null} if not supported
 	 * @param pathMatcherPrefixStrip
 	 *        a path prefix to strip from
 	 *        {@link HttpServletRequest#getRequestURI()} <i>after</i> any
 	 *        {@link HttpServletRequest#getContextPath()} has been removed,
-	 *        before comparing paths, or {@literal null} to not strip any prefix
+	 *        before comparing paths, or {@code null} to not strip any prefix
 	 * @since 1.5
 	 */
 	public SecurityTokenAuthenticationFilter(PathMatcher pathMatcher, String pathMatcherPrefixStrip) {
@@ -129,14 +129,14 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 * Construct with a {@link PathMatcher}.
 	 *
 	 * @param pathMatcher
-	 *        the matcher to use, or {@literal null} if not supported
+	 *        the matcher to use, or {@code null} if not supported
 	 * @param pathMatcherPrefixStrip
 	 *        a path prefix to strip from
 	 *        {@link HttpServletRequest#getRequestURI()} <i>after</i> any
 	 *        {@link HttpServletRequest#getContextPath()} has been removed,
-	 *        before comparing paths, or {@literal null} to not strip any prefix
+	 *        before comparing paths, or {@code null} to not strip any prefix
 	 * @param settings,
-	 *        or {@literal null} to create a default instance
+	 *        or {@code null} to create a default instance
 	 * @since 1.7
 	 */
 	public SecurityTokenAuthenticationFilter(PathMatcher pathMatcher, String pathMatcherPrefixStrip,
@@ -405,7 +405,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	/**
 	 * Get the filter settings.
 	 *
-	 * @return the settings, never {@literal null}
+	 * @return the settings, never {@code null}
 	 * @since 1.7
 	 */
 	public SecurityTokenFilterSettings getSettings() {

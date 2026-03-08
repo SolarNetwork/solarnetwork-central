@@ -46,7 +46,7 @@ public class AssetInstantaneousDatumConfiguration extends BaseAssetDatumConfigur
 	/**
 	 * Get the statistics type, defaulting to {@code Maximum} if not configured.
 	 * 
-	 * @return the statistics type, never {@literal null}.
+	 * @return the statistics type, never {@code null}.
 	 */
 	public StatisticType statisticType() {
 		StatisticType type = getStatisticType();

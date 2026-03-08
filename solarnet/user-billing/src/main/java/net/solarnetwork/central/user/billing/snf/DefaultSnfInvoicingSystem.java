@@ -182,7 +182,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param messageDao
 	 *        the message DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DefaultSnfInvoicingSystem(AccountDao accountDao, SnfInvoiceDao invoiceDao,
 			SnfInvoiceItemDao invoiceItemDao, SnfInvoiceNodeUsageDao invoiceNodeUsageDao,
@@ -637,7 +637,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 *
 	 * @param invoice
 	 *        the invoice to compute tax items for
-	 * @return the list of tax items, never {@literal null}
+	 * @return the list of tax items, never {@code null}
 	 */
 	public List<SnfInvoiceItem> computeInvoiceTaxItems(final SnfInvoice invoice) {
 		final SnfTaxCodeResolver taxResolver = (taxCodeResolver != null ? taxCodeResolver : this);
@@ -696,7 +696,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param datumPropertiesInKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
 	public final void setDatumPropertiesInKey(String datumPropertiesInKey) {
 		this.datumPropertiesInKey = requireNonNullArgument(datumPropertiesInKey, "datumPropertiesInKey");
@@ -717,7 +717,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param datumOutKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
 	public final void setDatumOutKey(String datumOutKey) {
 		this.datumOutKey = requireNonNullArgument(datumOutKey, "datumOutKey");
@@ -738,7 +738,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param datumDaysStoredKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
 	public final void setDatumDaysStoredKey(String datumDaysStoredKey) {
 		this.datumDaysStoredKey = requireNonNullArgument(datumDaysStoredKey, "datumDaysStoredKey");
@@ -760,7 +760,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param instructionsIssuedKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.3
 	 */
 	public final void setInstructionsIssuedKey(String instructionsIssuedKey) {
@@ -771,7 +771,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for SolarFlux data in.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#FLUX_DATA_IN_KEY}
 	 * @since 1.5
 	 */
@@ -785,7 +785,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param fluxDataInKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.5
 	 */
 	public final void setFluxDataInKey(String fluxDataInKey) {
@@ -795,7 +795,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for SolarFlux data out.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#FLUX_DATA_OUT_KEY}
 	 * @since 1.5
 	 */
@@ -809,7 +809,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param fluxDataOutKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.5
 	 */
 	public final void setFluxDataOutKey(String fluxDataOutKey) {
@@ -819,7 +819,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for OCPP chargers.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#OCPP_CHARGERS_KEY}
 	 * @since 1.1
 	 */
@@ -833,7 +833,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param ocppChargersKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.1
 	 */
 	public final void setOcppChargersKey(String ocppChargersKey) {
@@ -843,7 +843,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for OSCP Capacity Groups.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#OSCP_CAPACITY_GROUPS_KEY}
 	 * @since 1.1
 	 */
@@ -857,7 +857,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param oscpCapacityGroupsKey
 	 *        the oscpCapacityGroupsKey to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.1
 	 */
 	public final void setOscpCapacityGroupsKey(String oscpCapacityGroupsKey) {
@@ -868,7 +868,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for OSCP Capacity.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#OSCP_CAPACITY_KEY}
 	 * @since 1.4
 	 */
@@ -882,7 +882,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param oscpCapacityKey
 	 *        the oscpCapacityKey to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.4
 	 */
 	public final void setOscpCapacityKey(String oscpCapacityKey) {
@@ -892,7 +892,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for DNP3 Data Points.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#DNP3_DATA_POINTS_KEY}
 	 * @since 1.2
 	 */
@@ -906,7 +906,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param dnp3DataPointsKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.2
 	 */
 	public final void setDnp3DataPointsKey(String dnp3DataPointsKey) {
@@ -916,7 +916,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for OAuth client credentials.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#OAUTH_CLIENT_CREDENTIALS_KEY}
 	 * @since 1.5
 	 */
@@ -930,7 +930,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param oauthClientCredentialsKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.5
 	 */
 	public final void setOauthClientCredentialsKey(String oauthClientCredentialsKey) {
@@ -941,7 +941,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for Cloud Integrations data.
 	 *
-	 * @return the key, never {@literal null}; defaults to
+	 * @return the key, never {@code null}; defaults to
 	 *         {@link NodeUsages#CLOUD_INTEGRATIONS_DATA_KEY}
 	 * @since 1.6
 	 */
@@ -955,7 +955,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param cloudIntegrationsDataKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 * @since 1.6
 	 */
 	public final void setCloudIntegrationsDataKey(String cloudIntegrationsDataKey) {
@@ -978,7 +978,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * @param accountCreditKey
 	 *        the accountCreditKey to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
 	public final void setAccountCreditKey(String accountCreditKey) {
 		this.accountCreditKey = requireNonNullArgument(accountCreditKey, "accountCreditKey");

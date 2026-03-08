@@ -79,7 +79,7 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 	 * @param executor
 	 *        the executor for running delivery tasks
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public MailSnfInvoiceDeliverer(SnfInvoicingSystem invoicingSystem, MailService mailService,
 			Executor executor) {

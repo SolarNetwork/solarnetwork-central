@@ -115,7 +115,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 * @param passwordEncoder
 	 *        the system user password encoder to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public DaoUserOcppBiz(CentralSystemUserDao systemUserDao, CentralChargePointDao chargePointDao,
 			CentralChargePointConnectorDao connectorDao, CentralAuthorizationDao authorizationDao,

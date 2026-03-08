@@ -126,7 +126,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 	 * @param mapper
 	 *        the mapper to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public MeterTransferDataTransferDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,

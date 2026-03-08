@@ -437,10 +437,10 @@ public class DatumExportController {
 	 *
 	 * @param stateKeys
 	 *        an optional list of {@link DatumExportState} keys (or names) to
-	 *        filter the results by, or {@literal null} for any state
+	 *        filter the results by, or {@code null} for any state
 	 * @param success
 	 *        an optional "success" flag to filter the results by, or
-	 *        {@literal null} for any success value (including {@literal null})
+	 *        {@code null} for any success value (including {@code null})
 	 * @return the results
 	 * @since 1.1
 	 */

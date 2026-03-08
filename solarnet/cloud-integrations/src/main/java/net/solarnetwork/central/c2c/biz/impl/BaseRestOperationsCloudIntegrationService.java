@@ -75,7 +75,7 @@ public abstract class BaseRestOperationsCloudIntegrationService extends BaseClou
 	 * @param restOpsHelper
 	 *        the REST operations helper
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseRestOperationsCloudIntegrationService(String serviceIdentifier, String displayName,
 			Collection<CloudDatumStreamService> datumStreamServices,

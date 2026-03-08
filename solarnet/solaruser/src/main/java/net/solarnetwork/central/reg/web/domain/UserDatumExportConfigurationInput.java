@@ -172,7 +172,7 @@ public final class UserDatumExportConfigurationInput
 	/**
 	 * Get the schedule type key value.
 	 *
-	 * @return the schedule type; if {@link #getSchedule()} is {@literal null}
+	 * @return the schedule type; if {@link #getSchedule()} is {@code null}
 	 *         this will return the key value for {@link ScheduleType#Daily}
 	 */
 	public char getScheduleKey() {

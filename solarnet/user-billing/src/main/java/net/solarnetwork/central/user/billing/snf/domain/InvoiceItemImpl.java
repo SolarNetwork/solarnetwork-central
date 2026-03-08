@@ -64,7 +64,7 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 	 * @param item
 	 *        the item to wrap
 	 * @throws IllegalArgumentException
-	 *         if {@code invoice} or {@code item} are {@literal null}
+	 *         if {@code invoice} or {@code item} are {@code null}
 	 */
 	public InvoiceItemImpl(SnfInvoice invoice, SnfInvoiceItem item) {
 		this(invoice, item, null);
@@ -80,7 +80,7 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 	 * @param itemUsageRecords
 	 *        the explicit usage records to use
 	 * @throws IllegalArgumentException
-	 *         if {@code invoice} or {@code item} are {@literal null}
+	 *         if {@code invoice} or {@code item} are {@code null}
 	 */
 	public InvoiceItemImpl(SnfInvoice invoice, SnfInvoiceItem item,
 			@Nullable List<InvoiceItemUsageRecord> itemUsageRecords) {

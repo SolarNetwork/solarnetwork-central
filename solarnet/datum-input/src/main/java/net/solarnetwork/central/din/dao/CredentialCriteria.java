@@ -35,10 +35,10 @@ public interface CredentialCriteria {
 	 *
 	 * <p>
 	 * This returns the first available credential ID from the
-	 * {@link #getCredentialIds()} array, or {@literal null} if not available.
+	 * {@link #getCredentialIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first credential ID, or {@literal null} if not available
+	 * @return the first credential ID, or {@code null} if not available
 	 */
 	default Long getCredentialId() {
 		final Long[] array = getCredentialIds();
@@ -48,7 +48,7 @@ public interface CredentialCriteria {
 	/**
 	 * Get an array of credential IDs.
 	 *
-	 * @return array of credential IDs (may be {@literal null})
+	 * @return array of credential IDs (may be {@code null})
 	 */
 	Long[] getCredentialIds();
 

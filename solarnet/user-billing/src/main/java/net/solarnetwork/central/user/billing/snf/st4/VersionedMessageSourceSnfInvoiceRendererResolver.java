@@ -77,7 +77,7 @@ public class VersionedMessageSourceSnfInvoiceRendererResolver implements SnfInvo
 	 * @param templateCache
 	 *        the template cache
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public VersionedMessageSourceSnfInvoiceRendererResolver(String bundleName, String rootTemplateName,
 			MimeType mimeType, VersionedMessageDao messageDao,

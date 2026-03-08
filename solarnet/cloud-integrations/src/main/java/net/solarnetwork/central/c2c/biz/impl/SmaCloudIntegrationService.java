@@ -159,7 +159,7 @@ public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrati
 	 *        read-through semantics that always returns a new lock for missing
 	 *        keys
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SmaCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,

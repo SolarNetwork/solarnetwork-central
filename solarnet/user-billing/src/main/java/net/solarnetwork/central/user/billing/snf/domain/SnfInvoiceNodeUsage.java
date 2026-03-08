@@ -92,7 +92,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Constructor.
 	 *
 	 * <p>
-	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * Any {@code null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 *
 	 * @param invoiceId
@@ -121,7 +121,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Constructor.
 	 *
 	 * <p>
-	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * Any {@code null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 *
 	 * @param invoiceId
@@ -153,7 +153,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Constructor.
 	 *
 	 * <p>
-	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * Any {@code null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 *
 	 * @param invoiceId
@@ -188,7 +188,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Constructor.
 	 *
 	 * <p>
-	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * Any {@code null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 *
 	 * @param invoiceId
@@ -219,7 +219,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Constructor.
 	 *
 	 * <p>
-	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * Any {@code null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 *
 	 * @param invoiceId
@@ -254,7 +254,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Constructor.
 	 *
 	 * <p>
-	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * Any {@code null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 *
 	 * @param invoiceId
@@ -289,7 +289,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Constructor.
 	 *
 	 * <p>
-	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * Any {@code null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 *
 	 * @param id
@@ -315,7 +315,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Constructor.
 	 *
 	 * <p>
-	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * Any {@code null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 *
 	 * @param id
@@ -344,7 +344,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Constructor.
 	 *
 	 * <p>
-	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * Any {@code null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 *
 	 * @param id
@@ -372,7 +372,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Constructor.
 	 *
 	 * <p>
-	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * Any {@code null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 *
 	 * @param id
@@ -405,7 +405,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Constructor.
 	 *
 	 * <p>
-	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * Any {@code null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 *
 	 * @param id
@@ -559,7 +559,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	/**
 	 * Get the datum properties in count.
 	 *
-	 * @return the count, never {@literal null}
+	 * @return the count, never {@code null}
 	 */
 	public final BigInteger getDatumPropertiesIn() {
 		return datumPropertiesIn;
@@ -568,7 +568,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	/**
 	 * Get the datum out count.
 	 *
-	 * @return the count, never {@literal null}
+	 * @return the count, never {@code null}
 	 */
 	public final BigInteger getDatumOut() {
 		return datumOut;
@@ -577,7 +577,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	/**
 	 * Get the datum days stored count.
 	 *
-	 * @return the count, never {@literal null}
+	 * @return the count, never {@code null}
 	 */
 	public final BigInteger getDatumDaysStored() {
 		return datumDaysStored;
@@ -591,7 +591,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	/**
 	 * Get the instructions issued count.
 	 *
-	 * @return the count, never {@literal null}
+	 * @return the count, never {@code null}
 	 * @since 1.4
 	 */
 	public final BigInteger getInstructionsIssued() {
@@ -601,7 +601,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	/**
 	 * Get the SolarFlux data in count.
 	 *
-	 * @return the count, never {@literal null}
+	 * @return the count, never {@code null}
 	 * @since 1.5
 	 */
 	public final BigInteger getFluxDataIn() {

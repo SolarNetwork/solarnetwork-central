@@ -73,10 +73,10 @@ public class UsageTiers implements NamedCostTiers {
 	 * @param date
 	 *        the date
 	 * @param comparator
-	 *        an optional comparator to sort the tiers with, or {@literal null}
+	 *        an optional comparator to sort the tiers with, or {@code null}
 	 *        to not sort
 	 * @throws IllegalArgumentException
-	 *         if {@code tiers} or {@code date} is {@literal null}
+	 *         if {@code tiers} or {@code date} is {@code null}
 	 */
 	public UsageTiers(List<UsageTier> tiers, LocalDate date,
 			@Nullable Comparator<UsageTier> comparator) {
@@ -110,7 +110,7 @@ public class UsageTiers implements NamedCostTiers {
 	 *
 	 * @param key
 	 *        the key of the tiers to get
-	 * @return the matching tiers, never {@literal null}
+	 * @return the matching tiers, never {@code null}
 	 */
 	public final List<UsageTier> tiers(String key) {
 		return tiers.stream().filter(t -> key.equals(t.getKey())).collect(Collectors.toList());

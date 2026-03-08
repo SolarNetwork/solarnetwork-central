@@ -119,7 +119,7 @@ public class AlsoEnergyCloudIntegrationService extends BaseRestOperationsCloudIn
 	 *        read-through semantics that always returns a new lock for missing
 	 *        keys
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public AlsoEnergyCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,

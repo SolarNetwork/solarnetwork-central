@@ -92,7 +92,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	 * @param nodeInstructionDao
 	 *        the DAO to use
 	 * @param queueHooks
-	 *        the queue hooks to use (may be {@literal null}
+	 *        the queue hooks to use (may be {@code null}
 	 */
 	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao,
 			List<NodeInstructionQueueHook> queueHooks) {
@@ -105,9 +105,9 @@ public class DaoInstructorBiz implements InstructorBiz {
 	 * @param nodeInstructionDao
 	 *        the DAO to use
 	 * @param queueHooks
-	 *        the queue hooks to use (may be {@literal null}
+	 *        the queue hooks to use (may be {@code null}
 	 * @param nodeServiceAuditor
-	 *        the node service auditor to use (may be {@literal null})
+	 *        the node service auditor to use (may be {@code null})
 	 * @since 2.2
 	 */
 	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao,

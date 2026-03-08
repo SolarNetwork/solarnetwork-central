@@ -58,7 +58,7 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 	 * @param queryAuditor
 	 *        the query auditor service to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public AuditingQueryBiz(QueryBiz delegate, QueryAuditor queryAuditor) {
 		super(delegate);

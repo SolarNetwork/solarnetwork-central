@@ -52,7 +52,7 @@ public class StaleNodeStateUpdater extends JobSupport {
 	 * @param dao
 	 *        The NodeInstructionDao to use.
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public StaleNodeStateUpdater(NodeInstructionDao dao) {
 		super("Instruction", "StaleNodeStateUpdater");
@@ -92,7 +92,7 @@ public class StaleNodeStateUpdater extends JobSupport {
 	 * 
 	 * @param expectedState
 	 *        the state for instructions to be in that should be changed;
-	 *        {@literal null} will be treated as
+	 *        {@code null} will be treated as
 	 *        {@link InstructionState#Queuing}
 	 */
 	public void setExpectedState(InstructionState expectedState) {
@@ -106,7 +106,7 @@ public class StaleNodeStateUpdater extends JobSupport {
 	 * The state to update found instructions to.
 	 * 
 	 * @param state
-	 *        the state to change matching instructions to; {@literal null} will
+	 *        the state to change matching instructions to; {@code null} will
 	 *        be treated as {@link InstructionState#Queued}
 	 */
 	public void setState(InstructionState state) {

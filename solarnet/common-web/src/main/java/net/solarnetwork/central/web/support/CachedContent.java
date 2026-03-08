@@ -47,21 +47,21 @@ public interface CachedContent extends Serializable {
 	/**
 	 * Get metadata about the content.
 	 *
-	 * @return the metadata, never {@literal null}
+	 * @return the metadata, never {@code null}
 	 */
 	Map<String, ?> getMetadata();
 
 	/**
 	 * Get the content encoding.
 	 *
-	 * @return the encoding, for example {@literal gzip} or {@literal null}
+	 * @return the encoding, for example {@literal gzip} or {@code null}
 	 */
 	String getContentEncoding();
 
 	/**
 	 * Get the content.
 	 *
-	 * @return access to the content, or {@literal null} if none
+	 * @return access to the content, or {@code null} if none
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */

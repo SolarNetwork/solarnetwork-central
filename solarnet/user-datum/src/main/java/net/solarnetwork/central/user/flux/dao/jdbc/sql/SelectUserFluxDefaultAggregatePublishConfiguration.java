@@ -48,7 +48,7 @@ public final class SelectUserFluxDefaultAggregatePublishConfiguration
 	 * @param userId
 	 *        the user ID to get
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectUserFluxDefaultAggregatePublishConfiguration(Long userId) {
 		super();

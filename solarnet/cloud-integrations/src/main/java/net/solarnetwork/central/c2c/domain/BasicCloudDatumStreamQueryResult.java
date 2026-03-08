@@ -49,7 +49,7 @@ public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryRe
 	 * Constructor.
 	 *
 	 * @param results
-	 *        the results, or {@literal null}
+	 *        the results, or {@code null}
 	 */
 	public BasicCloudDatumStreamQueryResult(SequencedCollection<Datum> results) {
 		this(null, null, results);
@@ -59,11 +59,11 @@ public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryRe
 	 * Constructor.
 	 *
 	 * @param usedQueryFilter
-	 *        the used query filter, or {@literal null}
+	 *        the used query filter, or {@code null}
 	 * @param nextQueryFilter
-	 *        the next query filter, or {@literal null}
+	 *        the next query filter, or {@code null}
 	 * @param results
-	 *        the results, or {@literal null}
+	 *        the results, or {@code null}
 	 */
 	public BasicCloudDatumStreamQueryResult(CloudDatumStreamQueryFilter usedQueryFilter,
 			CloudDatumStreamQueryFilter nextQueryFilter, SequencedCollection<Datum> results) {

@@ -49,7 +49,7 @@ public class JdbcUserSettingsDao implements UserSettingsDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcUserSettingsDao(JdbcOperations jdbcOps) {
 		super();

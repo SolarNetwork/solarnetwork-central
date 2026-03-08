@@ -56,7 +56,7 @@ public class ThreadLocalCompletableHandlerInterceptor<T> implements HandlerInter
 	 * @param signal
 	 *        the signal to give the future when the request completes
 	 * @throws IllegalArgumentException
-	 *         if {@code threadLocal} is {@literal null}
+	 *         if {@code threadLocal} is {@code null}
 	 */
 	public ThreadLocalCompletableHandlerInterceptor(ThreadLocal<CompletableFuture<T>> threadLocal,
 			T signal) {

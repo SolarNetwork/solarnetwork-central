@@ -63,7 +63,7 @@ public class UserDataConfiguration extends BaseExportConfigurationEntity<UserDat
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserDataConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -79,7 +79,7 @@ public class UserDataConfiguration extends BaseExportConfigurationEntity<UserDat
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserDataConfiguration(Long userId, Long configId, Instant created) {
 		this(new UserLongCompositePK(userId, configId), created);

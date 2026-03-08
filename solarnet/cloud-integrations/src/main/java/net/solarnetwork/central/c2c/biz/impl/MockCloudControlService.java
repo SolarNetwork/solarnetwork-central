@@ -115,7 +115,7 @@ public class MockCloudControlService extends BaseCloudControlService {
 	 * @param controlDao
 	 *        the control DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public MockCloudControlService(UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
 			Clock clock, CloudIntegrationConfigurationDao integrationDao,

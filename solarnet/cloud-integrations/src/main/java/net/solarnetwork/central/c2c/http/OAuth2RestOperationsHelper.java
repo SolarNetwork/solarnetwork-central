@@ -114,7 +114,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
@@ -151,7 +151,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 *        read-through semantics that always returns a new lock for missing
 	 *        keys
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 1.1
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
@@ -193,7 +193,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 *        an optional map of extra service property keys to HTTP header
 	 *        names to include with HTTP requests
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 1.1
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,

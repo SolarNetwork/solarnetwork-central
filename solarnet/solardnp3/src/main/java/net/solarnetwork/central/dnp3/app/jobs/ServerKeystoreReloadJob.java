@@ -54,7 +54,7 @@ public class ServerKeystoreReloadJob extends JobSupport {
 	 * @param server
 	 *        the server
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ServerKeystoreReloadJob(TlsServerSettings settings, NettyDynamicProxyServer server) {
 		super("DNP3", "ServerKeystoreReload");

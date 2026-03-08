@@ -455,7 +455,7 @@ public class NodeUsageCost implements Serializable {
 	/**
 	 * Get the cost of datum properties added.
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 */
 	public final BigDecimal getDatumPropertiesInCost() {
 		return datumPropertiesInCost;
@@ -474,7 +474,7 @@ public class NodeUsageCost implements Serializable {
 	/**
 	 * Get the cost of datum stored per day (accumulating).
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 */
 	public final BigDecimal getDatumDaysStoredCost() {
 		return datumDaysStoredCost;
@@ -493,7 +493,7 @@ public class NodeUsageCost implements Serializable {
 	/**
 	 * Get the cost of datum queried.
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 */
 	public final BigDecimal getDatumOutCost() {
 		return datumOutCost;
@@ -531,7 +531,7 @@ public class NodeUsageCost implements Serializable {
 	/**
 	 * Get the OCPP Chargers cost.
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 */
 	public final BigDecimal getOcppChargersCost() {
 		return ocppChargersCost;
@@ -550,7 +550,7 @@ public class NodeUsageCost implements Serializable {
 	/**
 	 * Get the OSCP Capacity Groups cost.
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 */
 	public final BigDecimal getOscpCapacityGroupsCost() {
 		return oscpCapacityGroupsCost;
@@ -569,7 +569,7 @@ public class NodeUsageCost implements Serializable {
 	/**
 	 * Get the OSCP capacity cost.
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 * @since 1.4
 	 */
 	public final BigDecimal getOscpCapacityCost() {
@@ -590,7 +590,7 @@ public class NodeUsageCost implements Serializable {
 	/**
 	 * Get the DNP3 Data Points cost.
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 * @since 1.2
 	 */
 	public final BigDecimal getDnp3DataPointsCost() {
@@ -611,7 +611,7 @@ public class NodeUsageCost implements Serializable {
 	/**
 	 * Get the SolarFlux data in cost.
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 * @since 1.5
 	 */
 	public final BigDecimal getFluxDataInCost() {
@@ -632,7 +632,7 @@ public class NodeUsageCost implements Serializable {
 	/**
 	 * Get the SolarFlux data out cost.
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 * @since 1.5
 	 */
 	public final BigDecimal getFluxDataOutCost() {
@@ -653,7 +653,7 @@ public class NodeUsageCost implements Serializable {
 	/**
 	 * Get the OAuth client credentials cost.
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 * @since 1.5
 	 */
 	public final BigDecimal getOauthClientCredentialsCost() {
@@ -676,7 +676,7 @@ public class NodeUsageCost implements Serializable {
 	/**
 	 * Get the Cloud Integrations data cost.
 	 *
-	 * @return the cost, never {@literal null}
+	 * @return the cost, never {@code null}
 	 * @since 1.6
 	 */
 	public final BigDecimal getCloudIntegrationsDataCost() {

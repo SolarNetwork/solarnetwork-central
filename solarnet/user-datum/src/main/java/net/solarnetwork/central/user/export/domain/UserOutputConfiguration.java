@@ -59,7 +59,7 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserOutputConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -75,7 +75,7 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserOutputConfiguration(Long userId, Long configId, Instant created) {
 		this(new UserLongCompositePK(userId, configId), created);
@@ -117,7 +117,7 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 	 * Get the compression type key value.
 	 *
 	 * @return the compression type; if {@link #getCompressionType()} is
-	 *         {@literal null} this will return the key value for
+	 *         {@code null} this will return the key value for
 	 *         {@link OutputCompressionType#None}
 	 */
 	public char getCompressionTypeKey() {

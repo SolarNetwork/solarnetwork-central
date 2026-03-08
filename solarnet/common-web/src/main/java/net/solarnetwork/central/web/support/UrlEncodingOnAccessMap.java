@@ -46,7 +46,7 @@ public class UrlEncodingOnAccessMap<K> implements Map<K, String> {
 	 * @param delegate
 	 *        the delegate map
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UrlEncodingOnAccessMap(Map<K, String> delegate) {
 		super();

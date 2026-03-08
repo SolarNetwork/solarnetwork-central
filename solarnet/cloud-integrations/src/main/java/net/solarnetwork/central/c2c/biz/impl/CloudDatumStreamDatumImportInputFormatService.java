@@ -118,7 +118,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 	 *        function that provides a {@link CloudDatumStreamService} for a
 	 *        given service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamDatumImportInputFormatService(CloudDatumStreamConfigurationDao datumStreamDao,
 			Function<String, CloudDatumStreamService> datumStreamServiceProvider) {
@@ -164,7 +164,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 		 * @param progressListener
 		 *        the progress listener
 		 * @throws IllegalArgumentException
-		 *         if {@code config} is {@literal null} or the provided
+		 *         if {@code config} is {@code null} or the provided
 		 *         configuration is not valid
 		 */
 		private DatumStreamImportContext(InputConfiguration config, DatumImportResource resource,

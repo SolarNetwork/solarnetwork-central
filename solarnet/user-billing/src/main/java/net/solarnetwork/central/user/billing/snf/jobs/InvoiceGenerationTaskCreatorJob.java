@@ -42,7 +42,7 @@ public class InvoiceGenerationTaskCreatorJob extends JobSupport {
 	 * @param creator
 	 *        the creator
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InvoiceGenerationTaskCreatorJob(InvoiceGenerationTaskCreator creator) {
 		super("Billing", "InvoiceGEnerationTaskCreator");

@@ -65,7 +65,7 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudDatumStreamRakeTaskDao(JdbcOperations jdbcOps) {
 		this(jdbcOps, DEFAULT_CLAIM_JOB_SQL);
@@ -79,7 +79,7 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 	 * @param claimTaskSql
 	 *        the claim task SQL
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudDatumStreamRakeTaskDao(JdbcOperations jdbcOps, String claimTaskSql) {
 		super();

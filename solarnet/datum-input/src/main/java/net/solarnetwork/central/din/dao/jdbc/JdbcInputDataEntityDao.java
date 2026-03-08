@@ -56,7 +56,7 @@ public class JdbcInputDataEntityDao implements InputDataEntityDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcInputDataEntityDao(JdbcOperations jdbcOps) {
 		super();

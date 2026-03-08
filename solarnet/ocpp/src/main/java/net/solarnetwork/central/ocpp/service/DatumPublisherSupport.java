@@ -71,7 +71,7 @@ public final class DatumPublisherSupport {
 	 * @param datumDao
 	 *        the datum DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumPublisherSupport(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,
@@ -110,7 +110,7 @@ public final class DatumPublisherSupport {
 	 *        the ID of the user to get the settings for
 	 * @param id
 	 *        the ID of the charge point to get the settings for
-	 * @return the settings, never {@literal null}
+	 * @return the settings, never {@code null}
 	 */
 	public ChargePointSettings settingsForChargePoint(Long userId, Long id) {
 		ChargePointSettings cps = chargePointSettingsDao.resolveSettings(userId, id);
@@ -131,7 +131,7 @@ public final class DatumPublisherSupport {
 	 *        the charger identifier
 	 * @param connectorId
 	 *        the connector ID
-	 * @return the source ID, never {@literal null}
+	 * @return the source ID, never {@code null}
 	 */
 	public String sourceId(ChargePointSettings chargePointSettings, String identifier, Integer evseId,
 			Integer connectorId) {
@@ -209,7 +209,7 @@ public final class DatumPublisherSupport {
 	/**
 	 * Get the SolarFlux publisher.
 	 * 
-	 * @return the publisher, or {@literal null}
+	 * @return the publisher, or {@code null}
 	 */
 	public DatumProcessor getFluxPublisher() {
 		return fluxPublisher;

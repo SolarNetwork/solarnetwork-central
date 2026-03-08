@@ -77,7 +77,7 @@ public interface CloudIntegrationsConfigurationEntity<C extends CloudIntegration
 	 *        the service configuration to obtain placeholder values from, on a
 	 *        {@link #PLACEHOLDERS_SERVICE_PROPERTY} service property
 	 * @return the {@code template} with all placeholder values resolved, or
-	 *         {@literal null} if {@code template} is {@code null}
+	 *         {@code null} if {@code template} is {@code null}
 	 * @see StringUtils#expandTemplateString(String, Map)
 	 * @since 1.1
 	 */

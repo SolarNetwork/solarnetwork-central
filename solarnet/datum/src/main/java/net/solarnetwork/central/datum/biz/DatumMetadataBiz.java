@@ -99,7 +99,7 @@ public interface DatumMetadataBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@code null}
 	 */
 	FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findGeneralNodeDatumMetadata(
 			GeneralNodeDatumMetadataFilter criteria, @Nullable List<SortDescriptor> sortDescriptors,
@@ -156,7 +156,7 @@ public interface DatumMetadataBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@code null}
 	 * @since 1.1
 	 */
 	FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> findGeneralLocationDatumMetadata(
@@ -177,7 +177,7 @@ public interface DatumMetadataBiz {
 	 * @param metadataFilter
 	 *        A metadata search filter, in LDAP search filter syntax.
 	 * @return the distinct node ID and source IDs combinations that match the
-	 *         given filter (never <em>null</em>)
+	 *         given filter (never {@code null})
 	 * @since 1.2
 	 */
 	Set<NodeSourcePK> getGeneralNodeDatumMetadataFilteredSources(Long[] nodeIds, String metadataFilter);
@@ -196,7 +196,7 @@ public interface DatumMetadataBiz {
 	 * @param metadataFilter
 	 *        A metadata search filter, in LDAP search filter syntax.
 	 * @return the distinct node ID and source IDs combinations that match the
-	 *         given filter (never <em>null</em>)
+	 *         given filter (never {@code null})
 	 * @since 1.2
 	 */
 	Set<LocationSourcePK> getGeneralLocationDatumMetadataFilteredSources(Long[] locationIds,

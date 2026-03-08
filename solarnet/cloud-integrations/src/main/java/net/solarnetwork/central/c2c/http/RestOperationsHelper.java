@@ -70,7 +70,7 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 * @param sensitiveKeyProvider
 	 *        the sensitive key provider
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
@@ -105,7 +105,7 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 *        function to parse the HTTP response
 	 * @return the parsed response object
 	 * @throws IllegalArgumentException
-	 *         if {@code integration} is {@literal null}
+	 *         if {@code integration} is {@code null}
 	 */
 	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T httpGet(
 			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
@@ -141,7 +141,7 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 *        function to parse the HTTP response
 	 * @return the parsed response object
 	 * @throws IllegalArgumentException
-	 *         if {@code integration} is {@literal null}
+	 *         if {@code integration} is {@code null}
 	 * @since 1.2
 	 */
 	public <B, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(

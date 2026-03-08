@@ -42,7 +42,7 @@ public interface CloudDatumStreamPollService {
 	 * changing the state to "claimed".
 	 * </p>
 	 *
-	 * @return a claimed task, or {@literal null} if none could be claimed
+	 * @return a claimed task, or {@code null} if none could be claimed
 	 */
 	CloudDatumStreamPollTaskEntity claimQueuedTask();
 

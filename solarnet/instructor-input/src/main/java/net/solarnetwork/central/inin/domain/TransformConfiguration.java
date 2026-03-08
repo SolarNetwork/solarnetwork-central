@@ -73,7 +73,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	 * @param phase
 	 *        the phase
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	protected TransformConfiguration(UserLongCompositePK id, Instant created, TransformPhase phase) {
 		super(id, created);
@@ -93,7 +93,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	 * @param phase
 	 *        the phase
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	protected TransformConfiguration(Long userId, Long transformId, Instant created,
 			TransformPhase phase) {
@@ -120,7 +120,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 		 * @param created
 		 *        the creation date
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
 		public RequestTransformConfiguration(UserLongCompositePK id, Instant created) {
 			super(id, created, TransformPhase.Request);
@@ -136,7 +136,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 		 * @param created
 		 *        the creation date
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
 		public RequestTransformConfiguration(Long userId, Long transformId, Instant created) {
 			this(new UserLongCompositePK(userId, transformId), created);
@@ -171,7 +171,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 		 * @param created
 		 *        the creation date
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
 		public ResponseTransformConfiguration(UserLongCompositePK id, Instant created) {
 			super(id, created, TransformPhase.Response);
@@ -187,7 +187,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 		 * @param created
 		 *        the creation date
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
 		public ResponseTransformConfiguration(Long userId, Long transformId, Instant created) {
 			this(new UserLongCompositePK(userId, transformId), created);
@@ -312,7 +312,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
+	 * @return a JSON encoded string, or {@code null} if no service
 	 *         properties available
 	 */
 	@JsonIgnore

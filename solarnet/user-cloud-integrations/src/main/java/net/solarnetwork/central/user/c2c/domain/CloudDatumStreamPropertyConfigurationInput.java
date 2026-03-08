@@ -174,7 +174,7 @@ public class CloudDatumStreamPropertyConfigurationInput extends
 	/**
 	 * Get the value multiplier.
 	 *
-	 * @return a number to multiply source data values by, or {@literal null}
+	 * @return a number to multiply source data values by, or {@code null}
 	 *         for no change
 	 */
 	public final BigDecimal getMultiplier() {
@@ -185,7 +185,7 @@ public class CloudDatumStreamPropertyConfigurationInput extends
 	 * Set the value multiplier.
 	 *
 	 * @param multiplier
-	 *        a number to multiply source data values by, or {@literal null} for
+	 *        a number to multiply source data values by, or {@code null} for
 	 *        no change
 	 */
 	public final void setMultiplier(BigDecimal multiplier) {
@@ -195,7 +195,7 @@ public class CloudDatumStreamPropertyConfigurationInput extends
 	/**
 	 * Get the value decimal scale.
 	 *
-	 * @return the scale to round the property value to, or {@literal null} or
+	 * @return the scale to round the property value to, or {@code null} or
 	 *         less than 0 for no rounding
 	 */
 	public final Integer getScale() {
@@ -206,7 +206,7 @@ public class CloudDatumStreamPropertyConfigurationInput extends
 	 * Set the value decimal scale.
 	 *
 	 * @param scale
-	 *        the scale to round the property value to, or {@literal null} or
+	 *        the scale to round the property value to, or {@code null} or
 	 *        less than 0 for no rounding
 	 */
 	public final void setScale(Integer scale) {

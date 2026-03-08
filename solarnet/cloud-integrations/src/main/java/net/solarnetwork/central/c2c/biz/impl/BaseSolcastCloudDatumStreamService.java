@@ -172,7 +172,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseSolcastCloudDatumStreamService(String serviceIdentifier, String displayName,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
@@ -201,7 +201,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 	 *
 	 * @param datumStream
 	 *        the datum stream to resolve the resolution setting from
-	 * @return the resolution, never {@literal null}
+	 * @return the resolution, never {@code null}
 	 */
 	public static Duration resolveResolution(CloudDatumStreamConfiguration datumStream) {
 		String resoValue = nonEmptyString(datumStream.serviceProperty(RESOLUTION_SETTING, String.class));

@@ -54,7 +54,7 @@ public class HandlerExceptionResolverRequestRejectedHandler implements RequestRe
 	 * @param handlerExceptionResolver
 	 *        the resolve
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public HandlerExceptionResolverRequestRejectedHandler(
 			HandlerExceptionResolver handlerExceptionResolver) {

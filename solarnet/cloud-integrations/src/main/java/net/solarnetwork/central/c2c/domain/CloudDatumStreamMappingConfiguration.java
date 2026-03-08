@@ -80,7 +80,7 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamMappingConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -96,7 +96,7 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamMappingConfiguration(Long userId, Long configId, Instant created) {
 		this(new UserLongCompositePK(userId, configId), created);
@@ -223,7 +223,7 @@ public final class CloudDatumStreamMappingConfiguration extends
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
+	 * @return a JSON encoded string, or {@code null} if no service
 	 *         properties available
 	 */
 	@JsonIgnore

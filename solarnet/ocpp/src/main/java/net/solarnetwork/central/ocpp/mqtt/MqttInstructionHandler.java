@@ -320,7 +320,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 	 * @param mqttTopic
 	 *        the topic
 	 * @throws IllegalArgumentException
-	 *         if {@code topic} is {@literal null}
+	 *         if {@code topic} is {@code null}
 	 */
 	public void setMqttTopic(String mqttTopic) {
 		if ( mqttTopic == null || mqttTopic.isEmpty() ) {

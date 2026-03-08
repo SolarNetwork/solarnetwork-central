@@ -59,7 +59,7 @@ public class JdbcCloudControlConfigurationDao implements CloudControlConfigurati
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudControlConfigurationDao(JdbcOperations jdbcOps) {
 		super();

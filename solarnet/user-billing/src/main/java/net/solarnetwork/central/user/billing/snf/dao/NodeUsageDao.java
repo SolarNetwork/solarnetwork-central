@@ -41,7 +41,7 @@ public interface NodeUsageDao {
 	 *
 	 * @param date
 	 *        the date to get the effective node usage tiers for
-	 * @return the tiers, or {@literal null} if no tiers are available
+	 * @return the tiers, or {@code null} if no tiers are available
 	 * @since 2.0
 	 */
 	@Nullable
@@ -50,7 +50,7 @@ public interface NodeUsageDao {
 	/**
 	 * Get the node usage tiers at all available effective date boundaries.
 	 *
-	 * @return the tiers, or {@literal null} if no tiers are available
+	 * @return the tiers, or {@code null} if no tiers are available
 	 * @since 2.1
 	 */
 	@Nullable
@@ -61,7 +61,7 @@ public interface NodeUsageDao {
 	 *
 	 * <p>
 	 * This method applies all metered tier rates to the <b>account</b> level.
-	 * The {@link NodeUsage#getId()} values will be {@literal null} for all
+	 * The {@link NodeUsage#getId()} values will be {@code null} for all
 	 * returned instances.
 	 * </p>
 	 *
@@ -71,7 +71,7 @@ public interface NodeUsageDao {
 	 *        the minimum date to get usage for (inclusive)
 	 * @param endDate
 	 *        the maximum date to get usage for (exclusive)
-	 * @return the matching usage, never {@literal null}
+	 * @return the matching usage, never {@code null}
 	 * @since 2.0
 	 */
 	List<NodeUsage> findUsageForAccount(Long userId, LocalDate startDate, LocalDate endDate);
@@ -94,7 +94,7 @@ public interface NodeUsageDao {
 	 *        the minimum date to get usage for (inclusive)
 	 * @param endDate
 	 *        the maximum date to get usage for (exclusive)
-	 * @return the matching usage, never {@literal null}
+	 * @return the matching usage, never {@code null}
 	 * @since 2.0
 	 */
 	List<NodeUsage> findNodeUsageForAccount(Long userId, LocalDate startDate, LocalDate endDate);

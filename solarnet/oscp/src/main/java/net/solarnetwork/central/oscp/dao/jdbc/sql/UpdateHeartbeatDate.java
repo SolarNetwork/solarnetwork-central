@@ -59,7 +59,7 @@ public final class UpdateHeartbeatDate implements PreparedStatementCreator, SqlP
 	 * @param ts
 	 *        the value to set of the expectation matches
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code expected} is {@literal null} or the
+	 *         if any argument except {@code expected} is {@code null} or the
 	 *         {@code id} is not assigned
 	 */
 	public UpdateHeartbeatDate(OscpRole type, UserLongCompositePK id, Instant expected, Instant ts) {

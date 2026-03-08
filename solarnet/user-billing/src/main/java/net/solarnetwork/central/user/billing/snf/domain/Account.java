@@ -186,7 +186,7 @@ public class Account extends BasicEntity<UserLongPK>
 	/**
 	 * Get the invoice time zone.
 	 *
-	 * @return the time zone, or {@literal null} if not available
+	 * @return the time zone, or {@code null} if not available
 	 */
 	@JsonIgnore
 	public @Nullable ZoneId getTimeZone() {

@@ -131,7 +131,7 @@ public class DaoInstructionInputEndpointBiz
 	 * @param responseTransformServices
 	 *        the response transform services
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoInstructionInputEndpointBiz(TaskExecutor taskExecutor, InstructorBiz instructor,
 			SolarNodeOwnershipDao nodeOwnershipDao, EndpointConfigurationDao endpointDao,
@@ -450,7 +450,7 @@ public class DaoInstructionInputEndpointBiz
 	 *
 	 * @param executionResultDelay
 	 *        the executionDelay to set; defaults to
-	 *        {@link #DEFAULT_EXECUTION_RESULT_DELAY} if {@literal null} or not
+	 *        {@link #DEFAULT_EXECUTION_RESULT_DELAY} if {@code null} or not
 	 *        positive
 	 */
 	public void setExecutionResultDelay(Duration executionResultDelay) {

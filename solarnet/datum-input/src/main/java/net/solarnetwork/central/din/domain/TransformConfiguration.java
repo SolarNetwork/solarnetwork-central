@@ -69,7 +69,7 @@ public class TransformConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public TransformConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -86,7 +86,7 @@ public class TransformConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public TransformConfiguration(Long userId, Long transformId, Instant created) {
 		this(new UserLongCompositePK(userId, transformId), created);
@@ -195,7 +195,7 @@ public class TransformConfiguration
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
+	 * @return a JSON encoded string, or {@code null} if no service
 	 *         properties available
 	 */
 	@JsonIgnore

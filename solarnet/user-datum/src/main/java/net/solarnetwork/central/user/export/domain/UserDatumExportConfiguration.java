@@ -78,7 +78,7 @@ public class UserDatumExportConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserDatumExportConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -94,7 +94,7 @@ public class UserDatumExportConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserDatumExportConfiguration(Long userId, Long configId, Instant created) {
 		this(new UserLongCompositePK(userId, configId), created);
@@ -194,7 +194,7 @@ public class UserDatumExportConfiguration
 	/**
 	 * Get the schedule type key value.
 	 *
-	 * @return the schedule type; if {@link #getSchedule()} is {@literal null}
+	 * @return the schedule type; if {@link #getSchedule()} is {@code null}
 	 *         this will return the key value for {@link ScheduleType#Daily}
 	 */
 	public char getScheduleKey() {
@@ -260,7 +260,7 @@ public class UserDatumExportConfiguration
 	/**
 	 * Get the {@link UserDataConfiguration} ID.
 	 *
-	 * @return the ID, or {@literal null}
+	 * @return the ID, or {@code null}
 	 */
 	@JsonIgnore
 	public Long getUserDataConfigurationId() {
@@ -304,7 +304,7 @@ public class UserDatumExportConfiguration
 	/**
 	 * Get the {@link UserOutputConfiguration} ID.
 	 *
-	 * @return the ID, or {@literal null}
+	 * @return the ID, or {@code null}
 	 */
 	@JsonIgnore
 	public Long getUserOutputConfigurationId() {
@@ -350,7 +350,7 @@ public class UserDatumExportConfiguration
 	/**
 	 * Get the {@link UserDestinationConfiguration} ID.
 	 *
-	 * @return the ID, or {@literal null}
+	 * @return the ID, or {@code null}
 	 */
 	@JsonIgnore
 	public Long getUserDestinationConfigurationId() {

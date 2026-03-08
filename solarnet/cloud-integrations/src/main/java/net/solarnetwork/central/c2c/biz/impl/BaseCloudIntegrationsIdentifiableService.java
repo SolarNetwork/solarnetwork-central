@@ -70,7 +70,7 @@ public abstract class BaseCloudIntegrationsIdentifiableService extends
 	 * @param settings
 	 *        the service settings
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseCloudIntegrationsIdentifiableService(String serviceIdentifier, String displayName,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
@@ -95,7 +95,7 @@ public abstract class BaseCloudIntegrationsIdentifiableService extends
 	/**
 	 * Get the user service auditor.
 	 *
-	 * @return the auditor, or {@literal null}
+	 * @return the auditor, or {@code null}
 	 * @since 1.1
 	 */
 	public UserServiceAuditor getUserServiceAuditor() {
@@ -106,7 +106,7 @@ public abstract class BaseCloudIntegrationsIdentifiableService extends
 	 * Set the user service auditor.
 	 *
 	 * @param userServiceAuditor
-	 *        the auditor to set, or {@literal null}
+	 *        the auditor to set, or {@code null}
 	 * @since 1.1
 	 */
 	public void setUserServiceAuditor(UserServiceAuditor userServiceAuditor) {

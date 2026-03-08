@@ -58,7 +58,7 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserFluxDefaultAggregatePublishConfiguration(Long id, Instant created) {
 		super(id, created);

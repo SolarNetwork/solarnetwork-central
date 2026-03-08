@@ -223,7 +223,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	 *        read-through semantics that always returns a new lock for missing
 	 *        keys
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SmaCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
 			CloudIntegrationsExpressionService expressionService,

@@ -35,10 +35,10 @@ public interface CloudDatumStreamCriteria {
 	 *
 	 * <p>
 	 * This returns the first available datum stream ID from the
-	 * {@link #getDatumStreamIds()} array, or {@literal null} if not available.
+	 * {@link #getDatumStreamIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first datum stream ID, or {@literal null} if not available
+	 * @return the first datum stream ID, or {@code null} if not available
 	 */
 	default Long getDatumStreamId() {
 		final Long[] array = getDatumStreamIds();
@@ -48,7 +48,7 @@ public interface CloudDatumStreamCriteria {
 	/**
 	 * Get an array of datum stream IDs.
 	 *
-	 * @return array of datum stream IDs (may be {@literal null})
+	 * @return array of datum stream IDs (may be {@code null})
 	 */
 	Long[] getDatumStreamIds();
 

@@ -54,7 +54,7 @@ public enum SolarEdgeResolution {
 	/**
 	 * Get the key.
 	 *
-	 * @return the key, never {@literal null}
+	 * @return the key, never {@code null}
 	 */
 	public final String getKey() {
 		return key;
@@ -63,7 +63,7 @@ public enum SolarEdgeResolution {
 	/**
 	 * Get a clock tick duration appropriate for this granularity.
 	 *
-	 * @return the duration, never {@literal null}
+	 * @return the duration, never {@code null}
 	 */
 	public Duration getTickDuration() {
 		return tickDuration;
@@ -97,7 +97,7 @@ public enum SolarEdgeResolution {
 	 *
 	 * @param value
 	 *        the enumeration name or key value, case-insensitve
-	 * @return the enum; if {@code value} is {@literal null} or empty then
+	 * @return the enum; if {@code value} is {@code null} or empty then
 	 *         {@link #FifteenMinute} is returned
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value

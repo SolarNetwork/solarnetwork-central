@@ -47,7 +47,7 @@ public interface UserFluxBiz {
 	 *        the configuration input to save
 	 * @return the saved configuration
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	UserFluxDefaultAggregatePublishConfiguration saveDefaultAggregatePublishConfiguration(Long userId,
 			UserFluxDefaultAggregatePublishConfigurationInput input);
@@ -58,7 +58,7 @@ public interface UserFluxBiz {
 	 * @param userId
 	 *        the ID of the user to delete the configuration for
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	void deleteDefaultAggregatePublishConfiguration(Long userId);
 
@@ -68,9 +68,9 @@ public interface UserFluxBiz {
 	 * @param userId
 	 *        the ID of the user to save the configuration for
 	 * @return the configuration, or a default one if no persisted configuration
-	 *         available; never {@literal null}
+	 *         available; never {@code null}
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	UserFluxDefaultAggregatePublishConfiguration defaultAggregatePublishConfigurationForUser(
 			Long userId);
@@ -85,7 +85,7 @@ public interface UserFluxBiz {
 	 *        the configuration input to save
 	 * @return the saved configuration
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	UserFluxAggregatePublishConfiguration saveAggregatePublishConfiguration(UserLongCompositePK id,
 			UserFluxAggregatePublishConfigurationInput input);
@@ -107,9 +107,9 @@ public interface UserFluxBiz {
 	 *        the ID of the user to save the configuration for
 	 * @param configurationId
 	 *        the ID of the configuration to get
-	 * @return the configuration, or {@literal null}
+	 * @return the configuration, or {@code null}
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	UserFluxAggregatePublishConfiguration aggregatePublishConfigurationForUser(Long userId,
 			Long configurationId);
@@ -121,9 +121,9 @@ public interface UserFluxBiz {
 	 *        the user ID to get configurations for
 	 * @param filter
 	 *        an optional filter
-	 * @return the available configurations, never {@literal null}
+	 * @return the available configurations, never {@code null}
 	 * @throws IllegalArgumentException
-	 *         if the {@code userId} argument is {@literal null}
+	 *         if the {@code userId} argument is {@code null}
 	 */
 	FilterResults<UserFluxAggregatePublishConfiguration, UserLongCompositePK> aggregatePublishConfigurationsForUser(
 			Long userId, UserFluxAggregatePublishConfigurationFilter filter);

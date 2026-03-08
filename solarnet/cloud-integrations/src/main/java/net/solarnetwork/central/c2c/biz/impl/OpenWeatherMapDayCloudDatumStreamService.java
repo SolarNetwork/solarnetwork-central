@@ -107,7 +107,7 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OpenWeatherMapDayCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,

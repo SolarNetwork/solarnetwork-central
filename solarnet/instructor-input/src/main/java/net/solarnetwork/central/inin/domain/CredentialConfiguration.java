@@ -60,7 +60,7 @@ public class CredentialConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CredentialConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -76,7 +76,7 @@ public class CredentialConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CredentialConfiguration(Long userId, Long credentialId, Instant created) {
 		this(new UserLongCompositePK(userId, credentialId), created);

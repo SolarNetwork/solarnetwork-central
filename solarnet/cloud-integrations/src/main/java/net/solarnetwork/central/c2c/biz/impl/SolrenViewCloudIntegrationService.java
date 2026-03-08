@@ -114,7 +114,7 @@ public class SolrenViewCloudIntegrationService extends BaseRestOperationsCloudIn
 	 * @param restOps
 	 *        the REST operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SolrenViewCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {

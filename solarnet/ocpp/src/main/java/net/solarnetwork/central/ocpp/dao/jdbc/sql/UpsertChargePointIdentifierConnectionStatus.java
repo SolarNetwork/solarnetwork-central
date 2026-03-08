@@ -58,7 +58,7 @@ public final class UpsertChargePointIdentifierConnectionStatus
 	 * @param connected
 	 *        {@literal true} if connected, {@literal false} if disconnected
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertChargePointIdentifierConnectionStatus(Long userId, String chargePointIdentifier,
 			ChargePointStatus status, boolean connected) {

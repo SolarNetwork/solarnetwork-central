@@ -217,7 +217,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 	 *        read-through semantics that always returns a new lock for missing
 	 *        keys
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public LocusEnergyCloudDatumStreamService(AsyncTaskExecutor executor,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,

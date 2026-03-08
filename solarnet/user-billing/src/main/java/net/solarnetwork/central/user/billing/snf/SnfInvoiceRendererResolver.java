@@ -45,7 +45,7 @@ public interface SnfInvoiceRendererResolver {
 	 *        the desired output MIME type
 	 * @param locale
 	 *        the output locale
-	 * @return the renderer, or {@literal null} if none can be resolved
+	 * @return the renderer, or {@code null} if none can be resolved
 	 */
 	@Nullable
 	TemplateRenderer rendererForInvoice(SnfInvoice invoice, MimeType mimeType, Locale locale);

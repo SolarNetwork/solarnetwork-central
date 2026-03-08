@@ -151,7 +151,7 @@ public class PingController implements CompositeHealthContributor {
 		 * @param date
 		 *        The date the tests were executed at.
 		 * @param results
-		 *        The test results (or {@literal null} if none available).
+		 *        The test results (or {@code null} if none available).
 		 */
 		public PingResults(Instant date, Map<String, PingTestResultDisplay> results) {
 			super();

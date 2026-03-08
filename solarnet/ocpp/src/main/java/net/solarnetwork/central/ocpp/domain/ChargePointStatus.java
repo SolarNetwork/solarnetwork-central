@@ -65,13 +65,13 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *        the creation date
 	 * @param connectedTo
 	 *        the name of the SolarIn instance the charger is connected to, or
-	 *        {@literal null} if not connected
+	 *        {@code null} if not connected
 	 * @param connectedDate
 	 *        the date the connection was established
 	 * @param sessionId
 	 *        the connection session ID
 	 * @throws IllegalArgumentException
-	 *         if {@code userId} or {@code chargePointId} is {@literal null}
+	 *         if {@code userId} or {@code chargePointId} is {@code null}
 	 */
 	public ChargePointStatus(Long userId, Long chargePointId, Instant created, String connectedTo,
 			String sessionId, Instant connectedDate) {
@@ -88,13 +88,13 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *        the creation date
 	 * @param connectedTo
 	 *        the name of the SolarIn instance the charger is connected to, or
-	 *        {@literal null} if not connected
+	 *        {@code null} if not connected
 	 * @param sessionId
 	 *        the connection session ID
 	 * @param connectedDate
 	 *        the date the connection was established
 	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
+	 *         if {@code id} is {@code null}
 	 */
 	public ChargePointStatus(UserLongCompositePK id, Instant created, String connectedTo,
 			String sessionId, Instant connectedDate) {
@@ -122,7 +122,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	/**
 	 * Get the SolarIn instance name the charger is connected to.
 	 *
-	 * @return the instance name, or {@literal null} if not connected
+	 * @return the instance name, or {@code null} if not connected
 	 */
 	public String getConnectedTo() {
 		return connectedTo;
@@ -132,7 +132,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 * Set the SolarIn instance name the charger is connected to.
 	 *
 	 * @param connectedTo
-	 *        the instance name, or {@literal null} if not connected
+	 *        the instance name, or {@code null} if not connected
 	 */
 	public void setConnectedTo(String connectedTo) {
 		this.connectedTo = connectedTo;
@@ -162,7 +162,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	/**
 	 * Get the date the connection was last established.
 	 *
-	 * @return the date, or {@literal null} if never connected
+	 * @return the date, or {@code null} if never connected
 	 */
 	public Instant getConnectedDate() {
 		return connectedDate;

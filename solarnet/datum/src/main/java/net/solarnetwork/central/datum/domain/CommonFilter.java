@@ -53,7 +53,7 @@ public interface CommonFilter extends Filter, DateRangeFilter, LocalDateRangeFil
 	 * example a path like {@code i.watts} would return an array like
 	 * {@code ["i", "watts"]}.
 	 *
-	 * @return the data path elements, or <em>null</em>
+	 * @return the data path elements, or {@code null}
 	 */
 	String @Nullable [] getDataPathElements();
 

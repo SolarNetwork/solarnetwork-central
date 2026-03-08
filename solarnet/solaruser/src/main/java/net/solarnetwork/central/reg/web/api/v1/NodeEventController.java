@@ -68,7 +68,7 @@ public class NodeEventController {
 	 * @param eventHookBiz
 	 *        the event hook biz to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public NodeEventController(@Autowired(required = false) UserEventHookBiz eventHookBiz) {
 		super();

@@ -104,7 +104,7 @@ public class JCacheContentCachingService
 	 * @param cache
 	 *        the cache to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JCacheContentCachingService(Cache<String, CachedContent> cache) {
 		super();
@@ -453,7 +453,7 @@ public class JCacheContentCachingService
 	 * Get metadata for the cache content.
 	 *
 	 * <p>
-	 * This method returns {@literal null}, so extending classes can override.
+	 * This method returns {@code null}, so extending classes can override.
 	 * Note that the returned object must implement {@link Serializable}, along
 	 * with all values in the map.
 	 * </p>
@@ -466,7 +466,7 @@ public class JCacheContentCachingService
 	 *        the HTTP status code
 	 * @param headers
 	 *        the HTTP headers
-	 * @return the metadata, or {@literal null} if none
+	 * @return the metadata, or {@code null} if none
 	 */
 	protected Map<String, ?> getCacheContentMetadata(String key, HttpServletRequest request,
 			int statusCode, HttpHeaders headers) {

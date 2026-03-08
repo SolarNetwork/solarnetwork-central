@@ -48,7 +48,7 @@ public interface CentralAuthorizationDao extends AuthorizationDao {
 	 *        the owner user ID to find
 	 * @param token
 	 *        the token to find
-	 * @return the matching entity, or {@literal null} if not found
+	 * @return the matching entity, or {@code null} if not found
 	 */
 	Authorization getForToken(Long userId, String token);
 
@@ -57,7 +57,7 @@ public interface CentralAuthorizationDao extends AuthorizationDao {
 	 * 
 	 * @param userId
 	 *        the owner ID
-	 * @return the available authorizations; never {@literal null}
+	 * @return the available authorizations; never {@code null}
 	 */
 	Collection<CentralAuthorization> findAllForOwner(Long userId);
 
@@ -68,7 +68,7 @@ public interface CentralAuthorizationDao extends AuthorizationDao {
 	 *        the owner ID
 	 * @param id
 	 *        the ID to look for
-	 * @return the matching entity; never {@literal null}
+	 * @return the matching entity; never {@code null}
 	 * @throws RuntimeException
 	 *         if the entity cannot be found
 	 */

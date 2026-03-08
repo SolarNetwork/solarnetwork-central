@@ -74,7 +74,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamPropertyConfiguration(UserLongIntegerCompositePK id, Instant created) {
 		super(id, created);
@@ -90,7 +90,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamPropertyConfiguration(Long userId, Long datumStreamMappingId, Integer index,
 			Instant created) {
@@ -338,7 +338,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	/**
 	 * Get the value multiplier.
 	 *
-	 * @return a number to multiply source data values by, or {@literal null}
+	 * @return a number to multiply source data values by, or {@code null}
 	 *         for no change
 	 */
 	public BigDecimal getMultiplier() {
@@ -349,7 +349,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 * Set the value multiplier.
 	 *
 	 * @param multiplier
-	 *        a number to multiply source data values by, or {@literal null} for
+	 *        a number to multiply source data values by, or {@code null} for
 	 *        no change
 	 */
 	public void setMultiplier(BigDecimal multiplier) {
@@ -359,7 +359,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	/**
 	 * Get the value decimal scale.
 	 *
-	 * @return the scale to round the property value to, or {@literal null} or
+	 * @return the scale to round the property value to, or {@code null} or
 	 *         less than 0 for no rounding
 	 */
 	public Integer getScale() {
@@ -370,7 +370,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 * Set the value decimal scale.
 	 *
 	 * @param scale
-	 *        the scale to round the property value to, or {@literal null} or
+	 *        the scale to round the property value to, or {@code null} or
 	 *        less than 0 for no rounding
 	 */
 	public void setScale(Integer scale) {

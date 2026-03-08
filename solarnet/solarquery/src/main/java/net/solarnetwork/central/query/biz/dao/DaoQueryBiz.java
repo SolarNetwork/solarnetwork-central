@@ -144,7 +144,7 @@ public class DaoQueryBiz implements QueryBiz {
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoQueryBiz(DatumEntityDao datumDao, DatumStreamMetadataDao metaDao,
 			ReadingDatumDao readingDao, SolarNodeOwnershipDao nodeOwnershipDao) {

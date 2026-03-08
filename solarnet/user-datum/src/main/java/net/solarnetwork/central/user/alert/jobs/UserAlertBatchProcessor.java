@@ -43,7 +43,7 @@ public interface UserAlertBatchProcessor {
 	 * @param validDate
 	 *        The valid date to use when batch processing alerts.
 	 * @return The ID of the last {@link UserAlert} processed, or
-	 *         {@literal null} if no more alerts are available to process.
+	 *         {@code null} if no more alerts are available to process.
 	 */
 	Long processAlerts(Long lastProcessedAlertId, Instant validDate);
 

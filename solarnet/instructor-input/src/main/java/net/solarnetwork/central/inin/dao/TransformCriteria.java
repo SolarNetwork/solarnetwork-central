@@ -35,10 +35,10 @@ public interface TransformCriteria {
 	 *
 	 * <p>
 	 * This returns the first available transform ID from the
-	 * {@link #getTransformIds()} array, or {@literal null} if not available.
+	 * {@link #getTransformIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first transform ID, or {@literal null} if not available
+	 * @return the first transform ID, or {@code null} if not available
 	 */
 	default Long getTransformId() {
 		final Long[] array = getTransformIds();
@@ -48,7 +48,7 @@ public interface TransformCriteria {
 	/**
 	 * Get an array of transform IDs.
 	 *
-	 * @return array of transform IDs (may be {@literal null})
+	 * @return array of transform IDs (may be {@code null})
 	 */
 	Long[] getTransformIds();
 

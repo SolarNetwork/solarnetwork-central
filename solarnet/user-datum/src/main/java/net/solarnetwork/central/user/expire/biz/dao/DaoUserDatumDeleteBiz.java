@@ -617,7 +617,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	/**
 	 * Get the delete batch duration.
 	 *
-	 * @return the duration, or {@literal null} to not perform time-based delete
+	 * @return the duration, or {@code null} to not perform time-based delete
 	 *         batching; defaults to {@link #DEFAULT_DELETE_BATCH_DURATION}
 	 */
 	public Duration getDeleteBatchDuration() {
@@ -628,7 +628,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 * Set the delete batch duration.
 	 *
 	 * @param deleteBatchDuration
-	 *        the duration to set, or {@literal null} to not perform time-based
+	 *        the duration to set, or {@code null} to not perform time-based
 	 *        delete batching
 	 */
 	public void setDeleteBatchDuration(Duration deleteBatchDuration) {

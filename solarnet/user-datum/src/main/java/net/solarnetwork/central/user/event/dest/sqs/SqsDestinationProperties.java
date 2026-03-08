@@ -44,7 +44,7 @@ public class SqsDestinationProperties extends SqsProperties {
 	 * 
 	 * @param serviceProperties
 	 *        the service properties
-	 * @return the new instance, never {@literal null}
+	 * @return the new instance, never {@code null}
 	 */
 	public static SqsDestinationProperties ofServiceProperties(Map<String, ?> serviceProperties) {
 		SqsDestinationProperties props = new SqsDestinationProperties();

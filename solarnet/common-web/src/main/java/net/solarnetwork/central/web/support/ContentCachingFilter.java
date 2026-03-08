@@ -223,7 +223,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	 * @param lockPoolCapacity
 	 *        the lock pool capacity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ContentCachingFilter(ContentCachingService contentCachingService, int lockPoolCapacity) {
 		this(contentCachingService, lockPoolWithCapacity(lockPoolCapacity),
@@ -241,7 +241,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	 * @param requestLocks
 	 *        the request lock map to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null} or the lock pool is empty
+	 *         if any argument is {@code null} or the lock pool is empty
 	 */
 	public ContentCachingFilter(ContentCachingService contentCachingService,
 			BlockingQueue<LockAndCount> lockPool, ConcurrentMap<String, LockAndCount> requestLocks) {

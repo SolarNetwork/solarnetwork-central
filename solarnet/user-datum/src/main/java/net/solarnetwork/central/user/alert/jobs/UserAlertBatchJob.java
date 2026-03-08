@@ -77,7 +77,7 @@ public class UserAlertBatchJob extends JobSupport implements ServiceLifecycleObs
 	 * @param appSettingDao
 	 *        the setting DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserAlertBatchJob(UserAlertBatchProcessor processor, TransactionTemplate txTemplate,
 			AppSettingDao appSettingDao) {

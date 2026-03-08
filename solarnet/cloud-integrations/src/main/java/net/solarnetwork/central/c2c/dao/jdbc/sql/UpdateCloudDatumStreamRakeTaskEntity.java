@@ -67,7 +67,7 @@ public class UpdateCloudDatumStreamRakeTaskEntity implements PreparedStatementCr
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateCloudDatumStreamRakeTaskEntity(UserLongCompositePK id,
 			CloudDatumStreamRakeTaskEntity entity) {
@@ -84,7 +84,7 @@ public class UpdateCloudDatumStreamRakeTaskEntity implements PreparedStatementCr
 	 * @param filter
 	 *        an optional filter to restrict the update to
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}, other than {@code filter}
+	 *         if any argument is {@code null}, other than {@code filter}
 	 */
 	public UpdateCloudDatumStreamRakeTaskEntity(UserLongCompositePK id,
 			CloudDatumStreamRakeTaskEntity entity, CloudDatumStreamRakeTaskFilter filter) {

@@ -52,9 +52,9 @@ public class NamedCost
 	 * @param i
 	 *        the tier number
 	 * @param quantity
-	 *        the quantity; will be stored as {@literal 0} if {@literal null}
+	 *        the quantity; will be stored as {@literal 0} if {@code null}
 	 * @param cost
-	 *        the cost; will be stored as {@literal 0} if {@literal null}
+	 *        the cost; will be stored as {@literal 0} if {@code null}
 	 * @return the new instance
 	 */
 	public static NamedCost forTier(int i, String quantity, String cost) {
@@ -67,9 +67,9 @@ public class NamedCost
 	 * @param i
 	 *        the tier number
 	 * @param quantity
-	 *        the quantity; will be stored as {@literal 0} if {@literal null}
+	 *        the quantity; will be stored as {@literal 0} if {@code null}
 	 * @param cost
-	 *        the cost; will be stored as {@literal 0} if {@literal null}
+	 *        the cost; will be stored as {@literal 0} if {@code null}
 	 * @return the new instance
 	 */
 	public static NamedCost forTier(int i, @Nullable BigInteger quantity, @Nullable BigDecimal cost) {
@@ -82,12 +82,12 @@ public class NamedCost
 	 * @param name
 	 *        the name
 	 * @param quantity
-	 *        the quantity; will be stored as {@literal 0} if {@literal null}
+	 *        the quantity; will be stored as {@literal 0} if {@code null}
 	 * @param cost
-	 *        the cost; will be stored as {@literal 0} if {@literal null}
+	 *        the cost; will be stored as {@literal 0} if {@code null}
 	 * @return the new instance
 	 * @throws IllegalArgumentException
-	 *         if {@code name} is {@literal null}
+	 *         if {@code name} is {@code null}
 	 */
 	public static NamedCost of(String name, @Nullable BigInteger quantity, @Nullable BigDecimal cost) {
 		return new NamedCost(name, quantity, cost);
@@ -99,8 +99,8 @@ public class NamedCost
 	 * @param namedCosts
 	 *        the named cost Maps, each of whose keys match the properties of
 	 *        this class
-	 * @return the named costs, or {@literal null} if {@code namedCosts} is
-	 *         {@literal null} or does not contain valid property values
+	 * @return the named costs, or {@code null} if {@code namedCosts} is
+	 *         {@code null} or does not contain valid property values
 	 */
 	public static @Nullable List<NamedCost> of(@Nullable List<Map<String, ?>> namedCosts) {
 		if ( namedCosts == null || namedCosts.isEmpty() ) {
@@ -114,8 +114,8 @@ public class NamedCost
 	 *
 	 * @param namedCost
 	 *        the named cost Map, whose keys match the properties of this class
-	 * @return the named cost, or {@literal null} if {@code namedCost} is
-	 *         {@literal null} or does not contain valid property values
+	 * @return the named cost, or {@code null} if {@code namedCost} is
+	 *         {@code null} or does not contain valid property values
 	 */
 	public static @Nullable NamedCost of(Map<String, ?> namedCost) {
 		if ( namedCost == null ) {
@@ -142,11 +142,11 @@ public class NamedCost
 	 * @param name
 	 *        the name
 	 * @param quantity
-	 *        the quantity; will be stored as {@literal 0} if {@literal null}
+	 *        the quantity; will be stored as {@literal 0} if {@code null}
 	 * @param cost
-	 *        the cost; will be stored as {@literal 0} if {@literal null}
+	 *        the cost; will be stored as {@literal 0} if {@code null}
 	 * @throws IllegalArgumentException
-	 *         if {@code name} is {@literal null}
+	 *         if {@code name} is {@code null}
 	 */
 	public NamedCost(String name, @Nullable BigInteger quantity, @Nullable BigDecimal cost) {
 		super();
@@ -177,7 +177,7 @@ public class NamedCost
 	 * Get a map of metadata from this instance.
 	 *
 	 * @return the usage Map, whose keys match the properties of this class,
-	 *         never {@literal null}
+	 *         never {@code null}
 	 */
 	public Map<String, Object> toMetadata() {
 		Map<String, Object> result = new LinkedHashMap<>(4);

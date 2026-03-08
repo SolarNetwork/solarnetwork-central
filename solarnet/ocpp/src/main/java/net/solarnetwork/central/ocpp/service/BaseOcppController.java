@@ -131,7 +131,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 * @param objectMapper
 	 *        the object mapper to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public BaseOcppController(Executor executor, ChargePointRouter chargePointRouter,
 			UserNodeDao userNodeDao, NodeInstructionDao instructionDao,
@@ -276,7 +276,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 * Get the initial {@link RegistrationStatus} to use for newly registered
 	 * charge points.
 	 *
-	 * @return the status, never {@literal null}
+	 * @return the status, never {@code null}
 	 */
 	public RegistrationStatus getInitialRegistrationStatus() {
 		return initialRegistrationStatus;
@@ -289,7 +289,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	 * @param initialRegistrationStatus
 	 *        the status to set
 	 * @throws IllegalArgumentException
-	 *         if {@code initialRegistrationStatus} is {@literal null}
+	 *         if {@code initialRegistrationStatus} is {@code null}
 	 */
 	public void setInitialRegistrationStatus(RegistrationStatus initialRegistrationStatus) {
 		if ( initialRegistrationStatus == null ) {

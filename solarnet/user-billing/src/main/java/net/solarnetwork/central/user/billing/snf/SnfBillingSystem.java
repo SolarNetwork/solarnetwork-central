@@ -98,7 +98,7 @@ public class SnfBillingSystem implements BillingSystem {
 	 * @param nodeUsageDao
 	 *        the node usage DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SnfBillingSystem(SnfInvoicingSystem invoicingSystem, AccountDao accountDao,
 			SnfInvoiceDao invoiceDao, NodeUsageDao nodeUsageDao) {

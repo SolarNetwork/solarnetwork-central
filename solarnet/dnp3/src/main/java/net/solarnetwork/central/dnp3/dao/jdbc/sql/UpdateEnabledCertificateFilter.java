@@ -57,7 +57,7 @@ public final class UpdateEnabledCertificateFilter implements PreparedStatementCr
 	 * @param enabled
 	 *        the desired enabled state
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code filter} is {@literal null}
+	 *         if any argument other than {@code filter} is {@code null}
 	 */
 	public UpdateEnabledCertificateFilter(String tableName, Long userId, CertificateFilter filter,
 			boolean enabled) {

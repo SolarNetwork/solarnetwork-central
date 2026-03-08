@@ -55,7 +55,7 @@ public class ServerConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ServerConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -71,7 +71,7 @@ public class ServerConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ServerConfiguration(Long userId, Long entityId, Instant created) {
 		this(new UserLongCompositePK(userId, entityId), created);

@@ -52,7 +52,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 *
 	 * @param usage
 	 *        the usage Map, whose keys match the properties of this class
-	 * @return the usage, or {@literal null} if {@code usage} is {@literal null}
+	 * @return the usage, or {@code null} if {@code usage} is {@code null}
 	 *         or does not contain valid property values
 	 */
 	public static @Nullable UsageInfo of(@Nullable Map<String, ?> usage) {
@@ -66,7 +66,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 *        the usage Map, whose keys match the properties of this class
 	 * @param tiers
 	 *        the usage tiers, as an array of cost objects
-	 * @return the usage, or {@literal null} if {@code usage} is {@literal null}
+	 * @return the usage, or {@code null} if {@code usage} is {@code null}
 	 *         or does not contain valid property values
 	 */
 	public static @Nullable UsageInfo of(@Nullable Map<String, ?> usage,
@@ -102,9 +102,9 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 *        the usage unit type
 	 * @param amount
 	 *        the usage amount; will be stored as {@literal 0} if
-	 *        {@literal null}
+	 *        {@code null}
 	 * @throws IllegalArgumentException
-	 *         if {@code unitType} is {@literal null}
+	 *         if {@code unitType} is {@code null}
 	 * @since 1.1
 	 */
 	public UsageInfo(String unitType, @Nullable BigDecimal amount) {
@@ -118,13 +118,13 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 *        the usage unit type
 	 * @param amount
 	 *        the usage amount; will be stored as {@literal 0} if
-	 *        {@literal null}
+	 *        {@code null}
 	 * @param cost
 	 *        the usage cost, in the currency of the account or invoice this
 	 *        usage is associated with; will be stored as {@literal 0} if
-	 *        {@literal null}
+	 *        {@code null}
 	 * @throws IllegalArgumentException
-	 *         if {@code unitType} is {@literal null}
+	 *         if {@code unitType} is {@code null}
 	 */
 	public UsageInfo(String unitType, @Nullable BigDecimal amount, @Nullable BigDecimal cost) {
 		this(unitType, amount, cost, null);
@@ -137,15 +137,15 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 *        the usage unit type
 	 * @param amount
 	 *        the usage amount; will be stored as {@literal 0} if
-	 *        {@literal null}
+	 *        {@code null}
 	 * @param cost
 	 *        the usage cost, in the currency of the account or invoice this
 	 *        usage is associated with; will be stored as {@literal 0} if
-	 *        {@literal null}
+	 *        {@code null}
 	 * @param tiers
 	 *        the named cost tiers
 	 * @throws IllegalArgumentException
-	 *         if {@code unitType} is {@literal null}
+	 *         if {@code unitType} is {@code null}
 	 * @since 1.1
 	 */
 	public UsageInfo(String unitType, @Nullable BigDecimal amount, @Nullable BigDecimal cost,
@@ -183,7 +183,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 * Get a map of metadata from this instance.
 	 *
 	 * @return the usage Map, whose keys match the properties of this class,
-	 *         never {@literal null}
+	 *         never {@code null}
 	 */
 	public Map<String, Object> toMetadata() {
 		Map<String, Object> result = new LinkedHashMap<>(4);

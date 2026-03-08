@@ -88,7 +88,7 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	 * @param restOpsHelper
 	 *        the REST operations helper
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseRestOperationsCloudDatumStreamService(String serviceIdentifier, String displayName,
 			Clock clock, UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,

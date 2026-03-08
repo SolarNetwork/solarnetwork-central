@@ -83,7 +83,7 @@ public final class CloudDatumStreamConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -99,7 +99,7 @@ public final class CloudDatumStreamConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamConfiguration(Long userId, Long configId, Instant created) {
 		this(new UserLongCompositePK(userId, configId), created);
@@ -270,7 +270,7 @@ public final class CloudDatumStreamConfiguration
 	 * Get the schedule at which to poll for data.
 	 *
 	 * @return the schedule, as either a cron schedule or a number of seconds,
-	 *         or {@literal null} if polling is not used
+	 *         or {@code null} if polling is not used
 	 */
 	public String getSchedule() {
 		return schedule;
@@ -281,7 +281,7 @@ public final class CloudDatumStreamConfiguration
 	 *
 	 * @param schedule
 	 *        the schedule to set, as either a cron schedule or a number of
-	 *        seconds, or {@literal null} if polling is not used
+	 *        seconds, or {@code null} if polling is not used
 	 */
 	public void setSchedule(String schedule) {
 		this.schedule = schedule;

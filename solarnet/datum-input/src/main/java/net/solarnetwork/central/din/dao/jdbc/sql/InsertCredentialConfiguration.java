@@ -59,7 +59,7 @@ public final class InsertCredentialConfiguration implements PreparedStatementCre
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InsertCredentialConfiguration(Long userId, CredentialConfiguration entity) {
 		super();

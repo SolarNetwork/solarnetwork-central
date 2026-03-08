@@ -198,7 +198,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 * @param clientAccessTokenDao
 	 *        the client access token DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EgaugeCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
@@ -567,7 +567,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 *        the JSON node
 	 * @param field
 	 *        the name of the JSON field to extract the timestamp from
-	 * @return the parsed timestamp, or {@literal null}
+	 * @return the parsed timestamp, or {@code null}
 	 */
 	private static Instant parseTimestamp(JsonNode json, String field) {
 		JsonNode fieldNode = json.path(field);

@@ -48,7 +48,7 @@ public class OscpTokenAuthenticationProvider implements AuthenticationProvider {
 	 * @param dao
 	 *        the DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OscpTokenAuthenticationProvider(AuthTokenAuthorizationDao dao) {
 		super();

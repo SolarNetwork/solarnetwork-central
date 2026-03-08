@@ -46,7 +46,7 @@ public interface CloudIntegrationConfigurationDao
 	 *
 	 * @param datumStreamId
 	 *        the datum stream ID to find the integration for
-	 * @return the integration, or {@literal null} if not found
+	 * @return the integration, or {@code null} if not found
 	 * @since 1.1
 	 */
 	default CloudIntegrationConfiguration integrationForDatumStream(UserLongCompositePK datumStreamId) {

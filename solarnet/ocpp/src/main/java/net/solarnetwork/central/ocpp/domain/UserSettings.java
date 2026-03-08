@@ -222,7 +222,7 @@ public class UserSettings extends BasicLongEntity
 	/**
 	 * Set the source ID template.
 	 *
-	 * @return the template, never {@literal null}; defaults to
+	 * @return the template, never {@code null}; defaults to
 	 *         {@link #DEFAULT_SOURCE_ID_TEMPLATE}
 	 */
 	public String getSourceIdTemplate() {
@@ -235,7 +235,7 @@ public class UserSettings extends BasicLongEntity
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 * @throws IllegalArgumentException
-	 *         if {@code sourceIdTemplate} is {@literal null}
+	 *         if {@code sourceIdTemplate} is {@code null}
 	 */
 	public void setSourceIdTemplate(String sourceIdTemplate) {
 		this.sourceIdTemplate = requireNonNullArgument(sourceIdTemplate, "sourceIdTemplate");

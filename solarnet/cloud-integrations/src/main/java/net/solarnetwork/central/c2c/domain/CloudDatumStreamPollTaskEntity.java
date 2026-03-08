@@ -77,7 +77,7 @@ public final class CloudDatumStreamPollTaskEntity
 	 * @param id
 	 *        the primary key
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamPollTaskEntity(UserLongCompositePK id) {
 		super(id);
@@ -91,7 +91,7 @@ public final class CloudDatumStreamPollTaskEntity
 	 * @param dataSourceId
 	 *        the data source ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamPollTaskEntity(Long userId, Long dataSourceId) {
 		this(new UserLongCompositePK(userId, dataSourceId));
@@ -251,7 +251,7 @@ public final class CloudDatumStreamPollTaskEntity
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
+	 * @return a JSON encoded string, or {@code null} if no service
 	 *         properties available
 	 */
 	@JsonIgnore

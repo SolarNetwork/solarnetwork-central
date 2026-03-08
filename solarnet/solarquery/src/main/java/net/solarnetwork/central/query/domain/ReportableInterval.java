@@ -60,7 +60,7 @@ public final class ReportableInterval {
 	 * @param zone
 	 *        the node's time zone
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ReportableInterval(ZonedDateTime startDate, ZonedDateTime endDate, ZoneId zone) {
 		super();
@@ -79,7 +79,7 @@ public final class ReportableInterval {
 	 * @param zone
 	 *        the node's time zone
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ReportableInterval(Instant startDate, Instant endDate, ZoneId zone) {
 		this(startDate != null && zone != null ? startDate.atZone(zone) : null,

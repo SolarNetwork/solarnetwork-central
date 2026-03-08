@@ -64,7 +64,7 @@ public final class UpdateCloudDatumStreamPollTaskEntityState
 	 * @param filter
 	 *        a filter to restrict the update to
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateCloudDatumStreamPollTaskEntityState(BasicClaimableJobState desiredState,
 			CloudDatumStreamPollTaskFilter filter) {
@@ -88,7 +88,7 @@ public final class UpdateCloudDatumStreamPollTaskEntityState
 	 * @param data
 	 *        optional runtime properties to update
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code data} is {@literal null}
+	 *         if any argument except {@code data} is {@code null}
 	 * @since 1.1
 	 */
 	public UpdateCloudDatumStreamPollTaskEntityState(BasicClaimableJobState desiredState,

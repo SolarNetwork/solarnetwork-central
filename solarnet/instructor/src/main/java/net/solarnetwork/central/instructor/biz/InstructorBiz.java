@@ -73,7 +73,7 @@ public interface InstructorBiz {
 	 *        the node ID
 	 * @param instruction
 	 *        the instruction
-	 * @return the persisted instruction, or {@literal null} if not accepted
+	 * @return the persisted instruction, or {@code null} if not accepted
 	 */
 	NodeInstruction queueInstruction(Long nodeId, Instruction instruction);
 
@@ -95,7 +95,7 @@ public interface InstructorBiz {
 	 * 
 	 * @param instructionId
 	 *        the instruction ID
-	 * @return the found instruction, or {@literal null} if not found
+	 * @return the found instruction, or {@code null} if not found
 	 */
 	NodeInstruction getInstruction(Long instructionId);
 
@@ -191,7 +191,7 @@ public interface InstructorBiz {
 	 *        the message
 	 * @param code
 	 *        the code
-	 * @return the map, never {@literal null}
+	 * @return the map, never {@code null}
 	 * @since 1.6
 	 */
 	static Map<String, Object> createErrorResultParameters(String message, String code) {

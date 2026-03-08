@@ -49,7 +49,7 @@ public class CapacityProviderConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CapacityProviderConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -65,7 +65,7 @@ public class CapacityProviderConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CapacityProviderConfiguration(Long userId, Long entityId, Instant created) {
 		super(userId, entityId, created);

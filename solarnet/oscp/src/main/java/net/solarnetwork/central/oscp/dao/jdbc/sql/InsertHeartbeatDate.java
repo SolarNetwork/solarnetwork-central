@@ -56,7 +56,7 @@ public final class InsertHeartbeatDate implements PreparedStatementCreator, SqlP
 	 * @param ts
 	 *        the value to set
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code ts} is {@literal null} or the
+	 *         if any argument except {@code ts} is {@code null} or the
 	 *         {@code id} is not assigned
 	 */
 	public InsertHeartbeatDate(OscpRole type, UserLongCompositePK id, Instant ts) {

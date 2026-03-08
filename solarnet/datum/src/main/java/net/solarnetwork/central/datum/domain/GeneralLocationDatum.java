@@ -83,7 +83,7 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	/**
 	 * Convenience method for {@link DatumSamples#getSampleData()}.
 	 *
-	 * @return the sample data, or <em>null</em> if none available
+	 * @return the sample data, or {@code null} if none available
 	 */
 	@JsonUnwrapped
 	@JsonAnyGetter
@@ -190,10 +190,10 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	 * Get the {@link DatumSamples} object as a JSON string.
 	 *
 	 * <p>
-	 * This method will ignore <em>null</em> values.
+	 * This method will ignore {@code null} values.
 	 * </p>
 	 *
-	 * @return a JSON encoded string, never <em>null</em>
+	 * @return a JSON encoded string, never {@code null}
 	 */
 	@SerializeIgnore
 	@JsonIgnore

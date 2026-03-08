@@ -166,7 +166,7 @@ public class OutstationService
 	 * @param port
 	 *        the listen port
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OutstationService(DNP3Manager manager, UserEventAppenderBiz userEventAppenderBiz,
 			InstructorBiz instructorBiz, ServerAuthConfiguration auth, String bindAddress, int port,
@@ -648,7 +648,7 @@ public class OutstationService
 	 *        the datum
 	 * @param property
 	 *        the optional datum property name to extract
-	 * @return the control value, or {@literal null}
+	 * @return the control value, or {@code null}
 	 */
 	private static Object controlValue(final Datum datum, final String property) {
 		final DatumSamplesOperations ops = datum.asSampleOperations();

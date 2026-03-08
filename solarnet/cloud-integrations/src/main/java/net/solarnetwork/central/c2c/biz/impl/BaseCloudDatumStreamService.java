@@ -211,7 +211,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @param settings
 	 *        the service settings
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseCloudDatumStreamService(String serviceIdentifier, String displayName, Clock clock,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
@@ -373,7 +373,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	/**
 	 * Get the supported placeholder keys.
 	 *
-	 * @return the supported placeholder key, or {@literal null}
+	 * @return the supported placeholder key, or {@code null}
 	 * @since 1.3
 	 */
 	protected Iterable<String> supportedPlaceholders() {
@@ -383,7 +383,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	/**
 	 * Get the supported data value wildcard levels.
 	 *
-	 * @return the supported data value wildcard levels, or {@literal null}
+	 * @return the supported data value wildcard levels, or {@code null}
 	 * @since 1.3
 	 */
 	protected Iterable<Integer> supportedDataValueWildcardIdentifierLevels() {
@@ -394,7 +394,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * Get the supported data value identifier levels source ID range.
 	 *
 	 * @return the supported data value identifier levels source ID range, or
-	 *         {@literal null}
+	 *         {@code null}
 	 * @since 1.4
 	 */
 	protected IntRange dataValueIdentifierLevelsSourceIdRange() {
@@ -737,7 +737,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the service property key to extract
 	 * @param defaultResult
 	 *        the default duration to return if the property is not available
-	 * @return the mapping, or {@literal null}
+	 * @return the mapping, or {@code null}
 	 * @since 1.18
 	 */
 	public static Duration servicePropertyDuration(IdentifiableConfiguration configuration, String key,
@@ -768,7 +768,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the configuration to extract the mapping from
 	 * @param key
 	 *        the service property key to extract
-	 * @return the mapping, or {@literal null}
+	 * @return the mapping, or {@code null}
 	 * @since 1.4
 	 */
 	@SuppressWarnings("unchecked")
@@ -801,7 +801,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the configuration to extract the mapping from
 	 * @param key
 	 *        the service property key to extract
-	 * @return the list, or {@literal null}
+	 * @return the list, or {@code null}
 	 * @since 1.15
 	 */
 	@SuppressWarnings("unchecked")
@@ -849,7 +849,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the JSON value to parse as a datum property value.
 	 * @param propType
 	 *        the desired datum property type
-	 * @return the value, or {@literal null}
+	 * @return the value, or {@code null}
 	 */
 	public static Object parseJsonDatumPropertyValue(JsonNode val, DatumSamplesType propType) {
 		if ( val.isMissingNode() || val.isNull() ) {

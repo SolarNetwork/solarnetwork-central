@@ -48,7 +48,7 @@ public interface ServerAuthConfigurationDao extends
 	 * 
 	 * @param identifier
 	 *        the identifier to search for
-	 * @return the entity, or {@literal null} if not found
+	 * @return the entity, or {@code null} if not found
 	 */
 	ServerAuthConfiguration findForIdentifier(String identifier);
 

@@ -41,7 +41,7 @@ public interface InputDataEntityDao extends GenericDao<InputDataEntity, UserLong
 	 *        the ID to update
 	 * @param data
 	 *        the data to save
-	 * @return the previous data, or {@literal null} if none available
+	 * @return the previous data, or {@code null} if none available
 	 */
 	byte[] getAndPut(UserLongStringCompositePK id, byte[] data);
 

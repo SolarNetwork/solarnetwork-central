@@ -65,7 +65,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EndpointConfiguration(UserUuidPK id, Instant created) {
 		super(id, created);
@@ -81,7 +81,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EndpointConfiguration(Long userId, UUID entityId, Instant created) {
 		this(new UserUuidPK(userId, entityId), created);
@@ -232,7 +232,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @param sourceId
 	 *        the source ID to set; a blank value will be normalized to
-	 *        {@literal null}
+	 *        {@code null}
 	 */
 	public void setSourceId(String sourceId) {
 		if ( sourceId != null && sourceId.isBlank() ) {
@@ -338,8 +338,8 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * Set an implicit request content type.
 	 *
 	 * @param requestContentType
-	 *        the request content to assume, or {@literal null} to; a blank
-	 *        value will be normalized to {@literal null}
+	 *        the request content to assume, or {@code null} to; a blank
+	 *        value will be normalized to {@code null}
 	 * @since 1.2
 	 */
 	public void setRequestContentType(String requestContentType) {

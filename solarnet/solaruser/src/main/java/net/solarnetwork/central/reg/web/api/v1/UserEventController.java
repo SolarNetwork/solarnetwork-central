@@ -80,7 +80,7 @@ public class UserEventController {
 	 * @param cborObjectMapper
 	 *        the mapper to use for CBOR
 	 * @param propertySerializerRegistrar
-	 *        the registrar to use (may be {@literal null}
+	 *        the registrar to use (may be {@code null}
 	 */
 	@Autowired
 	public UserEventController(UserEventBiz userEventBiz,

@@ -82,7 +82,7 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 	 * @param userMappings
 	 *        the user mappings to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SimpleProxyConfigurationProvider(DynamicPortRegistrar portRegistrar,
 			List<SimplePrincipalMapping> userMappings) {

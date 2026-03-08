@@ -45,7 +45,7 @@ public interface CapacityGroupSettingsDao
 	 *        the user ID
 	 * @param groupId
 	 *        the capacity group ID to resolve settings for
-	 * @return the settings, or {@literal null} if no capacity group or user
+	 * @return the settings, or {@code null} if no capacity group or user
 	 *         settings exist
 	 */
 	DatumPublishSettings resolveDatumPublishSettings(Long userId, Long groupId);
@@ -58,7 +58,7 @@ public interface CapacityGroupSettingsDao
 	 *        the user ID
 	 * @param groupIdentifier
 	 *        the capacity group identifier to resolve settings for
-	 * @return the settings, or {@literal null} if no capacity group or user
+	 * @return the settings, or {@code null} if no capacity group or user
 	 *         settings exist
 	 */
 	DatumPublishSettings resolveDatumPublishSettings(Long userId, String groupIdentifier);

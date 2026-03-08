@@ -63,7 +63,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudDatumStreamPollTaskDao(JdbcOperations jdbcOps) {
 		this(jdbcOps, DEFAULT_CLAIM_JOB_SQL);
@@ -77,7 +77,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 	 * @param claimTaskSql
 	 *        the claim task SQL
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudDatumStreamPollTaskDao(JdbcOperations jdbcOps, String claimTaskSql) {
 		super();

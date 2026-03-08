@@ -46,7 +46,7 @@ public interface UserNodeEventTaskDao {
 	 * 
 	 * @param topic
 	 *        the event topic to claim a task from
-	 * @return the claimed task and configuration, or {@literal null} if no task
+	 * @return the claimed task and configuration, or {@code null} if no task
 	 *         is available
 	 */
 	UserNodeEvent claimQueuedTask(String topic);

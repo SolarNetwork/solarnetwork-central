@@ -70,7 +70,7 @@ public class CloudDatumStreamRakeTaskStateInput {
 	/**
 	 * Get a list of states the job must have in order to perform an update.
 	 *
-	 * @return the states, or {@literal null}
+	 * @return the states, or {@code null}
 	 */
 	public final Set<BasicClaimableJobState> getRequiredStates() {
 		return requiredStates;
@@ -80,7 +80,7 @@ public class CloudDatumStreamRakeTaskStateInput {
 	 * Set a list of states the job must have in order to perform an update.
 	 *
 	 * @param requiredStates
-	 *        the states to set, or {@literal null}
+	 *        the states to set, or {@code null}
 	 */
 	public final void setRequiredStates(Set<BasicClaimableJobState> requiredStates) {
 		this.requiredStates = requiredStates;

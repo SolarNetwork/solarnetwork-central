@@ -84,8 +84,8 @@ public enum OscpMqttCountStat {
 	 *
 	 * @param action
 	 *        the action
-	 * @return the statistic, or {@literal null} if {@code action} is
-	 *         {@literal null} or unsupported
+	 * @return the statistic, or {@code null} if {@code action} is
+	 *         {@code null} or unsupported
 	 */
 	public static OscpMqttCountStat instructionReceivedStat(String action) {
 		if ( action == null ) {
@@ -106,8 +106,8 @@ public enum OscpMqttCountStat {
 	 *
 	 * @param action
 	 *        the action
-	 * @return the error statistic, or {@literal null} if {@code action} is
-	 *         {@literal null} or unsupported
+	 * @return the error statistic, or {@code null} if {@code action} is
+	 *         {@code null} or unsupported
 	 */
 	public static OscpMqttCountStat instructionErrorStat(String action) {
 		if ( action == null ) {

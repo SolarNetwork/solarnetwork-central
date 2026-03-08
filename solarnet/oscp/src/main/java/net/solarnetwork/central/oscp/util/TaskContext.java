@@ -97,7 +97,7 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *        the URL path, to add to the base URL
 	 * @param extraErrorTags
 	 *        error tags to include in a user event if an error occurs
-	 * @return the URI, or {@literal null} if none configured
+	 * @return the URI, or {@code null} if none configured
 	 * @throws ExternalSystemConfigurationException
 	 *         if an error occurs
 	 */
@@ -122,7 +122,7 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *
 	 * @param extraErrorTags
 	 *        error tags to include in a user event if an error occurs
-	 * @return the token, or {@literal null} if not available
+	 * @return the token, or {@code null} if not available
 	 */
 	default String authToken(String... extraErrorTags) {
 		return dao().getExternalSystemAuthToken(config().getId());

@@ -113,7 +113,7 @@ public class NodeInstructionController {
 	 * @param cborObjectMapper
 	 *        the mapper to use for CBOR
 	 * @param propertySerializerRegistrar
-	 *        the registrar to use (may be {@literal null}
+	 *        the registrar to use (may be {@code null}
 	 */
 	public NodeInstructionController(TaskExecutor taskExecutor, InstructorBiz instructorBiz,
 			NodeInstructionDao nodeInstructionDao,
@@ -754,7 +754,7 @@ public class NodeInstructionController {
 	 *
 	 * @param executionResultDelay
 	 *        the execution delay to set; defaults to
-	 *        {@link #DEFAULT_EXECUTION_RESULT_DELAY} if {@literal null} or not
+	 *        {@link #DEFAULT_EXECUTION_RESULT_DELAY} if {@code null} or not
 	 *        positive
 	 */
 	public void setExecutionResultDelay(Duration executionResultDelay) {

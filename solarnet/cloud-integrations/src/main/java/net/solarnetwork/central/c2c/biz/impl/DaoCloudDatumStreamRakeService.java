@@ -140,7 +140,7 @@ public class DaoCloudDatumStreamRakeService
 	 *        function that provides a {@link CloudDatumStreamService} for a
 	 *        given service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoCloudDatumStreamRakeService(InstantSource clock, UserEventAppenderBiz userEventAppenderBiz,
 			SolarNodeOwnershipDao nodeOwnershipDao, CloudDatumStreamRakeTaskDao taskDao,
@@ -601,7 +601,7 @@ public class DaoCloudDatumStreamRakeService
 	 * Get the maximum length of time to wait for executing tasks to complete
 	 * when {@link #serviceDidShutdown()} is invoked.
 	 *
-	 * @return the maximum wait time, never {@literal null}
+	 * @return the maximum wait time, never {@code null}
 	 */
 	public final Duration getShutdownMaxWait() {
 		return shutdownMaxWait;
@@ -612,7 +612,7 @@ public class DaoCloudDatumStreamRakeService
 	 * when {@link #serviceDidShutdown()} is invoked.
 	 *
 	 * @param shutdownMaxWait
-	 *        the maximum wait time to set; if {@literal null} then
+	 *        the maximum wait time to set; if {@code null} then
 	 *        {@link #DEFAULT_SHUTDOWN_MAX_WAIT} will be used
 	 */
 	public final void setShutdownMaxWait(Duration shutdownMaxWait) {

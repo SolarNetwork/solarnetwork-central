@@ -69,7 +69,7 @@ public class AdjustGroupCapacityForecastController {
 	 * @param flexibilityProviderBiz
 	 *        the flexibility provider service
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public AdjustGroupCapacityForecastController(FlexibilityProviderBiz flexibilityProviderBiz) {
 		super();

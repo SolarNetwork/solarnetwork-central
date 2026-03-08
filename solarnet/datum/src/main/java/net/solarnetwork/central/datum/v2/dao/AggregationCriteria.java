@@ -44,7 +44,7 @@ public interface AggregationCriteria extends DateRangeCriteria, LocalDateRangeCr
 	/**
 	 * Get an aggregation to apply to the query.
 	 *
-	 * @return the aggregation, or {@literal null} for default
+	 * @return the aggregation, or {@code null} for default
 	 */
 	@Nullable
 	Aggregation getAggregation();
@@ -81,7 +81,7 @@ public interface AggregationCriteria extends DateRangeCriteria, LocalDateRangeCr
 	 * <li>1 Mar - 31 Mar</li>
 	 * </ol>
 	 *
-	 * @return the partial aggregation, or {@literal null} for none
+	 * @return the partial aggregation, or {@code null} for none
 	 * @since 1.1
 	 */
 	@Nullable

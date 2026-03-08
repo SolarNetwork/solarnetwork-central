@@ -87,7 +87,7 @@ public class TrustedIssuerCertificateRowMapper implements RowMapper<TrustedIssue
 	 * @param certificateFactory
 	 *        the certificate factory, must be X.509 type
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public TrustedIssuerCertificateRowMapper(int columnOffset, CertificateFactory certificateFactory) {
 		super();

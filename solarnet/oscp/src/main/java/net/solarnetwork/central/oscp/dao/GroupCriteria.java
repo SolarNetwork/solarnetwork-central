@@ -43,7 +43,7 @@ public interface GroupCriteria {
 	/**
 	 * Get an array of group IDs.
 	 * 
-	 * @return array of IDs (may be {@literal null})
+	 * @return array of IDs (may be {@code null})
 	 */
 	Long[] getGroupIds();
 
@@ -52,10 +52,10 @@ public interface GroupCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available ID from the {@link #getGroupIds()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the group ID, or {@literal null} if not available
+	 * @return the group ID, or {@code null} if not available
 	 */
 	default Long getGroupId() {
 		Long[] ids = getGroupIds();

@@ -79,7 +79,7 @@ public class ServerConfigurationsCsvWriter {
 	 * @param locale
 	 *        the locale for messages
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */

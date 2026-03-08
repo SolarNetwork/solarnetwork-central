@@ -74,7 +74,7 @@ public enum LocusEnergyGranularity {
 	/**
 	 * Get the key.
 	 *
-	 * @return the key, never {@literal null}
+	 * @return the key, never {@code null}
 	 */
 	public final String getKey() {
 		return key;
@@ -83,7 +83,7 @@ public enum LocusEnergyGranularity {
 	/**
 	 * Get the query time range constraint.
 	 *
-	 * @return the maximum query time range, or {@literal null} if there is no
+	 * @return the maximum query time range, or {@code null} if there is no
 	 *         limit
 	 */
 	public final Period getConstraint() {
@@ -95,7 +95,7 @@ public enum LocusEnergyGranularity {
 	 *
 	 * @param value
 	 *        the enumeration name or key value, case-insensitve
-	 * @return the enum; if {@code value} is {@literal null} or empty then
+	 * @return the enum; if {@code value} is {@code null} or empty then
 	 *         {@link #Latest} is returned
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value

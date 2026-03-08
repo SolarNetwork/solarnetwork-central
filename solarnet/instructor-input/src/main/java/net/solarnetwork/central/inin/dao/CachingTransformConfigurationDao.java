@@ -54,7 +54,7 @@ public class CachingTransformConfigurationDao<C extends TransformConfiguration<C
 	 * @param executor
 	 *        task executor
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CachingTransformConfigurationDao(TransformConfigurationDao<C> delegate,
 			Cache<UserLongCompositePK, C> cache, Executor executor) {

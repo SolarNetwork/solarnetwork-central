@@ -97,7 +97,7 @@ public interface UserOcppBiz {
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get OCPP system users for
-	 * @return all available system users; never {@literal null}
+	 * @return all available system users; never {@code null}
 	 */
 	Collection<CentralSystemUser> systemUsersForUser(Long userId);
 
@@ -141,7 +141,7 @@ public interface UserOcppBiz {
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get OCPP authorizations for
-	 * @return all available authorizations; never {@literal null}
+	 * @return all available authorizations; never {@code null}
 	 */
 	Collection<CentralAuthorization> authorizationsForUser(Long userId);
 
@@ -160,7 +160,7 @@ public interface UserOcppBiz {
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get charge points for
-	 * @return all available charge points; never {@literal null}
+	 * @return all available charge points; never {@code null}
 	 */
 	default Collection<CentralChargePoint> chargePointsForUser(Long userId) {
 		FilterResults<CentralChargePoint, Long> result = listChargePointsForUser(userId, null);
@@ -174,7 +174,7 @@ public interface UserOcppBiz {
 	 *        the user ID to get entities for
 	 * @param filter
 	 *        an optional filter
-	 * @return the available entities, never {@literal null}
+	 * @return the available entities, never {@code null}
 	 * @since 1.4
 	 */
 	FilterResults<CentralChargePoint, Long> listChargePointsForUser(Long userId,
@@ -246,7 +246,7 @@ public interface UserOcppBiz {
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get OCPP connectors for
-	 * @return all available connectors; never {@literal null}
+	 * @return all available connectors; never {@code null}
 	 */
 	Collection<CentralChargePointConnector> chargePointConnectorsForUser(Long userId);
 
@@ -304,7 +304,7 @@ public interface UserOcppBiz {
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get settings entities for
-	 * @return all available settings entities; never {@literal null}
+	 * @return all available settings entities; never {@code null}
 	 */
 	Collection<ChargePointSettings> chargePointSettingsForUser(Long userId);
 
@@ -367,7 +367,7 @@ public interface UserOcppBiz {
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get settings entity for
-	 * @return the settings entity, or {@literal null} if not available
+	 * @return the settings entity, or {@code null} if not available
 	 */
 	UserSettings settingsForUser(Long userId);
 
@@ -398,7 +398,7 @@ public interface UserOcppBiz {
 	 *        the SolarUser user ID to get charge session for
 	 * @param sessionId
 	 *        the charge session ID to get
-	 * @return the session entity, or {@literal null} if not available
+	 * @return the session entity, or {@code null} if not available
 	 */
 	ChargeSession chargeSessionForUser(Long userId, UUID sessionId);
 
@@ -409,7 +409,7 @@ public interface UserOcppBiz {
 	 *        the SolarUser user ID to delete the charge point settings for
 	 * @param chargePointId
 	 *        the charge point ID to get the sessions for
-	 * @return all matching incomplete sessions; never {@literal null}
+	 * @return all matching incomplete sessions; never {@code null}
 	 */
 	Collection<ChargeSession> incompleteChargeSessionsForChargePoint(Long userId, Long chargePointId);
 

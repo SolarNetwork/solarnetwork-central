@@ -110,7 +110,7 @@ public class UserCloudIntegrationsController {
 	/**
 	 * Get the {@link UserCloudIntegrationsBiz}.
 	 *
-	 * @return the service; never {@literal null}
+	 * @return the service; never {@code null}
 	 * @throws UnsupportedOperationException
 	 *         if the service is not available
 	 */

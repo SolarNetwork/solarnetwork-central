@@ -58,7 +58,7 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcTransformConfigurationDao(JdbcOperations jdbcOps) {
 		super();

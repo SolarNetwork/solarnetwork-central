@@ -565,7 +565,7 @@ public class JdbcAuthService implements AuthService {
 	 * @param jdbcCall
 	 *        the JDBC call
 	 * @throws IllegalArgumentException
-	 *         if {@code jdbcCall} is {@literal null}
+	 *         if {@code jdbcCall} is {@code null}
 	 */
 	public void setAuthenticateCall(String jdbcCall) {
 		if ( jdbcCall == null ) {
@@ -619,7 +619,7 @@ public class JdbcAuthService implements AuthService {
 	 * @param jdbcCall
 	 *        the JDBC call
 	 * @throws IllegalArgumentException
-	 *         if {@code jdbcCall} is {@literal null}
+	 *         if {@code jdbcCall} is {@code null}
 	 */
 	public void setAuthorizeCall(String jdbcCall) {
 		if ( jdbcCall == null ) {
@@ -643,7 +643,7 @@ public class JdbcAuthService implements AuthService {
 	 * @param snHost
 	 *        the host
 	 * @throws IllegalArgumentException
-	 *         if {@code snHost} is {@literal null}
+	 *         if {@code snHost} is {@code null}
 	 */
 	public void setSnHost(String snHost) {
 		if ( snHost == null ) {
@@ -667,7 +667,7 @@ public class JdbcAuthService implements AuthService {
 	 * @param snPath
 	 *        the path
 	 * @throws IllegalArgumentException
-	 *         if {@code snPath} is {@literal null}
+	 *         if {@code snPath} is {@code null}
 	 */
 	public void setSnPath(String snPath) {
 		if ( snPath == null ) {
@@ -760,7 +760,7 @@ public class JdbcAuthService implements AuthService {
 	 * @param jdbcCall
 	 *        the JDBC call
 	 * @throws IllegalArgumentException
-	 *         if {@code jdbcCall} is {@literal null}
+	 *         if {@code jdbcCall} is {@code null}
 	 */
 	public void setAuthorizeNodeCall(String jdbcCall) {
 		if ( jdbcCall == null ) {
@@ -789,7 +789,7 @@ public class JdbcAuthService implements AuthService {
 	 * @param publishUsername
 	 *        the publish username
 	 * @throws IllegalArgumentException
-	 *         if {@code publishUsername} is {@literal null}
+	 *         if {@code publishUsername} is {@code null}
 	 */
 	public void setPublishUsername(String publishUsername) {
 		if ( publishUsername == null ) {

@@ -51,7 +51,7 @@ public class TrustedIssuerCertificate extends BaseUserCertificate<TrustedIssuerC
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public TrustedIssuerCertificate(UserStringCompositePK id, Instant created) {
 		super(id, created);
@@ -67,7 +67,7 @@ public class TrustedIssuerCertificate extends BaseUserCertificate<TrustedIssuerC
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public TrustedIssuerCertificate(Long userId, String subjectDn, Instant created) {
 		super(userId, subjectDn, created);
@@ -83,7 +83,7 @@ public class TrustedIssuerCertificate extends BaseUserCertificate<TrustedIssuerC
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public TrustedIssuerCertificate(Long userId, X509Certificate certificate, Instant created) {
 		super(userId, certificate, created);

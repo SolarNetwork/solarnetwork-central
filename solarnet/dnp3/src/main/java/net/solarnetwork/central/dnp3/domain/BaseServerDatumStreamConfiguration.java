@@ -65,7 +65,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseServerDatumStreamConfiguration(UserLongIntegerCompositePK id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));

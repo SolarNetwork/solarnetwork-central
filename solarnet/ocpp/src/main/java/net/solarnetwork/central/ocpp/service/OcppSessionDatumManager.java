@@ -191,7 +191,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 * @param chargePointSettingsDao
 	 *        the charge point settings DAO
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public OcppSessionDatumManager(AuthorizationService authService, ChargePointDao chargePointDao,
 			CentralChargeSessionDao chargeSessionDao, DatumEntityDao datumDao,
@@ -597,7 +597,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *
 	 * @param id
 	 *        the charge point ID
-	 * @return the settings, never {@literal null}
+	 * @return the settings, never {@code null}
 	 */
 	private ChargePointSettings settingsForChargePoint(Long userId, Long id) {
 		ChargePointSettings cps = chargePointSettingsDao.resolveSettings(userId, id);
@@ -614,7 +614,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *
 	 * @param chargePointSettings
 	 *        the settings
-	 * @return the template, never {@literal null}
+	 * @return the template, never {@code null}
 	 */
 	private String sourceIdTemplate(ChargePointSettings chargePointSettings) {
 		return chargePointSettings.getSourceIdTemplate() != null
@@ -635,7 +635,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *        the connector ID
 	 * @param location
 	 *        the location
-	 * @return the source ID, never {@literal null}
+	 * @return the source ID, never {@code null}
 	 */
 	private String sourceId(ChargePointSettings chargePointSettings, String identifier, int evseId,
 			int connectorId, Location location) {
@@ -793,7 +793,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	/**
 	 * Get the SolarFlux publisher.
 	 *
-	 * @return the publisher, or {@literal null}
+	 * @return the publisher, or {@code null}
 	 */
 	public DatumProcessor getFluxPublisher() {
 		return fluxPublisher;

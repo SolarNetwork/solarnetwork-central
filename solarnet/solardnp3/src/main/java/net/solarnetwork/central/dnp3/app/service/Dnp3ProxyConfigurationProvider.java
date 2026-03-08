@@ -125,7 +125,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	 * @param userEventAppenderBiz
 	 *        the user event appender
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public Dnp3ProxyConfigurationProvider(DNP3Manager manager, InstructorBiz instructorBiz,
 			DynamicPortRegistrar portRegistrar, TrustedIssuerCertificateDao trustedCertDao,

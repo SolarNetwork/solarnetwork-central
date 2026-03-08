@@ -49,7 +49,7 @@ public class AccountTaskJob extends JobSupport {
 	 * Constructor.
 	 *
 	 * @param transactionTemplate
-	 *        the transaction template to use, or {@literal null}
+	 *        the transaction template to use, or {@code null}
 	 * @param taskDao
 	 *        the task DAO
 	 * @param generateInvoiceTaskHandler
@@ -58,7 +58,7 @@ public class AccountTaskJob extends JobSupport {
 	 *        the handler for {@link AccountTaskType#DeliverInvoice}
 	 * @throws IllegalArgumentException
 	 *         if {@code taskDao} or {@code generateInvoiceTaskHandler} is
-	 *         {@literal null}
+	 *         {@code null}
 	 */
 	public AccountTaskJob(@Nullable TransactionTemplate transactionTemplate, AccountTaskDao taskDao,
 			AccountTaskHandler generateInvoiceTaskHandler,

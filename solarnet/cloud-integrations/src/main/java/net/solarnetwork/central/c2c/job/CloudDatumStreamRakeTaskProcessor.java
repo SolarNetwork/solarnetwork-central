@@ -46,7 +46,7 @@ public class CloudDatumStreamRakeTaskProcessor extends JobSupport {
 	 * @param service
 	 *        the service to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamRakeTaskProcessor(CloudDatumStreamRakeService service) {
 		super("CloudIntegrations", "DatumStreamRakeTaskProcessor");

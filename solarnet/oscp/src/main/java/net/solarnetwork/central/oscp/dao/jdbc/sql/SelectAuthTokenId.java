@@ -57,7 +57,7 @@ public final class SelectAuthTokenId implements PreparedStatementCreator, SqlPro
 	 * @param oauth
 	 *        {@literal true} if the token is OAuth, {@literal false} if OSCP
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectAuthTokenId(OscpRole type, String token, boolean oauth) {
 		super();

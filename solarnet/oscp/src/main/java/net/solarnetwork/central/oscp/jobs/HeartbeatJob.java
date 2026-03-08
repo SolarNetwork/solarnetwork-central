@@ -71,7 +71,7 @@ public class HeartbeatJob extends JobSupport {
 	 * @param client
 	 *        the client to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public HeartbeatJob(OscpRole role, ExternalSystemConfigurationDao<?> dao,
 			ExternalSystemClient client) {
@@ -88,7 +88,7 @@ public class HeartbeatJob extends JobSupport {
 	 *        the template
 	 * @return this instance for method chaining
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public HeartbeatJob withTxTemplate(TransactionTemplate txTemplate) {
 		this.txTemplate = requireNonNullArgument(txTemplate, "txTemplate");

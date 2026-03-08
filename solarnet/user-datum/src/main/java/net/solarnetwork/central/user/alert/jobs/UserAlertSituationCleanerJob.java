@@ -52,7 +52,7 @@ public class UserAlertSituationCleanerJob extends JobSupport {
 	 * @param userAlertSituationDao
 	 *        The {@link UserAlertSituationDao} to use.
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserAlertSituationCleanerJob(InstantSource clock,
 			UserAlertSituationDao userAlertSituationDao) {

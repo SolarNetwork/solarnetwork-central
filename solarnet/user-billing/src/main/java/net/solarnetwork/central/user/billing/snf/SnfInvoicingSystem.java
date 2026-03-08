@@ -69,7 +69,7 @@ public interface SnfInvoicingSystem {
 	 *
 	 * @param userId
 	 *        the ID of the user to get the account for
-	 * @return the account, or {@literal null} if not available
+	 * @return the account, or {@code null} if not available
 	 */
 	@Nullable
 	Account accountForUser(Long userId);
@@ -79,7 +79,7 @@ public interface SnfInvoicingSystem {
 	 *
 	 * @param accountId
 	 *        the ID of the account to get the latest invoice for
-	 * @return the latest available invoice, or {@literal null} if none
+	 * @return the latest available invoice, or {@code null} if none
 	 *         available
 	 */
 	@Nullable
@@ -98,7 +98,7 @@ public interface SnfInvoicingSystem {
 	 *        user's account's time zone
 	 * @param options
 	 *        the invoice generation options
-	 * @return the generated invoice, or {@literal null} if no invoice is
+	 * @return the generated invoice, or {@code null} if no invoice is
 	 *         necessary (i.e. no charges)
 	 */
 	@Nullable
@@ -120,7 +120,7 @@ public interface SnfInvoicingSystem {
 	 *
 	 * @param invoice
 	 *        the invoice to get the message source for
-	 * @return the message source, never {@literal null}
+	 * @return the message source, never {@code null}
 	 */
 	MessageSource messageSourceForInvoice(SnfInvoice invoice);
 
@@ -129,7 +129,7 @@ public interface SnfInvoicingSystem {
 	 *
 	 * @param date
 	 *        the date to get the message source for
-	 * @return the message source, never {@literal null}
+	 * @return the message source, never {@code null}
 	 * @since 1.1
 	 */
 	MessageSource messageSourceForDate(Instant date);

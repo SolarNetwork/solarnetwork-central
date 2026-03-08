@@ -52,7 +52,7 @@ public class NodeInstructionCleaner extends JobSupport {
 	 * @param dao
 	 *        The NodeInstructionDao to use.
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public NodeInstructionCleaner(NodeInstructionDao dao) {
 		super("Instruction", "NodeInstructionCleaner");

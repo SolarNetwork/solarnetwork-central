@@ -79,7 +79,7 @@ public abstract class BaseCloudControlService extends BaseCloudIntegrationsIdent
 	 * @param controlDao
 	 *        the control DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseCloudControlService(String serviceIdentifier, String displayName,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,

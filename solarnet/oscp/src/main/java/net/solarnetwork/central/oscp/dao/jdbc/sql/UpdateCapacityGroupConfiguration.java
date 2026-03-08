@@ -69,7 +69,7 @@ public final class UpdateCapacityGroupConfiguration implements PreparedStatement
 	 * @param entity
 	 *        the entity data to update
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateCapacityGroupConfiguration(UserLongCompositePK id, CapacityGroupConfiguration entity) {
 		super();

@@ -44,7 +44,7 @@ public interface AccountTaskDao extends GenericDao<AccountTask, UUID> {
 	 * transaction.
 	 * </p>
 	 *
-	 * @return the claimed task, or {@literal null} if no task is available
+	 * @return the claimed task, or {@code null} if no task is available
 	 */
 	@Nullable
 	AccountTask claimAccountTask();

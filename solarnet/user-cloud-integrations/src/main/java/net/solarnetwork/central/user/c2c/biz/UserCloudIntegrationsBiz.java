@@ -67,7 +67,7 @@ public interface UserCloudIntegrationsBiz {
 	 * Get a list of all available {@link CloudIntegrationService}
 	 * implementations.
 	 *
-	 * @return the integration services, never {@literal null}
+	 * @return the integration services, never {@code null}
 	 */
 	Iterable<CloudIntegrationService> availableIntegrationServices();
 
@@ -75,7 +75,7 @@ public interface UserCloudIntegrationsBiz {
 	 * Get a specific {@link CloudIntegrationService} based on its service
 	 * identifier.
 	 *
-	 * @return the integration service, or {@literal null} if not available
+	 * @return the integration service, or {@code null} if not available
 	 */
 	CloudIntegrationService integrationService(String identifier);
 
@@ -83,7 +83,7 @@ public interface UserCloudIntegrationsBiz {
 	 * Get a specific {@link CloudDatumStreamService} based on its service
 	 * identifier.
 	 *
-	 * @return the datum stream service, or {@literal null} if not available
+	 * @return the datum stream service, or {@code null} if not available
 	 */
 	CloudDatumStreamService datumStreamService(String identifier);
 
@@ -91,7 +91,7 @@ public interface UserCloudIntegrationsBiz {
 	 * Get a specific {@link CloudControlService} based on its service
 	 * identifier.
 	 *
-	 * @return the control service, or {@literal null} if not available
+	 * @return the control service, or {@code null} if not available
 	 * @since 1.8
 	 */
 	CloudControlService controlService(String identifier);
@@ -101,7 +101,7 @@ public interface UserCloudIntegrationsBiz {
 	 *
 	 * @param userId
 	 *        the user ID
-	 * @return the settings ,or {@literal null} if none exist
+	 * @return the settings ,or {@code null} if none exist
 	 * @since 1.3
 	 */
 	UserSettingsEntity settingsForUser(Long userId);
@@ -137,7 +137,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        an optional filter
 	 * @param configurationClass
 	 *        the desired configuration type
-	 * @return the available configurations, never {@literal null}
+	 * @return the available configurations, never {@code null}
 	 */
 	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> FilterResults<C, K> listConfigurationsForUser(
 			Long userId, CloudIntegrationsFilter filter, Class<C> configurationClass);
@@ -153,7 +153,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        the primary key of the configuration to get
 	 * @param configurationClass
 	 *        the configuration type to get
-	 * @return the configuration, or {@literal null} if not available
+	 * @return the configuration, or {@code null} if not available
 	 */
 	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C configurationForId(
 			K id, Class<C> configurationClass);
@@ -259,7 +259,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        the ID of the configuration to validate
 	 * @param locale
 	 *        the desired locale for any error messages
-	 * @return the validation result, never {@literal null}
+	 * @return the validation result, never {@code null}
 	 */
 	Result<Void> validateIntegrationConfigurationForId(UserLongCompositePK id, Locale locale);
 
@@ -278,7 +278,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        an optional set of search filters to limit the data value groups
 	 *        to; the available key values come from the identifiers returned by
 	 *        {@link CloudDatumStreamService#dataValueFilters(Locale)}
-	 * @return the available values, never {@literal null}
+	 * @return the available values, never {@code null}
 	 */
 	Iterable<CloudDataValue> listDatumStreamDataValues(UserLongCompositePK integrationId,
 			String datumStreamServiceIdentifier, Map<String, ?> filters);
@@ -298,7 +298,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        an optional set of search filters to limit the data value groups
 	 *        to; the available key values come from the identifiers returned by
 	 *        {@link CloudControlService#dataValueFilters(Locale)}
-	 * @return the available values, never {@literal null}
+	 * @return the available values, never {@code null}
 	 * @since 1.8
 	 */
 	Iterable<CloudDataValue> listControlDataValues(UserLongCompositePK integrationId,
@@ -316,7 +316,7 @@ public interface UserCloudIntegrationsBiz {
 	 * @param id
 	 *        the ID of the {@link CloudDatumStreamConfiguration} to get the
 	 *        datum for
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
 	Iterable<Datum> latestDatumStreamDatumForId(UserLongCompositePK id);
 
@@ -328,7 +328,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        datum for
 	 * @param filter
 	 *        the search criteria
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
 	CloudDatumStreamQueryResult listDatumStreamDatum(UserLongCompositePK id,
 			CloudDatumStreamQueryFilter filter);
@@ -341,7 +341,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        the user ID to get entities for
 	 * @param filter
 	 *        an optional filter
-	 * @return the available entities, never {@literal null}
+	 * @return the available entities, never {@code null}
 	 */
 	FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> listDatumStreamPollTasksForUser(
 			Long userId, CloudDatumStreamPollTaskFilter filter);
@@ -355,9 +355,9 @@ public interface UserCloudIntegrationsBiz {
 	 *        the state to update the task to
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to {@code desiredState}, or {@literal null} if
+	 *        order to change it to {@code desiredState}, or {@code null} if
 	 *        the current state of the task does not matter
-	 * @return the resulting task, or {@literal null} if no such task exists
+	 * @return the resulting task, or {@code null} if no such task exists
 	 */
 	CloudDatumStreamPollTaskEntity updateDatumStreamPollTaskState(UserLongCompositePK id,
 			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates);
@@ -371,7 +371,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        the info to save
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to the info's given state, or {@literal null}
+	 *        order to change it to the info's given state, or {@code null}
 	 *        if the current state of the task does not matter
 	 * @return the resulting task
 	 */
@@ -403,7 +403,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        the user ID to get entities for
 	 * @param filter
 	 *        an optional filter
-	 * @return the available entities, never {@literal null}
+	 * @return the available entities, never {@code null}
 	 * @since 1.5
 	 */
 	FilterResults<CloudDatumStreamRakeTaskEntity, UserLongCompositePK> listDatumStreamRakeTasksForUser(
@@ -418,9 +418,9 @@ public interface UserCloudIntegrationsBiz {
 	 *        the state to update the task to
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to {@code desiredState}, or {@literal null} if
+	 *        order to change it to {@code desiredState}, or {@code null} if
 	 *        the current state of the task does not matter
-	 * @return the resulting task, or {@literal null} if no such task exists
+	 * @return the resulting task, or {@code null} if no such task exists
 	 * @since 1.5
 	 */
 	CloudDatumStreamRakeTaskEntity updateDatumStreamRakeTaskState(UserLongCompositePK id,
@@ -435,7 +435,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        the info to save
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to the info's given state, or {@literal null}
+	 *        order to change it to the info's given state, or {@code null}
 	 *        if the current state of the task does not matter
 	 * @return the resulting task
 	 * @since 1.5

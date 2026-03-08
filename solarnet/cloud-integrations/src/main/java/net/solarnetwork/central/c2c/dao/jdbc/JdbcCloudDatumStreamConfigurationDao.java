@@ -59,7 +59,7 @@ public class JdbcCloudDatumStreamConfigurationDao implements CloudDatumStreamCon
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudDatumStreamConfigurationDao(JdbcOperations jdbcOps) {
 		super();

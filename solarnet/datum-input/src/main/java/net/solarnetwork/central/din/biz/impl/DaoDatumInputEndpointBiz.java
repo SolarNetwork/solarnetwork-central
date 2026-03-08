@@ -104,7 +104,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 	 * @param transformServices
 	 *        the transform services
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoDatumInputEndpointBiz(SolarNodeOwnershipDao nodeOwnershipDao,
 			EndpointConfigurationDao endpointDao, TransformConfigurationDao transformDao,
@@ -325,7 +325,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 	/**
 	 * Get the SolarFlux publisher.
 	 *
-	 * @return the publisher, or {@literal null}
+	 * @return the publisher, or {@code null}
 	 */
 	public DatumProcessor getFluxPublisher() {
 		return fluxPublisher;

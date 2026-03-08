@@ -99,7 +99,7 @@ public class UserDatumInputController {
 	 * @param userDatumInputBiz
 	 *        the service
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserDatumInputController(UserDatumInputBiz userDatumInputBiz,
 			@Value("${app.din.max-datum-input-length}") long maxDatumInputLength) {

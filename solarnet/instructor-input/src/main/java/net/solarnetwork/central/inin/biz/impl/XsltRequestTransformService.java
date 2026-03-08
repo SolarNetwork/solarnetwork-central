@@ -84,10 +84,10 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 	 * @param objectMapper
 	 *        the object mapper
 	 * @param templatesCacheTtl
-	 *        the TTL for the templates cache, or {@literal null} or
+	 *        the TTL for the templates cache, or {@code null} or
 	 *        {@literal 0} for no caching
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public XsltRequestTransformService(DocumentBuilderFactory documentBuilderFactory,
 			TransformerFactory transformerFactory, ObjectMapper objectMapper,
@@ -111,12 +111,12 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 	 * @param objectMapper
 	 *        the object mapper
 	 * @param templatesCacheTtl
-	 *        the TTL for the templates cache, or {@literal null} or
+	 *        the TTL for the templates cache, or {@code null} or
 	 *        {@literal 0} for no caching
 	 * @param templatesCache
 	 *        the templates cache to use
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code templatesCache} is {@literal null}
+	 *         if any argument except {@code templatesCache} is {@code null}
 	 */
 	public XsltRequestTransformService(DocumentBuilderFactory documentBuilderFactory,
 			TransformerFactory transformerFactory, ObjectMapper objectMapper, Duration templatesCacheTtl,

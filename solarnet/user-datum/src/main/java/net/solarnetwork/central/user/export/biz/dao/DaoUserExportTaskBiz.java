@@ -76,7 +76,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 	 * @param userNodeDao
 	 *        the user node DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserExportTaskBiz(UserDatumExportTaskInfoDao taskDao,
 			UserAdhocDatumExportTaskInfoDao adhocTaskDao, UserNodeDao userNodeDao) {
@@ -90,8 +90,8 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 	 * Filter a set of sources using a source ID path pattern.
 	 *
 	 * <p>
-	 * If any arguments are {@literal null}, or {@code pattern} is
-	 * {@literal null} or empty, then {@code sources} will be returned without
+	 * If any arguments are {@code null}, or {@code pattern} is
+	 * {@code null} or empty, then {@code sources} will be returned without
 	 * filtering. Otherwise, a singleton set with just {@code pattern} will be
 	 * returned.
 	 * </p>

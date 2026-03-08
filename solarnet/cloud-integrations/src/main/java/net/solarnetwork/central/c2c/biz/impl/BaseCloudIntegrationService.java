@@ -160,7 +160,7 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 * @param wellKnownUrls
 	 *        the well known URLs
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseCloudIntegrationService(String serviceIdentifier, String displayName,
 			Collection<CloudDatumStreamService> datumStreamServices,

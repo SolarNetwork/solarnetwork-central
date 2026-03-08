@@ -52,7 +52,7 @@ public final class InsertAuthToken implements CallableStatementCreator, SqlProvi
 	 * @param id
 	 *        the ID associated with the token
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null} or the {@code id} is not
+	 *         if any argument is {@code null} or the {@code id} is not
 	 *         assigned
 	 */
 	public InsertAuthToken(OscpRole type, UserLongCompositePK id, String token) {

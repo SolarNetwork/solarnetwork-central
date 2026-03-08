@@ -64,9 +64,9 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 *        the minimum date from which this tax rate is applicable
 	 * @param validTo
 	 *        the maximum date to which this tax rate is applicable, or
-	 *        {@literal null} for "forever"
+	 *        {@code null} for "forever"
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code validTo} is {@literal null}
+	 *         if any argument other than {@code validTo} is {@code null}
 	 */
 	public TaxCode(String zone, String itemKey, String code, BigDecimal rate, Instant validFrom,
 			@Nullable Instant validTo) {
@@ -92,10 +92,10 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 *        the minimum date from which this tax rate is applicable
 	 * @param validTo
 	 *        the maximum date to which this tax rate is applicable, or
-	 *        {@literal null} for "forever"
+	 *        {@code null} for "forever"
 	 * @throws IllegalArgumentException
 	 *         if any argument other than {@code id}, {@code created}, or
-	 *         {@code validTo} are {@literal null}
+	 *         {@code validTo} are {@code null}
 	 */
 	public TaxCode(@Nullable Long id, @Nullable Instant created, String zone, String itemKey,
 			String code, BigDecimal rate, Instant validFrom, @Nullable Instant validTo) {
@@ -163,7 +163,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	/**
 	 * Get the tax zone.
 	 *
-	 * @return the zone, never {@literal null}
+	 * @return the zone, never {@code null}
 	 */
 	public final String getZone() {
 		return zone;
@@ -172,7 +172,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	/**
 	 * Get the item key.
 	 *
-	 * @return the item key, never {@literal null}
+	 * @return the item key, never {@code null}
 	 */
 	public final String getItemKey() {
 		return itemKey;
@@ -181,7 +181,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	/**
 	 * Get the tax code.
 	 *
-	 * @return the code, never {@literal null}
+	 * @return the code, never {@code null}
 	 */
 	public final String getCode() {
 		return code;
@@ -190,7 +190,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	/**
 	 * Get the tax rate.
 	 *
-	 * @return the rate, never {@literal null}
+	 * @return the rate, never {@code null}
 	 */
 	public final BigDecimal getRate() {
 		return rate;
@@ -199,7 +199,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	/**
 	 * Get the minimum date from which this tax code is applicable.
 	 *
-	 * @return the date, never {@literal null}
+	 * @return the date, never {@code null}
 	 */
 	public final Instant getValidFrom() {
 		return validFrom;
@@ -208,7 +208,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	/**
 	 * Get the maximum date to which this tax code is applicable.
 	 *
-	 * @return the date, or {@literal null} if the tax code is applicable
+	 * @return the date, or {@code null} if the tax code is applicable
 	 *         "forever"
 	 */
 	public final @Nullable Instant getValidTo() {

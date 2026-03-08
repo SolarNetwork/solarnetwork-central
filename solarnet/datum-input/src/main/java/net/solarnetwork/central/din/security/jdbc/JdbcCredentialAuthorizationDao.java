@@ -44,7 +44,7 @@ public class JdbcCredentialAuthorizationDao implements CredentialAuthorizationDa
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCredentialAuthorizationDao(JdbcOperations jdbcOps) {
 		super();

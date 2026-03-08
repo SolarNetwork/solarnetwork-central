@@ -62,7 +62,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	 * @param invoice
 	 *        the invoice to wrap
 	 * @throws IllegalArgumentException
-	 *         if {@code invoice} is {@literal null}
+	 *         if {@code invoice} is {@code null}
 	 */
 	public InvoiceImpl(SnfInvoice invoice) {
 		this(invoice, null);
@@ -76,7 +76,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	 * @param items
 	 *        the items to use directly
 	 * @throws IllegalArgumentException
-	 *         if {@code invoice} is {@literal null}
+	 *         if {@code invoice} is {@code null}
 	 */
 	public InvoiceImpl(SnfInvoice invoice, @Nullable List<InvoiceItem> items) {
 		super();

@@ -49,7 +49,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 *        the date
 	 * @param zones
 	 *        the zones
-	 * @return the filter, never {@literal null}
+	 * @return the filter, never {@code null}
 	 */
 	public static TaxCodeFilter filterFor(Instant date, String @Nullable... zones) {
 		TaxCodeFilter f = new TaxCodeFilter();
@@ -153,8 +153,8 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 *
 	 * <p>
 	 * This replaces the configured {@code zones} array with a single-element
-	 * array if {@code zone} is not {@literal null}, otherwise sets
-	 * {@code zones} to {@literal null}.
+	 * array if {@code zone} is not {@code null}, otherwise sets
+	 * {@code zones} to {@code null}.
 	 * </p>
 	 *
 	 * @param zone

@@ -109,7 +109,7 @@ public class UserOcppController {
 	 * @param cborObjectMapper
 	 *        the mapper to use for CBOR
 	 * @param propertySerializerRegistrar
-	 *        the registrar to use (may be {@literal null}
+	 *        the registrar to use (may be {@code null}
 	 */
 	public UserOcppController(UserOcppBiz userOcppBiz,
 			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) ObjectMapper objectMapper,
@@ -125,7 +125,7 @@ public class UserOcppController {
 	/**
 	 * Get the {@link UserOcppBiz}.
 	 *
-	 * @return the service; never {@literal null}
+	 * @return the service; never {@code null}
 	 * @throws UnsupportedOperationException
 	 *         if the service is not available
 	 */
@@ -146,7 +146,7 @@ public class UserOcppController {
 	 * @param out
 	 *        the entity that was saved and should be returned in the response
 	 * @return a response entity, with {@link HttpStatus#CREATED} if the
-	 *         {@code in} has a {@literal null} primary key or
+	 *         {@code in} has a {@code null} primary key or
 	 *         {@link HttpStatus#OK} otherwise
 	 */
 	private <T extends Entity<?>> ResponseEntity<Result<T>> responseForSave(Object id, T out) {

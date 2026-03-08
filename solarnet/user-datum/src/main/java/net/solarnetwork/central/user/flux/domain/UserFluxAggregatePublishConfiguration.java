@@ -60,7 +60,7 @@ public class UserFluxAggregatePublishConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserFluxAggregatePublishConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -77,7 +77,7 @@ public class UserFluxAggregatePublishConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserFluxAggregatePublishConfiguration(Long userId, Long configurationId, Instant created) {
 		this(new UserLongCompositePK(userId, configurationId), created);
@@ -128,7 +128,7 @@ public class UserFluxAggregatePublishConfiguration
 	/**
 	 * Get the node IDs.
 	 *
-	 * @return the node IDs, or {@literal null} for any node
+	 * @return the node IDs, or {@code null} for any node
 	 */
 	public Long[] getNodeIds() {
 		return nodeIds;

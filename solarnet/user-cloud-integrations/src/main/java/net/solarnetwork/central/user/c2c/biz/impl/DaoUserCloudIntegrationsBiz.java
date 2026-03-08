@@ -179,7 +179,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 * @param integrationServices
 	 *        the integration services
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserCloudIntegrationsBiz(InstantSource clock, UserSettingsEntityDao userSettingsDao,
 			CloudIntegrationConfigurationDao integrationDao,
@@ -950,7 +950,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	/**
 	 * Get the default datum stream settings.
 	 *
-	 * @return the settings, never {@literal null}
+	 * @return the settings, never {@code null}
 	 * @since 1.4
 	 */
 	public final CloudDatumStreamSettings getDefaultDatumStreamSettings() {

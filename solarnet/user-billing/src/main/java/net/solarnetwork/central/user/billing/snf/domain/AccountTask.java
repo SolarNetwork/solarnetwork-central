@@ -84,11 +84,11 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	 * @param accountId
 	 *        the account ID
 	 * @param taskData
-	 *        the task data, or {@literal null}
+	 *        the task data, or {@code null}
 	 * @return the new task instance, with a new ID
 	 * @throws IllegalArgumentException
 	 *         if {@code date} or {@code taskType} or {@code accountId} are
-	 *         {@literal null}
+	 *         {@code null}
 	 */
 	public static AccountTask newTask(Instant date, AccountTaskType taskType, Long accountId,
 			@Nullable Map<String, Object> taskData) {
@@ -120,7 +120,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	 * @param taskData
 	 *        the task data
 	 * @throws IllegalArgumentException
-	 *         if {@code taskType} or {@code accountId} are {@literal null}
+	 *         if {@code taskType} or {@code accountId} are {@code null}
 	 */
 	public AccountTask(final AccountTaskType taskType, Long accountId,
 			@Nullable Map<String, Object> taskData) {
@@ -141,7 +141,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	 * @param taskData
 	 *        the task data
 	 * @throws IllegalArgumentException
-	 *         if {@code taskType} or {@code accountId} are {@literal null}
+	 *         if {@code taskType} or {@code accountId} are {@code null}
 	 */
 	public AccountTask(@Nullable UUID id, @Nullable Instant created, final AccountTaskType taskType,
 			Long accountId, @Nullable Map<String, Object> taskData) {
@@ -212,7 +212,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	/**
 	 * Get the task type.
 	 *
-	 * @return the task type, never {@literal null}
+	 * @return the task type, never {@code null}
 	 */
 	public final AccountTaskType getTaskType() {
 		return taskType;
@@ -221,7 +221,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	/**
 	 * Get the account ID.
 	 *
-	 * @return the account ID, never {@literal null}
+	 * @return the account ID, never {@code null}
 	 */
 	public final Long getAccountId() {
 		return accountId;

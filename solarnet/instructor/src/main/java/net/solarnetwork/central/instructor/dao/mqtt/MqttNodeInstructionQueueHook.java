@@ -83,7 +83,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	 *        the MQTT stats to use; must support the
 	 *        {@link NodeInstructionQueueHookStat} stats
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public MqttNodeInstructionQueueHook(ObjectMapper objectMapper, Executor executor,
 			NodeInstructionDao nodeInstructionDao, StatTracker mqttStats) {

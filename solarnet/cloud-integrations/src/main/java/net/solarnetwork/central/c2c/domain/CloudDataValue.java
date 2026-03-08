@@ -166,7 +166,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 *
 	 * @param identifiers
 	 *        the identifiers
-	 * @return the reference value, never {@literal null}
+	 * @return the reference value, never {@code null}
 	 */
 	public static String pathReferenceValue(Collection<String> identifiers) {
 		var buf = new StringBuilder();
@@ -194,7 +194,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param name
 	 *        the component name
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 * @since 1.3
 	 */
 	public static CloudDataValue dataValue(List<String> identifiers, String name) {
@@ -216,7 +216,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param metadata
 	 *        the metadata
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
 	public static CloudDataValue dataValue(List<String> identifiers, String name,
 			Map<String, ?> metadata) {
@@ -233,7 +233,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param metadata
 	 *        the metadata
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
 	public static CloudDataValue intermediateDataValue(List<String> identifiers, String name,
 			Map<String, ?> metadata) {
@@ -252,7 +252,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param children
 	 *        the optional children values
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 * @since 1.1
 	 */
 	public static CloudDataValue intermediateDataValue(List<String> identifiers, String name,
@@ -277,7 +277,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param children
 	 *        the optional children values
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
 	public static CloudDataValue dataValue(List<String> identifiers, String name,
 			Map<String, ?> metadata, Collection<CloudDataValue> children) {
@@ -297,7 +297,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param metadata
 	 *        the metadata
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
 	public static CloudDataValue dataValue(List<String> identifiers, String name, String reference,
 			Map<String, ?> metadata) {
@@ -318,7 +318,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param children
 	 *        the optional children values
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
 	public static CloudDataValue dataValue(List<String> identifiers, String name, String reference,
 			Map<String, ?> metadata, Collection<CloudDataValue> children) {
@@ -337,7 +337,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param metadata
 	 *        the metadata
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
 	public CloudDataValue(List<String> identifiers, String name, String reference,
 			Map<String, ?> metadata) {
@@ -358,7 +358,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @param children
 	 *        the optional children values
 	 * @throws IllegalArgumentException
-	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@code null}
 	 */
 	public CloudDataValue(List<String> identifiers, String name, String reference,
 			Map<String, ?> metadata, Collection<CloudDataValue> children) {
@@ -422,7 +422,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * Get the data value hierarchy identifier.
 	 *
 	 * @return the identifiers, unique within the overall hierarchy, never
-	 *         {@literal null}
+	 *         {@code null}
 	 */
 	public List<String> getIdentifiers() {
 		return identifiers;
@@ -431,7 +431,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	/**
 	 * Get the component name.
 	 *
-	 * @return the name, never {@literal null}
+	 * @return the name, never {@code null}
 	 */
 	public String getName() {
 		return name;
@@ -440,7 +440,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	/**
 	 * Get the reference.
 	 *
-	 * @return the reference, or {@literal null}
+	 * @return the reference, or {@code null}
 	 */
 	public String getReference() {
 		return reference;
@@ -449,7 +449,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	/**
 	 * Get the component metadata.
 	 *
-	 * @return the metadata, or {@literal null}
+	 * @return the metadata, or {@code null}
 	 */
 	public Map<String, ?> getMetadata() {
 		return metadata;

@@ -56,11 +56,11 @@ public class ActorDetails implements Actor {
 	 * @param userId
 	 *        the associated user ID
 	 * @param policy
-	 *        the associated policy (or {@literal null} if none defined)
+	 *        the associated policy (or {@code null} if none defined)
 	 * @param userNodeIds
 	 *        the complete set of node IDs owned by {@code userId}
 	 * @throws IllegalArgumentException
-	 *         if {@code userId} is {@literal null}
+	 *         if {@code userId} is {@code null}
 	 */
 	public ActorDetails(String tokenId, ActorType actorType, boolean publishAllowed, Long userId,
 			SecurityPolicy policy, Set<Long> userNodeIds) {

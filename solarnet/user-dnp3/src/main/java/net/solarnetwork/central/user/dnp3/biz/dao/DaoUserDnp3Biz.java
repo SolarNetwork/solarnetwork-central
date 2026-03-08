@@ -116,7 +116,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	 * @param resourceLoader
 	 *        the resource loader to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserDnp3Biz(TrustedIssuerCertificateDao trustedCertDao, ServerConfigurationDao serverDao,
 			ServerAuthConfigurationDao serverAuthDao,
@@ -443,7 +443,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	 * @param csvImportExampleResources
 	 *        the resource mapping to set
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public void setCsvImportExampleResources(Map<String, String> csvImportExampleResources) {
 		this.csvImportExampleResources = requireNonNullArgument(csvImportExampleResources,

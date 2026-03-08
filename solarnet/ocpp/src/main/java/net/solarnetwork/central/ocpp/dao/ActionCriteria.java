@@ -35,17 +35,17 @@ public interface ActionCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available action from the {@link #getActions()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first action, or {@literal null} if not available
+	 * @return the first action, or {@code null} if not available
 	 */
 	String getAction();
 
 	/**
 	 * Get an array of actions.
 	 * 
-	 * @return array of actions (may be {@literal null})
+	 * @return array of actions (may be {@code null})
 	 */
 	String[] getActions();
 

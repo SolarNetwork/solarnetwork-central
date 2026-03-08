@@ -87,7 +87,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 	 * @param client
 	 *        the client to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CapacityGroupMeasurementJob(OscpRole role, ExternalSystemConfigurationDao<?> dao,
 			CapacityGroupConfigurationDao capacityGroupDao, AssetConfigurationDao assetDao,
@@ -109,7 +109,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 	 *        the template
 	 * @return this instance for method chaining
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CapacityGroupMeasurementJob withTxTemplate(TransactionTemplate txTemplate) {
 		this.txTemplate = requireNonNullArgument(txTemplate, "txTemplate");

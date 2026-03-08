@@ -66,7 +66,7 @@ public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<
 	 * <li>id</li>
 	 * </ol>
 	 *
-	 * {@literal null} values will be sorted before non-{@literal null} values.
+	 * {@code null} values will be sorted before non-{@code null} values.
 	 */
 	@Override
 	public int compareTo(@Nullable SnfInvoiceRelatedPK o) {

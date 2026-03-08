@@ -62,7 +62,7 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 	 * @param chargePointDao
 	 *        the {@link ChargePoint} DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public OcppAuthorizationService(CentralAuthorizationDao authorizationDao,
 			CentralChargePointDao chargePointDao) {

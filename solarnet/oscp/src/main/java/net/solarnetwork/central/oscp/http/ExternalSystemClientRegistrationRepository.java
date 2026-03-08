@@ -61,7 +61,7 @@ public class ExternalSystemClientRegistrationRepository implements ClientRegistr
 	 * @param systemSupportDao
 	 *        the system support DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ExternalSystemClientRegistrationRepository(ExternalSystemSupportDao systemSupportDao) {
 		super();

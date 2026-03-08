@@ -431,7 +431,7 @@ public class NodesController {
 		/**
 		 * Get the status of the installation process, if available.
 		 *
-		 * @return The installation status, or <em>null</em>.
+		 * @return The installation status, or {@code null}.
 		 */
 		public UserNodeCertificateInstallationStatus getInstallationStatus() {
 			return installationStatus;

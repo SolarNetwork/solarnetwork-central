@@ -133,7 +133,7 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 	 * @param integrationDao
 	 *        the integration DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EgaugeRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,

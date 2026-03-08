@@ -47,7 +47,7 @@ public class SnfInvoiceFilter extends SimplePagination {
 	 *
 	 * @param userId
 	 *        the user ID to set
-	 * @return the filter, never {@literal null}
+	 * @return the filter, never {@code null}
 	 */
 	public static SnfInvoiceFilter forUser(Long userId) {
 		SnfInvoiceFilter f = new SnfInvoiceFilter();
@@ -60,7 +60,7 @@ public class SnfInvoiceFilter extends SimplePagination {
 	 *
 	 * @param accountId
 	 *        the account ID to set
-	 * @return the filter, never {@literal null}
+	 * @return the filter, never {@code null}
 	 */
 	public static SnfInvoiceFilter forAccount(Long accountId) {
 		SnfInvoiceFilter f = new SnfInvoiceFilter();
@@ -73,7 +73,7 @@ public class SnfInvoiceFilter extends SimplePagination {
 	 *
 	 * @param account
 	 *        the account to extract the ID and userId from
-	 * @return the filter, never {@literal null}
+	 * @return the filter, never {@code null}
 	 */
 	public static SnfInvoiceFilter forAccount(Account account) {
 		SnfInvoiceFilter f = new SnfInvoiceFilter();

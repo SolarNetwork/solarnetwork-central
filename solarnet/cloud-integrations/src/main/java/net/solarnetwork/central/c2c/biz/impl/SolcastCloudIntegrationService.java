@@ -138,7 +138,7 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 	 * @param restOps
 	 *        the REST operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SolcastCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {

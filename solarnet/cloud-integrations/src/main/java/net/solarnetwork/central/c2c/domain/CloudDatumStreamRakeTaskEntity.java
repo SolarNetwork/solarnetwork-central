@@ -82,7 +82,7 @@ public final class CloudDatumStreamRakeTaskEntity
 	 * @param id
 	 *        the primary key
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamRakeTaskEntity(UserLongCompositePK id) {
 		super(id);
@@ -96,7 +96,7 @@ public final class CloudDatumStreamRakeTaskEntity
 	 * @param configId
 	 *        the configuration ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamRakeTaskEntity(Long userId, Long configId) {
 		this(new UserLongCompositePK(userId, configId));
@@ -279,7 +279,7 @@ public final class CloudDatumStreamRakeTaskEntity
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
+	 * @return a JSON encoded string, or {@code null} if no service
 	 *         properties available
 	 */
 	@JsonIgnore

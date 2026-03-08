@@ -47,7 +47,7 @@ public interface CapacityGroupConfigurationDao
 	 *        the ID of the Capacity Provider to get the group for
 	 * @param groupIdentifier
 	 *        the identifier of the group to get
-	 * @return the configuration, or {@literal null} if not found
+	 * @return the configuration, or {@code null} if not found
 	 */
 	CapacityGroupConfiguration findForCapacityProvider(Long userId, Long capacityProviderId,
 			String groupIdentifier);
@@ -59,7 +59,7 @@ public interface CapacityGroupConfigurationDao
 	 *        the ID of the user to get the group for
 	 * @param capacityProviderId
 	 *        the ID of the Capacity Provider to get the group for
-	 * @return the configurations, never {@literal null}
+	 * @return the configurations, never {@code null}
 	 */
 	Collection<CapacityGroupConfiguration> findAllForCapacityProvider(Long userId,
 			Long capacityProviderId);
@@ -73,7 +73,7 @@ public interface CapacityGroupConfigurationDao
 	 *        the ID of the Capacity Optimizer to get the group for
 	 * @param groupIdentifier
 	 *        the identifier of the group to get
-	 * @return the configuration, or {@literal null} if not found
+	 * @return the configuration, or {@code null} if not found
 	 */
 	CapacityGroupConfiguration findForCapacityOptimizer(Long userId, Long capacityOptimizerId,
 			String groupIdentifier);
@@ -85,7 +85,7 @@ public interface CapacityGroupConfigurationDao
 	 *        the ID of the user to get the group for
 	 * @param capacityOptimizerId
 	 *        the ID of the Capacity Optimizer to get the group for
-	 * @return the configurations, never {@literal null}
+	 * @return the configurations, never {@code null}
 	 */
 	Collection<CapacityGroupConfiguration> findAllForCapacityOptimizer(Long userId,
 			Long capacityOptimizerId);

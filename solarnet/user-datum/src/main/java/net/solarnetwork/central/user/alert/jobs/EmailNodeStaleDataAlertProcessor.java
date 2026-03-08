@@ -452,7 +452,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	 *
 	 * @param alert
 	 *        The alert to get the most recent data for.
-	 * @return The associated data, never {@literal null}.
+	 * @return The associated data, never {@code null}.
 	 */
 	private List<NodeDatumStreamPK> getLatestNodeData(final UserAlert alert) {
 		List<NodeDatumStreamPK> results;

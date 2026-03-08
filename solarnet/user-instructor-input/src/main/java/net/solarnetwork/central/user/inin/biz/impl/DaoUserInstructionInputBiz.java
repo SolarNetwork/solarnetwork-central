@@ -120,7 +120,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	 * @param responseTransformServices
 	 *        the response transform services
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserInstructionInputBiz(CredentialConfigurationDao credentialDao,
 			TransformConfigurationDao<RequestTransformConfiguration> requestTransformDao,

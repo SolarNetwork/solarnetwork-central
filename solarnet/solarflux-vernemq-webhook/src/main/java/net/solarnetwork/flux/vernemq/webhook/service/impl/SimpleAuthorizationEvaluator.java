@@ -382,7 +382,7 @@ public class SimpleAuthorizationEvaluator implements AuthorizationEvaluator {
 	 * @param nodeDatumTopicRegex
 	 *        the regular expression to use
 	 * @throws IllegalArgumentException
-	 *         if {@code nodeDatumTopicRegex} is {@literal null}
+	 *         if {@code nodeDatumTopicRegex} is {@code null}
 	 */
 	public void setNodeDatumTopicRegex(Pattern nodeDatumTopicRegex) {
 		if ( nodeDatumTopicRegex == null ) {
@@ -407,7 +407,7 @@ public class SimpleAuthorizationEvaluator implements AuthorizationEvaluator {
 	 * @param userTopicRegex
 	 *        the regular expression to set
 	 * @throws IllegalArgumentException
-	 *         if {@code nodeDatumTopicRegex} is {@literal null}
+	 *         if {@code nodeDatumTopicRegex} is {@code null}
 	 */
 	public void setUserTopicRegex(Pattern userTopicRegex) {
 		if ( userTopicRegex == null ) {
@@ -445,8 +445,8 @@ public class SimpleAuthorizationEvaluator implements AuthorizationEvaluator {
 	/**
 	 * Get the maximum MQTT Qos setting.
 	 * 
-	 * @return a maximum Qos to enforce, or {@literal null} for no limit;
-	 *         defaults to {@literal null}
+	 * @return a maximum Qos to enforce, or {@code null} for no limit;
+	 *         defaults to {@code null}
 	 */
 	public Qos getMaxQos() {
 		return maxQos;
@@ -461,7 +461,7 @@ public class SimpleAuthorizationEvaluator implements AuthorizationEvaluator {
 	 * </p>
 	 * 
 	 * @param maxQos
-	 *        the maximum Qos, or {@literal null} for no limit
+	 *        the maximum Qos, or {@code null} for no limit
 	 */
 	public void setMaxQos(Qos maxQos) {
 		this.maxQos = maxQos;

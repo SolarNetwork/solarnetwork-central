@@ -35,17 +35,17 @@ public interface ChargePointCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available charge point ID from the
-	 * {@link #getChargePointIds()} array, or {@literal null} if not available.
+	 * {@link #getChargePointIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first charge point ID, or {@literal null} if not available
+	 * @return the first charge point ID, or {@code null} if not available
 	 */
 	Long getChargePointId();
 
 	/**
 	 * Get an array of charge point IDs.
 	 * 
-	 * @return array of charge point IDs (may be {@literal null})
+	 * @return array of charge point IDs (may be {@code null})
 	 */
 	Long[] getChargePointIds();
 

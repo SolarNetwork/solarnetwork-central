@@ -85,7 +85,7 @@ public interface CloudDatumStreamLocalizedServiceInfo extends ConfigurableLocali
 	/**
 	 * Get a collection of supported placeholder keys.
 	 *
-	 * @return the placeholders, or {@literal null}
+	 * @return the placeholders, or {@code null}
 	 */
 	Iterable<String> getSupportedPlaceholders();
 
@@ -99,7 +99,7 @@ public interface CloudDatumStreamLocalizedServiceInfo extends ConfigurableLocali
 	 * {@link CloudDatumStreamPropertyConfiguration#getValueReference()}.
 	 * <p>
 	 *
-	 * @return the 0-based list offsets, or {@literal null}
+	 * @return the 0-based list offsets, or {@code null}
 	 */
 	Iterable<Integer> getSupportedDataValueWildcardIdentifierLevels();
 
@@ -107,7 +107,7 @@ public interface CloudDatumStreamLocalizedServiceInfo extends ConfigurableLocali
 	 * Get the data value identifier levels that can uniquely identify a
 	 * SolarNetwork source ID.
 	 *
-	 * @return the 0-based range, or {@literal null}
+	 * @return the 0-based range, or {@code null}
 	 */
 	IntRange getDataValueIdentifierLevelsSourceIdRange();
 

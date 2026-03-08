@@ -59,7 +59,7 @@ public interface InstructionInputEndpointBiz {
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	List<NodeInstruction> importInstructions(Long userId, UUID endpointId, MimeType contentType,
 			InputStream in, Map<String, String> parameters) throws IOException;
@@ -82,7 +82,7 @@ public interface InstructionInputEndpointBiz {
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	void generateResponse(Long userId, UUID endpointId, List<NodeInstruction> instructions,
 			MimeType outputType, OutputStream out, Map<String, String> parameters) throws IOException;

@@ -55,7 +55,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CapacityGroupConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -71,7 +71,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CapacityGroupConfiguration(Long userId, Long entityId, Instant created) {
 		super(userId, entityId, created);
@@ -122,7 +122,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 * An asset ID to use to combine all capacity group assets into a single
 	 * virtual asset.
 	 *
-	 * @return a combined virtual asset ID, or {@literal null} to report
+	 * @return a combined virtual asset ID, or {@code null} to report
 	 *         individual assets
 	 * @since 1.1
 	 */

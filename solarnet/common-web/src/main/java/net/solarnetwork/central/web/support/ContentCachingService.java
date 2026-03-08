@@ -92,7 +92,7 @@ public interface ContentCachingService {
 	 *
 	 * @param request
 	 *        the HTTP request to derive a key from
-	 * @return the key, or {@literal null} if the request should not be cached
+	 * @return the key, or {@code null} if the request should not be cached
 	 */
 	String keyForRequest(HttpServletRequest request);
 
@@ -107,7 +107,7 @@ public interface ContentCachingService {
 	 * @param response
 	 *        the active HTTP response to send the cached data to
 	 * @return the cached content if the response was successfully handled,
-	 *         {@literal null} otherwise (for example a cache miss)
+	 *         {@code null} otherwise (for example a cache miss)
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
@@ -127,7 +127,7 @@ public interface ContentCachingService {
 	 * @param headers
 	 *        the resolved HTTP response headers
 	 * @param content
-	 *        the resolved HTTP response content, or {@literal null} if none
+	 *        the resolved HTTP response content, or {@code null} if none
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
@@ -149,10 +149,10 @@ public interface ContentCachingService {
 	 * @param headers
 	 *        the resolved HTTP response headers
 	 * @param content
-	 *        the resolved HTTP response content, or {@literal null} if none
+	 *        the resolved HTTP response content, or {@code null} if none
 	 * @param compression
 	 *        if {@code content} has been compressed then the compression type,
-	 *        otherwise {@literal null}
+	 *        otherwise {@code null}
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @since 1.1

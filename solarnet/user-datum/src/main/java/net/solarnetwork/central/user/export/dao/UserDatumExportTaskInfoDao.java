@@ -41,7 +41,7 @@ public interface UserDatumExportTaskInfoDao
 	 * 
 	 * @param taskId
 	 *        the task ID to get
-	 * @return the export task, or {@literal null} if not available
+	 * @return the export task, or {@code null} if not available
 	 */
 	UserDatumExportTaskInfo getForTaskId(UUID taskId);
 

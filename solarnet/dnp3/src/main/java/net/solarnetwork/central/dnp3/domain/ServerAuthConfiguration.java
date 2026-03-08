@@ -55,7 +55,7 @@ public class ServerAuthConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ServerAuthConfiguration(UserLongStringCompositePK id, Instant created) {
 		super(id, created);
@@ -73,7 +73,7 @@ public class ServerAuthConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ServerAuthConfiguration(Long userId, Long serverId, String identity, Instant created) {
 		this(new UserLongStringCompositePK(userId, serverId, identity), created);

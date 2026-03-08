@@ -70,7 +70,7 @@ public class LocationSourcePK
 	 * <li>sourceId</li>
 	 * </ol>
 	 *
-	 * <em>Null</em> values will be sorted before non-<em>null</em> values.
+	 * <em>Null</em> values will be sorted before non-{@code null} values.
 	 */
 	@Override
 	public int compareTo(@Nullable LocationSourcePK o) {

@@ -145,7 +145,7 @@ public class DaoCloudDatumStreamPollService
 	 *        function that provides a {@link CloudDatumStreamService} for a
 	 *        given service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoCloudDatumStreamPollService(Clock clock, UserEventAppenderBiz userEventAppenderBiz,
 			SolarNodeOwnershipDao nodeOwnershipDao, CloudDatumStreamPollTaskDao taskDao,
@@ -553,7 +553,7 @@ public class DaoCloudDatumStreamPollService
 	 * Get the maximum length of time to wait for executing tasks to complete
 	 * when {@link #serviceDidShutdown()} is invoked.
 	 *
-	 * @return the maximum wait time, never {@literal null}
+	 * @return the maximum wait time, never {@code null}
 	 */
 	public final Duration getShutdownMaxWait() {
 		return shutdownMaxWait;
@@ -564,7 +564,7 @@ public class DaoCloudDatumStreamPollService
 	 * when {@link #serviceDidShutdown()} is invoked.
 	 *
 	 * @param shutdownMaxWait
-	 *        the maximum wait time to set; if {@literal null} then
+	 *        the maximum wait time to set; if {@code null} then
 	 *        {@link #DEFAULT_SHUTDOWN_MAX_WAIT} will be used
 	 */
 	public final void setShutdownMaxWait(Duration shutdownMaxWait) {
@@ -574,7 +574,7 @@ public class DaoCloudDatumStreamPollService
 	/**
 	 * Get the default datum stream settings.
 	 *
-	 * @return the settings, never {@literal null}
+	 * @return the settings, never {@code null}
 	 * @since 1.3
 	 */
 	public final CloudDatumStreamSettings getDefaultDatumStreamSettings() {
@@ -599,7 +599,7 @@ public class DaoCloudDatumStreamPollService
 	/**
 	 * Get the SolarFlux publisher.
 	 *
-	 * @return the publisher, or {@literal null}
+	 * @return the publisher, or {@code null}
 	 */
 	public DatumProcessor getFluxPublisher() {
 		return fluxPublisher;

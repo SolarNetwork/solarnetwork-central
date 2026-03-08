@@ -79,7 +79,7 @@ public final class DatumUtils {
 	 * @param o
 	 *        the object to serialize to JSON
 	 * @param defaultValue
-	 *        a default value to use if {@code o} is <em>null</em> or if any
+	 *        a default value to use if {@code o} is {@code null} or if any
 	 *        error occurs serializing the object to JSON
 	 * @return the JSON string
 	 * @see JsonUtils#getJSONString(Object, String)

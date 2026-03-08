@@ -86,7 +86,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * @param clazz
 	 *        the configuration class
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseJdbcExternalSystemConfigurationDao(JdbcOperations jdbcOps, OscpRole role,
 			Class<C> clazz) {
@@ -108,7 +108,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 *        the configuration ID
 	 * @return the filter
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	protected BasicConfigurationFilter filterForGet(UserLongCompositePK configId) {
 		BasicConfigurationFilter filter = new BasicConfigurationFilter();
@@ -191,7 +191,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	/**
 	 * Get the {@link RowMapper} to use for mapping full entity result objects.
 	 *
-	 * @return the mapper, never {@literal null}
+	 * @return the mapper, never {@code null}
 	 */
 	protected abstract RowMapper<C> rowMapperForEntity();
 
@@ -199,7 +199,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * Get the success event tags to use within
 	 * {@link #processExternalSystemWithExpiredHeartbeat(Function)}.
 	 *
-	 * @return the tags, never {@literal null}
+	 * @return the tags, never {@code null}
 	 */
 	protected abstract List<String> expiredHeartbeatEventSuccessTags();
 
@@ -207,7 +207,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * Get the error event tags to use within
 	 * {@link #processExternalSystemWithExpiredHeartbeat(Function)}.
 	 *
-	 * @return the tags, never {@literal null}
+	 * @return the tags, never {@code null}
 	 */
 	protected abstract List<String> expiredHeartbeatEventErrorTags();
 
@@ -215,7 +215,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * Get the success event tags to use within
 	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
 	 *
-	 * @return the tags, never {@literal null}
+	 * @return the tags, never {@code null}
 	 */
 	protected abstract List<String> expiredMeasurementEventSuccessTags();
 
@@ -223,7 +223,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * Get the error event tags to use within
 	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
 	 *
-	 * @return the tags, never {@literal null}
+	 * @return the tags, never {@code null}
 	 */
 	protected abstract List<String> expiredMeasurementEventErrorTags();
 

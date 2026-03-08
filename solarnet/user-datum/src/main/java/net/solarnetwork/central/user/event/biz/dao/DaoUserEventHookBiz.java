@@ -69,7 +69,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	 * @param nodeEventHookConfigurationDao
 	 *        the node event hook DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserEventHookBiz(UserNodeEventHookConfigurationDao nodeEventHookConfigurationDao) {
 		super();

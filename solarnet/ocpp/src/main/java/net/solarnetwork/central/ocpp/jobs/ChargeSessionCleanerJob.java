@@ -55,7 +55,7 @@ public class ChargeSessionCleanerJob extends JobSupport {
 	 * @param chargeSessionDao
 	 *        the charge session DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ChargeSessionCleanerJob(Clock clock, CentralChargeSessionDao chargeSessionDao) {
 		super("OCPP", "ChargeSessionCleaner");
@@ -91,7 +91,7 @@ public class ChargeSessionCleanerJob extends JobSupport {
 	/**
 	 * Get the expire period.
 	 * 
-	 * @return the expire period, never {@literal null}
+	 * @return the expire period, never {@code null}
 	 */
 	public Period getExpirePeriod() {
 		return expirePeriod;
@@ -101,7 +101,7 @@ public class ChargeSessionCleanerJob extends JobSupport {
 	 * SEt the expire period.
 	 * 
 	 * @param expirePeriod
-	 *        the period to set; if {@literal null} then
+	 *        the period to set; if {@code null} then
 	 *        {@link #DEFAULT_EXPIRE_PERIOD} will be used instead
 	 */
 	public void setExpirePeriod(Period expirePeriod) {

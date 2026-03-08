@@ -45,7 +45,7 @@ public interface EndpointConfigurationDao
 	 *
 	 * @param endpointId
 	 *        the endpoint ID
-	 * @return the configuration, or {@literal null} if not found
+	 * @return the configuration, or {@code null} if not found
 	 */
 	EndpointConfiguration getForEndpointId(UUID endpointId);
 

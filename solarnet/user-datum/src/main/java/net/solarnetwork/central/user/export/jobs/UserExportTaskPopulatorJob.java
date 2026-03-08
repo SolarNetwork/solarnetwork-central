@@ -46,7 +46,7 @@ public class UserExportTaskPopulatorJob extends JobSupport {
 	 * @param jobsService
 	 *        the helper
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserExportTaskPopulatorJob(ScheduleType scheduleType, UserExportJobsService jobsService) {
 		super("UserExport", "UserExportTaskPopulator-" + scheduleType);

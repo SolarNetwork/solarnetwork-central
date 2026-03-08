@@ -45,7 +45,7 @@ public interface InstructionFilter extends Filter, DateRangeCriteria {
 	/**
 	 * Get an array of node IDs.
 	 *
-	 * @return array of node IDs (may be {@literal null})
+	 * @return array of node IDs (may be {@code null})
 	 * @since 1.2
 	 */
 	Long[] getNodeIds();
@@ -63,7 +63,7 @@ public interface InstructionFilter extends Filter, DateRangeCriteria {
 	/**
 	 * Get an array of instruction IDs.
 	 *
-	 * @return array of instruction IDs (may be {@literal null})
+	 * @return array of instruction IDs (may be {@code null})
 	 * @since 1.2
 	 */
 	Long[] getInstructionIds();

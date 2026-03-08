@@ -35,10 +35,10 @@ public interface CloudControlCriteria {
 	 *
 	 * <p>
 	 * This returns the first available cloud control ID from the
-	 * {@link #getCloudControlIds()} array, or {@literal null} if not available.
+	 * {@link #getCloudControlIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first cloud control ID, or {@literal null} if not available
+	 * @return the first cloud control ID, or {@code null} if not available
 	 */
 	default Long getCloudControlId() {
 		final Long[] array = getCloudControlIds();
@@ -48,7 +48,7 @@ public interface CloudControlCriteria {
 	/**
 	 * Get an array of cloud control IDs.
 	 *
-	 * @return array of cloud control IDs (may be {@literal null})
+	 * @return array of cloud control IDs (may be {@code null})
 	 */
 	Long[] getCloudControlIds();
 

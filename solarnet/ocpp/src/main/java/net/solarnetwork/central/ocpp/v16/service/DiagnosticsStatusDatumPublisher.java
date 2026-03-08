@@ -65,7 +65,7 @@ public class DiagnosticsStatusDatumPublisher extends DiagnosticsStatusNotificati
 	 * @param datumDao
 	 *        the datum DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DiagnosticsStatusDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,

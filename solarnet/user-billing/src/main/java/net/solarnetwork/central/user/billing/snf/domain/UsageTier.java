@@ -81,7 +81,7 @@ public class UsageTier implements NamedCost {
 	 *        the associated date
 	 * @return the new tier instance
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code date} is {@literal null}
+	 *         if any argument other than {@code date} is {@code null}
 	 */
 	public static UsageTier tier(String key, long quantity, BigDecimal cost, LocalDate date) {
 		return new UsageTier(key, BigInteger.valueOf(quantity), cost, date);
@@ -100,7 +100,7 @@ public class UsageTier implements NamedCost {
 	 *        the associated date
 	 * @return the new tier instance
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code date} is {@literal null}
+	 *         if any argument other than {@code date} is {@code null}
 	 */
 	public static UsageTier tier(String key, long quantity, String cost, LocalDate date) {
 		return new UsageTier(key, BigInteger.valueOf(quantity), new BigDecimal(cost), date);
@@ -118,7 +118,7 @@ public class UsageTier implements NamedCost {
 	 * @param date
 	 *        the date
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code date} is {@literal null}
+	 *         if any argument other than {@code date} is {@code null}
 	 */
 	public UsageTier(String key, BigInteger quantity, BigDecimal cost, LocalDate date) {
 		super();

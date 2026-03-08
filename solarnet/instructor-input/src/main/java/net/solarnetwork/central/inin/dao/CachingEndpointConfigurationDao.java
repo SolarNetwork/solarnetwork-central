@@ -53,7 +53,7 @@ public class CachingEndpointConfigurationDao
 	 * @param executor
 	 *        task executor
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CachingEndpointConfigurationDao(EndpointConfigurationDao delegate,
 			Cache<UserUuidPK, EndpointConfiguration> cache, Executor executor) {

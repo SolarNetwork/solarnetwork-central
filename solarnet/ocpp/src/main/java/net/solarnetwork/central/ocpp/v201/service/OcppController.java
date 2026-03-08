@@ -82,7 +82,7 @@ public class OcppController extends BaseOcppController {
 	 * @param objectMapper
 	 *        the object mapper to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public OcppController(Executor executor, ChargePointRouter chargePointRouter,
 			UserNodeDao userNodeDao, NodeInstructionDao instructionDao,

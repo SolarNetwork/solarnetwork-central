@@ -126,7 +126,7 @@ public class UserDatumExportTaskPK
 	 * </ol>
 	 *
 	 * <p>
-	 * {@literal null} values will be sorted before non-{@literal null} values.
+	 * {@code null} values will be sorted before non-{@code null} values.
 	 * </p>
 	 */
 	@Override

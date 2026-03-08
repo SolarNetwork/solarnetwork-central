@@ -81,7 +81,7 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 	 * @param resources
 	 *        the set of CSV resources to load
 	 * @throws IllegalArgumentException
-	 *         if {@code resources} is {@literal null}
+	 *         if {@code resources} is {@code null}
 	 */
 	public CsvVersionedMessageDao(Iterable<Resource> resources) {
 		super();

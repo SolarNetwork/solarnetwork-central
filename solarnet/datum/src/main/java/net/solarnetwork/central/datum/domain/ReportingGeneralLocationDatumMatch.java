@@ -37,7 +37,7 @@ public interface ReportingGeneralLocationDatumMatch
 	/**
 	 * Get all available sample data as a Map.
 	 *
-	 * @return the sample data as a Map, or <em>null</em> if no sample data
+	 * @return the sample data as a Map, or {@code null} if no sample data
 	 *         available
 	 */
 	@Nullable

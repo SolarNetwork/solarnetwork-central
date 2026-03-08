@@ -274,7 +274,7 @@ public class DatumImportController {
 	 *
 	 * @param states
 	 *        an optional array of states to limit the results to, or
-	 *        {@literal null} to include all states
+	 *        {@code null} to include all states
 	 * @return the statuses
 	 */
 	@ResponseBody

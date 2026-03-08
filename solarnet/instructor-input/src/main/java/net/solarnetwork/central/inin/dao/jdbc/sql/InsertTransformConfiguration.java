@@ -62,7 +62,7 @@ public abstract sealed class InsertTransformConfiguration<C extends TransformCon
 		 * @param entity
 		 *        the entity
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
 		public InsertRequestTransformConfiguration(Long userId, RequestTransformConfiguration entity) {
 			super(userId, entity);
@@ -91,7 +91,7 @@ public abstract sealed class InsertTransformConfiguration<C extends TransformCon
 		 * @param entity
 		 *        the entity
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
 		public InsertResponseTransformConfiguration(Long userId, ResponseTransformConfiguration entity) {
 			super(userId, entity);
@@ -122,7 +122,7 @@ public abstract sealed class InsertTransformConfiguration<C extends TransformCon
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InsertTransformConfiguration(Long userId, C entity) {
 		super();

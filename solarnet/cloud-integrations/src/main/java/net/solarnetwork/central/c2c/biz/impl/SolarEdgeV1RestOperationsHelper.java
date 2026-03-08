@@ -64,7 +64,7 @@ public class SolarEdgeV1RestOperationsHelper extends RestOperationsHelper {
 	 * @param sensitiveKeyProvider
 	 *        the sensitive key provider
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SolarEdgeV1RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,

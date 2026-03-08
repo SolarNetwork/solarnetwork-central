@@ -77,7 +77,7 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 	 * @param clientAuthMethod
 	 *        the OAuth client authentication method
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ClientCredentialsClientRegistrationRepository(
 			CloudIntegrationConfigurationDao configurationDao, URI tokenUri,

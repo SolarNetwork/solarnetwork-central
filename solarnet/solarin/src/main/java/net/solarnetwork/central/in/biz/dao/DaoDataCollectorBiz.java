@@ -82,7 +82,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * via the normal Spring Security {@link SecurityContextHolder} API. Any attempt
  * to post data for a node different from the currently authenticated node will
  * result in a {@link BasicSecurityException}. If a {@link GeneralNodeDatum} is
- * posted with a <em>null</em> {@link GeneralNodeDatum#getNodeId()} value, this
+ * posted with a {@code null} {@link GeneralNodeDatum#getNodeId()} value, this
  * service will set the node ID to the authenticated node ID automatically.
  * </p>
  *
@@ -489,7 +489,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	/**
 	 * Get the configured node metadata biz.
 	 *
-	 * @return the service, or {@literal null} if not configured
+	 * @return the service, or {@code null} if not configured
 	 * @since 2.1
 	 */
 	public SolarNodeMetadataBiz getSolarNodeMetadataBiz() {
