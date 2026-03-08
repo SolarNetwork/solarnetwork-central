@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.biz;
 
 import java.util.List;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.security.SecurityActor;
@@ -55,8 +56,8 @@ public interface DatumStreamMetadataBiz {
 	 *         if either {@code kind} or {@code streamId} is {@code null} or
 	 *         both {@code objectId} and {@code sourceId} are {@code null}
 	 */
-	ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
-			String sourceId);
+	ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId,
+			@Nullable Long objectId, @Nullable String sourceId);
 
 	/**
 	 * Update the object and/or source IDs associated with a stream.
@@ -76,24 +77,26 @@ public interface DatumStreamMetadataBiz {
 	 * @param sourceId
 	 *        the source ID to set, or {@code null} to keep unchanged
 	 * @param instantaneousProperties
-	 *        the instantaneous property names to set, or {@code null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param accumulatingProperties
-	 *        the instantaneous property names to set, or {@code null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param statusProperties
-	 *        the instantaneous property names to set, or {@code null} to
-	 *        keep unchanged
-	 * @return the updated stream metadata, or {@code null} if the metadata
-	 *         was not updated
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
+	 * @return the updated stream metadata, or {@code null} if the metadata was
+	 *         not updated
 	 * @throws IllegalArgumentException
-	 *         if either {@code kind} or {@code streamId} is {@code null} or
-	 *         all other arguments are {@code null}
+	 *         if either {@code kind} or {@code streamId} is {@code null} or all
+	 *         other arguments are {@code null}
 	 * @since 1.1
 	 */
-	ObjectDatumStreamMetadata updateAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
-			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,
-			String[] statusProperties);
+	@Nullable
+	ObjectDatumStreamMetadata updateAttributes(ObjectDatumKind kind, UUID streamId,
+			@Nullable Long objectId, @Nullable String sourceId,
+			String @Nullable [] instantaneousProperties, String @Nullable [] accumulatingProperties,
+			String @Nullable [] statusProperties);
 
 	/**
 	 * Find all available object datum stream metadata for a given search

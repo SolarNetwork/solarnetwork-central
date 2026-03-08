@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.biz;
 
 import java.util.List;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
@@ -101,8 +102,8 @@ public interface DatumMetadataBiz {
 	 * @return the results, never <em>null</em>
 	 */
 	FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findGeneralNodeDatumMetadata(
-			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max);
+			GeneralNodeDatumMetadataFilter criteria, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max);
 
 	/**
 	 * Add metadata to a specific location and source. If metadata already
@@ -159,8 +160,8 @@ public interface DatumMetadataBiz {
 	 * @since 1.1
 	 */
 	FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> findGeneralLocationDatumMetadata(
-			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
-			Long offset, Integer max);
+			GeneralLocationDatumMetadataFilter criteria, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max);
 
 	/**
 	 * Find available datum source IDs that match a datum metadata filter.
@@ -252,8 +253,8 @@ public interface DatumMetadataBiz {
 	 * @since 2.1
 	 */
 	net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(Long userId,
-			LocationRequestCriteria filter, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max);
+			LocationRequestCriteria filter, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max);
 
 	/**
 	 * Get a specific location request.

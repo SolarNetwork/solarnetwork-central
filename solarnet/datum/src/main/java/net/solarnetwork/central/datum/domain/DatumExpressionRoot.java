@@ -339,11 +339,14 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the matching datum, never {@code null}
 	 */
 	public Collection<DatumExpressionRoot> offsetMatching(@Nullable String sourceIdPattern, int offset) {
-		if ( datumStreamsAccessor == null || sourceIdPattern == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceIdPattern == null || kind == null
+				|| objectId == null ) {
 			return emptyList();
 		}
-		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(datumKind(),
-				datumObjectId(), sourceIdPattern, offset);
+		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(kind, objectId,
+				sourceIdPattern, offset);
 		if ( found == null || found.isEmpty() ) {
 			return emptyList();
 		}
@@ -363,11 +366,14 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return {@code true} if at least one matching datum is available
 	 */
 	public boolean hasOffsetMatching(@Nullable String sourceIdPattern, int offset) {
-		if ( datumStreamsAccessor == null || sourceIdPattern == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceIdPattern == null || kind == null
+				|| objectId == null ) {
 			return false;
 		}
-		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(datumKind(),
-				datumObjectId(), sourceIdPattern, offset);
+		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(kind, objectId,
+				sourceIdPattern, offset);
 		return (found != null && !found.isEmpty());
 	}
 
@@ -388,11 +394,14 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 */
 	public Collection<DatumExpressionRoot> offsetMatching(@Nullable String sourceIdPattern, int offset,
 			@Nullable Instant timestamp) {
-		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null || kind == null
+				|| objectId == null ) {
 			return emptyList();
 		}
-		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(datumKind(),
-				datumObjectId(), sourceIdPattern, timestamp, offset);
+		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(kind, objectId,
+				sourceIdPattern, timestamp, offset);
 		if ( found == null || found.isEmpty() ) {
 			return emptyList();
 		}
@@ -416,11 +425,14 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 */
 	public boolean hasOffsetMatching(@Nullable String sourceIdPattern, int offset,
 			@Nullable Instant timestamp) {
-		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null || kind == null
+				|| objectId == null ) {
 			return false;
 		}
-		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(datumKind(),
-				datumObjectId(), sourceIdPattern, timestamp, offset);
+		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(kind, objectId,
+				sourceIdPattern, timestamp, offset);
 		return (found != null && !found.isEmpty());
 	}
 
@@ -512,10 +524,12 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return the matching datum, or {@code null} if not available
 	 */
 	public @Nullable DatumExpressionRoot offset(@Nullable String sourceId, int offset) {
-		if ( datumStreamsAccessor == null || sourceId == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceId == null || kind == null || objectId == null ) {
 			return null;
 		}
-		Datum d = datumStreamsAccessor.offset(datumKind(), datumObjectId(), sourceId, offset);
+		Datum d = datumStreamsAccessor.offset(kind, objectId, sourceId, offset);
 		return (d != null ? copyWith(d) : null);
 	}
 
@@ -531,10 +545,12 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @return {@code true} if a matching datum exists
 	 */
 	public boolean hasOffset(@Nullable String sourceId, int offset) {
-		if ( datumStreamsAccessor == null || sourceId == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceId == null || kind == null || objectId == null ) {
 			return false;
 		}
-		Datum d = datumStreamsAccessor.offset(datumKind(), datumObjectId(), sourceId, offset);
+		Datum d = datumStreamsAccessor.offset(kind, objectId, sourceId, offset);
 		return (d != null);
 	}
 
@@ -554,10 +570,13 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 */
 	public @Nullable DatumExpressionRoot offset(@Nullable String sourceId, int offset,
 			@Nullable Instant timestamp) {
-		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null || kind == null
+				|| objectId == null ) {
 			return null;
 		}
-		Datum d = datumStreamsAccessor.offset(datumKind(), datumObjectId(), sourceId, timestamp, offset);
+		Datum d = datumStreamsAccessor.offset(kind, objectId, sourceId, timestamp, offset);
 		return (d != null ? copyWith(d) : null);
 	}
 
@@ -576,10 +595,13 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @since 1.1
 	 */
 	public boolean hasOffset(@Nullable String sourceId, int offset, @Nullable Instant timestamp) {
-		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null || kind == null
+				|| objectId == null ) {
 			return false;
 		}
-		Datum d = datumStreamsAccessor.offset(datumKind(), datumObjectId(), sourceId, timestamp, offset);
+		Datum d = datumStreamsAccessor.offset(kind, objectId, sourceId, timestamp, offset);
 		return (d != null);
 	}
 
@@ -741,10 +763,13 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @since 1.6
 	 */
 	public @Nullable DatumExpressionRoot datumAt(String sourceId, Instant timestamp) {
-		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null || kind == null
+				|| objectId == null ) {
 			return null;
 		}
-		Datum d = datumStreamsAccessor.at(datumKind(), datumObjectId(), sourceId, timestamp);
+		Datum d = datumStreamsAccessor.at(kind, objectId, sourceId, timestamp);
 		return (d != null ? copyWith(d) : null);
 	}
 
@@ -760,10 +785,13 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @since 1.6
 	 */
 	public boolean hasDatumAt(String sourceId, Instant timestamp) {
-		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null || kind == null
+				|| objectId == null ) {
 			return false;
 		}
-		Datum d = datumStreamsAccessor.at(datumKind(), datumObjectId(), sourceId, timestamp);
+		Datum d = datumStreamsAccessor.at(kind, objectId, sourceId, timestamp);
 		return (d != null);
 	}
 
@@ -779,11 +807,14 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 */
 	public Collection<DatumExpressionRoot> datumAtMatching(@Nullable String sourceIdPattern,
 			Instant timestamp) {
-		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null || kind == null
+				|| objectId == null ) {
 			return emptyList();
 		}
-		Collection<Datum> found = datumStreamsAccessor.atMatching(datumKind(), datumObjectId(),
-				sourceIdPattern, timestamp);
+		Collection<Datum> found = datumStreamsAccessor.atMatching(kind, objectId, sourceIdPattern,
+				timestamp);
 		if ( found == null || found.isEmpty() ) {
 			return emptyList();
 		}
@@ -801,11 +832,14 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 * @since 1.6
 	 */
 	public boolean hasDatumAtMatching(@Nullable String sourceIdPattern, Instant timestamp) {
-		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null || kind == null
+				|| objectId == null ) {
 			return false;
 		}
-		Collection<Datum> found = datumStreamsAccessor.atMatching(datumKind(), datumObjectId(),
-				sourceIdPattern, timestamp);
+		Collection<Datum> found = datumStreamsAccessor.atMatching(kind, objectId, sourceIdPattern,
+				timestamp);
 		return (found != null && !found.isEmpty());
 	}
 
@@ -854,14 +888,17 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 */
 	public @Nullable Number deltaAt(@Nullable String sourceId, @Nullable Instant timestamp, String key,
 			boolean fallbackToZero) {
-		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+		final ObjectDatumKind kind = datumKind();
+		final Long objectId = datumObjectId();
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null || kind == null
+				|| objectId == null ) {
 			return null;
 		}
-		Datum d = datumStreamsAccessor.at(datumKind(), datumObjectId(), sourceId, timestamp);
+		Datum d = datumStreamsAccessor.at(kind, objectId, sourceId, timestamp);
 		if ( d == null || !d.asSampleOperations().hasSampleValue(key) ) {
 			return 0;
 		}
-		Datum d1 = datumStreamsAccessor.offset(datumKind(), datumObjectId(), sourceId, timestamp, 1);
+		Datum d1 = datumStreamsAccessor.offset(kind, objectId, sourceId, timestamp, 1);
 		if ( d1 == null || !d1.asSampleOperations().hasSampleValue(key) ) {
 			if ( fallbackToZero ) {
 				return 0;

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.biz;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
@@ -46,6 +47,7 @@ public interface DatumAuxiliaryBiz {
 	 *        the primary key of the data to get
 	 * @return the datum, or {@code null} if not found
 	 */
+	@Nullable
 	GeneralNodeDatumAuxiliary getGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id);
 
 	/**
@@ -101,7 +103,7 @@ public interface DatumAuxiliaryBiz {
 	 * @return the results, never {@code null}
 	 */
 	FilterResults<GeneralNodeDatumAuxiliaryFilterMatch, GeneralNodeDatumAuxiliaryPK> findGeneralNodeDatumAuxiliary(
-			GeneralNodeDatumAuxiliaryFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max);
+			GeneralNodeDatumAuxiliaryFilter criteria, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max);
 
 }
