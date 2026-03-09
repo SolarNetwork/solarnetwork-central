@@ -121,8 +121,10 @@
 	</sql>
 	
 	<resultMap id="InstructionParameterFullResult" type="InstructionParameter">
-		<result property="name" column="sn_node_instruction_param_pname"/>
-		<result property="value" column="sn_node_instruction_param_pvalue"/>
+		<constructor>
+			<arg column="sn_node_instruction_param_pname" javaType="String"/>
+			<arg column="sn_node_instruction_param_pvalue" javaType="String"/>
+		</constructor>
 	</resultMap>
 
 	<select id="get-NodeInstruction-for-id" parameterType="long" resultMap="NodeInstructionFullResult">

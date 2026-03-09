@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.instructor.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.instructor.support.NodeInstructionDeserializer;
@@ -38,7 +40,7 @@ import tools.jackson.databind.annotation.JsonSerialize;
  * Instruction for a specific node.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 @JsonSerialize(using = NodeInstructionSerializer.class)
 @JsonDeserialize(using = NodeInstructionDeserializer.class)
@@ -47,15 +49,28 @@ public class NodeInstruction extends BaseEntity implements EntityMatch {
 	@Serial
 	private static final long serialVersionUID = 4904518821205446583L;
 
-	private Long nodeId;
+	private @Nullable Long nodeId;
 	private Instruction instruction;
 
 	/**
 	 * Default constructor.
 	 */
 	public NodeInstruction() {
+		this(new Instruction());
+	}
+
+	/**
+	 * Default constructor.
+	 * 
+	 * @param instruction
+	 *        the instruction
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @since 3.1
+	 */
+	public NodeInstruction(Instruction instruction) {
 		super();
-		setInstruction(new Instruction());
+		this.instruction = requireNonNullArgument(instruction, "instruction");
 	}
 
 	/**
@@ -68,7 +83,8 @@ public class NodeInstruction extends BaseEntity implements EntityMatch {
 	 * @param nodeId
 	 *        the node ID
 	 */
-	public NodeInstruction(String topic, Instant instructionDate, Long nodeId) {
+	public NodeInstruction(@Nullable String topic, @Nullable Instant instructionDate,
+			@Nullable Long nodeId) {
 		this(topic, instructionDate, nodeId, null);
 	}
 
@@ -83,12 +99,11 @@ public class NodeInstruction extends BaseEntity implements EntityMatch {
 	 *        the node ID
 	 * @since 2.4
 	 */
-	public NodeInstruction(String topic, Instant instructionDate, Long nodeId, Instant expirationDate) {
-		super();
+	public NodeInstruction(@Nullable String topic, @Nullable Instant instructionDate,
+			@Nullable Long nodeId, @Nullable Instant expirationDate) {
+		this(new Instruction(topic, instructionDate));
 		setNodeId(nodeId);
-		Instruction instr = new Instruction(topic, instructionDate);
-		instr.setExpirationDate(expirationDate);
-		setInstruction(instr);
+		this.instruction.setExpirationDate(expirationDate);
 	}
 
 	/**
@@ -99,8 +114,7 @@ public class NodeInstruction extends BaseEntity implements EntityMatch {
 	 * @since 1.1
 	 */
 	public NodeInstruction(NodeInstruction other) {
-		super();
-		setInstruction(new Instruction());
+		this();
 		other.copyTo(this);
 	}
 
@@ -173,28 +187,28 @@ public class NodeInstruction extends BaseEntity implements EntityMatch {
 	private final class NodeInstructionStatus implements net.solarnetwork.domain.InstructionStatus {
 
 		@Override
-		public Long getInstructionId() {
+		public @Nullable Long getInstructionId() {
 			return getId();
 		}
 
 		@Override
-		public Instant getStatusDate() {
+		public @Nullable Instant getStatusDate() {
 			return instruction.getStatusDate();
 		}
 
 		@Override
-		public Map<String, ?> getResultParameters() {
+		public @Nullable Map<String, ?> getResultParameters() {
 			return instruction.getResultParameters();
 		}
 
 		@Override
-		public InstructionStatus.InstructionState getInstructionState() {
+		public @Nullable InstructionState getInstructionState() {
 			return instruction.getState();
 		}
 
 		@Override
-		public InstructionStatus newCopyWithState(InstructionStatus.InstructionState newState,
-				Map<String, ?> resultParameters) {
+		public InstructionStatus newCopyWithState(InstructionState newState,
+				@Nullable Map<String, ?> resultParameters) {
 			var copy = new NodeInstruction(NodeInstruction.this);
 			copy.instruction.setState(newState);
 			copy.instruction.setStatusDate(Instant.now());
@@ -234,7 +248,7 @@ public class NodeInstruction extends BaseEntity implements EntityMatch {
 	 *
 	 * @return the node ID
 	 */
-	public final Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
@@ -244,7 +258,7 @@ public class NodeInstruction extends BaseEntity implements EntityMatch {
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public final void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
@@ -253,7 +267,7 @@ public class NodeInstruction extends BaseEntity implements EntityMatch {
 	 * 
 	 * @return the instruction
 	 */
-	public Instruction getInstruction() {
+	public final Instruction getInstruction() {
 		return instruction;
 	}
 
@@ -262,9 +276,11 @@ public class NodeInstruction extends BaseEntity implements EntityMatch {
 	 * 
 	 * @param instruction
 	 *        the instruction to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setInstruction(Instruction instruction) {
-		this.instruction = instruction;
+	public final void setInstruction(Instruction instruction) {
+		this.instruction = requireNonNullArgument(instruction, "instruction");
 	}
 
 }

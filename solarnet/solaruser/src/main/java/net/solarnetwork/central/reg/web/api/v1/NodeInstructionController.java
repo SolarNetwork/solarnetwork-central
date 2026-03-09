@@ -277,9 +277,8 @@ public class NodeInstructionController {
 	@ResponseBody
 	public Result<NodeInstruction> queueInstruction(@RequestParam("nodeId") Long nodeId,
 			Instruction input) {
-		var nodeInstrInput = new NodeInstruction();
+		var nodeInstrInput = new NodeInstruction(input);
 		nodeInstrInput.setNodeId(nodeId);
-		nodeInstrInput.setInstruction(input);
 		validateInstruction(nodeInstrInput);
 		NodeInstruction instr = instructorBiz.queueInstruction(nodeId, input);
 		return success(instr);

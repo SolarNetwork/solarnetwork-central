@@ -695,7 +695,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			return null;
 		}
 		NodeInstruction instruction = instructorBiz.getInstruction(instructionId);
-		if ( instruction == null ) {
+		if ( instruction == null || instruction.getNodeId() == null ) {
 			return null;
 		}
 
@@ -719,7 +719,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			case Received, Executing -> UserNodeCertificateInstallationStatus.RequestReceived;
 			case Completed -> UserNodeCertificateInstallationStatus.Installed;
 			case Declined -> UserNodeCertificateInstallationStatus.Declined;
-			default -> null;
+			case null, default -> null;
 		};
 
 		details.setInstallationStatus(installStatus);
