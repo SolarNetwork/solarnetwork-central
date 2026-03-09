@@ -443,7 +443,7 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		final List<CloudDatumStreamConfiguration> userRandomConfs = List
 				.of(userConfs.get(RNG.nextInt(userConfs.size())),
 						userConfs.get(RNG.nextInt(userConfs.size())))
-				.stream().sorted().toList();
+				.stream().distinct().sorted().toList();
 		final Set<Long> randomNodeIds = userRandomConfs.stream()
 				.map(CloudDatumStreamConfiguration::getObjectId).collect(toSet());
 
