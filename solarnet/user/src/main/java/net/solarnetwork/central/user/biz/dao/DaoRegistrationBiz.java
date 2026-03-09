@@ -753,6 +753,9 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		if ( keystorePassword == null ) {
 			throw new IllegalArgumentException("Keystore password must be provided.");
 		}
+		if ( cert.getNodeId() == null ) {
+			throw new IllegalArgumentException("Certificate node ID must be provided.");
+		}
 		final KeyStore keystore;
 		try {
 			keystore = cert.getKeyStore(keystorePassword);
