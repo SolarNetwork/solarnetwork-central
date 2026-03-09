@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.instructor.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 
@@ -44,13 +45,13 @@ public interface NodeInstructionQueueHook {
 	 * 
 	 * <p>
 	 * This hook allows inspecting and/or modifying an instruction, as well as
-	 * preventing the instruction from being enqueued by returning
-	 * {@code null}. When a new instruction is created, it starts in the
-	 * {@code Queued} state. If the given instruction's state is <b>not</b>
-	 * {@code Queued} that is an indication that some hook has modified the
-	 * instruction. Similarly, the returned instruction's state can be changed
-	 * to something other than {@code Queued}, like {@code Queuing}, to indicate
-	 * to other hooks that the instruction is being processed by this hook.
+	 * preventing the instruction from being enqueued by returning {@code null}.
+	 * When a new instruction is created, it starts in the {@code Queued} state.
+	 * If the given instruction's state is <b>not</b> {@code Queued} that is an
+	 * indication that some hook has modified the instruction. Similarly, the
+	 * returned instruction's state can be changed to something other than
+	 * {@code Queued}, like {@code Queuing}, to indicate to other hooks that the
+	 * instruction is being processed by this hook.
 	 * </p>
 	 * 
 	 * @param instruction
@@ -59,6 +60,7 @@ public interface NodeInstructionQueueHook {
 	 *         instruction passed in or a new instance, or {@code null} to
 	 *         <b>not</b> enqueue the instruction
 	 */
+	@Nullable
 	NodeInstruction willQueueNodeInstruction(NodeInstruction instruction);
 
 	/**

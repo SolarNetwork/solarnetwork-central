@@ -1,7 +1,7 @@
 /* ==================================================================
- * NodeInstructionQueueHookStat.java - 11/11/2021 3:51:37 PM
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,33 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork instructor MQTT DAO implementations.
+ */
+
+@NullMarked
 package net.solarnetwork.central.instructor.dao.mqtt;
 
-/**
- * NodeInstructionQueueHook MQTT statistic types.
- *
- * @author matt
- * @version 1.1
- */
-public enum NodeInstructionQueueHookStat {
-
-	InstructionsPublished("instructions published"),
-
-	;
-
-	private final String description;
-
-	NodeInstructionQueueHookStat(String description) {
-		this.description = description;
-	}
-
-	/**
-	 * Get the description.
-	 *
-	 * @return the description
-	 */
-	public final String getDescription() {
-		return description;
-	}
-
-}
+import org.jspecify.annotations.NullMarked;

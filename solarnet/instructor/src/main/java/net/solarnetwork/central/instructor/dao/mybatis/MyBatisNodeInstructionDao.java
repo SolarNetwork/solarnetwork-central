@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.ibatis.session.ResultHandler;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -136,7 +137,8 @@ public class MyBatisNodeInstructionDao
 
 	@Override
 	public boolean compareAndUpdateInstructionState(Long instructionId, Long nodeId,
-			InstructionState expectedState, InstructionState state, Map<String, ?> resultParameters) {
+			InstructionState expectedState, InstructionState state,
+			@Nullable Map<String, ?> resultParameters) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", instructionId);
 		params.put("nodeId", nodeId);
@@ -151,7 +153,7 @@ public class MyBatisNodeInstructionDao
 
 	@Override
 	public boolean updateNodeInstructionState(Long instructionId, Long nodeId, InstructionState state,
-			Map<String, ?> resultParameters) {
+			@Nullable Map<String, ?> resultParameters) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", instructionId);
 		params.put("nodeId", nodeId);
@@ -175,8 +177,8 @@ public class MyBatisNodeInstructionDao
 	}
 
 	@Override
-	protected Long executeFilterCountQuery(final String countQueryName, InstructionFilter filter,
-			final Map<String, ?> sqlProps) {
+	protected @Nullable Long executeFilterCountQuery(final String countQueryName,
+			InstructionFilter filter, final @Nullable Map<String, ?> sqlProps) {
 		// count not supported, so don't bother trying
 		return null;
 	}
