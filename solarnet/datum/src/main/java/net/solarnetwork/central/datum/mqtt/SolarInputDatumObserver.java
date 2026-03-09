@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 import org.ehcache.impl.internal.concurrent.ConcurrentHashMap;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.TransactionException;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.biz.NodeEventObservationRegistrar;
@@ -101,7 +102,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final DatumStreamMetadataDao datumStreamMetadataDao;
 
-	private Cache<DatumId, ObjectDatumStreamMetadata> metadataCache;
+	private @Nullable Cache<DatumId, ObjectDatumStreamMetadata> metadataCache;
 	private String nodeDatumTopicTemplate = DEFAULT_NODE_DATUM_TOPIC_TEMPLATE;
 	private Pattern nodeDatumTopicRegex = DEFAULT_NODE_TOPIC_REGEX;
 
@@ -171,7 +172,8 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	}
 
 	@Override
-	public void unregisterNodeObserver(final Consumer<ObjectDatum> observer, final Long... nodeIds) {
+	public void unregisterNodeObserver(final Consumer<ObjectDatum> observer,
+			final Long @Nullable... nodeIds) {
 		if ( observer == null ) {
 			return;
 		}
@@ -215,7 +217,8 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 		});
 	}
 
-	private void subscribe(MqttConnection connection, Long nodeId, MqttMessageHandler handler) {
+	private void subscribe(@Nullable MqttConnection connection, Long nodeId,
+			MqttMessageHandler handler) {
 		if ( connection == null || !connection.isEstablished() ) {
 			return;
 		}
@@ -230,7 +233,8 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 		}
 	}
 
-	private void unsubscribe(MqttConnection connection, Long nodeId, MqttMessageHandler handler) {
+	private void unsubscribe(@Nullable MqttConnection connection, Long nodeId,
+			MqttMessageHandler handler) {
 		if ( connection == null || !connection.isEstablished() ) {
 			return;
 		}
@@ -294,7 +298,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 			}
 		}
 
-		private ObjectDatum parseMqttMessage(ObjectMapper objectMapper, MqttMessage message,
+		private @Nullable ObjectDatum parseMqttMessage(ObjectMapper objectMapper, MqttMessage message,
 				String topic, Long nodeId, SolarNodeOwnership owner) throws IOException {
 			JsonNode root = objectMapper.readTree(message.getPayload());
 			if ( root.isObject() || root.isArray() ) {
@@ -322,9 +326,10 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 			return null;
 		}
 
-		private ObjectDatum parseDatum(JsonNode json, Long nodeId, SolarNodeOwnership owner) {
-			String nodeType = getStringFieldValue(json, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE);
-			JsonNode instrId = json.get(INSTRUCTION_ID_FIELD);
+		private @Nullable ObjectDatum parseDatum(JsonNode json, Long nodeId, SolarNodeOwnership owner) {
+			final String nodeType = getStringFieldValue(json, OBJECT_TYPE_FIELD,
+					GENERAL_NODE_DATUM_TYPE);
+			final JsonNode instrId = json.get(INSTRUCTION_ID_FIELD);
 			if ( (instrId != null && instrId.isNumber())
 					|| INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
 				// do not handle instruction status
@@ -345,6 +350,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 				final ObjectDatumStreamMetadata meta = metadataForDatumId(owner.getUserId(), id);
 				if ( meta == null ) {
 					log.debug("Ignoring node {} datum with missing stream metadata: {}", nodeId, d);
+					return null;
 				}
 				return ObjectDatum.forDatum(d, owner.getUserId(), id, meta, true);
 			} catch ( Exception e ) {
@@ -353,7 +359,8 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 			return null;
 		}
 
-		private ObjectDatum parseStreamDatum(JsonNode json, Long nodeId, SolarNodeOwnership owner) {
+		private @Nullable ObjectDatum parseStreamDatum(JsonNode json, Long nodeId,
+				SolarNodeOwnership owner) {
 			try {
 				final StreamDatum d = objectMapper.treeToValue(json, StreamDatum.class);
 				final ObjectDatumStreamMetadata meta = metadataForStreamId(owner.getUserId(),
@@ -378,7 +385,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 		return (child == null ? placeholder : child.asString());
 	}
 
-	private ObjectDatumStreamMetadata metadataForDatumId(Long userId, DatumId id) {
+	private @Nullable ObjectDatumStreamMetadata metadataForDatumId(Long userId, DatumId id) {
 		final var cache = getMetadataCache();
 		var result = (cache != null ? cache.get(id) : null);
 		if ( result != null ) {
@@ -393,7 +400,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 		return StreamSupport.stream(results.spliterator(), false).findFirst().orElse(null);
 	}
 
-	private ObjectDatumStreamMetadata metadataForStreamId(Long userId, UUID id) {
+	private @Nullable ObjectDatumStreamMetadata metadataForStreamId(Long userId, UUID id) {
 		BasicDatumCriteria criteria = new BasicDatumCriteria();
 		criteria.setUserId(userId);
 		criteria.setStreamId(id);
@@ -406,7 +413,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	 *
 	 * @return the metadata cache to use
 	 */
-	public Cache<DatumId, ObjectDatumStreamMetadata> getMetadataCache() {
+	public final @Nullable Cache<DatumId, ObjectDatumStreamMetadata> getMetadataCache() {
 		return metadataCache;
 	}
 
@@ -416,7 +423,8 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	 * @param metadataCache
 	 *        the metadata cache to set
 	 */
-	public void setMetadataCache(Cache<DatumId, ObjectDatumStreamMetadata> metadataCache) {
+	public final void setMetadataCache(
+			@Nullable Cache<DatumId, ObjectDatumStreamMetadata> metadataCache) {
 		this.metadataCache = metadataCache;
 	}
 
@@ -425,7 +433,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	 *
 	 * @return the template
 	 */
-	public String getNodeDatumTopicTemplate() {
+	public final String getNodeDatumTopicTemplate() {
 		return nodeDatumTopicTemplate;
 	}
 
@@ -443,7 +451,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	 *        the template to set; if {@code null} then
 	 *        {@link #DEFAULT_NODE_DATUM_TOPIC_TEMPLATE} will be set instead
 	 */
-	public void setNodeDatumTopicTemplate(String nodeDatumTopicTemplate) {
+	public final void setNodeDatumTopicTemplate(String nodeDatumTopicTemplate) {
 		this.nodeDatumTopicTemplate = (nodeDatumTopicTemplate != null ? nodeDatumTopicTemplate
 				: DEFAULT_NODE_DATUM_TOPIC_TEMPLATE);
 	}
@@ -453,7 +461,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	 *
 	 * @return the pattern
 	 */
-	public Pattern getNodeDatumTopicRegex() {
+	public final Pattern getNodeDatumTopicRegex() {
 		return nodeDatumTopicRegex;
 	}
 
@@ -470,7 +478,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	 *        the nodeDatumTopicRegex to set; if {@code null} then
 	 *        {@link #DEFAULT_NODE_TOPIC_REGEX} will be set instead
 	 */
-	public void setNodeDatumTopicRegex(Pattern nodeDatumTopicRegex) {
+	public final void setNodeDatumTopicRegex(Pattern nodeDatumTopicRegex) {
 		this.nodeDatumTopicRegex = (nodeDatumTopicRegex != null ? nodeDatumTopicRegex
 				: DEFAULT_NODE_TOPIC_REGEX);
 	}
