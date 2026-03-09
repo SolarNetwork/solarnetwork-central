@@ -219,11 +219,9 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 			return null;
 		}
 
-		GeneralNodeDatum d = new GeneralNodeDatum();
+		GeneralNodeDatum d = new GeneralNodeDatum(cp.getNodeId(), ts,
+				pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		d.setSamples(s);
-		d.setCreated(ts);
-		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		return d;
 	}
 

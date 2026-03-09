@@ -85,10 +85,7 @@ public class StoreGeneralObjectDatumTests {
 		// GIVEN
 		final Instant now = now().truncatedTo(MILLIS);
 
-		final GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setNodeId(randomLong());
-		datum.setSourceId(randomString());
-		datum.setCreated(now);
+		final GeneralNodeDatum datum = new GeneralNodeDatum(randomLong(), now, randomString());
 
 		DatumSamples samples = new DatumSamples();
 		samples.setInstantaneous(Map.of("a", randomInt()));
@@ -151,10 +148,7 @@ public class StoreGeneralObjectDatumTests {
 		// GIVEN
 		final Instant now = now().truncatedTo(MILLIS);
 
-		final GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setNodeId(randomLong());
-		datum.setSourceId(randomString());
-		datum.setCreated(now);
+		final GeneralNodeDatum datum = new GeneralNodeDatum(randomLong(), now, randomString());
 
 		DatumSamples samples = new DatumSamples();
 		samples.setInstantaneous(Map.of("a", Double.POSITIVE_INFINITY));

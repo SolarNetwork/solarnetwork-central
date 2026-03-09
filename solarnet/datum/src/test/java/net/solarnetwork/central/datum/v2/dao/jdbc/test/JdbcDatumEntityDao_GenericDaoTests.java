@@ -120,10 +120,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 	@Test
 	public void store_veryBigValues() {
 		// GIVEN
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setNodeId(1L);
-		datum.setSourceId("a");
-		datum.setCreated(Instant.now());
+		GeneralNodeDatum datum = new GeneralNodeDatum(1L, Instant.now(), "a");
 		DatumSamples s = new DatumSamples();
 		datum.setSamples(s);
 		s.putInstantaneousSampleValue("watts", 498475890235787897L);
@@ -190,10 +187,8 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 	public void store_newLocationStream() throws IOException {
 		// GIVEN
 		GeneralNodeDatum nodeDatum = loadJsonDatumResource("test-datum-01.txt", getClass()).get(0);
-		GeneralLocationDatum datum = new GeneralLocationDatum();
-		datum.setCreated(nodeDatum.getCreated());
-		datum.setLocationId(TEST_LOC_ID);
-		datum.setSourceId(nodeDatum.getSourceId());
+		GeneralLocationDatum datum = new GeneralLocationDatum(TEST_LOC_ID, nodeDatum.getCreated(),
+				nodeDatum.getSourceId());
 		DatumSamples s = new DatumSamples();
 		s.setI(nodeDatum.getSamples().getI());
 		s.setA(nodeDatum.getSamples().getA());

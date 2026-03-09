@@ -132,10 +132,8 @@ public class MqttDataCollector_CborTests {
 		assertThat("Posted datum count", postedDatumList, hasSize(1));
 		GeneralNodeDatum postedDatum = postedDatumList.get(0);
 
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.ofEpochMilli(1576472400000L));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId("/DE/G2/GM/GEN/1");
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID, Instant.ofEpochMilli(1576472400000L),
+				"/DE/G2/GM/GEN/1");
 
 		assertThat("Posted datum ID", postedDatum.getId(), equalTo(datum.getId()));
 		DatumSamples samples = postedDatum.getSamples();
@@ -174,10 +172,8 @@ public class MqttDataCollector_CborTests {
 		assertThat("Posted datum count", postedDatumList, hasSize(1));
 		GeneralNodeDatum postedDatum = postedDatumList.get(0);
 
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.ofEpochMilli(1576472400000L));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId("/DE/G2/GM/GEN/1");
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID, Instant.ofEpochMilli(1576472400000L),
+				"/DE/G2/GM/GEN/1");
 
 		assertThat("Posted datum ID", postedDatum.getId(), equalTo(datum.getId()));
 		DatumSamples samples = postedDatum.getSamples();

@@ -56,6 +56,7 @@ import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
@@ -379,9 +380,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		insertDatumAuxiliary(log, jdbcTemplate, meta.getStreamId(), auxDatums);
 
 		List<GeneralNodeDatum> datums2 = datums.stream().map(e -> {
-			GeneralNodeDatum clone = e.clone();
-			clone.setNodeId(2L);
-			return clone;
+			return e.copyWithId(new GeneralNodeDatumPK(2L, e.getCreated(), e.getSourceId()));
 		}).collect(Collectors.toList());
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas2 = insertDatumStream(log, jdbcTemplate,
 				datums2, "UTC");

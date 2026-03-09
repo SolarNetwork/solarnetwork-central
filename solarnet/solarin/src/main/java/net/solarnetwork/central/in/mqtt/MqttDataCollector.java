@@ -315,17 +315,12 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 	private Object convertGeneralDatum(Long nodeId, Datum gd) {
 		DatumSamples s = new DatumSamples(gd.asSampleOperations());
 		if ( gd.getKind() == ObjectDatumKind.Location ) {
-			GeneralLocationDatum gld = new GeneralLocationDatum();
-			gld.setCreated(gd.getTimestamp());
-			gld.setSourceId(gd.getSourceId());
-			gld.setLocationId(gd.getObjectId());
+			GeneralLocationDatum gld = new GeneralLocationDatum(gd.getObjectId(), gd.getTimestamp(),
+					gd.getSourceId());
 			gld.setSamples(s);
 			return gld;
 		}
-		GeneralNodeDatum gnd = new GeneralNodeDatum();
-		gnd.setNodeId(nodeId);
-		gnd.setCreated(gd.getTimestamp());
-		gnd.setSourceId(gd.getSourceId());
+		GeneralNodeDatum gnd = new GeneralNodeDatum(nodeId, gd.getTimestamp(), gd.getSourceId());
 		gnd.setSamples(s);
 		return gnd;
 	}

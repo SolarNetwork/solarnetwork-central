@@ -30,6 +30,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.SerializeIgnore;
+import net.solarnetwork.domain.datum.DatumSamples;
 
 /**
  * A "match" to a {@link GeneralNodeDatumAuxiliary}.
@@ -52,6 +53,35 @@ public class GeneralNodeDatumAuxiliaryMatch extends GeneralNodeDatumAuxiliary
 	private static final long serialVersionUID = 3909545590126013044L;
 
 	private @Nullable LocalDateTime localDateTime;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the primary key
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public GeneralNodeDatumAuxiliaryMatch(GeneralNodeDatumAuxiliaryPK id) {
+		super(id);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the primary key
+	 * @param samplesFinal
+	 *        the final samples
+	 * @param samplesStart
+	 *        the starting samples
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@code null}
+	 */
+	public GeneralNodeDatumAuxiliaryMatch(GeneralNodeDatumAuxiliaryPK id,
+			@Nullable DatumSamples samplesFinal, @Nullable DatumSamples samplesStart) {
+		super(id, samplesFinal, samplesStart);
+	}
 
 	@Override
 	public final @Nullable LocalDate getLocalDate() {

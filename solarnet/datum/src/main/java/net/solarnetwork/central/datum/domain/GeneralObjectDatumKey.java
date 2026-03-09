@@ -24,16 +24,22 @@ package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
 import java.time.Instant;
-import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * A general datum key, suitable for node and location datum.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface GeneralObjectDatumKey extends Cloneable, Serializable {
+
+	/**
+	 * An "unassigned" object ID value.
+	 *
+	 * @since 1.1
+	 */
+	Long UNASSIGNED_OBJECT_ID = Long.MIN_VALUE;
 
 	/**
 	 * Get the object kind.
@@ -47,8 +53,20 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 *
 	 * @return the object ID, or {@code null}
 	 */
-	@Nullable
 	Long getObjectId();
+
+	/**
+	 * Test if the object ID is assigned.
+	 *
+	 * @return {@literal true} if the object ID value is assigned,
+	 *         {@literal false} if it is considered "not a value"
+	 * @since 1.1
+	 */
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
+	default boolean objectIdIsAssigned() {
+		final Long userId = getObjectId();
+		return userId != null && userId != UNASSIGNED_OBJECT_ID;
+	}
 
 	/**
 	 * Get the date this datum is associated with, which is often equal to
@@ -57,7 +75,6 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 *
 	 * @return the timestamp
 	 */
-	@Nullable
 	Instant getTimestamp();
 
 	/**
@@ -69,7 +86,6 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 *
 	 * @return the source ID
 	 */
-	@Nullable
 	String getSourceId();
 
 }

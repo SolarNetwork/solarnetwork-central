@@ -130,10 +130,8 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 			final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(),
 					cp.getId());
 
-			GeneralNodeDatum d = new GeneralNodeDatum();
-			d.setCreated(Instant.now());
-			d.setNodeId(cp.getNodeId());
-			d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
+			GeneralNodeDatum d = new GeneralNodeDatum(cp.getNodeId(), Instant.now(),
+					pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 			d.setSamples(s);
 			pubSupport.publishDatum(cps, d);
 		}

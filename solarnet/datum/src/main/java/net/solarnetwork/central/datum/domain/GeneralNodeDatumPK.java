@@ -41,13 +41,6 @@ public class GeneralNodeDatumPK extends BasicNodeSourceDatePK
 	private static final long serialVersionUID = 2663897681819661032L;
 
 	/**
-	 * Default constructor.
-	 */
-	public GeneralNodeDatumPK() {
-		super();
-	}
-
-	/**
 	 * Constructor.
 	 *
 	 * @param nodeId
@@ -56,10 +49,11 @@ public class GeneralNodeDatumPK extends BasicNodeSourceDatePK
 	 *        the creation date
 	 * @param sourceId
 	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 * @since 1.3
 	 */
-	public GeneralNodeDatumPK(@Nullable Long nodeId, @Nullable Instant created,
-			@Nullable String sourceId) {
+	public GeneralNodeDatumPK(Long nodeId, Instant created, String sourceId) {
 		super(nodeId, sourceId, created);
 	}
 
@@ -94,12 +88,12 @@ public class GeneralNodeDatumPK extends BasicNodeSourceDatePK
 	}
 
 	@Override
-	public final @Nullable Long getObjectId() {
+	public final Long getObjectId() {
 		return getNodeId();
 	}
 
 	@Override
-	public final @Nullable Instant getTimestamp() {
+	public final Instant getTimestamp() {
 		return getCreated();
 	}
 

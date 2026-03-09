@@ -53,13 +53,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
@@ -100,7 +101,8 @@ public class JdbcDatumEntityDao_StreamingReadingFilterResultsTests extends BaseD
 	}
 
 	private Map<NodeSourcePK, ObjectDatumStreamMetadata> loadStreamWithAuxiliary(String resource,
-			Consumer<GeneralNodeDatum> datumMapper, Consumer<GeneralNodeDatumAuxiliary> auxMapper) {
+			Function<GeneralNodeDatum, GeneralNodeDatum> datumMapper,
+			Function<GeneralNodeDatumAuxiliary, GeneralNodeDatumAuxiliary> auxMapper) {
 		List<?> data;
 		try {
 			data = loadJsonDatumAndAuxiliaryResource(resource, getClass(), datumMapper, auxMapper);
@@ -236,10 +238,8 @@ public class JdbcDatumEntityDao_StreamingReadingFilterResultsTests extends BaseD
 		for ( int i = 0; i < 5; i++ ) {
 			final Long nodeId = (long) (i + 1);
 			final String sourceId = Character.toString((char) ('a' + i));
-			metas.putAll(loadStreamWithAuxiliary("test-datum-02.txt", d -> {
-				d.setNodeId(nodeId);
-				d.setSourceId(sourceId);
-			}, null));
+			metas.putAll(loadStreamWithAuxiliary("test-datum-02.txt",
+					d -> d.copyWithId(new GeneralNodeDatumPK(nodeId, d.getCreated(), sourceId)), null));
 		}
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 
@@ -286,13 +286,11 @@ public class JdbcDatumEntityDao_StreamingReadingFilterResultsTests extends BaseD
 			final ZoneId zone = zones.get(i);
 			setupTestLocation(id, zone.getId());
 			setupTestNode(id, id);
-			metas.putAll(loadStreamWithAuxiliary("test-datum-02.txt", d -> {
-				d.setNodeId(nodeId);
-				d.setSourceId(sourceId);
-				ZonedDateTime dt = d.getCreated().atZone(ZoneId.of("Pacific/Auckland"))
-						.withZoneSameLocal(zone);
-				d.setCreated(dt.toInstant());
-			}, null));
+			metas.putAll(loadStreamWithAuxiliary("test-datum-02.txt",
+					d -> d.copyWithId(new GeneralNodeDatumPK(nodeId, d.getCreated()
+							.atZone(ZoneId.of("Pacific/Auckland")).withZoneSameLocal(zone).toInstant(),
+							sourceId)),
+					null));
 		}
 
 		LocalDateTime start = LocalDateTime.of(2020, 6, 2, 0, 0, 0, 0);

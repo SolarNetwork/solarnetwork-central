@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -54,13 +56,42 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 	@Serial
 	private static final long serialVersionUID = 7692101091820630679L;
 
-	private final LocationSourcePK id = new LocationSourcePK();
+	private final LocationSourcePK id;
 	private @Nullable Instant created;
 	private @Nullable Instant updated;
 	private @Nullable GeneralDatumMetadata meta;
 	private @Nullable String metaJson;
 
 	private @Nullable SolarLocation location;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public GeneralLocationDatumMetadata(LocationSourcePK id) {
+		super();
+		this.id = requireNonNullArgument(id, "id");
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param locationId
+	 *        the location ID
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public GeneralLocationDatumMetadata(@JsonProperty("locationId") Long locationId,
+			@JsonProperty("sourceId") String sourceId) {
+		this(new LocationSourcePK(locationId, sourceId));
+	}
 
 	@Override
 	public GeneralLocationDatumMetadata clone() {
@@ -95,18 +126,8 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 	 *
 	 * @return the locationId
 	 */
-	public final @Nullable Long getLocationId() {
+	public final Long getLocationId() {
 		return id.getLocationId();
-	}
-
-	/**
-	 * Convenience setter for {@link LocationSourcePK#setLocationId(Long)}.
-	 *
-	 * @param locationId
-	 *        the locationId to set
-	 */
-	public final void setLocationId(@Nullable Long locationId) {
-		id.setLocationId(locationId);
 	}
 
 	/**
@@ -114,22 +135,12 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 	 *
 	 * @return the sourceId
 	 */
-	public final @Nullable String getSourceId() {
+	public final String getSourceId() {
 		return id.getSourceId();
 	}
 
 	/**
-	 * Convenience setter for {@link LocationSourcePK#setSourceId(String)}.
-	 *
-	 * @param sourceId
-	 *        the sourceId to set
-	 */
-	public final void setSourceId(@Nullable String sourceId) {
-		id.setSourceId(sourceId);
-	}
-
-	/**
-	 * Alternative for {@link #getMeta()}. This method exists so that we can
+	 * /** Alternative for {@link #getMeta()}. This method exists so that we can
 	 * configure {@code @JsonUnwrapped} on our {@link GeneralDatumMetadata} but
 	 * still support setting it in a normal, wrapped fashion via
 	 * {@link #setMeta(GeneralDatumMetadata)}.

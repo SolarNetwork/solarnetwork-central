@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.biz.dao.DaoAuditDatumBiz;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.ObjectRecordId;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumDao;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
@@ -108,7 +108,7 @@ public class DaoAuditDatumBizTests {
 		filter.setLocalEndDate(filter.getLocalStartDate().plusDays(1));
 
 		FilterResults<AuditDatumRollup, DatumPK> rollups = biz.findAuditDatumFiltered(filter);
-		FilterResults<AuditDatumRecordCounts, GeneralNodeDatumPK> results = DatumUtils
+		FilterResults<AuditDatumRecordCounts, ObjectRecordId> results = DatumUtils
 				.toAuditDatumRecordCountsFilterResults(rollups);
 
 		// THEN

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
@@ -42,14 +43,7 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	@Serial
 	private static final long serialVersionUID = 5523741563653967531L;
 
-	private @Nullable DatumAuxiliaryType type;
-
-	/**
-	 * Default constructor.
-	 */
-	public GeneralNodeDatumAuxiliaryPK() {
-		super();
-	}
+	private final DatumAuxiliaryType type;
 
 	/**
 	 * Constructor.
@@ -65,8 +59,7 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	 * @param sourceId
 	 *        the source ID
 	 */
-	public GeneralNodeDatumAuxiliaryPK(@Nullable Long nodeId, @Nullable Instant created,
-			@Nullable String sourceId) {
+	public GeneralNodeDatumAuxiliaryPK(Long nodeId, Instant created, String sourceId) {
 		this(nodeId, created, sourceId, DatumAuxiliaryType.Reset);
 	}
 
@@ -82,10 +75,10 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	 * @param type
 	 *        the type
 	 */
-	public GeneralNodeDatumAuxiliaryPK(@Nullable Long nodeId, @Nullable Instant created,
-			@Nullable String sourceId, @Nullable DatumAuxiliaryType type) {
+	public GeneralNodeDatumAuxiliaryPK(Long nodeId, Instant created, String sourceId,
+			DatumAuxiliaryType type) {
 		super(nodeId, sourceId, created);
-		this.type = type;
+		this.type = requireNonNullArgument(type, "type");
 	}
 
 	@Override
@@ -116,20 +109,16 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	protected void populateIdValue(StringBuilder buf) {
 		super.populateIdValue(buf);
 		buf.append(";t=");
-		if ( type != null ) {
-			buf.append(type);
-		}
+		buf.append(type);
 	}
 
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		super.populateStringValue(buf);
-		if ( type != null ) {
-			if ( !buf.isEmpty() ) {
-				buf.append(", ");
-			}
-			buf.append("type=").append(type);
+		if ( !buf.isEmpty() ) {
+			buf.append(", ");
 		}
+		buf.append("type=").append(type);
 	}
 
 	@Override
@@ -139,20 +128,16 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 			return result;
 		}
 		o = nonnull(o, "other");
-		if ( o.type == null ) {
-			return 1;
-		} else if ( type == null ) {
-			return -1;
-		}
 		return type.compareTo(o.type);
 	}
 
-	public final @Nullable DatumAuxiliaryType getType() {
+	/**
+	 * Get the datum auxiliary type.
+	 *
+	 * @return the type
+	 */
+	public final DatumAuxiliaryType getType() {
 		return type;
-	}
-
-	public final void setType(@Nullable DatumAuxiliaryType type) {
-		this.type = type;
 	}
 
 }

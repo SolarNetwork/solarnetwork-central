@@ -140,9 +140,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		}
 
 		for ( GeneralNodeDatum d : datums ) {
-			if ( d.getNodeId() == null ) {
-				d.setNodeId(authNode.getNodeId());
-			} else if ( !d.getNodeId().equals(authNode.getNodeId()) ) {
+			if ( !d.getNodeId().equals(authNode.getNodeId()) ) {
 				if ( log.isWarnEnabled() ) {
 					log.warn("Illegal datum post by node {} as node {}", authNode.getNodeId(),
 							d.getNodeId());

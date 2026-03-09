@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
@@ -42,14 +43,7 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 	@Serial
 	private static final long serialVersionUID = 8552882329808995996L;
 
-	private @Nullable Instant created;
-
-	/**
-	 * Default constructor.
-	 */
-	public BasicLocationSourceDatePK() {
-		super();
-	}
+	private final Instant created;
 
 	/**
 	 * Constructor.
@@ -60,13 +54,12 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 	 *        the source ID
 	 * @param created
 	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public BasicLocationSourceDatePK(@Nullable Long locationId, @Nullable String sourceId,
-			@Nullable Instant created) {
-		super();
-		setLocationId(locationId);
-		setSourceId(sourceId);
-		setCreated(created);
+	public BasicLocationSourceDatePK(Long locationId, String sourceId, Instant created) {
+		super(locationId, sourceId);
+		this.created = requireNonNullArgument(created, "created");
 	}
 
 	@Override
@@ -90,9 +83,6 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 		if ( !super.equals(obj) || !(obj instanceof BasicLocationSourceDatePK other) ) {
 			return false;
 		}
-		if ( created == null ) {
-			return other.created == null;
-		}
 		return created.equals(other.created);
 	}
 
@@ -100,9 +90,7 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 	protected void populateIdValue(StringBuilder buf) {
 		super.populateIdValue(buf);
 		buf.append(";c=");
-		if ( created != null ) {
-			buf.append(created);
-		}
+		buf.append(created);
 	}
 
 	/**
@@ -132,11 +120,6 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 			return comparison;
 		}
 		o = nonnull(o, "other");
-		if ( o.created == null ) {
-			return 1;
-		} else if ( created == null ) {
-			return -1;
-		}
 		return created.compareTo(o.created);
 	}
 
@@ -154,21 +137,20 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		super.populateStringValue(buf);
-		if ( created != null ) {
-			if ( !buf.isEmpty() ) {
-				buf.append(", ");
-			}
-			buf.append("created=");
-			buf.append(created);
+		if ( !buf.isEmpty() ) {
+			buf.append(", ");
 		}
+		buf.append("created=");
+		buf.append(created);
 	}
 
-	public final @Nullable Instant getCreated() {
+	/**
+	 * Get the creation date.
+	 *
+	 * @return the creation date
+	 */
+	public final Instant getCreated() {
 		return created;
-	}
-
-	public final void setCreated(@Nullable Instant created) {
-		this.created = created;
 	}
 
 }

@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
-import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseObjectEntity;
 
@@ -37,72 +40,90 @@ import net.solarnetwork.central.dao.BaseObjectEntity;
  * @since 1.39
  */
 @JsonIgnoreProperties({ "id", "modified" })
-@JsonPropertyOrder({ "nodeId", "sourceId", "startDate", "kind", "created" })
+@JsonPropertyOrder({ "nodeId", "sourceId", "startDate", "kind" })
 public class StaleAggregateDatum extends BaseObjectEntity<GeneralNodeDatumKindPK> {
 
 	@Serial
 	private static final long serialVersionUID = -1038866556599452520L;
 
-	public StaleAggregateDatum() {
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public StaleAggregateDatum(GeneralNodeDatumKindPK id) {
 		super();
-		setId(new GeneralNodeDatumKindPK());
+		setId(requireNonNullArgument(id, "id"));
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @param kind
+	 *        the kind
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public StaleAggregateDatum(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("startDate") Instant created, @JsonProperty("sourceId") String sourceId,
+			@JsonProperty("kind") String kind) {
+		this(new GeneralNodeDatumKindPK(nodeId, created, sourceId, kind));
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("StaleAggregateDatum{");
-		builder.append("nodeId=").append(getNodeId());
+		builder.append("StaleAggregateDatum{nodeId=").append(getNodeId());
 		builder.append(", sourceId=").append(getSourceId());
 		builder.append(", startDate=").append(getStartDate());
-		builder.append(", created=").append(getCreated());
 		builder.append("}");
 		return builder.toString();
 	}
 
-	private GeneralNodeDatumKindPK getOrCreateId() {
-		GeneralNodeDatumKindPK pk = getId();
-		if ( pk == null ) {
-			pk = new GeneralNodeDatumKindPK();
-			setId(pk);
-		}
-		return pk;
+	/**
+	 * Get the node ID.
+	 *
+	 * @return the node ID
+	 */
+	public final Long getNodeId() {
+		return nonnull(getId(), "ID").getNodeId();
 	}
 
-	public final @Nullable Long getNodeId() {
-		GeneralNodeDatumKindPK pk = getId();
-		return (pk != null ? pk.getNodeId() : null);
+	/**
+	 * Get the source ID.
+	 *
+	 * @return the source ID
+	 */
+	public final String getSourceId() {
+		return nonnull(getId(), "ID").getSourceId();
 	}
 
-	public final void setNodeId(@Nullable Long nodeId) {
-		getOrCreateId().setNodeId(nodeId);
+	/**
+	 * Get the start date.
+	 *
+	 * @return the start date
+	 */
+	public final Instant getStartDate() {
+		return nonnull(getId(), "ID").getCreated();
 	}
 
-	public final @Nullable String getSourceId() {
-		GeneralNodeDatumKindPK pk = getId();
-		return (pk != null ? pk.getSourceId() : null);
-	}
-
-	public final void setSourceId(@Nullable String sourceId) {
-		getOrCreateId().setSourceId(sourceId);
-	}
-
-	public final @Nullable Instant getStartDate() {
-		GeneralNodeDatumKindPK pk = getId();
-		return (pk != null ? pk.getCreated() : null);
-	}
-
-	public final void setStartDate(@Nullable Instant date) {
-		getOrCreateId().setCreated(date);
-	}
-
-	public final @Nullable String getKind() {
-		GeneralNodeDatumKindPK pk = getId();
-		return (pk != null ? pk.getKind() : null);
-	}
-
-	public final void setKind(@Nullable String kind) {
-		getOrCreateId().setKind(kind);
+	/**
+	 * Get the kind.
+	 *
+	 * @return the kind
+	 */
+	public final String getKind() {
+		return nonnull(getId(), "ID").getKind();
 	}
 
 }

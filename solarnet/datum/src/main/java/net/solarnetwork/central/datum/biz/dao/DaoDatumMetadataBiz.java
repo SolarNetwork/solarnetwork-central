@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.biz.dao;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,6 +36,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -88,10 +90,10 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	private final LocationRequestDao locationRequestDao;
 	private final ObjectMapper objectMapper;
 
-	private String locationRequestSubmittedAlertEmailRecipient;
-	private MailService mailService;
-	private MessageSource messageSource;
-	private TaskExecutor taskExecutor;
+	private @Nullable String locationRequestSubmittedAlertEmailRecipient;
+	private @Nullable MailService mailService;
+	private @Nullable MessageSource messageSource;
+	private @Nullable TaskExecutor taskExecutor;
 
 	/**
 	 * Constructor.
@@ -113,7 +115,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 	}
 
-	private static GeneralDatumMetadata extractGeneralDatumMetadata(
+	private static @Nullable GeneralDatumMetadata extractGeneralDatumMetadata(
 			Iterable<ObjectDatumStreamMetadata> metas) {
 		if ( metas != null ) {
 			// assume at most 1 result... use first available
@@ -177,10 +179,10 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findGeneralNodeDatumMetadata(
-			GeneralNodeDatumMetadataFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max) {
-		BasicDatumCriteria criteria = DatumUtils.criteriaFromFilter(filter, sortDescriptors, offset,
-				max);
+			GeneralNodeDatumMetadataFilter filter, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max) {
+		BasicDatumCriteria criteria = requireNonNullArgument(
+				DatumUtils.criteriaFromFilter(filter, sortDescriptors, offset, max), "criteria");
 		criteria.setObjectKind(ObjectDatumKind.Node);
 		Iterable<ObjectDatumStreamMetadata> data = metaDao.findDatumStreamMetadata(criteria);
 		List<GeneralNodeDatumMetadataFilterMatch> matches = stream(data.spliterator(), false)
@@ -218,10 +220,10 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> findGeneralLocationDatumMetadata(
-			GeneralLocationDatumMetadataFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max) {
-		BasicDatumCriteria criteria = DatumUtils.criteriaFromFilter(filter, sortDescriptors, offset,
-				max);
+			GeneralLocationDatumMetadataFilter filter, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max) {
+		BasicDatumCriteria criteria = requireNonNullArgument(
+				DatumUtils.criteriaFromFilter(filter, sortDescriptors, offset, max), "criteria");
 		criteria.setObjectKind(ObjectDatumKind.Location);
 		Iterable<ObjectDatumStreamMetadata> data = metaDao.findDatumStreamMetadata(criteria);
 		List<GeneralLocationDatumMetadataFilterMatch> matches = stream(data.spliterator(), false)
@@ -295,7 +297,8 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	@Override
 	public net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(
 			final Long userId, final LocationRequestCriteria filter,
-			final List<SortDescriptor> sortDescriptors, final Long offset, final Integer max) {
+			final @Nullable List<SortDescriptor> sortDescriptors, final @Nullable Long offset,
+			final @Nullable Integer max) {
 		requireNonNullArgument(userId, "userId");
 		BasicLocationRequestCriteria criteria = new BasicLocationRequestCriteria(filter);
 		criteria.setUserId(userId);
@@ -347,15 +350,16 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		entity.setStatus(LocationRequestStatus.Submitted);
 		Long id = locationRequestDao.save(entity);
 
-		if ( mailService != null && messageSource != null
-				&& locationRequestSubmittedAlertEmailRecipient != null ) {
+		final MailService mailService = this.mailService;
+		final MessageSource messageSource = this.messageSource;
+		final String recipient = this.locationRequestSubmittedAlertEmailRecipient;
+		if ( mailService != null && messageSource != null && recipient != null ) {
 			Runnable task = () -> {
 				Map<String, Object> mailModel = new HashMap<>(4);
 				mailModel.put("userId", userId);
 				mailModel.put("requestId", id);
 				mailModel.put("info", infoToSave);
-				mailService.sendMail(
-						new BasicMailAddress(null, locationRequestSubmittedAlertEmailRecipient),
+				mailService.sendMail(new BasicMailAddress(null, recipient),
 						new ClasspathResourceMessageTemplateDataSource(Locale.getDefault(),
 								messageSource.getMessage("location.request.submitted.mail.subject", null,
 										Locale.getDefault()),
@@ -368,7 +372,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 			}
 		}
 
-		return locationRequestDao.get(id);
+		return nonnull(locationRequestDao.get(id), "Saved request");
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -389,7 +393,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		} catch ( JacksonException e ) {
 			throw new RuntimeException("Error generating JSON data: " + e.getMessage(), e);
 		}
-		return locationRequestDao.get(locationRequestDao.save(entity));
+		return nonnull(locationRequestDao.get(locationRequestDao.save(entity)), "Saved request");
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -409,7 +413,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	 * @param locationRequestSubmittedAlertEmailRecipient
 	 *        the locationRequestSubmittedAlertEmailRecipient to set
 	 */
-	public void setLocationRequestSubmittedAlertEmailRecipient(
+	public final void setLocationRequestSubmittedAlertEmailRecipient(
 			String locationRequestSubmittedAlertEmailRecipient) {
 		this.locationRequestSubmittedAlertEmailRecipient = locationRequestSubmittedAlertEmailRecipient;
 	}
@@ -420,7 +424,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	 * @param mailService
 	 *        the service to set
 	 */
-	public void setMailService(MailService mailService) {
+	public final void setMailService(MailService mailService) {
 		this.mailService = mailService;
 	}
 
@@ -430,7 +434,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	 * @param messageSource
 	 *        the source to set
 	 */
-	public void setMessageSource(MessageSource messageSource) {
+	public final void setMessageSource(MessageSource messageSource) {
 		this.messageSource = messageSource;
 	}
 
@@ -440,7 +444,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	 * @param taskExecutor
 	 *        the taskExecutor to set
 	 */
-	public void setTaskExecutor(TaskExecutor taskExecutor) {
+	public final void setTaskExecutor(TaskExecutor taskExecutor) {
 		this.taskExecutor = taskExecutor;
 	}
 

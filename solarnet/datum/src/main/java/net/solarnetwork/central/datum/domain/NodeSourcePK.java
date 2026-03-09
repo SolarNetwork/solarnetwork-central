@@ -40,21 +40,16 @@ public class NodeSourcePK extends BasicNodeSourcePK
 	private static final long serialVersionUID = 959344239925688873L;
 
 	/**
-	 * Default constructor.
-	 */
-	public NodeSourcePK() {
-		super();
-	}
-
-	/**
 	 * Construct with values.
 	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
 	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public NodeSourcePK(@Nullable Long nodeId, @Nullable String sourceId) {
+	public NodeSourcePK(Long nodeId, String sourceId) {
 		super(nodeId, sourceId);
 	}
 
@@ -89,7 +84,7 @@ public class NodeSourcePK extends BasicNodeSourcePK
 	 */
 	@JsonIgnore
 	@Override
-	public @Nullable Long getObjectId() {
+	public Long getObjectId() {
 		return getNodeId();
 	}
 

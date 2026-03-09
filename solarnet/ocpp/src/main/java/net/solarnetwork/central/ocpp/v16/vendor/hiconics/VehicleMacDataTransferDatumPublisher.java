@@ -167,11 +167,9 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 		DatumSamples s = new DatumSamples();
 		s.putStatusSampleValue("vid", vid);
 
-		GeneralNodeDatum d = new GeneralNodeDatum();
+		GeneralNodeDatum d = new GeneralNodeDatum(cp.getNodeId(), ts,
+				pubSupport.sourceId(cps, cp.getInfo().getId(), null, connId));
 		d.setSamples(s);
-		d.setCreated(ts);
-		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, connId));
 		return d;
 	}
 

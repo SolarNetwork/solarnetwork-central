@@ -31,6 +31,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -49,6 +50,7 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
@@ -273,29 +275,36 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 			}
 		}
 
+		final Instant now = Instant.now();
+
 		var result = (endpoint.isIncludeResponseBody() ? new ArrayList<DatumId>(8) : null);
 		for ( Datum d : datum ) {
-			Object gd = DatumUtils.convertGeneralDatum(d);
+			Object gd = DatumUtils.convertGeneralDatum(d, now);
 			if ( gd instanceof GeneralNodeDatum gnd ) {
 				// use the endpoint's node/source IDs if provided
 				if ( endpoint.getNodeId() != null ) {
-					gnd.setNodeId(endpoint.getNodeId());
-				} else if ( parameters != null && parameters.containsKey(PARAM_NODE_ID) ) {
+					gd = gnd.copyWithId(new GeneralNodeDatumPK(endpoint.getNodeId(), gnd.getCreated(),
+							gnd.getSourceId()));
+				} else if ( parameters != null && parameters.get(PARAM_NODE_ID) != null ) {
 					try {
-						gnd.setNodeId(Long.valueOf(parameters.get(PARAM_NODE_ID)));
+						gd = gnd.copyWithId(
+								new GeneralNodeDatumPK(Long.valueOf(parameters.get(PARAM_NODE_ID)),
+										gnd.getCreated(), gnd.getSourceId()));
 					} catch ( IllegalArgumentException e ) {
 						// ignore and continue
 					}
 				}
 				if ( endpoint.getSourceId() != null ) {
-					gnd.setSourceId(endpoint.getSourceId());
-				} else if ( parameters != null && parameters.containsKey(PARAM_SOURCE_ID) ) {
-					gnd.setSourceId(parameters.get(PARAM_SOURCE_ID));
+					gd = gnd.copyWithId(new GeneralNodeDatumPK(gnd.getNodeId(), gnd.getCreated(),
+							endpoint.getSourceId()));
+				} else if ( parameters != null && parameters.get(PARAM_SOURCE_ID) != null ) {
+					gd = gnd.copyWithId(new GeneralNodeDatumPK(gnd.getNodeId(), gnd.getCreated(),
+							parameters.get(PARAM_SOURCE_ID)));
 				}
 
 				// verify ownership node is owner of endpoint
-				Long nodeId = requireNonNullArgument(gnd.getNodeId(), "nodeId");
-				String sourceId = requireNonNullArgument(gnd.getSourceId(), "sourceId");
+				final Long nodeId = gnd.getNodeId();
+				final String sourceId = gnd.getSourceId();
 				SolarNodeOwnership owner = requireNonNullObject(
 						nodeOwnershipDao.ownershipForNodeId(nodeId), nodeId);
 				if ( !userId.equals(owner.getUserId()) ) {

@@ -27,6 +27,7 @@ import static net.solarnetwork.central.datum.flux.SolarFluxDatumPublishCountStat
 import static net.solarnetwork.central.datum.flux.SolarFluxDatumPublishCountStat.MonthlyDatumPublished;
 import static net.solarnetwork.central.datum.flux.SolarFluxDatumPublishCountStat.RawDatumPublished;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.Aggregation.Day;
 import static net.solarnetwork.domain.datum.Aggregation.Hour;
 import static net.solarnetwork.domain.datum.Aggregation.Month;
@@ -178,10 +179,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	@Test
 	public void publishRawDatum_notRetained() throws Exception {
 		// GIVEN
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(UUID.randomUUID().toString());
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.HOURS), UUID.randomUUID().toString());
 		DatumSamples samples = new DatumSamples();
 		samples.putInstantaneousSampleValue("foo", 123);
 		samples.putAccumulatingSampleValue("bar", 234L);
@@ -212,10 +211,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	@Test
 	public void publishHourDatum() throws Exception {
 		// GIVEN
-		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(UUID.randomUUID().toString());
+		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.HOURS), randomString());
 		DatumSamples samples = new DatumSamples();
 		samples.putInstantaneousSampleValue("foo", 123);
 		samples.putAccumulatingSampleValue("bar", 234L);
@@ -250,10 +247,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	@Test
 	public void publishDayDatum() throws Exception {
 		// GIVEN
-		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.DAYS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(UUID.randomUUID().toString());
+		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.DAYS), randomString());
 		DatumSamples samples = new DatumSamples();
 		samples.putInstantaneousSampleValue("foo", 123);
 		samples.putAccumulatingSampleValue("bar", 234L);
@@ -288,11 +283,9 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	@Test
 	public void publishMonthDatum() throws Exception {
 		// GIVEN
-		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum();
-		datum.setCreated(ZonedDateTime.now().with(TemporalAdjusters.firstDayOfMonth())
-				.truncatedTo(ChronoUnit.DAYS).toInstant());
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(UUID.randomUUID().toString());
+		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum(TEST_NODE_ID, ZonedDateTime.now()
+				.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant(),
+				randomString());
 		DatumSamples samples = new DatumSamples();
 		samples.putInstantaneousSampleValue("foo", 123);
 		samples.putAccumulatingSampleValue("bar", 234L);

@@ -206,10 +206,8 @@ public class DaoDatumExportBizTests {
 		req.setConfig(conf);
 
 		// export datum
-		final GeneralNodeDatumMatch d = new GeneralNodeDatumMatch();
-		d.setCreated(Instant.now().truncatedTo(ChronoUnit.SECONDS));
-		d.setNodeId(filter.getNodeId());
-		d.setSourceId(randomString());
+		final GeneralNodeDatumMatch d = new GeneralNodeDatumMatch(filter.getNodeId(),
+				Instant.now().truncatedTo(ChronoUnit.SECONDS), randomString());
 		d.setSamples(new DatumSamples(singletonMap("a", 1), null, null));
 
 		final BasicBulkExportResult exportResult = new BasicBulkExportResult(1);

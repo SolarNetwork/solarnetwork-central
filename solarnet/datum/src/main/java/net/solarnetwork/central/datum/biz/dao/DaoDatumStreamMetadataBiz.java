@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumStreamMetadataBiz;
@@ -68,16 +69,17 @@ public class DaoDatumStreamMetadataBiz implements DatumStreamMetadataBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId,
-			Long objectId, String sourceId) {
+	public @Nullable ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId,
+			@Nullable Long objectId, @Nullable String sourceId) {
 		return metaDao.updateIdAttributes(kind, streamId, objectId, sourceId);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public ObjectDatumStreamMetadata updateAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
-			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,
-			String[] statusProperties) {
+	public @Nullable ObjectDatumStreamMetadata updateAttributes(ObjectDatumKind kind, UUID streamId,
+			@Nullable Long objectId, @Nullable String sourceId,
+			String @Nullable [] instantaneousProperties, String @Nullable [] accumulatingProperties,
+			String @Nullable [] statusProperties) {
 		return metaDao.updateAttributes(kind, streamId, objectId, sourceId, instantaneousProperties,
 				accumulatingProperties, statusProperties);
 	}

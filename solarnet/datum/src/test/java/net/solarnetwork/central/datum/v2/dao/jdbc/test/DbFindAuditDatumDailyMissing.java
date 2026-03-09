@@ -47,13 +47,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
@@ -196,15 +197,12 @@ public class DbFindAuditDatumDailyMissing extends BaseDatumJdbcTestSupport {
 	public void findMissing_oneMissingOneNot() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		List<GeneralNodeDatum> datums2 = DatumDbUtils
-				.elementsOf(DatumDbUtils.loadJsonDatumAndAuxiliaryResource("test-datum-01.txt",
-						getClass(), new Consumer<GeneralNodeDatum>() {
-
-							@Override
-							public void accept(GeneralNodeDatum d) {
-								d.setNodeId(2L);
-							}
-						}, null), GeneralNodeDatum.class);
+		List<GeneralNodeDatum> datums2 = DatumDbUtils.elementsOf(
+				DatumDbUtils.loadJsonDatumAndAuxiliaryResource("test-datum-01.txt", getClass(),
+						(Function<GeneralNodeDatum, GeneralNodeDatum>) d -> d
+								.copyWithId(new GeneralNodeDatumPK(2L, d.getCreated(), d.getSourceId())),
+						null),
+				GeneralNodeDatum.class);
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate,
 				concat(datums.stream(), datums2.stream()).collect(toList()), "UTC");
 		UUID streamId_1 = metas.get(new NodeSourcePK(1L, "a")).getStreamId();

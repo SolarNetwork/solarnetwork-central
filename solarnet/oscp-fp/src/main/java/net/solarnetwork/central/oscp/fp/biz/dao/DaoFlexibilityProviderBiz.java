@@ -26,6 +26,7 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.datum.domain.GeneralObjectDatumKey.UNASSIGNED_OBJECT_ID;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.oscp.dao.BasicConfigurationFilter.filterForUsers;
 import static net.solarnetwork.central.oscp.domain.DatumPublishEvent.FORECAST_TYPE_PARAM;
@@ -48,6 +49,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -71,6 +73,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.OwnedGeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -451,20 +454,21 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			// node ownership not known or not owned by context user: ignore
 			return null;
 		}
-		final Collection<OwnedGeneralNodeDatum> datum = datumSupplier.get();
-		if ( datum == null || datum.isEmpty() ) {
+		final Collection<OwnedGeneralNodeDatum> tempDatum = datumSupplier.get();
+		if ( tempDatum == null || tempDatum.isEmpty() ) {
 			return null;
 		}
-		DatumPublishEvent event = new DatumPublishEvent(role, action, src, dest, group, settings, datum,
-				sourceIdParameters);
+		final List<OwnedGeneralNodeDatum> datum = new ArrayList<>();
+		final DatumPublishEvent event = new DatumPublishEvent(role, action, src, dest, group, settings,
+				datum, sourceIdParameters);
 		String sourceId = event.sourceId();
 		if ( sourceIdSuffix != null ) {
 			sourceId += sourceIdSuffix;
 		}
-		for ( OwnedGeneralNodeDatum d : datum ) {
-			d.setNodeId(nodeId);
-			d.setSourceId(sourceId);
+		for ( OwnedGeneralNodeDatum d : tempDatum ) {
+			datum.add(d.copyWithId(new GeneralNodeDatumPK(nodeId, d.getCreated(), sourceId)));
 		}
+
 		if ( datumDao != null && settings.isPublishToSolarIn() ) {
 			for ( OwnedGeneralNodeDatum d : datum ) {
 				datumDao.store(d);
@@ -566,8 +570,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		@Override
 		public Collection<OwnedGeneralNodeDatum> get() {
 			// we don't need to set node ID or source ID here, as that will be resolved in the publish() method
-			OwnedGeneralNodeDatum d = new OwnedGeneralNodeDatum(configId.getUserId());
-			d.setCreated(ts);
+			OwnedGeneralNodeDatum d = new OwnedGeneralNodeDatum(
+					new GeneralNodeDatumPK(UNASSIGNED_OBJECT_ID, ts, ""), configId.getUserId());
 
 			DatumSamples s = new DatumSamples();
 			s.putStatusSampleValue("expires", ISO_DATE_TIME_ALT_UTC.format(expires));
@@ -733,8 +737,9 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 						continue;
 					}
 					OwnedGeneralNodeDatum d = data.computeIfAbsent(start, k -> {
-						OwnedGeneralNodeDatum newD = new OwnedGeneralNodeDatum(configId.getUserId());
-						newD.setCreated(k);
+						OwnedGeneralNodeDatum newD = new OwnedGeneralNodeDatum(
+								new GeneralNodeDatumPK(UNASSIGNED_OBJECT_ID, k, ""),
+								configId.getUserId());
 						DatumSamples s = new DatumSamples();
 						newD.setSamples(s);
 						s.putInstantaneousSampleValue("duration", Duration.between(k, end).toSeconds());

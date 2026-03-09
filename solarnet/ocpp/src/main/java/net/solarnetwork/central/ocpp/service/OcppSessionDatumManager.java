@@ -50,6 +50,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
@@ -431,8 +432,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 		private final ChargePointSettings settings;
 
-		private Datum(ChargePointSettings settings) {
-			super();
+		private Datum(GeneralNodeDatumPK id, ChargePointSettings settings) {
+			super(id);
 			this.settings = settings;
 		}
 
@@ -449,36 +450,32 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	private Datum datum(String sourceId, CentralChargePoint chargePoint,
 			ChargePointSettings chargePointSettings, ChargeSession sess, SampledValue reading) {
-		Datum d = new Datum(chargePointSettings);
-		d.setNodeId(chargePoint.getNodeId());
-		d.setSamples(new DatumSamples());
-		populateProperty(d, reading.getMeasurand(), reading.getUnit(), reading.getPhase(),
+		final Long nodeId = chargePoint.getNodeId();
+		final DatumSamples samples = new DatumSamples();
+		populateProperty(samples, reading.getMeasurand(), reading.getUnit(), reading.getPhase(),
 				reading.getValue());
-		if ( d.getSamples() != null && !d.getSamples().isEmpty() ) {
-			d.setCreated(reading.getTimestamp());
-			d.setSourceId(sourceId);
+		if ( !samples.isEmpty() ) {
 			if ( sess != null ) {
-				d.getSamples().putSampleValue(DatumProperty.AuthorizationToken.getClassification(),
+				samples.putSampleValue(DatumProperty.AuthorizationToken.getClassification(),
 						DatumProperty.AuthorizationToken.getPropertyName(), sess.getAuthId());
 				// TODO - implement support for reservation ID
 				//d.getSamples().putSampleValue(DatumProperty.ReservationId.getClassification(),
 				//		DatumProperty.ReservationId.getPropertyName(), sess.getReservationId());
-				d.getSamples().putSampleValue(DatumProperty.SessionId.getClassification(),
+				samples.putSampleValue(DatumProperty.SessionId.getClassification(),
 						DatumProperty.SessionId.getPropertyName(), sess.getId().toString());
-				d.getSamples().putSampleValue(DatumProperty.TransactionId.getClassification(),
+				samples.putSampleValue(DatumProperty.TransactionId.getClassification(),
 						DatumProperty.TransactionId.getPropertyName(),
 						String.valueOf(sess.getTransactionId()));
 				if ( sess.getEnded() != null ) {
-					d.getSamples().putSampleValue(DatumProperty.SessionEndDate.getClassification(),
+					samples.putSampleValue(DatumProperty.SessionEndDate.getClassification(),
 							DatumProperty.SessionEndDate.getPropertyName(),
 							sess.getEnded().toEpochMilli());
 				}
-				d.getSamples().putSampleValue(
-						DatumProperty.SessionEndAuthorizationToken.getClassification(),
+				samples.putSampleValue(DatumProperty.SessionEndAuthorizationToken.getClassification(),
 						DatumProperty.SessionEndAuthorizationToken.getPropertyName(),
 						sess.getEndAuthId());
 				if ( sess.getEndReason() != null ) {
-					d.getSamples().putSampleValue(DatumProperty.SessionEndReason.getClassification(),
+					samples.putSampleValue(DatumProperty.SessionEndReason.getClassification(),
 							DatumProperty.SessionEndReason.getPropertyName(),
 							sess.getEndReason().toString());
 				}
@@ -486,10 +483,13 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 						&& (sess.getEnded() != null || reading.getTimestamp() != null) ) {
 					Duration dur = Duration.between(sess.getCreated(),
 							sess.getEnded() != null ? sess.getEnded() : reading.getTimestamp());
-					d.getSamples().putSampleValue(DatumProperty.SessionDuration.getClassification(),
+					samples.putSampleValue(DatumProperty.SessionDuration.getClassification(),
 							DatumProperty.SessionDuration.getPropertyName(), dur.getSeconds());
 				}
 			}
+			Datum d = new Datum(new GeneralNodeDatumPK(nodeId, reading.getTimestamp(), sourceId),
+					chargePointSettings);
+			d.setSamples(samples);
 			return d;
 		}
 		return null;
@@ -582,8 +582,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 					d = datum(sourceId, cp, cps, s, reading);
 					datumBySourceId.put(sourceId, d);
 				} else {
-					populateProperty(d, reading.getMeasurand(), reading.getUnit(), reading.getPhase(),
-							reading.getValue());
+					populateProperty(d.getSamples(), reading.getMeasurand(), reading.getUnit(),
+							reading.getPhase(), reading.getValue());
 				}
 			}
 			for ( Datum d : datumBySourceId.values() ) {
@@ -649,7 +649,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 				StringUtils.expandTemplateString(sourceIdTemplate(chargePointSettings), params));
 	}
 
-	private void populateProperty(GeneralNodeDatum datum, Measurand measurand, UnitOfMeasure unit,
+	private void populateProperty(DatumSamples samples, Measurand measurand, UnitOfMeasure unit,
 			Phase phase, Object value) {
 		if ( value == null ) {
 			return;
@@ -669,7 +669,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		num = normalizedUnit(num, unit);
 		String propName = propertyName(measurand, phase);
 		if ( propName != null ) {
-			datum.getSamples().putSampleValue(propertyType(measurand), propName, num);
+			samples.putSampleValue(propertyType(measurand), propName, num);
 		}
 	}
 

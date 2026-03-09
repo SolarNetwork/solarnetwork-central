@@ -111,10 +111,8 @@ public class DaoDatumAuxiliaryBizTests {
 		//return new DatumAuxiliaryEntity(UUID.randomUUID(), Instant.now().truncatedTo(ChronoUnit.HOURS),
 		//		DatumAuxiliaryType.Reset, null, sf, ss, "Note.", meta);
 
-		GeneralNodeDatumAuxiliary genAux = new GeneralNodeDatumAuxiliary();
-		genAux.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		genAux.setNodeId(TEST_NODE_ID);
-		genAux.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatumAuxiliary genAux = new GeneralNodeDatumAuxiliary(new GeneralNodeDatumAuxiliaryPK(
+				TEST_NODE_ID, Instant.now().truncatedTo(ChronoUnit.HOURS), TEST_SOURCE_ID));
 		genAux.setSamplesFinal(sf);
 		genAux.setSamplesStart(ss);
 		genAux.setMeta(meta);

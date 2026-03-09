@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -29,12 +30,14 @@ import java.time.Instant;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.SerializeIgnore;
 import net.solarnetwork.domain.datum.DatumSamples;
 
@@ -51,21 +54,43 @@ import net.solarnetwork.domain.datum.DatumSamples;
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId" })
 public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable,
-		GeneralObjectDatum<GeneralNodeDatumPK> {
+		GeneralObjectDatum<GeneralNodeDatumPK>, CopyingIdentity<GeneralNodeDatum, GeneralNodeDatumPK> {
 
 	@Serial
 	private static final long serialVersionUID = -3840727299179538235L;
 
-	private final GeneralNodeDatumPK id = new GeneralNodeDatumPK();
+	private final GeneralNodeDatumPK id;
 	private @Nullable DatumSamples samples;
 	private @Nullable Instant posted;
 	private @Nullable String sampleJson;
 
 	/**
 	 * Constructor.
+	 *
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public GeneralNodeDatum() {
+	public GeneralNodeDatum(GeneralNodeDatumPK id) {
 		super();
+		this.id = requireNonNullArgument(id, "id");
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public GeneralNodeDatum(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId) {
+		this(new GeneralNodeDatumPK(nodeId, created, sourceId));
 	}
 
 	@Override
@@ -77,6 +102,20 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 		builder.append(samples == null ? "null" : samples.getSampleData());
 		builder.append("}");
 		return builder.toString();
+	}
+
+	@Override
+	public GeneralNodeDatum copyWithId(GeneralNodeDatumPK id) {
+		GeneralNodeDatum other = new GeneralNodeDatum(id);
+		copyTo(other);
+		return other;
+	}
+
+	@Override
+	public void copyTo(GeneralNodeDatum other) {
+		other.posted = posted;
+		other.sampleJson = sampleJson;
+		other.samples = (samples != null ? new DatumSamples(samples) : new DatumSamples());
 	}
 
 	/**
@@ -127,18 +166,8 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	 *
 	 * @return the nodeId
 	 */
-	public final @Nullable Long getNodeId() {
+	public final Long getNodeId() {
 		return id.getNodeId();
-	}
-
-	/**
-	 * Convenience setter for {@link GeneralNodeDatumPK#setNodeId(Long)}.
-	 *
-	 * @param nodeId
-	 *        the nodeId to set
-	 */
-	public final void setNodeId(@Nullable Long nodeId) {
-		id.setNodeId(nodeId);
 	}
 
 	/**
@@ -146,32 +175,12 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	 *
 	 * @return the sourceId
 	 */
-	public final @Nullable String getSourceId() {
+	public final String getSourceId() {
 		return id.getSourceId();
 	}
 
-	/**
-	 * Convenience setter for {@link GeneralNodeDatumPK#setSourceId(String)}.
-	 *
-	 * @param sourceId
-	 *        the sourceId to set
-	 */
-	public final void setSourceId(@Nullable String sourceId) {
-		id.setSourceId(sourceId);
-	}
-
-	/**
-	 * Convenience setter for {@link GeneralNodeDatumPK#setCreated(Instant)}.
-	 *
-	 * @param created
-	 *        the created to set
-	 */
-	public final void setCreated(@Nullable Instant created) {
-		id.setCreated(created);
-	}
-
 	@Override
-	public final @Nullable Instant getCreated() {
+	public final Instant getCreated() {
 		return id.getCreated();
 	}
 

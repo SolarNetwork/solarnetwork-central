@@ -24,8 +24,6 @@ package net.solarnetwork.central.datum.domain.test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.not;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -81,26 +79,8 @@ public class GeneralNodeDatumAuxiliaryPKTests {
 		GeneralNodeDatumAuxiliaryPK pk1 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_TIMESTAMP,
 				TEST_SOURCE_ID, DatumAuxiliaryType.Reset);
 		GeneralNodeDatumAuxiliaryPK pk2 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_TIMESTAMP,
-				TEST_SOURCE_ID, null);
+				TEST_SOURCE_ID + "2", DatumAuxiliaryType.Reset);
 		assertThat("Keys not equal", pk1, not(equalTo(pk2)));
-	}
-
-	@Test
-	public void compareTypesDescendingNull() {
-		GeneralNodeDatumAuxiliaryPK pk1 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_TIMESTAMP,
-				TEST_SOURCE_ID, DatumAuxiliaryType.Reset);
-		GeneralNodeDatumAuxiliaryPK pk2 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_TIMESTAMP,
-				TEST_SOURCE_ID, null);
-		assertThat("Comparison", pk1.compareTo(pk2), greaterThanOrEqualTo(1));
-	}
-
-	@Test
-	public void compareTypesAscendingNull() {
-		GeneralNodeDatumAuxiliaryPK pk1 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_TIMESTAMP,
-				TEST_SOURCE_ID, null);
-		GeneralNodeDatumAuxiliaryPK pk2 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_TIMESTAMP,
-				TEST_SOURCE_ID, DatumAuxiliaryType.Reset);
-		assertThat("Comparison", pk1.compareTo(pk2), lessThanOrEqualTo(-1));
 	}
 
 	@Test

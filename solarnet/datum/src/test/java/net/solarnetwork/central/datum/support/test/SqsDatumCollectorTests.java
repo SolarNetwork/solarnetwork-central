@@ -413,10 +413,8 @@ public class SqsDatumCollectorTests {
 		collector.setReadConcurrency(0); // disable read thread
 
 		// store datum (slowly)
-		final GeneralNodeDatum d = new GeneralNodeDatum();
-		d.setNodeId(randomLong());
-		d.setSourceId(randomString());
-		d.setCreated(now().truncatedTo(ChronoUnit.MILLIS));
+		final GeneralNodeDatum d = new GeneralNodeDatum(randomLong(),
+				now().truncatedTo(ChronoUnit.MILLIS), randomString());
 		d.setSamples(new DatumSamples(Map.of("a", 1), Map.of("b", 2), null));
 		final DatumPK datumId = unassignedStream(d.getId().getKind(), d.getId().getObjectId(),
 				d.getId().getSourceId(), d.getId().getTimestamp());

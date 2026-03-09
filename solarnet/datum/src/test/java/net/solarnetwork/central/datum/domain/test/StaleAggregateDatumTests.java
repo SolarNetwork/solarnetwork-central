@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -61,12 +62,9 @@ public class StaleAggregateDatumTests {
 	}
 
 	private StaleAggregateDatum getTestInstance() {
-		StaleAggregateDatum datum = new StaleAggregateDatum();
+		StaleAggregateDatum datum = new StaleAggregateDatum(TEST_NODE_ID, TEST_TIMESTAMP, TEST_SOURCE_ID,
+				TEST_KIND);
 		datum.setCreated(Instant.now());
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setStartDate(TEST_TIMESTAMP);
-		datum.setSourceId(TEST_SOURCE_ID);
-		datum.setKind(TEST_KIND);
 		return datum;
 	}
 
@@ -76,8 +74,7 @@ public class StaleAggregateDatumTests {
 		String json = objectMapper.writeValueAsString(stale);
 		assertThat("JSON value", json,
 				equalTo("{\"nodeId\":-1,\"sourceId\":\"test.source\",\"startDate\":\""
-						+ TEST_TIMESTAMP_STRING + "\",\"kind\":\"test.kind\",\"created\":\""
-						+ DateUtils.ISO_DATE_TIME_ALT_UTC.format(stale.getCreated()) + "\"}"));
+						+ TEST_TIMESTAMP_STRING + "\",\"kind\":\"test.kind\"}"));
 
 	}
 
@@ -94,7 +91,7 @@ public class StaleAggregateDatumTests {
 		assertThat("Source ID", datum.getSourceId(), equalTo(TEST_SOURCE_ID));
 		assertThat("Start date", datum.getStartDate(), equalTo(TEST_TIMESTAMP));
 		assertThat("Kind", datum.getKind(), equalTo(TEST_KIND));
-		assertThat("Created", datum.getCreated(), equalTo(now));
+		assertThat("Created", datum.getCreated(), nullValue());
 	}
 
 }

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
@@ -42,14 +43,7 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	@Serial
 	private static final long serialVersionUID = 8861820278176468489L;
 
-	private @Nullable String kind;
-
-	/**
-	 * Default constructor.
-	 */
-	public GeneralNodeDatumKindPK() {
-		super();
-	}
+	private final String kind;
 
 	/**
 	 * Constructor.
@@ -62,11 +56,12 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	 *        the source ID
 	 * @param kind
 	 *        the kind
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public GeneralNodeDatumKindPK(@Nullable Long nodeId, @Nullable Instant created,
-			@Nullable String sourceId, @Nullable String kind) {
+	public GeneralNodeDatumKindPK(Long nodeId, Instant created, String sourceId, String kind) {
 		super(nodeId, sourceId, created);
-		setKind(kind);
+		this.kind = requireNonNullArgument(kind, "kind");
 	}
 
 	@Override
@@ -97,20 +92,16 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	protected void populateIdValue(StringBuilder buf) {
 		super.populateIdValue(buf);
 		buf.append(";k=");
-		if ( kind != null ) {
-			buf.append(kind);
-		}
+		buf.append(kind);
 	}
 
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		super.populateStringValue(buf);
-		if ( kind != null ) {
-			if ( !buf.isEmpty() ) {
-				buf.append(", ");
-			}
-			buf.append("kind=").append(kind);
+		if ( !buf.isEmpty() ) {
+			buf.append(", ");
 		}
+		buf.append("kind=").append(kind);
 	}
 
 	@Override
@@ -120,20 +111,16 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 			return result;
 		}
 		o = nonnull(o, "other");
-		if ( o.kind == null ) {
-			return 1;
-		} else if ( kind == null ) {
-			return -1;
-		}
 		return kind.compareTo(o.kind);
 	}
 
-	public final @Nullable String getKind() {
+	/**
+	 * Get the kind.
+	 *
+	 * @return the kind
+	 */
+	public final String getKind() {
 		return kind;
-	}
-
-	public final void setKind(@Nullable String kind) {
-		this.kind = kind;
 	}
 
 }

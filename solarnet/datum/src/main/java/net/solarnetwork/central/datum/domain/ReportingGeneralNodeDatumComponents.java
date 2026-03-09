@@ -23,12 +23,15 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.io.Serial;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.SerializeIgnore;
 
@@ -50,10 +53,31 @@ public class ReportingGeneralNodeDatumComponents extends GeneralNodeDatumCompone
 	private @Nullable LocalDateTime localDateTime;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
+	 *
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public ReportingGeneralNodeDatumComponents() {
-		super();
+	public ReportingGeneralNodeDatumComponents(GeneralNodeDatumPK id) {
+		super(id);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public ReportingGeneralNodeDatumComponents(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId) {
+		super(nodeId, created, sourceId);
 	}
 
 	/**
@@ -61,6 +85,8 @@ public class ReportingGeneralNodeDatumComponents extends GeneralNodeDatumCompone
 	 *
 	 * @param other
 	 *        the datum to copy
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public ReportingGeneralNodeDatumComponents(GeneralNodeDatum other) {
 		super(other);

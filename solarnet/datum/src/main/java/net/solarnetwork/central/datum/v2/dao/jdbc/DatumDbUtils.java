@@ -55,7 +55,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -298,8 +297,8 @@ public final class DatumDbUtils {
 	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
-	 * @see #loadJsonDatumAndAuxiliaryResource(String, Class, Consumer,
-	 *      Consumer)
+	 * @see #loadJsonDatumAndAuxiliaryResource(String, Class, Function,
+	 *      Function)
 	 */
 	public static List<?> loadJsonDatumAndAuxiliaryResource(String resource, Class<?> clazz)
 			throws IOException {
@@ -333,16 +332,17 @@ public final class DatumDbUtils {
 	 * @param clazz
 	 *        the class to load the resource from
 	 * @param datumMapper
-	 *        optional consumer to adjust datum with
+	 *        optional function to adjust datum with
 	 * @param auxMapper
-	 *        optional consumer to adjust auxiliary datum with
+	 *        optional function to adjust auxiliary datum with
 	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 */
 	public static List<?> loadJsonDatumAndAuxiliaryResource(String resource, Class<?> clazz,
-			@Nullable Consumer<GeneralNodeDatum> datumMapper,
-			@Nullable Consumer<GeneralNodeDatumAuxiliary> auxMapper) throws IOException {
+			@Nullable Function<GeneralNodeDatum, GeneralNodeDatum> datumMapper,
+			@Nullable Function<GeneralNodeDatumAuxiliary, GeneralNodeDatumAuxiliary> auxMapper)
+			throws IOException {
 		assert clazz != null;
 		List<Object> result = new ArrayList<>();
 		try (BufferedReader r = new BufferedReader(
@@ -361,7 +361,7 @@ public final class DatumDbUtils {
 							GeneralNodeDatumAuxiliary.class);
 					if ( d != null ) {
 						if ( auxMapper != null ) {
-							auxMapper.accept(d);
+							d = auxMapper.apply(d);
 						}
 						result.add(d);
 					}
@@ -369,7 +369,7 @@ public final class DatumDbUtils {
 					GeneralNodeDatum d = JsonUtils.getObjectFromJSON(line, GeneralNodeDatum.class);
 					if ( d != null ) {
 						if ( datumMapper != null ) {
-							datumMapper.accept(d);
+							d = datumMapper.apply(d);
 						}
 						result.add(d);
 					}

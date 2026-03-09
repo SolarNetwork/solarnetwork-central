@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
+import net.solarnetwork.central.datum.domain.ObjectRecordId;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 
 /**
@@ -83,7 +84,8 @@ public class DatumInsightOverallStatistics {
 
 	private static List<AuditDatumRecordCounts> convert(Iterable<AuditDatumRollup> rollups) {
 		return StreamSupport.stream(rollups.spliterator(), false).map(e -> {
-			AuditDatumRecordCounts c = new AuditDatumRecordCounts(e.getNodeId(), e.getSourceId(),
+			AuditDatumRecordCounts c = new AuditDatumRecordCounts(
+					new ObjectRecordId(e.getNodeId(), e.getSourceId(), e.getTimestamp()),
 					e.getDatumCount(), e.getDatumHourlyCount(), e.getDatumDailyCount(),
 					e.getDatumMonthlyCount());
 			if ( e.getDatumPropertyCount() != null ) {
@@ -92,9 +94,6 @@ public class DatumInsightOverallStatistics {
 								: 0));
 			}
 			c.setDatumQueryCount(e.getDatumQueryCount());
-			if ( e.getTimestamp() != null ) {
-				c.setCreated(e.getTimestamp());
-			}
 			return c;
 		}).collect(Collectors.toList());
 	}

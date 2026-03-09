@@ -23,12 +23,15 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.io.Serial;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.SerializeIgnore;
 
@@ -51,6 +54,34 @@ public class GeneralNodeDatumMatch extends GeneralNodeDatum implements GeneralNo
 	private static final long serialVersionUID = 8355572733802089327L;
 
 	private @Nullable LocalDateTime localDateTime;
+
+	/**
+	 * Constructor.
+	 *
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public GeneralNodeDatumMatch(GeneralNodeDatumPK id) {
+		super(id);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public GeneralNodeDatumMatch(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId) {
+		super(nodeId, created, sourceId);
+	}
 
 	@Override
 	public final @Nullable LocalDate getLocalDate() {

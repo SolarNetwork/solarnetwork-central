@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.support;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
@@ -31,7 +32,9 @@ import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
+import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -44,7 +47,7 @@ import tools.jackson.databind.ObjectMapper;
  * Utilities for Datum domain classes.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public final class DatumUtils {
 
@@ -175,29 +178,67 @@ public final class DatumUtils {
 	 * @return the converted datum, or {@code null} if {@code datum} is
 	 *         {@code null}
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static @Nullable GeneralObjectDatum<?> convertGeneralDatum(@Nullable Datum datum) {
+		return convertGeneralDatum(datum, Instant.now(), null);
+	}
+
+	/**
+	 * Convert a {@link Datum} into either a {@link GeneralNodeDatum} or
+	 * {@link GeneralLocationDatum} object.
+	 *
+	 * @param datum
+	 *        the datum to convert
+	 * @param fallbackTimestamp
+	 *        a fallback timestamp to use if the an datum has none
+	 * @return the converted datum, or {@code null} if {@code datum} is
+	 *         {@code null}
+	 * @since 3.1
+	 */
+	public static @Nullable GeneralObjectDatum<?> convertGeneralDatum(@Nullable Datum datum,
+			Instant fallbackTimestamp) {
+		return convertGeneralDatum(datum, fallbackTimestamp, null);
+	}
+
+	/**
+	 * Convert a {@link Datum} into either a {@link GeneralNodeDatum} or
+	 * {@link GeneralLocationDatum} object.
+	 *
+	 * @param datum
+	 *        the datum to convert
+	 * @param fallbackTimestamp
+	 *        a fallback timestamp to use if the an datum has none
+	 * @param authNode
+	 *        optional actor to force node ID values to
+	 * @return the converted datum, or {@code null} if {@code datum} is
+	 *         {@code null}
+	 * @since 3.1
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static @Nullable GeneralObjectDatum<?> convertGeneralDatum(@Nullable Datum datum,
+			Instant fallbackTimestamp, @Nullable SecurityNode authNode) {
 		if ( datum == null ) {
 			return null;
 		}
-		DatumSamplesOperations ops = datum.asSampleOperations();
-		var s = new DatumSamples();
+		final DatumSamplesOperations ops = datum.asSampleOperations();
+		final var s = new DatumSamples();
 		s.setI((Map) ops.getSampleData(DatumSamplesType.Instantaneous));
 		s.setA((Map) ops.getSampleData(DatumSamplesType.Accumulating));
 		s.setS((Map) ops.getSampleData(DatumSamplesType.Status));
 		s.setT(ops.getTags());
+
+		final Long objectId = (datum.getKind() == ObjectDatumKind.Node && authNode != null
+				? authNode.getNodeId()
+				: datum.getObjectId() != null ? datum.getObjectId()
+						: GeneralObjectDatumKey.UNASSIGNED_OBJECT_ID);
+		final String sourceId = (datum.getSourceId() != null ? datum.getSourceId() : "");
+		final Instant ts = datum.getTimestamp() != null ? datum.getTimestamp() : fallbackTimestamp;
+
 		if ( datum.getKind() == ObjectDatumKind.Location ) {
-			GeneralLocationDatum gld = new GeneralLocationDatum();
-			gld.setCreated(datum.getTimestamp());
-			gld.setSourceId(datum.getSourceId());
-			gld.setLocationId(datum.getObjectId());
+			GeneralLocationDatum gld = new GeneralLocationDatum(objectId, ts, sourceId);
 			gld.setSamples(s);
 			return gld;
 		}
-		GeneralNodeDatum gnd = new GeneralNodeDatum();
-		gnd.setCreated(datum.getTimestamp());
-		gnd.setSourceId(datum.getSourceId());
-		gnd.setNodeId(datum.getObjectId());
+		GeneralNodeDatum gnd = new GeneralNodeDatum(objectId, ts, sourceId);
 		gnd.setSamples(s);
 		return gnd;
 	}

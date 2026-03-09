@@ -60,11 +60,10 @@ public class GeneralLocationDatumMetadataTests {
 	}
 
 	private GeneralLocationDatumMetadata getTestInstance() {
-		GeneralLocationDatumMetadata datum = new GeneralLocationDatumMetadata();
+		GeneralLocationDatumMetadata datum = new GeneralLocationDatumMetadata(TEST_NODE_ID,
+				TEST_SOURCE_ID);
 		datum.setCreated(TEST_TIMESTAMP.toInstant(ZoneOffset.UTC));
-		datum.setLocationId(TEST_NODE_ID);
 		datum.setUpdated(datum.getCreated());
-		datum.setSourceId(TEST_SOURCE_ID);
 
 		GeneralDatumMetadata samples = new GeneralDatumMetadata();
 		datum.setMeta(samples);
@@ -100,12 +99,13 @@ public class GeneralLocationDatumMetadataTests {
 	@Test
 	public void deserializeJson() throws Exception {
 		String json = "{\"created\":\"" + TEST_TIMESTAMP_STRING
-				+ "\",\"sourceId\":\"Main\",\"meta\":{\"m\":{\"ploc\":2502287},\"t\":[\"foo\"]}}";
+				+ "\",\"locationId\":-1,\"sourceId\":\"Main\",\"meta\":{\"m\":{\"ploc\":2502287},\"t\":[\"foo\"]}}";
 		GeneralLocationDatumMetadata datum = objectMapper.readValue(json,
 				GeneralLocationDatumMetadata.class);
 		assertThat(datum, is(notNullValue()));
 		assertThat(datum.getCreated(), is(notNullValue()));
 		assertThat(datum.getCreated(), is(TEST_TIMESTAMP.toInstant(ZoneOffset.UTC)));
+		assertThat(datum.getLocationId(), is(-1L));
 		assertThat(datum.getSourceId(), is("Main"));
 		assertThat(datum.getMeta(), is(notNullValue()));
 		assertThat(datum.getMeta().getInfoLong("ploc"), is(Long.valueOf(2502287)));

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
@@ -41,15 +42,8 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	@Serial
 	private static final long serialVersionUID = 5041677194630502340L;
 
-	private @Nullable Long locationId;
-	private @Nullable String sourceId;
-
-	/**
-	 * Default constructor.
-	 */
-	public BasicLocationSourcePK() {
-		super();
-	}
+	private final Long locationId;
+	private final String sourceId;
 
 	/**
 	 * Constructor.
@@ -58,11 +52,13 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	 *        the location ID
 	 * @param sourceId
 	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public BasicLocationSourcePK(@Nullable Long locationId, @Nullable String sourceId) {
+	public BasicLocationSourcePK(Long locationId, String sourceId) {
 		super();
-		this.locationId = locationId;
-		this.sourceId = sourceId;
+		this.locationId = requireNonNullArgument(locationId, "locationId");
+		this.sourceId = requireNonNullArgument(sourceId, "sourceId");
 	}
 
 	@Override
@@ -73,31 +69,20 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	@Override
 	protected void populateIdValue(StringBuilder buf) {
 		buf.append("n=");
-		if ( locationId != null ) {
-			buf.append(locationId);
-		}
+		buf.append(locationId);
 		buf.append(";s=");
-		if ( sourceId != null ) {
-			buf.append(sourceId);
-		}
+		buf.append(sourceId);
 	}
 
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
-		if ( locationId != null ) {
-			if ( !buf.isEmpty() ) {
-				buf.append(", ");
-			}
-			buf.append("locationId=");
-			buf.append(locationId);
+		if ( !buf.isEmpty() ) {
+			buf.append(", ");
 		}
-		if ( sourceId != null ) {
-			if ( !buf.isEmpty() ) {
-				buf.append(", ");
-			}
-			buf.append("sourceId=");
-			buf.append(sourceId);
-		}
+		buf.append("locationId=");
+		buf.append(locationId);
+		buf.append(", sourceId=");
+		buf.append(sourceId);
 	}
 
 	@Override
@@ -140,39 +125,29 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 		if ( o == null ) {
 			return 1;
 		}
-		Long oLocationId = o.getLocationId();
-		Long locationId = getLocationId();
-		if ( oLocationId == null ) {
-			return 1;
-		} else if ( locationId == null ) {
-			return -1;
-		}
-		int comparison = locationId.compareTo(oLocationId);
+		int comparison = locationId.compareTo(o.locationId);
 		if ( comparison != 0 ) {
 			return comparison;
-		}
-		if ( o.sourceId == null ) {
-			return 1;
-		} else if ( sourceId == null ) {
-			return -1;
 		}
 		return sourceId.compareToIgnoreCase(o.sourceId);
 	}
 
-	public final @Nullable Long getLocationId() {
+	/**
+	 * Get the location ID.
+	 *
+	 * @return the location ID
+	 */
+	public final Long getLocationId() {
 		return locationId;
 	}
 
-	public final void setLocationId(@Nullable Long locationId) {
-		this.locationId = locationId;
-	}
-
-	public final @Nullable String getSourceId() {
+	/**
+	 * Get the source ID.
+	 *
+	 * @return the source ID
+	 */
+	public final String getSourceId() {
 		return sourceId;
-	}
-
-	public final void setSourceId(@Nullable String sourceId) {
-		this.sourceId = sourceId;
 	}
 
 }

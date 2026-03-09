@@ -578,10 +578,8 @@ public class DaoDatumImportBizTests {
 		List<GeneralNodeDatum> data = new ArrayList<>(4);
 		long wh = (long) (Math.random() * 1000000000.0);
 		for ( int i = 0; i < count; i++ ) {
-			GeneralNodeDatum d = new GeneralNodeDatum();
-			d.setNodeId(TEST_NODE_ID);
-			d.setCreated(start.plus(i, ChronoUnit.MINUTES));
-			d.setSourceId(TEST_SOURCE_ID);
+			GeneralNodeDatum d = new GeneralNodeDatum(TEST_NODE_ID, start.plus(i, ChronoUnit.MINUTES),
+					TEST_SOURCE_ID);
 
 			DatumSamples s = new DatumSamples();
 			int watts = (int) (Math.random() * 50000);

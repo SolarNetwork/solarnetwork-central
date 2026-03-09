@@ -166,8 +166,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *        the row of column values
 	 * @param col
 	 *        the 1-based column number to get
-	 * @return the column value, or {@code null} if the column isn't
-	 *         available
+	 * @return the column value, or {@code null} if the column isn't available
 	 */
 	protected String getColumnValue(CsvRecord row, Integer col) {
 		if ( row == null || col == null || col > row.getFieldCount() || col < 1 ) {
@@ -185,12 +184,12 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *        the 1-based column numbers to get
 	 * @param delimiter
 	 *        a delimiter to join the columns with
-	 * @return the columns combined value, or {@code null} if the columns
-	 *         aren't available
+	 * @return the columns combined value, or {@code null} if the columns aren't
+	 *         available
 	 */
 	protected String getColumnsValue(CsvRecord row, List<Integer> cols, String delimiter) {
 		int numCols = (cols != null ? cols.size() : 0);
-		if ( row == null || numCols < 1 ) {
+		if ( cols == null || row == null || numCols < 1 ) {
 			return null;
 		}
 
@@ -268,8 +267,8 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *        the data row
 	 * @param col
 	 *        the column to parse as a JSON array
-	 * @return the list, or {@code null} if the column is not available or
-	 *         the resulting list would be empty
+	 * @return the list, or {@code null} if the column is not available or the
+	 *         resulting list would be empty
 	 */
 	protected List<String> parseList(CsvRecord row, Integer col) {
 		String v = getColumnValue(row, col);
@@ -296,8 +295,8 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *        the data row
 	 * @param col
 	 *        the column to parse as a JSON array
-	 * @return the list, or {@code null} if the column is not available or
-	 *         the resulting list would be empty
+	 * @return the list, or {@code null} if the column is not available or the
+	 *         resulting list would be empty
 	 */
 	protected Set<String> parseSet(CsvRecord row, Integer col) {
 		List<String> l = parseList(row, col);
@@ -395,11 +394,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 					commaDelimitedStringFromCollection(row.getFields()));
 		}
 
-		GeneralNodeDatum d = new GeneralNodeDatum();
-		d.setNodeId(nodeId);
-		d.setCreated(date);
-		d.setSourceId(sourceId);
-		return d;
+		return new GeneralNodeDatum(nodeId, date, sourceId);
 	}
 
 	@Override

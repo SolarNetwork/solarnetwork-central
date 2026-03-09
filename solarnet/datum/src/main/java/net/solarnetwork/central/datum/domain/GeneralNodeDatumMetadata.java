@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -53,11 +55,40 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	@Serial
 	private static final long serialVersionUID = 646376244092193165L;
 
-	private final NodeSourcePK id = new NodeSourcePK();
+	private final NodeSourcePK id;
 	private @Nullable Instant created;
 	private @Nullable Instant updated;
 	private @Nullable GeneralDatumMetadata meta;
 	private @Nullable String metaJson;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public GeneralNodeDatumMetadata(NodeSourcePK id) {
+		super();
+		this.id = requireNonNullArgument(id, "id");
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public GeneralNodeDatumMetadata(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("sourceId") String sourceId) {
+		this(new NodeSourcePK(nodeId, sourceId));
+	}
 
 	@Override
 	public GeneralNodeDatumMetadata clone() {
@@ -92,18 +123,8 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	 *
 	 * @return the nodeId
 	 */
-	public final @Nullable Long getNodeId() {
+	public final Long getNodeId() {
 		return id.getNodeId();
-	}
-
-	/**
-	 * Convenience setter for {@link NodeSourcePK#setNodeId(Long)}.
-	 *
-	 * @param nodeId
-	 *        the nodeId to set
-	 */
-	public final void setNodeId(@Nullable Long nodeId) {
-		id.setNodeId(nodeId);
 	}
 
 	/**
@@ -111,18 +132,8 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	 *
 	 * @return the sourceId
 	 */
-	public final @Nullable String getSourceId() {
+	public final String getSourceId() {
 		return id.getSourceId();
-	}
-
-	/**
-	 * Convenience setter for {@link NodeSourcePK#setSourceId(String)}.
-	 *
-	 * @param sourceId
-	 *        the sourceId to set
-	 */
-	public final void setSourceId(@Nullable String sourceId) {
-		id.setSourceId(sourceId);
 	}
 
 	/**

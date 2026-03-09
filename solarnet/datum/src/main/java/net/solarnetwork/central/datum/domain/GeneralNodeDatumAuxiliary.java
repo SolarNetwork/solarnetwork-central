@@ -67,11 +67,16 @@ public class GeneralNodeDatumAuxiliary
 	private @Nullable String metaJson;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the primary key
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	@JsonCreator
-	public GeneralNodeDatumAuxiliary() {
-		this(new GeneralNodeDatumAuxiliaryPK(), null, null);
+	public GeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
+		super();
+		this.id = requireNonNullArgument(id, "id");
 	}
 
 	/**
@@ -88,8 +93,36 @@ public class GeneralNodeDatumAuxiliary
 	 */
 	public GeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id, @Nullable DatumSamples samplesFinal,
 			@Nullable DatumSamples samplesStart) {
-		super();
-		this.id = requireNonNullArgument(id, "id");
+		this(id);
+		setSamplesFinal(samplesFinal);
+		setSamplesStart(samplesStart);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @param type
+	 *        the type
+	 * @param samplesFinal
+	 *        the final samples
+	 * @param samplesStart
+	 *        the starting samples
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@code null}
+	 */
+	@JsonCreator
+	public GeneralNodeDatumAuxiliary(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId,
+			@JsonProperty(value = "type", required = false) @Nullable DatumAuxiliaryType type,
+			@Nullable DatumSamples samplesFinal, @Nullable DatumSamples samplesStart) {
+		this(new GeneralNodeDatumAuxiliaryPK(nodeId, created, sourceId,
+				type != null ? type : DatumAuxiliaryType.Reset));
 		setSamplesFinal(samplesFinal);
 		setSamplesStart(samplesStart);
 	}
@@ -125,19 +158,8 @@ public class GeneralNodeDatumAuxiliary
 	 *
 	 * @return the nodeId
 	 */
-	public final @Nullable Long getNodeId() {
+	public final Long getNodeId() {
 		return id.getNodeId();
-	}
-
-	/**
-	 * Convenience setter for
-	 * {@link GeneralNodeDatumAuxiliaryPK#setNodeId(Long)}.
-	 *
-	 * @param nodeId
-	 *        the nodeId to set
-	 */
-	public final void setNodeId(@Nullable Long nodeId) {
-		id.setNodeId(nodeId);
 	}
 
 	/**
@@ -145,34 +167,12 @@ public class GeneralNodeDatumAuxiliary
 	 *
 	 * @return the sourceId
 	 */
-	public final @Nullable String getSourceId() {
+	public final String getSourceId() {
 		return id.getSourceId();
 	}
 
-	/**
-	 * Convenience setter for
-	 * {@link GeneralNodeDatumAuxiliaryPK#setSourceId(String)}.
-	 *
-	 * @param sourceId
-	 *        the sourceId to set
-	 */
-	public final void setSourceId(@Nullable String sourceId) {
-		id.setSourceId(sourceId);
-	}
-
-	/**
-	 * Convenience setter for
-	 * {@link GeneralNodeDatumAuxiliaryPK#setCreated(Instant)}.
-	 *
-	 * @param created
-	 *        the created to set
-	 */
-	public final void setCreated(@Nullable Instant created) {
-		id.setCreated(created);
-	}
-
 	@Override
-	public final @Nullable Instant getCreated() {
+	public final Instant getCreated() {
 		return id.getCreated();
 	}
 
@@ -181,19 +181,8 @@ public class GeneralNodeDatumAuxiliary
 	 *
 	 * @return the type
 	 */
-	public final @Nullable DatumAuxiliaryType getType() {
+	public final DatumAuxiliaryType getType() {
 		return id.getType();
-	}
-
-	/**
-	 * Convenience setter for
-	 * {@link GeneralNodeDatumAuxiliaryPK#setType(DatumAuxiliaryType)}.
-	 *
-	 * @param type
-	 *        the type to set
-	 */
-	public final void setType(@Nullable DatumAuxiliaryType type) {
-		id.setType(type);
 	}
 
 	public final @Nullable Instant getUpdated() {

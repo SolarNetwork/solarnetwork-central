@@ -1,7 +1,7 @@
 /* ==================================================================
- * ObjectSourcePK.java - 5/11/2020 3:08:00 pm
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,31 +20,11 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
-
 /**
- * API for an object + source ID combination.
- *
- * @author matt
- * @version 1.0
- * @since 2.8
- * @see NodeSourcePK
- * @see LocationSourcePK
+ * SolarNetwork datum DAO-based service implementations.
  */
-public interface ObjectSourcePK {
 
-	/**
-	 * Get the object ID.
-	 *
-	 * @return the object ID
-	 */
-	Long getObjectId();
+@NullMarked
+package net.solarnetwork.central.datum.biz.dao;
 
-	/**
-	 * Get the source ID.
-	 *
-	 * @return the source ID
-	 */
-	String getSourceId();
-
-}
+import org.jspecify.annotations.NullMarked;

@@ -24,7 +24,10 @@ package net.solarnetwork.central.datum.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
+import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Extension of {@link GeneralNodeDatum} with account ownership information.
@@ -42,12 +45,35 @@ public class OwnedGeneralNodeDatum extends GeneralNodeDatum {
 	/**
 	 * Constructor.
 	 *
+	 * @param id
+	 *        the ID
 	 * @param userId
 	 *        the user (owner) ID
 	 */
-	public OwnedGeneralNodeDatum(Long userId) {
-		super();
+	public OwnedGeneralNodeDatum(GeneralNodeDatumPK id, Long userId) {
+		super(id);
 		this.userId = requireNonNullArgument(userId, "userId");
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @param userId
+	 *        the user (owner) ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public OwnedGeneralNodeDatum(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId,
+			@JsonProperty("userId") Long userId) {
+		this(new GeneralNodeDatumPK(nodeId, created, sourceId), userId);
 	}
 
 	/**
@@ -58,6 +84,13 @@ public class OwnedGeneralNodeDatum extends GeneralNodeDatum {
 	@JsonIgnore
 	public Long getUserId() {
 		return userId;
+	}
+
+	@Override
+	public OwnedGeneralNodeDatum copyWithId(GeneralNodeDatumPK id) {
+		OwnedGeneralNodeDatum copy = new OwnedGeneralNodeDatum(id, userId);
+		copyTo(copy);
+		return copy;
 	}
 
 }

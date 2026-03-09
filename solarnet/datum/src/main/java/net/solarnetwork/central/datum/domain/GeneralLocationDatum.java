@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -30,6 +31,7 @@ import java.time.Instant;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -57,16 +59,40 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	@Serial
 	private static final long serialVersionUID = 7682061775759924209L;
 
-	private final GeneralLocationDatumPK id = new GeneralLocationDatumPK();
+	private final GeneralLocationDatumPK id;
 	private @Nullable DatumSamples samples;
 	private @Nullable Instant posted;
 	private @Nullable String sampleJson;
 
 	/**
 	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public GeneralLocationDatum() {
+	public GeneralLocationDatum(GeneralLocationDatumPK id) {
 		super();
+		this.id = requireNonNullArgument(id, "id");
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param locationId
+	 *        the location ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public GeneralLocationDatum(@JsonProperty("locationId") Long locationId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId) {
+		this(new GeneralLocationDatumPK(locationId, created, sourceId));
 	}
 
 	@Override
@@ -128,19 +154,8 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	 *
 	 * @return the locationId
 	 */
-	public final @Nullable Long getLocationId() {
+	public final Long getLocationId() {
 		return id.getLocationId();
-	}
-
-	/**
-	 * Convenience setter for {@link GeneralLocationDatumPK#setLocationId(Long)}
-	 * .
-	 *
-	 * @param locationId
-	 *        the locationId to set
-	 */
-	public final void setLocationId(@Nullable Long locationId) {
-		id.setLocationId(locationId);
 	}
 
 	/**
@@ -148,34 +163,12 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	 *
 	 * @return the sourceId
 	 */
-	public final @Nullable String getSourceId() {
+	public final String getSourceId() {
 		return id.getSourceId();
 	}
 
-	/**
-	 * Convenience setter for {@link GeneralLocationDatumPK#setSourceId(String)}
-	 * .
-	 *
-	 * @param sourceId
-	 *        the sourceId to set
-	 */
-	public final void setSourceId(@Nullable String sourceId) {
-		id.setSourceId(sourceId);
-	}
-
-	/**
-	 * Convenience setter for
-	 * {@link GeneralLocationDatumPK#setCreated(Instant)}.
-	 *
-	 * @param created
-	 *        the created to set
-	 */
-	public final void setCreated(@Nullable Instant created) {
-		id.setCreated(created);
-	}
-
 	@Override
-	public final @Nullable Instant getCreated() {
+	public final Instant getCreated() {
 		return id.getCreated();
 	}
 

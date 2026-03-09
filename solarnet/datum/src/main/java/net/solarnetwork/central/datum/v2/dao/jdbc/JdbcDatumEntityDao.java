@@ -246,7 +246,7 @@ public class JdbcDatumEntityDao
 		if ( datum == null || datum.getObjectId() == null || datum.getSourceId() == null ) {
 			return null;
 		}
-		var d = convertGeneralDatum(datum);
+		var d = convertGeneralDatum(datum, Instant.now());
 		if ( d == null ) {
 			return null;
 		}
@@ -724,7 +724,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-
+		
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/

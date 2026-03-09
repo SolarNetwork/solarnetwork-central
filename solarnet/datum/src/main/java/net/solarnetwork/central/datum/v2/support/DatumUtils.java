@@ -55,10 +55,11 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.MostRecentFilter;
+import net.solarnetwork.central.datum.domain.ObjectRecordId;
 import net.solarnetwork.central.datum.domain.ReadingTypeFilter;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
@@ -627,11 +628,8 @@ public final class DatumUtils {
 		ZoneId zone = meta.getTimeZoneId() != null ? ZoneId.of(meta.getTimeZoneId()) : ZoneOffset.UTC;
 
 		// use ReportingGeneralNodeDatum to support localDateTime property
-		ReportingGeneralNodeDatum gnd = new ReportingGeneralNodeDatum();
-
-		gnd.setCreated(datum.getTimestamp());
-		gnd.setNodeId(meta.getObjectId());
-		gnd.setSourceId(meta.getSourceId());
+		ReportingGeneralNodeDatum gnd = new ReportingGeneralNodeDatum(meta.getObjectId(),
+				datum.getTimestamp(), meta.getSourceId());
 
 		DatumSamples s = new DatumSamples();
 
@@ -697,7 +695,7 @@ public final class DatumUtils {
 	}
 
 	/**
-	 * Create a new {@link GeneralLocationDatumMetadataMatch} out of an
+	 * Create a new {@link GeneralNodeDatumMetadataMatch} out of an
 	 * {@link ObjectDatumStreamMetadata}.
 	 *
 	 * @param meta
@@ -710,9 +708,8 @@ public final class DatumUtils {
 		if ( meta == null ) {
 			return null;
 		}
-		GeneralNodeDatumMetadataMatch m = new GeneralNodeDatumMetadataMatch();
-		m.setNodeId(meta.getObjectId());
-		m.setSourceId(meta.getSourceId());
+		GeneralNodeDatumMetadataMatch m = new GeneralNodeDatumMetadataMatch(meta.getObjectId(),
+				meta.getSourceId());
 		m.setMetaJson(meta.getMetaJson());
 		return m;
 	}
@@ -733,17 +730,13 @@ public final class DatumUtils {
 		if ( datum == null || meta == null ) {
 			return null;
 		}
-		GeneralNodeDatumAuxiliary aux = new GeneralNodeDatumAuxiliary();
-		populate(datum, meta, aux);
+		GeneralNodeDatumAuxiliary aux = new GeneralNodeDatumAuxiliary(new GeneralNodeDatumAuxiliaryPK(
+				meta.getObjectId(), datum.getTimestamp(), meta.getSourceId(), datum.getType()));
+		populate(datum, aux);
 		return aux;
 	}
 
-	private static void populate(DatumAuxiliary datum, ObjectDatumStreamMetadata meta,
-			GeneralNodeDatumAuxiliary aux) {
-		aux.setNodeId(meta.getObjectId());
-		aux.setSourceId(meta.getSourceId());
-		aux.setCreated(datum.getTimestamp());
-		aux.setType(datum.getType());
+	private static void populate(DatumAuxiliary datum, GeneralNodeDatumAuxiliary aux) {
 		if ( datum.getSamplesFinal() != null ) {
 			DatumSamples s = new DatumSamples();
 			s.setAccumulating(datum.getSamplesFinal().getAccumulating());
@@ -772,8 +765,10 @@ public final class DatumUtils {
 	 */
 	public static GeneralNodeDatumAuxiliaryFilterMatch toGeneralNodeDatumAuxiliaryFilterMatch(
 			DatumAuxiliary datum, ObjectDatumStreamMetadata meta) {
-		GeneralNodeDatumAuxiliaryMatch aux = new GeneralNodeDatumAuxiliaryMatch();
-		populate(datum, meta, aux);
+		GeneralNodeDatumAuxiliaryMatch aux = new GeneralNodeDatumAuxiliaryMatch(
+				new GeneralNodeDatumAuxiliaryPK(meta.getObjectId(), datum.getTimestamp(),
+						meta.getSourceId(), datum.getType()));
+		populate(datum, aux);
 		aux.setLocalDateTime(
 				datum.getTimestamp().atZone(ZoneId.of(meta.getTimeZoneId())).toLocalDateTime());
 		return aux;
@@ -799,11 +794,9 @@ public final class DatumUtils {
 		ZoneId zone = meta.getTimeZoneId() != null ? ZoneId.of(meta.getTimeZoneId()) : ZoneOffset.UTC;
 
 		// use ReportingGeneralLocationDatum to support localDateTime property
-		ReportingGeneralLocationDatum gnd = new ReportingGeneralLocationDatum();
-		gnd.setCreated(datum.getTimestamp());
+		ReportingGeneralLocationDatum gnd = new ReportingGeneralLocationDatum(meta.getObjectId(),
+				datum.getTimestamp(), meta.getSourceId());
 		gnd.setLocalDateTime(datum.getTimestamp().atZone(zone).toLocalDateTime());
-		gnd.setLocationId(meta.getObjectId());
-		gnd.setSourceId(meta.getSourceId());
 
 		DatumSamples s = new DatumSamples();
 		// populate normal data
@@ -844,9 +837,8 @@ public final class DatumUtils {
 		if ( meta == null ) {
 			return null;
 		}
-		GeneralLocationDatumMetadataMatch m = new GeneralLocationDatumMetadataMatch();
-		m.setLocationId(meta.getObjectId());
-		m.setSourceId(meta.getSourceId());
+		GeneralLocationDatumMetadataMatch m = new GeneralLocationDatumMetadataMatch(meta.getObjectId(),
+				meta.getSourceId());
 		m.setMetaJson(meta.getMetaJson());
 
 		net.solarnetwork.domain.Location l = meta.getLocation();
@@ -1050,19 +1042,17 @@ public final class DatumUtils {
 	 *         {@code null}
 	 * @since 2.0
 	 */
-	public static @Nullable FilterResults<AuditDatumRecordCounts, GeneralNodeDatumPK> toAuditDatumRecordCountsFilterResults(
+	public static @Nullable FilterResults<AuditDatumRecordCounts, ObjectRecordId> toAuditDatumRecordCountsFilterResults(
 			@Nullable FilterResults<AuditDatumRollup, DatumPK> results) {
 		if ( results == null ) {
 			return null;
 		}
 		List<AuditDatumRecordCounts> counts = StreamSupport.stream(results.spliterator(), false)
 				.map(e -> {
-					AuditDatumRecordCounts c = new AuditDatumRecordCounts(e.getNodeId(), e.getSourceId(),
+					AuditDatumRecordCounts c = new AuditDatumRecordCounts(
+							new ObjectRecordId(e.getNodeId(), e.getSourceId(), e.getTimestamp()),
 							e.getDatumCount(), e.getDatumHourlyCount(), e.getDatumDailyCount(),
 							e.getDatumMonthlyCount());
-					if ( e.getTimestamp() != null ) {
-						c.setCreated(e.getTimestamp());
-					}
 					return c;
 				}).collect(Collectors.toList());
 		return new BasicFilterResults<>(counts, results.getTotalResults(), results.getStartingOffset(),

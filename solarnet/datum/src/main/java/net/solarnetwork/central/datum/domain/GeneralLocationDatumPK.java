@@ -41,13 +41,6 @@ public class GeneralLocationDatumPK extends BasicLocationSourceDatePK
 	private static final long serialVersionUID = 8981870788775613402L;
 
 	/**
-	 * Default constructor.
-	 */
-	public GeneralLocationDatumPK() {
-		super();
-	}
-
-	/**
 	 * Constructor.
 	 *
 	 * @param locationId
@@ -58,8 +51,7 @@ public class GeneralLocationDatumPK extends BasicLocationSourceDatePK
 	 *        the source ID
 	 * @since 1.3
 	 */
-	public GeneralLocationDatumPK(@Nullable Long locationId, @Nullable Instant created,
-			@Nullable String sourceId) {
+	public GeneralLocationDatumPK(Long locationId, Instant created, String sourceId) {
 		super(locationId, sourceId, created);
 	}
 
@@ -89,17 +81,17 @@ public class GeneralLocationDatumPK extends BasicLocationSourceDatePK
 	}
 
 	@Override
-	public ObjectDatumKind getKind() {
+	public final ObjectDatumKind getKind() {
 		return ObjectDatumKind.Location;
 	}
 
 	@Override
-	public @Nullable Long getObjectId() {
+	public final Long getObjectId() {
 		return getLocationId();
 	}
 
 	@Override
-	public @Nullable Instant getTimestamp() {
+	public final Instant getTimestamp() {
 		return getCreated();
 	}
 

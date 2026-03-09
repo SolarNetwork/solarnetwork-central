@@ -217,11 +217,9 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 			return null;
 		}
 
-		GeneralNodeDatum d = new GeneralNodeDatum();
+		GeneralNodeDatum d = new GeneralNodeDatum(cp.getNodeId(), Instant.now(),
+				pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		d.setSamples(s);
-		d.setCreated(Instant.now());
-		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		return d;
 	}
 

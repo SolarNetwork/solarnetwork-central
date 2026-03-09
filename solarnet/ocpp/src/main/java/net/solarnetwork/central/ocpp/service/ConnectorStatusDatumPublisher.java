@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.service;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -188,13 +189,10 @@ public class ConnectorStatusDatumPublisher {
 					String.valueOf(cs.getTransactionId()));
 		}
 
-		GeneralNodeDatum d = new GeneralNodeDatum();
-		d.setNodeId(chargePoint.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, chargePoint.getInfo().getId(), info.getEvseId(),
-				info.getConnectorId()));
-		if ( info.getTimestamp() != null ) {
-			d.setCreated(info.getTimestamp());
-		}
+		final Instant ts = info.getTimestamp() != null ? info.getTimestamp() : Instant.now();
+		final String sourceId = pubSupport.sourceId(cps, chargePoint.getInfo().getId(), info.getEvseId(),
+				info.getConnectorId());
+		GeneralNodeDatum d = new GeneralNodeDatum(chargePoint.getNodeId(), ts, sourceId);
 		d.setSamples(s);
 		pubSupport.publishDatum(cps, d);
 	}

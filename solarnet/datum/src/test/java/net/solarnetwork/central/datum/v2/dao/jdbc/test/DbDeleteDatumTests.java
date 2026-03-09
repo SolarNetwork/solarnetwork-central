@@ -91,10 +91,7 @@ public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 		List<GeneralNodeDatum> data = new ArrayList<>(count);
 		long ts = start;
 		for ( int i = 0; i < count; i++ ) {
-			GeneralNodeDatum d = new GeneralNodeDatum();
-			d.setCreated(Instant.ofEpochMilli(ts));
-			d.setNodeId(nodeId);
-			d.setSourceId(sourceId);
+			GeneralNodeDatum d = new GeneralNodeDatum(nodeId, Instant.ofEpochMilli(ts), sourceId);
 			DatumSamples s = new DatumSamples();
 			s.putInstantaneousSampleValue("watts", 125);
 			s.putAccumulatingSampleValue("wattHours", 10);

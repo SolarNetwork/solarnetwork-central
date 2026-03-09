@@ -51,11 +51,13 @@ public interface DatumStreamMetadataBiz {
 	 *        the object ID to set, or {@code null} to keep unchanged
 	 * @param sourceId
 	 *        the source ID to set, or {@code null} to keep unchanged
-	 * @return the updated stream metadata ID
+	 * @return the updated stream metadata ID, or {@code null} if the metadata
+	 *         was not updated
 	 * @throws IllegalArgumentException
 	 *         if either {@code kind} or {@code streamId} is {@code null} or
 	 *         both {@code objectId} and {@code sourceId} are {@code null}
 	 */
+	@Nullable
 	ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId,
 			@Nullable Long objectId, @Nullable String sourceId);
 

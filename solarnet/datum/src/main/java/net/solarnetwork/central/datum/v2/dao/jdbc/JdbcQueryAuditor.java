@@ -266,11 +266,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	}
 
 	private static GeneralNodeDatumPK nodeDatumKey(Instant date, Long nodeId, String sourceId) {
-		GeneralNodeDatumPK pk = new GeneralNodeDatumPK();
-		pk.setCreated(date);
-		pk.setNodeId(nodeId);
-		pk.setSourceId(sourceId);
-		return pk;
+		return new GeneralNodeDatumPK(nodeId, date, sourceId);
 	}
 
 	private void addNodeSourceCount(GeneralNodeDatumPK key, int count) {

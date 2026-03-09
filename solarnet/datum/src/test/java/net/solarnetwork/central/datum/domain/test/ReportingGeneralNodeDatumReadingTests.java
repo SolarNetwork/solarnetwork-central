@@ -60,10 +60,8 @@ public class ReportingGeneralNodeDatumReadingTests {
 	}
 
 	private ReportingGeneralNodeDatumReading getTestInstance() {
-		ReportingGeneralNodeDatumReading datum = new ReportingGeneralNodeDatumReading();
-		datum.setCreated(TEST_TIMESTAMP);
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		ReportingGeneralNodeDatumReading datum = new ReportingGeneralNodeDatumReading(TEST_NODE_ID,
+				TEST_TIMESTAMP, TEST_SOURCE_ID);
 
 		DatumSamples starting = new DatumSamples();
 		starting.putAccumulatingSampleValue("watt_hours", 4231);
@@ -117,7 +115,8 @@ public class ReportingGeneralNodeDatumReadingTests {
 
 	@Test
 	public void deserializeJsonComponents() throws Exception {
-		ReportingGeneralNodeDatumReading datum = new ReportingGeneralNodeDatumReading();
+		ReportingGeneralNodeDatumReading datum = new ReportingGeneralNodeDatumReading(TEST_NODE_ID,
+				TEST_TIMESTAMP, TEST_SOURCE_ID);
 		datum.setSampleJson("{\"i\":{\"watts\":123},\"a\":{\"watt_hours\":80}}");
 		datum.setSampleJsonStart("{\"a\":{\"watt_hours\":9}}");
 		datum.setSampleJsonFinal("{\"a\":{\"watt_hours\":89}}");
