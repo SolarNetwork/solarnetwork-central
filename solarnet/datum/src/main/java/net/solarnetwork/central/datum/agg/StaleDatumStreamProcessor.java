@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.datum.agg;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
@@ -37,6 +39,7 @@ import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
 import net.solarnetwork.central.datum.domain.BasicDatumAppEvent;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumIdRowMapper;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -62,7 +65,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	/** The default {@code jdbcCall} value. */
 	public static final String DEFAULT_SQL = "{call solardatm.process_one_agg_stale_datm(?)}";
 
-	private List<DatumAppEventAcceptor> datumAppEventAcceptors;
+	private @Nullable List<DatumAppEventAcceptor> datumAppEventAcceptors;
 
 	/**
 	 * Constructor.
@@ -129,26 +132,30 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	}
 
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	private BasicDatumAppEvent extractAppEvent(ObjectDatumId id) {
+	private @Nullable BasicDatumAppEvent extractAppEvent(@Nullable ObjectDatumId id) {
 		if ( id == null || !id.isValidAggregateObjectId(ObjectDatumKind.Node) ) {
 			return null;
 		}
-		switch (id.getAggregation()) {
+
+		final Aggregation agg = id.getAggregation();
+
+		switch (agg) {
 			case Hour:
 			case Day:
 			case Month:
 				// allowed
 				break;
 
-			default:
+			case null, default:
 				// not allowed
 				return null;
 		}
 
-		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(id.getAggregation(),
-				id.getTimestamp());
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(agg,
+				nonnull(id.getTimestamp(), "Timestamp"));
 		return new BasicDatumAppEvent(AggregateUpdatedEventInfo.AGGREGATE_UPDATED_TOPIC,
-				info.toEventProperties(), id.getObjectId(), id.getSourceId());
+				info.toEventProperties(), nonnull(id.getObjectId(), "Object ID"),
+				nonnull(id.getSourceId(), "Source ID"));
 	}
 
 	/**
@@ -156,7 +163,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	 *
 	 * @return the type
 	 */
-	public String getAggregateProcessType() {
+	public final String getAggregateProcessType() {
 		return getTierProcessType();
 	}
 
@@ -167,7 +174,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	 * @param aggregateProcessType
 	 *        the type to set
 	 */
-	public void setAggregateProcessType(String aggregateProcessType) {
+	public final void setAggregateProcessType(String aggregateProcessType) {
 		setTierProcessType(aggregateProcessType);
 	}
 
@@ -176,7 +183,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	 *
 	 * @return the maximum row count
 	 */
-	public int getAggregateProcessMax() {
+	public final int getAggregateProcessMax() {
 		Integer max = getTierProcessMax();
 		return (max != null ? max : 0);
 	}
@@ -192,7 +199,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	 * @param aggregateProcessMax
 	 *        the maximum number of rows
 	 */
-	public void setAggregateProcessMax(int aggregateProcessMax) {
+	public final void setAggregateProcessMax(int aggregateProcessMax) {
 		setTierProcessMax(aggregateProcessMax);
 	}
 
@@ -203,7 +210,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	 * @return the services
 	 * @since 1.4
 	 */
-	public List<DatumAppEventAcceptor> getDatumAppEventAcceptors() {
+	public final @Nullable List<DatumAppEventAcceptor> getDatumAppEventAcceptors() {
 		return datumAppEventAcceptors;
 	}
 
@@ -215,7 +222,8 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	 *        the services to set
 	 * @since 1.4
 	 */
-	public void setDatumAppEventAcceptors(List<DatumAppEventAcceptor> datumAppEventAcceptors) {
+	public final void setDatumAppEventAcceptors(
+			@Nullable List<DatumAppEventAcceptor> datumAppEventAcceptors) {
 		this.datumAppEventAcceptors = datumAppEventAcceptors;
 	}
 
