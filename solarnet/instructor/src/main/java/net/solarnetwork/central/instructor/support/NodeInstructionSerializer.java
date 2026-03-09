@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.instructor.support;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -48,7 +51,7 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 	}
 
 	@Override
-	public void serialize(NodeInstruction nodeInstruction, JsonGenerator generator,
+	public void serialize(@Nullable NodeInstruction nodeInstruction, JsonGenerator generator,
 			SerializationContext provider) throws JacksonException {
 		if ( nodeInstruction == null ) {
 			generator.writeNull();
@@ -101,9 +104,10 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 			generator.writePOJOProperty("expirationDate", instr.getExpirationDate());
 		}
 		if ( hasParameters ) {
+			final List<InstructionParameter> params = nonnull(instr.getParameters(), "Parameters");
 			generator.writeName("parameters");
-			generator.writeStartArray(instr.getParameters(), instr.getParameters().size());
-			for ( InstructionParameter p : instr.getParameters() ) {
+			generator.writeStartArray(params, params.size());
+			for ( InstructionParameter p : params ) {
 				generator.writeStartObject(p, 2);
 				generator.writeStringProperty("name", p.getName());
 				generator.writeStringProperty("value", p.getValue());

@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -59,7 +60,7 @@ public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction
 
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	@Override
-	public NodeInstruction deserialize(JsonParser p, DeserializationContext ctxt)
+	public @Nullable NodeInstruction deserialize(JsonParser p, DeserializationContext ctxt)
 			throws JacksonException {
 		JsonToken t = p.currentToken();
 		if ( t == JsonToken.VALUE_NULL ) {
@@ -153,7 +154,8 @@ public class NodeInstructionDeserializer extends StdDeserializer<NodeInstruction
 		throw MismatchedInputException.from(p, "Unable to parse NodeInstruction (not an object)");
 	}
 
-	private static List<InstructionParameter> parseParameters(JsonParser p) throws JacksonException {
+	private static @Nullable List<InstructionParameter> parseParameters(JsonParser p)
+			throws JacksonException {
 		JsonToken t = p.nextToken();
 		return switch (t) {
 			case START_ARRAY -> parseParameterList(p);
