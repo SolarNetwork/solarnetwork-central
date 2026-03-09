@@ -77,7 +77,7 @@ public class NodeInstructionCleaner extends JobSupport {
 	 * 
 	 * @return the number of days old
 	 */
-	public int getDaysOlder() {
+	public final int getDaysOlder() {
 		return daysOlder;
 	}
 
@@ -89,7 +89,7 @@ public class NodeInstructionCleaner extends JobSupport {
 	 *        the number of days old instructions can be before they can be
 	 *        purged
 	 */
-	public void setDaysOlder(int daysOlder) {
+	public final void setDaysOlder(int daysOlder) {
 		this.daysOlder = daysOlder;
 	}
 
@@ -100,7 +100,7 @@ public class NodeInstructionCleaner extends JobSupport {
 	 * @return the number of days old
 	 * @since 2.1
 	 */
-	public int getAbandonedDaysOlder() {
+	public final int getAbandonedDaysOlder() {
 		return abandonedDaysOlder;
 	}
 
@@ -113,7 +113,7 @@ public class NodeInstructionCleaner extends JobSupport {
 	 *        can be purged
 	 * @since 2.1
 	 */
-	public void setAbandonedDaysOlder(int abandonedDaysOlder) {
+	public final void setAbandonedDaysOlder(int abandonedDaysOlder) {
 		this.abandonedDaysOlder = abandonedDaysOlder;
 	}
 

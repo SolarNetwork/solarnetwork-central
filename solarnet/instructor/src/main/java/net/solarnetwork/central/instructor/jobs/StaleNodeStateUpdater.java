@@ -24,6 +24,7 @@ package net.solarnetwork.central.instructor.jobs;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
@@ -33,18 +34,32 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * their state to something else.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.2
  */
 public class StaleNodeStateUpdater extends JobSupport {
 
-	/** The default value for the {@code secondsOlder} property. */
+	/** The {@code secondsOlder} property default value. */
 	public static final int DEFAULT_SECONDS_OLDER = 30;
 
+	/**
+	 * The {@code expectedState} property default value.
+	 * 
+	 * @since 2.2
+	 */
+	public static final InstructionState DEFAULT_EXPECTED_STATE = InstructionState.Queuing;
+
+	/**
+	 * The {@code state} property default value.
+	 * 
+	 * @since 2.2
+	 */
+	public static final InstructionState DEFAULT_STATE = InstructionState.Queued;
+
 	private final NodeInstructionDao dao;
-	private int secondsOlder;
-	private InstructionState expectedState;
-	private InstructionState state;
+	private int secondsOlder = DEFAULT_SECONDS_OLDER;
+	private InstructionState expectedState = DEFAULT_EXPECTED_STATE;
+	private InstructionState state = DEFAULT_STATE;
 
 	/**
 	 * Constructor.
@@ -57,9 +72,6 @@ public class StaleNodeStateUpdater extends JobSupport {
 	public StaleNodeStateUpdater(NodeInstructionDao dao) {
 		super("Instruction", "StaleNodeStateUpdater");
 		this.dao = requireNonNullArgument(dao, "dao");
-		setSecondsOlder(DEFAULT_SECONDS_OLDER);
-		setExpectedState(null);
-		setState(null);
 	}
 
 	@Override
@@ -80,11 +92,8 @@ public class StaleNodeStateUpdater extends JobSupport {
 	 *        the minimum number of seconds older an instruction must be;
 	 *        negative values are treated as {@literal 0}
 	 */
-	public void setSecondsOlder(int secondsOlder) {
-		if ( secondsOlder < 0 ) {
-			secondsOlder = 0;
-		}
-		this.secondsOlder = secondsOlder;
+	public final void setSecondsOlder(int secondsOlder) {
+		this.secondsOlder = (secondsOlder > 0 ? secondsOlder : 0);
 	}
 
 	/**
@@ -92,28 +101,21 @@ public class StaleNodeStateUpdater extends JobSupport {
 	 * 
 	 * @param expectedState
 	 *        the state for instructions to be in that should be changed;
-	 *        {@code null} will be treated as
-	 *        {@link InstructionState#Queuing}
+	 *        {@code null} will be treated as {@link InstructionState#Queuing}
 	 */
-	public void setExpectedState(InstructionState expectedState) {
-		if ( expectedState == null ) {
-			expectedState = InstructionState.Queuing;
-		}
-		this.expectedState = expectedState;
+	public final void setExpectedState(@Nullable InstructionState expectedState) {
+		this.expectedState = (expectedState != null ? expectedState : DEFAULT_EXPECTED_STATE);
 	}
 
 	/**
 	 * The state to update found instructions to.
 	 * 
 	 * @param state
-	 *        the state to change matching instructions to; {@code null} will
-	 *        be treated as {@link InstructionState#Queued}
+	 *        the state to change matching instructions to; {@code null} will be
+	 *        treated as {@link InstructionState#Queued}
 	 */
-	public void setState(InstructionState state) {
-		if ( state == null ) {
-			state = InstructionState.Queued;
-		}
-		this.state = state;
+	public final void setState(@Nullable InstructionState state) {
+		this.state = (state != null ? state : DEFAULT_STATE);
 	}
 
 }
