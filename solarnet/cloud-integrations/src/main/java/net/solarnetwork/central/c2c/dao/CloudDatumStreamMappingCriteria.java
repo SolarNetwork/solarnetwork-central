@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for cloud datum stream related data.
  *
@@ -42,7 +44,7 @@ public interface CloudDatumStreamMappingCriteria {
 	 * @return the first datum stream mapping ID, or {@code null} if not
 	 *         available
 	 */
-	default Long getDatumStreamMappingId() {
+	default @Nullable Long getDatumStreamMappingId() {
 		final Long[] array = getDatumStreamMappingIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -52,7 +54,7 @@ public interface CloudDatumStreamMappingCriteria {
 	 *
 	 * @return array of datum stream mapping IDs (may be {@code null})
 	 */
-	Long[] getDatumStreamMappingIds();
+	Long @Nullable [] getDatumStreamMappingIds();
 
 	/**
 	 * Test if this filter has any datum stream mapping criteria.

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -84,9 +85,10 @@ public class CloudDatumStreamRakeTaskEntityRowMapper
 		Long userId = rs.getObject(++p, Long.class);
 		Long entityId = rs.getObject(++p, Long.class);
 		Long dsId = rs.getObject(++p, Long.class);
-		BasicClaimableJobState state = BasicClaimableJobState.fromValue(rs.getString(++p));
-		Instant executeAt = getTimestampInstant(rs, ++p);
-		Period offset = CommonJdbcUtils.getIntervalPeriod(rs, ++p);
+		BasicClaimableJobState state = nonnull(BasicClaimableJobState.fromValue(rs.getString(++p)),
+				"state");
+		Instant executeAt = nonnull(getTimestampInstant(rs, ++p), "executeAt");
+		Period offset = nonnull(CommonJdbcUtils.getIntervalPeriod(rs, ++p), "offset");
 
 		final CloudDatumStreamRakeTaskEntity conf = new CloudDatumStreamRakeTaskEntity(userId, entityId,
 				Instant.EPOCH, dsId, state, executeAt, offset);

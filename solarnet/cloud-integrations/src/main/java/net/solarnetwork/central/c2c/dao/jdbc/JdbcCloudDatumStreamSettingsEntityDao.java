@@ -28,6 +28,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
@@ -79,12 +80,13 @@ public class JdbcCloudDatumStreamSettingsEntityDao implements CloudDatumStreamSe
 		requireNonNullArgument(entity, "entity");
 		final var sql = new UpsertCloudDatumStreamSettingsEntity(userId, entity.getDatumStreamId(),
 				entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? new UserLongCompositePK(userId, entity.getDatumStreamId()) : null);
+		jdbcOps.update(sql);
+		return new UserLongCompositePK(userId, entity.getDatumStreamId());
 	}
 
 	@Override
-	public Collection<CloudDatumStreamSettingsEntity> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<CloudDatumStreamSettingsEntity> findAll(Long userId,
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var results = findFiltered(filter, sorts, null, null);
@@ -93,8 +95,8 @@ public class JdbcCloudDatumStreamSettingsEntityDao implements CloudDatumStreamSe
 
 	@Override
 	public FilterResults<CloudDatumStreamSettingsEntity, UserLongCompositePK> findFiltered(
-			CloudDatumStreamSettingsFilter filter, List<SortDescriptor> sorts, Long offset,
-			Integer max) {
+			CloudDatumStreamSettingsFilter filter, @Nullable List<SortDescriptor> sorts,
+			@Nullable Long offset, @Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCloudDatumStreamSettingsEntity(filter);
 		return executeFilterQuery(jdbcOps, filter, sql,
@@ -108,7 +110,7 @@ public class JdbcCloudDatumStreamSettingsEntityDao implements CloudDatumStreamSe
 	}
 
 	@Override
-	public CloudDatumStreamSettingsEntity get(UserLongCompositePK id) {
+	public @Nullable CloudDatumStreamSettingsEntity get(UserLongCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -120,7 +122,7 @@ public class JdbcCloudDatumStreamSettingsEntityDao implements CloudDatumStreamSe
 	}
 
 	@Override
-	public Collection<CloudDatumStreamSettingsEntity> getAll(List<SortDescriptor> sorts) {
+	public Collection<CloudDatumStreamSettingsEntity> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -130,8 +132,8 @@ public class JdbcCloudDatumStreamSettingsEntityDao implements CloudDatumStreamSe
 
 	@Override
 	public void delete(CloudDatumStreamSettingsEntity entity) {
-		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+		var pk = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(), "entity.id");
+		var sql = new DeleteForCompositeKey(pk, TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for cloud control related data.
  *
@@ -40,7 +42,7 @@ public interface CloudControlCriteria {
 	 *
 	 * @return the first cloud control ID, or {@code null} if not available
 	 */
-	default Long getCloudControlId() {
+	default @Nullable Long getCloudControlId() {
 		final Long[] array = getCloudControlIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -50,7 +52,7 @@ public interface CloudControlCriteria {
 	 *
 	 * @return array of cloud control IDs (may be {@code null})
 	 */
-	Long[] getCloudControlIds();
+	Long @Nullable [] getCloudControlIds();
 
 	/**
 	 * Test if this filter has any cloud control criteria.

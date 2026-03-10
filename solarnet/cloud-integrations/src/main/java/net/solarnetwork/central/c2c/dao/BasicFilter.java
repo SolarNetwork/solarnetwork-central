@@ -189,7 +189,7 @@ public class BasicFilter extends BasicCoreCriteria
 				|| (datumStreamMappingIds != null && datumStreamMappingIds.length > 0)
 				|| endDate != null
 				|| (indexes != null && indexes.length > 0)
-				|| (integrationIds != null && datumStreamMappingIds.length > 0)
+				|| (integrationIds != null && integrationIds.length > 0)
 				|| (serviceIdentifiers != null && serviceIdentifiers.length > 0)
 				|| startDate != null
 				|| (taskIds != null && taskIds.length > 0)

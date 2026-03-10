@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.dao;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
@@ -49,7 +50,8 @@ public interface CloudIntegrationConfigurationDao
 	 * @return the integration, or {@code null} if not found
 	 * @since 1.1
 	 */
-	default CloudIntegrationConfiguration integrationForDatumStream(UserLongCompositePK datumStreamId) {
+	default @Nullable CloudIntegrationConfiguration integrationForDatumStream(
+			UserLongCompositePK datumStreamId) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(datumStreamId, "datumStreamId").getUserId());
 		filter.setDatumStreamId(datumStreamId.getEntityId());
@@ -70,7 +72,8 @@ public interface CloudIntegrationConfigurationDao
 	 *        if a state value already exists with this value
 	 * @return {@code true} if a matching record was updated
 	 */
-	boolean saveOAuthAuthorizationState(UserLongCompositePK id, String state, String expectedState);
+	boolean saveOAuthAuthorizationState(UserLongCompositePK id, String state,
+			@Nullable String expectedState);
 
 	/**
 	 * Save service properties, replacing any existing properties with the same
