@@ -26,6 +26,7 @@ import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -83,7 +84,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 		@Override
 		public RequestTransformConfiguration entityKey(UserLongCompositePK id) {
-			return new RequestTransformConfiguration(id, now());
+			return new RequestTransformConfiguration(id, Instant.EPOCH);
 		}
 
 		@Override

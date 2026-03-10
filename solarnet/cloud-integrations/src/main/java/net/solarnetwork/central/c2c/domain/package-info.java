@@ -1,7 +1,7 @@
 /* ==================================================================
- * CloudDatumStreamMappingIdRelated.java - 18/12/2025 8:59:20 am
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2025 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,35 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork Cloud Integration domain.
+ */
+
+@NullMarked
 package net.solarnetwork.central.c2c.domain;
 
-import org.jspecify.annotations.Nullable;
-
-/**
- * API for objects related to an {@link CloudDatumStreamMappingConfiguration}
- * entity by way of a configuration ID.
- *
- * @author matt
- * @version 1.0
- */
-public interface CloudDatumStreamMappingIdRelated {
-
-	/**
-	 * Get the associated {@link CloudDatumStreamMappingConfiguration}
-	 * {@code configId}.
-	 *
-	 * @return the datum stream mapping ID
-	 */
-	@Nullable
-	Long getDatumStreamMappingId();
-
-	/**
-	 * Test if a datum stream mapping ID is available.
-	 *
-	 * @return {@code true} if a datum stream mapping ID is available
-	 */
-	default boolean hasDatumStreamMappingId() {
-		return (getDatumStreamMappingId() != null);
-	}
-
-}
+import org.jspecify.annotations.NullMarked;

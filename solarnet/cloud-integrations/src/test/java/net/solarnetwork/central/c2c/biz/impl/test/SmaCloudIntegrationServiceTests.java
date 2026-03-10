@@ -45,6 +45,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -131,8 +132,7 @@ public class SmaCloudIntegrationServiceTests {
 	@Captor
 	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
-	@Mock
-	private TextEncryptor encryptor;
+	private TextEncryptor encryptor = noOpText();
 
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
@@ -154,7 +154,7 @@ public class SmaCloudIntegrationServiceTests {
 	public void validate_missingAuthSettings() {
 		// GIVEN
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				"foo", "bar"
@@ -219,7 +219,7 @@ public class SmaCloudIntegrationServiceTests {
 		final String refreshToken = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -294,7 +294,7 @@ public class SmaCloudIntegrationServiceTests {
 		final String clientId = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId
@@ -356,7 +356,7 @@ public class SmaCloudIntegrationServiceTests {
 		final Locale locale = Locale.getDefault();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				integrationId, now());
+				integrationId, now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,

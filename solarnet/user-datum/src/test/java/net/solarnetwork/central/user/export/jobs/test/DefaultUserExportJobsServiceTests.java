@@ -100,9 +100,10 @@ public class DefaultUserExportJobsServiceTests {
 	}
 
 	private UserDatumExportConfiguration createConfiguration(String tzId) {
+		final Long id = ID_GENERATOR.decrementAndGet();
 		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
-				new UserLongCompositePK(TEST_USER_ID, ID_GENERATOR.decrementAndGet()), now());
-		config.setName("Config" + config.getId());
+				new UserLongCompositePK(TEST_USER_ID, id), now(), "Config" + id, ScheduleType.Weekly, 0,
+				now());
 		config.setTimeZoneId(tzId);
 		return config;
 	}

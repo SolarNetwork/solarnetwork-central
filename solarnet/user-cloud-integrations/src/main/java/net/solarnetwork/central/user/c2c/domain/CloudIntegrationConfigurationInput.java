@@ -49,7 +49,7 @@ public class CloudIntegrationConfigurationInput extends
 	@Override
 	public CloudIntegrationConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
-				requireNonNullArgument(id, "id"), date);
+				requireNonNullArgument(id, "id"), date, getName(), getServiceIdentifier());
 		populateConfiguration(conf);
 		return conf;
 	}

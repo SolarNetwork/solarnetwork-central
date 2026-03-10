@@ -80,13 +80,12 @@ public class CloudDatumStreamMappingConfigurationRowMapper
 		Long userId = rs.getObject(++p, Long.class);
 		Long entityId = rs.getObject(++p, Long.class);
 		Instant ts = getTimestampInstant(rs, ++p);
-		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(userId,
-				entityId, ts);
-		conf.setModified(getTimestampInstant(rs, ++p));
-		conf.setName(rs.getString(++p));
-		conf.setIntegrationId(rs.getObject(++p, Long.class));
+		Instant mod = getTimestampInstant(rs, ++p);
 
+		final CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(
+				userId, entityId, ts, rs.getString(++p), rs.getObject(++p, Long.class));
 		conf.setServicePropsJson(rs.getString(++p));
+		conf.setModified(mod);
 		return conf;
 	}
 

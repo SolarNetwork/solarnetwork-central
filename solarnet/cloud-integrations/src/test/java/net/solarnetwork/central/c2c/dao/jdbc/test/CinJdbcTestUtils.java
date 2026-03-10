@@ -77,10 +77,9 @@ public class CinJdbcTestUtils {
 	public static CloudIntegrationConfiguration newCloudIntegrationConfiguration(Long userId,
 			String name, String serviceId, Map<String, Object> serviceProps) {
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
-				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS));
+				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS), name,
+				serviceId);
 		conf.setModified(conf.getCreated());
-		conf.setName(name);
-		conf.setServiceIdentifier(serviceId);
 		conf.setServiceProps(serviceProps);
 		conf.setEnabled(true);
 		return conf;
@@ -129,13 +128,11 @@ public class CinJdbcTestUtils {
 			Long datumStreamMappingId, String schedule, ObjectDatumKind kind, Long objectId,
 			String sourceId, String name, String serviceId, Map<String, Object> serviceProps) {
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
-				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS));
+				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS), name,
+				serviceId, kind);
 		conf.setModified(conf.getCreated());
-		conf.setName(name);
-		conf.setServiceIdentifier(serviceId);
 		conf.setDatumStreamMappingId(datumStreamMappingId);
 		conf.setSchedule(schedule);
-		conf.setKind(kind);
 		conf.setObjectId(objectId);
 		conf.setSourceId(sourceId);
 		conf.setServiceProps(serviceProps);
@@ -175,10 +172,9 @@ public class CinJdbcTestUtils {
 	public static CloudDatumStreamMappingConfiguration newCloudDatumStreamMappingConfiguration(
 			Long userId, Long integrationId, String name, Map<String, Object> serviceProps) {
 		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(
-				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS));
+				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS), name,
+				integrationId);
 		conf.setModified(conf.getCreated());
-		conf.setName(name);
-		conf.setIntegrationId(integrationId);
 		conf.setServiceProps(serviceProps);
 		return conf;
 	}
@@ -229,12 +225,9 @@ public class CinJdbcTestUtils {
 			String propertyName, CloudDatumStreamValueType valueType, String valueReference,
 			BigDecimal multiplier, Integer scale) {
 		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(userId,
-				datumStreamMappingId, index, Instant.now().truncatedTo(ChronoUnit.MILLIS));
+				datumStreamMappingId, index, Instant.now().truncatedTo(ChronoUnit.MILLIS), propertyType,
+				propertyName, valueType, valueReference);
 		conf.setModified(conf.getCreated());
-		conf.setPropertyType(propertyType);
-		conf.setPropertyName(propertyName);
-		conf.setValueType(valueType);
-		conf.setValueReference(valueReference);
 		conf.setMultiplier(multiplier);
 		conf.setScale(scale);
 		conf.setEnabled(true);
@@ -279,10 +272,8 @@ public class CinJdbcTestUtils {
 	public static CloudDatumStreamPollTaskEntity newCloudDatumStreamPollTaskEntity(Long userId,
 			Long datumStreamId, BasicClaimableJobState state, Instant executeAt, Instant startAt,
 			String message, Map<String, Object> serviceProps) {
-		CloudDatumStreamPollTaskEntity conf = new CloudDatumStreamPollTaskEntity(userId, datumStreamId);
-		conf.setState(state);
-		conf.setExecuteAt(executeAt);
-		conf.setStartAt(startAt);
+		CloudDatumStreamPollTaskEntity conf = new CloudDatumStreamPollTaskEntity(userId, datumStreamId,
+				state, executeAt, startAt);
 		conf.setMessage(message);
 		conf.setServiceProps(serviceProps);
 		return conf;
@@ -327,11 +318,7 @@ public class CinJdbcTestUtils {
 			Long datumStreamId, BasicClaimableJobState state, Instant executeAt, Period offset,
 			String message, Map<String, Object> serviceProps) {
 		CloudDatumStreamRakeTaskEntity conf = new CloudDatumStreamRakeTaskEntity(
-				unassignedEntityIdKey(userId));
-		conf.setDatumStreamId(datumStreamId);
-		conf.setState(state);
-		conf.setExecuteAt(executeAt);
-		conf.setOffset(offset);
+				unassignedEntityIdKey(userId), Instant.EPOCH, datumStreamId, state, executeAt, offset);
 		conf.setMessage(message);
 		conf.setServiceProps(serviceProps);
 		return conf;
@@ -455,13 +442,9 @@ public class CinJdbcTestUtils {
 			Long nodeId, String controlId, String controlReference, String name, String serviceId,
 			Map<String, Object> serviceProps) {
 		CloudControlConfiguration conf = new CloudControlConfiguration(unassignedEntityIdKey(userId),
-				Instant.now().truncatedTo(ChronoUnit.MILLIS));
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), name, serviceId, integrationId, nodeId,
+				controlId);
 		conf.setModified(conf.getCreated());
-		conf.setName(name);
-		conf.setServiceIdentifier(serviceId);
-		conf.setIntegrationId(integrationId);
-		conf.setNodeId(nodeId);
-		conf.setControlId(controlId);
 		conf.setControlReference(controlReference);
 		conf.setServiceProps(serviceProps);
 		conf.setEnabled(true);

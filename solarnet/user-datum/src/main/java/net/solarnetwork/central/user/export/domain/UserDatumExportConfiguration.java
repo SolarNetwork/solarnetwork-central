@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.export.domain;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -30,6 +31,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Objects;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -39,6 +41,7 @@ import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DataConfiguration;
 import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
+import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -49,7 +52,8 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 3.0
  */
-@JsonPropertyOrder({ "id", "created", "userId", "name", "hourDelayOffset", "scheduleKey" })
+@JsonPropertyOrder({ "id", "created", "userId", "name", "hourDelayOffset", "scheduleKey",
+		"minimumExportDate", "startingExportDate" })
 @JsonIgnoreProperties("enabled")
 public class UserDatumExportConfiguration
 		extends BaseUserModifiableEntity<UserDatumExportConfiguration, UserLongCompositePK>
@@ -62,13 +66,13 @@ public class UserDatumExportConfiguration
 	private ScheduleType schedule;
 	private int hourDelayOffset;
 	private Instant minimumExportDate;
-	private String timeZoneId;
-	private String tokenId;
-	private UserDataConfiguration userDataConfiguration;
-	private UserOutputConfiguration userOutputConfiguration;
-	private UserDestinationConfiguration userDestinationConfiguration;
+	private @Nullable String timeZoneId;
+	private @Nullable String tokenId;
+	private @Nullable UserDataConfiguration userDataConfiguration;
+	private @Nullable UserOutputConfiguration userOutputConfiguration;
+	private @Nullable UserDestinationConfiguration userDestinationConfiguration;
 
-	private transient Long configId;
+	private transient @Nullable Long configId;
 
 	/**
 	 * Constructor.
@@ -77,11 +81,24 @@ public class UserDatumExportConfiguration
 	 *        the primary key
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param schedule
+	 *        the schedule type
+	 * @param hourDelayOffset
+	 *        the hour delay offset
+	 * @param minimumExportDate
+	 *        the minimum export date
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public UserDatumExportConfiguration(UserLongCompositePK id, Instant created) {
+	public UserDatumExportConfiguration(UserLongCompositePK id, Instant created, String name,
+			ScheduleType schedule, int hourDelayOffset, Instant minimumExportDate) {
 		super(id, created);
+		this.name = requireNonNullArgument(name, "name");
+		this.schedule = requireNonNullArgument(schedule, "schedule");
+		this.hourDelayOffset = hourDelayOffset;
+		this.minimumExportDate = requireNonNullArgument(minimumExportDate, "minimumExportDate");
 	}
 
 	/**
@@ -93,16 +110,27 @@ public class UserDatumExportConfiguration
 	 *        the configuration ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param schedule
+	 *        the schedule type
+	 * @param hourDelayOffset
+	 *        the hour delay offset
+	 * @param minimumExportDate
+	 *        the minimum export date
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public UserDatumExportConfiguration(Long userId, Long configId, Instant created) {
-		this(new UserLongCompositePK(userId, configId), created);
+	public UserDatumExportConfiguration(Long userId, Long configId, Instant created, String name,
+			ScheduleType schedule, int hourDelayOffset, Instant minimumExportDate) {
+		this(new UserLongCompositePK(userId, configId), created, name, schedule, hourDelayOffset,
+				minimumExportDate);
 	}
 
 	@Override
 	public UserDatumExportConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new UserDatumExportConfiguration(id, getCreated());
+		var copy = new UserDatumExportConfiguration(id, getCreated(), name, schedule, hourDelayOffset,
+				minimumExportDate);
 		copyTo(copy);
 		return copy;
 	}
@@ -122,7 +150,7 @@ public class UserDatumExportConfiguration
 	}
 
 	@Override
-	public boolean isSameAs(UserDatumExportConfiguration other) {
+	public boolean isSameAs(@Nullable UserDatumExportConfiguration other) {
 		if ( !super.isSameAs(other) ) {
 			return false;
 		}
@@ -149,12 +177,11 @@ public class UserDatumExportConfiguration
 	 * @since 1.2
 	 */
 	@JsonProperty("id")
-	public Long getConfigId() {
+	public final Long getConfigId() {
 		if ( configId != null ) {
 			return configId;
 		}
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+		return pk().getEntityId();
 	}
 
 	/**
@@ -168,38 +195,53 @@ public class UserDatumExportConfiguration
 	 * @param configId
 	 *        the configuration ID to set
 	 */
-	public final void setConfigId(Long configId) {
+	public final void setConfigId(@Nullable Long configId) {
 		this.configId = configId;
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	/**
+	 * Set the name.
+	 * 
+	 * @param name
+	 *        the name to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	@JsonIgnore
 	@Override
-	public ScheduleType getSchedule() {
+	public final ScheduleType getSchedule() {
 		return schedule;
 	}
 
-	public void setSchedule(ScheduleType schedule) {
-		this.schedule = schedule;
+	/**
+	 * Set the schedule.
+	 * 
+	 * @param schedule
+	 *        the schedule to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public final void setSchedule(ScheduleType schedule) {
+		this.schedule = requireNonNullArgument(schedule, "schedule");
 	}
 
 	/**
 	 * Get the schedule type key value.
 	 *
-	 * @return the schedule type; if {@link #getSchedule()} is {@code null}
-	 *         this will return the key value for {@link ScheduleType#Daily}
+	 * @return the schedule type; if {@link #getSchedule()} is {@code null} this
+	 *         will return the key value for {@link ScheduleType#Daily}
 	 */
-	public char getScheduleKey() {
-		ScheduleType type = getSchedule();
-		return (type != null ? type.getKey() : ScheduleType.Daily.getKey());
+	public final char getScheduleKey() {
+		return schedule.getKey();
 	}
 
 	/**
@@ -210,7 +252,7 @@ public class UserDatumExportConfiguration
 	 *        unsupported, the compression will be set to
 	 *        {@link ScheduleType#Daily}
 	 */
-	public void setScheduleKey(char key) {
+	public final void setScheduleKey(char key) {
 		ScheduleType type = ScheduleType.Daily;
 		try {
 			type = ScheduleType.forKey(key);
@@ -221,146 +263,18 @@ public class UserDatumExportConfiguration
 	}
 
 	@Override
-	public int getHourDelayOffset() {
+	public final int getHourDelayOffset() {
 		return hourDelayOffset;
 	}
 
-	public void setHourDelayOffset(int hourDelayOffset) {
+	/**
+	 * Set the hour delay offset.
+	 * 
+	 * @param hourDelayOffset
+	 *        the offset to set
+	 */
+	public final void setHourDelayOffset(int hourDelayOffset) {
 		this.hourDelayOffset = hourDelayOffset;
-	}
-
-	@JsonIgnore
-	public UserDataConfiguration getUserDataConfiguration() {
-		return userDataConfiguration;
-	}
-
-	@JsonSetter("dataConfiguration")
-	public void setUserDataConfiguration(UserDataConfiguration userDataConfiguration) {
-		this.userDataConfiguration = userDataConfiguration;
-	}
-
-	/**
-	 * Set the data configuration ID.
-	 *
-	 * @param id
-	 *        the ID to set
-	 * @since 1.2
-	 */
-	@JsonSetter("dataConfigurationId")
-	public void setUserDataConfigurationId(Long id) {
-		UserDataConfiguration conf = getUserDataConfiguration();
-		if ( conf == null ) {
-			conf = new UserDataConfiguration(new UserLongCompositePK(getUserId(), id), Instant.now());
-			setUserDataConfiguration(conf);
-		} else {
-			conf = conf.copyWithId(new UserLongCompositePK(getUserId(), id));
-		}
-	}
-
-	/**
-	 * Get the {@link UserDataConfiguration} ID.
-	 *
-	 * @return the ID, or {@code null}
-	 */
-	@JsonIgnore
-	public Long getUserDataConfigurationId() {
-		UserDataConfiguration conf = getUserDataConfiguration();
-		return (conf != null ? conf.getConfigId() : null);
-	}
-
-	@Override
-	public DataConfiguration getDataConfiguration() {
-		return getUserDataConfiguration();
-	}
-
-	@JsonIgnore
-	public UserOutputConfiguration getUserOutputConfiguration() {
-		return userOutputConfiguration;
-	}
-
-	@JsonSetter("outputConfiguration")
-	public void setUserOutputConfiguration(UserOutputConfiguration userOutputConfiguration) {
-		this.userOutputConfiguration = userOutputConfiguration;
-	}
-
-	/**
-	 * Set the output configuration ID.
-	 *
-	 * @param id
-	 *        the ID to set
-	 * @since 1.2
-	 */
-	@JsonSetter("outputConfigurationId")
-	public void setUserOutputConfigurationId(Long id) {
-		UserOutputConfiguration conf = getUserOutputConfiguration();
-		if ( conf == null ) {
-			conf = new UserOutputConfiguration(new UserLongCompositePK(getUserId(), id), Instant.now());
-			setUserOutputConfiguration(conf);
-		} else {
-			conf = conf.copyWithId(new UserLongCompositePK(getUserId(), id));
-		}
-	}
-
-	/**
-	 * Get the {@link UserOutputConfiguration} ID.
-	 *
-	 * @return the ID, or {@code null}
-	 */
-	@JsonIgnore
-	public Long getUserOutputConfigurationId() {
-		UserOutputConfiguration conf = getUserOutputConfiguration();
-		return (conf != null ? conf.getConfigId() : null);
-	}
-
-	@Override
-	public OutputConfiguration getOutputConfiguration() {
-		return getUserOutputConfiguration();
-	}
-
-	@JsonIgnore
-	public UserDestinationConfiguration getUserDestinationConfiguration() {
-		return userDestinationConfiguration;
-	}
-
-	@JsonSetter("destinationConfiguration")
-	public void setUserDestinationConfiguration(
-			UserDestinationConfiguration userDestinationConfiguration) {
-		this.userDestinationConfiguration = userDestinationConfiguration;
-	}
-
-	/**
-	 * Set the destination configuration ID.
-	 *
-	 * @param id
-	 *        the ID to set
-	 * @since 1.2
-	 */
-	@JsonSetter("destinationConfigurationId")
-	public void setUserDestinationConfigurationId(Long id) {
-		UserDestinationConfiguration conf = getUserDestinationConfiguration();
-		if ( conf == null ) {
-			conf = new UserDestinationConfiguration(new UserLongCompositePK(getUserId(), id),
-					Instant.now());
-			setUserDestinationConfiguration(conf);
-		} else {
-			conf = conf.copyWithId(new UserLongCompositePK(getUserId(), id));
-		}
-	}
-
-	/**
-	 * Get the {@link UserDestinationConfiguration} ID.
-	 *
-	 * @return the ID, or {@code null}
-	 */
-	@JsonIgnore
-	public Long getUserDestinationConfigurationId() {
-		UserDestinationConfiguration conf = getUserDestinationConfiguration();
-		return (conf != null ? conf.getConfigId() : null);
-	}
-
-	@Override
-	public DestinationConfiguration getDestinationConfiguration() {
-		return getUserDestinationConfiguration();
 	}
 
 	/**
@@ -368,7 +282,7 @@ public class UserDatumExportConfiguration
 	 *
 	 * @return the minimum export date
 	 */
-	public Instant getMinimumExportDate() {
+	public final Instant getMinimumExportDate() {
 		return minimumExportDate;
 	}
 
@@ -384,9 +298,11 @@ public class UserDatumExportConfiguration
 	 *
 	 * @param minimumExportDate
 	 *        the minimum export date to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setMinimumExportDate(Instant minimumExportDate) {
-		this.minimumExportDate = minimumExportDate;
+	public final void setMinimumExportDate(Instant minimumExportDate) {
+		this.minimumExportDate = requireNonNullArgument(minimumExportDate, "minimumExportDate");
 	}
 
 	/**
@@ -400,11 +316,8 @@ public class UserDatumExportConfiguration
 	 * @return the minimum export date as a local date
 	 * @see #getMinimumExportDate()
 	 */
-	public LocalDateTime getStartingExportDate() {
+	public final LocalDateTime getStartingExportDate() {
 		Instant dt = getMinimumExportDate();
-		if ( dt == null ) {
-			return null;
-		}
 		return dt.atZone(zone()).toLocalDateTime();
 	}
 
@@ -420,16 +333,159 @@ public class UserDatumExportConfiguration
 	 *        the date to set
 	 * @see #setMinimumExportDate(Instant)
 	 */
-	public void setStartingExportDate(LocalDateTime date) {
+	public final void setStartingExportDate(LocalDateTime date) {
 		setMinimumExportDate(date.atZone(zone()).toInstant());
 	}
 
-	public void setTimeZoneId(String timeZoneId) {
+	@JsonIgnore
+	public final @Nullable UserDataConfiguration getUserDataConfiguration() {
+		return userDataConfiguration;
+	}
+
+	@JsonSetter("dataConfiguration")
+	public final void setUserDataConfiguration(@Nullable UserDataConfiguration userDataConfiguration) {
+		this.userDataConfiguration = userDataConfiguration;
+	}
+
+	/**
+	 * Set the data configuration ID.
+	 *
+	 * @param id
+	 *        the ID to set
+	 * @since 1.2
+	 */
+	@JsonSetter("dataConfigurationId")
+	public final void setUserDataConfigurationId(Long id) {
+		UserDataConfiguration conf = getUserDataConfiguration();
+		if ( conf == null ) {
+			conf = new UserDataConfiguration(new UserLongCompositePK(getUserId(), id), Instant.now(), "",
+					"");
+			setUserDataConfiguration(conf);
+		} else {
+			conf = conf.copyWithId(new UserLongCompositePK(getUserId(), id));
+		}
+	}
+
+	/**
+	 * Get the {@link UserDataConfiguration} ID.
+	 *
+	 * @return the ID, or {@code null}
+	 */
+	@JsonIgnore
+	public final @Nullable Long getUserDataConfigurationId() {
+		UserDataConfiguration conf = getUserDataConfiguration();
+		return (conf != null ? conf.getConfigId() : null);
+	}
+
+	@Override
+	public final @Nullable DataConfiguration getDataConfiguration() {
+		return getUserDataConfiguration();
+	}
+
+	@JsonIgnore
+	public final @Nullable UserOutputConfiguration getUserOutputConfiguration() {
+		return userOutputConfiguration;
+	}
+
+	@JsonSetter("outputConfiguration")
+	public final void setUserOutputConfiguration(
+			@Nullable UserOutputConfiguration userOutputConfiguration) {
+		this.userOutputConfiguration = userOutputConfiguration;
+	}
+
+	/**
+	 * Set the output configuration ID.
+	 *
+	 * @param id
+	 *        the ID to set
+	 * @since 1.2
+	 */
+	@JsonSetter("outputConfigurationId")
+	public final void setUserOutputConfigurationId(Long id) {
+		UserOutputConfiguration conf = getUserOutputConfiguration();
+		if ( conf == null ) {
+			conf = new UserOutputConfiguration(new UserLongCompositePK(getUserId(), id), Instant.now(),
+					"", "", OutputCompressionType.None);
+			setUserOutputConfiguration(conf);
+		} else {
+			conf = conf.copyWithId(new UserLongCompositePK(getUserId(), id));
+		}
+	}
+
+	/**
+	 * Get the {@link UserOutputConfiguration} ID.
+	 *
+	 * @return the ID, or {@code null}
+	 */
+	@JsonIgnore
+	public final @Nullable Long getUserOutputConfigurationId() {
+		UserOutputConfiguration conf = getUserOutputConfiguration();
+		return (conf != null ? conf.getConfigId() : null);
+	}
+
+	@Override
+	public final @Nullable OutputConfiguration getOutputConfiguration() {
+		return getUserOutputConfiguration();
+	}
+
+	@JsonIgnore
+	public final @Nullable UserDestinationConfiguration getUserDestinationConfiguration() {
+		return userDestinationConfiguration;
+	}
+
+	@JsonSetter("destinationConfiguration")
+	public final void setUserDestinationConfiguration(
+			@Nullable UserDestinationConfiguration userDestinationConfiguration) {
+		this.userDestinationConfiguration = userDestinationConfiguration;
+	}
+
+	/**
+	 * Set the destination configuration ID.
+	 *
+	 * @param id
+	 *        the ID to set
+	 * @since 1.2
+	 */
+	@JsonSetter("destinationConfigurationId")
+	public final void setUserDestinationConfigurationId(Long id) {
+		UserDestinationConfiguration conf = getUserDestinationConfiguration();
+		if ( conf == null ) {
+			conf = new UserDestinationConfiguration(new UserLongCompositePK(getUserId(), id),
+					Instant.now(), "", "");
+			setUserDestinationConfiguration(conf);
+		} else {
+			conf = conf.copyWithId(new UserLongCompositePK(getUserId(), id));
+		}
+	}
+
+	/**
+	 * Get the {@link UserDestinationConfiguration} ID.
+	 *
+	 * @return the ID, or {@code null}
+	 */
+	@JsonIgnore
+	public final @Nullable Long getUserDestinationConfigurationId() {
+		UserDestinationConfiguration conf = getUserDestinationConfiguration();
+		return (conf != null ? conf.getConfigId() : null);
+	}
+
+	@Override
+	public final @Nullable DestinationConfiguration getDestinationConfiguration() {
+		return getUserDestinationConfiguration();
+	}
+
+	/**
+	 * Set the time zone ID.
+	 * 
+	 * @param timeZoneId
+	 *        the time zone ID to set
+	 */
+	public final void setTimeZoneId(@Nullable String timeZoneId) {
 		this.timeZoneId = timeZoneId;
 	}
 
 	@Override
-	public String getTimeZoneId() {
+	public final @Nullable String getTimeZoneId() {
 		return timeZoneId;
 	}
 
@@ -441,7 +497,7 @@ public class UserDatumExportConfiguration
 	 * @since 2.0
 	 */
 	@NonNull
-	public ZoneId zone() {
+	public final ZoneId zone() {
 		String tzId = getTimeZoneId();
 		return (tzId != null ? ZoneId.of(tzId) : ZoneOffset.UTC);
 	}
@@ -451,7 +507,7 @@ public class UserDatumExportConfiguration
 	 *
 	 * @return the token ID
 	 */
-	public String getTokenId() {
+	public final @Nullable String getTokenId() {
 		return tokenId;
 	}
 
@@ -461,7 +517,7 @@ public class UserDatumExportConfiguration
 	 * @param tokenId
 	 *        the token ID to set
 	 */
-	public void setTokenId(String tokenId) {
+	public final void setTokenId(@Nullable String tokenId) {
 		this.tokenId = tokenId;
 	}
 

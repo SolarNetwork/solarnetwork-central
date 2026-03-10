@@ -29,10 +29,12 @@ import static net.solarnetwork.central.c2c.biz.impl.EgaugeRestOperationsHelper.A
 import static net.solarnetwork.central.c2c.biz.impl.EgaugeRestOperationsHelper.AUTH_UNAUTHORIZED_PATH;
 import static net.solarnetwork.central.c2c.biz.impl.EgaugeRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
@@ -42,6 +44,7 @@ import static org.mockito.BDDMockito.then;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_HTML_VALUE;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import static org.springframework.web.util.UriComponentsBuilder.fromUriString;
 import java.io.IOException;
 import java.net.URI;
@@ -84,7 +87,6 @@ import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -92,7 +94,6 @@ import net.solarnetwork.central.security.ClientAccessTokenEntity;
 import net.solarnetwork.central.support.SimpleCache;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.service.RemoteServiceException;
 import okhttp3.mockwebserver.MockResponse;
@@ -124,8 +125,7 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 	@Captor
 	private ArgumentCaptor<OAuth2AuthorizeRequest> authRequestCaptor;
 
-	@Mock
-	private TextEncryptor encryptor;
+	private TextEncryptor encryptor = noOpText();
 
 	@Mock
 	private CloudIntegrationConfigurationDao integrationDao;
@@ -197,7 +197,7 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				CloudIntegrationService.BASE_URL_SETTING, baseUrl
@@ -208,19 +208,15 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "temp", Reference,
+				componentValueRef(deviceId, "temp"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("temp");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(componentValueRef(deviceId, "temp"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1));
@@ -229,9 +225,8 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -292,7 +287,7 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				CloudIntegrationService.BASE_URL_SETTING, baseUrl
@@ -303,19 +298,15 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "temp", Reference,
+				componentValueRef(deviceId, "temp"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("temp");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(componentValueRef(deviceId, "temp"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1));
@@ -324,9 +315,8 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -473,7 +463,7 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				CloudIntegrationService.BASE_URL_SETTING, baseUrl
@@ -484,19 +474,15 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "temp", Reference,
+				componentValueRef(deviceId, "temp"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("temp");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(componentValueRef(deviceId, "temp"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1));
@@ -505,9 +491,8 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off

@@ -84,16 +84,19 @@ public class CloudControlConfigurationRowMapper implements RowMapper<CloudContro
 		Long userId = rs.getObject(++p, Long.class);
 		Long entityId = rs.getObject(++p, Long.class);
 		Instant ts = getTimestampInstant(rs, ++p);
-		CloudControlConfiguration conf = new CloudControlConfiguration(userId, entityId, ts);
-		conf.setModified(getTimestampInstant(rs, ++p));
-		conf.setEnabled(rs.getBoolean(++p));
-		conf.setName(rs.getString(++p));
-		conf.setServiceIdentifier(rs.getString(++p));
-		conf.setIntegrationId(rs.getObject(++p, Long.class));
-		conf.setNodeId(rs.getObject(++p, Long.class));
-		conf.setControlId(rs.getString(++p));
-		conf.setControlReference(rs.getString(++p));
+		Instant mod = getTimestampInstant(rs, ++p);
+		boolean enabled = rs.getBoolean(++p);
+		String name = rs.getString(++p);
+		String serviceIdent = rs.getString(++p);
+		Long integrationId = rs.getObject(++p, Long.class);
+		Long nodeId = rs.getObject(++p, Long.class);
+		String controlId = rs.getString(++p);
 
+		final CloudControlConfiguration conf = new CloudControlConfiguration(userId, entityId, ts, name,
+				serviceIdent, integrationId, nodeId, controlId);
+		conf.setModified(mod);
+		conf.setEnabled(enabled);
+		conf.setControlReference(rs.getString(++p));
 		conf.setServicePropsJson(rs.getString(++p));
 		return conf;
 	}

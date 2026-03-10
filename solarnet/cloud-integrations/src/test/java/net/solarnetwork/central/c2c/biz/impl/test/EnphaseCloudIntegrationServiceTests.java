@@ -47,6 +47,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -134,8 +135,7 @@ public class EnphaseCloudIntegrationServiceTests {
 	@Captor
 	private ArgumentCaptor<RequestEntity<JsonNode>> jsonRequestCaptor;
 
-	@Mock
-	private TextEncryptor encryptor;
+	private TextEncryptor encryptor = noOpText();
 
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
@@ -157,7 +157,7 @@ public class EnphaseCloudIntegrationServiceTests {
 	public void validate_missingAuthSettings() {
 		// GIVEN
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				"foo", "bar"
@@ -229,7 +229,7 @@ public class EnphaseCloudIntegrationServiceTests {
 		final String refreshToken = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -310,7 +310,7 @@ public class EnphaseCloudIntegrationServiceTests {
 		final String refreshToken = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -395,7 +395,7 @@ public class EnphaseCloudIntegrationServiceTests {
 		final String clientId = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId
@@ -456,7 +456,7 @@ public class EnphaseCloudIntegrationServiceTests {
 		final Locale locale = Locale.getDefault();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				integrationId, now());
+				integrationId, now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,

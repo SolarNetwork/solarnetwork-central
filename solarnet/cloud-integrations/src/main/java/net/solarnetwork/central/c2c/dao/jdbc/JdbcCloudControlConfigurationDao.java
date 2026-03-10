@@ -22,10 +22,11 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
-import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENTITY_ID;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -73,7 +74,8 @@ public class JdbcCloudControlConfigurationDao implements CloudControlConfigurati
 
 	@Override
 	public CloudControlConfiguration entityKey(UserLongCompositePK id) {
-		return new CloudControlConfiguration(id, now());
+		return new CloudControlConfiguration(id, Instant.EPOCH, "", "", UNASSIGNED_ENTITY_ID,
+				UNASSIGNED_ENTITY_ID, "");
 	}
 
 	@Override

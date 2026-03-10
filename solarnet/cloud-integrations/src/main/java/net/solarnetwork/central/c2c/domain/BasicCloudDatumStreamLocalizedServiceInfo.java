@@ -80,7 +80,7 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	}
 
 	@Override
-	public boolean isRequiresPolling() {
+	public final boolean isRequiresPolling() {
 		return requiresPolling;
 	}
 
@@ -90,7 +90,7 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	}
 
 	@Override
-	public boolean isArbitraryDateRangesSupported() {
+	public final boolean isArbitraryDateRangesSupported() {
 		return arbitraryDateRangesSupported;
 	}
 

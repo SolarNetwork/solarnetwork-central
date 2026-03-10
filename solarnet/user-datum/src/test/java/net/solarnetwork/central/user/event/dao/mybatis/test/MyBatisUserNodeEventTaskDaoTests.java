@@ -267,6 +267,7 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 		}
 
 		// WHEN
+		@SuppressWarnings("null")
 		long count = dao.purgeCompletedTasks(ts.truncatedTo(ChronoUnit.MILLIS));
 
 		// THEN

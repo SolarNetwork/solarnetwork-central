@@ -80,11 +80,15 @@ public class CloudIntegrationConfigurationRowMapper implements RowMapper<CloudIn
 		Long userId = rs.getObject(++p, Long.class);
 		Long entityId = rs.getObject(++p, Long.class);
 		Instant ts = getTimestampInstant(rs, ++p);
-		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(userId, entityId, ts);
-		conf.setModified(getTimestampInstant(rs, ++p));
-		conf.setEnabled(rs.getBoolean(++p));
-		conf.setName(rs.getString(++p));
-		conf.setServiceIdentifier(rs.getString(++p));
+		Instant mod = getTimestampInstant(rs, ++p);
+		boolean enabled = rs.getBoolean(++p);
+		String name = rs.getString(++p);
+		String serviceIdent = rs.getString(++p);
+
+		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(userId, entityId,
+				ts, name, serviceIdent);
+		conf.setModified(mod);
+		conf.setEnabled(enabled);
 		conf.setServicePropsJson(rs.getString(++p));
 		return conf;
 	}

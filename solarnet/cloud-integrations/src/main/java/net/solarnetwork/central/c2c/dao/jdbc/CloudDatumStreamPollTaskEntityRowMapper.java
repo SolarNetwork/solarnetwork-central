@@ -79,10 +79,9 @@ public class CloudDatumStreamPollTaskEntityRowMapper
 		int p = columnOffset;
 		Long userId = rs.getObject(++p, Long.class);
 		Long entityId = rs.getObject(++p, Long.class);
-		CloudDatumStreamPollTaskEntity conf = new CloudDatumStreamPollTaskEntity(userId, entityId);
-		conf.setState(BasicClaimableJobState.fromValue(rs.getString(++p)));
-		conf.setExecuteAt(getTimestampInstant(rs, ++p));
-		conf.setStartAt(getTimestampInstant(rs, ++p));
+		CloudDatumStreamPollTaskEntity conf = new CloudDatumStreamPollTaskEntity(userId, entityId,
+				BasicClaimableJobState.fromValue(rs.getString(++p)), getTimestampInstant(rs, ++p),
+				getTimestampInstant(rs, ++p));
 		conf.setMessage(rs.getString(++p));
 		conf.setServicePropsJson(rs.getString(++p));
 		return conf;

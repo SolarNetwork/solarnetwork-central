@@ -88,16 +88,17 @@ public class CloudDatumStreamPropertyConfigurationRowMapper
 		Long dataSourceId = rs.getObject(++p, Long.class);
 		Integer idx = rs.getObject(++p, Integer.class);
 		Instant ts = getTimestampInstant(rs, ++p);
-		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(userId,
-				dataSourceId, idx, ts);
-		conf.setModified(getTimestampInstant(rs, ++p));
-		conf.setEnabled(rs.getBoolean(++p));
-		conf.setPropertyType(DatumSamplesType.fromValue(rs.getString(++p)));
-		conf.setPropertyName(rs.getString(++p));
-		conf.setValueType(CloudDatumStreamValueType.fromValue(rs.getString(++p)));
-		conf.setValueReference(rs.getString(++p));
+		Instant mod = getTimestampInstant(rs, ++p);
+		boolean enabled = rs.getBoolean(++p);
+
+		final CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(
+				userId, dataSourceId, idx, ts, DatumSamplesType.fromValue(rs.getString(++p)),
+				rs.getString(++p), CloudDatumStreamValueType.fromValue(rs.getString(++p)),
+				rs.getString(++p));
 		conf.setMultiplier(rs.getBigDecimal(++p));
 		conf.setScale(rs.getObject(++p, Integer.class));
+		conf.setEnabled(enabled);
+		conf.setModified(mod);
 		return conf;
 	}
 

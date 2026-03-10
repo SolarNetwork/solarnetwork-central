@@ -123,7 +123,7 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 	public void validate_missingAuthSettings() {
 		// GIVEN
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				"foo", "bar"
@@ -181,7 +181,7 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 		final String password = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,

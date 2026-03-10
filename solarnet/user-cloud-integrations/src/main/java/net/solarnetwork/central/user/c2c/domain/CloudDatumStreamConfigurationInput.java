@@ -67,7 +67,7 @@ public class CloudDatumStreamConfigurationInput extends
 	@Override
 	public CloudDatumStreamConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
-				requireNonNullArgument(id, "id"), date);
+				requireNonNullArgument(id, "id"), date, getName(), getServiceIdentifier(), kind);
 		populateConfiguration(conf);
 		return conf;
 	}

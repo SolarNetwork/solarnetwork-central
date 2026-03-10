@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
+import static java.time.Instant.EPOCH;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENTITY_ID;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.time.Instant;
+import java.time.Period;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -94,7 +97,8 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 
 	@Override
 	public CloudDatumStreamRakeTaskEntity entityKey(UserLongCompositePK id) {
-		return new CloudDatumStreamRakeTaskEntity(id);
+		return new CloudDatumStreamRakeTaskEntity(id, EPOCH, UNASSIGNED_ENTITY_ID,
+				BasicClaimableJobState.Unknown, EPOCH, Period.ZERO);
 	}
 
 	@Override

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dao;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -54,10 +55,10 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	private static final long serialVersionUID = -7821821709345090306L;
 
 	/** The name. */
-	private @Nullable String name;
+	private String name;
 
 	/** The service identifier. */
-	private @Nullable String serviceIdentifier;
+	private String serviceIdentifier;
 
 	/** The service properties as JSON. */
 	private @Nullable String servicePropsJson;
@@ -72,11 +73,18 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public BaseIdentifiableUserModifiableEntity(K id, Instant created) {
+	public BaseIdentifiableUserModifiableEntity(K id, Instant created, String name,
+			String serviceIdentifier) {
 		super(id, created);
+		this.name = requireNonNullArgument(name, "name");
+		this.serviceIdentifier = requireNonNullArgument(serviceIdentifier, "serviceIdentifier");
 	}
 
 	@Override
@@ -137,7 +145,7 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	}
 
 	@Override
-	public final @Nullable String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -146,13 +154,15 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	 *
 	 * @param name
 	 *        the name to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public final void setName(@Nullable String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	@Override
-	public final @Nullable String getServiceIdentifier() {
+	public final String getServiceIdentifier() {
 		return serviceIdentifier;
 	}
 
@@ -162,9 +172,11 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	 *
 	 * @param serviceIdentifier
 	 *        the identifier of the service to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public final void setServiceIdentifier(@Nullable String serviceIdentifier) {
-		this.serviceIdentifier = serviceIdentifier;
+	public final void setServiceIdentifier(String serviceIdentifier) {
+		this.serviceIdentifier = requireNonNullArgument(serviceIdentifier, "serviceIdentifier");
 	}
 
 	/**

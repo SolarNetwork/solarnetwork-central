@@ -36,6 +36,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -110,8 +111,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 	@Captor
 	private ArgumentCaptor<OAuth2AuthorizeRequest> authRequestCaptor;
 
-	@Mock
-	private TextEncryptor encryptor;
+	private TextEncryptor encryptor = noOpText();
 
 	@Mock
 	private CloudIntegrationConfigurationDao integrationDao;
@@ -164,7 +164,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OpenWeatherMapCloudIntegrationService.API_KEY_SETTING, apiKey
@@ -174,8 +174,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -186,9 +185,8 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 		final Long locationId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Location);
 		datumStream.setObjectId(locationId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -275,7 +273,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OpenWeatherMapCloudIntegrationService.API_KEY_SETTING, apiKey
@@ -285,8 +283,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -297,9 +294,8 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 		final Long locationId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Location);
 		datumStream.setObjectId(locationId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off

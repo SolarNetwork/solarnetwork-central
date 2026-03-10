@@ -48,13 +48,14 @@ public class BaseIdentifiableUserModifiableEntityTests {
 
 		private static final long serialVersionUID = 7716175118480893490L;
 
-		private TestEntity(UserLongCompositePK id, Instant created) {
-			super(id, created);
+		private TestEntity(UserLongCompositePK id, Instant created, String name,
+				String serviceIdentifier) {
+			super(id, created, name, serviceIdentifier);
 		}
 
 		@Override
 		public TestEntity copyWithId(UserLongCompositePK id) {
-			TestEntity copy = new TestEntity(id, getCreated());
+			TestEntity copy = new TestEntity(id, getCreated(), getName(), getServiceIdentifier());
 			copyTo(copy);
 			return copy;
 		}
@@ -72,11 +73,10 @@ public class BaseIdentifiableUserModifiableEntityTests {
 	public void maskSensitive() {
 		// GIVEN
 		TestEntity entity = new TestEntity(new UserLongCompositePK(randomLong(), randomLong()),
-				Instant.now());
+				Instant.now(), randomString(), randomString());
 
 		Map<String, Object> props = Map.of("foo", "bar", "bim", "bam");
 		entity.setServiceProps(props);
-		entity.setServiceIdentifier(randomString());
 
 		// WHEN
 		entity.maskSensitiveInformation((serviceIdentifier) -> {
@@ -117,12 +117,11 @@ public class BaseIdentifiableUserModifiableEntityTests {
 	public void unmaskSensitive() {
 		// GIVEN
 		TestEntity entity = new TestEntity(new UserLongCompositePK(randomLong(), randomLong()),
-				Instant.now());
+				Instant.now(), randomString(), randomString());
 
 		String plainText = randomString();
 		Map<String, Object> props = Map.of("foo", encryptor.encrypt(plainText), "bim", "bam");
 		entity.setServiceProps(props);
-		entity.setServiceIdentifier(randomString());
 
 		// WHEN
 		entity.unmaskSensitiveInformation((serviceIdentifier) -> {

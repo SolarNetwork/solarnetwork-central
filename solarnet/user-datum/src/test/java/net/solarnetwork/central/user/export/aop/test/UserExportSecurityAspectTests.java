@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.export.aop.test;
 import static java.time.Instant.now;
 import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_USER_ID;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterEach;
@@ -34,6 +35,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.test.CentralTestConstants;
@@ -107,7 +109,8 @@ public class UserExportSecurityAspectTests implements CentralTestConstants {
 	public void saveConfigNoAuth() {
 		replayAll();
 		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
-				unassignedEntityIdKey(TEST_USER_ID), now());
+				unassignedEntityIdKey(TEST_USER_ID), now(), randomString(), ScheduleType.Adhoc, 0,
+				now());
 		thenExceptionOfType(AuthorizationException.class)
 				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 	}
@@ -117,7 +120,7 @@ public class UserExportSecurityAspectTests implements CentralTestConstants {
 		becomeUser("ROLE_USER");
 		replayAll();
 		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
-				unassignedEntityIdKey(-2L), now());
+				unassignedEntityIdKey(-2L), now(), randomString(), ScheduleType.Adhoc, 0, now());
 		thenExceptionOfType(AuthorizationException.class)
 				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 	}
@@ -127,7 +130,8 @@ public class UserExportSecurityAspectTests implements CentralTestConstants {
 		becomeUser("ROLE_USER");
 		replayAll();
 		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
-				unassignedEntityIdKey(UNASSIGNED_USER_ID), now());
+				unassignedEntityIdKey(UNASSIGNED_USER_ID), now(), randomString(), ScheduleType.Adhoc, 0,
+				now());
 		thenExceptionOfType(AuthorizationException.class)
 				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 	}
@@ -137,7 +141,8 @@ public class UserExportSecurityAspectTests implements CentralTestConstants {
 		becomeUser("ROLE_USER");
 		replayAll();
 		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
-				unassignedEntityIdKey(TEST_USER_ID), now());
+				unassignedEntityIdKey(TEST_USER_ID), now(), randomString(), ScheduleType.Adhoc, 0,
+				now());
 		aspect.saveConfigurationCheck(config);
 	}
 }

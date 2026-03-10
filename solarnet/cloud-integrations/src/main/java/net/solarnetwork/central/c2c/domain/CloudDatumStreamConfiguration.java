@@ -23,9 +23,11 @@
 package net.solarnetwork.central.c2c.domain;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseIdentifiableUserModifiableEntity;
@@ -69,11 +71,11 @@ public final class CloudDatumStreamConfiguration
 	@Serial
 	private static final long serialVersionUID = 1899493393926823115L;
 
-	private Long datumStreamMappingId;
-	private String schedule;
+	private @Nullable Long datumStreamMappingId;
+	private @Nullable String schedule;
 	private ObjectDatumKind kind;
-	private Long objectId;
-	private String sourceId;
+	private @Nullable Long objectId;
+	private @Nullable String sourceId;
 
 	/**
 	 * Constructor.
@@ -82,11 +84,19 @@ public final class CloudDatumStreamConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
+	 * @param kind
+	 *        the datum kind
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public CloudDatumStreamConfiguration(UserLongCompositePK id, Instant created) {
-		super(id, created);
+	public CloudDatumStreamConfiguration(UserLongCompositePK id, Instant created, String name,
+			String serviceIdentifier, ObjectDatumKind kind) {
+		super(id, created, name, serviceIdentifier);
+		this.kind = requireNonNullArgument(kind, "kind");
 	}
 
 	/**
@@ -98,16 +108,24 @@ public final class CloudDatumStreamConfiguration
 	 *        the configuration ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
+	 * @param kind
+	 *        the datum kind
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public CloudDatumStreamConfiguration(Long userId, Long configId, Instant created) {
-		this(new UserLongCompositePK(userId, configId), created);
+	public CloudDatumStreamConfiguration(Long userId, Long configId, Instant created, String name,
+			String serviceIdentifier, ObjectDatumKind kind) {
+		this(new UserLongCompositePK(userId, configId), created, name, serviceIdentifier, kind);
 	}
 
 	@Override
 	public CloudDatumStreamConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CloudDatumStreamConfiguration(id, getCreated());
+		var copy = new CloudDatumStreamConfiguration(id, nonnull(getCreated(), "created"), getName(),
+				getServiceIdentifier(), kind);
 		copyTo(copy);
 		return copy;
 	}
@@ -123,7 +141,7 @@ public final class CloudDatumStreamConfiguration
 	}
 
 	@Override
-	public boolean isSameAs(CloudDatumStreamConfiguration other) {
+	public boolean isSameAs(@Nullable CloudDatumStreamConfiguration other) {
 		if ( !super.isSameAs(other) ) {
 			return false;
 		}
@@ -225,7 +243,7 @@ public final class CloudDatumStreamConfiguration
 	 * @see #CLOUD_INTEGRATION_SYSTEM_IDENTIFIER
 	 */
 	@Override
-	public String systemIdentifier() {
+	public final String systemIdentifier() {
 		return systemIdentifierForComponents(CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, getConfigId());
 	}
 
@@ -234,13 +252,12 @@ public final class CloudDatumStreamConfiguration
 	 *
 	 * @return the configuration ID
 	 */
-	public Long getConfigId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getConfigId() {
+		return pk().getEntityId();
 	}
 
 	@Override
-	public Long getDatumStreamId() {
+	public final Long getDatumStreamId() {
 		return getConfigId();
 	}
 
@@ -251,7 +268,7 @@ public final class CloudDatumStreamConfiguration
 	 * @return the datum stream mapping ID
 	 */
 	@Override
-	public Long getDatumStreamMappingId() {
+	public final @Nullable Long getDatumStreamMappingId() {
 		return datumStreamMappingId;
 	}
 
@@ -262,7 +279,7 @@ public final class CloudDatumStreamConfiguration
 	 * @param datumStreamMappingId
 	 *        the integration ID to set
 	 */
-	public void setDatumStreamMappingId(Long datumStreamMappingId) {
+	public final void setDatumStreamMappingId(@Nullable Long datumStreamMappingId) {
 		this.datumStreamMappingId = datumStreamMappingId;
 	}
 
@@ -272,7 +289,7 @@ public final class CloudDatumStreamConfiguration
 	 * @return the schedule, as either a cron schedule or a number of seconds,
 	 *         or {@code null} if polling is not used
 	 */
-	public String getSchedule() {
+	public final @Nullable String getSchedule() {
 		return schedule;
 	}
 
@@ -283,7 +300,7 @@ public final class CloudDatumStreamConfiguration
 	 *        the schedule to set, as either a cron schedule or a number of
 	 *        seconds, or {@code null} if polling is not used
 	 */
-	public void setSchedule(String schedule) {
+	public final void setSchedule(@Nullable String schedule) {
 		this.schedule = schedule;
 	}
 
@@ -293,7 +310,7 @@ public final class CloudDatumStreamConfiguration
 	 * @return the kind
 	 */
 	@Override
-	public ObjectDatumKind getKind() {
+	public final ObjectDatumKind getKind() {
 		return kind;
 	}
 
@@ -302,9 +319,11 @@ public final class CloudDatumStreamConfiguration
 	 *
 	 * @param kind
 	 *        the kind to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setKind(ObjectDatumKind kind) {
-		this.kind = kind;
+	public final void setKind(ObjectDatumKind kind) {
+		this.kind = requireNonNullArgument(kind, "kind");
 	}
 
 	/**
@@ -313,7 +332,7 @@ public final class CloudDatumStreamConfiguration
 	 * @return the object ID
 	 */
 	@Override
-	public Long getObjectId() {
+	public final @Nullable Long getObjectId() {
 		return objectId;
 	}
 
@@ -323,7 +342,7 @@ public final class CloudDatumStreamConfiguration
 	 * @param objectId
 	 *        the object ID to set
 	 */
-	public void setObjectId(Long objectId) {
+	public final void setObjectId(@Nullable Long objectId) {
 		this.objectId = objectId;
 	}
 
@@ -332,7 +351,7 @@ public final class CloudDatumStreamConfiguration
 	 *
 	 * @return the source ID
 	 */
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return sourceId;
 	}
 
@@ -342,7 +361,7 @@ public final class CloudDatumStreamConfiguration
 	 * @param sourceId
 	 *        the source ID to set
 	 */
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(@Nullable String sourceId) {
 		this.sourceId = sourceId;
 	}
 

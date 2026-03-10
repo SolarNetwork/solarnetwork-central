@@ -78,9 +78,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 	@Test
 	public void storeNew() {
 		UserDataConfiguration conf = new UserDataConfiguration(unassignedEntityIdKey(this.user.getId()),
-				now());
-		conf.setName(TEST_NAME);
-		conf.setServiceIdentifier(TEST_SERVICE_IDENT);
+				now(), TEST_NAME, TEST_SERVICE_IDENT);
 
 		Map<String, Object> sprops = new HashMap<String, Object>(4);
 		sprops.put("string", "foo");

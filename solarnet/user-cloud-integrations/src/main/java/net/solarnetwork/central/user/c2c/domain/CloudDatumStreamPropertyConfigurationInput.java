@@ -77,7 +77,8 @@ public class CloudDatumStreamPropertyConfigurationInput extends
 	@Override
 	public CloudDatumStreamPropertyConfiguration toEntity(UserLongIntegerCompositePK id, Instant date) {
 		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(
-				requireNonNullArgument(id, "id"), date);
+				requireNonNullArgument(id, "id"), date, propertyType, propertyName, valueType,
+				valueReference);
 		populateConfiguration(conf);
 		return conf;
 	}
@@ -174,8 +175,8 @@ public class CloudDatumStreamPropertyConfigurationInput extends
 	/**
 	 * Get the value multiplier.
 	 *
-	 * @return a number to multiply source data values by, or {@code null}
-	 *         for no change
+	 * @return a number to multiply source data values by, or {@code null} for
+	 *         no change
 	 */
 	public final BigDecimal getMultiplier() {
 		return multiplier;
@@ -185,8 +186,8 @@ public class CloudDatumStreamPropertyConfigurationInput extends
 	 * Set the value multiplier.
 	 *
 	 * @param multiplier
-	 *        a number to multiply source data values by, or {@code null} for
-	 *        no change
+	 *        a number to multiply source data values by, or {@code null} for no
+	 *        change
 	 */
 	public final void setMultiplier(BigDecimal multiplier) {
 		this.multiplier = multiplier;
@@ -195,8 +196,8 @@ public class CloudDatumStreamPropertyConfigurationInput extends
 	/**
 	 * Get the value decimal scale.
 	 *
-	 * @return the scale to round the property value to, or {@code null} or
-	 *         less than 0 for no rounding
+	 * @return the scale to round the property value to, or {@code null} or less
+	 *         than 0 for no rounding
 	 */
 	public final Integer getScale() {
 		return scale;
@@ -206,8 +207,8 @@ public class CloudDatumStreamPropertyConfigurationInput extends
 	 * Set the value decimal scale.
 	 *
 	 * @param scale
-	 *        the scale to round the property value to, or {@code null} or
-	 *        less than 0 for no rounding
+	 *        the scale to round the property value to, or {@code null} or less
+	 *        than 0 for no rounding
 	 */
 	public final void setScale(Integer scale) {
 		this.scale = scale;

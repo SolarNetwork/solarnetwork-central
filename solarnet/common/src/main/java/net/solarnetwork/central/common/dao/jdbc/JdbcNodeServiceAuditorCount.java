@@ -45,7 +45,7 @@ public enum JdbcNodeServiceAuditorCount {
 	/** Flushed counts to DB. */
 	CountsFlushed,
 
-	/** Zero-valued counts cleared. */
+	/** Null-valued counts cleared. */
 	ZeroCountsCleared,
 
 	/** SQL updates executed. */

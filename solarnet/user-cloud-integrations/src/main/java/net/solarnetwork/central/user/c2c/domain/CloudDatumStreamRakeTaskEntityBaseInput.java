@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.c2c.domain;
 
+import static java.time.Instant.now;
+import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENTITY_ID;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.Period;
@@ -78,10 +80,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 */
 	public CloudDatumStreamRakeTaskEntity toEntity(UserLongCompositePK id) {
 		CloudDatumStreamRakeTaskEntity conf = new CloudDatumStreamRakeTaskEntity(
-				requireNonNullArgument(id, "id"));
-		conf.setState(state);
-		conf.setExecuteAt(executeAt);
-		conf.setOffset(offset);
+				requireNonNullArgument(id, "id"), now(), UNASSIGNED_ENTITY_ID, state, executeAt, offset);
 		conf.setMessage(message);
 		conf.setServiceProps(serviceProperties);
 		return conf;

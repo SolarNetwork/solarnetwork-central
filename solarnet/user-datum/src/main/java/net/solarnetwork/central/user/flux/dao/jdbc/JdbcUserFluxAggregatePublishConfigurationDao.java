@@ -88,7 +88,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDao
 
 	@Override
 	public UserFluxAggregatePublishConfiguration entityKey(UserLongCompositePK id) {
-		return new UserFluxAggregatePublishConfiguration(id, Instant.now());
+		return new UserFluxAggregatePublishConfiguration(id, Instant.EPOCH);
 	}
 
 	@Override

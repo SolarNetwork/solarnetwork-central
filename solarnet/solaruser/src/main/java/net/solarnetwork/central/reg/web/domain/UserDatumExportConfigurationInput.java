@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.reg.web.domain;
 
+import static java.time.Instant.now;
+import static java.time.temporal.ChronoUnit.HOURS;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseUserRelatedStdInput;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -37,32 +40,34 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 public final class UserDatumExportConfigurationInput
 		extends BaseUserRelatedStdInput<UserDatumExportConfiguration, UserLongCompositePK> {
 
-	private Long id;
-	private String name;
-	private ScheduleType schedule;
+	private @Nullable Long id;
+	private @Nullable String name;
+	private @Nullable ScheduleType schedule;
 	private int hourDelayOffset;
-	private Instant minimumExportDate;
-	private String timeZoneId;
-	private String tokenId;
+	private @Nullable Instant minimumExportDate;
+	private @Nullable String timeZoneId;
+	private @Nullable String tokenId;
 
-	private Long dataConfigurationId;
-	private Long destinationConfigurationId;
-	private Long outputConfigurationId;
+	private @Nullable Long dataConfigurationId;
+	private @Nullable Long destinationConfigurationId;
+	private @Nullable Long outputConfigurationId;
 
-	private UserDataConfigurationInput dataConfiguration;
-	private UserOutputConfigurationInput outputConfiguration;
-	private UserDestinationConfigurationInput destinationConfiguration;
+	private @Nullable UserDataConfigurationInput dataConfiguration;
+	private @Nullable UserOutputConfigurationInput outputConfiguration;
+	private @Nullable UserDestinationConfigurationInput destinationConfiguration;
 
 	/**
 	 * Constructor.
 	 */
 	public UserDatumExportConfigurationInput() {
 		super();
+		this.minimumExportDate = now().truncatedTo(HOURS);
 	}
 
 	@Override
 	public UserDatumExportConfiguration toEntity(UserLongCompositePK id, Instant date) {
-		UserDatumExportConfiguration entity = new UserDatumExportConfiguration(id, date);
+		UserDatumExportConfiguration entity = new UserDatumExportConfiguration(id, date, getName(),
+				schedule, hourDelayOffset, minimumExportDate);
 		populateConfiguration(entity);
 		return entity;
 	}
@@ -117,7 +122,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the ID
 	 */
-	public Long getId() {
+	public final @Nullable Long getId() {
 		return id;
 	}
 
@@ -127,7 +132,7 @@ public final class UserDatumExportConfigurationInput
 	 * @param id
 	 *        the ID to set
 	 */
-	public void setId(Long id) {
+	public final void setId(@Nullable Long id) {
 		this.id = id;
 	}
 
@@ -136,7 +141,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the name to set
 	 */
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
@@ -146,7 +151,7 @@ public final class UserDatumExportConfigurationInput
 	 * @param name
 	 *        the name to set
 	 */
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
@@ -155,7 +160,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the schedule
 	 */
-	public ScheduleType getSchedule() {
+	public final @Nullable ScheduleType getSchedule() {
 		return schedule;
 	}
 
@@ -165,17 +170,17 @@ public final class UserDatumExportConfigurationInput
 	 * @param schedule
 	 *        the schedule to set
 	 */
-	public void setSchedule(ScheduleType schedule) {
+	public final void setSchedule(@Nullable ScheduleType schedule) {
 		this.schedule = schedule;
 	}
 
 	/**
 	 * Get the schedule type key value.
 	 *
-	 * @return the schedule type; if {@link #getSchedule()} is {@code null}
-	 *         this will return the key value for {@link ScheduleType#Daily}
+	 * @return the schedule type; if {@link #getSchedule()} is {@code null} this
+	 *         will return the key value for {@link ScheduleType#Daily}
 	 */
-	public char getScheduleKey() {
+	public final char getScheduleKey() {
 		ScheduleType type = getSchedule();
 		return (type != null ? type.getKey() : ScheduleType.Daily.getKey());
 	}
@@ -188,7 +193,7 @@ public final class UserDatumExportConfigurationInput
 	 *        unsupported, the compression will be set to
 	 *        {@link ScheduleType#Daily}
 	 */
-	public void setScheduleKey(char key) {
+	public final void setScheduleKey(char key) {
 		ScheduleType type = ScheduleType.Daily;
 		try {
 			type = ScheduleType.forKey(key);
@@ -203,7 +208,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the offset
 	 */
-	public int getHourDelayOffset() {
+	public final int getHourDelayOffset() {
 		return hourDelayOffset;
 	}
 
@@ -213,7 +218,7 @@ public final class UserDatumExportConfigurationInput
 	 * @param hourDelayOffset
 	 *        the offset to set
 	 */
-	public void setHourDelayOffset(int hourDelayOffset) {
+	public final void setHourDelayOffset(int hourDelayOffset) {
 		this.hourDelayOffset = hourDelayOffset;
 	}
 
@@ -222,7 +227,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the ID
 	 */
-	public Long getDataConfigurationId() {
+	public final @Nullable Long getDataConfigurationId() {
 		return dataConfigurationId;
 	}
 
@@ -232,7 +237,7 @@ public final class UserDatumExportConfigurationInput
 	 * @param userDataConfigurationId
 	 *        the ID to set
 	 */
-	public void setDataConfigurationId(Long userDataConfigurationId) {
+	public final void setDataConfigurationId(@Nullable Long userDataConfigurationId) {
 		this.dataConfigurationId = userDataConfigurationId;
 	}
 
@@ -241,7 +246,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the ID
 	 */
-	public Long getDestinationConfigurationId() {
+	public final @Nullable Long getDestinationConfigurationId() {
 		return destinationConfigurationId;
 	}
 
@@ -251,7 +256,7 @@ public final class UserDatumExportConfigurationInput
 	 * @param userDestinationConfigurationId
 	 *        the ID to set
 	 */
-	public void setDestinationConfigurationId(Long userDestinationConfigurationId) {
+	public final void setDestinationConfigurationId(@Nullable Long userDestinationConfigurationId) {
 		this.destinationConfigurationId = userDestinationConfigurationId;
 	}
 
@@ -260,7 +265,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the ID
 	 */
-	public Long getOutputConfigurationId() {
+	public final @Nullable Long getOutputConfigurationId() {
 		return outputConfigurationId;
 	}
 
@@ -270,7 +275,7 @@ public final class UserDatumExportConfigurationInput
 	 * @param userOutputConfigurationId
 	 *        the ID to set
 	 */
-	public void setOutputConfigurationId(Long userOutputConfigurationId) {
+	public final void setOutputConfigurationId(@Nullable Long userOutputConfigurationId) {
 		this.outputConfigurationId = userOutputConfigurationId;
 	}
 
@@ -279,7 +284,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the minimum export date
 	 */
-	public Instant getMinimumExportDate() {
+	public final @Nullable Instant getMinimumExportDate() {
 		return minimumExportDate;
 	}
 
@@ -289,7 +294,7 @@ public final class UserDatumExportConfigurationInput
 	 * @param minimumExportDate
 	 *        the minimum export date to use
 	 */
-	public void setMinimumExportDate(Instant minimumExportDate) {
+	public final void setMinimumExportDate(@Nullable Instant minimumExportDate) {
 		this.minimumExportDate = minimumExportDate;
 	}
 
@@ -298,7 +303,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the ID
 	 */
-	public String getTimeZoneId() {
+	public final @Nullable String getTimeZoneId() {
 		return timeZoneId;
 	}
 
@@ -308,7 +313,7 @@ public final class UserDatumExportConfigurationInput
 	 * @param timeZoneId
 	 *        the ID to set
 	 */
-	public void setTimeZoneId(String timeZoneId) {
+	public final void setTimeZoneId(@Nullable String timeZoneId) {
 		this.timeZoneId = timeZoneId;
 	}
 
@@ -317,7 +322,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the token ID
 	 */
-	public String getTokenId() {
+	public final @Nullable String getTokenId() {
 		return tokenId;
 	}
 
@@ -327,7 +332,7 @@ public final class UserDatumExportConfigurationInput
 	 * @param tokenId
 	 *        the token ID to set
 	 */
-	public void setTokenId(String tokenId) {
+	public final void setTokenId(@Nullable String tokenId) {
 		this.tokenId = tokenId;
 	}
 
@@ -336,7 +341,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the configuration
 	 */
-	public UserDataConfigurationInput getDataConfiguration() {
+	public final @Nullable UserDataConfigurationInput getDataConfiguration() {
 		return dataConfiguration;
 	}
 
@@ -346,7 +351,7 @@ public final class UserDatumExportConfigurationInput
 	 * @param dataConfiguration
 	 *        the configuration to set
 	 */
-	public void setDataConfiguration(UserDataConfigurationInput dataConfiguration) {
+	public final void setDataConfiguration(@Nullable UserDataConfigurationInput dataConfiguration) {
 		this.dataConfiguration = dataConfiguration;
 	}
 
@@ -355,7 +360,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the configuration
 	 */
-	public UserOutputConfigurationInput getOutputConfiguration() {
+	public final @Nullable UserOutputConfigurationInput getOutputConfiguration() {
 		return outputConfiguration;
 	}
 
@@ -365,7 +370,8 @@ public final class UserDatumExportConfigurationInput
 	 * @param outputConfiguration
 	 *        the configuration to set
 	 */
-	public void setOutputConfiguration(UserOutputConfigurationInput outputConfiguration) {
+	public final void setOutputConfiguration(
+			@Nullable UserOutputConfigurationInput outputConfiguration) {
 		this.outputConfiguration = outputConfiguration;
 	}
 
@@ -374,7 +380,7 @@ public final class UserDatumExportConfigurationInput
 	 *
 	 * @return the configuration
 	 */
-	public UserDestinationConfigurationInput getDestinationConfiguration() {
+	public final @Nullable UserDestinationConfigurationInput getDestinationConfiguration() {
 		return destinationConfiguration;
 	}
 
@@ -384,7 +390,8 @@ public final class UserDatumExportConfigurationInput
 	 * @param destinationConfiguration
 	 *        the configuration to set
 	 */
-	public void setDestinationConfiguration(UserDestinationConfigurationInput destinationConfiguration) {
+	public final void setDestinationConfiguration(
+			@Nullable UserDestinationConfigurationInput destinationConfiguration) {
 		this.destinationConfiguration = destinationConfiguration;
 	}
 

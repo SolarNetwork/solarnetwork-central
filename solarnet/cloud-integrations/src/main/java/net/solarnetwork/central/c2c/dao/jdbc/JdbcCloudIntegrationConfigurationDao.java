@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
-import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +76,7 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 
 	@Override
 	public CloudIntegrationConfiguration entityKey(UserLongCompositePK id) {
-		return new CloudIntegrationConfiguration(id, now());
+		return new CloudIntegrationConfiguration(id, Instant.EPOCH, "", "");
 	}
 
 	@Override

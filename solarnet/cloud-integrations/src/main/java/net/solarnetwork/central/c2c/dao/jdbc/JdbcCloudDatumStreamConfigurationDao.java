@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
-import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -42,6 +42,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * JDBC implementation of {@link CloudDatumStreamConfigurationDao}.
@@ -73,7 +74,7 @@ public class JdbcCloudDatumStreamConfigurationDao implements CloudDatumStreamCon
 
 	@Override
 	public CloudDatumStreamConfiguration entityKey(UserLongCompositePK id) {
-		return new CloudDatumStreamConfiguration(id, now());
+		return new CloudDatumStreamConfiguration(id, Instant.EPOCH, "", "", ObjectDatumKind.Node);
 	}
 
 	@Override

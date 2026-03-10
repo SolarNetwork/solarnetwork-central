@@ -52,11 +52,16 @@ public class UserDestinationConfiguration
 	 *        the primary key
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public UserDestinationConfiguration(UserLongCompositePK id, Instant created) {
-		super(id, created);
+	public UserDestinationConfiguration(UserLongCompositePK id, Instant created, String name,
+			String serviceIdentifier) {
+		super(id, created, name, serviceIdentifier);
 	}
 
 	/**
@@ -68,16 +73,21 @@ public class UserDestinationConfiguration
 	 *        the configuration ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public UserDestinationConfiguration(Long userId, Long configId, Instant created) {
-		this(new UserLongCompositePK(userId, configId), created);
+	public UserDestinationConfiguration(Long userId, Long configId, Instant created, String name,
+			String serviceIdentifier) {
+		this(new UserLongCompositePK(userId, configId), created, name, serviceIdentifier);
 	}
 
 	@Override
 	public UserDestinationConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new UserDestinationConfiguration(id, getCreated());
+		var copy = new UserDestinationConfiguration(id, getCreated(), getName(), getServiceIdentifier());
 		copyTo(copy);
 		return copy;
 	}

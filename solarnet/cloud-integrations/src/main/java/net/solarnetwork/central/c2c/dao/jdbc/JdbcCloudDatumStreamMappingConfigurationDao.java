@@ -22,9 +22,10 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
-import static java.time.Instant.now;
+import static java.time.Instant.EPOCH;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENTITY_ID;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
@@ -73,7 +74,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDao
 
 	@Override
 	public CloudDatumStreamMappingConfiguration entityKey(UserLongCompositePK id) {
-		return new CloudDatumStreamMappingConfiguration(id, now());
+		return new CloudDatumStreamMappingConfiguration(id, EPOCH, "", UNASSIGNED_ENTITY_ID);
 	}
 
 	@Override

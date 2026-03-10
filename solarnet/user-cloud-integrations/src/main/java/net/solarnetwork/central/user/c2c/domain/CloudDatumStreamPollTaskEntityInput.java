@@ -67,7 +67,7 @@ public class CloudDatumStreamPollTaskEntityInput {
 
 	public CloudDatumStreamPollTaskEntity toEntity(UserLongCompositePK id) {
 		CloudDatumStreamPollTaskEntity conf = new CloudDatumStreamPollTaskEntity(
-				requireNonNullArgument(id, "id"));
+				requireNonNullArgument(id, "id"), state, executeAt, startAt);
 		populateConfiguration(conf);
 		return conf;
 	}

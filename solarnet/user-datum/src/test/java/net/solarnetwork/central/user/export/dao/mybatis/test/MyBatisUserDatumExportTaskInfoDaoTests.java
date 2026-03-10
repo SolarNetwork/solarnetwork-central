@@ -93,10 +93,8 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 
 	private UserDatumExportConfiguration createNewUserDatumExportConfig() {
 		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
-				unassignedEntityIdKey(this.user.getId()), now());
-		conf.setName(TEST_NAME);
-		conf.setHourDelayOffset(2);
-		conf.setSchedule(ScheduleType.Weekly);
+				unassignedEntityIdKey(this.user.getId()), now(), TEST_NAME, ScheduleType.Weekly, 2,
+				now());
 
 		UserLongCompositePK id = confDao.save(conf);
 		assertThat("Primary key assigned", id, notNullValue());

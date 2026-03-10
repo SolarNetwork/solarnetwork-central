@@ -45,11 +45,10 @@ public class CloudDatumStreamMappingConfigurationTests {
 	public void toJson() {
 		// GIVEN
 		CloudDatumStreamMappingConfiguration entity = new CloudDatumStreamMappingConfiguration(
-				randomLong(), randomLong(), Instant.now().truncatedTo(ChronoUnit.SECONDS));
+				randomLong(), randomLong(), Instant.now().truncatedTo(ChronoUnit.SECONDS),
+				randomString(), randomLong());
 		entity.setModified(entity.getCreated().plusSeconds(1));
 		entity.setServiceProps(Map.of("foo", "bar"));
-		entity.setName(randomString());
-		entity.setIntegrationId(randomLong());
 
 		// WHEN
 		String json = JsonUtils.getJSONString(entity);

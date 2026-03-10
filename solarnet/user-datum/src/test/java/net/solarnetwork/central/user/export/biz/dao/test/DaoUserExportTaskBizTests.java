@@ -101,11 +101,9 @@ public class DaoUserExportTaskBizTests {
 	}
 
 	private UserDatumExportConfiguration createConfiguration() {
-		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
-				new UserLongCompositePK(TEST_USER_ID, ID_GENERATOR.decrementAndGet()), now());
-		config.setName("Config" + config.getId());
-		config.setSchedule(ScheduleType.Hourly);
-		return config;
+		final Long id = ID_GENERATOR.decrementAndGet();
+		return new UserDatumExportConfiguration(new UserLongCompositePK(TEST_USER_ID, id), now(),
+				"Config" + id, ScheduleType.Hourly, 0, now());
 	}
 
 	@Test
@@ -146,7 +144,8 @@ public class DaoUserExportTaskBizTests {
 		UserDatumExportConfiguration config = createConfiguration();
 		ZonedDateTime now = ZonedDateTime.now(config.zone());
 		UserDataConfiguration dataConfig = new UserDataConfiguration(
-				new UserLongCompositePK(TEST_USER_ID, ID_GENERATOR.decrementAndGet()), now());
+				new UserLongCompositePK(TEST_USER_ID, ID_GENERATOR.decrementAndGet()), now(),
+				randomString(), randomString());
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setSourceId("/test/**");
 		dataConfig.setFilter(filter);
@@ -189,7 +188,8 @@ public class DaoUserExportTaskBizTests {
 		UserDatumExportConfiguration config = createConfiguration();
 		ZonedDateTime now = ZonedDateTime.now(config.zone());
 		UserDataConfiguration dataConfig = new UserDataConfiguration(
-				new UserLongCompositePK(TEST_USER_ID, ID_GENERATOR.decrementAndGet()), now());
+				new UserLongCompositePK(TEST_USER_ID, ID_GENERATOR.decrementAndGet()), now(),
+				randomString(), randomString());
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setSourceId("/test/**");
 		dataConfig.setFilter(filter);
@@ -311,7 +311,7 @@ public class DaoUserExportTaskBizTests {
 				.copyWithId(unassignedEntityIdKey(TEST_USER_ID));
 
 		UserDataConfiguration dataConfig = new UserDataConfiguration(unassignedEntityIdKey(TEST_USER_ID),
-				now());
+				now(), randomString(), randomString());
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setStartDate(Instant.parse("2025-03-01T00:00:00Z"));
 		filter.setEndDate(Instant.parse("2025-03-02T00:00:00Z"));

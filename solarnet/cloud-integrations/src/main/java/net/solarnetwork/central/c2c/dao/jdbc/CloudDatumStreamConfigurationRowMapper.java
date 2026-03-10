@@ -86,17 +86,22 @@ public class CloudDatumStreamConfigurationRowMapper implements RowMapper<CloudDa
 		Long userId = rs.getObject(++p, Long.class);
 		Long entityId = rs.getObject(++p, Long.class);
 		Instant ts = getTimestampInstant(rs, ++p);
-		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(userId, entityId, ts);
-		conf.setModified(getTimestampInstant(rs, ++p));
-		conf.setEnabled(rs.getBoolean(++p));
-		conf.setName(rs.getString(++p));
-		conf.setServiceIdentifier(rs.getString(++p));
-		conf.setDatumStreamMappingId(rs.getObject(++p, Long.class));
-		conf.setSchedule(rs.getString(++p));
-		conf.setKind(ObjectDatumKind.forKey(rs.getString(++p)));
+		Instant mod = getTimestampInstant(rs, ++p);
+		boolean enabled = rs.getBoolean(++p);
+		String name = rs.getString(++p);
+		String serviceIdent = rs.getString(++p);
+		Long mappingId = rs.getObject(++p, Long.class);
+		String schedule = rs.getString(++p);
+		ObjectDatumKind kind = ObjectDatumKind.forKey(rs.getString(++p));
+
+		final CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(userId, entityId,
+				ts, name, serviceIdent, kind);
+		conf.setModified(mod);
+		conf.setEnabled(enabled);
+		conf.setDatumStreamMappingId(mappingId);
+		conf.setSchedule(schedule);
 		conf.setObjectId(rs.getObject(++p, Long.class));
 		conf.setSourceId(rs.getString(++p));
-
 		conf.setServicePropsJson(rs.getString(++p));
 		return conf;
 	}

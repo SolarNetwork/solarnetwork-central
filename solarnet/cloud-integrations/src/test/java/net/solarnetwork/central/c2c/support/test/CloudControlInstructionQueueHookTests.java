@@ -282,11 +282,8 @@ public class CloudControlInstructionQueueHookTests implements CloudIntegrationsU
 
 	private CloudControlConfiguration newControl(SolarNodeOwnership owner) {
 		final CloudControlConfiguration control = new CloudControlConfiguration(owner.getUserId(),
-				randomLong(), now());
-		control.setServiceIdentifier(CONTROL_SERVICE_ID);
-		control.setIntegrationId(randomLong());
-		control.setNodeId(owner.getNodeId());
-		control.setControlId(randomString());
+				randomLong(), now(), randomString(), CONTROL_SERVICE_ID, randomLong(), owner.getNodeId(),
+				randomString());
 		control.setEnabled(true);
 		control.setControlReference(randomString());
 		return control;

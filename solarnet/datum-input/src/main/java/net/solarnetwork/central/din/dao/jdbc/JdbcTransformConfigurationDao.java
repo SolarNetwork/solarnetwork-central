@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.din.dao.jdbc;
 
-import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -72,7 +72,7 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 
 	@Override
 	public TransformConfiguration entityKey(UserLongCompositePK id) {
-		return new TransformConfiguration(id, now());
+		return new TransformConfiguration(id, Instant.EPOCH);
 	}
 
 	@Override

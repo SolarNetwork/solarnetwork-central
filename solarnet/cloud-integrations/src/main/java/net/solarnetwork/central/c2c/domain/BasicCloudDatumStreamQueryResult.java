@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.SequencedCollection;
 import java.util.Spliterator;
 import java.util.function.Consumer;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.datum.Datum;
@@ -41,8 +42,8 @@ import net.solarnetwork.domain.datum.Datum;
 @JsonPropertyOrder({ "returnedResultCount", "usedQueryFilter", "nextQueryFilter", "results" })
 public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryResult {
 
-	private final CloudDatumStreamQueryFilter usedQueryFilter;
-	private final CloudDatumStreamQueryFilter nextQueryFilter;
+	private final @Nullable CloudDatumStreamQueryFilter usedQueryFilter;
+	private final @Nullable CloudDatumStreamQueryFilter nextQueryFilter;
 	private final SequencedCollection<Datum> results;
 
 	/**
@@ -51,7 +52,7 @@ public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryRe
 	 * @param results
 	 *        the results, or {@code null}
 	 */
-	public BasicCloudDatumStreamQueryResult(SequencedCollection<Datum> results) {
+	public BasicCloudDatumStreamQueryResult(@Nullable SequencedCollection<Datum> results) {
 		this(null, null, results);
 	}
 
@@ -65,8 +66,9 @@ public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryRe
 	 * @param results
 	 *        the results, or {@code null}
 	 */
-	public BasicCloudDatumStreamQueryResult(CloudDatumStreamQueryFilter usedQueryFilter,
-			CloudDatumStreamQueryFilter nextQueryFilter, SequencedCollection<Datum> results) {
+	public BasicCloudDatumStreamQueryResult(@Nullable CloudDatumStreamQueryFilter usedQueryFilter,
+			@Nullable CloudDatumStreamQueryFilter nextQueryFilter,
+			@Nullable SequencedCollection<Datum> results) {
 		super();
 		this.usedQueryFilter = usedQueryFilter;
 		this.nextQueryFilter = nextQueryFilter;
@@ -94,12 +96,12 @@ public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryRe
 	}
 
 	@Override
-	public CloudDatumStreamQueryFilter getUsedQueryFilter() {
+	public @Nullable CloudDatumStreamQueryFilter getUsedQueryFilter() {
 		return usedQueryFilter;
 	}
 
 	@Override
-	public final CloudDatumStreamQueryFilter getNextQueryFilter() {
+	public final @Nullable CloudDatumStreamQueryFilter getNextQueryFilter() {
 		return nextQueryFilter;
 	}
 

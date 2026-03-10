@@ -355,8 +355,8 @@ public interface UserCloudIntegrationsBiz {
 	 *        the state to update the task to
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to {@code desiredState}, or {@code null} if
-	 *        the current state of the task does not matter
+	 *        order to change it to {@code desiredState}, or {@code null} if the
+	 *        current state of the task does not matter
 	 * @return the resulting task, or {@code null} if no such task exists
 	 */
 	CloudDatumStreamPollTaskEntity updateDatumStreamPollTaskState(UserLongCompositePK id,
@@ -371,8 +371,8 @@ public interface UserCloudIntegrationsBiz {
 	 *        the info to save
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to the info's given state, or {@code null}
-	 *        if the current state of the task does not matter
+	 *        order to change it to the info's given state, or {@code null} if
+	 *        the current state of the task does not matter
 	 * @return the resulting task
 	 */
 	CloudDatumStreamPollTaskEntity saveDatumStreamPollTask(UserLongCompositePK id,
@@ -418,8 +418,8 @@ public interface UserCloudIntegrationsBiz {
 	 *        the state to update the task to
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to {@code desiredState}, or {@code null} if
-	 *        the current state of the task does not matter
+	 *        order to change it to {@code desiredState}, or {@code null} if the
+	 *        current state of the task does not matter
 	 * @return the resulting task, or {@code null} if no such task exists
 	 * @since 1.5
 	 */
@@ -435,8 +435,8 @@ public interface UserCloudIntegrationsBiz {
 	 *        the info to save
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to the info's given state, or {@code null}
-	 *        if the current state of the task does not matter
+	 *        order to change it to the info's given state, or {@code null} if
+	 *        the current state of the task does not matter
 	 * @return the resulting task
 	 * @since 1.5
 	 */
@@ -457,8 +457,7 @@ public interface UserCloudIntegrationsBiz {
 	 *
 	 * <p>
 	 * This method will first <b>delete</b> all tasks for the given
-	 * {@code datumStreamId}, then <b>insert</b> the given tasks
-	 * </p>
+	 * {@code datumStreamId}, then <b>insert</b> the given tasks.
 	 * </p>
 	 *
 	 * @param datumStreamId

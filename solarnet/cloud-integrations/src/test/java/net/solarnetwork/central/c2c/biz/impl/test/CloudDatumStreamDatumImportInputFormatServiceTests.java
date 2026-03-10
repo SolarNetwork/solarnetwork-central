@@ -108,10 +108,9 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 		final ZonedDateTime startDate = LocalDate.of(2010, 1, 1).atStartOfDay(UTC);
 		final ZonedDateTime endDate = LocalDate.of(2010, 2, 1).atStartOfDay(UTC);
 
-		final var datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID, randomLong(), now());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
+		final var datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID, randomLong(), now(),
+				randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER, ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -182,10 +181,9 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 		final ZonedDateTime startDate = LocalDate.of(2010, 1, 1).atStartOfDay(UTC);
 		final ZonedDateTime endDate = LocalDate.of(2010, 2, 1).atStartOfDay(UTC);
 
-		final var datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID, randomLong(), now());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
+		final var datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID, randomLong(), now(),
+				randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER, ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -299,10 +297,9 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 		final ZonedDateTime startDate = LocalDate.of(2010, 1, 1).atStartOfDay(UTC);
 		final ZonedDateTime endDate = LocalDate.of(2010, 2, 1).atStartOfDay(UTC);
 
-		final var datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID, randomLong(), now());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
+		final var datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID, randomLong(), now(),
+				randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER, ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 

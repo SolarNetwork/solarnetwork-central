@@ -23,18 +23,22 @@
 package net.solarnetwork.central.user.c2c.biz.impl.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.Instant.EPOCH;
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
+import static net.solarnetwork.central.domain.BasicClaimableJobState.Unknown;
 import static net.solarnetwork.central.test.CommonTestUtils.randomBoolean;
 import static net.solarnetwork.central.test.CommonTestUtils.randomDecimal;
 import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.catchThrowableOfType;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -260,8 +264,7 @@ public class DaoUserCloudIntegrationsBizTests {
 		final Long userId = randomLong();
 		final Map<String, Object> sprops = Map.of("foo", "bar", TEST_SECURE_SETTING, "should be masked");
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(userId,
-				randomLong(), now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
+				randomLong(), now(), randomString(), TEST_SERVICE_ID);
 		conf.setServiceProps(sprops);
 		final var daoResults = new BasicFilterResults<CloudIntegrationConfiguration, UserLongCompositePK>(
 				Arrays.asList(conf));
@@ -310,8 +313,7 @@ public class DaoUserCloudIntegrationsBizTests {
 		final Long userId = randomLong();
 		final Map<String, Object> sprops = Map.of("foo", "bar", TEST_SECURE_SETTING, "should be masked");
 		final CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(userId,
-				randomLong(), now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
+				randomLong(), now(), randomString(), TEST_SERVICE_ID, ObjectDatumKind.Node);
 		conf.setServiceProps(sprops);
 		final var daoResults = new BasicFilterResults<CloudDatumStreamConfiguration, UserLongCompositePK>(
 				Arrays.asList(conf));
@@ -359,7 +361,7 @@ public class DaoUserCloudIntegrationsBizTests {
 		// GIVEN
 		final Long userId = randomLong();
 		final CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(
-				userId, randomLong(), now());
+				userId, randomLong(), now(), randomString(), randomLong());
 		final var daoResults = new BasicFilterResults<CloudDatumStreamMappingConfiguration, UserLongCompositePK>(
 				Arrays.asList(conf));
 		given(datumStreamMappingDao.findFiltered(any(), isNull(), isNull(), isNull()))
@@ -386,7 +388,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		// GIVEN
 		final Long userId = randomLong();
 		final CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(
-				userId, randomLong(), randomInt(), now());
+				userId, randomLong(), randomInt(), now(), Instantaneous, randomString(), Reference,
+				randomString());
 		final var daoResults = new BasicFilterResults<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK>(
 				Arrays.asList(conf));
 		given(datumStreamPropertyDao.findFiltered(any(), isNull(), isNull(), isNull()))
@@ -413,7 +416,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		// GIVEN
 		final Long userId = randomLong();
 		final CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(
-				userId, randomLong(), randomInt(), now());
+				userId, randomLong(), randomInt(), now(), Instantaneous, randomString(), Reference,
+				randomString());
 		final var daoResults = new BasicFilterResults<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK>(
 				Arrays.asList(conf));
 		given(datumStreamPropertyDao.findFiltered(any(), isNull(), isNull(), isNull()))
@@ -447,8 +451,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 
-		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now(), randomString(),
+				TEST_SERVICE_ID);
 		conf.setServiceProps(Map.of("foo", "bar", TEST_SECURE_SETTING, "bam"));
 
 		given(integrationDao.get(pk)).willReturn(conf);
@@ -486,8 +490,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 
-		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(pk, now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(pk, now(), randomString(),
+				TEST_SERVICE_ID, ObjectDatumKind.Node);
 		conf.setServiceProps(Map.of("foo", "bar", TEST_SECURE_SETTING, "bam"));
 
 		given(datumStreamDao.get(pk)).willReturn(conf);
@@ -524,7 +528,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(pk, now());
+		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(pk, now(),
+				randomString(), randomLong());
 
 		given(datumStreamMappingDao.get(pk)).willReturn(conf);
 
@@ -543,8 +548,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long groupId = randomLong();
 		Integer entityId = randomInt();
 		UserLongIntegerCompositePK pk = new UserLongIntegerCompositePK(userId, groupId, entityId);
-		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(pk,
-				now());
+		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(pk, now(),
+				Instantaneous, randomString(), Reference, randomString());
 
 		given(datumStreamPropertyDao.get(pk)).willReturn(conf);
 
@@ -565,8 +570,8 @@ public class DaoUserCloudIntegrationsBizTests {
 
 		final Map<String, Object> sprops = Map.of("foo", "bar", TEST_SECURE_SETTING, "should be masked");
 
-		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now(),
+				randomString(), TEST_SERVICE_ID);
 		conf.setServiceProps(sprops);
 
 		// save and retrieve
@@ -678,8 +683,8 @@ public class DaoUserCloudIntegrationsBizTests {
 				OAUTH_ACCESS_TOKEN_SETTING, TEST_ACCESS_TOKEN, OAUTH_REFRESH_TOKEN_SETTING,
 				TEST_REFRESH_TOKEN);
 
-		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now(),
+				randomString(), TEST_SERVICE_ID);
 		conf.setServiceProps(sprops);
 
 		// save and retrieve
@@ -747,8 +752,8 @@ public class DaoUserCloudIntegrationsBizTests {
 
 		final Map<String, Object> sprops = Map.of("foo", "bar", TEST_SECURE_SETTING, "should be masked");
 
-		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(pk, now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(pk, now(), randomString(),
+				TEST_SERVICE_ID, ObjectDatumKind.Node);
 		conf.setServiceProps(sprops);
 
 		// save and retrieve
@@ -843,7 +848,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(pk, now());
+		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(pk, now(),
+				randomString(), randomLong());
 
 		// save and retrieve
 		given(datumStreamMappingDao.save(any(CloudDatumStreamMappingConfiguration.class)))
@@ -893,8 +899,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long groupId = randomLong();
 		Integer entityId = randomInt();
 		UserLongIntegerCompositePK pk = new UserLongIntegerCompositePK(userId, groupId, entityId);
-		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(pk,
-				now());
+		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(pk, now(),
+				Instantaneous, randomString(), Reference, randomString());
 
 		// save and retrieve
 		given(datumStreamPropertyDao.save(any(CloudDatumStreamPropertyConfiguration.class)))
@@ -948,7 +954,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now());
+		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now(), randomString(),
+				TEST_SERVICE_ID);
 
 		given(integrationDao.entityKey(pk)).willReturn(conf);
 
@@ -972,7 +979,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(pk, now());
+		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(pk, now(), randomString(),
+				TEST_SERVICE_ID, ObjectDatumKind.Node);
 
 		given(datumStreamDao.entityKey(pk)).willReturn(conf);
 
@@ -996,7 +1004,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(pk, now());
+		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(pk, now(),
+				randomString(), randomLong());
 
 		given(datumStreamMappingDao.entityKey(pk)).willReturn(conf);
 
@@ -1021,8 +1030,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long groupId = randomLong();
 		Integer entityId = randomInt();
 		UserLongIntegerCompositePK pk = new UserLongIntegerCompositePK(userId, groupId, entityId);
-		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(pk,
-				now());
+		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(pk, now(),
+				Instantaneous, randomString(), Reference, randomString());
 
 		given(datumStreamPropertyDao.entityKey(pk)).willReturn(conf);
 
@@ -1046,7 +1055,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(pk);
+		CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(pk, Unknown, EPOCH,
+				EPOCH);
 
 		// save and retrieve
 		given(datumStreamPollTaskDao.save(any(CloudDatumStreamPollTaskEntity.class))).willReturn(pk);
@@ -1126,7 +1136,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(pk);
+		CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(pk, Unknown, EPOCH,
+				EPOCH);
 
 		// save and retrieve
 		given(datumStreamPollTaskDao.updateTask(any(CloudDatumStreamPollTaskEntity.class),
@@ -1177,7 +1188,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(pk);
+		CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(pk, Unknown, EPOCH,
+				EPOCH);
 
 		// save and retrieve
 		given(datumStreamPollTaskDao.updateTaskState(pk, Queued)).willReturn(true);
@@ -1201,7 +1213,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(pk);
+		CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(pk, Unknown, EPOCH,
+				EPOCH);
 
 		// save and retrieve
 		given(datumStreamPollTaskDao.updateTaskState(pk, Queued, Completed)).willReturn(true);
@@ -1226,7 +1239,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(pk);
+		CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(pk, Unknown, EPOCH,
+				EPOCH);
 
 		given(datumStreamPollTaskDao.entityKey(pk)).willReturn(entity);
 
@@ -1330,8 +1344,10 @@ public class DaoUserCloudIntegrationsBizTests {
 		final Long userId = randomLong();
 		final Long entityId = randomLong();
 		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		final CloudIntegrationConfiguration conf1 = new CloudIntegrationConfiguration(pk, now());
-		final CloudIntegrationConfiguration conf2 = new CloudIntegrationConfiguration(pk, now());
+		final CloudIntegrationConfiguration conf1 = new CloudIntegrationConfiguration(pk, now(),
+				randomString(), TEST_SERVICE_ID);
+		final CloudIntegrationConfiguration conf2 = new CloudIntegrationConfiguration(pk, now(),
+				randomString(), TEST_SERVICE_ID);
 
 		given(integrationDao.get(pk)).willReturn(conf1, conf2);
 
@@ -1359,10 +1375,12 @@ public class DaoUserCloudIntegrationsBizTests {
 		final Long entityId = randomLong();
 		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 
-		final CloudIntegrationConfiguration conf1 = new CloudIntegrationConfiguration(pk, now());
+		final CloudIntegrationConfiguration conf1 = new CloudIntegrationConfiguration(pk, now(),
+				randomString(), TEST_SERVICE_ID);
 		conf1.setServiceIdentifier(TEST_SERVICE_ID);
 
-		final CloudIntegrationConfiguration conf2 = new CloudIntegrationConfiguration(pk, now());
+		final CloudIntegrationConfiguration conf2 = new CloudIntegrationConfiguration(pk, now(),
+				randomString(), TEST_SERVICE_ID);
 		conf2.setServiceIdentifier(TEST_SERVICE_ID);
 		conf2.setServiceProps(Map.of("la", "tee-da", TEST_SECURE_SETTING, "boom"));
 
@@ -1428,11 +1446,13 @@ public class DaoUserCloudIntegrationsBizTests {
 		final Long entityId = randomLong();
 		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 
-		final CloudIntegrationConfiguration conf1 = new CloudIntegrationConfiguration(pk, now());
+		final CloudIntegrationConfiguration conf1 = new CloudIntegrationConfiguration(pk, now(),
+				randomString(), TEST_SERVICE_ID);
 		final String clientId = randomString();
 		conf1.setServiceProps(Map.of(CloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId));
 
-		final CloudIntegrationConfiguration conf2 = new CloudIntegrationConfiguration(pk, now());
+		final CloudIntegrationConfiguration conf2 = new CloudIntegrationConfiguration(pk, now(),
+				randomString(), TEST_SERVICE_ID);
 
 		given(integrationDao.get(pk)).willReturn(conf1, conf2);
 
@@ -1493,7 +1513,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk);
+		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk, now(),
+				randomLong(), BasicClaimableJobState.Unknown, now(), Period.ZERO);
 
 		// save and retrieve
 		given(datumStreamRakeTaskDao.save(any(CloudDatumStreamRakeTaskEntity.class))).willReturn(pk);
@@ -1547,7 +1568,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk);
+		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk, now(),
+				randomLong(), BasicClaimableJobState.Unknown, now(), Period.ZERO);
 
 		// save and retrieve
 		given(datumStreamRakeTaskDao.save(any(CloudDatumStreamRakeTaskEntity.class))).willReturn(pk);
@@ -1630,7 +1652,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk);
+		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk, now(),
+				randomLong(), BasicClaimableJobState.Unknown, now(), Period.ZERO);
 
 		// save and retrieve
 		given(datumStreamRakeTaskDao.updateTask(any(CloudDatumStreamRakeTaskEntity.class),
@@ -1684,7 +1707,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk);
+		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk, now(),
+				randomLong(), BasicClaimableJobState.Unknown, now(), Period.ZERO);
 
 		// save and retrieve
 		given(datumStreamRakeTaskDao.updateTaskState(pk, Queued)).willReturn(true);
@@ -1708,7 +1732,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk);
+		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk, now(),
+				randomLong(), BasicClaimableJobState.Unknown, now(), Period.ZERO);
 
 		// save and retrieve
 		given(datumStreamRakeTaskDao.updateTaskState(pk, Queued, Completed)).willReturn(true);
@@ -1733,7 +1758,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk);
+		CloudDatumStreamRakeTaskEntity entity = new CloudDatumStreamRakeTaskEntity(pk, now(),
+				randomLong(), BasicClaimableJobState.Unknown, now(), Period.ZERO);
 
 		given(datumStreamRakeTaskDao.entityKey(pk)).willReturn(entity);
 
@@ -1768,7 +1794,8 @@ public class DaoUserCloudIntegrationsBizTests {
 			input.setOffset(Period.ofDays(i + 1));
 			inputs.add(input);
 
-			outputs.add(new CloudDatumStreamRakeTaskEntity(userId, randomLong()));
+			outputs.add(new CloudDatumStreamRakeTaskEntity(userId, randomLong(), now(), randomLong(),
+					BasicClaimableJobState.Unknown, now(), Period.ZERO));
 		}
 
 		// delete for filter

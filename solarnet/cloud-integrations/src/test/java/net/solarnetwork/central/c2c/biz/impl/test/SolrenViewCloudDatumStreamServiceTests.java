@@ -33,9 +33,13 @@ import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationSe
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_START_DATE_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_USE_UTC_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewGranularity.FiveMinute;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.SpelExpression;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
@@ -85,13 +89,11 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -182,7 +184,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
@@ -300,49 +302,36 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, componentId1, "W"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("watts");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(componentValueRef(siteId, componentId1, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, componentId1, "WHL"));
 		c1p2.setEnabled(true);
-		c1p2.setPropertyType(DatumSamplesType.Accumulating);
-		c1p2.setPropertyName("wattHours");
-		c1p2.setValueType(CloudDatumStreamValueType.Reference);
-		c1p2.setValueReference(componentValueRef(siteId, componentId1, "WHL"));
 
 		final CloudDatumStreamPropertyConfiguration c2p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 3, now());
+				TEST_USER_ID, mapping.getConfigId(), 3, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, componentId2, "W"));
 		c2p1.setEnabled(true);
-		c2p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c2p1.setPropertyName("watts");
-		c2p1.setValueType(CloudDatumStreamValueType.Reference);
-		c2p1.setValueReference(componentValueRef(siteId, componentId2, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c2p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 4, now());
+				TEST_USER_ID, mapping.getConfigId(), 4, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, componentId2, "WHL"));
 		c2p2.setEnabled(true);
-		c2p2.setPropertyType(DatumSamplesType.Accumulating);
-		c2p2.setPropertyName("wattHours");
-		c2p2.setValueType(CloudDatumStreamValueType.Reference);
-		c2p2.setValueReference(componentValueRef(siteId, componentId2, "WHL"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1, c1p2, c2p1, c2p2));
@@ -351,9 +340,8 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -447,33 +435,26 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, componentId1, "W"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("watts");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(componentValueRef(siteId, componentId1, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, componentId1, "W"));
 		c1p2.setEnabled(true);
-		c1p2.setPropertyType(DatumSamplesType.Accumulating);
-		c1p2.setPropertyName("wattHours");
-		c1p2.setValueType(CloudDatumStreamValueType.Reference);
-		c1p2.setValueReference(componentValueRef(siteId, componentId1, "W"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1, c1p2));
@@ -482,9 +463,8 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -565,50 +545,36 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, componentId1, "W"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("watts");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(componentValueRef(siteId, componentId1, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, componentId1, "WHL"));
 		c1p2.setEnabled(true);
-		c1p2.setPropertyType(DatumSamplesType.Accumulating);
-		c1p2.setPropertyName("wattHours");
-		c1p2.setValueType(CloudDatumStreamValueType.Reference);
-		c1p2.setValueReference(componentValueRef(siteId, componentId1, "WHL"));
 
 		final CloudDatumStreamPropertyConfiguration c2p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 3, now());
+				TEST_USER_ID, mapping.getConfigId(), 3, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, componentId2, "W"));
 		c2p1.setEnabled(true);
-		c2p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c2p1.setPropertyName("watts");
-		c2p1.setValueType(CloudDatumStreamValueType.Reference);
-		c2p1.setValueReference(componentValueRef(siteId, componentId2, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c2p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 4, now());
+				TEST_USER_ID, mapping.getConfigId(), 4, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, componentId2, "WHL"));
 		c2p2.setEnabled(true);
-		c2p2.setPropertyType(DatumSamplesType.Accumulating);
-		c2p2.setPropertyName("wattHours");
-		c2p2.setValueType(CloudDatumStreamValueType.Reference);
-		c2p2.setValueReference(componentValueRef(siteId, componentId2, "WHL"));
-
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1, c1p2, c2p1, c2p2));
 
@@ -616,9 +582,8 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -710,33 +675,26 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				placeholderComponentValueRef("W"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("watts");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(placeholderComponentValueRef("W"));
 
 		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				placeholderComponentValueRef("WHL"));
 		c1p2.setEnabled(true);
-		c1p2.setPropertyType(DatumSamplesType.Accumulating);
-		c1p2.setPropertyName("wattHours");
-		c1p2.setValueType(CloudDatumStreamValueType.Reference);
-		c1p2.setValueReference(placeholderComponentValueRef("WHL"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1, c1p2));
@@ -748,9 +706,8 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		final String componentId2 = "1013811710042";
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -848,50 +805,37 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		// configure integration
 		final String proxyBaseUrl = "http://example.com:12345/proxy";
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		integration.setServiceProps(Map.of(CloudIntegrationService.BASE_URL_SETTING, proxyBaseUrl));
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, componentId1, "W"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("watts");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(componentValueRef(siteId, componentId1, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, componentId1, "WHL"));
 		c1p2.setEnabled(true);
-		c1p2.setPropertyType(DatumSamplesType.Accumulating);
-		c1p2.setPropertyName("wattHours");
-		c1p2.setValueType(CloudDatumStreamValueType.Reference);
-		c1p2.setValueReference(componentValueRef(siteId, componentId1, "WHL"));
 
 		final CloudDatumStreamPropertyConfiguration c2p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 3, now());
+				TEST_USER_ID, mapping.getConfigId(), 3, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, componentId2, "W"));
 		c2p1.setEnabled(true);
-		c2p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c2p1.setPropertyName("watts");
-		c2p1.setValueType(CloudDatumStreamValueType.Reference);
-		c2p1.setValueReference(componentValueRef(siteId, componentId2, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c2p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 4, now());
+				TEST_USER_ID, mapping.getConfigId(), 4, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, componentId2, "WHL"));
 		c2p2.setEnabled(true);
-		c2p2.setPropertyType(DatumSamplesType.Accumulating);
-		c2p2.setPropertyName("wattHours");
-		c2p2.setValueType(CloudDatumStreamValueType.Reference);
-		c2p2.setValueReference(componentValueRef(siteId, componentId2, "WHL"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1, c1p2, c2p1, c2p2));
@@ -900,9 +844,8 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -962,49 +905,36 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "ab", Reference,
+				placeholderComponentValueRef("PPVphAB"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("ab");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(placeholderComponentValueRef("PPVphAB"));
 
 		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "bc", Reference,
+				placeholderComponentValueRef("PPVphBC"));
 		c1p2.setEnabled(true);
-		c1p2.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p2.setPropertyName("bc");
-		c1p2.setValueType(CloudDatumStreamValueType.Reference);
-		c1p2.setValueReference(placeholderComponentValueRef("PPVphBC"));
 
 		final CloudDatumStreamPropertyConfiguration c1p3 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 3, now());
+				TEST_USER_ID, mapping.getConfigId(), 3, now(), Instantaneous, "ca", Reference,
+				placeholderComponentValueRef("PPVphCA"));
 		c1p3.setEnabled(true);
-		c1p3.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p3.setPropertyName("ca");
-		c1p3.setValueType(CloudDatumStreamValueType.Reference);
-		c1p3.setValueReference(placeholderComponentValueRef("PPVphCA"));
 
 		final CloudDatumStreamPropertyConfiguration c1p4 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 4, now());
+				TEST_USER_ID, mapping.getConfigId(), 4, now(), Instantaneous, "voltage", SpelExpression,
+				"round(rms({ab, bc, ca}), 1)");
 		c1p4.setEnabled(true);
-		c1p4.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p4.setPropertyName("voltage");
-		c1p4.setValueType(CloudDatumStreamValueType.SpelExpression);
-		c1p4.setValueReference("round(rms({ab, bc, ca}), 1)");
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1, c1p2, c1p3, c1p4));
@@ -1013,9 +943,8 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -1100,49 +1029,36 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, componentId1, "W"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("watts");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(componentValueRef(siteId, componentId1, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, componentId1, "WHL"));
 		c1p2.setEnabled(true);
-		c1p2.setPropertyType(DatumSamplesType.Accumulating);
-		c1p2.setPropertyName("wattHours");
-		c1p2.setValueType(CloudDatumStreamValueType.Reference);
-		c1p2.setValueReference(componentValueRef(siteId, componentId1, "WHL"));
 
 		final CloudDatumStreamPropertyConfiguration c2p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 3, now());
+				TEST_USER_ID, mapping.getConfigId(), 3, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, componentId2, "W"));
 		c2p1.setEnabled(true);
-		c2p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c2p1.setPropertyName("watts");
-		c2p1.setValueType(CloudDatumStreamValueType.Reference);
-		c2p1.setValueReference(componentValueRef(siteId, componentId2, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c2p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 4, now());
+				TEST_USER_ID, mapping.getConfigId(), 4, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, componentId2, "WHL"));
 		c2p2.setEnabled(true);
-		c2p2.setPropertyType(DatumSamplesType.Accumulating);
-		c2p2.setPropertyName("wattHours");
-		c2p2.setValueType(CloudDatumStreamValueType.Reference);
-		c2p2.setValueReference(componentValueRef(siteId, componentId2, "WHL"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1, c1p2, c2p1, c2p2));
@@ -1151,9 +1067,8 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off

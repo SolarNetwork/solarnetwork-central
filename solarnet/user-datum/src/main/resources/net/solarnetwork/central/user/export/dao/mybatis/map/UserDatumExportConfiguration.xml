@@ -77,12 +77,13 @@
 			<idArg column="user_export_datum_conf_user_id" javaType="java.lang.Long"/>
 			<idArg column="user_export_datum_conf_id" javaType="java.lang.Long"/>
 			<arg column="user_export_datum_conf_created" javaType="java.time.Instant"/>
+			<arg column="user_export_datum_conf_cname" javaType="java.lang.String"/>
+			<arg column="user_export_datum_conf_schedule" javaType="net.solarnetwork.central.datum.export.domain.ScheduleType"
+				typeHandler="net.solarnetwork.central.dao.mybatis.type.KeyCodedValueTypeHandler"/>
+			<arg column="user_export_datum_conf_delay_hours" javaType="_int"/>
+			<arg column="user_export_datum_conf_min_export_date" javaType="java.time.Instant"/>
 		</constructor>
-		<result property="name" column="user_export_datum_conf_cname"/>
-		<result property="hourDelayOffset" column="user_export_datum_conf_delay_hours"/>
-		<result property="scheduleKey" column="user_export_datum_conf_schedule"/>
 		<result property="tokenId" column="user_export_datum_conf_auth_token"/>
-		<result property="minimumExportDate" column="user_export_datum_conf_min_export_date"/>
 		<result property="timeZoneId" column="user_export_datum_conf_time_zone"/>
 		<association property="userDataConfiguration" resultMap="net.solarnetwork.central.user.export.domain.UserDataConfiguration.UserDataConfigurationFullResult"/>
 		<association property="userDestinationConfiguration" resultMap="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration.UserDestinationConfigurationFullResult"/>

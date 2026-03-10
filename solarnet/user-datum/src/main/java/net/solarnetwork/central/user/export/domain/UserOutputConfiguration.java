@@ -23,10 +23,12 @@
 package net.solarnetwork.central.user.export.domain;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -58,11 +60,19 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 	 *        the primary key
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
+	 * @param compressionType
+	 *        the compression type
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public UserOutputConfiguration(UserLongCompositePK id, Instant created) {
-		super(id, created);
+	public UserOutputConfiguration(UserLongCompositePK id, Instant created, String name,
+			String serviceIdentifier, OutputCompressionType compressionType) {
+		super(id, created, name, serviceIdentifier);
+		this.compressionType = requireNonNullArgument(compressionType, "compressionType");
 	}
 
 	/**
@@ -74,16 +84,25 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 	 *        the configuration ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
+	 * @param compressionType
+	 *        the compression type
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public UserOutputConfiguration(Long userId, Long configId, Instant created) {
-		this(new UserLongCompositePK(userId, configId), created);
+	public UserOutputConfiguration(Long userId, Long configId, Instant created, String name,
+			String serviceIdentifier, OutputCompressionType compressionType) {
+		this(new UserLongCompositePK(userId, configId), created, name, serviceIdentifier,
+				compressionType);
 	}
 
 	@Override
 	public UserOutputConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new UserOutputConfiguration(id, getCreated());
+		var copy = new UserOutputConfiguration(id, getCreated(), getName(), getServiceIdentifier(),
+				compressionType);
 		copyTo(copy);
 		return copy;
 	}
@@ -95,7 +114,7 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 	}
 
 	@Override
-	public boolean isSameAs(UserOutputConfiguration other) {
+	public boolean isSameAs(@Nullable UserOutputConfiguration other) {
 		if ( !super.isSameAs(other) ) {
 			return false;
 		}
@@ -105,12 +124,20 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 
 	@JsonIgnore
 	@Override
-	public OutputCompressionType getCompressionType() {
+	public final OutputCompressionType getCompressionType() {
 		return compressionType;
 	}
 
-	public void setCompressionType(OutputCompressionType compressionType) {
-		this.compressionType = compressionType;
+	/**
+	 * Set the compression type.
+	 * 
+	 * @param compressionType
+	 *        the type to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public final void setCompressionType(OutputCompressionType compressionType) {
+		this.compressionType = requireNonNullArgument(compressionType, "compressionType");
 	}
 
 	/**
@@ -120,9 +147,8 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 	 *         {@code null} this will return the key value for
 	 *         {@link OutputCompressionType#None}
 	 */
-	public char getCompressionTypeKey() {
-		OutputCompressionType type = getCompressionType();
-		return (type != null ? type.getKey() : OutputCompressionType.None.getKey());
+	public final char getCompressionTypeKey() {
+		return compressionType.getKey();
 	}
 
 	/**
@@ -133,7 +159,7 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 	 *        unsupported, the compression will be set to
 	 *        {@link OutputCompressionType#None}
 	 */
-	public void setCompressionTypeKey(char key) {
+	public final void setCompressionTypeKey(char key) {
 		OutputCompressionType type = OutputCompressionType.None;
 		try {
 			type = OutputCompressionType.forKey(key);

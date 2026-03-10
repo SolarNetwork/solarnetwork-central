@@ -87,6 +87,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.codec.jackson.JsonUtils;
@@ -174,7 +175,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 	public void claimTask() {
 		// GIVEN
 		final CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(TEST_USER_ID,
-				randomLong());
+				randomLong(), BasicClaimableJobState.Unknown, now(), now());
 
 		given(taskDao.claimQueuedTask()).willReturn(entity);
 
@@ -223,11 +224,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -267,10 +267,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(hour);
-		task.setStartAt(hour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
 
 		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
 		CloudDatumStreamPollTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
@@ -371,11 +369,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -395,10 +392,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTask(any(), eq(Claimed))).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(hour);
-		task.setStartAt(hour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
 
 		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
 		CloudDatumStreamPollTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
@@ -455,11 +450,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -489,10 +483,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(hour);
-		task.setStartAt(hour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
 
 		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
 		CloudDatumStreamPollTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
@@ -555,11 +547,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -567,10 +558,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTaskState(datumStream.getId(), Queued, Claimed)).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(hour);
-		task.setStartAt(hour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
 
 		// THEN
 		// @formatter:off
@@ -598,11 +587,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -641,10 +629,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(hour);
-		task.setStartAt(hour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
 
 		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
 		CloudDatumStreamPollTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
@@ -726,11 +712,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -760,10 +745,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(hour);
-		task.setStartAt(hour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
 
 		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
 
@@ -828,11 +811,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant oldHour = clock.instant().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -863,10 +845,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(oldHour);
-		task.setStartAt(oldHour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, oldHour,
+				oldHour.minusSeconds(300));
 
 		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
 

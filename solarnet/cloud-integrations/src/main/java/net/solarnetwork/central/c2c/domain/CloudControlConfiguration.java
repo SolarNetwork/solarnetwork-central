@@ -23,9 +23,11 @@
 package net.solarnetwork.central.c2c.domain;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseIdentifiableUserModifiableEntity;
@@ -46,7 +48,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @author matt
  * @version 1.0
  */
-@JsonIgnoreProperties({ "id", "fullyConfigured" })
+@JsonIgnoreProperties({ "id", "fullyConfigured", "pk" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "integrationId",
 		"nodeId", "controlId", "controlReference", "serviceIdentifier", "serviceProperties" })
 public class CloudControlConfiguration
@@ -66,7 +68,7 @@ public class CloudControlConfiguration
 	private Long integrationId;
 	private Long nodeId;
 	private String controlId;
-	private String controlReference;
+	private @Nullable String controlReference;
 
 	/**
 	 * Constructor.
@@ -75,11 +77,25 @@ public class CloudControlConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
+	 * @param integrationId
+	 *        the integration ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param controlId
+	 *        the control ID
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public CloudControlConfiguration(UserLongCompositePK id, Instant created) {
-		super(id, created);
+	public CloudControlConfiguration(UserLongCompositePK id, Instant created, String name,
+			String serviceIdentifier, Long integrationId, Long nodeId, String controlId) {
+		super(id, created, name, serviceIdentifier);
+		this.integrationId = requireNonNullArgument(integrationId, "integrationId");
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
+		this.controlId = requireNonNullArgument(controlId, "controlId");
 	}
 
 	/**
@@ -91,16 +107,29 @@ public class CloudControlConfiguration
 	 *        the configuration ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
+	 * @param integrationId
+	 *        the integration ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param controlId
+	 *        the control ID
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public CloudControlConfiguration(Long userId, Long configId, Instant created) {
-		this(new UserLongCompositePK(userId, configId), created);
+	public CloudControlConfiguration(Long userId, Long configId, Instant created, String name,
+			String serviceIdentifier, Long integrationId, Long nodeId, String controlId) {
+		this(new UserLongCompositePK(userId, configId), created, name, serviceIdentifier, integrationId,
+				nodeId, controlId);
 	}
 
 	@Override
 	public CloudControlConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CloudControlConfiguration(id, getCreated());
+		var copy = new CloudControlConfiguration(id, nonnull(getCreated(), "created"), getName(),
+				getServiceIdentifier(), integrationId, nodeId, controlId);
 		copyTo(copy);
 		return copy;
 	}
@@ -115,7 +144,7 @@ public class CloudControlConfiguration
 	}
 
 	@Override
-	public boolean isSameAs(CloudControlConfiguration other) {
+	public boolean isSameAs(@Nullable CloudControlConfiguration other) {
 		if ( !super.isSameAs(other) ) {
 			return false;
 		}
@@ -216,7 +245,7 @@ public class CloudControlConfiguration
 	 * @see #CLOUD_INTEGRATION_SYSTEM_IDENTIFIER
 	 */
 	@Override
-	public String systemIdentifier() {
+	public final String systemIdentifier() {
 		return systemIdentifierForComponents(CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, getConfigId());
 	}
 
@@ -225,9 +254,8 @@ public class CloudControlConfiguration
 	 *
 	 * @return the configuration ID
 	 */
-	public Long getConfigId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getConfigId() {
+		return pk().getEntityId();
 	}
 
 	/**
@@ -236,7 +264,7 @@ public class CloudControlConfiguration
 	 *
 	 * @return the integration ID
 	 */
-	public Long getIntegrationId() {
+	public final Long getIntegrationId() {
 		return integrationId;
 	}
 
@@ -246,9 +274,11 @@ public class CloudControlConfiguration
 	 *
 	 * @param integrationId
 	 *        the integration ID to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setIntegrationId(Long integrationId) {
-		this.integrationId = integrationId;
+	public final void setIntegrationId(Long integrationId) {
+		this.integrationId = requireNonNullArgument(integrationId, "integrationId");
 	}
 
 	/**
@@ -256,7 +286,7 @@ public class CloudControlConfiguration
 	 *
 	 * @return the node ID
 	 */
-	public Long getNodeId() {
+	public final Long getNodeId() {
 		return nodeId;
 	}
 
@@ -265,9 +295,11 @@ public class CloudControlConfiguration
 	 *
 	 * @param nodeId
 	 *        the node to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setNodeId(Long nodeId) {
-		this.nodeId = nodeId;
+	public final void setNodeId(Long nodeId) {
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
 	}
 
 	/**
@@ -275,7 +307,7 @@ public class CloudControlConfiguration
 	 *
 	 * @return the control ID
 	 */
-	public String getControlId() {
+	public final String getControlId() {
 		return controlId;
 	}
 
@@ -284,9 +316,11 @@ public class CloudControlConfiguration
 	 *
 	 * @param controlId
 	 *        the control ID to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setControlId(String controlId) {
-		this.controlId = controlId;
+	public final void setControlId(String controlId) {
+		this.controlId = requireNonNullArgument(controlId, "controlId");
 	}
 
 	/**
@@ -294,7 +328,7 @@ public class CloudControlConfiguration
 	 *
 	 * @return the control reference
 	 */
-	public String getControlReference() {
+	public final @Nullable String getControlReference() {
 		return controlReference;
 	}
 
@@ -304,7 +338,7 @@ public class CloudControlConfiguration
 	 * @param controlReference
 	 *        the control reference to set
 	 */
-	public void setControlReference(String controlReference) {
+	public final void setControlReference(@Nullable String controlReference) {
 		this.controlReference = controlReference;
 	}
 

@@ -70,7 +70,7 @@ public class CloudControlConfigurationInput extends
 	@Override
 	public CloudControlConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		CloudControlConfiguration conf = new CloudControlConfiguration(requireNonNullArgument(id, "id"),
-				date);
+				date, getName(), getServiceIdentifier(), integrationId, nodeId, controlId);
 		populateConfiguration(conf);
 		return conf;
 	}

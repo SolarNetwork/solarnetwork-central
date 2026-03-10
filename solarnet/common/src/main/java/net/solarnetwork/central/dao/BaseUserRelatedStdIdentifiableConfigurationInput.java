@@ -62,6 +62,7 @@ public abstract class BaseUserRelatedStdIdentifiableConfigurationInput<C extends
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(C conf) {
 		super.populateConfiguration(conf);
