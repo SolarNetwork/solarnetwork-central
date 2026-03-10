@@ -32,6 +32,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskFilter;
@@ -53,7 +54,7 @@ public class UpdateCloudDatumStreamRakeTaskEntityState implements PreparedStatem
 
 	private final BasicClaimableJobState desiredState;
 	private final CloudDatumStreamRakeTaskFilter filter;
-	private final CloudDatumStreamRakeTaskEntity data;
+	private final @Nullable CloudDatumStreamRakeTaskEntity data;
 
 	/**
 	 * Constructor.
@@ -91,7 +92,7 @@ public class UpdateCloudDatumStreamRakeTaskEntityState implements PreparedStatem
 	 * @since 1.1
 	 */
 	public UpdateCloudDatumStreamRakeTaskEntityState(BasicClaimableJobState desiredState,
-			CloudDatumStreamRakeTaskFilter filter, CloudDatumStreamRakeTaskEntity data) {
+			CloudDatumStreamRakeTaskFilter filter, @Nullable CloudDatumStreamRakeTaskEntity data) {
 		super();
 		this.desiredState = requireNonNullArgument(desiredState, "desiredState");
 		this.filter = requireNonNullArgument(filter, "filter");

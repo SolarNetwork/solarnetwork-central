@@ -26,6 +26,7 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_STA
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -43,7 +44,7 @@ public class UpdateCloudIntegrationOAuthAuthorizationState
 
 	private final UserLongCompositePK id;
 	private final String state;
-	private final String expectedState;
+	private final @Nullable String expectedState;
 
 	/**
 	 * Constructor.
@@ -58,7 +59,7 @@ public class UpdateCloudIntegrationOAuthAuthorizationState
 	 *         if {@code id} is {@code null}
 	 */
 	public UpdateCloudIntegrationOAuthAuthorizationState(UserLongCompositePK id, String state,
-			String expectedState) {
+			@Nullable String expectedState) {
 		this.id = ObjectUtils.requireNonNullArgument(id, "id");
 		this.state = state;
 		this.expectedState = expectedState;

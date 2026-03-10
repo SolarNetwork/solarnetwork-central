@@ -30,6 +30,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
@@ -57,7 +58,7 @@ public final class UpdateCloudDatumStreamPollTaskEntity
 
 	private final UserLongCompositePK id;
 	private final CloudDatumStreamPollTaskEntity entity;
-	private final CloudDatumStreamPollTaskFilter filter;
+	private final @Nullable CloudDatumStreamPollTaskFilter filter;
 
 	/**
 	 * Constructor.
@@ -87,7 +88,7 @@ public final class UpdateCloudDatumStreamPollTaskEntity
 	 *         if any argument is {@code null}, other than {@code filter}
 	 */
 	public UpdateCloudDatumStreamPollTaskEntity(UserLongCompositePK id,
-			CloudDatumStreamPollTaskEntity entity, CloudDatumStreamPollTaskFilter filter) {
+			CloudDatumStreamPollTaskEntity entity, @Nullable CloudDatumStreamPollTaskFilter filter) {
 		super();
 		this.id = requireNonNullArgument(id, "id");
 		this.entity = requireNonNullArgument(entity, "entity");
