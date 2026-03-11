@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import org.apache.commons.io.input.BoundedInputStream;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -106,8 +107,13 @@ public final class WebUtils {
 	 *        the optional URI variable values
 	 * @return the URI components
 	 */
-	public static UriComponents withoutHost(UriComponentsBuilder builder, Object... uriVariableValues) {
-		return builder.scheme(null).host(null).port(null).buildAndExpand(uriVariableValues);
+	public static UriComponents withoutHost(UriComponentsBuilder builder,
+			Object @Nullable... uriVariableValues) {
+		final UriComponentsBuilder b = builder.scheme(null).host(null).port(null);
+		if ( uriVariableValues != null ) {
+			return b.buildAndExpand(uriVariableValues);
+		}
+		return b.build();
 	}
 
 	/**
@@ -119,8 +125,13 @@ public final class WebUtils {
 	 *        the optional URI variables
 	 * @return the URI components
 	 */
-	public static UriComponents withoutHost(UriComponentsBuilder builder, Map<String, ?> uriVariables) {
-		return builder.scheme(null).host(null).port(null).buildAndExpand(uriVariables);
+	public static UriComponents withoutHost(UriComponentsBuilder builder,
+			@Nullable Map<String, ?> uriVariables) {
+		final UriComponentsBuilder b = builder.scheme(null).host(null).port(null);
+		if ( uriVariables != null ) {
+			return b.buildAndExpand(uriVariables);
+		}
+		return b.build();
 	}
 
 	/**
@@ -132,7 +143,8 @@ public final class WebUtils {
 	 *        the optional URI variable values
 	 * @return the URI
 	 */
-	public static URI uriWithoutHost(UriComponentsBuilder builder, Object... uriVariableValues) {
+	public static URI uriWithoutHost(UriComponentsBuilder builder,
+			Object @Nullable... uriVariableValues) {
 		return withoutHost(builder, uriVariableValues).toUri();
 	}
 
@@ -145,7 +157,8 @@ public final class WebUtils {
 	 *        the optional URI variables
 	 * @return the URI
 	 */
-	public static URI uriWithoutHost(UriComponentsBuilder builder, Map<String, ?> uriVariables) {
+	public static URI uriWithoutHost(UriComponentsBuilder builder,
+			@Nullable Map<String, ?> uriVariables) {
 		return withoutHost(builder, uriVariables).toUri();
 	}
 

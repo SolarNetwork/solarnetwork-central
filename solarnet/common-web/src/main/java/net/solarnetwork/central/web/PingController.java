@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,6 +35,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.health.contributor.CompositeHealthContributor;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthContributor;
@@ -73,10 +75,12 @@ public class PingController implements CompositeHealthContributor {
 	 *
 	 * @param tests
 	 *        the tests
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public PingController(List<PingTest> tests) {
 		super();
-		this.tests = tests;
+		this.tests = requireNonNullArgument(tests, "tests");
 	}
 
 	private PingResults executeTests() {
@@ -94,8 +98,9 @@ public class PingController implements CompositeHealthContributor {
 				try {
 					pingTestResult = executeTest(t);
 				} finally {
-					assert pingTestResult != null;
-					results.put(t.getPingTestId(), new PingTestResultDisplay(t, pingTestResult, start));
+					results.put(t.getPingTestId(),
+							new PingTestResultDisplay(t, pingTestResult != null ? pingTestResult
+									: new PingTestResult(false, "No result available"), start));
 				}
 			}
 		}
@@ -153,7 +158,7 @@ public class PingController implements CompositeHealthContributor {
 		 * @param results
 		 *        The test results (or {@code null} if none available).
 		 */
-		public PingResults(Instant date, Map<String, PingTestResultDisplay> results) {
+		public PingResults(Instant date, @Nullable Map<String, PingTestResultDisplay> results) {
 			super();
 			this.date = date;
 			boolean allOK = true;
@@ -177,7 +182,7 @@ public class PingController implements CompositeHealthContributor {
 		 *
 		 * @return All test results.
 		 */
-		public Map<String, PingTestResultDisplay> getResults() {
+		public final Map<String, PingTestResultDisplay> getResults() {
 			return results;
 		}
 
@@ -186,7 +191,7 @@ public class PingController implements CompositeHealthContributor {
 		 *
 		 * @return The date.
 		 */
-		public Instant getDate() {
+		public final Instant getDate() {
 			return date;
 		}
 
@@ -196,14 +201,14 @@ public class PingController implements CompositeHealthContributor {
 		 *
 		 * @return Boolean flag.
 		 */
-		public boolean isAllGood() {
+		public final boolean isAllGood() {
 			return allGood;
 		}
 
 	}
 
 	@Override
-	public HealthContributor getContributor(String name) {
+	public @Nullable HealthContributor getContributor(String name) {
 		if ( tests != null ) {
 			for ( PingTest t : tests ) {
 				String id = t.getPingTestId();
@@ -257,7 +262,7 @@ public class PingController implements CompositeHealthContributor {
 	 *
 	 * @return the tests
 	 */
-	public List<PingTest> getTests() {
+	public final List<PingTest> getTests() {
 		return tests;
 	}
 
