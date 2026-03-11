@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -97,7 +98,7 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 	private final NodeInstructionDao nodeInstructionDao;
 	private final Map<String, CloudControlService> controlServices;
 	private final Set<String> supportedTopics;
-	private UserEventAppenderBiz userEventAppenderBiz;
+	private @Nullable UserEventAppenderBiz userEventAppenderBiz;
 
 	/**
 	 * Constructor.
@@ -160,7 +161,7 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 
 		// verify topic is supported
 		final String topic = instruction.getInstruction().getTopic();
-		if ( !supportedTopics.contains(topic) ) {
+		if ( topic == null || !supportedTopics.contains(topic) ) {
 			return instruction;
 		}
 
@@ -194,17 +195,22 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 
 	@Override
 	public void didQueueNodeInstruction(NodeInstruction instruction, Long instructionId) {
-		if ( !(instruction instanceof CloudControlNodeInstruction instr) ) {
+		if ( instruction.getNodeId() == null || instruction.getInstruction().getTopic() == null
+				|| !(instruction instanceof CloudControlNodeInstruction instr) ) {
 			return;
 		}
 
 		instr.eventData.put(INSTRUCTION_ID_DATA_KEY, instructionId);
 
+		final String topic = instruction.getInstruction().getTopic();
 		final String serviceId = instr.control.getServiceIdentifier();
 		final CloudControlService service = controlServices.get(serviceId);
+		if ( service == null ) {
+			return;
+		}
 		try {
-			InstructionStatus status = service.executeInstruction(instr.control.getId(), instruction);
-			final InstructionState newState = status != null
+			InstructionStatus status = service.executeInstruction(instr.control.pk(), instruction);
+			final InstructionState newState = status != null && status.getInstructionState() != null
 					&& status.getInstructionState() != InstructionState.Queuing
 							? status.getInstructionState()
 							: InstructionState.Declined;
@@ -218,7 +224,7 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 			if ( nodeInstructionDao.compareAndUpdateInstructionState(instructionId,
 					instruction.getNodeId(), Queuing, newState,
 					!resultParams.isEmpty() ? resultParams : null) ) {
-				incrementInstructionExecutedStat(instr.getInstruction().getTopic(), newState);
+				incrementInstructionExecutedStat(topic, newState);
 
 				instr.eventData.put(INSTRUCTION_STATE_DATA_KEY, newState.toString());
 				if ( status == null || status.getInstructionState() == InstructionState.Queuing ) {
@@ -230,8 +236,7 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 
 		} catch ( Exception e ) {
 			log.warn("Error processing cloud control {} instruction {} topic {}: {}",
-					instr.control.getIntegrationId(), instructionId, instr.getInstruction().getTopic(),
-					e.toString());
+					instr.control.getIntegrationId(), instructionId, topic, e.toString());
 			final Map<String, Object> resultParams = Map.of(MESSAGE_DATA_KEY,
 					"Error processing instruction: " + e.getMessage());
 			instruction.getInstruction().setState(Declined);
@@ -240,7 +245,7 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 					instruction.getNodeId(), Queuing, Declined, resultParams) ) {
 				instr.eventData.put(INSTRUCTION_STATE_DATA_KEY, Declined.toString());
 				instr.eventData.put(ERROR_CODE_DATA_KEY, ERROR_CODE_INSTRUCTION_THREW_EXCEPTION);
-				incrementInstructionErrorStat(instr.getInstruction().getTopic());
+				incrementInstructionErrorStat(topic);
 				generateUserEvent(instr.control.getUserId(), INTEGRATION_CONTROL_INSTRUCTION_ERROR_TAGS,
 						"Instruction failed", instr.eventData);
 			}
@@ -254,12 +259,11 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 	 *        the instruction to find the control IDs for
 	 * @return the control IDs, or {@code null} if none found
 	 */
-	private String[] findControlIds(final String topic, final Instruction instruction) {
+	private String @Nullable [] findControlIds(final String topic, final Instruction instruction) {
 		final CommonInstructionTopic t = CommonInstructionTopic.findForTopic(topic);
 		return switch (t) {
-			case null -> null;
 			case SetControlParameter -> extractParameterKeys(instruction);
-			default -> null;
+			case null, default -> null;
 		};
 	}
 
@@ -271,7 +275,7 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 	 * @return all parameter keys, or {@code null} if no parameters are
 	 *         available
 	 */
-	private String[] extractParameterKeys(Instruction instruction) {
+	private String @Nullable [] extractParameterKeys(Instruction instruction) {
 		final List<InstructionParameter> params = instruction.getParameters();
 		if ( params == null || params.isEmpty() ) {
 			return null;
@@ -296,7 +300,8 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 		stats.increment(topic + "Errors");
 	}
 
-	private void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, @Nullable String message,
+			Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
@@ -311,7 +316,7 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 	 *
 	 * @return the service
 	 */
-	public UserEventAppenderBiz getUserEventAppenderBiz() {
+	public final @Nullable UserEventAppenderBiz getUserEventAppenderBiz() {
 		return userEventAppenderBiz;
 	}
 
@@ -321,7 +326,7 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 	 * @param userEventAppenderBiz
 	 *        the service to set
 	 */
-	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
+	public final void setUserEventAppenderBiz(@Nullable UserEventAppenderBiz userEventAppenderBiz) {
 		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 
