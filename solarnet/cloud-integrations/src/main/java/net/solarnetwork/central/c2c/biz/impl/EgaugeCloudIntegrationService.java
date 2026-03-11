@@ -59,7 +59,7 @@ public class EgaugeCloudIntegrationService extends BaseRestOperationsCloudIntegr
 	/**
 	 * The well-known URLs.
 	 */
-	public static final Map<String, URI> WELL_KNOWN_URLS = Collections.emptyMap();
+	public static final Map<String, URI> WELL_KNOWN_URLS = Map.of();
 
 	/** The service settings . */
 	public static final List<SettingSpecifier> SETTINGS;

@@ -175,7 +175,7 @@ public final class CloudDatumStreamConfiguration
 	 * @return the ID
 	 */
 	public DatumId datumId(Instant ts) {
-		return new DatumId(kind, objectId, sourceId, ts);
+		return DatumId.datumId(kind, objectId, sourceId, ts);
 	}
 
 	@Override

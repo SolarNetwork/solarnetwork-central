@@ -46,6 +46,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
@@ -136,10 +137,10 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	}
 
 	/** The service secure setting keys. */
-	public static final Set<String> SECURE_SETTINGS = Collections.emptySet();
+	public static final Set<String> SECURE_SETTINGS = Set.of();
 
 	/** The supported placeholder keys. */
-	public static final List<String> SUPPORTED_PLACEHOLDERS = Collections.emptyList();
+	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of();
 
 	/**
 	 * Constructor.
@@ -180,12 +181,12 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 	@Override
 	public Iterable<LocalizedServiceInfo> dataValueFilters(Locale locale) {
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
-			Map<String, ?> filters) {
+			@Nullable Map<String, ?> filters) {
 		return Arrays.stream(SolcastIrradianceType.values()).map(e -> dataValue(List.of(e.name()),
 				e.getName(),
 				Map.of(UNIT_OF_MEASURE_METADATA, e.getUnit(), DESCRIPTION_METADATA, e.getDescription())))
@@ -207,7 +208,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 		final var result = datum(datumStream, filter);
 		if ( result == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return result.getResults();
 	}
@@ -268,7 +269,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 			// use the live API if requested or if query start near current date
 			final boolean useLiveApi = filter.hasParameter(QUERY_PARAM_USE_LIVE_DATA)
 					|| (ds.hasServiceProperty(DISALLOW_HISTORIC_API_SETTING, Boolean.class)
-							&& ds.serviceProperty(DISALLOW_HISTORIC_API_SETTING, Boolean.class))
+							&& ds.serviceProp(DISALLOW_HISTORIC_API_SETTING, Boolean.class))
 					|| Duration.between(startDate, now).compareTo(MAX_LIVE_API_OFFSET) < 0;
 
 			Collection<GeneralDatum> r = null;
@@ -424,11 +425,11 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private List<GeneralDatum> parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream,
-			Map<String, ValueRef> refsByFieldName, Duration resolution, Instant minDate,
-			Instant maxDate) {
+	private List<GeneralDatum> parseDatum(@Nullable JsonNode json,
+			CloudDatumStreamConfiguration datumStream, Map<String, ValueRef> refsByFieldName,
+			Duration resolution, Instant minDate, Instant maxDate) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -472,8 +473,8 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 				}
 			}
 			if ( !samples.isEmpty() ) {
-				result.add(new GeneralDatum(new DatumId(datumStream.getKind(), datumStream.getObjectId(),
-						datumStream.getSourceId(), ts), samples));
+				result.add(new GeneralDatum(DatumId.datumId(datumStream.getKind(),
+						datumStream.getObjectId(), datumStream.getSourceId(), ts), samples));
 			}
 		}
 

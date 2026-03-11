@@ -87,6 +87,8 @@ public interface ClaimableTaskDao<T extends Entity<K>, K extends Comparable<K>> 
 	 * left in an executing state, for example after a server restart.
 	 * </p>
 	 *
+	 * @param olderThan
+	 *        the date tasks must be older than to reset
 	 * @return the number of tasks reset
 	 */
 	int resetAbandondedExecutingTasks(Instant olderThan);

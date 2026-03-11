@@ -139,7 +139,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
 				mapping.getConfigId(), null);
 
-		Map<String, Object> props = singletonMap("foo", "bar");
+		Map<String, Object> props = Map.of("foo", "bar");
 		// @formatter:off
 		CloudDatumStreamRakeTaskEntity conf = newCloudDatumStreamRakeTaskEntity(userId,
 				datumStream.getConfigId(),
@@ -389,7 +389,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		conf.setOffset(Period.ofDays(4747474));
 		conf.setMessage(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		UserLongCompositePK result = dao.save(conf);
@@ -418,7 +418,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		conf.setOffset(Period.ofDays(4747474));
 		conf.setMessage(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		boolean result = dao.updateTask(conf, BasicClaimableJobState.Queued);
@@ -455,7 +455,7 @@ public class JdbcCloudDatumStreamRakeTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		conf.setOffset(Period.ofDays(4747474));
 		conf.setMessage(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		boolean result = dao.updateTask(conf, BasicClaimableJobState.Claimed);

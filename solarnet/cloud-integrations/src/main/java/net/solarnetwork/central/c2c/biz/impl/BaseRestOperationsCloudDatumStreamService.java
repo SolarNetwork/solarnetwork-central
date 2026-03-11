@@ -28,6 +28,7 @@ import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -104,20 +105,21 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	}
 
 	@Override
-	public void setUserServiceAuditor(UserServiceAuditor userServiceAuditor) {
-		super.setUserServiceAuditor(userServiceAuditor);
+	public void didSetUserServiceAuditor(@Nullable UserServiceAuditor userServiceAuditor) {
 		restOpsHelper.setUserServiceAuditor(userServiceAuditor);
 	}
 
 	@Override
-	public <I, O> ResponseEntity<O> http(HttpMethod method, URI uri, HttpHeaders headers, I body,
-			Class<O> responseType, Object context, Map<String, ?> runtimeData) {
+	public <I, O> ResponseEntity<O> http(HttpMethod method, URI uri, @Nullable HttpHeaders headers,
+			@Nullable I body, Class<O> responseType, @Nullable Object context,
+			@Nullable Map<String, ?> runtimeData) {
 		return restOpsHelper.http(method, uri, headers, body, responseType, context, runtimeData);
 	}
 
 	@Override
-	public <O> Result<O> httpGet(String uri, Map<String, ?> parameters, Map<String, ?> headers,
-			Class<O> responseType, Object context, Map<String, ?> runtimeData) {
+	public <O> Result<O> httpGet(String uri, @Nullable Map<String, ?> parameters,
+			@Nullable Map<String, ?> headers, Class<O> responseType, @Nullable Object context,
+			@Nullable Map<String, ?> runtimeData) {
 		return restOpsHelper.httpGet(uri, parameters, headers, responseType, context, runtimeData);
 	}
 
@@ -127,7 +129,7 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	 * @return the cache
 	 * @since 1.4
 	 */
-	public final Cache<CachableRequestEntity, Result<?>> getHttpCache() {
+	public final @Nullable Cache<CachableRequestEntity, Result<?>> getHttpCache() {
 		return restOpsHelper.getHttpCache();
 	}
 
@@ -138,7 +140,7 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	 *        the cache to set
 	 * @since 1.4
 	 */
-	public final void setHttpCache(Cache<CachableRequestEntity, Result<?>> httpCache) {
+	public final void setHttpCache(@Nullable Cache<CachableRequestEntity, Result<?>> httpCache) {
 		restOpsHelper.setHttpCache(httpCache);
 	}
 

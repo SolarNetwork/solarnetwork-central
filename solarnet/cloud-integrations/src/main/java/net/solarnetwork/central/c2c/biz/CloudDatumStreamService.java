@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz;
 
 import java.util.Locale;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
@@ -119,7 +120,8 @@ public interface CloudDatumStreamService
 	 * @return the available values, never {@code null}
 	 *
 	 */
-	Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId, Map<String, ?> filters);
+	Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
+			@Nullable Map<String, ?> filters);
 
 	/**
 	 * Get the latest available datum for a datum stream configuration.

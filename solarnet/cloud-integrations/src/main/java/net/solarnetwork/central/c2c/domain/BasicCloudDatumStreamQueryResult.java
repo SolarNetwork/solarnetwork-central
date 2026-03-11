@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.c2c.domain;
 
-import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.SequencedCollection;
 import java.util.Spliterator;
 import java.util.function.Consumer;
@@ -72,7 +72,7 @@ public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryRe
 		super();
 		this.usedQueryFilter = usedQueryFilter;
 		this.nextQueryFilter = nextQueryFilter;
-		this.results = (results != null ? results : Collections.emptyList());
+		this.results = (results != null ? results : List.of());
 	}
 
 	@Override

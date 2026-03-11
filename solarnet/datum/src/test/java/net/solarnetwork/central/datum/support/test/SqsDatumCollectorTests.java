@@ -452,7 +452,7 @@ public class SqsDatumCollectorTests {
 			.isNotNull()
 			.as("SQS message is GeneralDatum JSON serialization of datum")
 			.returns(sqsObjectMapper.writeValueAsString(new GeneralDatum(
-					new DatumId(d.getId().getKind(),
+					DatumId.datumId(d.getId().getKind(),
 							d.getId().getObjectId(),
 							d.getId().getSourceId(),
 							d.getId().getTimestamp()),

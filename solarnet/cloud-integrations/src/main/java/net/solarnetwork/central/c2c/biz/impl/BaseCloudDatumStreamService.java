@@ -28,6 +28,7 @@ import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelat
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.NumberUtils.narrow;
 import static net.solarnetwork.util.NumberUtils.parseNumber;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.expandTemplateString;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
@@ -51,6 +52,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionException;
@@ -180,10 +182,10 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	/** The expression service. */
 	protected final CloudIntegrationsExpressionService expressionService;
 
-	private DatumEntityDao datumDao;
-	private DatumStreamMetadataDao datumStreamMetadataDao;
-	private QueryAuditor queryAuditor;
-	private Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
+	private @Nullable DatumEntityDao datumDao;
+	private @Nullable DatumStreamMetadataDao datumStreamMetadataDao;
+	private @Nullable QueryAuditor queryAuditor;
+	private @Nullable Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
 
 	/**
 	 * Constructor.
@@ -233,7 +235,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	}
 
 	@Override
-	public LocalizedServiceInfo getLocalizedServiceInfo(Locale locale) {
+	public LocalizedServiceInfo getLocalizedServiceInfo(@Nullable Locale locale) {
 		return new BasicCloudDatumStreamLocalizedServiceInfo(
 				super.getLocalizedServiceInfo(locale != null ? locale : Locale.getDefault()),
 				getSettingSpecifiers(), requiresPolling(), dataValuesRequireDatumStream(),
@@ -248,7 +250,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the result type
 	 */
 	@FunctionalInterface
-	public interface IntegrationAction<T> {
+	public interface IntegrationAction<T extends @Nullable Object> {
 
 		/**
 		 * Handle a full datum stream integration configuration model.
@@ -269,6 +271,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		 *        the value properties
 		 * @param exprProps
 		 *        the expression properties
+		 * @return the result
 		 */
 		T doWithDatumStreamIntegration(MessageSource ms, CloudDatumStreamConfiguration datumStream,
 				CloudDatumStreamMappingConfiguration mapping, CloudIntegrationConfiguration integration,
@@ -376,7 +379,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @return the supported placeholder key, or {@code null}
 	 * @since 1.3
 	 */
-	protected Iterable<String> supportedPlaceholders() {
+	protected @Nullable Iterable<String> supportedPlaceholders() {
 		return null;
 	}
 
@@ -386,7 +389,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @return the supported data value wildcard levels, or {@code null}
 	 * @since 1.3
 	 */
-	protected Iterable<Integer> supportedDataValueWildcardIdentifierLevels() {
+	protected @Nullable Iterable<Integer> supportedDataValueWildcardIdentifierLevels() {
 		return null;
 	}
 
@@ -397,7 +400,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *         {@code null}
 	 * @since 1.4
 	 */
-	protected IntRange dataValueIdentifierLevelsSourceIdRange() {
+	protected @Nullable IntRange dataValueIdentifierLevelsSourceIdRange() {
 		return null;
 	}
 
@@ -441,7 +444,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	public Collection<GeneralDatum> evaluateExpressions(CloudDatumStreamConfiguration datumStream,
 			SequencedCollection<CloudDatumStreamPropertyConfiguration> configurations,
 			Collection<GeneralDatum> datum, Long mappingId, Long integrationId,
-			Map<String, ?> parameters) {
+			@Nullable Map<String, ?> parameters) {
 		assert mappingId != null && integrationId != null;
 		if ( configurations == null || configurations.isEmpty() || datum == null || datum.isEmpty() ) {
 			return datum;
@@ -463,10 +466,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				VIRTUAL_SOURCE_IDS_SETTING);
 		final SortedMap<Instant, List<GeneralDatum>> virtualDatum = (virtualSourceIds != null
 				&& !virtualSourceIds.isEmpty() ? new TreeMap<>() : null);
-		final boolean generateVirtualDatum = virtualDatum != null;
 
 		final Collection<GeneralDatum> expressionDatum;
-		if ( generateVirtualDatum ) {
+		if ( virtualDatum != null && virtualSourceIds != null ) {
 			// combine real datum and virtual datum so expressions have access to both
 			for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
 				if ( !config.getValueType().isExpression() ) {
@@ -474,10 +476,11 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				}
 				for ( MutableDatum d : datum ) {
 					virtualDatum.computeIfAbsent(d.getTimestamp(), _ -> {
+						@SuppressWarnings("null")
 						var l = new ArrayList<GeneralDatum>(virtualSourceIds.size());
 						for ( String virtualSourceId : virtualSourceIds ) {
 							String sourceId = expandTemplateString(virtualSourceId, placeholders);
-							l.add(new GeneralDatum(new DatumId(datumStream.getKind(),
+							l.add(new GeneralDatum(DatumId.datumId(datumStream.getKind(),
 									datumStream.getObjectId(), sourceId, d.getTimestamp()),
 									new DatumSamples()));
 						}
@@ -539,7 +542,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 					Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY, config.getValueReference())));
 			throw new IllegalArgumentException(
 					"Error evaluating datum stream %s property configuration %s: %s"
-							.formatted(datumStream.getId().ident(), config.getId().ident(), exMsg),
+							.formatted(datumStream.pk().ident(), config.pk().ident(), exMsg),
 					e);
 		}
 		return expression;
@@ -552,7 +555,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		DatumMetadataOperations metaOps = null;
 		if ( datumStreamMetadataDao != null && d.getKind() != null && d.getObjectId() != null ) {
 			metaOps = new LazyDatumMetadataOperations(
-					new ObjectDatumStreamMetadataId(d.getKind(), d.getObjectId(), d.getSourceId()),
+					new ObjectDatumStreamMetadataId(d.getKind(), d.getObjectId(),
+							d.getSourceId() != null ? d.getSourceId() : ""),
 					datumStreamMetadataDao, datumStreamMetadataCache);
 		}
 		Object val = null;
@@ -740,8 +744,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @return the mapping, or {@code null}
 	 * @since 1.18
 	 */
-	public static Duration servicePropertyDuration(IdentifiableConfiguration configuration, String key,
-			Duration defaultResult) {
+	public static @Nullable Duration servicePropertyDuration(IdentifiableConfiguration configuration,
+			String key, Duration defaultResult) {
 		if ( configuration == null ) {
 			return defaultResult;
 		}
@@ -772,8 +776,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @since 1.4
 	 */
 	@SuppressWarnings("unchecked")
-	public static Map<String, String> servicePropertyStringMap(IdentifiableConfiguration configuration,
-			String key) {
+	public static @Nullable Map<String, String> servicePropertyStringMap(
+			IdentifiableConfiguration configuration, String key) {
 		if ( configuration == null ) {
 			return null;
 		}
@@ -805,8 +809,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @since 1.15
 	 */
 	@SuppressWarnings("unchecked")
-	public static List<String> servicePropertyStringList(IdentifiableConfiguration configuration,
-			String key) {
+	public static @Nullable List<String> servicePropertyStringList(
+			IdentifiableConfiguration configuration, String key) {
 		if ( configuration == null ) {
 			return null;
 		}
@@ -851,7 +855,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the desired datum property type
 	 * @return the value, or {@code null}
 	 */
-	public static Object parseJsonDatumPropertyValue(JsonNode val, DatumSamplesType propType) {
+	public static @Nullable Object parseJsonDatumPropertyValue(JsonNode val, DatumSamplesType propType) {
 		if ( val.isMissingNode() || val.isNull() ) {
 			return null;
 		}
@@ -899,7 +903,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        optional transformations to apply
 	 */
 	@SuppressWarnings("unchecked")
-	public static void populateJsonDatumPropertyValue(JsonNode json, String key,
+	public static void populateJsonDatumPropertyValue(@Nullable JsonNode json, String key,
 			DatumSamplesType propType, String propName, DatumSamples samples, Function<?, ?>... xforms) {
 		if ( json == null ) {
 			return;
@@ -974,8 +978,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *         holding a single empty map if no placeholders are provided
 	 * @since 1.9
 	 */
-	protected List<Map<String, ?>> resolvePlaceholderSets(Map<String, ?> placeholders,
-			Collection<String> sourceValueRefs) {
+	protected List<Map<String, ?>> resolvePlaceholderSets(@Nullable Map<String, ?> placeholders,
+			@Nullable Collection<String> sourceValueRefs) {
 		final Iterable<String> supportedPlaceholdersIterable = supportedPlaceholders();
 		final List<String> supportedPlaceholders = (supportedPlaceholdersIterable instanceof List<String> l
 				? l
@@ -1008,7 +1012,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			placeholderSets = Collections.singletonList(placeholders);
 		} else {
 			// no placeholders: provide a single static (empty) set
-			placeholderSets = Collections.singletonList(Collections.emptyMap());
+			placeholderSets = Collections.singletonList(Map.of());
 		}
 		return placeholderSets;
 	}
@@ -1022,8 +1026,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @since 1.19
 	 */
 	public static Duration multiStreamMaximumLag(CloudDatumStreamConfiguration datumStream) {
-		return servicePropertyDuration(datumStream, MULTI_STREAM_MAXIMUM_LAG_SETTING,
-				DEFAULT_MULTI_STREAM_MAXIMUM_LAG);
+		return nonnull(servicePropertyDuration(datumStream, MULTI_STREAM_MAXIMUM_LAG_SETTING,
+				DEFAULT_MULTI_STREAM_MAXIMUM_LAG), "Multi-stream maximum lag");
 	}
 
 	/**
@@ -1032,7 +1036,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @return the datum DAO
 	 * @since 1.11
 	 */
-	public final DatumEntityDao getDatumDao() {
+	public final @Nullable DatumEntityDao getDatumDao() {
 		return datumDao;
 	}
 
@@ -1048,7 +1052,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the datum DAO to set
 	 * @since 1.11
 	 */
-	public final void setDatumDao(DatumEntityDao datumDao) {
+	public final void setDatumDao(@Nullable DatumEntityDao datumDao) {
 		this.datumDao = datumDao;
 	}
 
@@ -1058,7 +1062,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @return the DAO
 	 * @since 1.13
 	 */
-	public final DatumStreamMetadataDao getDatumStreamMetadataDao() {
+	public final @Nullable DatumStreamMetadataDao getDatumStreamMetadataDao() {
 		return datumStreamMetadataDao;
 	}
 
@@ -1069,7 +1073,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the DAO to set
 	 * @since 1.13
 	 */
-	public final void setDatumStreamMetadataDao(DatumStreamMetadataDao datumStreamMetadataDao) {
+	public final void setDatumStreamMetadataDao(
+			@Nullable DatumStreamMetadataDao datumStreamMetadataDao) {
 		this.datumStreamMetadataDao = datumStreamMetadataDao;
 	}
 
@@ -1079,7 +1084,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @return the auditor
 	 * @since 1.11
 	 */
-	public final QueryAuditor getQueryAuditor() {
+	public final @Nullable QueryAuditor getQueryAuditor() {
 		return queryAuditor;
 	}
 
@@ -1090,7 +1095,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the auditor to set
 	 * @since 1.11
 	 */
-	public final void setQueryAuditor(QueryAuditor queryAuditor) {
+	public final void setQueryAuditor(@Nullable QueryAuditor queryAuditor) {
 		this.queryAuditor = queryAuditor;
 	}
 
@@ -1100,7 +1105,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @return the cache
 	 * @since 1.13
 	 */
-	public final Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> getDatumStreamMetadataCache() {
+	public final @Nullable Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> getDatumStreamMetadataCache() {
 		return datumStreamMetadataCache;
 	}
 
@@ -1112,7 +1117,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @since 1.13
 	 */
 	public final void setDatumStreamMetadataCache(
-			Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache) {
+			@Nullable Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache) {
 		this.datumStreamMetadataCache = datumStreamMetadataCache;
 	}
 

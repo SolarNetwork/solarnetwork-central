@@ -40,6 +40,7 @@ import java.util.SequencedMap;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -143,10 +144,10 @@ public class MockCloudControlService extends BaseCloudControlService {
 
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
-			Map<String, ?> filters) {
+			@Nullable Map<String, ?> filters) {
 		requireNonNullObject(integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
-		List<CloudDataValue> result = Collections.emptyList();
+		List<CloudDataValue> result = List.of();
 		if ( filters != null && filters.get(SYSTEM_ID_FILTER) != null
 				&& filters.get(DEVICE_ID_FILTER) != null ) {
 			String systemId = filters.get(SYSTEM_ID_FILTER).toString();

@@ -46,6 +46,7 @@ import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfiguration
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.NumberUtils.narrow;
 import static net.solarnetwork.util.NumberUtils.parseNumber;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.io.StringReader;
@@ -69,6 +70,7 @@ import java.util.stream.Collectors;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
@@ -336,13 +338,13 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
-			Map<String, ?> filters) {
+			@Nullable Map<String, ?> filters) {
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
-		List<CloudDataValue> result = Collections.emptyList();
+		List<CloudDataValue> result = List.of();
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
-			result = componentsForSite(integration, filters);
+			result = componentsForSite(integration, filters.get(SITE_ID_FILTER), filters);
 		}
 		Collections.sort(result);
 		return result;
@@ -361,7 +363,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 		final var result = datum(datumStream, filter);
 		if ( result == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return result.getResults();
 	}
@@ -486,7 +488,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			}
 
 			// evaluate expressions on merged datum
-			if ( !exprProps.isEmpty() ) {
+			if ( !exprProps.isEmpty() && ds.getDatumStreamMappingId() != null
+					&& mapping.getIntegrationId() != null ) {
 				r = evaluateExpressions(datumStream, exprProps, r, ds.getDatumStreamMappingId(),
 						mapping.getIntegrationId());
 			}
@@ -505,7 +508,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private List<CloudDataValue> componentsForSite(CloudIntegrationConfiguration integration,
-			Map<String, ?> filters) {
+			Object siteId, Map<String, ?> filters) {
 		final SolrenViewGranularity granularity = resolveGranularity(null, filters);
 		final Clock queryClock = Clock.tick(clock, granularity.getTickDuration());
 		final Instant endDate = queryEndDate(queryClock, granularity);
@@ -523,7 +526,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 					.buildAndExpand(filters.get(SITE_ID_FILTER), startDate, endDate)
 					.toUri();
 			// @formatter:on
-		}, res -> parseComponents(filters.get(SITE_ID_FILTER), res.getBody()));
+		}, res -> parseComponents(siteId, res.getBody()));
 	}
 
 	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
@@ -553,8 +556,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return endDate.atZone(UTC).minusYears(1).toInstant();
 	}
 
-	private SolrenViewGranularity resolveGranularity(CloudDatumStreamConfiguration datumStream,
-			Map<String, ?> parameters) {
+	private SolrenViewGranularity resolveGranularity(@Nullable CloudDatumStreamConfiguration datumStream,
+			@Nullable Map<String, ?> parameters) {
 		SolrenViewGranularity granularity = null;
 		try {
 			String granSetting = null;
@@ -572,7 +575,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return (granularity != null ? granularity : SolrenViewGranularity.FiveMinute);
 	}
 
-	private List<CloudDataValue> parseComponents(Object siteId, String body) {
+	private List<CloudDataValue> parseComponents(Object siteId, @Nullable String body) {
 		/*- example XML:
 		<sunSpecPlantExtract t="2024-10-16T22:57:51Z">
 		  <plant id="ffffffff-ffff-ffff-ffff-02df51b432cf" v="1" locale="en-US">
@@ -602,12 +605,15 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		      </m>
 		      ...
 		 */
+		if ( body == null ) {
+			return List.of();
+		}
 		final Document dom;
 		try {
-			dom = XML_SUPPORT.getDocBuilderFactory().newDocumentBuilder()
-					.parse(new InputSource(new StringReader(body)));
+			dom = nonnull(XML_SUPPORT.getDocBuilderFactory(), "DocumentBuilderFactory")
+					.newDocumentBuilder().parse(new InputSource(new StringReader(body)));
 		} catch ( Exception e ) {
-			throw new RemoteServiceException(e.getMessage(), e);
+			throw new RemoteServiceException(e);
 		}
 
 		final Element plantExtract = dom.getDocumentElement();
@@ -704,7 +710,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		}
 	}
 
-	private CloudDataValue componentValue(Node n, Object siteId) {
+	private @Nullable CloudDataValue componentValue(Node n, Object siteId) {
 		/*- example XML:
 		      <m id="103" sn="123123123">
 		        <p id="WH">1000</p>
@@ -737,22 +743,25 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return intermediateDataValue(List.of(siteId.toString(), id), id, null, propCollection);
 	}
 
-	private Void parseDatum(CloudDatumStreamConfiguration datumStream, Long siteId, String body,
-			Instant ts, Map<Instant, Map<String, GeneralDatum>> datumByTimeSource,
+	private Void parseDatum(CloudDatumStreamConfiguration datumStream, Long siteId,
+			@Nullable String body, Instant ts, Map<Instant, Map<String, GeneralDatum>> datumByTimeSource,
 			Map<String, List<ValueRef>> refsByComponent) {
+		if ( body == null ) {
+			return null;
+		}
 		final Document dom;
 		try {
-			dom = XML_SUPPORT.getDocBuilderFactory().newDocumentBuilder()
-					.parse(new InputSource(new StringReader(body)));
+			dom = nonnull(XML_SUPPORT.getDocBuilderFactory(), "DocumentBuilderFactory")
+					.newDocumentBuilder().parse(new InputSource(new StringReader(body)));
 		} catch ( Exception e ) {
-			throw new RemoteServiceException(e.getMessage(), e);
+			throw new RemoteServiceException(e);
 		}
 
 		final NodeList componentNodes;
 		try {
 			componentNodes = (NodeList) M_COMPONENTS_XPATH.evaluate(dom, XPathConstants.NODESET);
 		} catch ( XPathExpressionException e ) {
-			throw new RemoteServiceException(e.getMessage(), e);
+			throw new RemoteServiceException(e);
 		}
 
 		// get optional map of component ID (or ref) -> source ID
@@ -774,7 +783,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			GeneralDatum datum = datumByTimeSource.computeIfAbsent(ts, _ -> new LinkedHashMap<>(8))
 					.compute(sourceId, (_, d) -> {
 						if ( d == null ) {
-							d = new GeneralDatum(new DatumId(datumStream.getKind(),
+							d = new GeneralDatum(DatumId.datumId(datumStream.getKind(),
 									datumStream.getObjectId(), sourceId, ts), new DatumSamples());
 						}
 
@@ -786,12 +795,12 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return null;
 	}
 
-	private Map<String, String> sourceIdMap(CloudDatumStreamConfiguration datumStream) {
+	private @Nullable Map<String, String> sourceIdMap(CloudDatumStreamConfiguration datumStream) {
 		return servicePropertyStringMap(datumStream, SOURCE_ID_MAP_SETTING);
 	}
 
-	private static String resolveSourceId(CloudDatumStreamConfiguration datumStream, Long siteId,
-			String componentId, int i, Map<String, String> sourceIdMap) {
+	private static @Nullable String resolveSourceId(CloudDatumStreamConfiguration datumStream,
+			Long siteId, String componentId, int i, @Nullable Map<String, String> sourceIdMap) {
 		if ( sourceIdMap != null ) {
 			String result = sourceIdMap.get(componentId);
 			if ( result != null ) {
@@ -810,10 +819,10 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			Map<String, List<ValueRef>> refsByComponent) {
 		assert refsByComponent != null;
 
-		final List<ValueRef> refs = refsByComponent.containsKey(componentId)
-				? refsByComponent.get(componentId)
-				: refsByComponent.get(CloudDataValue.WILDCARD_IDENTIFIER);
-		assert refs != null;
+		final List<ValueRef> refs = nonnull(
+				refsByComponent.containsKey(componentId) ? refsByComponent.get(componentId)
+						: refsByComponent.get(CloudDataValue.WILDCARD_IDENTIFIER),
+				"Value references");
 
 		final Map<String, ValueRef> refsByField = refs.stream()
 				.collect(toMap(r -> r.fieldName, identity(), (l, _) -> l));

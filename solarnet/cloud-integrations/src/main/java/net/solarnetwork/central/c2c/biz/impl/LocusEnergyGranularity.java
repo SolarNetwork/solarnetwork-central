@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import java.time.Period;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
@@ -60,13 +61,13 @@ public enum LocusEnergyGranularity {
 	;
 
 	private final String key;
-	private final Period constraint;
+	private final @Nullable Period constraint;
 
 	LocusEnergyGranularity(String key) {
 		this(key, null);
 	}
 
-	LocusEnergyGranularity(String key, Period constraint) {
+	LocusEnergyGranularity(String key, @Nullable Period constraint) {
 		this.key = key;
 		this.constraint = constraint;
 	}
@@ -86,7 +87,7 @@ public enum LocusEnergyGranularity {
 	 * @return the maximum query time range, or {@code null} if there is no
 	 *         limit
 	 */
-	public final Period getConstraint() {
+	public final @Nullable Period getConstraint() {
 		return constraint;
 	}
 

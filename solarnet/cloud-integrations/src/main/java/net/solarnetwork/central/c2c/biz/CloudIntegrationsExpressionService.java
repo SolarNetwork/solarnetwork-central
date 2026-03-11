@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.biz;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.expression.Expression;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
@@ -76,8 +77,9 @@ public interface CloudIntegrationsExpressionService {
 	 * @since 1.1
 	 */
 	DatumExpressionRoot createDatumExpressionRoot(Long userId, Long integrationId, Datum datum,
-			Map<String, ?> parameters, DatumMetadataOperations metadata,
-			DatumStreamsAccessor datumStreamsAccessor, HttpOperations httpOperations);
+			@Nullable Map<String, ?> parameters, @Nullable DatumMetadataOperations metadata,
+			@Nullable DatumStreamsAccessor datumStreamsAccessor,
+			@Nullable HttpOperations httpOperations);
 
 	/**
 	 * Get an {@link Expression} instance for a property configuration.
@@ -105,8 +107,9 @@ public interface CloudIntegrationsExpressionService {
 	 *        the result type
 	 * @return the result
 	 */
-	default <T> T evaluateDatumPropertyExpression(CloudDatumStreamPropertyConfiguration property,
-			Object root, Map<String, Object> variables, Class<T> resultClass) {
+	default <T> @Nullable T evaluateDatumPropertyExpression(
+			CloudDatumStreamPropertyConfiguration property, Object root,
+			@Nullable Map<String, Object> variables, Class<T> resultClass) {
 		return evaluateDatumPropertyExpression(expression(property), root, variables, resultClass);
 	}
 
@@ -127,6 +130,6 @@ public interface CloudIntegrationsExpressionService {
 	 * @return the result
 	 * @since 1.4
 	 */
-	<T> T evaluateDatumPropertyExpression(Expression expression, Object root,
-			Map<String, Object> variables, Class<T> resultClass);
+	<T> @Nullable T evaluateDatumPropertyExpression(Expression expression, Object root,
+			@Nullable Map<String, Object> variables, Class<T> resultClass);
 }

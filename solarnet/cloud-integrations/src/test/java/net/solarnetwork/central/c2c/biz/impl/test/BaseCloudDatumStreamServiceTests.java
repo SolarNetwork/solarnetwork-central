@@ -38,7 +38,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -145,7 +144,7 @@ public class BaseCloudDatumStreamServiceTests {
 				List<String> supportedPlaceholders) {
 			super("test", "Test", Clock.systemUTC(), userEventAppenderBiz, encryptor, expressionService,
 					integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao,
-					Collections.emptyList());
+					List.of());
 			this.supportedPlaceholders = supportedPlaceholders;
 			setDatumStreamMetadataDao(datumStreamMetadataDao);
 			setDatumStreamMetadataCache(datumStreamMetadataCache);
@@ -460,14 +459,14 @@ public class BaseCloudDatumStreamServiceTests {
 
 		and.then(result).element(4)
 			.as("Virtual datum added for 1st timestamp")
-			.returns(new DatumId(datumStream.getKind(), datumStream.getObjectId(), "/%s/gen/1".formatted(siteId), inv1Datum1.getTimestamp()),
+			.returns(DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), "/%s/gen/1".formatted(siteId), inv1Datum1.getTimestamp()),
 					from(GeneralDatum::getId))
 			.as("Samples are sum() of inv1d1 + inv1d2")
 			.returns(new DatumSamples(Map.of("v1", 468, "v2", 864), null, null), from(GeneralDatum::getSamples))
 			;
 		and.then(result).element(5)
 			.as("Virtual datum added for 2nd timestamp")
-			.returns(new DatumId(datumStream.getKind(), datumStream.getObjectId(), "/%s/gen/1".formatted(siteId), inv1Datum2.getTimestamp()),
+			.returns(DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), "/%s/gen/1".formatted(siteId), inv1Datum2.getTimestamp()),
 					from(GeneralDatum::getId))
 			.as("Samples are sum() of inv1d2 + inv2d2")
 			.returns(new DatumSamples(Map.of("v1", 690, "v2", 1086), null, null), from(GeneralDatum::getSamples))

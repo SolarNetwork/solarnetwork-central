@@ -43,7 +43,7 @@ public class UpdateCloudIntegrationOAuthAuthorizationState
 		implements PreparedStatementCreator, SqlProvider {
 
 	private final UserLongCompositePK id;
-	private final String state;
+	private final @Nullable String state;
 	private final @Nullable String expectedState;
 
 	/**
@@ -58,7 +58,7 @@ public class UpdateCloudIntegrationOAuthAuthorizationState
 	 * @throws IllegalArgumentException
 	 *         if {@code id} is {@code null}
 	 */
-	public UpdateCloudIntegrationOAuthAuthorizationState(UserLongCompositePK id, String state,
+	public UpdateCloudIntegrationOAuthAuthorizationState(UserLongCompositePK id, @Nullable String state,
 			@Nullable String expectedState) {
 		this.id = ObjectUtils.requireNonNullArgument(id, "id");
 		this.state = state;

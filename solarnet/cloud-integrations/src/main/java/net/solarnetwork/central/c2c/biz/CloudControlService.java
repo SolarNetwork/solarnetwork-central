@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.c2c.domain.CloudControlConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
@@ -87,7 +88,8 @@ public interface CloudControlService
 	 * @return the available values, never {@code null}
 	 *
 	 */
-	Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId, Map<String, ?> filters);
+	Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
+			@Nullable Map<String, ?> filters);
 
 	/**
 	 * Get a set of all instruction topics supported by this service.
@@ -104,9 +106,9 @@ public interface CloudControlService
 	 *        instruction on
 	 * @param instruction
 	 *        the instruction to execute
-	 * @return the resulting instruction status, or {@code null} if not
-	 *         accepted
+	 * @return the resulting instruction status, or {@code null} if not accepted
 	 */
+	@Nullable
 	InstructionStatus executeInstruction(UserLongCompositePK cloudControlId,
 			NodeInstruction instruction);
 

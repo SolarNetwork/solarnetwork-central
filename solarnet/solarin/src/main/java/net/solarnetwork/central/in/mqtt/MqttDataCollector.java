@@ -263,7 +263,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 			final Datum d = objectMapper.treeToValue(node, Datum.class);
 			final GeneralDatum gd = (d instanceof GeneralDatum g ? g
 					: new GeneralDatum(
-							new DatumId(d.getKind(), d.getObjectId(), d.getSourceId(), d.getTimestamp()),
+							DatumId.datumId(d.getKind(), d.getObjectId(), d.getSourceId(), d.getTimestamp()),
 							new DatumSamples(d.asSampleOperations())));
 
 			if ( checkVersion && !gd.asSampleOperations().hasTag(TAG_V2) ) {

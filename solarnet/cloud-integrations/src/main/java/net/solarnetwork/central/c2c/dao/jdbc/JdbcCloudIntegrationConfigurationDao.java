@@ -162,7 +162,7 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 	}
 
 	@Override
-	public boolean saveOAuthAuthorizationState(UserLongCompositePK id, String state,
+	public boolean saveOAuthAuthorizationState(UserLongCompositePK id, @Nullable String state,
 			@Nullable String expectedState) {
 		var sql = new UpdateCloudIntegrationOAuthAuthorizationState(id, state, expectedState);
 		return jdbcOps.update(sql) > 0;

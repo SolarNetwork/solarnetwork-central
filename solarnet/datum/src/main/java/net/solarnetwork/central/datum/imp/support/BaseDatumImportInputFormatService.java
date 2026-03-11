@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.support;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
 
@@ -35,8 +36,8 @@ import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceIn
 public abstract class BaseDatumImportInputFormatService extends
 		BaseSettingsSpecifierLocalizedServiceInfoProvider implements DatumImportInputFormatService {
 
-	private String inputFilenameExtension;
-	private String inputContentType;
+	private @Nullable String inputFilenameExtension;
+	private @Nullable String inputContentType;
 
 	/**
 	 * Constructor.
@@ -49,20 +50,20 @@ public abstract class BaseDatumImportInputFormatService extends
 	}
 
 	@Override
-	public String getInputFilenameExtension() {
+	public final @Nullable String getInputFilenameExtension() {
 		return inputFilenameExtension;
 	}
 
-	public void setInputFilenameExtension(String inputFilenameExtension) {
+	public final void setInputFilenameExtension(@Nullable String inputFilenameExtension) {
 		this.inputFilenameExtension = inputFilenameExtension;
 	}
 
 	@Override
-	public String getInputContentType() {
+	public final @Nullable String getInputContentType() {
 		return inputContentType;
 	}
 
-	public void setInputContentType(String inputContentType) {
+	public final void setInputContentType(@Nullable String inputContentType) {
 		this.inputContentType = inputContentType;
 	}
 

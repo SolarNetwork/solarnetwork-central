@@ -137,7 +137,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
 				mapping.getConfigId(), null);
 
-		Map<String, Object> props = singletonMap("foo", "bar");
+		Map<String, Object> props = Map.of("foo", "bar");
 		// @formatter:off
 		CloudDatumStreamPollTaskEntity conf = newCloudDatumStreamPollTaskEntity(userId,
 				datumStream.getConfigId(),
@@ -380,7 +380,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		conf.setStartAt(now().plusMillis(4747474));
 		conf.setMessage(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		UserLongCompositePK result = dao.save(conf);
@@ -409,7 +409,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		conf.setStartAt(now().plusMillis(4747474));
 		conf.setMessage(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		boolean result = dao.updateTask(conf, BasicClaimableJobState.Queued);
@@ -446,7 +446,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		conf.setStartAt(now().plusMillis(4747474));
 		conf.setMessage(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		boolean result = dao.updateTask(conf, BasicClaimableJobState.Claimed);

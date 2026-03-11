@@ -99,9 +99,9 @@ public class JdbcCloudControlConfigurationDaoTests extends AbstractJUnit5JdbcDao
 	public void insert() {
 		// GIVEN
 		final CloudIntegrationConfiguration integration = createIntegration(userId,
-				singletonMap("bim", "bam"));
+				Map.of("bim", "bam"));
 
-		Map<String, Object> props = singletonMap("foo", "bar");
+		Map<String, Object> props = Map.of("foo", "bar");
 		// @formatter:off
 		CloudControlConfiguration conf = newCloudControlConfiguration(userId,
 				integration.getConfigId(),
@@ -189,7 +189,7 @@ public class JdbcCloudControlConfigurationDaoTests extends AbstractJUnit5JdbcDao
 		conf.setControlId(randomString());
 		conf.setControlReference(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		UserLongCompositePK result = dao.save(conf);
@@ -228,13 +228,13 @@ public class JdbcCloudControlConfigurationDaoTests extends AbstractJUnit5JdbcDao
 		final List<Long> userIds = new ArrayList<>(userCount);
 		final List<CloudControlConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int u = 0; u < userCount; u++ ) {
 			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 			userIds.add(userId);
 			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 				for ( int ctrl = 0; ctrl < count; ctrl++ ) {
 					// @formatter:off
 					CloudControlConfiguration conf = newCloudControlConfiguration(userId,
@@ -274,13 +274,13 @@ public class JdbcCloudControlConfigurationDaoTests extends AbstractJUnit5JdbcDao
 		final List<Long> userIds = new ArrayList<>(userCount);
 		final List<CloudControlConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int u = 0; u < userCount; u++ ) {
 			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 			userIds.add(userId);
 			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 				for ( int ctrl = 0; ctrl < count; ctrl++ ) {
 					// @formatter:off
 					CloudControlConfiguration conf = newCloudControlConfiguration(
@@ -323,13 +323,13 @@ public class JdbcCloudControlConfigurationDaoTests extends AbstractJUnit5JdbcDao
 		final List<Long> userIds = new ArrayList<>(userCount);
 		final List<CloudControlConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int u = 0; u < userCount; u++ ) {
 			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 			userIds.add(userId);
 			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 				for ( int ctrl = 0; ctrl < count; ctrl++ ) {
 					// @formatter:off
 					CloudControlConfiguration conf = newCloudControlConfiguration(

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.settings.ConfigurableLocalizedServiceInfo;
 import net.solarnetwork.util.IntRange;
@@ -87,6 +88,7 @@ public interface CloudDatumStreamLocalizedServiceInfo extends ConfigurableLocali
 	 *
 	 * @return the placeholders, or {@code null}
 	 */
+	@Nullable
 	Iterable<String> getSupportedPlaceholders();
 
 	/**
@@ -101,6 +103,7 @@ public interface CloudDatumStreamLocalizedServiceInfo extends ConfigurableLocali
 	 *
 	 * @return the 0-based list offsets, or {@code null}
 	 */
+	@Nullable
 	Iterable<Integer> getSupportedDataValueWildcardIdentifierLevels();
 
 	/**
@@ -109,6 +112,7 @@ public interface CloudDatumStreamLocalizedServiceInfo extends ConfigurableLocali
 	 *
 	 * @return the 0-based range, or {@code null}
 	 */
+	@Nullable
 	IntRange getDataValueIdentifierLevelsSourceIdRange();
 
 }

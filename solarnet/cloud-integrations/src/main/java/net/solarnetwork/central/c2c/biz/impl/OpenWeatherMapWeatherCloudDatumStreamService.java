@@ -23,11 +23,12 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.WEATHER_URL_PATH;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Clock;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
@@ -74,10 +75,10 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 	}
 
 	/** The service secure setting keys. */
-	public static final Set<String> SECURE_SETTINGS = Collections.emptySet();
+	public static final Set<String> SECURE_SETTINGS = Set.of();
 
 	/** The supported placeholder keys. */
-	public static final List<String> SUPPORTED_PLACEHOLDERS = Collections.emptyList();
+	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of();
 
 	/**
 	 * Constructor.
@@ -128,8 +129,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 					JsonNode.class, _ -> uriBuilder.buildAndExpand().toUri(),
 					res -> parseDatum(res.getBody(), ds));
 
-			final List<GeneralDatum> resultDatum = (datum != null ? List.of(datum)
-					: Collections.emptyList());
+			final List<GeneralDatum> resultDatum = (datum != null ? List.of(datum) : List.of());
 
 			// evaluate expressions on merged datum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
@@ -139,9 +139,11 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 		});
 	}
 
-	private GeneralDatum parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream) {
-		GeneralDatum d = parseWeatherData(json, datumStream.getKind(), datumStream.getObjectId(),
-				datumStream.getSourceId());
+	private @Nullable GeneralDatum parseDatum(@Nullable JsonNode json,
+			CloudDatumStreamConfiguration datumStream) {
+		GeneralDatum d = parseWeatherData(json, datumStream.getKind(),
+				nonnull(datumStream.getObjectId(), "Object ID"),
+				nonnull(datumStream.getSourceId(), "Source ID"));
 		if ( d != null ) {
 			// remove DayDatum keys from weather
 			d.getSamples().putInstantaneousSampleValue(DayDatum.TEMPERATURE_MINIMUM_KEY, null);

@@ -23,13 +23,15 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static java.time.temporal.ChronoUnit.DAYS;
+import static java.util.stream.Collectors.toMap;
+import static net.solarnetwork.central.datum.v2.domain.ObjectDatum.forStreamDatum;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.InstantSource;
@@ -37,10 +39,8 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
@@ -52,6 +52,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.mutable.MutableInt;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestClientResponseException;
@@ -80,12 +81,13 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamplesOperations;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
+import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringNaturalSortComparator;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * DAO based implementation of {@link CloudDatumStreamRakeService}.
@@ -188,7 +190,7 @@ public class DaoCloudDatumStreamRakeService
 	}
 
 	@Override
-	public CloudDatumStreamRakeTaskEntity claimQueuedTask() {
+	public @Nullable CloudDatumStreamRakeTaskEntity claimQueuedTask() {
 		if ( executorService.isShutdown() ) {
 			return null;
 		}
@@ -203,9 +205,9 @@ public class DaoCloudDatumStreamRakeService
 			log.debug("Datum stream rake task execution rejected, resetting state to Queued: {}",
 					e.getMessage());
 			// go back to queued
-			if ( !taskDao.updateTaskState(task.getId(), Queued, task.getState()) ) {
+			if ( !taskDao.updateTaskState(task.pk(), Queued, task.getState()) ) {
 				log.warn("Failed to update rejected datum stream rake task {} state from {} to Queued",
-						task.getId().ident(), task.getState());
+						task.pk().ident(), task.getState());
 			}
 			throw e;
 		}
@@ -239,12 +241,11 @@ public class DaoCloudDatumStreamRakeService
 				try {
 					if ( log.isDebugEnabled() || !(e instanceof RemoteServiceException) ) {
 						// log full stack trace when debug enabled or not a RemoteServiceException
-						log.warn("Error executing datum stream {} rake task", taskInfo.getId().ident(),
-								e);
+						log.warn("Error executing datum stream {} rake task", taskInfo.pk().ident(), e);
 					} else {
 						// otherwise just print exception message, to cut down on log clutter
-						log.warn("Error executing datum stream {} rake task: {}",
-								taskInfo.getId().ident(), e.toString());
+						log.warn("Error executing datum stream {} rake task: {}", taskInfo.pk().ident(),
+								e.toString());
 					}
 					var errMsg = "Error executing rake task.";
 					var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
@@ -257,7 +258,7 @@ public class DaoCloudDatumStreamRakeService
 						// reset back to queued to try again if HTTP client or IO error
 						log.info(
 								"Resetting datum stream {} rake task by changing state from {} to {} after error: {}",
-								taskInfo.getId().ident(), oldState, Queued, e.toString());
+								taskInfo.pk().ident(), oldState, Queued, e.toString());
 						taskInfo.setState(Queued);
 						if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
 							// bump date into future by 1 minute so we do not immediately try to process again
@@ -268,19 +269,19 @@ public class DaoCloudDatumStreamRakeService
 						// stop processing job if not what appears to be an API IO exception
 						log.info(
 								"Stopping datum stream {} rake task by changing state from {} to {} after error: {}",
-								taskInfo.getId().ident(), oldState, Completed, e.toString());
+								taskInfo.pk().ident(), oldState, Completed, e.toString());
 						taskInfo.setState(Completed);
 					}
 					userEventAppenderBiz.addEvent(taskInfo.getUserId(), eventForUserRelatedKey(
-							taskInfo.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
+							taskInfo.pk(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 					if ( !taskDao.updateTask(taskInfo, oldState) ) {
 						log.warn(
 								"Unable to update datum stream {} rake task info with expected state {} with details: {}",
-								taskInfo.getId().ident(), oldState, taskInfo);
+								taskInfo.pk().ident(), oldState, taskInfo);
 					}
 				} catch ( Exception e2 ) {
 					log.warn("Error updating datum stream {} rake task state after error",
-							taskInfo.getId().ident(), e2);
+							taskInfo.pk().ident(), e2);
 					// ignore, return original
 				}
 				throw e;
@@ -298,36 +299,39 @@ public class DaoCloudDatumStreamRakeService
 				return taskInfo;
 			}
 
-			final String datumStreamIdent = datumStream.getId().ident();
+			final String datumStreamIdent = datumStream.pk().ident();
 
 			if ( !datumStream.isFullyConfigured() ) {
 				var errMsg = "Datum stream not fully configured.";
-				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
-						datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg));
+				userEventAppenderBiz.addEvent(datumStream.getUserId(),
+						eventForUserRelatedKey(datumStream.pk(), INTEGRATION_RAKE_ERROR_TAGS, errMsg));
 				taskInfo.setMessage(errMsg);
 				taskInfo.setState(Completed); // stop processing job
 				taskDao.updateTask(taskInfo, startState);
 				return taskInfo;
 			}
 
+			// get nonnull refs, after call to isFullyConfigured()
+			final Long objectId = nonnull(datumStream.getObjectId(), "Object ID");
+			final ObjectDatumKind kind = nonnull(datumStream.getKind(), "Kind");
+
 			// The time zone of the datum stream.
 			ZoneId rakeZone = ZoneOffset.UTC;
 
 			if ( datumStream.getKind() == ObjectDatumKind.Node ) {
-				SolarNodeOwnership ownership = nodeOwnershipDao
-						.ownershipForNodeId(datumStream.getObjectId());
+				SolarNodeOwnership ownership = nodeOwnershipDao.ownershipForNodeId(objectId);
 				if ( ownership == null || !taskInfo.getUserId().equals(ownership.getUserId()) ) {
 					log.warn(
 							"Refusing to execute datum stream {} rake task because task owner {} does not own node {}",
-							datumStreamIdent, taskInfo.getUserId(), datumStream.getObjectId());
+							datumStreamIdent, taskInfo.getUserId(), objectId);
 					var errMsg = "Access denied to configured node.";
 					var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(), SOURCE_DATA_KEY,
-							(Object) datumStream.getObjectId());
+							(Object) objectId);
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
 					taskInfo.setState(Completed); // stop processing job
 					userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
-							datumStream.getId(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
+							datumStream.pk(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 					taskDao.updateTask(taskInfo, startState);
 					return taskInfo;
 				}
@@ -340,7 +344,7 @@ public class DaoCloudDatumStreamRakeService
 			final ZonedDateTime endDate = startDate.plusDays(1);
 
 			// verify poll task is after the rake end date, so the two tasks do not overlap
-			CloudDatumStreamPollTaskEntity pollTask = pollTaskDao.get(datumStream.getId());
+			CloudDatumStreamPollTaskEntity pollTask = pollTaskDao.get(datumStream.pk());
 			if ( pollTask != null && pollTask.getStartAt() != null
 					&& endDate.isAfter(pollTask.getStartAt().atZone(rakeZone)) ) {
 				log.debug(
@@ -359,7 +363,7 @@ public class DaoCloudDatumStreamRakeService
 			}
 
 			// save task state to Executing
-			if ( !taskDao.updateTaskState(taskInfo.getId(), Executing, startState) ) {
+			if ( !taskDao.updateTaskState(taskInfo.pk(), Executing, startState) ) {
 				log.warn("Failed to update rake task {} state to Executing @ {} offset @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getOffset());
 				var errMsg = "Failed to update task state from Claimed to Executing.";
@@ -419,11 +423,8 @@ public class DaoCloudDatumStreamRakeService
 							rakedDatum.size());
 
 					// sort by stream
-					SortedMap<DatumId, Datum> datumMapping = rakedDatum.getResults().stream()
-							.collect(Collectors.toMap(
-									d -> new DatumId(d.getKind(), d.getObjectId(), d.getSourceId(),
-											d.getTimestamp()),
-									Function.identity(), (l, _) -> l, TreeMap::new));
+					SortedMap<DatumId, Datum> datumMapping = rakedDatum.getResults().stream().collect(
+							toMap(d -> d.datumId(), Function.identity(), (l, _) -> l, TreeMap::new));
 
 					ObjectDatumStreamMetadataId currStreamId = null;
 					SortedMap<DatumId, Datum> existingDatum = new TreeMap<>();
@@ -432,14 +433,13 @@ public class DaoCloudDatumStreamRakeService
 						final DatumId datumId = entry.getKey();
 						final Datum datum = entry.getValue();
 						// validate that provided datum ID matches that on the configuration
-						if ( !datumStream.getObjectId().equals(datum.getObjectId()) ) {
+						if ( datum.getObjectId() == null || !objectId.equals(datum.getObjectId()) ) {
 							log.warn(
 									"Datum stream {} configured with object ID {} but produced datum with object ID {}: cancelling rake task.",
-									datumStreamIdent, taskInfo.getUserId(), datumStream.getObjectId());
+									datumStreamIdent, objectId, datum.getObjectId());
 							var errMsg = "Access denied to datum with object ID different from datum stream configuration.";
 							var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
-									SOURCE_DATA_KEY, (Object) datum.getObjectId(), "expected",
-									datumStream.getObjectId());
+									SOURCE_DATA_KEY, (Object) datum.getObjectId(), "expected", objectId);
 							taskInfo.setMessage(errMsg);
 							taskInfo.putServiceProps(errData);
 							taskInfo.setState(Completed); // stop processing job
@@ -449,17 +449,38 @@ public class DaoCloudDatumStreamRakeService
 							taskDao.updateTask(taskInfo, Executing);
 							return taskInfo;
 						}
-						if ( currStreamId == null || !(datum.getKind().equals(currStreamId.getKind())
-								&& datum.getObjectId().equals(currStreamId.getObjectId())
-								&& datum.getSourceId().equals(currStreamId.getSourceId())) ) {
+						final ObjectDatumKind datumKind = (datum.getKind() != null ? datum.getKind()
+								: kind);
+						if ( !kind.equals(datumKind) ) {
+							log.warn(
+									"Datum stream {} configured with kind {} but produced datum with kind {}: cancelling rake task.",
+									datumStreamIdent, kind, datumKind);
+							var errMsg = "Access denied to datum with kind different from datum stream configuration.";
+							var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
+									SOURCE_DATA_KEY, (Object) datumKind, "expected", kind);
+							taskInfo.setMessage(errMsg);
+							taskInfo.putServiceProps(errData);
+							taskInfo.setState(Completed); // stop processing job
+							userEventAppenderBiz.addEvent(datumStream.getUserId(),
+									eventForUserRelatedKey(datumStream.getId(),
+											INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
+							taskDao.updateTask(taskInfo, Executing);
+							return taskInfo;
+						}
+						if ( datum.getSourceId() == null ) {
+							continue;
+						}
+						if ( currStreamId == null
+								|| !currStreamId.getSourceId().equals(datum.getSourceId()) ) {
 							// starting new stream
-							currStreamId = new ObjectDatumStreamMetadataId(datum.getKind(),
-									datum.getObjectId(), datum.getSourceId());
+							currStreamId = new ObjectDatumStreamMetadataId(kind, datum.getObjectId(),
+									datum.getSourceId());
 
 							// query for existing datum
 							existingDatum.clear();
 							existingDatum.putAll(existingDatum(datumStream.getUserId(), datumId,
-									filter.getStartDate(), filter.getEndDate()));
+									nonnull(filter.getStartDate(), "Start date"),
+									nonnull(filter.getEndDate(), "End date")));
 						}
 
 						Datum existing = existingDatum.get(datumId);
@@ -539,7 +560,8 @@ public class DaoCloudDatumStreamRakeService
 			return taskInfo;
 		}
 
-		private ZonedDateTime maxDate(ZoneId rakeZone, CloudDatumStreamPollTaskEntity pollTask) {
+		private ZonedDateTime maxDate(ZoneId rakeZone,
+				@Nullable CloudDatumStreamPollTaskEntity pollTask) {
 			var max = clock.instant().atZone(rakeZone).truncatedTo(DAYS);
 			if ( pollTask != null && pollTask.getStartAt() != null
 					&& pollTask.getStartAt().isAfter(max.toInstant()) ) {
@@ -563,38 +585,18 @@ public class DaoCloudDatumStreamRakeService
 			datumFilter.setEndDate(endDate);
 			var results = datumDao.findFiltered(datumFilter);
 			return StreamSupport.stream(results.spliterator(), false).map(d -> {
-				var meta = results.metadataForStreamId(d.getStreamId());
-				return ObjectDatum.forStreamDatum(d, userId, new DatumId(meta.getKind(),
-						meta.getObjectId(), meta.getSourceId(), d.getTimestamp()), meta);
+				var meta = nonnull(results.metadataForStreamId(d.getStreamId()), "Stream metadata");
+				return nonnull(forStreamDatum(d, userId, meta.datumIdent(d.getTimestamp()), meta),
+						"Stream datum");
 			}).collect(Collectors.toMap(d -> d.getId(), Function.identity(), (l, _) -> l, TreeMap::new));
 		}
 
 	}
 
-	private static final Set<DatumSamplesType> MAP_SAMPLE_TYPES = EnumSet
-			.of(DatumSamplesType.Instantaneous, DatumSamplesType.Accumulating, DatumSamplesType.Status);
-
 	private static boolean differ(Datum datum, Datum datum2) {
 		DatumSamplesOperations s1 = datum.asSampleOperations();
 		DatumSamplesOperations s2 = datum2.asSampleOperations();
-		for ( DatumSamplesType propType : MAP_SAMPLE_TYPES ) {
-			Map<String, ?> m1 = s1.getSampleData(propType);
-			Map<String, ?> m2 = s2.getSampleData(propType);
-			if ( m1 != null && m2 != null && m1.size() == m2.size()
-					&& m1.keySet().equals(m2.keySet()) ) {
-				// compare all props as BigDecimal
-				for ( String propName : m1.keySet() ) {
-					BigDecimal p1 = s1.getSampleBigDecimal(propType, propName);
-					BigDecimal p2 = s2.getSampleBigDecimal(propType, propName);
-					if ( p1.compareTo(p2) != 0 ) {
-						return true;
-					}
-				}
-			} else if ( m1 != m2 && !((m1 == null && m2.isEmpty()) || (m1 != null && m1.isEmpty())) ) {
-				return true;
-			}
-		}
-		return false;
+		return s1.differsNumericallyFrom(s2, StringUtils::numberValue, NumberUtils::bigDecimalForNumber);
 	}
 
 	/**

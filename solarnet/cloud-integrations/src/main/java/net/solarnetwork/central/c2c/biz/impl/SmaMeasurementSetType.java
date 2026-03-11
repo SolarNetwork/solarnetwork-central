@@ -27,6 +27,7 @@ import static net.solarnetwork.central.c2c.biz.impl.SmaMeasurementType.numberTyp
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.SequencedMap;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
@@ -222,7 +223,7 @@ public enum SmaMeasurementSetType {
 	 *         if {@code value} is not a valid value
 	 */
 	@JsonCreator
-	public static SmaMeasurementSetType fromValue(String value) {
+	public static @Nullable SmaMeasurementSetType fromValue(String value) {
 		if ( value == null || value.isEmpty() ) {
 			return null;
 		}

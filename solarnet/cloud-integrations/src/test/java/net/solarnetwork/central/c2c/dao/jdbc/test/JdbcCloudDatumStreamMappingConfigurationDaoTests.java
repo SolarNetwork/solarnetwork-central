@@ -119,9 +119,9 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 	public void insert() {
 		// GIVEN
 		final CloudIntegrationConfiguration integration = createIntegration(userId,
-				singletonMap("bim", "bam"));
+				Map.of("bim", "bam"));
 
-		Map<String, Object> props = singletonMap("foo", "bar");
+		Map<String, Object> props = Map.of("foo", "bar");
 		// @formatter:off
 		CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(userId,
 				integration.getConfigId(),
@@ -191,7 +191,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setName(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		UserLongCompositePK result = dao.save(conf);
@@ -230,7 +230,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 		final List<Long> integrationIds = new ArrayList<>(userCount);
 		final List<CloudDatumStreamMappingConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int i = 0; i < count; i++ ) {
 			for ( int u = 0; u < userCount; u++ ) {
@@ -240,7 +240,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
 
-					integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+					integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 					integrationIds.add(integrationId);
 				} else {
 					userId = userIds.get(u);
@@ -280,7 +280,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 		final List<Long> integrationIds = new ArrayList<>(userCount);
 		final List<CloudDatumStreamMappingConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int i = 0; i < count; i++ ) {
 			for ( int u = 0; u < userCount; u++ ) {
@@ -290,7 +290,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
 
-					integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+					integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 					integrationIds.add(integrationId);
 				} else {
 					userId = userIds.get(u);
@@ -343,7 +343,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 		for ( int u = 0; u < userCount; u++ ) {
 			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 				for ( int m = 0; m < mappingCount; m++ ) {
 					// @formatter:off
 					CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(

@@ -28,6 +28,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -130,6 +131,8 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 *        a description of the operation, for example "List sites"
 	 * @param method
 	 *        the HTTP method
+	 * @param body
+	 *        the optional request body content
 	 * @param configuration
 	 *        the integration making the request on behalf of
 	 * @param responseType
@@ -144,7 +147,7 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 *         if {@code integration} is {@code null}
 	 * @since 1.2
 	 */
-	public <B, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
+	public <B extends @Nullable Object, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
 			String description, HttpMethod method, B body, C configuration, Class<R> responseType,
 			Function<HttpHeaders, URI> setup, Function<ResponseEntity<R>, T> handler) {
 		requireNonNullArgument(configuration, "configuration");

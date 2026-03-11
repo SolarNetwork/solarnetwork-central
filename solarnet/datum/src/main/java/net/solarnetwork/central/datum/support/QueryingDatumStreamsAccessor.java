@@ -215,7 +215,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 					.metadataForStreamId(daoDatum.getStreamId());
 			if ( meta != null ) {
 				var d = ObjectDatum.forStreamDatum(daoDatum, userId,
-						new DatumId(kind, objectId, sourceId, daoDatum.getTimestamp()), meta);
+						DatumId.datumId(kind, objectId, sourceId, daoDatum.getTimestamp()), meta);
 				if ( auditor != null ) {
 					auditor.auditNodeDatum(d);
 				}
@@ -258,7 +258,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 			return null;
 		}
 		final var d = ObjectDatum.forStreamDatum(daoDatum, userId,
-				new DatumId(kind, objectId, sourceId, daoDatum.getTimestamp()), meta);
+				DatumId.datumId(kind, objectId, sourceId, daoDatum.getTimestamp()), meta);
 		if ( d != null ) {
 			if ( auditor != null ) {
 				auditor.auditNodeDatum(d);
@@ -351,7 +351,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 				continue;
 			}
 			var d = ObjectDatum.forStreamDatum(daoDatum, userId,
-					new DatumId(kind, objectId, meta.getSourceId(), daoDatum.getTimestamp()), meta);
+					DatumId.datumId(kind, objectId, meta.getSourceId(), daoDatum.getTimestamp()), meta);
 			if ( d != null ) {
 				if ( auditor != null ) {
 					auditor.auditNodeDatum(d);

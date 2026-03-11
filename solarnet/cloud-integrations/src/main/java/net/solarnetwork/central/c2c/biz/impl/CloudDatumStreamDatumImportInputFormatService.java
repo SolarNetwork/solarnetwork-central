@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.DateTimeException;
@@ -31,7 +32,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
@@ -168,7 +171,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 		 *         configuration is not valid
 		 */
 		private DatumStreamImportContext(InputConfiguration config, DatumImportResource resource,
-				ProgressListener<DatumImportService> progressListener) {
+				@Nullable ProgressListener<DatumImportService> progressListener) {
 			super(config, resource, progressListener);
 
 			Long datumStreamId = requireNonNullArgument(
@@ -220,7 +223,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 		private class DatumStreamImportContextIterator implements Iterator<GeneralNodeDatum> {
 
 			private Iterator<Datum> batchItr;
-			private BasicQueryFilter filter;
+			private @Nullable BasicQueryFilter filter;
 
 			private DatumStreamImportContextIterator() {
 				super();
@@ -247,15 +250,20 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 			@Override
 			public GeneralNodeDatum next() {
 				var next = batchItr.next();
-				return (GeneralNodeDatum) DatumUtils.convertGeneralDatum(next);
+				var result = (GeneralNodeDatum) DatumUtils.convertGeneralDatum(next);
+				if ( result == null ) {
+					throw new NoSuchElementException();
+				}
+				return result;
 			}
 
 			private Iterator<Datum> listDatumForBatchRange() {
+				final var f = nonnull(filter, "Filter");
 				CloudDatumStreamQueryResult results = null;
 				int attempt = 0;
 				while ( true ) {
 					try {
-						results = service.datum(datumStream, filter);
+						results = service.datum(datumStream, f);
 						break;
 					} catch ( RemoteServiceException e ) {
 						attempt++;
@@ -264,7 +272,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 						} else {
 							log.warn(
 									"Error importing datum from Cloud Datum Stream {} for date range {} - {}: {}; will try up to {} more times",
-									datumStream.ident(), filter.getStartDate(), filter.getEndDate(),
+									datumStream.ident(), f.getStartDate(), f.getEndDate(),
 									e.getMessage(), (retryCount - attempt + 1));
 						}
 						try {
@@ -278,7 +286,8 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 					return Collections.emptyIterator();
 				}
 				var nextFilter = results.getNextQueryFilter();
-				if ( nextFilter != null && nextFilter.getStartDate().isAfter(filter.getStartDate()) ) {
+				if ( nextFilter != null && nonnull(nextFilter.getStartDate(), "Next start date")
+						.isAfter(f.getStartDate()) ) {
 					// update progress based on the seconds between the overall start date and the next start date
 					updateProgress(CloudDatumStreamDatumImportInputFormatService.this,
 							ChronoUnit.SECONDS.between(startDate, nextFilter.getStartDate()),

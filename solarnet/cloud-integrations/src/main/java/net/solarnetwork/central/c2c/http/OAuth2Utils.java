@@ -116,13 +116,13 @@ public final class OAuth2Utils {
 		} else if ( config.hasServiceProperty(OAUTH_CLIENT_ID_SETTING, String.class) ) {
 			if ( config.hasServiceProperty(OAUTH_CLIENT_SECRET_SETTING, String.class) ) {
 				authReq.principal(new UsernamePasswordAuthenticationToken(
-						config.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class),
-						config.serviceProperty(OAUTH_CLIENT_SECRET_SETTING, String.class)));
+						config.serviceProp(OAUTH_CLIENT_ID_SETTING, String.class),
+						config.serviceProp(OAUTH_CLIENT_SECRET_SETTING, String.class)));
 			} else {
-				authReq.principal(config.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class));
+				authReq.principal(config.serviceProp(OAUTH_CLIENT_ID_SETTING, String.class));
 			}
 		} else {
-			authReq.principal("%s %s".formatted(config.getId().ident(), config.getName()));
+			authReq.principal("%s %s".formatted(config.pk().ident(), config.getName()));
 		}
 
 		final Lock lock = (lockProvider != null ? lockProvider.apply(config.getId()) : null);

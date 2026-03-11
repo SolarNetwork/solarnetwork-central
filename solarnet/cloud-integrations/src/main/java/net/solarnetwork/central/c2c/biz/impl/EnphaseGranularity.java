@@ -29,6 +29,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
 import java.util.concurrent.TimeUnit;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
@@ -87,9 +88,6 @@ public enum EnphaseGranularity {
 	 * @return the start instant
 	 */
 	public Instant tickStart(Instant ts, ZoneId zone) {
-		if ( tickAmount == null ) {
-			return ts;
-		}
 		if ( tickAmount instanceof Duration d ) {
 			return CloudIntegrationsUtils.truncateDate(ts, d, zone);
 		} else if ( tickAmount instanceof Period p ) {
@@ -135,7 +133,7 @@ public enum EnphaseGranularity {
 	 *         if {@code value} is not a valid value
 	 */
 	@JsonCreator
-	public static EnphaseGranularity fromValue(String value) {
+	public static EnphaseGranularity fromValue(@Nullable String value) {
 		if ( value == null || value.isEmpty() ) {
 			return FifteenMinute;
 		}

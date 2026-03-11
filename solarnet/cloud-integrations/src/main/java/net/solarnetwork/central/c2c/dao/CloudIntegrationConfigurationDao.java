@@ -72,7 +72,7 @@ public interface CloudIntegrationConfigurationDao
 	 *        if a state value already exists with this value
 	 * @return {@code true} if a matching record was updated
 	 */
-	boolean saveOAuthAuthorizationState(UserLongCompositePK id, String state,
+	boolean saveOAuthAuthorizationState(UserLongCompositePK id, @Nullable String state,
 			@Nullable String expectedState);
 
 	/**

@@ -30,6 +30,7 @@ import static net.solarnetwork.central.c2c.biz.impl.SmaResolution.FiveMinute;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
@@ -42,7 +43,6 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -55,6 +55,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -189,7 +190,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	 * A cache of SMA system IDs to associated time zones. This is used because
 	 * the timestamps returned from the API are all in site-local time.
 	 */
-	private Cache<String, ZoneId> systemTimeZoneCache;
+	private @Nullable Cache<String, ZoneId> systemTimeZoneCache;
 	private Duration maxFilterTimeRange = DEFAULT_MAX_FILTER_TIME_RANGE;
 
 	/**
@@ -223,7 +224,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	 *        read-through semantics that always returns a new lock for missing
 	 *        keys
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null}
+	 *         if any argument except {@code integrationLocksCache} is
+	 *         {@code null}
 	 */
 	public SmaCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
 			CloudIntegrationsExpressionService expressionService,
@@ -232,7 +234,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
-			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
+			@Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		super(SERVICE_IDENTIFIER, "SMA Datum Stream Service", clock, userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
@@ -266,7 +268,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
-			Map<String, ?> filters) {
+			@Nullable Map<String, ?> filters) {
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
@@ -286,19 +288,20 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	}
 
 	private List<CloudDataValue> systems(CloudIntegrationConfiguration integration) {
+		final Map<String, ?> sprops = integration.getServiceProperties();
 		List<CloudDataValue> result = restOpsHelper.httpGet("List systems", integration, JsonNode.class,
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH)
-						.buildAndExpand(integration.getServiceProperties()).toUri(),
+						.buildAndExpand(sprops != null ? sprops : Map.of()).toUri(),
 				res -> parseSystems(res.getBody()));
 
 		return result;
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<CloudDataValue> parseSystems(JsonNode json) {
+	private static List<CloudDataValue> parseSystems(@Nullable JsonNode json) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -312,7 +315,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		return result;
 	}
 
-	private static List<CloudDataValue> parseSystem(JsonNode json, Collection<CloudDataValue> children) {
+	private static List<CloudDataValue> parseSystem(@Nullable JsonNode json,
+			@Nullable Collection<CloudDataValue> children) {
 		/*- EXAMPLE JSON:
 		    {
 		      "plantId": "7190000",
@@ -394,7 +398,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				res -> parseSystemDevices(res.getBody(), systemId));
 	}
 
-	private static List<CloudDataValue> parseSystemDevices(final JsonNode json, final String systemId) {
+	private static List<CloudDataValue> parseSystemDevices(final @Nullable JsonNode json,
+			final String systemId) {
 		/*- EXAMPLE JSON:
 		{
 		  "devices": [
@@ -449,7 +454,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				res -> parseDeviceMeasurements(res.getBody(), systemId, deviceId));
 	}
 
-	private static List<CloudDataValue> parseDeviceMeasurements(final JsonNode json,
+	private static List<CloudDataValue> parseDeviceMeasurements(final @Nullable JsonNode json,
 			final String systemId, final String deviceId) {
 		/*- EXAMPLE JSON:
 			{
@@ -520,9 +525,9 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		});
 	}
 
-	private BasicCloudDatumStreamQueryResult query(CloudDatumStreamQueryFilter filter, MessageSource ms,
-			CloudDatumStreamConfiguration ds, CloudDatumStreamMappingConfiguration mapping,
-			CloudIntegrationConfiguration integration,
+	private BasicCloudDatumStreamQueryResult query(@Nullable CloudDatumStreamQueryFilter filter,
+			MessageSource ms, CloudDatumStreamConfiguration ds,
+			CloudDatumStreamMappingConfiguration mapping, CloudIntegrationConfiguration integration,
 			List<CloudDatumStreamPropertyConfiguration> valueProps,
 			List<CloudDatumStreamPropertyConfiguration> exprProps, SmaPeriod queryPeriod) {
 		if ( valueProps.isEmpty() ) {
@@ -536,12 +541,18 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		final QueryPlan plan = resolveQueryPlan(integration, ds, sourceIdMap, valueProps);
 
-		final Instant filterStartDate = FiveMinute.tickStart(queryPeriod != SmaPeriod.Recent
-				? requireNonNullArgument(filter.getStartDate(), "filter.startDate")
-				: Instant.now(), UTC);
-		final Instant filterEndDate = FiveMinute.tickStart(queryPeriod != SmaPeriod.Recent
-				? requireNonNullArgument(filter.getEndDate(), "filter.endDate")
-				: filterStartDate.plus(1, DAYS), UTC);
+		final Instant filterStartDate = FiveMinute.tickStart(
+				queryPeriod != SmaPeriod.Recent
+						? requireNonNullArgument(requireNonNullArgument(filter, "filter").getStartDate(),
+								"filter.startDate")
+						: Instant.now(),
+				UTC);
+		final Instant filterEndDate = FiveMinute.tickStart(
+				queryPeriod != SmaPeriod.Recent
+						? requireNonNullArgument(requireNonNullArgument(filter, "filter").getEndDate(),
+								"filter.endDate")
+						: filterStartDate.plus(1, DAYS),
+				UTC);
 
 		BasicQueryFilter nextQueryFilter = null;
 		if ( queryPeriod != SmaPeriod.Recent ) {
@@ -568,8 +579,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		// for each zone, interate over days and devices
 		for ( Entry<ZoneId, Map<String, DeviceQueryPlan>> zoneEntry : plan.zoneDevicePlans.entrySet() ) {
 			ZoneId zone = zoneEntry.getKey();
-			for ( var ts = usedQueryFilter.getStartDate(); ts.atZone(zone).toLocalDate()
-					.atStartOfDay(zone).toInstant()
+			for ( var ts = nonnull(usedQueryFilter.getStartDate(), "Start date"); ts.atZone(zone)
+					.toLocalDate().atStartOfDay(zone).toInstant()
 					.isBefore(usedQueryFilter.getEndDate()); ts = ts.plus(1, DAYS) ) {
 				var day = ts.atZone(zone).toLocalDate();
 				final String queryDay = day.toString();
@@ -640,8 +651,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				r.stream().map(Datum.class::cast).toList());
 	}
 
-	private static String resolveSourceId(CloudDatumStreamConfiguration datumStream,
-			Map<String, String> sourceIdMap, DeviceQueryPlan devPlan) {
+	private static @Nullable String resolveSourceId(CloudDatumStreamConfiguration datumStream,
+			@Nullable Map<String, String> sourceIdMap, DeviceQueryPlan devPlan) {
 		String baseSourceId = "/%s/%s".formatted(devPlan.systemId, devPlan.deviceId);
 		if ( sourceIdMap != null ) {
 			return sourceIdMap.get(baseSourceId);
@@ -657,8 +668,10 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		return result;
 	}
 
-	private List<GeneralDatum> parseDeviceDatum(JsonNode json, CloudDatumStreamQueryFilter filter,
-			ZoneId zone, List<ValueRef> valueRefs, CloudDatumStreamConfiguration ds, String sourceId,
+	// note an empty list is _always_ returned as we populate resultDatum but return type required
+	private List<GeneralDatum> parseDeviceDatum(@Nullable JsonNode json,
+			CloudDatumStreamQueryFilter filter, ZoneId zone, List<ValueRef> valueRefs,
+			CloudDatumStreamConfiguration ds, String sourceId,
 			Map<String, SortedMap<Instant, GeneralDatum>> resultDatum) {
 		/*- EXAMPLE JSON:
 		{
@@ -698,7 +711,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			GeneralDatum datum = resultDatum.computeIfAbsent(sourceId, _ -> new TreeMap<>())
 					.computeIfAbsent(ts,
 							k -> new GeneralDatum(
-									new DatumId(ds.getKind(), ds.getObjectId(), sourceId, k),
+									DatumId.datumId(ds.getKind(), ds.getObjectId(), sourceId, k),
 									new DatumSamples()));
 			for ( ValueRef ref : valueRefs ) {
 				JsonNode measurementNode = dataNode.path(ref.measurement.name());
@@ -719,11 +732,11 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			}
 		}
 
-		return null;
+		return List.of();
 	}
 
 	private void populateSampleProp(GeneralDatum datum, ValueRef ref, Object propVal,
-			String propNameSuffix) {
+			@Nullable String propNameSuffix) {
 		propVal = ref.property.applyValueTransforms(propVal);
 		if ( propVal != null ) {
 			String propName = ref.property.getPropertyName();
@@ -812,7 +825,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	 * @return the query plan
 	 */
 	private QueryPlan resolveQueryPlan(CloudIntegrationConfiguration integration,
-			CloudDatumStreamConfiguration datumStream, Map<String, String> sourceIdMap,
+			CloudDatumStreamConfiguration datumStream, @Nullable Map<String, String> sourceIdMap,
 			List<CloudDatumStreamPropertyConfiguration> propConfigs) {
 		final var plan = new QueryPlan();
 
@@ -842,9 +855,11 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					continue;
 				}
 
-				SmaMeasurementType<?> measurement = measurementSet.getMeasurements()
-						.get(measurementName);
-				if ( measurement == null ) {
+				var measurements = (measurementSet != null ? measurementSet.getMeasurements() : null);
+				SmaMeasurementType<?> measurement = (measurements != null
+						? measurements.get(measurementName)
+						: null);
+				if ( measurementSet == null || measurement == null ) {
 					// ignore and continue
 					log.warn(
 							"Unsupported measurement name [{}] on CloudDatumStreamPropertyConfiguration {} value reference [{}]",
@@ -916,7 +931,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	 *
 	 * @return the cache
 	 */
-	public final Cache<String, ZoneId> getSystemTimeZoneCache() {
+	public final @Nullable Cache<String, ZoneId> getSystemTimeZoneCache() {
 		return systemTimeZoneCache;
 	}
 
@@ -931,7 +946,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	 * @param systemTimeZoneCache
 	 *        the cache to set
 	 */
-	public final void setSystemTimeZoneCache(Cache<String, ZoneId> systemTimeZoneCache) {
+	public final void setSystemTimeZoneCache(@Nullable Cache<String, ZoneId> systemTimeZoneCache) {
 		this.systemTimeZoneCache = systemTimeZoneCache;
 	}
 

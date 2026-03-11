@@ -577,7 +577,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 				final String sourceId = requireNonNullArgument(id.getSourceId(), "entity.id.sourceId");
 				final Instant ts = requireNonNullArgument(id.getTimestamp(), "entity.id.timestamp");
 				// to ensure consistent JSON serialization, convert this to a GeneralDatum instance
-				GeneralDatum gd = new GeneralDatum(new DatumId(kind, objectId, sourceId, ts),
+				GeneralDatum gd = new GeneralDatum(DatumId.datumId(kind, objectId, sourceId, ts),
 						d.getSamples());
 				json = sqsObjectMapper.writeValueAsString(gd);
 			} else {

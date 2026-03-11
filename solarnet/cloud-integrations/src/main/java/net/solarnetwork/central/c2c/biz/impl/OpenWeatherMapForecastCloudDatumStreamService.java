@@ -22,12 +22,13 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Clock;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
@@ -73,10 +74,10 @@ public class OpenWeatherMapForecastCloudDatumStreamService
 	}
 
 	/** The service secure setting keys. */
-	public static final Set<String> SECURE_SETTINGS = Collections.emptySet();
+	public static final Set<String> SECURE_SETTINGS = Set.of();
 
 	/** The supported placeholder keys. */
-	public static final List<String> SUPPORTED_PLACEHOLDERS = Collections.emptyList();
+	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of();
 
 	/** The URL path for forecast data. */
 	public static final String FORECAST_URL_PATH = "/data/2.5/forecast";
@@ -139,14 +140,16 @@ public class OpenWeatherMapForecastCloudDatumStreamService
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private List<GeneralDatum> parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream) {
+	private List<GeneralDatum> parseDatum(@Nullable JsonNode json,
+			CloudDatumStreamConfiguration datumStream) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		List<GeneralDatum> result = new ArrayList<>(40);
 		for ( JsonNode forecastNode : json.path("list") ) {
 			GeneralDatum d = parseWeatherData(forecastNode, datumStream.getKind(),
-					datumStream.getObjectId(), datumStream.getSourceId());
+					nonnull(datumStream.getObjectId(), "Object ID"),
+					nonnull(datumStream.getSourceId(), "Source ID"));
 			if ( d != null ) {
 				result.add(d);
 			}

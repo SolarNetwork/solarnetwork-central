@@ -177,7 +177,7 @@ public class CloudControlConfiguration
 	 * @return the ID
 	 */
 	public DatumId datumId(Instant ts) {
-		return new DatumId(ObjectDatumKind.Node, nodeId, controlId, ts);
+		return DatumId.datumId(ObjectDatumKind.Node, nodeId, controlId, ts);
 	}
 
 	@Override

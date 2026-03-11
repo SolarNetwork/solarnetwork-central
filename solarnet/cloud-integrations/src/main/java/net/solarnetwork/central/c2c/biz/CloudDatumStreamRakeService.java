@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz;
 
 import java.time.Instant;
 import java.util.concurrent.Future;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 
 /**
@@ -50,6 +51,7 @@ public interface CloudDatumStreamRakeService {
 	 *
 	 * @return a claimed task, or {@code null} if none could be claimed
 	 */
+	@Nullable
 	CloudDatumStreamRakeTaskEntity claimQueuedTask();
 
 	/**

@@ -70,9 +70,9 @@ public final class BasicQueryFilter extends SimplePagination
 	 *
 	 * @param filter
 	 *        the filter to copy
-	 * @return the copy of {@code criteria}
+	 * @return a new filter instance with properties copied from {@code filter}
 	 */
-	public static BasicQueryFilter copyOf(CloudDatumStreamQueryFilter filter) {
+	public static BasicQueryFilter copyOf(@Nullable CloudDatumStreamQueryFilter filter) {
 		return copyOf(filter, null);
 	}
 
@@ -80,12 +80,13 @@ public final class BasicQueryFilter extends SimplePagination
 	 * Create a copy of a filter.
 	 *
 	 * @param filter
-	 *        the filter to copy
+	 *        the optional filter to copy
 	 * @param parameters
 	 *        optional parameters to override in the copy
-	 * @return the copy of {@code criteria}
+	 * @return a new filter instance with properties copied from {@code filter}
+	 *         and {@code parameters}
 	 */
-	public static BasicQueryFilter copyOf(CloudDatumStreamQueryFilter filter,
+	public static BasicQueryFilter copyOf(@Nullable CloudDatumStreamQueryFilter filter,
 			@Nullable Map<String, ?> parameters) {
 		BasicQueryFilter copy = new BasicQueryFilter();
 		if ( filter instanceof BasicQueryFilter f ) {
@@ -94,7 +95,7 @@ public final class BasicQueryFilter extends SimplePagination
 			if ( f.getParameters() != null ) {
 				copy.setParameters(new LinkedHashMap<>(f.getParameters()));
 			}
-		} else {
+		} else if ( filter != null ) {
 			// DateRangeCriteria
 			copy.setStartDate(filter.getStartDate());
 			copy.setEndDate(filter.getEndDate());

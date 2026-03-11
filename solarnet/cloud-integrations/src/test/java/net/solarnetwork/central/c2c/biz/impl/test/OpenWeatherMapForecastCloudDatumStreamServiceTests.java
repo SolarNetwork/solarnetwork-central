@@ -41,7 +41,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -180,7 +180,7 @@ public class OpenWeatherMapForecastCloudDatumStreamServiceTests {
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
-				.willReturn(Collections.emptyList());
+				.willReturn(List.of());
 
 		// configure datum stream
 		final Long locationId = randomLong();

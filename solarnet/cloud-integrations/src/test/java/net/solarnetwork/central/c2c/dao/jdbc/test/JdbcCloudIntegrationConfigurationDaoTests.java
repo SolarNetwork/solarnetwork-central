@@ -118,7 +118,7 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 	@Test
 	public void insert() {
 		// GIVEN
-		Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		Map<String, Object> props = Map.of("foo", "bar");
 		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
 				randomString(), props);
 
@@ -186,7 +186,7 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 		conf.setName(randomString());
 		conf.setServiceIdentifier(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		UserLongCompositePK result = dao.save(conf);
@@ -224,7 +224,7 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 		final List<Long> userIds = new ArrayList<>(userCount);
 		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int i = 0; i < count; i++ ) {
 			for ( int u = 0; u < userCount; u++ ) {
@@ -262,7 +262,7 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 		final List<Long> userIds = new ArrayList<>(userCount);
 		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int i = 0; i < count; i++ ) {
 			for ( int u = 0; u < userCount; u++ ) {
@@ -367,7 +367,7 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 		final List<Long> userIds = new ArrayList<>(userCount);
 		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int i = 0; i < count; i++ ) {
 			for ( int u = 0; u < userCount; u++ ) {

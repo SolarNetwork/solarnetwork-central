@@ -24,7 +24,6 @@ package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
-import static java.util.Collections.emptyList;
 import static net.solarnetwork.central.c2c.biz.impl.CloudDatumStreamDatumImportInputFormatService.DATUM_STREAM_ID_SETTING;
 import static net.solarnetwork.central.c2c.biz.impl.CloudDatumStreamDatumImportInputFormatService.END_DATE_SETTING;
 import static net.solarnetwork.central.c2c.biz.impl.CloudDatumStreamDatumImportInputFormatService.START_DATE_SETTING;
@@ -42,7 +41,6 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -139,7 +137,7 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 		// @formatter:off
 		given(datumStreamService.datum(same(datumStream), any()))
 				.willReturn(new BasicCloudDatumStreamQueryResult(datumList))
-				.willReturn(new BasicCloudDatumStreamQueryResult(Collections.emptyList()));
+				.willReturn(new BasicCloudDatumStreamQueryResult(List.of()));
 		// @formatter:on
 
 		// WHEN
@@ -228,7 +226,7 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 					.willReturn(new BasicCloudDatumStreamQueryResult(null, nextFilter, datumPage));
 		}
 		// return the final non-paginated end result
-		datumStub.willReturn(new BasicCloudDatumStreamQueryResult(emptyList()));
+		datumStub.willReturn(new BasicCloudDatumStreamQueryResult(List.of()));
 
 		// WHEN
 		final var progress = new ArrayList<Double>(8);
@@ -346,7 +344,7 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 		// services like Enphase use their "last reported date" to adjust the next query start date;
 		// we expect to abort when this happens
 		datumStub.willReturn(
-				new BasicCloudDatumStreamQueryResult(null, queryFilters.getLast(), emptyList()));
+				new BasicCloudDatumStreamQueryResult(null, queryFilters.getLast(), List.of()));
 
 		// WHEN
 		final var progress = new ArrayList<Double>(8);
