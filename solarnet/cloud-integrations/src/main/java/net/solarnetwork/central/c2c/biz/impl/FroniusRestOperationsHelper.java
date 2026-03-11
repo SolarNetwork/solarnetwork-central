@@ -79,8 +79,9 @@ public class FroniusRestOperationsHelper extends RestOperationsHelper {
 
 	@Override
 	public <B extends @Nullable Object, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
-			String description, HttpMethod method, B body, C configuration, Class<R> responseType,
-			Function<HttpHeaders, URI> setup, Function<ResponseEntity<R>, T> handler) {
+			String description, HttpMethod method, @Nullable B body, C configuration,
+			Class<R> responseType, Function<HttpHeaders, URI> setup,
+			Function<ResponseEntity<R>, T> handler) {
 		return super.http(description, method, body, configuration, responseType, (headers) -> {
 			if ( configuration instanceof IdentifiableConfiguration c
 					&& c.hasServiceProperty(ACCESS_KEY_ID_SETTING) ) {

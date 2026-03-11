@@ -212,11 +212,12 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 
 	@Override
 	public <B, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
-			String description, HttpMethod method, B body, C configuration, Class<R> responseType,
-			Function<HttpHeaders, URI> setup, Function<ResponseEntity<R>, T> handler) {
+			String description, HttpMethod method, @Nullable B body, C configuration,
+			Class<R> responseType, Function<HttpHeaders, URI> setup,
+			Function<ResponseEntity<R>, T> handler) {
 		return super.http(description, method, body, configuration, responseType, (headers) -> {
 			if ( configuration instanceof CloudIntegrationConfiguration integration ) {
-				final var decrypted = integration.copyWithId(integration.getId());
+				final var decrypted = integration.copyWithId(integration.pk());
 				decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
 				addOAuthBearerAuthorization(decrypted, headers, oauthClientManager, userEventAppenderBiz,
 						integrationLocksCache != null ? (id) -> integrationLocksCache.get(id) : null);

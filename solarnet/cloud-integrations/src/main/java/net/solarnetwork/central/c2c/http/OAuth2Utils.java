@@ -32,6 +32,7 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -106,7 +107,7 @@ public final class OAuth2Utils {
 	public static void addOAuthBearerAuthorization(CloudIntegrationConfiguration config,
 			HttpHeaders headers, OAuth2AuthorizedClientManager oauthClientManager,
 			UserEventAppenderBiz userEventAppenderBiz,
-			Function<UserLongCompositePK, Lock> lockProvider) {
+			@Nullable Function<UserLongCompositePK, @Nullable Lock> lockProvider) {
 		final String username = config.serviceProperty(USERNAME_SETTING, String.class);
 		final String password = config.serviceProperty(PASSWORD_SETTING, String.class);
 		final OAuth2AuthorizeRequest.Builder authReq = OAuth2AuthorizeRequest

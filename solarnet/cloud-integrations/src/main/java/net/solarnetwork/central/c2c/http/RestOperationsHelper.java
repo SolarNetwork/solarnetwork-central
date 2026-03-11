@@ -148,16 +148,22 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 * @since 1.2
 	 */
 	public <B extends @Nullable Object, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
-			String description, HttpMethod method, B body, C configuration, Class<R> responseType,
-			Function<HttpHeaders, URI> setup, Function<ResponseEntity<R>, T> handler) {
+			String description, HttpMethod method, @Nullable B body, C configuration,
+			Class<R> responseType, Function<HttpHeaders, URI> setup,
+			Function<ResponseEntity<R>, T> handler) {
 		requireNonNullArgument(configuration, "configuration");
 
 		// execute request
 		final ResponseEntity<R> res = exchange(() -> {
 			// resolve URI and headers
 			final var headers = new HttpHeaders();
-			URI uri = setup.apply(headers);
-			return RequestEntity.method(method, uri).headers(headers).body(body);
+			final URI uri = setup.apply(headers);
+			final RequestEntity.BodyBuilder reqBuilder = RequestEntity.method(method, uri)
+					.headers(headers);
+			if ( body == null ) {
+				return reqBuilder.build();
+			}
+			return reqBuilder.body(body);
 		}, responseType, configuration, null, () -> description,
 				BasicHttpOperations::defaultRequestErrorEventMessage);
 		return handler.apply(res);
