@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 
 /**
@@ -56,6 +57,7 @@ public interface CachedContent extends Serializable {
 	 *
 	 * @return the encoding, for example {@literal gzip} or {@code null}
 	 */
+	@Nullable
 	String getContentEncoding();
 
 	/**
@@ -65,6 +67,7 @@ public interface CachedContent extends Serializable {
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
+	@Nullable
 	InputStream getContent() throws IOException;
 
 	/**

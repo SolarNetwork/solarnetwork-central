@@ -450,7 +450,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	 * @param methodsToCache
 	 *        the methods to cache; defaults to {@literal GET} only
 	 */
-	public void setMethodsToCache(Set<String> methodsToCache) {
+	public final void setMethodsToCache(Set<String> methodsToCache) {
 		this.methodsToCache = methodsToCache;
 	}
 
@@ -460,7 +460,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	 * @param requestLockTimeout
 	 *        the timeout to use, in milliseconds; defaults to 4 minutes
 	 */
-	public void setRequestLockTimeout(long requestLockTimeout) {
+	public final void setRequestLockTimeout(long requestLockTimeout) {
 		this.requestLockTimeout = requestLockTimeout;
 	}
 
@@ -478,7 +478,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	 *        {@link #DEFAULT_STAT_LOG_ACCESS_COUNT}
 	 * @since 3.0
 	 */
-	public void setStatLogAccessCount(int statLogAccessCount) {
+	public final void setStatLogAccessCount(int statLogAccessCount) {
 		this.stats.setLogFrequency(statLogAccessCount);
 	}
 }

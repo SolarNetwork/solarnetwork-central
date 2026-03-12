@@ -173,7 +173,8 @@ public final class ExceptionUtils {
 	 *        the validator
 	 * @return the result
 	 */
-	public static BindingResult toBindingResult(ConstraintViolationException e, Validator validator) {
+	public static BindingResult toBindingResult(ConstraintViolationException e,
+			@Nullable Validator validator) {
 		Object object = null;
 		for ( ConstraintViolation<?> violation : e.getConstraintViolations() ) {
 			if ( violation.getLeafBean() != null ) {
@@ -185,7 +186,9 @@ public final class ExceptionUtils {
 		}
 		try {
 			BindingResult bindingResult = new BeanPropertyBindingResult(object, "input");
-			new SpringValidatorAdapterSupport(validator, e, bindingResult);
+			if ( validator != null ) {
+				new SpringValidatorAdapterSupport(validator, e, bindingResult);
+			}
 			return bindingResult;
 		} catch ( IllegalStateException e2 ) {
 			// try with root bean instead of leaf
@@ -195,7 +198,9 @@ public final class ExceptionUtils {
 			}
 			BindingResult bindingResult = new BeanPropertyBindingResult(object, "input");
 			try {
-				new SpringValidatorAdapterSupport(validator, e, bindingResult);
+				if ( validator != null ) {
+					new SpringValidatorAdapterSupport(validator, e, bindingResult);
+				}
 				return bindingResult;
 			} catch ( IllegalStateException e3 ) {
 				// fall back to generic message

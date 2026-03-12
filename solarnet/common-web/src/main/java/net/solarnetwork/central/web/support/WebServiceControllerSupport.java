@@ -23,6 +23,7 @@
 package net.solarnetwork.central.web.support;
 
 import static net.solarnetwork.domain.Result.error;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.security.Principal;
 import java.sql.SQLException;
 import java.time.DateTimeException;
@@ -58,6 +59,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartException;
+import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
@@ -154,10 +156,10 @@ public final class WebServiceControllerSupport {
 	private static final Logger log = LoggerFactory.getLogger(WebServiceControllerSupport.class);
 
 	@Autowired
-	private MessageSource messageSource;
+	private @Nullable MessageSource messageSource;
 
 	@Autowired(required = false)
-	private Validator validator;
+	private @Nullable Validator validator;
 
 	/**
 	 * Get a standardized string description of a request.
@@ -216,8 +218,9 @@ public final class WebServiceControllerSupport {
 			if ( idx > 0 && idx + 1 < authHeader.length() ) {
 				String data = authHeader.substring(idx + 1);
 				Map<String, String> dataMap = StringUtils.commaDelimitedStringToMap(data);
-				String name = dataMap
-						.get(AbstractAuthorizationBuilder.AUTHORIZATION_COMPONENT_CREDENTIAL);
+				String name = (dataMap != null
+						? dataMap.get(AbstractAuthorizationBuilder.AUTHORIZATION_COMPONENT_CREDENTIAL)
+						: null);
 				if ( name != null ) {
 					return name;
 				}
@@ -541,10 +544,12 @@ public final class WebServiceControllerSupport {
 		return ExceptionUtils.generateErrorsResult(e, "VAL.00004", locale, messageSource);
 	}
 
-	private String generateErrorsMessage(Errors e, Locale locale, MessageSource msgSrc) {
+	private String generateErrorsMessage(@Nullable Errors e, Locale locale,
+			@Nullable MessageSource msgSrc) {
 		String msg = (msgSrc == null ? "Validation error"
-				: msgSrc.getMessage("error.validation", null, "Validation error", locale));
-		if ( msgSrc != null && e.hasErrors() ) {
+				: nonnull(msgSrc.getMessage("error.validation", null, "Validation error", locale),
+						"Message"));
+		if ( msgSrc != null && e != null && e.hasErrors() ) {
 			StringBuilder buf = new StringBuilder();
 			for ( ObjectError error : e.getAllErrors() ) {
 				if ( !buf.isEmpty() ) {
@@ -575,8 +580,11 @@ public final class WebServiceControllerSupport {
 			Locale locale) {
 		log.info("InvalidPropertyException in request {}: {}", requestDescription(request),
 				e.toString());
-		return error("VAL.00005", messageSource.getMessage("error.invalidProperty",
-				new Object[] { e.getMessage() }, "Invalid request syntax", locale));
+		return error("VAL.00005",
+				messageSource != null
+						? messageSource.getMessage("error.invalidProperty",
+								new Object[] { e.getMessage() }, "Invalid request syntax", locale)
+						: "Invalid request syntax");
 	}
 
 	/**
@@ -650,7 +658,7 @@ public final class WebServiceControllerSupport {
 	 *
 	 * @return the message source
 	 */
-	public MessageSource getMessageSource() {
+	public @Nullable MessageSource getMessageSource() {
 		return messageSource;
 	}
 
@@ -661,7 +669,7 @@ public final class WebServiceControllerSupport {
 	 *        the message source
 	 */
 	@Autowired
-	public void setMessageSource(MessageSource messageSource) {
+	public void setMessageSource(@Nullable MessageSource messageSource) {
 		this.messageSource = messageSource;
 	}
 
