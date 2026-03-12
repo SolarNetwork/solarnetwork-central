@@ -26,7 +26,6 @@ import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -134,7 +133,7 @@ public class DaoNodeOwnershipBizTests {
 		final UserNode originalUserNode = new UserNode(testUser, testNode);
 		final UserNodeTransfer xfer = new UserNodeTransfer(testUser.getId(), testNode.getId(),
 				TEST_NEW_EMAIL);
-		final List<UserAuthToken> authTokens = Collections.emptyList();
+		final List<UserAuthToken> authTokens = List.of();
 		final UserNode newUserNode = new UserNode(newOwner, testNode);
 
 		// get the xfer record

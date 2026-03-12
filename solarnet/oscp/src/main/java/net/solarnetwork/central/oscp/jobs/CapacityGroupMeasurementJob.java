@@ -30,7 +30,6 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -184,16 +183,14 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 					if ( combinedAssetId != null ) {
 						AssetMeasurement combined = combineAssetMeasurements(combinedAssetId,
 								measurements);
-						measurements = (combined == null ? Collections.emptyList()
-								: Collections.singletonList(combined));
+						measurements = (combined == null ? List.of() : List.of(combined));
 					}
 					msg = new UpdateAssetMeasurement(group.getIdentifier(), measurements);
 				} else {
 					List<EnergyMeasurement> measurements = energyMeasurements(assets, dateCriteria);
 					if ( combinedAssetId != null ) {
 						EnergyMeasurement combined = combineEnergyMeasurements(measurements);
-						measurements = (combined == null ? Collections.emptyList()
-								: Collections.singletonList(combined));
+						measurements = (combined == null ? List.of() : List.of(combined));
 					}
 					msg = new UpdateGroupMeasurements(group.getIdentifier(), measurements);
 				}

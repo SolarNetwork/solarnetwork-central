@@ -25,7 +25,6 @@ package net.solarnetwork.central.user.dao;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
@@ -133,7 +132,7 @@ public class NoopUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 			@Nullable List<SortDescriptor> sorts) {
 		return (data != null && keyComponent1 != null ? data.values().stream()
 				.filter(e -> e.hasId() && keyComponent1.equals(nonnull(e.getId(), "id").keyComponent1()))
-				.toList() : Collections.emptyList());
+				.toList() : List.of());
 	}
 
 	@Override

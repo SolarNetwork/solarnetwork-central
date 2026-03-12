@@ -26,7 +26,6 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +77,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 
 	@Override
 	public Iterable<DatumImportInputFormatService> availableInputFormatServices() {
-		return (inputServices != null ? inputServices : Collections.emptyList());
+		return (inputServices != null ? inputServices : List.of());
 	}
 
 	/**

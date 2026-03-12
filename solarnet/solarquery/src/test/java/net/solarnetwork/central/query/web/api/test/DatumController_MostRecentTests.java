@@ -37,7 +37,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -112,7 +111,7 @@ public class DatumController_MostRecentTests extends AbstractJUnit5CentralTransa
 		final ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
 				"UTC", ObjectDatumKind.Node, 1L, "A", new String[] { "watts" },
 				new String[] { "wattHours" }, null);
-		final List<ObjectDatumStreamMetadata> metas = Collections.singletonList(meta);
+		final List<ObjectDatumStreamMetadata> metas = List.of(meta);
 		final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ssX");
 		final List<Datum> datum = DatumCsvUtils.datumResourceList(SolarQueryApp.class,
 				"testdata/datum-raw-data-01.csv", staticProvider(metas), formatter);

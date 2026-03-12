@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.reg.web.domain;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,12 +40,12 @@ import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
  */
 public class DatumInsightOverallStatistics {
 
-	private List<AuditDatumRecordCounts> counts = Collections.emptyList();
+	private List<AuditDatumRecordCounts> counts = List.of();
 	private Integer nodeCount;
 	private Integer sourceCount;
 	private Integer activeSourceCount;
 	private Integer activeNodeCount;
-	private List<AuditDatumRecordCounts> accumulative = Collections.emptyList();
+	private List<AuditDatumRecordCounts> accumulative = List.of();
 
 	/**
 	 * Default constructor.
@@ -205,7 +204,7 @@ public class DatumInsightOverallStatistics {
 
 	public void setCounts(List<AuditDatumRecordCounts> counts) {
 		if ( counts == null ) {
-			counts = Collections.emptyList();
+			counts = List.of();
 		}
 		this.counts = counts;
 	}
@@ -216,7 +215,7 @@ public class DatumInsightOverallStatistics {
 
 	public void setAccumulative(List<AuditDatumRecordCounts> accumulative) {
 		if ( accumulative == null ) {
-			accumulative = Collections.emptyList();
+			accumulative = List.of();
 		}
 		this.accumulative = accumulative;
 	}

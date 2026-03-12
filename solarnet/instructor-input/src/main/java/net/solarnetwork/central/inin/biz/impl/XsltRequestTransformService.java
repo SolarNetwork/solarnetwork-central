@@ -35,7 +35,6 @@ import java.io.StringWriter;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -149,7 +148,7 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 		Map<String, ?> props = config.getServiceProperties();
 		Object xslt = (props != null ? props.get(SETTING_XSLT) : null);
 		if ( xslt == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		Templates templates = templates(xslt.toString(), config, parameters);
 		try {
@@ -211,9 +210,9 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 		if ( root.isObject() ) {
 			NodeInstruction instr = objectMapper.treeToValue(root, NodeInstruction.class);
 			if ( instr != null ) {
-				return Collections.singletonList(instr);
+				return List.of(instr);
 			}
-			return Collections.emptyList();
+			return List.of();
 		}
 		List<NodeInstruction> result = new ArrayList<>(root.size());
 		for ( JsonNode n : root ) {

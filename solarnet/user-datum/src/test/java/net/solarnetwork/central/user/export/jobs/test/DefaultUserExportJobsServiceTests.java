@@ -33,7 +33,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicLong;
@@ -88,8 +87,7 @@ public class DefaultUserExportJobsServiceTests {
 	public void noConfigurationsFound() {
 		// given
 		Instant now = Instant.now();
-		expect(configurationDao.findForExecution(now, ScheduleType.Hourly))
-				.andReturn(Collections.emptyList());
+		expect(configurationDao.findForExecution(now, ScheduleType.Hourly)).andReturn(List.of());
 
 		// when
 		replayAll();
@@ -116,7 +114,7 @@ public class DefaultUserExportJobsServiceTests {
 		ZonedDateTime minExportDate = ScheduleType.Hourly.previousExportDate(now);
 		config.setMinimumExportDate(minExportDate.toInstant());
 		expect(configurationDao.findForExecution(now.toInstant(), ScheduleType.Hourly))
-				.andReturn(Collections.singletonList(config));
+				.andReturn(List.of(config));
 
 		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
 		Capture<UserDatumExportConfiguration> configCaptor = new Capture<>(CaptureType.ALL);
@@ -143,7 +141,7 @@ public class DefaultUserExportJobsServiceTests {
 		ZonedDateTime minExportDate = ScheduleType.Daily.previousExportDate(now);
 		config.setMinimumExportDate(minExportDate.toInstant());
 		expect(configurationDao.findForExecution(now.toInstant(), ScheduleType.Daily))
-				.andReturn(Collections.singletonList(config));
+				.andReturn(List.of(config));
 
 		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
 		Capture<UserDatumExportConfiguration> configCaptor = new Capture<>(CaptureType.ALL);
@@ -196,7 +194,7 @@ public class DefaultUserExportJobsServiceTests {
 		ZonedDateTime minExportDate = now.truncatedTo(ChronoUnit.HOURS).minusHours(expectedHourCount);
 		config.setMinimumExportDate(minExportDate.toInstant());
 		expect(configurationDao.findForExecution(now.toInstant(), ScheduleType.Hourly))
-				.andReturn(Collections.singletonList(config));
+				.andReturn(List.of(config));
 
 		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
 		for ( int i = 0; i < expectedHourCount; i++ ) {

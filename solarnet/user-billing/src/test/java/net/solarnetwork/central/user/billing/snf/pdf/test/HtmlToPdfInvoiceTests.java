@@ -38,7 +38,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -167,7 +166,7 @@ public class HtmlToPdfInvoiceTests {
 
 			@Override
 			public List<MimeType> supportedMimeTypes() {
-				return Collections.singletonList(MimeTypeUtils.TEXT_HTML);
+				return List.of(MimeTypeUtils.TEXT_HTML);
 			}
 
 			@Override

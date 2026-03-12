@@ -163,7 +163,7 @@ public class LocalizedInvoiceItemUsageRecord
 	public List<LocalizedNamedCostInfo> getLocalizedUsageTiers() {
 		List<NamedCost> tiers = getUsageTiers();
 		if ( tiers == null || tiers.isEmpty() ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		final int len = tiers.size();
 		List<LocalizedNamedCostInfo> result = new ArrayList<>(len);

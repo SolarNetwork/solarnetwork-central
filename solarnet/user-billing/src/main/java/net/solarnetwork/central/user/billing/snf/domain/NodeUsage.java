@@ -29,7 +29,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -543,7 +542,7 @@ public class NodeUsage extends BasicLongEntity
 	private static List<NamedCost> tiersCostBreakdown(BigInteger @Nullable [] counts,
 			NodeUsageCost @Nullable [] costsTiers, Function<NodeUsageCost, BigDecimal> f) {
 		if ( counts == null || counts.length < 1 ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		List<NamedCost> result = new ArrayList<>(counts.length);
 		for ( int i = 0; i < counts.length; i++ ) {

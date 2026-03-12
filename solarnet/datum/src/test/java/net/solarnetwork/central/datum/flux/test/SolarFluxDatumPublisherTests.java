@@ -44,8 +44,8 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -123,7 +123,7 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 		publisher.setMqttStats(mqttStats);
 
 		mqttConnection = new ObservableMqttConnection(factory, mqttStats, "Test SolarFlux",
-				Collections.singletonList(publisher));
+				List.of(publisher));
 		mqttConnection.getMqttConfig().setClientId(TEST_CLIENT_ID);
 		mqttConnection.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
 		Future<?> f = mqttConnection.startup();

@@ -36,7 +36,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -128,7 +127,7 @@ public class DbDeleteDatumByIdTests extends BaseDatumJdbcTestSupport {
 		if ( result.get("data") instanceof List<?> l ) {
 			return (List<ObjectDatumId>) l;
 		}
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Test

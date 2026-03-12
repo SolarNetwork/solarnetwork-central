@@ -24,7 +24,6 @@ package net.solarnetwork.central.reg.web;
 
 import static net.solarnetwork.domain.Result.success;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -126,7 +125,7 @@ public class MyNodesController extends ControllerSupport {
 	@ModelAttribute("nodeDataAlertTypes")
 	public List<UserAlertType> nodeDataAlertTypes() {
 		// now, only one alert type!
-		return Collections.singletonList(UserAlertType.NodeStaleData);
+		return List.of(UserAlertType.NodeStaleData);
 	}
 
 	@ModelAttribute("alertStatuses")

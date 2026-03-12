@@ -36,6 +36,7 @@ import static org.hamcrest.Matchers.sameInstance;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.easymock.Capture;
@@ -107,8 +108,7 @@ public class DaoDatumMetadataBizTests {
 		meta.addTag("bam");
 
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(Collections.emptyList());
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(List.of());
 
 		NodeSourcePK pk = new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID);
 		metaDao.replaceJsonMeta(pk, JsonUtils.getJSONString(meta, null));
@@ -133,8 +133,7 @@ public class DaoDatumMetadataBizTests {
 		meta.addTag("bam");
 
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(Collections.emptyList());
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(List.of());
 
 		NodeSourcePK pk = new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID);
 		metaDao.replaceJsonMeta(pk, JsonUtils.getJSONString(meta, null));
@@ -271,8 +270,7 @@ public class DaoDatumMetadataBizTests {
 		meta.addTag("bam");
 
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(Collections.emptyList());
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(List.of());
 
 		LocationSourcePK pk = new LocationSourcePK(TEST_LOCATION_ID, TEST_SOURCE_ID);
 		metaDao.replaceJsonMeta(pk, JsonUtils.getJSONString(meta, null));
@@ -297,8 +295,7 @@ public class DaoDatumMetadataBizTests {
 		meta.addTag("bam");
 
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(Collections.emptyList());
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(List.of());
 
 		LocationSourcePK pk = new LocationSourcePK(TEST_LOCATION_ID, TEST_SOURCE_ID);
 		metaDao.replaceJsonMeta(pk, JsonUtils.getJSONString(meta, null));

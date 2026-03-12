@@ -67,6 +67,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -627,7 +628,7 @@ public class DaoFlexibilityProviderBizTests {
 		TimeBlockAmount amount = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
 				Phase.All, new BigDecimal("3.3"), MeasurementUnit.kW);
 		final CapacityForecast forecast = new CapacityForecast(ForecastType.Consumption,
-				Collections.singletonList(amount));
+				List.of(amount));
 
 		// find the group
 		CapacityGroupConfiguration group = new CapacityGroupConfiguration(authInfo.userId(),
@@ -712,7 +713,7 @@ public class DaoFlexibilityProviderBizTests {
 		TimeBlockAmount amount = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
 				Phase.All, new BigDecimal("3.3"), MeasurementUnit.kW);
 		final CapacityForecast forecast = new CapacityForecast(ForecastType.Consumption,
-				Collections.singletonList(amount));
+				List.of(amount));
 		final String customUrlPath = "/" + randomUUID().toString();
 
 		// find the group
@@ -768,7 +769,7 @@ public class DaoFlexibilityProviderBizTests {
 		TimeBlockAmount amount = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
 				Phase.All, new BigDecimal("3.3"), MeasurementUnit.kW);
 		final CapacityForecast forecast = new CapacityForecast(ForecastType.Consumption,
-				Collections.singletonList(amount));
+				List.of(amount));
 
 		// find the group
 		CapacityGroupConfiguration group = new CapacityGroupConfiguration(authInfo.userId(),
@@ -950,7 +951,7 @@ public class DaoFlexibilityProviderBizTests {
 		TimeBlockAmount amount = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
 				Phase.All, new BigDecimal("3.3"), MeasurementUnit.kW);
 		final CapacityForecast forecast = new CapacityForecast(ForecastType.Consumption,
-				Collections.singletonList(amount));
+				List.of(amount));
 
 		// find the group
 		CapacityGroupConfiguration group = new CapacityGroupConfiguration(authInfo.userId(),

@@ -51,7 +51,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -840,7 +839,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 						"Flexibility Provider URL for version not configured");
 				throw new ExternalSystemConfigurationException(role, conf, event, msg);
 			}
-			List<VersionUrl> versions = Collections.singletonList(new VersionUrl(V20, url));
+			List<VersionUrl> versions = List.of(new VersionUrl(V20, url));
 			Register register = new Register(token, versions);
 			post(REGISTER_URL_PATH, register);
 

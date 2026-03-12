@@ -243,7 +243,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 
 	@Test
 	public void processNoAlerts() {
-		List<UserAlert> pendingAlerts = Collections.emptyList();
+		List<UserAlert> pendingAlerts = List.of();
 		final Instant batchTime = Instant.now();
 		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
 				service.getBatchSize())).andReturn(pendingAlerts);

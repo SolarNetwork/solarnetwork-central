@@ -23,7 +23,6 @@
 package net.solarnetwork.central.user.aop;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -155,7 +154,7 @@ public class UserSecurityAspect extends AuthorizationSupport {
 			@Nullable SecurityPolicy policy) {
 		if ( nodes == null || nodes.isEmpty() || policy == null || policy.getNodeIds() == null
 				|| policy.getNodeIds().isEmpty() ) {
-			return (nodes != null ? nodes : Collections.emptyList());
+			return (nodes != null ? nodes : List.of());
 		}
 		final Set<Long> policyNodeIds = policy.getNodeIds();
 		final List<UserNode> result = new ArrayList<>(nodes.size());
@@ -189,7 +188,7 @@ public class UserSecurityAspect extends AuthorizationSupport {
 			@Nullable List<UserNodeConfirmation> nodes, @Nullable SecurityPolicy policy) {
 		if ( nodes == null || nodes.isEmpty() || policy == null || policy.getNodeIds() == null
 				|| policy.getNodeIds().isEmpty() ) {
-			return (nodes != null ? nodes : Collections.emptyList());
+			return (nodes != null ? nodes : List.of());
 		}
 		final Set<Long> policyNodeIds = policy.getNodeIds();
 		final List<UserNodeConfirmation> result = new ArrayList<>(nodes.size());

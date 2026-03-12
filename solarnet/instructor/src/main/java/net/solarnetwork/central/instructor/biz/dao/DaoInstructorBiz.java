@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -116,7 +115,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 			@Nullable NodeServiceAuditor nodeServiceAuditor) {
 		super();
 		this.nodeInstructionDao = nodeInstructionDao;
-		this.queueHooks = (queueHooks != null ? queueHooks : Collections.emptyList());
+		this.queueHooks = (queueHooks != null ? queueHooks : List.of());
 		this.nodeServiceAuditor = nodeServiceAuditor;
 	}
 

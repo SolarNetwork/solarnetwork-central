@@ -315,7 +315,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			flush();
 			close();
 			if ( temporaryFile == null ) {
-				return Collections.emptyList();
+				return List.of();
 			}
 			log.info("Wrote {} bytes to temporary file [{}]", temporaryFile.length(), temporaryFile);
 			final boolean decompressTemp = (config == null || config.getCompressionType() == null
@@ -343,7 +343,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 				log.info("Wrote {} bytes to temporary file [{}]", temporaryFile.length(), temporaryFile);
 			}
 			if ( temporaryFile == null ) {
-				return Collections.emptyList();
+				return List.of();
 			}
 			Resource outputResource = new FileSystemResource(temporaryFile);
 			if ( decompressTemp ) {

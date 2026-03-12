@@ -31,7 +31,6 @@ import static net.solarnetwork.service.IdentifiableConfiguration.maskConfigurati
 import static net.solarnetwork.service.LocalizedServiceInfoProvider.localizedServiceSettings;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -171,9 +170,9 @@ public class DatumExportController {
 	public Result<DatumExportFullConfigurations> fullConfiguration() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		List<DatumExportProperties> configs = null;
-		List<UserDataConfiguration> dataConfigs = Collections.emptyList();
-		List<UserDestinationConfiguration> destConfigs = Collections.emptyList();
-		List<UserOutputConfiguration> outputConfigs = Collections.emptyList();
+		List<UserDataConfiguration> dataConfigs = List.of();
+		List<UserDestinationConfiguration> destConfigs = List.of();
+		List<UserOutputConfiguration> outputConfigs = List.of();
 		if ( exportBiz != null ) {
 			configs = exportBiz.datumExportsForUser(userId).stream().map(DatumExportProperties::new)
 					.collect(Collectors.toList());

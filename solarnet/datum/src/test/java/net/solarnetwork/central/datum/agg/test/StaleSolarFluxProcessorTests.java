@@ -38,7 +38,6 @@ import java.sql.ResultSet;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadFactory;
@@ -209,7 +208,7 @@ public class StaleSolarFluxProcessorTests {
 		con.commit();
 
 		// GIVEN
-		List<Datum> datumResults = Collections.singletonList(mostRecentDatum);
+		List<Datum> datumResults = List.of(mostRecentDatum);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> filterResults = new BasicObjectDatumStreamFilterResults<>(
 				singletonMap(streamId, meta), datumResults);
 		Capture<DatumCriteria> filterCaptor = new Capture<>();

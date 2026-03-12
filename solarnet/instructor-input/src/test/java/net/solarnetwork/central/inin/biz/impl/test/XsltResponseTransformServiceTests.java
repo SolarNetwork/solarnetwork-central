@@ -30,7 +30,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,7 +83,7 @@ public class XsltResponseTransformServiceTests {
 	@Test
 	public void empty() throws IOException {
 		// GIVEN
-		List<NodeInstruction> instructions = Collections.emptyList();
+		List<NodeInstruction> instructions = List.of();
 
 		final String xslt = ClassUtils.getResourceAsString("test-xform-res-01.xsl", getClass());
 

@@ -24,7 +24,6 @@ package net.solarnetwork.central.user.billing.snf.st4;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import javax.cache.Cache;
@@ -87,7 +86,7 @@ public class VersionedMessageSourceSnfInvoiceRendererResolver implements SnfInvo
 		this.bundleNames = new String[] { requireNonNullArgument(bundleName, "bundleName") };
 		this.rootTemplateName = requireNonNullArgument(rootTemplateName, "rootTemplateName");
 		this.messageDao = requireNonNullArgument(messageDao, "messageDao");
-		this.mimeTypes = Collections.singletonList(requireNonNullArgument(mimeType, "mimeType"));
+		this.mimeTypes = List.of(requireNonNullArgument(mimeType, "mimeType"));
 		this.messageCache = requireNonNullArgument(messageCache, "messageCache");
 		this.templateCache = requireNonNullArgument(templateCache, "templateCache");
 	}

@@ -23,7 +23,6 @@
 package net.solarnetwork.central.user.event.biz.dao;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -83,19 +82,19 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	@Override
 	public Iterable<UserNodeEventHookService> availableNodeEventHookServices() {
 		List<UserNodeEventHookService> svcs = getNodeEventHookServices();
-		return (svcs != null ? svcs : Collections.emptyList());
+		return (svcs != null ? svcs : List.of());
 	}
 
 	@Override
 	public Iterable<DatumAppEventProducer> availableDatumEventProducers() {
 		List<DatumAppEventProducer> svcs = getDatumEventProducers();
-		return (svcs != null ? svcs : Collections.emptyList());
+		return (svcs != null ? svcs : List.of());
 	}
 
 	@Override
 	public Iterable<LocalizedServiceInfo> availableDatumEventTopics(Locale locale) {
 		List<DatumAppEventProducer> svcs = getDatumEventProducers();
-		Iterable<DatumAppEventProducer> producers = (svcs != null ? svcs : Collections.emptyList());
+		Iterable<DatumAppEventProducer> producers = (svcs != null ? svcs : List.of());
 		List<LocalizedServiceInfo> results = new ArrayList<>(10);
 		Set<String> handledTopics = new HashSet<>(10);
 		for ( DatumAppEventProducer producer : producers ) {
@@ -162,7 +161,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 		if ( UserNodeEventHookConfiguration.class.isAssignableFrom(configurationClass) ) {
 			return availableNodeEventHookServices();
 		}
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	private List<SettingSpecifier> settingsForService(String identifier,
@@ -174,7 +173,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 				}
 			}
 		}
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@SuppressWarnings("unchecked")

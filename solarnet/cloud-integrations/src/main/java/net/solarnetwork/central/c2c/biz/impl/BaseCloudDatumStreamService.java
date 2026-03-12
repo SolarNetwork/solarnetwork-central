@@ -42,7 +42,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -1009,10 +1008,10 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			}
 		} else if ( placeholders != null && !placeholders.isEmpty() ) {
 			// no sourceIdMap: provide a single static set of given placeholders
-			placeholderSets = Collections.singletonList(placeholders);
+			placeholderSets = List.of(placeholders);
 		} else {
 			// no placeholders: provide a single static (empty) set
-			placeholderSets = Collections.singletonList(Map.of());
+			placeholderSets = List.of(Map.of());
 		}
 		return placeholderSets;
 	}

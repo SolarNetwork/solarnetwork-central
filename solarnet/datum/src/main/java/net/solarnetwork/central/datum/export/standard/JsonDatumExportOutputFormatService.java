@@ -27,7 +27,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 import org.springframework.core.io.FileSystemResource;
@@ -154,7 +154,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 				return Set.of(new BasicDatumExportResource(new DeleteOnCloseFileResource(outputResource),
 						getContentType(config), getExportContentType()));
 			}
-			return Collections.emptyList();
+			return List.of();
 		}
 
 		@Override

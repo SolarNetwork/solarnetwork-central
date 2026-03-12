@@ -48,7 +48,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -586,7 +585,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -735,7 +734,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -819,7 +818,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -886,7 +885,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -964,7 +963,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -1121,7 +1120,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -1197,7 +1196,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -1268,7 +1267,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();

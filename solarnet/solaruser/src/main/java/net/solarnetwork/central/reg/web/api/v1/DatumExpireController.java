@@ -100,7 +100,7 @@ public class DatumExpireController {
 	public Result<DatumExpireFullConfigurations> viewDataConfigurations() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 
-		List<ExpireUserDataConfiguration> dataConfigs = Collections.emptyList();
+		List<ExpireUserDataConfiguration> dataConfigs = List.of();
 		if ( expireBiz != null ) {
 			dataConfigs = expireBiz.configurationsForUser(userId, ExpireUserDataConfiguration.class);
 		}

@@ -457,7 +457,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 					final Long siteId = e.getKey();
 					final Map<String, List<ValueRef>> refsByComponent = e.getValue();
 					restOpsHelper.httpGet("Query for site", integration, String.class, (headers) -> {
-						headers.setAccept(Collections.singletonList(MediaType.TEXT_XML));
+						headers.setAccept(List.of(MediaType.TEXT_XML));
 						// @formatter:off
 						return  fromUri(resolveBaseUrl(integration,BASE_URI))
 								.path(XML_FEED_PATH)
@@ -514,7 +514,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		final Instant endDate = queryEndDate(queryClock, granularity);
 		final Instant startDate = queryStartDate(endDate, granularity);
 		return restOpsHelper.httpGet("Query for site", integration, String.class, (headers) -> {
-			headers.setAccept(Collections.singletonList(MediaType.TEXT_XML));
+			headers.setAccept(List.of(MediaType.TEXT_XML));
 			// @formatter:off
 			return  fromUri(resolveBaseUrl(integration,BASE_URI))
 					.path(XML_FEED_PATH)

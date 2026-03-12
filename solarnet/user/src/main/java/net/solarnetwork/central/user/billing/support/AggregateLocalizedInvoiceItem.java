@@ -26,7 +26,6 @@ import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Supplier;
@@ -178,7 +177,7 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 
 	@Override
 	public List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedInvoiceItemUsageRecords() {
-		return Collections.emptyList(); // maybe join lists into single list
+		return List.of(); // maybe join lists into single list
 	}
 
 	@Override

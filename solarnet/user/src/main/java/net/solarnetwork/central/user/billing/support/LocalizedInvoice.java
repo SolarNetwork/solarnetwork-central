@@ -33,7 +33,6 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.FormatStyle;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -235,7 +234,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	public List<LocalizedInvoiceItemInfo> getLocalizedInvoiceItems() {
 		List<InvoiceItem> items = getInvoiceItems();
 		if ( items == null || items.isEmpty() ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return localizedItems(items.stream());
 	}
@@ -243,7 +242,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	private Stream<InvoiceItem> getTaxInvoiceItemsStream() {
 		List<InvoiceItem> items = getInvoiceItems();
 		if ( items == null ) {
-			items = Collections.emptyList();
+			items = List.of();
 		}
 		return items.stream().filter(item -> InvoiceItem.TYPE_TAX.equals(item.getItemType()));
 	}
@@ -251,7 +250,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	private Stream<InvoiceItem> getNonTaxInvoiceItemsStream() {
 		List<InvoiceItem> items = getInvoiceItems();
 		if ( items == null ) {
-			items = Collections.emptyList();
+			items = List.of();
 		}
 		return items.stream().filter(item -> !InvoiceItem.TYPE_TAX.equals(item.getItemType())
 				&& !InvoiceItem.TYPE_CREDIT.equals(item.getItemType()));
@@ -275,7 +274,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	public List<LocalizedInvoiceItemInfo> getLocalizedTaxInvoiceItemsGroupedByDescription() {
 		List<InvoiceItem> taxItems = getTaxInvoiceItemsStream().toList();
 		if ( taxItems.isEmpty() ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 
 		// maintain ordering based on original invoice items
@@ -295,7 +294,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	public List<LocalizedInvoiceUsageRecordInfo> getLocalizedInvoiceUsageRecords() {
 		List<InvoiceUsageRecord<Long>> recs = getNodeUsageRecords();
 		if ( recs == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return recs.stream().map(r -> LocalizedInvoiceUsageRecord.of(r, locale, getCurrencyCode()))
 				.collect(Collectors.toList());

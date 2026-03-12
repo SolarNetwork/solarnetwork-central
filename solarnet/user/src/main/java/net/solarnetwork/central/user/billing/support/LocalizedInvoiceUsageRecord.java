@@ -23,7 +23,6 @@
 package net.solarnetwork.central.user.billing.support;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -130,7 +129,7 @@ public class LocalizedInvoiceUsageRecord<T>
 	public List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedUsageRecords() {
 		List<InvoiceItemUsageRecord> recs = getUsageRecords();
 		if ( recs == null || recs.isEmpty() ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return recs.stream().map(record -> {
 			if ( record instanceof LocalizedInvoiceItemUsageRecordInfo li ) {

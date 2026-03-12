@@ -29,7 +29,6 @@ import java.time.Instant;
 import java.time.InstantSource;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -329,14 +328,14 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 				.findFiltered(c);
 		if ( daoResults == null ) {
 			// not expected
-			return Collections.emptyList();
+			return List.of();
 		}
 
 		log.debug("Query user {} node {} source [{}] range [{} - {}] found {}", userId, objectId,
 				sourceIdPattern, from, to, daoResults.getReturnedResultCount());
 
 		if ( daoResults.getReturnedResultCount() < 1 ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 
 		final QueryAuditor auditor = (kind == ObjectDatumKind.Node ? this.auditor : null);

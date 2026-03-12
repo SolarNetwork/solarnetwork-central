@@ -32,7 +32,6 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.HexFormat;
@@ -274,7 +273,7 @@ public class JCacheContentCachingService
 			buf.append(acceptHeader.nextElement());
 		}
 		String value = buf.toString();
-		return (!value.isEmpty() ? MediaType.parseMediaTypes(value) : Collections.emptyList());
+		return (!value.isEmpty() ? MediaType.parseMediaTypes(value) : List.of());
 	}
 
 	private void addNormalizedAccept(HttpServletRequest request, MessageDigest digest) {

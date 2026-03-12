@@ -29,7 +29,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -160,10 +159,10 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 			UsageInfo usage = UsageInfo.of((Map<String, ?>) metadata.get(SnfInvoiceItem.META_USAGE),
 					(List<Map<String, ?>>) metadata.get(SnfInvoiceItem.META_TIER_BREAKDOWN));
 			if ( usage != null ) {
-				return Collections.singletonList(usage);
+				return List.of(usage);
 			}
 		}
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Override

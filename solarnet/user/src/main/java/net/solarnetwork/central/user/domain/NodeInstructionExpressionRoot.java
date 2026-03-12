@@ -31,8 +31,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.SequencedCollection;
@@ -589,7 +589,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	public Collection<ObjectDatumStreamMetadata> findDatumStreams(ObjectDatumKind kind, String query,
 			@Nullable String sourceIdPattern, String @Nullable... tags) {
 		if ( datumStreamsAccessor == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return datumStreamsAccessor.findStreams(kind, query, sourceIdPattern, tags);
 	}
@@ -759,7 +759,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 			Instant to) {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null || sourceIdPattern.isEmpty()
 				|| from == null || to == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		Collection<Datum> result = datumStreamsAccessor.rangeMatching(Node, getNodeId(), sourceIdPattern,
 				from, to);
@@ -780,7 +780,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	public Collection<DatumExpressionRoot> datumRange(ObjectDatumStreamMetadata streamMeta, Instant from,
 			Instant to) {
 		if ( datumStreamsAccessor == null || streamMeta == null || from == null || to == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		Collection<Datum> result = datumStreamsAccessor.rangeMatching(streamMeta.getKind(),
 				streamMeta.getObjectId(), streamMeta.getSourceId(), from, to);

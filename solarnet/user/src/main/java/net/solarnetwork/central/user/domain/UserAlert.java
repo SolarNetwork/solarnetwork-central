@@ -28,7 +28,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -246,7 +245,7 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 			} else if ( o instanceof String[] a ) {
 				result = Arrays.asList(a);
 			} else if ( o != null ) {
-				result = Collections.singletonList(o.toString());
+				result = List.of(o.toString());
 			}
 		}
 		return result;

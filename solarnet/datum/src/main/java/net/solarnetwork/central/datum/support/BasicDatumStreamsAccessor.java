@@ -28,7 +28,6 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +74,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 			@Nullable Collection<? extends Datum> datum) {
 		super();
 		this.pathMatcher = requireNonNullArgument(pathMatcher, "pathMatcher");
-		this.datum = (datum != null ? datum : Collections.emptyList());
+		this.datum = (datum != null ? datum : List.of());
 	}
 
 	/**

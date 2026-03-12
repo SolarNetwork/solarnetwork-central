@@ -453,7 +453,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	public Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId, Set<String> jobIds,
 			boolean force) {
 		if ( jobIds == null || jobIds.isEmpty() ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		Set<DatumImportState> allowStates = (force ? null
 				: EnumSet.complementOf(EnumSet.of(Claimed, Executing)));

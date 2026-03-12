@@ -33,7 +33,6 @@ import static org.mockito.BDDMockito.then;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -127,7 +126,7 @@ public class DaoUserOcppBizTests {
 	public void availableAuthorizations() {
 		// GIVEN
 		final Long userId = randomLong();
-		List<CentralAuthorization> list = Collections.emptyList();
+		List<CentralAuthorization> list = List.of();
 		given(authorizationDao.findAllForOwner(userId)).willReturn(list);
 
 		// WHEN
@@ -179,7 +178,7 @@ public class DaoUserOcppBizTests {
 	public void availableSystemUsers() {
 		// GIVEN
 		final Long userId = randomLong();
-		List<CentralSystemUser> list = Collections.emptyList();
+		List<CentralSystemUser> list = List.of();
 		given(systemUserDao.findAllForOwner(userId)).willReturn(list);
 
 		// WHEN
@@ -314,7 +313,7 @@ public class DaoUserOcppBizTests {
 	public void availableChargePoints() {
 		// GIVEN
 		final Long userId = randomLong();
-		List<CentralChargePoint> list = Collections.emptyList();
+		List<CentralChargePoint> list = List.of();
 		given(chargePointDao.findAllForOwner(userId)).willReturn(list);
 
 		// WHEN
@@ -368,7 +367,7 @@ public class DaoUserOcppBizTests {
 	public void availableChargePointConnectors() {
 		// GIVEN
 		final Long userId = randomLong();
-		List<CentralChargePointConnector> list = Collections.emptyList();
+		List<CentralChargePointConnector> list = List.of();
 		given(connectorDao.findAllForOwner(userId)).willReturn(list);
 
 		// WHEN
@@ -422,7 +421,7 @@ public class DaoUserOcppBizTests {
 	public void availableChargePointSettings() {
 		// GIVEN
 		final Long userId = randomLong();
-		List<ChargePointSettings> list = Collections.emptyList();
+		List<ChargePointSettings> list = List.of();
 		given(chargePointSettingsDao.findAllForOwner(userId)).willReturn(list);
 
 		// WHEN

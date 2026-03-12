@@ -497,7 +497,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 		if ( data == null || data.isEmpty() ) {
 			return List.of();
 		}
-		return Collections.singletonList(data.getResults().getLast());
+		return List.of(data.getResults().getLast());
 	}
 
 	@Override

@@ -171,7 +171,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 		}
 		Set<SnfInvoiceItem> items = invoice.getItems();
 		if ( items == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return items.stream().map(e -> new InvoiceItemImpl(invoice, e)).collect(Collectors.toList());
 	}
@@ -179,11 +179,11 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	@Override
 	public List<InvoiceUsageRecord<Long>> getNodeUsageRecords() {
 		if ( invoice == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		Set<SnfInvoiceNodeUsage> usages = invoice.getUsages();
 		if ( usages == null || usages.isEmpty() ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return usages.stream().sorted(InvoiceUsageRecordUsageKeyComparator.LONG_USAGE_COMPARATOR)
 				.collect(Collectors.toList());

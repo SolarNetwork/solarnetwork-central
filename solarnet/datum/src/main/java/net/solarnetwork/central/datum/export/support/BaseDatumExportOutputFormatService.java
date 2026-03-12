@@ -25,7 +25,6 @@ package net.solarnetwork.central.datum.export.support;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
@@ -59,7 +58,7 @@ public abstract class BaseDatumExportOutputFormatService extends
 
 	@Override
 	public List<SettingSpecifier> getSettingSpecifiers() {
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	/**

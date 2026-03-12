@@ -25,7 +25,6 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import static java.math.BigDecimal.ZERO;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -151,7 +150,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 		this.unitType = requireNonNullArgument(unitType, "unitType");
 		this.amount = amount != null ? amount : ZERO;
 		this.cost = cost != null ? cost : ZERO;
-		this.tiers = tiers != null ? tiers : Collections.emptyList();
+		this.tiers = tiers != null ? tiers : List.of();
 	}
 
 	@Override

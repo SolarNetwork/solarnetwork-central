@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -655,8 +654,7 @@ public class NodeInstructionController {
 		if ( instruction == null ) {
 			return null;
 		}
-		List<NodeInstruction> results = waitForResults(Collections.singletonList(instruction),
-				maxWaitMs);
+		List<NodeInstruction> results = waitForResults(List.of(instruction), maxWaitMs);
 		if ( results != null && !results.isEmpty() ) {
 			return results.getFirst();
 		}

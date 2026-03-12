@@ -31,7 +31,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -230,7 +229,7 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	public List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedInvoiceItemUsageRecords() {
 		List<InvoiceItemUsageRecord> recs = getItemUsageRecords();
 		if ( recs == null || recs.isEmpty() ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return recs.stream().map(record -> {
 			if ( record instanceof LocalizedInvoiceItemUsageRecordInfo li ) {

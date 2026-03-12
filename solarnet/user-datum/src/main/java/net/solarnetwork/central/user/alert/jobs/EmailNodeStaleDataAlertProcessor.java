@@ -30,7 +30,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -461,7 +460,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		} else {
 			results = userDataCache.get(alert.getUserId());
 		}
-		return (results == null ? Collections.emptyList() : results);
+		return (results == null ? List.of() : results);
 	}
 
 	private boolean withinIntervals(final Instant now, List<DateInterval> intervals) {

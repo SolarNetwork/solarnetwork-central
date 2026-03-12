@@ -31,7 +31,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -476,7 +475,7 @@ public class OutstationService
 	}
 
 	private static <T> List<T> nonNullList(List<T> list) {
-		return (list != null ? list : Collections.emptyList());
+		return (list != null ? list : List.of());
 	}
 
 	private OutstationChangeSet changeSetForDatumCapturedEvent(final Datum datum) {
