@@ -27,8 +27,8 @@ import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
 import java.time.Clock;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.random.RandomGenerator;
 import javax.cache.Cache;
@@ -215,7 +215,7 @@ public class SmaConfig implements SolarNetCloudIntegrationsConfiguration {
 				.requestFactory(() -> environment.matchesProfiles(HTTP_TRACE)
 						? new BufferingClientHttpRequestFactory(reqFactory)
 						: reqFactory)
-				.messageConverters(Arrays.asList(
+				.messageConverters(List.of(
 						new FormHttpMessageConverter(),
 						tokenResponseConverter))
 				.errorHandler(new OAuth2ErrorResponseErrorHandler())

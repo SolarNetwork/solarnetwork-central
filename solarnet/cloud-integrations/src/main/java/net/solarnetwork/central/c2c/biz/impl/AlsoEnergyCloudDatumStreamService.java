@@ -314,7 +314,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 			final AlsoEnergyGranularity resolution = resolveGranularity(ds, filter.getParameters());
 
-			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
 			// construct (siteId, hardwareId) to ValueRef[] mapping
 			final Map<UserLongCompositePK, List<ValueRef>> hardwareGroups = resolveHardwareGroups(ds,

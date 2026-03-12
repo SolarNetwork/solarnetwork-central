@@ -537,7 +537,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 			throw new ValidationException(msg, errors, ms);
 		}
 
-		final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+		final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
 		final QueryPlan plan = resolveQueryPlan(integration, ds, sourceIdMap, valueProps);
 

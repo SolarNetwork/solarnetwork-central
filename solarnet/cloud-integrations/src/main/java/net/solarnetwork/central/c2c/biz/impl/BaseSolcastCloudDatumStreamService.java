@@ -26,7 +26,6 @@ import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -104,7 +103,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 	/** The Solcast supported resolutions. */
 	public static final Set<Duration> SUPPORTED_RESOLUTIONS;
 	static {
-		SUPPORTED_RESOLUTIONS = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
+		SUPPORTED_RESOLUTIONS = Collections.unmodifiableSet(new LinkedHashSet<>(List.of(
 		// @formatter:off
 				Duration.ofMinutes(5),
 				Duration.ofMinutes(10),

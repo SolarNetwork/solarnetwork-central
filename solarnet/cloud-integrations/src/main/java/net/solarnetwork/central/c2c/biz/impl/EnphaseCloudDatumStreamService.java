@@ -49,7 +49,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -573,7 +572,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		},
 		 */
 		// @formatter:off
-		return Arrays.asList(
+		return List.of(
 				dataValue(List.of(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID, "DevicesReporting"), "Devices reporting"),
 
 				dataValue(List.of(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID, "W"), "Active power"),
@@ -613,7 +612,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		        },
 		 */
 		// @formatter:off
-		return Arrays.asList(
+		return List.of(
 				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "DevicesReporting"), "Devices reporting"),
 
 				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "W"), "Active power"),
@@ -785,8 +784,9 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			final var decryptedIntegration = integration.copyWithId(integration.pk());
 			decryptedIntegration.unmaskSensitiveInformation(_ -> SECURE_SETTINGS, encryptor);
 
-			final Duration deviceReportingMaxLag = nonnull(servicePropertyDuration(datumStream,
-					DEVICE_REPORTING_MAXIMUM_LAG_SETTING, DEFAULT_DEVICE_REPORTING_MAXIMUM_LAG),
+			final Duration deviceReportingMaxLag = nonnull(
+					datumStream.servicePropertyDuration(DEVICE_REPORTING_MAXIMUM_LAG_SETTING,
+							DEFAULT_DEVICE_REPORTING_MAXIMUM_LAG),
 					"Maximum lag");
 
 			final Instant filterStartDate = requireNonNullArgument(filter.getStartDate(),
@@ -816,7 +816,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			usedQueryFilter.setStartDate(startDate);
 			usedQueryFilter.setEndDate(endDate);
 
-			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
 			final List<GeneralDatum> resultDatum = new ArrayList<>(16);
 			final Map<Long, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(ds, sourceIdMap,

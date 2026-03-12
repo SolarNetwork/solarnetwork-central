@@ -32,7 +32,6 @@ import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.expandTemplateString;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
-import static org.springframework.util.StringUtils.commaDelimitedListToStringArray;
 import static org.springframework.util.StringUtils.delimitedListToStringArray;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -40,7 +39,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -90,7 +88,6 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.MutableDatum;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
-import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.TextFieldSettingSpecifier;
 import net.solarnetwork.settings.ToggleSettingSpecifier;
@@ -459,10 +456,10 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			params = tmp;
 		}
 
-		final var placeholders = servicePropertyStringMap(datumStream, PLACEHOLDERS_SERVICE_PROPERTY);
+		final var placeholders = datumStream.servicePropertyStringMap(PLACEHOLDERS_SERVICE_PROPERTY);
 
-		final List<String> virtualSourceIds = servicePropertyStringList(datumStream,
-				VIRTUAL_SOURCE_IDS_SETTING);
+		final List<String> virtualSourceIds = datumStream
+				.servicePropertyStringList(VIRTUAL_SOURCE_IDS_SETTING);
 		final SortedMap<Instant, List<GeneralDatum>> virtualDatum = (virtualSourceIds != null
 				&& !virtualSourceIds.isEmpty() ? new TreeMap<>() : null);
 
@@ -725,127 +722,6 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	}
 
 	/**
-	 * Resolve a {@link Duration} from a setting on a configuration.
-	 *
-	 * <p>
-	 * The property value can be a number value, which will be treated as
-	 * seconds, or an ISO duration suitable for passing to
-	 * {@link Duration#parse(CharSequence)} (for example {@code PT2H} for "2
-	 * hours").
-	 * </p>
-	 *
-	 * @param configuration
-	 *        the configuration to extract the mapping from
-	 * @param key
-	 *        the service property key to extract
-	 * @param defaultResult
-	 *        the default duration to return if the property is not available
-	 * @return the mapping, or {@code null}
-	 * @since 1.18
-	 */
-	public static @Nullable Duration servicePropertyDuration(IdentifiableConfiguration configuration,
-			String key, Duration defaultResult) {
-		if ( configuration == null ) {
-			return defaultResult;
-		}
-		final Object propVal = configuration.serviceProperty(key, Object.class);
-		if ( propVal instanceof Duration d ) {
-			return d;
-		} else if ( propVal instanceof Number n ) {
-			return Duration.ofSeconds(n.longValue());
-		} else if ( propVal != null ) {
-			String s = propVal.toString();
-			try {
-				return Duration.parse(s);
-			} catch ( DateTimeParseException e ) {
-				// not parsable...
-			}
-		}
-		return defaultResult;
-	}
-
-	/**
-	 * Resolve a mapping from a setting on a configuration.
-	 *
-	 * @param configuration
-	 *        the configuration to extract the mapping from
-	 * @param key
-	 *        the service property key to extract
-	 * @return the mapping, or {@code null}
-	 * @since 1.4
-	 */
-	@SuppressWarnings("unchecked")
-	public static @Nullable Map<String, String> servicePropertyStringMap(
-			IdentifiableConfiguration configuration, String key) {
-		if ( configuration == null ) {
-			return null;
-		}
-		final Object propVal = configuration.serviceProperty(key, Object.class);
-		final Map<String, String> result;
-		if ( propVal instanceof Map<?, ?> ) {
-			result = (Map<String, String>) propVal;
-		} else if ( propVal != null ) {
-			result = StringUtils.commaDelimitedStringToMap(propVal.toString());
-		} else {
-			result = null;
-		}
-		return result;
-	}
-
-	/**
-	 * Resolve a list from a setting on a configuration.
-	 *
-	 * <p>
-	 * The property value can be a {@code List}, array, or a comma-delimited
-	 * single value.
-	 * </p>
-	 *
-	 * @param configuration
-	 *        the configuration to extract the mapping from
-	 * @param key
-	 *        the service property key to extract
-	 * @return the list, or {@code null}
-	 * @since 1.15
-	 */
-	@SuppressWarnings("unchecked")
-	public static @Nullable List<String> servicePropertyStringList(
-			IdentifiableConfiguration configuration, String key) {
-		if ( configuration == null ) {
-			return null;
-		}
-		final Object propVal = configuration.serviceProperty(key, Object.class);
-		if ( propVal == null ) {
-			return null;
-		}
-		final List<String> result;
-		if ( propVal instanceof List<?> l && !l.isEmpty() ) {
-			if ( l.getFirst() instanceof String ) {
-				// assume all values are strings
-				result = (List<String>) l;
-			} else {
-				result = new ArrayList<>(l.size());
-				for ( Object o : l ) {
-					if ( o != null ) {
-						result.add(o.toString());
-					}
-				}
-			}
-		} else if ( propVal instanceof String[] a ) {
-			result = Arrays.asList(a);
-		} else if ( propVal instanceof Object[] a ) {
-			result = new ArrayList<>(a.length);
-			for ( Object o : a ) {
-				if ( o != null ) {
-					result.add(o.toString());
-				}
-			}
-		} else {
-			result = List.of(commaDelimitedListToStringArray(propVal.toString()));
-		}
-		return result;
-	}
-
-	/**
 	 * Parse a JSON datum property value.
 	 *
 	 * @param val
@@ -1025,7 +901,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @since 1.19
 	 */
 	public static Duration multiStreamMaximumLag(CloudDatumStreamConfiguration datumStream) {
-		return nonnull(servicePropertyDuration(datumStream, MULTI_STREAM_MAXIMUM_LAG_SETTING,
+		return nonnull(datumStream.servicePropertyDuration(MULTI_STREAM_MAXIMUM_LAG_SETTING,
 				DEFAULT_MULTI_STREAM_MAXIMUM_LAG), "Multi-stream maximum lag");
 	}
 

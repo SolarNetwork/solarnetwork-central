@@ -754,7 +754,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		  }
 		 */
 		// @formatter:off
-		return Arrays.asList(
+		return List.of(
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "W"), "Total active power"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "DCV"), "DC voltage"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "GndRes"), "Ground fault resistance"),
@@ -807,7 +807,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		// power extracted from /site/{siteId}/powerDetails
 		// lifetime energy extracted from /site/{siteId}/meters
 		// @formatter:off
-		return Arrays.asList(
+		return List.of(
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "W"), "Power"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "TotWh"), "Lifetime energy")
 				);
@@ -831,7 +831,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		  }
 		 */
 		// @formatter:off
-		return Arrays.asList(
+		return List.of(
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "W"), "Power"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "State"), "Battery state"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "TotWhExp"), "Lifetime energy discharged"),
@@ -884,7 +884,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 			final SolarEdgeResolution resolution = resolveResolution(ds, filter.getParameters());
 
-			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
 			final List<GeneralDatum> resultDatum = new ArrayList<>(16);
 			final Map<Long, SiteQueryPlan> queryPlans = resolveSiteQueryPlans(integration, ds,

@@ -796,7 +796,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private @Nullable Map<String, String> sourceIdMap(CloudDatumStreamConfiguration datumStream) {
-		return servicePropertyStringMap(datumStream, SOURCE_ID_MAP_SETTING);
+		return datumStream.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 	}
 
 	private static @Nullable String resolveSourceId(CloudDatumStreamConfiguration datumStream,

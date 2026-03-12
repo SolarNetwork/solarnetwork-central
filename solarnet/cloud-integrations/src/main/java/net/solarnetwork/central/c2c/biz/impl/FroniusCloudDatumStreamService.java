@@ -581,7 +581,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				throw new ValidationException(msg, errors, ms);
 			}
 
-			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
 			var resultDatum = new ArrayList<GeneralDatum>();
 			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(ds, sourceIdMap,
@@ -650,7 +650,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				nextQueryFilter.setEndDate(nextEndDate);
 			}
 
-			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
 			final var resultDatum = new ArrayList<GeneralDatum>();
 			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(ds, sourceIdMap,
