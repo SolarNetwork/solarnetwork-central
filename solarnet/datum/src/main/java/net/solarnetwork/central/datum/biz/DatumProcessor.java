@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.datum.biz;
 
-import java.util.Collections;
+import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -69,7 +69,7 @@ public interface DatumProcessor {
 	 * @return {@literal true} if the processing was handled successfully
 	 */
 	default boolean processDatum(Identity<GeneralNodeDatumPK> datum, @Nullable Aggregation aggregation) {
-		return processDatumCollection(Collections.singleton(datum), aggregation);
+		return processDatumCollection(Set.of(datum), aggregation);
 	}
 
 	/**
@@ -85,6 +85,6 @@ public interface DatumProcessor {
 	 * @return {@literal true} if the processing was handled successfully
 	 */
 	default boolean processDatum(Identity<GeneralNodeDatumPK> datum) {
-		return processDatumCollection(Collections.singleton(datum), Aggregation.None);
+		return processDatumCollection(Set.of(datum), Aggregation.None);
 	}
 }

@@ -45,9 +45,9 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -188,7 +188,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		// re-store the same datum, but with one new property added
 		GeneralNodeDatum updated = datums.get(0);
 		updated.getSamples().putAccumulatingSampleValue("just.one.more.after.dinner.mint", 1);
-		ingestDatumStream(log, jdbcTemplate, Collections.singleton(updated), "UTC");
+		ingestDatumStream(log, jdbcTemplate, Set.of(updated), "UTC");
 
 		// THEN
 		assertThat("One stale aggregate record created for re-ingested datum", staleRows, hasSize(1));

@@ -576,7 +576,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			s.putStatusSampleValue("expires", ISO_DATE_TIME_ALT_UTC.format(expires));
 			d.setSamples(s);
 
-			return Collections.singleton(d);
+			return Set.of(d);
 		}
 
 	}

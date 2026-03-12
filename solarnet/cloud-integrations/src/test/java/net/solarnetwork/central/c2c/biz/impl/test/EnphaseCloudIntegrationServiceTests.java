@@ -53,9 +53,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.random.RandomGenerator;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -143,9 +143,8 @@ public class EnphaseCloudIntegrationServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		service = new EnphaseCloudIntegrationService(Collections.singleton(datumStreamService),
-				userEventAppenderBiz, encryptor, integrationDao, rng, restOps, oauthClientManager, clock,
-				null);
+		service = new EnphaseCloudIntegrationService(Set.of(datumStreamService), userEventAppenderBiz,
+				encryptor, integrationDao, rng, restOps, oauthClientManager, clock, null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(EnphaseCloudIntegrationService.class.getName(),

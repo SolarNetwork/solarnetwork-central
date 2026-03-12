@@ -38,7 +38,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -272,15 +271,14 @@ public class S3DatumExportDestinationServiceTests {
 
 		// WHEN
 		List<Double> progress = new ArrayList<>(8);
-		service.export(config, Collections.singleton(rsrc), runtimeProps,
-				new ProgressListener<DatumExportService>() {
+		service.export(config, Set.of(rsrc), runtimeProps, new ProgressListener<DatumExportService>() {
 
-					@Override
-					public void progressChanged(DatumExportService context, double amountComplete) {
-						assertThat("Context is service", context, sameInstance(service));
-						progress.add(amountComplete);
-					}
-				});
+			@Override
+			public void progressChanged(DatumExportService context, double amountComplete) {
+				assertThat("Context is service", context, sameInstance(service));
+				progress.add(amountComplete);
+			}
+		});
 
 		// THEN
 		assertThat("Progress was made", progress, not(hasSize(0)));

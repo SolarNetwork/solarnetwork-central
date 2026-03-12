@@ -349,9 +349,8 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			if ( decompressTemp ) {
 				outputResource = new DecompressingResource(outputResource);
 			}
-			return Collections.singleton(
-					new BasicDatumExportResource(new DeleteOnCloseFileResource(outputResource),
-							getContentType(config), getExportContentType()));
+			return Set.of(new BasicDatumExportResource(new DeleteOnCloseFileResource(outputResource),
+					getContentType(config), getExportContentType()));
 		}
 
 		@Override

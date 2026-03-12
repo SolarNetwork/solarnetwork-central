@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -64,7 +63,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	public static final Set<String> DEFAULT_JAVA_BEAN_IGNORE_PROPERTIES;
 
 	static {
-		DEFAULT_JAVA_BEAN_IGNORE_PROPERTIES = Collections.singleton("class");
+		DEFAULT_JAVA_BEAN_IGNORE_PROPERTIES = Set.of("class");
 	}
 
 	/**
@@ -74,7 +73,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	public static final Set<Class<?>> DEFAULT_JAVA_BEAN_STRING_VALUES;
 
 	static {
-		DEFAULT_JAVA_BEAN_STRING_VALUES = Collections.singleton(Class.class);
+		DEFAULT_JAVA_BEAN_STRING_VALUES = Set.of(Class.class);
 	}
 
 	private final @Nullable PropertySerializerRegistrar propertySerializerRegistrar;

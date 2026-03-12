@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.common.dao;
 
-import java.util.Collections;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.LocationRequestStatus;
@@ -86,7 +85,7 @@ public class BasicLocationRequestCriteria extends BasicCoreCriteria implements L
 	 *        the status to set, or {@code null} to remove all statuses
 	 */
 	public final void setRequestStatus(@Nullable LocationRequestStatus status) {
-		setRequestStatuses(status != null ? Collections.singleton(status) : null);
+		setRequestStatuses(status != null ? Set.of(status) : null);
 	}
 
 	@Override

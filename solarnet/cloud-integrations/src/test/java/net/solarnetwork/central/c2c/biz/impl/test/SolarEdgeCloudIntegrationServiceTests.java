@@ -32,9 +32,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -88,7 +88,7 @@ public class SolarEdgeCloudIntegrationServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		service = new SolarEdgeV1CloudIntegrationService(Collections.singleton(datumStreamService),
+		service = new SolarEdgeV1CloudIntegrationService(Set.of(datumStreamService),
 				userEventAppenderBiz, encryptor, restOps);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();

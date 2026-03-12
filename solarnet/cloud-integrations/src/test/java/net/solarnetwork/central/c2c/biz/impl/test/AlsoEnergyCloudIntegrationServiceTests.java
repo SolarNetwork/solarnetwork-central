@@ -38,9 +38,9 @@ import static org.mockito.BDDMockito.then;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -110,8 +110,8 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		service = new AlsoEnergyCloudIntegrationService(Collections.singleton(datumStreamService),
-				userEventAppenderBiz, encryptor, restOps, oauthClientManager, clock, null);
+		service = new AlsoEnergyCloudIntegrationService(Set.of(datumStreamService), userEventAppenderBiz,
+				encryptor, restOps, oauthClientManager, clock, null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(AlsoEnergyCloudIntegrationService.class.getName(),

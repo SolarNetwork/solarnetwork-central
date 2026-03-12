@@ -379,8 +379,8 @@ public class CentralOcppNodeInstructionProvider extends
 	/**
 	 * Get the instruction topic to listen to for OCPP messages.
 	 *
-	 * @return the instruction topic to listen to, or {@code null} to not
-	 *         look for OCPP instructions
+	 * @return the instruction topic to listen to, or {@code null} to not look
+	 *         for OCPP instructions
 	 */
 	public String getInstructionTopic() {
 		return instructionTopic;

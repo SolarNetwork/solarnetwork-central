@@ -248,7 +248,7 @@ public class DaoQueryBiz implements QueryBiz {
 	public Set<Long> findAvailableNodes(SecurityActor actor) {
 		Set<Long> nodeIds = null;
 		if ( actor instanceof SecurityNode a ) {
-			nodeIds = Collections.singleton(a.getNodeId());
+			nodeIds = Set.of(a.getNodeId());
 		} else if ( actor instanceof SecurityToken a ) {
 			String tokenId = a.getToken();
 			Long[] ids = nodeOwnershipDao.nonArchivedNodeIdsForToken(tokenId);

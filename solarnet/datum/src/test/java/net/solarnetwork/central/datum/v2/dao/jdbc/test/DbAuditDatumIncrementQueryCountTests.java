@@ -34,8 +34,8 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataAccessException;
@@ -119,8 +119,8 @@ public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSuppo
 		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(streamId, TEST_TZ,
 				ObjectDatumKind.Node, TEST_NODE_ID, "a");
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, Collections.singleton(
-				ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L, 0L, 0L)));
+		DatumDbUtils.insertAuditDatum(log, jdbcTemplate,
+				Set.of(ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L, 0L, 0L)));
 
 		// WHEN
 		AuditDatum d = incrementAndGet(meta, now, 321);

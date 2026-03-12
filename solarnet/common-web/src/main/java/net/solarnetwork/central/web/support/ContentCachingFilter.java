@@ -27,7 +27,6 @@ import static net.solarnetwork.central.web.support.ContentCachingService.CONTENT
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -88,7 +87,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	private final int lockPoolCapacity;
 	private final LongAccumulator lockPoolMinSize;
 
-	private Set<String> methodsToCache = Collections.singleton("GET");
+	private Set<String> methodsToCache = Set.of("GET");
 	private long requestLockTimeout = TimeUnit.SECONDS.toMillis(240);
 
 	private final Logger log = LoggerFactory.getLogger(getClass());

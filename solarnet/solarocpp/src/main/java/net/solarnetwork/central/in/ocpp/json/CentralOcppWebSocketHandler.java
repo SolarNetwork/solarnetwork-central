@@ -577,8 +577,8 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	/**
 	 * Get the instruction topic to listen to for OCPP messages.
 	 * 
-	 * @return the instruction topic to listen to, or {@code null} to not
-	 *         look for OCPP instructions
+	 * @return the instruction topic to listen to, or {@code null} to not look
+	 *         for OCPP instructions
 	 * @since 2.6
 	 */
 	public String getInstructionTopic() {

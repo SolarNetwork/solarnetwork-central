@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -231,8 +232,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Returned result count", result.getReturnedResultCount(), equalTo(4));
 		assertThat("Total results provided", result.getTotalResults(), equalTo(4L));
 
-		List<SnfInvoice> expectedInvoices = Stream
-				.concat(Collections.singleton(last).stream(), others.stream())
+		List<SnfInvoice> expectedInvoices = Stream.concat(Set.of(last).stream(), others.stream())
 				.sorted(Collections.reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(Collectors.toList());
 
 		List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
@@ -254,8 +254,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
 				"NZD", last.getStartDate().plusMonths(1), 3);
 
-		final List<SnfInvoice> expectedInvoices = Stream
-				.concat(Collections.singleton(last).stream(), others.stream())
+		final List<SnfInvoice> expectedInvoices = Stream.concat(Set.of(last).stream(), others.stream())
 				.sorted(Collections.reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(Collectors.toList());
 
 		// WHEN
@@ -301,8 +300,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Returned result count", result.getReturnedResultCount(), equalTo(4));
 		assertThat("Total results provided", result.getTotalResults(), equalTo(4L));
 
-		List<SnfInvoice> expectedInvoices = Stream
-				.concat(Collections.singleton(last).stream(), others.stream())
+		List<SnfInvoice> expectedInvoices = Stream.concat(Set.of(last).stream(), others.stream())
 				.sorted(Collections.reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(Collectors.toList());
 
 		List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
@@ -324,8 +322,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
 				"NZD", last.getStartDate().plusMonths(1), 3);
 
-		final List<SnfInvoice> expectedInvoices = Stream
-				.concat(Collections.singleton(last).stream(), others.stream())
+		final List<SnfInvoice> expectedInvoices = Stream.concat(Set.of(last).stream(), others.stream())
 				.sorted(Collections.reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(Collectors.toList());
 
 		// WHEN

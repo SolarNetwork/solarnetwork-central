@@ -26,8 +26,8 @@ import static net.solarnetwork.central.instructor.dao.mqtt.NodeInstructionQueueH
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -134,7 +134,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 			this.instructionId = instructionId;
 			this.nodeId = nonnull(instruction.getNodeId(), "Node ID");
 			this.topic = String.format(nodeInstructionTopicTemplate, instruction.getNodeId());
-			Map<String, Object> data = Map.of("instructions", Collections.singleton(instruction));
+			Map<String, Object> data = Map.of("instructions", Set.of(instruction));
 			this.payload = objectMapper.writeValueAsBytes(data);
 		}
 

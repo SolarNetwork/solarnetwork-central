@@ -44,9 +44,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -158,7 +158,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		transform.setServiceIdentifier(requestXformServiceId);
 
 		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
-		endpoint.setNodeIds(Collections.singleton(nodeId));
+		endpoint.setNodeIds(Set.of(nodeId));
 		endpoint.setRequestTransformId(transform.getTransformId());
 
 		// load transform configuration
@@ -259,7 +259,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		transform.setServiceIdentifier(requestXformServiceId);
 
 		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
-		endpoint.setNodeIds(Collections.singleton(nodeId));
+		endpoint.setNodeIds(Set.of(nodeId));
 		endpoint.setRequestTransformId(transform.getTransformId());
 		endpoint.setUserMetadataPath("/pm/foo");
 
@@ -614,7 +614,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		transform.setServiceIdentifier(requestXformServiceId);
 
 		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
-		endpoint.setNodeIds(Collections.singleton(nodeId));
+		endpoint.setNodeIds(Set.of(nodeId));
 		endpoint.setRequestTransformId(transform.getTransformId());
 		endpoint.setRequestContentType("foo/bar");
 

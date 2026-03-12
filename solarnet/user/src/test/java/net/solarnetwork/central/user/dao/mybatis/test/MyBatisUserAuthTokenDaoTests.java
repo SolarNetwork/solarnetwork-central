@@ -38,9 +38,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -118,8 +118,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setCreated(Instant.now());
 		authToken.setAuthSecret(TEST_SECRET);
 		authToken.setStatus(SecurityTokenStatus.Active);
-		authToken.setPolicy(new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(node.getId())).build());
+		authToken.setPolicy(new BasicSecurityPolicy.Builder().withNodeIds(Set.of(node.getId())).build());
 		String id = userAuthTokenDao.save(authToken);
 		assertThat("ID returned", id, is(notNullValue()));
 		this.userAuthToken = authToken;

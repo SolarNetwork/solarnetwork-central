@@ -337,7 +337,7 @@ public class DatumImportController {
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			result = importBiz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Queued,
-					Collections.singleton(DatumImportState.Staged));
+					Set.of(DatumImportState.Staged));
 		}
 		return success(result);
 	}

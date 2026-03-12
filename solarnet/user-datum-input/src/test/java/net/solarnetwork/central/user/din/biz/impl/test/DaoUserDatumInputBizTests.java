@@ -33,9 +33,9 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -122,7 +122,7 @@ public class DaoUserDatumInputBizTests {
 	@BeforeEach
 	public void setup() {
 		biz = new DaoUserDatumInputBiz(credentialDao, transformDao, endpointDao, endpointAuthDao,
-				Collections.singleton(transformService));
+				Set.of(transformService));
 
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 		biz.setValidator(factory.getValidator());

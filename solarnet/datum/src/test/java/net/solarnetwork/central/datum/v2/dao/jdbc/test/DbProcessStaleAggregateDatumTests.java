@@ -67,7 +67,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -352,7 +351,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		BasicObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(d.getStreamId(), "UTC",
 				ObjectDatumKind.Node, 1L, "a", new String[] { "i1" }, new String[] { "a1" }, null, null);
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		DatumDbUtils.insertDatum(log, jdbcTemplate, Collections.singleton(d));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, Set.of(d));
 		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(d.getStreamId(),
 						hour.toInstant(), Aggregation.Hour, Instant.now())));
@@ -432,7 +431,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(agg.getStreamId(),
 				"UTC", ObjectDatumKind.Node, 1L, "a");
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		insertAggregateDatum(log, jdbcTemplate, Collections.singleton(agg));
+		insertAggregateDatum(log, jdbcTemplate, Set.of(agg));
 		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(agg.getStreamId(),
 						day.toInstant(), Aggregation.Day, Instant.now())));
@@ -509,7 +508,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(agg.getStreamId(),
 				"UTC", ObjectDatumKind.Node, 1L, "a");
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		insertAggregateDatum(log, jdbcTemplate, Collections.singleton(agg));
+		insertAggregateDatum(log, jdbcTemplate, Set.of(agg));
 		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(agg.getStreamId(),
 						month.toInstant(), Aggregation.Month, Instant.now())));

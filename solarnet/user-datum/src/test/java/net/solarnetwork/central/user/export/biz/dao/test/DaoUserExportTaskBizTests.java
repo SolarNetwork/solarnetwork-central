@@ -37,8 +37,8 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import org.easymock.Capture;
@@ -111,8 +111,7 @@ public class DaoUserExportTaskBizTests {
 		// given
 		UserDatumExportConfiguration config = createConfiguration();
 		ZonedDateTime now = ZonedDateTime.now(config.zone());
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID))
-				.andReturn(Collections.singleton(TEST_NODE_ID));
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(Set.of(TEST_NODE_ID));
 
 		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
 
@@ -151,8 +150,7 @@ public class DaoUserExportTaskBizTests {
 		dataConfig.setFilter(filter);
 		config.setUserDataConfiguration(dataConfig);
 
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID))
-				.andReturn(Collections.singleton(TEST_NODE_ID));
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(Set.of(TEST_NODE_ID));
 
 		ZonedDateTime exportDate = ScheduleType.Hourly.exportDate(now);
 
@@ -233,8 +231,7 @@ public class DaoUserExportTaskBizTests {
 		UserDatumExportConfiguration config = createConfiguration()
 				.copyWithId(unassignedEntityIdKey(TEST_USER_ID));
 
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID))
-				.andReturn(Collections.singleton(TEST_NODE_ID));
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(Set.of(TEST_NODE_ID));
 
 		Capture<UserAdhocDatumExportTaskInfo> taskCaptor = new Capture<>();
 
@@ -271,8 +268,7 @@ public class DaoUserExportTaskBizTests {
 		UserDatumExportConfiguration config = createConfiguration()
 				.copyWithId(unassignedEntityIdKey(TEST_USER_ID));
 
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID))
-				.andReturn(Collections.singleton(TEST_NODE_ID));
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(Set.of(TEST_NODE_ID));
 
 		Capture<UserAdhocDatumExportTaskInfo> taskCaptor = new Capture<>();
 
