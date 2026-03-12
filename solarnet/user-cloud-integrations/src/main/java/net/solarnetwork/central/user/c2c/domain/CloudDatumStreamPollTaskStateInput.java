@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.c2c.domain;
 
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.validation.StartStopClaimableJobState;
@@ -33,13 +34,14 @@ import net.solarnetwork.central.domain.validation.StartStopClaimableJobState;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class CloudDatumStreamPollTaskStateInput {
 
 	@NotNull
 	@StartStopClaimableJobState
-	private BasicClaimableJobState state;
+	private @Nullable BasicClaimableJobState state;
 
-	private Set<BasicClaimableJobState> requiredStates;
+	private @Nullable Set<BasicClaimableJobState> requiredStates;
 
 	/**
 	 * Constructor.
@@ -53,7 +55,7 @@ public class CloudDatumStreamPollTaskStateInput {
 	 *
 	 * @return the state
 	 */
-	public final BasicClaimableJobState getState() {
+	public final @Nullable BasicClaimableJobState getState() {
 		return state;
 	}
 
@@ -63,7 +65,7 @@ public class CloudDatumStreamPollTaskStateInput {
 	 * @param state
 	 *        the state to set
 	 */
-	public final void setState(BasicClaimableJobState state) {
+	public final void setState(@Nullable BasicClaimableJobState state) {
 		this.state = state;
 	}
 
@@ -72,7 +74,7 @@ public class CloudDatumStreamPollTaskStateInput {
 	 *
 	 * @return the states, or {@code null}
 	 */
-	public final Set<BasicClaimableJobState> getRequiredStates() {
+	public final @Nullable Set<BasicClaimableJobState> getRequiredStates() {
 		return requiredStates;
 	}
 
@@ -82,7 +84,7 @@ public class CloudDatumStreamPollTaskStateInput {
 	 * @param requiredStates
 	 *        the states to set, or {@code null}
 	 */
-	public final void setRequiredStates(Set<BasicClaimableJobState> requiredStates) {
+	public final void setRequiredStates(@Nullable Set<BasicClaimableJobState> requiredStates) {
 		this.requiredStates = requiredStates;
 	}
 

@@ -29,6 +29,7 @@ import java.time.Instant;
 import java.time.Period;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
@@ -44,25 +45,26 @@ import net.solarnetwork.central.domain.validation.StartStopClaimableJobState;
  * @author matt
  * @version 1.1
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStreamRelated {
 
 	@NotNull
 	@StartStopClaimableJobState
-	private BasicClaimableJobState state;
+	private @Nullable BasicClaimableJobState state;
 
 	@NotNull
-	private Instant executeAt;
+	private @Nullable Instant executeAt;
 
 	@NotNull
 	@PositiveTemporalAmount
-	private Period offset;
+	private @Nullable Period offset;
 
 	@Size(max = 4096)
-	private String message;
+	private @Nullable String message;
 
-	private Map<String, Object> serviceProperties;
+	private @Nullable Map<String, Object> serviceProperties;
 
-	private Set<BasicClaimableJobState> requiredStates;
+	private @Nullable Set<BasicClaimableJobState> requiredStates;
 
 	/**
 	 * Constructor.
@@ -78,6 +80,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 *        the ID to assign to the entity
 	 * @return the entity
 	 */
+	@SuppressWarnings("NullAway")
 	public CloudDatumStreamRakeTaskEntity toEntity(UserLongCompositePK id) {
 		CloudDatumStreamRakeTaskEntity conf = new CloudDatumStreamRakeTaskEntity(
 				requireNonNullArgument(id, "id"), now(), UNASSIGNED_ENTITY_ID, state, executeAt, offset);
@@ -91,7 +94,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 *
 	 * @return the state
 	 */
-	public final BasicClaimableJobState getState() {
+	public final @Nullable BasicClaimableJobState getState() {
 		return state;
 	}
 
@@ -101,7 +104,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 * @param state
 	 *        the state to set
 	 */
-	public final void setState(BasicClaimableJobState state) {
+	public final void setState(@Nullable BasicClaimableJobState state) {
 		this.state = state;
 	}
 
@@ -110,7 +113,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 *
 	 * @return the offset
 	 */
-	public Period getOffset() {
+	public @Nullable Period getOffset() {
 		return offset;
 	}
 
@@ -120,7 +123,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 * @param offset
 	 *        the offset to set
 	 */
-	public void setOffset(Period offset) {
+	public void setOffset(@Nullable Period offset) {
 		this.offset = offset;
 	}
 
@@ -129,7 +132,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 *
 	 * @return the date
 	 */
-	public final Instant getExecuteAt() {
+	public final @Nullable Instant getExecuteAt() {
 		return executeAt;
 	}
 
@@ -139,7 +142,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 * @param executeAt
 	 *        the date to set
 	 */
-	public final void setExecuteAt(Instant executeAt) {
+	public final void setExecuteAt(@Nullable Instant executeAt) {
 		this.executeAt = executeAt;
 	}
 
@@ -148,7 +151,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 *
 	 * @return the message
 	 */
-	public final String getMessage() {
+	public final @Nullable String getMessage() {
 		return message;
 	}
 
@@ -158,7 +161,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 * @param message
 	 *        the message to set
 	 */
-	public final void setMessage(String message) {
+	public final void setMessage(@Nullable String message) {
 		this.message = message;
 	}
 
@@ -167,7 +170,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 *
 	 * @return the service properties
 	 */
-	public Map<String, Object> getServiceProperties() {
+	public @Nullable Map<String, Object> getServiceProperties() {
 		return serviceProperties;
 	}
 
@@ -177,7 +180,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 * @param serviceProperties
 	 *        the service properties to set
 	 */
-	public void setServiceProperties(Map<String, Object> serviceProperties) {
+	public void setServiceProperties(@Nullable Map<String, Object> serviceProperties) {
 		this.serviceProperties = serviceProperties;
 	}
 
@@ -186,7 +189,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 *
 	 * @return the states, or {@code null}
 	 */
-	public final Set<BasicClaimableJobState> getRequiredStates() {
+	public final @Nullable Set<BasicClaimableJobState> getRequiredStates() {
 		return requiredStates;
 	}
 
@@ -196,7 +199,7 @@ public class CloudDatumStreamRakeTaskEntityBaseInput implements CloudDatumStream
 	 * @param requiredStates
 	 *        the states to set, or {@code null}
 	 */
-	public final void setRequiredStates(Set<BasicClaimableJobState> requiredStates) {
+	public final void setRequiredStates(@Nullable Set<BasicClaimableJobState> requiredStates) {
 		this.requiredStates = requiredStates;
 	}
 

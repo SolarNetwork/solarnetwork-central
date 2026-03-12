@@ -46,6 +46,7 @@ public class CloudIntegrationConfigurationInput extends
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public CloudIntegrationConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(

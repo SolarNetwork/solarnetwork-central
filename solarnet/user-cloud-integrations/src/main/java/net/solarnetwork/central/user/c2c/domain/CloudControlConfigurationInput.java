@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.c2c.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -39,26 +40,27 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.1
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class CloudControlConfigurationInput extends
 		BaseUserRelatedStdIdentifiableConfigurationInput<CloudControlConfiguration, UserLongCompositePK>
 		implements CloudIntegrationsConfigurationInput<CloudControlConfiguration, UserLongCompositePK>,
 		NodeIdRelated {
 
 	@NotNull
-	private Long integrationId;
+	private @Nullable Long integrationId;
 
 	@NotNull
-	private Long nodeId;
+	private @Nullable Long nodeId;
 
 	@NotNull
 	@NotBlank
 	@Size(max = 64)
-	private String controlId;
+	private @Nullable String controlId;
 
 	@NotNull
 	@NotBlank
 	@Size(max = 4096)
-	private String controlReference;
+	private @Nullable String controlReference;
 
 	/**
 	 * Constructor.
@@ -67,6 +69,7 @@ public class CloudControlConfigurationInput extends
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public CloudControlConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		CloudControlConfiguration conf = new CloudControlConfiguration(requireNonNullArgument(id, "id"),
@@ -75,6 +78,7 @@ public class CloudControlConfigurationInput extends
 		return conf;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(CloudControlConfiguration conf) {
 		super.populateConfiguration(conf);
@@ -90,7 +94,7 @@ public class CloudControlConfigurationInput extends
 	 *
 	 * @return the integration ID
 	 */
-	public Long getIntegrationId() {
+	public final @Nullable Long getIntegrationId() {
 		return integrationId;
 	}
 
@@ -101,7 +105,7 @@ public class CloudControlConfigurationInput extends
 	 * @param integrationId
 	 *        the integration ID to set
 	 */
-	public void setIntegrationId(Long integrationId) {
+	public final void setIntegrationId(@Nullable Long integrationId) {
 		this.integrationId = integrationId;
 	}
 
@@ -111,7 +115,7 @@ public class CloudControlConfigurationInput extends
 	 * @return the node ID
 	 */
 	@Override
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
@@ -121,7 +125,7 @@ public class CloudControlConfigurationInput extends
 	 * @param nodeId
 	 *        the node to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
@@ -130,7 +134,7 @@ public class CloudControlConfigurationInput extends
 	 *
 	 * @return the control ID
 	 */
-	public String getControlId() {
+	public final @Nullable String getControlId() {
 		return controlId;
 	}
 
@@ -140,7 +144,7 @@ public class CloudControlConfigurationInput extends
 	 * @param controlId
 	 *        the control ID to set
 	 */
-	public void setControlId(String controlId) {
+	public final void setControlId(@Nullable String controlId) {
 		this.controlId = controlId;
 	}
 
@@ -149,7 +153,7 @@ public class CloudControlConfigurationInput extends
 	 *
 	 * @return the control reference
 	 */
-	public String getControlReference() {
+	public final @Nullable String getControlReference() {
 		return controlReference;
 	}
 
@@ -159,7 +163,7 @@ public class CloudControlConfigurationInput extends
 	 * @param controlReference
 	 *        the control reference to set
 	 */
-	public void setControlReference(String controlReference) {
+	public final void setControlReference(@Nullable String controlReference) {
 		this.controlReference = controlReference;
 	}
 

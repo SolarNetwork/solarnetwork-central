@@ -54,7 +54,7 @@ public class CloudDatumStreamSettingsEntityInput implements
 	 *
 	 * @return {@literal true} if data should be published to SolarIn
 	 */
-	public boolean isPublishToSolarIn() {
+	public final boolean isPublishToSolarIn() {
 		return publishToSolarIn;
 	}
 
@@ -64,7 +64,7 @@ public class CloudDatumStreamSettingsEntityInput implements
 	 * @param publishToSolarIn
 	 *        {@literal true} if data should be published to SolarIn
 	 */
-	public void setPublishToSolarIn(boolean publishToSolarIn) {
+	public final void setPublishToSolarIn(boolean publishToSolarIn) {
 		this.publishToSolarIn = publishToSolarIn;
 	}
 
@@ -73,7 +73,7 @@ public class CloudDatumStreamSettingsEntityInput implements
 	 *
 	 * @return {@literal true} if data should be published to SolarFlux
 	 */
-	public boolean isPublishToSolarFlux() {
+	public final boolean isPublishToSolarFlux() {
 		return publishToSolarFlux;
 	}
 
@@ -83,7 +83,7 @@ public class CloudDatumStreamSettingsEntityInput implements
 	 * @param publishToSolarFlux
 	 *        {@literal true} if data should be published to SolarFlux
 	 */
-	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+	public final void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
 	}
 
