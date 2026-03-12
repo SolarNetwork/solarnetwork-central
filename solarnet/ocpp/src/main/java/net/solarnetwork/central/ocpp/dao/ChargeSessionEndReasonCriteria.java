@@ -57,6 +57,7 @@ public interface ChargeSessionEndReasonCriteria {
 	 * 
 	 * @return array of end reason code values (may be {@code null})
 	 */
+	@SuppressWarnings("null")
 	@JsonIgnore
 	default Integer[] getEndReasonCodes() {
 		final ChargeSessionEndReason[] a = getEndReasons();

@@ -408,14 +408,19 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 
 	@Before(value = "saveEntityForUserKey(userKey, entity)", argNames = "userKey,entity")
 	public void saveEntityAccessCheck(UserIdRelated userKey, Object entity) {
-		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
+		final Long userId = userKey != null ? userKey.getUserId() : null;
+		requireUserWriteAccess(userId);
+		if ( userKey == null ) {
+			// this just to make null analysis happy: requireUserWriteAccess() would
+			// have thrown exception if userKey was null
+			return;
+		}
 		if ( entity instanceof NodeIdRelated id && id.getNodeId() != null ) {
 			requireNodeWriteAccess(id.getNodeId());
 		} else if ( entity instanceof ObjectDatumIdRelated id && id.hasNodeId() ) {
 			requireNodeWriteAccess(id.nodeId());
 		} else if ( entity instanceof CloudDatumStreamIdRelated id && id.hasDatumStreamId() ) {
-			requireDatumStreamWriteAccess(
-					new UserLongCompositePK(userKey.getUserId(), id.getDatumStreamId()));
+			requireDatumStreamWriteAccess(new UserLongCompositePK(userId, id.getDatumStreamId()));
 		} else if ( entity instanceof CloudDatumStreamRelated
 				&& userKey instanceof UserLongCompositePK datumStreamId ) {
 			requireDatumStreamWriteAccess(datumStreamId);

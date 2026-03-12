@@ -1,21 +1,21 @@
 /* ==================================================================
  * SecurityTokenFilterSettings.java - 4/03/2022 10:10:35 AM
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,7 +30,7 @@ import net.solarnetwork.web.jakarta.security.SecurityHttpServletRequestWrapper;
 
 /**
  * Configurable settings for security token filters.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -50,7 +50,11 @@ public class SecurityTokenFilterSettings {
 	public static final DataSize DEFAULT_MINIMUM_SPOOL_LENGTH = DataSize
 			.ofBytes(SecurityHttpServletRequestWrapper.DEFAULT_MINIMUM_SPOOL_LENGTH);
 
-	/** The {@code spoolDirectory} property default value. */
+	/**
+	 * The {@code spoolDirectory} property default value, as a
+	 * {@code SecurityTokenFilter} directory within the {@code java.io.tmpdir}
+	 * system property path.
+	 */
 	public static final Path DEFAULT_SPOOL_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir"),
 			"SecurityTokenFilter");
 
@@ -64,123 +68,130 @@ public class SecurityTokenFilterSettings {
 
 	/**
 	 * Get the maximum date skew.
-	 * 
+	 *
 	 * @return the maximum date skew, in milliseconds; defaults to
 	 *         {@link #DEFALUT_MAX_DATE_SKEW}
 	 */
-	public long getMaxDateSkew() {
+	public final long getMaxDateSkew() {
 		return maxDateSkew;
 	}
 
 	/**
 	 * Set the maximum date skew.
-	 * 
+	 *
 	 * @param maxDateSkew
 	 *        the maximum date skew, in milliseconds
 	 */
-	public void setMaxDateSkew(long maxDateSkew) {
+	public final void setMaxDateSkew(long maxDateSkew) {
 		this.maxDateSkew = maxDateSkew;
 	}
 
 	/**
 	 * Get the maximum request body size.
-	 * 
+	 *
 	 * @return the maximum size, never {@code null} ; defaults to
 	 *         {@link #DEFAULT_MAX_REQUEST_BODY_SIZE}
 	 */
-	public DataSize getMaxRequestBodySize() {
+	public final DataSize getMaxRequestBodySize() {
 		return maxRequestBodySize;
 	}
 
 	/**
 	 * Set the maximum request body size.
-	 * 
+	 *
 	 * @param maxRequestBodySize
 	 *        the maximum size to set; if {@code null} then
 	 *        {@link #DEFAULT_MAX_REQUEST_BODY_SIZE} will be set
 	 */
-	public void setMaxRequestBodySize(DataSize maxRequestBodySize) {
-		if ( maxRequestBodySize == null ) {
-			maxRequestBodySize = DEFAULT_MAX_REQUEST_BODY_SIZE;
-		}
-		this.maxRequestBodySize = maxRequestBodySize;
+	public final void setMaxRequestBodySize(DataSize maxRequestBodySize) {
+		this.maxRequestBodySize = (maxRequestBodySize != null ? maxRequestBodySize
+				: DEFAULT_MAX_REQUEST_BODY_SIZE);
 	}
 
 	/**
 	 * Get the minimum content length before compression can be used.
-	 * 
+	 *
 	 * @return the length; defaults to {@link #DEFAULT_MINIMUM_COMPRESS_LENGTH}
 	 */
-	public DataSize getMinimumCompressLength() {
+	public final DataSize getMinimumCompressLength() {
 		return minimumCompressLength;
 	}
 
 	/**
 	 * Set the minimum content length before compression can be used.
-	 * 
+	 *
 	 * @param minimumCompressLength
-	 *        the length to set
+	 *        the length to set; if {@code null} then
+	 *        {@link #DEFAULT_MINIMUM_COMPRESS_LENGTH} will be set
 	 */
-	public void setMinimumCompressLength(DataSize minimumCompressLength) {
-		this.minimumCompressLength = minimumCompressLength;
+	public final void setMinimumCompressLength(DataSize minimumCompressLength) {
+		this.minimumCompressLength = (minimumCompressLength != null ? minimumCompressLength
+				: DEFAULT_MINIMUM_COMPRESS_LENGTH);
 	}
 
 	/**
 	 * Get a pattern of compressible content types.
-	 * 
+	 *
 	 * @return the pattern; defaults to
 	 *         {@link SecurityHttpServletRequestWrapper#DEFAULT_COMPRESSIBLE_CONTENT_PATTERN}
 	 */
-	public Pattern getCompressibleContentTypePattern() {
+	public final Pattern getCompressibleContentTypePattern() {
 		return compressibleContentTypePattern;
 	}
 
 	/**
 	 * Set a pattern of compressible content types.
-	 * 
+	 *
 	 * @param compressibleContentTypePattern
-	 *        the pattern to set
+	 *        the pattern to set; if {@code null} then
+	 *        {@link SecurityHttpServletRequestWrapper#DEFAULT_COMPRESSIBLE_CONTENT_PATTERN}
+	 *        will be set
 	 */
-	public void setCompressibleContentTypePattern(Pattern compressibleContentTypePattern) {
-		this.compressibleContentTypePattern = compressibleContentTypePattern;
+	public final void setCompressibleContentTypePattern(Pattern compressibleContentTypePattern) {
+		this.compressibleContentTypePattern = (compressibleContentTypePattern != null
+				? compressibleContentTypePattern
+				: SecurityHttpServletRequestWrapper.DEFAULT_COMPRESSIBLE_CONTENT_PATTERN);
 	}
 
 	/**
 	 * Get the minimum content length before spooling to disk is allowed.
-	 * 
+	 *
 	 * @return the length; defaults to {@link #DEFAULT_MINIMUM_SPOOL_LENGTH}
 	 */
-	public DataSize getMinimumSpoolLength() {
+	public final DataSize getMinimumSpoolLength() {
 		return minimumSpoolLength;
 	}
 
 	/**
 	 * Set the minimum content length before spooling to disk is allowed.
-	 * 
+	 *
 	 * @param minimumSpoolLength
-	 *        the length to set
+	 *        the length to set; if {@code null} then
+	 *        {@link #DEFAULT_MINIMUM_SPOOL_LENGTH} will be set
 	 */
-	public void setMinimumSpoolLength(DataSize minimumSpoolLength) {
-		this.minimumSpoolLength = minimumSpoolLength;
+	public final void setMinimumSpoolLength(DataSize minimumSpoolLength) {
+		this.minimumSpoolLength = (minimumSpoolLength != null ? minimumSpoolLength
+				: DEFAULT_MINIMUM_SPOOL_LENGTH);
 	}
 
 	/**
 	 * Get the directory to create temporary spool files.
-	 * 
+	 *
 	 * @return the directory; defaults to a {@link #DEFAULT_SPOOL_DIRECTORY}
 	 */
-	public Path getSpoolDirectory() {
+	public final Path getSpoolDirectory() {
 		return spoolDirectory;
 	}
 
 	/**
 	 * Set the directory to create temporary spool files.
-	 * 
+	 *
 	 * @param spoolDirectory
-	 *        the directory to set
+	 *        the directory to set; if {@code null} then
+	 *        {@link #DEFAULT_SPOOL_DIRECTORY} will be set
 	 */
-	public void setSpoolDirectory(Path spoolDirectory) {
-		this.spoolDirectory = spoolDirectory;
+	public final void setSpoolDirectory(Path spoolDirectory) {
+		this.spoolDirectory = (spoolDirectory != null ? spoolDirectory : DEFAULT_SPOOL_DIRECTORY);
 	}
 
 }

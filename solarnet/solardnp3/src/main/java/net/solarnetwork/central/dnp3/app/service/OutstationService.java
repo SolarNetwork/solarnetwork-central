@@ -434,7 +434,7 @@ public class OutstationService
 					Dnp3UserEvents.eventWithEntity(config, INSTRUCTION_TAGS,
 							opDescription + " control operation failed.", result.getResultParameters(),
 							ERROR_TAG));
-		} else {
+		} else if ( instr != null ) {
 			Map<String, Object> eventData = new LinkedHashMap<>(2);
 			eventData.put(TOPIC_DATA_KEY, instr.getTopic());
 			if ( instr.getParameters() != null && !instr.getParameters().isEmpty() ) {

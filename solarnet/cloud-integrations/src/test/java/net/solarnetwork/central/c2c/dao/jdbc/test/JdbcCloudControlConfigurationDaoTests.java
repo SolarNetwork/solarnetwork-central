@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
-import static java.util.Collections.singletonMap;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudControlConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudControlConfiguration;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
@@ -35,7 +34,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;

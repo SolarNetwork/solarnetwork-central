@@ -23,9 +23,11 @@
 package net.solarnetwork.central.security.web;
 
 import static net.solarnetwork.domain.SecurityPolicy.INVERTED_PATH_MATCH_PREFIX;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -43,7 +45,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.transaction.TransactionException;
-import org.springframework.util.Assert;
 import org.springframework.util.InvalidMimeTypeException;
 import org.springframework.util.MimeType;
 import org.springframework.util.PathMatcher;
@@ -78,8 +79,13 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * character.
  * </p>
  *
+ * <p>
+ * After validating the request authorization, this filter will authenticate the
+ * user with Spring Security.
+ * </p>
+ *
  * @author matt
- * @version 1.12
+ * @version 1.13
  */
 public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter implements Filter {
 
@@ -93,25 +99,25 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 */
 	public static final int DEFAULT_MAX_REQUEST_BODY_SIZE = 65535;
 
-	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
-	private SecurityTokenAuthenticationEntryPoint authenticationEntryPoint;
-	private UserDetailsService userDetailsService;
-	private final PathMatcher pathMatcher;
-	private final String pathMatcherPrefixStrip;
+	private final UserDetailsService userDetailsService;
+	private final SecurityTokenAuthenticationEntryPoint authenticationEntryPoint;
+	private final @Nullable PathMatcher pathMatcher;
+	private final @Nullable String pathMatcherPrefixStrip;
 	private final SecurityTokenFilterSettings settings;
+	private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	/**
-	 * Default constructor.
-	 */
-	public SecurityTokenAuthenticationFilter() {
-		this(null, null, null);
-	}
-
-	/**
 	 * Construct with a {@link PathMatcher}.
 	 *
+	 * @param userDetailsService
+	 *        the user details service
+	 * @param authenticationEntryPoint
+	 *        the authentication entry point
+	 * @param authenticationDetailsSource
+	 *        the authentication details source, or {@code null} to use a
+	 *        default {@link WebAuthenticationDetailsSource}
 	 * @param pathMatcher
 	 *        the matcher to use, or {@code null} if not supported
 	 * @param pathMatcherPrefixStrip
@@ -119,38 +125,28 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 *        {@link HttpServletRequest#getRequestURI()} <i>after</i> any
 	 *        {@link HttpServletRequest#getContextPath()} has been removed,
 	 *        before comparing paths, or {@code null} to not strip any prefix
-	 * @since 1.5
+	 * @param settings
+	 *        the settings, or {@code null} to create a default instance
+	 * @throws IllegalArgumentException
+	 *         if {@code userDetailsService} or {@code authenticationEntryPoint}
+	 *         is {@code null}
+	 * @since 1.13
 	 */
-	public SecurityTokenAuthenticationFilter(PathMatcher pathMatcher, String pathMatcherPrefixStrip) {
-		this(pathMatcher, pathMatcherPrefixStrip, null);
-	}
-
-	/**
-	 * Construct with a {@link PathMatcher}.
-	 *
-	 * @param pathMatcher
-	 *        the matcher to use, or {@code null} if not supported
-	 * @param pathMatcherPrefixStrip
-	 *        a path prefix to strip from
-	 *        {@link HttpServletRequest#getRequestURI()} <i>after</i> any
-	 *        {@link HttpServletRequest#getContextPath()} has been removed,
-	 *        before comparing paths, or {@code null} to not strip any prefix
-	 * @param settings,
-	 *        or {@code null} to create a default instance
-	 * @since 1.7
-	 */
-	public SecurityTokenAuthenticationFilter(PathMatcher pathMatcher, String pathMatcherPrefixStrip,
-			SecurityTokenFilterSettings settings) {
+	public SecurityTokenAuthenticationFilter(UserDetailsService userDetailsService,
+			SecurityTokenAuthenticationEntryPoint authenticationEntryPoint,
+			AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource,
+			@Nullable PathMatcher pathMatcher, @Nullable String pathMatcherPrefixStrip,
+			@Nullable SecurityTokenFilterSettings settings) {
 		super();
+		this.userDetailsService = requireNonNullArgument(userDetailsService, "userDetailsService");
+		this.authenticationEntryPoint = requireNonNullArgument(authenticationEntryPoint,
+				"authenticationEntryPoint");
+		this.authenticationDetailsSource = (authenticationDetailsSource != null
+				? authenticationDetailsSource
+				: new WebAuthenticationDetailsSource());
 		this.pathMatcher = pathMatcher;
 		this.pathMatcherPrefixStrip = pathMatcherPrefixStrip;
 		this.settings = (settings != null ? settings : new SecurityTokenFilterSettings());
-	}
-
-	@Override
-	public void afterPropertiesSet() {
-		Assert.notNull(userDetailsService, "A UserDetailsService is required");
-		Assert.notNull(authenticationEntryPoint, "A SecurityTokenAuthenticationEntryPoint is required");
 	}
 
 	@Override
@@ -220,7 +216,8 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 			}
 		}
 
-		final String computedDigest = data.computeSignatureDigest(user.getPassword());
+		final String computedDigest = data
+				.computeSignatureDigest(user.getPassword() != null ? user.getPassword() : "");
 		if ( !computedDigest.equals(data.getSignatureDigest()) ) {
 			log.debug("Expected response: [{}] but received: [{}]", computedDigest,
 					data.getSignatureDigest());
@@ -242,7 +239,8 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		chain.doFilter(request, res);
 	}
 
-	private boolean isValidApiPath(final HttpServletRequest request, final SecurityPolicy policy) {
+	private boolean isValidApiPath(final HttpServletRequest request,
+			final @Nullable SecurityPolicy policy) {
 		Set<String> apiPaths = (policy != null ? policy.getApiPaths() : null);
 		if ( apiPaths == null || apiPaths.isEmpty() ) {
 			return true;
@@ -324,44 +322,17 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	/**
 	 * Get the user details service.
 	 *
+	 * <p>
+	 * The service must return users with valid SolarNetwork usernames (email
+	 * addresses) and plain-text authorization token secret passwords via
+	 * {@link UserDetails#getUsername()} and {@link UserDetails#getPassword()}.
+	 * </p>
+	 *
 	 * @return the service
 	 * @since 1.9
 	 */
-	public UserDetailsService getUserDetailsService() {
+	public final UserDetailsService getUserDetailsService() {
 		return userDetailsService;
-	}
-
-	/**
-	 * Set the details service, which must return users with valid SolarNetwork
-	 * usernames (email addresses) and plain-text authorization token secret
-	 * passwords via {@link UserDetails#getUsername()} and
-	 * {@link UserDetails#getPassword()}.
-	 *
-	 * <p>
-	 * After validating the request authorization, this filter will authenticate
-	 * the user with Spring Security.
-	 * </p>
-	 *
-	 * @param userDetailsService
-	 *        the service
-	 */
-	public void setUserDetailsService(UserDetailsService userDetailsService) {
-		this.userDetailsService = userDetailsService;
-	}
-
-	/**
-	 * Set the details source to use.
-	 *
-	 * <p>
-	 * Defaults to a {@link WebAuthenticationDetailsSource}.
-	 * </p>
-	 *
-	 * @param authenticationDetailsSource
-	 *        the source to use
-	 */
-	public void setAuthenticationDetailsSource(
-			AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
-		this.authenticationDetailsSource = authenticationDetailsSource;
 	}
 
 	/**
@@ -376,19 +347,8 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 * @param maxDateSkew
 	 *        the maximum allowed date skew
 	 */
-	public void setMaxDateSkew(long maxDateSkew) {
+	public final void setMaxDateSkew(long maxDateSkew) {
 		this.settings.setMaxDateSkew(maxDateSkew);
-	}
-
-	/**
-	 * The {@link SecurityTokenAuthenticationEntryPoint} to use as the entry
-	 * point.
-	 *
-	 * @param entryPoint
-	 *        the entry point to use
-	 */
-	public void setAuthenticationEntryPoint(SecurityTokenAuthenticationEntryPoint entryPoint) {
-		this.authenticationEntryPoint = entryPoint;
 	}
 
 	/**
@@ -398,7 +358,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 *        the maximum request body size allowed
 	 * @since 1.3
 	 */
-	public void setMaxRequestBodySize(int maxRequestBodySize) {
+	public final void setMaxRequestBodySize(int maxRequestBodySize) {
 		this.settings.setMaxRequestBodySize(DataSize.ofBytes(maxRequestBodySize));
 	}
 
@@ -408,7 +368,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 * @return the settings, never {@code null}
 	 * @since 1.7
 	 */
-	public SecurityTokenFilterSettings getSettings() {
+	public final SecurityTokenFilterSettings getSettings() {
 		return settings;
 	}
 

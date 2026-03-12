@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
-import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toCollection;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamMappingConfigurationData;
@@ -37,7 +36,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

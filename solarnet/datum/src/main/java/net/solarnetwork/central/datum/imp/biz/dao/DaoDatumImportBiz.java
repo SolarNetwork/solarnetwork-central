@@ -464,7 +464,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		taskMap.entrySet().removeIf(e -> {
 			DatumImportTask task = e.getValue();
 			boolean remove = userId.equals(task.getUserId()) && jobIds.contains(task.getJobId())
-					&& allowStates.contains(task.getJobState());
+					&& (allowStates == null || allowStates.contains(task.getJobState()));
 			task.cancel(true);
 			return remove;
 		});
@@ -1064,8 +1064,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 *        the ID of the token to get, or {@code null}
 	 * @return the token, or {@code null} if {@code token} is {@code null}
 	 * @throws AuthorizationException
-	 *         if {@code token} is not {@code null} but a
-	 *         {@link SecurityToken} is not found for it
+	 *         if {@code token} is not {@code null} but a {@link SecurityToken}
+	 *         is not found for it
 	 */
 	private SecurityToken tokenForId(String tokenId) throws AuthorizationException {
 		if ( tokenId == null ) {
@@ -1083,11 +1083,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 *
 	 * @param tokenId
 	 *        the ID of the token to get, or {@code null}
-	 * @return the policy, or {@code null} if {@code token} is
-	 *         {@code null} or the token has no policy
+	 * @return the policy, or {@code null} if {@code token} is {@code null} or
+	 *         the token has no policy
 	 * @throws AuthorizationException
-	 *         if {@code token} is not {@code null} but a
-	 *         {@link SecurityToken} is not found for it
+	 *         if {@code token} is not {@code null} but a {@link SecurityToken}
+	 *         is not found for it
 	 */
 	private SecurityPolicy tokenPolicyForId(String tokenId) throws AuthorizationException {
 		SecurityToken token = tokenForId(tokenId);
