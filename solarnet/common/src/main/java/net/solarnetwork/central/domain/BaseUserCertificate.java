@@ -23,8 +23,8 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;

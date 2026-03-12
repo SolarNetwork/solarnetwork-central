@@ -26,7 +26,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
-import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,7 +85,7 @@ public class MyBatisAccountTaskDaoTests extends AbstractMyBatisDaoTestSupport {
 	private AccountTask createTestAccountTask(Account account) {
 		AccountTask t = new AccountTask(UUID.randomUUID(),
 				Instant.ofEpochMilli(System.currentTimeMillis()), AccountTaskType.GenerateInvoice,
-				account.getId().getId(), Collections.singletonMap("foo", "bar"));
+				account.getId().getId(), Map.of("foo", "bar"));
 		return t;
 	}
 

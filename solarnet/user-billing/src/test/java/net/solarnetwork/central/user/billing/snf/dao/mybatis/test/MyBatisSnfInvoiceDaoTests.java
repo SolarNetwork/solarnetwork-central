@@ -130,7 +130,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		SnfInvoiceItem item1 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
 				new BigDecimal("1.23"));
-		item1.setMetadata(Collections.singletonMap("just", "testing"));
+		item1.setMetadata(Map.of("just", "testing"));
 		SnfInvoiceItem item2 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
 				new BigDecimal("2.34"));
 		SnfInvoiceItem item3 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
@@ -168,7 +168,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 			SnfInvoiceItem item1 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
 					new BigDecimal("1.23"));
-			item1.setMetadata(Collections.singletonMap("just", "testing"));
+			item1.setMetadata(Map.of("just", "testing"));
 			SnfInvoiceItem item2 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
 					new BigDecimal("2.34"));
 			SnfInvoiceItem item3 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
@@ -479,7 +479,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		SnfInvoiceItem item1 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
 				new BigDecimal("1.23"));
-		item1.setMetadata(Collections.singletonMap("just", "testing"));
+		item1.setMetadata(Map.of("just", "testing"));
 		SnfInvoiceItem item2 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
 				new BigDecimal("2.34"));
 		SnfInvoiceItem item3 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,

@@ -101,8 +101,7 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	 * available.
 	 * </p>
 	 *
-	 * @return the instantaneous property name, or {@code null} if not
-	 *         available
+	 * @return the instantaneous property name, or {@code null} if not available
 	 */
 	default @Nullable String getInstantaneousPropertyName() {
 		String[] names = getInstantaneousPropertyNames();
@@ -125,8 +124,7 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	 * available.
 	 * </p>
 	 *
-	 * @return the accumulating property name, or {@code null} if not
-	 *         available
+	 * @return the accumulating property name, or {@code null} if not available
 	 */
 	default @Nullable String getAccumulatingPropertyName() {
 		String[] names = getAccumulatingPropertyNames();

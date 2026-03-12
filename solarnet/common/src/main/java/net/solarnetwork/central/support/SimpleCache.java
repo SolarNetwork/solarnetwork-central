@@ -161,7 +161,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	@Override
 	public Map<K, V> getAll(Set<? extends K> keys) {
 		if ( keys == null || keys.isEmpty() ) {
-			return Collections.emptyMap();
+			return Map.of();
 		}
 		Map<K, V> result = new HashMap<>(keys.size());
 		for ( K key : keys ) {

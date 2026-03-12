@@ -52,8 +52,7 @@ public interface ConfigurationCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available ID from the
-	 * {@link #getConfigurationIds()} array, or {@code null} if not
-	 * available.
+	 * {@link #getConfigurationIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
 	 * @return the configuration ID, or {@code null} if not available

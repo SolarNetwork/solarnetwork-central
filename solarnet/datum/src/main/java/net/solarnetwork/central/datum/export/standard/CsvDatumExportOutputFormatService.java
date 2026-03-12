@@ -212,7 +212,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 		@SuppressWarnings("MixedMutabilityReturnType")
 		private Map<String, Object> datumMap(GeneralNodeDatumFilterMatch match) {
 			if ( match == null || match.getId() == null ) {
-				return Collections.emptyMap();
+				return Map.of();
 			}
 			Map<String, Object> map = new LinkedHashMap<>(8);
 

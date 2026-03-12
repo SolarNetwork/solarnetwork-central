@@ -73,8 +73,8 @@ public class UsageTiers implements NamedCostTiers {
 	 * @param date
 	 *        the date
 	 * @param comparator
-	 *        an optional comparator to sort the tiers with, or {@code null}
-	 *        to not sort
+	 *        an optional comparator to sort the tiers with, or {@code null} to
+	 *        not sort
 	 * @throws IllegalArgumentException
 	 *         if {@code tiers} or {@code date} is {@code null}
 	 */

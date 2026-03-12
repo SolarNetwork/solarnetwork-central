@@ -86,8 +86,8 @@ public class XsltTransformService extends BaseXsltService implements TransformSe
 	 * @param objectMapper
 	 *        the object mapper
 	 * @param templatesCacheTtl
-	 *        the TTL for the templates cache, or {@code null} or
-	 *        {@literal 0} for no caching
+	 *        the TTL for the templates cache, or {@code null} or {@literal 0}
+	 *        for no caching
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
@@ -113,8 +113,8 @@ public class XsltTransformService extends BaseXsltService implements TransformSe
 	 * @param objectMapper
 	 *        the object mapper
 	 * @param templatesCacheTtl
-	 *        the TTL for the templates cache, or {@code null} or
-	 *        {@literal 0} for no caching
+	 *        the TTL for the templates cache, or {@code null} or {@literal 0}
+	 *        for no caching
 	 * @param templatesCache
 	 *        the templates cache to use
 	 * @throws IllegalArgumentException

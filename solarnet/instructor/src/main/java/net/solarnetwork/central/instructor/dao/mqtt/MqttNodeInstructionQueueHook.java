@@ -134,8 +134,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 			this.instructionId = instructionId;
 			this.nodeId = nonnull(instruction.getNodeId(), "Node ID");
 			this.topic = String.format(nodeInstructionTopicTemplate, instruction.getNodeId());
-			Map<String, Object> data = Collections.singletonMap("instructions",
-					Collections.singleton(instruction));
+			Map<String, Object> data = Map.of("instructions", Collections.singleton(instruction));
 			this.payload = objectMapper.writeValueAsBytes(data);
 		}
 

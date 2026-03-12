@@ -90,10 +90,9 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 	 * Filter a set of sources using a source ID path pattern.
 	 *
 	 * <p>
-	 * If any arguments are {@code null}, or {@code pattern} is
-	 * {@code null} or empty, then {@code sources} will be returned without
-	 * filtering. Otherwise, a singleton set with just {@code pattern} will be
-	 * returned.
+	 * If any arguments are {@code null}, or {@code pattern} is {@code null} or
+	 * empty, then {@code sources} will be returned without filtering.
+	 * Otherwise, a singleton set with just {@code pattern} will be returned.
 	 * </p>
 	 *
 	 * @param sources

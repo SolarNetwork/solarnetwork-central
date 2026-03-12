@@ -153,8 +153,8 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	 *
 	 * <p>
 	 * This replaces the configured {@code zones} array with a single-element
-	 * array if {@code zone} is not {@code null}, otherwise sets
-	 * {@code zones} to {@code null}.
+	 * array if {@code zone} is not {@code null}, otherwise sets {@code zones}
+	 * to {@code null}.
 	 * </p>
 	 *
 	 * @param zone

@@ -52,8 +52,8 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 *
 	 * @param usage
 	 *        the usage Map, whose keys match the properties of this class
-	 * @return the usage, or {@code null} if {@code usage} is {@code null}
-	 *         or does not contain valid property values
+	 * @return the usage, or {@code null} if {@code usage} is {@code null} or
+	 *         does not contain valid property values
 	 */
 	public static @Nullable UsageInfo of(@Nullable Map<String, ?> usage) {
 		return of(usage, null);
@@ -66,8 +66,8 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 *        the usage Map, whose keys match the properties of this class
 	 * @param tiers
 	 *        the usage tiers, as an array of cost objects
-	 * @return the usage, or {@code null} if {@code usage} is {@code null}
-	 *         or does not contain valid property values
+	 * @return the usage, or {@code null} if {@code usage} is {@code null} or
+	 *         does not contain valid property values
 	 */
 	public static @Nullable UsageInfo of(@Nullable Map<String, ?> usage,
 			@Nullable List<Map<String, ?>> tiers) {
@@ -101,8 +101,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 * @param unitType
 	 *        the usage unit type
 	 * @param amount
-	 *        the usage amount; will be stored as {@literal 0} if
-	 *        {@code null}
+	 *        the usage amount; will be stored as {@literal 0} if {@code null}
 	 * @throws IllegalArgumentException
 	 *         if {@code unitType} is {@code null}
 	 * @since 1.1
@@ -117,8 +116,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 * @param unitType
 	 *        the usage unit type
 	 * @param amount
-	 *        the usage amount; will be stored as {@literal 0} if
-	 *        {@code null}
+	 *        the usage amount; will be stored as {@literal 0} if {@code null}
 	 * @param cost
 	 *        the usage cost, in the currency of the account or invoice this
 	 *        usage is associated with; will be stored as {@literal 0} if
@@ -136,8 +134,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 * @param unitType
 	 *        the usage unit type
 	 * @param amount
-	 *        the usage amount; will be stored as {@literal 0} if
-	 *        {@code null}
+	 *        the usage amount; will be stored as {@literal 0} if {@code null}
 	 * @param cost
 	 *        the usage cost, in the currency of the account or invoice this
 	 *        usage is associated with; will be stored as {@literal 0} if

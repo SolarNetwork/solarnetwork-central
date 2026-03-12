@@ -26,8 +26,8 @@ import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.execu
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
@@ -95,7 +95,7 @@ public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 		requireNonNullArgument(processor, "processor");
 		final PreparedStatementCreator sql = new SelectUserEvent(filter);
 		final RowMapper<UserEvent> mapper = UserEventRowMapper.INSTANCE;
-		processor.start(null, null, null, Collections.emptyMap()); // TODO: support count total results/offset/max
+		processor.start(null, null, null, Map.of()); // TODO: support count total results/offset/max
 		try {
 			jdbcOps.execute(sql, (PreparedStatementCallback<Void>) ps -> {
 				try (ResultSet rs = ps.executeQuery()) {

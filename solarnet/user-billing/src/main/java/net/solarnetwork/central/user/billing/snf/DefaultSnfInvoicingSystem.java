@@ -404,7 +404,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 						SnfInvoiceItem creditItem = SnfInvoiceItem.newItem(invoice,
 								InvoiceItemType.Credit, accountCreditKey, BigDecimal.ONE,
 								credit.negate());
-						creditItem.setMetadata(Collections.singletonMap(META_AVAILABLE_CREDIT,
+						creditItem.setMetadata(Map.of(META_AVAILABLE_CREDIT,
 								balance.getAvailableCredit().toPlainString()));
 						if ( !dryRun ) {
 							invoiceItemDao.save(creditItem);

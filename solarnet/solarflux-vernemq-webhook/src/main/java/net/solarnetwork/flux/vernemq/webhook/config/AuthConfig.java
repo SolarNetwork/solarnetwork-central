@@ -20,7 +20,6 @@ package net.solarnetwork.flux.vernemq.webhook.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Qos;
 import net.solarnetwork.flux.vernemq.webhook.service.AuthorizationEvaluator;
 import net.solarnetwork.flux.vernemq.webhook.service.impl.SimpleAuthorizationEvaluator;

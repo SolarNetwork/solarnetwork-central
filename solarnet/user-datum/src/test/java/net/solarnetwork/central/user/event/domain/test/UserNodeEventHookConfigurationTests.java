@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.equalTo;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Collections;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.codec.jackson.JsonUtils;
@@ -64,7 +64,7 @@ public class UserNodeEventHookConfigurationTests {
 		conf.setNodeIds(new Long[] { 1L, 2L });
 		conf.setSourceIds(new String[] { "A", "B" });
 		conf.setServiceIdentifier("foobar");
-		conf.setServiceProps(Collections.singletonMap("foo", "bar"));
+		conf.setServiceProps(Map.of("foo", "bar"));
 
 		// WHEN
 		String json = JsonUtils.getJSONString(conf, null);

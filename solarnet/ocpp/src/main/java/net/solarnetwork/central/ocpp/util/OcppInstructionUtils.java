@@ -75,8 +75,8 @@ public final class OcppInstructionUtils {
 		 * @param jsonPayload
 		 *        the raw JSON message, or {@code null} if an error occurred
 		 * @param payload
-		 *        the decoded OCPP message payload, or {@code null} if an
-		 *        error occurred
+		 *        the decoded OCPP message payload, or {@code null} if an error
+		 *        occurred
 		 * @return the result
 		 */
 		T handleMessage(Exception e, ObjectNode jsonPayload, Object payload);

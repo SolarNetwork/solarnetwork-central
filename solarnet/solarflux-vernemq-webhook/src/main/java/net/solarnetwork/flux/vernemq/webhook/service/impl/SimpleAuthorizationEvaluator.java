@@ -18,16 +18,13 @@
 package net.solarnetwork.flux.vernemq.webhook.service.impl;
 
 import static net.solarnetwork.flux.vernemq.webhook.Globals.AUDIT_LOG;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
-
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.flux.vernemq.webhook.domain.Actor;
 import net.solarnetwork.flux.vernemq.webhook.domain.ActorType;
@@ -445,8 +442,8 @@ public class SimpleAuthorizationEvaluator implements AuthorizationEvaluator {
 	/**
 	 * Get the maximum MQTT Qos setting.
 	 * 
-	 * @return a maximum Qos to enforce, or {@code null} for no limit;
-	 *         defaults to {@code null}
+	 * @return a maximum Qos to enforce, or {@code null} for no limit; defaults
+	 *         to {@code null}
 	 */
 	public Qos getMaxQos() {
 		return maxQos;

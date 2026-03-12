@@ -51,8 +51,7 @@ public interface AuditNodeServiceValue extends Unique<DatumId> {
 	 * @return the node ID
 	 */
 	default Long getNodeId() {
-		return nonnull(nonnull(getId(), "id").getObjectId(),
-				"id.objectId");
+		return nonnull(nonnull(getId(), "id").getObjectId(), "id.objectId");
 	}
 
 	/**
@@ -65,8 +64,7 @@ public interface AuditNodeServiceValue extends Unique<DatumId> {
 	 * @return the service
 	 */
 	default String getService() {
-		return nonnull(nonnull(getId(), "id").getSourceId(),
-				"id.sourceId");
+		return nonnull(nonnull(getId(), "id").getSourceId(), "id.sourceId");
 	}
 
 	/**
@@ -84,8 +82,7 @@ public interface AuditNodeServiceValue extends Unique<DatumId> {
 	 * @return the timestamp for this datum
 	 */
 	default Instant getTimestamp() {
-		return nonnull(nonnull(getId(), "id").getTimestamp(),
-				"id.timestamp");
+		return nonnull(nonnull(getId(), "id").getTimestamp(), "id.timestamp");
 	}
 
 	/**

@@ -37,7 +37,6 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -266,7 +265,7 @@ public class UserDatumInputController {
 					// ignore
 				}
 			}
-			return Collections.emptyMap();
+			return Map.of();
 		}
 
 	}

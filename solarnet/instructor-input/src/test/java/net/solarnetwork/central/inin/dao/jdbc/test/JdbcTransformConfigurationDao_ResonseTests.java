@@ -33,7 +33,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -88,7 +87,7 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 	@Test
 	public void insert() {
 		// GIVEN
-		Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		Map<String, Object> props = Map.of("foo", "bar");
 		ResponseTransformConfiguration conf = newResponseTransformConfiguration(userId, randomString(),
 				randomString(), props);
 
@@ -156,7 +155,7 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 		conf.setName(randomString());
 		conf.setServiceIdentifier(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		UserLongCompositePK result = dao.save(conf);
@@ -194,7 +193,7 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 		final List<Long> userIds = new ArrayList<>(userCount);
 		final List<ResponseTransformConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int i = 0; i < count; i++ ) {
 			for ( int u = 0; u < userCount; u++ ) {
@@ -233,7 +232,7 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 		final List<Long> userIds = new ArrayList<>(userCount);
 		final List<ResponseTransformConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int i = 0; i < count; i++ ) {
 			for ( int u = 0; u < userCount; u++ ) {

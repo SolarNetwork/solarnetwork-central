@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.inin.domain;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -312,8 +312,8 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@code null} if no service
-	 *         properties available
+	 * @return a JSON encoded string, or {@code null} if no service properties
+	 *         available
 	 */
 	@JsonIgnore
 	public String getServicePropsJson() {

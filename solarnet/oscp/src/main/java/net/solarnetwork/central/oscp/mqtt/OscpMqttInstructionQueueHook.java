@@ -421,8 +421,8 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 	 * Set the MQTT topic to publish to.
 	 *
 	 * @param mqttTopic
-	 *        the topic; if {@code null} or blank then
-	 *        {@link #MQTT_TOPIC_V20} will be set instead
+	 *        the topic; if {@code null} or blank then {@link #MQTT_TOPIC_V20}
+	 *        will be set instead
 	 */
 	public void setMqttTopic(String mqttTopic) {
 		this.mqttTopic = (mqttTopic == null || mqttTopic.isBlank() ? MQTT_TOPIC_V20 : mqttTopic);

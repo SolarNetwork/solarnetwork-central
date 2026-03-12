@@ -49,7 +49,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -386,9 +385,9 @@ public class JdbcDatumEntityDao
 		if ( filter.getStreamIds() != null && filter.getStreamIds().length == 1 ) {
 			ObjectDatumStreamMetadata meta = findStreamMetadata(filter);
 			if ( meta != null ) {
-				metaMap = Collections.singletonMap(meta.getStreamId(), meta);
+				metaMap = Map.of(meta.getStreamId(), meta);
 			} else {
-				metaMap = Collections.emptyMap();
+				metaMap = Map.of();
 			}
 		} else {
 			ObjectStreamCriteria metaCriteria = DatumUtils.criteriaWithoutDates(filter);
@@ -673,9 +672,9 @@ public class JdbcDatumEntityDao
 		if ( filter.getStreamIds() != null && filter.getStreamIds().length == 1 ) {
 			ObjectDatumStreamMetadata meta = findStreamMetadata(filter);
 			if ( meta != null ) {
-				metaMap = Collections.singletonMap(meta.getStreamId(), meta);
+				metaMap = Map.of(meta.getStreamId(), meta);
 			} else {
-				metaMap = Collections.emptyMap();
+				metaMap = Map.of();
 			}
 		} else {
 			ObjectStreamCriteria metaCriteria = DatumUtils.criteriaWithoutDates(filter);

@@ -86,8 +86,8 @@ public interface DatumPublishSettings {
 	 *
 	 * @param settings
 	 *        the settings to test
-	 * @return {@literal true} if {@code settings} is not {@code null} and
-	 *         has either SolarIn or SolarFlux publishing enabled
+	 * @return {@literal true} if {@code settings} is not {@code null} and has
+	 *         either SolarIn or SolarFlux publishing enabled
 	 */
 	static boolean shouldPublishForSettings(DatumPublishSettings settings) {
 		return settings != null && settings.shouldPublish();

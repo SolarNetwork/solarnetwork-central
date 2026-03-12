@@ -30,7 +30,6 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -342,7 +341,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 */
 	public final Map<UUID, SnfInvoiceItem> itemMap() {
 		if ( items == null ) {
-			return Collections.emptyMap();
+			return Map.of();
 		}
 		return items.stream().collect(Collectors.toMap(SnfInvoiceItem::getId, e -> e));
 	}
@@ -503,7 +502,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 */
 	public final Map<Long, SnfInvoiceNodeUsage> usageMap() {
 		if ( usages == null ) {
-			return Collections.emptyMap();
+			return Map.of();
 		}
 		return usages.stream().collect(Collectors.toMap(SnfInvoiceNodeUsage::getNodeId, e -> e));
 	}

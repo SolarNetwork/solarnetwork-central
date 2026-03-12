@@ -104,8 +104,7 @@ public final class SnfBillingUtils {
 	 *
 	 * @param id
 	 *        the invoice ID to format
-	 * @return the invoice number, or {@code null} if {@code id} is
-	 *         {@code null}
+	 * @return the invoice number, or {@code null} if {@code id} is {@code null}
 	 */
 	public static @Nullable String invoiceNumForId(@Nullable Long id) {
 		if ( id == null ) {

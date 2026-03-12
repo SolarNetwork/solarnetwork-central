@@ -23,7 +23,6 @@
 package net.solarnetwork.central.common.http;
 
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -103,7 +102,7 @@ public final class OAuth2Utils {
 	 */
 	public static Map<String, Object> principalCredentialsContextAttributes(
 			OAuth2AuthorizeRequest authReq) {
-		Map<String, Object> contextAttributes = Collections.emptyMap();
+		Map<String, Object> contextAttributes = Map.of();
 		Authentication principal = authReq.getPrincipal();
 		if ( principal.getPrincipal() != null && principal.getCredentials() != null ) {
 			contextAttributes = new HashMap<>(4);

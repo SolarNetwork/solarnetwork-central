@@ -41,8 +41,8 @@ public interface ExternalSystemSupportDao {
 	 *        the role of the configuration to get
 	 * @param id
 	 *        the ID of the configuration to get
-	 * @return the configuration, or {@code null} if one does not exist for
-	 *         the given values
+	 * @return the configuration, or {@code null} if one does not exist for the
+	 *         given values
 	 */
 	ExternalSystemConfiguration externalSystemConfiguration(OscpRole role, UserLongCompositePK id);
 

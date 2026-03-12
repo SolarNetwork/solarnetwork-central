@@ -83,8 +83,8 @@ public interface AccountDao extends GenericDao<Account, UserLongPK> {
 	 * @param max
 	 *        the maximum amount of credit to claim, or {@code null} to claim
 	 *        all available credit
-	 * @return the claimed credit, never {@code null} but possibly less than
-	 *         the requested {@code max} if not enough credit is available
+	 * @return the claimed credit, never {@code null} but possibly less than the
+	 *         requested {@code max} if not enough credit is available
 	 */
 	BigDecimal claimAccountBalanceCredit(Long accountId, BigDecimal max);
 

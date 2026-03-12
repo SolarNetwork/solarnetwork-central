@@ -17,7 +17,6 @@
 
 package net.solarnetwork.flux.vernemq.webhook.domain;
 
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -114,7 +113,7 @@ public class Response {
 		super();
 		this.status = status;
 		if ( message != null ) {
-			this.errorStatus = Collections.singletonMap(status, message);
+			this.errorStatus = Map.of(status, message);
 		} else {
 			this.errorStatus = null;
 		}

@@ -93,7 +93,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		inputConfig.setName(TEST_NAME);
 		inputConfig.setServiceIdentifier("foo.bar");
 		inputConfig.setTimeZoneId("Pacific/Auckland");
-		inputConfig.setServiceProps(Collections.singletonMap("foo", "bar"));
+		inputConfig.setServiceProps(Map.of("foo", "bar"));
 		conf.setInputConfiguration(inputConfig);
 
 		return conf;

@@ -200,7 +200,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		Long id = userDao.save(user);
 		then(id).isEqualTo(this.userId);
 
-		Map<String, Object> data = Collections.singletonMap("bim", (Object) "bam");
+		Map<String, Object> data = Map.of("bim", (Object) "bam");
 		userDao.storeInternalData(id, data);
 
 		User updatedUser = userDao.get(id);
@@ -246,13 +246,13 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	public void findFilteredForInternalProperty() {
 		storeNewUser();
 		User user1 = userDao.get(userId);
-		Map<String, Object> billingData1 = Collections.singletonMap("bim", (Object) "bam");
+		Map<String, Object> billingData1 = Map.of("bim", (Object) "bam");
 		user1.setInternalData(billingData1);
 		userDao.storeInternalData(user1.getId(), billingData1);
 
 		Long userId2 = storeTestUser("bar@example.com");
 		User user2 = userDao.get(userId2);
-		Map<String, Object> billingData2 = Collections.singletonMap("bim", (Object) "baz");
+		Map<String, Object> billingData2 = Map.of("bim", (Object) "baz");
 		user2.setInternalData(billingData2);
 		userDao.storeInternalData(user2.getId(), billingData2);
 
@@ -275,7 +275,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	public void storeInternalPropertyNullColumn() {
 		storeNewUser();
 
-		Map<String, Object> data = Collections.singletonMap("foo", (Object) "bar");
+		Map<String, Object> data = Map.of("foo", (Object) "bar");
 		userDao.storeInternalData(userId, data);
 
 		User user = userDao.get(userId);
@@ -287,7 +287,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		storeInternalPropertyNullColumn();
 		User user = userDao.get(userId);
 
-		Map<String, Object> billingData = Collections.singletonMap("bim", (Object) "bam");
+		Map<String, Object> billingData = Map.of("bim", (Object) "bam");
 		userDao.storeInternalData(user.getId(), billingData);
 
 		User updated = userDao.get(userId);
@@ -301,7 +301,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		storeInternalPropertyNullColumn();
 		User user = userDao.get(userId);
 
-		Map<String, Object> billingData = Collections.singletonMap("foo", (Object) "bam");
+		Map<String, Object> billingData = Map.of("foo", (Object) "bam");
 		userDao.storeInternalData(user.getId(), billingData);
 
 		User updated = userDao.get(userId);
@@ -312,6 +312,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	public void storeInternalPropertyNullValue() {
 		storeNewUser();
 
+		// note can not use Map.of() here because that does not support null values
 		Map<String, Object> billingData = Collections.singletonMap("foo", null);
 		userDao.storeInternalData(userId, billingData);
 

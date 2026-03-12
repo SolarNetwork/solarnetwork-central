@@ -48,8 +48,8 @@ public interface AuthorizationEvaluator {
 	 *        the authenticated actor
 	 * @param message
 	 *        the message to publish
-	 * @return the resulting message to publish; or {@code null} if
-	 *         publishing is not authorized for any reason
+	 * @return the resulting message to publish; or {@code null} if publishing
+	 *         is not authorized for any reason
 	 */
 	Message evaluatePublish(Actor actor, Message message);
 

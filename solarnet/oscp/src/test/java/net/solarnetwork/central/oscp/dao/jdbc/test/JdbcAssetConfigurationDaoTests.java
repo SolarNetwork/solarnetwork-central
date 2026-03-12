@@ -42,7 +42,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -196,7 +195,7 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		energy.setType(EnergyType.Total);
 		energy.setDirection(EnergyDirection.Export);
 
-		conf.setServiceProps(Collections.singletonMap("bim", randomUUID().toString()));
+		conf.setServiceProps(Map.of("bim", randomUUID().toString()));
 
 		UserLongCompositePK result = dao.save(conf);
 		AssetConfiguration updated = dao.get(result);

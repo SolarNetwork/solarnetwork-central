@@ -147,19 +147,19 @@ public class DatumStreamMetadataController {
 	 * @param sourceId
 	 *        the source ID to set, or {@code null} to keep unchanged
 	 * @param instantaneousProperties
-	 *        the instantaneous property names to set, or {@code null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param accumulatingProperties
-	 *        the instantaneous property names to set, or {@code null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param statusProperties
-	 *        the instantaneous property names to set, or {@code null} to
-	 *        keep unchanged
-	 * @return the updated stream metadata, or {@code null} if the metadata
-	 *         was not updated
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
+	 * @return the updated stream metadata, or {@code null} if the metadata was
+	 *         not updated
 	 * @throws IllegalArgumentException
-	 *         if either {@code kind} or {@code streamId} is {@code null} or
-	 *         all other arguments are {@code null}
+	 *         if either {@code kind} or {@code streamId} is {@code null} or all
+	 *         other arguments are {@code null}
 	 * @since 1.1
 	 */
 	@RequestMapping(method = RequestMethod.POST, path = "/node")
@@ -191,19 +191,19 @@ public class DatumStreamMetadataController {
 	 * @param sourceId
 	 *        the source ID to set, or {@code null} to keep unchanged
 	 * @param instantaneousProperties
-	 *        the instantaneous property names to set, or {@code null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param accumulatingProperties
-	 *        the instantaneous property names to set, or {@code null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param statusProperties
-	 *        the instantaneous property names to set, or {@code null} to
-	 *        keep unchanged
-	 * @return the updated stream metadata, or {@code null} if the metadata
-	 *         was not updated
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
+	 * @return the updated stream metadata, or {@code null} if the metadata was
+	 *         not updated
 	 * @throws IllegalArgumentException
-	 *         if either {@code kind} or {@code streamId} is {@code null} or
-	 *         all other arguments are {@code null}
+	 *         if either {@code kind} or {@code streamId} is {@code null} or all
+	 *         other arguments are {@code null}
 	 * @since 1.1
 	 */
 	@RequestMapping(method = RequestMethod.POST, path = "/node/{streamId}")

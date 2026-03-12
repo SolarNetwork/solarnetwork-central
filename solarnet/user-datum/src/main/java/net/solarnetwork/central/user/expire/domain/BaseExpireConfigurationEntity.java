@@ -83,8 +83,8 @@ public class BaseExpireConfigurationEntity extends BaseEntity
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@code null} if no service
-	 *         properties available
+	 * @return a JSON encoded string, or {@code null} if no service properties
+	 *         available
 	 */
 	@SerializeIgnore
 	@JsonIgnore

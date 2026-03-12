@@ -60,8 +60,8 @@ public class PartialAggregationInterval {
 	 * @param end
 	 *        the end date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null} or {@code partial} does not
-	 *         have a smaller level than {@code main}
+	 *         if any argument is {@code null} or {@code partial} does not have
+	 *         a smaller level than {@code main}
 	 */
 	public PartialAggregationInterval(Aggregation main, Aggregation partial, LocalDateTime start,
 			LocalDateTime end) {

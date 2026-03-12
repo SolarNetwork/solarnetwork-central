@@ -79,8 +79,8 @@ public enum CombiningType {
 	 * Get an enum instance for a key value.
 	 *
 	 * @param key
-	 *        the key value; if {@code null} or empty then {@link #Sum} will
-	 *        be returned
+	 *        the key value; if {@code null} or empty then {@link #Sum} will be
+	 *        returned
 	 * @return the enum
 	 * @throws IllegalArgumentException
 	 *         if {@code key} is not supported

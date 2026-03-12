@@ -27,7 +27,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serial;
-import java.util.Collections;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
@@ -103,7 +102,7 @@ public class SimpleCachedContent implements CachedContent {
 
 	@Override
 	public Map<String, ?> getMetadata() {
-		return (metadata != null ? metadata : Collections.emptyMap());
+		return (metadata != null ? metadata : Map.of());
 	}
 
 	@Override

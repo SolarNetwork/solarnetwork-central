@@ -619,7 +619,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					}
 				}
 			} else {
-				tzMap = Collections.emptyMap();
+				tzMap = Map.of();
 			}
 
 			try (ImportContext input = createImportContext(info, this)) {

@@ -203,7 +203,7 @@ public class DaoDatumImportBizTests {
 		inputConfiguration.setName("Test CSV Input");
 		inputConfiguration.setTimeZoneId("UTC");
 		inputConfiguration.setServiceIdentifier("foo");
-		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		inputConfiguration.setServiceProps(Map.of("foo", "bar"));
 		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
 		configuration.setInputConfiguration(inputConfiguration);
 		BasicDatumImportRequest request = new BasicDatumImportRequest(configuration, TEST_USER_ID);
@@ -276,7 +276,7 @@ public class DaoDatumImportBizTests {
 		inputConfiguration.setName("Test CSV Input");
 		inputConfiguration.setTimeZoneId("UTC");
 		inputConfiguration.setServiceIdentifier("foo");
-		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		inputConfiguration.setServiceProps(Map.of("foo", "bar"));
 		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
 		configuration.setInputConfiguration(inputConfiguration);
 		BasicDatumImportRequest request = new BasicDatumImportRequest(configuration, TEST_USER_ID);
@@ -357,7 +357,7 @@ public class DaoDatumImportBizTests {
 		inputConfiguration.setName("Test CSV Input");
 		inputConfiguration.setTimeZoneId("UTC");
 		inputConfiguration.setServiceIdentifier("foo");
-		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		inputConfiguration.setServiceProps(Map.of("foo", "bar"));
 		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
 		configuration.setInputConfiguration(inputConfiguration);
 		BasicDatumImportRequest request = new BasicDatumImportRequest(configuration, TEST_USER_ID);
@@ -443,7 +443,7 @@ public class DaoDatumImportBizTests {
 		inputConfiguration.setName("Test CSV Input");
 		inputConfiguration.setTimeZoneId("UTC");
 		inputConfiguration.setServiceIdentifier("foo");
-		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		inputConfiguration.setServiceProps(Map.of("foo", "bar"));
 		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
 		configuration.setInputConfiguration(inputConfiguration);
 		BasicDatumImportRequest request = new BasicDatumImportRequest(configuration, TEST_USER_ID);
@@ -597,7 +597,7 @@ public class DaoDatumImportBizTests {
 		inputConfiguration.setName("Test CSV Input");
 		inputConfiguration.setTimeZoneId("UTC");
 		inputConfiguration.setServiceIdentifier("foo");
-		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		inputConfiguration.setServiceProps(Map.of("foo", "bar"));
 		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
 		configuration.setInputConfiguration(inputConfiguration);
 		DatumImportJobInfo info = new DatumImportJobInfo();

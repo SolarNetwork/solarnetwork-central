@@ -21,11 +21,9 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.stream.Collectors.toCollection;
-
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
 import net.solarnetwork.domain.SecurityPolicy;
 
 /**

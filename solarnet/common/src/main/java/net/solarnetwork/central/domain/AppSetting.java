@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.domain;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import org.jspecify.annotations.Nullable;

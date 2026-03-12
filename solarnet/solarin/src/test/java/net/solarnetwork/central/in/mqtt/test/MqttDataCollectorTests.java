@@ -509,7 +509,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		// given
 		final Long nodeInstructionId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
 		final Long instructionId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
-		final Map<String, Object> resultParams = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> resultParams = Map.of("foo", "bar");
 		expect(nodeInstructionDao.updateNodeInstructionState(instructionId, TEST_NODE_ID,
 				InstructionState.Completed, resultParams)).andReturn(true);
 
@@ -532,7 +532,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 	public void processInstructionStatus_twoOh() throws Exception {
 		// GIVEN
 		final Long instructionId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
-		final Map<String, Object> resultParams = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> resultParams = Map.of("foo", "bar");
 		expect(nodeInstructionDao.updateNodeInstructionState(instructionId, TEST_NODE_ID,
 				InstructionState.Completed, resultParams)).andReturn(true);
 

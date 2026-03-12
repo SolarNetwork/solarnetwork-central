@@ -178,8 +178,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *
 	 * @param name
 	 *        the unique name of the custom URL path to get
-	 * @return the associated custom URL path, or {@code null} if not
-	 *         available
+	 * @return the associated custom URL path, or {@code null} if not available
 	 */
 	public String customUrlPath(String name) {
 		final Map<String, Object> props = getServiceProps();
@@ -329,11 +328,10 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 * @param key
 	 *        the key to add, or remove if {@code value} is {@code null}
 	 * @param value
-	 *        the value to set, or {@code null} if {@code key} should be
-	 *        removed
+	 *        the value to set, or {@code null} if {@code key} should be removed
 	 * @return any previous value associated with {@code key} before adding or
-	 *         removing it from the service properties map, or {@code null}
-	 *         if nothing was removed
+	 *         removing it from the service properties map, or {@code null} if
+	 *         nothing was removed
 	 * @throws IllegalArgumentException
 	 *         if {@code key} is {@code null}
 	 * @since 1.1

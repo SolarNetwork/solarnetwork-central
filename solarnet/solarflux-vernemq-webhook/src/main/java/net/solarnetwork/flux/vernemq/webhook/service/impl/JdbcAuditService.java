@@ -19,7 +19,6 @@ package net.solarnetwork.flux.vernemq.webhook.service.impl;
 
 import static java.lang.System.currentTimeMillis;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,12 +37,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.sql.DataSource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import net.solarnetwork.central.support.DelayQueueSet;
 import net.solarnetwork.flux.vernemq.webhook.domain.Actor;
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;

@@ -68,8 +68,7 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 * @param paymentTotal
 	 *        the payment total; {@code null} will be stored as {@literal 0}
 	 * @param availableCredit
-	 *        the available credit; {@code null} will be stored as
-	 *        {@literal 0}
+	 *        the available credit; {@code null} will be stored as {@literal 0}
 	 */
 	public AccountBalance(@Nullable UserLongPK id, @Nullable Instant created,
 			@Nullable BigDecimal chargeTotal, @Nullable BigDecimal paymentTotal,
@@ -94,8 +93,7 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 * @param paymentTotal
 	 *        the payment total; {@code null} will be stored as {@literal 0}
 	 * @param availableCredit
-	 *        the available credit; {@code null} will be stored as
-	 *        {@literal 0}
+	 *        the available credit; {@code null} will be stored as {@literal 0}
 	 */
 	public AccountBalance(Long accountId, Long userId, @Nullable Instant created,
 			@Nullable BigDecimal chargeTotal, @Nullable BigDecimal paymentTotal,

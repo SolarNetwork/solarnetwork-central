@@ -56,8 +56,7 @@ public final class UpdateOfflineDate implements PreparedStatementCreator, SqlPro
 	 * @param ts
 	 *        the value to set of the expectation matches
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null} or the {@code id} is not
-	 *         assigned
+	 *         if any argument is {@code null} or the {@code id} is not assigned
 	 */
 	public UpdateOfflineDate(OscpRole type, UserLongCompositePK id, Instant ts) {
 		super();

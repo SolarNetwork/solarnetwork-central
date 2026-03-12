@@ -78,8 +78,8 @@ public enum InvoiceItemType implements CodedValue {
 	 *
 	 * @param code
 	 *        the code
-	 * @return the status, never {@code null} and set to {@link #Unknown} if
-	 *         not any other valid code
+	 * @return the status, never {@code null} and set to {@link #Unknown} if not
+	 *         any other valid code
 	 */
 	public static InvoiceItemType forCode(int code) {
 		final byte c = (byte) code;

@@ -49,7 +49,8 @@ public final class SecurityUtils {
 	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 */
-	public static SecurityEndpointCredential getCurrentEndpointCredential() throws BasicSecurityException {
+	public static SecurityEndpointCredential getCurrentEndpointCredential()
+			throws BasicSecurityException {
 		return getEndpointCredential(getCurrentAuthentication());
 	}
 

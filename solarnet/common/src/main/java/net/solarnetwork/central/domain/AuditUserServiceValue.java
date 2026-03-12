@@ -53,8 +53,7 @@ public interface AuditUserServiceValue extends Unique<DatumId>, UserIdRelated {
 	 */
 	@Override
 	default Long getUserId() {
-		return nonnull(nonnull(getId(), "id").getObjectId(),
-				"id.objectId");
+		return nonnull(nonnull(getId(), "id").getObjectId(), "id.objectId");
 	}
 
 	/**
@@ -67,8 +66,7 @@ public interface AuditUserServiceValue extends Unique<DatumId>, UserIdRelated {
 	 * @return the service
 	 */
 	default String getService() {
-		return nonnull(nonnull(getId(), "id").getSourceId(),
-				"id.sourceId");
+		return nonnull(nonnull(getId(), "id").getSourceId(), "id.sourceId");
 	}
 
 	/**
@@ -86,8 +84,7 @@ public interface AuditUserServiceValue extends Unique<DatumId>, UserIdRelated {
 	 * @return the timestamp for this datum
 	 */
 	default Instant getTimestamp() {
-		return nonnull(nonnull(getId(), "id").getTimestamp(),
-				"id.timestamp");
+		return nonnull(nonnull(getId(), "id").getTimestamp(), "id.timestamp");
 	}
 
 	/**

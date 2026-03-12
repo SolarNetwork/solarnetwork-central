@@ -100,8 +100,8 @@ public interface ExternalSystemConfiguration {
 	 * An asset ID to use to combine all capacity group assets into a single
 	 * virtual asset.
 	 * 
-	 * @return a combined virtual asset ID, or {@code null} to report
-	 *         individual assets
+	 * @return a combined virtual asset ID, or {@code null} to report individual
+	 *         assets
 	 * @since 1.1
 	 */
 	String combinedGroupAssetId();

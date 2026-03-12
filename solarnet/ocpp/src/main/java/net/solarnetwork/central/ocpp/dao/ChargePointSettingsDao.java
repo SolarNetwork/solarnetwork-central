@@ -77,8 +77,8 @@ public interface ChargePointSettingsDao extends GenericDao<ChargePointSettings, 
 	 *        the charge point owner user ID
 	 * @param id
 	 *        the charge point ID to resolve settings for
-	 * @return the settings, or {@code null} if no charge point or user
-	 *         settings exist
+	 * @return the settings, or {@code null} if no charge point or user settings
+	 *         exist
 	 */
 	ChargePointSettings resolveSettings(Long userId, Long id);
 

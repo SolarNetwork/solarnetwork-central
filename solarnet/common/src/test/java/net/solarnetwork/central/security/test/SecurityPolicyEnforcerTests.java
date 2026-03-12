@@ -28,7 +28,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.is;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -562,7 +561,7 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
 				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
 
-		Map<String, Object> nestedMap = Collections.singletonMap("bar", (Object) "yes");
+		Map<String, Object> nestedMap = Map.of("bar", (Object) "yes");
 
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
 		meta.putInfoValue("a", "1", nestedMap);

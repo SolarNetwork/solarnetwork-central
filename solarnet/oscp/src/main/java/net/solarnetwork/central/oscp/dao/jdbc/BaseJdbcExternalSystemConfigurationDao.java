@@ -26,8 +26,8 @@ import static net.solarnetwork.central.oscp.dao.BasicLockingFilter.ONE_FOR_UPDAT
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -235,7 +235,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 			C row = rows.getFirst();
 			SystemTaskContext<C> context = new SystemTaskContext<>("Heartbeat", role, row,
 					expiredHeartbeatEventErrorTags(), expiredHeartbeatEventSuccessTags(), this,
-					Collections.emptyMap());
+					Map.of());
 			Instant ts = handler.apply(context);
 			if ( ts != null ) {
 				compareAndSetHeartbeat(row.getId(), row.getHeartbeatDate(), ts);
@@ -276,7 +276,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 			CapacityGroupSystemTaskContext<C> context = new CapacityGroupSystemTaskContext<>(
 					"Measurement", role, row.conf(), row.group(), taskDate,
 					expiredMeasurementEventErrorTags(), expiredMeasurementEventSuccessTags(), this,
-					Collections.emptyMap());
+					Map.of());
 			Instant ts = handler.apply(context);
 			if ( ts != null ) {
 				compareAndSetMeasurement(row.group().getId(), measurementDate, ts);

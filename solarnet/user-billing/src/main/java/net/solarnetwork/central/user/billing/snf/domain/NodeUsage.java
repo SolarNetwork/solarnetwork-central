@@ -302,8 +302,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of datum properties added.
 	 *
 	 * @param datumPropertiesIn
-	 *        the count to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the count to set; if {@code null} then {@literal 0} will be stored
 	 */
 	public final void setDatumPropertiesIn(@Nullable BigInteger datumPropertiesIn) {
 		if ( datumPropertiesIn == null ) {
@@ -344,8 +343,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of datum stored per day (accumulating).
 	 *
 	 * @param datumDaysStored
-	 *        the count to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the count to set; if {@code null} then {@literal 0} will be stored
 	 */
 	public final void setDatumDaysStored(BigInteger datumDaysStored) {
 		if ( datumDaysStored == null ) {
@@ -386,8 +384,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of datum queried.
 	 *
 	 * @param datumOut
-	 *        the count to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the count to set; if {@code null} then {@literal 0} will be stored
 	 */
 	public final void setDatumOut(BigInteger datumOut) {
 		if ( datumOut == null ) {
@@ -428,8 +425,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the overall cost.
 	 *
 	 * @param totalCost
-	 *        the cost to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the cost to set; if {@code null} then {@literal 0} will be stored
 	 */
 	public final void setTotalCost(BigDecimal totalCost) {
 		this.totalCost = totalCost != null ? totalCost : BigDecimal.ZERO;
@@ -448,8 +444,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of OCPP Chargers.
 	 *
 	 * @param ocppChargers
-	 *        the count to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the count to set; if {@code null} then {@literal 0} will be stored
 	 */
 	public final void setOcppChargers(BigInteger ocppChargers) {
 		if ( ocppChargers == null ) {
@@ -490,8 +485,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of OSCP Capacity Groups.
 	 *
 	 * @param oscpCapacityGroups
-	 *        the count to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the count to set; if {@code null} then {@literal 0} will be stored
 	 */
 	public final void setOscpCapacityGroups(BigInteger oscpCapacityGroups) {
 		if ( oscpCapacityGroups == null ) {
@@ -1029,8 +1023,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of DNP3 Data Points.
 	 *
 	 * @param dnp3DataPoints
-	 *        the count to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the count to set; if {@code null} then {@literal 0} will be stored
 	 * @since 2.3
 	 */
 	public final void setDnp3DataPoints(BigInteger dnp3DataPoints) {
@@ -1148,8 +1141,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of Instructions issued.
 	 *
 	 * @param instructionsIssued
-	 *        the count to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the count to set; if {@code null} then {@literal 0} will be stored
 	 * @since 2.4
 	 */
 	public final void setInstructionsIssued(BigInteger instructionsIssued) {
@@ -1269,8 +1261,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of OSCP capacity .
 	 *
 	 * @param oscpCapacity
-	 *        the count to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the count to set; if {@code null} then {@literal 0} will be stored
 	 * @since 2.5
 	 */
 	public final void setOscpCapacity(BigInteger oscpCapacity) {
@@ -1388,8 +1379,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of SolarFlux data in.
 	 *
 	 * @param fluxDataIn
-	 *        the count to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the count to set; if {@code null} then {@literal 0} will be stored
 	 * @since 2.6
 	 */
 	public final void setFluxDataIn(BigInteger fluxDataIn) {
@@ -1507,8 +1497,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of SolarFlux data out.
 	 *
 	 * @param fluxDataOut
-	 *        the count to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the count to set; if {@code null} then {@literal 0} will be stored
 	 * @since 2.6
 	 */
 	public final void setFluxDataOut(BigInteger fluxDataOut) {
@@ -1626,8 +1615,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of OAuth client credentials.
 	 *
 	 * @param oauthClientCredentials
-	 *        the count to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the count to set; if {@code null} then {@literal 0} will be stored
 	 * @since 2.6
 	 */
 	public final void setOauthClientCredentials(BigInteger oauthClientCredentials) {
@@ -1749,8 +1737,7 @@ public class NodeUsage extends BasicLongEntity
 	 * Set the count of Cloud Integrations data.
 	 *
 	 * @param cloudIntegrationsData
-	 *        the count to set; if {@code null} then {@literal 0} will be
-	 *        stored
+	 *        the count to set; if {@code null} then {@literal 0} will be stored
 	 * @since 2.7
 	 */
 	public final void setCloudIntegrationsData(BigInteger cloudIntegrationsData) {

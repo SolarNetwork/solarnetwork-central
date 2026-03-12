@@ -44,8 +44,8 @@ public class ApplicationMetadata {
 	 * @param name
 	 *        the application name, must not be {@code null}
 	 * @param version
-	 *        the application version; if {@code null} an empty string will
-	 *        be set
+	 *        the application version; if {@code null} an empty string will be
+	 *        set
 	 * @param instanceId
 	 *        a unique application instance ID, to differentiate multiple
 	 *        instances of the same application; if {@code null} a UUID-based

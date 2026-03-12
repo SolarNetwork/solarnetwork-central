@@ -27,7 +27,6 @@ import static java.util.Collections.singletonMap;
 import static org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive;
 import static org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization;
 import java.io.Serial;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -109,8 +108,8 @@ public class OcppController extends BaseOcppController {
 		CentralChargePoint cp = chargePointForParameters(userNode, params);
 		if ( cp == null ) {
 			instruction.getInstruction().setState(InstructionState.Declined);
-			instruction.getInstruction().setResultParameters(
-					Collections.singletonMap("error", "ChargePoint not specified or not available."));
+			instruction.getInstruction()
+					.setResultParameters(Map.of("error", "ChargePoint not specified or not available."));
 			return instruction;
 		}
 		Action action;
@@ -118,8 +117,8 @@ public class OcppController extends BaseOcppController {
 			action = Action.valueOf(params.remove(OcppInstructionUtils.OCPP_ACTION_PARAM));
 		} catch ( IllegalArgumentException | NullPointerException e ) {
 			instruction.getInstruction().setState(InstructionState.Declined);
-			instruction.getInstruction().setResultParameters(
-					Collections.singletonMap("error", "OCPP action parameter missing."));
+			instruction.getInstruction()
+					.setResultParameters(Map.of("error", "OCPP action parameter missing."));
 			return instruction;
 		}
 		return OcppInstructionUtils.decodeJsonOcppInstructionMessage(objectMapper, action, params,

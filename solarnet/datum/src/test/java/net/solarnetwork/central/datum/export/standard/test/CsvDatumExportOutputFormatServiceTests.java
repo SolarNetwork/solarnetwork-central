@@ -42,8 +42,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import java.util.zip.GZIPInputStream;
@@ -433,7 +433,7 @@ public class CsvDatumExportOutputFormatServiceTests {
 		CsvDatumExportOutputFormatService service = new CsvDatumExportOutputFormatService();
 		BasicOutputConfiguration config = new BasicOutputConfiguration();
 		config.setCompressionType(OutputCompressionType.GZIP);
-		config.setServiceProps(Collections.singletonMap("includeHeader", "false"));
+		config.setServiceProps(Map.of("includeHeader", "false"));
 
 		List<GeneralNodeDatumFilterMatch> data = new ArrayList<>(100);
 		Instant start = LocalDateTime.of(2018, 4, 23, 11, 19).atZone(ZoneOffset.UTC).toInstant();

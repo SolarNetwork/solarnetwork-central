@@ -32,7 +32,6 @@ import java.sql.Types;
 import java.time.Instant;
 import java.time.Period;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -316,7 +315,7 @@ public final class CommonJdbcUtils {
 	public static <T> void executeStreamingQuery(JdbcOperations jdbcOps,
 			FilteredResultsProcessor<T> processor, PreparedStatementCreator sql, RowMapper<T> mapper)
 			throws IOException {
-		executeStreamingQuery(jdbcOps, processor, sql, mapper, null, null, null, Collections.emptyMap());
+		executeStreamingQuery(jdbcOps, processor, sql, mapper, null, null, null, Map.of());
 	}
 
 	/**

@@ -24,12 +24,11 @@ package net.solarnetwork.central.query.web.support;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 import javax.cache.Cache;
+import org.springframework.http.HttpHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpHeaders;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.web.support.CachedContent;
@@ -91,7 +90,7 @@ public class AuditingJCacheContentCachingService extends JCacheContentCachingSer
 			int statusCode, HttpHeaders headers) {
 		Map<GeneralNodeDatumPK, Integer> auditResults = auditor.currentAuditResults();
 		if ( auditResults != null ) {
-			return Collections.singletonMap(QUERY_AUDITOR_NODE_DATUM_RESULTS_KEY, auditResults);
+			return Map.of(QUERY_AUDITOR_NODE_DATUM_RESULTS_KEY, auditResults);
 		}
 		return null;
 	}

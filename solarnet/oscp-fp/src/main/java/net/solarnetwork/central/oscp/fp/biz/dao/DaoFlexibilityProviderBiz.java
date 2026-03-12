@@ -155,8 +155,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 * @return the map
 	 */
 	public static Map<String, String> defaultVersionUrlMap() {
-		return Collections.singletonMap(V20,
-				"https://oscp.solarnetwork.net" + FLEXIBILITY_PROVIDER_V20_URL_PATH);
+		return Map.of(V20, "https://oscp.solarnetwork.net" + FLEXIBILITY_PROVIDER_V20_URL_PATH);
 	}
 
 	/**
@@ -597,7 +596,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			this.blocks = blocks;
 			withErrorEventTags(CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS_ERROR_TAGS);
 			withSuccessEventTags(CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS);
-			withParameters(Collections.singletonMap(OscpWebUtils.CORRELATION_ID_HEADER,
+			withParameters(Map.of(OscpWebUtils.CORRELATION_ID_HEADER,
 					requireNonNullArgument(forecastIdentifier, "forecastIdentifier")));
 		}
 
@@ -703,8 +702,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 				if ( origParams != null ) {
 					pubParams.putAll(origParams);
 				}
-				Map<String, String> pubHeaders = Collections.singletonMap(
-						ExternalSystemServiceProperties.SOURCE_ID_HEADER,
+				Map<String, String> pubHeaders = Map.of(ExternalSystemServiceProperties.SOURCE_ID_HEADER,
 						evt.sourceId() + "/".concat(forecast.type().getAlias()));
 				pubParams.put(ExternalSystemServiceProperties.EXTRA_HTTP_HEADERS, pubHeaders);
 

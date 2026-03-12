@@ -41,8 +41,7 @@ import oscp.v20.InstantaneousMeasurement;
  * @param energyType
  *        for energy measurements the energy type, otherwise {@code null}
  * @param energyDirection
- *        for energy measurements the energy direction, otherwise
- *        {@code null}
+ *        for energy measurements the energy direction, otherwise {@code null}
  * @param startMeasureTime
  *        for energy measurements the start of the measurement period, otherwise
  *        {@code null}

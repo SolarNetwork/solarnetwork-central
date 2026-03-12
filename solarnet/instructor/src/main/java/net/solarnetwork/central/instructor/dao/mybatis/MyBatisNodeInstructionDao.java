@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.ibatis.session.ResultHandler;
@@ -188,7 +187,7 @@ public class MyBatisNodeInstructionDao
 			FilteredResultsProcessor<NodeInstruction> processor) throws IOException {
 		requireNonNullArgument(filter, "filter");
 		requireNonNullArgument(processor, "processor");
-		processor.start(null, null, null, Collections.emptyMap()); // TODO: support count total results/offset/max
+		processor.start(null, null, null, Map.of()); // TODO: support count total results/offset/max
 		try {
 			getSqlSession().select("findall-NodeInstruction-EntityMatch",
 					singletonMap(FILTER_PROPERTY, filter),

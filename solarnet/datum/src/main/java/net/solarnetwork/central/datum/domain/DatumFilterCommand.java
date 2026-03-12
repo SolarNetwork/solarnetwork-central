@@ -938,8 +938,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	/**
 	 * Get the datum rollups as key values.
 	 *
-	 * @return the datum rollup type key values, or {@code null} if not
-	 *         defined
+	 * @return the datum rollup type key values, or {@code null} if not defined
 	 * @since 1.11
 	 */
 	@JsonProperty("rollupTypeKeys")

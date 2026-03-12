@@ -25,7 +25,6 @@ package net.solarnetwork.central.datum.v2.dao;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +64,7 @@ public class CombiningConfig {
 		super();
 		this.type = requireNonNullArgument(type, "type");
 		if ( configs == null || configs.isEmpty() ) {
-			this.configMap = Collections.emptyMap();
+			this.configMap = Map.of();
 		} else {
 			this.configMap = new LinkedHashMap<>(configs.size());
 			for ( CombiningIdsConfig<?> config : configs ) {

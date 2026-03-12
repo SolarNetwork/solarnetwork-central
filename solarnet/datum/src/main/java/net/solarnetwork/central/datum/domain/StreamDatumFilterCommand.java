@@ -919,8 +919,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	/**
 	 * Get the datum rollups as key values.
 	 *
-	 * @return the datum rollup type key values, or {@code null} if not
-	 *         defined
+	 * @return the datum rollup type key values, or {@code null} if not defined
 	 */
 	@JsonIgnore
 	public final String @Nullable [] getDatumRollupTypeKeys() {

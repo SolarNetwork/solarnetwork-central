@@ -141,8 +141,7 @@ public class HtmlToPdfInvoiceTests {
 		Path tmpFile = Files.createTempFile("HtmlToPdfInvoiceTests-SVG-", ".pdf");
 		try (BufferedOutputStream out = new BufferedOutputStream(
 				new FileOutputStream(tmpFile.toFile()))) {
-			t.render(Locale.ENGLISH, HtmlToPdfTemplateRenderer.PDF_MIME_TYPE, Collections.emptyMap(),
-					out);
+			t.render(Locale.ENGLISH, HtmlToPdfTemplateRenderer.PDF_MIME_TYPE, Map.of(), out);
 		}
 
 		// THEN
@@ -189,8 +188,7 @@ public class HtmlToPdfInvoiceTests {
 		Path tmpFile = Files.createTempFile("HtmlToPdfInvoiceTests-SVG-", ".pdf");
 		try (BufferedOutputStream out = new BufferedOutputStream(
 				new FileOutputStream(tmpFile.toFile()))) {
-			t.render(Locale.ENGLISH, HtmlToPdfTemplateRenderer.PDF_MIME_TYPE, Collections.emptyMap(),
-					out);
+			t.render(Locale.ENGLISH, HtmlToPdfTemplateRenderer.PDF_MIME_TYPE, Map.of(), out);
 		}
 
 		// THEN

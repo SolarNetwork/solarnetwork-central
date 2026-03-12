@@ -60,8 +60,8 @@ public interface UserAuthTokenDao extends GenericDao<UserAuthToken, String>,
 	 *        the token ID to get a builder for
 	 * @param signingDate
 	 *        the date to use in the signing key
-	 * @return the builder, or {@code null} if the given {@code tokenId} is
-	 *         not found
+	 * @return the builder, or {@code null} if the given {@code tokenId} is not
+	 *         found
 	 * @since 2.0
 	 */
 	@Nullable

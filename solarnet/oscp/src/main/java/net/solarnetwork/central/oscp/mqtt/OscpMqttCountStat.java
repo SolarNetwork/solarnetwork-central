@@ -84,8 +84,8 @@ public enum OscpMqttCountStat {
 	 *
 	 * @param action
 	 *        the action
-	 * @return the statistic, or {@code null} if {@code action} is
-	 *         {@code null} or unsupported
+	 * @return the statistic, or {@code null} if {@code action} is {@code null}
+	 *         or unsupported
 	 */
 	public static OscpMqttCountStat instructionReceivedStat(String action) {
 		if ( action == null ) {

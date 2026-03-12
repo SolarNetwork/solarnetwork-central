@@ -82,8 +82,7 @@ public interface QueryBiz {
 	 *        the ID of the node to look for
 	 * @param sourceId
 	 *        an optional source ID to find the available interval for
-	 * @return ReadableInterval instance, or {@code null} if no data
-	 *         available
+	 * @return ReadableInterval instance, or {@code null} if no data available
 	 */
 	ReportableInterval getReportableInterval(Long nodeId, String sourceId);
 
@@ -105,8 +104,7 @@ public interface QueryBiz {
 	 *
 	 * @param filter
 	 *        the node, source, and optional date range to search for
-	 * @return ReadableInterval instance, or {@code null} if no data
-	 *         available
+	 * @return ReadableInterval instance, or {@code null} if no data available
 	 * @since 4.3
 	 */
 	ReportableInterval findReportableInterval(GeneralNodeDatumFilter filter);
@@ -149,8 +147,7 @@ public interface QueryBiz {
 	 *
 	 * @param filter
 	 *        the query filter
-	 * @return the distinct node and source IDs available (never
-	 *         {@code null})
+	 * @return the distinct node and source IDs available (never {@code null})
 	 * @since 2.5
 	 */
 	Set<NodeSourcePK> findAvailableSources(GeneralNodeDatumFilter filter);
@@ -247,8 +244,8 @@ public interface QueryBiz {
 	 *        the type of reading to perform
 	 * @param tolerance
 	 *        a time period of tolerance to use when querying around the
-	 *        start/end dates, or {@code null} for a default tolerance based
-	 *        on {@code readingType}
+	 *        start/end dates, or {@code null} for a default tolerance based on
+	 *        {@code readingType}
 	 * @param processor
 	 *        the processor for the results
 	 * @param sortDescriptors
@@ -282,8 +279,8 @@ public interface QueryBiz {
 	 *        the type of reading to perform
 	 * @param tolerance
 	 *        a time period of tolerance to use when querying around the
-	 *        start/end dates, or {@code null} for a default tolerance based
-	 *        on {@code readingType}
+	 *        start/end dates, or {@code null} for a default tolerance based on
+	 *        {@code readingType}
 	 * @return the results, never {@code null}
 	 * @since 2.4
 	 */
@@ -307,8 +304,8 @@ public interface QueryBiz {
 	 *        the type of reading to perform
 	 * @param tolerance
 	 *        a time period of tolerance to use when querying around the
-	 *        start/end dates, or {@code null} for a default tolerance based
-	 *        on {@code readingType}
+	 *        start/end dates, or {@code null} for a default tolerance based on
+	 *        {@code readingType}
 	 * @param sortDescriptors
 	 *        the optional sort descriptors
 	 * @param offset
@@ -396,8 +393,7 @@ public interface QueryBiz {
 	 *        the ID of the location to look for
 	 * @param sourceId
 	 *        an optional source ID to find the available interval for
-	 * @return ReadableInterval instance, or {@code null} if no data
-	 *         available
+	 * @return ReadableInterval instance, or {@code null} if no data available
 	 * @since 1.5
 	 */
 	ReportableInterval getLocationReportableInterval(Long locationId, String sourceId);

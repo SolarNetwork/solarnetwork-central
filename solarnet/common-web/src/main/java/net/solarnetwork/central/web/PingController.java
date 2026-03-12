@@ -25,7 +25,6 @@ package net.solarnetwork.central.web;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -163,7 +162,7 @@ public class PingController implements CompositeHealthContributor {
 			this.date = date;
 			boolean allOK = true;
 			if ( results == null ) {
-				this.results = Collections.emptyMap();
+				this.results = Map.of();
 				allOK = false;
 			} else {
 				this.results = results;

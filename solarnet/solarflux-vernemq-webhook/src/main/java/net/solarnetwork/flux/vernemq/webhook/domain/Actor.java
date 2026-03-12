@@ -18,7 +18,6 @@
 package net.solarnetwork.flux.vernemq.webhook.domain;
 
 import java.util.Set;
-
 import net.solarnetwork.domain.SecurityPolicy;
 
 /**

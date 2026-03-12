@@ -53,8 +53,8 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * Constructor.
 	 *
 	 * <p>
-	 * All arguments except {@code streamId} are allowed to be {@code null}.
-	 * If any array is empty, it will be treated as if it were {@code null}.
+	 * All arguments except {@code streamId} are allowed to be {@code null}. If
+	 * any array is empty, it will be treated as if it were {@code null}.
 	 * </p>
 	 *
 	 * @param streamId
@@ -90,10 +90,9 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * Constructor.
 	 *
 	 * <p>
-	 * All arguments except {@code streamId} are allowed to be {@code null}.
-	 * The other arguments are {@code Object} to work around MyBatis mapping
-	 * issues. If any array is empty, it will be treated as if it were
-	 * {@code null}.
+	 * All arguments except {@code streamId} are allowed to be {@code null}. The
+	 * other arguments are {@code Object} to work around MyBatis mapping issues.
+	 * If any array is empty, it will be treated as if it were {@code null}.
 	 * </p>
 	 *
 	 * @param streamId

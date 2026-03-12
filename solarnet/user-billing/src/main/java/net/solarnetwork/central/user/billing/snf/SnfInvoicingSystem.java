@@ -79,8 +79,7 @@ public interface SnfInvoicingSystem {
 	 *
 	 * @param accountId
 	 *        the ID of the account to get the latest invoice for
-	 * @return the latest available invoice, or {@code null} if none
-	 *         available
+	 * @return the latest available invoice, or {@code null} if none available
 	 */
 	@Nullable
 	SnfInvoice findLatestInvoiceForAccount(UserLongPK accountId);
@@ -98,8 +97,8 @@ public interface SnfInvoicingSystem {
 	 *        user's account's time zone
 	 * @param options
 	 *        the invoice generation options
-	 * @return the generated invoice, or {@code null} if no invoice is
-	 *         necessary (i.e. no charges)
+	 * @return the generated invoice, or {@code null} if no invoice is necessary
+	 *         (i.e. no charges)
 	 */
 	@Nullable
 	SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate,

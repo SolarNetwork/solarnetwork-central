@@ -131,8 +131,8 @@ public interface DatumImportBiz {
 	 * @param userId
 	 *        the ID of the user to find the job statuses for
 	 * @param states
-	 *        the specific states to limit the results to, or {@code null}
-	 *        for all states
+	 *        the specific states to limit the results to, or {@code null} for
+	 *        all states
 	 * @return the job statuses, never {@code null}
 	 */
 	Collection<DatumImportStatus> datumImportJobStatusesForUser(Long userId,

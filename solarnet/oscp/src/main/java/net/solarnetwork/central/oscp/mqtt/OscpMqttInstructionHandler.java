@@ -39,7 +39,6 @@ import static net.solarnetwork.domain.InstructionStatus.InstructionState.Decline
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Executing;
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Queuing;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -351,8 +350,8 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 			this.action = action;
 			this.msg = msg;
 			Map<String, Object> params = (correlationId != null
-					? Collections.singletonMap(OscpWebUtils.CORRELATION_ID_HEADER, correlationId)
-					: Collections.emptyMap());
+					? Map.of(OscpWebUtils.CORRELATION_ID_HEADER, correlationId)
+					: Map.of());
 			this.context = new SystemTaskContext<>(action, OscpRole.CapacityOptimizer, provider,
 					OSCP_INSTRUCTION_ERROR_TAGS, OSCP_INSTRUCTION_TAGS, capacityProviderDao, params);
 		}
@@ -407,8 +406,8 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	 * Set the MQTT topic to publish to.
 	 *
 	 * @param mqttTopic
-	 *        the topic; if {@code null} or blank then
-	 *        {@link #MQTT_TOPIC_V20} will be set instead
+	 *        the topic; if {@code null} or blank then {@link #MQTT_TOPIC_V20}
+	 *        will be set instead
 	 */
 	public void setMqttTopic(String mqttTopic) {
 		this.mqttTopic = (mqttTopic == null || mqttTopic.isBlank() ? MQTT_TOPIC_V20 : mqttTopic);

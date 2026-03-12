@@ -142,7 +142,7 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 	@Override
 	public Map<UUID, ObjectDatumStreamMetadataId> getDatumStreamMetadataIds(UUID... streamIds) {
 		if ( streamIds == null || streamIds.length < 1 ) {
-			return Collections.emptyMap();
+			return Map.of();
 		}
 
 		final Map<UUID, ObjectDatumStreamMetadataId> result = new LinkedHashMap<>(streamIds.length);

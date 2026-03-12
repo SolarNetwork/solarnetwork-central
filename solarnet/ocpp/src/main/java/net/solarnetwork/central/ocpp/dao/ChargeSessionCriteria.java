@@ -37,8 +37,7 @@ public interface ChargeSessionCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available charge session ID from the
-	 * {@link #getChargeSessionIds()} array, or {@code null} if not
-	 * available.
+	 * {@link #getChargeSessionIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
 	 * @return the first charge session ID, or {@code null} if not available

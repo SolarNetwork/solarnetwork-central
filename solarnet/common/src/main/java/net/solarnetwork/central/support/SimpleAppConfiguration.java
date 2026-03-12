@@ -54,7 +54,7 @@ public class SimpleAppConfiguration implements AppConfiguration {
 	public SimpleAppConfiguration(@Nullable Map<String, String> serviceUrls) {
 		super();
 		if ( serviceUrls == null || serviceUrls.isEmpty() ) {
-			this.serviceUrls = Collections.emptyMap();
+			this.serviceUrls = Map.of();
 		} else {
 			this.serviceUrls = Collections.unmodifiableMap(new LinkedHashMap<>(serviceUrls));
 		}

@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.user.expire.config;
 
-import java.util.Collections;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -95,7 +95,7 @@ public class UserExpireBizConfig {
 		ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
 		messageSource.setBasenames(Aggregation.class.getName());
 		PrefixedMessageSource prefixedMessageSource = new PrefixedMessageSource();
-		prefixedMessageSource.setDelegates(Collections.singletonMap("aggregation.", messageSource));
+		prefixedMessageSource.setDelegates(Map.of("aggregation.", messageSource));
 		biz.setMessageSource(prefixedMessageSource);
 
 		return biz;

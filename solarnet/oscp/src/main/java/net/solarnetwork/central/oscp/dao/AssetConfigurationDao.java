@@ -42,8 +42,8 @@ public interface AssetConfigurationDao
 	 * Find all assets for a user and capacity group.
 	 * 
 	 * <p>
-	 * The {@code sortDescriptors} parameter can be {@code null}, in which
-	 * case the sort order is not defined and implementation specific.
+	 * The {@code sortDescriptors} parameter can be {@code null}, in which case
+	 * the sort order is not defined and implementation specific.
 	 * </p>
 	 * 
 	 * @param userId

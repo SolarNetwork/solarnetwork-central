@@ -28,13 +28,13 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import java.security.Principal;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.CapacityForecast;
 import net.solarnetwork.central.oscp.fp.biz.FlexibilityProviderBiz;

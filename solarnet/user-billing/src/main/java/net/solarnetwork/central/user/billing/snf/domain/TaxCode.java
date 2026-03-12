@@ -208,8 +208,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	/**
 	 * Get the maximum date to which this tax code is applicable.
 	 *
-	 * @return the date, or {@code null} if the tax code is applicable
-	 *         "forever"
+	 * @return the date, or {@code null} if the tax code is applicable "forever"
 	 */
 	public final @Nullable Instant getValidTo() {
 		return validTo;

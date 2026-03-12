@@ -75,8 +75,7 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 	 * @param topic
 	 *        the event topic
 	 * @param created
-	 *        the event creation date, or {@code null} to use the current
-	 *        time
+	 *        the event creation date, or {@code null} to use the current time
 	 * @param eventProperties
 	 *        the event properties, or {@code null}
 	 * @param nodeId
