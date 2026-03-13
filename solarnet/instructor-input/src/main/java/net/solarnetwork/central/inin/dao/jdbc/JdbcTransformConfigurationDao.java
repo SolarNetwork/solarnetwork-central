@@ -29,6 +29,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
@@ -84,7 +85,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 		@Override
 		public RequestTransformConfiguration entityKey(UserLongCompositePK id) {
-			return new RequestTransformConfiguration(id, Instant.EPOCH);
+			return new RequestTransformConfiguration(id, Instant.EPOCH, "", "");
 		}
 
 		@Override
@@ -130,7 +131,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 		@Override
 		public ResponseTransformConfiguration entityKey(UserLongCompositePK id) {
-			return new ResponseTransformConfiguration(id, now());
+			return new ResponseTransformConfiguration(id, now(), "", "");
 		}
 
 		@Override
@@ -213,7 +214,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 	}
 
 	@Override
-	public Collection<C> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<C> findAll(Long userId, @Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectTransformConfiguration(phase, filter);
@@ -223,7 +224,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 	@Override
 	public FilterResults<C, UserLongCompositePK> findFiltered(TransformFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectTransformConfiguration(phase, filter);
 		return executeFilterQuery(jdbcOps, filter, sql, rowMapper());
@@ -240,17 +241,17 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 	@Override
 	public UserLongCompositePK save(C entity) {
-		if ( !entity.getId().entityIdIsAssigned() ) {
-			return create(entity.getId().getUserId(), entity);
+		if ( !entity.pk().entityIdIsAssigned() ) {
+			return create(entity.pk().getUserId(), entity);
 		}
 		validatePhase(entity);
 		final var sql = saveSql(entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		jdbcOps.update(sql);
+		return entity.pk();
 	}
 
 	@Override
-	public C get(UserLongCompositePK id) {
+	public @Nullable C get(UserLongCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -285,7 +286,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 	@Override
 	public void delete(C entity) {
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), tableName(), PK_COLUMN_NAMES);
+				requireNonNullArgument(entity, "entity").pk(), tableName(), PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 

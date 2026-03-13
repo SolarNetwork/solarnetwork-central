@@ -73,7 +73,7 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 
 	@Override
 	public CredentialConfiguration entityKey(UserLongCompositePK id) {
-		return new CredentialConfiguration(id, Instant.EPOCH);
+		return new CredentialConfiguration(id, Instant.EPOCH, "");
 	}
 
 	@Override

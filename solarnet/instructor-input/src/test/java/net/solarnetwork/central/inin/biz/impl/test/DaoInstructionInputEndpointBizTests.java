@@ -154,10 +154,10 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 
-		final var transform = new RequestTransformConfiguration(userId, randomLong(), now());
+		final var transform = new RequestTransformConfiguration(userId, randomLong(), now(), "", "");
 		transform.setServiceIdentifier(requestXformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), "");
 		endpoint.setNodeIds(Set.of(nodeId));
 		endpoint.setRequestTransformId(transform.getTransformId());
 
@@ -255,10 +255,10 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 
-		final var transform = new RequestTransformConfiguration(userId, randomLong(), now());
+		final var transform = new RequestTransformConfiguration(userId, randomLong(), now(), "", "");
 		transform.setServiceIdentifier(requestXformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), "");
 		endpoint.setNodeIds(Set.of(nodeId));
 		endpoint.setRequestTransformId(transform.getTransformId());
 		endpoint.setUserMetadataPath("/pm/foo");
@@ -366,10 +366,10 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 
-		final var transform = new ResponseTransformConfiguration(userId, randomLong(), now());
+		final var transform = new ResponseTransformConfiguration(userId, randomLong(), now(), "", "");
 		transform.setServiceIdentifier(responseXformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), "");
 		endpoint.setNodeIds(singleton(nodeId));
 		endpoint.setResponseTransformId(transform.getTransformId());
 
@@ -483,10 +483,10 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 
-		final var transform = new ResponseTransformConfiguration(userId, randomLong(), now());
+		final var transform = new ResponseTransformConfiguration(userId, randomLong(), now(), "", "");
 		transform.setServiceIdentifier(responseXformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), "");
 		endpoint.setNodeIds(singleton(nodeId));
 		endpoint.setResponseTransformId(transform.getTransformId());
 		endpoint.setUserMetadataPath("/pm/foo");
@@ -610,10 +610,10 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 
-		final var transform = new RequestTransformConfiguration(userId, randomLong(), now());
+		final var transform = new RequestTransformConfiguration(userId, randomLong(), now(), "", "");
 		transform.setServiceIdentifier(requestXformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), "");
 		endpoint.setNodeIds(Set.of(nodeId));
 		endpoint.setRequestTransformId(transform.getTransformId());
 		endpoint.setRequestContentType("foo/bar");
@@ -713,10 +713,10 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 
-		final var transform = new ResponseTransformConfiguration(userId, randomLong(), now());
+		final var transform = new ResponseTransformConfiguration(userId, randomLong(), now(), "", "");
 		transform.setServiceIdentifier(responseXformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), "");
 		endpoint.setNodeIds(singleton(nodeId));
 		endpoint.setResponseTransformId(transform.getTransformId());
 		endpoint.setResponseContentType("bim/bam");
