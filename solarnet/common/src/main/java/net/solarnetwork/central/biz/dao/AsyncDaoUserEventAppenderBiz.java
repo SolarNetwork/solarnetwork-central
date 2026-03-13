@@ -25,11 +25,9 @@ package net.solarnetwork.central.biz.dao;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -55,10 +53,10 @@ import net.solarnetwork.util.UuidGenerator;
  * Asynchronous {@link UserEventAppenderBiz}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class AsyncDaoUserEventAppenderBiz
-		implements UserEventAppenderBiz, PingTest, ServiceLifecycleObserver, Runnable {
+		implements UserEventAppenderBiz, PingTest, ServiceLifecycleObserver {
 
 	/** The {@code queueLagAlertThreshold} property default value. */
 	public final int DEFAULT_QUEUE_LAG_ALERT_THRESHOLD = 500;
@@ -113,6 +111,9 @@ public class AsyncDaoUserEventAppenderBiz
 		/** The count of user events persisted. */
 		EventsStored,
 
+		/** The count of events rejected. */
+		EventsRejected,
+
 		;
 
 	}
@@ -120,7 +121,6 @@ public class AsyncDaoUserEventAppenderBiz
 	private final ExecutorService executorService;
 	private final UserEventAppenderDao dao;
 	private final StatTracker stats;
-	private final BlockingQueue<UserEvent> queue;
 	private final UuidGenerator uuidGenerator;
 	private @Nullable MqttJsonPublisher<UserEvent> solarFluxPublisher;
 	private int queueLagAlertThreshold = DEFAULT_QUEUE_LAG_ALERT_THRESHOLD;
@@ -132,10 +132,11 @@ public class AsyncDaoUserEventAppenderBiz
 	 *        the executor service
 	 * @param dao
 	 *        the DAO
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public AsyncDaoUserEventAppenderBiz(ExecutorService executorService, UserEventAppenderDao dao) {
-		this(executorService, dao, new PriorityBlockingQueue<>(64, EVENT_SORT),
-				new StatTracker("AsyncDaoUserEventAppender", null, log, 500),
+		this(executorService, dao, new StatTracker("AsyncDaoUserEventAppender", null, log, 500),
 				TimeBasedV7UuidGenerator.INSTANCE_MICROS);
 	}
 
@@ -146,8 +147,6 @@ public class AsyncDaoUserEventAppenderBiz
 	 *        the executor service
 	 * @param dao
 	 *        the DAO
-	 * @param queue
-	 *        the queue
 	 * @param stats
 	 *        the stats
 	 * @param uuidGenerator
@@ -156,11 +155,10 @@ public class AsyncDaoUserEventAppenderBiz
 	 *         if any argument is {@code null}
 	 */
 	public AsyncDaoUserEventAppenderBiz(ExecutorService executorService, UserEventAppenderDao dao,
-			BlockingQueue<UserEvent> queue, StatTracker stats, UuidGenerator uuidGenerator) {
+			StatTracker stats, UuidGenerator uuidGenerator) {
 		super();
 		this.executorService = requireNonNullArgument(executorService, "executorService");
 		this.dao = requireNonNullArgument(dao, "datumDao");
-		this.queue = requireNonNullArgument(queue, "queue");
 		this.stats = requireNonNullArgument(stats, "stats");
 		this.uuidGenerator = requireNonNullArgument(uuidGenerator, "uuidGenerator");
 
@@ -170,22 +168,29 @@ public class AsyncDaoUserEventAppenderBiz
 	public UserEvent addEvent(Long userId, LogEventInfo info) {
 		UserEvent event = new UserEvent(userId, uuidGenerator.generate(),
 				requireNonNullArgument(info, "info").getTags(), info.getMessage(), info.getData());
-		queue.offer(event);
-		stats.increment(UserEventStats.EventsAdded);
 		try {
-			executorService.execute(this);
+			executorService.execute(new EventTask(event));
+			stats.increment(UserEventStats.EventsAdded);
 		} catch ( RejectedExecutionException e ) {
-			// assume shutting down; discard event
+			// could have reached queue capacity, or shutting down
+			stats.increment(UserEventStats.EventsRejected);
 			log.warn("Discarding UserEvent {} because of RejectedExecutionException: {}", event,
 					e.getMessage());
 		}
 		return event;
 	}
 
-	@Override
-	public void run() {
-		final UserEvent event = queue.poll();
-		if ( event != null ) {
+	private final class EventTask implements Runnable {
+
+		private final UserEvent event;
+
+		private EventTask(UserEvent event) {
+			super();
+			this.event = event;
+		}
+
+		@Override
+		public void run() {
 			try {
 				dao.add(event);
 				stats.increment(UserEventStats.EventsStored);
