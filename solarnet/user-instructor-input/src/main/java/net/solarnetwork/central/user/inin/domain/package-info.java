@@ -1,7 +1,7 @@
 /* ==================================================================
- * InstructionResults.java - 29/03/2024 9:45:11 am
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2024 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,19 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork user instructor input domain.
+ */
+
+@NullMarked
 package net.solarnetwork.central.user.inin.domain;
 
-import java.util.Map;
-import org.jspecify.annotations.Nullable;
-import net.solarnetwork.domain.InstructionStatus.InstructionState;
-
-/**
- * Transform instruction results for a single node ID.
- *
- * @author matt
- * @version 1.0
- */
-public record TransformInstructionResults(Long nodeId, InstructionState state,
-		@Nullable Map<String, Object> resultParameters) {
-
-}
+import org.jspecify.annotations.NullMarked;

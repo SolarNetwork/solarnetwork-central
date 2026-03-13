@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.inin.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 
 /**
@@ -38,7 +39,7 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
  * @author matt
  * @version 1.0
  */
-public record TransformOutput(Iterable<NodeInstruction> instructions, String response,
-		String transformOutput, String message) {
+public record TransformOutput(@Nullable Iterable<NodeInstruction> instructions,
+		@Nullable String response, @Nullable String transformOutput, @Nullable String message) {
 
 }

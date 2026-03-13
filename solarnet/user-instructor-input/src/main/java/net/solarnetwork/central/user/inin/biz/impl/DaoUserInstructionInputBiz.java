@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
@@ -99,8 +100,8 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	private final Collection<RequestTransformService> requestTransformServices;
 	private final Collection<ResponseTransformService> responseTransformServices;
 
-	private Validator validator;
-	private PasswordEncoder passwordEncoder;
+	private @Nullable Validator validator;
+	private @Nullable PasswordEncoder passwordEncoder;
 
 	/**
 	 * Constructor.
@@ -153,7 +154,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public <C extends InstructionInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> FilterResults<C, K> configurationsForUser(
-			Long userId, InstructionInputFilter filter, Class<C> configurationClass) {
+			Long userId, @Nullable InstructionInputFilter filter, Class<C> configurationClass) {
 		requireNonNullArgument(userId, "userId");
 		requireNonNullArgument(configurationClass, "configurationClass");
 		BasicFilter f = new BasicFilter(filter);
@@ -247,7 +248,8 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 		dao.delete(pk);
 	}
 
-	private static Set<Long> nodeIds(EndpointConfiguration endpoint, Map<String, ?> parameters) {
+	private static @Nullable Set<Long> nodeIds(EndpointConfiguration endpoint,
+			@Nullable Map<String, ?> parameters) {
 		Set<Long> nodeIds = endpoint.getNodeIds();
 		if ( parameters != null && parameters.containsKey(InstructionInputEndpointBiz.PARAM_NODE_IDS) ) {
 			Object val = parameters.get(InstructionInputEndpointBiz.PARAM_NODE_IDS);
@@ -274,7 +276,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	@Override
 	public TransformOutput previewTransform(UserUuidPK id, MimeType contentType, InputStream in,
 			MimeType outputType, Collection<TransformInstructionResults> instructionResults,
-			Map<String, ?> parameters) throws IOException {
+			@Nullable Map<String, ?> parameters) throws IOException {
 		final EndpointConfiguration endpoint = requireNonNullObject(
 				endpointDao.get(requireNonNullArgument(id, "id")), id);
 
@@ -384,7 +386,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 				root = root.getCause();
 			}
 			msg = e.getMessage();
-			if ( !msg.equals(root.getMessage()) ) {
+			if ( msg != null && !msg.equals(root.getMessage()) ) {
 				msg += " " + root.getMessage();
 			}
 		}
@@ -392,7 +394,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 		return new TransformOutput(instructions, output, xsltOutput.toString(), msg);
 	}
 
-	private RequestTransformService requestTransformService(String serviceId) {
+	private @Nullable RequestTransformService requestTransformService(String serviceId) {
 		for ( RequestTransformService service : requestTransformServices ) {
 			if ( serviceId.equals(service.getId()) ) {
 				return service;
@@ -401,7 +403,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 		return null;
 	}
 
-	private ResponseTransformService responseTransformService(String serviceId) {
+	private @Nullable ResponseTransformService responseTransformService(String serviceId) {
 		for ( ResponseTransformService service : responseTransformServices ) {
 			if ( serviceId.equals(service.getId()) ) {
 				return service;
@@ -410,11 +412,11 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 		return null;
 	}
 
-	private void validateInput(final Object input) {
+	private void validateInput(final @Nullable Object input) {
 		validateInput(input, getValidator());
 	}
 
-	private static void validateInput(final Object input, final Validator v) {
+	private static void validateInput(final @Nullable Object input, final @Nullable Validator v) {
 		if ( input == null || v == null ) {
 			return;
 		}
@@ -493,7 +495,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	 *
 	 * @return the validator
 	 */
-	public Validator getValidator() {
+	public final @Nullable Validator getValidator() {
 		return validator;
 	}
 
@@ -503,7 +505,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	 * @param validator
 	 *        the validator to set
 	 */
-	public void setValidator(Validator validator) {
+	public final void setValidator(@Nullable Validator validator) {
 		this.validator = validator;
 	}
 
@@ -512,7 +514,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	 *
 	 * @return the password encoder
 	 */
-	public PasswordEncoder getPasswordEncoder() {
+	public final @Nullable PasswordEncoder getPasswordEncoder() {
 		return passwordEncoder;
 	}
 
@@ -522,7 +524,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	 * @param passwordEncoder
 	 *        the encoder to set
 	 */
-	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+	public final void setPasswordEncoder(@Nullable PasswordEncoder passwordEncoder) {
 		this.passwordEncoder = passwordEncoder;
 	}
 

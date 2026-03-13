@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.inin.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -41,6 +42,7 @@ import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTrans
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public abstract sealed class TransformConfigurationInput<C extends TransformConfiguration<C>>
 		extends BaseInstructionInputConfigurationInput<C, UserLongCompositePK>
 		permits TransformConfigurationInput.RequestTransformConfigurationInput,
@@ -49,14 +51,14 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 	@NotNull
 	@NotBlank
 	@Size(max = 64)
-	private String name;
+	private @Nullable String name;
 
 	@NotNull
 	@NotBlank
 	@Size(max = 128)
-	private String serviceIdentifier;
+	private @Nullable String serviceIdentifier;
 
-	private Map<String, Object> serviceProperties;
+	private @Nullable Map<String, Object> serviceProperties;
 
 	/**
 	 * Constructor.
@@ -65,6 +67,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(C conf) {
 		super.populateConfiguration(conf);
@@ -86,6 +89,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 			super();
 		}
 
+		@SuppressWarnings("NullAway")
 		@Override
 		public RequestTransformConfiguration toEntity(UserLongCompositePK id, Instant date) {
 			RequestTransformConfiguration conf = new RequestTransformConfiguration(
@@ -109,6 +113,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 			super();
 		}
 
+		@SuppressWarnings("NullAway")
 		@Override
 		public ResponseTransformConfiguration toEntity(UserLongCompositePK id, Instant date) {
 			ResponseTransformConfiguration conf = new ResponseTransformConfiguration(
@@ -124,7 +129,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
@@ -134,7 +139,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 	 * @param name
 	 *        the name to set
 	 */
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
@@ -143,7 +148,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 	 *
 	 * @return the identifier
 	 */
-	public String getServiceIdentifier() {
+	public final @Nullable String getServiceIdentifier() {
 		return serviceIdentifier;
 	}
 
@@ -153,7 +158,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 	 * @param serviceIdentifier
 	 *        the identifier to use
 	 */
-	public void setServiceIdentifier(String serviceIdentifier) {
+	public final void setServiceIdentifier(@Nullable String serviceIdentifier) {
 		this.serviceIdentifier = serviceIdentifier;
 	}
 
@@ -162,7 +167,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 	 *
 	 * @return the service properties
 	 */
-	public Map<String, Object> getServiceProperties() {
+	public final @Nullable Map<String, Object> getServiceProperties() {
 		return serviceProperties;
 	}
 
@@ -172,7 +177,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 	 * @param serviceProperties
 	 *        the service properties to set
 	 */
-	public void setServiceProperties(Map<String, Object> serviceProperties) {
+	public final void setServiceProperties(@Nullable Map<String, Object> serviceProperties) {
 		this.serviceProperties = serviceProperties;
 	}
 

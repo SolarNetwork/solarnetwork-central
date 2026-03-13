@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.inin.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -38,18 +39,19 @@ import net.solarnetwork.util.DateUtils;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class CredentialConfigurationInput
 		extends BaseInstructionInputConfigurationInput<CredentialConfiguration, UserLongCompositePK> {
 
 	@NotNull
 	@NotBlank
 	@Size(max = 256)
-	private String username;
+	private @Nullable String username;
 
 	@Size(max = 64)
-	private String password;
+	private @Nullable String password;
 
-	private String expires;
+	private @Nullable String expires;
 
 	private boolean oauth;
 
@@ -60,6 +62,7 @@ public class CredentialConfigurationInput
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public CredentialConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		CredentialConfiguration conf = new CredentialConfiguration(requireNonNullArgument(id, "id"),
@@ -68,6 +71,7 @@ public class CredentialConfigurationInput
 		return conf;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(CredentialConfiguration conf) {
 		super.populateConfiguration(conf);
@@ -88,7 +92,7 @@ public class CredentialConfigurationInput
 	 *
 	 * @return the username
 	 */
-	public String getUsername() {
+	public final @Nullable String getUsername() {
 		return username;
 	}
 
@@ -98,7 +102,7 @@ public class CredentialConfigurationInput
 	 * @param username
 	 *        the username to set
 	 */
-	public void setUsername(String username) {
+	public final void setUsername(@Nullable String username) {
 		this.username = username;
 	}
 
@@ -107,7 +111,7 @@ public class CredentialConfigurationInput
 	 *
 	 * @return the password
 	 */
-	public String getPassword() {
+	public final @Nullable String getPassword() {
 		return password;
 	}
 
@@ -117,7 +121,7 @@ public class CredentialConfigurationInput
 	 * @param password
 	 *        the password to set
 	 */
-	public void setPassword(String password) {
+	public final void setPassword(@Nullable String password) {
 		this.password = password;
 	}
 
@@ -126,7 +130,7 @@ public class CredentialConfigurationInput
 	 *
 	 * @return the expiration date as an ISO-8601 string
 	 */
-	public String getExpires() {
+	public final @Nullable String getExpires() {
 		return expires;
 	}
 
@@ -136,7 +140,7 @@ public class CredentialConfigurationInput
 	 * @param expires
 	 *        the expiration date to set, as an ISO-8601 string
 	 */
-	public void setExpires(String expires) {
+	public final void setExpires(@Nullable String expires) {
 		this.expires = expires;
 	}
 
@@ -146,7 +150,7 @@ public class CredentialConfigurationInput
 	 * @return {@literal true} if the {@code username} represents an OAuth
 	 *         client credentials issuer URL
 	 */
-	public boolean isOauth() {
+	public final boolean isOauth() {
 		return oauth;
 	}
 
@@ -157,7 +161,7 @@ public class CredentialConfigurationInput
 	 *        {@literal true} if the {@code username} represents an OAuth client
 	 *        credentials issuer URL
 	 */
-	public void setOauth(boolean oauth) {
+	public final void setOauth(boolean oauth) {
 		this.oauth = oauth;
 	}
 

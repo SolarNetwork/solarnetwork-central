@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.UserIdRelated;
@@ -84,7 +85,7 @@ public interface UserInstructionInputBiz {
 	 * @return the available configurations, never {@code null}
 	 */
 	<C extends InstructionInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> FilterResults<C, K> configurationsForUser(
-			Long userId, InstructionInputFilter filter, Class<C> configurationClass);
+			Long userId, @Nullable InstructionInputFilter filter, Class<C> configurationClass);
 
 	/**
 	 * Get a specific configuration kind for a given ID.
@@ -99,7 +100,7 @@ public interface UserInstructionInputBiz {
 	 *        the configuration type to get
 	 * @return the configuration, or {@code null} if not available
 	 */
-	<C extends InstructionInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> C configurationForId(
+	<C extends InstructionInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> @Nullable C configurationForId(
 			K id, Class<C> configurationClass);
 
 	/**
@@ -182,5 +183,5 @@ public interface UserInstructionInputBiz {
 	 */
 	TransformOutput previewTransform(UserUuidPK id, MimeType contentType, InputStream in,
 			MimeType outputType, Collection<TransformInstructionResults> instructionResults,
-			Map<String, ?> parameters) throws IOException;
+			@Nullable Map<String, ?> parameters) throws IOException;
 }
