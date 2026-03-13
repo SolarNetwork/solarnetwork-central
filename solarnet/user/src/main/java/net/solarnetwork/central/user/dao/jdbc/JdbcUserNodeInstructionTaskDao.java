@@ -228,7 +228,8 @@ public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", ID_COLUMN_NAME };
 
 	@Override
-	public int updateEnabledStatus(Long userId, UserNodeInstructionTaskFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable UserNodeInstructionTaskFilter filter,
+			boolean enabled) {
 		UserLongCompositePK key = filter != null && filter.hasTaskCriteria()
 				? new UserLongCompositePK(userId, nonnull(filter.getTaskId(), "taskId"))
 				: UserLongCompositePK.unassignedEntityIdKey(userId);

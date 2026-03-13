@@ -153,7 +153,8 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, CloudIntegrationFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable CloudIntegrationFilter filter,
+			boolean enabled) {
 		UserLongCompositePK key = filter != null && filter.hasIntegrationCriteria()
 				? new UserLongCompositePK(userId, nonnull(filter.getIntegrationId(), "integrationId"))
 				: UserLongCompositePK.unassignedEntityIdKey(userId);

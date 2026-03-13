@@ -141,7 +141,8 @@ public class NoopUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, UserNodeInstructionTaskFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable UserNodeInstructionTaskFilter filter,
+			boolean enabled) {
 		throw new UnsupportedOperationException();
 	}
 

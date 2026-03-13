@@ -147,7 +147,7 @@ public class JdbcCloudControlConfigurationDao implements CloudControlConfigurati
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, CloudControlFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable CloudControlFilter filter, boolean enabled) {
 		UserLongCompositePK key = filter != null && filter.hasCloudControlCriteria()
 				? new UserLongCompositePK(userId, nonnull(filter.getCloudControlId(), "cloudControlId"))
 				: UserLongCompositePK.unassignedEntityIdKey(userId);
