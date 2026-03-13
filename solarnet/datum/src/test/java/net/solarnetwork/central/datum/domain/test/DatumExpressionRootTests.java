@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.temporal.ChronoUnit.HOURS;
 import static net.solarnetwork.central.test.CommonTestUtils.randomBytes;
 import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -772,6 +773,125 @@ public class DatumExpressionRootTests {
 
 		and.then(result).as("Delta evaluated as fallback when offset property not available")
 				.isEqualTo(0L);
+	}
+
+	private static final String SIMPLE_VIRTUAL_METER = """
+			has('irradiance') && hasOffset(1, timestamp) && offset(1, timestamp).props['irradianceHours'] != null
+			? offset(1, timestamp).irradianceHours + round((secondsBetween(offset(1, timestamp).timestamp, timestamp) / 3600.0) * avg({offset(1, timestamp).props['irradiance'] ?: 0, irradiance}))
+			: offset(1, timestamp).props['irradianceHours'] != null
+			? offset(1, timestamp).irradianceHours
+			: 0
+			""";
+
+	@Test
+	public void simpleVirtualMeter_start() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final Instant ts = Instant.now();
+
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, sourceId, ts,
+				new DatumSamples(Map.of("irradiance", 20), null, null));
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, sourceId, ts.minus(1, HOURS),
+				new DatumSamples(Map.of("irradiance", 10), null, null));
+
+		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(), Map.of(),
+				null, datumStreamsAccessor, null, null, httpOperations, userSecretProvider);
+
+		// get end datum
+		//given(datumStreamsAccessor.at(Node, nodeId, sourceId, root.getTimestamp())).willReturn(d);
+
+		// get offset earlier datum
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, ts, 1)).willReturn(d1);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(SIMPLE_VIRTUAL_METER, null, root, null,
+				Long.class);
+
+		// THEN
+		and.then(result).as("irradianceHours calculated at start as 0").isEqualTo(0L);
+	}
+
+	@Test
+	public void simpleVirtualMeter_middle() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final Instant ts = Instant.now();
+
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, sourceId, ts,
+				new DatumSamples(Map.of("irradiance", 20), null, null));
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, sourceId, ts.minus(1, HOURS),
+				new DatumSamples(Map.of("irradiance", 10), Map.of("irradianceHours", 5L), null));
+
+		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(), Map.of(),
+				null, datumStreamsAccessor, null, null, httpOperations, userSecretProvider);
+
+		// get offset earlier datum
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, ts, 1)).willReturn(d1);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(SIMPLE_VIRTUAL_METER, null, root, null,
+				Long.class);
+
+		// THEN
+		and.then(result).as("irradianceHours is previous + (30/2) == 20").isEqualTo(20L);
+	}
+
+	@Test
+	public void simpleVirtualMeter_currNoIrradiance() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final Instant ts = Instant.now();
+
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, sourceId, ts,
+				new DatumSamples(Map.of("foo", 20), null, null));
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, sourceId, ts.minus(1, HOURS),
+				new DatumSamples(Map.of("irradiance", 10), Map.of("irradianceHours", 5L), null));
+
+		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(), Map.of(),
+				null, datumStreamsAccessor, null, null, httpOperations, userSecretProvider);
+
+		// get offset earlier datum
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, ts, 1)).willReturn(d1);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(SIMPLE_VIRTUAL_METER, null, root, null,
+				Long.class);
+
+		// THEN
+		and.then(result).as("irradianceHours is previous as no irradiance available").isEqualTo(5L);
+	}
+
+	@Test
+	public void simpleVirtualMeter_prevNoIrradiance() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final Instant ts = Instant.now();
+
+		final GeneralDatum d = GeneralDatum.nodeDatum(nodeId, sourceId, ts,
+				new DatumSamples(Map.of("irradiance", 20), null, null));
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, sourceId, ts.minus(1, HOURS),
+				new DatumSamples(Map.of("foo", 10), Map.of("irradianceHours", 5L), null));
+
+		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(), Map.of(),
+				null, datumStreamsAccessor, null, null, httpOperations, userSecretProvider);
+
+		// get offset earlier datum
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, ts, 1)).willReturn(d1);
+
+		// WHEN
+		Long result = expressionService.evaluateExpression(SIMPLE_VIRTUAL_METER, null, root, null,
+				Long.class);
+
+		// THEN
+		and.then(result).as("irradianceHours is previous + 20/2 == 15L").isEqualTo(15L);
 	}
 
 }
