@@ -61,7 +61,7 @@ public class ExternalSystemClientRegistrationRepository implements ClientRegistr
 	 * @param systemSupportDao
 	 *        the system support DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ExternalSystemClientRegistrationRepository(ExternalSystemSupportDao systemSupportDao) {
 		super();
@@ -94,7 +94,7 @@ public class ExternalSystemClientRegistrationRepository implements ClientRegistr
 			}
 		}
 		if ( secret == null ) {
-			throw new IllegalArgumentException(
+			throw new IllegalStateException(
 					"%s %s configured to use OAuth but does not have client secret available."
 							.formatted(role.role(), role.id().ident()));
 		}

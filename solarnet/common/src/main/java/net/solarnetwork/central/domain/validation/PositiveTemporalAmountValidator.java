@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain.validation;
 
 import java.time.temporal.TemporalAmount;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
@@ -33,7 +34,7 @@ import jakarta.validation.ConstraintValidatorContext;
  * @version 1.0
  */
 public class PositiveTemporalAmountValidator
-		implements ConstraintValidator<PositiveTemporalAmount, TemporalAmount> {
+		implements ConstraintValidator<PositiveTemporalAmount, @Nullable TemporalAmount> {
 
 	/**
 	 * Constructor.
@@ -43,7 +44,7 @@ public class PositiveTemporalAmountValidator
 	}
 
 	@Override
-	public boolean isValid(TemporalAmount value, ConstraintValidatorContext context) {
+	public boolean isValid(@Nullable TemporalAmount value, ConstraintValidatorContext context) {
 		if ( value == null ) {
 			return false;
 		}

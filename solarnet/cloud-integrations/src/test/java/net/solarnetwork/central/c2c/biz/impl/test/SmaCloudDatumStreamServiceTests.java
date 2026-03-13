@@ -34,10 +34,12 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLI
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING;
 import static net.solarnetwork.central.c2c.biz.impl.SmaCloudIntegrationService.BASE_URI;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
 import static net.solarnetwork.codec.jackson.JsonUtils.getObjectFromJSON;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
@@ -109,13 +111,11 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import tools.jackson.databind.JsonNode;
@@ -202,7 +202,7 @@ public class SmaCloudDatumStreamServiceTests {
 		final String refreshToken = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -358,7 +358,7 @@ public class SmaCloudDatumStreamServiceTests {
 		final String systemId = randomLong().toString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -489,7 +489,7 @@ public class SmaCloudDatumStreamServiceTests {
 		final String deviceId = randomLong().toString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -657,7 +657,7 @@ public class SmaCloudDatumStreamServiceTests {
 		final String device2Id = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -692,8 +692,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// configure datum stream mapping
 
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -702,24 +701,18 @@ public class SmaCloudDatumStreamServiceTests {
 		final SmaMeasurementSetType prop1MeasuermentSet = SmaMeasurementSetType.EnergyAndPowerPv;
 		final String prop1MeasurementName = "pvGeneration";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh", Reference,
+				placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
+		prop1.setEnabled(true);
 
 		final SmaMeasurementSetType prop2MeasuermentSet = SmaMeasurementSetType.PowerAc;
 		final String prop2MeasurementName = "activePower";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Instantaneous);
-		prop2.setPropertyName("watts");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "watts", Reference,
+				placeholderValueRef(prop2MeasuermentSet, prop2MeasurementName));
 		prop2.setScale(1);
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(placeholderValueRef(prop2MeasuermentSet, prop2MeasurementName));
+		prop2.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -728,9 +721,8 @@ public class SmaCloudDatumStreamServiceTests {
 
 		final Long nodeId = randomLong();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
 
@@ -884,7 +876,7 @@ public class SmaCloudDatumStreamServiceTests {
 		final String deviceId = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -918,8 +910,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// configure datum stream mapping
 
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -928,13 +919,10 @@ public class SmaCloudDatumStreamServiceTests {
 		final SmaMeasurementSetType prop1MeasuermentSet = SmaMeasurementSetType.EnergyAndPowerPv;
 		final String prop1MeasurementName = "pvGeneration";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh", Reference,
+				placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -943,9 +931,8 @@ public class SmaCloudDatumStreamServiceTests {
 
 		final Long nodeId = randomLong();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
 		// @formatter:off
@@ -1084,7 +1071,7 @@ public class SmaCloudDatumStreamServiceTests {
 		final String deviceId = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -1118,8 +1105,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// configure datum stream mapping
 
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -1128,13 +1114,10 @@ public class SmaCloudDatumStreamServiceTests {
 		final SmaMeasurementSetType prop1MeasuermentSet = SmaMeasurementSetType.EnergyAndPowerPv;
 		final String prop1MeasurementName = "pvGeneration";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh", Reference,
+				placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -1143,9 +1126,8 @@ public class SmaCloudDatumStreamServiceTests {
 
 		final Long nodeId = randomLong();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
 		// @formatter:off
@@ -1283,7 +1265,7 @@ public class SmaCloudDatumStreamServiceTests {
 		final String deviceId = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -1317,8 +1299,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// configure datum stream mapping
 
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -1327,12 +1308,9 @@ public class SmaCloudDatumStreamServiceTests {
 		final SmaMeasurementSetType prop1MeasuermentSet = SmaMeasurementSetType.PowerDc;
 		final String prop1MeasurementName = "dcPowerInput";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "dcPower", Reference,
+				placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("dcPower");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -1341,9 +1319,8 @@ public class SmaCloudDatumStreamServiceTests {
 
 		final Long nodeId = randomLong();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
 		// @formatter:off
@@ -1469,7 +1446,7 @@ public class SmaCloudDatumStreamServiceTests {
 		final String deviceId = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -1503,8 +1480,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// configure datum stream mapping
 
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -1513,13 +1489,10 @@ public class SmaCloudDatumStreamServiceTests {
 		final SmaMeasurementSetType prop1MeasuermentSet = SmaMeasurementSetType.EnergyAndPowerPv;
 		final String prop1MeasurementName = "pvGeneration";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh", Reference,
+				placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -1528,9 +1501,8 @@ public class SmaCloudDatumStreamServiceTests {
 
 		final Long nodeId = randomLong();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
 		// @formatter:off
@@ -1669,7 +1641,7 @@ public class SmaCloudDatumStreamServiceTests {
 		final String deviceId = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -1703,8 +1675,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// configure datum stream mapping
 
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -1713,13 +1684,10 @@ public class SmaCloudDatumStreamServiceTests {
 		final SmaMeasurementSetType prop1MeasuermentSet = SmaMeasurementSetType.EnergyAndPowerPv;
 		final String prop1MeasurementName = "pvGeneration";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh", Reference,
+				placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -1728,9 +1696,8 @@ public class SmaCloudDatumStreamServiceTests {
 
 		final Long nodeId = randomLong();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
 		// @formatter:off
@@ -1890,7 +1857,7 @@ public class SmaCloudDatumStreamServiceTests {
 		final String device2Id = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -1925,8 +1892,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// configure datum stream mapping
 
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -1935,13 +1901,10 @@ public class SmaCloudDatumStreamServiceTests {
 		final SmaMeasurementSetType prop1MeasuermentSet = SmaMeasurementSetType.EnergyAndPowerPv;
 		final String prop1MeasurementName = "pvGeneration";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh", Reference,
+				placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -1950,9 +1913,8 @@ public class SmaCloudDatumStreamServiceTests {
 
 		final Long nodeId = randomLong();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
 
@@ -2099,7 +2061,7 @@ public class SmaCloudDatumStreamServiceTests {
 		final String device2Id = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -2134,8 +2096,7 @@ public class SmaCloudDatumStreamServiceTests {
 		// configure datum stream mapping
 
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
@@ -2144,13 +2105,10 @@ public class SmaCloudDatumStreamServiceTests {
 		final SmaMeasurementSetType prop1MeasuermentSet = SmaMeasurementSetType.EnergyAndPowerPv;
 		final String prop1MeasurementName = "pvGeneration";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "wh", Reference,
+				placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(placeholderValueRef(prop1MeasuermentSet, prop1MeasurementName));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -2159,9 +2117,8 @@ public class SmaCloudDatumStreamServiceTests {
 
 		final Long nodeId = randomLong();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId("unused");
 

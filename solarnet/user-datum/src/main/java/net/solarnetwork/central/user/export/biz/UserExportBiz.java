@@ -46,14 +46,14 @@ public interface UserExportBiz {
 	/**
 	 * Get a list of all available output format services.
 	 * 
-	 * @return the available services, never {@literal null}
+	 * @return the available services, never {@code null}
 	 */
 	Iterable<DatumExportOutputFormatService> availableOutputFormatServices();
 
 	/**
 	 * Get a list of all available destination services.
 	 * 
-	 * @return the available services, never {@literal null}
+	 * @return the available services, never {@code null}
 	 */
 	Iterable<DatumExportDestinationService> availableDestinationServices();
 
@@ -91,7 +91,7 @@ public interface UserExportBiz {
 	 *        the user ID to get configurations for
 	 * @param id
 	 *        the ID of the configuration to get
-	 * @return the configuration, or {@literal null} if not available
+	 * @return the configuration, or {@code null} if not available
 	 */
 	UserDatumExportConfiguration datumExportConfigurationForUser(Long userId, Long id);
 
@@ -117,7 +117,7 @@ public interface UserExportBiz {
 	 * 
 	 * @param userId
 	 *        the user ID to get configurations for
-	 * @return the available configurations, never {@literal null}
+	 * @return the available configurations, never {@code null}
 	 */
 	List<UserDatumExportConfiguration> datumExportsForUser(Long userId);
 
@@ -132,7 +132,7 @@ public interface UserExportBiz {
 	 *        the configuration type to get
 	 * @param id
 	 *        the primary key of the configuration to get
-	 * @return the configuration, or {@literal null} if not available
+	 * @return the configuration, or {@code null} if not available
 	 */
 	<T extends UserRelatedIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id);
@@ -163,7 +163,7 @@ public interface UserExportBiz {
 	 *        the user ID to get configurations for
 	 * @param configurationClass
 	 *        the desired configuration type
-	 * @return the available configurations, never {@literal null}
+	 * @return the available configurations, never {@code null}
 	 */
 	<T extends UserRelatedIdentifiableConfigurationEntity<?>> List<T> configurationsForUser(Long userId,
 			Class<T> configurationClass);
@@ -176,7 +176,7 @@ public interface UserExportBiz {
 	 *        the configuration to save the tasks for
 	 * @param exportDate
 	 *        the export date to use
-	 * @return the created task, never {@literal null}
+	 * @return the created task, never {@code null}
 	 * @throws IllegalArgumentException
 	 *         if {@code configuration} is not complete enough to create an
 	 *         export task
@@ -190,7 +190,7 @@ public interface UserExportBiz {
 	 * 
 	 * @param configuration
 	 *        the configuration to save the task for
-	 * @return the created task, never {@literal null}
+	 * @return the created task, never {@code null}
 	 * @throws IllegalArgumentException
 	 *         if {@code configuration} is not complete enough to create an
 	 *         export task
@@ -210,7 +210,7 @@ public interface UserExportBiz {
 	 * @param success
 	 *        if provided, filter the results to only include jobs with a
 	 *        matching success flag
-	 * @return the matching tasks, never {@literal null}
+	 * @return the matching tasks, never {@code null}
 	 * @since 1.1
 	 */
 	List<UserAdhocDatumExportTaskInfo> adhocExportTasksForUser(Long userId, Set<DatumExportState> states,

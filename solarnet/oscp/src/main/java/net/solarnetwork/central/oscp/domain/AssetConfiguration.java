@@ -58,7 +58,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if the {code id} argument is {@literal null}
+	 *         if the {code id} argument is {@code null}
 	 */
 	public AssetConfiguration(UserLongCompositePK id, Instant created) {
 		super(requireNonNullArgument(id, "id"), created);
@@ -74,7 +74,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public AssetConfiguration(Long userId, Long entityId, Instant created) {
 		super(new UserLongCompositePK(userId, entityId), created);
@@ -189,7 +189,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @param audience
 	 *        the audience to set
 	 * @throws IllegalArgumentException
-	 *         if {@code audience} is {@literal null} or not supported
+	 *         if {@code audience} is {@code null} or not supported
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public void setAudience(OscpRole audience) {

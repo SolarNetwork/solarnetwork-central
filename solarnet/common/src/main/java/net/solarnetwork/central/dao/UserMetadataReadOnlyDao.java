@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserMetadataFilter;
 import net.solarnetwork.dao.FilterableDao;
@@ -42,6 +43,7 @@ public interface UserMetadataReadOnlyDao
 	 *        the primary key to retrieve
 	 * @return the domain object, or {@code null} if not available
 	 */
+	@Nullable
 	UserMetadataEntity get(Long id);
 
 	/**
@@ -58,6 +60,7 @@ public interface UserMetadataReadOnlyDao
 	 * @return the metadata object
 	 * @see net.solarnetwork.domain.datum.DatumMetadataOperations#metadataAtPath(String)
 	 */
+	@Nullable
 	String jsonMetadataAtPath(Long userId, String path);
 
 }

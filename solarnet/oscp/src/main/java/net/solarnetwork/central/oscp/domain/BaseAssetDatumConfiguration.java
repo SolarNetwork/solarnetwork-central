@@ -120,7 +120,7 @@ public abstract class BaseAssetDatumConfiguration {
 	 * Get the datum stream property value multiplier.
 	 *
 	 * @return the multiplier to convert property values into {@code unit}, or
-	 *         {@literal null} for no conversion
+	 *         {@code null} for no conversion
 	 */
 	public BigDecimal getMultiplier() {
 		return multiplier;
@@ -131,7 +131,7 @@ public abstract class BaseAssetDatumConfiguration {
 	 *
 	 * @param multiplier
 	 *        the multiplier to convert property values into
-	 *        {@code instantaneousUnit}, or {@literal null} for no conversion
+	 *        {@code instantaneousUnit}, or {@code null} for no conversion
 	 */
 	public void setMultiplier(BigDecimal multiplier) {
 		this.multiplier = multiplier;

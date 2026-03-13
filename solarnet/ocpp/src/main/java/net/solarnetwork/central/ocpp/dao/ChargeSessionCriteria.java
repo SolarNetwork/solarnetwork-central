@@ -37,18 +37,17 @@ public interface ChargeSessionCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available charge session ID from the
-	 * {@link #getChargeSessionIds()} array, or {@literal null} if not
-	 * available.
+	 * {@link #getChargeSessionIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first charge session ID, or {@literal null} if not available
+	 * @return the first charge session ID, or {@code null} if not available
 	 */
 	UUID getChargeSessionId();
 
 	/**
 	 * Get an array of charge session IDs.
 	 * 
-	 * @return array of charge session IDs (may be {@literal null})
+	 * @return array of charge session IDs (may be {@code null})
 	 */
 	UUID[] getChargeSessionIds();
 

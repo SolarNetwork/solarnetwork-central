@@ -31,7 +31,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -166,7 +165,7 @@ public class OutstationService
 	 * @param port
 	 *        the listen port
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OutstationService(DNP3Manager manager, UserEventAppenderBiz userEventAppenderBiz,
 			InstructorBiz instructorBiz, ServerAuthConfiguration auth, String bindAddress, int port,
@@ -434,7 +433,7 @@ public class OutstationService
 					Dnp3UserEvents.eventWithEntity(config, INSTRUCTION_TAGS,
 							opDescription + " control operation failed.", result.getResultParameters(),
 							ERROR_TAG));
-		} else {
+		} else if ( instr != null ) {
 			Map<String, Object> eventData = new LinkedHashMap<>(2);
 			eventData.put(TOPIC_DATA_KEY, instr.getTopic());
 			if ( instr.getParameters() != null && !instr.getParameters().isEmpty() ) {
@@ -476,7 +475,7 @@ public class OutstationService
 	}
 
 	private static <T> List<T> nonNullList(List<T> list) {
-		return (list != null ? list : Collections.emptyList());
+		return (list != null ? list : List.of());
 	}
 
 	private OutstationChangeSet changeSetForDatumCapturedEvent(final Datum datum) {
@@ -648,7 +647,7 @@ public class OutstationService
 	 *        the datum
 	 * @param property
 	 *        the optional datum property name to extract
-	 * @return the control value, or {@literal null}
+	 * @return the control value, or {@code null}
 	 */
 	private static Object controlValue(final Datum datum, final String property) {
 		final DatumSamplesOperations ops = datum.asSampleOperations();

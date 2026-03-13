@@ -55,7 +55,7 @@ public final class InsertAggregateDatum implements PreparedStatementCreator, Sql
 	 * @param datum
 	 *        the datum to store
 	 * @throws IllegalArgumentException
-	 *         if {@code datum} is {@literal null}
+	 *         if {@code datum} is {@code null}
 	 */
 	public InsertAggregateDatum(AggregateDatumEntity datum) {
 		super();

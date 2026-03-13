@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.SequencedSet;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
 import net.solarnetwork.central.common.dao.TaskCriteria;
@@ -45,11 +46,11 @@ import net.solarnetwork.dao.PaginationCriteria;
 public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 		implements UserNodeInstructionTaskFilter {
 
-	private String[] topics;
-	private Long[] taskIds;
-	private BasicClaimableJobState[] claimableJobStates;
-	private Instant startDate;
-	private Instant endDate;
+	private String @Nullable [] topics;
+	private Long @Nullable [] taskIds;
+	private BasicClaimableJobState @Nullable [] claimableJobStates;
+	private @Nullable Instant startDate;
+	private @Nullable Instant endDate;
 
 	/**
 	 * Constructor.
@@ -64,7 +65,7 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 	 * @param criteria
 	 *        the criteria to copy
 	 */
-	public BasicUserNodeInstructionTaskFilter(PaginationCriteria criteria) {
+	public BasicUserNodeInstructionTaskFilter(@Nullable PaginationCriteria criteria) {
 		super(criteria);
 	}
 
@@ -74,7 +75,7 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public void copyFrom(PaginationCriteria criteria) {
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria == null ) {
 			return;
@@ -105,7 +106,7 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 						}
 					}
 				}
-				setClaimableJobStates(copy.toArray(BasicClaimableJobState[]::new));
+				setClaimableJobStates(copy != null ? copy.toArray(BasicClaimableJobState[]::new) : null);
 			}
 			if ( criteria instanceof DateRangeCriteria c ) {
 				setStartDate(c.getStartDate());
@@ -126,7 +127,7 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -172,7 +173,7 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public String getTopic() {
+	public final @Nullable String getTopic() {
 		return UserNodeInstructionTaskFilter.super.getTopic();
 	}
 
@@ -182,12 +183,12 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 	 * @param topic
 	 *        the topic to set
 	 */
-	public void setTopic(String topic) {
+	public final void setTopic(@Nullable String topic) {
 		setTopics(topic != null ? new String[] { topic } : null);
 	}
 
 	@Override
-	public String[] getTopics() {
+	public final String @Nullable [] getTopics() {
 		return topics;
 	}
 
@@ -197,12 +198,12 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 	 * @param topics
 	 *        the topics
 	 */
-	public void setTopics(String[] topics) {
+	public final void setTopics(String @Nullable [] topics) {
 		this.topics = topics;
 	}
 
 	@Override
-	public Long getTaskId() {
+	public final @Nullable Long getTaskId() {
 		return UserNodeInstructionTaskFilter.super.getTaskId();
 	}
 
@@ -212,12 +213,12 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 	 * @param taskId
 	 *        the task ID to set
 	 */
-	public void setTaskId(Long taskId) {
+	public final void setTaskId(@Nullable Long taskId) {
 		setTaskIds(taskId != null ? new Long[] { taskId } : null);
 	}
 
 	@Override
-	public Long[] getTaskIds() {
+	public final Long @Nullable [] getTaskIds() {
 		return taskIds;
 	}
 
@@ -227,12 +228,12 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 	 * @param taskIds
 	 *        the task IDs to set
 	 */
-	public void setTaskIds(Long[] taskIds) {
+	public final void setTaskIds(Long @Nullable [] taskIds) {
 		this.taskIds = taskIds;
 	}
 
 	@Override
-	public final BasicClaimableJobState[] getClaimableJobStates() {
+	public final BasicClaimableJobState @Nullable [] getClaimableJobStates() {
 		return claimableJobStates;
 	}
 
@@ -242,12 +243,12 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 	 * @param claimableJobStates
 	 *        the states to set
 	 */
-	public final void setClaimableJobStates(BasicClaimableJobState[] claimableJobStates) {
+	public final void setClaimableJobStates(BasicClaimableJobState @Nullable [] claimableJobStates) {
 		this.claimableJobStates = claimableJobStates;
 	}
 
 	@Override
-	public Instant getStartDate() {
+	public final @Nullable Instant getStartDate() {
 		return startDate;
 	}
 
@@ -257,12 +258,12 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 	 * @param startDate
 	 *        the date to set
 	 */
-	public void setStartDate(Instant startDate) {
+	public final void setStartDate(@Nullable Instant startDate) {
 		this.startDate = startDate;
 	}
 
 	@Override
-	public Instant getEndDate() {
+	public final @Nullable Instant getEndDate() {
 		return endDate;
 	}
 
@@ -272,7 +273,7 @@ public class BasicUserNodeInstructionTaskFilter extends BasicCoreCriteria
 	 * @param endDate
 	 *        the date to set
 	 */
-	public void setEndDate(Instant endDate) {
+	public final void setEndDate(@Nullable Instant endDate) {
 		this.endDate = endDate;
 	}
 

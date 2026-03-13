@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.alert.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -29,7 +30,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -372,8 +372,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				userIds.add(alert.getUserId());
 
 				// need to associate all possible node IDs to this user ID
-				List<UserNode> nodes = userNodeDao
-						.findUserNodesForUser(new User(alert.getUserId(), null));
+				List<UserNode> nodes = userNodeDao.findUserNodesForUser(new User(alert.getUserId(), ""));
 				for ( UserNode userNode : nodes ) {
 					nodeCache.put(userNode.getNode().getId(), userNode.getNode());
 					nodeUserMapping.put(userNode.getNode().getId(), alert.getUserId());
@@ -452,7 +451,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	 *
 	 * @param alert
 	 *        The alert to get the most recent data for.
-	 * @return The associated data, never {@literal null}.
+	 * @return The associated data, never {@code null}.
 	 */
 	private List<NodeDatumStreamPK> getLatestNodeData(final UserAlert alert) {
 		List<NodeDatumStreamPK> results;
@@ -461,7 +460,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		} else {
 			results = userDataCache.get(alert.getUserId());
 		}
-		return (results == null ? Collections.emptyList() : results);
+		return (results == null ? List.of() : results);
 	}
 
 	private boolean withinIntervals(final Instant now, List<DateInterval> intervals) {
@@ -498,7 +497,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		}
 
 		// no time period later than now, so make the next period the start of the earliest interval, tomorrow
-		return earliest.getStart().plus(1, ChronoUnit.DAYS);
+		return nonnull(earliest, "earliest").getStart().plus(1, ChronoUnit.DAYS);
 	}
 
 	private NodeDatumStreamPK getFirstStaleDatum(final UserAlert alert, final Instant now,
@@ -596,6 +595,9 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		if ( node == null ) {
 			return;
 		}
+
+		final NodeDatumStreamPK datumId = nonnull(datum, "datum");
+
 		BasicMailAddress addr = null;
 		String[] emails = alert.optionEmailTos();
 		if ( (emails == null || emails.length == 0) ) {
@@ -615,9 +617,9 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		if ( node.getTimeZone() != null ) {
 			dateFormat = dateFormat.withZone(node.getTimeZone().toZoneId());
 		}
-		model.put("datumDate", dateFormat.format(datum.getTimestamp()));
+		model.put("datumDate", dateFormat.format(datumId.getTimestamp()));
 
-		String subject = messageSource.getMessage(subjectKey, new Object[] { datum.getNodeId() },
+		String subject = messageSource.getMessage(subjectKey, new Object[] { datumId.getNodeId() },
 				locale);
 
 		log.debug("Sending NodeStaleData alert {} to {} with model {}", subject, user.getEmail(), model);

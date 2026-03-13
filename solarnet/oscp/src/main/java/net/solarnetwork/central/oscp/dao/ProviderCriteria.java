@@ -43,7 +43,7 @@ public interface ProviderCriteria {
 	/**
 	 * Get an array of provider IDs.
 	 * 
-	 * @return array of IDs (may be {@literal null})
+	 * @return array of IDs (may be {@code null})
 	 */
 	Long[] getProviderIds();
 
@@ -52,10 +52,10 @@ public interface ProviderCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available ID from the {@link #getProviderIds()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the provider ID, or {@literal null} if not available
+	 * @return the provider ID, or {@code null} if not available
 	 */
 	default Long getProviderId() {
 		Long[] ids = getProviderIds();

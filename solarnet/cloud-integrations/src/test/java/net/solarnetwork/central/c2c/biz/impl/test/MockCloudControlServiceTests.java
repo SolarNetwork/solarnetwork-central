@@ -116,11 +116,8 @@ public class MockCloudControlServiceTests implements CloudIntegrationsUserEvents
 
 	private CloudControlConfiguration newControl(SolarNodeOwnership owner) {
 		final CloudControlConfiguration control = new CloudControlConfiguration(owner.getUserId(),
-				randomLong(), now());
-		control.setServiceIdentifier(MockCloudControlService.SERVICE_IDENTIFIER);
-		control.setIntegrationId(randomLong());
-		control.setNodeId(owner.getNodeId());
-		control.setControlId(randomString());
+				randomLong(), now(), randomString(), MockCloudControlService.SERVICE_IDENTIFIER,
+				randomLong(), owner.getNodeId(), randomString());
 		control.setEnabled(true);
 		control.setControlReference(randomString());
 		return control;
@@ -154,8 +151,8 @@ public class MockCloudControlServiceTests implements CloudIntegrationsUserEvents
 
 		// look up associated integration
 		CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(
-				control.getUserId(), control.getIntegrationId(), now());
-		integration.setServiceIdentifier(MockCloudIntegrationService.SERVICE_IDENTIFIER);
+				control.getUserId(), control.getIntegrationId(), now(), randomString(),
+				MockCloudIntegrationService.SERVICE_IDENTIFIER);
 		given(integrationDao
 				.get(new UserLongCompositePK(control.getUserId(), control.getIntegrationId())))
 						.willReturn(integration);

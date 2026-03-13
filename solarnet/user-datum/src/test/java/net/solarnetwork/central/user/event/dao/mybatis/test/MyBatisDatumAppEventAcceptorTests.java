@@ -95,9 +95,8 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 	@Test
 	public void accept_noConfiguration() {
 		// GIVEN
-		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
-		info.setAggregation(Aggregation.Hour);
-		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
+				Instant.now().truncatedTo(ChronoUnit.HOURS));
 		BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC,
 				info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
 
@@ -143,9 +142,8 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 				new Long[] { TEST_NODE_ID }, new String[] { TEST_SOURCE_ID });
 
 		// WHEN		
-		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
-		info.setAggregation(Aggregation.Hour);
-		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
+				Instant.now().truncatedTo(ChronoUnit.HOURS));
 		BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC,
 				info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
 		dao.offerDatumEvent(event);
@@ -165,9 +163,8 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		createHookConf(user.getId(), new Long[] { -99L }, new String[] { "foo" }); // create another that should not be returned
 
 		// WHEN		
-		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
-		info.setAggregation(Aggregation.Hour);
-		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
+				Instant.now().truncatedTo(ChronoUnit.HOURS));
 		BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC,
 				info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
 		dao.offerDatumEvent(event);
@@ -186,9 +183,8 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		createHookConf(user.getId(), new Long[] { -99L }, new String[] { "foo" }); // create another that should not be returned
 
 		// WHEN		
-		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
-		info.setAggregation(Aggregation.Hour);
-		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
+				Instant.now().truncatedTo(ChronoUnit.HOURS));
 		BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC,
 				info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
 		dao.offerDatumEvent(event);
@@ -208,9 +204,8 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		createHookConf(user.getId(), new Long[] { TEST_NODE_ID }, new String[] { "foo" }); // create another that should not be returned
 
 		// WHEN		
-		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
-		info.setAggregation(Aggregation.Hour);
-		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
+				Instant.now().truncatedTo(ChronoUnit.HOURS));
 		BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC,
 				info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
 		dao.offerDatumEvent(event);
@@ -232,9 +227,8 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		createHookConf(user.getId(), new Long[] { TEST_NODE_ID }, new String[] { "foo" }); // create another that should not be returned
 
 		// WHEN		
-		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
-		info.setAggregation(Aggregation.Hour);
-		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo(Aggregation.Hour,
+				Instant.now().truncatedTo(ChronoUnit.HOURS));
 		BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC,
 				info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
 		dao.offerDatumEvent(event);

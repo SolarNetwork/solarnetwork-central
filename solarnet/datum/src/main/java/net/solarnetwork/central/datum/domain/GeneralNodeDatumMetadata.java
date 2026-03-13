@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -52,11 +55,40 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	@Serial
 	private static final long serialVersionUID = 646376244092193165L;
 
-	private NodeSourcePK id = new NodeSourcePK();
-	private Instant created;
-	private Instant updated;
-	private GeneralDatumMetadata meta;
-	private String metaJson;
+	private final NodeSourcePK id;
+	private @Nullable Instant created;
+	private @Nullable Instant updated;
+	private @Nullable GeneralDatumMetadata meta;
+	private @Nullable String metaJson;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public GeneralNodeDatumMetadata(NodeSourcePK id) {
+		super();
+		this.id = requireNonNullArgument(id, "id");
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public GeneralNodeDatumMetadata(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("sourceId") String sourceId) {
+		this(new NodeSourcePK(nodeId, sourceId));
+	}
 
 	@Override
 	public GeneralNodeDatumMetadata clone() {
@@ -76,15 +108,12 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
 		if ( !(obj instanceof GeneralNodeDatumMetadata other) ) {
 			return false;
-		}
-		if ( id == null ) {
-			return other.id == null;
 		}
 		return id.equals(other.id);
 	}
@@ -94,21 +123,8 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	 *
 	 * @return the nodeId
 	 */
-	public Long getNodeId() {
-		return (id == null ? null : id.getNodeId());
-	}
-
-	/**
-	 * Convenience setter for {@link NodeSourcePK#setNodeId(Long)}.
-	 *
-	 * @param nodeId
-	 *        the nodeId to set
-	 */
-	public void setNodeId(Long nodeId) {
-		if ( id == null ) {
-			id = new NodeSourcePK();
-		}
-		id.setNodeId(nodeId);
+	public final Long getNodeId() {
+		return id.getNodeId();
 	}
 
 	/**
@@ -116,21 +132,8 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	 *
 	 * @return the sourceId
 	 */
-	public String getSourceId() {
-		return (id == null ? null : id.getSourceId());
-	}
-
-	/**
-	 * Convenience setter for {@link NodeSourcePK#setSourceId(String)}.
-	 *
-	 * @param sourceId
-	 *        the sourceId to set
-	 */
-	public void setSourceId(String sourceId) {
-		if ( id == null ) {
-			id = new NodeSourcePK();
-		}
-		id.setSourceId(sourceId);
+	public final String getSourceId() {
+		return id.getSourceId();
 	}
 
 	/**
@@ -142,13 +145,13 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	 * @return GeneralDatumMetadata
 	 */
 	@JsonUnwrapped
-	public GeneralDatumMetadata getMetadata() {
+	public final @Nullable GeneralDatumMetadata getMetadata() {
 		return getMeta();
 	}
 
 	@JsonIgnore
 	@SerializeIgnore
-	public GeneralDatumMetadata getMeta() {
+	public final @Nullable GeneralDatumMetadata getMeta() {
 		if ( meta == null && metaJson != null ) {
 			meta = DatumUtils.getObjectFromJSON(metaJson, GeneralDatumMetadata.class);
 			metaJson = null; // clear this out, because we might mutate meta and invalidate our cached JSON value
@@ -157,14 +160,14 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	}
 
 	@JsonProperty
-	public void setMeta(GeneralDatumMetadata meta) {
+	public final void setMeta(@Nullable GeneralDatumMetadata meta) {
 		this.meta = meta;
 		this.metaJson = null;
 	}
 
 	@JsonIgnore
 	@SerializeIgnore
-	public String getMetaJson() {
+	public final @Nullable String getMetaJson() {
 		if ( metaJson == null ) {
 			metaJson = DatumUtils.getJSONString(meta, "{}");
 			meta = null; // clear this out, because we might otherwise mutate it and invalidate our cached JSON value
@@ -172,7 +175,7 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 		return metaJson;
 	}
 
-	public void setMetaJson(String infoJson) {
+	public final void setMetaJson(@Nullable String infoJson) {
 		this.metaJson = infoJson;
 		this.meta = null;
 	}
@@ -180,28 +183,24 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	@Override
 	@JsonIgnore
 	@SerializeIgnore
-	public NodeSourcePK getId() {
+	public final NodeSourcePK getId() {
 		return id;
 	}
 
-	public void setId(NodeSourcePK id) {
-		this.id = id;
-	}
-
 	@Override
-	public Instant getCreated() {
+	public final @Nullable Instant getCreated() {
 		return created;
 	}
 
-	public void setCreated(Instant created) {
+	public final void setCreated(@Nullable Instant created) {
 		this.created = created;
 	}
 
-	public Instant getUpdated() {
+	public final @Nullable Instant getUpdated() {
 		return updated;
 	}
 
-	public void setUpdated(Instant updated) {
+	public final void setUpdated(@Nullable Instant updated) {
 		this.updated = updated;
 	}
 

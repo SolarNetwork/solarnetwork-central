@@ -59,7 +59,7 @@ public final class UpdateCapacityGroupMeasurementDate implements PreparedStateme
 	 * @param ts
 	 *        the value to set of the expectation matches
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code expected} is {@literal null} or the
+	 *         if any argument except {@code expected} is {@code null} or the
 	 *         {@code id} is not assigned
 	 */
 	public UpdateCapacityGroupMeasurementDate(OscpRole type, UserLongCompositePK id, Instant expected,

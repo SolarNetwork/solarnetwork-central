@@ -59,12 +59,12 @@ public interface DatumInputEndpointBiz {
 	 *        optional parameters, such as {@link #PARAM_NODE_ID} or
 	 *        {@link #PARAM_SOURCE_ID}
 	 * @return the collection of datum IDs successfully imported; will be
-	 *         {@literal null} if the endpoint is configured not to include a
+	 *         {@code null} if the endpoint is configured not to include a
 	 *         response body
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	Collection<DatumId> importDatum(Long userId, UUID endpointId, MimeType contentType, InputStream in,
 			Map<String, String> parameters) throws IOException;

@@ -60,7 +60,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDao
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcUserFluxAggregatePublishConfigurationDao(JdbcOperations jdbcOps) {
 		super();
@@ -88,7 +88,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDao
 
 	@Override
 	public UserFluxAggregatePublishConfiguration entityKey(UserLongCompositePK id) {
-		return new UserFluxAggregatePublishConfiguration(id, Instant.now());
+		return new UserFluxAggregatePublishConfiguration(id, Instant.EPOCH);
 	}
 
 	@Override

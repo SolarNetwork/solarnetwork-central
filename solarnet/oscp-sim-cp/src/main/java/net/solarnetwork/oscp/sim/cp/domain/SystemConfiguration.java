@@ -70,7 +70,7 @@ public class SystemConfiguration extends BasicUuidEntity
 	 * Test if the heartbeat date is expired now.
 	 *
 	 * @return {@literal true} if {@code heartbeatSecs} is configured and
-	 *         {@code heartbeatDate} is {@literal null} or expired right now
+	 *         {@code heartbeatDate} is {@code null} or expired right now
 	 */
 	@JsonIgnore
 	public boolean isHeartbeatExpired() {
@@ -83,7 +83,7 @@ public class SystemConfiguration extends BasicUuidEntity
 	 * @param at
 	 *        the date at which to test if the heartbeat has expired
 	 * @return {@literal true} if {@code heartbeatSecs} is configured and
-	 *         {@code heartbeatDate} is {@literal null} or expired at the given
+	 *         {@code heartbeatDate} is {@code null} or expired at the given
 	 *         date
 	 */
 	public boolean isHeartbeatExpired(Instant at) {
@@ -102,7 +102,7 @@ public class SystemConfiguration extends BasicUuidEntity
 	/**
 	 * Test if the offline date is expired now.
 	 *
-	 * @return {@literal true} if {@code offlineDate} is not {@literal null} and
+	 * @return {@literal true} if {@code offlineDate} is not {@code null} and
 	 *         expired right now
 	 */
 	@JsonIgnore
@@ -115,7 +115,7 @@ public class SystemConfiguration extends BasicUuidEntity
 	 *
 	 * @param at
 	 *        the date at which to test if the offline date has expired
-	 * @return {@literal true} if {@code offlineDate} is not {@literal null} and
+	 * @return {@literal true} if {@code offlineDate} is not {@code null} and
 	 *         expired right now
 	 */
 	public boolean isOffline(Instant at) {

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.biz;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 
@@ -41,8 +42,9 @@ public interface NodeOwnershipBiz {
 	 *        The ID of the user making the request.
 	 * @param nodeId
 	 *        The ID of the node to transfer.
-	 * @return The transfer, or <em>null</em> if none exists.
+	 * @return The transfer, or {@code null} if none exists.
 	 */
+	@Nullable
 	UserNodeTransfer getNodeOwnershipTransfer(Long userId, Long nodeId);
 
 	/**
@@ -56,7 +58,7 @@ public interface NodeOwnershipBiz {
 	 * @param email
 	 *        The email address of the requested ownership recipient.
 	 * @return A list of all ownership requests associated with the given
-	 *         recipient (never <em>null</em>).
+	 *         recipient (never {@code null}).
 	 */
 	List<UserNodeTransfer> pendingNodeOwnershipTransfersForEmail(String email);
 

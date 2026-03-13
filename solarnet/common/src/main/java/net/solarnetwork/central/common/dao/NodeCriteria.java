@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for node related data.
  * 
@@ -36,19 +38,20 @@ public interface NodeCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available node ID from the {@link #getNodeIds()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the node ID, or {@literal null} if not available
+	 * @return the node ID, or {@code null} if not available
 	 */
+	@Nullable
 	Long getNodeId();
 
 	/**
 	 * Get an array of node IDs.
 	 * 
-	 * @return array of node IDs (may be {@literal null})
+	 * @return array of node IDs (may be {@code null})
 	 */
-	Long[] getNodeIds();
+	Long @Nullable [] getNodeIds();
 
 	/**
 	 * Test if this filter has any node criteria.

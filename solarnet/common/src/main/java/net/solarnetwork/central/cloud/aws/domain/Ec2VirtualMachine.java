@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.cloud.aws.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.List;
 import net.solarnetwork.central.cloud.domain.VirtualMachine;
@@ -52,10 +53,12 @@ public final class Ec2VirtualMachine extends BasicUnique<String> implements Virt
 	 *        the instance ID
 	 * @param displayName
 	 *        the display name
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public Ec2VirtualMachine(String instanceId, String displayName) {
-		super(instanceId);
-		this.displayName = displayName;
+		super(requireNonNullArgument(instanceId, "instanceId"));
+		this.displayName = requireNonNullArgument(displayName, "displayName");
 	}
 
 	/**
@@ -63,9 +66,12 @@ public final class Ec2VirtualMachine extends BasicUnique<String> implements Virt
 	 *
 	 * @param instance
 	 *        the EC2 instance
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public Ec2VirtualMachine(Instance instance) {
-		this(instance.instanceId(), displayNameForInstance(instance));
+		this(requireNonNullArgument(instance, "instance").instanceId(),
+				displayNameForInstance(instance));
 		this.state = virtualMachineStateForInstanceState(instance.state());
 	}
 
@@ -79,15 +85,16 @@ public final class Ec2VirtualMachine extends BasicUnique<String> implements Virt
 	 *
 	 * @param instance
 	 *        the instance to get the display name for
-	 * @return the name, never {@literal null}
+	 * @return the name, never {@code null}
 	 */
 	public static String displayNameForInstance(Instance instance) {
-		List<Tag> tags = instance.tags();
+		final Instance inst = requireNonNullArgument(instance, "instance");
+		List<Tag> tags = inst.tags();
 		if ( tags == null ) {
-			return instance.instanceId();
+			return inst.instanceId();
 		} else {
-			return instance.tags().stream().filter(t -> "name".equalsIgnoreCase(t.key())).findFirst()
-					.map(Tag::value).orElse(instance.instanceId());
+			return inst.tags().stream().filter(t -> "name".equalsIgnoreCase(t.key())).findFirst()
+					.map(Tag::value).orElse(inst.instanceId());
 		}
 	}
 
@@ -96,7 +103,7 @@ public final class Ec2VirtualMachine extends BasicUnique<String> implements Virt
 	 *
 	 * @param state
 	 *        the state
-	 * @return the state enum value, never {@literal null}
+	 * @return the state enum value, never {@code null}
 	 */
 	public static VirtualMachineState virtualMachineStateForInstanceState(InstanceState state) {
 		if ( state == null ) {
@@ -127,10 +134,11 @@ public final class Ec2VirtualMachine extends BasicUnique<String> implements Virt
 	 * Set the machine state.
 	 *
 	 * @param state
-	 *        the state
+	 *        the state; if {@code null} then
+	 *        {@link VirtualMachineState#Unknown} will be used
 	 */
 	public void setState(VirtualMachineState state) {
-		this.state = state;
+		this.state = (state != null ? state : VirtualMachineState.Unknown);
 	}
 
 }

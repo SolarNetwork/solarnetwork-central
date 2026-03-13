@@ -23,12 +23,14 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.service.CertificateException;
 
@@ -46,7 +48,7 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	@Serial
 	private static final long serialVersionUID = -8325998663783331582L;
 
-	private X509Certificate certificate;
+	private @Nullable X509Certificate certificate;
 
 	/**
 	 * Constructor.
@@ -56,7 +58,7 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseUserCertificate(UserStringCompositePK id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
@@ -72,7 +74,7 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseUserCertificate(Long userId, String subjectDn, Instant created) {
 		super(new UserStringCompositePK(userId, subjectDn), created);
@@ -92,7 +94,7 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseUserCertificate(Long userId, X509Certificate certificate, Instant created) {
 		super(new UserStringCompositePK(userId, canonicalSubjectDn(certificate)), created);
@@ -119,8 +121,12 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	 *         other's
 	 */
 	@Override
-	public boolean isSameAs(T other) {
-		return (super.isSameAs(other) && Objects.equals(this.certificate, other.getCertificate()));
+	public boolean isSameAs(@Nullable T other) {
+		if ( !super.isSameAs(other) ) {
+			return false;
+		}
+		final T o = nonnull(other, "other");
+		return Objects.equals(this.certificate, o.getCertificate());
 	}
 
 	/**
@@ -128,7 +134,7 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	 *
 	 * @return the subject DN
 	 */
-	public String getSubjectDn() {
+	public final @Nullable String getSubjectDn() {
 		UserStringCompositePK pk = getId();
 		return (pk != null ? pk.getEntityId() : null);
 	}
@@ -138,7 +144,7 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	 *
 	 * @return the certificate
 	 */
-	public X509Certificate getCertificate() {
+	public final @Nullable X509Certificate getCertificate() {
 		return certificate;
 	}
 
@@ -148,17 +154,17 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	 * @param certificate
 	 *        the certificate to set
 	 */
-	public void setCertificate(X509Certificate certificate) {
+	public final void setCertificate(@Nullable X509Certificate certificate) {
 		this.certificate = certificate;
 	}
 
 	/**
 	 * Get the certificate expiration date.
 	 *
-	 * @return the expiration date, or {@literal null} if the certificate is not
+	 * @return the expiration date, or {@code null} if the certificate is not
 	 *         set
 	 */
-	public Instant getExpires() {
+	public final @Nullable Instant getExpires() {
 		final X509Certificate cert = getCertificate();
 		if ( cert == null ) {
 			return null;
@@ -171,7 +177,7 @@ public abstract class BaseUserCertificate<T extends BaseUserCertificate<T>>
 	 *
 	 * @return the certificate data
 	 */
-	public byte[] certificateData() {
+	public final byte @Nullable [] certificateData() {
 		final X509Certificate cert = getCertificate();
 		try {
 			return (cert != null ? cert.getEncoded() : null);

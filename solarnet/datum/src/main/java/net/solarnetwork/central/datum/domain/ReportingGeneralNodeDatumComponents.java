@@ -23,11 +23,15 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.io.Serial;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.SerializeIgnore;
 
@@ -46,13 +50,34 @@ public class ReportingGeneralNodeDatumComponents extends GeneralNodeDatumCompone
 	@Serial
 	private static final long serialVersionUID = 1860195207830270606L;
 
-	private LocalDateTime localDateTime;
+	private @Nullable LocalDateTime localDateTime;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
+	 *
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public ReportingGeneralNodeDatumComponents() {
-		super();
+	public ReportingGeneralNodeDatumComponents(GeneralNodeDatumPK id) {
+		super(id);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public ReportingGeneralNodeDatumComponents(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId) {
+		super(nodeId, created, sourceId);
 	}
 
 	/**
@@ -60,13 +85,15 @@ public class ReportingGeneralNodeDatumComponents extends GeneralNodeDatumCompone
 	 *
 	 * @param other
 	 *        the datum to copy
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public ReportingGeneralNodeDatumComponents(GeneralNodeDatum other) {
 		super(other);
 	}
 
 	@Override
-	public LocalDate getLocalDate() {
+	public final @Nullable LocalDate getLocalDate() {
 		if ( localDateTime == null ) {
 			return null;
 		}
@@ -75,7 +102,7 @@ public class ReportingGeneralNodeDatumComponents extends GeneralNodeDatumCompone
 
 	@JsonFormat(pattern = "HH:mm")
 	@Override
-	public LocalTime getLocalTime() {
+	public final @Nullable LocalTime getLocalTime() {
 		if ( localDateTime == null ) {
 			return null;
 		}
@@ -84,11 +111,11 @@ public class ReportingGeneralNodeDatumComponents extends GeneralNodeDatumCompone
 
 	@JsonIgnore
 	@SerializeIgnore
-	public LocalDateTime getLocalDateTime() {
+	public final @Nullable LocalDateTime getLocalDateTime() {
 		return localDateTime;
 	}
 
-	public void setLocalDateTime(LocalDateTime localDateTime) {
+	public final void setLocalDateTime(@Nullable LocalDateTime localDateTime) {
 		this.localDateTime = localDateTime;
 	}
 }

@@ -147,7 +147,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	 *        the destination services
 	 * @throws IllegalArgumentException
 	 *         if any argument other than {@code transactionTemplate} is
-	 *         {@literal null}
+	 *         {@code null}
 	 */
 	public DaoDatumExportBiz(DatumExportTaskInfoDao taskDao, DatumEntityDao datumDao,
 			TaskScheduler scheduler, AsyncTaskExecutor executor, TextEncryptor textEncryptor,
@@ -397,8 +397,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 					}
 
 					// all exported data will be audited on the hour we start the export at
-					GeneralNodeDatumPK auditDatumKey = new GeneralNodeDatumPK();
-					auditDatumKey.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
+					final Instant auditDate = Instant.now().truncatedTo(ChronoUnit.HOURS);
 
 					datumDao.bulkExport(new ExportCallback<>() {
 
@@ -416,9 +415,9 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 						@Override
 						public ExportCallbackAction handle(GeneralNodeDatumFilterMatch d) {
 							if ( d != null && d.getId() != null && auditor != null ) {
-								auditDatumKey.setNodeId(d.getId().getNodeId());
-								auditDatumKey.setSourceId(d.getId().getSourceId());
-								auditor.addNodeDatumAuditResults(singletonMap(auditDatumKey, 1));
+								final var pk = new GeneralNodeDatumPK(d.getId().getNodeId(), auditDate,
+										d.getId().getSourceId());
+								auditor.addNodeDatumAuditResults(singletonMap(pk, 1));
 							}
 							try {
 								exportContext.appendDatumMatch(singleton(d), DatumExportTask.this);

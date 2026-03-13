@@ -52,7 +52,7 @@ public class CachingTransformConfigurationDao
 	 * @param executor
 	 *        task executor
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CachingTransformConfigurationDao(TransformConfigurationDao delegate,
 			Cache<UserLongCompositePK, TransformConfiguration> cache, Executor executor) {

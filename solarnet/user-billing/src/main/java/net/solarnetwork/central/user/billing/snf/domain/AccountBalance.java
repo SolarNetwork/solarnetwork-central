@@ -22,13 +22,16 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static java.math.BigDecimal.ZERO;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Account balance entity.
@@ -56,35 +59,24 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	/**
 	 * Constructor.
 	 *
-	 * @param accountId
-	 *        the account ID
-	 */
-	public AccountBalance(Long accountId) {
-		this(new UserLongPK(null, accountId), Instant.now(), BigDecimal.ZERO, BigDecimal.ZERO,
-				BigDecimal.ZERO);
-	}
-
-	/**
-	 * Constructor.
-	 *
 	 * @param id
 	 *        the ID
 	 * @param created
 	 *        the creation date
 	 * @param chargeTotal
-	 *        the charge total; {@literal null} will be stored as {@literal 0}
+	 *        the charge total; {@code null} will be stored as {@literal 0}
 	 * @param paymentTotal
-	 *        the payment total; {@literal null} will be stored as {@literal 0}
+	 *        the payment total; {@code null} will be stored as {@literal 0}
 	 * @param availableCredit
-	 *        the available credit; {@literal null} will be stored as
-	 *        {@literal 0}
+	 *        the available credit; {@code null} will be stored as {@literal 0}
 	 */
-	public AccountBalance(UserLongPK id, Instant created, BigDecimal chargeTotal,
-			BigDecimal paymentTotal, BigDecimal availableCredit) {
+	public AccountBalance(@Nullable UserLongPK id, @Nullable Instant created,
+			@Nullable BigDecimal chargeTotal, @Nullable BigDecimal paymentTotal,
+			@Nullable BigDecimal availableCredit) {
 		super(id, created);
-		this.chargeTotal = (chargeTotal != null ? chargeTotal : BigDecimal.ZERO);
-		this.paymentTotal = (paymentTotal != null ? paymentTotal : BigDecimal.ZERO);
-		this.availableCredit = (availableCredit != null ? availableCredit : BigDecimal.ZERO);
+		this.chargeTotal = (chargeTotal != null ? chargeTotal : ZERO);
+		this.paymentTotal = (paymentTotal != null ? paymentTotal : ZERO);
+		this.availableCredit = (availableCredit != null ? availableCredit : ZERO);
 	}
 
 	/**
@@ -97,28 +89,27 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 * @param created
 	 *        the creation date
 	 * @param chargeTotal
-	 *        the charge total; {@literal null} will be stored as {@literal 0}
+	 *        the charge total; {@code null} will be stored as {@literal 0}
 	 * @param paymentTotal
-	 *        the payment total; {@literal null} will be stored as {@literal 0}
+	 *        the payment total; {@code null} will be stored as {@literal 0}
 	 * @param availableCredit
-	 *        the available credit; {@literal null} will be stored as
-	 *        {@literal 0}
+	 *        the available credit; {@code null} will be stored as {@literal 0}
 	 */
-	public AccountBalance(Long accountId, Long userId, Instant created, BigDecimal chargeTotal,
-			BigDecimal paymentTotal, BigDecimal availableCredit) {
+	public AccountBalance(Long accountId, Long userId, @Nullable Instant created,
+			@Nullable BigDecimal chargeTotal, @Nullable BigDecimal paymentTotal,
+			@Nullable BigDecimal availableCredit) {
 		this(new UserLongPK(userId, accountId), created, chargeTotal, paymentTotal, availableCredit);
 	}
 
 	@Override
 	public boolean hasId() {
 		UserLongPK id = getId();
-		return (id != null && id.getId() != null && id.getUserId() != null);
+		return (id != null && id.getId() != null && id.userIdIsAssigned());
 	}
 
 	@Override
 	public Long getUserId() {
-		final UserLongPK id = getId();
-		return id != null ? id.getUserId() : null;
+		return ObjectUtils.nonnull(getId(), "id").getUserId();
 	}
 
 	/**
@@ -136,7 +127,7 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 *         the other
 	 */
 	@SuppressWarnings("ReferenceEquality")
-	public boolean isSameAs(AccountBalance other) {
+	public boolean isSameAs(@Nullable AccountBalance other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -151,7 +142,7 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	}
 
 	@Override
-	public boolean differsFrom(AccountBalance other) {
+	public boolean differsFrom(@Nullable AccountBalance other) {
 		return !isSameAs(other);
 	}
 
@@ -160,7 +151,7 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 *
 	 * @return the charge total
 	 */
-	public BigDecimal getChargeTotal() {
+	public final BigDecimal getChargeTotal() {
 		return chargeTotal;
 	}
 
@@ -169,7 +160,7 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 *
 	 * @return the payment total
 	 */
-	public BigDecimal getPaymentTotal() {
+	public final BigDecimal getPaymentTotal() {
 		return paymentTotal;
 	}
 
@@ -178,7 +169,7 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 *
 	 * @return the available credit
 	 */
-	public BigDecimal getAvailableCredit() {
+	public final BigDecimal getAvailableCredit() {
 		return availableCredit;
 	}
 

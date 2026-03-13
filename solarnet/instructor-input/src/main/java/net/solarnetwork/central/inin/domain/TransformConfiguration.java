@@ -22,12 +22,14 @@
 
 package net.solarnetwork.central.inin.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -58,9 +60,9 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	private final TransformPhase phase;
 	private String name;
 	private String serviceIdentifier;
-	private String servicePropsJson;
+	private @Nullable String servicePropsJson;
 
-	private Map<String, Object> serviceProps;
+	private @Nullable Map<String, Object> serviceProps;
 
 	/**
 	 * Constructor.
@@ -71,12 +73,19 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	 *        the creation date
 	 * @param phase
 	 *        the phase
+	 * @param name
+	 *        the configuration name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	protected TransformConfiguration(UserLongCompositePK id, Instant created, TransformPhase phase) {
+	protected TransformConfiguration(UserLongCompositePK id, Instant created, TransformPhase phase,
+			String name, String serviceIdentifier) {
 		super(id, created);
 		this.phase = requireNonNullArgument(phase, "phase");
+		this.name = requireNonNullArgument(name, "name");
+		this.serviceIdentifier = requireNonNullArgument(serviceIdentifier, "serviceIdentifier");
 		setEnabled(true);
 	}
 
@@ -91,12 +100,16 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	 *        the creation date
 	 * @param phase
 	 *        the phase
+	 * @param name
+	 *        the configuration name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	protected TransformConfiguration(Long userId, Long transformId, Instant created,
-			TransformPhase phase) {
-		this(new UserLongCompositePK(userId, transformId), created, phase);
+			TransformPhase phase, String name, String serviceIdentifier) {
+		this(new UserLongCompositePK(userId, transformId), created, phase, name, serviceIdentifier);
 	}
 
 	/**
@@ -118,11 +131,16 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 		 *        the ID
 		 * @param created
 		 *        the creation date
+		 * @param name
+		 *        the configuration name
+		 * @param serviceIdentifier
+		 *        the service identifier
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
-		public RequestTransformConfiguration(UserLongCompositePK id, Instant created) {
-			super(id, created, TransformPhase.Request);
+		public RequestTransformConfiguration(UserLongCompositePK id, Instant created, String name,
+				String serviceIdentifier) {
+			super(id, created, TransformPhase.Request, name, serviceIdentifier);
 		}
 
 		/**
@@ -134,16 +152,22 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 		 *        the transform ID
 		 * @param created
 		 *        the creation date
+		 * @param name
+		 *        the configuration name
+		 * @param serviceIdentifier
+		 *        the service identifier
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
-		public RequestTransformConfiguration(Long userId, Long transformId, Instant created) {
-			this(new UserLongCompositePK(userId, transformId), created);
+		public RequestTransformConfiguration(Long userId, Long transformId, Instant created, String name,
+				String serviceIdentifier) {
+			this(new UserLongCompositePK(userId, transformId), created, name, serviceIdentifier);
 		}
 
 		@Override
 		public RequestTransformConfiguration copyWithId(UserLongCompositePK id) {
-			var copy = new RequestTransformConfiguration(id, getCreated());
+			var copy = new RequestTransformConfiguration(id, nonnull(getCreated(), "created"), getName(),
+					getServiceIdentifier());
 			copyTo(copy);
 			return copy;
 		}
@@ -169,11 +193,16 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 		 *        the ID
 		 * @param created
 		 *        the creation date
+		 * @param name
+		 *        the configuration name
+		 * @param serviceIdentifier
+		 *        the service identifier
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
-		public ResponseTransformConfiguration(UserLongCompositePK id, Instant created) {
-			super(id, created, TransformPhase.Response);
+		public ResponseTransformConfiguration(UserLongCompositePK id, Instant created, String name,
+				String serviceIdentifier) {
+			super(id, created, TransformPhase.Response, name, serviceIdentifier);
 		}
 
 		/**
@@ -185,16 +214,22 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 		 *        the transform ID
 		 * @param created
 		 *        the creation date
+		 * @param name
+		 *        the configuration name
+		 * @param serviceIdentifier
+		 *        the service identifier
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
-		public ResponseTransformConfiguration(Long userId, Long transformId, Instant created) {
-			this(new UserLongCompositePK(userId, transformId), created);
+		public ResponseTransformConfiguration(Long userId, Long transformId, Instant created,
+				String name, String serviceIdentifier) {
+			this(new UserLongCompositePK(userId, transformId), created, name, serviceIdentifier);
 		}
 
 		@Override
 		public ResponseTransformConfiguration copyWithId(UserLongCompositePK id) {
-			var copy = new ResponseTransformConfiguration(id, getCreated());
+			var copy = new ResponseTransformConfiguration(id, nonnull(getCreated(), "created"),
+					getName(), getServiceIdentifier());
 			copyTo(copy);
 			return copy;
 		}
@@ -210,16 +245,16 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	}
 
 	@Override
-	public boolean isSameAs(C other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable C other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.getName())
-				&& Objects.equals(this.phase, other.getPhase())
-				&& Objects.equals(this.serviceIdentifier, other.getServiceIdentifier())
-				&& Objects.equals(this.servicePropsJson, other.getServicePropsJson())
+		return Objects.equals(this.name, o.getName())
+				&& Objects.equals(this.phase, o.getPhase())
+				&& Objects.equals(this.serviceIdentifier, o.getServiceIdentifier())
+				&& Objects.equals(this.servicePropsJson, o.getServicePropsJson())
 				;
 		// @formatter:on
 	}
@@ -264,13 +299,12 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	 *
 	 * @return the endpoint ID
 	 */
-	public Long getTransformId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getTransformId() {
+		return pk().getEntityId();
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -279,9 +313,11 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	 *
 	 * @param name
 	 *        the name to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	/**
@@ -289,12 +325,12 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	 *
 	 * @return the phase
 	 */
-	public TransformPhase getPhase() {
+	public final TransformPhase getPhase() {
 		return phase;
 	}
 
 	@Override
-	public String getServiceIdentifier() {
+	public final String getServiceIdentifier() {
 		return serviceIdentifier;
 	}
 
@@ -303,19 +339,21 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	 *
 	 * @param serviceIdentifier
 	 *        the identifier to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setServiceIdentifier(String serviceIdentifier) {
-		this.serviceIdentifier = serviceIdentifier;
+	public final void setServiceIdentifier(String serviceIdentifier) {
+		this.serviceIdentifier = requireNonNullArgument(serviceIdentifier, "serviceIdentifier");
 	}
 
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
-	 *         properties available
+	 * @return a JSON encoded string, or {@code null} if no service properties
+	 *         available
 	 */
 	@JsonIgnore
-	public String getServicePropsJson() {
+	public final @Nullable String getServicePropsJson() {
 		return servicePropsJson;
 	}
 
@@ -333,7 +371,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setServicePropsJson(String json) {
+	public final void setServicePropsJson(@Nullable String json) {
 		servicePropsJson = json;
 		serviceProps = null;
 	}
@@ -349,7 +387,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	 * @return the service properties
 	 */
 	@JsonIgnore
-	public Map<String, Object> getServiceProps() {
+	public final @Nullable Map<String, Object> getServiceProps() {
 		if ( serviceProps == null && servicePropsJson != null ) {
 			serviceProps = JsonUtils.getStringMap(servicePropsJson);
 		}
@@ -368,13 +406,13 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	 *        the service properties to set
 	 */
 	@JsonSetter("serviceProperties")
-	public void setServiceProps(Map<String, Object> serviceProps) {
+	public final void setServiceProps(@Nullable Map<String, Object> serviceProps) {
 		this.serviceProps = serviceProps;
 		servicePropsJson = JsonUtils.getJSONString(serviceProps, null);
 	}
 
 	@Override
-	public Map<String, ?> getServiceProperties() {
+	public final @Nullable Map<String, ?> getServiceProperties() {
 		return getServiceProps();
 	}
 

@@ -24,6 +24,9 @@ package net.solarnetwork.central.instructor.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Helper class for instruction parameters.
@@ -40,13 +43,6 @@ public final class InstructionParameter implements Serializable {
 	private String value;
 
 	/**
-	 * Default constructor.
-	 */
-	public InstructionParameter() {
-		super();
-	}
-
-	/**
 	 * Construct with values.
 	 *
 	 * @param name
@@ -54,34 +50,16 @@ public final class InstructionParameter implements Serializable {
 	 * @param value
 	 *        the value
 	 */
-	public InstructionParameter(String name, String value) {
+	@JsonCreator
+	public InstructionParameter(@JsonProperty("name") String name, @JsonProperty("value") String value) {
 		super();
 		setName(name);
 		setValue(value);
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getValue() {
-		return value;
-	}
-
-	public void setValue(String value) {
-		this.value = value;
-	}
-
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
+		return Objects.hash(name, value);
 	}
 
 	/**
@@ -111,6 +89,22 @@ public final class InstructionParameter implements Serializable {
 		builder.append(value);
 		builder.append("}");
 		return builder.toString();
+	}
+
+	public final String getName() {
+		return name;
+	}
+
+	public final void setName(String name) {
+		this.name = name;
+	}
+
+	public final String getValue() {
+		return value;
+	}
+
+	public final void setValue(String value) {
+		this.value = value;
 	}
 
 }

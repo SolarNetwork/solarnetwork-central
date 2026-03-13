@@ -75,10 +75,9 @@ public class JsonDatumExportOutpuFormatServiceTests {
 		BasicOutputConfiguration config = new BasicOutputConfiguration();
 		config.setCompressionType(OutputCompressionType.None);
 
-		GeneralNodeDatumMatch d1 = new GeneralNodeDatumMatch();
-		d1.setCreated(LocalDateTime.of(2018, 4, 23, 11, 19).atZone(ZoneOffset.UTC).toInstant());
-		d1.setNodeId(TEST_NODE_ID);
-		d1.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatumMatch d1 = new GeneralNodeDatumMatch(TEST_NODE_ID,
+				LocalDateTime.of(2018, 4, 23, 11, 19).atZone(ZoneOffset.UTC).toInstant(),
+				TEST_SOURCE_ID);
 		d1.setLocalDateTime(d1.getCreated().atZone(ZoneOffset.UTC).toLocalDateTime());
 		d1.setPosted(d1.getCreated().plus(1, ChronoUnit.MINUTES));
 		d1.setSampleJson("{\"i\":{\"watts\":123.456}}");
@@ -137,10 +136,8 @@ public class JsonDatumExportOutpuFormatServiceTests {
 		List<GeneralNodeDatumFilterMatch> data = new ArrayList<>(count);
 		ZonedDateTime start = LocalDateTime.of(2018, 4, 23, 11, 19).atZone(ZoneOffset.UTC);
 		for ( int i = 0; i < count; i++ ) {
-			GeneralNodeDatumMatch d1 = new GeneralNodeDatumMatch();
-			d1.setCreated(start.plusMinutes(i).toInstant());
-			d1.setNodeId(TEST_NODE_ID);
-			d1.setSourceId(TEST_SOURCE_ID);
+			GeneralNodeDatumMatch d1 = new GeneralNodeDatumMatch(TEST_NODE_ID,
+					start.plusMinutes(i).toInstant(), TEST_SOURCE_ID);
 			d1.setLocalDateTime(d1.getCreated().atZone(ZoneOffset.UTC).toLocalDateTime());
 			d1.setSampleJson("{\"i\":{\"watts\":123.456}}");
 			data.add(d1);

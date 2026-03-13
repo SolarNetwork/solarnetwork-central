@@ -42,7 +42,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -104,9 +103,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 
 	private UserDataConfiguration addDataConf() {
 		UserDataConfiguration conf = new UserDataConfiguration(unassignedEntityIdKey(this.user.getId()),
-				now());
-		conf.setName(UUID.randomUUID().toString());
-		conf.setServiceIdentifier(UUID.randomUUID().toString());
+				now(), randomString(), randomString());
 
 		Map<String, Object> sprops = new HashMap<String, Object>(4);
 		sprops.put("string", "foo");
@@ -130,9 +127,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 
 	private UserDestinationConfiguration addDestConf() {
 		UserDestinationConfiguration conf = new UserDestinationConfiguration(
-				unassignedEntityIdKey(this.user.getId()), now());
-		conf.setName(UUID.randomUUID().toString());
-		conf.setServiceIdentifier(UUID.randomUUID().toString());
+				unassignedEntityIdKey(this.user.getId()), now(), randomString(), randomString());
 
 		Map<String, Object> sprops = new HashMap<String, Object>(4);
 		sprops.put("string", "foo");
@@ -151,10 +146,8 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 
 	private UserOutputConfiguration addOutpConf() {
 		UserOutputConfiguration conf = new UserOutputConfiguration(
-				unassignedEntityIdKey(this.user.getId()), now());
-		conf.setName(UUID.randomUUID().toString());
-		conf.setServiceIdentifier(UUID.randomUUID().toString());
-		conf.setCompressionType(OutputCompressionType.None);
+				unassignedEntityIdKey(this.user.getId()), now(), randomString(), randomString(),
+				OutputCompressionType.None);
 
 		Map<String, Object> sprops = new HashMap<String, Object>(4);
 		sprops.put("string", "foo");
@@ -174,10 +167,8 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 	@Test
 	public void storeNew() {
 		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
-				unassignedEntityIdKey(this.user.getId()), now());
-		conf.setName(TEST_NAME);
-		conf.setHourDelayOffset(2);
-		conf.setSchedule(ScheduleType.Weekly);
+				unassignedEntityIdKey(this.user.getId()), now(), TEST_NAME, ScheduleType.Weekly, 2,
+				now());
 
 		UserLongCompositePK id = dao.save(conf);
 		assertThat("Primary key returned", id, notNullValue());
@@ -191,10 +182,8 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 	@Test
 	public void storeNew_withToken() {
 		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
-				unassignedEntityIdKey(this.user.getId()), now());
-		conf.setName(TEST_NAME);
-		conf.setHourDelayOffset(2);
-		conf.setSchedule(ScheduleType.Weekly);
+				unassignedEntityIdKey(this.user.getId()), now(), TEST_NAME, ScheduleType.Weekly, 2,
+				now());
 		conf.setTokenId(randomString());
 
 		UserLongCompositePK id = dao.save(conf);
@@ -211,10 +200,8 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		UserOutputConfiguration outpConf = addOutpConf();
 
 		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
-				unassignedEntityIdKey(this.user.getId()), now());
-		conf.setName(TEST_NAME);
-		conf.setHourDelayOffset(2);
-		conf.setSchedule(ScheduleType.Weekly);
+				unassignedEntityIdKey(this.user.getId()), now(), TEST_NAME, ScheduleType.Weekly, 2,
+				now());
 
 		conf.setUserDataConfiguration(dataConf);
 		conf.setUserDestinationConfiguration(destConf);
@@ -345,11 +332,8 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 	public void updateNoChangeToMinimumExportDate() {
 		update();
 
-		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(this.conf.getId(), now());
-		conf.setName("new.new.name");
-		conf.setHourDelayOffset(6);
-		conf.setSchedule(ScheduleType.Weekly);
-		conf.setMinimumExportDate(null);
+		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(this.conf.getId(), now(),
+				"new.new.name", ScheduleType.Daily, 6, TEST_DATE);
 
 		UserLongCompositePK id = dao.save(conf);
 		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
@@ -401,11 +385,8 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		Instant exportDate = LocalDateTime.of(2017, 4, 18, 8, 0, 0).toInstant(ZoneOffset.UTC);
 
 		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
-				unassignedEntityIdKey(this.user.getId()), now());
-		conf.setName(TEST_NAME);
-		conf.setHourDelayOffset(2);
-		conf.setSchedule(ScheduleType.Hourly);
-		conf.setMinimumExportDate(exportDate);
+				unassignedEntityIdKey(this.user.getId()), now(), TEST_NAME, ScheduleType.Hourly, 2,
+				exportDate);
 
 		UserLongCompositePK id = dao.save(conf);
 		conf = conf.copyWithId(id);
@@ -425,11 +406,8 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		Instant exportDate = LocalDateTime.of(2017, 4, 18, 8, 0, 0).toInstant(ZoneOffset.UTC);
 		for ( int i = 0; i < 3; i++ ) {
 			UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
-					unassignedEntityIdKey(this.user.getId()), now());
-			conf.setName(TEST_NAME);
-			conf.setHourDelayOffset(2);
-			conf.setSchedule(ScheduleType.Hourly);
-			conf.setMinimumExportDate(exportDate.plus(i, ChronoUnit.HOURS));
+					unassignedEntityIdKey(this.user.getId()), now(), TEST_NAME, ScheduleType.Hourly, 2,
+					exportDate.plus(i, ChronoUnit.HOURS));
 
 			conf.setUserDataConfiguration(dataConf);
 			conf.setUserDestinationConfiguration(destConf);

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
@@ -69,8 +70,8 @@ public class MyBatisTaxCodeDao extends BaseMyBatisGenericDaoSupport<TaxCode, Lon
 	}
 
 	@Override
-	public FilterResults<TaxCode, Long> findFiltered(TaxCodeFilter filter, List<SortDescriptor> sorts,
-			Long offset, Integer max) {
+	public FilterResults<TaxCode, Long> findFiltered(TaxCodeFilter filter,
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		List<TaxCode> results = selectList(QueryName.FindFiltered.getQueryName(), filter, offset, max);
 		return new BasicFilterResults<>(results, null, offset != null ? offset.intValue() : 0,
 				results.size());

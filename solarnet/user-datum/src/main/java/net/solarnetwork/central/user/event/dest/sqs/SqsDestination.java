@@ -77,7 +77,7 @@ public final class SqsDestination {
 	/**
 	 * Get the SQS client.
 	 *
-	 * @return the client, never {@literal null}
+	 * @return the client, never {@code null}
 	 */
 	public SqsClient getClient() {
 		return client;

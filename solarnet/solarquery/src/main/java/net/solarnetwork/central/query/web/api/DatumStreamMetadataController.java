@@ -68,7 +68,7 @@ public class DatumStreamMetadataController {
 	 * @param datumStreamMetadataBiz
 	 *        the stream metadata biz to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumStreamMetadataController(DatumStreamMetadataBiz datumStreamMetadataBiz) {
 		super();
@@ -88,7 +88,7 @@ public class DatumStreamMetadataController {
 	 *        any search criteria, supporting only
 	 *        {@link net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria}
 	 *        properties
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	// @formatter:off
 	@Operation(operationId = "datumStreamMetadataList",
@@ -111,7 +111,7 @@ public class DatumStreamMetadataController {
 	 *        any search criteria, supporting only
 	 *        {@link net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria}
 	 *        properties
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	// @formatter:off
 	@Operation(operationId = "locationDatumStreamMetadataList",
@@ -139,7 +139,7 @@ public class DatumStreamMetadataController {
 	 *        any search criteria, supporting only
 	 *        {@link net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria}
 	 *        properties
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	// @formatter:off
 	@Operation(operationId = "datumStreamMetadataIdList",
@@ -162,7 +162,7 @@ public class DatumStreamMetadataController {
 	 *        any search criteria, supporting only
 	 *        {@link net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria}
 	 *        properties
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	// @formatter:off
 	@Operation(operationId = "locationDatumStreamMetadataIdList",

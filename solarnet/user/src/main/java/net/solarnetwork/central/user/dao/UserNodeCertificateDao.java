@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.dao.GenericDao;
@@ -39,8 +40,9 @@ public interface UserNodeCertificateDao extends GenericDao<UserNodeCertificate, 
 	 * 
 	 * @param nodeId
 	 *        the node ID
-	 * @return the found UserNodeCertificate, or <em>null</em> if not found
+	 * @return the found UserNodeCertificate, or {@code null} if not found
 	 */
+	@Nullable
 	UserNodeCertificate getActiveCertificateForNode(Long nodeId);
 
 }

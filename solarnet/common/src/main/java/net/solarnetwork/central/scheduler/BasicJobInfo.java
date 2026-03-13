@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.scheduler;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Basic implementation of {@link JobInfo}.
@@ -37,11 +39,24 @@ public class BasicJobInfo implements JobInfo {
 	private final String id;
 	private final String executionScheduleDescription;
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param groupId
+	 *        the group ID
+	 * @param id
+	 *        the job ID
+	 * @param executionScheduleDescription
+	 *        the description
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
 	public BasicJobInfo(String groupId, String id, String executionScheduleDescription) {
 		super();
-		this.groupId = groupId;
-		this.id = id;
-		this.executionScheduleDescription = executionScheduleDescription;
+		this.groupId = requireNonNullArgument(groupId, "groupId");
+		this.id = requireNonNullArgument(id, "id");
+		this.executionScheduleDescription = requireNonNullArgument(executionScheduleDescription,
+				"executionScheduleDescription");
 	}
 
 	@Override
@@ -61,7 +76,7 @@ public class BasicJobInfo implements JobInfo {
 
 	@Override
 	public JobStatus getJobStatus() {
-		return null;
+		return JobStatus.Unknown;
 	}
 
 	@Override
@@ -70,12 +85,12 @@ public class BasicJobInfo implements JobInfo {
 	}
 
 	@Override
-	public Instant getPreviousExecutionTime() {
+	public @Nullable Instant getPreviousExecutionTime() {
 		return null;
 	}
 
 	@Override
-	public Instant getNextExecutionTime() {
+	public @Nullable Instant getNextExecutionTime() {
 		return null;
 	}
 

@@ -23,10 +23,14 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.io.Serial;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.SerializeIgnore;
 
@@ -45,13 +49,36 @@ public class ReportingGeneralLocationDatumComponents extends GeneralLocationDatu
 	@Serial
 	private static final long serialVersionUID = -6372444817955945298L;
 
-	private LocalDateTime localDateTime;
+	private @Nullable LocalDateTime localDateTime;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public ReportingGeneralLocationDatumComponents() {
-		super();
+	public ReportingGeneralLocationDatumComponents(GeneralLocationDatumPK id) {
+		super(id);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param locationId
+	 *        the location ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public ReportingGeneralLocationDatumComponents(@JsonProperty("locationId") Long locationId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId) {
+		super(locationId, created, sourceId);
 	}
 
 	/**
@@ -59,13 +86,15 @@ public class ReportingGeneralLocationDatumComponents extends GeneralLocationDatu
 	 *
 	 * @param other
 	 *        the datum to copy
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public ReportingGeneralLocationDatumComponents(GeneralLocationDatum other) {
 		super(other);
 	}
 
 	@Override
-	public LocalDate getLocalDate() {
+	public final @Nullable LocalDate getLocalDate() {
 		if ( localDateTime == null ) {
 			return null;
 		}
@@ -73,7 +102,7 @@ public class ReportingGeneralLocationDatumComponents extends GeneralLocationDatu
 	}
 
 	@Override
-	public LocalTime getLocalTime() {
+	public final @Nullable LocalTime getLocalTime() {
 		if ( localDateTime == null ) {
 			return null;
 		}
@@ -82,11 +111,11 @@ public class ReportingGeneralLocationDatumComponents extends GeneralLocationDatu
 
 	@JsonIgnore
 	@SerializeIgnore
-	public LocalDateTime getLocalDateTime() {
+	public final @Nullable LocalDateTime getLocalDateTime() {
 		return localDateTime;
 	}
 
-	public void setLocalDateTime(LocalDateTime localDateTime) {
+	public final void setLocalDateTime(@Nullable LocalDateTime localDateTime) {
 		this.localDateTime = localDateTime;
 	}
 }

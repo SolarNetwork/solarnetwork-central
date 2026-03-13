@@ -37,7 +37,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -108,7 +107,7 @@ public class DaoUserEventHookBizTests {
 		DatumAppEventProducer producer = EasyMock.createMock(DatumAppEventProducer.class);
 		biz.setDatumEventProducers(singletonList(producer));
 
-		Set<String> topics = Collections.singleton(AggregateUpdatedEventInfo.AGGREGATE_UPDATED_TOPIC);
+		Set<String> topics = Set.of(AggregateUpdatedEventInfo.AGGREGATE_UPDATED_TOPIC);
 		expect(producer.getProducedDatumAppEventTopics()).andReturn(topics);
 
 		// WHEN
@@ -135,7 +134,7 @@ public class DaoUserEventHookBizTests {
 		biz.setDatumEventProducers(singletonList(producer));
 
 		String topic = "some/topic";
-		Set<String> topics = Collections.singleton(topic);
+		Set<String> topics = Set.of(topic);
 		expect(producer.getProducedDatumAppEventTopics()).andReturn(topics);
 
 		ResourceBundleMessageSource ms = new ResourceBundleMessageSource();

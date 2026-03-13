@@ -42,7 +42,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +110,7 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		conf.setCapacityOptimizerMeasurementPeriod(MeasurementPeriod.FiveMinute);
 		conf.setCapacityProviderId(lastProvider.getEntityId());
 		conf.setCapacityOptimizerId(lastOptimzer.getEntityId());
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
 
 		// WHEN
 		UserLongCompositePK result = dao.create(userId, conf);
@@ -197,7 +196,7 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		conf.setCapacityOptimizerMeasurementPeriod(MeasurementPeriod.TwentyMinute);
 		conf.setCapacityProviderId(lastProvider.getEntityId());
 		conf.setCapacityOptimizerId(lastOptimzer.getEntityId());
-		conf.setServiceProps(Collections.singletonMap("bim", "bam"));
+		conf.setServiceProps(Map.of("bim", "bam"));
 
 		UserLongCompositePK result = dao.save(conf);
 

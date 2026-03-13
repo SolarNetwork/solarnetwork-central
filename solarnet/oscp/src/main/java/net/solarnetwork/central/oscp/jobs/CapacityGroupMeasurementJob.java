@@ -30,7 +30,6 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -87,20 +86,18 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 	 * @param client
 	 *        the client to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CapacityGroupMeasurementJob(OscpRole role, ExternalSystemConfigurationDao<?> dao,
 			CapacityGroupConfigurationDao capacityGroupDao, AssetConfigurationDao assetDao,
 			MeasurementDao measurementDao, ExternalSystemClient client) {
-		super();
+		super("OSCP", requireNonNullArgument(role, "role") + "-CapacityGroupMeasurement");
 		this.role = requireNonNullArgument(role, "role");
 		this.dao = requireNonNullArgument(dao, "dao");
 		this.capacityGroupDao = requireNonNullArgument(capacityGroupDao, "capacityGroupDao");
 		this.assetDao = requireNonNullArgument(assetDao, "assetDao");
 		this.measurementDao = requireNonNullArgument(measurementDao, "measurementDao");
 		this.client = requireNonNullArgument(client, "client");
-		setGroupId("OSCP");
-		setId(this.role + "-CapacityGroupMeasurement");
 		setMaximumWaitMs(1800000L);
 	}
 
@@ -111,7 +108,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 	 *        the template
 	 * @return this instance for method chaining
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CapacityGroupMeasurementJob withTxTemplate(TransactionTemplate txTemplate) {
 		this.txTemplate = requireNonNullArgument(txTemplate, "txTemplate");
@@ -186,16 +183,14 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 					if ( combinedAssetId != null ) {
 						AssetMeasurement combined = combineAssetMeasurements(combinedAssetId,
 								measurements);
-						measurements = (combined == null ? Collections.emptyList()
-								: Collections.singletonList(combined));
+						measurements = (combined == null ? List.of() : List.of(combined));
 					}
 					msg = new UpdateAssetMeasurement(group.getIdentifier(), measurements);
 				} else {
 					List<EnergyMeasurement> measurements = energyMeasurements(assets, dateCriteria);
 					if ( combinedAssetId != null ) {
 						EnergyMeasurement combined = combineEnergyMeasurements(measurements);
-						measurements = (combined == null ? Collections.emptyList()
-								: Collections.singletonList(combined));
+						measurements = (combined == null ? List.of() : List.of(combined));
 					}
 					msg = new UpdateGroupMeasurements(group.getIdentifier(), measurements);
 				}

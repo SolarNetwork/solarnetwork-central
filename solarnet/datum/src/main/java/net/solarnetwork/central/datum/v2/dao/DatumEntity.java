@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.dao.Entity;
@@ -52,7 +55,7 @@ public class DatumEntity extends BasicSerializableIdentity<DatumPK>
 	@Serial
 	private static final long serialVersionUID = -6655090793049766389L;
 
-	private final Instant received;
+	private final @Nullable Instant received;
 	private final DatumProperties properties;
 
 	/**
@@ -64,11 +67,13 @@ public class DatumEntity extends BasicSerializableIdentity<DatumPK>
 	 *        the date the datum was received by SolarNetwork
 	 * @param properties
 	 *        the properties
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code received} is {@code null}
 	 */
-	public DatumEntity(DatumPK id, Instant received, DatumProperties properties) {
-		super(id);
+	public DatumEntity(DatumPK id, @Nullable Instant received, DatumProperties properties) {
+		super(requireNonNullArgument(id, "id"));
 		this.received = received;
-		this.properties = properties;
+		this.properties = requireNonNullArgument(properties, "properties");
 	}
 
 	/**
@@ -82,20 +87,12 @@ public class DatumEntity extends BasicSerializableIdentity<DatumPK>
 	 *        the date the datum was received by SolarNetwork
 	 * @param properties
 	 *        the samples
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code received} is {@code null}
 	 */
-	public DatumEntity(UUID streamId, Instant timestamp, Instant received, DatumProperties properties) {
+	public DatumEntity(UUID streamId, Instant timestamp, @Nullable Instant received,
+			DatumProperties properties) {
 		this(new DatumPK(streamId, timestamp), received, properties);
-	}
-
-	/**
-	 * Default constructor.
-	 *
-	 * <p>
-	 * This method exists to adhere to {@link Serializable}.
-	 * </p>
-	 */
-	protected DatumEntity() {
-		this(null, null, null);
 	}
 
 	@Override
@@ -137,44 +134,12 @@ public class DatumEntity extends BasicSerializableIdentity<DatumPK>
 
 	@Override
 	public boolean hasId() {
-		DatumPK id = getId();
-		return (id != null && id.getStreamId() != null && id.getTimestamp() != null);
+		return nonnull(getId(), "ID").streamIdIsAssigned();
 	}
 
 	@Override
-	public Instant getCreated() {
+	public final Instant getCreated() {
 		return getTimestamp();
-	}
-
-	/**
-	 * Get the datum timestamp.
-	 *
-	 * <p>
-	 * The {@link #getCreated()} method is an alias for this method. This method
-	 * is a shortcut for {@code getId().getTimestamp()}.
-	 * </p>
-	 *
-	 * @return the datum timestamp
-	 */
-	@Override
-	public Instant getTimestamp() {
-		DatumPK id = getId();
-		return (id != null ? id.getTimestamp() : null);
-	}
-
-	/**
-	 * Get the datum stream ID.
-	 *
-	 * <p>
-	 * This method is a shortcut for {@code getId().getStreamId()}.
-	 * </p>
-	 *
-	 * @return the stream ID
-	 */
-	@Override
-	public UUID getStreamId() {
-		DatumPK id = getId();
-		return (id != null ? id.getStreamId() : null);
 	}
 
 	/**
@@ -182,7 +147,7 @@ public class DatumEntity extends BasicSerializableIdentity<DatumPK>
 	 *
 	 * @return the received date
 	 */
-	public Instant getReceived() {
+	public final @Nullable Instant getReceived() {
 		return received;
 	}
 
@@ -192,7 +157,7 @@ public class DatumEntity extends BasicSerializableIdentity<DatumPK>
 	 * @return the property values
 	 */
 	@Override
-	public DatumProperties getProperties() {
+	public final DatumProperties getProperties() {
 		return properties;
 	}
 

@@ -33,7 +33,6 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -41,8 +40,8 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -190,7 +189,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		BasicInputConfiguration config = new BasicInputConfiguration(TEST_USER_ID);
 		config.setTimeZoneId("UTC");
 		String datePattern = "MM/dd/yyyy HH:mm:ss";
-		config.setServiceProps(Collections.singletonMap("dateFormat", datePattern));
+		config.setServiceProps(Map.of("dateFormat", datePattern));
 		BasicDatumImportResource resource = new BasicDatumImportResource(
 				new ClassPathResource("test-data-02.csv", getClass()), "text/csv;charset=utf-8");
 
@@ -275,7 +274,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		BasicCsvDatumImportInputFormatService service = new BasicCsvDatumImportInputFormatService();
 		BasicInputConfiguration config = new BasicInputConfiguration(TEST_USER_ID);
 		config.setTimeZoneId("UTC");
-		config.setServiceProps(Collections.singletonMap("instantaneousDataColumn", "0"));
+		config.setServiceProps(Map.of("instantaneousDataColumn", "0"));
 		BasicDatumImportResource resource = new BasicDatumImportResource(
 				new ClassPathResource("test-data-04.csv", getClass()), "text/csv;charset=utf-8");
 
@@ -286,7 +285,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 				assertThat("Node ID", d.getNodeId(), equalTo(123L));
 				assertThat("Source ID not parsed from invalid column 0", d.getSourceId(),
 						equalTo("/DE/G1/B600/GEN/100"));
-				assertThat("Watts", d.getSamples(), nullValue());
+				assertThat("Watts", d.getSamples().isEmpty(), equalTo(true));
 				count++;
 			}
 			assertThat("Row count", count, equalTo(1));
@@ -299,7 +298,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		BasicCsvDatumImportInputFormatService service = new BasicCsvDatumImportInputFormatService();
 		BasicInputConfiguration config = new BasicInputConfiguration(TEST_USER_ID);
 		String datePattern = "yyyy-MM-dd HH:mm:ss";
-		config.setServiceProps(Collections.singletonMap("dateFormat", datePattern));
+		config.setServiceProps(Map.of("dateFormat", datePattern));
 		config.setTimeZoneId("America/New_York");
 		BasicDatumImportResource resource = new BasicDatumImportResource(
 				new ClassPathResource("test-data-05.csv", getClass()), "text/csv;charset=utf-8");
@@ -331,7 +330,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		BasicCsvDatumImportInputFormatService service = new BasicCsvDatumImportInputFormatService();
 		BasicInputConfiguration config = new BasicInputConfiguration(TEST_USER_ID);
 		String datePattern = "yyyy-MM-dd HH:mm:ss";
-		config.setServiceProps(Collections.singletonMap("dateFormat", datePattern));
+		config.setServiceProps(Map.of("dateFormat", datePattern));
 		config.setTimeZoneId("America/New_York");
 		BasicDatumImportResource resource = new BasicDatumImportResource(
 				new ClassPathResource("test-data-06.csv", getClass()), "text/csv;charset=utf-8");

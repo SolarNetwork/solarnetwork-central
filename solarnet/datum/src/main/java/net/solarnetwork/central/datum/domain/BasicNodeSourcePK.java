@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasePK;
 
 /**
@@ -40,15 +42,8 @@ public class BasicNodeSourcePK extends BasePK implements Serializable, Cloneable
 	@Serial
 	private static final long serialVersionUID = -6312919371283470806L;
 
-	private Long nodeId;
-	private String sourceId;
-
-	/**
-	 * Default constructor.
-	 */
-	public BasicNodeSourcePK() {
-		super();
-	}
+	private final Long nodeId;
+	private final String sourceId;
 
 	/**
 	 * Constructor.
@@ -57,11 +52,13 @@ public class BasicNodeSourcePK extends BasePK implements Serializable, Cloneable
 	 *        the node ID
 	 * @param sourceId
 	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public BasicNodeSourcePK(Long nodeId, String sourceId) {
 		super();
-		this.nodeId = nodeId;
-		this.sourceId = sourceId;
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
+		this.sourceId = requireNonNullArgument(sourceId, "sourceId");
 	}
 
 	@Override
@@ -72,31 +69,20 @@ public class BasicNodeSourcePK extends BasePK implements Serializable, Cloneable
 	@Override
 	protected void populateIdValue(StringBuilder buf) {
 		buf.append("n=");
-		if ( nodeId != null ) {
-			buf.append(nodeId);
-		}
+		buf.append(nodeId);
 		buf.append(";s=");
-		if ( sourceId != null ) {
-			buf.append(sourceId);
-		}
+		buf.append(sourceId);
 	}
 
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
-		if ( nodeId != null ) {
-			if ( !buf.isEmpty() ) {
-				buf.append(", ");
-			}
-			buf.append("nodeId=");
-			buf.append(nodeId);
+		if ( !buf.isEmpty() ) {
+			buf.append(", ");
 		}
-		if ( sourceId != null ) {
-			if ( !buf.isEmpty() ) {
-				buf.append(", ");
-			}
-			buf.append("sourceId=");
-			buf.append(sourceId);
-		}
+		buf.append("nodeId=");
+		buf.append(nodeId);
+		buf.append(", sourceId=");
+		buf.append(sourceId);
 	}
 
 	@Override
@@ -105,7 +91,7 @@ public class BasicNodeSourcePK extends BasePK implements Serializable, Cloneable
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -127,7 +113,7 @@ public class BasicNodeSourcePK extends BasePK implements Serializable, Cloneable
 	 * <li>sourceId</li>
 	 * </ol>
 	 *
-	 * {@literal null} values will be sorted before non-{@literal null} values.
+	 * {@code null} values will be sorted before non-{@code null} values.
 	 *
 	 * @param o
 	 *        the object to compare to
@@ -135,43 +121,33 @@ public class BasicNodeSourcePK extends BasePK implements Serializable, Cloneable
 	 *         less than, equal to, or l to, or greater than the specified
 	 *         object.
 	 */
-	public int compareTo(BasicNodeSourcePK o) {
+	public int compareTo(@Nullable BasicNodeSourcePK o) {
 		if ( o == null ) {
 			return 1;
 		}
-		Long oNodeId = o.getNodeId();
-		Long nodeId = getNodeId();
-		if ( oNodeId == null ) {
-			return 1;
-		} else if ( nodeId == null ) {
-			return -1;
-		}
-		int comparison = nodeId.compareTo(oNodeId);
+		int comparison = nodeId.compareTo(o.nodeId);
 		if ( comparison != 0 ) {
 			return comparison;
-		}
-		if ( o.sourceId == null ) {
-			return 1;
-		} else if ( sourceId == null ) {
-			return -1;
 		}
 		return sourceId.compareToIgnoreCase(o.sourceId);
 	}
 
-	public Long getNodeId() {
+	/**
+	 * Get the node ID.
+	 *
+	 * @return the node ID
+	 */
+	public final Long getNodeId() {
 		return nodeId;
 	}
 
-	public void setNodeId(Long nodeId) {
-		this.nodeId = nodeId;
-	}
-
-	public String getSourceId() {
+	/**
+	 * Get the source ID.
+	 *
+	 * @return the source ID
+	 */
+	public final String getSourceId() {
 		return sourceId;
-	}
-
-	public void setSourceId(String sourceId) {
-		this.sourceId = sourceId;
 	}
 
 }

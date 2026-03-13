@@ -49,14 +49,13 @@ public class DatumDeleteProcessorJob extends JobSupport {
 	 * @param jobInfoDao
 	 *        the DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumDeleteProcessorJob(UserDatumDeleteJobBiz datumDeleteJobBiz,
 			UserDatumDeleteJobInfoDao jobInfoDao) {
-		super();
+		super("UserExpire", "DatumDeleteProcessor");
 		this.datumDeleteJobBiz = requireNonNullArgument(datumDeleteJobBiz, "datumDeleteJobBiz");
 		this.jobInfoDao = requireNonNullArgument(jobInfoDao, "jobInfoDao");
-		setGroupId("UserExpire");
 		setMaximumWaitMs(5400000L);
 		setMaximumIterations(1);
 	}

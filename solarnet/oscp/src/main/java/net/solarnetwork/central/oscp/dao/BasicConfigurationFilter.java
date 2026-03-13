@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.dao;
 
 import java.util.Arrays;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.IdentifierCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
@@ -39,11 +40,11 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	private boolean lockResults;
 	private boolean skipLockedResults;
-	private Long[] configurationIds;
-	private Long[] groupIds;
-	private Long[] providerIds;
-	private Long[] optimizerIds;
-	private String[] identifiers;
+	private Long @Nullable [] configurationIds;
+	private Long @Nullable [] groupIds;
+	private Long @Nullable [] providerIds;
+	private Long @Nullable [] optimizerIds;
+	private String @Nullable [] identifiers;
 
 	/**
 	 * Create a filter for one or more user IDs.
@@ -52,7 +53,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 *        the user IDs to create the filter for
 	 * @return the new filter instance
 	 */
-	public static BasicConfigurationFilter filterForUsers(Long... userIds) {
+	public static BasicConfigurationFilter filterForUsers(Long @Nullable... userIds) {
 		BasicConfigurationFilter f = new BasicConfigurationFilter();
 		f.setUserIds(userIds);
 		return f;
@@ -71,12 +72,12 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param criteria
 	 *        the criteria to copy
 	 */
-	public BasicConfigurationFilter(PaginationCriteria criteria) {
+	public BasicConfigurationFilter(@Nullable PaginationCriteria criteria) {
 		super(criteria);
 	}
 
 	@Override
-	public void copyFrom(PaginationCriteria criteria) {
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof BasicConfigurationFilter c ) {
 			setLockResults(c.isLockResults());
@@ -124,7 +125,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -160,7 +161,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public Long[] getConfigurationIds() {
+	public final Long @Nullable [] getConfigurationIds() {
 		return configurationIds;
 	}
 
@@ -170,7 +171,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param configurationIds
 	 *        the IDs of the configurations to find
 	 */
-	public void setConfigurationIds(Long[] configurationIds) {
+	public final void setConfigurationIds(Long @Nullable [] configurationIds) {
 		this.configurationIds = configurationIds;
 	}
 
@@ -180,12 +181,12 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param configurationId
 	 *        the ID of the configuration to set
 	 */
-	public void setConfigurationId(Long configurationId) {
+	public final void setConfigurationId(@Nullable Long configurationId) {
 		setConfigurationIds(configurationId != null ? new Long[] { configurationId } : null);
 	}
 
 	@Override
-	public Long[] getGroupIds() {
+	public final Long @Nullable [] getGroupIds() {
 		return groupIds;
 	}
 
@@ -195,7 +196,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param groupIds
 	 *        the group IDs to set
 	 */
-	public void setGroupIds(Long[] groupIds) {
+	public final void setGroupIds(Long @Nullable [] groupIds) {
 		this.groupIds = groupIds;
 	}
 
@@ -205,12 +206,12 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param groupId
 	 *        the ID of the group to set
 	 */
-	public void setGroupId(Long groupId) {
+	public final void setGroupId(@Nullable Long groupId) {
 		setGroupIds(groupId != null ? new Long[] { groupId } : null);
 	}
 
 	@Override
-	public Long[] getProviderIds() {
+	public final Long @Nullable [] getProviderIds() {
 		return providerIds;
 	}
 
@@ -220,7 +221,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param providerIds
 	 *        the provider IDs to set
 	 */
-	public void setProviderIds(Long[] providerIds) {
+	public final void setProviderIds(Long @Nullable [] providerIds) {
 		this.providerIds = providerIds;
 	}
 
@@ -230,12 +231,12 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param providerId
 	 *        the ID of the provider to set
 	 */
-	public void setProviderId(Long providerId) {
+	public final void setProviderId(@Nullable Long providerId) {
 		setProviderIds(providerId != null ? new Long[] { providerId } : null);
 	}
 
 	@Override
-	public Long[] getOptimizerIds() {
+	public final Long @Nullable [] getOptimizerIds() {
 		return optimizerIds;
 	}
 
@@ -245,7 +246,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param optimizerIds
 	 *        the optimizer IDs to set
 	 */
-	public void setOptimizerIds(Long[] optimizerIds) {
+	public final void setOptimizerIds(Long @Nullable [] optimizerIds) {
 		this.optimizerIds = optimizerIds;
 	}
 
@@ -255,12 +256,12 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param optimizerId
 	 *        the ID of the optimizer to set
 	 */
-	public void setOptimizerId(Long optimizerId) {
+	public final void setOptimizerId(@Nullable Long optimizerId) {
 		setOptimizerIds(optimizerId != null ? new Long[] { optimizerId } : null);
 	}
 
 	@Override
-	public String[] getIdentifiers() {
+	public final String @Nullable [] getIdentifiers() {
 		return identifiers;
 	}
 
@@ -270,7 +271,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param identifiers
 	 *        the identifiers to set
 	 */
-	public void setIdentifiers(String[] identifiers) {
+	public final void setIdentifiers(String @Nullable [] identifiers) {
 		this.identifiers = identifiers;
 	}
 
@@ -280,12 +281,12 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param identifier
 	 *        the identifier to set
 	 */
-	public void setIdentifier(String identifier) {
+	public final void setIdentifier(@Nullable String identifier) {
 		setIdentifiers(identifier != null ? new String[] { identifier } : null);
 	}
 
 	@Override
-	public boolean isLockResults() {
+	public final boolean isLockResults() {
 		return lockResults;
 	}
 
@@ -295,12 +296,12 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param lockResults
 	 *        {@literal true} to request locked results
 	 */
-	public void setLockResults(boolean lockResults) {
+	public final void setLockResults(boolean lockResults) {
 		this.lockResults = lockResults;
 	}
 
 	@Override
-	public boolean isSkipLockedResults() {
+	public final boolean isSkipLockedResults() {
 		return skipLockedResults;
 	}
 
@@ -310,7 +311,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 * @param skipLockedResults
 	 *        {@literal true} to skip locked results
 	 */
-	public void setSkipLockedResults(boolean skipLockedResults) {
+	public final void setSkipLockedResults(boolean skipLockedResults) {
 		this.skipLockedResults = skipLockedResults;
 	}
 

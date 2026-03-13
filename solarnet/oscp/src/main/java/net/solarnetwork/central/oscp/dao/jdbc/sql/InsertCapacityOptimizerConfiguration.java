@@ -56,7 +56,7 @@ public final class InsertCapacityOptimizerConfiguration
 	 * @param entity
 	 *        the entity to insert
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InsertCapacityOptimizerConfiguration(Long userId, CapacityOptimizerConfiguration entity) {
 		super();

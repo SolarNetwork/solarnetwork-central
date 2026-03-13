@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
@@ -99,7 +100,7 @@ public interface NodeInstructionDao
 	 * @since 1.2
 	 */
 	boolean updateNodeInstructionState(Long instructionId, Long nodeId, InstructionState state,
-			Map<String, ?> resultParameters);
+			@Nullable Map<String, ?> resultParameters);
 
 	/**
 	 * Update an instruction status only if it currently has an expected state.
@@ -124,7 +125,8 @@ public interface NodeInstructionDao
 	 * @since 1.2
 	 */
 	boolean compareAndUpdateInstructionState(Long instructionId, Long nodeId,
-			InstructionState expectedState, InstructionState state, Map<String, ?> resultParameters);
+			InstructionState expectedState, InstructionState state,
+			@Nullable Map<String, ?> resultParameters);
 
 	/**
 	 * Find instructions in a given state that are older than a specific date

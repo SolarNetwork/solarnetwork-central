@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.Period;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -44,10 +47,10 @@ import net.solarnetwork.codec.jackson.JsonUtils;
  * @author matt
  * @version 1.1
  */
-@JsonIgnoreProperties({ "id", "enabled" })
+@JsonIgnoreProperties({ "created", "id", "enabled" })
 @JsonPropertyOrder({ "userId", "configId", "datumStreamId", "state", "executeAt", "offset", "message",
 		"serviceProperties" })
-public class CloudDatumStreamRakeTaskEntity
+public final class CloudDatumStreamRakeTaskEntity
 		extends BaseUserModifiableEntity<CloudDatumStreamRakeTaskEntity, UserLongCompositePK>
 		implements CloudDatumStreamIdRelated {
 
@@ -67,24 +70,39 @@ public class CloudDatumStreamRakeTaskEntity
 	private Period offset;
 
 	/** A status message. */
-	private String message;
+	private @Nullable String message;
 
 	/** The service properties as JSON. */
-	private String servicePropsJson;
+	private @Nullable String servicePropsJson;
 
 	/** The service properties. */
-	private volatile transient Map<String, Object> serviceProps;
+	private volatile transient @Nullable Map<String, Object> serviceProps;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param id
 	 *        the primary key
+	 * @param created
+	 *        the creation date
+	 * @param datumStreamId
+	 *        the datum stream ID
+	 * @param state
+	 *        the state
+	 * @param executeAt
+	 *        the next execute date
+	 * @param offset
+	 *        the data offset
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CloudDatumStreamRakeTaskEntity(UserLongCompositePK id) {
-		super(id);
+	public CloudDatumStreamRakeTaskEntity(UserLongCompositePK id, Instant created, Long datumStreamId,
+			BasicClaimableJobState state, Instant executeAt, Period offset) {
+		super(id, created);
+		this.datumStreamId = requireNonNullArgument(datumStreamId, "datumStreamId");
+		this.state = requireNonNullArgument(state, "state");
+		this.executeAt = requireNonNullArgument(executeAt, "executeAt");
+		this.offset = requireNonNullArgument(offset, "offset");
 	}
 
 	/**
@@ -94,16 +112,29 @@ public class CloudDatumStreamRakeTaskEntity
 	 *        the user ID
 	 * @param configId
 	 *        the configuration ID
+	 * @param created
+	 *        the creation date
+	 * @param datumStreamId
+	 *        the datum stream ID
+	 * @param state
+	 *        the state
+	 * @param executeAt
+	 *        the next execute date
+	 * @param offset
+	 *        the data offset
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CloudDatumStreamRakeTaskEntity(Long userId, Long configId) {
-		this(new UserLongCompositePK(userId, configId));
+	public CloudDatumStreamRakeTaskEntity(Long userId, Long configId, Instant created,
+			Long datumStreamId, BasicClaimableJobState state, Instant executeAt, Period offset) {
+		this(new UserLongCompositePK(userId, configId), created, datumStreamId, state, executeAt,
+				offset);
 	}
 
 	@Override
 	public CloudDatumStreamRakeTaskEntity copyWithId(UserLongCompositePK id) {
-		var copy = new CloudDatumStreamRakeTaskEntity(id);
+		var copy = new CloudDatumStreamRakeTaskEntity(id, nonnull(getCreated(), "created"),
+				datumStreamId, state, executeAt, offset);
 		copyTo(copy);
 		return copy;
 	}
@@ -120,17 +151,17 @@ public class CloudDatumStreamRakeTaskEntity
 	}
 
 	@Override
-	public boolean isSameAs(CloudDatumStreamRakeTaskEntity other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable CloudDatumStreamRakeTaskEntity other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.state, other.state)
-				&& Objects.equals(this.executeAt, other.executeAt)
-				&& Objects.equals(this.offset, other.offset)
-				&& Objects.equals(this.message, other.message)
-				&& Objects.equals(getServiceProperties(), other.getServiceProperties())
+		return Objects.equals(this.state, o.state)
+				&& Objects.equals(this.executeAt, o.executeAt)
+				&& Objects.equals(this.offset, o.offset)
+				&& Objects.equals(this.message, o.message)
+				&& Objects.equals(getServiceProperties(), o.getServiceProperties())
 				;
 		// @formatter:on
 	}
@@ -174,9 +205,8 @@ public class CloudDatumStreamRakeTaskEntity
 	 *
 	 * @return the configuration ID
 	 */
-	public Long getConfigId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getConfigId() {
+		return pk().getEntityId();
 	}
 
 	/**
@@ -185,7 +215,7 @@ public class CloudDatumStreamRakeTaskEntity
 	 * @return the datum stream ID
 	 */
 	@Override
-	public Long getDatumStreamId() {
+	public final Long getDatumStreamId() {
 		return datumStreamId;
 	}
 
@@ -194,9 +224,11 @@ public class CloudDatumStreamRakeTaskEntity
 	 *
 	 * @param datumStreamId
 	 *        the datum stream ID to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setDatumStreamId(Long datumStreamId) {
-		this.datumStreamId = datumStreamId;
+	public final void setDatumStreamId(Long datumStreamId) {
+		this.datumStreamId = requireNonNullArgument(datumStreamId, "datumStreamId");
 	}
 
 	/**
@@ -204,7 +236,7 @@ public class CloudDatumStreamRakeTaskEntity
 	 *
 	 * @return the state
 	 */
-	public BasicClaimableJobState getState() {
+	public final BasicClaimableJobState getState() {
 		return state;
 	}
 
@@ -213,9 +245,11 @@ public class CloudDatumStreamRakeTaskEntity
 	 *
 	 * @param state
 	 *        the state to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setState(BasicClaimableJobState state) {
-		this.state = state;
+	public final void setState(BasicClaimableJobState state) {
+		this.state = requireNonNullArgument(state, "state");
 	}
 
 	/**
@@ -223,7 +257,7 @@ public class CloudDatumStreamRakeTaskEntity
 	 *
 	 * @return the offset
 	 */
-	public Period getOffset() {
+	public final Period getOffset() {
 		return offset;
 	}
 
@@ -232,9 +266,11 @@ public class CloudDatumStreamRakeTaskEntity
 	 *
 	 * @param offset
 	 *        the offset to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setOffset(Period offset) {
-		this.offset = offset;
+	public final void setOffset(Period offset) {
+		this.offset = requireNonNullArgument(offset, "offset");
 	}
 
 	/**
@@ -242,7 +278,7 @@ public class CloudDatumStreamRakeTaskEntity
 	 *
 	 * @return the date
 	 */
-	public Instant getExecuteAt() {
+	public final Instant getExecuteAt() {
 		return executeAt;
 	}
 
@@ -251,9 +287,11 @@ public class CloudDatumStreamRakeTaskEntity
 	 *
 	 * @param executeAt
 	 *        the date to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setExecuteAt(Instant executeAt) {
-		this.executeAt = executeAt;
+	public final void setExecuteAt(Instant executeAt) {
+		this.executeAt = requireNonNullArgument(executeAt, "executeAt");
 	}
 
 	/**
@@ -261,7 +299,7 @@ public class CloudDatumStreamRakeTaskEntity
 	 *
 	 * @return the message
 	 */
-	public String getMessage() {
+	public final @Nullable String getMessage() {
 		return message;
 	}
 
@@ -271,18 +309,18 @@ public class CloudDatumStreamRakeTaskEntity
 	 * @param message
 	 *        the message to set
 	 */
-	public void setMessage(String message) {
+	public final void setMessage(@Nullable String message) {
 		this.message = message;
 	}
 
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
-	 *         properties available
+	 * @return a JSON encoded string, or {@code null} if no service properties
+	 *         available
 	 */
 	@JsonIgnore
-	public String getServicePropsJson() {
+	public final @Nullable String getServicePropsJson() {
 		return servicePropsJson;
 	}
 
@@ -300,7 +338,7 @@ public class CloudDatumStreamRakeTaskEntity
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setServicePropsJson(String json) {
+	public final void setServicePropsJson(@Nullable String json) {
 		servicePropsJson = json;
 		serviceProps = null;
 	}
@@ -316,7 +354,7 @@ public class CloudDatumStreamRakeTaskEntity
 	 * @return the service properties
 	 */
 	@JsonIgnore
-	public Map<String, Object> getServiceProps() {
+	public final @Nullable Map<String, Object> getServiceProps() {
 		if ( serviceProps == null && servicePropsJson != null ) {
 			serviceProps = JsonUtils.getStringMap(servicePropsJson);
 		}
@@ -335,7 +373,7 @@ public class CloudDatumStreamRakeTaskEntity
 	 *        the service properties to set
 	 */
 	@JsonSetter("serviceProperties")
-	public void setServiceProps(Map<String, Object> serviceProps) {
+	public final void setServiceProps(@Nullable Map<String, Object> serviceProps) {
 		this.serviceProps = serviceProps;
 		servicePropsJson = JsonUtils.getJSONString(serviceProps, null);
 	}
@@ -346,7 +384,7 @@ public class CloudDatumStreamRakeTaskEntity
 	 * @param props
 	 *        the properties to add
 	 */
-	public void putServiceProps(Map<String, Object> props) {
+	public final void putServiceProps(@Nullable Map<String, Object> props) {
 		Map<String, Object> serviceProps = getServiceProps();
 		if ( serviceProps == null ) {
 			serviceProps = props;
@@ -361,7 +399,7 @@ public class CloudDatumStreamRakeTaskEntity
 	 *
 	 * @return the service properties
 	 */
-	public Map<String, ?> getServiceProperties() {
+	public final @Nullable Map<String, ?> getServiceProperties() {
 		return getServiceProps();
 	}
 

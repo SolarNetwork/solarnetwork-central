@@ -31,6 +31,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import org.jspecify.annotations.Nullable;
 import de.siegmar.fastcsv.reader.CsvReader;
 import de.siegmar.fastcsv.reader.CsvRecord;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
@@ -79,12 +81,12 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 	private final ObjectDatumStreamMetadataProvider metaProvider;
 	private final Instant parseTime;
 
-	private List<String> columnNames;
+	private @Nullable List<String> columnNames;
 	private int dateColumn = -1;
 	private int objectIdColumn = -1;
 	private int sourceIdColumn = -1;
-	private Map<String, Integer> columnMap;
-	private Datum next;
+	private @Nullable Map<String, Integer> columnMap;
+	private @Nullable Datum next;
 
 	/**
 	 * Constructor.
@@ -101,7 +103,7 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumCsvIterator(CsvReader<CsvRecord> reader, ObjectDatumStreamMetadataProvider metaProvider)
 			throws IOException {
@@ -120,7 +122,7 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumCsvIterator(CsvReader<CsvRecord> reader, ObjectDatumStreamMetadataProvider metaProvider,
 			DateTimeFormatter dateFormatter) throws IOException {
@@ -137,7 +139,7 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 		reader.close();
 	}
 
-	private Datum getNext() {
+	private @Nullable Datum getNext() {
 		if ( next == null && delegate.hasNext() ) {
 			try {
 				// read in rows of data until we parse a non-null value
@@ -204,6 +206,9 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 		if ( result != null ) {
 			next = null;
 		}
+		if ( result == null ) {
+			throw new NoSuchElementException();
+		}
 		return result;
 	}
 
@@ -212,11 +217,11 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 	 *
 	 * @param row
 	 *        the row data
-	 * @return the parsed object, or {@literal null} to skip row and continue
+	 * @return the parsed object, or {@code null} to skip row and continue
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
-	protected Datum parseRow(List<String> row) throws IOException {
+	protected @Nullable Datum parseRow(List<String> row) throws IOException {
 		Instant ts = dateFormatter.parse(row.get(dateColumn), Instant::from);
 		Long objectId = Long.valueOf(row.get(objectIdColumn));
 		String sourceId = row.get(sourceIdColumn);
@@ -234,8 +239,8 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 		return new DatumEntity(meta.getStreamId(), ts, parseTime, props);
 	}
 
-	private String[] parseStringColumns(List<String> row, String[] propertyNames) {
-		if ( propertyNames == null || propertyNames.length < 1 ) {
+	private String @Nullable [] parseStringColumns(List<String> row, String @Nullable [] propertyNames) {
+		if ( propertyNames == null || propertyNames.length < 1 || columnMap == null ) {
 			return null;
 		}
 		boolean empty = true;
@@ -253,8 +258,9 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 		return (empty ? null : result);
 	}
 
-	private BigDecimal[] parseDecimalColumns(List<String> row, String[] propertyNames) {
-		if ( propertyNames == null || propertyNames.length < 1 ) {
+	private BigDecimal @Nullable [] parseDecimalColumns(List<String> row,
+			String @Nullable [] propertyNames) {
+		if ( propertyNames == null || propertyNames.length < 1 || columnMap == null ) {
 			return null;
 		}
 		boolean empty = true;

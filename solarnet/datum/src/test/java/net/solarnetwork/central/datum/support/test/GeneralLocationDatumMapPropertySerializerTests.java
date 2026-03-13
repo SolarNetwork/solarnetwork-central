@@ -45,7 +45,7 @@ import net.solarnetwork.domain.datum.DatumSamples;
  */
 public class GeneralLocationDatumMapPropertySerializerTests {
 
-	private static final Long TEST_NODE_ID = -1L;
+	private static final Long TEST_LOCATION_ID = -1L;
 	private static final String TEST_SOURCE_ID = "test.source";
 	private static final LocalDateTime TEST_DATE = LocalDateTime.of(2014, 8, 22, 12, 1, 2,
 			(int) TimeUnit.MILLISECONDS.toNanos(345));
@@ -54,11 +54,9 @@ public class GeneralLocationDatumMapPropertySerializerTests {
 	private GeneralLocationDatumMapPropertySerializer serializer;
 
 	private GeneralLocationDatum getTestInstance() {
-		GeneralLocationDatum datum = new GeneralLocationDatum();
-		datum.setCreated(TEST_TIMESTAMP);
-		datum.setLocationId(TEST_NODE_ID);
+		GeneralLocationDatum datum = new GeneralLocationDatum(TEST_LOCATION_ID, TEST_TIMESTAMP,
+				TEST_SOURCE_ID);
 		datum.setPosted(datum.getCreated());
-		datum.setSourceId(TEST_SOURCE_ID);
 
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
@@ -102,10 +100,8 @@ public class GeneralLocationDatumMapPropertySerializerTests {
 	@Test
 	public void serializeReporting() {
 		GeneralLocationDatum d = getTestInstance();
-		ReportingGeneralLocationDatum rd = new ReportingGeneralLocationDatum();
-		rd.setCreated(d.getCreated());
-		rd.setLocationId(d.getLocationId());
-		rd.setSourceId(d.getSourceId());
+		ReportingGeneralLocationDatum rd = new ReportingGeneralLocationDatum(d.getLocationId(),
+				d.getCreated(), d.getSourceId());
 		rd.setSamples(d.getSamples());
 		rd.setLocalDateTime(TEST_DATE);
 		Object result = serializer.serialize(null, null, rd);

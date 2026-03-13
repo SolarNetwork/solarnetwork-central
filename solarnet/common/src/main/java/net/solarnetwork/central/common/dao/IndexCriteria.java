@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for indexed related data.
  * 
@@ -35,12 +37,12 @@ public interface IndexCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available value from the {@link #getIndexes()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first index, or {@literal null} if not available
+	 * @return the first index, or {@code null} if not available
 	 */
-	default Integer getIndex() {
+	default @Nullable Integer getIndex() {
 		final Integer[] array = getIndexes();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -48,9 +50,9 @@ public interface IndexCriteria {
 	/**
 	 * Get an array of indexes.
 	 * 
-	 * @return array of indexes (may be {@literal null})
+	 * @return array of indexes (may be {@code null})
 	 */
-	Integer[] getIndexes();
+	Integer @Nullable [] getIndexes();
 
 	/**
 	 * Test if this filter has any index criteria.

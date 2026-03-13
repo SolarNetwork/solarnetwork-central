@@ -24,6 +24,7 @@ package net.solarnetwork.central.common.dao;
 
 import java.util.Map;
 import java.util.function.BiFunction;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
@@ -49,6 +50,8 @@ public interface UserServiceConfigurationDao<K extends UserRelatedCompositeKey<K
 	 *         {@code id} exists but has no service configuration, an empty Map
 	 *         should be returned
 	 */
-	Map<String, Object> serviceConfiguration(K id, BiFunction<K, String, String> secretResolver);
+	@Nullable
+	Map<String, Object> serviceConfiguration(K id,
+			@Nullable BiFunction<K, String, String> secretResolver);
 
 }

@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumPublishEventTests.java - 10/10/2022 2:28:45 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,12 +25,14 @@ package net.solarnetwork.central.oscp.domain.test;
 import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.datum.domain.GeneralObjectDatumKey.UNASSIGNED_OBJECT_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.OwnedGeneralNodeDatum;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
@@ -43,7 +45,7 @@ import oscp.v20.GroupCapacityComplianceError;
 
 /**
  * Test cases for the {@link DatumPublishEvent} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -75,7 +77,8 @@ public class DatumPublishEventTests {
 	@Test
 	public void resolveSourceId() {
 		// GIVEN
-		OwnedGeneralNodeDatum d = new OwnedGeneralNodeDatum(userId);
+		OwnedGeneralNodeDatum d = new OwnedGeneralNodeDatum(
+				new GeneralNodeDatumPK(UNASSIGNED_OBJECT_ID, now(), ""), userId);
 
 		UserSettings settings = new UserSettings();
 		settings.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
@@ -99,7 +102,8 @@ public class DatumPublishEventTests {
 	@Test
 	public void resolveSourceId_actionCode() {
 		// GIVEN
-		OwnedGeneralNodeDatum d = new OwnedGeneralNodeDatum(userId);
+		OwnedGeneralNodeDatum d = new OwnedGeneralNodeDatum(
+				new GeneralNodeDatumPK(UNASSIGNED_OBJECT_ID, now(), ""), userId);
 
 		UserSettings settings = new UserSettings();
 		settings.setSourceIdTemplate("/oscp/{role}/{actionCode}/{cp}/{co}/{cgIdentifier}");

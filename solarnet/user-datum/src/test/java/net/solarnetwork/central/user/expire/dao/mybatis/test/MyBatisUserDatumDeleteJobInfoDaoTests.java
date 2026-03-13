@@ -32,9 +32,9 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -267,7 +267,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 	public void updateStateWithExpectedStateNotFound() {
 		storeNew();
 		boolean updated = dao.updateJobState(this.info.getId(), DatumDeleteJobState.Completed,
-				Collections.singleton(DatumDeleteJobState.Queued));
+				Set.of(DatumDeleteJobState.Queued));
 		assertThat("Update result", updated, equalTo(false));
 
 		DatumDeleteJobInfo info = dao.get(this.info.getId());
@@ -279,7 +279,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 	public void updateStateWithExpectedState() {
 		storeNew();
 		boolean updated = dao.updateJobState(this.info.getId(), DatumDeleteJobState.Completed,
-				Collections.singleton(DatumDeleteJobState.Unknown));
+				Set.of(DatumDeleteJobState.Unknown));
 		assertThat("Update result", updated, equalTo(true));
 
 		DatumDeleteJobInfo info = dao.get(this.info.getId());

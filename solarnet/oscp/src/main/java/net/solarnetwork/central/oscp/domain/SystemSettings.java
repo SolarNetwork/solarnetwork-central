@@ -63,8 +63,8 @@ public record SystemSettings(Integer heartbeatSeconds, Set<MeasurementStyle> mea
 	 *
 	 * @param behaviour
 	 *        the OSCP 2.0 value to get an instance for
-	 * @return the instance, or {@literal null} if {@code behaviour} is
-	 *         {@literal null}
+	 * @return the instance, or {@code null} if {@code behaviour} is
+	 *         {@code null}
 	 */
 	public static SystemSettings forOscp20Value(RequiredBehaviour behaviour) {
 		if ( behaviour == null ) {

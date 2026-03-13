@@ -22,13 +22,14 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.CombiningType;
 
 /**
@@ -56,12 +57,14 @@ public class CombiningConfig {
 	 *        the type
 	 * @param configs
 	 *        the list of configurations
+	 * @throws IllegalArgumentException
+	 *         if {@code type} is {@code null}
 	 */
-	public CombiningConfig(CombiningType type, List<CombiningIdsConfig<Object>> configs) {
+	public CombiningConfig(CombiningType type, @Nullable List<CombiningIdsConfig<Object>> configs) {
 		super();
-		this.type = type;
+		this.type = requireNonNullArgument(type, "type");
 		if ( configs == null || configs.isEmpty() ) {
-			this.configMap = Collections.emptyMap();
+			this.configMap = Map.of();
 		} else {
 			this.configMap = new LinkedHashMap<>(configs.size());
 			for ( CombiningIdsConfig<?> config : configs ) {
@@ -76,10 +79,10 @@ public class CombiningConfig {
 	 *
 	 * @param filter
 	 *        the criteria
-	 * @return the config, or {@literal null} if {@code filter} is
-	 *         {@literal null} or has no combining configuration
+	 * @return the config, or {@code null} if {@code filter} is {@code null} or
+	 *         has no combining configuration
 	 */
-	public static CombiningConfig configFromCriteria(ObjectStreamCriteria filter) {
+	public static @Nullable CombiningConfig configFromCriteria(@Nullable ObjectStreamCriteria filter) {
 		if ( filter == null || !filter.hasIdMappings() ) {
 			return null;
 		}
@@ -112,7 +115,7 @@ public class CombiningConfig {
 	 *
 	 * @return the type
 	 */
-	public CombiningType getType() {
+	public final CombiningType getType() {
 		return type;
 	}
 
@@ -121,7 +124,7 @@ public class CombiningConfig {
 	 *
 	 * @return the available ID configuration keys
 	 */
-	public Set<String> getIdsConfigKeys() {
+	public final Set<String> getIdsConfigKeys() {
 		return configMap.keySet();
 	}
 
@@ -132,12 +135,12 @@ public class CombiningConfig {
 	 *        the expected IDs configuration type
 	 * @param key
 	 *        the configuration key to get
-	 * @return the configuration, or {@literal null} if not available
+	 * @return the configuration, or {@code null} if not available
 	 * @throws ClassCastException
 	 *         if the value cannot be cast to {@code T}
 	 */
 	@SuppressWarnings("unchecked")
-	public <T> CombiningIdsConfig<T> getIdsConfig(String key) {
+	public final <T> @Nullable CombiningIdsConfig<T> getIdsConfig(String key) {
 		return (CombiningIdsConfig<T>) configMap.get(key);
 	}
 
@@ -146,7 +149,7 @@ public class CombiningConfig {
 	 *
 	 * @return the IDs configurations
 	 */
-	public Collection<CombiningIdsConfig<?>> getIdsConfigs() {
+	public final Collection<CombiningIdsConfig<?>> getIdsConfigs() {
 		return configMap.values();
 	}
 
@@ -156,7 +159,7 @@ public class CombiningConfig {
 	 * @return {@literal true} if an IDs configuration for
 	 *         {@link #OBJECT_IDS_CONFIG} exists
 	 */
-	public boolean isWithObjectIds() {
+	public final boolean isWithObjectIds() {
 		return configMap.containsKey(OBJECT_IDS_CONFIG);
 	}
 
@@ -166,7 +169,7 @@ public class CombiningConfig {
 	 * @return {@literal true} if an IDs configuration for
 	 *         {@link #SOURCE_IDS_CONFIG} exists
 	 */
-	public boolean isWithSourceIds() {
+	public final boolean isWithSourceIds() {
 		return configMap.containsKey(SOURCE_IDS_CONFIG);
 	}
 

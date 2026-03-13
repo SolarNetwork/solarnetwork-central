@@ -26,8 +26,8 @@ import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfi
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.HTTP_TRACE;
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
 import java.time.Clock;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -187,7 +187,7 @@ public class LocusEnergyConfig implements SolarNetCloudIntegrationsConfiguration
 				.requestFactory(() -> environment.matchesProfiles(HTTP_TRACE)
 						? new BufferingClientHttpRequestFactory(reqFactory)
 						: reqFactory)
-				.messageConverters(Arrays.asList(
+				.messageConverters(List.of(
 						new FormHttpMessageConverter(),
 						new OAuth2AccessTokenResponseHttpMessageConverter()))
 				.errorHandler(new OAuth2ErrorResponseErrorHandler())

@@ -59,7 +59,7 @@ public class JdbcCapacityOptimizerConfigurationDao
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCapacityOptimizerConfigurationDao(JdbcOperations jdbcOps) {
 		super(jdbcOps, OscpRole.CapacityOptimizer, CapacityOptimizerConfiguration.class);

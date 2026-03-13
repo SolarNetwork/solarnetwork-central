@@ -107,7 +107,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 	 * @param capacityProviderDao
 	 *        the capacity provider DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public OscpMqttInstructionQueueHook(StatTracker stats, ObjectMapper objectMapper,
 			UserNodeDao userNodeDao, CapacityGroupConfigurationDao capacityGroupDao,
@@ -421,8 +421,8 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 	 * Set the MQTT topic to publish to.
 	 *
 	 * @param mqttTopic
-	 *        the topic; if {@literal null} or blank then
-	 *        {@link #MQTT_TOPIC_V20} will be set instead
+	 *        the topic; if {@code null} or blank then {@link #MQTT_TOPIC_V20}
+	 *        will be set instead
 	 */
 	public void setMqttTopic(String mqttTopic) {
 		this.mqttTopic = (mqttTopic == null || mqttTopic.isBlank() ? MQTT_TOPIC_V20 : mqttTopic);

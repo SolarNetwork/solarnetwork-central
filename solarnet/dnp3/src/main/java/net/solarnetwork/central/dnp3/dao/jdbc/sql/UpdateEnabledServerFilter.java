@@ -60,7 +60,7 @@ public final class UpdateEnabledServerFilter implements PreparedStatementCreator
 	 * @param enabled
 	 *        the desired enabled state
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code filter} is {@literal null}
+	 *         if any argument other than {@code filter} is {@code null}
 	 */
 	public UpdateEnabledServerFilter(String tableName, String serverIdColumnName, Long userId,
 			ServerFilter filter, boolean enabled) {

@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Basic implementation of a Long and Integer composite key.
@@ -73,7 +74,7 @@ public final class LongIntegerCompositePK extends BasePK implements Serializable
 	 * @param entityId
 	 *        the entity ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public LongIntegerCompositePK(Long groupId, Integer entityId) {
 		super();
@@ -82,7 +83,7 @@ public final class LongIntegerCompositePK extends BasePK implements Serializable
 	}
 
 	@Override
-	public int compareTo(LongIntegerCompositePK o) {
+	public int compareTo(@Nullable LongIntegerCompositePK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -118,7 +119,7 @@ public final class LongIntegerCompositePK extends BasePK implements Serializable
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -133,7 +134,7 @@ public final class LongIntegerCompositePK extends BasePK implements Serializable
 	 *
 	 * @return the user ID
 	 */
-	public Long getGroupId() {
+	public final Long getGroupId() {
 		return groupId;
 	}
 
@@ -142,17 +143,17 @@ public final class LongIntegerCompositePK extends BasePK implements Serializable
 	 *
 	 * @return the entity ID
 	 */
-	public Integer getEntityId() {
+	public final Integer getEntityId() {
 		return entityId;
 	}
 
 	@Override
-	public Long keyComponent1() {
+	public final Long keyComponent1() {
 		return getGroupId();
 	}
 
 	@Override
-	public Integer keyComponent2() {
+	public final Integer keyComponent2() {
 		return getEntityId();
 	}
 
@@ -188,7 +189,7 @@ public final class LongIntegerCompositePK extends BasePK implements Serializable
 
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
-	public <T> T keyComponentValue(int index, Object val) {
+	public <T> T keyComponentValue(int index, @Nullable Object val) {
 		try {
 			if ( index == 0 ) {
 				return switch (val) {
@@ -213,7 +214,7 @@ public final class LongIntegerCompositePK extends BasePK implements Serializable
 	}
 
 	@Override
-	public LongIntegerCompositePK createKey(CompositeKey template, Object... components) {
+	public LongIntegerCompositePK createKey(@Nullable CompositeKey template, Object... components) {
 		Object v1 = (components != null && components.length > 0 ? components[0]
 				: template != null ? template.keyComponent(0) : null);
 		Object v2 = (components != null && components.length > 1 ? components[1]

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dnp3.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
@@ -54,7 +55,7 @@ public class ServerAuthConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ServerAuthConfiguration(UserLongStringCompositePK id, Instant created) {
 		super(id, created);
@@ -72,7 +73,7 @@ public class ServerAuthConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ServerAuthConfiguration(Long userId, Long serverId, String identity, Instant created) {
 		this(new UserLongStringCompositePK(userId, serverId, identity), created);
@@ -93,11 +94,11 @@ public class ServerAuthConfiguration
 
 	@Override
 	public boolean isSameAs(ServerAuthConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
-		return Objects.equals(this.name, other.getName());
+		final var o = nonnull(other, "other");
+		return Objects.equals(this.name, o.getName());
 	}
 
 	@Override

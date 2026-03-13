@@ -23,11 +23,12 @@
 package net.solarnetwork.central.user.billing.snf.domain.test;
 
 import static java.util.Arrays.asList;
+import static net.solarnetwork.central.user.billing.snf.domain.UsageTier.tier;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
-import net.solarnetwork.central.user.billing.snf.domain.UsageTier;
 import net.solarnetwork.central.user.billing.snf.domain.UsageTiers;
 
 /**
@@ -41,18 +42,19 @@ public class UsageTeirsTests {
 	@Test
 	public void asString() {
 		// GIVEN
+		final LocalDate date = LocalDate.now();
 		// @formatter:off
 		UsageTiers tiers = new UsageTiers(asList(
-				UsageTier.tier(NodeUsage.DATUM_OUT_KEY, 1,  "0.0000004"),
-				UsageTier.tier(NodeUsage.DATUM_OUT_KEY, 10,  "0.0000003"),
-				UsageTier.tier(NodeUsage.DATUM_OUT_KEY, 100,  "0.000002"),
-				UsageTier.tier(NodeUsage.DATUM_PROPS_IN_KEY, 2,  "0.000004"),
-				UsageTier.tier(NodeUsage.DATUM_PROPS_IN_KEY, 20,  "0.000003"),
-				UsageTier.tier(NodeUsage.DATUM_PROPS_IN_KEY, 200,  "0.00002"),
-				UsageTier.tier(NodeUsage.DATUM_DAYS_STORED_KEY, 3,  "0.00004"),
-				UsageTier.tier(NodeUsage.DATUM_DAYS_STORED_KEY, 30,  "0.00003"),
-				UsageTier.tier(NodeUsage.DATUM_DAYS_STORED_KEY, 300,  "0.0002")
-				));
+				tier(NodeUsage.DATUM_OUT_KEY, 1,  "0.0000004", date),
+				tier(NodeUsage.DATUM_OUT_KEY, 10,  "0.0000003", date),
+				tier(NodeUsage.DATUM_OUT_KEY, 100,  "0.000002", date),
+				tier(NodeUsage.DATUM_PROPS_IN_KEY, 2,  "0.000004", date),
+				tier(NodeUsage.DATUM_PROPS_IN_KEY, 20,  "0.000003", date),
+				tier(NodeUsage.DATUM_PROPS_IN_KEY, 200,  "0.00002", date),
+				tier(NodeUsage.DATUM_DAYS_STORED_KEY, 3,  "0.00004", date),
+				tier(NodeUsage.DATUM_DAYS_STORED_KEY, 30,  "0.00003", date),
+				tier(NodeUsage.DATUM_DAYS_STORED_KEY, 300,  "0.0002", date)
+				), date);
 
 		// WHEN
 		String s = tiers.toString();

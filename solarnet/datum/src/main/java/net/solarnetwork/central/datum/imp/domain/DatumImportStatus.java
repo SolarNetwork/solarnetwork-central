@@ -151,7 +151,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	/**
 	 * Create a job status changed event out of this instance.
 	 *
-	 * @return the event, never {@literal null}
+	 * @return the event, never {@code null}
 	 * @see #createJobStatusChangedEvent(DatumImportStatus)
 	 */
 	default AppEvent asJobStatusChangedEvent() {
@@ -163,7 +163,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	 *
 	 * @param result
 	 *        a specific result to use
-	 * @return the event, never {@literal null}
+	 * @return the event, never {@code null}
 	 * @see #createJobStatusChangedEvent(DatumImportStatus, DatumImportResult)
 	 */
 	default AppEvent asJobStatusChangedEvent(DatumImportResult result) {
@@ -180,7 +180,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	 *
 	 * @param status
 	 *        the status instance to create the event for
-	 * @return the event, never {@literal null}
+	 * @return the event, never {@code null}
 	 */
 	static AppEvent createJobStatusChangedEvent(DatumImportStatus status) {
 		DatumImportResult result = null;
@@ -206,7 +206,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	 *        the status instance to create the event for
 	 * @param result
 	 *        the import result
-	 * @return the event, never {@literal null}
+	 * @return the event, never {@code null}
 	 */
 	static AppEvent createJobStatusChangedEvent(DatumImportStatus status, DatumImportResult result) {
 		Map<String, Object> props = new HashMap<>(4);

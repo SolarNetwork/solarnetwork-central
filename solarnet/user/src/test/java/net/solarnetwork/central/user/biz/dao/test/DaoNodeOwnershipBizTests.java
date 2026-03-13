@@ -26,7 +26,6 @@ import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +40,8 @@ import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
+import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
@@ -74,14 +75,14 @@ public class DaoNodeOwnershipBizTests {
 	private UserAlertDao userAlertDao;
 	private UserAuthTokenDao userAuthTokenDao;
 	private UserNodeDao userNodeDao;
+	private UserNodeConfirmationDao userNodeConfirmationDao;
+	private UserNodeCertificateDao userNodeCertificateDao;
 
 	private DaoUserBiz userBiz;
 
 	@BeforeEach
 	public void setup() {
-		testUser = new User();
-		testUser.setEmail(TEST_EMAIL);
-		testUser.setId(TEST_USER_ID);
+		testUser = new User(TEST_USER_ID, TEST_EMAIL);
 		testUser.setName(TEST_NAME);
 		testUser.setPassword(TEST_ENC_PASSWORD);
 
@@ -98,22 +99,21 @@ public class DaoNodeOwnershipBizTests {
 		userAlertDao = EasyMock.createMock(UserAlertDao.class);
 		userAuthTokenDao = EasyMock.createMock(UserAuthTokenDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
+		userNodeConfirmationDao = EasyMock.createMock(UserNodeConfirmationDao.class);
+		userNodeCertificateDao = EasyMock.createMock(UserNodeCertificateDao.class);
 
-		userBiz = new DaoUserBiz();
-		userBiz.setSolarLocationDao(solarLocationDao);
-		userBiz.setSolarNodeDao(solarNodeDao);
-		userBiz.setUserDao(userDao);
-		userBiz.setUserAlertDao(userAlertDao);
-		userBiz.setUserAuthTokenDao(userAuthTokenDao);
-		userBiz.setUserNodeDao(userNodeDao);
+		userBiz = new DaoUserBiz(userDao, userNodeDao, userNodeConfirmationDao, userNodeCertificateDao,
+				solarNodeDao, solarLocationDao, userAuthTokenDao, userAlertDao);
 	}
 
 	private void replayAll() {
-		replay(solarLocationDao, solarNodeDao, userAuthTokenDao, userDao, userNodeDao);
+		replay(solarLocationDao, solarNodeDao, userAuthTokenDao, userDao, userNodeDao,
+				userNodeConfirmationDao, userNodeCertificateDao);
 	}
 
 	private void verifyAll() {
-		verify(solarLocationDao, solarNodeDao, userAuthTokenDao, userDao, userNodeDao);
+		verify(solarLocationDao, solarNodeDao, userAuthTokenDao, userDao, userNodeDao,
+				userNodeConfirmationDao, userNodeCertificateDao);
 	}
 
 	@Test
@@ -133,7 +133,7 @@ public class DaoNodeOwnershipBizTests {
 		final UserNode originalUserNode = new UserNode(testUser, testNode);
 		final UserNodeTransfer xfer = new UserNodeTransfer(testUser.getId(), testNode.getId(),
 				TEST_NEW_EMAIL);
-		final List<UserAuthToken> authTokens = Collections.emptyList();
+		final List<UserAuthToken> authTokens = List.of();
 		final UserNode newUserNode = new UserNode(newOwner, testNode);
 
 		// get the xfer record

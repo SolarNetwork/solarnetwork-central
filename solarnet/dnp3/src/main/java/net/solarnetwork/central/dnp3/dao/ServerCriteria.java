@@ -36,10 +36,10 @@ public interface ServerCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available server ID from the
-	 * {@link #getServerIds()} array, or {@literal null} if not available.
+	 * {@link #getServerIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first server ID, or {@literal null} if not available
+	 * @return the first server ID, or {@code null} if not available
 	 */
 	default Long getServerId() {
 		final Long[] array = getServerIds();
@@ -49,7 +49,7 @@ public interface ServerCriteria {
 	/**
 	 * Get an array of server IDs.
 	 * 
-	 * @return array of server IDs (may be {@literal null})
+	 * @return array of server IDs (may be {@code null})
 	 */
 	Long[] getServerIds();
 

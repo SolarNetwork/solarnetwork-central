@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -33,6 +35,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.LocationDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.NodeDatumId;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
@@ -80,16 +83,18 @@ public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {
 	 *        the type of metadata to parse; if {@link MetadataKind#Dynamic}
 	 *        then an extra {@literal kind} row must be provided by the query
 	 *        results
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code nulL}
 	 */
 	public ObjectDatumIdRowMapper(MetadataKind kind) {
 		super();
-		this.kind = kind;
+		this.kind = requireNonNullArgument(kind, "kind");
 	}
 
 	@Override
 	public ObjectDatumId mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = getUuid(rs, 1);
-		Instant ts = rs.getTimestamp(2).toInstant();
+		UUID streamId = nonnull(getUuid(rs, 1), "Stream ID");
+		Instant ts = nonnull(rs.getTimestamp(2), "Timestamp").toInstant();
 		Aggregation agg = Aggregation.forKey(rs.getString(3));
 		Object objId = rs.getObject(4);
 		String sourceId = rs.getString(5);
@@ -106,7 +111,9 @@ public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {
 		} else if ( k == MetadataKind.Node ) {
 			result = new NodeDatumId(streamId, objectId, sourceId, ts, agg);
 		} else {
-			result = new ObjectDatumId(null, streamId, objectId, sourceId, ts, agg);
+			// note ObjectDatumKind is required, but the metadata for the stream might not have been
+			// found, so fall back to Node here
+			result = new ObjectDatumId(ObjectDatumKind.Node, streamId, objectId, sourceId, ts, agg);
 		}
 		return result;
 	}

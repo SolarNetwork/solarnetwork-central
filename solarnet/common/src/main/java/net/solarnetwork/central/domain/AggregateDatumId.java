@@ -26,6 +26,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.BaseId;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -179,7 +180,7 @@ public class AggregateDatumId extends BaseId
 
 	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
-	public int compareTo(AggregateDatumId o) {
+	public int compareTo(@Nullable AggregateDatumId o) {
 		if ( this == o ) {
 			return 0;
 		}
@@ -247,7 +248,7 @@ public class AggregateDatumId extends BaseId
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}

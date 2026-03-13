@@ -38,10 +38,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mybatis.spring.MyBatisSystemException;
@@ -91,7 +93,8 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 
 	private UserDatumExportConfiguration createNewUserDatumExportConfig() {
 		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
-				unassignedEntityIdKey(this.user.getId()), now());
+				unassignedEntityIdKey(this.user.getId()), now(), TEST_NAME, ScheduleType.Weekly, 2,
+				now());
 		conf.setName(TEST_NAME);
 		conf.setHourDelayOffset(2);
 		conf.setSchedule(ScheduleType.Weekly);
@@ -334,16 +337,16 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 
 	@Test
 	public void findForUser() {
-		List<UUID> pks = new ArrayList<>(3);
+		Set<UUID> pks = new HashSet<>(3);
 		for ( int i = 0; i < 3; i++ ) {
 			pks.add(storeTask(this.user.getId()));
 		}
 		List<UserAdhocDatumExportTaskInfo> tasks = dao.findTasksForUser(user.getId(), null, null);
 		assertThat("Result count", tasks, hasSize(3));
-		for ( int i = 0; i < 3; i++ ) {
-			UserAdhocDatumExportTaskInfo info = tasks.get(i);
-			assertThat("Result PK " + i, info.getId(), equalTo(pks.get(i)));
-		}
+
+		Set<UUID> resultTaskIds = tasks.stream().map(UserAdhocDatumExportTaskInfo::getId)
+				.collect(Collectors.toSet());
+		assertThat("Expected task IDs", resultTaskIds, equalTo(pks));
 	}
 
 	@Test

@@ -24,11 +24,13 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.EXISTING_PROPERTY;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -58,11 +60,11 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 	private static final long serialVersionUID = 7571299682812609193L;
 
 	private final ObjectDatumKind kind;
-	private final UUID streamId;
-	private final Long objectId;
-	private final String sourceId;
+	private final @Nullable UUID streamId;
+	private final @Nullable Long objectId;
+	private final @Nullable String sourceId;
 	private final Instant timestamp;
-	private final Aggregation aggregation;
+	private final @Nullable Aggregation aggregation;
 
 	/**
 	 * Create a new node datum stream key.
@@ -78,9 +80,11 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 	 * @param aggregation
 	 *        the aggregation
 	 * @return the instance
+	 * @throws IllegalArgumentException
+	 *         if {@code timestamp} is {@code null}
 	 */
-	public static NodeDatumId nodeId(UUID streamId, Long nodeId, String sourceId, Instant timestamp,
-			Aggregation aggregation) {
+	public static NodeDatumId nodeId(@Nullable UUID streamId, @Nullable Long nodeId,
+			@Nullable String sourceId, Instant timestamp, @Nullable Aggregation aggregation) {
 		return new NodeDatumId(streamId, nodeId, sourceId, timestamp, aggregation);
 	}
 
@@ -98,9 +102,11 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 	 * @param aggregation
 	 *        the aggregation
 	 * @return the instance
+	 * @throws IllegalArgumentException
+	 *         if {@code timestamp} is {@code null}
 	 */
-	public static LocationDatumId locationId(UUID streamId, Long locationId, String sourceId,
-			Instant timestamp, Aggregation aggregation) {
+	public static LocationDatumId locationId(@Nullable UUID streamId, @Nullable Long locationId,
+			@Nullable String sourceId, Instant timestamp, @Nullable Aggregation aggregation) {
 		return new LocationDatumId(streamId, locationId, sourceId, timestamp, aggregation);
 	}
 
@@ -121,11 +127,14 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 	 *        the aggregation
 	 * @return the instance, will be either a {@link LocationDatumId} or
 	 *         {@link NodeDatumId} instance, depending on {@code kind}
+	 * @throws IllegalArgumentException
+	 *         if {@code kind} or {@code timestamp} is {@code null}
 	 * @since 1.2
 	 */
-	public static ObjectDatumId datumId(ObjectDatumKind kind, UUID streamId, Long objectId,
-			String sourceId, Instant timestamp, Aggregation aggregation) {
-		return switch (kind) {
+	public static ObjectDatumId datumId(ObjectDatumKind kind, @Nullable UUID streamId,
+			@Nullable Long objectId, @Nullable String sourceId, Instant timestamp,
+			@Nullable Aggregation aggregation) {
+		return switch (requireNonNullArgument(kind, "kind")) {
 			case Location -> locationId(streamId, objectId, sourceId, timestamp, aggregation);
 			case Node -> nodeId(streamId, objectId, sourceId, timestamp, aggregation);
 		};
@@ -154,11 +163,11 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 		 *        the aggregation
 		 */
 		@JsonCreator
-		public NodeDatumId(@JsonProperty(value = "streamId", required = false) UUID streamId,
-				@JsonProperty(value = "objectId", required = false) Long nodeId,
-				@JsonProperty(value = "sourceId", required = false) String sourceId,
-				@JsonProperty("timestamp") Instant timestamp,
-				@JsonProperty(value = "aggregation", required = false) Aggregation aggregation) {
+		public NodeDatumId(@JsonProperty(value = "streamId", required = false) @Nullable UUID streamId,
+				@JsonProperty(value = "objectId", required = false) @Nullable Long nodeId,
+				@JsonProperty(value = "sourceId", required = false) @Nullable String sourceId,
+				@JsonProperty("timestamp") Instant timestamp, @JsonProperty(value = "aggregation",
+						required = false) @Nullable Aggregation aggregation) {
 			super(ObjectDatumKind.Node, streamId, nodeId, sourceId, timestamp, aggregation);
 		}
 
@@ -173,7 +182,7 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 		 * @return the node ID
 		 */
 		@JsonIgnore
-		public Long getNodeId() {
+		public @Nullable Long getNodeId() {
 			return getObjectId();
 		}
 
@@ -202,11 +211,12 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 		 *        the aggregation
 		 */
 		@JsonCreator
-		public LocationDatumId(@JsonProperty(value = "streamId", required = false) UUID streamId,
-				@JsonProperty(value = "objectId", required = false) Long locationId,
-				@JsonProperty(value = "sourceId", required = false) String sourceId,
-				@JsonProperty("timestamp") Instant timestamp,
-				@JsonProperty(value = "aggregation", required = false) Aggregation aggregation) {
+		public LocationDatumId(
+				@JsonProperty(value = "streamId", required = false) @Nullable UUID streamId,
+				@JsonProperty(value = "objectId", required = false) @Nullable Long locationId,
+				@JsonProperty(value = "sourceId", required = false) @Nullable String sourceId,
+				@JsonProperty("timestamp") Instant timestamp, @JsonProperty(value = "aggregation",
+						required = false) @Nullable Aggregation aggregation) {
 			super(ObjectDatumKind.Location, streamId, locationId, sourceId, timestamp, aggregation);
 		}
 
@@ -221,7 +231,7 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 		 * @return the location ID
 		 */
 		@JsonIgnore
-		public Long getLocationId() {
+		public @Nullable Long getLocationId() {
 			return getObjectId();
 		}
 
@@ -242,15 +252,17 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 	 *        the timestamp
 	 * @param aggregation
 	 *        the aggregation
+	 * @throws IllegalArgumentException
+	 *         if {@code kind} or {@code timestamp} is {@code null}
 	 */
-	public ObjectDatumId(ObjectDatumKind kind, UUID streamId, Long objectId, String sourceId,
-			Instant timestamp, Aggregation aggregation) {
+	public ObjectDatumId(ObjectDatumKind kind, @Nullable UUID streamId, @Nullable Long objectId,
+			@Nullable String sourceId, Instant timestamp, @Nullable Aggregation aggregation) {
 		super();
-		this.kind = kind;
+		this.kind = requireNonNullArgument(kind, "kind");
 		this.streamId = streamId;
 		this.objectId = objectId;
 		this.sourceId = sourceId;
-		this.timestamp = timestamp;
+		this.timestamp = requireNonNullArgument(timestamp, "timestamp");
 		this.aggregation = aggregation;
 	}
 
@@ -405,7 +417,7 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 	 *
 	 * @return the stream ID
 	 */
-	public UUID getStreamId() {
+	public @Nullable UUID getStreamId() {
 		return streamId;
 	}
 
@@ -414,7 +426,7 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 	 *
 	 * @return the object ID
 	 */
-	public Long getObjectId() {
+	public @Nullable Long getObjectId() {
 		return objectId;
 	}
 
@@ -423,7 +435,7 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 	 *
 	 * @return the source ID
 	 */
-	public String getSourceId() {
+	public @Nullable String getSourceId() {
 		return sourceId;
 	}
 
@@ -441,7 +453,7 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 	 *
 	 * @return the aggregation
 	 */
-	public Aggregation getAggregation() {
+	public @Nullable Aggregation getAggregation() {
 		return aggregation;
 	}
 

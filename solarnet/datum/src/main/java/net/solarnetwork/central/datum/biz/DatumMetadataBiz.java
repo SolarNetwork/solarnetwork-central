@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.biz;
 
 import java.util.List;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
@@ -98,11 +99,11 @@ public interface DatumMetadataBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@code null}
 	 */
 	FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findGeneralNodeDatumMetadata(
-			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max);
+			GeneralNodeDatumMetadataFilter criteria, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max);
 
 	/**
 	 * Add metadata to a specific location and source. If metadata already
@@ -155,12 +156,12 @@ public interface DatumMetadataBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@code null}
 	 * @since 1.1
 	 */
 	FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> findGeneralLocationDatumMetadata(
-			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
-			Long offset, Integer max);
+			GeneralLocationDatumMetadataFilter criteria, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max);
 
 	/**
 	 * Find available datum source IDs that match a datum metadata filter.
@@ -176,7 +177,7 @@ public interface DatumMetadataBiz {
 	 * @param metadataFilter
 	 *        A metadata search filter, in LDAP search filter syntax.
 	 * @return the distinct node ID and source IDs combinations that match the
-	 *         given filter (never <em>null</em>)
+	 *         given filter (never {@code null})
 	 * @since 1.2
 	 */
 	Set<NodeSourcePK> getGeneralNodeDatumMetadataFilteredSources(Long[] nodeIds, String metadataFilter);
@@ -195,7 +196,7 @@ public interface DatumMetadataBiz {
 	 * @param metadataFilter
 	 *        A metadata search filter, in LDAP search filter syntax.
 	 * @return the distinct node ID and source IDs combinations that match the
-	 *         given filter (never <em>null</em>)
+	 *         given filter (never {@code null})
 	 * @since 1.2
 	 */
 	Set<LocationSourcePK> getGeneralLocationDatumMetadataFilteredSources(Long[] locationIds,
@@ -213,7 +214,7 @@ public interface DatumMetadataBiz {
 	 *
 	 * @param filter
 	 *        the search filter
-	 * @return the matching results, never {@literal null}
+	 * @return the matching results, never {@code null}
 	 * @since 1.3
 	 */
 	Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectStreamCriteria filter);
@@ -230,7 +231,7 @@ public interface DatumMetadataBiz {
 	 *
 	 * @param filter
 	 *        the search filter
-	 * @return the matching results, never {@literal null}
+	 * @return the matching results, never {@code null}
 	 * @since 2.0
 	 */
 	Set<ObjectDatumStreamMetadataId> findDatumStreamMetadataIds(ObjectStreamCriteria filter);
@@ -248,12 +249,12 @@ public interface DatumMetadataBiz {
 	 *        optional starting offset
 	 * @param max
 	 *        optional max number of results
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 * @since 2.1
 	 */
 	net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(Long userId,
-			LocationRequestCriteria filter, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max);
+			LocationRequestCriteria filter, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max);
 
 	/**
 	 * Get a specific location request.
@@ -262,7 +263,7 @@ public interface DatumMetadataBiz {
 	 *        the user ID to get the request for
 	 * @param id
 	 *        the request ID
-	 * @return the matching entity, or {@literal null} if not found
+	 * @return the matching entity, or {@code null} if not found
 	 * @since 2.1
 	 */
 	LocationRequest getLocationRequest(Long userId, Long id);

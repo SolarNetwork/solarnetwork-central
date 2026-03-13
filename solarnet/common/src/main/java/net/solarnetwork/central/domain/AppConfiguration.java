@@ -85,7 +85,7 @@ public interface AppConfiguration {
 	 * and to add any other values needed by the application.
 	 * </p>
 	 * 
-	 * @return named service URLs, never {@literal null}
+	 * @return named service URLs, never {@code null}
 	 */
 	Map<String, String> getServiceUrls();
 

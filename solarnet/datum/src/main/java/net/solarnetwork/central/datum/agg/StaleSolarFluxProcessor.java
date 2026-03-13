@@ -42,6 +42,7 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Tiered stale datum processor that processes all tiers of stale SolarFlux
@@ -84,19 +85,19 @@ public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 	 * @param publisher
 	 *        the processor to publish the stale SolarFlux data
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public StaleSolarFluxProcessor(JdbcOperations jdbcOps, DatumEntityDao datumDao,
 			DatumProcessor publisher) {
-		super(jdbcOps, "stale SolarFlux data");
+		super(jdbcOps, "Datum", "StaleSolarFluxProcessor", "stale SolarFlux data");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 		this.publisher = requireNonNullArgument(publisher, "publisher");
-		setGroupId("Datum");
 		setMaximumWaitMs(1800000L);
 		setTierProcessType("*");
 		setJdbcCall(SelectStaleFluxDatum.ANY_ONE_FOR_UPDATE.getSql());
 	}
 
+	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	@Override
 	protected final int execute(AtomicInteger remainingCount) {
 		if ( !publisher.isConfigured() ) {
@@ -129,9 +130,16 @@ public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 									if ( results.getReturnedResultCount() > 0 ) {
 										Datum datum = results.iterator().next();
 										if ( datum != null ) {
-											GeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(datum,
-													results.metadataForStreamId(datum.getStreamId()));
-											handled = publisher.processDatum(gnd, stale.getKind());
+											ObjectDatumStreamMetadata meta = results
+													.metadataForStreamId(datum.getStreamId());
+											if ( meta != null ) {
+												GeneralNodeDatum gnd = DatumUtils
+														.toGeneralNodeDatum(datum, meta);
+												if ( gnd != null ) {
+													handled = publisher.processDatum(gnd,
+															stale.getKind());
+												}
+											}
 										}
 									} else {
 										log.warn(
@@ -172,7 +180,7 @@ public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 	 *
 	 * @return the publisher
 	 */
-	public DatumProcessor getPublisher() {
+	public final DatumProcessor getPublisher() {
 		return publisher;
 	}
 

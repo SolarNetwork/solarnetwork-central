@@ -661,7 +661,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 
 		// @formatter:off
 		ReadingDatum d1 = new ReadingDatumEntity(meta.getStreamId(), start.minusMinutes(1).toInstant(),
-				null, start.plusHours(1).minusMinutes(1).toInstant(),
+				Aggregation.None, start.plusHours(1).minusMinutes(1).toInstant(),
 				propertiesOf(
 						decimalArray("1.23", "2.34"),
 						decimalArray("3"), null, null),
@@ -702,7 +702,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 
 		// @formatter:off
 		final ReadingDatum d1 = new ReadingDatumEntity(meta.getStreamId(), start.minusMinutes(1).toInstant(),
-				null, start.plusHours(1).minusMinutes(1).toInstant(),
+				Aggregation.None, start.plusHours(1).minusMinutes(1).toInstant(),
 				propertiesOf(
 						decimalArray("1.23", "2.34"),
 						decimalArray("3"), null, null),
@@ -795,7 +795,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 
 		// @formatter:off
 		final ReadingDatum d1 = new ReadingDatumEntity(meta.getStreamId(), start.minusMinutes(1).toInstant(),
-				null, start.plusHours(1).minusMinutes(1).toInstant(),
+				Aggregation.None, start.plusHours(1).minusMinutes(1).toInstant(),
 				propertiesOf(
 						decimalArray("1.23", "2.34"),
 						decimalArray("3"), null, null),

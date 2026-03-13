@@ -63,7 +63,6 @@ public class UserDatumExportJobsConfig {
 	public ManagedJob hourlyTaskPopulatorJob(UserExportJobsService exportJobsService) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Hourly,
 				exportJobsService);
-		job.setId("UserExportTaskPopulatorHourly");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -73,7 +72,6 @@ public class UserDatumExportJobsConfig {
 	public ManagedJob dailyTaskPopulatorJob(UserExportJobsService exportJobsService) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Daily,
 				exportJobsService);
-		job.setId("UserExportTaskPopulatorDaily");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -83,7 +81,6 @@ public class UserDatumExportJobsConfig {
 	public ManagedJob weeklyTaskPopulatorJob(UserExportJobsService exportJobsService) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Weekly,
 				exportJobsService);
-		job.setId("UserExportTaskPopulatorWeekly");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -93,7 +90,6 @@ public class UserDatumExportJobsConfig {
 	public ManagedJob monthlyTaskPopulatorJob(UserExportJobsService userExportJobsService) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Monthly,
 				userExportJobsService);
-		job.setId("UserExportTaskPopulatorMonthly");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}

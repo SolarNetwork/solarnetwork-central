@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.dao.BasicEntity;
@@ -46,7 +48,7 @@ public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntit
 	@Serial
 	private static final long serialVersionUID = -8201311252309117005L;
 
-	private Instant modified;
+	private @Nullable Instant modified;
 	private boolean enabled;
 
 	/**
@@ -55,7 +57,7 @@ public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntit
 	 * @param id
 	 *        the ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 1.2
 	 */
 	public BaseUserModifiableEntity(K id) {
@@ -70,7 +72,7 @@ public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntit
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseUserModifiableEntity(K id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
@@ -101,19 +103,21 @@ public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntit
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
-	public boolean isSameAs(T other) {
+	public boolean isSameAs(@Nullable T other) {
+		if ( other == null ) {
+			return false;
+		}
 		return (this.enabled == other.isEnabled());
 	}
 
 	@Override
-	public boolean differsFrom(T other) {
+	public boolean differsFrom(@Nullable T other) {
 		return !isSameAs(other);
 	}
 
 	@Override
-	public Long getUserId() {
-		K pk = getId();
-		return (pk != null ? (Long) pk.keyComponent(0) : null);
+	public final Long getUserId() {
+		return nonnull(getId(), "id").getUserId();
 	}
 
 	/**
@@ -144,7 +148,7 @@ public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntit
 	 *
 	 * @return the modified date
 	 */
-	public Instant getModified() {
+	public final @Nullable Instant getModified() {
 		return modified;
 	}
 
@@ -154,7 +158,7 @@ public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntit
 	 * @param modified
 	 *        the modified date to set
 	 */
-	public void setModified(Instant modified) {
+	public final void setModified(@Nullable Instant modified) {
 		this.modified = modified;
 	}
 
@@ -163,7 +167,7 @@ public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntit
 	 *
 	 * @return {@literal true} if enabled
 	 */
-	public boolean isEnabled() {
+	public final boolean isEnabled() {
 		return enabled;
 	}
 
@@ -173,7 +177,7 @@ public abstract class BaseUserModifiableEntity<T extends BaseUserModifiableEntit
 	 * @param enabled
 	 *        the value to set
 	 */
-	public void setEnabled(boolean enabled) {
+	public final void setEnabled(boolean enabled) {
 		this.enabled = enabled;
 	}
 

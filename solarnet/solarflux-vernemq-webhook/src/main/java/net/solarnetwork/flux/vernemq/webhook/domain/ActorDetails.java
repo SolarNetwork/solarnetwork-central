@@ -21,11 +21,9 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.stream.Collectors.toCollection;
-
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
 import net.solarnetwork.domain.SecurityPolicy;
 
 /**
@@ -56,11 +54,11 @@ public class ActorDetails implements Actor {
 	 * @param userId
 	 *        the associated user ID
 	 * @param policy
-	 *        the associated policy (or {@literal null} if none defined)
+	 *        the associated policy (or {@code null} if none defined)
 	 * @param userNodeIds
 	 *        the complete set of node IDs owned by {@code userId}
 	 * @throws IllegalArgumentException
-	 *         if {@code userId} is {@literal null}
+	 *         if {@code userId} is {@code null}
 	 */
 	public ActorDetails(String tokenId, ActorType actorType, boolean publishAllowed, Long userId,
 			SecurityPolicy policy, Set<Long> userNodeIds) {

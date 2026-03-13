@@ -24,6 +24,8 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * NodeDatum API for watt-hour related data.
  *
@@ -37,6 +39,7 @@ public interface WattHourDatum {
 	 *
 	 * @return the wattHours
 	 */
+	@Nullable
 	Double getWattHours();
 
 	/**
@@ -44,6 +47,7 @@ public interface WattHourDatum {
 	 *
 	 * @return the cost
 	 */
+	@Nullable
 	Double getCost();
 
 	/**
@@ -51,6 +55,7 @@ public interface WattHourDatum {
 	 *
 	 * @return the currency
 	 */
+	@Nullable
 	String getCurrency();
 
 }

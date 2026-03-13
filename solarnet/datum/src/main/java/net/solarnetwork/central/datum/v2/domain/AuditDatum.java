@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.Unique;
 import net.solarnetwork.domain.datum.Aggregation;
 
@@ -37,6 +39,15 @@ import net.solarnetwork.domain.datum.Aggregation;
 public interface AuditDatum extends Unique<DatumPK>, DatumRecordCounts {
 
 	/**
+	 * Get the primary key.
+	 *
+	 * @return the primary key
+	 */
+	@Override
+	@NonNull
+	DatumPK getId();
+
+	/**
 	 * Get the unique ID of the stream this audit datum is a part of.
 	 *
 	 * <p>
@@ -45,7 +56,9 @@ public interface AuditDatum extends Unique<DatumPK>, DatumRecordCounts {
 	 *
 	 * @return the stream ID
 	 */
-	UUID getStreamId();
+	default UUID getStreamId() {
+		return getId().getStreamId();
+	}
 
 	/**
 	 * Get the associated timestamp of this audit datum.
@@ -62,13 +75,16 @@ public interface AuditDatum extends Unique<DatumPK>, DatumRecordCounts {
 	 * @return the timestamp for this datum
 	 */
 	@Override
-	Instant getTimestamp();
+	default Instant getTimestamp() {
+		return getId().getTimestamp();
+	}
 
 	/**
 	 * Get time period associated with this audit datum.
 	 *
 	 * @return the aggregation
 	 */
+	@Nullable
 	Aggregation getAggregation();
 
 	/**
@@ -76,6 +92,7 @@ public interface AuditDatum extends Unique<DatumPK>, DatumRecordCounts {
 	 *
 	 * @return the datum property count
 	 */
+	@Nullable
 	Long getDatumPropertyCount();
 
 	/**
@@ -83,6 +100,7 @@ public interface AuditDatum extends Unique<DatumPK>, DatumRecordCounts {
 	 *
 	 * @return the datum property update count
 	 */
+	@Nullable
 	Long getDatumPropertyUpdateCount();
 
 	/**
@@ -90,6 +108,7 @@ public interface AuditDatum extends Unique<DatumPK>, DatumRecordCounts {
 	 *
 	 * @return the datum query count
 	 */
+	@Nullable
 	Long getDatumQueryCount();
 
 	/**
@@ -98,6 +117,7 @@ public interface AuditDatum extends Unique<DatumPK>, DatumRecordCounts {
 	 * @return the SolarFlux data input count
 	 * @since 1.3
 	 */
+	@Nullable
 	Long getFluxDataInCount();
 
 }

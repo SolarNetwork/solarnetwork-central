@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -37,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.sql.DataSource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.domain.datum.DatumId;
@@ -108,9 +110,9 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 
 	private final String writerThreadName;
 
-	private String serviceIncrementSql;
+	private @Nullable String serviceIncrementSql;
 
-	private WriterThread writerThread;
+	private @Nullable WriterThread writerThread;
 	private long updateDelay;
 	private long flushDelay;
 	private long connectionRecoveryDelay;
@@ -126,7 +128,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 *        the clock to use; a tick-based clock is typical, to align updates
 	 *        to time-based "buckets"
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseJdbcDatumIdServiceAuditor(DataSource dataSource,
 			ConcurrentMap<DatumId, AtomicInteger> serviceCounters, Clock clock,
@@ -219,12 +221,12 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 		}
 
 		private Boolean execute() throws SQLException {
+			final String sql = nonnull(serviceIncrementSql, "serviceIncrementSql");
 			try (Connection conn = dataSource.getConnection()) {
 				statCounter.increment(JdbcNodeServiceAuditorCount.ConnectionsCreated);
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
-				PreparedStatement stmt = isCallableStatement(serviceIncrementSql)
-						? conn.prepareCall(serviceIncrementSql)
-						: conn.prepareStatement(serviceIncrementSql);
+				PreparedStatement stmt = isCallableStatement(sql) ? conn.prepareCall(sql)
+						: conn.prepareStatement(sql);
 				do {
 					try {
 						if ( Thread.interrupted() ) {
@@ -372,7 +374,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 * @throws IllegalArgumentException
 	 *         if {@code flushDelay} is &lt; 0
 	 */
-	public void setFlushDelay(long flushDelay) {
+	public final void setFlushDelay(long flushDelay) {
 		if ( flushDelay < 0 ) {
 			throw new IllegalArgumentException("flushDelay must be >= 0");
 		}
@@ -389,7 +391,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 * @throws IllegalArgumentException
 	 *         if {@code connectionRecoveryDelay} is &lt; 0
 	 */
-	public void setConnectionRecoveryDelay(long connectionRecoveryDelay) {
+	public final void setConnectionRecoveryDelay(long connectionRecoveryDelay) {
 		if ( connectionRecoveryDelay < 0 ) {
 			throw new IllegalArgumentException("connectionRecoveryDelay must be >= 0");
 		}
@@ -406,7 +408,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 * @throws IllegalArgumentException
 	 *         if {@code updateDelay} is &lt; 0
 	 */
-	public void setUpdateDelay(long updateDelay) {
+	public final void setUpdateDelay(long updateDelay) {
 		this.updateDelay = updateDelay;
 	}
 
@@ -427,8 +429,10 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 *
 	 * @param sql
 	 *        the SQL statement to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setServiceIncrementSql(String sql) {
+	public final void setServiceIncrementSql(String sql) {
 		if ( requireNonNullArgument(sql, "sql").equals(serviceIncrementSql) ) {
 			return;
 		}
@@ -448,7 +452,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 * @param statLogUpdateCount
 	 *        the update count
 	 */
-	public void setStatLogUpdateCount(int statLogUpdateCount) {
+	public final void setStatLogUpdateCount(int statLogUpdateCount) {
 		statCounter.setLogFrequency(statLogUpdateCount);
 	}
 

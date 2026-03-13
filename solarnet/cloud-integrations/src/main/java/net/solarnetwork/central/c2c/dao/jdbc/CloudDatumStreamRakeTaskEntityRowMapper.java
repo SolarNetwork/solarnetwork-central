@@ -23,8 +23,11 @@
 package net.solarnetwork.central.c2c.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.Period;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
@@ -81,11 +84,14 @@ public class CloudDatumStreamRakeTaskEntityRowMapper
 		int p = columnOffset;
 		Long userId = rs.getObject(++p, Long.class);
 		Long entityId = rs.getObject(++p, Long.class);
-		CloudDatumStreamRakeTaskEntity conf = new CloudDatumStreamRakeTaskEntity(userId, entityId);
-		conf.setDatumStreamId(rs.getObject(++p, Long.class));
-		conf.setState(BasicClaimableJobState.fromValue(rs.getString(++p)));
-		conf.setExecuteAt(getTimestampInstant(rs, ++p));
-		conf.setOffset(CommonJdbcUtils.getIntervalPeriod(rs, ++p));
+		Long dsId = rs.getObject(++p, Long.class);
+		BasicClaimableJobState state = nonnull(BasicClaimableJobState.fromValue(rs.getString(++p)),
+				"state");
+		Instant executeAt = nonnull(getTimestampInstant(rs, ++p), "executeAt");
+		Period offset = nonnull(CommonJdbcUtils.getIntervalPeriod(rs, ++p), "offset");
+
+		final CloudDatumStreamRakeTaskEntity conf = new CloudDatumStreamRakeTaskEntity(userId, entityId,
+				Instant.EPOCH, dsId, state, executeAt, offset);
 		conf.setMessage(rs.getString(++p));
 		conf.setServicePropsJson(rs.getString(++p));
 		return conf;

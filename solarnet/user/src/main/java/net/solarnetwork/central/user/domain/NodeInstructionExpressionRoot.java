@@ -32,11 +32,13 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.SequencedCollection;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.http.HttpOperations;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumCollectionFunctions;
@@ -73,23 +75,23 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	private final SolarNodeOwnership owner;
 	private final NodeInstruction instruction;
 	private final Map<String, Object> parameters;
-	private final DatumStreamsAccessor datumStreamsAccessor;
-	private final HttpOperations httpOperations;
+	private final @Nullable DatumStreamsAccessor datumStreamsAccessor;
+	private final @Nullable HttpOperations httpOperations;
 
 	// a function to lookup user metadata based on user ID
-	private final Function<Long, DatumMetadataOperations> userMetadataProvider;
+	private final @Nullable Function<Long, DatumMetadataOperations> userMetadataProvider;
 
 	// a function to lookup node or datum stream metadata based on an object ID
-	private final Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider;
+	private final @Nullable Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider;
 
 	// a function to parse a metadata tariff schedule at a path
-	private final BiFunction<DatumMetadataOperations, String, TariffSchedule> tariffScheduleProvider;
+	private final @Nullable BiFunction<DatumMetadataOperations, String, TariffSchedule> tariffScheduleProvider;
 
 	// a function to return decrypted user secrets based on a user ID and key
-	private final BiFunction<Long, String, byte[]> secretProvider;
+	private final @Nullable BiFunction<Long, String, byte[]> secretProvider;
 
 	// dynamic runtime data to pass to runtime services
-	private Map<String, Object> runtimeData;
+	private @Nullable Map<String, Object> runtimeData;
 
 	/**
 	 * Constructor.
@@ -125,11 +127,12 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *         if {@code owner} or {@code instruction} are {@code null}
 	 */
 	public NodeInstructionExpressionRoot(SolarNodeOwnership owner, NodeInstruction instruction,
-			Map<String, ?> parameters, DatumStreamsAccessor datumStreamsAccessor,
-			HttpOperations httpOperations, Function<Long, DatumMetadataOperations> userMetadataProvider,
-			Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
-			BiFunction<DatumMetadataOperations, String, TariffSchedule> tariffScheduleProvider,
-			BiFunction<Long, String, byte[]> secretProvider) {
+			@Nullable Map<String, ?> parameters, @Nullable DatumStreamsAccessor datumStreamsAccessor,
+			@Nullable HttpOperations httpOperations,
+			@Nullable Function<Long, DatumMetadataOperations> userMetadataProvider,
+			@Nullable Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
+			@Nullable BiFunction<DatumMetadataOperations, String, TariffSchedule> tariffScheduleProvider,
+			@Nullable BiFunction<Long, String, byte[]> secretProvider) {
 		super();
 		this.owner = requireNonNullArgument(owner, "owner");
 		this.instruction = requireNonNullArgument(instruction, "instruction");
@@ -172,7 +175,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 * 
 	 * @return 2-character country code
 	 */
-	public String getCountry() {
+	public @Nullable String getCountry() {
 		return owner.getCountry();
 	}
 
@@ -190,7 +193,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 * 
 	 * @return the instruction ID
 	 */
-	public Long getInstructionId() {
+	public @Nullable Long getInstructionId() {
 		return instruction.getId();
 	}
 
@@ -223,7 +226,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *
 	 * @return the user metadata, or {@code null} if none available
 	 */
-	public DatumMetadataOperations userMetadata() {
+	public @Nullable DatumMetadataOperations userMetadata() {
 		return (userMetadataProvider != null ? userMetadataProvider.apply(owner.getUserId()) : null);
 	}
 
@@ -234,7 +237,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the metadata path to extract
 	 * @return the extracted metadata value, or {@code null} if none available
 	 */
-	public Object userMetadata(final String path) {
+	public @Nullable Object userMetadata(final @Nullable String path) {
 		DatumMetadataOperations metadata = userMetadata();
 		return (metadata != null ? metadata.metadataAtPath(path) : null);
 	}
@@ -244,9 +247,9 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *
 	 * @return the node metadata, or {@code null} if none available
 	 */
-	public DatumMetadataOperations nodeMetadata() {
+	public @Nullable DatumMetadataOperations nodeMetadata() {
 		return (metadataProvider != null
-				? metadataProvider.apply(new ObjectDatumStreamMetadataId(Node, owner.getNodeId(), null))
+				? metadataProvider.apply(new ObjectDatumStreamMetadataId(Node, owner.getNodeId(), ""))
 				: null);
 	}
 
@@ -257,7 +260,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the metadata path to extract
 	 * @return the extracted metadata value, or {@code null} if none available
 	 */
-	public Object nodeMetadata(final String path) {
+	public @Nullable Object nodeMetadata(final @Nullable String path) {
 		DatumMetadataOperations metadata = nodeMetadata();
 		return (metadata != null ? metadata.metadataAtPath(path) : null);
 	}
@@ -265,9 +268,11 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	/**
 	 * Get datum source metadata.
 	 *
+	 * @param sourceId
+	 *        the source to get metadata for
 	 * @return the source metadata, or {@code null} if none available
 	 */
-	public DatumMetadataOperations sourceMetadata(final String sourceId) {
+	public @Nullable DatumMetadataOperations sourceMetadata(final @Nullable String sourceId) {
 		if ( sourceId == null || sourceId.isEmpty() ) {
 			return null;
 		}
@@ -280,11 +285,14 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	/**
 	 * Extract a value from source metadata.
 	 *
+	 * @param sourceId
+	 *        the source to get metadata for
 	 * @param path
 	 *        the metadata path to extract
 	 * @return the extracted metadata value, or {@code null} if none available
 	 */
-	public Object sourceMetadata(final String sourceId, final String path) {
+	public @Nullable Object sourceMetadata(final @Nullable String sourceId,
+			final @Nullable String path) {
 		DatumMetadataOperations metadata = sourceMetadata(sourceId);
 		return (metadata != null ? metadata.metadataAtPath(path) : null);
 	}
@@ -307,7 +315,8 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *         or language)
 	 * @see DatumMetadataOperations#resolveLocale(String, Locale)
 	 */
-	public Locale resolveLocale(final DatumMetadataOperations meta, final String path) {
+	public Locale resolveLocale(final @Nullable DatumMetadataOperations meta,
+			final @Nullable String path) {
 		if ( meta == null ) {
 			return Locale.ENGLISH;
 		}
@@ -330,7 +339,8 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        a CSV string or list of string arrays
 	 * @return the schedule, or {@code node} if none available
 	 */
-	public TariffSchedule tariffSchedule(final DatumMetadataOperations meta, final String path) {
+	public @Nullable TariffSchedule tariffSchedule(final @Nullable DatumMetadataOperations meta,
+			final @Nullable String path) {
 		if ( meta == null || meta.isEmpty() || path == null || path.isEmpty() ) {
 			return null;
 		}
@@ -365,7 +375,8 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 * @return the first available rate for the current time, or {@code null} if
 	 *         not available
 	 */
-	public BigDecimal resolveTariffScheduleRate(final DatumMetadataOperations meta, final String path) {
+	public @Nullable BigDecimal resolveTariffScheduleRate(final @Nullable DatumMetadataOperations meta,
+			final @Nullable String path) {
 		return resolveTariffScheduleRate(meta, path, LocalDateTime.now(UTC), null);
 	}
 
@@ -382,8 +393,8 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the date to evaluate the schedule at
 	 * @return the first available rate, or {@code null} if not available
 	 */
-	public BigDecimal resolveTariffScheduleRate(final DatumMetadataOperations meta, final String path,
-			final LocalDateTime date) {
+	public @Nullable BigDecimal resolveTariffScheduleRate(final @Nullable DatumMetadataOperations meta,
+			final @Nullable String path, final LocalDateTime date) {
 		return resolveTariffScheduleRate(meta, path, date, null);
 	}
 
@@ -402,8 +413,8 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        first available rate
 	 * @return the rate, or {@code null} if not available
 	 */
-	public BigDecimal resolveTariffScheduleRate(final DatumMetadataOperations meta, final String path,
-			final LocalDateTime date, final String rateName) {
+	public @Nullable BigDecimal resolveTariffScheduleRate(final @Nullable DatumMetadataOperations meta,
+			final @Nullable String path, final LocalDateTime date, final @Nullable String rateName) {
 		BigDecimal result = null;
 		TariffSchedule schedule = tariffSchedule(meta, path);
 		if ( schedule != null ) {
@@ -436,7 +447,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the key of the secret to retrieve
 	 * @return the secret value as a string, or {@code null}
 	 */
-	public String secret(String key) {
+	public @Nullable String secret(String key) {
 		byte[] secret = secretData(key);
 		if ( secret == null ) {
 			return null;
@@ -456,7 +467,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the key of the secret to retrieve
 	 * @return the secret value, or {@code null}
 	 */
-	public byte[] secretData(String key) {
+	public byte @Nullable [] secretData(String key) {
 		return (secretProvider != null ? secretProvider.apply(owner.getUserId(), key) : null);
 	}
 
@@ -472,7 +483,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *
 	 * @param uri
 	 *        the URL to request
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
 	public Result<Map<String, Object>> httpGet(String uri) {
 		return httpGet(uri, null, null);
@@ -486,9 +497,9 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the URL to request
 	 * @param parameters
 	 *        optional query parameters to include in the URL
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
-	public Result<Map<String, Object>> httpGet(String uri, Map<String, ?> parameters) {
+	public Result<Map<String, Object>> httpGet(String uri, @Nullable Map<String, ?> parameters) {
 		return httpGet(uri, parameters, null);
 	}
 
@@ -502,10 +513,10 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        optional query parameters to include in the URL
 	 * @param headers
 	 *        optional HTTP headers to include
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
-	public Result<Map<String, Object>> httpGet(String uri, Map<String, ?> parameters,
-			Map<String, ?> headers) {
+	public Result<Map<String, Object>> httpGet(String uri, @Nullable Map<String, ?> parameters,
+			@Nullable Map<String, ?> headers) {
 		if ( httpOperations == null ) {
 			return Result.error("IXR.00001", "HTTP not supported");
 		}
@@ -534,7 +545,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the datum
 	 * @return the new expression root instance using {@code datum}
 	 */
-	private DatumExpressionRoot datumRoot(Datum datum) {
+	private DatumExpressionRoot datumRoot(@Nullable Datum datum) {
 		return datumRoot(datum, null, null);
 	}
 
@@ -551,8 +562,8 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 * @return the new expression root instance using {@code datum},
 	 *         {@code samples}, and {@code parameters}
 	 */
-	private DatumExpressionRoot datumRoot(Datum datum, DatumSamplesOperations samples,
-			Map<String, ?> parameters) {
+	private DatumExpressionRoot datumRoot(@Nullable Datum datum,
+			@Nullable DatumSamplesOperations samples, @Nullable Map<String, ?> parameters) {
 		return new DatumExpressionRoot(getUserId(), datum, samples, parameters, nodeMetadata(),
 				datumStreamsAccessor, metadataProvider, (meta, id) -> {
 					return tariffScheduleProvider != null
@@ -576,9 +587,9 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 * @return the matching datum stream metadata, never {@code null}
 	 */
 	public Collection<ObjectDatumStreamMetadata> findDatumStreams(ObjectDatumKind kind, String query,
-			String sourceIdPattern, String... tags) {
+			@Nullable String sourceIdPattern, String @Nullable... tags) {
 		if ( datumStreamsAccessor == null ) {
-			return null;
+			return List.of();
 		}
 		return datumStreamsAccessor.findStreams(kind, query, sourceIdPattern, tags);
 	}
@@ -598,8 +609,8 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 * @return the first matching datum stream metadata, or {@code null} if not
 	 *         available
 	 */
-	public ObjectDatumStreamMetadata findDatumStream(ObjectDatumKind kind, String query,
-			String sourceIdPattern, String... tags) {
+	public @Nullable ObjectDatumStreamMetadata findDatumStream(ObjectDatumKind kind, String query,
+			@Nullable String sourceIdPattern, String @Nullable... tags) {
 		Collection<ObjectDatumStreamMetadata> result = findDatumStreams(kind, query, sourceIdPattern,
 				tags);
 		if ( result.isEmpty() ) {
@@ -624,8 +635,8 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 * @return the first matching datum stream metadata, or {@code null} if not
 	 *         available
 	 */
-	public ObjectDatumStreamMetadata findLocDatumStream(String query, String sourceIdPattern,
-			String... tags) {
+	public @Nullable ObjectDatumStreamMetadata findLocDatumStream(String query,
+			@Nullable String sourceIdPattern, String @Nullable... tags) {
 		Collection<ObjectDatumStreamMetadata> result = findDatumStreams(ObjectDatumKind.Location, query,
 				sourceIdPattern, tags);
 		if ( result.isEmpty() ) {
@@ -645,9 +656,9 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the source ID to find the datum for
 	 * @param timestamp
 	 *        the timestamp to find the datum for
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
-	public DatumExpressionRoot datumAt(String sourceId, Instant timestamp) {
+	public @Nullable DatumExpressionRoot datumAt(String sourceId, Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceId == null || sourceId.isEmpty()
 				|| timestamp == null ) {
 			return null;
@@ -663,9 +674,10 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the stream metadata to find the datum for
 	 * @param timestamp
 	 *        the timestamp to find the datum for
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
-	public DatumExpressionRoot datumAt(ObjectDatumStreamMetadata streamMeta, Instant timestamp) {
+	public @Nullable DatumExpressionRoot datumAt(ObjectDatumStreamMetadata streamMeta,
+			Instant timestamp) {
 		if ( datumStreamsAccessor == null || streamMeta == null || timestamp == null ) {
 			return null;
 		}
@@ -685,9 +697,9 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        latest and {@code 1} the next later, and so on
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
-	public DatumExpressionRoot datumOffset(String sourceId, int offset, Instant timestamp) {
+	public @Nullable DatumExpressionRoot datumOffset(String sourceId, int offset, Instant timestamp) {
 		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
 			return null;
 		}
@@ -705,9 +717,9 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        latest and {@code 1} the next later, and so on
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
-	public DatumExpressionRoot datumOffset(ObjectDatumStreamMetadata streamMeta, int offset,
+	public @Nullable DatumExpressionRoot datumOffset(ObjectDatumStreamMetadata streamMeta, int offset,
 			Instant timestamp) {
 		if ( datumStreamsAccessor == null || streamMeta == null || timestamp == null ) {
 			return null;
@@ -724,9 +736,10 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the stream metadata to find the datum for
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, or {@literal null} if not available
+	 * @return the matching datum, or {@code null} if not available
 	 */
-	public DatumExpressionRoot datumNear(ObjectDatumStreamMetadata streamMeta, Instant timestamp) {
+	public @Nullable DatumExpressionRoot datumNear(ObjectDatumStreamMetadata streamMeta,
+			Instant timestamp) {
 		return datumOffset(streamMeta, 0, timestamp);
 	}
 
@@ -740,12 +753,13 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the minimum datum timestamp (inclusive)
 	 * @param to
 	 *        the maximum datum timestamp (exclusive)
-	 * @return the matching datum, never {@literal null}
+	 * @return the matching datum, never {@code null}
 	 */
-	public Collection<DatumExpressionRoot> datumRange(String sourceIdPattern, Instant from, Instant to) {
+	public Collection<DatumExpressionRoot> datumRange(@Nullable String sourceIdPattern, Instant from,
+			Instant to) {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null || sourceIdPattern.isEmpty()
 				|| from == null || to == null ) {
-			return null;
+			return List.of();
 		}
 		Collection<Datum> result = datumStreamsAccessor.rangeMatching(Node, getNodeId(), sourceIdPattern,
 				from, to);
@@ -761,12 +775,12 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 *        the minimum datum timestamp (inclusive)
 	 * @param to
 	 *        the maximum datum timestamp (exclusive)
-	 * @return the matching datum, never {@literal null}
+	 * @return the matching datum, never {@code null}
 	 */
 	public Collection<DatumExpressionRoot> datumRange(ObjectDatumStreamMetadata streamMeta, Instant from,
 			Instant to) {
 		if ( datumStreamsAccessor == null || streamMeta == null || from == null || to == null ) {
-			return null;
+			return List.of();
 		}
 		Collection<Datum> result = datumStreamsAccessor.rangeMatching(streamMeta.getKind(),
 				streamMeta.getObjectId(), streamMeta.getSourceId(), from, to);
@@ -778,7 +792,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 * 
 	 * @return the data
 	 */
-	public Map<String, Object> getRuntimeData() {
+	public final @Nullable Map<String, Object> getRuntimeData() {
 		return runtimeData;
 	}
 
@@ -788,7 +802,7 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	 * @param runtimeData
 	 *        the data to set
 	 */
-	public void setRuntimeData(Map<String, Object> runtimeData) {
+	public final void setRuntimeData(@Nullable Map<String, Object> runtimeData) {
 		this.runtimeData = runtimeData;
 	}
 

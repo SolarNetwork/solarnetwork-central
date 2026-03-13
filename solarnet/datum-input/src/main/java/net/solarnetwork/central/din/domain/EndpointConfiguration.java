@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
@@ -64,7 +65,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EndpointConfiguration(UserUuidPK id, Instant created) {
 		super(id, created);
@@ -80,7 +81,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EndpointConfiguration(Long userId, UUID entityId, Instant created) {
 		this(new UserUuidPK(userId, entityId), created);
@@ -108,19 +109,19 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 
 	@Override
 	public boolean isSameAs(EndpointConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.name)
-				&& Objects.equals(this.nodeId, other.nodeId)
-				&& Objects.equals(this.sourceId, other.sourceId)
-				&& Objects.equals(this.transformId, other.transformId)
-				&& publishToSolarFlux == other.publishToSolarFlux
-				&& previousInputTracking == other.previousInputTracking
-				&& includeResponseBody == other.includeResponseBody
-				&& Objects.equals(requestContentType, other.requestContentType)
+		return Objects.equals(this.name, o.name)
+				&& Objects.equals(this.nodeId, o.nodeId)
+				&& Objects.equals(this.sourceId, o.sourceId)
+				&& Objects.equals(this.transformId, o.transformId)
+				&& publishToSolarFlux == o.publishToSolarFlux
+				&& previousInputTracking == o.previousInputTracking
+				&& includeResponseBody == o.includeResponseBody
+				&& Objects.equals(requestContentType, o.requestContentType)
 				;
 		// @formatter:on
 	}
@@ -231,7 +232,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @param sourceId
 	 *        the source ID to set; a blank value will be normalized to
-	 *        {@literal null}
+	 *        {@code null}
 	 */
 	public void setSourceId(String sourceId) {
 		if ( sourceId != null && sourceId.isBlank() ) {
@@ -337,8 +338,8 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * Set an implicit request content type.
 	 *
 	 * @param requestContentType
-	 *        the request content to assume, or {@literal null} to; a blank
-	 *        value will be normalized to {@literal null}
+	 *        the request content to assume, or {@code null} to; a blank value
+	 *        will be normalized to {@code null}
 	 * @since 1.2
 	 */
 	public void setRequestContentType(String requestContentType) {

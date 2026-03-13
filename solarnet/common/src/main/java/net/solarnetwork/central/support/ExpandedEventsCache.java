@@ -23,6 +23,7 @@
 package net.solarnetwork.central.support;
 
 import static java.util.Collections.singleton;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.Iterator;
 import java.util.Map;
@@ -41,7 +42,7 @@ import javax.cache.integration.CompletionListener;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.EntryProcessorResult;
-import net.solarnetwork.util.ObjectUtils;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Cache with extended events support.
@@ -61,17 +62,19 @@ public class ExpandedEventsCache<K, V> implements Cache<K, V> {
 
 	private final Cache<K, V> delegate;
 
-	private CacheEntryRemovedListener<? super K, ? super V> removedListener;
+	private @Nullable CacheEntryRemovedListener<? super K, ? super V> removedListener;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param delegate
 	 *        the delegate cache
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public ExpandedEventsCache(Cache<K, V> delegate) {
 		super();
-		this.delegate = ObjectUtils.requireNonNullArgument(delegate, "delegate");
+		this.delegate = requireNonNullArgument(delegate, "delegate");
 	}
 
 	@Override
@@ -85,7 +88,7 @@ public class ExpandedEventsCache<K, V> implements Cache<K, V> {
 	}
 
 	@Override
-	public V get(K key) {
+	public @Nullable V get(K key) {
 		return delegate.get(key);
 	}
 
@@ -111,7 +114,7 @@ public class ExpandedEventsCache<K, V> implements Cache<K, V> {
 	}
 
 	@Override
-	public V getAndPut(K key, V value) {
+	public @Nullable V getAndPut(K key, V value) {
 		return delegate.getAndPut(key, value);
 	}
 
@@ -131,12 +134,12 @@ public class ExpandedEventsCache<K, V> implements Cache<K, V> {
 	}
 
 	@Override
-	public boolean remove(K key, V oldValue) {
+	public boolean remove(K key, @Nullable V oldValue) {
 		return delegate.remove(key, oldValue);
 	}
 
 	@Override
-	public V getAndRemove(K key) {
+	public @Nullable V getAndRemove(K key) {
 		final V old = delegate.getAndRemove(key);
 		if ( old != null ) {
 			publishRemovedEvent(key, old);
@@ -145,7 +148,7 @@ public class ExpandedEventsCache<K, V> implements Cache<K, V> {
 	}
 
 	@Override
-	public boolean replace(K key, V oldValue, V newValue) {
+	public boolean replace(K key, @Nullable V oldValue, V newValue) {
 		return delegate.replace(key, oldValue, newValue);
 	}
 
@@ -155,7 +158,7 @@ public class ExpandedEventsCache<K, V> implements Cache<K, V> {
 	}
 
 	@Override
-	public V getAndReplace(K key, V value) {
+	public @Nullable V getAndReplace(K key, V value) {
 		return delegate.getAndReplace(key, value);
 	}
 
@@ -180,14 +183,14 @@ public class ExpandedEventsCache<K, V> implements Cache<K, V> {
 	}
 
 	@Override
-	public <T> T invoke(K key, EntryProcessor<K, V, T> entryProcessor, Object... arguments)
+	public <T> T invoke(K key, EntryProcessor<K, V, T> entryProcessor, Object @Nullable... arguments)
 			throws EntryProcessorException {
 		return delegate.invoke(key, entryProcessor, arguments);
 	}
 
 	@Override
 	public <T> Map<K, EntryProcessorResult<T>> invokeAll(Set<? extends K> keys,
-			EntryProcessor<K, V, T> entryProcessor, Object... arguments) {
+			EntryProcessor<K, V, T> entryProcessor, Object @Nullable... arguments) {
 		return delegate.invokeAll(keys, entryProcessor, arguments);
 	}
 
@@ -257,8 +260,8 @@ public class ExpandedEventsCache<K, V> implements Cache<K, V> {
 
 		private CacheEntryEventImpl(K key, V value, EventType eventType) {
 			super(ExpandedEventsCache.this, eventType);
-			this.key = key;
-			this.value = value;
+			this.key = requireNonNullArgument(key, "key");
+			this.value = requireNonNullArgument(value, "value");
 		}
 
 		@Override
@@ -277,7 +280,7 @@ public class ExpandedEventsCache<K, V> implements Cache<K, V> {
 		}
 
 		@Override
-		public V getOldValue() {
+		public @Nullable V getOldValue() {
 			return null;
 		}
 

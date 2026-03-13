@@ -25,7 +25,6 @@ package net.solarnetwork.central.oscp.dao.jdbc.test;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.oscp.domain.MeasurementUnit.KILO_MULTIPLIER;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -87,7 +86,7 @@ public class OscpJdbcTestUtils {
 		conf.setFlexibilityProviderId(flexibilityProviderId);
 		conf.setName(randomUUID().toString());
 		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
 		conf.setToken(randomUUID().toString());
 		return conf;
 	}
@@ -113,7 +112,7 @@ public class OscpJdbcTestUtils {
 		conf.setFlexibilityProviderId(flexibilityProviderId);
 		conf.setName(randomUUID().toString());
 		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
 		conf.setToken(randomUUID().toString());
 		return conf;
 	}
@@ -182,7 +181,7 @@ public class OscpJdbcTestUtils {
 		energy.setDirection(EnergyDirection.Import);
 		conf.setEnergy(energy);
 
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
 		return conf;
 	}
 
@@ -210,7 +209,7 @@ public class OscpJdbcTestUtils {
 		conf.setCapacityProviderMeasurementPeriod(MeasurementPeriod.TenMinute);
 		conf.setCapacityProviderId(capacityProviderId);
 		conf.setCapacityOptimizerId(capacityOptimizerId);
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
 		return conf;
 	}
 

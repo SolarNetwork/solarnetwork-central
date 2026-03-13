@@ -124,7 +124,7 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 	 * @param datumDao
 	 *        the datum DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DlbMeterDataTransferDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,
@@ -217,11 +217,9 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 			return null;
 		}
 
-		GeneralNodeDatum d = new GeneralNodeDatum();
+		GeneralNodeDatum d = new GeneralNodeDatum(cp.getNodeId(), Instant.now(),
+				pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		d.setSamples(s);
-		d.setCreated(Instant.now());
-		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		return d;
 	}
 

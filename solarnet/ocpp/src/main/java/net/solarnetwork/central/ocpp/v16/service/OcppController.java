@@ -29,7 +29,6 @@ import static org.springframework.transaction.support.TransactionSynchronization
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -98,7 +97,7 @@ public class OcppController extends BaseOcppController {
 	 * @param objectMapper
 	 *        the object mapper to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public OcppController(Executor executor, ChargePointRouter chargePointRouter,
 			UserNodeDao userNodeDao, NodeInstructionDao instructionDao,
@@ -207,8 +206,8 @@ public class OcppController extends BaseOcppController {
 		CentralChargePoint cp = chargePointForParameters(userNode, params);
 		if ( cp == null ) {
 			instruction.getInstruction().setState(InstructionState.Declined);
-			instruction.getInstruction().setResultParameters(
-					Collections.singletonMap("error", "ChargePoint not specified or not available."));
+			instruction.getInstruction()
+					.setResultParameters(Map.of("error", "ChargePoint not specified or not available."));
 			return instruction;
 		}
 		ChargePointAction action;
@@ -216,8 +215,8 @@ public class OcppController extends BaseOcppController {
 			action = ChargePointAction.valueOf(params.remove(OcppInstructionUtils.OCPP_ACTION_PARAM));
 		} catch ( IllegalArgumentException | NullPointerException e ) {
 			instruction.getInstruction().setState(InstructionState.Declined);
-			instruction.getInstruction().setResultParameters(
-					Collections.singletonMap("error", "OCPP action parameter missing."));
+			instruction.getInstruction()
+					.setResultParameters(Map.of("error", "OCPP action parameter missing."));
 			return instruction;
 		}
 		return OcppInstructionUtils.decodeJsonOcppInstructionMessage(objectMapper, action, params,

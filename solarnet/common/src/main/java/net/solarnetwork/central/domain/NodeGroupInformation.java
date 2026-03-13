@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * General node group information.
  * 
@@ -35,6 +37,7 @@ public interface NodeGroupInformation extends NodeGroupIdentity {
 	 * 
 	 * @return the group name
 	 */
+	@Nullable
 	String getName();
 
 	/**
@@ -42,6 +45,7 @@ public interface NodeGroupInformation extends NodeGroupIdentity {
 	 * 
 	 * @return location
 	 */
+	@Nullable
 	Location getLocation();
 
 	/**
@@ -50,6 +54,7 @@ public interface NodeGroupInformation extends NodeGroupIdentity {
 	 * 
 	 * @return generation capacity watts
 	 */
+	@Nullable
 	Long getGenerationCapacityWatts();
 
 	/**
@@ -58,6 +63,7 @@ public interface NodeGroupInformation extends NodeGroupIdentity {
 	 * 
 	 * @return storage capacity in watt hours
 	 */
+	@Nullable
 	Long getStorageCapacityWattHours();
 
 }

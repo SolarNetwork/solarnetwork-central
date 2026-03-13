@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.mail;
 
 import static java.lang.String.format;
 import static java.util.Collections.singleton;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.FileCopyUtils.copyToString;
 import java.io.InputStreamReader;
@@ -33,6 +34,7 @@ import java.time.YearMonth;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
@@ -44,6 +46,7 @@ import net.solarnetwork.central.mail.support.SimpleMessageDataSource;
 import net.solarnetwork.central.user.billing.snf.SnfInvoiceDeliverer;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceImpl;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.domain.Result;
@@ -76,7 +79,7 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 	 * @param executor
 	 *        the executor for running delivery tasks
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public MailSnfInvoiceDeliverer(SnfInvoicingSystem invoicingSystem, MailService mailService,
 			Executor executor) {
@@ -89,11 +92,12 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 
 	@Override
 	public CompletableFuture<Result<Object>> deliverInvoice(SnfInvoice invoice, Account account,
-			IdentifiableConfiguration configuration) {
+			@Nullable IdentifiableConfiguration configuration) {
 		final CompletableFuture<Result<Object>> result = new CompletableFuture<>();
 		executor.execute(() -> {
 			try {
-				Locale locale = account.locale();
+				final Locale locale = account.locale();
+				final Address addr = nonnull(account.getAddress(), "Account address");
 
 				// TODO: allow output type to be specified via configuration
 				//       for now assume HTML body with PDF attachment
@@ -101,8 +105,7 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 						locale);
 				Resource pdf = invoicingSystem.renderInvoice(invoice, APPLICATION_PDF, locale);
 
-				BasicMailAddress to = new BasicMailAddress(account.getAddress().getName(),
-						account.getAddress().getEmail());
+				BasicMailAddress to = new BasicMailAddress(addr.getName(), addr.getEmail());
 
 				// generate subject and pass invoice number and date as arguments
 				InvoiceImpl invoiceImpl = new InvoiceImpl(invoice);
@@ -111,8 +114,10 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 				Object[] subjectArgs = new Object[] { invoiceKey, invoiceDate };
 
 				MessageSource messageSource = invoicingSystem.messageSourceForInvoice(invoice);
-				String subject = messageSource.getMessage("invoice.mail.subject", subjectArgs,
-						format("SolarNetwork invoice %s (%s)", subjectArgs), locale);
+				String subject = nonnull(
+						messageSource.getMessage("invoice.mail.subject", subjectArgs,
+								format("SolarNetwork invoice %s (%s)", subjectArgs), locale),
+						"Email subject");
 
 				mailService.sendMail(to,
 						new SimpleMessageDataSource(subject, copyToString(

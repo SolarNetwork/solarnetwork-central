@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.SequencedSet;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
 import net.solarnetwork.central.common.dao.ControlCriteria;
@@ -48,17 +49,17 @@ public class BasicFilter extends BasicCoreCriteria
 		CloudDatumStreamPropertyFilter, CloudDatumStreamPollTaskFilter, CloudDatumStreamRakeTaskFilter,
 		CloudDatumStreamSettingsFilter, CloudControlFilter {
 
-	private Long[] integrationIds;
-	private Long[] datumStreamIds;
-	private Long[] datumStreamMappingIds;
-	private Long[] cloudControlIds;
-	private String[] controlIds;
-	private Long[] taskIds;
-	private Integer[] indexes;
-	private BasicClaimableJobState[] claimableJobStates;
-	private String[] serviceIdentifiers;
-	private Instant startDate;
-	private Instant endDate;
+	private Long @Nullable [] integrationIds;
+	private Long @Nullable [] datumStreamIds;
+	private Long @Nullable [] datumStreamMappingIds;
+	private Long @Nullable [] cloudControlIds;
+	private String @Nullable [] controlIds;
+	private Long @Nullable [] taskIds;
+	private Integer @Nullable [] indexes;
+	private BasicClaimableJobState @Nullable [] claimableJobStates;
+	private String @Nullable [] serviceIdentifiers;
+	private @Nullable Instant startDate;
+	private @Nullable Instant endDate;
 
 	/**
 	 * Constructor.
@@ -73,7 +74,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param criteria
 	 *        the criteria to copy
 	 */
-	public BasicFilter(PaginationCriteria criteria) {
+	public BasicFilter(@Nullable PaginationCriteria criteria) {
 		super(criteria);
 	}
 
@@ -83,7 +84,7 @@ public class BasicFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public void copyFrom(PaginationCriteria criteria) {
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof BasicFilter f ) {
 			setIntegrationIds(f.getIntegrationIds());
@@ -128,7 +129,7 @@ public class BasicFilter extends BasicCoreCriteria
 						}
 					}
 				}
-				setClaimableJobStates(copy.toArray(BasicClaimableJobState[]::new));
+				setClaimableJobStates(copy != null ? copy.toArray(BasicClaimableJobState[]::new) : null);
 			}
 			if ( criteria instanceof IdentifiableCriteria f ) {
 				setServiceIdentifiers(f.getServiceIdentifiers());
@@ -157,7 +158,7 @@ public class BasicFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -188,7 +189,7 @@ public class BasicFilter extends BasicCoreCriteria
 				|| (datumStreamMappingIds != null && datumStreamMappingIds.length > 0)
 				|| endDate != null
 				|| (indexes != null && indexes.length > 0)
-				|| (integrationIds != null && datumStreamMappingIds.length > 0)
+				|| (integrationIds != null && integrationIds.length > 0)
 				|| (serviceIdentifiers != null && serviceIdentifiers.length > 0)
 				|| startDate != null
 				|| (taskIds != null && taskIds.length > 0)
@@ -197,7 +198,7 @@ public class BasicFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public Long getIntegrationId() {
+	public final @Nullable Long getIntegrationId() {
 		return CloudIntegrationFilter.super.getIntegrationId();
 	}
 
@@ -207,12 +208,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param integrationId
 	 *        the integration ID to set
 	 */
-	public void setIntegrationId(Long integrationId) {
+	public final void setIntegrationId(@Nullable Long integrationId) {
 		setIntegrationIds(integrationId != null ? new Long[] { integrationId } : null);
 	}
 
 	@Override
-	public Long[] getIntegrationIds() {
+	public final Long @Nullable [] getIntegrationIds() {
 		return integrationIds;
 	}
 
@@ -222,12 +223,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param integrationIds
 	 *        the integration IDs to set
 	 */
-	public void setIntegrationIds(Long[] integrationIds) {
+	public final void setIntegrationIds(Long @Nullable [] integrationIds) {
 		this.integrationIds = integrationIds;
 	}
 
 	@Override
-	public Long getDatumStreamId() {
+	public final @Nullable Long getDatumStreamId() {
 		return CloudDatumStreamFilter.super.getDatumStreamId();
 	}
 
@@ -237,12 +238,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param datumStreamId
 	 *        the datum stream ID to set
 	 */
-	public void setDatumStreamId(Long datumStreamId) {
+	public final void setDatumStreamId(@Nullable Long datumStreamId) {
 		setDatumStreamIds(datumStreamId != null ? new Long[] { datumStreamId } : null);
 	}
 
 	@Override
-	public Long[] getDatumStreamIds() {
+	public final Long @Nullable [] getDatumStreamIds() {
 		return datumStreamIds;
 	}
 
@@ -252,12 +253,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param datumStreamIds
 	 *        the datum stream IDs to set
 	 */
-	public void setDatumStreamIds(Long[] datumStreamIds) {
+	public final void setDatumStreamIds(Long @Nullable [] datumStreamIds) {
 		this.datumStreamIds = datumStreamIds;
 	}
 
 	@Override
-	public Long getDatumStreamMappingId() {
+	public final @Nullable Long getDatumStreamMappingId() {
 		return CloudDatumStreamMappingFilter.super.getDatumStreamMappingId();
 	}
 
@@ -267,13 +268,13 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param datumStreamMappingId
 	 *        the datum stream mapping ID to set
 	 */
-	public void setDatumStreamMappingId(Long datumStreamMappingId) {
+	public final void setDatumStreamMappingId(@Nullable Long datumStreamMappingId) {
 		setDatumStreamMappingIds(
 				datumStreamMappingId != null ? new Long[] { datumStreamMappingId } : null);
 	}
 
 	@Override
-	public Long[] getDatumStreamMappingIds() {
+	public final Long @Nullable [] getDatumStreamMappingIds() {
 		return datumStreamMappingIds;
 	}
 
@@ -283,17 +284,17 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param datumStreamMappingIds
 	 *        the datum stream mapping IDs to set
 	 */
-	public void setDatumStreamMappingIds(Long[] datumStreamMappingIds) {
+	public final void setDatumStreamMappingIds(Long @Nullable [] datumStreamMappingIds) {
 		this.datumStreamMappingIds = datumStreamMappingIds;
 	}
 
 	@Override
-	public Integer getIndex() {
+	public final @Nullable Integer getIndex() {
 		return CloudDatumStreamPropertyFilter.super.getIndex();
 	}
 
 	@Override
-	public Long getCloudControlId() {
+	public final @Nullable Long getCloudControlId() {
 		return CloudControlFilter.super.getCloudControlId();
 	}
 
@@ -303,12 +304,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param cloudControlId
 	 *        the cloud control ID to set
 	 */
-	public void setCloudControlId(Long cloudControlId) {
+	public final void setCloudControlId(@Nullable Long cloudControlId) {
 		setCloudControlIds(cloudControlId != null ? new Long[] { cloudControlId } : null);
 	}
 
 	@Override
-	public Long[] getCloudControlIds() {
+	public final Long @Nullable [] getCloudControlIds() {
 		return cloudControlIds;
 	}
 
@@ -318,12 +319,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param cloudControlIds
 	 *        the cloud control IDs to set
 	 */
-	public void setCloudControlIds(Long[] cloudControlIds) {
+	public final void setCloudControlIds(Long @Nullable [] cloudControlIds) {
 		this.cloudControlIds = cloudControlIds;
 	}
 
 	@Override
-	public String getControlId() {
+	public final @Nullable String getControlId() {
 		return CloudControlFilter.super.getControlId();
 	}
 
@@ -333,12 +334,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param controlId
 	 *        the cloud control ID to set
 	 */
-	public void setControlId(String controlId) {
+	public final void setControlId(@Nullable String controlId) {
 		setControlIds(controlId != null ? new String[] { controlId } : null);
 	}
 
 	@Override
-	public String[] getControlIds() {
+	public final String @Nullable [] getControlIds() {
 		return controlIds;
 	}
 
@@ -348,7 +349,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param controlIds
 	 *        the control IDs to set
 	 */
-	public void setControlIds(String[] controlIds) {
+	public final void setControlIds(String @Nullable [] controlIds) {
 		this.controlIds = controlIds;
 	}
 
@@ -358,7 +359,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param index
 	 *        the index to set
 	 */
-	public void setIndex(Integer index) {
+	public final void setIndex(@Nullable Integer index) {
 		setIndexes(index != null ? new Integer[] { index } : null);
 	}
 
@@ -368,7 +369,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @return the indexes
 	 */
 	@Override
-	public Integer[] getIndexes() {
+	public final Integer @Nullable [] getIndexes() {
 		return indexes;
 	}
 
@@ -378,12 +379,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param indexes
 	 *        the indexes to set
 	 */
-	public void setIndexes(Integer[] indexes) {
+	public final void setIndexes(Integer @Nullable [] indexes) {
 		this.indexes = indexes;
 	}
 
 	@Override
-	public final BasicClaimableJobState[] getClaimableJobStates() {
+	public final BasicClaimableJobState @Nullable [] getClaimableJobStates() {
 		return claimableJobStates;
 	}
 
@@ -393,12 +394,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param claimableJobStates
 	 *        the states to set
 	 */
-	public final void setClaimableJobStates(BasicClaimableJobState[] claimableJobStates) {
+	public final void setClaimableJobStates(BasicClaimableJobState @Nullable [] claimableJobStates) {
 		this.claimableJobStates = claimableJobStates;
 	}
 
 	@Override
-	public Instant getStartDate() {
+	public final @Nullable Instant getStartDate() {
 		return startDate;
 	}
 
@@ -408,12 +409,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param startDate
 	 *        the date to set
 	 */
-	public void setStartDate(Instant startDate) {
+	public final void setStartDate(@Nullable Instant startDate) {
 		this.startDate = startDate;
 	}
 
 	@Override
-	public Instant getEndDate() {
+	public final @Nullable Instant getEndDate() {
 		return endDate;
 	}
 
@@ -423,12 +424,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param endDate
 	 *        the date to set
 	 */
-	public void setEndDate(Instant endDate) {
+	public final void setEndDate(@Nullable Instant endDate) {
 		this.endDate = endDate;
 	}
 
 	@Override
-	public final String[] getServiceIdentifiers() {
+	public final String @Nullable [] getServiceIdentifiers() {
 		return serviceIdentifiers;
 	}
 
@@ -439,12 +440,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 *        the service identifiers to set
 	 * @since 1.2
 	 */
-	public final void setServiceIdentifiers(String[] serviceIdentifiers) {
+	public final void setServiceIdentifiers(String @Nullable [] serviceIdentifiers) {
 		this.serviceIdentifiers = serviceIdentifiers;
 	}
 
 	@Override
-	public Long getTaskId() {
+	public final @Nullable Long getTaskId() {
 		return CloudDatumStreamRakeTaskFilter.super.getTaskId();
 	}
 
@@ -455,12 +456,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 *        the task ID to set
 	 * @since 1.4
 	 */
-	public void setTaskId(Long taskId) {
+	public final void setTaskId(@Nullable Long taskId) {
 		setTaskIds(taskId != null ? new Long[] { taskId } : null);
 	}
 
 	@Override
-	public Long[] getTaskIds() {
+	public final Long @Nullable [] getTaskIds() {
 		return taskIds;
 	}
 
@@ -471,7 +472,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 *        the task IDs to set
 	 * @since 1.4
 	 */
-	public void setTaskIds(Long[] taskIds) {
+	public final void setTaskIds(Long @Nullable [] taskIds) {
 		this.taskIds = taskIds;
 	}
 

@@ -83,7 +83,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	/**
 	 * Get the state of the delete job.
 	 *
-	 * @return the state, never {@literal null}
+	 * @return the state, never {@code null}
 	 */
 	DatumDeleteJobState getJobState();
 
@@ -159,7 +159,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	/**
 	 * Create a job status changed event out of this instance.
 	 *
-	 * @return the event, never {@literal null}
+	 * @return the event, never {@code null}
 	 * @see #createJobStatusChangedEvent(DatumDeleteJobStatus)
 	 */
 	default AppEvent asJobStatusChangedEvent() {
@@ -171,7 +171,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 *
 	 * @param result
 	 *        a specific result to use
-	 * @return the event, never {@literal null}
+	 * @return the event, never {@code null}
 	 * @see #createJobStatusChangedEvent(DatumDeleteJobStatus,
 	 *      DatumDeleteJobInfo)
 	 */
@@ -189,7 +189,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 *
 	 * @param status
 	 *        the status instance to create the event for
-	 * @return the event, never {@literal null}
+	 * @return the event, never {@code null}
 	 */
 	static AppEvent createJobStatusChangedEvent(DatumDeleteJobStatus status) {
 		DatumDeleteJobInfo result = null;
@@ -215,7 +215,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 *        the status instance to create the event for
 	 * @param result
 	 *        the delete result
-	 * @return the event, never {@literal null}
+	 * @return the event, never {@code null}
 	 */
 	static AppEvent createJobStatusChangedEvent(DatumDeleteJobStatus status, DatumDeleteJobInfo result) {
 		Map<String, Object> props = new HashMap<>(4);

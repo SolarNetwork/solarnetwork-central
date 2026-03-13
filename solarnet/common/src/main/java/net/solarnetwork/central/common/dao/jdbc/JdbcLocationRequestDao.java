@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -57,7 +59,7 @@ public class JdbcLocationRequestDao implements LocationRequestDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcLocationRequestDao(JdbcOperations jdbcOps) {
 		super();
@@ -66,7 +68,7 @@ public class JdbcLocationRequestDao implements LocationRequestDao {
 
 	@Override
 	public FilterResults<LocationRequest, Long> findFiltered(LocationRequestCriteria filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		SelectLocationRequest sql = new SelectLocationRequest(filter); // TODO: support sorts, offset, max
 		List<LocationRequest> list = jdbcOps.query(sql, LocationRequestRowMapper.INSTANCE);
 		return BasicFilterResults.filterResults(list, null, (long) list.size(), list.size());
@@ -92,33 +94,34 @@ public class JdbcLocationRequestDao implements LocationRequestDao {
 			int count = jdbcOps.update(sql);
 			result = (count > 0 ? entity.getId() : null);
 		}
-		return result;
+		return nonnull(result, "id");
 	}
 
 	@Override
-	public LocationRequest get(Long id) {
+	public @Nullable LocationRequest get(Long id) {
 		SelectLocationRequest sql = new SelectLocationRequest(id);
 		List<LocationRequest> list = jdbcOps.query(sql, LocationRequestRowMapper.INSTANCE);
 		return (!list.isEmpty() ? list.getFirst() : null);
 	}
 
 	@Override
-	public Collection<LocationRequest> getAll(List<SortDescriptor> sorts) {
+	public Collection<LocationRequest> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void delete(LocationRequest entity) {
-		jdbcOps.update(new DeleteLocationRequest(requireNonNullArgument(entity, "entity").getId()));
+		jdbcOps.update(new DeleteLocationRequest(
+				requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(), "entity.id")));
 	}
 
 	@Override
-	public List<LocationRequest> find(Long id, LocationRequestCriteria filter) {
+	public List<LocationRequest> find(Long id, @Nullable LocationRequestCriteria filter) {
 		return jdbcOps.query(new SelectLocationRequest(id, filter), LocationRequestRowMapper.INSTANCE);
 	}
 
 	@Override
-	public int delete(Long id, LocationRequestCriteria filter) {
+	public int delete(Long id, @Nullable LocationRequestCriteria filter) {
 		return jdbcOps.update(new DeleteLocationRequest(id, filter));
 	}
 

@@ -27,7 +27,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -76,7 +75,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 	 * @param userNodeDao
 	 *        the user node DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserExportTaskBiz(UserDatumExportTaskInfoDao taskDao,
 			UserAdhocDatumExportTaskInfoDao adhocTaskDao, UserNodeDao userNodeDao) {
@@ -90,10 +89,9 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 	 * Filter a set of sources using a source ID path pattern.
 	 *
 	 * <p>
-	 * If any arguments are {@literal null}, or {@code pattern} is
-	 * {@literal null} or empty, then {@code sources} will be returned without
-	 * filtering. Otherwise, a singleton set with just {@code pattern} will be
-	 * returned.
+	 * If any arguments are {@code null}, or {@code pattern} is {@code null} or
+	 * empty, then {@code sources} will be returned without filtering.
+	 * Otherwise, a singleton set with just {@code pattern} will be returned.
 	 * </p>
 	 *
 	 * @param sources
@@ -108,7 +106,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 			String pattern) {
 		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
 				|| !pathMatcher.isPattern(pattern) ) {
-			return (pattern == null || pattern.isEmpty() ? sources : Collections.singleton(pattern));
+			return (pattern == null || pattern.isEmpty() ? sources : Set.of(pattern));
 		}
 		Set<String> result = new LinkedHashSet<>(sources);
 		result.removeIf(source -> !pathMatcher.match(pattern, source));

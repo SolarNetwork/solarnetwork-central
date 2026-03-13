@@ -23,6 +23,9 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.io.Serial;
+import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * A "match" to a {@link GeneralLocationDatum}.
@@ -41,5 +44,35 @@ public class GeneralLocationDatumMatch extends GeneralLocationDatum
 
 	@Serial
 	private static final long serialVersionUID = 6050154075058540361L;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public GeneralLocationDatumMatch(GeneralLocationDatumPK id) {
+		super(id);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param locationId
+	 *        the location ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public GeneralLocationDatumMatch(@JsonProperty("locationId") Long locationId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId) {
+		super(locationId, created, sourceId);
+	}
 
 }

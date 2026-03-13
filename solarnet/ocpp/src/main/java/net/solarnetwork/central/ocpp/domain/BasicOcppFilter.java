@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
@@ -43,7 +44,7 @@ public class BasicOcppFilter extends BasicCoreCriteria implements CentralChargeP
 	/**
 	 * Copy constructor.
 	 */
-	public BasicOcppFilter(PaginationCriteria criteria) {
+	public BasicOcppFilter(@Nullable PaginationCriteria criteria) {
 		super();
 		copyFrom(criteria);
 	}

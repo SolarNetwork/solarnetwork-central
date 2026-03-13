@@ -45,11 +45,12 @@ public final class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityEndpointCredential}.
 	 *
-	 * @return the current security actor, never {@literal null}
+	 * @return the current security actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 */
-	public static SecurityEndpointCredential getCurrentEndpointCredential() throws BasicSecurityException {
+	public static SecurityEndpointCredential getCurrentEndpointCredential()
+			throws BasicSecurityException {
 		return getEndpointCredential(getCurrentAuthentication());
 	}
 
@@ -58,7 +59,7 @@ public final class SecurityUtils {
 	 *
 	 * @param auth
 	 *        the authentication
-	 * @return the endpoint actor, never {@literal null}
+	 * @return the endpoint actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available or is not an endpoint credential
 	 */

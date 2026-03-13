@@ -24,9 +24,9 @@ package net.solarnetwork.central.oscp.web;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.CompletableFuture;
+import org.springframework.web.servlet.HandlerInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
  * Helper HandlerInterceptor to support OSCP style "do something only after the
@@ -56,7 +56,7 @@ public class ThreadLocalCompletableHandlerInterceptor<T> implements HandlerInter
 	 * @param signal
 	 *        the signal to give the future when the request completes
 	 * @throws IllegalArgumentException
-	 *         if {@code threadLocal} is {@literal null}
+	 *         if {@code threadLocal} is {@code null}
 	 */
 	public ThreadLocalCompletableHandlerInterceptor(ThreadLocal<CompletableFuture<T>> threadLocal,
 			T signal) {

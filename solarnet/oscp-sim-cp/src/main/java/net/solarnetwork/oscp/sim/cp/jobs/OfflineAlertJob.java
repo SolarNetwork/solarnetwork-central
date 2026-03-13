@@ -51,10 +51,8 @@ public class OfflineAlertJob extends JobSupport {
 	 *        the DAO
 	 */
 	public OfflineAlertJob(CapacityProviderDao dao) {
-		super();
+		super("OSCP", "OfflineAlert");
 		this.dao = requireNonNullArgument(dao, "dao");
-		setGroupId("OSCP");
-		setId("OfflineAlert");
 		setMaximumWaitMs(1800000L);
 	}
 

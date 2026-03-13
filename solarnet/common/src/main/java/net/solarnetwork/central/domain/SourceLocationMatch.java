@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.EntityMatch;
 
 /**
@@ -37,6 +38,7 @@ public interface SourceLocationMatch extends EntityMatch {
 	 * 
 	 * @return the source name
 	 */
+	@Nullable
 	String getSourceName();
 
 	/**
@@ -44,6 +46,7 @@ public interface SourceLocationMatch extends EntityMatch {
 	 * 
 	 * @return the location ID
 	 */
+	@Nullable
 	Long getLocationId();
 
 	/**
@@ -51,6 +54,7 @@ public interface SourceLocationMatch extends EntityMatch {
 	 * 
 	 * @return the location name
 	 */
+	@Nullable
 	String getLocationName();
 
 }

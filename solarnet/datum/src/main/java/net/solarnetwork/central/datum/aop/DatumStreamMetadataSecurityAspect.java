@@ -62,7 +62,7 @@ public class DatumStreamMetadataSecurityAspect extends AuthorizationSupport {
 	 * @param metaDao
 	 *        the metadata DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumStreamMetadataSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao,
 			DatumStreamMetadataDao metaDao) {

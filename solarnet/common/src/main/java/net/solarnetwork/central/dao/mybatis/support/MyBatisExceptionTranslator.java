@@ -32,6 +32,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.sql.DataSource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.ConcurrencyFailureException;
@@ -54,7 +55,7 @@ public class MyBatisExceptionTranslator extends org.mybatis.spring.MyBatisExcept
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	private MultiValueMap<String, SqlStateErrorConfig> sqlStateConfigurations;
+	private @Nullable MultiValueMap<String, SqlStateErrorConfig> sqlStateConfigurations;
 
 	/**
 	 * Constructor.
@@ -72,7 +73,7 @@ public class MyBatisExceptionTranslator extends org.mybatis.spring.MyBatisExcept
 	}
 
 	@Override
-	public DataAccessException translateExceptionIfPossible(RuntimeException e) {
+	public @Nullable DataAccessException translateExceptionIfPossible(RuntimeException e) {
 		if ( e.getCause() instanceof DataAccessException ) {
 			// could be something like CannotGetJdbcConnectionException, so use that directly
 			return (DataAccessException) e.getCause();
@@ -142,8 +143,8 @@ public class MyBatisExceptionTranslator extends org.mybatis.spring.MyBatisExcept
 			String name = me.getKey();
 			Map<String, String> configProps = me.getValue();
 			try {
-				SqlStateErrorConfig cfg = new SqlStateErrorConfig(name, configProps.get("state"),
-						configProps.get("pat"), configProps.get("type"));
+				SqlStateErrorConfig cfg = cfg(name, configProps.get("state"), configProps.get("pat"),
+						configProps.get("type"));
 				result.add(cfg.sqlState, cfg);
 			} catch ( IllegalArgumentException e ) {
 				log.warn("SQL state error properties syntax error: {}", e.toString());
@@ -164,6 +165,12 @@ public class MyBatisExceptionTranslator extends org.mybatis.spring.MyBatisExcept
 		}
 	}
 
+	@SuppressWarnings("NullAway")
+	private static SqlStateErrorConfig cfg(@Nullable String name, @Nullable String sqlState,
+			@Nullable String messagePattern, @Nullable String type) {
+		return new SqlStateErrorConfig(name, sqlState, messagePattern, type);
+	}
+
 	private static class SqlStateErrorConfig {
 
 		private final String name;
@@ -175,14 +182,9 @@ public class MyBatisExceptionTranslator extends org.mybatis.spring.MyBatisExcept
 			super();
 			this.name = requireNonNullArgument(name, "name");
 			this.sqlState = requireNonNullArgument(sqlState, "sqlState");
-			if ( messagePattern == null ) {
-				throw new IllegalArgumentException("The messagePattern argument must not be null.");
-			}
-			this.messagePattern = Pattern.compile(messagePattern, Pattern.CASE_INSENSITIVE);
-			if ( type == null ) {
-				throw new IllegalArgumentException("The type argument must not be null.");
-			}
-			this.type = ExceptionType.valueOf(type);
+			this.messagePattern = Pattern.compile(
+					requireNonNullArgument(messagePattern, "messagePattern"), Pattern.CASE_INSENSITIVE);
+			this.type = ExceptionType.valueOf(requireNonNullArgument(type, "type"));
 		}
 
 		@Override

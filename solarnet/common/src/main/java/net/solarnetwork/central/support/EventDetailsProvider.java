@@ -36,7 +36,7 @@ public interface EventDetailsProvider {
 	/**
 	 * Get the event details.
 	 * 
-	 * @return the event details, never {@literal null}
+	 * @return the event details, never {@code null}
 	 */
 	Map<String, ?> eventDetails();
 

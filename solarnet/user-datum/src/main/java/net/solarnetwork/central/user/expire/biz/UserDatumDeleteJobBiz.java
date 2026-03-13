@@ -50,7 +50,7 @@ public interface UserDatumDeleteJobBiz {
 	 * 
 	 * @param id
 	 *        the ID of the delete job to perform
-	 * @return the job status, or {@literal null} if the job is not available
+	 * @return the job status, or {@code null} if the job is not available
 	 */
 	DatumDeleteJobStatus performDatumDelete(UserUuidPK id);
 

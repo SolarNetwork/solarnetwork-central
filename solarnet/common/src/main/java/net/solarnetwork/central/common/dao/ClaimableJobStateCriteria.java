@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.ClaimableJobState;
 
 /**
@@ -37,13 +38,12 @@ public interface ClaimableJobStateCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available state from the
-	 * {@link #getClaimableJobStates()} set, or {@literal null} if not
-	 * available.
+	 * {@link #getClaimableJobStates()} set, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first state, or {@literal null} if not available
+	 * @return the first state, or {@code null} if not available
 	 */
-	default ClaimableJobState getClaimableJobState() {
+	default @Nullable ClaimableJobState getClaimableJobState() {
 		ClaimableJobState[] states = getClaimableJobStates();
 		return (states != null && states.length > 0 ? states[0] : null);
 	}
@@ -51,9 +51,9 @@ public interface ClaimableJobStateCriteria {
 	/**
 	 * Get a set of claimable job states.
 	 * 
-	 * @return array of states (may be {@literal null})
+	 * @return array of states (may be {@code null})
 	 */
-	ClaimableJobState[] getClaimableJobStates();
+	ClaimableJobState @Nullable [] getClaimableJobStates();
 
 	/**
 	 * Test if this filter has any claimable job state criteria.
@@ -69,13 +69,16 @@ public interface ClaimableJobStateCriteria {
 	 * 
 	 * @return the claimable job states, as key values
 	 */
-	default String[] claimableJobStateKeys() {
+	default String @Nullable [] claimableJobStateKeys() {
 		ClaimableJobState[] states = getClaimableJobStates();
-		final int len = (states != null ? states.length : 0);
+		if ( states == null ) {
+			return null;
+		}
+		final int len = states.length;
 		if ( len < 1 ) {
 			return null;
 		}
-		String[] result = new String[states.length];
+		String[] result = new String[len];
 		for ( int i = 0; i < len; i++ ) {
 			result[i] = states[i].keyValue();
 		}

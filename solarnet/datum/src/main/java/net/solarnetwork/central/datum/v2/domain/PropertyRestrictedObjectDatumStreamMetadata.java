@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
@@ -50,31 +51,31 @@ public class PropertyRestrictedObjectDatumStreamMetadata implements ObjectDatumS
 	private final ObjectDatumStreamMetadata delegate;
 
 	/** The restricted instantaneous property names. */
-	private final String[] restrictedInstantaneousProperties;
+	private final String @Nullable [] restrictedInstantaneousProperties;
 
 	/**
 	 * The restricted instantaneous delegate index mapping (restricted index to
 	 * delegate index).
 	 */
-	private final int[] restrictedInstantaneousMapping;
+	private final int @Nullable [] restrictedInstantaneousMapping;
 
 	/** The restricted accumulating property names. */
-	private final String[] restrictedAccumulatingProperties;
+	private final String @Nullable [] restrictedAccumulatingProperties;
 
 	/**
 	 * The restricted accumulating delegate index mapping (restricted index to
 	 * delegate index).
 	 */
-	private final int[] restrictedAccumulatingMapping;
+	private final int @Nullable [] restrictedAccumulatingMapping;
 
 	/** The restricted status property names. */
-	private final String[] restrictedStatusProperties;
+	private final String @Nullable [] restrictedStatusProperties;
 
 	/**
 	 * The restricted status delegate index mapping (restricted index to
 	 * delegate index).
 	 */
-	private final int[] restrictedStatusMapping;
+	private final int @Nullable [] restrictedStatusMapping;
 
 	/**
 	 * Constructor.
@@ -83,12 +84,14 @@ public class PropertyRestrictedObjectDatumStreamMetadata implements ObjectDatumS
 	 *        the delegate metadata
 	 * @param allowedNames
 	 *        the restricted set of property names to allow
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public PropertyRestrictedObjectDatumStreamMetadata(ObjectDatumStreamMetadata delegate,
 			Set<String> allowedNames) {
 		super();
 		this.delegate = requireNonNullArgument(delegate, "delegate");
-		requireNonNullArgument(allowedNames, "allowedNames");
+		allowedNames = requireNonNullArgument(allowedNames, "allowedNames");
 
 		String[] names = delegate.propertyNamesForType(DatumSamplesType.Instantaneous);
 		if ( names != null && names.length > 0 ) {
@@ -155,7 +158,7 @@ public class PropertyRestrictedObjectDatumStreamMetadata implements ObjectDatumS
 		}
 	}
 
-	private static int[] fitToSize(final int[] mapping, final int len) {
+	private static int @Nullable [] fitToSize(final int[] mapping, final int len) {
 		if ( len < 1 ) {
 			return null;
 		}
@@ -170,7 +173,7 @@ public class PropertyRestrictedObjectDatumStreamMetadata implements ObjectDatumS
 	}
 
 	@Override
-	public String getTimeZoneId() {
+	public @Nullable String getTimeZoneId() {
 		return delegate.getTimeZoneId();
 	}
 
@@ -185,7 +188,7 @@ public class PropertyRestrictedObjectDatumStreamMetadata implements ObjectDatumS
 	}
 
 	@Override
-	public String[] getPropertyNames() {
+	public String @Nullable [] getPropertyNames() {
 		if ( restrictedInstantaneousProperties == null && restrictedAccumulatingProperties == null
 				&& restrictedStatusProperties == null ) {
 			return delegate.getPropertyNames();
@@ -217,12 +220,12 @@ public class PropertyRestrictedObjectDatumStreamMetadata implements ObjectDatumS
 	}
 
 	@Override
-	public String getMetaJson() {
+	public @Nullable String getMetaJson() {
 		return delegate.getMetaJson();
 	}
 
 	@Override
-	public String[] propertyNamesForType(DatumSamplesType type) {
+	public String @Nullable [] propertyNamesForType(DatumSamplesType type) {
 		return switch (type) {
 			case Instantaneous -> restrictedInstantaneousProperties != null
 					? (restrictedInstantaneousProperties.length > 0 ? restrictedInstantaneousProperties
@@ -240,12 +243,16 @@ public class PropertyRestrictedObjectDatumStreamMetadata implements ObjectDatumS
 	}
 
 	@Override
-	public Object value(DatumProperties props, DatumSamplesType type, int propertyIndex) {
+	public @Nullable Object value(@Nullable DatumProperties props, @Nullable DatumSamplesType type,
+			int propertyIndex) {
+		if ( props == null || type == null ) {
+			return null;
+		}
 		final int[] mapping = switch (type) {
 			case Instantaneous -> restrictedInstantaneousMapping;
 			case Accumulating -> restrictedAccumulatingMapping;
 			case Status -> restrictedStatusMapping;
-			default -> null;
+			case null, default -> null;
 		};
 		if ( mapping == null ) {
 			return ObjectDatumStreamMetadata.super.value(props, type, propertyIndex);
@@ -257,8 +264,11 @@ public class PropertyRestrictedObjectDatumStreamMetadata implements ObjectDatumS
 	}
 
 	@Override
-	public BigDecimal stat(DatumPropertiesStatistics stats, InstantaneousStatistic type,
-			int propertyIndex) {
+	public @Nullable BigDecimal stat(@Nullable DatumPropertiesStatistics stats,
+			@Nullable InstantaneousStatistic type, int propertyIndex) {
+		if ( stats == null || type == null ) {
+			return null;
+		}
 		if ( restrictedInstantaneousMapping == null ) {
 			return ObjectDatumStreamMetadata.super.stat(stats, type, propertyIndex);
 		}
@@ -269,8 +279,11 @@ public class PropertyRestrictedObjectDatumStreamMetadata implements ObjectDatumS
 	}
 
 	@Override
-	public BigDecimal stat(DatumPropertiesStatistics stats, AccumulatingStatistic type,
-			int propertyIndex) {
+	public @Nullable BigDecimal stat(@Nullable DatumPropertiesStatistics stats,
+			@Nullable AccumulatingStatistic type, int propertyIndex) {
+		if ( stats == null || type == null ) {
+			return null;
+		}
 		if ( restrictedAccumulatingMapping == null ) {
 			return ObjectDatumStreamMetadata.super.stat(stats, type, propertyIndex);
 		}
@@ -286,7 +299,7 @@ public class PropertyRestrictedObjectDatumStreamMetadata implements ObjectDatumS
 	}
 
 	@Override
-	public Location getLocation() {
+	public @Nullable Location getLocation() {
 		return delegate.getLocation();
 	}
 
@@ -301,14 +314,14 @@ public class PropertyRestrictedObjectDatumStreamMetadata implements ObjectDatumS
 	 * @param type
 	 *        the type to get the mapping for
 	 * @return the mapping of restricted property name index to actual datum
-	 *         stream property name index
+	 *         stream property name index, or {@code null}
 	 */
-	public int[] propertyMappingForType(DatumSamplesType type) {
+	public int @Nullable [] propertyMappingForType(DatumSamplesType type) {
 		return switch (type) {
 			case Instantaneous -> restrictedInstantaneousMapping;
 			case Accumulating -> restrictedAccumulatingMapping;
 			case Status -> restrictedStatusMapping;
-			default -> null;
+			case null, default -> null;
 		};
 	}
 

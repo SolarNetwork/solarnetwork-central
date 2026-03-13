@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.domain;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedStdEntity;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.service.ServiceConfiguration;
@@ -77,11 +78,12 @@ public interface CloudIntegrationsConfigurationEntity<C extends CloudIntegration
 	 *        the service configuration to obtain placeholder values from, on a
 	 *        {@link #PLACEHOLDERS_SERVICE_PROPERTY} service property
 	 * @return the {@code template} with all placeholder values resolved, or
-	 *         {@literal null} if {@code template} is {@code null}
+	 *         {@code null} if {@code template} is {@code null}
 	 * @see StringUtils#expandTemplateString(String, Map)
 	 * @since 1.1
 	 */
-	static String resolvePlaceholders(String template, ServiceConfiguration configuration) {
+	static @Nullable String resolvePlaceholders(@Nullable String template,
+			ServiceConfiguration configuration) {
 		if ( template == null || template.isEmpty() ) {
 			return template;
 		}

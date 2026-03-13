@@ -58,7 +58,7 @@ public class MockCloudIntegrationService extends BaseCloudIntegrationService {
 	 * @param encryptor
 	 *        the sensitive key encryptor
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public MockCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			Collection<CloudControlService> controlServices, UserEventAppenderBiz userEventAppenderBiz,

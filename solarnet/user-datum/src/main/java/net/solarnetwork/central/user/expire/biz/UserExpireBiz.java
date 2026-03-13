@@ -57,7 +57,7 @@ public interface UserExpireBiz {
 	 *        the configuration type to get
 	 * @param id
 	 *        the primary key of the configuration to get
-	 * @return the configuration, or {@literal null} if not available
+	 * @return the configuration, or {@code null} if not available
 	 */
 	<T extends UserRelatedIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id);
@@ -88,7 +88,7 @@ public interface UserExpireBiz {
 	 *        the user ID to get configurations for
 	 * @param configurationClass
 	 *        the desired configuration type
-	 * @return the available configurations, never {@literal null}
+	 * @return the available configurations, never {@code null}
 	 */
 	<T extends UserRelatedIdentifiableConfigurationEntity<?>> List<T> configurationsForUser(Long userId,
 			Class<T> configurationClass);

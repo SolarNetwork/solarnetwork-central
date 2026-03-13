@@ -22,13 +22,15 @@
 
 package net.solarnetwork.central.inin.dao.jdbc;
 
-import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
@@ -58,7 +60,7 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcEndpointConfigurationDao(JdbcOperations jdbcOps) {
 		super();
@@ -72,19 +74,19 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 
 	@Override
 	public EndpointConfiguration entityKey(UserUuidPK id) {
-		return new EndpointConfiguration(id, now());
+		return new EndpointConfiguration(id, Instant.EPOCH, "");
 	}
 
 	@Override
 	public UserUuidPK create(Long userId, EndpointConfiguration entity) {
 		final var sql = new UpsertEndpointConfiguration(userId, entity);
 
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? new UserUuidPK(userId, sql.getEndpointId()) : null);
+		jdbcOps.update(sql);
+		return new UserUuidPK(userId, sql.getEndpointId());
 	}
 
 	@Override
-	public Collection<EndpointConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<EndpointConfiguration> findAll(Long userId, @Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectEndpointConfiguration(filter);
@@ -94,7 +96,7 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 
 	@Override
 	public FilterResults<EndpointConfiguration, UserUuidPK> findFiltered(EndpointFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectEndpointConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, EndpointConfigurationRowMapper.INSTANCE);
@@ -104,12 +106,12 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 	public UserUuidPK save(EndpointConfiguration entity) {
 		final var sql = new UpsertEndpointConfiguration(entity.getUserId(), entity);
 
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? new UserUuidPK(entity.getUserId(), sql.getEndpointId()) : null);
+		jdbcOps.update(sql);
+		return new UserUuidPK(entity.getUserId(), sql.getEndpointId());
 	}
 
 	@Override
-	public EndpointConfiguration get(UserUuidPK id) {
+	public @Nullable EndpointConfiguration get(UserUuidPK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -120,7 +122,7 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 	}
 
 	@Override
-	public EndpointConfiguration getForEndpointId(UUID endpointId) {
+	public @Nullable EndpointConfiguration getForEndpointId(UUID endpointId) {
 		var filter = new BasicFilter();
 		filter.setEndpointId(requireNonNullArgument(endpointId, "endpointId"));
 		var sql = new SelectEndpointConfiguration(filter);
@@ -129,7 +131,7 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 	}
 
 	@Override
-	public Collection<EndpointConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<EndpointConfiguration> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -140,14 +142,14 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 	@Override
 	public void delete(EndpointConfiguration entity) {
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+				requireNonNullArgument(entity, "entity").pk(), TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, EndpointFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable EndpointFilter filter, boolean enabled) {
 		UserUuidPK key = filter != null && filter.hasEndpointCriteria()
-				? new UserUuidPK(userId, filter.getEndpointId())
+				? new UserUuidPK(userId, nonnull(filter.getEndpointId(), "Endpoint ID"))
 				: UserUuidPK.unassignedUuidKey(userId);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);

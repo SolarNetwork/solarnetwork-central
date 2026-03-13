@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.support;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,6 +43,7 @@ import javax.cache.integration.CompletionListener;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.EntryProcessorResult;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.util.CachedResult;
 
 /**
@@ -90,7 +92,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	 * @param data
 	 *        the map to use to store the cached data in
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public SimpleCache(String name, ConcurrentMap<K, ? extends CachedResult<V>> data) {
@@ -107,7 +109,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 		private final K key;
 
 		private CachedValue(K key, V value) {
-			super(value, ttl, timeUnit);
+			super(requireNonNullArgument(value, "value"), ttl, timeUnit);
 			this.key = requireNonNullArgument(key, "key");
 		}
 
@@ -118,7 +120,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 
 		@Override
 		public V getValue() {
-			return getResult();
+			return nonnull(getResult(), "result");
 		}
 
 		@Override
@@ -151,7 +153,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	}
 
 	@Override
-	public V get(K key) {
+	public @Nullable V get(K key) {
 		CachedValue result = data.get(key);
 		return (result != null && result.isValid() ? result.getResult() : null);
 	}
@@ -159,7 +161,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	@Override
 	public Map<K, V> getAll(Set<? extends K> keys) {
 		if ( keys == null || keys.isEmpty() ) {
-			return Collections.emptyMap();
+			return Map.of();
 		}
 		Map<K, V> result = new HashMap<>(keys.size());
 		for ( K key : keys ) {
@@ -188,7 +190,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	}
 
 	@Override
-	public V getAndPut(K key, V value) {
+	public @Nullable V getAndPut(K key, V value) {
 		CachedValue result = data.put(key, new CachedValue(key, value));
 		return (result != null && result.isValid() ? result.getResult() : null);
 	}
@@ -225,7 +227,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	}
 
 	@Override
-	public V getAndRemove(K key) {
+	public @Nullable V getAndRemove(K key) {
 		CachedValue result = data.remove(key);
 		return (result != null && result.isValid() ? result.getResult() : null);
 	}
@@ -241,7 +243,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	}
 
 	@Override
-	public V getAndReplace(K key, V value) {
+	public @Nullable V getAndReplace(K key, V value) {
 		AtomicReference<V> old = new AtomicReference<>();
 		data.compute(key, (_, v) -> {
 			if ( v != null && v.isValid() ) {
@@ -292,7 +294,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -333,7 +335,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 		return new Iterator<>() {
 
 			private final Iterator<Map.Entry<K, CachedValue>> itr = data.entrySet().iterator();
-			private Map.Entry<K, CachedValue> e;
+			private Map.@Nullable Entry<K, CachedValue> e;
 
 			@Override
 			public boolean hasNext() {
@@ -367,7 +369,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	 *
 	 * @return the time to live
 	 */
-	public long getTtl() {
+	public final long getTtl() {
 		return ttl;
 	}
 
@@ -377,7 +379,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	 * @param ttl
 	 *        the time to live to set
 	 */
-	public void setTtl(long ttl) {
+	public final void setTtl(long ttl) {
 		this.ttl = ttl;
 	}
 
@@ -386,7 +388,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	 *
 	 * @return the TTL time unit
 	 */
-	public TimeUnit getTimeUnit() {
+	public final TimeUnit getTimeUnit() {
 		return timeUnit;
 	}
 
@@ -395,9 +397,11 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 	 *
 	 * @param timeUnit
 	 *        the TTL time unit to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setTimeUnit(TimeUnit timeUnit) {
-		this.timeUnit = timeUnit;
+	public final void setTimeUnit(TimeUnit timeUnit) {
+		this.timeUnit = requireNonNullArgument(timeUnit, "timeUnit");
 	}
 
 }

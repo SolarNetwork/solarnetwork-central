@@ -33,6 +33,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -72,8 +73,8 @@ public class SecurityUtils {
 	 * @param password
 	 *        the password to authenticate
 	 */
-	public static void authenticate(AuthenticationManager authenticationManager, Object username,
-			Object password) {
+	public static void authenticate(AuthenticationManager authenticationManager,
+			@Nullable Object username, @Nullable Object password) {
 		try {
 			UsernamePasswordAuthenticationToken usernameAndPassword = new UsernamePasswordAuthenticationToken(
 					username, password);
@@ -108,7 +109,7 @@ public class SecurityUtils {
 	 * @since 2.0
 	 */
 	public static SecurityToken becomeToken(String tokenId, SecurityTokenType type, Long userId,
-			SecurityPolicy policy) {
+			@Nullable SecurityPolicy policy) {
 		AuthenticatedToken token = new AuthenticatedToken(
 				new User(tokenId, "", true, true, true, true, AuthorityUtils.NO_AUTHORITIES), type,
 				userId, policy);
@@ -131,7 +132,7 @@ public class SecurityUtils {
 	 *        the user ID
 	 * @since 2.0
 	 */
-	public static SecurityUser becomeUser(String username, String name, Long userId) {
+	public static SecurityUser becomeUser(String username, @Nullable String name, Long userId) {
 		User userDetails = new User(username, "", AuthorityUtils.NO_AUTHORITIES);
 		AuthenticatedUser user = new AuthenticatedUser(userDetails, userId, name, false);
 		Collection<GrantedAuthority> authorities = Collections
@@ -176,7 +177,8 @@ public class SecurityUtils {
 					null);
 		}
 		for ( GrantedAuthority role : auth.getAuthorities() ) {
-			if ( roles.contains(role.getAuthority().toUpperCase(Locale.ENGLISH)) ) {
+			final String authority = role.getAuthority();
+			if ( authority != null && roles.contains(authority.toUpperCase(Locale.ENGLISH)) ) {
 				return;
 			}
 		}
@@ -200,7 +202,11 @@ public class SecurityUtils {
 		}
 		Set<String> rolesCopy = new HashSet<>(roles);
 		for ( GrantedAuthority role : auth.getAuthorities() ) {
-			if ( !rolesCopy.remove(role.getAuthority().toUpperCase(Locale.ENGLISH)) ) {
+			final String authority = role.getAuthority();
+			if ( authority == null ) {
+				continue;
+			}
+			if ( !rolesCopy.remove(authority.toUpperCase(Locale.ENGLISH)) ) {
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 			}
 			if ( rolesCopy.isEmpty() ) {
@@ -215,9 +221,9 @@ public class SecurityUtils {
 	/**
 	 * Get the current active authentication.
 	 *
-	 * @return the active Authentication, or {@literal null} if none available
+	 * @return the active Authentication, or {@code null} if none available
 	 */
-	public static Authentication getCurrentAuthentication() {
+	public static @Nullable Authentication getCurrentAuthentication() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if ( auth == null ) {
 			LOG.debug("No Authentication available, cannot tell current user");
@@ -229,7 +235,7 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityActor}.
 	 *
-	 * @return the current actor, never {@literal null}
+	 * @return the current actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 */
@@ -242,12 +248,12 @@ public class SecurityUtils {
 	 *
 	 * @param principal
 	 *        the principal
-	 * @return the actor, never {@literal null}
+	 * @return the actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 * @since 2.5
 	 */
-	public SecurityActor getActor(Principal principal) {
+	public SecurityActor getActor(@Nullable Principal principal) {
 		if ( principal instanceof SecurityActor a ) {
 			return a;
 		} else if ( principal instanceof Authentication a ) {
@@ -261,12 +267,12 @@ public class SecurityUtils {
 	 *
 	 * @param auth
 	 *        the authentication
-	 * @return the actor, never {@literal null}
+	 * @return the actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 * @since 2.1
 	 */
-	public static SecurityActor getActor(Authentication auth) {
+	public static SecurityActor getActor(@Nullable Authentication auth) {
 		if ( auth instanceof SecurityActor a ) {
 			return a;
 		} else if ( auth != null && auth.getPrincipal() instanceof SecurityActor a ) {
@@ -281,7 +287,7 @@ public class SecurityUtils {
 	 * Get the current {@link SecurityActor}'s {@code userId}.
 	 *
 	 * @return The user ID of the current {@link SecurityActor} (never
-	 *         {@literal null}).
+	 *         {@code null}).
 	 * @throws BasicSecurityException
 	 *         If the user ID is not available.
 	 * @since 1.3
@@ -295,13 +301,12 @@ public class SecurityUtils {
 	 *
 	 * @param principal
 	 *        the user principal
-	 * @return the ID of the user associated with the actor, never
-	 *         {@literal null}
+	 * @return the ID of the user associated with the actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the user ID is not available
 	 * @since 2.1
 	 */
-	public static Long getActorUserId(Principal principal) throws BasicSecurityException {
+	public static Long getActorUserId(@Nullable Principal principal) throws BasicSecurityException {
 		if ( principal instanceof UserIdRelated u ) {
 			return u.getUserId();
 		} else if ( principal instanceof Authentication auth ) {
@@ -320,7 +325,7 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityToken}.
 	 *
-	 * @return the current actor, never {@literal null}
+	 * @return the current actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 */
@@ -333,12 +338,12 @@ public class SecurityUtils {
 	 *
 	 * @param auth
 	 *        the authentication
-	 * @return the token actor, never {@literal null}
+	 * @return the token actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available or not a token
 	 * @since 2.1
 	 */
-	public static SecurityToken getToken(Authentication auth) throws BasicSecurityException {
+	public static SecurityToken getToken(@Nullable Authentication auth) throws BasicSecurityException {
 		if ( auth != null && auth.getPrincipal() instanceof SecurityToken ) {
 			return (SecurityToken) auth.getPrincipal();
 		} else if ( auth != null && auth.getDetails() instanceof SecurityToken ) {
@@ -350,10 +355,10 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityToken#getToken()}, if available.
 	 *
-	 * @return the token, or {@literal null} if a token is not available
+	 * @return the token, or {@code null} if a token is not available
 	 * @since 2.2
 	 */
-	public static String currentTokenId() {
+	public static @Nullable String currentTokenId() {
 		try {
 			return getCurrentToken().getToken();
 		} catch ( BasicSecurityException e ) {
@@ -364,7 +369,7 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityUser}.
 	 *
-	 * @return the current user, never {@literal null}
+	 * @return the current user, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the user is not available
 	 */
@@ -377,12 +382,12 @@ public class SecurityUtils {
 	 *
 	 * @param auth
 	 *        the authentication
-	 * @return the user actor, never {@literal null}
+	 * @return the user actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available or is not a user
 	 * @since 2.1
 	 */
-	public static SecurityUser getUser(Authentication auth) throws BasicSecurityException {
+	public static SecurityUser getUser(@Nullable Authentication auth) throws BasicSecurityException {
 		if ( auth != null && auth.getPrincipal() instanceof SecurityUser ) {
 			return (SecurityUser) auth.getPrincipal();
 		} else if ( auth != null && auth.getDetails() instanceof SecurityUser ) {
@@ -394,7 +399,7 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityNode}.
 	 *
-	 * @return the current node, never {@literal null}
+	 * @return the current node, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the node is not available
 	 */
@@ -407,12 +412,12 @@ public class SecurityUtils {
 	 *
 	 * @param auth
 	 *        the authentication
-	 * @return the node actor, never {@literal null}
+	 * @return the node actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available or is not a node
 	 * @since 2.1
 	 */
-	public static SecurityNode getNode(Authentication auth) throws BasicSecurityException {
+	public static SecurityNode getNode(@Nullable Authentication auth) throws BasicSecurityException {
 		if ( auth != null && auth.getPrincipal() instanceof SecurityNode ) {
 			return (SecurityNode) auth.getPrincipal();
 		} else if ( auth != null && auth.getDetails() instanceof SecurityNode ) {
@@ -432,7 +437,8 @@ public class SecurityUtils {
 	 *         if no node IDs are allowed or there is no actor
 	 * @since 2.0
 	 */
-	public static Long[] authorizedNodeIdsForCurrentActor(SolarNodeOwnershipDao nodeOwnershipDao) {
+	public static Long[] authorizedNodeIdsForCurrentActor(
+			@Nullable SolarNodeOwnershipDao nodeOwnershipDao) {
 		return authorizedNodeIds(getCurrentAuthentication(), nodeOwnershipDao);
 	}
 
@@ -449,7 +455,8 @@ public class SecurityUtils {
 	 *         if no node IDs are allowed or there is no actor
 	 * @since 2.1
 	 */
-	public static Long[] authorizedNodeIds(Authentication auth, SolarNodeOwnershipDao nodeOwnershipDao) {
+	public static Long[] authorizedNodeIds(@Nullable Authentication auth,
+			@Nullable SolarNodeOwnershipDao nodeOwnershipDao) {
 		final SecurityActor actor;
 		try {
 			actor = getActor(auth);
@@ -462,7 +469,9 @@ public class SecurityUtils {
 			return new Long[] { node.getNodeId() };
 		} else if ( actor instanceof SecurityUser user ) {
 			// default to all nodes for actor
-			SolarNodeOwnership[] ownerships = nodeOwnershipDao.ownershipsForUserId(user.getUserId());
+			SolarNodeOwnership[] ownerships = (nodeOwnershipDao != null
+					? nodeOwnershipDao.ownershipsForUserId(user.getUserId())
+					: null);
 			if ( ownerships != null && ownerships.length > 0 ) {
 				return Arrays.stream(ownerships).map(SolarNodeOwnership::getNodeId).toArray(Long[]::new);
 			}
@@ -470,7 +479,9 @@ public class SecurityUtils {
 			Long[] result;
 			// get full list to all nodes for actor; in future could optimize with query
 			// that accepts policy node IDs to restrict result to
-			SolarNodeOwnership[] ownerships = nodeOwnershipDao.ownershipsForUserId(token.getUserId());
+			SolarNodeOwnership[] ownerships = (nodeOwnershipDao != null
+					? nodeOwnershipDao.ownershipsForUserId(token.getUserId())
+					: null);
 			Long[] allNodeIds = (ownerships != null
 					? Arrays.stream(ownerships).map(SolarNodeOwnership::getNodeId).toArray(Long[]::new)
 					: null);
@@ -488,7 +499,7 @@ public class SecurityUtils {
 		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 	}
 
-	private static Set<Long> tokenRestrictedNodeIds(SecurityToken token) {
+	private static @Nullable Set<Long> tokenRestrictedNodeIds(SecurityToken token) {
 		Set<Long> restrictedToNodeIds = null;
 		if ( SecurityTokenType.User == token.getTokenType() ) {
 			restrictedToNodeIds = (token.getPolicy() != null && token.getPolicy().getNodeIds() != null
@@ -509,7 +520,7 @@ public class SecurityUtils {
 	 * @return The active user's policy, or {@code null}.
 	 * @since 2.2
 	 */
-	public static SecurityPolicy getActiveSecurityPolicy() {
+	public static @Nullable SecurityPolicy getActiveSecurityPolicy() {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
@@ -554,8 +565,8 @@ public class SecurityUtils {
 	 *         {@code map} when no values need encrypted
 	 * @since 2.4
 	 */
-	public static <K, V> Map<K, V> encryptedMap(Map<K, V> map, Set<K> secureKeys,
-			TextEncryptor encryptor) {
+	public static <K, V> @Nullable Map<K, V> encryptedMap(@Nullable Map<K, V> map,
+			@Nullable Set<K> secureKeys, TextEncryptor encryptor) {
 		assert encryptor != null;
 		return encryptedMap(map, secureKeys, encryptor::encrypt);
 	}
@@ -590,8 +601,8 @@ public class SecurityUtils {
 	 * @since 3.1
 	 */
 	@SuppressWarnings("unchecked")
-	public static <K, V> Map<K, V> encryptedMap(Map<K, V> map, Set<K> secureKeys,
-			Function<String, String> encryptor) {
+	public static <K, V> @Nullable Map<K, V> encryptedMap(@Nullable Map<K, V> map,
+			@Nullable Set<K> secureKeys, Function<String, String> encryptor) {
 		assert encryptor != null;
 		return CollectionUtils.transformMap(map, secureKeys, (val) -> {
 			var result = val;
@@ -634,8 +645,8 @@ public class SecurityUtils {
 	 *         {@code map} when no values need encrypted
 	 * @since 2.4
 	 */
-	public static <K, V> Map<K, V> decryptedMap(Map<K, V> map, Set<K> secureKeys,
-			TextEncryptor encryptor) {
+	public static <K, V> @Nullable Map<K, V> decryptedMap(@Nullable Map<K, V> map,
+			@Nullable Set<K> secureKeys, TextEncryptor encryptor) {
 		assert encryptor != null;
 		return decryptedMap(map, secureKeys, encryptor::decrypt);
 	}
@@ -670,8 +681,8 @@ public class SecurityUtils {
 	 * @since 3.1
 	 */
 	@SuppressWarnings("unchecked")
-	public static <K, V> Map<K, V> decryptedMap(Map<K, V> map, Set<K> secureKeys,
-			Function<String, String> decryptor) {
+	public static <K, V> @Nullable Map<K, V> decryptedMap(@Nullable Map<K, V> map,
+			@Nullable Set<K> secureKeys, Function<String, String> decryptor) {
 		assert decryptor != null;
 		return CollectionUtils.transformMap(map, secureKeys, (val) -> {
 			var result = val;
@@ -703,7 +714,8 @@ public class SecurityUtils {
 	 *         the policy
 	 * @since 3.2
 	 */
-	public static Long[] restrictNodeIds(Long[] nodeIds, final SecurityPolicy policy) {
+	public static Long @Nullable [] restrictNodeIds(Long @Nullable [] nodeIds,
+			final @Nullable SecurityPolicy policy) {
 		final Set<Long> policyNodeIds = (policy != null ? policy.getNodeIds() : null);
 		// verify source IDs
 		if ( policyNodeIds == null || policyNodeIds.isEmpty() ) {
@@ -745,7 +757,7 @@ public class SecurityUtils {
 	 *         restrictions
 	 * @since 3.2
 	 */
-	public static boolean policyIsUnrestricted(SecurityPolicy policy) {
+	public static boolean policyIsUnrestricted(@Nullable SecurityPolicy policy) {
 		if ( policy == null ) {
 			return true;
 		}

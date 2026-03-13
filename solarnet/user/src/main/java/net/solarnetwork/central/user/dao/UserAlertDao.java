@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao;
 
 import java.time.Instant;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 import net.solarnetwork.central.user.domain.UserAlertType;
@@ -46,7 +47,7 @@ public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 	 * @param startingId
 	 *        An optional {@link UserAlert} ID value to start from. Only alerts
 	 *        with an ID value <em>higher</em> than this ID will be considered.
-	 *        If <em>null</em> then consider all alerts.
+	 *        If {@code null} then consider all alerts.
 	 * @param validDate
 	 *        A timestamp to use for the validity check date. If
 	 *        {@code startingId} is provided, this value can be provided to
@@ -60,8 +61,8 @@ public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 	 * @return The found alerts, or an empty list if none found.
 	 * @since 2.0
 	 */
-	List<UserAlert> findAlertsToProcess(UserAlertType type, Long startingId, Instant validDate,
-			Integer max);
+	List<UserAlert> findAlertsToProcess(UserAlertType type, @Nullable Long startingId,
+			@Nullable Instant validDate, @Nullable Integer max);
 
 	/**
 	 * Get a set of all alerts configured for a user. The alerts will have the
@@ -93,8 +94,9 @@ public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 	 *
 	 * @param alertId
 	 *        The ID of the alert to get.
-	 * @return The found alert, or <em>null</em> if not available.
+	 * @return The found alert, or {@code null} if not available.
 	 */
+	@Nullable
 	UserAlert getAlertSituation(Long alertId);
 
 	/**

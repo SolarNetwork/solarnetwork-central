@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.din.dao.jdbc;
 
-import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -58,7 +58,7 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcEndpointAuthConfigurationDao(JdbcOperations jdbcOps) {
 		super();
@@ -72,7 +72,7 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 
 	@Override
 	public EndpointAuthConfiguration entityKey(UserUuidLongCompositePK id) {
-		return new EndpointAuthConfiguration(id, now());
+		return new EndpointAuthConfiguration(id, Instant.EPOCH);
 	}
 
 	@Override

@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.c2c.domain.test;
 
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -32,9 +34,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.codec.jackson.JsonUtils;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.util.DateUtils;
 
 /**
@@ -49,15 +49,12 @@ public class CloudDatumStreamPropertyConfigurationTests {
 	public void toJson() {
 		// GIVEN
 		CloudDatumStreamPropertyConfiguration entity = new CloudDatumStreamPropertyConfiguration(
-				randomLong(), randomLong(), randomInt(), Instant.now().truncatedTo(ChronoUnit.SECONDS));
+				randomLong(), randomLong(), randomInt(), Instant.now().truncatedTo(ChronoUnit.SECONDS),
+				Accumulating, randomString(), Reference, randomString());
 		entity.setModified(entity.getCreated().plusSeconds(1));
-		entity.setEnabled(true);
-		entity.setPropertyType(DatumSamplesType.Accumulating);
-		entity.setPropertyName(randomString());
-		entity.setValueType(CloudDatumStreamValueType.Reference);
-		entity.setValueReference(randomString());
 		entity.setMultiplier(new BigDecimal("1.23"));
 		entity.setScale(6);
+		entity.setEnabled(true);
 
 		// WHEN
 		String json = JsonUtils.getJSONString(entity);
@@ -98,7 +95,8 @@ public class CloudDatumStreamPropertyConfigurationTests {
 	public void applyXform_mult() {
 		// GIVEN
 		CloudDatumStreamPropertyConfiguration entity = new CloudDatumStreamPropertyConfiguration(
-				randomLong(), randomLong(), randomInt(), Instant.now().truncatedTo(ChronoUnit.SECONDS));
+				randomLong(), randomLong(), randomInt(), Instant.now().truncatedTo(ChronoUnit.SECONDS),
+				Accumulating, randomString(), Reference, randomString());
 		entity.setMultiplier(new BigDecimal("1.5"));
 
 		// WHEN
@@ -113,7 +111,8 @@ public class CloudDatumStreamPropertyConfigurationTests {
 	public void applyXform_scale() {
 		// GIVEN
 		CloudDatumStreamPropertyConfiguration entity = new CloudDatumStreamPropertyConfiguration(
-				randomLong(), randomLong(), randomInt(), Instant.now().truncatedTo(ChronoUnit.SECONDS));
+				randomLong(), randomLong(), randomInt(), Instant.now().truncatedTo(ChronoUnit.SECONDS),
+				Accumulating, randomString(), Reference, randomString());
 		entity.setScale(1);
 
 		// WHEN
@@ -128,7 +127,8 @@ public class CloudDatumStreamPropertyConfigurationTests {
 	public void applyXform_multAndScale() {
 		// GIVEN
 		CloudDatumStreamPropertyConfiguration entity = new CloudDatumStreamPropertyConfiguration(
-				randomLong(), randomLong(), randomInt(), Instant.now().truncatedTo(ChronoUnit.SECONDS));
+				randomLong(), randomLong(), randomInt(), Instant.now().truncatedTo(ChronoUnit.SECONDS),
+				Accumulating, randomString(), Reference, randomString());
 		entity.setMultiplier(new BigDecimal("1.5"));
 		entity.setScale(1);
 

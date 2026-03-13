@@ -57,7 +57,7 @@ public interface Configuration {
 	 * 
 	 * <p>
 	 * This specifies how frequently datum will be committed to the database
-	 * during the load process. If {@literal null} or anything less than
+	 * during the load process. If {@code null} or anything less than
 	 * {@literal 1}, an all-or-nothing approach will be used, and no datum will
 	 * be committed unless the entire data set is parsed and loaded
 	 * successfully. If anything greater than {@code 0}, then datum will be
@@ -85,7 +85,7 @@ public interface Configuration {
 	 * provides a way to synchronize multiple related jobs in a reliable manner.
 	 * </p>
 	 * 
-	 * @return the group key, or {@literal null} for the "default" group
+	 * @return the group key, or {@code null} for the "default" group
 	 * @since 1.1
 	 */
 	String getGroupKey();

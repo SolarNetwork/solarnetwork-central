@@ -118,7 +118,7 @@ public class CsvDatumImportInputProperties {
 	/**
 	 * Create a map of service properties from this instance.
 	 *
-	 * @return a map of service properties, never {@literal null}
+	 * @return a map of service properties, never {@code null}
 	 */
 	public Map<String, Object> toServiceProperties() {
 		Map<String, Object> result = new LinkedHashMap<>(8);

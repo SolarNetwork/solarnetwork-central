@@ -137,7 +137,7 @@ public class NettyDynamicProxyServer
 	 * @param bindAddress
 	 *        the server bind address
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public NettyDynamicProxyServer(SocketAddress bindAddress) {
 		this(new SocketAddress[] { requireNonNullArgument(bindAddress, "bindAddress") });
@@ -149,7 +149,7 @@ public class NettyDynamicProxyServer
 	 * @param bindAddresses
 	 *        the server bind addresses
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public NettyDynamicProxyServer(SocketAddress[] bindAddresses) {
 		super();
@@ -428,7 +428,7 @@ public class NettyDynamicProxyServer
 	 * Set the supported TLS protocols.
 	 *
 	 * @param tlsProtocols
-	 *        the protocols to support; if {@literal null} then the default
+	 *        the protocols to support; if {@code null} then the default
 	 *        protocols will be set
 	 */
 	public void setTlsProtocols(String[] tlsProtocols) {
@@ -468,7 +468,7 @@ public class NettyDynamicProxyServer
 	 * Set the SSL key store alias for the server certificate.
 	 *
 	 * @param keyStoreAlias
-	 *        the key store alias to set; if {@literal null} then
+	 *        the key store alias to set; if {@code null} then
 	 *        {@link #DEFAULT_KEYSTORE_ALIAS} will be used instead
 	 */
 	public final void setKeyStoreAlias(String keyStoreAlias) {

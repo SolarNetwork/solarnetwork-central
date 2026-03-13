@@ -27,6 +27,8 @@ import static net.solarnetwork.central.common.http.HttpConstants.OAUTH_TOKEN_URL
 import static net.solarnetwork.central.common.http.HttpConstants.USERNAME_SETTING;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
 import static net.solarnetwork.util.CollectionUtils.getMapString;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -38,6 +40,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -93,22 +96,22 @@ public class UserNodeInstructionTaskEntity
 	private Instant executeAt;
 
 	/** The service properties as JSON. */
-	private String servicePropsJson;
+	private @Nullable String servicePropsJson;
 
 	/** The service properties. */
-	private volatile transient Map<String, Object> serviceProps;
+	private volatile transient @Nullable Map<String, Object> serviceProps;
 
 	/** The last time the job executed. */
-	private Instant lastExecuteAt;
+	private @Nullable Instant lastExecuteAt;
 
 	/** A status message. */
-	private String message;
+	private @Nullable String message;
 
 	/** The last execution result properties as JSON. */
-	private String resultPropsJson;
+	private @Nullable String resultPropsJson;
 
 	/** The last execution result properties. */
-	private volatile transient Map<String, Object> resultProps;
+	private volatile transient @Nullable Map<String, Object> resultProps;
 
 	/**
 	 * Constructor.
@@ -116,10 +119,12 @@ public class UserNodeInstructionTaskEntity
 	 * @param id
 	 *        the primary key
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
+	@SuppressWarnings("NullAway")
 	public UserNodeInstructionTaskEntity(UserLongCompositePK id) {
 		super(id);
+		this.state = BasicClaimableJobState.Unknown;
 	}
 
 	/**
@@ -130,15 +135,15 @@ public class UserNodeInstructionTaskEntity
 	 * @param configId
 	 *        the configuration ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserNodeInstructionTaskEntity(Long userId, Long configId) {
 		this(new UserLongCompositePK(userId, configId));
 	}
 
 	@Override
-	public UserNodeInstructionTaskEntity copyWithId(UserLongCompositePK id) {
-		var copy = new UserNodeInstructionTaskEntity(id);
+	public UserNodeInstructionTaskEntity copyWithId(@Nullable UserLongCompositePK id) {
+		var copy = new UserNodeInstructionTaskEntity(requireNonNullArgument(id, "id"));
 		copyTo(copy);
 		return copy;
 	}
@@ -159,22 +164,22 @@ public class UserNodeInstructionTaskEntity
 	}
 
 	@Override
-	public boolean isSameAs(UserNodeInstructionTaskEntity other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable UserNodeInstructionTaskEntity other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.name)
-				&& Objects.equals(this.nodeId, other.nodeId)
-				&& Objects.equals(this.topic, other.topic)
-				&& Objects.equals(this.schedule, other.schedule)
-				&& Objects.equals(this.state, other.state)
-				&& Objects.equals(this.executeAt, other.executeAt)
-				&& Objects.equals(this.lastExecuteAt, other.lastExecuteAt)
-				&& Objects.equals(this.message, other.message)
-				&& Objects.equals(getServiceProperties(), other.getServiceProperties())
-				&& Objects.equals(getResultProperties(), other.getResultProperties())
+		return Objects.equals(this.name, o.name)
+				&& Objects.equals(this.nodeId, o.nodeId)
+				&& Objects.equals(this.topic, o.topic)
+				&& Objects.equals(this.schedule, o.schedule)
+				&& Objects.equals(this.state, o.state)
+				&& Objects.equals(this.executeAt, o.executeAt)
+				&& Objects.equals(this.lastExecuteAt, o.lastExecuteAt)
+				&& Objects.equals(this.message, o.message)
+				&& Objects.equals(getServiceProperties(), o.getServiceProperties())
+				&& Objects.equals(getResultProperties(), o.getResultProperties())
 				;
 		// @formatter:on
 	}
@@ -269,7 +274,7 @@ public class UserNodeInstructionTaskEntity
 	 * 
 	 * @return the identity, or {@code null} if no OAuth identity is available
 	 */
-	public OAuth2ClientIdentity oauthClientIdentity() {
+	public @Nullable OAuth2ClientIdentity oauthClientIdentity() {
 		final Map<String, Object> props = getServiceProps();
 		if ( props == null || !(props.get(EXPRESSION_SETTINGS_PROP) instanceof Map<?, ?> s) ) {
 			return null;
@@ -282,10 +287,11 @@ public class UserNodeInstructionTaskEntity
 		}
 		final String username = nonEmptyString(getMapString(USERNAME_SETTING, settings));
 		final String clientId = nonEmptyString(getMapString(OAUTH_CLIENT_ID_SETTING, settings));
-		return new OAuth2ClientIdentity(getId(),
+		final UserLongCompositePK id = nonnull(getId(), "id");
+		return new OAuth2ClientIdentity(id,
 				userIdSystemIdentifier(getUserId(), OAUTH_SYSTEM_NAME, getConfigId()),
 				username != null ? username
-						: clientId != null ? clientId : "%s %s".formatted(getId().ident(), getName()));
+						: clientId != null ? clientId : "%s %s".formatted(id.ident(), getName()));
 	}
 
 	/**
@@ -293,7 +299,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -303,7 +309,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param name
 	 *        the name to set
 	 */
-	public void setName(String name) {
+	public final void setName(String name) {
 		this.name = name;
 	}
 
@@ -312,9 +318,8 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the configuration ID
 	 */
-	public Long getConfigId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getConfigId() {
+		return nonnull(getId(), "id").getEntityId();
 	}
 
 	/**
@@ -322,7 +327,7 @@ public class UserNodeInstructionTaskEntity
 	 * 
 	 * @return the node ID
 	 */
-	public Long getNodeId() {
+	public final Long getNodeId() {
 		return nodeId;
 	}
 
@@ -332,7 +337,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
@@ -341,7 +346,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the topic
 	 */
-	public String getTopic() {
+	public final String getTopic() {
 		return topic;
 	}
 
@@ -351,7 +356,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param topic
 	 *        the topic to set
 	 */
-	public void setTopic(String topic) {
+	public final void setTopic(String topic) {
 		this.topic = topic;
 	}
 
@@ -360,7 +365,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the schedule, as either a cron schedule or a number of seconds
 	 */
-	public String getSchedule() {
+	public final String getSchedule() {
 		return schedule;
 	}
 
@@ -371,16 +376,16 @@ public class UserNodeInstructionTaskEntity
 	 *        the schedule to set, as either a cron schedule or a number of
 	 *        seconds
 	 */
-	public void setSchedule(String schedule) {
+	public final void setSchedule(String schedule) {
 		this.schedule = schedule;
 	}
 
 	/**
 	 * Get the job state.
 	 *
-	 * @return the state
+	 * @return the state; defaults to {@link BasicClaimableJobState#Unknown}
 	 */
-	public BasicClaimableJobState getState() {
+	public final BasicClaimableJobState getState() {
 		return state;
 	}
 
@@ -390,8 +395,8 @@ public class UserNodeInstructionTaskEntity
 	 * @param state
 	 *        the state to set
 	 */
-	public void setState(BasicClaimableJobState state) {
-		this.state = state;
+	public final void setState(@Nullable BasicClaimableJobState state) {
+		this.state = (state != null ? state : BasicClaimableJobState.Unknown);
 	}
 
 	/**
@@ -399,7 +404,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the date
 	 */
-	public Instant getExecuteAt() {
+	public final Instant getExecuteAt() {
 		return executeAt;
 	}
 
@@ -409,7 +414,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param executeAt
 	 *        the date to set
 	 */
-	public void setExecuteAt(Instant executeAt) {
+	public final void setExecuteAt(Instant executeAt) {
 		this.executeAt = executeAt;
 	}
 
@@ -418,7 +423,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the date
 	 */
-	public Instant getLastExecuteAt() {
+	public final @Nullable Instant getLastExecuteAt() {
 		return lastExecuteAt;
 	}
 
@@ -428,7 +433,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param lastExecuteAt
 	 *        the date to set
 	 */
-	public void setLastExecuteAt(Instant lastExecuteAt) {
+	public final void setLastExecuteAt(@Nullable Instant lastExecuteAt) {
 		this.lastExecuteAt = lastExecuteAt;
 	}
 
@@ -437,7 +442,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the message
 	 */
-	public String getMessage() {
+	public final @Nullable String getMessage() {
 		return message;
 	}
 
@@ -447,18 +452,18 @@ public class UserNodeInstructionTaskEntity
 	 * @param message
 	 *        the message to set
 	 */
-	public void setMessage(String message) {
+	public final void setMessage(@Nullable String message) {
 		this.message = message;
 	}
 
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
-	 *         properties available
+	 * @return a JSON encoded string, or {@code null} if no service properties
+	 *         available
 	 */
 	@JsonIgnore
-	public String getServicePropsJson() {
+	public final @Nullable String getServicePropsJson() {
 		return servicePropsJson;
 	}
 
@@ -476,7 +481,7 @@ public class UserNodeInstructionTaskEntity
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setServicePropsJson(String json) {
+	public final void setServicePropsJson(@Nullable String json) {
 		servicePropsJson = json;
 		serviceProps = null;
 	}
@@ -492,7 +497,7 @@ public class UserNodeInstructionTaskEntity
 	 * @return the service properties
 	 */
 	@JsonIgnore
-	public Map<String, Object> getServiceProps() {
+	public final @Nullable Map<String, Object> getServiceProps() {
 		if ( serviceProps == null && servicePropsJson != null ) {
 			serviceProps = JsonUtils.getStringMap(servicePropsJson);
 		}
@@ -511,7 +516,7 @@ public class UserNodeInstructionTaskEntity
 	 *        the service properties to set
 	 */
 	@JsonSetter("serviceProperties")
-	public void setServiceProps(Map<String, Object> serviceProps) {
+	public final void setServiceProps(@Nullable Map<String, Object> serviceProps) {
 		this.serviceProps = serviceProps;
 		servicePropsJson = JsonUtils.getJSONString(serviceProps, null);
 	}
@@ -522,7 +527,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param props
 	 *        the properties to add
 	 */
-	public void putServiceProps(Map<String, Object> props) {
+	public final void putServiceProps(@Nullable Map<String, Object> props) {
 		Map<String, Object> serviceProps = getServiceProps();
 		if ( serviceProps == null ) {
 			serviceProps = props;
@@ -537,18 +542,18 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the service properties
 	 */
-	public Map<String, ?> getServiceProperties() {
+	public final @Nullable Map<String, ?> getServiceProperties() {
 		return getServiceProps();
 	}
 
 	/**
 	 * Get the result properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no result properties
+	 * @return a JSON encoded string, or {@code null} if no result properties
 	 *         available
 	 */
 	@JsonIgnore
-	public String getResultPropsJson() {
+	public final @Nullable String getResultPropsJson() {
 		return resultPropsJson;
 	}
 
@@ -566,7 +571,7 @@ public class UserNodeInstructionTaskEntity
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setResultPropsJson(String json) {
+	public final void setResultPropsJson(@Nullable String json) {
 		resultPropsJson = json;
 		resultProps = null;
 	}
@@ -582,7 +587,7 @@ public class UserNodeInstructionTaskEntity
 	 * @return the result properties
 	 */
 	@JsonIgnore
-	public Map<String, Object> getResultProps() {
+	public final @Nullable Map<String, Object> getResultProps() {
 		if ( resultProps == null && resultPropsJson != null ) {
 			resultProps = JsonUtils.getStringMap(resultPropsJson);
 		}
@@ -601,7 +606,7 @@ public class UserNodeInstructionTaskEntity
 	 *        the result properties to set
 	 */
 	@JsonSetter("resultProperties")
-	public void setResultProps(Map<String, Object> resultProps) {
+	public final void setResultProps(@Nullable Map<String, Object> resultProps) {
 		this.resultProps = resultProps;
 		resultPropsJson = JsonUtils.getJSONString(resultProps, null);
 	}
@@ -612,7 +617,7 @@ public class UserNodeInstructionTaskEntity
 	 * @param props
 	 *        the properties to add
 	 */
-	public void putResultProps(Map<String, Object> props) {
+	public final void putResultProps(@Nullable Map<String, Object> props) {
 		Map<String, Object> resultProps = getResultProps();
 		if ( resultProps == null ) {
 			resultProps = props;
@@ -627,7 +632,7 @@ public class UserNodeInstructionTaskEntity
 	 *
 	 * @return the result properties
 	 */
-	public Map<String, ?> getResultProperties() {
+	public final @Nullable Map<String, ?> getResultProperties() {
 		return getResultProps();
 	}
 

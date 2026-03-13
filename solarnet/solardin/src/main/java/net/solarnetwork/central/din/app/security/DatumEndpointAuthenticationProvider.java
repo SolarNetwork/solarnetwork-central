@@ -51,7 +51,7 @@ public class DatumEndpointAuthenticationProvider implements AuthenticationProvid
 	 * @param passwordEncoder
 	 *        the password encoder
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumEndpointAuthenticationProvider(CredentialAuthorizationDao authDao,
 			PasswordEncoder passwordEncoder) {

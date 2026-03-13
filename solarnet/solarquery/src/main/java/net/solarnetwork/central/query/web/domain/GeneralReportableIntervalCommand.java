@@ -108,7 +108,7 @@ public class GeneralReportableIntervalCommand {
 	 * 
 	 * <p>
 	 * This returns the first available node ID from the {@code nodeIds} array,
-	 * or <em>null</em> if not available.
+	 * or {@code null} if not available.
 	 * </p>
 	 * 
 	 * @return the first node ID

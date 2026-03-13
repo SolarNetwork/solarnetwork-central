@@ -31,6 +31,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -68,7 +69,7 @@ public class FroniusRestOperationsHelper extends RestOperationsHelper {
 	 * @param sensitiveKeyProvider
 	 *        the sensitive key provider
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public FroniusRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
@@ -77,9 +78,10 @@ public class FroniusRestOperationsHelper extends RestOperationsHelper {
 	}
 
 	@Override
-	public <B, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
-			String description, HttpMethod method, B body, C configuration, Class<R> responseType,
-			Function<HttpHeaders, URI> setup, Function<ResponseEntity<R>, T> handler) {
+	public <B extends @Nullable Object, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
+			String description, HttpMethod method, @Nullable B body, C configuration,
+			Class<R> responseType, Function<HttpHeaders, URI> setup,
+			Function<ResponseEntity<R>, T> handler) {
 		return super.http(description, method, body, configuration, responseType, (headers) -> {
 			if ( configuration instanceof IdentifiableConfiguration c
 					&& c.hasServiceProperty(ACCESS_KEY_ID_SETTING) ) {

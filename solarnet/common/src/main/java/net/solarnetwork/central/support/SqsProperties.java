@@ -23,6 +23,7 @@
 package net.solarnetwork.central.support;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.util.ClassUtils;
 
 /**
@@ -33,11 +34,11 @@ import net.solarnetwork.util.ClassUtils;
  */
 public class SqsProperties {
 
-	private String region;
-	private String queueName;
-	private String accessKey;
-	private String secretKey;
-	private String url;
+	private @Nullable String region;
+	private @Nullable String queueName;
+	private @Nullable String accessKey;
+	private @Nullable String secretKey;
+	private @Nullable String url;
 
 	/**
 	 * Constructor.
@@ -56,7 +57,7 @@ public class SqsProperties {
 	 * 
 	 * @param serviceProperties
 	 *        the service properties
-	 * @return the new instance, never {@literal null}
+	 * @return the new instance, never {@code null}
 	 */
 	public static SqsProperties ofServiceProperties(Map<String, ?> serviceProperties) {
 		SqsProperties props = new SqsProperties();
@@ -83,7 +84,7 @@ public class SqsProperties {
 	 * 
 	 * @return the SQS queue region
 	 */
-	public String getRegion() {
+	public final @Nullable String getRegion() {
 		return region;
 	}
 
@@ -93,7 +94,7 @@ public class SqsProperties {
 	 * @param region
 	 *        the SQS queue region
 	 */
-	public synchronized void setRegion(String region) {
+	public final void setRegion(@Nullable String region) {
 		this.region = region;
 	}
 
@@ -102,7 +103,7 @@ public class SqsProperties {
 	 * 
 	 * @return the queue name
 	 */
-	public String getQueueName() {
+	public final @Nullable String getQueueName() {
 		return queueName;
 	}
 
@@ -112,7 +113,7 @@ public class SqsProperties {
 	 * @param queueName
 	 *        the queue name to set
 	 */
-	public void setQueueName(String queueName) {
+	public final void setQueueName(@Nullable String queueName) {
 		this.queueName = queueName;
 	}
 
@@ -121,7 +122,7 @@ public class SqsProperties {
 	 * 
 	 * @return the access key
 	 */
-	public String getAccessKey() {
+	public final @Nullable String getAccessKey() {
 		return accessKey;
 	}
 
@@ -131,7 +132,7 @@ public class SqsProperties {
 	 * @param accessKey
 	 *        the key to use
 	 */
-	public void setAccessKey(String accessKey) {
+	public final void setAccessKey(@Nullable String accessKey) {
 		this.accessKey = accessKey;
 	}
 
@@ -140,7 +141,7 @@ public class SqsProperties {
 	 * 
 	 * @return the AWS secret key
 	 */
-	public String getSecretKey() {
+	public final @Nullable String getSecretKey() {
 		return secretKey;
 	}
 
@@ -150,7 +151,7 @@ public class SqsProperties {
 	 * @param secretKey
 	 *        the AWS secret key to use
 	 */
-	public void setSecretKey(String secretKey) {
+	public final void setSecretKey(@Nullable String secretKey) {
 		this.secretKey = secretKey;
 	}
 
@@ -159,7 +160,7 @@ public class SqsProperties {
 	 * 
 	 * @return the queue URL
 	 */
-	public String getUrl() {
+	public final @Nullable String getUrl() {
 		return url;
 	}
 
@@ -169,7 +170,7 @@ public class SqsProperties {
 	 * @param url
 	 *        the url to set
 	 */
-	public void setUrl(String url) {
+	public final void setUrl(@Nullable String url) {
 		this.url = url;
 	}
 

@@ -61,9 +61,9 @@
 			<idArg column="user_export_data_conf_user_id" javaType="java.lang.Long"/>
 			<idArg column="user_export_data_conf_id" javaType="java.lang.Long"/>
 			<arg column="user_export_data_conf_created" javaType="java.time.Instant"/>
+			<arg column="user_export_data_conf_cname" javaType="java.lang.String"/>
+			<arg column="user_export_data_conf_sident" javaType="java.lang.String"/>
 		</constructor>
-		<result property="name" column="user_export_data_conf_cname"/>
-		<result property="serviceIdentifier" column="user_export_data_conf_sident"/>
 		<result property="servicePropsJson" column="user_export_data_conf_sprops"/>
 		<result property="filterJson" column="user_export_data_conf_filter"/>
 	</resultMap>

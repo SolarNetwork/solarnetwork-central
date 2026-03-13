@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -297,7 +298,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		int i = 0;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
-					meta.getStreamId(), start.plusHours(i).toInstant(), Hour, null));
+					meta.getStreamId(), start.plusHours(i).toInstant(), Hour, now()));
 			i++;
 		}
 	}
@@ -344,7 +345,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		int i = 0;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
-					meta.getStreamId(), start.plusHours(i).toInstant(), Hour, null));
+					meta.getStreamId(), start.plusHours(i).toInstant(), Hour, now()));
 			i++;
 		}
 	}
@@ -392,7 +393,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		int i = 0;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
-					meta.getStreamId(), start.plusHours(i).toInstant(), Hour, null));
+					meta.getStreamId(), start.plusHours(i).toInstant(), Hour, now()));
 			i++;
 		}
 	}
@@ -440,7 +441,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		int i = 2;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
-					meta.getStreamId(), start.plusHours(i).toInstant(), Hour, null));
+					meta.getStreamId(), start.plusHours(i).toInstant(), Hour, now()));
 			i++;
 		}
 	}
@@ -488,7 +489,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		int i = 4;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
-					meta.getStreamId(), start.plusHours(i).toInstant(), Hour, null));
+					meta.getStreamId(), start.plusHours(i).toInstant(), Hour, now()));
 			i++;
 		}
 	}
@@ -657,7 +658,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		int i = 0;
 		for ( StaleAggregateDatum stale : stales ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
-					meta.getStreamId(), start.plusHours(i - 1).toInstant(), Hour, null));
+					meta.getStreamId(), start.plusHours(i - 1).toInstant(), Hour, now()));
 			i++;
 		}
 	}
@@ -699,7 +700,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		int i = 0;
 		for ( StaleAggregateDatum stale : stales ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
-					meta.getStreamId(), start.plusHours(i - 1).toInstant(), Hour, null));
+					meta.getStreamId(), start.plusHours(i - 1).toInstant(), Hour, now()));
 			i++;
 		}
 	}
@@ -751,7 +752,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 			int hourIdx = i / 2 - 1;
 			assertStaleAggregateDatum("stream " + streamId + " stale hour " + hourIdx, stale,
 					new StaleAggregateDatumEntity(streamId, start.plusHours(hourIdx).toInstant(), Hour,
-							null));
+							now()));
 			i++;
 		}
 	}
@@ -824,7 +825,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 					new StaleAggregateDatumEntity(
 							streamId, start.plusHours(h)
 									.atZone(ZoneId.of(metas.get(streamId).getTimeZoneId())).toInstant(),
-							Hour, null));
+							Hour, now()));
 			i++;
 			if ( h == 4 ) {
 				h = -1;
@@ -839,10 +840,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		List<GeneralNodeDatum> data = new ArrayList<>(count);
 		long ts = start;
 		for ( int i = 0; i < count; i++ ) {
-			GeneralNodeDatum d = new GeneralNodeDatum();
-			d.setCreated(Instant.ofEpochMilli(ts));
-			d.setNodeId(nodeId);
-			d.setSourceId(sourceId);
+			GeneralNodeDatum d = new GeneralNodeDatum(nodeId, Instant.ofEpochMilli(ts), sourceId);
 			DatumSamples s = new DatumSamples();
 			s.putInstantaneousSampleValue("watts", 125);
 			s.putAccumulatingSampleValue("wattHours", 10);
@@ -888,7 +886,8 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		DatumRecordCounts counts = dao.countDatumRecords(filter);
 
 		// THEN
-		assertDatumRecordCounts("Counts", counts, datumRecordCounts(null, 6L, 3L, 3, 1));
+		assertDatumRecordCounts("Counts", counts,
+				datumRecordCounts(counts.getTimestamp(), 6L, 3L, 3, 1));
 	}
 
 	@Test
@@ -912,7 +911,8 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		DatumRecordCounts counts = dao.countDatumRecords(filter);
 
 		// THEN
-		assertDatumRecordCounts("Counts", counts, datumRecordCounts(null, 4L, 1L, 1, 0));
+		assertDatumRecordCounts("Counts", counts,
+				datumRecordCounts(counts.getTimestamp(), 4L, 1L, 1, 0));
 	}
 
 	@Test
@@ -952,7 +952,8 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		DatumRecordCounts counts = dao.countDatumRecords(filter);
 
 		// THEN
-		assertDatumRecordCounts("Counts", counts, datumRecordCounts(null, 8L, 2L, 2, 0));
+		assertDatumRecordCounts("Counts", counts,
+				datumRecordCounts(counts.getTimestamp(), 8L, 2L, 2, 0));
 	}
 
 	@Test

@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.export.standard;
 
-import java.util.Collections;
 import java.util.List;
 import net.solarnetwork.central.datum.export.biz.DatumExportDataFilterService;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -51,7 +50,7 @@ public class DefaultDatumExportDataFilterService extends
 
 	@Override
 	public List<SettingSpecifier> getSettingSpecifiers() {
-		return Collections.emptyList();
+		return List.of();
 	}
 
 }

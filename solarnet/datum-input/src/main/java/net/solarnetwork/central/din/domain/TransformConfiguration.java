@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -68,7 +69,7 @@ public class TransformConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public TransformConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -85,7 +86,7 @@ public class TransformConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public TransformConfiguration(Long userId, Long transformId, Instant created) {
 		this(new UserLongCompositePK(userId, transformId), created);
@@ -108,14 +109,14 @@ public class TransformConfiguration
 
 	@Override
 	public boolean isSameAs(TransformConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.name)
-				&& Objects.equals(this.serviceIdentifier, other.serviceIdentifier)
-				&& Objects.equals(this.servicePropsJson, other.servicePropsJson)
+		return Objects.equals(this.name, o.name)
+				&& Objects.equals(this.serviceIdentifier, o.serviceIdentifier)
+				&& Objects.equals(this.servicePropsJson, o.servicePropsJson)
 				;
 		// @formatter:on
 	}
@@ -194,8 +195,8 @@ public class TransformConfiguration
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
-	 *         properties available
+	 * @return a JSON encoded string, or {@code null} if no service properties
+	 *         available
 	 */
 	@JsonIgnore
 	public String getServicePropsJson() {

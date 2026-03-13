@@ -54,7 +54,7 @@ public final class SelectExternalSystemForMeasurement implements PreparedStateme
 	 * @param filter
 	 *        the pagination and/or locking criteria to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectExternalSystemForMeasurement(OscpRole type, LockingFilter filter) {
 		super();

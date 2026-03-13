@@ -46,7 +46,7 @@ public interface UserExportTaskBiz {
 	 *        the export configuration to create tasks for
 	 * @param exportDate
 	 *        the export date to use
-	 * @return the created task, never {@literal null}
+	 * @return the created task, never {@code null}
 	 * @throws IllegalArgumentException
 	 *         if {@code configuration} is not complete enough to create an
 	 *         export task
@@ -59,7 +59,7 @@ public interface UserExportTaskBiz {
 	 * 
 	 * @param config
 	 *        the export configuration to create tasks for
-	 * @return the created task, never {@literal null}
+	 * @return the created task, never {@code null}
 	 * @throws IllegalArgumentException
 	 *         if {@code configuration} is not complete enough to create an
 	 *         export task

@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
-import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamConfiguration;
@@ -36,7 +35,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -115,11 +113,11 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 	public void insert() {
 		// GIVEN
 		final CloudIntegrationConfiguration integration = createIntegration(userId,
-				singletonMap("bim", "bam"));
+				Map.of("bim", "bam"));
 		final CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
 				integration.getConfigId(), Map.of("bif", "bop"));
 
-		Map<String, Object> props = singletonMap("foo", "bar");
+		Map<String, Object> props = Map.of("foo", "bar");
 		// @formatter:off
 		CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(userId,
 				mapping.getConfigId(),
@@ -209,7 +207,7 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		conf.setObjectId(randomLong());
 		conf.setSourceId(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		UserLongCompositePK result = dao.save(conf);
@@ -249,13 +247,13 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		final List<Long> userIds = new ArrayList<>(userCount);
 		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int u = 0; u < userCount; u++ ) {
 			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 			userIds.add(userId);
 			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 				for ( int m = 0; m < mappingCount; m++ ) {
 					Long mappingId = createDatumStreamMapping(userId, integrationId, null).getConfigId();
 					for ( int ds = 0; ds < count; ds++ ) {
@@ -299,13 +297,13 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		final List<Long> userIds = new ArrayList<>(userCount);
 		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int u = 0; u < userCount; u++ ) {
 			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 			userIds.add(userId);
 			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 				for ( int m = 0; m < mappingCount; m++ ) {
 					Long mappingId = createDatumStreamMapping(userId, integrationId, null).getConfigId();
 					for ( int ds = 0; ds < count; ds++ ) {
@@ -351,12 +349,12 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		final int mappingCount = 3;
 		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int u = 0; u < userCount; u++ ) {
 			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 				for ( int m = 0; m < mappingCount; m++ ) {
 					Long mappingId = createDatumStreamMapping(userId, integrationId, null).getConfigId();
 					for ( int ds = 0; ds < count; ds++ ) {
@@ -406,12 +404,12 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		final int mappingCount = 3;
 		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(count);
 
-		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> props = Map.of("foo", "bar");
 
 		for ( int u = 0; u < userCount; u++ ) {
 			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+				Long integrationId = createIntegration(userId, Map.of("bim", "bam")).getConfigId();
 				for ( int m = 0; m < mappingCount; m++ ) {
 					Long mappingId = createDatumStreamMapping(userId, integrationId, null).getConfigId();
 					for ( int ds = 0; ds < count; ds++ ) {
@@ -443,7 +441,7 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		final List<CloudDatumStreamConfiguration> userRandomConfs = List
 				.of(userConfs.get(RNG.nextInt(userConfs.size())),
 						userConfs.get(RNG.nextInt(userConfs.size())))
-				.stream().sorted().toList();
+				.stream().distinct().sorted().toList();
 		final Set<Long> randomNodeIds = userRandomConfs.stream()
 				.map(CloudDatumStreamConfiguration::getObjectId).collect(toSet());
 

@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
-import java.util.Collections;
+import java.util.Map;
 import net.solarnetwork.central.domain.UserFilterCommand;
 
 /**
@@ -49,7 +49,7 @@ public final class BillingDataConstants {
 	 */
 	public static UserFilterCommand filterForAccountingType(String type) {
 		UserFilterCommand criteria = new UserFilterCommand();
-		criteria.setInternalData(Collections.singletonMap(ACCOUNTING_DATA_PROP, type));
+		criteria.setInternalData(Map.of(ACCOUNTING_DATA_PROP, type));
 		return criteria;
 	}
 }

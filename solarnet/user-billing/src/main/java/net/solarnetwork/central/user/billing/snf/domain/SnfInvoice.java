@@ -22,20 +22,23 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.domain.UserLongPK;
@@ -61,12 +64,12 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	public static final Comparator<SnfInvoice> SORT_BY_DATE = new SnfInvoiceStartDateComparator();
 
 	private final Long accountId;
-	private Address address;
-	private LocalDate startDate;
-	private LocalDate endDate;
-	private String currencyCode;
-	private Set<SnfInvoiceItem> items;
-	private Set<SnfInvoiceNodeUsage> usages;
+	private final LocalDate startDate;
+	private final LocalDate endDate;
+	private final String currencyCode;
+	private @Nullable Address address;
+	private @Nullable Set<SnfInvoiceItem> items;
+	private @Nullable Set<SnfInvoiceNodeUsage> usages;
 
 	/**
 	 * Compare {@link SnfInvoice} instances by start date in ascending order.
@@ -77,22 +80,11 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 		public int compare(SnfInvoice o1, SnfInvoice o2) {
 			int result = o1.startDate.compareTo(o2.startDate);
 			if ( result == 0 ) {
-				result = o1.getId().compareTo(o2.getId());
+				result = nonnull(o1.getId(), "Left ID").compareTo(nonnull(o2.getId(), "Right ID"));
 			}
 			return result;
 		}
 
-	}
-
-	/**
-	 * Default constructor.
-	 *
-	 * @param accountId
-	 *        the account ID
-	 */
-	public SnfInvoice(Long accountId) {
-		super(new UserLongPK(), Instant.now());
-		this.accountId = accountId;
 	}
 
 	/**
@@ -104,10 +96,22 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *        the account ID
 	 * @param created
 	 *        the creation date
+	 * @param startDate
+	 *        the start date
+	 * @param endDate
+	 *        the end date
+	 * @param currencyCode
+	 *        the currency code
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public SnfInvoice(UserLongPK id, Long accountId, Instant created) {
-		super(id, created);
-		this.accountId = accountId;
+	public SnfInvoice(UserLongPK id, Long accountId, Instant created, LocalDate startDate,
+			LocalDate endDate, String currencyCode) {
+		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
+		this.accountId = requireNonNullArgument(accountId, "accountId");
+		this.startDate = requireNonNullArgument(startDate, "startDate");
+		this.endDate = requireNonNullArgument(endDate, "endDate");
+		this.currencyCode = requireNonNullArgument(currencyCode, "currencyCode");
 	}
 
 	/**
@@ -119,9 +123,18 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *        the user ID
 	 * @param created
 	 *        the creation date
+	 * @param startDate
+	 *        the start date
+	 * @param endDate
+	 *        the end date
+	 * @param currencyCode
+	 *        the currency code
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public SnfInvoice(Long accountId, Long userId, Instant created) {
-		this(new UserLongPK(userId, null), accountId, created);
+	public SnfInvoice(Long accountId, Long userId, Instant created, LocalDate startDate,
+			LocalDate endDate, String currencyCode) {
+		this(new UserLongPK(userId, null), accountId, created, startDate, endDate, currencyCode);
 	}
 
 	/**
@@ -135,9 +148,18 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *        the account ID
 	 * @param created
 	 *        the creation date
+	 * @param startDate
+	 *        the start date
+	 * @param endDate
+	 *        the end date
+	 * @param currencyCode
+	 *        the currency code
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public SnfInvoice(Long id, Long userId, Long accountId, Instant created) {
-		this(new UserLongPK(userId, id), accountId, created);
+	public SnfInvoice(Long id, Long userId, Long accountId, Instant created, LocalDate startDate,
+			LocalDate endDate, String currencyCode) {
+		this(new UserLongPK(userId, id), accountId, created, startDate, endDate, currencyCode);
 	}
 
 	@Override
@@ -161,7 +183,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	/**
 	 * Get the total amount of all invoice items.
 	 *
-	 * @return the total cost, never {@literal null}
+	 * @return the total cost, never {@code null}
 	 */
 	public BigDecimal getTotalAmount() {
 		BigDecimal result = BigDecimal.ZERO;
@@ -179,10 +201,10 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 * This returns the time zone of the configured address.
 	 * </p>
 	 *
-	 * @return the time zone, or {@literal null} if not available
+	 * @return the time zone, or {@code null} if not available
 	 */
 	@JsonIgnore
-	public ZoneId getTimeZone() {
+	public @Nullable ZoneId getTimeZone() {
 		Address addr = getAddress();
 		return (addr != null ? addr.getTimeZone() : null);
 	}
@@ -194,9 +216,8 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	}
 
 	@Override
-	public Long getUserId() {
-		final UserLongPK id = getId();
-		return id != null ? id.getUserId() : null;
+	public final Long getUserId() {
+		return nonnull(getId(), "id").getUserId();
 	}
 
 	/**
@@ -205,11 +226,36 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 * @param userId
 	 *        the user ID
 	 */
-	public void setUserId(Long userId) {
+	public final void setUserId(Long userId) {
 		final UserLongPK id = getId();
 		if ( id != null ) {
 			id.setUserId(userId);
 		}
+	}
+
+	/**
+	 * Get the invoice ID.
+	 *
+	 * @return the invoice ID
+	 * @throws IllegalStateException
+	 *         if the invoice ID is not available
+	 */
+	@JsonIgnore
+	public final Long getInvoiceId() {
+		return nonnull(nonnull(getId(), "Invoice PK").getId(), "Invoice ID");
+	}
+
+	/**
+	 * Set the invoice ID.
+	 *
+	 * @param invoiceId
+	 *        the invoice ID to set
+	 * @throws IllegalStateException
+	 *         if the invoice primary key is not available
+	 */
+	@JsonIgnore
+	public final void setInvoiceId(Long invoiceId) {
+		nonnull(getId(), "Invoice PK").setId(invoiceId);
 	}
 
 	/**
@@ -228,7 +274,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *         the other
 	 */
 	@SuppressWarnings("ReferenceEquality")
-	public boolean isSameAs(SnfInvoice other) {
+	public boolean isSameAs(@Nullable SnfInvoice other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -254,10 +300,12 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 			return false;
 		}
 		Map<UUID, SnfInvoiceItem> otherItems = other.itemMap();
-		for ( SnfInvoiceItem item : items ) {
-			SnfInvoiceItem otherItem = otherItems.remove(item.getId());
-			if ( item.differsFrom(otherItem) ) {
-				return false;
+		if ( items != null ) {
+			for ( SnfInvoiceItem item : items ) {
+				SnfInvoiceItem otherItem = otherItems.remove(item.getId());
+				if ( item.differsFrom(otherItem) ) {
+					return false;
+				}
 			}
 		}
 		if ( !otherItems.isEmpty() ) {
@@ -270,17 +318,19 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 			return false;
 		}
 		Map<Long, SnfInvoiceNodeUsage> otherUsages = other.usageMap();
-		for ( SnfInvoiceNodeUsage usage : usages ) {
-			SnfInvoiceNodeUsage otherUsage = otherUsages.remove(usage.getNodeId());
-			if ( usage.differsFrom(otherUsage) ) {
-				return false;
+		if ( usages != null ) {
+			for ( SnfInvoiceNodeUsage usage : usages ) {
+				SnfInvoiceNodeUsage otherUsage = otherUsages.remove(usage.getNodeId());
+				if ( usage.differsFrom(otherUsage) ) {
+					return false;
+				}
 			}
 		}
 		return otherUsages.isEmpty();
 	}
 
 	@Override
-	public boolean differsFrom(SnfInvoice other) {
+	public boolean differsFrom(@Nullable SnfInvoice other) {
 		return !isSameAs(other);
 	}
 
@@ -289,11 +339,26 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *
 	 * @return the map
 	 */
-	public Map<UUID, SnfInvoiceItem> itemMap() {
+	public final Map<UUID, SnfInvoiceItem> itemMap() {
 		if ( items == null ) {
-			return Collections.emptyMap();
+			return Map.of();
 		}
 		return items.stream().collect(Collectors.toMap(SnfInvoiceItem::getId, e -> e));
+	}
+
+	/**
+	 * Add an invoice item.
+	 *
+	 * @param item
+	 *        the item to add
+	 */
+	public final void addItem(SnfInvoiceItem item) {
+		Set<SnfInvoiceItem> items = getItems();
+		if ( items == null ) {
+			items = new LinkedHashSet<>(4);
+			setItems(items);
+		}
+		items.add(item);
 	}
 
 	/**
@@ -301,7 +366,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *
 	 * @return the account ID
 	 */
-	public Long getAccountId() {
+	public final Long getAccountId() {
 		return accountId;
 	}
 
@@ -310,7 +375,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *
 	 * @return the address
 	 */
-	public Address getAddress() {
+	public final @Nullable Address getAddress() {
 		return address;
 	}
 
@@ -320,7 +385,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 * @param address
 	 *        the address to set
 	 */
-	public void setAddress(Address address) {
+	public final void setAddress(@Nullable Address address) {
 		this.address = address;
 	}
 
@@ -329,18 +394,8 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *
 	 * @return the starting date (inclusive)
 	 */
-	public LocalDate getStartDate() {
+	public final LocalDate getStartDate() {
 		return startDate;
-	}
-
-	/**
-	 * Set the starting date.
-	 *
-	 * @param startDate
-	 *        the starting date to set (inclusive)
-	 */
-	public void setStartDate(LocalDate startDate) {
-		this.startDate = startDate;
 	}
 
 	/**
@@ -348,18 +403,8 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *
 	 * @return the ending date (exclusive)
 	 */
-	public LocalDate getEndDate() {
+	public final LocalDate getEndDate() {
 		return endDate;
-	}
-
-	/**
-	 * Set the ending date.
-	 *
-	 * @param endDate
-	 *        the ending date to set (exclusive)
-	 */
-	public void setEndDate(LocalDate endDate) {
-		this.endDate = endDate;
 	}
 
 	/**
@@ -367,18 +412,8 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *
 	 * @return the currency code
 	 */
-	public String getCurrencyCode() {
+	public final String getCurrencyCode() {
 		return currencyCode;
-	}
-
-	/**
-	 * Set the currency code.
-	 *
-	 * @param currencyCode
-	 *        the currency code to set
-	 */
-	public void setCurrencyCode(String currencyCode) {
-		this.currencyCode = currencyCode;
 	}
 
 	/**
@@ -386,17 +421,17 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *
 	 * @return the number of items
 	 */
-	public int getItemCount() {
+	public final int getItemCount() {
 		return (items != null ? items.size() : 0);
 	}
 
 	/**
 	 * Get all invoice items as a map using item key values as map keys.
 	 *
-	 * @return the map, or {@literal null} if {@link #getItems()} returns
-	 *         {@literal null}
+	 * @return the map, or {@code null} if {@link #getItems()} returns
+	 *         {@code null}
 	 */
-	public Map<String, SnfInvoiceItem> getItemsByKey() {
+	public final @Nullable Map<String, SnfInvoiceItem> getItemsByKey() {
 		Map<String, SnfInvoiceItem> result = null;
 		Set<SnfInvoiceItem> items = getItems();
 		if ( items != null ) {
@@ -415,7 +450,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *
 	 * @return the items
 	 */
-	public Set<SnfInvoiceItem> getItems() {
+	public final @Nullable Set<SnfInvoiceItem> getItems() {
 		return items;
 	}
 
@@ -425,7 +460,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 * @param items
 	 *        the items to set
 	 */
-	public void setItems(Set<SnfInvoiceItem> items) {
+	public final void setItems(@Nullable Set<SnfInvoiceItem> items) {
 		this.items = items;
 	}
 
@@ -435,7 +470,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 * @return the usage records
 	 * @since 1.1
 	 */
-	public Set<SnfInvoiceNodeUsage> getUsages() {
+	public final @Nullable Set<SnfInvoiceNodeUsage> getUsages() {
 		return usages;
 	}
 
@@ -446,7 +481,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *        the usages to set
 	 * @since 1.1
 	 */
-	public void setUsages(Set<SnfInvoiceNodeUsage> usages) {
+	public final void setUsages(@Nullable Set<SnfInvoiceNodeUsage> usages) {
 		this.usages = usages;
 	}
 
@@ -456,7 +491,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 * @return the count
 	 * @since 1.1
 	 */
-	public int getUsagesCount() {
+	public final int getUsagesCount() {
 		return (usages != null ? usages.size() : 0);
 	}
 
@@ -465,9 +500,9 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *
 	 * @return the map
 	 */
-	public Map<Long, SnfInvoiceNodeUsage> usageMap() {
+	public final Map<Long, SnfInvoiceNodeUsage> usageMap() {
 		if ( usages == null ) {
-			return Collections.emptyMap();
+			return Map.of();
 		}
 		return usages.stream().collect(Collectors.toMap(SnfInvoiceNodeUsage::getNodeId, e -> e));
 	}

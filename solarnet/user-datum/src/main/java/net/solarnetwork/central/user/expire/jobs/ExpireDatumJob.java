@@ -44,12 +44,11 @@ public class ExpireDatumJob extends JobSupport {
 	 * @param configDao
 	 *        the DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ExpireDatumJob(ExpireUserDataConfigurationDao configDao) {
-		super();
+		super("UserExpire", "ExpireDatum");
 		this.configDao = requireNonNullArgument(configDao, "configDao");
-		setGroupId("UserExpire");
 	}
 
 	@Override

@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -52,7 +53,7 @@ public final class ResponseLengthUserServiceFilter extends OncePerRequestFilter 
 	private final UserServiceAuditor userServiceAuditor;
 	private final String auditServiceName;
 
-	private Pattern[] excludes;
+	private Pattern @Nullable [] excludes;
 
 	private static final Logger log = LoggerFactory.getLogger(ResponseLengthUserServiceFilter.class);
 
@@ -99,8 +100,8 @@ public final class ResponseLengthUserServiceFilter extends OncePerRequestFilter 
 	private final class ResponseLengthTrackingHttpServletResponse extends HttpServletResponseWrapper {
 
 		private final HttpServletRequest request;
-		private ServletOutputStream out;
-		private PrintWriter writer;
+		private @Nullable ServletOutputStream out;
+		private @Nullable PrintWriter writer;
 
 		/**
 		 * Constructor.
@@ -137,7 +138,7 @@ public final class ResponseLengthUserServiceFilter extends OncePerRequestFilter 
 		private final class DelegatingServletOutputStream extends ServletOutputStream {
 
 			private final ServletOutputStream delegate;
-			private final Long userId;
+			private final @Nullable Long userId;
 			private long count = 0;
 
 			private DelegatingServletOutputStream(ServletOutputStream delegate) {
@@ -219,7 +220,7 @@ public final class ResponseLengthUserServiceFilter extends OncePerRequestFilter 
 
 		private final class DelegatingPrintWriter extends PrintWriter {
 
-			private final Long userId;
+			private final @Nullable Long userId;
 			private long count = 0;
 
 			private DelegatingPrintWriter(PrintWriter delegate) {
@@ -296,7 +297,7 @@ public final class ResponseLengthUserServiceFilter extends OncePerRequestFilter 
 	 *
 	 * @return the exclude patterns
 	 */
-	public Pattern[] getExcludes() {
+	public final Pattern @Nullable [] getExcludes() {
 		return excludes;
 	}
 
@@ -306,7 +307,7 @@ public final class ResponseLengthUserServiceFilter extends OncePerRequestFilter 
 	 * @param excludes
 	 *        the exclude patterns to set
 	 */
-	public void setExcludes(Pattern[] excludes) {
+	public final void setExcludes(Pattern @Nullable [] excludes) {
 		this.excludes = excludes;
 	}
 

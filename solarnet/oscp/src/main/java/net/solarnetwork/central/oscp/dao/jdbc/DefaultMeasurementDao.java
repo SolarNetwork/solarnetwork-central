@@ -70,7 +70,7 @@ public class DefaultMeasurementDao implements MeasurementDao {
 	 * @param readingDatumDao
 	 *        the DAO to query readings from
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DefaultMeasurementDao(ReadingDatumDao readingDatumDao) {
 		super();

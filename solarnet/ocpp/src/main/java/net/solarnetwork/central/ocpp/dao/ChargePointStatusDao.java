@@ -61,7 +61,7 @@ public interface ChargePointStatusDao
 	 * @param connected
 	 *        {@literal true} if connected, {@literal false} if disconnected
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	void updateConnectionStatus(Long userId, String chargePointIdentifier, String connectedTo,
 			String sessionId, Instant connectionDate, boolean connected);

@@ -29,7 +29,6 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Types;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -135,7 +134,7 @@ public final class FlexibilityProviderTestUtils {
 		conf.setFlexibilityProviderId(flexibilityProviderId);
 		conf.setName(randomUUID().toString());
 		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
 		conf.setToken(randomUUID().toString());
 		return conf;
 	}
@@ -165,7 +164,7 @@ public final class FlexibilityProviderTestUtils {
 		conf.setFlexibilityProviderId(flexibilityProviderId);
 		conf.setName(randomUUID().toString());
 		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
 		conf.setToken(randomUUID().toString());
 		return conf;
 	}

@@ -79,22 +79,22 @@ public class AuthenticatedEndpointCredentials extends User
 	}
 
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 
 	@Override
-	public UUID getEndpointId() {
+	public final UUID getEndpointId() {
 		return endpointId;
 	}
 
 	@Override
-	public boolean isAuthenticatedWithToken() {
+	public final boolean isAuthenticatedWithToken() {
 		return false;
 	}
 
 	@Override
-	public boolean isOauth() {
+	public final boolean isOauth() {
 		return oauth;
 	}
 

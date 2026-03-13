@@ -22,13 +22,18 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
+import static java.time.Instant.EPOCH;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENTITY_ID;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.time.Instant;
+import java.time.Period;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskDao;
@@ -65,7 +70,7 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudDatumStreamRakeTaskDao(JdbcOperations jdbcOps) {
 		this(jdbcOps, DEFAULT_CLAIM_JOB_SQL);
@@ -79,7 +84,7 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 	 * @param claimTaskSql
 	 *        the claim task SQL
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudDatumStreamRakeTaskDao(JdbcOperations jdbcOps, String claimTaskSql) {
 		super();
@@ -94,20 +99,22 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 
 	@Override
 	public CloudDatumStreamRakeTaskEntity entityKey(UserLongCompositePK id) {
-		return new CloudDatumStreamRakeTaskEntity(id);
+		return new CloudDatumStreamRakeTaskEntity(id, EPOCH, UNASSIGNED_ENTITY_ID,
+				BasicClaimableJobState.Unknown, EPOCH, Period.ZERO);
 	}
 
 	@Override
 	public UserLongCompositePK create(Long userId, CloudDatumStreamRakeTaskEntity entity) {
 		final var sql = new InsertCloudDatumStreamRakeTaskEntity(userId, entity);
-		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		return (id != null ? new UserLongCompositePK(userId, id) : null);
+		final Long id = nonnull(CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id"),
+				"Generated ID");
+		return new UserLongCompositePK(userId, id);
 	}
 
 	@Override
 	public FilterResults<CloudDatumStreamRakeTaskEntity, UserLongCompositePK> findFiltered(
-			CloudDatumStreamRakeTaskFilter filter, List<SortDescriptor> sorts, Long offset,
-			Integer max) {
+			CloudDatumStreamRakeTaskFilter filter, @Nullable List<SortDescriptor> sorts,
+			@Nullable Long offset, @Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCloudDatumStreamRakeTaskEntity(filter);
 		return executeFilterQuery(jdbcOps, filter, sql,
@@ -115,7 +122,8 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 	}
 
 	@Override
-	public Collection<CloudDatumStreamRakeTaskEntity> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<CloudDatumStreamRakeTaskEntity> findAll(Long userId,
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectCloudDatumStreamRakeTaskEntity(filter);
@@ -126,17 +134,19 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 
 	@Override
 	public UserLongCompositePK save(CloudDatumStreamRakeTaskEntity entity) {
-		if ( !entity.getId().entityIdIsAssigned() ) {
-			return create(entity.getId().getUserId(), entity);
+		UserLongCompositePK pk = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(),
+				"entity.id");
+		if ( !pk.entityIdIsAssigned() ) {
+			return create(pk.getUserId(), entity);
 		}
-		final UpdateCloudDatumStreamRakeTaskEntity sql = new UpdateCloudDatumStreamRakeTaskEntity(
-				entity.getId(), entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		final UpdateCloudDatumStreamRakeTaskEntity sql = new UpdateCloudDatumStreamRakeTaskEntity(pk,
+				entity);
+		jdbcOps.update(sql);
+		return pk;
 	}
 
 	@Override
-	public CloudDatumStreamRakeTaskEntity get(UserLongCompositePK id) {
+	public @Nullable CloudDatumStreamRakeTaskEntity get(UserLongCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -148,7 +158,7 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 	}
 
 	@Override
-	public Collection<CloudDatumStreamRakeTaskEntity> getAll(List<SortDescriptor> sorts) {
+	public Collection<CloudDatumStreamRakeTaskEntity> getAll(@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		var sql = new SelectCloudDatumStreamRakeTaskEntity(filter);
 		return jdbcOps.query(sql, CloudDatumStreamRakeTaskEntityRowMapper.INSTANCE);
@@ -168,6 +178,7 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 		return jdbcOps.update(sql);
 	}
 
+	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	@Override
 	public CloudDatumStreamRakeTaskEntity claimQueuedTask() {
 		return jdbcOps.execute(claimTaskSql, (CallableStatement cs) -> {
@@ -186,7 +197,7 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 
 	@Override
 	public boolean updateTaskState(UserLongCompositePK id, BasicClaimableJobState desiredState,
-			BasicClaimableJobState... expectedStates) {
+			BasicClaimableJobState @Nullable... expectedStates) {
 		BasicFilter filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -200,7 +211,7 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 
 	@Override
 	public boolean updateTask(CloudDatumStreamRakeTaskEntity info,
-			BasicClaimableJobState... expectedStates) {
+			BasicClaimableJobState @Nullable... expectedStates) {
 		BasicFilter filter = new BasicFilter();
 		filter.setUserId(info.getUserId());
 		filter.setTaskId(filter.getTaskId());

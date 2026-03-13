@@ -30,6 +30,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -63,7 +64,7 @@ public class UpdateUserNodeInstructionTaskEntity implements PreparedStatementCre
 
 	private final UserLongCompositePK id;
 	private final UserNodeInstructionTaskEntity entity;
-	private final UserNodeInstructionTaskFilter filter;
+	private final @Nullable UserNodeInstructionTaskFilter filter;
 
 	/**
 	 * Constructor.
@@ -73,7 +74,7 @@ public class UpdateUserNodeInstructionTaskEntity implements PreparedStatementCre
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateUserNodeInstructionTaskEntity(UserLongCompositePK id,
 			UserNodeInstructionTaskEntity entity) {
@@ -90,10 +91,10 @@ public class UpdateUserNodeInstructionTaskEntity implements PreparedStatementCre
 	 * @param filter
 	 *        an optional filter to restrict the update to
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}, other than {@code filter}
+	 *         if any argument is {@code null}, other than {@code filter}
 	 */
 	public UpdateUserNodeInstructionTaskEntity(UserLongCompositePK id,
-			UserNodeInstructionTaskEntity entity, UserNodeInstructionTaskFilter filter) {
+			UserNodeInstructionTaskEntity entity, @Nullable UserNodeInstructionTaskFilter filter) {
 		super();
 		this.id = requireNonNullArgument(id, "id");
 		this.entity = requireNonNullArgument(entity, "entity");

@@ -50,7 +50,7 @@ public class SimpleNetworkIdentityBiz implements NetworkIdentityBiz {
 	 * @param networkAssociationDao
 	 *        the association DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SimpleNetworkIdentityBiz(NetworkIdentificationBiz networkIdentificationBiz,
 			NetworkAssociationDao networkAssociationDao) {

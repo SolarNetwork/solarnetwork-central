@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.lang.String.format;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -42,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
@@ -353,8 +355,8 @@ public final class DatumSqlUtils {
 	 * @return the number of leading "joining" characters added to {@code buf};
 	 *         will either be {@literal 0} or {@literal 2}
 	 */
-	public static int orderBySorts(Iterable<SortDescriptor> sorts, Map<String, String> sortKeyMapping,
-			StringBuilder buf) {
+	public static int orderBySorts(@Nullable Iterable<SortDescriptor> sorts,
+			@Nullable Map<String, String> sortKeyMapping, StringBuilder buf) {
 		return CommonSqlUtils.orderBySorts(sorts, sortKeyMapping, buf);
 	}
 
@@ -379,7 +381,7 @@ public final class DatumSqlUtils {
 	 * @return {@literal true} if some sort descriptor in {@code sorts} is also
 	 *         in the default list of list of metadata sort keys
 	 */
-	public static boolean hasMetadataSortKey(Iterable<SortDescriptor> sorts) {
+	public static boolean hasMetadataSortKey(@Nullable Iterable<SortDescriptor> sorts) {
 		return hasMetadataSortKey(sorts, DEFAULT_METADATA_SORT_KEYS);
 	}
 
@@ -402,7 +404,7 @@ public final class DatumSqlUtils {
 	 * @return {@literal true} if some sort descriptor in {@code sorts} is also
 	 *         in {@code orderedMetaSortKeys}
 	 */
-	public static boolean hasMetadataSortKey(Iterable<SortDescriptor> sorts,
+	public static boolean hasMetadataSortKey(@Nullable Iterable<SortDescriptor> sorts,
 			String[] orderedMetaSortKeys) {
 		if ( sorts == null ) {
 			return false;
@@ -518,7 +520,7 @@ public final class DatumSqlUtils {
 			paramCount += 1;
 		}
 		if ( filter.hasLocationCriteria() ) {
-			Location l = filter.getLocation();
+			Location l = nonnull(filter.getLocation(), "Location");
 			if ( l.getCountry() != null ) {
 				buf.append("	AND l.country = ?\n");
 				paramCount += 1;
@@ -649,7 +651,7 @@ public final class DatumSqlUtils {
 		int paramCount = 0;
 		if ( filter.getLocationId() != null ) {
 			buf.append("\tAND s.loc_id = ");
-			if ( filter.getNodeIds().length > 1 ) {
+			if ( nonnull(filter.getLocationIds(), "locationIds").length > 1 ) {
 				buf.append("ANY(?)");
 			} else {
 				buf.append("?");
@@ -658,7 +660,7 @@ public final class DatumSqlUtils {
 			paramCount += 1;
 		} else if ( filter.getNodeId() != null ) {
 			buf.append("\tAND s.node_id = ");
-			if ( filter.getNodeIds().length > 1 ) {
+			if ( nonnull(filter.getNodeIds(), "nodeIds").length > 1 ) {
 				buf.append("ANY(?)");
 			} else {
 				buf.append("?");
@@ -805,7 +807,7 @@ public final class DatumSqlUtils {
 	 *      ObjectDatumKind, Connection, PreparedStatement, int)
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
-			CombiningConfig combiningConfig, StringBuilder buf) {
+			@Nullable CombiningConfig combiningConfig, StringBuilder buf) {
 		return nodeMetadataFilterSql(filter, style, null, null, null, combiningConfig,
 				SQL_AT_STREAM_METADATA_TIME_ZONE, buf);
 	}
@@ -821,8 +823,8 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 */
-	public static int metadataObjectSourceIdsSql(CombiningConfig combiningConfig, ObjectDatumKind kind,
-			StringBuilder buf) {
+	public static int metadataObjectSourceIdsSql(@Nullable CombiningConfig combiningConfig,
+			ObjectDatumKind kind, StringBuilder buf) {
 		final String objName = (kind == ObjectDatumKind.Location ? "loc" : "node");
 		int paramCount = 0;
 		if ( combiningConfig == null || !combiningConfig.isWithObjectIds() ) {
@@ -834,8 +836,9 @@ public final class DatumSqlUtils {
 				buf.append("\n, 0 AS obj_rank");
 			}
 		} else {
-			CombiningIdsConfig<Long> objIdConfig = combiningConfig
-					.getIdsConfig(CombiningConfig.OBJECT_IDS_CONFIG);
+			CombiningIdsConfig<Long> objIdConfig = nonnull(
+					combiningConfig.getIdsConfig(CombiningConfig.OBJECT_IDS_CONFIG),
+					"Combining object IDs config");
 			buf.append("\n, CASE\n");
 			for ( Iterator<Long> iterator = objIdConfig.getIdSets().keySet().iterator(); iterator
 					.hasNext(); ) {
@@ -858,8 +861,9 @@ public final class DatumSqlUtils {
 				buf.append("\n, 0 AS source_rank");
 			}
 		} else {
-			CombiningIdsConfig<String> objIdConfig = combiningConfig
-					.getIdsConfig(CombiningConfig.SOURCE_IDS_CONFIG);
+			CombiningIdsConfig<String> objIdConfig = nonnull(
+					combiningConfig.getIdsConfig(CombiningConfig.SOURCE_IDS_CONFIG),
+					"Combining source IDs config");
 			buf.append("\n, CASE\n");
 			for ( Iterator<String> iterator = objIdConfig.getIdSets().keySet().iterator(); iterator
 					.hasNext(); ) {
@@ -905,8 +909,9 @@ public final class DatumSqlUtils {
 	 *      ObjectDatumKind, Connection, PreparedStatement, int)
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
-			ObjectStreamCriteria streamFilter, String datumTableName, Aggregation aggregation,
-			CombiningConfig combiningConfig, String zoneClause, StringBuilder buf) {
+			@Nullable ObjectStreamCriteria streamFilter, @Nullable String datumTableName,
+			@Nullable Aggregation aggregation, @Nullable CombiningConfig combiningConfig,
+			@Nullable String zoneClause, StringBuilder buf) {
 		buf.append("SELECT s.stream_id");
 		int paramCount = metadataObjectSourceIdsSql(combiningConfig, ObjectDatumKind.Node, buf);
 		if ( style == MetadataSelectStyle.WithGeography ) {
@@ -938,8 +943,8 @@ public final class DatumSqlUtils {
 			StringBuilder where = new StringBuilder();
 			if ( streamFilter != null ) {
 				// NOTE join added directly to buf
-				paramCount += joinStreamMetadataDateRangeSql(streamFilter, datumTableName, aggregation,
-						zoneClause, buf);
+				paramCount += joinStreamMetadataDateRangeSql(streamFilter,
+						nonnull(datumTableName, "datumTableName"), aggregation, zoneClause, buf);
 			}
 			if ( filter != null ) {
 				paramCount += whereNodeMetadata(filter, where);
@@ -950,41 +955,6 @@ public final class DatumSqlUtils {
 			}
 		}
 		return paramCount;
-	}
-
-	/**
-	 * Generate SQL {@code INNER JOIN} clause for stream metadata to a datum
-	 * table on the most extreme datum available (earliest or latest).
-	 *
-	 * @param tableName
-	 *        the datum table name
-	 * @param timeColumnName
-	 *        the datum table time column name, e.g. {@literal ts} or
-	 *        {@literal ts_start}
-	 * @param latest
-	 *        {@literal true} for the highest time value and a join table name
-	 *        of {@literal late}, {@literal false} for the smallest time value
-	 *        and a join table name of {@literal early}
-	 * @param buf
-	 *        the buffer to append the SQL to
-	 * @deprecated since 2.8, use
-	 *             {@link #joinStreamMetadataExtremeDatumSql(ObjectStreamCriteria, String, Aggregation, String, boolean, StringBuilder)}
-	 */
-	@Deprecated
-	public static void joinStreamMetadataExtremeDatumSql(String tableName, String timeColumnName,
-			boolean latest, StringBuilder buf) {
-		buf.append("INNER JOIN LATERAL (\n");
-		buf.append("		SELECT datum.*\n");
-		buf.append("		FROM ").append(tableName).append(" datum\n");
-		buf.append("		WHERE datum.stream_id = s.stream_id\n");
-		buf.append("		ORDER BY datum.").append(timeColumnName);
-		if ( latest ) {
-			buf.append(" DESC");
-		}
-		buf.append("\n");
-		buf.append("		LIMIT 1\n");
-		buf.append("	) ").append(latest ? "late" : "early").append(" ON ")
-				.append(latest ? "late" : "early").append(".stream_id = s.stream_id\n");
 	}
 
 	/**
@@ -1010,7 +980,8 @@ public final class DatumSqlUtils {
 	 * @since 2.8
 	 */
 	public static int joinStreamMetadataExtremeDatumSql(ObjectStreamCriteria filter, String tableName,
-			Aggregation aggregation, String zoneClause, boolean latest, StringBuilder buf) {
+			@Nullable Aggregation aggregation, @Nullable String zoneClause, boolean latest,
+			StringBuilder buf) {
 		StringBuilder where = new StringBuilder();
 		int paramCount = filter.hasLocalDate()
 				? DatumSqlUtils.whereLocalDateRange(filter, aggregation, zoneClause, where)
@@ -1050,7 +1021,7 @@ public final class DatumSqlUtils {
 	 * @return the number of JDBC query parameters generated
 	 */
 	public static int joinStreamMetadataDateRangeSql(ObjectStreamCriteria filter, String tableName,
-			Aggregation aggregation, String zoneClause, StringBuilder buf) {
+			@Nullable Aggregation aggregation, @Nullable String zoneClause, StringBuilder buf) {
 		StringBuilder where = new StringBuilder();
 		int paramCount = filter.hasLocalDate()
 				? DatumSqlUtils.whereLocalDateRange(filter, aggregation, zoneClause, where)
@@ -1112,7 +1083,7 @@ public final class DatumSqlUtils {
 	 * @return the number of JDBC query parameters generated
 	 */
 	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
-			CombiningConfig combiningConfig, StringBuilder buf) {
+			@Nullable CombiningConfig combiningConfig, StringBuilder buf) {
 		return locationMetadataFilterSql(filter, style, null, null, null, combiningConfig,
 				SQL_AT_STREAM_METADATA_TIME_ZONE, buf);
 	}
@@ -1140,8 +1111,9 @@ public final class DatumSqlUtils {
 	 * @return the number of JDBC query parameters generated
 	 */
 	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
-			ObjectStreamCriteria streamFilter, String datumTableName, Aggregation aggregation,
-			CombiningConfig combiningConfig, String zoneClause, StringBuilder buf) {
+			@Nullable ObjectStreamCriteria streamFilter, @Nullable String datumTableName,
+			@Nullable Aggregation aggregation, @Nullable CombiningConfig combiningConfig,
+			@Nullable String zoneClause, StringBuilder buf) {
 		buf.append("SELECT s.stream_id");
 		int paramCount = metadataObjectSourceIdsSql(combiningConfig, ObjectDatumKind.Location, buf);
 		if ( style == MetadataSelectStyle.WithGeography ) {
@@ -1167,8 +1139,8 @@ public final class DatumSqlUtils {
 			StringBuilder where = new StringBuilder();
 			if ( streamFilter != null ) {
 				// NOTE join added directly to buf
-				paramCount += joinStreamMetadataDateRangeSql(streamFilter, datumTableName, aggregation,
-						zoneClause, buf);
+				paramCount += joinStreamMetadataDateRangeSql(streamFilter,
+						nonnull(datumTableName, "datumTableName"), aggregation, zoneClause, buf);
 			}
 			if ( filter != null ) {
 				paramCount += whereLocationMetadata(filter, where);
@@ -1196,8 +1168,8 @@ public final class DatumSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareStreamFilter(StreamCriteria filter, Connection con, PreparedStatement stmt,
-			int parameterOffset) throws SQLException {
+	public static int prepareStreamFilter(@Nullable StreamCriteria filter, Connection con,
+			PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter != null ) {
 			if ( filter.getStreamIds() != null ) {
 				if ( filter.getStreamIds().length > 1 ) {
@@ -1229,8 +1201,9 @@ public final class DatumSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareStreamMetadataFilter(StreamMetadataCriteria filter, ObjectDatumKind kind,
-			Connection con, PreparedStatement stmt, int parameterOffset) throws SQLException {
+	public static int prepareStreamMetadataFilter(@Nullable StreamMetadataCriteria filter,
+			@Nullable ObjectDatumKind kind, Connection con, PreparedStatement stmt, int parameterOffset)
+			throws SQLException {
 		if ( filter != null ) {
 			parameterOffset = prepareStreamFilter(filter, con, stmt, parameterOffset);
 			if ( filter.getSourceIds() != null ) {
@@ -1279,7 +1252,7 @@ public final class DatumSqlUtils {
 				array.free();
 			}
 			if ( filter.hasLocationCriteria() ) {
-				Location l = filter.getLocation();
+				Location l = nonnull(filter.getLocation(), "Location");
 				if ( l.getCountry() != null ) {
 					stmt.setString(++parameterOffset, l.getCountry());
 				}
@@ -1406,11 +1379,12 @@ public final class DatumSqlUtils {
 	 *      ObjectDatumKind, Connection, PreparedStatement, int)
 	 */
 	public static int prepareDatumMetadataFilter(ObjectStreamCriteria filter,
-			CombiningConfig combiningConfig, Connection con, PreparedStatement stmt, int parameterOffset)
-			throws SQLException {
+			@Nullable CombiningConfig combiningConfig, Connection con, PreparedStatement stmt,
+			int parameterOffset) throws SQLException {
 		if ( combiningConfig != null && combiningConfig.isWithObjectIds() ) {
-			CombiningIdsConfig<Long> objIdConfig = combiningConfig
-					.getIdsConfig(CombiningConfig.OBJECT_IDS_CONFIG);
+			CombiningIdsConfig<Long> objIdConfig = nonnull(
+					combiningConfig.getIdsConfig(CombiningConfig.OBJECT_IDS_CONFIG),
+					"Combining object IDs config");
 			List<Long> allIds = new ArrayList<>();
 			for ( Map.Entry<Long, Set<Long>> me : objIdConfig.getIdSets().entrySet() ) {
 				allIds.addAll(me.getValue());
@@ -1425,8 +1399,9 @@ public final class DatumSqlUtils {
 			array.free();
 		}
 		if ( combiningConfig != null && combiningConfig.isWithSourceIds() ) {
-			CombiningIdsConfig<String> sourceIdConfig = combiningConfig
-					.getIdsConfig(CombiningConfig.SOURCE_IDS_CONFIG);
+			CombiningIdsConfig<String> sourceIdConfig = nonnull(
+					combiningConfig.getIdsConfig(CombiningConfig.SOURCE_IDS_CONFIG),
+					"Combining source IDs config");
 			List<String> allIds = new ArrayList<>();
 			for ( Map.Entry<String, Set<String>> me : sourceIdConfig.getIdSets().entrySet() ) {
 				allIds.addAll(me.getValue());
@@ -1442,7 +1417,7 @@ public final class DatumSqlUtils {
 		}
 		if ( filter != null ) {
 			if ( filter.getLocationId() != null ) {
-				if ( filter.getLocationIds().length > 1 ) {
+				if ( nonnull(filter.getLocationIds(), "locationIds").length > 1 ) {
 					Array array = con.createArrayOf("bigint", filter.getLocationIds());
 					stmt.setArray(++parameterOffset, array);
 					array.free();
@@ -1450,7 +1425,7 @@ public final class DatumSqlUtils {
 					stmt.setObject(++parameterOffset, filter.getLocationId());
 				}
 			} else if ( filter.getNodeId() != null ) {
-				if ( filter.getNodeIds().length > 1 ) {
+				if ( nonnull(filter.getNodeIds(), "nodeIds").length > 1 ) {
 					Array array = con.createArrayOf("bigint", filter.getNodeIds());
 					stmt.setArray(++parameterOffset, array);
 					array.free();
@@ -1472,7 +1447,7 @@ public final class DatumSqlUtils {
 	 * @return if {@code aggregation} is provided and not {@literal None} then
 	 *         {@code ts_start}; otherwise {@code ts}
 	 */
-	public static String timeColumnName(Aggregation aggregation) {
+	public static String timeColumnName(@Nullable Aggregation aggregation) {
 		return (aggregation == null || aggregation == Aggregation.None ? "ts" : "ts_start");
 	}
 
@@ -1514,7 +1489,7 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 */
-	public static int whereDateRange(DateRangeCriteria filter, Aggregation aggregation,
+	public static int whereDateRange(DateRangeCriteria filter, @Nullable Aggregation aggregation,
 			StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getStartDate() != null ) {
@@ -1572,8 +1547,8 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 */
-	public static int whereLocalDateRange(LocalDateRangeCriteria filter, Aggregation aggregation,
-			String zoneClause, StringBuilder buf) {
+	public static int whereLocalDateRange(LocalDateRangeCriteria filter,
+			@Nullable Aggregation aggregation, @Nullable String zoneClause, StringBuilder buf) {
 		return whereLocalDateRange(filter, aggregation, zoneClause, null, null, buf);
 	}
 
@@ -1612,16 +1587,17 @@ public final class DatumSqlUtils {
 	 *        if provided, then an extra clause to add after each local date
 	 *        parameter placeholder
 	 * @param startRoundingMode
-	 *        the rounding mode to apply to the start date, or {@literal null}
-	 *        for none
+	 *        the rounding mode to apply to the start date, or {@code null} for
+	 *        none
 	 * @param endRoundingMode
-	 *        the rounding mode to apply to the end date, or {@literal null}
+	 *        the rounding mode to apply to the end date, or {@code null}
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 */
-	public static int whereLocalDateRange(LocalDateRangeCriteria filter, Aggregation aggregation,
-			String zoneClause, RoundingMode startRoundingMode, RoundingMode endRoundingMode,
+	public static int whereLocalDateRange(LocalDateRangeCriteria filter,
+			@Nullable Aggregation aggregation, @Nullable String zoneClause,
+			@Nullable RoundingMode startRoundingMode, @Nullable RoundingMode endRoundingMode,
 			StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getLocalStartDate() != null ) {
@@ -1650,8 +1626,8 @@ public final class DatumSqlUtils {
 	 *
 	 * <p>
 	 * The output is along the lines of {@literal date_trunc('day', ?)}. If no
-	 * rounding mode is needed (because {@code roundingMode} is {@literal null}
-	 * or {@literal UNNECESSARY}) then a simple {@literal ?} placeholder will be
+	 * rounding mode is needed (because {@code roundingMode} is {@code null} or
+	 * {@literal UNNECESSARY}) then a simple {@literal ?} placeholder will be
 	 * generated.
 	 * </p>
 	 *
@@ -1665,8 +1641,8 @@ public final class DatumSqlUtils {
 	 *         if {@code roundingMode} is not supported
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	public static void dateRoundedParameter(Aggregation aggregation, RoundingMode roundingMode,
-			StringBuilder buf) {
+	public static void dateRoundedParameter(@Nullable Aggregation aggregation,
+			@Nullable RoundingMode roundingMode, StringBuilder buf) {
 		if ( roundingMode == null || roundingMode == RoundingMode.UNNECESSARY || aggregation == null
 				|| !(aggregation == Aggregation.Hour || aggregation == Aggregation.Day
 						|| aggregation == Aggregation.Month || aggregation == Aggregation.Year) ) {
@@ -1702,7 +1678,7 @@ public final class DatumSqlUtils {
 	 *        the interval count
 	 * @return the SQL clause
 	 * @throws IllegalArgumentException
-	 *         if {@code aggregation} is {@literal null} or not supported
+	 *         if {@code aggregation} is {@code null} or not supported
 	 */
 	public static String sqlInterval(Aggregation aggregation, int count) {
 		if ( aggregation == null ) {
@@ -1733,7 +1709,7 @@ public final class DatumSqlUtils {
 	 *        the aggregation to get the type for
 	 * @return the type
 	 * @throws IllegalArgumentException
-	 *         if {@code aggregation} is {@literal null} or not supported
+	 *         if {@code aggregation} is {@code null} or not supported
 	 */
 	public static String sqlDateRoundingInterval(Aggregation aggregation) {
 		return switch (aggregation) {
@@ -1838,12 +1814,12 @@ public final class DatumSqlUtils {
 	 *        the filter
 	 * @param sortKeyMapping
 	 *        the sort mapping to use if sorts are included in the filter
-	 * @return the cache key, as a string, or {@literal null} if one cannot be
+	 * @return the cache key, as a string, or {@code null} if one cannot be
 	 *         generated
 	 */
-	public static String streamMetadataCacheKey(StreamMetadataCriteria filter,
+	public static @Nullable String streamMetadataCacheKey(StreamMetadataCriteria filter,
 			Map<String, String> sortKeyMapping) {
-		UUID[] streamIds = filter.getStreamIds();
+		final UUID[] streamIds = filter.getStreamIds();
 		if ( streamIds == null || streamIds.length < 1 ) {
 			return null;
 		}
@@ -1855,13 +1831,13 @@ public final class DatumSqlUtils {
 
 		// otherwise, compute SHA1 digest
 		try {
-			MessageDigest digest = MessageDigest.getInstance("SHA-1");
-			byte[] buf = new byte[8];
+			final MessageDigest digest = MessageDigest.getInstance("SHA-1");
+			final byte[] buf = new byte[8];
 			// for >1 stream ID, sort them for a stable cache key
-			streamIds = new UUID[filter.getStreamIds().length];
-			System.arraycopy(filter.getStreamIds(), 0, streamIds, 0, streamIds.length);
-			Arrays.sort(streamIds);
-			for ( UUID uuid : streamIds ) {
+			final UUID[] sortedStreamIds = new UUID[streamIds.length];
+			System.arraycopy(streamIds, 0, sortedStreamIds, 0, sortedStreamIds.length);
+			Arrays.sort(sortedStreamIds);
+			for ( UUID uuid : sortedStreamIds ) {
 				ByteUtils.encodeUnsignedInt64(uuid.getMostSignificantBits(), buf, 0,
 						ByteOrdering.BigEndian);
 				digest.update(buf);
@@ -1905,7 +1881,7 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC parameters generated
 	 */
-	public static int metadataSearchFilterSql(SearchFilter filter, StringBuilder buf) {
+	public static int metadataSearchFilterSql(@Nullable SearchFilter filter, StringBuilder buf) {
 		if ( filter == null ) {
 			return 0;
 		}
@@ -1913,15 +1889,18 @@ public final class DatumSqlUtils {
 		final boolean[] withTags = new boolean[] { false };
 		filter.walk(new VisitorCallback() {
 
-			private SearchFilter root = null;
+			private @Nullable SearchFilter root = null;
 
 			@Override
-			public boolean visit(SearchFilter node, SearchFilter parentNode) {
+			public boolean visit(SearchFilter node, @Nullable SearchFilter parentNode) {
 				if ( parentNode == null ) {
 					root = node;
 				} else if ( parentNode != root ) {
 					// TODO: work on this
 					throw new IllegalArgumentException("Nested search filter logic is not supported.");
+				}
+				if ( node.getFilter() == null ) {
+					return true;
 				}
 				for ( Map.Entry<String, ?> me : node.getFilter().entrySet() ) {
 					String path = me.getKey();
@@ -1976,7 +1955,7 @@ public final class DatumSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareMetadataSearchFilter(SearchFilter filter, Connection con,
+	public static int prepareMetadataSearchFilter(@Nullable SearchFilter filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter == null ) {
 			return parameterOffset;
@@ -1987,16 +1966,19 @@ public final class DatumSqlUtils {
 		try {
 			filter.walk(new VisitorCallback() {
 
-				private SearchFilter root = null;
+				private @Nullable SearchFilter root = null;
 
 				@Override
-				public boolean visit(SearchFilter node, SearchFilter parentNode) {
+				public boolean visit(SearchFilter node, @Nullable SearchFilter parentNode) {
 					if ( parentNode == null ) {
 						root = node;
 					} else if ( parentNode != root ) {
 						// TODO: work on this
 						throw new IllegalArgumentException(
 								"Nested search filter logic is not supported.");
+					}
+					if ( node.getFilter() == null ) {
+						return true;
 					}
 					for ( Map.Entry<String, ?> me : node.getFilter().entrySet() ) {
 						String path = me.getKey();

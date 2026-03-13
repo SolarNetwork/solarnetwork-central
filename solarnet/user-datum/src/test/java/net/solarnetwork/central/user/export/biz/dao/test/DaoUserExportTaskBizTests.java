@@ -37,8 +37,8 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import org.easymock.Capture;
@@ -101,11 +101,9 @@ public class DaoUserExportTaskBizTests {
 	}
 
 	private UserDatumExportConfiguration createConfiguration() {
-		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
-				new UserLongCompositePK(TEST_USER_ID, ID_GENERATOR.decrementAndGet()), now());
-		config.setName("Config" + config.getId());
-		config.setSchedule(ScheduleType.Hourly);
-		return config;
+		final Long id = ID_GENERATOR.decrementAndGet();
+		return new UserDatumExportConfiguration(new UserLongCompositePK(TEST_USER_ID, id), now(),
+				"Config" + id, ScheduleType.Hourly, 0, now());
 	}
 
 	@Test
@@ -113,8 +111,7 @@ public class DaoUserExportTaskBizTests {
 		// given
 		UserDatumExportConfiguration config = createConfiguration();
 		ZonedDateTime now = ZonedDateTime.now(config.zone());
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID))
-				.andReturn(Collections.singleton(TEST_NODE_ID));
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(Set.of(TEST_NODE_ID));
 
 		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
 
@@ -146,14 +143,14 @@ public class DaoUserExportTaskBizTests {
 		UserDatumExportConfiguration config = createConfiguration();
 		ZonedDateTime now = ZonedDateTime.now(config.zone());
 		UserDataConfiguration dataConfig = new UserDataConfiguration(
-				new UserLongCompositePK(TEST_USER_ID, ID_GENERATOR.decrementAndGet()), now());
+				new UserLongCompositePK(TEST_USER_ID, ID_GENERATOR.decrementAndGet()), now(),
+				randomString(), randomString());
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setSourceId("/test/**");
 		dataConfig.setFilter(filter);
 		config.setUserDataConfiguration(dataConfig);
 
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID))
-				.andReturn(Collections.singleton(TEST_NODE_ID));
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(Set.of(TEST_NODE_ID));
 
 		ZonedDateTime exportDate = ScheduleType.Hourly.exportDate(now);
 
@@ -189,7 +186,8 @@ public class DaoUserExportTaskBizTests {
 		UserDatumExportConfiguration config = createConfiguration();
 		ZonedDateTime now = ZonedDateTime.now(config.zone());
 		UserDataConfiguration dataConfig = new UserDataConfiguration(
-				new UserLongCompositePK(TEST_USER_ID, ID_GENERATOR.decrementAndGet()), now());
+				new UserLongCompositePK(TEST_USER_ID, ID_GENERATOR.decrementAndGet()), now(),
+				randomString(), randomString());
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setSourceId("/test/**");
 		dataConfig.setFilter(filter);
@@ -233,8 +231,7 @@ public class DaoUserExportTaskBizTests {
 		UserDatumExportConfiguration config = createConfiguration()
 				.copyWithId(unassignedEntityIdKey(TEST_USER_ID));
 
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID))
-				.andReturn(Collections.singleton(TEST_NODE_ID));
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(Set.of(TEST_NODE_ID));
 
 		Capture<UserAdhocDatumExportTaskInfo> taskCaptor = new Capture<>();
 
@@ -271,8 +268,7 @@ public class DaoUserExportTaskBizTests {
 		UserDatumExportConfiguration config = createConfiguration()
 				.copyWithId(unassignedEntityIdKey(TEST_USER_ID));
 
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID))
-				.andReturn(Collections.singleton(TEST_NODE_ID));
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(Set.of(TEST_NODE_ID));
 
 		Capture<UserAdhocDatumExportTaskInfo> taskCaptor = new Capture<>();
 
@@ -311,7 +307,7 @@ public class DaoUserExportTaskBizTests {
 				.copyWithId(unassignedEntityIdKey(TEST_USER_ID));
 
 		UserDataConfiguration dataConfig = new UserDataConfiguration(unassignedEntityIdKey(TEST_USER_ID),
-				now());
+				now(), randomString(), randomString());
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setStartDate(Instant.parse("2025-03-01T00:00:00Z"));
 		filter.setEndDate(Instant.parse("2025-03-02T00:00:00Z"));

@@ -107,7 +107,7 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 	 * @param restOps
 	 *        the REST operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OpenWeatherMapCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {

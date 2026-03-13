@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import java.time.Period;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
@@ -60,13 +61,13 @@ public enum LocusEnergyGranularity {
 	;
 
 	private final String key;
-	private final Period constraint;
+	private final @Nullable Period constraint;
 
 	LocusEnergyGranularity(String key) {
 		this(key, null);
 	}
 
-	LocusEnergyGranularity(String key, Period constraint) {
+	LocusEnergyGranularity(String key, @Nullable Period constraint) {
 		this.key = key;
 		this.constraint = constraint;
 	}
@@ -74,7 +75,7 @@ public enum LocusEnergyGranularity {
 	/**
 	 * Get the key.
 	 *
-	 * @return the key, never {@literal null}
+	 * @return the key, never {@code null}
 	 */
 	public final String getKey() {
 		return key;
@@ -83,10 +84,10 @@ public enum LocusEnergyGranularity {
 	/**
 	 * Get the query time range constraint.
 	 *
-	 * @return the maximum query time range, or {@literal null} if there is no
+	 * @return the maximum query time range, or {@code null} if there is no
 	 *         limit
 	 */
-	public final Period getConstraint() {
+	public final @Nullable Period getConstraint() {
 		return constraint;
 	}
 
@@ -95,7 +96,7 @@ public enum LocusEnergyGranularity {
 	 *
 	 * @param value
 	 *        the enumeration name or key value, case-insensitve
-	 * @return the enum; if {@code value} is {@literal null} or empty then
+	 * @return the enum; if {@code value} is {@code null} or empty then
 	 *         {@link #Latest} is returned
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value

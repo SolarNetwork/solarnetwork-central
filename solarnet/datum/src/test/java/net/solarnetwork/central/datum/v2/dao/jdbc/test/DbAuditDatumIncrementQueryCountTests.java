@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.ioAuditDatum;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,8 +34,8 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataAccessException;
@@ -106,7 +107,7 @@ public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSuppo
 		DatumTestUtils.assertStaleAuditDatum("Stale", stale.get(0),
 				new StaleAuditDatumEntity(meta.getStreamId(),
 						now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS).toInstant(),
-						Aggregation.Day, null));
+						Aggregation.Day, now()));
 	}
 
 	@Test
@@ -118,8 +119,8 @@ public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSuppo
 		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(streamId, TEST_TZ,
 				ObjectDatumKind.Node, TEST_NODE_ID, "a");
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, Collections.singleton(
-				ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L, 0L, 0L)));
+		DatumDbUtils.insertAuditDatum(log, jdbcTemplate,
+				Set.of(ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L, 0L, 0L)));
 
 		// WHEN
 		AuditDatum d = incrementAndGet(meta, now, 321);
@@ -134,7 +135,7 @@ public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSuppo
 		DatumTestUtils.assertStaleAuditDatum("Stale", stale.get(0),
 				new StaleAuditDatumEntity(meta.getStreamId(),
 						now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS).toInstant(),
-						Aggregation.Day, null));
+						Aggregation.Day, now()));
 	}
 
 }

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.biz.dao.test;
 
+import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
@@ -97,7 +98,7 @@ public class DaoDatumMaintenanceBizTests {
 		UUID streamId = UUID.randomUUID();
 		List<net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum> daoStale = new ArrayList<>();
 		StaleAggregateDatumEntity daoDatum = new StaleAggregateDatumEntity(streamId,
-				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, Instant.now());
+				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, now());
 		daoStale.add(daoDatum);
 		Capture<DatumStreamCriteria> filterCaptor = new Capture<>();
 		BasicFilterResults<net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum, StreamKindPK> daoResults = new BasicFilterResults<>(
@@ -142,7 +143,7 @@ public class DaoDatumMaintenanceBizTests {
 		UUID streamId = UUID.randomUUID();
 		List<net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum> daoStale = new ArrayList<>();
 		StaleAggregateDatumEntity daoDatum = new StaleAggregateDatumEntity(streamId,
-				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, Instant.now());
+				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, now());
 		daoStale.add(daoDatum);
 		Capture<DatumStreamCriteria> filterCaptor = new Capture<>();
 		BasicFilterResults<net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum, StreamKindPK> daoResults = new BasicFilterResults<>(

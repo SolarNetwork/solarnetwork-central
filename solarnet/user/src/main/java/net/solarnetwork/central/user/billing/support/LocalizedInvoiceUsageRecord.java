@@ -22,10 +22,11 @@
 
 package net.solarnetwork.central.user.billing.support;
 
-import java.util.Collections;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
 import net.solarnetwork.central.user.billing.domain.InvoiceUsageRecord;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemUsageRecordInfo;
@@ -43,10 +44,10 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceUsageRecordI
 public class LocalizedInvoiceUsageRecord<T>
 		implements InvoiceUsageRecord<T>, LocalizedInvoiceUsageRecordInfo {
 
-	private final String localizedDescription;
 	private final InvoiceUsageRecord<T> usage;
 	private final Locale locale;
 	private final String currencyCode;
+	private final @Nullable String localizedDescription;
 
 	/**
 	 * Convenience builder.
@@ -60,6 +61,8 @@ public class LocalizedInvoiceUsageRecord<T>
 	 * @param currencyCode
 	 *        the currency code
 	 * @return the localized invoice
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public static <T> LocalizedInvoiceUsageRecord<T> of(InvoiceUsageRecord<T> usage, Locale locale,
 			String currencyCode) {
@@ -75,6 +78,8 @@ public class LocalizedInvoiceUsageRecord<T>
 	 *        the locale to localize to
 	 * @param currencyCode
 	 *        the currency code
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public LocalizedInvoiceUsageRecord(InvoiceUsageRecord<T> usage, Locale locale, String currencyCode) {
 		this(usage, locale, null, currencyCode);
@@ -91,18 +96,21 @@ public class LocalizedInvoiceUsageRecord<T>
 	 *        the localized description
 	 * @param currencyCode
 	 *        the currency code
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code localizedDescription} is
+	 *         {@code null}
 	 */
 	public LocalizedInvoiceUsageRecord(InvoiceUsageRecord<T> usage, Locale locale,
-			String localizedDescription, String currencyCode) {
+			@Nullable String localizedDescription, String currencyCode) {
 		super();
-		this.usage = usage;
-		this.locale = locale;
+		this.usage = requireNonNullArgument(usage, "usage");
+		this.locale = requireNonNullArgument(locale, "locale");
 		this.localizedDescription = localizedDescription;
-		this.currencyCode = currencyCode;
+		this.currencyCode = requireNonNullArgument(currencyCode, "currencyCode");
 	}
 
 	@Override
-	public T getUsageKey() {
+	public @Nullable T getUsageKey() {
 		return usage.getUsageKey();
 	}
 
@@ -113,16 +121,15 @@ public class LocalizedInvoiceUsageRecord<T>
 
 	@Override
 	public String getLocalizedDescription() {
-		return (localizedDescription != null ? localizedDescription : usage.getDescription());
+		String desc = (localizedDescription != null ? localizedDescription : usage.getDescription());
+		return (desc != null ? desc : "");
 	}
 
 	@Override
 	public List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedUsageRecords() {
 		List<InvoiceItemUsageRecord> recs = getUsageRecords();
-		if ( recs == null ) {
-			return null;
-		} else if ( recs.isEmpty() ) {
-			return Collections.emptyList();
+		if ( recs == null || recs.isEmpty() ) {
+			return List.of();
 		}
 		return recs.stream().map(record -> {
 			if ( record instanceof LocalizedInvoiceItemUsageRecordInfo li ) {

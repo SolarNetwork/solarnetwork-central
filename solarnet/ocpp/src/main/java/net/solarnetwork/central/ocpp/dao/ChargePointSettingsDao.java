@@ -40,7 +40,7 @@ public interface ChargePointSettingsDao extends GenericDao<ChargePointSettings, 
 	 * 
 	 * @param userId
 	 *        the owner ID
-	 * @return the available settings; never {@literal null}
+	 * @return the available settings; never {@code null}
 	 */
 	Collection<ChargePointSettings> findAllForOwner(Long userId);
 
@@ -51,7 +51,7 @@ public interface ChargePointSettingsDao extends GenericDao<ChargePointSettings, 
 	 *        the owner ID
 	 * @param id
 	 *        the ID to look for
-	 * @return the matching entity; never {@literal null}
+	 * @return the matching entity; never {@code null}
 	 * @throws RuntimeException
 	 *         if the entity cannot be found
 	 */
@@ -77,8 +77,8 @@ public interface ChargePointSettingsDao extends GenericDao<ChargePointSettings, 
 	 *        the charge point owner user ID
 	 * @param id
 	 *        the charge point ID to resolve settings for
-	 * @return the settings, or {@literal null} if no charge point or user
-	 *         settings exist
+	 * @return the settings, or {@code null} if no charge point or user settings
+	 *         exist
 	 */
 	ChargePointSettings resolveSettings(Long userId, Long id);
 

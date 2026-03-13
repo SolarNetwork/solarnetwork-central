@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.domain;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.support.FilterSupport;
 import net.solarnetwork.domain.MutableSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
@@ -40,10 +41,10 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	@Serial
 	private static final long serialVersionUID = -1664006438848339711L;
 
-	private List<MutableSortDescriptor> sorts;
-	private Long offset = 0L;
-	private Integer max;
-	private Boolean unpaid;
+	private @Nullable List<MutableSortDescriptor> sorts;
+	private @Nullable Long offset = 0L;
+	private @Nullable Integer max;
+	private @Nullable Boolean unpaid;
 
 	@Override
 	public int hashCode() {
@@ -57,7 +58,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -94,9 +95,9 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	/**
 	 * Get the mutable sort descriptors.
 	 *
-	 * @return the sort descriptors, or {@literal null}
+	 * @return the sort descriptors, or {@code null}
 	 */
-	public List<MutableSortDescriptor> getSorts() {
+	public final @Nullable List<MutableSortDescriptor> getSorts() {
 		return sorts;
 	}
 
@@ -106,7 +107,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 * @param sorts
 	 *        the sort descriptors to se
 	 */
-	public void setSorts(List<MutableSortDescriptor> sorts) {
+	public final void setSorts(@Nullable List<MutableSortDescriptor> sorts) {
 		this.sorts = sorts;
 	}
 
@@ -115,12 +116,12 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 *
 	 * <p>
 	 * This returns a copy of the {@code sorts} list or an empty list if that is
-	 * {@literal null}.
+	 * {@code null}.
 	 * </p>
 	 *
 	 * @return the sort descriptors, never {@code null}
 	 */
-	public List<SortDescriptor> getSortDescriptors() {
+	public final List<SortDescriptor> getSortDescriptors() {
 		if ( sorts == null ) {
 			return new ArrayList<>(2);
 		}
@@ -130,9 +131,9 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	/**
 	 * Get the result starting offset.
 	 *
-	 * @return the starting offset, or {@literal null} for no offset
+	 * @return the starting offset, or {@code null} for no offset
 	 */
-	public Long getOffset() {
+	public final @Nullable Long getOffset() {
 		return offset;
 	}
 
@@ -142,7 +143,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 * @param offset
 	 *        the offset to set
 	 */
-	public void setOffset(Long offset) {
+	public final void setOffset(@Nullable Long offset) {
 		this.offset = offset;
 	}
 
@@ -151,7 +152,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 *
 	 * @return the maximum desired result count
 	 */
-	public Integer getMax() {
+	public final @Nullable Integer getMax() {
 		return max;
 	}
 
@@ -159,14 +160,14 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 * Set the maximum desired results.
 	 *
 	 * @param max
-	 *        the maximum desired result count, or {@literal null} for no limit
+	 *        the maximum desired result count, or {@code null} for no limit
 	 */
-	public void setMax(Integer max) {
+	public final void setMax(@Nullable Integer max) {
 		this.max = max;
 	}
 
 	@Override
-	public Boolean getUnpaid() {
+	public final @Nullable Boolean getUnpaid() {
 		return unpaid;
 	}
 
@@ -176,7 +177,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 * @param unpaid
 	 *        the unpaid value to limit the results to
 	 */
-	public void setUnpaid(Boolean unpaid) {
+	public final void setUnpaid(@Nullable Boolean unpaid) {
 		this.unpaid = unpaid;
 	}
 

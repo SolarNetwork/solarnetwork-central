@@ -130,10 +130,8 @@ public class UserCloudIntegrationsController_DatumStreamWebTests
 
 	private CloudIntegrationConfiguration createIntegration(Long userId) {
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
-				unassignedEntityIdKey(userId), clock.instant());
+				unassignedEntityIdKey(userId), clock.instant(), randomString(), randomString());
 		conf.setModified(conf.getCreated());
-		conf.setName(randomString());
-		conf.setServiceIdentifier(randomString());
 		conf.setEnabled(true);
 
 		return integrationDao.get(integrationDao.save(conf));
@@ -142,23 +140,19 @@ public class UserCloudIntegrationsController_DatumStreamWebTests
 	private CloudDatumStreamMappingConfiguration createDatumStreamMapping(Long userId,
 			Long integrationId) {
 		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(
-				unassignedEntityIdKey(userId), clock.instant());
+				unassignedEntityIdKey(userId), clock.instant(), randomString(), integrationId);
 		conf.setModified(conf.getCreated());
-		conf.setName(randomString());
 		conf.setEnabled(true);
-		conf.setIntegrationId(integrationId);
 
 		return datumStreamMappingDao.get(datumStreamMappingDao.save(conf));
 	}
 
 	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long nodeId) {
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
-				unassignedEntityIdKey(userId), clock.instant());
+				unassignedEntityIdKey(userId), clock.instant(), randomString(), randomString(),
+				ObjectDatumKind.Node);
 		conf.setModified(conf.getCreated());
-		conf.setName(randomString());
-		conf.setServiceIdentifier(randomString());
 		conf.setEnabled(true);
-		conf.setKind(ObjectDatumKind.Node);
 		conf.setObjectId(nodeId);
 		conf.setSchedule("600");
 		conf.setSourceId(randomString());

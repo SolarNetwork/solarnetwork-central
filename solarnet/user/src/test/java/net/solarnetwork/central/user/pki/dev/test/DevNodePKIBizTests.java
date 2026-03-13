@@ -55,13 +55,11 @@ public class DevNodePKIBizTests {
 
 	@BeforeEach
 	public void setup() {
-		biz = new DevNodePKIBiz();
-
 		certificateService = new BCCertificateService();
 		certificateService.setCertificateExpireDays(365);
 		certificateService.setSignatureAlgorithm("SHA256WithRSA");
-		biz.setCertificateService(certificateService);
-		biz.setCaService(certificateService);
+
+		biz = new DevNodePKIBiz(certificateService, certificateService);
 
 		User userDetails = new User("test@localhost", "foobar", AuthorityUtils.NO_AUTHORITIES);
 		AuthenticatedUser user = new AuthenticatedUser(userDetails, -1L, "Test User", false);

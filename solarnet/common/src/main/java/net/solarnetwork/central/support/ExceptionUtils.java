@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.support;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
@@ -61,9 +63,12 @@ public final class ExceptionUtils {
 	 *        the message source
 	 * @return the error message
 	 */
-	public static String generateErrorsMessage(Errors e, Locale locale, MessageSource msgSrc) {
-		String msg = (msgSrc == null ? "Validation error"
-				: msgSrc.getMessage("error.validation", null, "Validation error", locale));
+	public static String generateErrorsMessage(@Nullable Errors e, @Nullable Locale locale,
+			@Nullable MessageSource msgSrc) {
+		String msg = nonnull(
+				(msgSrc == null ? "Validation error"
+						: msgSrc.getMessage("error.validation", null, "Validation error", locale)),
+				"msg");
 		if ( msgSrc != null && e != null && e.hasErrors() ) {
 			StringBuilder buf = new StringBuilder();
 			for ( ObjectError error : e.getAllErrors() ) {
@@ -97,8 +102,8 @@ public final class ExceptionUtils {
 	 *        the message source
 	 * @return the result
 	 */
-	public static <V> Result<V> generateErrorsResult(Errors e, String code, Locale locale,
-			MessageSource msgSrc) {
+	public static <V> Result<V> generateErrorsResult(@Nullable Errors e, @Nullable String code,
+			@Nullable Locale locale, @Nullable MessageSource msgSrc) {
 		return generateErrorsResult(e, code, generateErrorsMessage(e, locale, msgSrc), locale, msgSrc);
 	}
 
@@ -124,8 +129,8 @@ public final class ExceptionUtils {
 	 *        the message source
 	 * @return the result
 	 */
-	public static <V> Result<V> generateErrorsResult(Errors e, String code, String message,
-			Locale locale, MessageSource msgSrc) {
+	public static <V> Result<V> generateErrorsResult(@Nullable Errors e, @Nullable String code,
+			@Nullable String message, @Nullable Locale locale, @Nullable MessageSource msgSrc) {
 		List<Result.ErrorDetail> details = null;
 		if ( msgSrc != null && e != null && e.hasErrors() ) {
 			for ( ObjectError error : e.getGlobalErrors() ) {
@@ -168,7 +173,8 @@ public final class ExceptionUtils {
 	 *        the validator
 	 * @return the result
 	 */
-	public static BindingResult toBindingResult(ConstraintViolationException e, Validator validator) {
+	public static BindingResult toBindingResult(ConstraintViolationException e,
+			@Nullable Validator validator) {
 		Object object = null;
 		for ( ConstraintViolation<?> violation : e.getConstraintViolations() ) {
 			if ( violation.getLeafBean() != null ) {
@@ -180,7 +186,9 @@ public final class ExceptionUtils {
 		}
 		try {
 			BindingResult bindingResult = new BeanPropertyBindingResult(object, "input");
-			new SpringValidatorAdapterSupport(validator, e, bindingResult);
+			if ( validator != null ) {
+				new SpringValidatorAdapterSupport(validator, e, bindingResult);
+			}
 			return bindingResult;
 		} catch ( IllegalStateException e2 ) {
 			// try with root bean instead of leaf
@@ -190,7 +198,9 @@ public final class ExceptionUtils {
 			}
 			BindingResult bindingResult = new BeanPropertyBindingResult(object, "input");
 			try {
-				new SpringValidatorAdapterSupport(validator, e, bindingResult);
+				if ( validator != null ) {
+					new SpringValidatorAdapterSupport(validator, e, bindingResult);
+				}
 				return bindingResult;
 			} catch ( IllegalStateException e3 ) {
 				// fall back to generic message

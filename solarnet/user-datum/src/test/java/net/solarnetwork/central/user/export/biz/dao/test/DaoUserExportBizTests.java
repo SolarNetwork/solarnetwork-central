@@ -42,6 +42,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
@@ -130,8 +131,8 @@ public class DaoUserExportBizTests {
 		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 
 		final UserOutputConfiguration conf = new UserOutputConfiguration(userId, UNASSIGNED_ENTITY_ID,
-				Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		conf.setServiceIdentifier(TEST_OUTPUT_SERVICE_ID);
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), randomString(), TEST_OUTPUT_SERVICE_ID,
+				OutputCompressionType.None);
 		conf.setServiceProps(Map.of("foo", 1, TEST_SECURE_SETTING, "bam"));
 
 		given(outputConfigDao.save(same(conf))).willReturn(pk);
@@ -178,8 +179,8 @@ public class DaoUserExportBizTests {
 		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 
 		final UserDestinationConfiguration conf = new UserDestinationConfiguration(userId,
-				UNASSIGNED_ENTITY_ID, Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		conf.setServiceIdentifier(TEST_OUTPUT_SERVICE_ID);
+				UNASSIGNED_ENTITY_ID, Instant.now().truncatedTo(ChronoUnit.MILLIS), randomString(),
+				TEST_DESTINATION_SERVICE_ID);
 		conf.setServiceProps(Map.of("foo", 1, TEST_SECURE_SETTING, "bam"));
 
 		given(destinationConfigDao.save(same(conf))).willReturn(pk);
@@ -226,15 +227,15 @@ public class DaoUserExportBizTests {
 		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 
 		final UserDestinationConfiguration existing = new UserDestinationConfiguration(userId,
-				UNASSIGNED_ENTITY_ID, Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		existing.setServiceIdentifier(TEST_OUTPUT_SERVICE_ID);
+				UNASSIGNED_ENTITY_ID, Instant.now().truncatedTo(ChronoUnit.MILLIS), randomString(),
+				TEST_DESTINATION_SERVICE_ID);
 		existing.setServiceProps(Map.of("foo", 1, TEST_SECURE_SETTING, textEncryptor.encrypt("bing")));
 
 		given(destinationConfigDao.get(pk, userId)).willReturn(existing);
 
 		final UserDestinationConfiguration conf = new UserDestinationConfiguration(pk,
-				Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		conf.setServiceIdentifier(TEST_OUTPUT_SERVICE_ID);
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), randomString(),
+				TEST_DESTINATION_SERVICE_ID);
 		conf.setServiceProps(Map.of("foo", 2, "bar", 1, TEST_SECURE_SETTING, "bam"));
 
 		given(destinationConfigDao.save(same(conf))).willReturn(pk);
@@ -283,15 +284,15 @@ public class DaoUserExportBizTests {
 		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 
 		final UserDestinationConfiguration existing = new UserDestinationConfiguration(userId,
-				UNASSIGNED_ENTITY_ID, Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		existing.setServiceIdentifier(TEST_OUTPUT_SERVICE_ID);
+				UNASSIGNED_ENTITY_ID, Instant.now().truncatedTo(ChronoUnit.MILLIS), randomString(),
+				TEST_DESTINATION_SERVICE_ID);
 		existing.setServiceProps(Map.of("foo", 1, TEST_SECURE_SETTING, textEncryptor.encrypt("bing")));
 
 		given(destinationConfigDao.get(pk, userId)).willReturn(existing);
 
 		final UserDestinationConfiguration conf = new UserDestinationConfiguration(pk,
-				Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		conf.setServiceIdentifier(TEST_OUTPUT_SERVICE_ID);
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), randomString(),
+				TEST_DESTINATION_SERVICE_ID);
 		conf.setServiceProps(Map.of("foo", 2, "bar", 1, TEST_SECURE_SETTING, ""));
 
 		given(destinationConfigDao.save(same(conf))).willReturn(pk);
@@ -340,15 +341,15 @@ public class DaoUserExportBizTests {
 		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 
 		final UserDestinationConfiguration existing = new UserDestinationConfiguration(userId,
-				UNASSIGNED_ENTITY_ID, Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		existing.setServiceIdentifier(TEST_OUTPUT_SERVICE_ID);
+				UNASSIGNED_ENTITY_ID, Instant.now().truncatedTo(ChronoUnit.MILLIS), randomString(),
+				TEST_DESTINATION_SERVICE_ID);
 		existing.setServiceProps(Map.of("foo", 1, TEST_SECURE_SETTING, textEncryptor.encrypt("bing")));
 
 		given(destinationConfigDao.get(pk, userId)).willReturn(existing);
 
 		final UserDestinationConfiguration conf = new UserDestinationConfiguration(pk,
-				Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		conf.setServiceIdentifier(TEST_OUTPUT_SERVICE_ID);
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), randomString(),
+				TEST_DESTINATION_SERVICE_ID);
 		conf.setServiceProps(
 				Map.of("foo", 2, "bar", 1, TEST_SECURE_SETTING, textEncryptor.encrypt("blamo")));
 
@@ -398,15 +399,15 @@ public class DaoUserExportBizTests {
 		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 
 		final UserDestinationConfiguration existing = new UserDestinationConfiguration(userId,
-				UNASSIGNED_ENTITY_ID, Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		existing.setServiceIdentifier(TEST_OUTPUT_SERVICE_ID);
+				UNASSIGNED_ENTITY_ID, Instant.now().truncatedTo(ChronoUnit.MILLIS), randomString(),
+				TEST_DESTINATION_SERVICE_ID);
 		existing.setServiceProps(Map.of("foo", 1, TEST_SECURE_SETTING, "not.encrypted"));
 
 		given(destinationConfigDao.get(pk, userId)).willReturn(existing);
 
 		final UserDestinationConfiguration conf = new UserDestinationConfiguration(pk,
-				Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		conf.setServiceIdentifier(TEST_OUTPUT_SERVICE_ID);
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), randomString(),
+				TEST_DESTINATION_SERVICE_ID);
 		conf.setServiceProps(Map.of("foo", 2, "bar", 1, TEST_SECURE_SETTING,
 				"{SHA-256}%s".formatted(DigestUtils.sha256Hex("some.thing"))));
 

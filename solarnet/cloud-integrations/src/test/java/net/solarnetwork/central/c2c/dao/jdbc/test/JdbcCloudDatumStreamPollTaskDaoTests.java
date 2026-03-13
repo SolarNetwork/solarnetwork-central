@@ -23,7 +23,6 @@
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
 import static java.time.Instant.now;
-import static java.util.Collections.singletonMap;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamPollTaskEntityData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamPollTaskEntity;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
@@ -36,7 +35,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -137,7 +135,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
 				mapping.getConfigId(), null);
 
-		Map<String, Object> props = singletonMap("foo", "bar");
+		Map<String, Object> props = Map.of("foo", "bar");
 		// @formatter:off
 		CloudDatumStreamPollTaskEntity conf = newCloudDatumStreamPollTaskEntity(userId,
 				datumStream.getConfigId(),
@@ -380,7 +378,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		conf.setStartAt(now().plusMillis(4747474));
 		conf.setMessage(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		UserLongCompositePK result = dao.save(conf);
@@ -409,7 +407,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		conf.setStartAt(now().plusMillis(4747474));
 		conf.setMessage(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		boolean result = dao.updateTask(conf, BasicClaimableJobState.Queued);
@@ -446,7 +444,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		conf.setStartAt(now().plusMillis(4747474));
 		conf.setMessage(randomString());
 
-		Map<String, Object> props = Collections.singletonMap("bar", "foo");
+		Map<String, Object> props = Map.of("bar", "foo");
 		conf.setServiceProps(props);
 
 		boolean result = dao.updateTask(conf, BasicClaimableJobState.Claimed);

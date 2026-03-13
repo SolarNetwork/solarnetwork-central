@@ -170,7 +170,7 @@ public interface Configuration {
 	 * @param outputFormatService
 	 *        the output format service to determine the filename extension to
 	 *        use
-	 * @return the properties, never {@literal null}
+	 * @return the properties, never {@code null}
 	 */
 	default Map<String, Object> createRuntimeProperties(DatumExportRequest request,
 			DateTimeFormatter dateFormatter, DatumExportOutputFormatService outputFormatService) {
@@ -226,7 +226,7 @@ public interface Configuration {
 	 * If no time zone is available, {@literal UTC} will be used.
 	 * </p>
 	 *
-	 * @return the formatter, never {@literal null}
+	 * @return the formatter, never {@code null}
 	 */
 	default DateTimeFormatter createDateTimeFormatterForSchedule() {
 		ScheduleType schedule = getSchedule();

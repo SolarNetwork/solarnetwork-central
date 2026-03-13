@@ -156,7 +156,7 @@ public class SwaggerUtils {
 			// we might mutate the schemas map, so iterate over array copy of current names
 			for ( String schemaName : schemas.keySet().toArray(String[]::new) ) {
 				Schema s = schemas.get(schemaName);
-				if ( !s.getName().startsWith(FilterResults.class.getSimpleName()) ) {
+				if ( s == null || !s.getName().startsWith(FilterResults.class.getSimpleName()) ) {
 					continue;
 				}
 				Object resProp = s.getProperties().get("results");

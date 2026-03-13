@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.domain;
 
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkAssociationDetails;
 
@@ -38,7 +39,7 @@ public class BasicUserNodeCertificateRenewal extends NetworkAssociationDetails
 	@Serial
 	private static final long serialVersionUID = 3537089462856128834L;
 
-	private UserNodeCertificateInstallationStatus installationStatus;
+	private @Nullable UserNodeCertificateInstallationStatus installationStatus;
 
 	/**
 	 * Default constructor.
@@ -61,11 +62,12 @@ public class BasicUserNodeCertificateRenewal extends NetworkAssociationDetails
 	}
 
 	@Override
-	public UserNodeCertificateInstallationStatus getInstallationStatus() {
+	public final @Nullable UserNodeCertificateInstallationStatus getInstallationStatus() {
 		return installationStatus;
 	}
 
-	public void setInstallationStatus(UserNodeCertificateInstallationStatus installationStatus) {
+	public final void setInstallationStatus(
+			@Nullable UserNodeCertificateInstallationStatus installationStatus) {
 		this.installationStatus = installationStatus;
 	}
 

@@ -23,33 +23,34 @@
 package net.solarnetwork.central.biz.dao.test;
 
 import static java.lang.String.format;
-import static java.util.Arrays.sort;
-import static java.util.UUID.randomUUID;
-import static org.assertj.core.api.BDDAssertions.then;
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.arrayContaining;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.sameInstance;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.easymock.Capture;
-import org.easymock.CaptureType;
-import org.easymock.EasyMock;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.netty.util.concurrent.Future;
@@ -77,30 +78,39 @@ import tools.jackson.databind.module.SimpleModule;
  * @author matt
  * @version 1.4
  */
+@SuppressWarnings("static-access")
+@ExtendWith(MockitoExtension.class)
 public class AsyncDaoUserEventAppenderBizTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
+	@Mock
+	private UserEventAppenderDao dao;
+
+	@Mock
+	private MqttConnection mqttConnection;
+
+	@Captor
+	private ArgumentCaptor<UserEvent> eventCaptor;
+
+	@Captor
+	private ArgumentCaptor<MqttMessage> messageCaptor;
+
 	private UuidGenerator uuidGenerator;
 	private ExecutorService executor;
-	private UserEventAppenderDao dao;
-	private PriorityBlockingQueue<UserEvent> queue;
 	private StatTracker stats;
 	private AsyncDaoUserEventAppenderBiz biz;
 	private ObjectMapper objectMapper;
 	private MqttJsonPublisher<UserEvent> solarFluxPublisher;
-	private MqttConnection mqttConnection;
 
 	@BeforeEach
 	public void setup() {
 		uuidGenerator = TimeBasedV7UuidGenerator.INSTANCE_MICROS;
 		executor = Executors.newFixedThreadPool(3);
-		dao = EasyMock.createMock(UserEventAppenderDao.class);
-		queue = new PriorityBlockingQueue<>(64, AsyncDaoUserEventAppenderBiz.EVENT_SORT);
 		stats = new StatTracker("AsyncDaoUserEventAppender",
 				"net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz",
 				LoggerFactory.getLogger(AsyncDaoUserEventAppenderBiz.class), 10);
-		biz = new AsyncDaoUserEventAppenderBiz(executor, dao, queue, stats, uuidGenerator);
+		biz = new AsyncDaoUserEventAppenderBiz(executor, dao, stats, uuidGenerator);
 
 		SimpleModule m = new SimpleModule();
 		m.addSerializer(UserEvent.class, UserEventSerializer.INSTANCE);
@@ -108,43 +118,107 @@ public class AsyncDaoUserEventAppenderBizTests {
 
 		solarFluxPublisher = new MqttJsonPublisher<>("Test", objectMapper,
 				AsyncDaoUserEventAppenderBiz.SOLARFLUX_TOPIC_FN, false, MqttQos.AtMostOnce);
-		mqttConnection = EasyMock.createMock(MqttConnection.class);
-	}
-
-	@AfterEach
-	public void teardown() {
-		EasyMock.verify(dao, mqttConnection);
-	}
-
-	private void replayAll() {
-		EasyMock.replay(dao, mqttConnection);
 	}
 
 	@Test
 	public void add() {
 		// GIVEN
-		Long userId = randomUUID().getMostSignificantBits();
-
-		Capture<UserEvent> eventCaptor = new Capture<>();
-		dao.add(capture(eventCaptor));
+		final Long userId = randomLong();
+		final LogEventInfo info = new LogEventInfo(new String[] { "foo", randomString() },
+				randomString(), "{\"foo\":123}");
 
 		// WHEN
-		replayAll();
-		LogEventInfo info = new LogEventInfo(new String[] { "foo", UUID.randomUUID().toString() },
-				UUID.randomUUID().toString(), "{\"foo\":123}");
-		UserEvent result = biz.addEvent(userId, info);
+		final UserEvent result = biz.addEvent(userId, info);
 
 		// THEN
 		biz.serviceDidShutdown();
-		assertThat("Result provided", result, is(notNullValue()));
-		assertThat("Result same as persisted", eventCaptor.getValue(), is(sameInstance(result)));
-		assertThat("Generated event with user ID", result.getUserId(), is(equalTo(userId)));
-		assertThat("Generated event has UUID", result.getEventId(), is(notNullValue()));
-		assertThat("Generated event took tags from info", result.getTags(),
-				arrayContaining(info.getTags()));
-		assertThat("Generated event took message from info", result.getMessage(),
-				is(equalTo(info.getMessage())));
-		assertThat("Generated event took data from info", result.getData(), is(equalTo(info.getData())));
+
+		then(dao).should().add(eventCaptor.capture());
+
+		// @formatter:off
+		and.then(result)
+			.as("result provided")
+			.isNotNull()
+			.as("Result same instance as persisted")
+			.isSameAs(eventCaptor.getValue())
+			.as("Generated event with user ID")
+			.returns(userId, from(UserEvent::getUserId))
+			.as("Generated event used tags from info")
+			.returns(info.getTags(), from(UserEvent::getTags))
+			.as("Generated event used message from info")
+			.returns(info.getMessage(), from(UserEvent::getMessage))
+			.as("Generated event used data from info")
+			.returns(info.getData(), from(UserEvent::getData))
+			.extracting(UserEvent::getEventId)
+			.as("Event has UUID populated")
+			.isNotNull()
+			;
+		// @formatter:on
+	}
+
+	private static class TestAppenderDao implements UserEventAppenderDao {
+
+		private final CountDownLatch latch;
+		private final List<UserEvent> events;
+
+		private TestAppenderDao(CountDownLatch latch) {
+			super();
+			this.latch = latch;
+			this.events = new ArrayList<>();
+		}
+
+		@Override
+		public void add(UserEvent event) {
+			try {
+				latch.await();
+			} catch ( InterruptedException e ) {
+				// ignore
+			}
+			events.add(event);
+		}
+
+	}
+
+	@Test
+	public void add_queueFull() {
+		// GIVEN
+		// setup queue with capacity of 1
+		final BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>(1);
+		final ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 1L, TimeUnit.MINUTES, queue);
+		final CountDownLatch latch = new CountDownLatch(1);
+		final var dao = new TestAppenderDao(latch);
+		biz = new AsyncDaoUserEventAppenderBiz(executor, dao, stats, uuidGenerator);
+
+		final Long userId = randomLong();
+
+		final int infoCount = 3;
+		final List<LogEventInfo> infos = new ArrayList<>(infoCount);
+		for ( int i = 0; i < infoCount; i++ ) {
+			infos.add(new LogEventInfo(new String[] { "foo", randomString() }, randomString(),
+					"{\"foo\":123}"));
+		}
+
+		// WHEN
+		final List<UserEvent> results = new ArrayList<>(infoCount);
+		for ( LogEventInfo info : infos ) {
+			results.add(biz.addEvent(userId, info));
+		}
+
+		// THEN
+		latch.countDown(); // unblock DAO
+		biz.serviceDidShutdown();
+
+		// @formatter:off
+		and.then(results)
+			.as("Events generated for every add")
+			.hasSize(infoCount)
+			;
+
+		and.then(dao.events)
+			.as("Non-rejected events captured (first 2)")
+			.containsExactlyElementsOf(results.subList(0, 2))
+			;
+		// @formatter:on
 	}
 
 	@SuppressWarnings("unchecked")
@@ -154,55 +228,66 @@ public class AsyncDaoUserEventAppenderBizTests {
 		biz.setSolarFluxPublisher(solarFluxPublisher);
 		solarFluxPublisher.onMqttServerConnectionEstablished(mqttConnection, false);
 
-		Long userId = randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
 
-		Capture<UserEvent> eventCaptor = new Capture<>();
-		dao.add(capture(eventCaptor));
+		given(mqttConnection.isEstablished()).willReturn(true);
 
-		expect(mqttConnection.isEstablished()).andReturn(true);
 		@SuppressWarnings("rawtypes")
 		Future f = new SucceededFuture<Void>(null, null);
-		Capture<MqttMessage> mqttMsgCaptor = new Capture<>();
-		expect(mqttConnection.publish(capture(mqttMsgCaptor))).andReturn(f);
+		given(mqttConnection.publish(any())).willReturn(f);
 
 		// WHEN
-		replayAll();
-		LogEventInfo info = new LogEventInfo(new String[] { "foo", UUID.randomUUID().toString() },
-				UUID.randomUUID().toString(), "{\"foo\":123}");
+		LogEventInfo info = new LogEventInfo(new String[] { "foo", randomString() }, randomString(),
+				"{\"foo\":123}");
 		UserEvent result = biz.addEvent(userId, info);
 
 		// THEN
 		biz.serviceDidShutdown();
-		assertThat("Result provided", result, is(notNullValue()));
-		assertThat("Result same as persisted", eventCaptor.getValue(), is(sameInstance(result)));
-		assertThat("Generated event with user ID", result.getUserId(), is(equalTo(userId)));
-		assertThat("Generated event has UUID", result.getEventId(), is(notNullValue()));
-		assertThat("Generated event took tags from info", result.getTags(),
-				arrayContaining(info.getTags()));
-		assertThat("Generated event took message from info", result.getMessage(),
-				is(equalTo(info.getMessage())));
-		assertThat("Generated event took data from info", result.getData(), is(equalTo(info.getData())));
 
-		MqttMessage mqttMsg = mqttMsgCaptor.getValue();
-		assertThat("MqttMessage published for event", mqttMsg, is(notNullValue()));
-		assertThat("MqttMessage topic", mqttMsg.getTopic(),
-				is(equalTo(format("user/%d/event", userId))));
-		assertThat("MqttMessage retained", mqttMsg.isRetained(), is(equalTo(false)));
-		assertThat("MqttMessage QoS", mqttMsg.getQosLevel(), is(equalTo(MqttQos.AtMostOnce)));
-		assertThat("MqttMessage payload is UserEvent", Arrays.equals(mqttMsg.getPayload(),
-				objectMapper.writeValueAsBytes(eventCaptor.getValue())), is(equalTo(true)));
+		then(dao).should().add(eventCaptor.capture());
+
+		then(mqttConnection).should().publish(messageCaptor.capture());
+
+		// @formatter:off
+		and.then(result)
+			.as("result provided")
+			.isNotNull()
+			.as("Result same instance as persisted")
+			.isSameAs(eventCaptor.getValue())
+			.as("Generated event with user ID")
+			.returns(userId, from(UserEvent::getUserId))
+			.as("Generated event used tags from info")
+			.returns(info.getTags(), from(UserEvent::getTags))
+			.as("Generated event used message from info")
+			.returns(info.getMessage(), from(UserEvent::getMessage))
+			.as("Generated event used data from info")
+			.returns(info.getData(), from(UserEvent::getData))
+			.extracting(UserEvent::getEventId)
+			.as("Event has UUID populated")
+			.isNotNull()
+			;
+		
+		and.then(messageCaptor.getValue())
+			.as("MqttMessage published for event")
+			.isNotNull()
+			.as("MqttMessage topic")
+			.returns(format("user/%d/event", userId), from(MqttMessage::getTopic))
+			.as("MqttMessage retained")
+			.returns(false, from(MqttMessage::isRetained))
+			.as("MqttMessage QoS")
+			.returns(MqttQos.AtMostOnce, from(MqttMessage::getQosLevel))
+			.as("MqttMessage payload is UserEvent JSON data")
+			.returns(objectMapper.writeValueAsBytes(eventCaptor.getValue()), from(MqttMessage::getPayload))
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void add_concurrent() throws InterruptedException {
 		// GIVEN
 		final int taskCount = 100;
-		Capture<UserEvent> eventsCaptor = new Capture<>(CaptureType.ALL);
-		dao.add(capture(eventsCaptor));
-		expectLastCall().times(taskCount);
 
 		// WHEN
-		replayAll();
 		Queue<UserEvent> events = new ConcurrentLinkedQueue<>();
 		ExecutorService exec = Executors.newWorkStealingPool(6);
 		for ( int i = 0; i < taskCount; i++ ) {
@@ -211,9 +296,8 @@ public class AsyncDaoUserEventAppenderBizTests {
 
 				@Override
 				public void run() {
-					LogEventInfo info = new LogEventInfo(
-							new String[] { "foo", UUID.randomUUID().toString() },
-							UUID.randomUUID().toString(), "{\"foo\":123}");
+					LogEventInfo info = new LogEventInfo(new String[] { "foo", randomString() },
+							randomString(), "{\"foo\":123}");
 					log.info("Adding event info {}", info);
 					UserEvent event = biz.addEvent(userId, info);
 					events.add(event);
@@ -225,63 +309,57 @@ public class AsyncDaoUserEventAppenderBizTests {
 
 		// THEN
 		biz.serviceDidShutdown();
-		assertThat("Stats added count", stats.get(UserEventStats.EventsAdded),
-				is(equalTo((long) taskCount)));
-		assertThat("Stats stored count", stats.get(UserEventStats.EventsStored),
-				is(equalTo((long) taskCount)));
+
+		then(dao).should(times(taskCount)).add(eventCaptor.capture());
+
+		and.then(stats.get(UserEventStats.EventsAdded)).isEqualTo(taskCount);
+		and.then(stats.get(UserEventStats.EventsStored)).isEqualTo(taskCount);
 
 		UserEvent[] added = events.toArray(UserEvent[]::new);
-		sort(added);
-
-		UserEvent[] stored = eventsCaptor.getValues().toArray(UserEvent[]::new);
-		sort(stored);
-
-		assertThat("Added and stored the same", stored, arrayContaining(added));
+		UserEvent[] stored = eventCaptor.getAllValues().toArray(UserEvent[]::new);
+		and.then(added).as("Added and stored the same").containsExactlyInAnyOrder(stored);
 	}
 
 	@Test
 	public void taggedEventTopic_oneTag() {
 		// GIVEN
 		final Long userId = UUID.randomUUID().getLeastSignificantBits();
-		UserEvent evt = new UserEvent(userId, uuidGenerator.generate(), new String[] { "a" }, "msg",
-				"data");
+		final UserEvent evt = new UserEvent(userId, uuidGenerator.generate(), new String[] { "a" },
+				"msg", "data");
 
 		// WHEN
-		replayAll();
-		String topic = AsyncDaoUserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN.apply(evt);
+		final String topic = AsyncDaoUserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN.apply(evt);
 
 		// THEN
-		then(topic).as("Topic generated wihtout tags").isEqualTo("user/%d/event/a", userId);
+		and.then(topic).as("Topic generated wihtout tags").isEqualTo("user/%d/event/a", userId);
 	}
 
 	@Test
 	public void taggedEventTopic_twoTags() {
 		// GIVEN
 		final Long userId = UUID.randomUUID().getLeastSignificantBits();
-		UserEvent evt = new UserEvent(userId, uuidGenerator.generate(), new String[] { "a", "b" }, "msg",
-				"data");
+		final UserEvent evt = new UserEvent(userId, uuidGenerator.generate(), new String[] { "a", "b" },
+				"msg", "data");
 
 		// WHEN
-		replayAll();
-		String topic = AsyncDaoUserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN.apply(evt);
+		final String topic = AsyncDaoUserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN.apply(evt);
 
 		// THEN
-		then(topic).as("Topic generated wihtout tags").isEqualTo("user/%d/event/a/b", userId);
+		and.then(topic).as("Topic generated wihtout tags").isEqualTo("user/%d/event/a/b", userId);
 	}
 
 	@Test
 	public void taggedEventTopic_threeTags() {
 		// GIVEN
 		final Long userId = UUID.randomUUID().getLeastSignificantBits();
-		UserEvent evt = new UserEvent(userId, uuidGenerator.generate(), new String[] { "a", "b", "c" },
-				"msg", "data");
+		final UserEvent evt = new UserEvent(userId, uuidGenerator.generate(),
+				new String[] { "a", "b", "c" }, "msg", "data");
 
 		// WHEN
-		replayAll();
-		String topic = AsyncDaoUserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN.apply(evt);
+		final String topic = AsyncDaoUserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN.apply(evt);
 
 		// THEN
-		then(topic).as("Topic generated wihtout tags").isEqualTo("user/%d/event/a/b/c", userId);
+		and.then(topic).as("Topic generated wihtout tags").isEqualTo("user/%d/event/a/b/c", userId);
 	}
 
 }

@@ -35,6 +35,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjuster;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.TemporalAmount;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Helper methods for cloud integrations.
@@ -117,14 +118,15 @@ public final class CloudIntegrationsUtils {
 	 * @param tick
 	 *        the tick amount; a valid time- or date-based unit is assumed; see
 	 *        {@link java.time.temporal.TemporalUnit#isTimeBased()} and
-	 *        {@link java.time.temporal.TemporalUnit#isDateBased()}
+	 *        {@link java.time.temporal.TemporalUnit#isDateBased()}; if
+	 *        {@code null} then {@code tickStart} will be returned
 	 * @param tickStart
 	 *        a starting tick boundary instant
 	 * @param zone
 	 *        the time zone, for ticks larger than 1 day
 	 * @return the previous boundary start
 	 */
-	public static Instant prevTickStart(TemporalAmount tick, Instant tickStart, ZoneId zone) {
+	public static Instant prevTickStart(@Nullable TemporalAmount tick, Instant tickStart, ZoneId zone) {
 		if ( tick == null ) {
 			return tickStart;
 		}
@@ -141,14 +143,15 @@ public final class CloudIntegrationsUtils {
 	 * @param tick
 	 *        the tick amount; a valid time- or date-based unit is assumed; see
 	 *        {@link java.time.temporal.TemporalUnit#isTimeBased()} and
-	 *        {@link java.time.temporal.TemporalUnit#isDateBased()}
+	 *        {@link java.time.temporal.TemporalUnit#isDateBased()}; if
+	 *        {@code null} then {@code tickStart} will be returned
 	 * @param tickStart
 	 *        a starting tick boundary instant
 	 * @param zone
 	 *        the time zone, for ticks larger than 1 day
 	 * @return the next boundary start
 	 */
-	public static Instant nextTickStart(TemporalAmount tick, Instant tickStart, ZoneId zone) {
+	public static Instant nextTickStart(@Nullable TemporalAmount tick, Instant tickStart, ZoneId zone) {
 		if ( tick == null ) {
 			return tickStart;
 		}

@@ -57,7 +57,7 @@ public interface UserAdhocDatumExportTaskInfoDao
 	 * @param success
 	 *        if provided, filter the results to only include jobs with a
 	 *        matching success flag
-	 * @return the matching tasks, never {@literal null}
+	 * @return the matching tasks, never {@code null}
 	 */
 	List<UserAdhocDatumExportTaskInfo> findTasksForUser(Long userId, Set<DatumExportState> states,
 			Boolean success);

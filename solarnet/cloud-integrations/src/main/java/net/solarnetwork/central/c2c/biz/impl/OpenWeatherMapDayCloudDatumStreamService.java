@@ -27,13 +27,14 @@ import static net.solarnetwork.codec.jackson.JsonUtils.parseIntegerAttribute;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Status;
 import static net.solarnetwork.domain.datum.DayDatum.SUNRISE_KEY;
 import static net.solarnetwork.domain.datum.DayDatum.SUNSET_KEY;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Clock;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
@@ -80,10 +81,10 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 	}
 
 	/** The service secure setting keys. */
-	public static final Set<String> SECURE_SETTINGS = Collections.emptySet();
+	public static final Set<String> SECURE_SETTINGS = Set.of();
 
 	/** The supported placeholder keys. */
-	public static final List<String> SUPPORTED_PLACEHOLDERS = Collections.emptyList();
+	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of();
 
 	/**
 	 * Constructor.
@@ -107,7 +108,7 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OpenWeatherMapDayCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
@@ -134,8 +135,7 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 					JsonNode.class, _ -> uriBuilder.buildAndExpand().toUri(),
 					res -> parseDatum(res.getBody(), ds));
 
-			final List<GeneralDatum> resultDatum = (datum != null ? List.of(datum)
-					: Collections.emptyList());
+			final List<GeneralDatum> resultDatum = (datum != null ? List.of(datum) : List.of());
 
 			// evaluate expressions on merged datum
 			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
@@ -145,14 +145,19 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 		});
 	}
 
-	private GeneralDatum parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream) {
+	private @Nullable GeneralDatum parseDatum(@Nullable JsonNode json,
+			CloudDatumStreamConfiguration datumStream) {
 		Integer tzOffsetSecs = parseIntegerAttribute(json, "timezone");
 		if ( tzOffsetSecs == null ) {
 			return null;
 		}
 
-		GeneralDatum d = parseWeatherData(json, datumStream.getKind(), datumStream.getObjectId(),
-				datumStream.getSourceId());
+		final GeneralDatum d = parseWeatherData(json, datumStream.getKind(),
+				nonnull(datumStream.getObjectId(), "Object ID"),
+				nonnull(datumStream.getSourceId(), "Source ID"));
+		if ( d == null || d.getTimestamp() == null ) {
+			return null;
+		}
 
 		// create a day-specific datum
 		var samples = new DatumSamples();
@@ -163,10 +168,10 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 			return null;
 		}
 
-		return new GeneralDatum(
-				new DatumId(datumStream.getKind(), datumStream.getObjectId(), datumStream.getSourceId(),
-						d.getTimestamp().atZone(ZoneOffset.ofTotalSeconds(tzOffsetSecs))
-								.truncatedTo(ChronoUnit.DAYS).toInstant()),
+		return new GeneralDatum(DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(),
+				datumStream.getSourceId(),
+				d.getTimestamp().atZone(ZoneOffset.ofTotalSeconds(tzOffsetSecs))
+						.truncatedTo(ChronoUnit.DAYS).toInstant()),
 				samples);
 	}
 

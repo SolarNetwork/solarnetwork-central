@@ -53,7 +53,7 @@ public class InputDataEntity extends BasicEntity<UserLongStringCompositePK>
 	 * @param data
 	 *        the data
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code data} is {@literal null}
+	 *         if any argument except {@code data} is {@code null}
 	 */
 	public InputDataEntity(UserLongStringCompositePK id, Instant created, byte[] data) {
 		super(id, created);
@@ -74,7 +74,7 @@ public class InputDataEntity extends BasicEntity<UserLongStringCompositePK>
 	 * @param data
 	 *        the data
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code data} is {@literal null}
+	 *         if any argument except {@code data} is {@code null}
 	 */
 	public InputDataEntity(Long userId, Long nodeId, String sourceId, Instant created, byte[] data) {
 		this(new UserLongStringCompositePK(userId, nodeId, sourceId), created, data);

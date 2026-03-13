@@ -82,7 +82,7 @@ public final class UpsertServerMeasurementConfiguration
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertServerMeasurementConfiguration(Long userId, Long serverId,
 			ServerMeasurementConfiguration entity) {

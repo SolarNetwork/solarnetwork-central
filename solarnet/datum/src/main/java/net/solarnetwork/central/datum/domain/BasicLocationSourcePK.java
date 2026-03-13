@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasePK;
 
 /**
@@ -40,15 +42,8 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	@Serial
 	private static final long serialVersionUID = 5041677194630502340L;
 
-	private Long locationId;
-	private String sourceId;
-
-	/**
-	 * Default constructor.
-	 */
-	public BasicLocationSourcePK() {
-		super();
-	}
+	private final Long locationId;
+	private final String sourceId;
 
 	/**
 	 * Constructor.
@@ -57,11 +52,13 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	 *        the location ID
 	 * @param sourceId
 	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public BasicLocationSourcePK(Long locationId, String sourceId) {
 		super();
-		this.locationId = locationId;
-		this.sourceId = sourceId;
+		this.locationId = requireNonNullArgument(locationId, "locationId");
+		this.sourceId = requireNonNullArgument(sourceId, "sourceId");
 	}
 
 	@Override
@@ -72,31 +69,20 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	@Override
 	protected void populateIdValue(StringBuilder buf) {
 		buf.append("n=");
-		if ( locationId != null ) {
-			buf.append(locationId);
-		}
+		buf.append(locationId);
 		buf.append(";s=");
-		if ( sourceId != null ) {
-			buf.append(sourceId);
-		}
+		buf.append(sourceId);
 	}
 
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
-		if ( locationId != null ) {
-			if ( !buf.isEmpty() ) {
-				buf.append(", ");
-			}
-			buf.append("locationId=");
-			buf.append(locationId);
+		if ( !buf.isEmpty() ) {
+			buf.append(", ");
 		}
-		if ( sourceId != null ) {
-			if ( !buf.isEmpty() ) {
-				buf.append(", ");
-			}
-			buf.append("sourceId=");
-			buf.append(sourceId);
-		}
+		buf.append("locationId=");
+		buf.append(locationId);
+		buf.append(", sourceId=");
+		buf.append(sourceId);
 	}
 
 	@Override
@@ -105,7 +91,7 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -127,7 +113,7 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	 * <li>sourceId</li>
 	 * </ol>
 	 *
-	 * {@literal null} values will be sorted before non-{@literal null} values.
+	 * {@code null} values will be sorted before non-{@code null} values.
 	 *
 	 * @param o
 	 *        the object to compare to
@@ -135,43 +121,33 @@ public class BasicLocationSourcePK extends BasePK implements Serializable, Clone
 	 *         less than, equal to, or l to, or greater than the specified
 	 *         object.
 	 */
-	public int compareTo(BasicLocationSourcePK o) {
+	public int compareTo(@Nullable BasicLocationSourcePK o) {
 		if ( o == null ) {
 			return 1;
 		}
-		Long oLocationId = o.getLocationId();
-		Long locationId = getLocationId();
-		if ( oLocationId == null ) {
-			return 1;
-		} else if ( locationId == null ) {
-			return -1;
-		}
-		int comparison = locationId.compareTo(oLocationId);
+		int comparison = locationId.compareTo(o.locationId);
 		if ( comparison != 0 ) {
 			return comparison;
-		}
-		if ( o.sourceId == null ) {
-			return 1;
-		} else if ( sourceId == null ) {
-			return -1;
 		}
 		return sourceId.compareToIgnoreCase(o.sourceId);
 	}
 
-	public Long getLocationId() {
+	/**
+	 * Get the location ID.
+	 *
+	 * @return the location ID
+	 */
+	public final Long getLocationId() {
 		return locationId;
 	}
 
-	public void setLocationId(Long locationId) {
-		this.locationId = locationId;
-	}
-
-	public String getSourceId() {
+	/**
+	 * Get the source ID.
+	 *
+	 * @return the source ID
+	 */
+	public final String getSourceId() {
 		return sourceId;
-	}
-
-	public void setSourceId(String sourceId) {
-		this.sourceId = sourceId;
 	}
 
 }

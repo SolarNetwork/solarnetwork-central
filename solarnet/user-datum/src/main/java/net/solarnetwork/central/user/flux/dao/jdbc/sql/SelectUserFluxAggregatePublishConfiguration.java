@@ -61,7 +61,7 @@ public final class SelectUserFluxAggregatePublishConfiguration
 	 * @param filter
 	 *        the filter
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectUserFluxAggregatePublishConfiguration(
 			UserFluxAggregatePublishConfigurationFilter filter) {
@@ -76,7 +76,7 @@ public final class SelectUserFluxAggregatePublishConfiguration
 	 * @param fetchSize
 	 *        the row fetch size
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectUserFluxAggregatePublishConfiguration(
 			UserFluxAggregatePublishConfigurationFilter filter, int fetchSize) {
@@ -92,7 +92,7 @@ public final class SelectUserFluxAggregatePublishConfiguration
 	 * @param key
 	 *        the primary key to select
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectUserFluxAggregatePublishConfiguration(UserLongCompositePK key) {
 		super();

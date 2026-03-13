@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.user.billing.snf.jobs.test;
 
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions.defaultOptions;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
@@ -84,16 +87,12 @@ public class InvoiceGeneratorTests {
 	}
 
 	private static Address createAddress(String country, String timeZoneId) {
-		final Address addr = new Address(randomUUID().getMostSignificantBits(), Instant.now());
-		addr.setCountry(country);
-		addr.setTimeZoneId(timeZoneId);
+		Address addr = new Address(randomLong(), randomString(), randomString(), country, timeZoneId);
 		return addr;
 	}
 
 	private static Account createAccount(Long userId, String locale, Address address) {
-		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
-				Instant.now());
-		account.setLocale(locale);
+		final Account account = new Account(randomLong(), userId, now(), "NZD", locale);
 		account.setAddress(address);
 		return account;
 	}
@@ -110,7 +109,8 @@ public class InvoiceGeneratorTests {
 
 		// generate invoice for month ending on endDate
 		SnfInvoice generatedInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				account.getUserId(), account.getId().getId(), Instant.now());
+				account.getUserId(), account.getId().getId(), Instant.now(), LocalDate.now(),
+				LocalDate.now(), "NZD");
 		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), defaultOptions()))
 				.andReturn(generatedInvoice);
 
@@ -150,7 +150,8 @@ public class InvoiceGeneratorTests {
 
 		// generate invoice for month ending on endDate
 		SnfInvoice generatedInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				account.getUserId(), account.getId().getId(), Instant.now());
+				account.getUserId(), account.getId().getId(), Instant.now(), LocalDate.now(),
+				LocalDate.now(), "NZD");
 		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), defaultOptions()))
 				.andReturn(generatedInvoice);
 

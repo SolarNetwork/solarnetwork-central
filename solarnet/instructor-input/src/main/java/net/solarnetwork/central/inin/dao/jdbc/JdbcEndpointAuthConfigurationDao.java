@@ -22,13 +22,15 @@
 
 package net.solarnetwork.central.inin.dao.jdbc;
 
-import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
@@ -58,7 +60,7 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcEndpointAuthConfigurationDao(JdbcOperations jdbcOps) {
 		super();
@@ -72,7 +74,7 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 
 	@Override
 	public EndpointAuthConfiguration entityKey(UserUuidLongCompositePK id) {
-		return new EndpointAuthConfiguration(id, now());
+		return new EndpointAuthConfiguration(id, Instant.EPOCH);
 	}
 
 	@Override
@@ -80,13 +82,13 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 			EndpointAuthConfiguration entity) {
 		final var sql = new UpsertEndpointAuthConfiguration(userId, endpointId, entity);
 
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		jdbcOps.update(sql);
+		return entity.pk();
 	}
 
 	@Override
 	public Collection<EndpointAuthConfiguration> findAll(Long userId, UUID endpointId,
-			List<SortDescriptor> sorts) {
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		filter.setEndpointId(endpointId);
@@ -98,7 +100,8 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 
 	@Override
 	public FilterResults<EndpointAuthConfiguration, UserUuidLongCompositePK> findFiltered(
-			EndpointAuthFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			EndpointAuthFilter filter, @Nullable List<SortDescriptor> sorts, @Nullable Long offset,
+			@Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectEndpointAuthConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, EndpointAuthConfigurationRowMapper.INSTANCE);
@@ -109,12 +112,12 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 		final var sql = new UpsertEndpointAuthConfiguration(entity.getUserId(), entity.getEndpointId(),
 				entity);
 
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		jdbcOps.update(sql);
+		return entity.pk();
 	}
 
 	@Override
-	public EndpointAuthConfiguration get(UserUuidLongCompositePK id) {
+	public @Nullable EndpointAuthConfiguration get(UserUuidLongCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -127,7 +130,7 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 	}
 
 	@Override
-	public Collection<EndpointAuthConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<EndpointAuthConfiguration> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -140,19 +143,20 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 	@Override
 	public void delete(EndpointAuthConfiguration entity) {
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+				requireNonNullArgument(entity, "entity").pk(), TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, EndpointAuthFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable EndpointAuthFilter filter, boolean enabled) {
 		UserUuidLongCompositePK key = filter != null && filter.hasEndpointCriteria()
 				&& filter.hasCredentialCriteria()
-						? new UserUuidLongCompositePK(userId, filter.getEndpointId(),
-								filter.getCredentialId())
+						? new UserUuidLongCompositePK(userId,
+								nonnull(filter.getEndpointId(), "Endpoint ID"),
+								nonnull(filter.getCredentialId(), "Credential ID"))
 						: filter != null && filter.hasEndpointCriteria()
 								? UserUuidLongCompositePK.unassignedEntityIdKey(userId,
-										filter.getEndpointId())
+										nonnull(filter.getEndpointId(), "Endpoint ID"))
 								: UserUuidLongCompositePK.unassignedEntityIdKey(userId);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for task related data.
  *
@@ -35,12 +37,12 @@ public interface TaskCriteria {
 	 *
 	 * <p>
 	 * This returns the first available task ID from the {@link #getTaskIds()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first task ID, or {@literal null} if not available
+	 * @return the first task ID, or {@code null} if not available
 	 */
-	default Long getTaskId() {
+	default @Nullable Long getTaskId() {
 		final Long[] array = getTaskIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -48,9 +50,9 @@ public interface TaskCriteria {
 	/**
 	 * Get an array of task IDs.
 	 *
-	 * @return array of task IDs (may be {@literal null})
+	 * @return array of task IDs (may be {@code null})
 	 */
-	Long[] getTaskIds();
+	Long @Nullable [] getTaskIds();
 
 	/**
 	 * Test if this filter has any task criteria.

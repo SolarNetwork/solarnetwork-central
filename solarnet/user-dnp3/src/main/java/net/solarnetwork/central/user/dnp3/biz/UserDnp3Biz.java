@@ -80,7 +80,7 @@ public interface UserDnp3Biz {
 	 *        the ID of the user to get configurations for
 	 * @param filter
 	 *        an optional filter
-	 * @return the matching certificates; never {@literal null}
+	 * @return the matching certificates; never {@code null}
 	 */
 	FilterResults<TrustedIssuerCertificate, UserStringCompositePK> trustedIssuerCertificatesForUser(
 			Long userId, CertificateFilter filter);
@@ -116,7 +116,7 @@ public interface UserDnp3Biz {
 	 *        the ID of the user to create the configuration for
 	 * @param input
 	 *        the configuration input
-	 * @return the persisted configuration; never {@literal null}
+	 * @return the persisted configuration; never {@code null}
 	 */
 	ServerConfiguration createServer(Long userId, ServerConfigurationInput input);
 
@@ -129,7 +129,7 @@ public interface UserDnp3Biz {
 	 *        the ID of the server to update
 	 * @param input
 	 *        the configuration input
-	 * @return the persisted configuration; never {@literal null}
+	 * @return the persisted configuration; never {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if an
 	 *         entity matching {@code userId} and {@code serverId} does not
@@ -167,7 +167,7 @@ public interface UserDnp3Biz {
 	 *        the ID of the user to get configurations for
 	 * @param filter
 	 *        an optional filter
-	 * @return the matching configurations; never {@literal null}
+	 * @return the matching configurations; never {@code null}
 	 */
 	FilterResults<ServerConfiguration, UserLongCompositePK> serversForUser(Long userId,
 			ServerFilter filter);
@@ -183,7 +183,7 @@ public interface UserDnp3Biz {
 	 *        the identifier of the configuration to update
 	 * @param input
 	 *        the configuration input
-	 * @return the persisted configuration; never {@literal null}
+	 * @return the persisted configuration; never {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         server entity matching {@code userId} and {@code serverId} does
@@ -224,7 +224,7 @@ public interface UserDnp3Biz {
 	 *        the ID of the user to get configurations for
 	 * @param filter
 	 *        an optional filter
-	 * @return the matching configurations; never {@literal null}
+	 * @return the matching configurations; never {@code null}
 	 */
 	FilterResults<ServerAuthConfiguration, UserLongStringCompositePK> serverAuthsForUser(Long userId,
 			ServerFilter filter);
@@ -240,7 +240,7 @@ public interface UserDnp3Biz {
 	 *        the index of the configuration to update
 	 * @param input
 	 *        the configuration input
-	 * @return the persisted configuration; never {@literal null}
+	 * @return the persisted configuration; never {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         server entity matching {@code userId} and {@code serverId} does
@@ -282,7 +282,7 @@ public interface UserDnp3Biz {
 	 *        the ID of the user to get configurations for
 	 * @param filter
 	 *        an optional filter
-	 * @return the matching configurations; never {@literal null}
+	 * @return the matching configurations; never {@code null}
 	 */
 	FilterResults<ServerMeasurementConfiguration, UserLongIntegerCompositePK> serverMeasurementsForUser(
 			Long userId, ServerDataPointFilter filter);
@@ -298,7 +298,7 @@ public interface UserDnp3Biz {
 	 *        the index of the configuration to update the configuration index
 	 * @param input
 	 *        the configuration input
-	 * @return the persisted configuration; never {@literal null}
+	 * @return the persisted configuration; never {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         server entity matching {@code userId} and {@code serverId} does
@@ -339,7 +339,7 @@ public interface UserDnp3Biz {
 	 *        the ID of the user to get configurations for
 	 * @param filter
 	 *        an optional filter
-	 * @return the matching configurations; never {@literal null}
+	 * @return the matching configurations; never {@code null}
 	 */
 	FilterResults<ServerControlConfiguration, UserLongIntegerCompositePK> serverControlsForUser(
 			Long userId, ServerDataPointFilter filter);
@@ -392,7 +392,7 @@ public interface UserDnp3Biz {
 	 * @param csv
 	 *        the CSV resource to import
 	 * @param locale
-	 *        a locale for messages, or {@literal null} to use the runtime
+	 *        a locale for messages, or {@code null} to use the runtime
 	 *        default
 	 * @return the generated server configurations
 	 * @throws IOException
@@ -415,7 +415,7 @@ public interface UserDnp3Biz {
 	 * @param out
 	 *        the output stream to write to
 	 * @param locale
-	 *        a locale for messages, or {@literal null} to use the runtime
+	 *        a locale for messages, or {@code null} to use the runtime
 	 *        default
 	 * @throws IOException
 	 *         if an IO error occurs

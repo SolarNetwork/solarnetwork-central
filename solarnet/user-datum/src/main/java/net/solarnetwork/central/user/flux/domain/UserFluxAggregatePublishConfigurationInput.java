@@ -25,8 +25,8 @@ package net.solarnetwork.central.user.flux.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.util.StringUtils;
@@ -98,7 +98,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	/**
 	 * Get the node IDs.
 	 * 
-	 * @return the node IDs, or {@literal null} for any node
+	 * @return the node IDs, or {@code null} for any node
 	 */
 	public Long[] getNodeIds() {
 		return nodeIds;
@@ -182,7 +182,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 */
 	public String getNodeIdsValue() {
 		return StringUtils.commaDelimitedStringFromCollection(
-				nodeIds != null ? Arrays.asList(nodeIds) : Collections.emptyList());
+				nodeIds != null ? Arrays.asList(nodeIds) : List.of());
 	}
 
 	/**
@@ -217,7 +217,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 */
 	public String getSourceIdsValue() {
 		return StringUtils.commaDelimitedStringFromCollection(
-				sourceIds != null ? Arrays.asList(sourceIds) : Collections.emptyList());
+				sourceIds != null ? Arrays.asList(sourceIds) : List.of());
 	}
 
 	/**

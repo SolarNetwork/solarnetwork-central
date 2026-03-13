@@ -29,7 +29,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
@@ -106,7 +106,7 @@ public class CapacityProviderConfigurationTests {
 		conf.setName("Howdy");
 		conf.setBaseUrl("https://localhost/" + UUID.randomUUID());
 		conf.setRegistrationStatus(RegistrationStatus.Pending);
-		conf.setServiceProps(Collections.singletonMap("foo", "bar"));
+		conf.setServiceProps(Map.of("foo", "bar"));
 
 		// WHEN
 		String json = mapper.writeValueAsString(conf);

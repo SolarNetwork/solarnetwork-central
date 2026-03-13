@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.c2c.domain;
 
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.validation.StartStopClaimableJobState;
@@ -33,13 +34,14 @@ import net.solarnetwork.central.domain.validation.StartStopClaimableJobState;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class CloudDatumStreamRakeTaskStateInput {
 
 	@NotNull
 	@StartStopClaimableJobState
-	private BasicClaimableJobState state;
+	private @Nullable BasicClaimableJobState state;
 
-	private Set<BasicClaimableJobState> requiredStates;
+	private @Nullable Set<BasicClaimableJobState> requiredStates;
 
 	/**
 	 * Constructor.
@@ -53,7 +55,7 @@ public class CloudDatumStreamRakeTaskStateInput {
 	 *
 	 * @return the state
 	 */
-	public final BasicClaimableJobState getState() {
+	public final @Nullable BasicClaimableJobState getState() {
 		return state;
 	}
 
@@ -63,16 +65,16 @@ public class CloudDatumStreamRakeTaskStateInput {
 	 * @param state
 	 *        the state to set
 	 */
-	public final void setState(BasicClaimableJobState state) {
+	public final void setState(@Nullable BasicClaimableJobState state) {
 		this.state = state;
 	}
 
 	/**
 	 * Get a list of states the job must have in order to perform an update.
 	 *
-	 * @return the states, or {@literal null}
+	 * @return the states, or {@code null}
 	 */
-	public final Set<BasicClaimableJobState> getRequiredStates() {
+	public final @Nullable Set<BasicClaimableJobState> getRequiredStates() {
 		return requiredStates;
 	}
 
@@ -80,9 +82,9 @@ public class CloudDatumStreamRakeTaskStateInput {
 	 * Set a list of states the job must have in order to perform an update.
 	 *
 	 * @param requiredStates
-	 *        the states to set, or {@literal null}
+	 *        the states to set, or {@code null}
 	 */
-	public final void setRequiredStates(Set<BasicClaimableJobState> requiredStates) {
+	public final void setRequiredStates(@Nullable Set<BasicClaimableJobState> requiredStates) {
 		this.requiredStates = requiredStates;
 	}
 

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.aop;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -213,7 +214,8 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 			for ( NodeSourcePK pk : result ) {
 				inputSourceIds.add(pk.getSourceId());
 			}
-			String[] resultSourceIds = enforcer.verifySourceIds(inputSourceIds.toArray(String[]::new));
+			String[] resultSourceIds = nonnull(
+					enforcer.verifySourceIds(inputSourceIds.toArray(String[]::new)), "Input source IDs");
 			Set<String> allowedSourceIdSet = new HashSet<>(Arrays.asList(resultSourceIds));
 			Set<NodeSourcePK> restricted = new LinkedHashSet<>(resultSourceIds.length);
 			for ( NodeSourcePK oneResult : result ) {

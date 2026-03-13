@@ -27,10 +27,13 @@ import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.impl.CloudIntegrationsUtils.SECS_PER_HOUR;
 import static net.solarnetwork.central.c2c.biz.impl.EgaugeRestOperationsHelper.CLOUD_INTEGRATION_SYSTEM_IDENTIFIER;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -84,7 +87,6 @@ import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -93,7 +95,6 @@ import net.solarnetwork.central.support.SimpleCache;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -186,25 +187,21 @@ public class EGaugeCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "temp", Reference,
+				componentValueRef(deviceId, "temp"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("temp");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(componentValueRef(deviceId, "temp"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1));
@@ -213,9 +210,8 @@ public class EGaugeCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -235,11 +231,9 @@ public class EGaugeCloudDatumStreamServiceTests {
 		// make access token available
 		ClientAccessTokenEntity accessToken = new ClientAccessTokenEntity(TEST_USER_ID,
 				userIdSystemIdentifier(TEST_USER_ID, CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, deviceId),
-				"owner", Instant.now());
-		accessToken.setAccessTokenType("Bearer");
-		accessToken.setAccessToken("TOKEN".getBytes(StandardCharsets.UTF_8));
-		accessToken.setAccessTokenIssuedAt(clock.instant().minus(5L, ChronoUnit.MINUTES));
-		accessToken.setAccessTokenExpiresAt(clock.instant().plus(1, ChronoUnit.HOURS));
+				"owner", Instant.now(), "Bearer", "TOKEN".getBytes(StandardCharsets.UTF_8),
+				clock.instant().minus(5L, ChronoUnit.MINUTES),
+				clock.instant().plus(1, ChronoUnit.HOURS));
 		given(clientAccessTokenDao.get(accessToken.getId())).willReturn(accessToken);
 
 		final Instant endDate = clock.instant();
@@ -310,33 +304,26 @@ public class EGaugeCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 0, now());
+				TEST_USER_ID, mapping.getConfigId(), 0, now(), Instantaneous, "watts", Reference,
+				componentValueRef(deviceId, "use"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("watts");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(componentValueRef(deviceId, "use"));
 
 		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(deviceId, "use"));
 		c1p2.setEnabled(true);
-		c1p2.setPropertyType(DatumSamplesType.Accumulating);
-		c1p2.setPropertyName("wattHours");
-		c1p2.setValueType(CloudDatumStreamValueType.Reference);
-		c1p2.setValueReference(componentValueRef(deviceId, "use"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1, c1p2));
@@ -345,9 +332,8 @@ public class EGaugeCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -367,11 +353,9 @@ public class EGaugeCloudDatumStreamServiceTests {
 		// make access token available
 		ClientAccessTokenEntity accessToken = new ClientAccessTokenEntity(TEST_USER_ID,
 				userIdSystemIdentifier(TEST_USER_ID, CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, deviceId),
-				"owner", Instant.now());
-		accessToken.setAccessTokenType("Bearer");
-		accessToken.setAccessToken("TOKEN".getBytes(StandardCharsets.UTF_8));
-		accessToken.setAccessTokenIssuedAt(clock.instant().minus(5L, ChronoUnit.MINUTES));
-		accessToken.setAccessTokenExpiresAt(clock.instant().plus(1, ChronoUnit.HOURS));
+				"owner", Instant.now(), "Bearer", "TOKEN".getBytes(StandardCharsets.UTF_8),
+				clock.instant().minus(5L, ChronoUnit.MINUTES),
+				clock.instant().plus(1, ChronoUnit.HOURS));
 		given(clientAccessTokenDao.get(accessToken.getId())).willReturn(accessToken);
 
 		final Instant endDate = clock.instant();

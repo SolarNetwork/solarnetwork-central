@@ -41,10 +41,10 @@
 			<arg column="bill_account_user_id" javaType="Long"/>
 			<arg column="bill_invoice_acct_id" javaType="Long"/>
 			<arg column="bill_invoice_created" javaType="java.time.Instant"/>
+			<arg column="bill_invoice_date_start" javaType="java.time.LocalDate"/>
+			<arg column="bill_invoice_date_end" javaType="java.time.LocalDate"/>
+			<arg column="bill_invoice_currency" javaType="String"/>
 		</constructor>
-		<result property="startDate" column="bill_invoice_date_start"/>
-		<result property="endDate" column="bill_invoice_date_end"/>
-		<result property="currencyCode" column="bill_invoice_currency"/>
 		<association property="address" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.Address-FullResult"/>
 		<association property="items" notNullColumn="bill_invoice_item_id" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.SnfInvoiceItem-FullResult"/>
 		<association property="usages" notNullColumn="bill_invoice_node_usage_node_id" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceNodeUsage.SnfInvoiceNodeUsage-FullResult"/>

@@ -43,6 +43,10 @@ import net.solarnetwork.util.ObjectUtils;
  */
 public final class CacheUtils {
 
+	private CacheUtils() {
+		// not available
+	}
+
 	/**
 	 * Listener API for "eviction" events.
 	 *

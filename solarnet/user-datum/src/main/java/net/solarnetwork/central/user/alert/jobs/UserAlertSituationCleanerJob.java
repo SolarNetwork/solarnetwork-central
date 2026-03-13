@@ -52,14 +52,13 @@ public class UserAlertSituationCleanerJob extends JobSupport {
 	 * @param userAlertSituationDao
 	 *        The {@link UserAlertSituationDao} to use.
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserAlertSituationCleanerJob(InstantSource clock,
 			UserAlertSituationDao userAlertSituationDao) {
-		super();
+		super("UserAlert", "UserAlertSituationCleaner");
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.dao = requireNonNullArgument(userAlertSituationDao, "userAlertSituationDao");
-		setGroupId("UserAlert");
 	}
 
 	@Override

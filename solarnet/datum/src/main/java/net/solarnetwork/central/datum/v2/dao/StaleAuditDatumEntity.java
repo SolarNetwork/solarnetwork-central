@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
@@ -59,10 +60,12 @@ public class StaleAuditDatumEntity extends BasicIdentity<StreamKindPK>
 	 *        the aggregation kind
 	 * @param created
 	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public StaleAuditDatumEntity(UUID streamId, Instant timestamp, Aggregation kind, Instant created) {
 		super(new StreamKindPK(streamId, timestamp, kind.getKey()));
-		this.created = created;
+		this.created = requireNonNullArgument(created, "created");
 	}
 
 	@Override
@@ -93,25 +96,7 @@ public class StaleAuditDatumEntity extends BasicIdentity<StreamKindPK>
 	}
 
 	@Override
-	public Aggregation getKind() {
-		StreamKindPK id = getId();
-		return (id.getKind() != null ? Aggregation.forKey(id.getKind()) : null);
-	}
-
-	@Override
-	public Instant getTimestamp() {
-		StreamKindPK id = getId();
-		return (id != null ? id.getTimestamp() : null);
-	}
-
-	@Override
-	public UUID getStreamId() {
-		StreamKindPK id = getId();
-		return (id != null ? id.getStreamId() : null);
-	}
-
-	@Override
-	public Instant getCreated() {
+	public final Instant getCreated() {
 		return created;
 	}
 

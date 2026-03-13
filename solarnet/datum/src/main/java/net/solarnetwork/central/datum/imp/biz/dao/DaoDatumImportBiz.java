@@ -175,7 +175,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * @param datumDao
 	 *        the datum DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoDatumImportBiz(TaskScheduler scheduler, AsyncTaskExecutor executor,
 			SolarNodeOwnershipDao nodeOwnershipDao, SecurityTokenDao securityTokenDao,
@@ -453,7 +453,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	public Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId, Set<String> jobIds,
 			boolean force) {
 		if ( jobIds == null || jobIds.isEmpty() ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		Set<DatumImportState> allowStates = (force ? null
 				: EnumSet.complementOf(EnumSet.of(Claimed, Executing)));
@@ -464,7 +464,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		taskMap.entrySet().removeIf(e -> {
 			DatumImportTask task = e.getValue();
 			boolean remove = userId.equals(task.getUserId()) && jobIds.contains(task.getJobId())
-					&& allowStates.contains(task.getJobState());
+					&& (allowStates == null || allowStates.contains(task.getJobState()));
 			task.cancel(true);
 			return remove;
 		});
@@ -619,7 +619,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					}
 				}
 			} else {
-				tzMap = Collections.emptyMap();
+				tzMap = Map.of();
 			}
 
 			try (ImportContext input = createImportContext(info, this)) {
@@ -1061,11 +1061,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * Get a {@link SecurityToken} for a given token ID.
 	 *
 	 * @param tokenId
-	 *        the ID of the token to get, or {@literal null}
-	 * @return the token, or {@literal null} if {@code token} is {@literal null}
+	 *        the ID of the token to get, or {@code null}
+	 * @return the token, or {@code null} if {@code token} is {@code null}
 	 * @throws AuthorizationException
-	 *         if {@code token} is not {@literal null} but a
-	 *         {@link SecurityToken} is not found for it
+	 *         if {@code token} is not {@code null} but a {@link SecurityToken}
+	 *         is not found for it
 	 */
 	private SecurityToken tokenForId(String tokenId) throws AuthorizationException {
 		if ( tokenId == null ) {
@@ -1082,12 +1082,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * Get a {@link SecurityPolicy} for a given token ID.
 	 *
 	 * @param tokenId
-	 *        the ID of the token to get, or {@literal null}
-	 * @return the policy, or {@literal null} if {@code token} is
-	 *         {@literal null} or the token has no policy
+	 *        the ID of the token to get, or {@code null}
+	 * @return the policy, or {@code null} if {@code token} is {@code null} or
+	 *         the token has no policy
 	 * @throws AuthorizationException
-	 *         if {@code token} is not {@literal null} but a
-	 *         {@link SecurityToken} is not found for it
+	 *         if {@code token} is not {@code null} but a {@link SecurityToken}
+	 *         is not found for it
 	 */
 	private SecurityPolicy tokenPolicyForId(String tokenId) throws AuthorizationException {
 		SecurityToken token = tokenForId(tokenId);

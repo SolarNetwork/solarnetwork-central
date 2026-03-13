@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz;
 
 import java.util.Locale;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
@@ -102,7 +103,7 @@ public interface CloudDatumStreamService
 	 *
 	 * @param locale
 	 *        the desired locale
-	 * @return the available filter criteria, never {@literal null}
+	 * @return the available filter criteria, never {@code null}
 	 */
 	Iterable<LocalizedServiceInfo> dataValueFilters(Locale locale);
 
@@ -116,10 +117,11 @@ public interface CloudDatumStreamService
 	 *        an optional set of search filters to limit the data value groups
 	 *        to; the available key values come from the identifiers returned by
 	 *        {@link #dataValueFilters(Locale)}
-	 * @return the available values, never {@literal null}
+	 * @return the available values, never {@code null}
 	 *
 	 */
-	Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId, Map<String, ?> filters);
+	Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
+			@Nullable Map<String, ?> filters);
 
 	/**
 	 * Get the latest available datum for a datum stream configuration.
@@ -131,7 +133,7 @@ public interface CloudDatumStreamService
 	 *
 	 * @param datumStream
 	 *        the datum stream configuration to get the latest datum for
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
 	Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream);
 
@@ -143,7 +145,7 @@ public interface CloudDatumStreamService
 	 *        the datum stream configuration to get the latest datum for
 	 * @param filter
 	 *        the query filter
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
 	CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter);

@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import java.time.ZoneId;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * API for node ownership details.
@@ -38,7 +39,6 @@ public interface SolarNodeOwnership extends UserIdRelated {
 	 * 
 	 * @return the node ID
 	 */
-	@NonNull
 	Long getNodeId();
 
 	/**
@@ -55,6 +55,7 @@ public interface SolarNodeOwnership extends UserIdRelated {
 	 * 
 	 * @return 2-character country code
 	 */
+	@Nullable
 	String getCountry();
 
 	/**
@@ -62,7 +63,6 @@ public interface SolarNodeOwnership extends UserIdRelated {
 	 * 
 	 * @return the time zone
 	 */
-	@NonNull
 	ZoneId getZone();
 
 	/**

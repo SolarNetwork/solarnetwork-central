@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.SerializeIgnore;
@@ -41,11 +42,11 @@ import net.solarnetwork.domain.SerializeIgnore;
  */
 public class SimpleInstructionFilter implements InstructionFilter {
 
-	private Long[] nodeIds;
-	private Long[] instructionIds;
-	private List<InstructionState> states;
-	private Instant startDate;
-	private Instant endDate;
+	private Long @Nullable [] nodeIds;
+	private Long @Nullable [] instructionIds;
+	private @Nullable List<InstructionState> states;
+	private @Nullable Instant startDate;
+	private @Nullable Instant endDate;
 
 	@Override
 	@SerializeIgnore
@@ -88,8 +89,8 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 *        the ID of the node
 	 */
 	@SuppressWarnings("InvalidParam")
-	public void setNodeId(Long nodeId) {
-		this.nodeIds = new Long[] { nodeId };
+	public final void setNodeId(@Nullable Long nodeId) {
+		setNodeIds(nodeId != null ? new Long[] { nodeId } : null);
 	}
 
 	/**
@@ -97,32 +98,32 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 *
 	 * <p>
 	 * This returns the first available node ID from the {@code nodeIds} array,
-	 * or <em>null</em> if not available.
+	 * or {@code null} if not available.
 	 * </p>
 	 *
 	 * @return the first node ID
 	 */
 	@SuppressWarnings("InvalidParam")
 	@Override
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0];
 	}
 
 	@Override
-	public Long[] getNodeIds() {
+	public final Long @Nullable [] getNodeIds() {
 		return nodeIds;
 	}
 
-	public void setNodeIds(Long[] nodeIds) {
+	public final void setNodeIds(Long @Nullable [] nodeIds) {
 		this.nodeIds = nodeIds;
 	}
 
 	@Override
-	public InstructionState getState() {
+	public final @Nullable InstructionState getState() {
 		return (states != null && !states.isEmpty() ? states.getFirst() : null);
 	}
 
-	public void setState(InstructionState state) {
+	public final void setState(@Nullable InstructionState state) {
 		if ( state == null ) {
 			states = null;
 		} else {
@@ -131,7 +132,7 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	}
 
 	@Override
-	public List<InstructionState> getStates() {
+	public final @Nullable List<InstructionState> getStates() {
 		return states;
 	}
 
@@ -143,7 +144,7 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 *        the Set to convert to a List of {@link InstructionState} values
 	 *        for the {@code states} property
 	 */
-	public void setStateSet(Set<InstructionState> stateSet) {
+	public final void setStateSet(@Nullable Set<InstructionState> stateSet) {
 		if ( stateSet == null ) {
 			this.states = null;
 		} else {
@@ -151,7 +152,7 @@ public class SimpleInstructionFilter implements InstructionFilter {
 		}
 	}
 
-	public void setStates(List<InstructionState> states) {
+	public final void setStates(@Nullable List<InstructionState> states) {
 		if ( states == null ) {
 			this.states = null;
 		} else {
@@ -167,7 +168,7 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 * @since 1.1
 	 */
 	@Override
-	public Long[] getInstructionIds() {
+	public final Long @Nullable [] getInstructionIds() {
 		return instructionIds;
 	}
 
@@ -178,12 +179,12 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 *        the IDs to set
 	 * @since 1.1
 	 */
-	public void setInstructionIds(Long[] instructionIds) {
+	public final void setInstructionIds(Long @Nullable [] instructionIds) {
 		this.instructionIds = instructionIds;
 	}
 
 	@Override
-	public Instant getStartDate() {
+	public final @Nullable Instant getStartDate() {
 		return startDate;
 	}
 
@@ -194,12 +195,12 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 *        the start date
 	 * @since 2.1
 	 */
-	public void setStartDate(Instant startDate) {
+	public final void setStartDate(@Nullable Instant startDate) {
 		this.startDate = startDate;
 	}
 
 	@Override
-	public Instant getEndDate() {
+	public final @Nullable Instant getEndDate() {
 		return endDate;
 	}
 
@@ -210,7 +211,7 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 *        the end date
 	 * @since 2.1
 	 */
-	public void setEndDate(Instant endDate) {
+	public final void setEndDate(@Nullable Instant endDate) {
 		this.endDate = endDate;
 	}
 

@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.user.export.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -50,9 +52,9 @@ public class UserDataConfiguration extends BaseExportConfigurationEntity<UserDat
 	@Serial
 	private static final long serialVersionUID = 866381003784859350L;
 
-	private String filterJson;
+	private @Nullable String filterJson;
 
-	private transient DatumFilterCommand filter;
+	private transient @Nullable DatumFilterCommand filter;
 
 	/**
 	 * Constructor.
@@ -61,11 +63,16 @@ public class UserDataConfiguration extends BaseExportConfigurationEntity<UserDat
 	 *        the primary key
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public UserDataConfiguration(UserLongCompositePK id, Instant created) {
-		super(id, created);
+	public UserDataConfiguration(UserLongCompositePK id, Instant created, String name,
+			String serviceIdentifier) {
+		super(id, created, name, serviceIdentifier);
 	}
 
 	/**
@@ -77,16 +84,21 @@ public class UserDataConfiguration extends BaseExportConfigurationEntity<UserDat
 	 *        the configuration ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public UserDataConfiguration(Long userId, Long configId, Instant created) {
-		this(new UserLongCompositePK(userId, configId), created);
+	public UserDataConfiguration(Long userId, Long configId, Instant created, String name,
+			String serviceIdentifier) {
+		this(new UserLongCompositePK(userId, configId), created, name, serviceIdentifier);
 	}
 
 	@Override
 	public UserDataConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new UserDataConfiguration(id, getCreated());
+		var copy = new UserDataConfiguration(id, getCreated(), getName(), getServiceIdentifier());
 		copyTo(copy);
 		return copy;
 	}
@@ -98,38 +110,38 @@ public class UserDataConfiguration extends BaseExportConfigurationEntity<UserDat
 	}
 
 	@Override
-	public boolean isSameAs(UserDataConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable UserDataConfiguration other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
 		return  // compare decoded JSON, as JSON key order not assumed
-				Objects.equals(getFilter(), other.getFilter())
+				Objects.equals(getFilter(), o.getFilter())
 				;
 		// @formatter:on
 	}
 
 	@Override
-	public AggregateGeneralNodeDatumFilter getDatumFilter() {
+	public final @Nullable AggregateGeneralNodeDatumFilter getDatumFilter() {
 		return getFilter();
 	}
 
 	@JsonIgnore
-	public String getFilterJson() {
+	public final @Nullable String getFilterJson() {
 		if ( filterJson == null ) {
 			filterJson = JsonUtils.getJSONString(filter, null);
 		}
 		return filterJson;
 	}
 
-	public void setFilterJson(String filterJson) {
+	public final void setFilterJson(@Nullable String filterJson) {
 		this.filterJson = filterJson;
 		filter = null;
 	}
 
 	@JsonIgnore
-	public DatumFilterCommand getFilter() {
+	public final @Nullable DatumFilterCommand getFilter() {
 		if ( filter == null && filterJson != null ) {
 			filter = JsonUtils.getObjectFromJSON(filterJson, DatumFilterCommand.class);
 		}
@@ -137,7 +149,7 @@ public class UserDataConfiguration extends BaseExportConfigurationEntity<UserDat
 	}
 
 	@JsonSetter("datumFilter")
-	public void setFilter(DatumFilterCommand filter) {
+	public final void setFilter(@Nullable DatumFilterCommand filter) {
 		this.filter = filter;
 		filterJson = null;
 	}

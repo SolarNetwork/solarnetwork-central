@@ -25,10 +25,12 @@ package net.solarnetwork.central.datum.v2.dao;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * Implementation of {@link AuditDatumRollup}.
@@ -40,15 +42,15 @@ import net.solarnetwork.domain.datum.Aggregation;
 @JsonPropertyOrder({ "ts", "nodeId", "sourceId", "aggregation", "datumTotalCount", "datumCount",
 		"datumHourlyCount", "datumDailyCount", "datumMonthlyCount", "datumPropertyPostedCount",
 		"datumPropertyRepostedCount", "datumQueryCount", "fluxDataInCount" })
-@JsonIgnoreProperties({ "id", "streamId" })
+@JsonIgnoreProperties({ "id", "streamId", "timestamp" })
 public class AuditDatumEntityRollup extends AuditDatumEntity
 		implements AuditDatumRollup, Cloneable, Serializable {
 
 	@Serial
 	private static final long serialVersionUID = -1564122596119213768L;
 
-	private final Long nodeId;
-	private final String sourceId;
+	private final @Nullable Long nodeId;
+	private final @Nullable String sourceId;
 
 	/**
 	 * Create an hourly audit datum.
@@ -68,40 +70,14 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 * @param datumPropertyUpdateCount
 	 *        the datum property update count
 	 * @return the audit datum
-	 * @deprecated use
-	 *             {@link #hourlyAuditDatumRollup(Long, String, Instant, Long, Long, Long, Long, Long)}
-	 */
-	@Deprecated(since = "1.3")
-	public static AuditDatumEntityRollup hourlyAuditDatumRollup(Long nodeId, String sourceId,
-			Instant timestamp, Long datumCount, Long datumPropertyCount, Long datumQueryCount,
-			Long datumPropertyUpdateCount) {
-		return hourlyAuditDatumRollup(nodeId, sourceId, timestamp, datumCount, datumPropertyCount,
-				datumQueryCount, datumPropertyUpdateCount, 0L);
-	}
-
-	/**
-	 * Create an hourly audit datum.
-	 *
-	 * @param nodeId
-	 *        the node ID
-	 * @param sourceId
-	 *        the source ID
-	 * @param timestamp
-	 *        the time
-	 * @param datumCount
-	 *        the datum count
-	 * @param datumPropertyCount
-	 *        the datum property count
-	 * @param datumQueryCount
-	 *        the datum query count
-	 * @param datumPropertyUpdateCount
-	 *        the datum property update count
-	 * @return the audit datum
+	 * @throws IllegalArgumentException
+	 *         if {@code timestamp} is {@code null}
 	 * @since 1.3
 	 */
-	public static AuditDatumEntityRollup hourlyAuditDatumRollup(Long nodeId, String sourceId,
-			Instant timestamp, Long datumCount, Long datumPropertyCount, Long datumQueryCount,
-			Long datumPropertyUpdateCount, Long fluxDataInCount) {
+	public static AuditDatumEntityRollup hourlyAuditDatumRollup(@Nullable Long nodeId,
+			@Nullable String sourceId, Instant timestamp, @Nullable Long datumCount,
+			@Nullable Long datumPropertyCount, @Nullable Long datumQueryCount,
+			@Nullable Long datumPropertyUpdateCount, @Nullable Long fluxDataInCount) {
 		return new AuditDatumEntityRollup(nodeId, sourceId, timestamp, Aggregation.Hour, datumCount,
 				null, null, null, datumPropertyCount, datumQueryCount, datumPropertyUpdateCount,
 				fluxDataInCount);
@@ -128,48 +104,18 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 *        the datum query count
 	 * @param datumPropertyUpdateCount
 	 *        the datum property update count
-	 * @return the audit datum
-	 * @deprecated use
-	 *             {@link #dailyAuditDatumRollup(Long, String, Instant, Long, Long, Integer, Long, Long, Long, Long)}
-	 */
-	@Deprecated(since = "1.3")
-	public static AuditDatumEntityRollup dailyAuditDatumRollup(Long nodeId, String sourceId,
-			Instant timestamp, Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
-			Long datumPropertyCount, Long datumQueryCount, Long datumPropertyUpdateCount) {
-		return dailyAuditDatumRollup(nodeId, sourceId, timestamp, datumCount, datumHourlyCount,
-				datumDailyCount, datumPropertyCount, datumQueryCount, datumPropertyUpdateCount, 0L);
-	}
-
-	/**
-	 * Create a daily audit datum.
-	 *
-	 * @param nodeId
-	 *        the node ID
-	 * @param sourceId
-	 *        the source ID
-	 * @param timestamp
-	 *        the time
-	 * @param datumCount
-	 *        the datum count
-	 * @param datumHourlyCount
-	 *        the hourly datum count
-	 * @param datumDailyCount
-	 *        the daily datum count
-	 * @param datumPropertyCount
-	 *        the datum property count
-	 * @param datumQueryCount
-	 *        the datum query count
-	 * @param datumPropertyUpdateCount
-	 *        the datum property update count
 	 * @param fluxDataInCount
 	 *        the SolarFlux data in count
 	 * @return the audit datum
+	 * @throws IllegalArgumentException
+	 *         if {@code timestamp} is {@code null}
 	 * @since 1.3
 	 */
-	public static AuditDatumEntityRollup dailyAuditDatumRollup(Long nodeId, String sourceId,
-			Instant timestamp, Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
-			Long datumPropertyCount, Long datumQueryCount, Long datumPropertyUpdateCount,
-			Long fluxDataInCount) {
+	public static AuditDatumEntityRollup dailyAuditDatumRollup(@Nullable Long nodeId,
+			@Nullable String sourceId, Instant timestamp, @Nullable Long datumCount,
+			@Nullable Long datumHourlyCount, @Nullable Integer datumDailyCount,
+			@Nullable Long datumPropertyCount, @Nullable Long datumQueryCount,
+			@Nullable Long datumPropertyUpdateCount, @Nullable Long fluxDataInCount) {
 		return new AuditDatumEntityRollup(nodeId, sourceId, timestamp, Aggregation.Day, datumCount,
 				datumHourlyCount, datumDailyCount, null, datumPropertyCount, datumQueryCount,
 				datumPropertyUpdateCount, fluxDataInCount);
@@ -198,52 +144,19 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 *        the datum query count
 	 * @param datumPropertyUpdateCount
 	 *        the datum property update count
-	 * @return the audit datum
-	 * @deprecated use
-	 *             {@link #monthlyAuditDatumRollup(Long, String, Instant, Long, Long, Integer, Integer, Long, Long, Long, Long)}
-	 */
-	@Deprecated(since = "1.3")
-	public static AuditDatumEntityRollup monthlyAuditDatumRollup(Long nodeId, String sourceId,
-			Instant timestamp, Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
-			Integer datumMonthlyCount, Long datumPropertyCount, Long datumQueryCount,
-			Long datumPropertyUpdateCount) {
-		return monthlyAuditDatumRollup(nodeId, sourceId, timestamp, datumCount, datumHourlyCount,
-				datumDailyCount, datumMonthlyCount, datumPropertyCount, datumQueryCount,
-				datumPropertyUpdateCount, 0L);
-	}
-
-	/**
-	 * Create a monthly audit datum.
-	 *
-	 * @param nodeId
-	 *        the node ID
-	 * @param sourceId
-	 *        the source ID
-	 * @param timestamp
-	 *        the time
-	 * @param datumCount
-	 *        the datum count
-	 * @param datumHourlyCount
-	 *        the hourly datum count
-	 * @param datumDailyCount
-	 *        the daily datum count
-	 * @param datumMonthlyCount
-	 *        the monthly datum count
-	 * @param datumPropertyCount
-	 *        the datum property count
-	 * @param datumQueryCount
-	 *        the datum query count
-	 * @param datumPropertyUpdateCount
-	 *        the datum property update count
 	 * @param fluxDataInCount
 	 *        the SolarFlux data in count
 	 * @return the audit datum
+	 * @throws IllegalArgumentException
+	 *         if {@code timestamp} is {@code null}
 	 * @since 1.3
 	 */
-	public static AuditDatumEntityRollup monthlyAuditDatumRollup(Long nodeId, String sourceId,
-			Instant timestamp, Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
-			Integer datumMonthlyCount, Long datumPropertyCount, Long datumQueryCount,
-			Long datumPropertyUpdateCount, Long fluxDataInCount) {
+	public static AuditDatumEntityRollup monthlyAuditDatumRollup(@Nullable Long nodeId,
+			@Nullable String sourceId, Instant timestamp, @Nullable Long datumCount,
+			@Nullable Long datumHourlyCount, @Nullable Integer datumDailyCount,
+			@Nullable Integer datumMonthlyCount, @Nullable Long datumPropertyCount,
+			@Nullable Long datumQueryCount, @Nullable Long datumPropertyUpdateCount,
+			@Nullable Long fluxDataInCount) {
 		return new AuditDatumEntityRollup(nodeId, sourceId, timestamp, Aggregation.Month, datumCount,
 				datumHourlyCount, datumDailyCount, datumMonthlyCount, datumPropertyCount,
 				datumQueryCount, datumPropertyUpdateCount, fluxDataInCount);
@@ -267,10 +180,13 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 * @param datumMonthlyCount
 	 *        the monthly datum count
 	 * @return the audit datum
+	 * @throws IllegalArgumentException
+	 *         if {@code timestamp} is {@code null}
 	 */
-	public static AuditDatumEntityRollup accumulativeAuditDatumRollup(Long nodeId, String sourceId,
-			Instant timestamp, Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
-			Integer datumMonthlyCount) {
+	public static AuditDatumEntityRollup accumulativeAuditDatumRollup(@Nullable Long nodeId,
+			@Nullable String sourceId, Instant timestamp, @Nullable Long datumCount,
+			@Nullable Long datumHourlyCount, @Nullable Integer datumDailyCount,
+			@Nullable Integer datumMonthlyCount) {
 		return new AuditDatumEntityRollup(nodeId, sourceId, timestamp, Aggregation.RunningTotal,
 				datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount, null, null, null,
 				null);
@@ -301,54 +217,20 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 *        the datum query count
 	 * @param datumPropertyUpdateCount
 	 *        the datum property update count
-	 * @deprecated use
-	 *             {@link #AuditDatumEntityRollup(Long, String, Instant, Aggregation, Long, Long, Integer, Integer, Long, Long, Long, Long)}
-	 */
-	@Deprecated(since = "1.3")
-	public AuditDatumEntityRollup(Long nodeId, String sourceId, Instant timestamp,
-			Aggregation aggregation, Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
-			Integer datumMonthlyCount, Long datumPropertyCount, Long datumQueryCount,
-			Long datumPropertyUpdateCount) {
-		this(nodeId, sourceId, timestamp, aggregation, datumCount, datumHourlyCount, datumDailyCount,
-				datumMonthlyCount, datumPropertyCount, datumQueryCount, datumPropertyUpdateCount, 0L);
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param nodeId
-	 *        the node ID
-	 * @param sourceId
-	 *        the source ID
-	 * @param timestamp
-	 *        the timestamp
-	 * @param aggregation
-	 *        the aggregation
-	 * @param datumCount
-	 *        the datum count
-	 * @param datumHourlyCount
-	 *        the hourly datum count
-	 * @param datumDailyCount
-	 *        the daily datum count
-	 * @param datumMonthlyCount
-	 *        the monthly datum count
-	 * @param datumPropertyCount
-	 *        the datum property count
-	 * @param datumQueryCount
-	 *        the datum query count
-	 * @param datumPropertyUpdateCount
-	 *        the datum property update count
 	 * @param fluxDataInCount
 	 *        the SolarFlux data in count
+	 * @throws IllegalArgumentException
+	 *         if {@code aggregation} or {@code timestamp} is {@code null}
 	 * @since 1.3
 	 */
-	public AuditDatumEntityRollup(Long nodeId, String sourceId, Instant timestamp,
-			Aggregation aggregation, Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
-			Integer datumMonthlyCount, Long datumPropertyCount, Long datumQueryCount,
-			Long datumPropertyUpdateCount, Long fluxDataInCount) {
-		super(null, timestamp, aggregation, datumCount, datumHourlyCount, datumDailyCount,
-				datumMonthlyCount, datumPropertyCount, datumQueryCount, datumPropertyUpdateCount,
-				fluxDataInCount);
+	public AuditDatumEntityRollup(@Nullable Long nodeId, @Nullable String sourceId, Instant timestamp,
+			Aggregation aggregation, @Nullable Long datumCount, @Nullable Long datumHourlyCount,
+			@Nullable Integer datumDailyCount, @Nullable Integer datumMonthlyCount,
+			@Nullable Long datumPropertyCount, @Nullable Long datumQueryCount,
+			@Nullable Long datumPropertyUpdateCount, @Nullable Long fluxDataInCount) {
+		super(StreamDatum.UNASSIGNED_STREAM_ID, timestamp, aggregation, datumCount, datumHourlyCount,
+				datumDailyCount, datumMonthlyCount, datumPropertyCount, datumQueryCount,
+				datumPropertyUpdateCount, fluxDataInCount);
 		this.nodeId = nodeId;
 		this.sourceId = sourceId;
 	}
@@ -409,12 +291,12 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	}
 
 	@Override
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
 	@Override
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return sourceId;
 	}
 

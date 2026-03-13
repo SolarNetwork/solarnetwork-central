@@ -27,8 +27,8 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -60,7 +60,7 @@ public class JdbcChargePointStatusDao implements ChargePointStatusDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcChargePointStatusDao(JdbcOperations jdbcOps) {
 		super();
@@ -94,7 +94,7 @@ public class JdbcChargePointStatusDao implements ChargePointStatusDao {
 		requireNonNullArgument(processor, "processor");
 		final PreparedStatementCreator sql = new SelectChargePointStatus(filter);
 		final RowMapper<ChargePointStatus> mapper = ChargePointStatusRowMapper.INSTANCE;
-		processor.start(null, null, null, Collections.emptyMap());
+		processor.start(null, null, null, Map.of());
 		try {
 			jdbcOps.execute(sql, (PreparedStatementCallback<Void>) ps -> {
 				try (ResultSet rs = ps.executeQuery()) {

@@ -73,22 +73,21 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 	 * Constructor.
 	 *
 	 * @param transactionTemplate
-	 *        the transaction template to use, or {@literal null}
+	 *        the transaction template to use, or {@code null}
 	 * @param taskDao
 	 *        the task DAO to use
 	 * @param hookServices
 	 *        the hook services
 	 * @throws IllegalArgumentException
 	 *         if {@code eventAdmin} or {@code taskDao} or {@code hookServices}
-	 *         are {@literal null}
+	 *         are {@code null}
 	 */
 	public UserNodeEventTaskProcessorJob(TransactionTemplate transactionTemplate,
 			UserNodeEventTaskDao taskDao, List<UserNodeEventHookService> hookServices) {
-		super();
+		super("UserNodeEvent", "UserNodeEventTaskProcessor");
 		this.transactionTemplate = transactionTemplate;
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.hookServices = requireNonNullArgument(hookServices, "hookServices");
-		setGroupId("UserNodeEvent");
 	}
 
 	private UserNodeEventHookService resolveService(String serviceId) {
@@ -214,7 +213,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 	 * @param topic
 	 *        the topic to set
 	 * @throws IllegalArgumentException
-	 *         if {@code topic} is {@literal null}
+	 *         if {@code topic} is {@code null}
 	 */
 	public void setTopic(String topic) {
 		this.topic = requireNonNullArgument(topic, "topic");

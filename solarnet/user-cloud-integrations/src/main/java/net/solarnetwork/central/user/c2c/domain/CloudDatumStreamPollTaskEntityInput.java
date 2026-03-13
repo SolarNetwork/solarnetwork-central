@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
@@ -39,24 +40,25 @@ import net.solarnetwork.central.domain.validation.StartStopClaimableJobState;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class CloudDatumStreamPollTaskEntityInput {
 
 	@NotNull
 	@StartStopClaimableJobState
-	private BasicClaimableJobState state;
+	private @Nullable BasicClaimableJobState state;
 
 	@NotNull
-	private Instant executeAt;
+	private @Nullable Instant executeAt;
 
 	@NotNull
-	private Instant startAt;
+	private @Nullable Instant startAt;
 
 	@Size(max = 4096)
-	private String message;
+	private @Nullable String message;
 
-	private Map<String, Object> serviceProperties;
+	private @Nullable Map<String, Object> serviceProperties;
 
-	private Set<BasicClaimableJobState> requiredStates;
+	private @Nullable Set<BasicClaimableJobState> requiredStates;
 
 	/**
 	 * Constructor.
@@ -65,13 +67,15 @@ public class CloudDatumStreamPollTaskEntityInput {
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	public CloudDatumStreamPollTaskEntity toEntity(UserLongCompositePK id) {
 		CloudDatumStreamPollTaskEntity conf = new CloudDatumStreamPollTaskEntity(
-				requireNonNullArgument(id, "id"));
+				requireNonNullArgument(id, "id"), state, executeAt, startAt);
 		populateConfiguration(conf);
 		return conf;
 	}
 
+	@SuppressWarnings("NullAway")
 	private void populateConfiguration(CloudDatumStreamPollTaskEntity conf) {
 		conf.setState(state);
 		conf.setExecuteAt(executeAt);
@@ -85,7 +89,7 @@ public class CloudDatumStreamPollTaskEntityInput {
 	 *
 	 * @return the state
 	 */
-	public final BasicClaimableJobState getState() {
+	public final @Nullable BasicClaimableJobState getState() {
 		return state;
 	}
 
@@ -95,7 +99,7 @@ public class CloudDatumStreamPollTaskEntityInput {
 	 * @param state
 	 *        the state to set
 	 */
-	public final void setState(BasicClaimableJobState state) {
+	public final void setState(@Nullable BasicClaimableJobState state) {
 		this.state = state;
 	}
 
@@ -104,7 +108,7 @@ public class CloudDatumStreamPollTaskEntityInput {
 	 *
 	 * @return the date
 	 */
-	public final Instant getStartAt() {
+	public final @Nullable Instant getStartAt() {
 		return startAt;
 	}
 
@@ -114,7 +118,7 @@ public class CloudDatumStreamPollTaskEntityInput {
 	 * @param startAt
 	 *        the date to set
 	 */
-	public final void setStartAt(Instant startAt) {
+	public final void setStartAt(@Nullable Instant startAt) {
 		this.startAt = startAt;
 	}
 
@@ -123,7 +127,7 @@ public class CloudDatumStreamPollTaskEntityInput {
 	 *
 	 * @return the date
 	 */
-	public final Instant getExecuteAt() {
+	public final @Nullable Instant getExecuteAt() {
 		return executeAt;
 	}
 
@@ -133,7 +137,7 @@ public class CloudDatumStreamPollTaskEntityInput {
 	 * @param executeAt
 	 *        the date to set
 	 */
-	public final void setExecuteAt(Instant executeAt) {
+	public final void setExecuteAt(@Nullable Instant executeAt) {
 		this.executeAt = executeAt;
 	}
 
@@ -142,7 +146,7 @@ public class CloudDatumStreamPollTaskEntityInput {
 	 *
 	 * @return the message
 	 */
-	public final String getMessage() {
+	public final @Nullable String getMessage() {
 		return message;
 	}
 
@@ -152,7 +156,7 @@ public class CloudDatumStreamPollTaskEntityInput {
 	 * @param message
 	 *        the message to set
 	 */
-	public final void setMessage(String message) {
+	public final void setMessage(@Nullable String message) {
 		this.message = message;
 	}
 
@@ -161,7 +165,7 @@ public class CloudDatumStreamPollTaskEntityInput {
 	 *
 	 * @return the service properties
 	 */
-	public Map<String, Object> getServiceProperties() {
+	public @Nullable Map<String, Object> getServiceProperties() {
 		return serviceProperties;
 	}
 
@@ -171,16 +175,16 @@ public class CloudDatumStreamPollTaskEntityInput {
 	 * @param serviceProperties
 	 *        the service properties to set
 	 */
-	public void setServiceProperties(Map<String, Object> serviceProperties) {
+	public void setServiceProperties(@Nullable Map<String, Object> serviceProperties) {
 		this.serviceProperties = serviceProperties;
 	}
 
 	/**
 	 * Get a list of states the job must have in order to perform an update.
 	 *
-	 * @return the states, or {@literal null}
+	 * @return the states, or {@code null}
 	 */
-	public final Set<BasicClaimableJobState> getRequiredStates() {
+	public final @Nullable Set<BasicClaimableJobState> getRequiredStates() {
 		return requiredStates;
 	}
 
@@ -188,9 +192,9 @@ public class CloudDatumStreamPollTaskEntityInput {
 	 * Set a list of states the job must have in order to perform an update.
 	 *
 	 * @param requiredStates
-	 *        the states to set, or {@literal null}
+	 *        the states to set, or {@code null}
 	 */
-	public final void setRequiredStates(Set<BasicClaimableJobState> requiredStates) {
+	public final void setRequiredStates(@Nullable Set<BasicClaimableJobState> requiredStates) {
 		this.requiredStates = requiredStates;
 	}
 

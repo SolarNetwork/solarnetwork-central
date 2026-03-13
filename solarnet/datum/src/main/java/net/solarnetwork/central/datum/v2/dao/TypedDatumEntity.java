@@ -22,12 +22,16 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.BasicIdentity;
@@ -41,7 +45,7 @@ import net.solarnetwork.domain.datum.DatumProperties;
  * @since 2.8
  */
 public class TypedDatumEntity extends BasicIdentity<DatumPK>
-		implements Entity<DatumPK>, Cloneable, Serializable {
+		implements Datum, Entity<DatumPK>, Cloneable, Serializable {
 
 	@Serial
 	private static final long serialVersionUID = 8626921281040436299L;
@@ -58,11 +62,13 @@ public class TypedDatumEntity extends BasicIdentity<DatumPK>
 	 *        the type
 	 * @param properties
 	 *        the properties
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public TypedDatumEntity(DatumPK id, int type, DatumProperties properties) {
-		super(id);
-		this.type = type;
-		this.properties = properties;
+		super(requireNonNullArgument(id, "id"));
+		this.type = requireNonNullArgument(type, "type");
+		this.properties = requireNonNullArgument(properties, "properties");
 	}
 
 	/**
@@ -76,6 +82,8 @@ public class TypedDatumEntity extends BasicIdentity<DatumPK>
 	 *        the type
 	 * @param properties
 	 *        the samples
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public TypedDatumEntity(UUID streamId, Instant timestamp, int type, DatumProperties properties) {
 		this(new DatumPK(streamId, timestamp), type, properties);
@@ -104,8 +112,8 @@ public class TypedDatumEntity extends BasicIdentity<DatumPK>
 	 * @param tags
 	 *        the tag values; must be {@code String[]}
 	 */
-	public TypedDatumEntity(UUID streamId, Instant timestamp, int type, Object instantaneous,
-			Object accumulating, Object status, Object tags) {
+	public TypedDatumEntity(UUID streamId, Instant timestamp, int type, @Nullable Object instantaneous,
+			@Nullable Object accumulating, @Nullable Object status, @Nullable Object tags) {
 		this(new DatumPK(streamId, timestamp), type,
 				DatumProperties.propertiesOf((BigDecimal[]) instantaneous, (BigDecimal[]) accumulating,
 						(String[]) status, (String[]) tags));
@@ -151,42 +159,12 @@ public class TypedDatumEntity extends BasicIdentity<DatumPK>
 
 	@Override
 	public boolean hasId() {
-		DatumPK id = getId();
-		return (id != null && id.getStreamId() != null && id.getTimestamp() != null);
+		return nonnull(getId(), "ID").streamIdIsAssigned();
 	}
 
 	@Override
-	public Instant getCreated() {
+	public final Instant getCreated() {
 		return getTimestamp();
-	}
-
-	/**
-	 * Get the datum timestamp.
-	 *
-	 * <p>
-	 * The {@link #getCreated()} method is an alias for this method. This method
-	 * is a shortcut for {@code getId().getTimestamp()}.
-	 * </p>
-	 *
-	 * @return the datum timestamp
-	 */
-	public Instant getTimestamp() {
-		DatumPK id = getId();
-		return (id != null ? id.getTimestamp() : null);
-	}
-
-	/**
-	 * Get the datum stream ID.
-	 *
-	 * <p>
-	 * This method is a shortcut for {@code getId().getStreamId()}.
-	 * </p>
-	 *
-	 * @return the stream ID
-	 */
-	public UUID getStreamId() {
-		DatumPK id = getId();
-		return (id != null ? id.getStreamId() : null);
 	}
 
 	/**
@@ -194,7 +172,8 @@ public class TypedDatumEntity extends BasicIdentity<DatumPK>
 	 *
 	 * @return the property values
 	 */
-	public DatumProperties getProperties() {
+	@Override
+	public final DatumProperties getProperties() {
 		return properties;
 	}
 
@@ -209,7 +188,7 @@ public class TypedDatumEntity extends BasicIdentity<DatumPK>
 	 *
 	 * @return the type
 	 */
-	public int getType() {
+	public final int getType() {
 		return type;
 	}
 

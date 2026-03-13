@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.security;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
@@ -36,7 +39,7 @@ import net.solarnetwork.central.domain.UserStringStringCompositePK;
  * Entity implementation of {@link ClientAccessToken}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id", "modified", "enabled", "accessTokenValue", "refreshTokenValue" })
 @JsonPropertyOrder({ "userId", "registrationId", "principalName", "created", "accessTokenType",
@@ -49,13 +52,13 @@ public class ClientAccessTokenEntity
 	@Serial
 	private static final long serialVersionUID = 4075961449877401018L;
 
-	private String accessTokenType;
-	private byte[] accessToken;
-	private Instant accessTokenIssuedAt;
-	private Instant accessTokenExpiresAt;
-	private Set<String> accessTokenScopes;
-	private byte[] refreshToken;
-	private Instant refreshTokenIssuedAt;
+	private final String accessTokenType;
+	private final byte[] accessToken;
+	private final Instant accessTokenIssuedAt;
+	private final Instant accessTokenExpiresAt;
+	private @Nullable Set<String> accessTokenScopes;
+	private byte @Nullable [] refreshToken;
+	private @Nullable Instant refreshTokenIssuedAt;
 
 	/**
 	 * Constructor.
@@ -64,11 +67,25 @@ public class ClientAccessTokenEntity
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param accessTokenType
+	 *        the access token type
+	 * @param accessToken
+	 *        the access token
+	 * @param accessTokenIssuedAt
+	 *        the access token issue date
+	 * @param accessTokenExpiresAt
+	 *        the access token expiration date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public ClientAccessTokenEntity(UserStringStringCompositePK id, Instant created) {
+	public ClientAccessTokenEntity(UserStringStringCompositePK id, Instant created,
+			String accessTokenType, byte[] accessToken, Instant accessTokenIssuedAt,
+			Instant accessTokenExpiresAt) {
 		super(id, created);
+		this.accessTokenType = requireNonNullArgument(accessTokenType, "accessTokenType");
+		this.accessToken = requireNonNullArgument(accessToken, "accessToken");
+		this.accessTokenIssuedAt = requireNonNullArgument(accessTokenIssuedAt, "accessTokenIssuedAt");
+		this.accessTokenExpiresAt = requireNonNullArgument(accessTokenExpiresAt, "accessTokenExpiresAt");
 	}
 
 	/**
@@ -82,17 +99,29 @@ public class ClientAccessTokenEntity
 	 *        name the principal name
 	 * @param created
 	 *        the creation date
+	 * @param accessTokenType
+	 *        the access token type
+	 * @param accessToken
+	 *        the access token
+	 * @param accessTokenIssuedAt
+	 *        the access token issue date
+	 * @param accessTokenExpiresAt
+	 *        the access token expiration date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ClientAccessTokenEntity(Long userId, String registrationId, String principalName,
-			Instant created) {
-		this(new UserStringStringCompositePK(userId, registrationId, principalName), created);
+			Instant created, String accessTokenType, byte[] accessToken, Instant accessTokenIssuedAt,
+			Instant accessTokenExpiresAt) {
+		this(new UserStringStringCompositePK(userId, registrationId, principalName), created,
+				accessTokenType, accessToken, accessTokenIssuedAt, accessTokenExpiresAt);
 	}
 
 	@Override
-	public ClientAccessTokenEntity copyWithId(UserStringStringCompositePK id) {
-		var copy = new ClientAccessTokenEntity(id, getCreated());
+	public ClientAccessTokenEntity copyWithId(@Nullable UserStringStringCompositePK id) {
+		var copy = new ClientAccessTokenEntity(requireNonNullArgument(id, "id"),
+				nonnull(getCreated(), "created"), accessTokenType, accessToken, accessTokenIssuedAt,
+				accessTokenExpiresAt);
 		copyTo(copy);
 		return copy;
 	}
@@ -100,29 +129,25 @@ public class ClientAccessTokenEntity
 	@Override
 	public void copyTo(ClientAccessTokenEntity entity) {
 		super.copyTo(entity);
-		entity.setAccessTokenType(accessTokenType);
-		entity.setAccessToken(accessToken);
-		entity.setAccessTokenIssuedAt(accessTokenIssuedAt);
-		entity.setAccessTokenExpiresAt(accessTokenExpiresAt);
 		entity.setAccessTokenScopes(accessTokenScopes);
 		entity.setRefreshToken(refreshToken);
 		entity.setRefreshTokenIssuedAt(refreshTokenIssuedAt);
 	}
 
 	@Override
-	public boolean isSameAs(ClientAccessTokenEntity other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable ClientAccessTokenEntity other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.accessTokenType, other.accessTokenType)
-				&& Objects.equals(this.accessTokenIssuedAt, other.accessTokenIssuedAt)
-				&& Objects.equals(this.accessTokenExpiresAt, other.accessTokenExpiresAt)
-				&& Objects.equals(this.accessTokenScopes, other.accessTokenScopes)
-				&& Objects.equals(this.refreshTokenIssuedAt, other.refreshTokenIssuedAt)
-				&& Arrays.equals(this.accessToken, other.accessToken)
-				&& Arrays.equals(this.refreshToken, other.refreshToken)
+		return Objects.equals(this.accessTokenType, o.accessTokenType)
+				&& Objects.equals(this.accessTokenIssuedAt, o.accessTokenIssuedAt)
+				&& Objects.equals(this.accessTokenExpiresAt, o.accessTokenExpiresAt)
+				&& Objects.equals(this.accessTokenScopes, o.accessTokenScopes)
+				&& Objects.equals(this.refreshTokenIssuedAt, o.refreshTokenIssuedAt)
+				&& Arrays.equals(this.accessToken, o.accessToken)
+				&& Arrays.equals(this.refreshToken, o.refreshToken)
 				;
 		// @formatter:on
 	}
@@ -163,14 +188,12 @@ public class ClientAccessTokenEntity
 
 	@Override
 	public final String getRegistrationId() {
-		UserStringStringCompositePK id = getId();
-		return (id != null ? id.getGroupId() : null);
+		return nonnull(getId(), "id").getGroupId();
 	}
 
 	@Override
 	public final String getPrincipalName() {
-		UserStringStringCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+		return nonnull(getId(), "id").getEntityId();
 	}
 
 	@Override
@@ -178,29 +201,9 @@ public class ClientAccessTokenEntity
 		return accessTokenType;
 	}
 
-	/**
-	 * Set the access token type.
-	 *
-	 * @param accessTokenType
-	 *        the type to set
-	 */
-	public final void setAccessTokenType(String accessTokenType) {
-		this.accessTokenType = accessTokenType;
-	}
-
 	@Override
 	public final byte[] getAccessToken() {
 		return accessToken;
-	}
-
-	/**
-	 * Set the access token.
-	 *
-	 * @param accessToken
-	 *        the access token to set
-	 */
-	public final void setAccessToken(byte[] accessToken) {
-		this.accessToken = accessToken;
 	}
 
 	@Override
@@ -208,33 +211,13 @@ public class ClientAccessTokenEntity
 		return accessTokenIssuedAt;
 	}
 
-	/**
-	 * Set the access token issue date.
-	 *
-	 * @param accessTokenIssuedAt
-	 *        the date to set
-	 */
-	public final void setAccessTokenIssuedAt(Instant accessTokenIssuedAt) {
-		this.accessTokenIssuedAt = accessTokenIssuedAt;
-	}
-
 	@Override
 	public final Instant getAccessTokenExpiresAt() {
 		return accessTokenExpiresAt;
 	}
 
-	/**
-	 * Set the access token expire date.
-	 *
-	 * @param accessTokenExpiresAt
-	 *        the date to set
-	 */
-	public final void setAccessTokenExpiresAt(Instant accessTokenExpiresAt) {
-		this.accessTokenExpiresAt = accessTokenExpiresAt;
-	}
-
 	@Override
-	public final Set<String> getAccessTokenScopes() {
+	public final @Nullable Set<String> getAccessTokenScopes() {
 		return accessTokenScopes;
 	}
 
@@ -242,14 +225,14 @@ public class ClientAccessTokenEntity
 	 * Set the access token scopes.
 	 *
 	 * @param accessTokenScopes
-	 *        the scopes to set, or {@literal null}
+	 *        the scopes to set, or {@code null}
 	 */
-	public final void setAccessTokenScopes(Set<String> accessTokenScopes) {
+	public final void setAccessTokenScopes(@Nullable Set<String> accessTokenScopes) {
 		this.accessTokenScopes = accessTokenScopes;
 	}
 
 	@Override
-	public final byte[] getRefreshToken() {
+	public final byte @Nullable [] getRefreshToken() {
 		return refreshToken;
 	}
 
@@ -257,14 +240,14 @@ public class ClientAccessTokenEntity
 	 * Set the refresh token.
 	 *
 	 * @param refreshToken
-	 *        the refresh token to set, or {@literal null}
+	 *        the refresh token to set, or {@code null}
 	 */
-	public final void setRefreshToken(byte[] refreshToken) {
+	public final void setRefreshToken(byte @Nullable [] refreshToken) {
 		this.refreshToken = refreshToken;
 	}
 
 	@Override
-	public final Instant getRefreshTokenIssuedAt() {
+	public final @Nullable Instant getRefreshTokenIssuedAt() {
 		return refreshTokenIssuedAt;
 	}
 
@@ -272,9 +255,9 @@ public class ClientAccessTokenEntity
 	 * Set the refresh token issue date.
 	 *
 	 * @param refreshTokenIssuedAt
-	 *        the date to set, or {@literal null}
+	 *        the date to set, or {@code null}
 	 */
-	public final void setRefreshTokenIssuedAt(Instant refreshTokenIssuedAt) {
+	public final void setRefreshTokenIssuedAt(@Nullable Instant refreshTokenIssuedAt) {
 		this.refreshTokenIssuedAt = refreshTokenIssuedAt;
 	}
 

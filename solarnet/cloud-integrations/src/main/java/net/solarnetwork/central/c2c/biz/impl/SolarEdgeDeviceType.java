@@ -57,7 +57,7 @@ public enum SolarEdgeDeviceType {
 	/**
 	 * Get the key.
 	 *
-	 * @return the key, never {@literal null}
+	 * @return the key, never {@code null}
 	 */
 	public final String getKey() {
 		return key;

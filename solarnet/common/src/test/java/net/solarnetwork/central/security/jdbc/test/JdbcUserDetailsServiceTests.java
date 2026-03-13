@@ -28,7 +28,6 @@ import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -124,7 +123,7 @@ public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSuppor
 		final Long userId = 123L;
 		setupTestUser(userId);
 		final BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withSourceIds(Collections.singleton("Main")).build();
+				.withSourceIds(Set.of("Main")).build();
 		final String token = setupTestToken(userId, policy);
 
 		UserDetails details = service.loadUserByUsername(token);
@@ -149,7 +148,7 @@ public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSuppor
 		final Long userId = 123L;
 		setupTestUser(userId);
 		final BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withSourceIds(Collections.singleton("Main"))
+				.withSourceIds(Set.of("Main"))
 				.withNotAfter(Instant.now().plus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS))
 				.build();
 		final String token = setupTestToken(userId, policy);

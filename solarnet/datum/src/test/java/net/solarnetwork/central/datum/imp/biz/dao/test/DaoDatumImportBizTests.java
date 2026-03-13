@@ -56,7 +56,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
@@ -203,7 +202,7 @@ public class DaoDatumImportBizTests {
 		inputConfiguration.setName("Test CSV Input");
 		inputConfiguration.setTimeZoneId("UTC");
 		inputConfiguration.setServiceIdentifier("foo");
-		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		inputConfiguration.setServiceProps(Map.of("foo", "bar"));
 		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
 		configuration.setInputConfiguration(inputConfiguration);
 		BasicDatumImportRequest request = new BasicDatumImportRequest(configuration, TEST_USER_ID);
@@ -276,7 +275,7 @@ public class DaoDatumImportBizTests {
 		inputConfiguration.setName("Test CSV Input");
 		inputConfiguration.setTimeZoneId("UTC");
 		inputConfiguration.setServiceIdentifier("foo");
-		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		inputConfiguration.setServiceProps(Map.of("foo", "bar"));
 		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
 		configuration.setInputConfiguration(inputConfiguration);
 		BasicDatumImportRequest request = new BasicDatumImportRequest(configuration, TEST_USER_ID);
@@ -357,7 +356,7 @@ public class DaoDatumImportBizTests {
 		inputConfiguration.setName("Test CSV Input");
 		inputConfiguration.setTimeZoneId("UTC");
 		inputConfiguration.setServiceIdentifier("foo");
-		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		inputConfiguration.setServiceProps(Map.of("foo", "bar"));
 		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
 		configuration.setInputConfiguration(inputConfiguration);
 		BasicDatumImportRequest request = new BasicDatumImportRequest(configuration, TEST_USER_ID);
@@ -443,7 +442,7 @@ public class DaoDatumImportBizTests {
 		inputConfiguration.setName("Test CSV Input");
 		inputConfiguration.setTimeZoneId("UTC");
 		inputConfiguration.setServiceIdentifier("foo");
-		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		inputConfiguration.setServiceProps(Map.of("foo", "bar"));
 		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
 		configuration.setInputConfiguration(inputConfiguration);
 		BasicDatumImportRequest request = new BasicDatumImportRequest(configuration, TEST_USER_ID);
@@ -578,10 +577,8 @@ public class DaoDatumImportBizTests {
 		List<GeneralNodeDatum> data = new ArrayList<>(4);
 		long wh = (long) (Math.random() * 1000000000.0);
 		for ( int i = 0; i < count; i++ ) {
-			GeneralNodeDatum d = new GeneralNodeDatum();
-			d.setNodeId(TEST_NODE_ID);
-			d.setCreated(start.plus(i, ChronoUnit.MINUTES));
-			d.setSourceId(TEST_SOURCE_ID);
+			GeneralNodeDatum d = new GeneralNodeDatum(TEST_NODE_ID, start.plus(i, ChronoUnit.MINUTES),
+					TEST_SOURCE_ID);
 
 			DatumSamples s = new DatumSamples();
 			int watts = (int) (Math.random() * 50000);
@@ -599,7 +596,7 @@ public class DaoDatumImportBizTests {
 		inputConfiguration.setName("Test CSV Input");
 		inputConfiguration.setTimeZoneId("UTC");
 		inputConfiguration.setServiceIdentifier("foo");
-		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		inputConfiguration.setServiceProps(Map.of("foo", "bar"));
 		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
 		configuration.setInputConfiguration(inputConfiguration);
 		DatumImportJobInfo info = new DatumImportJobInfo();
@@ -1107,7 +1104,7 @@ public class DaoDatumImportBizTests {
 			}
 		};
 		CompletableFuture<Iterable<Resource>> storageListingFuture = CompletableFuture
-				.completedFuture(Collections.singleton(r));
+				.completedFuture(Set.of(r));
 		expect(resourceStorageService.listResources(dataFile.getName())).andReturn(storageListingFuture);
 
 		expect(resourceStorageService.getUid()).andReturn("Magic Storage").anyTimes();
@@ -1146,7 +1143,7 @@ public class DaoDatumImportBizTests {
 
 		loadingContext.close();
 
-		Set<String> deletedResourcePaths = Collections.singleton("Yeah, baby!");
+		Set<String> deletedResourcePaths = Set.of("Yeah, baby!");
 		Capture<Iterable<String>> deleteResourcePathsCaptor = new Capture<>();
 		expect(resourceStorageService.deleteResources(capture(deleteResourcePathsCaptor)))
 				.andReturn(CompletableFuture.completedFuture(deletedResourcePaths));
@@ -1435,7 +1432,7 @@ public class DaoDatumImportBizTests {
 
 		// when
 		replayAll();
-		Set<String> jobIds = Collections.singleton(uuid.toString());
+		Set<String> jobIds = Set.of(uuid.toString());
 		Collection<DatumImportStatus> results = biz.deleteDatumImportJobsForUser(TEST_USER_ID, jobIds);
 
 		assertThat("Queried states", statesCaptor.getValue(),
@@ -1465,7 +1462,7 @@ public class DaoDatumImportBizTests {
 
 		// when
 		replayAll();
-		Set<String> jobIds = Collections.singleton(uuid.toString());
+		Set<String> jobIds = Set.of(uuid.toString());
 		Collection<DatumImportStatus> results = biz.deleteDatumImportJobsForUser(TEST_USER_ID, jobIds);
 
 		assertThat("Queried states", statesCaptor.getValue(),

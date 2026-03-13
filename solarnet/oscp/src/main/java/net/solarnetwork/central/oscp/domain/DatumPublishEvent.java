@@ -109,7 +109,7 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 	/**
 	 * Get the node ID.
 	 *
-	 * @return the settings node ID, or {@literal null} if not available
+	 * @return the settings node ID, or {@code null} if not available
 	 */
 	public Long nodeId() {
 		return (settings != null ? settings.getNodeId() : null);
@@ -118,7 +118,7 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 	/**
 	 * Resolve the source ID according the configured settings and parameters.
 	 *
-	 * @return the source ID, or {@literal null} if no source ID template is
+	 * @return the source ID, or {@code null} if no source ID template is
 	 *         available
 	 */
 	public String sourceId() {

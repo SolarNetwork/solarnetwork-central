@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.support;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.configuration.Configuration;
@@ -41,6 +43,8 @@ import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.config.units.EntryUnit;
 import org.ehcache.config.units.MemoryUnit;
 import org.ehcache.jsr107.Eh107Configuration;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -66,21 +70,21 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	private final Class<V> valueType;
 
 	private String name = "default";
-	private boolean storeByValue = false;
-	private boolean statisticsEnabled = false;
-	private ExpiryPolicy expiryPolicy = null;
-	private Duration expiryDuration = null;
+	private boolean storeByValue;
+	private boolean statisticsEnabled;
+	private @Nullable ExpiryPolicy expiryPolicy;
+	private @Nullable Duration expiryDuration;
 
-	private Factory<? extends CacheLoader<K, V>> readThroughLoaderFactory;
-	private boolean readThrough = false;
-	private Factory<? extends CacheWriter<K, V>> writeThroughWriterFactory;
-	private boolean writeThrough = false;
+	private @Nullable Factory<? extends CacheLoader<K, V>> readThroughLoaderFactory;
+	private boolean readThrough;
+	private @Nullable Factory<? extends CacheWriter<K, V>> writeThroughWriterFactory;
+	private boolean writeThrough;
 
-	private Integer heapMaxEntries = null;
-	private Integer diskMaxSizeMB = null;
-	private boolean diskPersistent = false;
+	private @Nullable Integer heapMaxEntries;
+	private @Nullable Integer diskMaxSizeMB;
+	private boolean diskPersistent;
 
-	private Cache<K, V> cache;
+	private @Nullable Cache<K, V> cache;
 
 	/**
 	 * Constructor.
@@ -91,12 +95,14 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 *        the key type
 	 * @param valueType
 	 *        the value type
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public JCacheFactoryBean(CacheManager cacheManager, Class<K> keyType, Class<V> valueType) {
 		super();
-		this.cacheManager = cacheManager;
-		this.keyType = keyType;
-		this.valueType = valueType;
+		this.cacheManager = requireNonNullArgument(cacheManager, "cacheManager");
+		this.keyType = requireNonNullArgument(keyType, "keyType");
+		this.valueType = requireNonNullArgument(valueType, "valueType");
 	}
 
 	@SuppressWarnings({ "deprecation", "StatementSwitchToExpressionSwitch" })
@@ -118,7 +124,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 						diskPersistent);
 			}
 			cacheConfigBuilder = cacheConfigBuilder.withResourcePools(poolsBuilder);
-			if ( expiryPolicy != null ) {
+			if ( expiryPolicy != null && expiryDuration != null ) {
 				switch (expiryPolicy) {
 					case Accessed:
 					case Updated:
@@ -190,15 +196,15 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	}
 
 	@Override
-	public Cache<K, V> getObject() throws Exception {
+	public @NonNull Cache<K, V> getObject() throws Exception {
 		if ( cache == null ) {
 			afterPropertiesSet();
 		}
-		return cache;
+		return nonnull(cache, "cache");
 	}
 
 	@Override
-	public Class<?> getObjectType() {
+	public @NonNull Class<?> getObjectType() {
 		return (this.cache != null ? this.cache.getClass() : Cache.class);
 	}
 
@@ -207,9 +213,11 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 *
 	 * @param name
 	 *        the name to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	/**
@@ -218,7 +226,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 * @param storeByValue
 	 *        the store-by-value to set
 	 */
-	public void setStoreByValue(boolean storeByValue) {
+	public final void setStoreByValue(boolean storeByValue) {
 		this.storeByValue = storeByValue;
 	}
 
@@ -228,7 +236,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 * @param expiryPolicy
 	 *        the expiry policy to set
 	 */
-	public void setExpiryPolicy(ExpiryPolicy expiryPolicy) {
+	public final void setExpiryPolicy(@Nullable ExpiryPolicy expiryPolicy) {
 		this.expiryPolicy = expiryPolicy;
 	}
 
@@ -238,7 +246,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 * @param expiryDuration
 	 *        the expiry duration to set
 	 */
-	public void setExpiryDuration(Duration expiryDuration) {
+	public final void setExpiryDuration(@Nullable Duration expiryDuration) {
 		this.expiryDuration = expiryDuration;
 	}
 
@@ -248,7 +256,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 * @param readThrough
 	 *        the read-through to set
 	 */
-	public void setReadThrough(boolean readThrough) {
+	public final void setReadThrough(boolean readThrough) {
 		this.readThrough = readThrough;
 	}
 
@@ -258,7 +266,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 * @param writeThrough
 	 *        the write-through to set
 	 */
-	public void setWriteThrough(boolean writeThrough) {
+	public final void setWriteThrough(boolean writeThrough) {
 		this.writeThrough = writeThrough;
 	}
 
@@ -268,7 +276,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 * @param statisticsEnabled
 	 *        the statistics-enabled to set
 	 */
-	public void setStatisticsEnabled(boolean statisticsEnabled) {
+	public final void setStatisticsEnabled(boolean statisticsEnabled) {
 		this.statisticsEnabled = statisticsEnabled;
 	}
 
@@ -278,7 +286,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 * @param readThroughLoaderFactory
 	 *        the loader to set
 	 */
-	public void setReadThroughLoaderFactory(
+	public final void setReadThroughLoaderFactory(
 			Factory<? extends CacheLoader<K, V>> readThroughLoaderFactory) {
 		this.readThroughLoaderFactory = readThroughLoaderFactory;
 	}
@@ -289,7 +297,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 * @param writeThroughWriterFactory
 	 *        the writer to set
 	 */
-	public void setWriteThroughWriterFactory(
+	public final void setWriteThroughWriterFactory(
 			Factory<? extends CacheWriter<K, V>> writeThroughWriterFactory) {
 		this.writeThroughWriterFactory = writeThroughWriterFactory;
 	}
@@ -306,7 +314,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 *        the max heap entries to configure
 	 * @since 1.1
 	 */
-	public void setHeapMaxEntries(Integer heapMaxEntries) {
+	public final void setHeapMaxEntries(@Nullable Integer heapMaxEntries) {
 		this.heapMaxEntries = heapMaxEntries;
 	}
 
@@ -322,7 +330,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 *        the max disk size to store
 	 * @since 1.1
 	 */
-	public void setDiskMaxSizeMB(Integer diskMaxSizeMB) {
+	public final void setDiskMaxSizeMB(@Nullable Integer diskMaxSizeMB) {
 		this.diskMaxSizeMB = diskMaxSizeMB;
 	}
 
@@ -333,7 +341,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 *         restarts; defaults to {@literal false}
 	 * @since 1.2
 	 */
-	public boolean isDiskPersistent() {
+	public final boolean isDiskPersistent() {
 		return diskPersistent;
 	}
 
@@ -346,7 +354,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 *        the disk storage on restart
 	 * @since 1.2
 	 */
-	public void setDiskPersistent(boolean diskPersistent) {
+	public final void setDiskPersistent(boolean diskPersistent) {
 		this.diskPersistent = diskPersistent;
 	}
 

@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemUsageRecordInfo;
 import net.solarnetwork.central.user.billing.domain.LocalizedNamedCostInfo;
@@ -43,11 +44,11 @@ import net.solarnetwork.central.user.billing.domain.NamedCost;
 public class LocalizedInvoiceItemUsageRecord
 		implements InvoiceItemUsageRecord, LocalizedInvoiceItemUsageRecordInfo {
 
-	private final String localizedUnitType;
 	private final InvoiceItemUsageRecord item;
 	private final Locale locale;
 	private final String currencyCode;
-	private final String[] localizedUsageTierDescriptions;
+	private final @Nullable String localizedUnitType;
+	private final String @Nullable [] localizedUsageTierDescriptions;
 
 	/**
 	 * Convenience builder.
@@ -59,6 +60,8 @@ public class LocalizedInvoiceItemUsageRecord
 	 * @param currencyCode
 	 *        the currency code
 	 * @return the localized invoice
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public static LocalizedInvoiceItemUsageRecord of(InvoiceItemUsageRecord item, Locale locale,
 			String currencyCode) {
@@ -78,10 +81,13 @@ public class LocalizedInvoiceItemUsageRecord
 	 *        the localized usage tier descriptions to use for the
 	 *        {@link InvoiceItemUsageRecord#getUsageTiers()} named costs
 	 * @return the localized invoice
+	 * @throws IllegalArgumentException
+	 *         if {@code item}, {@code locale}, or {@code currencyCode} is
+	 *         {@code null}
 	 * @since 1.1
 	 */
 	public static LocalizedInvoiceItemUsageRecord of(InvoiceItemUsageRecord item, Locale locale,
-			String currencyCode, String[] localizedUsageTierDescriptions) {
+			String currencyCode, String @Nullable [] localizedUsageTierDescriptions) {
 		return new LocalizedInvoiceItemUsageRecord(item, locale, null, currencyCode,
 				localizedUsageTierDescriptions);
 	}
@@ -97,9 +103,12 @@ public class LocalizedInvoiceItemUsageRecord
 	 *        the localized unit type name
 	 * @param currencyCode
 	 *        the currency code
+	 * @throws IllegalArgumentException
+	 *         if {@code item}, {@code locale}, or {@code currencyCode} is
+	 *         {@code null}
 	 */
 	public LocalizedInvoiceItemUsageRecord(InvoiceItemUsageRecord item, Locale locale,
-			String localizedUnitType, String currencyCode) {
+			@Nullable String localizedUnitType, String currencyCode) {
 		this(item, locale, localizedUnitType, currencyCode, null);
 	}
 
@@ -117,20 +126,24 @@ public class LocalizedInvoiceItemUsageRecord
 	 * @param localizedUsageTierDescriptions
 	 *        the localized usage tier descriptions to use for the
 	 *        {@link InvoiceItemUsageRecord#getUsageTiers()} named costs
+	 * @throws IllegalArgumentException
+	 *         if {@code item}, {@code locale}, or {@code currencyCode} is
+	 *         {@code null}
 	 * @since 1.1
 	 */
 	public LocalizedInvoiceItemUsageRecord(InvoiceItemUsageRecord item, Locale locale,
-			String localizedUnitType, String currencyCode, String[] localizedUsageTierDescriptions) {
+			@Nullable String localizedUnitType, String currencyCode,
+			String @Nullable [] localizedUsageTierDescriptions) {
 		super();
 		this.item = item;
 		this.locale = locale;
-		this.localizedUnitType = localizedUnitType;
 		this.currencyCode = currencyCode;
+		this.localizedUnitType = localizedUnitType;
 		this.localizedUsageTierDescriptions = localizedUsageTierDescriptions;
 	}
 
 	@Override
-	public String getLocalizedUnitType() {
+	public final @Nullable String getLocalizedUnitType() {
 		return localizedUnitType;
 	}
 
@@ -150,7 +163,7 @@ public class LocalizedInvoiceItemUsageRecord
 	public List<LocalizedNamedCostInfo> getLocalizedUsageTiers() {
 		List<NamedCost> tiers = getUsageTiers();
 		if ( tiers == null || tiers.isEmpty() ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		final int len = tiers.size();
 		List<LocalizedNamedCostInfo> result = new ArrayList<>(len);
@@ -158,28 +171,29 @@ public class LocalizedInvoiceItemUsageRecord
 			String desc = (localizedUsageTierDescriptions != null
 					&& i < localizedUsageTierDescriptions.length ? localizedUsageTierDescriptions[i]
 							: null);
-			result.add(new LocalizedNamedCost(tiers.get(i), locale, desc, currencyCode));
+			result.add(new LocalizedNamedCost(tiers.get(i), locale,
+					desc != null ? desc : String.valueOf(i), currencyCode));
 		}
 		return Collections.unmodifiableList(result);
 	}
 
 	@Override
-	public String getUnitType() {
+	public final String getUnitType() {
 		return item.getUnitType();
 	}
 
 	@Override
-	public BigDecimal getAmount() {
+	public final BigDecimal getAmount() {
 		return item.getAmount();
 	}
 
 	@Override
-	public BigDecimal getCost() {
+	public final BigDecimal getCost() {
 		return item.getCost();
 	}
 
 	@Override
-	public List<NamedCost> getUsageTiers() {
+	public final List<NamedCost> getUsageTiers() {
 		return item.getUsageTiers();
 	}
 

@@ -32,9 +32,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -88,7 +88,7 @@ public class SolarEdgeCloudIntegrationServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		service = new SolarEdgeV1CloudIntegrationService(Collections.singleton(datumStreamService),
+		service = new SolarEdgeV1CloudIntegrationService(Set.of(datumStreamService),
 				userEventAppenderBiz, encryptor, restOps);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
@@ -101,7 +101,7 @@ public class SolarEdgeCloudIntegrationServiceTests {
 	public void validate_missingAuthSettings() {
 		// GIVEN
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				"foo", "bar"
@@ -144,7 +144,7 @@ public class SolarEdgeCloudIntegrationServiceTests {
 		final String apiKey = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				SolarEdgeV1CloudIntegrationService.API_KEY_SETTING, apiKey

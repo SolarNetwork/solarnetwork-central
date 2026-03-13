@@ -126,7 +126,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 	 * @param mapper
 	 *        the mapper to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public MeterTransferDataTransferDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,
@@ -219,11 +219,9 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 			return null;
 		}
 
-		GeneralNodeDatum d = new GeneralNodeDatum();
+		GeneralNodeDatum d = new GeneralNodeDatum(cp.getNodeId(), ts,
+				pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		d.setSamples(s);
-		d.setCreated(ts);
-		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		return d;
 	}
 

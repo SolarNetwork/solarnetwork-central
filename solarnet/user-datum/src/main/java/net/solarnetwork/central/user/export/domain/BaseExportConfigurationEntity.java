@@ -49,11 +49,16 @@ public abstract class BaseExportConfigurationEntity<C extends BaseIdentifiableUs
 	 *        the primary key
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public BaseExportConfigurationEntity(UserLongCompositePK id, Instant created) {
-		super(id, created);
+	public BaseExportConfigurationEntity(UserLongCompositePK id, Instant created, String name,
+			String serviceIdentifier) {
+		super(id, created, name, serviceIdentifier);
 	}
 
 	/**
@@ -67,8 +72,7 @@ public abstract class BaseExportConfigurationEntity<C extends BaseIdentifiableUs
 		if ( configId != null ) {
 			return configId;
 		}
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+		return pk().getEntityId();
 	}
 
 	/**

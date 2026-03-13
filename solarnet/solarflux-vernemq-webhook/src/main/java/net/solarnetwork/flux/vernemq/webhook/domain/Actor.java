@@ -18,7 +18,6 @@
 package net.solarnetwork.flux.vernemq.webhook.domain;
 
 import java.util.Set;
-
 import net.solarnetwork.domain.SecurityPolicy;
 
 /**
@@ -39,7 +38,7 @@ public interface Actor {
 	/**
 	 * The actor type.
 	 * 
-	 * @return the actor type, or {@literal null} if not known
+	 * @return the actor type, or {@code null} if not known
 	 */
 	ActorType getActorType();
 
@@ -58,21 +57,21 @@ public interface Actor {
 	 * {@link #getTokenId()}.
 	 * </p>
 	 * 
-	 * @return the user ID, never {@literal null}
+	 * @return the user ID, never {@code null}
 	 */
 	Long getUserId();
 
 	/**
 	 * Get the security policy associated with the actor.
 	 * 
-	 * @return the policy, or {@literal null} if none available
+	 * @return the policy, or {@code null} if none available
 	 */
 	SecurityPolicy getPolicy();
 
 	/**
 	 * Get the complete set of SolarNode IDs the user owns.
 	 * 
-	 * @return the user's node IDs, never {@literal null}
+	 * @return the user's node IDs, never {@code null}
 	 */
 	Set<Long> getUserNodeIds();
 
@@ -85,7 +84,7 @@ public interface Actor {
 	 * available and {@link #getUserNodeIds()}.
 	 * </p>
 	 * 
-	 * @return the allowed node IDs, never {@literal null}
+	 * @return the allowed node IDs, never {@code null}
 	 */
 	Set<Long> getAllowedNodeIds();
 

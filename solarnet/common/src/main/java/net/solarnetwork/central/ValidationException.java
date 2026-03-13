@@ -23,6 +23,7 @@
 package net.solarnetwork.central;
 
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.validation.Errors;
 
@@ -37,8 +38,8 @@ public class ValidationException extends RuntimeException {
 	@Serial
 	private static final long serialVersionUID = -40848031815846620L;
 
-	private final Errors errors;
-	private final MessageSource messageSource;
+	private final @Nullable Errors errors;
+	private final @Nullable MessageSource messageSource;
 
 	/**
 	 * Default constructor.
@@ -53,7 +54,7 @@ public class ValidationException extends RuntimeException {
 	 * @param errors
 	 *        the validation errors
 	 */
-	public ValidationException(Errors errors) {
+	public ValidationException(@Nullable Errors errors) {
 		this(errors, null);
 	}
 
@@ -65,7 +66,7 @@ public class ValidationException extends RuntimeException {
 	 * @param messageSource
 	 *        the message source to use to resolve the Errors against
 	 */
-	public ValidationException(Errors errors, MessageSource messageSource) {
+	public ValidationException(@Nullable Errors errors, @Nullable MessageSource messageSource) {
 		this(errors, messageSource, null);
 	}
 
@@ -80,7 +81,8 @@ public class ValidationException extends RuntimeException {
 	 *        the message source to use to resolve the Errors against
 	 * @since 1.2
 	 */
-	public ValidationException(String message, Errors errors, MessageSource messageSource) {
+	public ValidationException(String message, @Nullable Errors errors,
+			@Nullable MessageSource messageSource) {
 		this(message, errors, messageSource, null);
 	}
 
@@ -94,7 +96,8 @@ public class ValidationException extends RuntimeException {
 	 * @param cause
 	 *        the causing exception
 	 */
-	public ValidationException(Errors errors, MessageSource messageSource, Throwable cause) {
+	public ValidationException(@Nullable Errors errors, @Nullable MessageSource messageSource,
+			@Nullable Throwable cause) {
 		this(null, errors, messageSource, cause);
 	}
 
@@ -111,18 +114,18 @@ public class ValidationException extends RuntimeException {
 	 *        the causing exception
 	 * @since 1.2
 	 */
-	public ValidationException(String message, Errors errors, MessageSource messageSource,
-			Throwable cause) {
+	public ValidationException(@Nullable String message, @Nullable Errors errors,
+			@Nullable MessageSource messageSource, @Nullable Throwable cause) {
 		super(message, cause);
 		this.errors = errors;
 		this.messageSource = messageSource;
 	}
 
-	public Errors getErrors() {
+	public @Nullable Errors getErrors() {
 		return errors;
 	}
 
-	public MessageSource getMessageSource() {
+	public @Nullable MessageSource getMessageSource() {
 		return messageSource;
 	}
 

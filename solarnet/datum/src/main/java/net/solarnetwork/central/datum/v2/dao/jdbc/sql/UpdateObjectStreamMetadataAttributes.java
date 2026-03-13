@@ -29,6 +29,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -46,11 +47,11 @@ public final class UpdateObjectStreamMetadataAttributes
 
 	private final ObjectDatumKind kind;
 	private final UUID streamId;
-	private final Long objectId;
-	private final String sourceId;
-	private final String[] instantaneousProperties;
-	private final String[] accumulatingProperties;
-	private final String[] statusProperties;
+	private final @Nullable Long objectId;
+	private final @Nullable String sourceId;
+	private final String @Nullable [] instantaneousProperties;
+	private final String @Nullable [] accumulatingProperties;
+	private final String @Nullable [] statusProperties;
 
 	/**
 	 * Constructor.
@@ -60,12 +61,12 @@ public final class UpdateObjectStreamMetadataAttributes
 	 * @param streamId
 	 *        the ID of the stream metadata to update
 	 * @param objectId
-	 *        the object ID to set, or {@literal null} to leave unchanged
+	 *        the object ID to set, or {@code null} to leave unchanged
 	 * @param sourceId
-	 *        the source ID to set, or {@literal null} to leave unchanged
+	 *        the source ID to set, or {@code null} to leave unchanged
 	 * @throws IllegalArgumentException
-	 *         if either {@code streamId} or {@code kind} is {@literal null}, or
-	 *         both {@code objectId} and {@code sourceId} are {@literal null}
+	 *         if either {@code streamId} or {@code kind} is {@code null}, or
+	 *         both {@code objectId} and {@code sourceId} are {@code null}
 	 */
 	public UpdateObjectStreamMetadataAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
 			String sourceId) {
@@ -80,25 +81,26 @@ public final class UpdateObjectStreamMetadataAttributes
 	 * @param streamId
 	 *        the ID of the stream metadata to update
 	 * @param objectId
-	 *        the object ID to set, or {@literal null} to leave unchanged
+	 *        the object ID to set, or {@code null} to leave unchanged
 	 * @param sourceId
-	 *        the source ID to set, or {@literal null} to leave unchanged
+	 *        the source ID to set, or {@code null} to leave unchanged
 	 * @param instantaneousProperties
-	 *        the instantaneous property names to set, or {@literal null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param accumulatingProperties
-	 *        the instantaneous property names to set, or {@literal null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @param statusProperties
-	 *        the instantaneous property names to set, or {@literal null} to
-	 *        keep unchanged
+	 *        the instantaneous property names to set, or {@code null} to keep
+	 *        unchanged
 	 * @throws IllegalArgumentException
-	 *         if either {@code streamId} or {@code kind} is {@literal null}, or
-	 *         all other arguments are {@literal null}
+	 *         if either {@code streamId} or {@code kind} is {@code null}, or
+	 *         all other arguments are {@code null}
 	 */
-	public UpdateObjectStreamMetadataAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
-			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,
-			String[] statusProperties) {
+	public UpdateObjectStreamMetadataAttributes(ObjectDatumKind kind, UUID streamId,
+			@Nullable Long objectId, @Nullable String sourceId,
+			String @Nullable [] instantaneousProperties, String @Nullable [] accumulatingProperties,
+			String @Nullable [] statusProperties) {
 		super();
 		this.streamId = requireNonNullArgument(streamId, "streamId");
 		this.kind = requireNonNullArgument(kind, "kind");

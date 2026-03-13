@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Extension of {@link Filter} for mapping node IDs into virtual IDs.
@@ -48,6 +49,7 @@ public interface NodeMappingFilter {
 	 * @return the mapping of virtual node IDs to the set of real node IDs that
 	 *         should be mapped to them
 	 */
+	@Nullable
 	Map<Long, Set<Long>> getNodeIdMappings();
 
 }

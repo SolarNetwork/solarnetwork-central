@@ -38,7 +38,6 @@ import static org.mockito.internal.verification.VerificationModeFactory.times;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.function.Function;
@@ -123,8 +122,7 @@ public class HeartbeatJob_CapacityProviderTests {
 			for ( int i = 0; i < rows; i++ ) {
 				CapacityProviderConfiguration conf = confs.get(i);
 				var ctx = new SystemTaskContext<CapacityProviderConfiguration>("Heartbeat Test",
-						OscpRole.CapacityProvider, conf, null, null, capacityProviderDao,
-						Collections.emptyMap());
+						OscpRole.CapacityProvider, conf, null, null, capacityProviderDao, Map.of());
 				Instant result = handler.apply(ctx);
 				results.add(result);
 			}
@@ -172,8 +170,7 @@ public class HeartbeatJob_CapacityProviderTests {
 			for ( int i = 0; i < rows; i++ ) {
 				CapacityProviderConfiguration conf = confs.get(i);
 				var ctx = new SystemTaskContext<CapacityProviderConfiguration>("Heartbeat Test",
-						OscpRole.CapacityProvider, conf, null, null, capacityProviderDao,
-						Collections.emptyMap());
+						OscpRole.CapacityProvider, conf, null, null, capacityProviderDao, Map.of());
 				Instant result = handler.apply(ctx);
 				results.add(result);
 			}

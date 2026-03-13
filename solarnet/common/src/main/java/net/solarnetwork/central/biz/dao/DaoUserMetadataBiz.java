@@ -24,6 +24,7 @@ package net.solarnetwork.central.biz.dao;
 
 import java.time.Instant;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.biz.UserMetadataBiz;
@@ -102,7 +103,8 @@ public class DaoUserMetadataBiz implements UserMetadataBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<UserMetadataEntity, Long> findUserMetadata(UserMetadataFilter criteria,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max) {
 		return userMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
 	}
 

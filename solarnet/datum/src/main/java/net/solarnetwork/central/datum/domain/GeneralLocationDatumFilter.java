@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Filter API for {@link GeneralLocationDatum}.
  *
@@ -32,18 +34,19 @@ public interface GeneralLocationDatumFilter extends CommonFilter, PropertyNameFi
 
 	/**
 	 * Get the first location ID. This returns the first available location ID
-	 * from the {@link #getLocationIds()} array, or <em>null</em> if not
+	 * from the {@link #getLocationIds()} array, or {@code null} if not
 	 * available.
 	 *
-	 * @return the location ID, or <em>null</em> if not available
+	 * @return the location ID, or {@code null} if not available
 	 */
+	@Nullable
 	Long getLocationId();
 
 	/**
 	 * Get an array of location IDs.
 	 *
-	 * @return array of location IDs (may be <em>null</em>)
+	 * @return array of location IDs (may be {@code null})
 	 */
-	Long[] getLocationIds();
+	Long @Nullable [] getLocationIds();
 
 }

@@ -28,6 +28,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.inin.domain.CredentialConfiguration;
@@ -40,7 +41,7 @@ import net.solarnetwork.central.inin.domain.CredentialConfiguration;
  */
 public class SelectAuthenticatedEndpointCredentials implements PreparedStatementCreator, SqlProvider {
 
-	private final UUID endpointId;
+	private final @Nullable UUID endpointId;
 	private final String username;
 	private final boolean oauth;
 
@@ -48,18 +49,20 @@ public class SelectAuthenticatedEndpointCredentials implements PreparedStatement
 	 * Constructor.
 	 *
 	 * @param endpointId
-	 *        the endpoint ID
+	 *        the endpoint ID, or {@code null} if {@code oath} is
+	 *        {@literal true}
 	 * @param username
 	 *        the username
 	 * @param oauth
 	 *        {@literal true} to lookup OAuth credentials, {@literal false} for
 	 *        non-OAuth credentials
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public SelectAuthenticatedEndpointCredentials(UUID endpointId, String username, boolean oauth) {
+	public SelectAuthenticatedEndpointCredentials(@Nullable UUID endpointId, String username,
+			boolean oauth) {
 		super();
-		this.endpointId = requireNonNullArgument(endpointId, "endpointId");
+		this.endpointId = endpointId;
 		this.username = requireNonNullArgument(username, "username");
 		this.oauth = oauth;
 	}
@@ -74,13 +77,10 @@ public class SelectAuthenticatedEndpointCredentials implements PreparedStatement
 	 * @param username
 	 *        the username
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectAuthenticatedEndpointCredentials(String username) {
-		super();
-		this.endpointId = null;
-		this.username = requireNonNullArgument(username, "username");
-		this.oauth = true;
+		this(null, username, true);
 	}
 
 	@Override

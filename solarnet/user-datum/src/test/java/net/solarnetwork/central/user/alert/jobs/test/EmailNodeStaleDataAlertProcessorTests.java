@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.user.alert.jobs.test;
 
+import static java.time.Instant.now;
 import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
+import static net.solarnetwork.domain.datum.DatumProperties.emptyProperties;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
@@ -214,7 +216,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 	}
 
 	private static DatumEntity newDatum(ZonedDateTime created, UUID streamId) {
-		DatumEntity d = new DatumEntity(streamId, created.toInstant(), Instant.now(), null);
+		DatumEntity d = new DatumEntity(streamId, created.toInstant(), now(), emptyProperties());
 		return d;
 	}
 
@@ -241,7 +243,7 @@ public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstan
 
 	@Test
 	public void processNoAlerts() {
-		List<UserAlert> pendingAlerts = Collections.emptyList();
+		List<UserAlert> pendingAlerts = List.of();
 		final Instant batchTime = Instant.now();
 		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
 				service.getBatchSize())).andReturn(pendingAlerts);

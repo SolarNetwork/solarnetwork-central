@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security.web.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
@@ -44,24 +45,32 @@ public class UserDetailsAuthenticationTokenService implements AuthenticationToke
 
 	private final UserDetailsService userDetailsService;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param userDetailsService
+	 *        the user details service
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
 	public UserDetailsAuthenticationTokenService(UserDetailsService userDetailsService) {
 		super();
-		this.userDetailsService = userDetailsService;
+		this.userDetailsService = requireNonNullArgument(userDetailsService, "userDetailsService");
 	}
 
 	@Override
 	public byte[] computeAuthenticationTokenSigningKey(AuthenticationScheme scheme, SecurityToken token,
 			Map<String, ?> properties) {
-		UserDetails user = userDetailsService.loadUserByUsername(token.getToken());
+		final UserDetails user = userDetailsService.loadUserByUsername(token.getToken());
+		final String password = (user.getPassword() != null ? user.getPassword() : "");
 		return switch (scheme) {
-			case V1 -> user.getPassword().getBytes(StandardCharsets.UTF_8);
+			case V1 -> password.getBytes(StandardCharsets.UTF_8);
 			case V2 -> {
 				if ( !(properties.get(SIGN_DATE_PROP) instanceof Instant ts) ) {
 					throw new IllegalArgumentException(
 							"The " + SIGN_DATE_PROP + " property must be an Instant");
 				}
-				yield new Snws2AuthorizationBuilder(token.getToken()).computeSigningKey(ts,
-						user.getPassword());
+				yield new Snws2AuthorizationBuilder(token.getToken()).computeSigningKey(ts, password);
 			}
 			default -> throw new UnsupportedOperationException("Scheme " + scheme + " not supported");
 		};

@@ -27,11 +27,11 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
@@ -54,9 +54,8 @@ import net.solarnetwork.util.DateUtils;
 public class UserDatumExportConfigurationTests {
 
 	public static UserDataConfiguration newDataConf(Long id, Long userId, Instant now) {
-		UserDataConfiguration conf = new UserDataConfiguration(new UserLongCompositePK(userId, id), now);
-		conf.setName(randomString());
-		conf.setServiceIdentifier(randomString());
+		UserDataConfiguration conf = new UserDataConfiguration(new UserLongCompositePK(userId, id), now,
+				randomString(), randomString());
 
 		Map<String, Object> sprops = new HashMap<String, Object>(4);
 		sprops.put("string", "foo");
@@ -79,9 +78,7 @@ public class UserDatumExportConfigurationTests {
 
 	public static UserDestinationConfiguration newDestConf(Long id, Long userId, Instant now) {
 		UserDestinationConfiguration conf = new UserDestinationConfiguration(
-				new UserLongCompositePK(userId, id), now);
-		conf.setName(UUID.randomUUID().toString());
-		conf.setServiceIdentifier(UUID.randomUUID().toString());
+				new UserLongCompositePK(userId, id), now, randomString(), randomString());
 
 		Map<String, Object> sprops = new HashMap<String, Object>(4);
 		sprops.put("string", "foo");
@@ -99,10 +96,7 @@ public class UserDatumExportConfigurationTests {
 
 	public static UserOutputConfiguration newOutpConf(Long id, Long userId, Instant now) {
 		UserOutputConfiguration conf = new UserOutputConfiguration(new UserLongCompositePK(userId, id),
-				now);
-		conf.setName(UUID.randomUUID().toString());
-		conf.setServiceIdentifier(UUID.randomUUID().toString());
-		conf.setCompressionType(OutputCompressionType.None);
+				now, randomString(), randomString(), OutputCompressionType.None);
 
 		Map<String, Object> sprops = new HashMap<String, Object>(4);
 		sprops.put("string", "foo");
@@ -122,19 +116,21 @@ public class UserDatumExportConfigurationTests {
 	public void toJson() {
 		// GIVEN
 		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
-				new UserLongCompositePK(randomLong(), randomLong()), now());
-		conf.setName(randomString());
-		conf.setHourDelayOffset(2);
-		conf.setSchedule(ScheduleType.Weekly);
+				new UserLongCompositePK(randomLong(), randomLong()), now(), randomString(),
+				ScheduleType.Weekly, 2, now().truncatedTo(ChronoUnit.HOURS));
 
 		// WHEN
 		String json = JsonUtils.getJSONString(conf);
 
 		// THEN
-		then(json).isEqualTo("""
-				{"id":%d,"created":"%s","userId":%d,"name":"%s","hourDelayOffset":2,"scheduleKey":"w"}"""
-				.formatted(conf.getConfigId(), DateUtils.ISO_DATE_TIME_ALT_UTC.format(conf.getCreated()),
-						conf.getUserId(), conf.getName()));
+		then(json).isEqualTo(
+				"""
+						{"id":%d,"created":"%s","userId":%d,"name":"%s","hourDelayOffset":2,"scheduleKey":"w","minimumExportDate":"%s","startingExportDate":"%s"}"""
+						.formatted(conf.getConfigId(),
+								DateUtils.ISO_DATE_TIME_ALT_UTC.format(conf.getCreated()),
+								conf.getUserId(), conf.getName(),
+								DateUtils.ISO_DATE_TIME_ALT_UTC.format(conf.getMinimumExportDate()),
+								DateUtils.ISO_DATE_TIME_ALT_UTC.format(conf.getStartingExportDate())));
 	}
 
 }

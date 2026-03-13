@@ -35,7 +35,6 @@ import java.io.StringWriter;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -51,6 +50,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -84,10 +84,10 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 	 * @param objectMapper
 	 *        the object mapper
 	 * @param templatesCacheTtl
-	 *        the TTL for the templates cache, or {@literal null} or
-	 *        {@literal 0} for no caching
+	 *        the TTL for the templates cache, or {@code null} or {@literal 0}
+	 *        for no caching
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public XsltRequestTransformService(DocumentBuilderFactory documentBuilderFactory,
 			TransformerFactory transformerFactory, ObjectMapper objectMapper,
@@ -111,12 +111,12 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 	 * @param objectMapper
 	 *        the object mapper
 	 * @param templatesCacheTtl
-	 *        the TTL for the templates cache, or {@literal null} or
-	 *        {@literal 0} for no caching
+	 *        the TTL for the templates cache, or {@code null} or {@literal 0}
+	 *        for no caching
 	 * @param templatesCache
 	 *        the templates cache to use
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code templatesCache} is {@literal null}
+	 *         if any argument except {@code templatesCache} is {@code null}
 	 */
 	public XsltRequestTransformService(DocumentBuilderFactory documentBuilderFactory,
 			TransformerFactory transformerFactory, ObjectMapper objectMapper, Duration templatesCacheTtl,
@@ -144,12 +144,12 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 
 	@Override
 	public Iterable<NodeInstruction> transformInput(Object input, MimeType type,
-			IdentifiableConfiguration config, Map<String, ?> parameters) throws IOException {
+			IdentifiableConfiguration config, @Nullable Map<String, ?> parameters) throws IOException {
 		String inputText = inputText(input);
 		Map<String, ?> props = config.getServiceProperties();
 		Object xslt = (props != null ? props.get(SETTING_XSLT) : null);
 		if ( xslt == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		Templates templates = templates(xslt.toString(), config, parameters);
 		try {
@@ -199,8 +199,8 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 		}
 	}
 
-	private Templates templates(String xslt, IdentifiableConfiguration config, Map<String, ?> parameters)
-			throws IOException {
+	private Templates templates(String xslt, IdentifiableConfiguration config,
+			@Nullable Map<String, ?> parameters) throws IOException {
 		return templates(xslt, config,
 				parameters != null ? parameters.get(PARAM_CONFIGURATION_CACHE_KEY) : null);
 	}
@@ -211,9 +211,9 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 		if ( root.isObject() ) {
 			NodeInstruction instr = objectMapper.treeToValue(root, NodeInstruction.class);
 			if ( instr != null ) {
-				return Collections.singletonList(instr);
+				return List.of(instr);
 			}
-			return Collections.emptyList();
+			return List.of();
 		}
 		List<NodeInstruction> result = new ArrayList<>(root.size());
 		for ( JsonNode n : root ) {

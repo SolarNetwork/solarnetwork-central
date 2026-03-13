@@ -67,6 +67,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -217,7 +218,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 	 *        read-through semantics that always returns a new lock for missing
 	 *        keys
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument except {@code integrationLocksCache} is
+	 *         {@code null}
 	 */
 	public LocusEnergyCloudDatumStreamService(AsyncTaskExecutor executor,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
@@ -227,7 +229,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
-			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
+			@Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		super(SERVICE_IDENTIFIER, "Locus Energy Datum Stream Service", clock, userEventAppenderBiz,
 				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
@@ -258,14 +260,15 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
-			Map<String, ?> filters) {
+			@Nullable Map<String, ?> filters) {
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
 		List<CloudDataValue> result;
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null
 				&& filters.get(COMPONENT_ID_FILTER) != null ) {
-			result = nodesForComponent(integration, filters);
+			result = nodesForComponent(integration, filters.get(SITE_ID_FILTER).toString(),
+					filters.get(COMPONENT_ID_FILTER).toString(), filters);
 		} else if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
 			result = componentsForSite(integration, filters);
 		} else {
@@ -276,17 +279,18 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	private List<CloudDataValue> sitesForPartner(CloudIntegrationConfiguration integration) {
+		final Map<String, ?> sprops = integration.getServiceProperties();
 		return restOpsHelper.httpGet("List sites", integration, ObjectNode.class,
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
-						.buildAndExpand(integration.getServiceProperties()).toUri(),
+						.buildAndExpand(sprops != null ? sprops : Map.of()).toUri(),
 				res -> parseSites(res.getBody()));
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<CloudDataValue> parseSites(ObjectNode json) {
+	private static List<CloudDataValue> parseSites(@Nullable ObjectNode json) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -347,9 +351,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<CloudDataValue> parseComponents(ObjectNode json) {
+	private static List<CloudDataValue> parseComponents(@Nullable ObjectNode json) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -403,20 +407,19 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	private List<CloudDataValue> nodesForComponent(CloudIntegrationConfiguration integration,
-			Map<String, ?> filters) {
+			String siteId, String compId, Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List fields for component", integration, ObjectNode.class,
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(LocusEnergyCloudIntegrationService.V3_NODES_FOR_COMPOENNT_ID_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
-				res -> parseNodes(res.getBody(), filters));
+				res -> parseNodes(res.getBody(), siteId, compId));
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<CloudDataValue> parseNodes(ObjectNode json, Map<String, ?> filters) {
-		assert filters != null && filters.containsKey(SITE_ID_FILTER)
-				&& filters.containsKey(COMPONENT_ID_FILTER);
+	private static List<CloudDataValue> parseNodes(@Nullable ObjectNode json, String siteId,
+			String compId) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -455,8 +458,6 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 		  ]
 		}
 		*/
-		final var siteId = filters.get(SITE_ID_FILTER).toString();
-		final var compId = filters.get(COMPONENT_ID_FILTER).toString();
 		List<CloudDataValue> result = new ArrayList<>(32);
 		for ( JsonNode fieldNode : json.path("baseFields") ) {
 			final String id = fieldNode.path("baseField").asString().trim();
@@ -494,9 +495,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		final var data = queryForDatum(datumStream, null);
 		if ( data == null || data.isEmpty() ) {
-			return Collections.emptyList();
+			return List.of();
 		}
-		return Collections.singletonList(data.getResults().getLast());
+		return List.of(data.getResults().getLast());
 	}
 
 	@Override
@@ -524,14 +525,14 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/(-?\\d+)/(-?\\d+)/([^/]+)/(.+)");
 
 	private LocusEnergyGranularity resolveGranularity(CloudDatumStreamConfiguration datumStream,
-			CloudDatumStreamQueryFilter filter) {
+			@Nullable CloudDatumStreamQueryFilter filter) {
 		if ( filter == null || !filter.hasDateRange() ) {
 			return LocusEnergyGranularity.Latest;
 		}
 		LocusEnergyGranularity granularity = null;
 		try {
 			String granSetting;
-			if ( filter.hasParameterCriteria()
+			if ( filter.getParameters() != null
 					&& filter.getParameters().get(GRANULARITY_SETTING) instanceof String s ) {
 				granSetting = s;
 			} else {
@@ -557,7 +558,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 	 * @return the results
 	 */
 	private CloudDatumStreamQueryResult queryForDatum(CloudDatumStreamConfiguration datumStream,
-			CloudDatumStreamQueryFilter filter) {
+			@Nullable CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
 
@@ -569,12 +570,13 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 			}
 
 			final LocusEnergyGranularity granularity = resolveGranularity(ds, filter);
-			final Instant filterEndDate = (granularity != LocusEnergyGranularity.Latest
-					? filter.getEndDate().truncatedTo(ChronoUnit.SECONDS)
-					: null);
+			final Instant filterEndDate = (granularity != LocusEnergyGranularity.Latest && filter != null
+					&& filter.getEndDate() != null ? filter.getEndDate().truncatedTo(ChronoUnit.SECONDS)
+							: null);
 			final Instant startDate;
 			final Instant endDate;
-			if ( granularity != LocusEnergyGranularity.Latest ) {
+			if ( granularity != LocusEnergyGranularity.Latest && filter != null
+					&& filter.getStartDate() != null ) {
 				// add date range
 				startDate = filter.getStartDate().truncatedTo(ChronoUnit.SECONDS);
 
@@ -582,7 +584,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				if ( granularity.getConstraint() != null ) {
 					// enforce max time constraint
 					var maxEnd = startDate.plus(granularity.getConstraint());
-					if ( end.isAfter(maxEnd) ) {
+					if ( end == null || end.isAfter(maxEnd) ) {
 						end = maxEnd;
 					}
 				}
@@ -636,7 +638,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 											.queryParam("fields", collectionToCommaDelimitedString(fieldNames))
 											;
 									// @formatter:on
-									if ( granularity != LocusEnergyGranularity.Latest ) {
+									if ( granularity != LocusEnergyGranularity.Latest
+											&& startDate != null && endDate != null ) {
 										// add date range
 										b.queryParam("start",
 												ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)));
@@ -710,7 +713,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 					mapping.getConfigId(), integration.getConfigId());
 
 			BasicQueryFilter nextQueryFilter = null;
-			if ( granularity != LocusEnergyGranularity.Latest && endDate.isBefore(filterEndDate) ) {
+			if ( granularity != LocusEnergyGranularity.Latest && endDate != null && filterEndDate != null
+					&& endDate.isBefore(filterEndDate) ) {
 				// provide next date range to try
 				nextQueryFilter = BasicQueryFilter.copyOf(filter);
 				nextQueryFilter.setStartDate(endDate);

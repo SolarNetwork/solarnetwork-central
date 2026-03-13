@@ -52,7 +52,7 @@ public final class GetDatum implements PreparedStatementCreator, SqlProvider {
 	 * @param id
 	 *        the primary key
 	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
+	 *         if {@code id} is {@code null}
 	 */
 	public GetDatum(DatumPK id) {
 		this(id, Aggregation.None);
@@ -66,7 +66,7 @@ public final class GetDatum implements PreparedStatementCreator, SqlProvider {
 	 * @param aggregation
 	 *        the aggregation
 	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
+	 *         if {@code id} is {@code null}
 	 */
 	public GetDatum(DatumPK id, Aggregation aggregation) {
 		super();

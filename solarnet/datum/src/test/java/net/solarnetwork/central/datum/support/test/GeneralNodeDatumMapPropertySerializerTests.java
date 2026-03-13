@@ -54,11 +54,8 @@ public class GeneralNodeDatumMapPropertySerializerTests {
 	private GeneralNodeDatumMapPropertySerializer serializer;
 
 	private GeneralNodeDatum getTestInstance() {
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(TEST_TIMESTAMP);
-		datum.setNodeId(TEST_NODE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID, TEST_TIMESTAMP, TEST_SOURCE_ID);
 		datum.setPosted(datum.getCreated());
-		datum.setSourceId(TEST_SOURCE_ID);
 
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
@@ -102,10 +99,8 @@ public class GeneralNodeDatumMapPropertySerializerTests {
 	@Test
 	public void serializeReporting() {
 		GeneralNodeDatum d = getTestInstance();
-		ReportingGeneralNodeDatum rd = new ReportingGeneralNodeDatum();
-		rd.setCreated(d.getCreated());
-		rd.setNodeId(d.getNodeId());
-		rd.setSourceId(d.getSourceId());
+		ReportingGeneralNodeDatum rd = new ReportingGeneralNodeDatum(d.getNodeId(), d.getCreated(),
+				d.getSourceId());
 		rd.setSamples(d.getSamples());
 		rd.setLocalDateTime(TEST_DATE);
 		Object result = serializer.serialize(null, null, rd);

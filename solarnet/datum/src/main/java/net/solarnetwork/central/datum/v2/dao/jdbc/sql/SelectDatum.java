@@ -33,6 +33,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDate;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
@@ -63,8 +64,8 @@ public final class SelectDatum
 
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
-	private final CombiningConfig combine;
-	private final DatumRollupType rollup;
+	private final @Nullable CombiningConfig combine;
+	private final @Nullable DatumRollupType rollup;
 	private final int fetchSize;
 
 	/**
@@ -73,7 +74,7 @@ public final class SelectDatum
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null} or invalid
+	 *         if {@code filter} is {@code null} or invalid
 	 */
 	public SelectDatum(DatumCriteria filter) {
 		this(filter, DEFAULT_FETCH_SIZE);
@@ -87,7 +88,7 @@ public final class SelectDatum
 	 * @param fetchSize
 	 *        the row fetch size
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null} or invalid
+	 *         if {@code filter} is {@code null} or invalid
 	 * @since 1.2
 	 */
 	public SelectDatum(DatumCriteria filter, int fetchSize) {

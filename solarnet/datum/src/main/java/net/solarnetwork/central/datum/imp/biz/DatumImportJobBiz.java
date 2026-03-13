@@ -54,7 +54,7 @@ public interface DatumImportJobBiz {
 	 *
 	 * @param id
 	 *        the ID of the import job to perform
-	 * @return the job status, or {@literal null} if the job is not available
+	 * @return the job status, or {@code null} if the job is not available
 	 */
 	DatumImportStatus performImport(UserUuidPK id);
 
@@ -83,7 +83,7 @@ public interface DatumImportJobBiz {
 	 * changing the state to "claimed".
 	 * </p>
 	 *
-	 * @return a claimed job, or {@literal null} if none could be claimed
+	 * @return a claimed job, or {@code null} if none could be claimed
 	 */
 	DatumImportJobInfo claimQueuedJob();
 
@@ -105,7 +105,7 @@ public interface DatumImportJobBiz {
 	 *        the state to change the job to
 	 * @param expectedStates
 	 *        a set of states that must include the job's current state in order
-	 *        to change it to {@code desiredState}, or {@literal null} if the
+	 *        to change it to {@code desiredState}, or {@code null} if the
 	 *        current state of the job does not matter
 	 * @return {@literal true} if the job state was changed
 	 * @since 2.1

@@ -194,6 +194,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		given(datumDao.persist(any(GeneralNodeDatum.class))).willReturn(datumPk);
 
 		// WHEN
+		final Instant start = Instant.now();
 		Map<String, String> params = Map.of("foo", "bar", "bim", "bam");
 		Collection<DatumId> result = service.importDatum(userId, endpoint.getEndpointId(), type, in,
 				params);
@@ -233,10 +234,11 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 			.returns(nodeId, GeneralNodeDatum::getNodeId)
 			.as("Persisted source ID")
 			.returns(sourceId, GeneralNodeDatum::getSourceId)
-			.as("Timestamp not provided to DAO")
-			.returns(null, GeneralNodeDatum::getCreated)
 			.as("Persisted samples")
 			.returns(xformOutput.getSamples(), GeneralNodeDatum::getSamples)
+			.extracting(GeneralNodeDatum::getCreated)
+			.as("Timestamp assigned before passing to DAO")
+			.returns(true, from(ts -> !ts.isBefore(start)))
 			;
 
 		then(fluxProcessor).shouldHaveNoInteractions();
@@ -292,6 +294,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		given(fluxProcessor.isConfigured()).willReturn(true);
 
 		// WHEN
+		final Instant start = Instant.now();
 		Collection<DatumId> result = service.importDatum(userId, endpoint.getEndpointId(), type, in,
 				null);
 
@@ -305,10 +308,11 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 			.returns(nodeId, GeneralNodeDatum::getNodeId)
 			.as("Persisted source ID")
 			.returns(sourceId, GeneralNodeDatum::getSourceId)
-			.as("Timestamp not provided to DAO")
-			.returns(null, GeneralNodeDatum::getCreated)
 			.as("Persisted samples")
 			.returns(xformOutput.getSamples(), GeneralNodeDatum::getSamples)
+			.extracting(GeneralNodeDatum::getCreated)
+			.as("Timestamp assigned before passing to DAO")
+			.returns(true, from(ts -> !ts.isBefore(start)))
 			;
 
 		then(fluxProcessor).should().processDatum(fluxDatumCaptor.capture());
@@ -365,6 +369,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		given(datumDao.persist(any(GeneralNodeDatum.class))).willReturn(datumPk);
 
 		// WHEN
+		final Instant start = Instant.now();
 		var parameters = Map.of(DatumInputEndpointBiz.PARAM_NODE_ID, nodeId.toString(),
 				DatumInputEndpointBiz.PARAM_SOURCE_ID, sourceId);
 		Collection<DatumId> result = service.importDatum(userId, endpoint.getEndpointId(), type, in,
@@ -391,10 +396,11 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 			.returns(nodeId, GeneralNodeDatum::getNodeId)
 			.as("Persisted source ID")
 			.returns(sourceId, GeneralNodeDatum::getSourceId)
-			.as("Timestamp not provided to DAO")
-			.returns(null, GeneralNodeDatum::getCreated)
 			.as("Persisted samples")
 			.returns(xformOutput.getSamples(), GeneralNodeDatum::getSamples)
+			.extracting(GeneralNodeDatum::getCreated)
+			.as("Timestamp assigned before passing to DAO")
+			.returns(true, from(ts -> !ts.isBefore(start)))
 			;
 
 		then(fluxProcessor).shouldHaveNoInteractions();
@@ -607,6 +613,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		given(datumDao.persist(any(GeneralNodeDatum.class))).willReturn(datumPk);
 
 		// WHEN
+		final Instant start = Instant.now();
 		var parameters = Map.of(DatumInputEndpointBiz.PARAM_NODE_ID, nodeId.toString(),
 				DatumInputEndpointBiz.PARAM_SOURCE_ID, sourceId);
 		Collection<DatumId> result = service.importDatum(userId, endpoint.getEndpointId(), type, in,
@@ -652,10 +659,11 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 			.returns(nodeId, GeneralNodeDatum::getNodeId)
 			.as("Persisted source ID")
 			.returns(sourceId, GeneralNodeDatum::getSourceId)
-			.as("Timestamp not provided to DAO")
-			.returns(null, GeneralNodeDatum::getCreated)
 			.as("Persisted samples")
 			.returns(xformOutput.getSamples(), GeneralNodeDatum::getSamples)
+			.extracting(GeneralNodeDatum::getCreated)
+			.as("Timestamp assigned before passing to DAO")
+			.returns(true, from(ts -> !ts.isBefore(start)))
 			;
 
 
@@ -709,6 +717,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		given(datumDao.persist(any(GeneralNodeDatum.class))).willReturn(datumPk);
 
 		// WHEN
+		final Instant start = Instant.now();
 		Collection<DatumId> result = service.importDatum(userId, endpoint.getEndpointId(), type, in,
 				null);
 
@@ -722,10 +731,11 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 			.returns(nodeId, GeneralNodeDatum::getNodeId)
 			.as("Persisted source ID")
 			.returns(sourceId, GeneralNodeDatum::getSourceId)
-			.as("Timestamp not provided to DAO")
-			.returns(null, GeneralNodeDatum::getCreated)
 			.as("Persisted samples")
 			.returns(xformOutput.getSamples(), GeneralNodeDatum::getSamples)
+			.extracting(GeneralNodeDatum::getCreated)
+			.as("Timestamp assigned before passing to DAO")
+			.returns(true, from(ts -> !ts.isBefore(start)))
 			;
 
 		then(fluxProcessor).shouldHaveNoInteractions();
@@ -779,6 +789,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		given(datumDao.persist(any(GeneralNodeDatum.class))).willReturn(datumPk);
 
 		// WHEN
+		final Instant start = Instant.now();
 		// posting application/json content type, overridden by foo/bar on endpoint
 		Collection<DatumId> result = service.importDatum(userId, endpoint.getEndpointId(),
 				MediaType.APPLICATION_JSON, in, null);
@@ -793,10 +804,11 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 			.returns(nodeId, GeneralNodeDatum::getNodeId)
 			.as("Persisted source ID")
 			.returns(sourceId, GeneralNodeDatum::getSourceId)
-			.as("Timestamp not provided to DAO")
-			.returns(null, GeneralNodeDatum::getCreated)
 			.as("Persisted samples")
 			.returns(xformOutput.getSamples(), GeneralNodeDatum::getSamples)
+			.extracting(GeneralNodeDatum::getCreated)
+			.as("Timestamp assigned before passing to DAO")
+			.returns(true, from(ts -> !ts.isBefore(start)))
 			;
 
 		then(fluxProcessor).shouldHaveNoInteractions();

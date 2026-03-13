@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import java.util.Arrays;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Standard log event info.
@@ -34,8 +36,8 @@ import java.util.List;
 public class LogEventInfo {
 
 	private final String[] tags;
-	private final String message;
-	private final String data;
+	private final @Nullable String message;
+	private final @Nullable String data;
 
 	/**
 	 * Create a new event.
@@ -53,9 +55,12 @@ public class LogEventInfo {
 	 * @param extraTags
 	 *        optional extra tags
 	 * @return the event
+	 * @throws IllegalArgumentException
+	 *         if no tags are provided
 	 */
-	public static LogEventInfo event(String[] baseTags, String message, String data,
-			String... extraTags) {
+	@SuppressWarnings({ "null", "NullAway" })
+	public static LogEventInfo event(String @Nullable [] baseTags, @Nullable String message,
+			@Nullable String data, String @Nullable... extraTags) throws IllegalStateException {
 		String[] tags = null;
 		boolean hasBaseTags = (baseTags != null && baseTags.length > 0);
 		boolean hasExtraTags = (extraTags != null && extraTags.length > 0);
@@ -88,9 +93,12 @@ public class LogEventInfo {
 	 *        optional extra tags
 	 * @return the event
 	 * @since 1.1
+	 * @throws IllegalArgumentException
+	 *         if no tags are provided
 	 */
-	public static LogEventInfo event(List<String> baseTags, String message, String data,
-			String... extraTags) {
+	@SuppressWarnings({ "null", "NullAway" })
+	public static LogEventInfo event(@Nullable List<String> baseTags, @Nullable String message,
+			@Nullable String data, String @Nullable... extraTags) {
 		String[] tags = null;
 		boolean hasBaseTags = (baseTags != null && !baseTags.isEmpty());
 		boolean hasExtraTags = (extraTags != null && extraTags.length > 0);
@@ -124,8 +132,9 @@ public class LogEventInfo {
 	 * @return the event
 	 * @since 1.1
 	 */
-	public static LogEventInfo event(List<String> baseTags, String message, String data,
-			List<String> extraTags) {
+	@SuppressWarnings({ "null", "NullAway" })
+	public static LogEventInfo event(@Nullable List<String> baseTags, @Nullable String message,
+			@Nullable String data, @Nullable List<String> extraTags) {
 		String[] tags = null;
 		boolean hasBaseTags = (baseTags != null && !baseTags.isEmpty());
 		boolean hasExtraTags = (extraTags != null && !extraTags.isEmpty());
@@ -152,10 +161,12 @@ public class LogEventInfo {
 	 *        the message
 	 * @param data
 	 *        the data
+	 * @throws IllegalArgumentException
+	 *         if {@code tags} is empty
 	 */
-	public LogEventInfo(String[] tags, String message, String data) {
+	public LogEventInfo(String[] tags, @Nullable String message, @Nullable String data) {
 		super();
-		this.tags = tags;
+		this.tags = requireNonEmptyArgument(tags, "tags");
 		this.message = message;
 		this.data = data;
 	}
@@ -196,7 +207,7 @@ public class LogEventInfo {
 	 *
 	 * @return the message
 	 */
-	public String getMessage() {
+	public @Nullable String getMessage() {
 		return message;
 	}
 
@@ -205,7 +216,7 @@ public class LogEventInfo {
 	 *
 	 * @return the data
 	 */
-	public String getData() {
+	public @Nullable String getData() {
 		return data;
 	}
 

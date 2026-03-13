@@ -56,7 +56,7 @@ public class InstructionEndpointAuthenticationDetailsSource
 	 * @param endpointDao
 	 *        the endpoint DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InstructionEndpointAuthenticationDetailsSource(EndpointConfigurationDao endpointDao) {
 		this(endpointDao, DEFAULT_ENDPOINT_ID_PATTERN);

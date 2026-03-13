@@ -85,8 +85,8 @@ public final class CsvUtils {
 	 *
 	 * @param value
 	 *        a delimited list of column references
-	 * @return the column numbers as a set, or {@literal null} if {@code value}
-	 *         is {@literal null} or empty or has no valid references
+	 * @return the column numbers as a set, or {@code null} if {@code value} is
+	 *         {@code null} or empty or has no valid references
 	 */
 	public static IntRangeSet parseColumnsReference(String value) {
 		if ( value == null || value.trim().isEmpty() ) {

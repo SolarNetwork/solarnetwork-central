@@ -25,6 +25,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 import static net.solarnetwork.central.c2c.biz.impl.CloudIntegrationsUtils.MILLIS;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
@@ -111,10 +112,10 @@ public enum EgaugeTypeCode {
 	Speed("v", "m/s", MILLIS),;
 
 	private final String key;
-	private final String unit;
+	private final @Nullable String unit;
 	private final BigDecimal quantum;
 
-	EgaugeTypeCode(String key, String unit, BigDecimal quantum) {
+	EgaugeTypeCode(String key, @Nullable String unit, BigDecimal quantum) {
 		this.key = key;
 		this.unit = unit;
 		this.quantum = quantum;
@@ -134,7 +135,7 @@ public enum EgaugeTypeCode {
 	 *
 	 * @return the unit
 	 */
-	public final String getUnit() {
+	public final @Nullable String getUnit() {
 		return unit;
 	}
 

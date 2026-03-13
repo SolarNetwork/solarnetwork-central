@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.aop;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -198,7 +199,7 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 			requireNodeReadAccess(nodeId);
 		}
 
-		return policyEnforcerCheck(filter);
+		return nonnull(policyEnforcerCheck(filter), "filter");
 	}
 
 }

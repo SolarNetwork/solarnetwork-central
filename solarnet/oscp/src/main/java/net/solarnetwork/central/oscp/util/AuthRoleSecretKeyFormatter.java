@@ -46,7 +46,7 @@ import net.solarnetwork.util.StringUtils;
  * </ul>
  *
  * <p>
- * Note that {@literal null} values are not supported.
+ * Note that {@code null} values are not supported.
  * </p>
  *
  * @author matt

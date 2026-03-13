@@ -127,8 +127,8 @@ public class DatumJsonUtilsTests {
 	}
 
 	@Test
-	public void writePropertyValues_missingTimestamp() throws IOException {
-		DatumEntity datum = new DatumEntity(UUID.randomUUID(), null, null,
+	public void writePropertyValues_epochTimestamp() throws IOException {
+		DatumEntity datum = new DatumEntity(UUID.randomUUID(), Instant.EPOCH, null,
 				propertiesOf(new BigDecimal[] { new BigDecimal("1.23") },
 						new BigDecimal[] { new BigDecimal("123456") }, new String[] { "On" }, null));
 		StringWriter out = new StringWriter();
@@ -353,10 +353,10 @@ public class DatumJsonUtilsTests {
 	}
 
 	@Test
-	public void writeStatisticValues_missingTimestamp() throws IOException {
+	public void writeStatisticValues_epochTimestamp() throws IOException {
 		// @formatter:off
 		AggregateDatumEntity datum = new AggregateDatumEntity(
-				UUID.randomUUID(), null, Aggregation.Hour,
+				UUID.randomUUID(), Instant.EPOCH, Aggregation.Hour,
 				propertiesOf(
 						arrayOfDecimals("1.23"),
 						null,

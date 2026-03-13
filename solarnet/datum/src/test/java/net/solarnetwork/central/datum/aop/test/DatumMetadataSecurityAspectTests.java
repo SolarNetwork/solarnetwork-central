@@ -25,7 +25,6 @@ package net.solarnetwork.central.datum.aop.test;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -112,7 +111,7 @@ public class DatumMetadataSecurityAspectTests implements CentralTestConstants {
 
 	@Test
 	public void updateMetadataNoAuth() {
-		DatumMetadataSecurityAspect aspect = getTestInstance(Collections.singleton("role_foo"));
+		DatumMetadataSecurityAspect aspect = getTestInstance(Set.of("role_foo"));
 		replayAll();
 
 		thenExceptionOfType(AuthorizationException.class)
@@ -121,7 +120,7 @@ public class DatumMetadataSecurityAspectTests implements CentralTestConstants {
 
 	@Test
 	public void updateMetadataMissingRole() {
-		DatumMetadataSecurityAspect aspect = getTestInstance(Collections.singleton("role_foo"));
+		DatumMetadataSecurityAspect aspect = getTestInstance(Set.of("role_foo"));
 		becomeUser("ROLE_USER");
 		replayAll();
 
@@ -131,7 +130,7 @@ public class DatumMetadataSecurityAspectTests implements CentralTestConstants {
 
 	@Test
 	public void updateMetadataAllowed() {
-		DatumMetadataSecurityAspect aspect = getTestInstance(Collections.singleton("role_user"));
+		DatumMetadataSecurityAspect aspect = getTestInstance(Set.of("role_user"));
 		becomeUser("ROLE_USER");
 		replayAll();
 		aspect.updateLocationMetadataCheck(TEST_LOC_ID);
@@ -144,7 +143,7 @@ public class DatumMetadataSecurityAspectTests implements CentralTestConstants {
 		final String[] policySourceIds = new String[] { "/A/**/watts" };
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
-				.withNodeIds(Collections.singleton(nodeId)).build();
+				.withNodeIds(Set.of(nodeId)).build();
 		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
 		final Set<NodeSourcePK> availableSourceIds = new LinkedHashSet<NodeSourcePK>(Arrays.asList(
 				new NodeSourcePK(nodeId, "/A/B/watts"), new NodeSourcePK(nodeId, "/A/C/watts"),

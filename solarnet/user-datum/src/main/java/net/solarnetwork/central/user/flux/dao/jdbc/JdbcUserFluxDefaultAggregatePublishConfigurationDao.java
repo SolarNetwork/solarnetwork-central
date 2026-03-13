@@ -51,7 +51,7 @@ public class JdbcUserFluxDefaultAggregatePublishConfigurationDao
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcUserFluxDefaultAggregatePublishConfigurationDao(JdbcOperations jdbcOps) {
 		super();

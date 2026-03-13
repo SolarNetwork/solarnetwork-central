@@ -35,17 +35,17 @@ public interface ChargeSessionTransactionCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available transaction ID from the
-	 * {@link #getTransactionIds()} array, or {@literal null} if not available.
+	 * {@link #getTransactionIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first transaction ID, or {@literal null} if not available
+	 * @return the first transaction ID, or {@code null} if not available
 	 */
 	String getTransactionId();
 
 	/**
 	 * Get an array of transaction IDs.
 	 * 
-	 * @return array of transaction IDs (may be {@literal null})
+	 * @return array of transaction IDs (may be {@code null})
 	 */
 	String[] getTransactionIds();
 

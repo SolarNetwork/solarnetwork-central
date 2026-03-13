@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.export.aop;
 
+import static net.solarnetwork.util.ObjectUtils.nullable;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
@@ -73,7 +74,7 @@ public class UserExportSecurityAspect extends AuthorizationSupport {
 
 	@Before(value = "saveConfiguration(config) || deleteConfiguration(config)", argNames = "config")
 	public void saveConfigurationCheck(UserRelatedEntity<?> config) {
-		final Long userId = (config != null ? config.getUserId() : null);
+		final Long userId = nullable(config != null ? config::getUserId : null);
 		requireUserWriteAccess(userId);
 
 		DataConfiguration dataConfiguration = null;

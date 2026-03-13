@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStreamWithAuxiliary;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumAuxiliary;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,7 +35,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
@@ -94,7 +94,7 @@ public class JdbcDatumAuxiliaryEntityDao_FilterableDaoTests extends BaseDatumJdb
 		DatumSamples s = new DatumSamples();
 		s.putAccumulatingSampleValue("w", 100);
 		assertDatumAuxiliary("Found match", results.iterator().next(), new DatumAuxiliaryEntity(streamId,
-				start.plusHours(13).toInstant(), DatumAuxiliaryType.Reset, null, f, s, null, null));
+				start.plusHours(13).toInstant(), DatumAuxiliaryType.Reset, now(), f, s, null, null));
 
 	}
 

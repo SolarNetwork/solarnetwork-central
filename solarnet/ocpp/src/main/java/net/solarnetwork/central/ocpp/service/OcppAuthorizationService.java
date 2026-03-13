@@ -62,7 +62,7 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 	 * @param chargePointDao
 	 *        the {@link ChargePoint} DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public OcppAuthorizationService(CentralAuthorizationDao authorizationDao,
 			CentralChargePointDao chargePointDao) {
@@ -101,8 +101,8 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 				result.withStatus(AuthorizationStatus.Accepted);
 			}
 		} else {
-			log.info("Invliad IdTag received from charge point {}: [{}]", identity.getIdentifier(),
-					idTag);
+			log.info("Invliad IdTag received from charge point {}: [{}]",
+					(identity != null ? identity.getIdentifier() : null), idTag);
 			result.withStatus(AuthorizationStatus.Invalid);
 		}
 		return result.build();

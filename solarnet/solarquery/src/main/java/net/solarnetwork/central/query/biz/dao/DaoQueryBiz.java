@@ -144,7 +144,7 @@ public class DaoQueryBiz implements QueryBiz {
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoQueryBiz(DatumEntityDao datumDao, DatumStreamMetadataDao metaDao,
 			ReadingDatumDao readingDao, SolarNodeOwnershipDao nodeOwnershipDao) {
@@ -176,10 +176,23 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Node);
 		validateDatumCriteria(c);
 		Iterable<DatumDateInterval> results = datumDao.findAvailableInterval(c);
+		ReportableInterval result = null;
 		for ( DatumDateInterval interval : results ) {
-			return new ReportableInterval(interval.getStart(), interval.getEnd(), interval.getZone());
+			if ( result == null ) {
+				result = new ReportableInterval(interval.getStart(), interval.getEnd(),
+						interval.getZone());
+			} else {
+				if ( interval.getStart().isBefore(result.startDate().toInstant()) ) {
+					result = new ReportableInterval(interval.getStart(), result.endDate().toInstant(),
+							result.getTimeZone());
+				}
+				if ( interval.getEnd().isAfter(result.endDate().toInstant()) ) {
+					result = new ReportableInterval(result.startDate().toInstant(), interval.getEnd(),
+							result.getTimeZone());
+				}
+			}
 		}
-		return null;
+		return result;
 	}
 
 	@Override
@@ -235,7 +248,7 @@ public class DaoQueryBiz implements QueryBiz {
 	public Set<Long> findAvailableNodes(SecurityActor actor) {
 		Set<Long> nodeIds = null;
 		if ( actor instanceof SecurityNode a ) {
-			nodeIds = Collections.singleton(a.getNodeId());
+			nodeIds = Set.of(a.getNodeId());
 		} else if ( actor instanceof SecurityToken a ) {
 			String tokenId = a.getToken();
 			Long[] ids = nodeOwnershipDao.nonArchivedNodeIdsForToken(tokenId);

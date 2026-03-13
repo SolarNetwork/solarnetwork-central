@@ -30,6 +30,7 @@ import java.util.Queue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
@@ -82,7 +83,7 @@ public abstract class DelayedOccasionalProcessor<T>
 	private int queueSizeAlertThreshold = DEFAULT_QUEUE_SIZE_ALERT_THRESHOLD;
 
 	private final Lock flushLock;
-	private ScheduledFuture<?> flushTask;
+	private @Nullable ScheduledFuture<?> flushTask;
 
 	/**
 	 * Processor statistics.
@@ -120,7 +121,7 @@ public abstract class DelayedOccasionalProcessor<T>
 	 * @param items
 	 *        the item buffer; this must support concurrent access
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DelayedOccasionalProcessor(Clock clock, StatTracker stats, TaskScheduler scheduler,
 			Queue<T> items) {
@@ -272,7 +273,7 @@ public abstract class DelayedOccasionalProcessor<T>
 	 *        the delay to set
 	 */
 	public final void setDelay(Duration delay) {
-		this.delay = delay;
+		this.delay = requireNonNullArgument(delay, "delay");
 	}
 
 	/**

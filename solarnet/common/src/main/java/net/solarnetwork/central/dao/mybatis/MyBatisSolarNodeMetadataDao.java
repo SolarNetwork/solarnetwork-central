@@ -26,6 +26,7 @@ import static java.util.stream.Collectors.toList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
@@ -63,7 +64,8 @@ public class MyBatisSolarNodeMetadataDao extends BaseMyBatisGenericDao<SolarNode
 
 	@Override
 	public FilterResults<SolarNodeMetadataFilterMatch, Long> findFiltered(SolarNodeMetadataFilter filter,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max) {
 		final String query = getQueryForFilter();
 		Map<String, Object> sqlProps = new HashMap<>(1);
 		sqlProps.put(PARAM_FILTER, filter);

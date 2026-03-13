@@ -25,7 +25,6 @@ package net.solarnetwork.central.support.xslt.test;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -71,7 +70,7 @@ public class BaseXsltServiceTests {
 
 		@Override
 		public List<SettingSpecifier> getSettingSpecifiers() {
-			return Collections.emptyList();
+			return List.of();
 		}
 
 		public static String inputTextValue(Object object) throws IOException {

@@ -45,7 +45,7 @@ public interface CentralSystemUserDao extends SystemUserDao {
 	 * 
 	 * @param userId
 	 *        the owner ID
-	 * @return the available system users; never {@literal null}
+	 * @return the available system users; never {@code null}
 	 */
 	Collection<CentralSystemUser> findAllForOwner(Long userId);
 
@@ -56,7 +56,7 @@ public interface CentralSystemUserDao extends SystemUserDao {
 	 *        the owner ID
 	 * @param id
 	 *        the ID to look for
-	 * @return the matching system user; never {@literal null}
+	 * @return the matching system user; never {@code null}
 	 * @throws RuntimeException
 	 *         if the entity cannot be found
 	 */
@@ -81,7 +81,7 @@ public interface CentralSystemUserDao extends SystemUserDao {
 	 *        the owner ID
 	 * @param username
 	 *        the username to look for
-	 * @return the matching system user; never {@literal null}
+	 * @return the matching system user; never {@code null}
 	 * @throws RuntimeException
 	 *         if the entity cannot be found
 	 */

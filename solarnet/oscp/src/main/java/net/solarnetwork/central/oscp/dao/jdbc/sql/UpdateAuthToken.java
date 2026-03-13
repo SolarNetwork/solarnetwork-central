@@ -51,8 +51,7 @@ public final class UpdateAuthToken implements CallableStatementCreator, SqlProvi
 	 * @param id
 	 *        the ID associated with the token
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null} or the {@code id} is not
-	 *         assigned
+	 *         if any argument is {@code null} or the {@code id} is not assigned
 	 */
 	public UpdateAuthToken(OscpRole type, UserLongCompositePK id) {
 		super();

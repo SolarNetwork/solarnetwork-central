@@ -51,8 +51,8 @@ public final class CreateAuthToken implements CallableStatementCreator, SqlProvi
 	 * @param id
 	 *        the ID associated with the token
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null} or the {@code id} is not
-	 *         assigned (except for Flexibility Provider type)
+	 *         if any argument is {@code null} or the {@code id} is not assigned
+	 *         (except for Flexibility Provider type)
 	 */
 	public CreateAuthToken(OscpRole type, UserLongCompositePK id) {
 		super();

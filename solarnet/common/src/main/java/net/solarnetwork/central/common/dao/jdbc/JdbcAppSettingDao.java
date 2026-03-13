@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteAppSetting;
 import net.solarnetwork.central.common.dao.jdbc.sql.InsertAppSetting;
@@ -51,7 +53,7 @@ public class JdbcAppSettingDao implements AppSettingDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcAppSettingDao(JdbcOperations jdbcOps) {
 		super();
@@ -67,11 +69,11 @@ public class JdbcAppSettingDao implements AppSettingDao {
 	public KeyTypePK save(AppSetting entity) {
 		requireNonNullArgument(entity, "entity");
 		jdbcOps.update(new InsertAppSetting(entity, true));
-		return entity.getId();
+		return nonnull(entity.getId(), "id");
 	}
 
 	@Override
-	public AppSetting get(KeyTypePK id) {
+	public @Nullable AppSetting get(KeyTypePK id) {
 		requireNonNullArgument(id, "id");
 		List<AppSetting> result = jdbcOps.query(
 				SelectAppSetting.selectForKeyType(id.getKey(), id.getType()),
@@ -80,7 +82,7 @@ public class JdbcAppSettingDao implements AppSettingDao {
 	}
 
 	@Override
-	public Collection<AppSetting> getAll(List<SortDescriptor> sorts) {
+	public Collection<AppSetting> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -97,7 +99,7 @@ public class JdbcAppSettingDao implements AppSettingDao {
 	}
 
 	@Override
-	public AppSetting lockForUpdate(String key, String type) {
+	public @Nullable AppSetting lockForUpdate(String key, String type) {
 		List<AppSetting> result = jdbcOps.query(SelectAppSetting.selectForKeyType(key, type, true),
 				AppSettingRowMapper.INSTANCE);
 		return (!result.isEmpty() ? result.getFirst() : null);

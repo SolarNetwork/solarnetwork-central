@@ -68,7 +68,7 @@ public class SimpleDynamicPortRegistrar implements DynamicPortRegistrar, Service
 	 * @param portSupplier
 	 *        the port supplier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SimpleDynamicPortRegistrar(Supplier<Integer> portSupplier) {
 		this(portSupplier, DEFAULT_RETRIES);
@@ -83,7 +83,7 @@ public class SimpleDynamicPortRegistrar implements DynamicPortRegistrar, Service
 	 *        the number of times to retry allocating a new port if one cannot
 	 *        be obtained
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SimpleDynamicPortRegistrar(Supplier<Integer> portSupplier, int retries) {
 		super();

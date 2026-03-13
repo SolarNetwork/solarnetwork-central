@@ -77,14 +77,14 @@ public interface ExternalSystemConfiguration {
 	 * Test if OAuth client settings are available.
 	 * 
 	 * @return {@literal true} if {@link #oauthClientSettings()} would return a
-	 *         non-{@literal null} instance
+	 *         non-{@code null} instance
 	 */
 	boolean hasOauthClientSettings();
 
 	/**
 	 * Get OAuth client settings, if available.
 	 * 
-	 * @return the OAuth client settings, or {@literal null} if not available
+	 * @return the OAuth client settings, or {@code null} if not available
 	 */
 	OAuthClientSettings oauthClientSettings();
 
@@ -100,8 +100,8 @@ public interface ExternalSystemConfiguration {
 	 * An asset ID to use to combine all capacity group assets into a single
 	 * virtual asset.
 	 * 
-	 * @return a combined virtual asset ID, or {@literal null} to report
-	 *         individual assets
+	 * @return a combined virtual asset ID, or {@code null} to report individual
+	 *         assets
 	 * @since 1.1
 	 */
 	String combinedGroupAssetId();

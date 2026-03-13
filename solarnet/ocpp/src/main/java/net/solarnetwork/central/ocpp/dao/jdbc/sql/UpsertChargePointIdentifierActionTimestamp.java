@@ -58,7 +58,7 @@ public final class UpsertChargePointIdentifierActionTimestamp
 	 * @param chargePointIdentifier
 	 *        the charge point identifier
 	 * @param connectorId
-	 *        the connector ID, or {@literal null} for a charger-wide action
+	 *        the connector ID, or {@code null} for a charger-wide action
 	 * @param action
 	 *        the action name
 	 * @param messageId
@@ -66,7 +66,7 @@ public final class UpsertChargePointIdentifierActionTimestamp
 	 * @param date
 	 *        the timestamp
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code connectorId} is {@literal null}
+	 *         if any argument except {@code connectorId} is {@code null}
 	 */
 	public UpsertChargePointIdentifierActionTimestamp(Long userId, String chargePointIdentifier,
 			Integer connectorId, String action, String messageId, Instant date) {
@@ -83,7 +83,7 @@ public final class UpsertChargePointIdentifierActionTimestamp
 	 * @param evseId
 	 *        the EVSE ID
 	 * @param connectorId
-	 *        the connector ID, or {@literal null} for a charger-wide action
+	 *        the connector ID, or {@code null} for a charger-wide action
 	 * @param action
 	 *        the action name
 	 * @param messageId
@@ -92,7 +92,7 @@ public final class UpsertChargePointIdentifierActionTimestamp
 	 *        the timestamp
 	 * @throws IllegalArgumentException
 	 *         if any argument except {@code evseId} or {@code connectorId} is
-	 *         {@literal null}
+	 *         {@code null}
 	 * @since 1.1
 	 */
 	public UpsertChargePointIdentifierActionTimestamp(Long userId, String chargePointIdentifier,

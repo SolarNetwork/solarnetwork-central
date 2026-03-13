@@ -93,7 +93,7 @@ public final class CommonDbTestUtils {
 	 * 
 	 * @param jdbcOps
 	 *        the JDBC operations to use
-	 * @return the values, never {@literal null}
+	 * @return the values, never {@code null}
 	 */
 	public static List<AuditNodeServiceValue> listAuditNodeServiceValueHourly(JdbcOperations jdbcOps) {
 		return jdbcOps.query("""
@@ -113,7 +113,7 @@ public final class CommonDbTestUtils {
 	 * 
 	 * @param jdbcOps
 	 *        the JDBC operations to use
-	 * @return the values, never {@literal null}
+	 * @return the values, never {@code null}
 	 */
 	public static List<AuditNodeServiceValue> listAuditNodeServiceValueDaily(JdbcOperations jdbcOps) {
 		return jdbcOps.query("""
@@ -133,7 +133,7 @@ public final class CommonDbTestUtils {
 	 * 
 	 * @param jdbcOps
 	 *        the JDBC operations to use
-	 * @return the values, never {@literal null}
+	 * @return the values, never {@code null}
 	 */
 	public static List<AuditNodeServiceValue> listAuditNodeServiceValueMonthly(JdbcOperations jdbcOps) {
 		return jdbcOps.query("""
@@ -264,7 +264,7 @@ public final class CommonDbTestUtils {
 	 * 
 	 * @param jdbcOps
 	 *        the JDBC operations to use
-	 * @return the values, never {@literal null}
+	 * @return the values, never {@code null}
 	 */
 	public static List<StaleAuditNodeServiceValue> listStaleAuditNodeServiceValues(
 			JdbcOperations jdbcOps) {
@@ -374,7 +374,7 @@ public final class CommonDbTestUtils {
 	 * 
 	 * @param jdbcOps
 	 *        the JDBC operations to use
-	 * @return the values, never {@literal null}
+	 * @return the values, never {@code null}
 	 */
 	public static List<AuditUserServiceValue> listAuditUserServiceValueHourly(JdbcOperations jdbcOps) {
 		return jdbcOps.query("""
@@ -394,7 +394,7 @@ public final class CommonDbTestUtils {
 	 * 
 	 * @param jdbcOps
 	 *        the JDBC operations to use
-	 * @return the values, never {@literal null}
+	 * @return the values, never {@code null}
 	 */
 	public static List<AuditUserServiceValue> listAuditUserServiceValueDaily(JdbcOperations jdbcOps) {
 		return jdbcOps.query("""
@@ -414,7 +414,7 @@ public final class CommonDbTestUtils {
 	 * 
 	 * @param jdbcOps
 	 *        the JDBC operations to use
-	 * @return the values, never {@literal null}
+	 * @return the values, never {@code null}
 	 */
 	public static List<AuditUserServiceValue> listAuditUserServiceValueMonthly(JdbcOperations jdbcOps) {
 		return jdbcOps.query("""
@@ -545,7 +545,7 @@ public final class CommonDbTestUtils {
 	 * 
 	 * @param jdbcOps
 	 *        the JDBC operations to use
-	 * @return the values, never {@literal null}
+	 * @return the values, never {@code null}
 	 */
 	public static List<StaleAuditUserServiceValue> listStaleAuditUserServiceValues(
 			JdbcOperations jdbcOps) {

@@ -100,7 +100,7 @@ public class DatumExpireController {
 	public Result<DatumExpireFullConfigurations> viewDataConfigurations() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 
-		List<ExpireUserDataConfiguration> dataConfigs = Collections.emptyList();
+		List<ExpireUserDataConfiguration> dataConfigs = List.of();
 		if ( expireBiz != null ) {
 			dataConfigs = expireBiz.configurationsForUser(userId, ExpireUserDataConfiguration.class);
 		}
@@ -219,7 +219,7 @@ public class DatumExpireController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/datum-delete/ids", method = RequestMethod.POST)
-	public Result<Set<ObjectDatumId>> confirmDataDelete(@RequestBody Set<ObjectDatumId> ids) {
+	public Result<Set<ObjectDatumId>> deleteForIds(@RequestBody Set<ObjectDatumId> ids) {
 		Set<ObjectDatumId> result = null;
 		if ( datumDeleteBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();

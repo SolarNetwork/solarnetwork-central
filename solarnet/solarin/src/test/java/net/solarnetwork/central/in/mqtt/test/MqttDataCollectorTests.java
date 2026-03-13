@@ -32,7 +32,6 @@ import static org.hamcrest.Matchers.hasSize;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -116,7 +115,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		service = new MqttDataCollector(objectMapper, dataCollectorBiz, nodeInstructionDao, mqttStats);
 
 		mqttConnection = new ObservableMqttConnection(factory, mqttStats, "Test SolarFlux",
-				Collections.singletonList(service));
+				List.of(service));
 		mqttConnection.getMqttConfig().setClientId(TEST_CLIENT_ID);
 		mqttConnection.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
 		Future<?> f = mqttConnection.startup();
@@ -169,10 +168,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), TEST_SOURCE_ID);
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
 		samples.putInstantaneousSampleValue("foo", 123);
@@ -202,10 +199,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// WHEN
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), TEST_SOURCE_ID);
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
 		samples.putInstantaneousSampleValue("foo", 123);
@@ -243,10 +238,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), TEST_SOURCE_ID);
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
 		samples.putInstantaneousSampleValue("foo", 123);
@@ -287,10 +280,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID,
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), TEST_SOURCE_ID);
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
 		samples.putInstantaneousSampleValue("foo", 123);
@@ -456,10 +447,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralLocationDatum datum = new GeneralLocationDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setLocationId(TEST_LOC_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralLocationDatum datum = new GeneralLocationDatum(TEST_LOC_ID,
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), TEST_SOURCE_ID);
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
 		samples.putInstantaneousSampleValue("foo", 123);
@@ -490,10 +479,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralLocationDatum datum = new GeneralLocationDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setLocationId(TEST_LOC_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralLocationDatum datum = new GeneralLocationDatum(TEST_LOC_ID,
+				Instant.now().truncatedTo(ChronoUnit.MILLIS), TEST_SOURCE_ID);
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
 		samples.putInstantaneousSampleValue("foo", 123);
@@ -521,7 +508,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		// given
 		final Long nodeInstructionId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
 		final Long instructionId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
-		final Map<String, Object> resultParams = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> resultParams = Map.of("foo", "bar");
 		expect(nodeInstructionDao.updateNodeInstructionState(instructionId, TEST_NODE_ID,
 				InstructionState.Completed, resultParams)).andReturn(true);
 
@@ -544,7 +531,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 	public void processInstructionStatus_twoOh() throws Exception {
 		// GIVEN
 		final Long instructionId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
-		final Map<String, Object> resultParams = Collections.singletonMap("foo", "bar");
+		final Map<String, Object> resultParams = Map.of("foo", "bar");
 		expect(nodeInstructionDao.updateNodeInstructionState(instructionId, TEST_NODE_ID,
 				InstructionState.Completed, resultParams)).andReturn(true);
 

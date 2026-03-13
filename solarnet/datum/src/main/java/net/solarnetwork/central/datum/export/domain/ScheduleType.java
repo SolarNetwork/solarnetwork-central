@@ -27,6 +27,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
+import net.solarnetwork.domain.KeyCodedValue;
 
 /**
  * Enumeration of export job schedule options.
@@ -35,7 +36,7 @@ import java.time.temporal.TemporalAdjusters;
  * @version 1.1
  * @since 1.23
  */
-public enum ScheduleType {
+public enum ScheduleType implements KeyCodedValue {
 
 	Hourly('h'),
 
@@ -59,6 +60,11 @@ public enum ScheduleType {
 	 * @return the key value
 	 */
 	public char getKey() {
+		return key;
+	}
+
+	@Override
+	public char getKeyCode() {
 		return key;
 	}
 
@@ -88,7 +94,7 @@ public enum ScheduleType {
 	 * given this schedule type.
 	 * </p>
 	 *
-	 * @return the property, never {@literal null}
+	 * @return the property, never {@code null}
 	 */
 	public ChronoUnit temporalUnit() {
 		return switch (this) {
@@ -110,11 +116,11 @@ public enum ScheduleType {
 	 *
 	 * <p>
 	 * Note for the {@code Adhoc} type {@code date} will be returned, or the
-	 * current time if {@literal null}.
+	 * current time if {@code null}.
 	 * </p>
 	 *
 	 * @param date
-	 *        the date to get an export date for, or {@literal null} for the
+	 *        the date to get an export date for, or {@code null} for the
 	 *        current date
 	 * @return the export date
 	 */
@@ -139,7 +145,7 @@ public enum ScheduleType {
 	 * Get the "next" export date for a given date.
 	 *
 	 * @param date
-	 *        the date to get the "next" export date for, or {@literal null} for
+	 *        the date to get the "next" export date for, or {@code null} for
 	 *        the current date
 	 * @return the "next" export date
 	 * @see #offsetExportDate(ZonedDateTime, int)
@@ -152,7 +158,7 @@ public enum ScheduleType {
 	 * Get the "previous" export date for a given date.
 	 *
 	 * @param date
-	 *        the date to get the "previous" export date for, or {@literal null}
+	 *        the date to get the "previous" export date for, or {@code null}
 	 *        for the current date
 	 * @return the "previous" export date
 	 * @see #offsetExportDate(ZonedDateTime, int)
@@ -170,7 +176,7 @@ public enum ScheduleType {
 	 * </p>
 	 *
 	 * @param date
-	 *        the date to get the offset export date for, or {@literal null} for
+	 *        the date to get the offset export date for, or {@code null} for
 	 *        the current date
 	 * @param offset
 	 *        the schedule period offset

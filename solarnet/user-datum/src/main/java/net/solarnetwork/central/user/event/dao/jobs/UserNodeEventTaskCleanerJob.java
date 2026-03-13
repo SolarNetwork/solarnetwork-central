@@ -49,9 +49,8 @@ public class UserNodeEventTaskCleanerJob extends JobSupport {
 	 *        the task DAO to use
 	 */
 	public UserNodeEventTaskCleanerJob(UserNodeEventTaskDao taskDao) {
-		super();
+		super("UserNodeEvent", "UserNodeEventTaskCleaner");
 		this.taskDao = ObjectUtils.requireNonNullArgument(taskDao, "taskDao");
-		setGroupId("UserNodeEvent");
 	}
 
 	@Override

@@ -23,10 +23,7 @@
 package net.solarnetwork.central.in.config;
 
 import static net.solarnetwork.central.in.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import org.apache.tomcat.util.threads.ThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,7 +32,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import net.solarnetwork.central.biz.LoggingUserEventAppenderBiz;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz;
 import net.solarnetwork.central.common.config.AsyncUserEventAppenderSettings;
@@ -96,12 +92,8 @@ public class UserEventConfig {
 		public AsyncDaoUserEventAppenderBiz userEventAppenderBiz(AsyncUserEventAppenderSettings settings,
 				UserEventAppenderDao dao, UuidGenerator uuidGenerator, @Autowired(
 						required = false) @Qualifier(SOLARFLUX) MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher) {
-			ThreadPoolExecutor executor = new ThreadPoolExecutor(settings.getThreads(),
-					settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<>(),
-					new CustomizableThreadFactory("UserEventAppender-"));
-			executor.allowCoreThreadTimeOut(true);
+			ThreadPoolExecutor executor = settings.createThreadPool();
 			AsyncDaoUserEventAppenderBiz biz = new AsyncDaoUserEventAppenderBiz(executor, dao,
-					new PriorityBlockingQueue<>(64, AsyncDaoUserEventAppenderBiz.EVENT_SORT),
 					new StatTracker("AsyncDaoUserEventAppender", null,
 							LoggerFactory.getLogger(AsyncDaoUserEventAppenderBiz.class),
 							settings.getStatFrequency()),

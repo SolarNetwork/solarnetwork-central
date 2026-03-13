@@ -45,6 +45,11 @@ public enum UserNodeCertificateStatus {
 		this.value = value;
 	}
 
+	/**
+	 * Get the value.
+	 * 
+	 * @return the value
+	 */
 	public String getValue() {
 		return value;
 	}

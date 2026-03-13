@@ -48,8 +48,8 @@ public interface UserDatumDeleteJobInfoDao extends GenericDao<DatumDeleteJobInfo
 	 *        the ID of the user to get the entities for
 	 * @param states
 	 *        an optional set of states to restrict the results to, or
-	 *        {@literal null} for any state
-	 * @return the matching results, never {@literal null}
+	 *        {@code null} for any state
+	 * @return the matching results, never {@code null}
 	 */
 	List<DatumDeleteJobInfo> findForUser(Long userId, Set<DatumDeleteJobState> states);
 
@@ -63,7 +63,7 @@ public interface UserDatumDeleteJobInfoDao extends GenericDao<DatumDeleteJobInfo
 	 *        user are deleted
 	 * @param states
 	 *        an optional set of states to restrict the deletion to, or
-	 *        {@literal null} for any state
+	 *        {@code null} for any state
 	 * @return the number of deleted jobs
 	 */
 	int deleteForUser(Long userId, Set<UUID> jobIds, Set<DatumDeleteJobState> states);

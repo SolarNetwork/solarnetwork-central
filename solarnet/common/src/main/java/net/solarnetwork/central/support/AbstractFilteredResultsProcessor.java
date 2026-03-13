@@ -24,6 +24,7 @@ package net.solarnetwork.central.support;
 
 import java.io.IOException;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 
 /**
@@ -52,8 +53,9 @@ public abstract class AbstractFilteredResultsProcessor<R> implements FilteredRes
 	}
 
 	@Override
-	public void start(Long totalResultCount, Integer startingOffset, Integer expectedResultCount,
-			Map<String, ?> attributes) throws IOException {
+	public void start(@Nullable Long totalResultCount, @Nullable Integer startingOffset,
+			@Nullable Integer expectedResultCount, @Nullable Map<String, ?> attributes)
+			throws IOException {
 		// NO-OP
 	}
 

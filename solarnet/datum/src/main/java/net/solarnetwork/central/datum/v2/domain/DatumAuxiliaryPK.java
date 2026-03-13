@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 
 /**
@@ -53,10 +56,12 @@ public class DatumAuxiliaryPK extends StreamPK
 	 *        the time stamp
 	 * @param kind
 	 *        the auxiliary type
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public DatumAuxiliaryPK(UUID streamId, Instant timestamp, DatumAuxiliaryType kind) {
 		super(streamId, timestamp);
-		this.kind = kind;
+		this.kind = requireNonNullArgument(kind, "kind");
 	}
 
 	/**
@@ -64,7 +69,7 @@ public class DatumAuxiliaryPK extends StreamPK
 	 *
 	 * @return the kind
 	 */
-	public DatumAuxiliaryType getKind() {
+	public final DatumAuxiliaryType getKind() {
 		return kind;
 	}
 
@@ -103,7 +108,7 @@ public class DatumAuxiliaryPK extends StreamPK
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -114,11 +119,12 @@ public class DatumAuxiliaryPK extends StreamPK
 	}
 
 	@Override
-	public int compareTo(DatumAuxiliaryPK o) {
+	public int compareTo(@Nullable DatumAuxiliaryPK o) {
 		int result = super.compareWith(o);
 		if ( result != 0 ) {
 			return result;
 		}
+		o = nonnull(o, "other");
 		if ( kind == o.kind ) {
 			return 0;
 		} else if ( kind == null ) {

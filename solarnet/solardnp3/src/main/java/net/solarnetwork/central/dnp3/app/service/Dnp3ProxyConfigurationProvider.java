@@ -34,7 +34,6 @@ import java.security.KeyStore;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +124,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	 * @param userEventAppenderBiz
 	 *        the user event appender
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public Dnp3ProxyConfigurationProvider(DNP3Manager manager, InstructorBiz instructorBiz,
 			DynamicPortRegistrar portRegistrar, TrustedIssuerCertificateDao trustedCertDao,
@@ -151,7 +150,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	public Iterable<X509Certificate> acceptedIdentityIssuers() {
 		// in future if needed this iterator could do dynamic, paginated iteration over live DAO results;
 		// for now just return nothing
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Override

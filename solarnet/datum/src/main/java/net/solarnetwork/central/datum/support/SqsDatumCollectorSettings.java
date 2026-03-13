@@ -58,7 +58,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	private Duration readSleepThrottleStep = Duration
 			.ofMillis(SqsDatumCollector.DEFAULT_READ_SLEEP_THROTTLE_STEP_MS);
 
-	private Duration shutdownWait;
+	private Duration shutdownWait = Duration.ZERO;
 
 	/**
 	 * Create an asynchronous client from the settings of this instance.
@@ -81,7 +81,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 *
 	 * @return the frequency; defaults to {@link #DEFAULT_STAT_FREQUENCY}
 	 */
-	public int getStatFrequency() {
+	public final int getStatFrequency() {
 		return statFrequency;
 	}
 
@@ -91,7 +91,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @param statFrequency
 	 *        the frequency to set
 	 */
-	public void setStatFrequency(int statFrequency) {
+	public final void setStatFrequency(int statFrequency) {
 		this.statFrequency = statFrequency;
 	}
 
@@ -100,7 +100,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 *
 	 * @return the size; defaults to {@link #DEFUALT_WORK_QUEUE_SIZE}
 	 */
-	public int getWorkQueueSize() {
+	public final int getWorkQueueSize() {
 		return workQueueSize;
 	}
 
@@ -110,7 +110,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @param workQueueSize
 	 *        the size to set
 	 */
-	public void setWorkQueueSize(int workQueueSize) {
+	public final void setWorkQueueSize(int workQueueSize) {
 		this.workQueueSize = workQueueSize;
 	}
 
@@ -120,7 +120,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @return the number of reader threads; defaults to
 	 *         {@link SqsDatumCollector#DEFAULT_READ_CONCURRENCY}
 	 */
-	public int getReadConcurrency() {
+	public final int getReadConcurrency() {
 		return readConcurrency;
 	}
 
@@ -131,7 +131,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 *        the number of reader threads, or {@code 0} to disable reading;
 	 *        anything less than {@literal 0} will be treated as {@literal 0}
 	 */
-	public void setReadConcurrency(int readConcurrency) {
+	public final void setReadConcurrency(int readConcurrency) {
 		if ( readConcurrency < 0 ) {
 			readConcurrency = 0;
 		}
@@ -144,7 +144,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @return the number of writer threads; defaults to
 	 *         {@link SqsDatumCollector#DEFAULT_WRITE_CONCURRENCY}
 	 */
-	public int getWriteConcurrency() {
+	public final int getWriteConcurrency() {
 		return writeConcurrency;
 	}
 
@@ -155,7 +155,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 *        the number of writer threads; anything less than {@literal 1} will
 	 *        be treated as {@literal 1}
 	 */
-	public void setWriteConcurrency(int writeConcurrency) {
+	public final void setWriteConcurrency(int writeConcurrency) {
 		if ( writeConcurrency < 1 ) {
 			writeConcurrency = 1;
 		}
@@ -167,7 +167,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 *
 	 * @return the wait
 	 */
-	public Duration getShutdownWait() {
+	public final Duration getShutdownWait() {
 		return shutdownWait;
 	}
 
@@ -178,7 +178,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 *        the wait duration; anything less than {@literal 0} will be treated
 	 *        as {@literal 0}
 	 */
-	public void setShutdownWait(Duration shutdownWait) {
+	public final void setShutdownWait(Duration shutdownWait) {
 		if ( shutdownWait != null && shutdownWait.isNegative() ) {
 			shutdownWait = Duration.ZERO;
 		}
@@ -190,7 +190,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 *
 	 * @return the maximum time
 	 */
-	public Duration getWorkItemMaxWait() {
+	public final Duration getWorkItemMaxWait() {
 		return workItemMaxWait;
 	}
 
@@ -200,7 +200,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @param workItemMaxWait
 	 *        the maximum time to set
 	 */
-	public void setWorkItemMaxWait(Duration workItemMaxWait) {
+	public final void setWorkItemMaxWait(Duration workItemMaxWait) {
 		this.workItemMaxWait = workItemMaxWait;
 	}
 
@@ -210,7 +210,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @return the count; defaults to
 	 *         {@link SqsDatumCollector#DEFAULT_READ_MAX_MESSAGE_COUNT}
 	 */
-	public int getReadMaxMessageCount() {
+	public final int getReadMaxMessageCount() {
 		return readMaxMessageCount;
 	}
 
@@ -221,7 +221,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 *        the count to set; see AWS documentation for valid range (e.g.
 	 *        1-10)
 	 */
-	public void setReadMaxMessageCount(int readMaxMessageCount) {
+	public final void setReadMaxMessageCount(int readMaxMessageCount) {
 		this.readMaxMessageCount = readMaxMessageCount;
 	}
 
@@ -231,7 +231,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @return the seconds; defaults to
 	 *         {@link SqsDatumCollector#DEFAULT_READ_MAX_WAIT_TIME_SECS}
 	 */
-	public Duration getReadMaxWaitTime() {
+	public final Duration getReadMaxWaitTime() {
 		return readMaxWaitTime;
 	}
 
@@ -242,7 +242,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 *        the seconds to set; see AWS documentation for valid range (e.g.
 	 *        1-20s)
 	 */
-	public void setReadMaxWaitTime(Duration readMaxWaitTime) {
+	public final void setReadMaxWaitTime(Duration readMaxWaitTime) {
 		this.readMaxWaitTime = readMaxWaitTime;
 	}
 
@@ -253,7 +253,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @return the minimum sleep amount; defaults to
 	 *         {@link SqsDatumCollector#DEFAULT_READ_SLEEP_MIN_MS}
 	 */
-	public Duration getReadSleepMin() {
+	public final Duration getReadSleepMin() {
 		return readSleepMin;
 	}
 
@@ -264,7 +264,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @param readSleepMin
 	 *        the minimum sleep amount to set
 	 */
-	public void setReadSleepMin(Duration readSleepMin) {
+	public final void setReadSleepMin(Duration readSleepMin) {
 		this.readSleepMin = readSleepMin;
 	}
 
@@ -275,7 +275,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @return the minimum sleep amount; defaults to
 	 *         {@link SqsDatumCollector#DEFAULT_READ_SLEEP_MAX_MS}
 	 */
-	public Duration getReadSleepMax() {
+	public final Duration getReadSleepMax() {
 		return readSleepMax;
 	}
 
@@ -286,7 +286,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @param readSleepMax
 	 *        the maximum sleep amount to set
 	 */
-	public void setReadSseepMax(Duration readSleepMax) {
+	public final void setReadSseepMax(Duration readSleepMax) {
 		this.readSleepMax = readSleepMax;
 	}
 
@@ -298,7 +298,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @return the step amount, in milliseconds; defaults to
 	 *         {@link SqsDatumCollector#DEFAULT_READ_SLEEP_THROTTLE_STEP_MS}
 	 */
-	public Duration getReadSleepThrottleStep() {
+	public final Duration getReadSleepThrottleStep() {
 		return readSleepThrottleStep;
 	}
 
@@ -310,7 +310,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @param readSleepThrottleStep
 	 *        the step amount to set
 	 */
-	public void setReadRejectionSleepStep(Duration readSleepThrottleStep) {
+	public final void setReadRejectionSleepStep(Duration readSleepThrottleStep) {
 		this.readSleepThrottleStep = readSleepThrottleStep;
 	}
 

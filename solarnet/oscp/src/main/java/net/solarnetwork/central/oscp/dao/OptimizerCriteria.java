@@ -43,7 +43,7 @@ public interface OptimizerCriteria {
 	/**
 	 * Get an array of optimizer IDs.
 	 * 
-	 * @return array of IDs (may be {@literal null})
+	 * @return array of IDs (may be {@code null})
 	 */
 	Long[] getOptimizerIds();
 
@@ -52,10 +52,10 @@ public interface OptimizerCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available ID from the {@link #getOptimizerIds()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the optimizer ID, or {@literal null} if not available
+	 * @return the optimizer ID, or {@code null} if not available
 	 */
 	default Long getOptimizerId() {
 		Long[] ids = getOptimizerIds();

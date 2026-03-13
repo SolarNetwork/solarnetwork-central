@@ -26,7 +26,12 @@ import static java.time.Instant.now;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Period;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
@@ -58,7 +63,7 @@ public final class SelectDatumCalculatedAt implements PreparedStatementCreator, 
 	 * @param filter
 	 *        the filter
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectDatumCalculatedAt(DatumCriteria filter) {
 		super();

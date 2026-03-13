@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A set of capabilities for a node.
@@ -36,7 +37,7 @@ public class SolarNodeCapability extends SolarCapability implements Cloneable, S
 	@Serial
 	private static final long serialVersionUID = -1896754053131443476L;
 
-	private Long nodeId;
+	private @Nullable Long nodeId;
 
 	/**
 	 * Default constructor.
@@ -55,8 +56,8 @@ public class SolarNodeCapability extends SolarCapability implements Cloneable, S
 	 * @param storageCapacityWattHours
 	 *        the energy storage capacity
 	 */
-	public SolarNodeCapability(Long nodeId, Long generationCapacityWatts,
-			Long storageCapacityWattHours) {
+	public SolarNodeCapability(@Nullable Long nodeId, @Nullable Long generationCapacityWatts,
+			@Nullable Long storageCapacityWattHours) {
 		setNodeId(nodeId);
 		setGenerationCapacityWatts(generationCapacityWatts);
 		setStorageCapacityWattHours(storageCapacityWattHours);
@@ -67,11 +68,11 @@ public class SolarNodeCapability extends SolarCapability implements Cloneable, S
 		return (SolarNodeCapability) super.clone();
 	}
 
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.http;
 
 import java.time.Duration;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Settings for the HTTP client.
@@ -64,7 +65,7 @@ public class HttpClientSettings {
 	 *
 	 * @return the timeout; defaults to {@link #DEFAULT_CONNECT_TIMEOUT_SECS}
 	 */
-	public Duration getConnectTimeout() {
+	public final Duration getConnectTimeout() {
 		return connectTimeout;
 	}
 
@@ -72,10 +73,12 @@ public class HttpClientSettings {
 	 * Set the connection timeout.
 	 *
 	 * @param connectTimeout
-	 *        the timeout to set
+	 *        the timeout to set; if {@code null} then
+	 *        {@link #DEFAULT_CONNECT_TIMEOUT_SECS} will be used
 	 */
-	public void setConnectTimeout(Duration connectTimeout) {
-		this.connectTimeout = connectTimeout;
+	public final void setConnectTimeout(Duration connectTimeout) {
+		this.connectTimeout = (connectTimeout != null ? connectTimeout
+				: Duration.ofSeconds(DEFAULT_CONNECT_TIMEOUT_SECS));
 	}
 
 	/**
@@ -84,7 +87,7 @@ public class HttpClientSettings {
 	 * @return the timeout; defaults to
 	 *         {@link #DEFAULT_CONNECTION_KEEP_ALIVE_SECS}
 	 */
-	public Duration getConnectionKeepAlive() {
+	public final Duration getConnectionKeepAlive() {
 		return connectionKeepAlive;
 	}
 
@@ -92,10 +95,12 @@ public class HttpClientSettings {
 	 * Set the connection keep-alive default timeout.
 	 * 
 	 * @param connectionKeepAlive
-	 *        the timeout to set
+	 *        the timeout to set; if {@code null} then
+	 *        {@link #DEFAULT_CONNECTION_KEEP_ALIVE_SECS} will be used
 	 */
-	public void setConnectionKeepAlive(Duration connectionKeepAlive) {
-		this.connectionKeepAlive = connectionKeepAlive;
+	public final void setConnectionKeepAlive(@Nullable Duration connectionKeepAlive) {
+		this.connectionKeepAlive = (connectionKeepAlive != null ? connectionKeepAlive
+				: Duration.ofSeconds(DEFAULT_CONNECTION_KEEP_ALIVE_SECS));
 	}
 
 	/**
@@ -104,7 +109,7 @@ public class HttpClientSettings {
 	 * @return the timeout; defaults to
 	 *         {@link #DEFAULT_CONNECTION_REQUEST_TIMEOUT_SECS}
 	 */
-	public Duration getConnectionRequestTimeout() {
+	public final Duration getConnectionRequestTimeout() {
 		return connectionRequestTimeout;
 	}
 
@@ -112,10 +117,12 @@ public class HttpClientSettings {
 	 * Set the connection pool borrow timeout.
 	 *
 	 * @param connectionRequestTimeout
-	 *        the connectionRequestTimeout to set
+	 *        the connectionRequestTimeout to set; if {@code null} then
+	 *        {@link #DEFAULT_CONNECTION_REQUEST_TIMEOUT_SECS} will be used
 	 */
-	public void setConnectionRequestTimeout(Duration connectionRequestTimeout) {
-		this.connectionRequestTimeout = connectionRequestTimeout;
+	public final void setConnectionRequestTimeout(@Nullable Duration connectionRequestTimeout) {
+		this.connectionRequestTimeout = (connectionRequestTimeout != null ? connectionRequestTimeout
+				: Duration.ofSeconds(DEFAULT_CONNECTION_REQUEST_TIMEOUT_SECS));
 	}
 
 	/**
@@ -123,7 +130,7 @@ public class HttpClientSettings {
 	 * 
 	 * @return the timeout; defaults to {@link #DEFAULT_CONNECTION_TTL_SECS}
 	 */
-	public Duration getConnectionTimeToLive() {
+	public final Duration getConnectionTimeToLive() {
 		return connectionTimeToLive;
 	}
 
@@ -131,10 +138,12 @@ public class HttpClientSettings {
 	 * Set the connection time to live timeout.
 	 * 
 	 * @param connectionTimeToLive
-	 *        the timeout to set
+	 *        the timeout to set; if {@code null} then
+	 *        {@link #DEFAULT_CONNECTION_TTL_SECS will be used
 	 */
-	public void setConnectionTimeToLive(Duration connectionTimeToLive) {
-		this.connectionTimeToLive = connectionTimeToLive;
+	public final void setConnectionTimeToLive(Duration connectionTimeToLive) {
+		this.connectionTimeToLive = (connectionTimeToLive != null ? connectionTimeToLive
+				: Duration.ofSeconds(DEFAULT_CONNECTION_TTL_SECS));
 	}
 
 	/**
@@ -143,7 +152,7 @@ public class HttpClientSettings {
 	 * @return the timeout; deafults to
 	 *         {@link #DEFAULT_CONNECTION_VALIDATE_AFTER_INACTIVITY_SECS}
 	 */
-	public Duration getConnectionValidateAfterInactivity() {
+	public final Duration getConnectionValidateAfterInactivity() {
 		return connectionValidateAfterInactivity;
 	}
 
@@ -151,10 +160,15 @@ public class HttpClientSettings {
 	 * Set the connection validate-after-inactivity timeout.
 	 * 
 	 * @param connectionValidateAfterInactivity
-	 *        the timeout to set
+	 *        the timeout to set; if {@code null} then
+	 *        {@link #DEFAULT_CONNECTION_VALIDATE_AFTER_INACTIVITY_SECS} will be
+	 *        used
 	 */
-	public void setConnectionValidateAfterInactivity(Duration connectionValidateAfterInactivity) {
-		this.connectionValidateAfterInactivity = connectionValidateAfterInactivity;
+	public final void setConnectionValidateAfterInactivity(
+			@Nullable Duration connectionValidateAfterInactivity) {
+		this.connectionValidateAfterInactivity = (connectionValidateAfterInactivity != null
+				? connectionValidateAfterInactivity
+				: Duration.ofSeconds(DEFAULT_CONNECTION_VALIDATE_AFTER_INACTIVITY_SECS));
 	}
 
 	/**
@@ -162,7 +176,7 @@ public class HttpClientSettings {
 	 *
 	 * @return the timeout; defaults to {@link #DEFAULT_SOCKET_TIMEOUT_SECONDS}
 	 */
-	public Duration getSocketTimeout() {
+	public final Duration getSocketTimeout() {
 		return socketTimeout;
 	}
 
@@ -170,10 +184,12 @@ public class HttpClientSettings {
 	 * Set the socket timeout.
 	 *
 	 * @param socketTimeout
-	 *        the timeout to set
+	 *        the timeout to set; if {@code null} then
+	 *        {@link #DEFAULT_SOCKET_TIMEOUT_SECONDS} will be used
 	 */
-	public void setSocketTimeout(Duration socketTimeout) {
-		this.socketTimeout = socketTimeout;
+	public final void setSocketTimeout(@Nullable Duration socketTimeout) {
+		this.socketTimeout = (socketTimeout != null ? socketTimeout
+				: Duration.ofSeconds(DEFAULT_SOCKET_TIMEOUT_SECONDS));
 	}
 
 }

@@ -81,7 +81,7 @@ public final class InsertAssetConfiguration implements PreparedStatementCreator,
 	 * @param entity
 	 *        the entity to insert
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InsertAssetConfiguration(Long userId, AssetConfiguration entity) {
 		super();

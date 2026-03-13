@@ -30,6 +30,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamRakeTaskFilter;
@@ -57,7 +58,7 @@ public class UpdateCloudDatumStreamRakeTaskEntity implements PreparedStatementCr
 
 	private final UserLongCompositePK id;
 	private final CloudDatumStreamRakeTaskEntity entity;
-	private final CloudDatumStreamRakeTaskFilter filter;
+	private final @Nullable CloudDatumStreamRakeTaskFilter filter;
 
 	/**
 	 * Constructor.
@@ -67,7 +68,7 @@ public class UpdateCloudDatumStreamRakeTaskEntity implements PreparedStatementCr
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateCloudDatumStreamRakeTaskEntity(UserLongCompositePK id,
 			CloudDatumStreamRakeTaskEntity entity) {
@@ -84,10 +85,10 @@ public class UpdateCloudDatumStreamRakeTaskEntity implements PreparedStatementCr
 	 * @param filter
 	 *        an optional filter to restrict the update to
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}, other than {@code filter}
+	 *         if any argument is {@code null}, other than {@code filter}
 	 */
 	public UpdateCloudDatumStreamRakeTaskEntity(UserLongCompositePK id,
-			CloudDatumStreamRakeTaskEntity entity, CloudDatumStreamRakeTaskFilter filter) {
+			CloudDatumStreamRakeTaskEntity entity, @Nullable CloudDatumStreamRakeTaskFilter filter) {
 		super();
 		this.id = requireNonNullArgument(id, "id");
 		this.entity = requireNonNullArgument(entity, "entity");

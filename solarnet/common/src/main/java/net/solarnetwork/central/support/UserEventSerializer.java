@@ -23,6 +23,7 @@
 package net.solarnetwork.central.support;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import tools.jackson.core.JacksonException;
@@ -36,7 +37,7 @@ import tools.jackson.databind.ser.std.StdSerializer;
  * @author matt
  * @version 2.0
  */
-public class UserEventSerializer extends StdSerializer<UserEvent> {
+public class UserEventSerializer extends StdSerializer<@Nullable UserEvent> {
 
 	/** A default instance. */
 	public static final UserEventSerializer INSTANCE = new UserEventSerializer();
@@ -46,8 +47,8 @@ public class UserEventSerializer extends StdSerializer<UserEvent> {
 	}
 
 	@Override
-	public void serialize(UserEvent event, JsonGenerator generator, SerializationContext provider)
-			throws JacksonException {
+	public void serialize(@Nullable UserEvent event, JsonGenerator generator,
+			SerializationContext provider) throws JacksonException {
 		if ( event == null ) {
 			generator.writeNull();
 			return;

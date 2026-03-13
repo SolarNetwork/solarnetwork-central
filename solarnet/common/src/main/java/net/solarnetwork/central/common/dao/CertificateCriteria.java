@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for certificate related data.
  * 
@@ -35,12 +37,12 @@ public interface CertificateCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available subject DN from the
-	 * {@link #getSubjectDns()} array, or {@literal null} if not available.
+	 * {@link #getSubjectDns()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first subject DN, or {@literal null} if not available
+	 * @return the first subject DN, or {@code null} if not available
 	 */
-	default String getSubjectDn() {
+	default @Nullable String getSubjectDn() {
 		final String[] array = getSubjectDns();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -48,9 +50,9 @@ public interface CertificateCriteria {
 	/**
 	 * Get an array of subject DNs.
 	 * 
-	 * @return array of subject DNs (may be {@literal null})
+	 * @return array of subject DNs (may be {@code null})
 	 */
-	String[] getSubjectDns();
+	String @Nullable [] getSubjectDns();
 
 	/**
 	 * Test if this filter has any user certificate criteria.

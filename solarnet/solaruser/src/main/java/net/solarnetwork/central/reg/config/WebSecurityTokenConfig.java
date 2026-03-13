@@ -46,9 +46,8 @@ public class WebSecurityTokenConfig {
 	@ConfigurationProperties(prefix = "app.job.security-token-spool.cleaner")
 	@Bean
 	public DirectoryCleanerJob spoolDirectoryCleanerJob(final SecurityTokenFilterSettings settings) {
-		DirectoryCleanerJob job = new DirectoryCleanerJob(settings.getSpoolDirectory());
-		job.setId("SecurityTokenSpoolDirectoryCleaner");
-		job.setGroupId("Housekeeping");
+		DirectoryCleanerJob job = new DirectoryCleanerJob("SecurityTokenSpoolDirectoryCleaner",
+				settings.getSpoolDirectory());
 		return job;
 	}
 

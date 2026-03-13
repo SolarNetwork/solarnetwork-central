@@ -50,9 +50,9 @@ public class UserServiceAuditJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.user.audit.daily")
 	@Bean
 	public ManagedJob staleAuditUserServiceProcessorDaily() {
-		StaleAuditUserServiceProcessor processor = new StaleAuditUserServiceProcessor(jdbcOperations);
+		StaleAuditUserServiceProcessor processor = new StaleAuditUserServiceProcessor(jdbcOperations,
+				"StaleAuditUserServiceProcessor-Daily");
 		processor.setParallelTaskExecutor(taskExecutor);
-		processor.setId("StaleAuditUserServiceProcessorDaily");
 		processor.setTierProcessType(Aggregation.Day.getKey());
 		return processor;
 	}
@@ -60,9 +60,9 @@ public class UserServiceAuditJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.user.audit.monthly")
 	@Bean
 	public ManagedJob staleAuditUserServiceProcessorMonthly() {
-		StaleAuditUserServiceProcessor processor = new StaleAuditUserServiceProcessor(jdbcOperations);
+		StaleAuditUserServiceProcessor processor = new StaleAuditUserServiceProcessor(jdbcOperations,
+				"StaleAuditUserServiceProcessor-Monthly");
 		processor.setParallelTaskExecutor(taskExecutor);
-		processor.setId("StaleAuditUserServiceProcessorMonthly");
 		processor.setTierProcessType(Aggregation.Month.getKey());
 		return processor;
 	}

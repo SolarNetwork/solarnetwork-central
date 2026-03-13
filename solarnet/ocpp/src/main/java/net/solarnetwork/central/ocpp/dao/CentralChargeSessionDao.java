@@ -54,7 +54,7 @@ public interface CentralChargeSessionDao
 	 * @param chargePointId
 	 *        the charge point ID to look for
 	 * @return all available incomplete charge session for the given charge
-	 *         point, never {@literal null}
+	 *         point, never {@code null}
 	 * @since 1.1
 	 */
 	Collection<ChargeSession> getIncompleteChargeSessionsForUserForChargePoint(long userId,

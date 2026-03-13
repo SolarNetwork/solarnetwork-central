@@ -61,7 +61,7 @@ public class StaleAuditDataProcessorTests {
 		private final AtomicInteger taskThreadCount = new AtomicInteger(0);
 
 		private TestProcessor(JdbcOperations jdbcOps) {
-			super(jdbcOps);
+			super(jdbcOps, TEST_JOB_ID);
 			ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 			executor.setCorePoolSize(10);
 			executor.setAllowCoreThreadTimeOut(true);
@@ -88,8 +88,6 @@ public class StaleAuditDataProcessorTests {
 		jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
 
 		job = new TestProcessor(jdbcTemplate);
-		job.setGroupId("Test");
-		job.setId(TEST_JOB_ID);
 		job.setMaximumIterations(10);
 		job.setTierProcessType(Aggregation.None.getKey());
 

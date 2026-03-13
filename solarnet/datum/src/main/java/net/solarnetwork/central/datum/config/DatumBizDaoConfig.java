@@ -74,7 +74,7 @@ public class DatumBizDaoConfig {
 	private TaskExecutor taskExecutor;
 
 	@Value("${app.location.request.alert-mail:nobody@localhost}")
-	private String locationRequestAlertEmail;
+	private String locationRequestAlertEmail = "nobody@localhost";
 
 	@Autowired
 	private MessageSource messageSource;

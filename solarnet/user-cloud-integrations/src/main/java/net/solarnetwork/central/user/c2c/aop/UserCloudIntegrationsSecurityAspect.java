@@ -33,6 +33,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
@@ -353,8 +354,9 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 		return pjp.proceed(args);
 	}
 
-	private CloudIntegrationsFilter enforceSecurityPolicyOnFilter(final SecurityPolicy policy,
-			final CloudIntegrationsFilter filter, final Class<?> entityClass) {
+	private @Nullable CloudIntegrationsFilter enforceSecurityPolicyOnFilter(
+			final @Nullable SecurityPolicy policy, final @Nullable CloudIntegrationsFilter filter,
+			final @Nullable Class<?> entityClass) {
 		if ( policy == null || entityClass == null || policy.getNodeIds() == null
 				|| policy.getNodeIds().isEmpty() ) {
 			// no node IDs to enforce
@@ -408,14 +410,19 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 
 	@Before(value = "saveEntityForUserKey(userKey, entity)", argNames = "userKey,entity")
 	public void saveEntityAccessCheck(UserIdRelated userKey, Object entity) {
-		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
+		final Long userId = userKey != null ? userKey.getUserId() : null;
+		requireUserWriteAccess(userId);
+		if ( userKey == null || userId == null ) {
+			// this just to make null analysis happy: requireUserWriteAccess() would
+			// have thrown exception if userKey was null
+			return;
+		}
 		if ( entity instanceof NodeIdRelated id && id.getNodeId() != null ) {
 			requireNodeWriteAccess(id.getNodeId());
 		} else if ( entity instanceof ObjectDatumIdRelated id && id.hasNodeId() ) {
 			requireNodeWriteAccess(id.nodeId());
 		} else if ( entity instanceof CloudDatumStreamIdRelated id && id.hasDatumStreamId() ) {
-			requireDatumStreamWriteAccess(
-					new UserLongCompositePK(userKey.getUserId(), id.getDatumStreamId()));
+			requireDatumStreamWriteAccess(new UserLongCompositePK(userId, id.getDatumStreamId()));
 		} else if ( entity instanceof CloudDatumStreamRelated
 				&& userKey instanceof UserLongCompositePK datumStreamId ) {
 			requireDatumStreamWriteAccess(datumStreamId);

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.CombiningType;
 
 /**
@@ -37,6 +38,7 @@ public interface CombiningCriteria {
 	 *
 	 * @return the combining type
 	 */
+	@Nullable
 	CombiningType getCombiningType();
 
 	/**

@@ -88,7 +88,7 @@ public class UserOscpController {
 	/**
 	 * Get the {@link UserOscpBiz}.
 	 *
-	 * @return the service; never {@literal null}
+	 * @return the service; never {@code null}
 	 * @throws UnsupportedOperationException
 	 *         if the service is not available
 	 */

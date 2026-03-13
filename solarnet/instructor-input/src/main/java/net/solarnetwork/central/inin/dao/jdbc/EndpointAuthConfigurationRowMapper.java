@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.inin.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
@@ -77,13 +79,16 @@ public class EndpointAuthConfigurationRowMapper implements RowMapper<EndpointAut
 	public EndpointAuthConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
 		Long userId = rs.getObject(++p, Long.class);
-		UUID endpointId = CommonJdbcUtils.getUuid(rs, ++p);
-		Long credentialId = rs.getObject(++p, Long.class);
-		Timestamp ts = rs.getTimestamp(++p);
-		EndpointAuthConfiguration conf = new EndpointAuthConfiguration(userId, endpointId, credentialId,
-				ts.toInstant());
-		conf.setModified(rs.getTimestamp(++p).toInstant());
-		conf.setEnabled(rs.getBoolean(++p));
+		UUID endpointId = nonnull(CommonJdbcUtils.getUuid(rs, ++p), "endpointId");
+		Long credentialId = nonnull(rs.getObject(++p, Long.class), "credentialId");
+		Instant ts = nonnull(getTimestampInstant(rs, ++p), "created");
+		Instant mod = getTimestampInstant(rs, ++p);
+		boolean enabled = rs.getBoolean(++p);
+
+		final EndpointAuthConfiguration conf = new EndpointAuthConfiguration(userId, endpointId,
+				credentialId, ts);
+		conf.setModified(mod);
+		conf.setEnabled(enabled);
 		return conf;
 	}
 

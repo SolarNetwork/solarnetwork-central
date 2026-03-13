@@ -49,7 +49,7 @@ public class CapacityOptimizerConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CapacityOptimizerConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -65,7 +65,7 @@ public class CapacityOptimizerConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CapacityOptimizerConfiguration(Long userId, Long entityId, Instant created) {
 		super(userId, entityId, created);

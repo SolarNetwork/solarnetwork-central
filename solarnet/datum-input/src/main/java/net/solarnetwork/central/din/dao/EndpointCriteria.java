@@ -37,10 +37,10 @@ public interface EndpointCriteria {
 	 *
 	 * <p>
 	 * This returns the first available endpoint ID from the
-	 * {@link #getEndpointIds()} array, or {@literal null} if not available.
+	 * {@link #getEndpointIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first endpoint ID, or {@literal null} if not available
+	 * @return the first endpoint ID, or {@code null} if not available
 	 */
 	default UUID getEndpointId() {
 		final UUID[] array = getEndpointIds();
@@ -50,7 +50,7 @@ public interface EndpointCriteria {
 	/**
 	 * Get an array of endpoint IDs.
 	 *
-	 * @return array of endpoint IDs (may be {@literal null})
+	 * @return array of endpoint IDs (may be {@code null})
 	 */
 	UUID[] getEndpointIds();
 

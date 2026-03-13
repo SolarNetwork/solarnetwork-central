@@ -58,7 +58,7 @@ public class JdbcServerConfigurationDao implements ServerConfigurationDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcServerConfigurationDao(JdbcOperations jdbcOps) {
 		super();

@@ -40,7 +40,7 @@ public interface UserEventHookBiz {
 	/**
 	 * Get all available datum event producers.
 	 * 
-	 * @return the producers, never {@literal null}
+	 * @return the producers, never {@code null}
 	 * @since 1.1
 	 */
 	Iterable<DatumAppEventProducer> availableDatumEventProducers();
@@ -48,7 +48,7 @@ public interface UserEventHookBiz {
 	/**
 	 * Get all available node event hook services.
 	 * 
-	 * @return the services, never {@literal null}
+	 * @return the services, never {@code null}
 	 * @since 1.1
 	 */
 	Iterable<UserNodeEventHookService> availableNodeEventHookServices();
@@ -58,7 +58,7 @@ public interface UserEventHookBiz {
 	 * 
 	 * @param locale
 	 *        the desired locale
-	 * @return the topics as service info, never {@literal null}
+	 * @return the topics as service info, never {@code null}
 	 * @since 1.1
 	 */
 	Iterable<LocalizedServiceInfo> availableDatumEventTopics(Locale locale);
@@ -74,7 +74,7 @@ public interface UserEventHookBiz {
 	 *        the configuration type to get
 	 * @param id
 	 *        the primary key of the configuration to get
-	 * @return the configuration, or {@literal null} if not available
+	 * @return the configuration, or {@code null} if not available
 	 */
 	<T extends UserLongIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id);
@@ -106,7 +106,7 @@ public interface UserEventHookBiz {
 	 *        the user ID to get configurations for
 	 * @param configurationClass
 	 *        the desired configuration type
-	 * @return the available configurations, never {@literal null}
+	 * @return the available configurations, never {@code null}
 	 */
 	<T extends UserLongIdentifiableConfigurationEntity<?>> List<T> configurationsForUser(Long userId,
 			Class<T> configurationClass);

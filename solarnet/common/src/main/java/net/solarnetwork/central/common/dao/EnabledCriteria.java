@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for enabled-state data.
  * 
@@ -34,8 +36,9 @@ public interface EnabledCriteria {
 	 * Get the enabled flag.
 	 * 
 	 * @return the {@literal true} or {@literal false} to filter by that state,
-	 *         or {@literal null} to not filter
+	 *         or {@code null} to not filter
 	 */
+	@Nullable
 	Boolean getEnabled();
 
 	/**

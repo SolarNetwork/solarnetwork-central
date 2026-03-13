@@ -24,6 +24,7 @@ package net.solarnetwork.central.inin.dao.jdbc.sql;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -133,7 +134,7 @@ public final class SelectCredentialConfiguration
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getCredentialIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled());
+			stmt.setBoolean(++p, nonnull(filter.getEnabled(), "enabled"));
 		}
 		return p;
 	}

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * API for a {@link SolarNode} search or filter match result.
  * 
@@ -37,6 +39,7 @@ public interface SolarNodeFilterMatch extends NodeIdentity, FilterMatch<Long> {
 	 * @return the metadata
 	 * @since 1.1
 	 */
+	@Nullable
 	String getMetaJson();
 
 }

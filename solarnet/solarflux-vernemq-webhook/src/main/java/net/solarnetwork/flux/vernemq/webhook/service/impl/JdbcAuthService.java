@@ -20,7 +20,6 @@ package net.solarnetwork.flux.vernemq.webhook.service.impl;
 import static java.time.Instant.now;
 import static net.solarnetwork.flux.vernemq.webhook.Globals.AUDIT_LOG;
 import static net.solarnetwork.util.StringUtils.delimitedStringToMap;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
@@ -29,15 +28,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-
 import javax.cache.Cache;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
-
 import com.github.veqryn.net.Cidr4;
-
 import net.solarnetwork.flux.vernemq.webhook.domain.Actor;
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;
 import net.solarnetwork.flux.vernemq.webhook.domain.Response;
@@ -565,7 +560,7 @@ public class JdbcAuthService implements AuthService {
 	 * @param jdbcCall
 	 *        the JDBC call
 	 * @throws IllegalArgumentException
-	 *         if {@code jdbcCall} is {@literal null}
+	 *         if {@code jdbcCall} is {@code null}
 	 */
 	public void setAuthenticateCall(String jdbcCall) {
 		if ( jdbcCall == null ) {
@@ -619,7 +614,7 @@ public class JdbcAuthService implements AuthService {
 	 * @param jdbcCall
 	 *        the JDBC call
 	 * @throws IllegalArgumentException
-	 *         if {@code jdbcCall} is {@literal null}
+	 *         if {@code jdbcCall} is {@code null}
 	 */
 	public void setAuthorizeCall(String jdbcCall) {
 		if ( jdbcCall == null ) {
@@ -643,7 +638,7 @@ public class JdbcAuthService implements AuthService {
 	 * @param snHost
 	 *        the host
 	 * @throws IllegalArgumentException
-	 *         if {@code snHost} is {@literal null}
+	 *         if {@code snHost} is {@code null}
 	 */
 	public void setSnHost(String snHost) {
 		if ( snHost == null ) {
@@ -667,7 +662,7 @@ public class JdbcAuthService implements AuthService {
 	 * @param snPath
 	 *        the path
 	 * @throws IllegalArgumentException
-	 *         if {@code snPath} is {@literal null}
+	 *         if {@code snPath} is {@code null}
 	 */
 	public void setSnPath(String snPath) {
 		if ( snPath == null ) {
@@ -760,7 +755,7 @@ public class JdbcAuthService implements AuthService {
 	 * @param jdbcCall
 	 *        the JDBC call
 	 * @throws IllegalArgumentException
-	 *         if {@code jdbcCall} is {@literal null}
+	 *         if {@code jdbcCall} is {@code null}
 	 */
 	public void setAuthorizeNodeCall(String jdbcCall) {
 		if ( jdbcCall == null ) {
@@ -789,7 +784,7 @@ public class JdbcAuthService implements AuthService {
 	 * @param publishUsername
 	 *        the publish username
 	 * @throws IllegalArgumentException
-	 *         if {@code publishUsername} is {@literal null}
+	 *         if {@code publishUsername} is {@code null}
 	 */
 	public void setPublishUsername(String publishUsername) {
 		if ( publishUsername == null ) {

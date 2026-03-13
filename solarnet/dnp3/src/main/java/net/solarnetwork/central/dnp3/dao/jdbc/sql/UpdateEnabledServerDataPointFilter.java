@@ -60,7 +60,7 @@ public final class UpdateEnabledServerDataPointFilter implements PreparedStateme
 	 * @param enabled
 	 *        the desired enabled state
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code filter} is {@literal null}
+	 *         if any argument other than {@code filter} is {@code null}
 	 */
 	public UpdateEnabledServerDataPointFilter(String tableName, String serverIdColumnName, Long userId,
 			ServerDataPointFilter filter, boolean enabled) {

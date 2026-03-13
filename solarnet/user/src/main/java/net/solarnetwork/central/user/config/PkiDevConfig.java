@@ -57,12 +57,8 @@ public class PkiDevConfig {
 
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public DevNodePKIBiz pkiBiz() {
-		DevNodePKIBiz biz = new DevNodePKIBiz();
-		biz.setCaService(certificationAuthorityService);
-		biz.setCertificateService(certificateService);
-		biz.setBaseDir(baseDir.toFile());
-		biz.setCaDN(caDn);
-		return biz;
+		return new DevNodePKIBiz(certificateService, certificationAuthorityService, baseDir.toFile(),
+				caDn);
 	}
 
 }

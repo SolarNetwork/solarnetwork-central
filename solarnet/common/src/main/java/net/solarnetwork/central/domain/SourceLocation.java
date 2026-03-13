@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * A filter for locations based on a specific source.
  * 
@@ -35,6 +37,7 @@ public interface SourceLocation extends Filter {
 	 * 
 	 * @return the ID
 	 */
+	@Nullable
 	Long getId();
 
 	/**
@@ -42,6 +45,7 @@ public interface SourceLocation extends Filter {
 	 * 
 	 * @return the source name
 	 */
+	@Nullable
 	String getSource();
 
 	/**
@@ -49,6 +53,7 @@ public interface SourceLocation extends Filter {
 	 * 
 	 * @return the location filter
 	 */
+	@Nullable
 	Location getLocation();
 
 }

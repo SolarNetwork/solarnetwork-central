@@ -48,12 +48,11 @@ public class DatumDeleteJobInfoCleanerJob extends JobSupport {
 	 * @param datumDeleteBiz
 	 *        the service to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumDeleteJobInfoCleanerJob(UserDatumDeleteJobBiz datumDeleteBiz) {
-		super();
+		super("UserExpire", "DatumDeleteJobInfoCleaner");
 		this.datumDeleteBiz = requireNonNullArgument(datumDeleteBiz, "datumDeleteBiz");
-		setGroupId("UserExpire");
 		setMinimumAgeMinutes(DEFAULT_MINIMUM_AGE_MINUTES);
 	}
 

@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import java.net.URI;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A very simplified HTTP request structure.
@@ -31,6 +32,6 @@ import java.util.Map;
  * @author matt
  * @version 1.0
  */
-public record HttpRequestInfo(String method, URI uri, Map<String, String> headers) {
+public record HttpRequestInfo(String method, URI uri, @Nullable Map<String, String> headers) {
 
 }

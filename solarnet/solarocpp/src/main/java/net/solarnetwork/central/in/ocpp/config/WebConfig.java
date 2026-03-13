@@ -23,10 +23,10 @@
 package net.solarnetwork.central.in.ocpp.config;
 
 import static java.lang.String.format;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -106,7 +106,7 @@ public class WebConfig implements WebMvcConfigurer {
 		SimpleXmlView view = new SimpleXmlView();
 		view.setContentType("text/xml;charset=UTF-8");
 		view.setPropertySerializerRegistrar(registrar);
-		view.setClassNamesAllowedForNesting(Collections.singleton("net.solarnetwork"));
+		view.setClassNamesAllowedForNesting(Set.of("net.solarnetwork"));
 		return view;
 	}
 

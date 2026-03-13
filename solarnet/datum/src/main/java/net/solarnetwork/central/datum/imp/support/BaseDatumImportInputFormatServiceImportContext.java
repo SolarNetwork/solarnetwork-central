@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +30,7 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.lang3.mutable.MutableLong;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService.ImportContext;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
@@ -46,7 +48,7 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 
 	protected final InputConfiguration config;
 	protected final DatumImportResource resource;
-	protected final ProgressListener<DatumImportService> progressListener;
+	protected final @Nullable ProgressListener<DatumImportService> progressListener;
 	private long estimatedResultCount = -1;
 	private long complete = 0;
 
@@ -59,12 +61,15 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 	 *        the data to import
 	 * @param progressListener
 	 *        the progress listener
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code progressListener} is {@code null}
 	 */
 	public BaseDatumImportInputFormatServiceImportContext(InputConfiguration config,
-			DatumImportResource resource, ProgressListener<DatumImportService> progressListener) {
+			DatumImportResource resource,
+			@Nullable ProgressListener<DatumImportService> progressListener) {
 		super();
-		this.config = config;
-		this.resource = resource;
+		this.config = requireNonNullArgument(config, "config");
+		this.resource = requireNonNullArgument(resource, "resource");
 		this.progressListener = progressListener;
 	}
 
@@ -116,7 +121,7 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 	 * determined.
 	 * </p>
 	 *
-	 * @return the character set name, never {@literal null}
+	 * @return the character set name, never {@code null}
 	 */
 	protected String getResourceCharset() {
 		String charset = "UTF-8";

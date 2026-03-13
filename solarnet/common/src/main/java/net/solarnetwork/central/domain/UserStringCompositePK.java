@@ -25,6 +25,7 @@ package net.solarnetwork.central.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Immutable primary key for user-related entities using a String entity key.
@@ -42,7 +43,7 @@ public final class UserStringCompositePK extends BasePK
 	 * A special "not a value" instance to be used for generated user ID values
 	 * yet to be generated.
 	 */
-	public static final Long UNASSIGNED_USER_ID = Long.MIN_VALUE;
+	public static final Long UNASSIGNED_USER_ID = UserIdRelated.UNASSIGNED_USER_ID;
 
 	/**
 	 * A special "not a value" instance to be used for generated entity ID
@@ -72,7 +73,7 @@ public final class UserStringCompositePK extends BasePK
 	 * @param entityId
 	 *        the entity ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserStringCompositePK(Long userId, String entityId) {
 		super();
@@ -81,7 +82,7 @@ public final class UserStringCompositePK extends BasePK
 	}
 
 	@Override
-	public int compareTo(UserStringCompositePK o) {
+	public int compareTo(@Nullable UserStringCompositePK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -117,7 +118,7 @@ public final class UserStringCompositePK extends BasePK
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -132,23 +133,23 @@ public final class UserStringCompositePK extends BasePK
 	 *
 	 * @return the entity ID
 	 */
-	public String getEntityId() {
+	public final String getEntityId() {
 		return entityId;
 	}
 
 	@Override
-	public Long keyComponent1() {
+	public final Long keyComponent1() {
 		return userId;
 	}
 
 	@Override
-	public String keyComponent2() {
+	public final String keyComponent2() {
 		return entityId;
 	}
 
 	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
-	public boolean keyComponentIsAssigned(int index) {
+	public final boolean keyComponentIsAssigned(int index) {
 		return switch (index) {
 			case 0 -> userId != UNASSIGNED_USER_ID;
 			case 1 -> entityId != UNASSIGNED_ENTITY_ID;
@@ -162,13 +163,13 @@ public final class UserStringCompositePK extends BasePK
 	 * @return {@literal true} if the entity ID value is assigned,
 	 *         {@literal false} if it is considered "not a value"
 	 */
-	public boolean entityIdIsAssigned() {
+	public final boolean entityIdIsAssigned() {
 		return keyComponentIsAssigned(1);
 	}
 
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
-	public <T> T keyComponentValue(int index, Object val) {
+	public <T> T keyComponentValue(int index, @Nullable Object val) {
 		try {
 			if ( index == 0 ) {
 				return switch (val) {
@@ -192,7 +193,8 @@ public final class UserStringCompositePK extends BasePK
 	}
 
 	@Override
-	public UserStringCompositePK createKey(CompositeKey template, Object... components) {
+	public UserStringCompositePK createKey(@Nullable CompositeKey template,
+			Object @Nullable... components) {
 		Object v1 = (components != null && components.length > 0 ? components[0]
 				: template != null ? template.keyComponent(0) : null);
 		Object v2 = (components != null && components.length > 1 ? components[1]

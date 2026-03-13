@@ -24,6 +24,7 @@ package net.solarnetwork.central.common.job;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.jdbc.core.JdbcOperations;
 
@@ -33,7 +34,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * <p>
  * This job executes a JDBC procedure, which is expected to accept one or two
  * arguments. The first argument is the configured {@code tierProcessType}. If
- * {@code tierProcessMax} is not {@literal null} then that will be passed as the
+ * {@code tierProcessMax} is not {@code null} then that will be passed as the
  * second argument. The JDBC procedure must return an {@code Integer} result
  * representing the number of rows processed by the call. If the procedure
  * returns zero, the job stops immediately.
@@ -47,20 +48,25 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 
 	private final String taskDescription;
 	private String tierProcessType = "h";
-	private Integer tierProcessMax;
+	private @Nullable Integer tierProcessMax;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
+	 * @param groupId
+	 *        the group ID to use
+	 * @param id
+	 *        the job ID
 	 * @param taskDescription
 	 *        a description of the task to use in log statements
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public TieredStaleRecordProcessor(JdbcOperations jdbcOps, String taskDescription) {
-		super(jdbcOps);
+	public TieredStaleRecordProcessor(JdbcOperations jdbcOps, String groupId, String id,
+			String taskDescription) {
+		super(jdbcOps, groupId, id);
 		this.taskDescription = requireNonNullArgument(taskDescription, "taskDescription");
 		setMaximumIterations(1);
 		setParallelism(1);
@@ -106,7 +112,7 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	 *
 	 * @return the type; defaults to {@literal "h"}
 	 */
-	public String getTierProcessType() {
+	public final String getTierProcessType() {
 		return tierProcessType;
 	}
 
@@ -119,17 +125,19 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	 *
 	 * @param tierProcessType
 	 *        the type to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setTierProcessType(String tierProcessType) {
-		this.tierProcessType = tierProcessType;
+	public final void setTierProcessType(String tierProcessType) {
+		this.tierProcessType = requireNonNullArgument(tierProcessType, "tierProcessType");
 	}
 
 	/**
 	 * Get the maximum tier rows to process per procedure call.
 	 *
-	 * @return the maximum row count, or {@literal null} for no explicit limit
+	 * @return the maximum row count, or {@code null} for no explicit limit
 	 */
-	public Integer getTierProcessMax() {
+	public final @Nullable Integer getTierProcessMax() {
 		return tierProcessMax;
 	}
 
@@ -137,16 +145,16 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	 * Set the maximum number of tier rows to process per procedure call.
 	 *
 	 * <p>
-	 * If this value is not {@literal null}, then it will be passed as the
-	 * second parameter passed to the JDBC procedure. When {@literal null} then
-	 * the JDBC procedure is expected to take only one argument.
+	 * If this value is not {@code null}, then it will be passed as the second
+	 * parameter passed to the JDBC procedure. When {@code null} then the JDBC
+	 * procedure is expected to take only one argument.
 	 * </p>
 	 *
 	 * @param tierProcessMax
-	 *        the maximum number of rows, or {@literal null} for no explicit
-	 *        limit; default is {@literal null}
+	 *        the maximum number of rows, or {@code null} for no explicit limit;
+	 *        default is {@code null}
 	 */
-	public void setTierProcessMax(Integer tierProcessMax) {
+	public final void setTierProcessMax(@Nullable Integer tierProcessMax) {
 		this.tierProcessMax = tierProcessMax;
 	}
 

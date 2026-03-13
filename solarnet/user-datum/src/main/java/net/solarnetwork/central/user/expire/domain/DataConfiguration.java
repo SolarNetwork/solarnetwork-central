@@ -46,7 +46,7 @@ public interface DataConfiguration extends IdentifiableConfiguration {
 	 * <li><code>sourceIds</code> - a list of source IDs, or source ID patterns,
 	 * to include</li>
 	 * <li><code>aggregation</code> the aggregation level to include, or
-	 * {@literal null} for only raw data</li>
+	 * {@code null} for only raw data</li>
 	 * </ul>
 	 * 
 	 * @return the datum filter

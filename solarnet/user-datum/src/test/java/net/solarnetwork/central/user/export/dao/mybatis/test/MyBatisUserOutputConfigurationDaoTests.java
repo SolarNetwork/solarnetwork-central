@@ -76,10 +76,8 @@ public class MyBatisUserOutputConfigurationDaoTests extends AbstractMyBatisUserD
 	@Test
 	public void storeNew() {
 		UserOutputConfiguration conf = new UserOutputConfiguration(
-				unassignedEntityIdKey(this.user.getId()), now());
-		conf.setName(TEST_NAME);
-		conf.setServiceIdentifier(TEST_SERVICE_IDENT);
-		conf.setCompressionType(OutputCompressionType.None);
+				unassignedEntityIdKey(this.user.getId()), now(), TEST_NAME, TEST_SERVICE_IDENT,
+				OutputCompressionType.None);
 
 		Map<String, Object> sprops = new HashMap<String, Object>(4);
 		sprops.put("string", "foo");

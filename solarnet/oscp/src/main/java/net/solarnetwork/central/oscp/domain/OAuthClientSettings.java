@@ -33,8 +33,8 @@ import java.util.Map;
  * @param clientId
  *        the client ID to use
  * @param clientSecret
- *        the client secret, which may be {@literal null} if stored in some
- *        other context
+ *        the client secret, which may be {@code null} if stored in some other
+ *        context
  * @author matt
  * @version 1.0
  */

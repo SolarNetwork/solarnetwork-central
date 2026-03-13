@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.c2c.domain;
 
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamIdRelated;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
@@ -33,11 +34,12 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.2
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class CloudDatumStreamRakeTaskEntityInput extends CloudDatumStreamRakeTaskEntityBaseInput
 		implements CloudDatumStreamIdRelated {
 
 	@NotNull
-	private Long datumStreamId;
+	private @Nullable Long datumStreamId;
 
 	/**
 	 * Constructor.
@@ -46,6 +48,7 @@ public class CloudDatumStreamRakeTaskEntityInput extends CloudDatumStreamRakeTas
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public CloudDatumStreamRakeTaskEntity toEntity(UserLongCompositePK id) {
 		CloudDatumStreamRakeTaskEntity conf = super.toEntity(id);
@@ -58,8 +61,9 @@ public class CloudDatumStreamRakeTaskEntityInput extends CloudDatumStreamRakeTas
 	 *
 	 * @return the datum stream ID
 	 */
+	@SuppressWarnings("NullAway")
 	@Override
-	public Long getDatumStreamId() {
+	public final Long getDatumStreamId() {
 		return datumStreamId;
 	}
 
@@ -69,7 +73,7 @@ public class CloudDatumStreamRakeTaskEntityInput extends CloudDatumStreamRakeTas
 	 * @param datumStreamId
 	 *        the datum stream ID to set
 	 */
-	public void setDatumStreamId(Long datumStreamId) {
+	public final void setDatumStreamId(@Nullable Long datumStreamId) {
 		this.datumStreamId = datumStreamId;
 	}
 

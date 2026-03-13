@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
@@ -64,7 +65,7 @@ public final class CommonSqlUtils {
 	 * non-array parameter if the array holds a single object.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -81,7 +82,7 @@ public final class CommonSqlUtils {
 	 * @since 2.4
 	 */
 	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
-			int parameterOffset, Integer[] value) throws SQLException {
+			int parameterOffset, Integer @Nullable [] value) throws SQLException {
 		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "integer", value);
 	}
 
@@ -90,7 +91,7 @@ public final class CommonSqlUtils {
 	 * non-array parameter if the array holds a single object.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -106,7 +107,7 @@ public final class CommonSqlUtils {
 	 *         if any SQL error occurs
 	 */
 	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
-			int parameterOffset, Long[] value) throws SQLException {
+			int parameterOffset, Long @Nullable [] value) throws SQLException {
 		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "bigint", value);
 	}
 
@@ -124,14 +125,14 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 2.2
 	 */
 	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
-			int parameterOffset, Long[] value, boolean setNull) throws SQLException {
+			int parameterOffset, Long @Nullable [] value, boolean setNull) throws SQLException {
 		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "text", value, setNull);
 	}
 
@@ -140,7 +141,7 @@ public final class CommonSqlUtils {
 	 * non-array parameter if the array holds a single object.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -156,7 +157,7 @@ public final class CommonSqlUtils {
 	 *         if any SQL error occurs
 	 */
 	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
-			int parameterOffset, String[] value) throws SQLException {
+			int parameterOffset, String @Nullable [] value) throws SQLException {
 		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "text", value);
 	}
 
@@ -174,14 +175,14 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 2.2
 	 */
 	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
-			int parameterOffset, String[] value, boolean setNull) throws SQLException {
+			int parameterOffset, String @Nullable [] value, boolean setNull) throws SQLException {
 		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "text", value, setNull);
 	}
 
@@ -190,7 +191,7 @@ public final class CommonSqlUtils {
 	 * non-array parameter if the array holds a single object.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -207,7 +208,7 @@ public final class CommonSqlUtils {
 	 * @since 2.6
 	 */
 	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
-			int parameterOffset, UUID[] value) throws SQLException {
+			int parameterOffset, UUID @Nullable [] value) throws SQLException {
 		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "uuid", value);
 	}
 
@@ -225,14 +226,14 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 2.6
 	 */
 	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
-			int parameterOffset, UUID[] value, boolean setNull) throws SQLException {
+			int parameterOffset, UUID @Nullable [] value, boolean setNull) throws SQLException {
 		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "uuid", value, setNull);
 	}
 
@@ -241,7 +242,7 @@ public final class CommonSqlUtils {
 	 * parameter if the array holds a single object.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -259,7 +260,7 @@ public final class CommonSqlUtils {
 	 *         if any SQL error occurs
 	 */
 	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
-			int parameterOffset, String arrayType, Object[] value) throws SQLException {
+			int parameterOffset, String arrayType, Object @Nullable [] value) throws SQLException {
 		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, arrayType, value, false);
 	}
 
@@ -279,14 +280,15 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 2.2
 	 */
 	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
-			int parameterOffset, String arrayType, Object[] value, boolean setNull) throws SQLException {
+			int parameterOffset, String arrayType, Object @Nullable [] value, boolean setNull)
+			throws SQLException {
 		if ( value != null ) {
 			if ( value.length > 1 ) {
 				Array array = con.createArrayOf(arrayType, value);
@@ -305,7 +307,7 @@ public final class CommonSqlUtils {
 	 * Prepare a SQL statement {@code INTEGER} array parameter.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -322,7 +324,7 @@ public final class CommonSqlUtils {
 	 * @since 2.1
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			Integer[] value) throws SQLException {
+			Integer @Nullable [] value) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, value, false);
 	}
 
@@ -339,14 +341,14 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 2.2
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			Integer[] value, boolean setNull) throws SQLException {
+			Integer @Nullable [] value, boolean setNull) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, "integer", value, setNull);
 	}
 
@@ -354,7 +356,7 @@ public final class CommonSqlUtils {
 	 * Prepare a SQL statement {@code BIGINT} array parameter.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -371,7 +373,7 @@ public final class CommonSqlUtils {
 	 * @since 2.1
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			Long[] value) throws SQLException {
+			Long @Nullable [] value) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, value, false);
 	}
 
@@ -388,14 +390,14 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 2.2
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			Long[] value, boolean setNull) throws SQLException {
+			Long @Nullable [] value, boolean setNull) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, "bigint", value, setNull);
 	}
 
@@ -403,7 +405,7 @@ public final class CommonSqlUtils {
 	 * Prepare a SQL statement {@code TEXT} array parameter.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -420,7 +422,7 @@ public final class CommonSqlUtils {
 	 * @since 2.1
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			String[] value) throws SQLException {
+			String @Nullable [] value) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, "text", value);
 	}
 
@@ -437,14 +439,14 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 2.2
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			String[] value, boolean setNull) throws SQLException {
+			String @Nullable [] value, boolean setNull) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, "text", value, setNull);
 	}
 
@@ -452,7 +454,7 @@ public final class CommonSqlUtils {
 	 * Prepare a SQL statement {@code UUID} array parameter.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -469,7 +471,7 @@ public final class CommonSqlUtils {
 	 * @since 2.6
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			UUID[] value) throws SQLException {
+			UUID @Nullable [] value) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, "uuid", value);
 	}
 
@@ -486,14 +488,14 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 2.6
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			UUID[] value, boolean setNull) throws SQLException {
+			UUID @Nullable [] value, boolean setNull) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, "uuid", value, setNull);
 	}
 
@@ -501,7 +503,7 @@ public final class CommonSqlUtils {
 	 * Prepare a SQL statement array parameter.
 	 *
 	 * <p>
-	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * The parameter will <b>not</b> be set if {@code value} is {@code null}.
 	 * </p>
 	 *
 	 * @param con
@@ -520,7 +522,7 @@ public final class CommonSqlUtils {
 	 * @since 2.1
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			String arrayType, Object[] value) throws SQLException {
+			String arrayType, Object @Nullable [] value) throws SQLException {
 		return prepareArrayParameter(con, stmt, parameterOffset, arrayType, value, false);
 	}
 
@@ -539,14 +541,14 @@ public final class CommonSqlUtils {
 	 *        the array value
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null}, or {@literal false} to skip the parameter
+	 *        {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 2.2
 	 */
 	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
-			String arrayType, Object[] value, boolean setNull) throws SQLException {
+			String arrayType, Object @Nullable [] value, boolean setNull) throws SQLException {
 		if ( value != null ) {
 			Array array = con.createArrayOf(arrayType, value);
 			stmt.setArray(++parameterOffset, array);
@@ -577,13 +579,13 @@ public final class CommonSqlUtils {
 	 * @param skipLocked
 	 *        {@literal true} to include the {@literal SKIP LOCKED} clause
 	 * @param tableNames
-	 *        explicit table names to lock, or {@literal null} for default (all
+	 *        explicit table names to lock, or {@code null} for default (all
 	 *        referenced tables)
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @since 2.2
 	 */
-	public static void forUpdate(boolean skipLocked, String[] tableNames, StringBuilder buf) {
+	public static void forUpdate(boolean skipLocked, String @Nullable [] tableNames, StringBuilder buf) {
 		buf.append("\nFOR UPDATE");
 		if ( tableNames != null && tableNames.length > 0 ) {
 			buf.append(" OF");
@@ -614,7 +616,7 @@ public final class CommonSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 */
-	public static int limitOffset(PaginationCriteria filter, StringBuilder buf) {
+	public static int limitOffset(@Nullable PaginationCriteria filter, StringBuilder buf) {
 		int result = 0;
 		if ( filter != null && filter.getMax() != null ) {
 			int max = filter.getMax();
@@ -653,7 +655,7 @@ public final class CommonSqlUtils {
 	 * @see #limitOffset(PaginationCriteria, StringBuilder)
 	 * @since 2.1
 	 */
-	public static int prepareLimitOffset(PaginationCriteria filter, PreparedStatement stmt,
+	public static int prepareLimitOffset(@Nullable PaginationCriteria filter, PreparedStatement stmt,
 			int parameterOffset) throws SQLException {
 		if ( filter != null && filter.getMax() != null ) {
 			int max = filter.getMax();
@@ -695,7 +697,7 @@ public final class CommonSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 */
-	public static void limitOffsetLiteral(PaginationCriteria filter, StringBuilder buf) {
+	public static void limitOffsetLiteral(@Nullable PaginationCriteria filter, StringBuilder buf) {
 		if ( filter != null && filter.getMax() != null ) {
 			int max = filter.getMax();
 			if ( max > 0 ) {
@@ -752,7 +754,8 @@ public final class CommonSqlUtils {
 	 *      Object[])
 	 * @since 2.7
 	 */
-	public static int whereArrayColContains(Object[] array, String colName, StringBuilder buf) {
+	public static int whereArrayColContains(Object @Nullable [] array, String colName,
+			StringBuilder buf) {
 		if ( array != null && array.length > 0 ) {
 			buf.append("\tAND ").append(colName).append(" @> ?\n");
 			return 1;
@@ -780,7 +783,8 @@ public final class CommonSqlUtils {
 	 *      String, Object[])
 	 * @since 2.1
 	 */
-	public static int whereOptimizedArrayContains(Object[] array, String colName, StringBuilder buf) {
+	public static int whereOptimizedArrayContains(Object @Nullable [] array, String colName,
+			StringBuilder buf) {
 		int paramCount = 0;
 		if ( array != null && array.length > 0 ) {
 			buf.append("\tAND ").append(colName).append(" = ");
@@ -863,14 +867,14 @@ public final class CommonSqlUtils {
 	 *        the zero-based starting JDBC statement parameter offset
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code data} serializes
-	 *        to {@literal null}, or {@literal false} to skip the parameter
+	 *        to {@code null}, or {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 2.2
 	 */
-	public static int prepareJsonString(Object data, PreparedStatement stmt, int parameterOffset,
-			boolean setNull) throws SQLException {
+	public static int prepareJsonString(@Nullable Object data, PreparedStatement stmt,
+			int parameterOffset, boolean setNull) throws SQLException {
 		String props = JsonUtils.getJSONString(data, null);
 		if ( props != null ) {
 			stmt.setString(++parameterOffset, props);
@@ -890,17 +894,18 @@ public final class CommonSqlUtils {
 	 * @param value
 	 *        the value to set
 	 * @param defaultValue
-	 *        the value to set if {@code value} is {@literal null}
+	 *        the value to set if {@code value} is {@code null}
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null} and {@literal defaultValue} is {@literal null}, or
+	 *        {@code null} and {@literal defaultValue} is {@code null}, or
 	 *        {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareCodedValue(PreparedStatement stmt, int parameterOffset, CodedValue value,
-			CodedValue defaultValue, boolean setNull) throws SQLException {
+	public static int prepareCodedValue(PreparedStatement stmt, int parameterOffset,
+			@Nullable CodedValue value, @Nullable CodedValue defaultValue, boolean setNull)
+			throws SQLException {
 		if ( value != null ) {
 			stmt.setInt(++parameterOffset, value.getCode());
 		} else if ( defaultValue != null ) {
@@ -921,10 +926,10 @@ public final class CommonSqlUtils {
 	 * @param value
 	 *        the value to set
 	 * @param defaultValue
-	 *        the value to set if {@code value} is {@literal null}
+	 *        the value to set if {@code value} is {@code null}
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
-	 *        {@literal null} and {@literal defaultValue} is {@literal null}, or
+	 *        {@code null} and {@literal defaultValue} is {@code null}, or
 	 *        {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
@@ -932,7 +937,8 @@ public final class CommonSqlUtils {
 	 * @since 2.5
 	 */
 	public static int prepareCodedValueChar(PreparedStatement stmt, int parameterOffset,
-			CodedValue value, CodedValue defaultValue, boolean setNull) throws SQLException {
+			@Nullable CodedValue value, @Nullable CodedValue defaultValue, boolean setNull)
+			throws SQLException {
 		if ( value != null ) {
 			stmt.setObject(++parameterOffset, (char) value.getCode());
 		} else if ( defaultValue != null ) {
@@ -954,7 +960,7 @@ public final class CommonSqlUtils {
 	 *        the values to set
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code values} is
-	 *        {@literal null} and {@literal defaultValue} is {@literal null}, or
+	 *        {@code null} and {@literal defaultValue} is {@code null}, or
 	 *        {@literal false} to skip the parameter
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
@@ -962,7 +968,7 @@ public final class CommonSqlUtils {
 	 * @since 2.2
 	 */
 	public static int prepareCodedValuesArray(Connection con, PreparedStatement stmt,
-			int parameterOffset, Collection<? extends CodedValue> values, boolean setNull)
+			int parameterOffset, @Nullable Collection<? extends CodedValue> values, boolean setNull)
 			throws SQLException {
 		Integer[] codes = null;
 		if ( values != null ) {
@@ -992,8 +998,8 @@ public final class CommonSqlUtils {
 	 *         will either be {@literal 0} or {@literal 2}
 	 * @since 2.3
 	 */
-	public static int orderBySorts(Iterable<SortDescriptor> sorts, Map<String, String> sortKeyMapping,
-			StringBuilder buf) {
+	public static int orderBySorts(@Nullable Iterable<SortDescriptor> sorts,
+			@Nullable Map<String, String> sortKeyMapping, StringBuilder buf) {
 		if ( sorts == null || sortKeyMapping == null || sortKeyMapping.isEmpty() ) {
 			return 0;
 		}

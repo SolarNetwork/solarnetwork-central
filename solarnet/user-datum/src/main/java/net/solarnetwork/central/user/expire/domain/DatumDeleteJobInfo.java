@@ -25,8 +25,10 @@ package net.solarnetwork.central.user.expire.domain;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.dao.UserUuidPK;
@@ -41,6 +43,8 @@ import net.solarnetwork.codec.jackson.JsonUtils;
  * @author matt
  * @version 2.0
  */
+@JsonIgnoreProperties({ "completed", "configJson", "created", "jobSuccess", "modified", "result",
+		"started" })
 public class DatumDeleteJobInfo
 		extends BaseClaimableJob<GeneralNodeDatumFilter, Long, DatumDeleteJobState, UserUuidPK>
 		implements UserRelatedEntity<UserUuidPK> {
@@ -48,21 +52,15 @@ public class DatumDeleteJobInfo
 	@Serial
 	private static final long serialVersionUID = 464029861491855667L;
 
-	private String configJson;
-
-	@JsonIgnore
-	@Override
-	public UserUuidPK getId() {
-		return super.getId();
-	}
+	private @Nullable String configJson;
 
 	@Override
-	public Long getUserId() {
+	public @Nullable Long getUserId() {
 		UserUuidPK pk = getId();
 		return (pk != null ? pk.getUserId() : null);
 	}
 
-	public void setUserId(Long userId) {
+	public void setUserId(@Nullable Long userId) {
 		UserUuidPK pk = getId();
 		if ( pk == null ) {
 			setId(new UserUuidPK(userId, null));
@@ -72,13 +70,13 @@ public class DatumDeleteJobInfo
 	}
 
 	@JsonGetter("id")
-	public UUID getUuid() {
+	public @Nullable UUID getUuid() {
 		UserUuidPK pk = getId();
 		return (pk != null ? pk.getId() : null);
 	}
 
 	@JsonSetter("id")
-	public void setUuid(UUID id) {
+	public void setUuid(@Nullable UUID id) {
 		UserUuidPK pk = getId();
 		if ( pk == null ) {
 			setId(new UserUuidPK(null, id));
@@ -87,7 +85,7 @@ public class DatumDeleteJobInfo
 		}
 	}
 
-	public String getJobId() {
+	public @Nullable String getJobId() {
 		UserUuidPK id = getId();
 		return (id != null && id.getId() != null ? id.getId().toString() : null);
 	}
@@ -103,44 +101,31 @@ public class DatumDeleteJobInfo
 	}
 
 	@Override
-	public GeneralNodeDatumFilter getConfiguration() {
-		GeneralNodeDatumFilter config = super.getConfiguration();
+	public @Nullable GeneralNodeDatumFilter didGetConfiguration(
+			@Nullable GeneralNodeDatumFilter config) {
 		if ( config == null && configJson != null ) {
 			config = JsonUtils.getObjectFromJSON(configJson, DatumFilterCommand.class);
-			super.setConfiguration(config);
+			replaceConfiguration(config);
 		}
 		return config;
 	}
 
 	@Override
-	public void setConfiguration(GeneralNodeDatumFilter config) {
-		super.setConfiguration(config);
+	public void didSetConfiguration(GeneralNodeDatumFilter config) {
 		this.configJson = null;
 	}
 
 	@JsonIgnore
-	public String getConfigJson() {
+	public @Nullable String getConfigJson() {
 		if ( configJson == null ) {
-			configJson = JsonUtils.getJSONString(super.getConfiguration(), null);
+			configJson = JsonUtils.getJSONString(configuration(), null);
 		}
 		return configJson;
 	}
 
-	public void setConfigJson(String configJson) {
+	public void setConfigJson(@Nullable String configJson) {
+		replaceConfiguration(null);
 		this.configJson = configJson;
-		super.setConfiguration(null);
-	}
-
-	@Override
-	@JsonIgnore
-	public Boolean getJobSuccess() {
-		return super.getJobSuccess();
-	}
-
-	@Override
-	@JsonIgnore
-	public Long getResult() {
-		return super.getResult();
 	}
 
 	public long getResultCount() {
@@ -150,30 +135,6 @@ public class DatumDeleteJobInfo
 
 	public void setResultCount(long deletedCount) {
 		setResult(deletedCount);
-	}
-
-	@JsonIgnore
-	@Override
-	public Instant getStarted() {
-		return super.getStarted();
-	}
-
-	@JsonIgnore
-	@Override
-	public Instant getCompleted() {
-		return super.getCompleted();
-	}
-
-	@JsonIgnore
-	@Override
-	public Instant getCreated() {
-		return super.getCreated();
-	}
-
-	@JsonIgnore
-	@Override
-	public Instant getModified() {
-		return super.getModified();
 	}
 
 	public long getSubmitDate() {

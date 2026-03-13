@@ -25,7 +25,6 @@ package net.solarnetwork.central.datum.export.support;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
@@ -59,7 +58,7 @@ public abstract class BaseDatumExportOutputFormatService extends
 
 	@Override
 	public List<SettingSpecifier> getSettingSpecifiers() {
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	/**
@@ -123,7 +122,7 @@ public abstract class BaseDatumExportOutputFormatService extends
 	 * @param temporaryDir
 	 *        the temporary directory to set
 	 * @throws IllegalArgumentException
-	 *         if {@code temporaryDir} is {@literal null}
+	 *         if {@code temporaryDir} is {@code null}
 	 */
 	public void setTemporaryDir(File temporaryDir) {
 		this.temporaryDir = requireNonNullArgument(temporaryDir, "temporaryDir");
@@ -133,7 +132,7 @@ public abstract class BaseDatumExportOutputFormatService extends
 	 * Set the temporary directory as a path string.
 	 *
 	 * @param path
-	 *        the path to use, or {@literal null} or an empty string to use the
+	 *        the path to use, or {@code null} or an empty string to use the
 	 *        system property {@literal java.io.tmpdir}
 	 */
 	public void setTemporaryPath(String path) {

@@ -137,7 +137,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	/**
 	 * Get the node IDs.
 	 *
-	 * @return the node IDs, or {@literal null} for any node
+	 * @return the node IDs, or {@code null} for any node
 	 */
 	public Long[] getNodeIds() {
 		return nodeIds;

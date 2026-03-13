@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
@@ -29,8 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.Differentiable;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A named resource with associated cost.
@@ -51,9 +52,9 @@ public class NamedCost
 	 * @param i
 	 *        the tier number
 	 * @param quantity
-	 *        the quantity; will be stored as {@literal 0} if {@literal null}
+	 *        the quantity; will be stored as {@literal 0} if {@code null}
 	 * @param cost
-	 *        the cost; will be stored as {@literal 0} if {@literal null}
+	 *        the cost; will be stored as {@literal 0} if {@code null}
 	 * @return the new instance
 	 */
 	public static NamedCost forTier(int i, String quantity, String cost) {
@@ -66,12 +67,12 @@ public class NamedCost
 	 * @param i
 	 *        the tier number
 	 * @param quantity
-	 *        the quantity; will be stored as {@literal 0} if {@literal null}
+	 *        the quantity; will be stored as {@literal 0} if {@code null}
 	 * @param cost
-	 *        the cost; will be stored as {@literal 0} if {@literal null}
+	 *        the cost; will be stored as {@literal 0} if {@code null}
 	 * @return the new instance
 	 */
-	public static NamedCost forTier(int i, BigInteger quantity, BigDecimal cost) {
+	public static NamedCost forTier(int i, @Nullable BigInteger quantity, @Nullable BigDecimal cost) {
 		return of(String.format("Tier %d", i), quantity, cost);
 	}
 
@@ -81,14 +82,14 @@ public class NamedCost
 	 * @param name
 	 *        the name
 	 * @param quantity
-	 *        the quantity; will be stored as {@literal 0} if {@literal null}
+	 *        the quantity; will be stored as {@literal 0} if {@code null}
 	 * @param cost
-	 *        the cost; will be stored as {@literal 0} if {@literal null}
+	 *        the cost; will be stored as {@literal 0} if {@code null}
 	 * @return the new instance
 	 * @throws IllegalArgumentException
-	 *         if {@code name} is {@literal null}
+	 *         if {@code name} is {@code null}
 	 */
-	public static NamedCost of(String name, BigInteger quantity, BigDecimal cost) {
+	public static NamedCost of(String name, @Nullable BigInteger quantity, @Nullable BigDecimal cost) {
 		return new NamedCost(name, quantity, cost);
 	}
 
@@ -98,10 +99,10 @@ public class NamedCost
 	 * @param namedCosts
 	 *        the named cost Maps, each of whose keys match the properties of
 	 *        this class
-	 * @return the named costs, or {@literal null} if {@code namedCosts} is
-	 *         {@literal null} or does not contain valid property values
+	 * @return the named costs, or {@code null} if {@code namedCosts} is
+	 *         {@code null} or does not contain valid property values
 	 */
-	public static List<NamedCost> of(List<Map<String, ?>> namedCosts) {
+	public static @Nullable List<NamedCost> of(@Nullable List<Map<String, ?>> namedCosts) {
 		if ( namedCosts == null || namedCosts.isEmpty() ) {
 			return null;
 		}
@@ -113,10 +114,10 @@ public class NamedCost
 	 *
 	 * @param namedCost
 	 *        the named cost Map, whose keys match the properties of this class
-	 * @return the named cost, or {@literal null} if {@code namedCost} is
-	 *         {@literal null} or does not contain valid property values
+	 * @return the named cost, or {@code null} if {@code namedCost} is
+	 *         {@code null} or does not contain valid property values
 	 */
-	public static NamedCost of(Map<String, ?> namedCost) {
+	public static @Nullable NamedCost of(Map<String, ?> namedCost) {
 		if ( namedCost == null ) {
 			return null;
 		}
@@ -141,15 +142,15 @@ public class NamedCost
 	 * @param name
 	 *        the name
 	 * @param quantity
-	 *        the quantity; will be stored as {@literal 0} if {@literal null}
+	 *        the quantity; will be stored as {@literal 0} if {@code null}
 	 * @param cost
-	 *        the cost; will be stored as {@literal 0} if {@literal null}
+	 *        the cost; will be stored as {@literal 0} if {@code null}
 	 * @throws IllegalArgumentException
-	 *         if {@code name} is {@literal null}
+	 *         if {@code name} is {@code null}
 	 */
-	public NamedCost(String name, BigInteger quantity, BigDecimal cost) {
+	public NamedCost(String name, @Nullable BigInteger quantity, @Nullable BigDecimal cost) {
 		super();
-		this.name = ObjectUtils.requireNonNullArgument(name, "name");
+		this.name = requireNonNullArgument(name, "name");
 		this.quantity = quantity != null ? quantity : BigInteger.ZERO;
 		this.cost = cost != null ? cost : BigDecimal.ZERO;
 	}
@@ -163,12 +164,12 @@ public class NamedCost
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(NamedCost other) {
+	public boolean isSameAs(@Nullable NamedCost other) {
 		return equals(other);
 	}
 
 	@Override
-	public boolean differsFrom(NamedCost other) {
+	public boolean differsFrom(@Nullable NamedCost other) {
 		return !isSameAs(other);
 	}
 
@@ -176,7 +177,7 @@ public class NamedCost
 	 * Get a map of metadata from this instance.
 	 *
 	 * @return the usage Map, whose keys match the properties of this class,
-	 *         never {@literal null}
+	 *         never {@code null}
 	 */
 	public Map<String, Object> toMetadata() {
 		Map<String, Object> result = new LinkedHashMap<>(4);
@@ -206,7 +207,7 @@ public class NamedCost
 
 	@SuppressWarnings("ReferenceEquality")
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -218,17 +219,17 @@ public class NamedCost
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
 	@Override
-	public BigInteger getQuantity() {
+	public final BigInteger getQuantity() {
 		return quantity;
 	}
 
 	@Override
-	public BigDecimal getCost() {
+	public final BigDecimal getCost() {
 		return cost;
 	}
 

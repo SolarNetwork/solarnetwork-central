@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.biz;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumKindPK;
 import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
@@ -62,10 +63,10 @@ public interface DatumMaintenanceBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 * @since 1.1
 	 */
 	FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK> findStaleAggregateDatum(
-			GeneralNodeDatumFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max);
+			GeneralNodeDatumFilter criteria, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max);
 }

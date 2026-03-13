@@ -43,7 +43,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -266,7 +265,7 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setName(randomUUID().toString());
 		conf.setRegistrationStatus(RegistrationStatus.Failed);
-		conf.setServiceProps(Collections.singletonMap("bim", "bam"));
+		conf.setServiceProps(Map.of("bim", "bam"));
 
 		UserLongCompositePK result = dao.save(conf);
 

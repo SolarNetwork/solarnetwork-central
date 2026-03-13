@@ -244,8 +244,8 @@ public class EndpointConfigurationInput
 	 * Set an implicit request content type.
 	 *
 	 * @param requestContentType
-	 *        the request content to assume, or {@literal null} to; a blank
-	 *        value will be normalized to {@literal null}
+	 *        the request content to assume, or {@code null} to; a blank value
+	 *        will be normalized to {@code null}
 	 * @since 1.2
 	 */
 	public void setRequestContentType(String requestContentType) {

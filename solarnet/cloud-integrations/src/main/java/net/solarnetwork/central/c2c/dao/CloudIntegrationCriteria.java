@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for cloud integration related data.
  *
@@ -35,12 +37,12 @@ public interface CloudIntegrationCriteria {
 	 *
 	 * <p>
 	 * This returns the first available integration ID from the
-	 * {@link #getIntegrationIds()} array, or {@literal null} if not available.
+	 * {@link #getIntegrationIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first integration ID, or {@literal null} if not available
+	 * @return the first integration ID, or {@code null} if not available
 	 */
-	default Long getIntegrationId() {
+	default @Nullable Long getIntegrationId() {
 		final Long[] array = getIntegrationIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -48,9 +50,9 @@ public interface CloudIntegrationCriteria {
 	/**
 	 * Get an array of integration IDs.
 	 *
-	 * @return array of integration IDs (may be {@literal null})
+	 * @return array of integration IDs (may be {@code null})
 	 */
-	Long[] getIntegrationIds();
+	Long @Nullable [] getIntegrationIds();
 
 	/**
 	 * Test if this filter has any integration criteria.

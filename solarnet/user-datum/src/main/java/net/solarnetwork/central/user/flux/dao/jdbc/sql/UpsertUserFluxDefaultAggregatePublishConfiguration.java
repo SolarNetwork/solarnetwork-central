@@ -63,7 +63,7 @@ public final class UpsertUserFluxDefaultAggregatePublishConfiguration
 	 * @param entity
 	 *        the entity to insert
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertUserFluxDefaultAggregatePublishConfiguration(Long userId,
 			UserFluxDefaultAggregatePublishConfiguration entity) {

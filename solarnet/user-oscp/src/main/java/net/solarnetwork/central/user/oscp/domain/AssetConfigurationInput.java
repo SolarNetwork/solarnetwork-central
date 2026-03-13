@@ -152,7 +152,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 * @param audience
 	 *        the audience to set
 	 * @throws IllegalArgumentException
-	 *         if {@code audience} is {@literal null} or not supported
+	 *         if {@code audience} is {@code null} or not supported
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public void setAudience(OscpRole audience) {

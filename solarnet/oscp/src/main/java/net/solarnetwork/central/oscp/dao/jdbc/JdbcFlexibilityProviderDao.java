@@ -51,7 +51,7 @@ public class JdbcFlexibilityProviderDao implements FlexibilityProviderDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcFlexibilityProviderDao(JdbcOperations jdbcOps) {
 		super();

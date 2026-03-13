@@ -56,7 +56,7 @@ public final class SelectStaleAggregateDatum
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectStaleAggregateDatum(DatumStreamCriteria filter) {
 		super();

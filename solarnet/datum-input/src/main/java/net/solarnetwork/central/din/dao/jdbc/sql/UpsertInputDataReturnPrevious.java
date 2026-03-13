@@ -65,7 +65,7 @@ public final class UpsertInputDataReturnPrevious implements PreparedStatementCre
 	 * @param key
 	 *        the key
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertInputDataReturnPrevious(UserLongStringCompositePK key, byte[] data) {
 		super();

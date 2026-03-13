@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.NetworkCertificate;
 
 /**
@@ -37,6 +38,7 @@ public interface UserNodeCertificateRenewal extends NetworkCertificate {
 	 * 
 	 * @return The certificate installation status.
 	 */
+	@Nullable
 	UserNodeCertificateInstallationStatus getInstallationStatus();
 
 }

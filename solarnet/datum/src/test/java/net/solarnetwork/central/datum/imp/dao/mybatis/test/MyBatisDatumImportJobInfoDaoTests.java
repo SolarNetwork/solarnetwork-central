@@ -35,10 +35,10 @@ import static org.hamcrest.Matchers.sameInstance;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -93,7 +93,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		inputConfig.setName(TEST_NAME);
 		inputConfig.setServiceIdentifier("foo.bar");
 		inputConfig.setTimeZoneId("Pacific/Auckland");
-		inputConfig.setServiceProps(Collections.singletonMap("foo", "bar"));
+		inputConfig.setServiceProps(Map.of("foo", "bar"));
 		conf.setInputConfiguration(inputConfig);
 
 		return conf;
@@ -426,7 +426,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	public void updateStateWithExpectedStateNotFound() {
 		storeNew();
 		boolean updated = dao.updateJobState(this.info.getId(), DatumImportState.Completed,
-				Collections.singleton(DatumImportState.Staged));
+				Set.of(DatumImportState.Staged));
 		assertThat("Update result", updated, equalTo(false));
 	}
 
@@ -434,7 +434,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	public void updateStateWithExpectedState() {
 		storeNew();
 		boolean updated = dao.updateJobState(this.info.getId(), DatumImportState.Retracted,
-				Collections.singleton(DatumImportState.Unknown));
+				Set.of(DatumImportState.Unknown));
 		assertThat("Update result", updated, equalTo(true));
 	}
 

@@ -27,8 +27,8 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertOptions;
@@ -57,7 +57,7 @@ public class UserAlertTests {
 	public void sourceIdOption_null() {
 		// GIVEN
 		UserAlert a = new UserAlert();
-		a.setOptions(Collections.emptyMap());
+		a.setOptions(Map.of());
 
 		// WHEN
 		List<String> result = a.optionSourceIds();
@@ -70,7 +70,7 @@ public class UserAlertTests {
 	public void sourceIdOption_string() {
 		// GIVEN
 		UserAlert a = new UserAlert();
-		a.setOptions(Collections.singletonMap(UserAlertOptions.SOURCE_IDS, "a"));
+		a.setOptions(Map.of(UserAlertOptions.SOURCE_IDS, "a"));
 
 		// WHEN
 		List<String> result = a.optionSourceIds();
@@ -83,7 +83,7 @@ public class UserAlertTests {
 	public void sourceIdOption_obj() {
 		// GIVEN
 		UserAlert a = new UserAlert();
-		a.setOptions(Collections.singletonMap(UserAlertOptions.SOURCE_IDS, 123));
+		a.setOptions(Map.of(UserAlertOptions.SOURCE_IDS, 123));
 
 		// WHEN
 		List<String> result = a.optionSourceIds();
@@ -96,7 +96,7 @@ public class UserAlertTests {
 	public void sourceIdOption_array() {
 		// GIVEN
 		UserAlert a = new UserAlert();
-		a.setOptions(Collections.singletonMap(UserAlertOptions.SOURCE_IDS, new String[] { "a", "b" }));
+		a.setOptions(Map.of(UserAlertOptions.SOURCE_IDS, new String[] { "a", "b" }));
 
 		// WHEN
 		List<String> result = a.optionSourceIds();
@@ -109,7 +109,7 @@ public class UserAlertTests {
 	public void sourceIdOption_list() {
 		// GIVEN
 		UserAlert a = new UserAlert();
-		a.setOptions(Collections.singletonMap(UserAlertOptions.SOURCE_IDS, Arrays.asList("a", "b")));
+		a.setOptions(Map.of(UserAlertOptions.SOURCE_IDS, Arrays.asList("a", "b")));
 
 		// WHEN
 		List<String> result = a.optionSourceIds();
@@ -122,7 +122,7 @@ public class UserAlertTests {
 	public void sourceIdOption_listObj() {
 		// GIVEN
 		UserAlert a = new UserAlert();
-		a.setOptions(Collections.singletonMap(UserAlertOptions.SOURCE_IDS, Arrays.asList(123, 234)));
+		a.setOptions(Map.of(UserAlertOptions.SOURCE_IDS, Arrays.asList(123, 234)));
 
 		// WHEN
 		List<String> result = a.optionSourceIds();

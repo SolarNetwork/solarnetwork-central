@@ -35,8 +35,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
-import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.BasicSecurityException;
+import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -71,7 +71,7 @@ public class AuthenticationUserEventPublisher {
 	 * @param userEventAppenderBiz
 	 *        the appender
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public AuthenticationUserEventPublisher(String context, UserEventAppenderBiz userEventAppenderBiz) {
 		super();

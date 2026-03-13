@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.dao.mybatis;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.domain.CompositeKey2;
@@ -71,7 +72,7 @@ public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEnti
 	}
 
 	@Override
-	public T get(K id, Long userId) {
+	public @Nullable T get(K id, Long userId) {
 		Map<String, Object> params = new HashMap<>(2);
 		if ( id instanceof CompositeKey2<?, ?> pk && userId.equals(pk.keyComponent1()) ) {
 			// automatically unwrap secondary key component as userId parameter provided directly below
@@ -84,7 +85,7 @@ public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEnti
 	}
 
 	@Override
-	public T get(K id) {
+	public @Nullable T get(K id) {
 		throw new UnsupportedOperationException("The get(K,Long) method must be used");
 	}
 

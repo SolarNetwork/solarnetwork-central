@@ -67,7 +67,7 @@ public final class SelectCapacityGroupSettings implements PreparedStatementCreat
 	 *        {@literal true} to resolve user settings as defaults when no group
 	 *        settings are available
 	 * @throws IllegalArgumentException
-	 *         if {@code userId} is {@literal null}
+	 *         if {@code userId} is {@code null}
 	 */
 	public SelectCapacityGroupSettings(Long userId, Long groupId, boolean resolve) {
 		super();
@@ -100,7 +100,7 @@ public final class SelectCapacityGroupSettings implements PreparedStatementCreat
 	 *        {@literal true} to resolve user settings as defaults when no group
 	 *        settings are available
 	 * @throws IllegalArgumentException
-	 *         if {@code userId} is {@literal null}
+	 *         if {@code userId} is {@code null}
 	 */
 	public SelectCapacityGroupSettings(Long userId, String groupIdentifier, boolean resolve) {
 		super();

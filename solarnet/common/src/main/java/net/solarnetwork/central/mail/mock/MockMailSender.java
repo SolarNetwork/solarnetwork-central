@@ -177,7 +177,7 @@ public class MockMailSender implements MailSender, JavaMailSender {
 	 * Get a list of all sent messages. This list can be cleared during unit
 	 * tests to keep track of the messages sent during the test.
 	 *
-	 * @return List of messages, never {@literal null}.
+	 * @return List of messages, never {@code null}.
 	 * @since 1.1
 	 */
 	public Queue<MailMessage> getSent() {

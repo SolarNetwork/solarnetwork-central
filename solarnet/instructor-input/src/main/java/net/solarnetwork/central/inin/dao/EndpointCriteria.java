@@ -23,6 +23,7 @@
 package net.solarnetwork.central.inin.dao;
 
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Search criteria for endpoint related data.
@@ -37,12 +38,12 @@ public interface EndpointCriteria {
 	 *
 	 * <p>
 	 * This returns the first available endpoint ID from the
-	 * {@link #getEndpointIds()} array, or {@literal null} if not available.
+	 * {@link #getEndpointIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first endpoint ID, or {@literal null} if not available
+	 * @return the first endpoint ID, or {@code null} if not available
 	 */
-	default UUID getEndpointId() {
+	default @Nullable UUID getEndpointId() {
 		final UUID[] array = getEndpointIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -50,9 +51,9 @@ public interface EndpointCriteria {
 	/**
 	 * Get an array of endpoint IDs.
 	 *
-	 * @return array of endpoint IDs (may be {@literal null})
+	 * @return array of endpoint IDs (may be {@code null})
 	 */
-	UUID[] getEndpointIds();
+	UUID @Nullable [] getEndpointIds();
 
 	/**
 	 * Test if this filter has any endpoint criteria.

@@ -19,7 +19,6 @@ package net.solarnetwork.flux.vernemq.webhook.web.test;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -27,7 +26,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
 import net.solarnetwork.flux.vernemq.webhook.test.TestSupport;
 import net.solarnetwork.flux.vernemq.webhook.web.PingController;
 

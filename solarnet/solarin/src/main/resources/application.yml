@@ -121,6 +121,7 @@ app:
       threads: 1
       stat-frequency: 500
       queue-lag-alert-threshold: 500
+      queue-capacity: 500000
 
 logging:
   level:

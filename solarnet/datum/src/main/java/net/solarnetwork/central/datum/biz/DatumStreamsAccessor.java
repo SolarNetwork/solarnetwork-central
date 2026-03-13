@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.biz;
 
 import java.time.Instant;
 import java.util.Collection;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
@@ -56,6 +57,7 @@ public interface DatumStreamsAccessor {
 	 * @return the matching datum, or {@code null} if not available
 	 * @since 2.1
 	 */
+	@Nullable
 	Datum at(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp);
 
 	/**
@@ -74,7 +76,7 @@ public interface DatumStreamsAccessor {
 	 * @return the matching datum, never {@code null}
 	 * @since 2.1
 	 */
-	Collection<Datum> atMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
+	Collection<Datum> atMatching(ObjectDatumKind kind, Long objectId, @Nullable String sourceIdPattern,
 			Instant timestamp);
 
 	/**
@@ -92,8 +94,8 @@ public interface DatumStreamsAccessor {
 	 *        {@code 1} the next later, and so on
 	 * @return the matching datum, never {@code null}
 	 */
-	Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
-			int offset);
+	Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId,
+			@Nullable String sourceIdPattern, int offset);
 
 	/**
 	 * Get the latest available datum per source ID.
@@ -112,7 +114,7 @@ public interface DatumStreamsAccessor {
 	 * @see #offsetMatching(ObjectDatumKind, Long, String, int)
 	 */
 	default Collection<Datum> latestMatching(ObjectDatumKind kind, Long objectId,
-			String sourceIdPattern) {
+			@Nullable String sourceIdPattern) {
 		return offsetMatching(kind, objectId, sourceIdPattern, 0);
 	}
 
@@ -131,6 +133,7 @@ public interface DatumStreamsAccessor {
 	 *        {@code 1} the next later, and so on
 	 * @return the matching datum, or {@code null} if not available
 	 */
+	@Nullable
 	Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, int offset);
 
 	/**
@@ -149,7 +152,7 @@ public interface DatumStreamsAccessor {
 	 * @return the matching datum, or {@code null} if not available
 	 * @see #offset(ObjectDatumKind, Long, String, int)
 	 */
-	default Datum latest(ObjectDatumKind kind, Long objectId, String sourceId) {
+	default @Nullable Datum latest(ObjectDatumKind kind, Long objectId, String sourceId) {
 		return offset(kind, objectId, sourceId, 0);
 	}
 
@@ -172,8 +175,8 @@ public interface DatumStreamsAccessor {
 	 * @return the matching datum, never {@code null}
 	 * @since 1.1
 	 */
-	Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
-			Instant timestamp, int offset);
+	Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId,
+			@Nullable String sourceIdPattern, Instant timestamp, int offset);
 
 	/**
 	 * Get the latest available datum offset from a given timestamp, optionally
@@ -196,8 +199,8 @@ public interface DatumStreamsAccessor {
 	 * @see #offsetMatching(ObjectDatumKind, Long, String, int)
 	 * @since 1.1
 	 */
-	default Collection<Datum> latestMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
-			Instant timestamp) {
+	default Collection<Datum> latestMatching(ObjectDatumKind kind, Long objectId,
+			@Nullable String sourceIdPattern, Instant timestamp) {
 		return offsetMatching(kind, objectId, sourceIdPattern, timestamp, 0);
 	}
 
@@ -218,6 +221,7 @@ public interface DatumStreamsAccessor {
 	 * @return the matching datum, or {@code null} if not available
 	 * @since 1.1
 	 */
+	@Nullable
 	Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp, int offset);
 
 	/**
@@ -239,7 +243,8 @@ public interface DatumStreamsAccessor {
 	 * @return the matching datum, or {@code null} if not available
 	 * @since 1.1
 	 */
-	default Datum latest(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp) {
+	default @Nullable Datum latest(ObjectDatumKind kind, Long objectId, String sourceId,
+			Instant timestamp) {
 		return offset(kind, objectId, sourceId, timestamp, 0);
 	}
 
@@ -259,8 +264,8 @@ public interface DatumStreamsAccessor {
 	 * @return the matching datum, never {@code null}
 	 * @since 2.2
 	 */
-	Collection<Datum> rangeMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
-			Instant from, Instant to);
+	Collection<Datum> rangeMatching(ObjectDatumKind kind, Long objectId,
+			@Nullable String sourceIdPattern, Instant from, Instant to);
 
 	/**
 	 * Find datum streams matching a general query, source ID pattern, and
@@ -278,6 +283,6 @@ public interface DatumStreamsAccessor {
 	 * @since 2.2
 	 */
 	Collection<ObjectDatumStreamMetadata> findStreams(ObjectDatumKind kind, String query,
-			String sourceIdPattern, String... tags);
+			@Nullable String sourceIdPattern, String @Nullable... tags);
 
 }

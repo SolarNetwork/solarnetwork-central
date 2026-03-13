@@ -22,8 +22,11 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Primary key based on a location ID and source ID.
@@ -37,15 +40,8 @@ public class LocationSourcePK
 	@Serial
 	private static final long serialVersionUID = 2535992672383477286L;
 
-	private Long locationId;
-	private String sourceId;
-
-	/**
-	 * Default constructor.
-	 */
-	public LocationSourcePK() {
-		super();
-	}
+	private final Long locationId;
+	private final String sourceId;
 
 	/**
 	 * Construct with values.
@@ -54,11 +50,13 @@ public class LocationSourcePK
 	 *        the location ID
 	 * @param sourceId
 	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public LocationSourcePK(Long locationId, String sourceId) {
 		super();
-		this.locationId = locationId;
-		this.sourceId = sourceId;
+		this.locationId = requireNonNullArgument(locationId, "locationId");
+		this.sourceId = requireNonNullArgument(sourceId, "sourceId");
 	}
 
 	/**
@@ -69,26 +67,16 @@ public class LocationSourcePK
 	 * <li>sourceId</li>
 	 * </ol>
 	 *
-	 * <em>Null</em> values will be sorted before non-<em>null</em> values.
+	 * <em>Null</em> values will be sorted before non-{@code null} values.
 	 */
 	@Override
-	public int compareTo(LocationSourcePK o) {
+	public int compareTo(@Nullable LocationSourcePK o) {
 		if ( o == null ) {
 			return 1;
-		}
-		if ( o.locationId == null ) {
-			return 1;
-		} else if ( locationId == null ) {
-			return -1;
 		}
 		int comparison = locationId.compareTo(o.locationId);
 		if ( comparison != 0 ) {
 			return comparison;
-		}
-		if ( o.sourceId == null ) {
-			return 1;
-		} else if ( sourceId == null ) {
-			return -1;
 		}
 		return sourceId.compareToIgnoreCase(o.sourceId);
 	}
@@ -96,46 +84,29 @@ public class LocationSourcePK
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("LocationSourcePK{");
-		if ( locationId != null ) {
-			builder.append("locationId=");
-			builder.append(locationId);
-			builder.append(", ");
-		}
-		if ( sourceId != null ) {
-			builder.append("sourceId=");
-			builder.append(sourceId);
-		}
+		builder.append("LocationSourcePK{locationId=");
+		builder.append(locationId);
+		builder.append(", sourceId=");
+		builder.append(sourceId);
 		builder.append("}");
 		return builder.toString();
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((locationId == null) ? 0 : locationId.hashCode());
-		result = prime * result + ((sourceId == null) ? 0 : sourceId.hashCode());
-		return result;
+		return Objects.hash(locationId, sourceId);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
 		if ( !(obj instanceof LocationSourcePK other) ) {
 			return false;
 		}
-		if ( locationId == null ) {
-			if ( other.locationId != null ) {
-				return false;
-			}
-		} else if ( !locationId.equals(other.locationId) ) {
+		if ( !locationId.equals(other.locationId) ) {
 			return false;
-		}
-		if ( sourceId == null ) {
-			return other.sourceId == null;
 		}
 		return sourceId.equals(other.sourceId);
 	}
@@ -150,12 +121,13 @@ public class LocationSourcePK
 		}
 	}
 
-	public Long getLocationId() {
+	/**
+	 * Get the location ID.
+	 *
+	 * @return the location ID
+	 */
+	public final Long getLocationId() {
 		return locationId;
-	}
-
-	public void setLocationId(Long locationId) {
-		this.locationId = locationId;
 	}
 
 	/**
@@ -168,17 +140,13 @@ public class LocationSourcePK
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Long getObjectId() {
+	public final Long getObjectId() {
 		return getLocationId();
 	}
 
 	@Override
-	public String getSourceId() {
+	public final String getSourceId() {
 		return sourceId;
-	}
-
-	public void setSourceId(String sourceId) {
-		this.sourceId = sourceId;
 	}
 
 }

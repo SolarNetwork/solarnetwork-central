@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.inin.security.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
@@ -66,9 +67,9 @@ public class AuthenticatedEndpointCredentialsRowMapper
 	@Override
 	public AuthenticatedEndpointCredentials mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = 0;
-		Long userId = rs.getObject(++p, Long.class);
-		UUID entityId = CommonJdbcUtils.getUuid(rs, ++p);
-		String username = rs.getString(++p);
+		Long userId = nonnull(rs.getObject(++p, Long.class), "userId");
+		UUID entityId = nonnull(CommonJdbcUtils.getUuid(rs, ++p), "entityId");
+		String username = nonnull(rs.getString(++p), "username");
 		String password = rs.getString(++p);
 		boolean enabled = rs.getBoolean(++p);
 		boolean expired = rs.getBoolean(++p);

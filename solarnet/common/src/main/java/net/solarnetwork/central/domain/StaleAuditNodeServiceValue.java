@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.Unique;
 import net.solarnetwork.domain.datum.Aggregation;
 
@@ -44,7 +45,7 @@ public interface StaleAuditNodeServiceValue extends Unique<AggregateDatumId> {
 	 * 
 	 * @return the node ID
 	 */
-	default Long getNodeId() {
+	default @Nullable Long getNodeId() {
 		AggregateDatumId id = getId();
 		return id != null ? id.getObjectId() : null;
 	}
@@ -58,7 +59,7 @@ public interface StaleAuditNodeServiceValue extends Unique<AggregateDatumId> {
 	 * 
 	 * @return the service
 	 */
-	default String getService() {
+	default @Nullable String getService() {
 		AggregateDatumId id = getId();
 		return id != null ? id.getSourceId() : null;
 	}
@@ -77,7 +78,7 @@ public interface StaleAuditNodeServiceValue extends Unique<AggregateDatumId> {
 	 * 
 	 * @return the timestamp for this datum
 	 */
-	default Instant getTimestamp() {
+	default @Nullable Instant getTimestamp() {
 		AggregateDatumId id = getId();
 		return id != null ? id.getTimestamp() : null;
 	}
@@ -91,7 +92,7 @@ public interface StaleAuditNodeServiceValue extends Unique<AggregateDatumId> {
 	 * 
 	 * @return the aggregation
 	 */
-	default Aggregation getAggregation() {
+	default @Nullable Aggregation getAggregation() {
 		AggregateDatumId id = getId();
 		return id != null ? id.getAggregation() : null;
 	}

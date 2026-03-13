@@ -84,7 +84,6 @@ public class SnfBillingJobsConfig {
 		AccountTaskJob job = new AccountTaskJob(transactionTemplate, accountTaskDao, generator,
 				deliverer);
 		job.setParallelTaskExecutor(taskExecutor);
-		job.setId("AccountTaskProcessor");
 		return job;
 	}
 
@@ -98,7 +97,6 @@ public class SnfBillingJobsConfig {
 	public ManagedJob invoiceGenerationTaskCreatorJob(InvoiceGenerationTaskCreator taskCreator) {
 		InvoiceGenerationTaskCreatorJob job = new InvoiceGenerationTaskCreatorJob(taskCreator);
 		job.setParallelTaskExecutor(taskExecutor);
-		job.setId("InvoiceGenerationTaskCreator");
 		return job;
 	}
 

@@ -75,7 +75,7 @@ public class SqsUserNodeEventHookService extends BaseSettingsSpecifierLocalizedS
 	 * @param stats
 	 *        the status object to use
 	 * @throws IllegalArgumentException
-	 *         if {@code stats} is {@literal null}
+	 *         if {@code stats} is {@code null}
 	 */
 	public SqsUserNodeEventHookService(SqsStats stats) {
 		super("net.solarnetwork.central.user.event.dest.sqs.SqsUserNodeEventHookService");
@@ -190,7 +190,7 @@ public class SqsUserNodeEventHookService extends BaseSettingsSpecifierLocalizedS
 	/**
 	 * Get the optional destination cache.
 	 *
-	 * @return the cache, or {@literal null}
+	 * @return the cache, or {@code null}
 	 */
 	public Cache<String, SqsDestination> getDestinationCache() {
 		return destinationCache;

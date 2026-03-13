@@ -45,12 +45,11 @@ public class CloudDatumIntegrationConfigurationTests {
 	public void toJson() {
 		// GIVEN
 		CloudIntegrationConfiguration entity = new CloudIntegrationConfiguration(randomLong(),
-				randomLong(), Instant.now().truncatedTo(ChronoUnit.SECONDS));
+				randomLong(), Instant.now().truncatedTo(ChronoUnit.SECONDS), randomString(),
+				randomString());
 		entity.setModified(entity.getCreated().plusSeconds(1));
 		entity.setEnabled(true);
-		entity.setServiceIdentifier(randomString());
 		entity.setServiceProps(Map.of("foo", "bar"));
-		entity.setName(randomString());
 
 		// WHEN
 		String json = JsonUtils.getJSONString(entity);

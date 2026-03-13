@@ -43,8 +43,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -155,7 +155,7 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		// iterate over expired configurations
 		final var ctx = new CapacityGroupSystemTaskContext<CapacityProviderConfiguration>(
 				"Measurement Test", OscpRole.CapacityProvider, systemConf, group, start, null, null,
-				capacityProviderDao, Collections.emptyMap());
+				capacityProviderDao, Map.of());
 		will((Answer<Void>) invocation -> {
 			Function<CapacityGroupSystemTaskContext<CapacityProviderConfiguration>, Instant> handler = invocation
 					.getArgument(0);
@@ -237,7 +237,7 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		// iterate over expired configurations
 		final var ctx = new CapacityGroupSystemTaskContext<CapacityProviderConfiguration>(
 				"Measurement Test", OscpRole.CapacityProvider, systemConf, group, start, null, null,
-				capacityProviderDao, Collections.emptyMap());
+				capacityProviderDao, Map.of());
 		will((Answer<Void>) invocation -> {
 			Function<CapacityGroupSystemTaskContext<CapacityProviderConfiguration>, Instant> handler = invocation
 					.getArgument(0);
@@ -373,7 +373,7 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		// iterate over expired configurations
 		final var ctx = new CapacityGroupSystemTaskContext<CapacityProviderConfiguration>(
 				"Measurement Test", OscpRole.CapacityProvider, systemConf, group, start, null, null,
-				capacityProviderDao, Collections.emptyMap());
+				capacityProviderDao, Map.of());
 		will((Answer<Void>) invocation -> {
 			Function<CapacityGroupSystemTaskContext<CapacityProviderConfiguration>, Instant> handler = invocation
 					.getArgument(0);
@@ -478,7 +478,7 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		// iterate over expired configurations
 		final var ctx = new CapacityGroupSystemTaskContext<CapacityProviderConfiguration>(
 				"Measurement Test", OscpRole.CapacityProvider, systemConf, group, start, null, null,
-				capacityProviderDao, Collections.emptyMap());
+				capacityProviderDao, Map.of());
 		will((Answer<Void>) invocation -> {
 			Function<CapacityGroupSystemTaskContext<CapacityProviderConfiguration>, Instant> handler = invocation
 					.getArgument(0);
@@ -586,7 +586,7 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		// iterate over expired configurations
 		final var ctx = new CapacityGroupSystemTaskContext<CapacityProviderConfiguration>(
 				"Measurement Test", OscpRole.CapacityProvider, systemConf, group, start, null, null,
-				capacityProviderDao, Collections.emptyMap());
+				capacityProviderDao, Map.of());
 		will((Answer<Void>) invocation -> {
 			Function<CapacityGroupSystemTaskContext<CapacityProviderConfiguration>, Instant> handler = invocation
 					.getArgument(0);

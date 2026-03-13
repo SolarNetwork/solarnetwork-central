@@ -49,7 +49,8 @@ import net.solarnetwork.central.din.security.AuthenticatedEndpointCredentials;
  * @author matt
  * @version 1.0
  */
-public class AuthenticatedEndpointCredentialsRowMapper implements RowMapper<AuthenticatedEndpointCredentials> {
+public class AuthenticatedEndpointCredentialsRowMapper
+		implements RowMapper<AuthenticatedEndpointCredentials> {
 
 	/** A default instance. */
 	public static final RowMapper<AuthenticatedEndpointCredentials> INSTANCE = new AuthenticatedEndpointCredentialsRowMapper();

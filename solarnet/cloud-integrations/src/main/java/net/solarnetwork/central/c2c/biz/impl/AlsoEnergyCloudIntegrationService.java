@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpEntity;
@@ -119,12 +120,13 @@ public class AlsoEnergyCloudIntegrationService extends BaseRestOperationsCloudIn
 	 *        read-through semantics that always returns a new lock for missing
 	 *        keys
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument except {@code integrationLocksCache} is
+	 *         {@code null}
 	 */
 	public AlsoEnergyCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
-			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
+			@Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		super(SERVICE_IDENTIFIER, "AlsoEnergy", datumStreamServices, List.of(), userEventAppenderBiz,
 				encryptor, SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(

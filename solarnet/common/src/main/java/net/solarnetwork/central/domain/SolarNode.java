@@ -28,6 +28,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.TimeZone;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.domain.SerializeIgnore;
@@ -43,12 +44,12 @@ public class SolarNode extends BaseEntity implements Cloneable, Serializable, No
 	@Serial
 	private static final long serialVersionUID = 531103294940393083L;
 
-	private String name = null;
-	private Long locationId = null; // the location ID
+	private @Nullable String name;
+	private @Nullable Long locationId;
 
 	@SerializeIgnore
 	@JsonIgnore
-	private SolarLocation location;
+	private @Nullable SolarLocation location;
 
 	/**
 	 * Default constructor.
@@ -65,11 +66,11 @@ public class SolarNode extends BaseEntity implements Cloneable, Serializable, No
 	 * @param locationId
 	 *        the location ID
 	 */
-	public SolarNode(Long id, Long locationId) {
+	public SolarNode(@Nullable Long id, @Nullable Long locationId) {
 		super();
 		setId(id);
 		setCreated(Instant.now());
-		setLocationId(locationId);
+		this.locationId = locationId;
 	}
 
 	@Override
@@ -88,37 +89,37 @@ public class SolarNode extends BaseEntity implements Cloneable, Serializable, No
 	 *
 	 * @return the TimeZone
 	 */
-	public TimeZone getTimeZone() {
+	public final @Nullable TimeZone getTimeZone() {
 		return (this.location != null && this.location.getTimeZoneId() != null
 				? TimeZone.getTimeZone(this.location.getTimeZoneId())
 				: null);
 	}
 
-	public Long getLocationId() {
+	public final @Nullable Long getLocationId() {
 		return locationId;
 	}
 
-	public void setLocationId(Long locationId) {
+	public final void setLocationId(@Nullable Long locationId) {
 		this.locationId = locationId;
 	}
 
 	@JsonIgnore
-	public SolarLocation getLocation() {
+	public final @Nullable SolarLocation getLocation() {
 		return location;
 	}
 
-	public void setLocation(SolarLocation location) {
+	public final void setLocation(@Nullable SolarLocation location) {
 		this.location = location;
 		if ( location != null && location.getId() != null ) {
 			this.locationId = location.getId();
 		}
 	}
 
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 

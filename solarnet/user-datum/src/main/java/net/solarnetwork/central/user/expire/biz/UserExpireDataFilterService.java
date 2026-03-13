@@ -23,8 +23,8 @@
 package net.solarnetwork.central.user.expire.biz;
 
 import net.solarnetwork.domain.Identity;
-import net.solarnetwork.settings.SettingSpecifierProvider;
 import net.solarnetwork.service.LocalizedServiceInfoProvider;
+import net.solarnetwork.settings.SettingSpecifierProvider;
 
 /**
  * API for datum expire data filter services.

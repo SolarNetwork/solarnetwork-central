@@ -68,8 +68,11 @@ public final class StoreDatum implements CallableStatementCreator, SqlProvider {
 	public StoreDatum(DatumEntity datum) {
 		super();
 		this.datum = requireNonNullArgument(datum, "datum");
-		this.streamId = requireNonNullArgument(datum.getStreamId(), "streamId");
-		this.timestamp = requireNonNullArgument(datum.getTimestamp(), "timestamp");
+		if ( !datum.hasId() ) {
+			throw new IllegalArgumentException("Stream ID must be assigned.");
+		}
+		this.streamId = datum.getStreamId();
+		this.timestamp = datum.getTimestamp();
 		this.received = (datum.getReceived() != null ? datum.getReceived() : Instant.now());
 	}
 

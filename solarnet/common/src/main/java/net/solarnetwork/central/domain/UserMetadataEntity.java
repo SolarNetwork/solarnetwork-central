@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -55,9 +57,9 @@ public class UserMetadataEntity extends net.solarnetwork.dao.BasicEntity<Long>
 	@Serial
 	private static final long serialVersionUID = 934821285827145848L;
 
-	private Instant updated;
-	private GeneralDatumMetadata meta;
-	private String metaJson;
+	private @Nullable Instant updated;
+	private @Nullable GeneralDatumMetadata meta;
+	private @Nullable String metaJson;
 
 	/**
 	 * Constructor.
@@ -67,7 +69,7 @@ public class UserMetadataEntity extends net.solarnetwork.dao.BasicEntity<Long>
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserMetadataEntity(Long id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
@@ -84,8 +86,8 @@ public class UserMetadataEntity extends net.solarnetwork.dao.BasicEntity<Long>
 	 * @return the userId
 	 */
 	@Override
-	public Long getUserId() {
-		return getId();
+	public final Long getUserId() {
+		return nonnull(getId(), "id");
 	}
 
 	/**
@@ -98,13 +100,13 @@ public class UserMetadataEntity extends net.solarnetwork.dao.BasicEntity<Long>
 	 */
 	@Override
 	@JsonUnwrapped
-	public GeneralDatumMetadata getMetadata() {
+	public final @Nullable GeneralDatumMetadata getMetadata() {
 		return getMeta();
 	}
 
 	@JsonIgnore
 	@SerializeIgnore
-	public GeneralDatumMetadata getMeta() {
+	public final @Nullable GeneralDatumMetadata getMeta() {
 		if ( meta == null && metaJson != null ) {
 			meta = JsonUtils.getObjectFromJSON(metaJson, GeneralDatumMetadata.class);
 			metaJson = null; // clear this out, because we might mutate meta and invalidate our cached JSON value
@@ -113,14 +115,14 @@ public class UserMetadataEntity extends net.solarnetwork.dao.BasicEntity<Long>
 	}
 
 	@JsonProperty
-	public void setMeta(GeneralDatumMetadata meta) {
+	public final void setMeta(@Nullable GeneralDatumMetadata meta) {
 		this.meta = meta;
 		this.metaJson = null;
 	}
 
 	@JsonIgnore
 	@SerializeIgnore
-	public String getMetaJson() {
+	public final @Nullable String getMetaJson() {
 		if ( metaJson == null ) {
 			metaJson = JsonUtils.getJSONString(meta, "{}");
 			meta = null; // clear this out, because we might otherwise mutate it and invalidate our cached JSON value
@@ -128,17 +130,17 @@ public class UserMetadataEntity extends net.solarnetwork.dao.BasicEntity<Long>
 		return metaJson;
 	}
 
-	public void setMetaJson(String infoJson) {
+	public final void setMetaJson(@Nullable String infoJson) {
 		this.metaJson = infoJson;
 		this.meta = null;
 	}
 
 	@Override
-	public Instant getUpdated() {
+	public final @Nullable Instant getUpdated() {
 		return updated;
 	}
 
-	public void setUpdated(Instant updated) {
+	public final void setUpdated(@Nullable Instant updated) {
 		this.updated = updated;
 	}
 

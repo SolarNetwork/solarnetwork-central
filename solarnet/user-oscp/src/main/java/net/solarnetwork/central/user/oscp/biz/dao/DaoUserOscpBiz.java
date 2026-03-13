@@ -98,7 +98,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	 * @param assetDao
 	 *        the asset DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserOscpBiz(UserSettingsDao userSettingsDao, FlexibilityProviderDao flexibilityProviderDao,
 			CapacityProviderConfigurationDao capacityProviderDao,

@@ -50,7 +50,7 @@ public interface UserOscpBiz {
 	 * 
 	 * @param userId
 	 *        the ID of the user to get the settings for
-	 * @return the settings, or {@literal null} if no settings exist
+	 * @return the settings, or {@code null} if no settings exist
 	 */
 	UserSettings settingsForUser(Long userId);
 
@@ -61,7 +61,7 @@ public interface UserOscpBiz {
 	 *        the ID of the user to get the configuration for
 	 * @param entityId
 	 *        the ID of the configuration to get
-	 * @return the configuration; never {@literal null}
+	 * @return the configuration; never {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         configuration with the given IDs does not exist
@@ -75,7 +75,7 @@ public interface UserOscpBiz {
 	 *        the ID of the user to get the configuration for
 	 * @param entityId
 	 *        the ID of the configuration to get
-	 * @return the configuration; never {@literal null}
+	 * @return the configuration; never {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         configuration with the given IDs does not exist
@@ -89,7 +89,7 @@ public interface UserOscpBiz {
 	 *        the ID of the user to get the configuration for
 	 * @param entityId
 	 *        the ID of the configuration to get
-	 * @return the configuration; never {@literal null}
+	 * @return the configuration; never {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         configuration with the given IDs does not exist
@@ -103,7 +103,7 @@ public interface UserOscpBiz {
 	 *        the ID of the user to get the settings for
 	 * @param entityId
 	 *        the ID of the group to get
-	 * @return the settings, or {@literal null} if no settings exist
+	 * @return the settings, or {@code null} if no settings exist
 	 */
 	CapacityGroupSettings capacityGroupSettingsForUser(Long userId, Long entityId);
 
@@ -114,7 +114,7 @@ public interface UserOscpBiz {
 	 *        the ID of the user to get the configuration for
 	 * @param entityId
 	 *        the ID of the configuration to get
-	 * @return the configuration; never {@literal null}
+	 * @return the configuration; never {@code null}
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         configuration with the given IDs does not exist
@@ -196,7 +196,7 @@ public interface UserOscpBiz {
 	 * 
 	 * @param userId
 	 *        the ID of the user to get configurations for
-	 * @return all available configurations; never {@literal null}
+	 * @return all available configurations; never {@code null}
 	 */
 	Collection<CapacityProviderConfiguration> capacityProvidersForUser(Long userId);
 
@@ -205,7 +205,7 @@ public interface UserOscpBiz {
 	 * 
 	 * @param userId
 	 *        the ID of the user to get configurations for
-	 * @return all available configurations; never {@literal null}
+	 * @return all available configurations; never {@code null}
 	 */
 	Collection<CapacityOptimizerConfiguration> capacityOptimizersForUser(Long userId);
 
@@ -214,7 +214,7 @@ public interface UserOscpBiz {
 	 * 
 	 * @param userId
 	 *        the ID of the user to get configurations for
-	 * @return all available configurations; never {@literal null}
+	 * @return all available configurations; never {@code null}
 	 */
 	Collection<CapacityGroupConfiguration> capacityGroupsForUser(Long userId);
 
@@ -223,7 +223,7 @@ public interface UserOscpBiz {
 	 * 
 	 * @param userId
 	 *        the ID of the user to get settings for
-	 * @return all available settings; never {@literal null}
+	 * @return all available settings; never {@code null}
 	 */
 	Collection<CapacityGroupSettings> capacityGroupSettingsForUser(Long userId);
 
@@ -232,7 +232,7 @@ public interface UserOscpBiz {
 	 * 
 	 * @param userId
 	 *        the ID of the user to get configurations for
-	 * @return all available configurations; never {@literal null}
+	 * @return all available configurations; never {@code null}
 	 */
 	Collection<AssetConfiguration> assetsForUser(Long userId);
 
@@ -241,7 +241,7 @@ public interface UserOscpBiz {
 	 * 
 	 * @param userId
 	 *        the ID of the user to get configurations for
-	 * @return all available configurations; never {@literal null}
+	 * @return all available configurations; never {@code null}
 	 */
 	Collection<AssetConfiguration> assetsForUserCapacityGroup(Long userId, Long groupId);
 

@@ -49,8 +49,8 @@ public class DatumImportJobInfoCleanerJob extends JobSupport {
 	 *        the service to use
 	 */
 	public DatumImportJobInfoCleanerJob(DatumImportJobBiz importJobBiz) {
+		super("DatumImport", "DatumImportJobInfoCleaner");
 		this.importJobBiz = requireNonNullArgument(importJobBiz, "importJobBiz");
-		setGroupId("DatumImport");
 		setMinimumAgeMinutes(DEFAULT_MINIMUM_AGE_MINUTES);
 	}
 

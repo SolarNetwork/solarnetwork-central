@@ -68,7 +68,7 @@ public final class UpsertCloudDatumStreamSettingsEntity
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertCloudDatumStreamSettingsEntity(Long userId, Long datumStreamId,
 			CloudDatumStreamSettingsEntity entity) {

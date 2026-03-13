@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.domain;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.instructor.domain.Instruction;
 
 /**
@@ -32,8 +33,8 @@ import net.solarnetwork.central.instructor.domain.Instruction;
  * @author matt
  * @version 1.0
  */
-public record InstructionExpressionEvaluationResult(String expression, Map<String, ?> parameters,
-		Instruction instruction) {
+public record InstructionExpressionEvaluationResult(String expression,
+		@Nullable Map<String, ?> parameters, @Nullable Instruction instruction) {
 
 	/**
 	 * Create a new expression simulation result instance.

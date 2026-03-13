@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  * @param name
  *        the key name
  * @param phase
- *        the optional phase ({@literal null} if not phased)
+ *        the optional phase ({@code null} if not phased)
  * @author matt
  * @version 1.0
  */
@@ -58,7 +58,7 @@ public record DlbMeterKey(DlbMeterKeyName name, String phase) {
 	 * 
 	 * @param key
 	 *        the key value to parse
-	 * @return the key instance, or {@literal null} if one cannot be extracted
+	 * @return the key instance, or {@code null} if one cannot be extracted
 	 */
 	public static DlbMeterKey forKey(String key) {
 		Matcher m = KEY_PATTERN.matcher(key);

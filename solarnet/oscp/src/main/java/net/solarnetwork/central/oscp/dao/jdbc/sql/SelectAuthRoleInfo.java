@@ -52,7 +52,7 @@ public final class SelectAuthRoleInfo implements PreparedStatementCreator, SqlPr
 	 * @param authId
 	 *        the authorization ID to search for
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SelectAuthRoleInfo(OscpRole type, UserLongCompositePK authId) {
 		super();

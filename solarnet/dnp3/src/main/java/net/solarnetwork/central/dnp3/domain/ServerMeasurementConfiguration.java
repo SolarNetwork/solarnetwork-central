@@ -51,7 +51,7 @@ public final class ServerMeasurementConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ServerMeasurementConfiguration(UserLongIntegerCompositePK id, Instant created) {
 		super(id, created);
@@ -69,7 +69,7 @@ public final class ServerMeasurementConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ServerMeasurementConfiguration(Long userId, Long serverId, Integer index, Instant created) {
 		this(new UserLongIntegerCompositePK(userId, serverId, index), created);

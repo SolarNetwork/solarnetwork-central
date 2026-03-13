@@ -26,8 +26,8 @@ import static net.solarnetwork.central.oscp.dao.BasicLockingFilter.ONE_FOR_UPDAT
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -86,7 +86,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * @param clazz
 	 *        the configuration class
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseJdbcExternalSystemConfigurationDao(JdbcOperations jdbcOps, OscpRole role,
 			Class<C> clazz) {
@@ -108,7 +108,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 *        the configuration ID
 	 * @return the filter
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	protected BasicConfigurationFilter filterForGet(UserLongCompositePK configId) {
 		BasicConfigurationFilter filter = new BasicConfigurationFilter();
@@ -191,7 +191,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	/**
 	 * Get the {@link RowMapper} to use for mapping full entity result objects.
 	 *
-	 * @return the mapper, never {@literal null}
+	 * @return the mapper, never {@code null}
 	 */
 	protected abstract RowMapper<C> rowMapperForEntity();
 
@@ -199,7 +199,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * Get the success event tags to use within
 	 * {@link #processExternalSystemWithExpiredHeartbeat(Function)}.
 	 *
-	 * @return the tags, never {@literal null}
+	 * @return the tags, never {@code null}
 	 */
 	protected abstract List<String> expiredHeartbeatEventSuccessTags();
 
@@ -207,7 +207,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * Get the error event tags to use within
 	 * {@link #processExternalSystemWithExpiredHeartbeat(Function)}.
 	 *
-	 * @return the tags, never {@literal null}
+	 * @return the tags, never {@code null}
 	 */
 	protected abstract List<String> expiredHeartbeatEventErrorTags();
 
@@ -215,7 +215,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * Get the success event tags to use within
 	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
 	 *
-	 * @return the tags, never {@literal null}
+	 * @return the tags, never {@code null}
 	 */
 	protected abstract List<String> expiredMeasurementEventSuccessTags();
 
@@ -223,7 +223,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * Get the error event tags to use within
 	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
 	 *
-	 * @return the tags, never {@literal null}
+	 * @return the tags, never {@code null}
 	 */
 	protected abstract List<String> expiredMeasurementEventErrorTags();
 
@@ -235,7 +235,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 			C row = rows.getFirst();
 			SystemTaskContext<C> context = new SystemTaskContext<>("Heartbeat", role, row,
 					expiredHeartbeatEventErrorTags(), expiredHeartbeatEventSuccessTags(), this,
-					Collections.emptyMap());
+					Map.of());
 			Instant ts = handler.apply(context);
 			if ( ts != null ) {
 				compareAndSetHeartbeat(row.getId(), row.getHeartbeatDate(), ts);
@@ -276,7 +276,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 			CapacityGroupSystemTaskContext<C> context = new CapacityGroupSystemTaskContext<>(
 					"Measurement", role, row.conf(), row.group(), taskDate,
 					expiredMeasurementEventErrorTags(), expiredMeasurementEventSuccessTags(), this,
-					Collections.emptyMap());
+					Map.of());
 			Instant ts = handler.apply(context);
 			if ( ts != null ) {
 				compareAndSetMeasurement(row.group().getId(), measurementDate, ts);

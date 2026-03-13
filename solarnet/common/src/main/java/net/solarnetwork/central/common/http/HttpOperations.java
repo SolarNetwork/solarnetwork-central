@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -57,21 +58,24 @@ public interface HttpOperations {
 	 * @param body
 	 *        an optional body to include
 	 * @param responseType
-	 *        the expected response type, or {@code null} for no body
+	 *        the expected response type, or {@code Void.class} for no body
 	 * @param context
 	 *        an optional contextual object, such as a user ID or other
 	 *        discriminator
 	 * @param runtimeData
 	 *        optional runtime information, the supported keys will be
 	 *        implementation specific
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
-	<I, O> ResponseEntity<O> http(HttpMethod method, URI uri, HttpHeaders headers, I body,
-			Class<O> responseType, Object context, Map<String, ?> runtimeData);
+	<I extends @Nullable Object, O> ResponseEntity<O> http(HttpMethod method, URI uri,
+			@Nullable HttpHeaders headers, @Nullable I body, Class<O> responseType,
+			@Nullable Object context, @Nullable Map<String, ?> runtimeData);
 
 	/**
 	 * Make an HTTP GET request for an object and return the result.
 	 *
+	 * @param <O>
+	 *        the response body type
 	 * @param uri
 	 *        the URL to request
 	 * @param parameters
@@ -79,21 +83,22 @@ public interface HttpOperations {
 	 * @param headers
 	 *        optional HTTP headers to include
 	 * @param responseType
-	 *        the expected response type, or {@code null}
+	 *        the expected response type, or {@code Void.class} for no body
 	 * @param context
 	 *        an optional contextual object, such as a user ID or other
 	 *        discriminator
 	 * @param runtimeData
 	 *        optional runtime information, the supported keys will be
 	 *        implementation specific
-	 * @return the result, never {@literal null}
+	 * @return the result, never {@code null}
 	 */
-	default <O> Result<O> httpGet(String uri, Map<String, ?> parameters, Map<String, ?> headers,
-			Class<O> responseType, Object context, Map<String, ?> runtimeData) {
+	default <O> Result<O> httpGet(String uri, @Nullable Map<String, ?> parameters,
+			@Nullable Map<String, ?> headers, Class<O> responseType, @Nullable Object context,
+			@Nullable Map<String, ?> runtimeData) {
 		URI u = uri(uri, parameters);
 		HttpHeaders h = headersForMap(headers);
 		ResponseEntity<O> res = http(HttpMethod.GET, u, h, null, responseType, context, runtimeData);
-		return new Result<>(res.getBody());
+		return Result.result(res.getBody());
 	}
 
 	/**
@@ -105,7 +110,7 @@ public interface HttpOperations {
 	 *        the optional query parameters
 	 * @return the URI
 	 */
-	static URI uri(String uri, Map<String, ?> parameters) {
+	static URI uri(String uri, @Nullable Map<String, ?> parameters) {
 		UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(uri);
 		if ( parameters != null ) {
 			for ( Entry<String, ?> e : parameters.entrySet() ) {
@@ -124,7 +129,7 @@ public interface HttpOperations {
 	 * @return the headers instance, or {@code null} if {@code headers} is
 	 *         {@code null}
 	 */
-	static HttpHeaders headersForMap(Map<String, ?> headers) {
+	static @Nullable HttpHeaders headersForMap(@Nullable Map<String, ?> headers) {
 		HttpHeaders h = null;
 		if ( headers != null ) {
 			h = new HttpHeaders();

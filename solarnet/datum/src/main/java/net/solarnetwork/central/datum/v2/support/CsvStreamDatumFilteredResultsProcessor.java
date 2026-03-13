@@ -39,6 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import de.siegmar.fastcsv.writer.CsvWriter;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
@@ -178,7 +179,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 	private final CsvWriter writer;
 
 	/** A set of allowed output property names. */
-	private final Set<String> allowedPropertyNames;
+	private final @Nullable Set<String> allowedPropertyNames;
 
 	/**
 	 * A mapping of column names to associated column index; linked so insertion
@@ -186,8 +187,8 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 	 */
 	private final Map<String, Integer> streamColumnIndexes = new LinkedHashMap<>(8);
 
-	private ObjectDatumStreamMetadataProvider metadataProvider;
-	private Collection<UUID> streamIds;
+	private @Nullable ObjectDatumStreamMetadataProvider metadataProvider;
+	private @Nullable Collection<UUID> streamIds;
 	private int columnCount = 0;
 	private int metaColumnCount = 0;
 
@@ -209,12 +210,16 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 	 *
 	 * @param out
 	 *        the output destination
+	 * @param allowedPropertyNames
+	 *        optional set of restricted property names to allow, or
+	 *        {@code null} to allow all properties
 	 * @throws IllegalArgumentException
 	 *         if any argument except {@code allowedPropertyNames} is
 	 *         {@code null}
 	 * @since 1.5
 	 */
-	public CsvStreamDatumFilteredResultsProcessor(Writer out, Set<String> allowedPropertyNames) {
+	public CsvStreamDatumFilteredResultsProcessor(Writer out,
+			@Nullable Set<String> allowedPropertyNames) {
 		super();
 		this.writer = CsvWriter.builder().build(requireNonNullArgument(out, "out"));
 		this.allowedPropertyNames = allowedPropertyNames;
@@ -226,8 +231,9 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 	}
 
 	@Override
-	public void start(Long totalResultCount, Integer startingOffset, Integer expectedResultCount,
-			Map<String, ?> attributes) throws IOException {
+	public void start(@Nullable Long totalResultCount, @Nullable Integer startingOffset,
+			@Nullable Integer expectedResultCount, @Nullable Map<String, ?> attributes)
+			throws IOException {
 		if ( attributes == null || !(attributes
 				.get(METADATA_PROVIDER_ATTR) instanceof ObjectDatumStreamMetadataProvider) ) {
 			throw new IllegalArgumentException("No metadata provider provided.");
@@ -399,21 +405,21 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 		}
 	}
 
-	private static String formatInstant(Instant ts) {
+	private static String formatInstant(@Nullable Instant ts) {
 		if ( ts == null ) {
 			return "";
 		}
 		return DateTimeFormatter.ISO_INSTANT.format(ts);
 	}
 
-	private static String formatDecimal(BigDecimal obj) {
+	private static String formatDecimal(@Nullable BigDecimal obj) {
 		if ( obj == null ) {
 			return "";
 		}
 		return obj.toPlainString();
 	}
 
-	private static String formatObject(Object obj) {
+	private static String formatObject(@Nullable Object obj) {
 		if ( obj == null ) {
 			return "";
 		}

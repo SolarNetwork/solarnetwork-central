@@ -169,7 +169,7 @@ public interface Dnp3UserEvents {
 	 * @param entity
 	 *        the entity
 	 * @param extraData
-	 *        optional extra data to include, or {@literal null}
+	 *        optional extra data to include, or {@code null}
 	 * @return the data map
 	 */
 	static Map<String, Object> eventDataForEntity(Entity<? extends CompositeKey> entity,

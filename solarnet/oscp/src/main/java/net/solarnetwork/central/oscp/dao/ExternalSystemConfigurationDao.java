@@ -87,7 +87,7 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 	 *
 	 * @param id
 	 *        the primary key to retrieve
-	 * @return the domain object, or {@literal null} if not available
+	 * @return the domain object, or {@code null} if not available
 	 */
 	C getForUpdate(UserLongCompositePK id);
 
@@ -147,7 +147,7 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 	 *        a function that will be passed a task context for an external
 	 *        system that needs to have a heartbeat sent, and returns a new
 	 *        heartbeat date if a heartbeat was successfully sent, or
-	 *        {@literal null} otherwise
+	 *        {@code null} otherwise
 	 * @return {@literal true} if the heartbeat date was updated with the value
 	 *         returned from {@code handler}
 	 */
@@ -160,7 +160,7 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 	 *        a function that will be passed a task context for an external
 	 *        system that needs to have a measurement sent, and returns a new
 	 *        heartbeat date if a heartbeat was successfully sent, or
-	 *        {@literal null} otherwise
+	 *        {@code null} otherwise
 	 * @return {@literal true} if the heartbeat date was updated with the value
 	 *         returned from {@code handler}
 	 */

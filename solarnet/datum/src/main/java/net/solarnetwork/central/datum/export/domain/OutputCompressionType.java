@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.export.domain;
 
+import net.solarnetwork.domain.KeyCodedValue;
+
 /**
  * Enumeration of output compression types.
  *
@@ -29,7 +31,7 @@ package net.solarnetwork.central.datum.export.domain;
  * @version 1.1
  * @since 1.23
  */
-public enum OutputCompressionType {
+public enum OutputCompressionType implements KeyCodedValue {
 
 	/** No compression. */
 	None('n', "", ""),
@@ -63,11 +65,16 @@ public enum OutputCompressionType {
 		return key;
 	}
 
+	@Override
+	public char getKeyCode() {
+		return key;
+	}
+
 	/**
 	 * Get the filename extension.
 	 *
 	 * @return the extension, which may be an empty string but never
-	 *         {@literal null}
+	 *         {@code null}
 	 */
 	public String getFilenameExtension() {
 		return ext;

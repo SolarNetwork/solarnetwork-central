@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.config;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,13 +42,13 @@ public class ApplicationMetadataConfig {
 	private final Logger log = LoggerFactory.getLogger(ApplicationMetadataConfig.class);
 
 	@Value("${app.meta.name:}")
-	private String appName;
+	private String appName = "";
 
 	@Value("${app.meta.version:}")
-	private String appVersion;
+	private @Nullable String appVersion;
 
 	@Value("${app.meta.instance-id:}")
-	private String appInstanceId;
+	private @Nullable String appInstanceId;
 
 	@Bean
 	public ApplicationMetadata applicationMetadata() {

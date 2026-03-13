@@ -31,7 +31,10 @@ import java.security.cert.Certificate;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.net.proxy.domain.ProxyConnectionRequest;
@@ -82,7 +85,7 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 	 * @param userMappings
 	 *        the user mappings to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SimpleProxyConfigurationProvider(DynamicPortRegistrar portRegistrar,
 			List<SimplePrincipalMapping> userMappings) {
@@ -197,7 +200,7 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 			}
 			final int newPort = portRegistrar.reserveNewPort();
 
-			final Map<String, Object> cmdParameters = Collections.singletonMap("port", newPort);
+			final Map<String, Object> cmdParameters = Map.of("port", newPort);
 			final int cmdLen = externalServerCommand.length;
 			String[] cmd = new String[cmdLen];
 			for ( int i = 0; i < cmdLen; i++ ) {

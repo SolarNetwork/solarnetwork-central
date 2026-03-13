@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.c2c.job.test;
 
+import static java.time.Instant.now;
+import static net.solarnetwork.central.domain.BasicClaimableJobState.Unknown;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.mockito.ArgumentMatchers.any;
@@ -114,7 +116,7 @@ public class CloudDatumStreamPollTaskProcessorTests {
 		final int taskCount = 2;
 		final List<CloudDatumStreamPollTaskEntity> tasks = new ArrayList<>();
 		for ( int i = 0; i < taskCount; i++ ) {
-			var task = new CloudDatumStreamPollTaskEntity(userId, randomLong());
+			var task = new CloudDatumStreamPollTaskEntity(userId, randomLong(), Unknown, now(), now());
 			tasks.add(task);
 		}
 
@@ -175,7 +177,7 @@ public class CloudDatumStreamPollTaskProcessorTests {
 		final int taskCount = 3;
 		final List<CloudDatumStreamPollTaskEntity> tasks = new ArrayList<>();
 		for ( int i = 0; i < taskCount; i++ ) {
-			var task = new CloudDatumStreamPollTaskEntity(userId, randomLong());
+			var task = new CloudDatumStreamPollTaskEntity(userId, randomLong(), Unknown, now(), now());
 			tasks.add(task);
 		}
 

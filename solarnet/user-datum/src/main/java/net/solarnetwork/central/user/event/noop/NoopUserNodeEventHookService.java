@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.event.noop;
 
-import java.util.Collections;
 import java.util.List;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.user.event.biz.UserNodeEventHookService;
@@ -54,7 +53,7 @@ public class NoopUserNodeEventHookService extends BaseSettingsSpecifierLocalized
 
 	@Override
 	public List<SettingSpecifier> getSettingSpecifiers() {
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Override

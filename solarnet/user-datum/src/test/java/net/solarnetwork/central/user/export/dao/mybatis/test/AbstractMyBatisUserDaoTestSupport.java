@@ -78,9 +78,8 @@ public abstract class AbstractMyBatisUserDaoTestSupport extends AbstractJUnit5Ce
 	 * @return the primary key
 	 */
 	protected Long storeNewUser(String email) {
-		User newUser = new User();
+		User newUser = new User(email);
 		newUser.setCreated(Instant.now());
-		newUser.setEmail(email);
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);

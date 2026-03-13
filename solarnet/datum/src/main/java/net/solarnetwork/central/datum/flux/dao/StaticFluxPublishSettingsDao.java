@@ -46,7 +46,7 @@ public final class StaticFluxPublishSettingsDao implements FluxPublishSettingsDa
 	 * @param settings
 	 *        the static settings
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public StaticFluxPublishSettingsDao(FluxPublishSettings settings) {
 		super();

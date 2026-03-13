@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.biz;
 
 import java.util.List;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.user.billing.domain.Invoice;
@@ -46,9 +47,10 @@ public interface BillingBiz {
 	 * 
 	 * @param userId
 	 *        the ID of the user to get the billing system for
-	 * @return the billing system, or {@literal null} if no system is configured
-	 *         or available
+	 * @return the billing system, or {@code null} if no system is configured or
+	 *         available
 	 */
+	@Nullable
 	BillingSystem billingSystemForUser(Long userId);
 
 	/**
@@ -56,10 +58,11 @@ public interface BillingBiz {
 	 * 
 	 * @param key
 	 *        the key of the system to get
-	 * @return the system, or {@literal null} if no system available for the
-	 *         given {@code key}
+	 * @return the system, or {@code null} if no system available for the given
+	 *         {@code key}
 	 * @since 1.2
 	 */
+	@Nullable
 	BillingSystem billingSystemForKey(String key);
 
 	/**
@@ -71,8 +74,9 @@ public interface BillingBiz {
 	 *        the invoice ID to get
 	 * @param locale
 	 *        the desired output locale
-	 * @return the invoice, or {@literal null} if not available
+	 * @return the invoice, or {@code null} if not available
 	 */
+	@Nullable
 	Invoice getInvoice(Long userId, String invoiceId, Locale locale);
 
 	/**
@@ -86,10 +90,11 @@ public interface BillingBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	FilterResults<InvoiceMatch, String> findFilteredInvoices(InvoiceFilter filter,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max);
 
 	/**
 	 * Render an invoice.
@@ -102,11 +107,12 @@ public interface BillingBiz {
 	 *        the desired output type, e.g. {@literal text/html}
 	 * @param locale
 	 *        the desired output locale
-	 * @return a resource with the result data, or {@literal null} if the
-	 *         invoice is not available
+	 * @return a resource with the result data, or {@code null} if the invoice
+	 *         is not available
 	 * @throws IllegalArgumentException
 	 *         if {@code outputType} is not supported
 	 */
+	@Nullable
 	Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale);
 
 	/**
@@ -118,9 +124,10 @@ public interface BillingBiz {
 	 *        the options
 	 * @param locale
 	 *        the desired output locale
-	 * @return the invoice, or {@literal null} if not available
+	 * @return the invoice, or {@code null} if not available
 	 * @since 1.1
 	 */
+	@Nullable
 	Invoice getPreviewInvoice(Long userId, InvoiceGenerationOptions options, Locale locale);
 
 	/**
@@ -134,12 +141,13 @@ public interface BillingBiz {
 	 *        the desired output type, e.g. {@literal text/html}
 	 * @param locale
 	 *        the desired output locale
-	 * @return a resource with the result data, or {@literal null} if the
-	 *         invoice is not available
+	 * @return a resource with the result data, or {@code null} if the invoice
+	 *         is not available
 	 * @throws IllegalArgumentException
 	 *         if {@code outputType} is not supported
 	 * @since 1.1
 	 */
+	@Nullable
 	Resource previewInvoice(Long userId, InvoiceGenerationOptions options, MimeType outputType,
 			Locale locale);
 

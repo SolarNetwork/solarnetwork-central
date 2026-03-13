@@ -101,7 +101,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 	 * @param restOps
 	 *        the REST operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SolarEdgeV1CloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {

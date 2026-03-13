@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.pki.dogtag;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -37,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.PropertyAccessor;
@@ -113,22 +116,62 @@ public class DogtagPKIBiz
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	private String baseUrl;
+	private final CertificateService certificateService;
+	private final RestOperations restOps;
+	private final String baseUrl;
+	private final String dogtagProfileId;
+
 	private XmlSupport xmlSupport = new XmlSupport();
-	private CertificateService certificateService;
-	private RestOperations restOps;
-	private String dogtagProfileId = "SolarNode";
 	private String dogtagRenewalProfileId = "caManualRenewal";
-	private XPathExpression csrRequestIdXPath;
-	private Map<String, XPathExpression> csrInfoMapping;
-	private Map<String, XPathExpression> renewalInfoMapping;
-	private Map<String, XPathExpression> certDetailMapping;
+	private @Nullable XPathExpression csrRequestIdXPath;
+	private @Nullable Map<String, XPathExpression> csrInfoMapping;
+	private @Nullable Map<String, XPathExpression> renewalInfoMapping;
+	private @Nullable Map<String, XPathExpression> certDetailMapping;
 	private int pingResultsCacheSeconds = 300;
 
 	private final int[] dogtagVersion = new int[] { 0, 0, 0 };
 
 	private final Map<String, XPathExpression> xpathCache = new HashMap<>();
-	private CachedResult<PingTestResult> cachedResult;
+	private @Nullable CachedResult<PingTestResult> cachedResult;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param certificateService
+	 *        the certificate service
+	 * @param restOps
+	 *        the REST operations
+	 * @param baseUrl
+	 *        the base URL
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public DogtagPKIBiz(CertificateService certificateService, RestOperations restOps, String baseUrl) {
+		this(certificateService, restOps, baseUrl, "SolarNode");
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param certificateService
+	 *        the certificate service
+	 * @param restOps
+	 *        the REST operations
+	 * @param baseUrl
+	 *        the base URL
+	 * @param dogtagProfileId
+	 *        the profile ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public DogtagPKIBiz(CertificateService certificateService, RestOperations restOps, String baseUrl,
+			String dogtagProfileId) {
+		super();
+		this.certificateService = requireNonNullArgument(certificateService, "certificateService");
+		this.restOps = requireNonNullArgument(restOps, "restOps");
+		this.baseUrl = requireNonNullArgument(baseUrl, "baseUrl");
+		this.dogtagProfileId = requireNonNullArgument(dogtagProfileId, "dogtagProfileId");
+	}
 
 	/**
 	 * Call to setup the Dogtag client.
@@ -151,7 +194,7 @@ public class DogtagPKIBiz
 	}
 
 	@Override
-	public void configurationChanged(Map<String, Object> properties) {
+	public void configurationChanged(@Nullable Map<String, Object> properties) {
 		if ( dogtagVersion[0] == 0 ) {
 			detectDogtagVersion();
 		}
@@ -197,7 +240,7 @@ public class DogtagPKIBiz
 		ResponseEntity<DOMSource> result = restOps.postForEntity(baseUrl + DOGTAG_10_PROFILE_SUBMIT_PATH,
 				params, DOMSource.class);
 		DOMSource xmlResult = result.getBody();
-		if ( log.isDebugEnabled() ) {
+		if ( xmlResult != null && log.isDebugEnabled() ) {
 			log.debug("Got XML response: {}", xmlSupport.getXmlAsString(xmlResult, true));
 		}
 		if ( xmlResult == null ) {
@@ -254,15 +297,17 @@ public class DogtagPKIBiz
 				log.debug("Got JSON response: {}", result.getBody());
 			}
 			renewResponse = result;
-			requestInfo = getRenewalRequestInfo(result.getBody());
+			requestInfo = getRenewalRequestInfo(nonnull(result.getBody(), "Renew certificate response"));
 		} else {
 			ResponseEntity<DOMSource> result = restOps
 					.postForEntity(baseUrl + DOGTAG_10_CERTREG_RENEW_PATH, req, DOMSource.class);
 			if ( log.isDebugEnabled() ) {
-				log.debug("Got XML response: {}", xmlSupport.getXmlAsString(result.getBody(), true));
+				log.debug("Got XML response: {}", xmlSupport
+						.getXmlAsString(nonnull(result.getBody(), "Renew certificate response"), true));
 			}
 			renewResponse = result;
-			requestInfo = getRenewalRequestInfo(result.getBody().getNode());
+			requestInfo = getRenewalRequestInfo(
+					nonnull(result.getBody(), "Renew certificate response").getNode());
 		}
 
 		// the request ID is the last path value of the requestURL
@@ -308,8 +353,8 @@ public class DogtagPKIBiz
 
 		if ( reqStatus == null || REQ_STATUS_PENDING.equalsIgnoreCase(reqStatus) ) {
 			// approve the pending CSR
-			restOps.postForEntity(baseUrl + DOGTAG_10_AGENT_CERTREQ_APPROVE_PATH, result.getBody(), null,
-					requestID);
+			restOps.postForEntity(baseUrl + DOGTAG_10_AGENT_CERTREQ_APPROVE_PATH, result.getBody(),
+					Void.class, requestID);
 		}
 
 		// get the CSR details, which will include our cert URL
@@ -331,7 +376,8 @@ public class DogtagPKIBiz
 		result = restOps.getForEntity(certURL, JsonNode.class);
 		final DogtagCertificateData certData = getCertData(result.getBody());
 
-		return certificateService.parsePKCS7CertificateChainString(certData.getPkcs7Chain());
+		return certificateService.parsePKCS7CertificateChainString(
+				nonnull(certData.getPkcs7Chain(), "Certificate chain"));
 	}
 
 	private X509Certificate[] approveCsrXml(String requestID) {
@@ -340,7 +386,7 @@ public class DogtagPKIBiz
 				.getForEntity(baseUrl + DOGTAG_10_AGENT_CERTREQ_GET_PATH, DOMSource.class, requestID);
 		if ( log.isDebugEnabled() ) {
 			log.debug("Got agent cert req details: {}",
-					xmlSupport.getXmlAsString(result.getBody(), true));
+					xmlSupport.getXmlAsString(nonnull(result.getBody(), "Certificate request"), true));
 		}
 
 		// check if the request is already complete
@@ -352,16 +398,19 @@ public class DogtagPKIBiz
 
 		if ( reqStatus == null || REQ_STATUS_PENDING.equalsIgnoreCase(reqStatus) ) {
 			// approve the pending CSR
-			restOps.postForEntity(baseUrl + DOGTAG_10_AGENT_CERTREQ_APPROVE_PATH, result.getBody(), null,
+			restOps.postForEntity(baseUrl + DOGTAG_10_AGENT_CERTREQ_APPROVE_PATH,
+					nonnull(result.getBody(), "Approve certificate request response"), Void.class,
 					requestID);
 		}
 
 		// get the CSR details, which will include our cert URL
 		result = restOps.getForEntity(baseUrl + DOGTAG_10_CERTREG_GET_PATH, DOMSource.class, requestID);
-		final DogtagCertRequestInfo info = getCertRequestInfo(result.getBody().getNode());
+		final DogtagCertRequestInfo info = getCertRequestInfo(
+				nonnull(result.getBody(), "Get certificate request response").getNode());
 		if ( info.getCertURL() == null ) {
 			log.warn("Expected to find certURL for approved CSR {}; req info: {}", requestID,
-					xmlSupport.getXmlAsString(result.getBody(), false));
+					xmlSupport.getXmlAsString(
+							nonnull(result.getBody(), "Get certificate request response"), false));
 			throw new CertificateException("URL not available for request " + requestID);
 		}
 
@@ -373,9 +422,11 @@ public class DogtagPKIBiz
 			certURL = info.getCertURL().toExternalForm();
 		}
 		result = restOps.getForEntity(certURL, DOMSource.class);
-		final DogtagCertificateData certData = getCertData(result.getBody().getNode());
+		final DogtagCertificateData certData = getCertData(
+				nonnull(result.getBody(), "Certificate request").getNode());
 
-		return certificateService.parsePKCS7CertificateChainString(certData.getPkcs7Chain());
+		return certificateService.parsePKCS7CertificateChainString(
+				nonnull(certData.getPkcs7Chain(), "Certificate chain"));
 	}
 
 	private DogtagCertRequestInfo getCertRequestInfo(Node node) {
@@ -399,7 +450,7 @@ public class DogtagPKIBiz
 		return data;
 	}
 
-	private DogtagCertRequestInfo getCertRequestInfo(final JsonNode json) {
+	private DogtagCertRequestInfo getCertRequestInfo(final @Nullable JsonNode json) {
 		/*- Example JSON:
 		 {
 			  "requestID": "0x2e866ad1ccc49e00a00df6ae82bce16b",
@@ -416,6 +467,10 @@ public class DogtagPKIBiz
 		}
 		 */
 
+		if ( json == null ) {
+			throw new CertificateException("Certificate request data not available.");
+		}
+
 		final var info = new DogtagCertRequestInfo();
 		try {
 			info.setCertURL(new URI(json.path("certURL").stringValue()).toURL());
@@ -428,7 +483,8 @@ public class DogtagPKIBiz
 		return info;
 	}
 
-	private DogtagCertificateData getCertData(final JsonNode json) {
+	private DogtagCertificateData getCertData(final @Nullable JsonNode json)
+			throws CertificateException {
 		/*- Example JSON
 			{
 			  "id": "0xc11e3339cfad425c95c7375be7408f35",
@@ -442,17 +498,20 @@ public class DogtagPKIBiz
 			  "Status": "INVALID"
 			}
 		 */
-
-		final var data = new DogtagCertificateData();
-		try {
-			final String idVal = json.path("id").stringValue();
-			data.setId(idVal.startsWith("0x") ? new BigInteger(idVal.substring(2), 16)
-					: new BigInteger(idVal));
-			data.setPkcs7Chain(json.path("PKCS7CertChain").stringValue());
-		} catch ( IllegalArgumentException e ) {
-			log.warn("Error parsing certificate data from [{}]: {}", json, e.toString());
+		if ( json == null ) {
+			throw new CertificateException("Certificate data not available.");
 		}
-		return data;
+
+		try {
+			final String idVal = nonnull(json.path("id").stringValue(), "id");
+			final BigInteger id = idVal.startsWith("0x") ? new BigInteger(idVal.substring(2), 16)
+					: new BigInteger(idVal);
+			final String pkcs7 = nonnull(json.path("PKCS7CertChain").stringValue(), "PKCS7CertChain");
+			return new DogtagCertificateData(id, pkcs7);
+		} catch ( Exception e ) {
+			log.warn("Error parsing certificate data from [{}]: {}", json, e.toString());
+			throw new CertificateException(e);
+		}
 	}
 
 	private DogtagCertRequestInfo getRenewalRequestInfo(final JsonNode json) {
@@ -543,7 +602,7 @@ public class DogtagPKIBiz
 		if ( csrRequestIdXPath == null ) {
 			setCsrRequestIdXPath(DOGTAG_10_PROFILE_SUBMIT_RESPONSE_REQUEST_ID_XPATH);
 		}
-		return this.csrRequestIdXPath;
+		return nonnull(this.csrRequestIdXPath, "CSR request ID XPath");
 	}
 
 	public void setCsrRequestIdXPath(String csrRequestIdXPath) {
@@ -556,10 +615,6 @@ public class DogtagPKIBiz
 	}
 
 	// PingTest support
-
-	public String getBaseUrl() {
-		return baseUrl;
-	}
 
 	@Override
 	public String getPingTestId() {
@@ -591,8 +646,9 @@ public class DogtagPKIBiz
 
 	@Override
 	public PingTestResult performPingTest() throws Exception {
+		final CachedResult<PingTestResult> cachedResult = this.cachedResult;
 		if ( cachedResult != null && cachedResult.isValid() ) {
-			return cachedResult.getResult();
+			return nonnull(cachedResult.getResult(), "Cached result");
 		}
 		if ( restOps == null ) {
 			return new PingTestResult(false, "RestOperations not configured.");
@@ -623,7 +679,7 @@ public class DogtagPKIBiz
 				}
 			}
 		}
-		if ( response == null ) {
+		if ( response == null || response.getBody() == null ) {
 			result = new PingTestResult(false, "HTTP response not available");
 		} else if ( response.getStatusCode() != HttpStatus.OK ) {
 			result = new PingTestResult(false, "HTTP status not 200: " + response.getStatusCode());
@@ -654,7 +710,7 @@ public class DogtagPKIBiz
 		}
 		CachedResult<PingTestResult> cached = new CachedResult<>(result, pingResultsCacheSeconds,
 				TimeUnit.SECONDS);
-		cachedResult = cached;
+		this.cachedResult = cached;
 		return result;
 	}
 
@@ -663,7 +719,8 @@ public class DogtagPKIBiz
 			ResponseEntity<DOMSource> response = restOps.getForEntity(baseUrl + DOGTAG_10_PKI_INFO,
 					DOMSource.class);
 			if ( response.getStatusCode() == HttpStatus.OK ) {
-				String version = xmlSupport.extractStringFromXml(response.getBody().getNode(),
+				String version = xmlSupport.extractStringFromXml(
+						nonnull(response.getBody(), "PKI info").getNode(),
 						xpathForString(DOGTAG_10_PKI_INFO_VERSION_XPATH));
 				if ( version != null && !version.isEmpty() ) {
 					log.info("Detected Dogtag server version {}", version);
@@ -679,56 +736,46 @@ public class DogtagPKIBiz
 		}
 	}
 
-	public void setBaseUrl(String baseUrl) {
-		this.baseUrl = baseUrl;
+	public final String getBaseUrl() {
+		return baseUrl;
 	}
 
-	public CertificateService getCertificateService() {
+	public final CertificateService getCertificateService() {
 		return certificateService;
 	}
 
-	public void setCertificateService(CertificateService certificateService) {
-		this.certificateService = certificateService;
-	}
-
-	public RestOperations getRestOps() {
+	public final RestOperations getRestOps() {
 		return restOps;
 	}
 
-	public void setRestOps(RestOperations restOps) {
-		this.restOps = restOps;
-	}
-
-	public String getDogtagProfileId() {
+	public final String getDogtagProfileId() {
 		return dogtagProfileId;
 	}
 
-	public void setDogtagProfileId(String dogtagProfileId) {
-		this.dogtagProfileId = dogtagProfileId;
-	}
-
-	public XmlSupport getXmlSupport() {
+	public final XmlSupport getXmlSupport() {
 		return xmlSupport;
 	}
 
-	public void setXmlSupport(XmlSupport xmlSupport) {
-		this.xmlSupport = xmlSupport;
+	public final void setXmlSupport(XmlSupport xmlSupport) {
+		this.xmlSupport = requireNonNullArgument(xmlSupport, "xmlSupport");
 	}
 
-	public int getPingResultsCacheSeconds() {
+	public final int getPingResultsCacheSeconds() {
 		return pingResultsCacheSeconds;
 	}
 
-	public void setPingResultsCacheSeconds(int pingResultsCacheSeconds) {
+	public final void setPingResultsCacheSeconds(int pingResultsCacheSeconds) {
 		this.pingResultsCacheSeconds = pingResultsCacheSeconds;
 	}
 
-	public String getDogtagRenewalProfileId() {
+	public final String getDogtagRenewalProfileId() {
 		return dogtagRenewalProfileId;
 	}
 
-	public void setDogtagRenewalProfileId(String dogtagRenewalProfileId) {
-		this.dogtagRenewalProfileId = dogtagRenewalProfileId;
+	public final void setDogtagRenewalProfileId(String dogtagRenewalProfileId) {
+		this.dogtagRenewalProfileId = requireNonNullArgument(dogtagRenewalProfileId,
+				"dogtagRenewalProfileId");
+		;
 	}
 
 	/**
@@ -745,7 +792,7 @@ public class DogtagPKIBiz
 	 *        <em>minor</em>, and <em>patch</em> are integers
 	 * @since 1.3
 	 */
-	public void setDogtagVersionValue(String version) {
+	public final void setDogtagVersionValue(@Nullable String version) {
 		if ( version == null || version.isEmpty() || !version.matches("\\d+\\.\\d+\\.\\d+") ) {
 			return;
 		}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.inin.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.UUID;
@@ -53,7 +54,7 @@ public class EndpointAuthConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EndpointAuthConfiguration(UserUuidLongCompositePK id, Instant created) {
 		super(id, created);
@@ -71,7 +72,7 @@ public class EndpointAuthConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EndpointAuthConfiguration(Long userId, UUID endpointId, Long credentialId, Instant created) {
 		this(new UserUuidLongCompositePK(userId, endpointId, credentialId), created);
@@ -79,7 +80,7 @@ public class EndpointAuthConfiguration
 
 	@Override
 	public EndpointAuthConfiguration copyWithId(UserUuidLongCompositePK id) {
-		var copy = new EndpointAuthConfiguration(id, getCreated());
+		var copy = new EndpointAuthConfiguration(id, nonnull(getCreated(), "created"));
 		copyTo(copy);
 		return copy;
 	}
@@ -115,8 +116,7 @@ public class EndpointAuthConfiguration
 	 * @return the endpoint ID
 	 */
 	public UUID getEndpointId() {
-		UserUuidLongCompositePK id = getId();
-		return (id != null ? id.getGroupId() : null);
+		return pk().getGroupId();
 	}
 
 	/**
@@ -125,8 +125,7 @@ public class EndpointAuthConfiguration
 	 * @return the credential ID
 	 */
 	public Long getCredentialId() {
-		UserUuidLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+		return pk().getEntityId();
 	}
 
 }

@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.domain;
 
 import java.security.KeyPair;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.domain.Unique;
@@ -66,6 +67,7 @@ public interface UserKeyPair extends Unique<UserStringCompositePK>, UserIdRelate
 	 * 
 	 * @return the creation date
 	 */
+	@Nullable
 	Instant getCreated();
 
 	/**
@@ -73,6 +75,7 @@ public interface UserKeyPair extends Unique<UserStringCompositePK>, UserIdRelate
 	 * 
 	 * @return the modification date
 	 */
+	@Nullable
 	Instant getModified();
 
 	/**
@@ -80,7 +83,7 @@ public interface UserKeyPair extends Unique<UserStringCompositePK>, UserIdRelate
 	 * 
 	 * @param password
 	 *        the password to use
-	 * @return the key pair, never {@literal null}
+	 * @return the key pair, never {@code null}
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 * @throws IllegalStateException

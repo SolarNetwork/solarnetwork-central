@@ -23,14 +23,18 @@
 package net.solarnetwork.central.datum.support;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
+import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -43,7 +47,7 @@ import tools.jackson.databind.ObjectMapper;
  * Utilities for Datum domain classes.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public final class DatumUtils {
 
@@ -78,13 +82,14 @@ public final class DatumUtils {
 	 * @param o
 	 *        the object to serialize to JSON
 	 * @param defaultValue
-	 *        a default value to use if {@code o} is <em>null</em> or if any
+	 *        a default value to use if {@code o} is {@code null} or if any
 	 *        error occurs serializing the object to JSON
 	 * @return the JSON string
 	 * @see JsonUtils#getJSONString(Object, String)
 	 * @since 1.1
 	 */
-	public static String getJSONString(final Object o, final String defaultValue) {
+	public static @Nullable String getJSONString(final @Nullable Object o,
+			final @Nullable String defaultValue) {
 		return JsonUtils.getJSONString(o, defaultValue);
 	}
 
@@ -105,7 +110,7 @@ public final class DatumUtils {
 	 * @see JsonUtils#getJSONString(Object, String)
 	 * @since 1.1
 	 */
-	public static <T> T getObjectFromJSON(final String json, Class<T> clazz) {
+	public static <T> @Nullable T getObjectFromJSON(final @Nullable String json, Class<T> clazz) {
 		return JsonUtils.getObjectFromJSON(json, clazz);
 	}
 
@@ -113,8 +118,8 @@ public final class DatumUtils {
 	 * Filter a set of node sources using a source ID path pattern.
 	 *
 	 * <p>
-	 * If any arguments are {@literal null}, or {@code pathMatcher} is not a
-	 * path pattern, then {@code sources} will be returned without filtering.
+	 * If any arguments are {@code null}, or {@code pathMatcher} is not a path
+	 * pattern, then {@code sources} will be returned without filtering.
 	 * </p>
 	 *
 	 * @param sources
@@ -126,13 +131,14 @@ public final class DatumUtils {
 	 * @return the filtered sources
 	 * @since 1.3
 	 */
-	public static Set<NodeSourcePK> filterNodeSources(Set<NodeSourcePK> sources, PathMatcher pathMatcher,
-			String pattern) {
+	public static @Nullable Set<NodeSourcePK> filterNodeSources(@Nullable Set<NodeSourcePK> sources,
+			@Nullable PathMatcher pathMatcher, @Nullable String pattern) {
 		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
 				|| !pathMatcher.isPattern(pattern) ) {
 			return sources;
 		}
-		sources.removeIf(pk -> !pathMatcher.match(pattern, pk.getSourceId()));
+		sources.removeIf(
+				pk -> pk.getSourceId() == null || !pathMatcher.match(pattern, pk.getSourceId()));
 		return sources;
 	}
 
@@ -140,8 +146,8 @@ public final class DatumUtils {
 	 * Filter a set of sources using a source ID path pattern.
 	 *
 	 * <p>
-	 * If any arguments are {@literal null}, or {@code pathMatcher} is not a
-	 * path pattern, then {@code sources} will be returned without filtering.
+	 * If any arguments are {@code null}, or {@code pathMatcher} is not a path
+	 * pattern, then {@code sources} will be returned without filtering.
 	 * </p>
 	 *
 	 * @param sources
@@ -153,8 +159,8 @@ public final class DatumUtils {
 	 * @return the filtered sources
 	 * @since 1.3
 	 */
-	public static Set<String> filterSources(Set<String> sources, PathMatcher pathMatcher,
-			String pattern) {
+	public static @Nullable Set<String> filterSources(@Nullable Set<String> sources,
+			@Nullable PathMatcher pathMatcher, @Nullable String pattern) {
 		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
 				|| !pathMatcher.isPattern(pattern) ) {
 			return sources;
@@ -169,32 +175,70 @@ public final class DatumUtils {
 	 *
 	 * @param datum
 	 *        the datum to convert
-	 * @return the converted datum, or {@literal null} if {@code datum} is
-	 *         {@literal null}
+	 * @return the converted datum, or {@code null} if {@code datum} is
+	 *         {@code null}
+	 */
+	public static @Nullable GeneralObjectDatum<?> convertGeneralDatum(@Nullable Datum datum) {
+		return convertGeneralDatum(datum, Instant.now(), null);
+	}
+
+	/**
+	 * Convert a {@link Datum} into either a {@link GeneralNodeDatum} or
+	 * {@link GeneralLocationDatum} object.
+	 *
+	 * @param datum
+	 *        the datum to convert
+	 * @param fallbackTimestamp
+	 *        a fallback timestamp to use if the an datum has none
+	 * @return the converted datum, or {@code null} if {@code datum} is
+	 *         {@code null}
+	 * @since 3.1
+	 */
+	public static @Nullable GeneralObjectDatum<?> convertGeneralDatum(@Nullable Datum datum,
+			Instant fallbackTimestamp) {
+		return convertGeneralDatum(datum, fallbackTimestamp, null);
+	}
+
+	/**
+	 * Convert a {@link Datum} into either a {@link GeneralNodeDatum} or
+	 * {@link GeneralLocationDatum} object.
+	 *
+	 * @param datum
+	 *        the datum to convert
+	 * @param fallbackTimestamp
+	 *        a fallback timestamp to use if the an datum has none
+	 * @param authNode
+	 *        optional actor to force node ID values to
+	 * @return the converted datum, or {@code null} if {@code datum} is
+	 *         {@code null}
+	 * @since 3.1
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static GeneralObjectDatum<?> convertGeneralDatum(Datum datum) {
+	public static @Nullable GeneralObjectDatum<?> convertGeneralDatum(@Nullable Datum datum,
+			Instant fallbackTimestamp, @Nullable SecurityNode authNode) {
 		if ( datum == null ) {
 			return null;
 		}
-		DatumSamplesOperations ops = datum.asSampleOperations();
-		var s = new DatumSamples();
+		final DatumSamplesOperations ops = datum.asSampleOperations();
+		final var s = new DatumSamples();
 		s.setI((Map) ops.getSampleData(DatumSamplesType.Instantaneous));
 		s.setA((Map) ops.getSampleData(DatumSamplesType.Accumulating));
 		s.setS((Map) ops.getSampleData(DatumSamplesType.Status));
 		s.setT(ops.getTags());
+
+		final Long objectId = (datum.getKind() == ObjectDatumKind.Node && authNode != null
+				? authNode.getNodeId()
+				: datum.getObjectId() != null ? datum.getObjectId()
+						: GeneralObjectDatumKey.UNASSIGNED_OBJECT_ID);
+		final String sourceId = (datum.getSourceId() != null ? datum.getSourceId() : "");
+		final Instant ts = datum.getTimestamp() != null ? datum.getTimestamp() : fallbackTimestamp;
+
 		if ( datum.getKind() == ObjectDatumKind.Location ) {
-			GeneralLocationDatum gld = new GeneralLocationDatum();
-			gld.setCreated(datum.getTimestamp());
-			gld.setSourceId(datum.getSourceId());
-			gld.setLocationId(datum.getObjectId());
+			GeneralLocationDatum gld = new GeneralLocationDatum(objectId, ts, sourceId);
 			gld.setSamples(s);
 			return gld;
 		}
-		GeneralNodeDatum gnd = new GeneralNodeDatum();
-		gnd.setCreated(datum.getTimestamp());
-		gnd.setSourceId(datum.getSourceId());
-		gnd.setNodeId(datum.getObjectId());
+		GeneralNodeDatum gnd = new GeneralNodeDatum(objectId, ts, sourceId);
 		gnd.setSamples(s);
 		return gnd;
 	}

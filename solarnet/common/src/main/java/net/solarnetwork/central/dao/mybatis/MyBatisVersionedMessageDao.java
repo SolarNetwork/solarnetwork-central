@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.VersionedMessageDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisDao;
 import net.solarnetwork.domain.KeyValuePair;
@@ -62,7 +63,7 @@ public class MyBatisVersionedMessageDao extends BaseMyBatisDao implements Versio
 	}
 
 	@Override
-	public Properties findMessages(Instant version, String[] bundleNames, String locale) {
+	public @Nullable Properties findMessages(Instant version, String[] bundleNames, String locale) {
 		Map<String, Object> params = new LinkedHashMap<>(3);
 		params.put("version", version);
 		params.put("bundles", bundleNames);

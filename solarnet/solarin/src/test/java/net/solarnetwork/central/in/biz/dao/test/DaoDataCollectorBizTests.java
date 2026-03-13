@@ -23,6 +23,7 @@
 package net.solarnetwork.central.in.biz.dao.test;
 
 import static java.util.Collections.singleton;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
@@ -157,10 +158,7 @@ public class DaoDataCollectorBizTests {
 	@Test
 	public void postGeneralNodeDatum() {
 		// GIVEN
-		GeneralNodeDatum d = new GeneralNodeDatum();
-		d.setNodeId(UUID.randomUUID().getMostSignificantBits());
-		d.setSourceId(TEST_SOURCE_ID);
-		d.setCreated(Instant.now());
+		GeneralNodeDatum d = new GeneralNodeDatum(randomLong(), Instant.now(), TEST_SOURCE_ID);
 		d.setSamples(new DatumSamples());
 		d.getSamples().putInstantaneousSampleValue("foo", 1);
 

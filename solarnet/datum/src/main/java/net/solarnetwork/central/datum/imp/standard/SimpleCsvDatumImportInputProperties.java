@@ -45,7 +45,7 @@ public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProp
 	/**
 	 * Get settings for configuring an instance of this class.
 	 *
-	 * @return the settings, never {@literal null}
+	 * @return the settings, never {@code null}
 	 */
 	public static List<SettingSpecifier> getSimpleCsvSettingSpecifiers() {
 		List<SettingSpecifier> result = CsvDatumImportInputProperties.getCsvSettingSpecifiers();
@@ -151,7 +151,7 @@ public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProp
 	 *
 	 * @param type
 	 *        the type of column to get the set for
-	 * @return the set, or {@literal null} if nothing configured for that type
+	 * @return the set, or {@code null} if nothing configured for that type
 	 */
 	public IntRangeSet columnsForType(DatumSamplesType type) {
 		String refs = switch (type) {

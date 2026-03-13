@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.Filter;
 
 /**
@@ -35,11 +36,11 @@ public interface GeneralDatumMetadataFilter extends Filter {
 
 	/**
 	 * Get the first source ID. This returns the first available source ID from
-	 * the {@link #getSourceIds()} array, or {@literal null} if not available.
+	 * the {@link #getSourceIds()} array, or {@code null} if not available.
 	 *
-	 * @return the first source ID, or {@literal null} if not available
+	 * @return the first source ID, or {@code null} if not available
 	 */
-	default String getSourceId() {
+	default @Nullable String getSourceId() {
 		String[] array = getSourceIds();
 		return array != null && array.length > 0 ? array[0] : null;
 	}
@@ -47,17 +48,17 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	/**
 	 * Get an array of source IDs.
 	 *
-	 * @return array of source IDs (may be {@literal null})
+	 * @return array of source IDs (may be {@code null})
 	 */
-	String[] getSourceIds();
+	String @Nullable [] getSourceIds();
 
 	/**
 	 * Get the first tag. This returns the first available tag from the
-	 * {@link #getTags()} array, or {@literal null} if not available.
+	 * {@link #getTags()} array, or {@code null} if not available.
 	 *
-	 * @return the first tag, or {@literal null} if not available
+	 * @return the first tag, or {@code null} if not available
 	 */
-	default String getTag() {
+	default @Nullable String getTag() {
 		String[] array = getTags();
 		return array != null && array.length > 0 ? array[0] : null;
 	}
@@ -65,21 +66,21 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	/**
 	 * Get an array of tags.
 	 *
-	 * @return array of tags (may be {@literal null})
+	 * @return array of tags (may be {@code null})
 	 */
-	String[] getTags();
+	String @Nullable [] getTags();
 
 	/**
 	 * Get the first property name.
 	 *
 	 * <p>
 	 * This returns the first available property name from the
-	 * {@link #getPropertyNames()} array, or {@literal null} if not available.
+	 * {@link #getPropertyNames()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the property name, or {@literal null} if not available
+	 * @return the property name, or {@code null} if not available
 	 */
-	default String getPropertyName() {
+	default @Nullable String getPropertyName() {
 		String[] names = getPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
 	}
@@ -87,23 +88,22 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	/**
 	 * Get an array of property names.
 	 *
-	 * @return array of property names (may be {@literal null})
+	 * @return array of property names (may be {@code null})
 	 */
-	String[] getPropertyNames();
+	String @Nullable [] getPropertyNames();
 
 	/**
 	 * Get the first instantaneous property name.
 	 *
 	 * <p>
 	 * This returns the first available instantaneous property name from the
-	 * {@link #getInstantaneousPropertyNames()} array, or {@literal null} if not
+	 * {@link #getInstantaneousPropertyNames()} array, or {@code null} if not
 	 * available.
 	 * </p>
 	 *
-	 * @return the instantaneous property name, or {@literal null} if not
-	 *         available
+	 * @return the instantaneous property name, or {@code null} if not available
 	 */
-	default String getInstantaneousPropertyName() {
+	default @Nullable String getInstantaneousPropertyName() {
 		String[] names = getInstantaneousPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
 	}
@@ -111,23 +111,22 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	/**
 	 * Get an array of instantaneous property names.
 	 *
-	 * @return array of instantaneous property names (may be {@literal null})
+	 * @return array of instantaneous property names (may be {@code null})
 	 */
-	String[] getInstantaneousPropertyNames();
+	String @Nullable [] getInstantaneousPropertyNames();
 
 	/**
 	 * Get the first accumulating property name.
 	 *
 	 * <p>
 	 * This returns the first available accumulating property name from the
-	 * {@link #getAccumulatingPropertyNames()} array, or {@literal null} if not
+	 * {@link #getAccumulatingPropertyNames()} array, or {@code null} if not
 	 * available.
 	 * </p>
 	 *
-	 * @return the accumulating property name, or {@literal null} if not
-	 *         available
+	 * @return the accumulating property name, or {@code null} if not available
 	 */
-	default String getAccumulatingPropertyName() {
+	default @Nullable String getAccumulatingPropertyName() {
 		String[] names = getAccumulatingPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
 	}
@@ -135,22 +134,22 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	/**
 	 * Get an array of accumulating property names.
 	 *
-	 * @return array of accumulating property names (may be {@literal null})
+	 * @return array of accumulating property names (may be {@code null})
 	 */
-	String[] getAccumulatingPropertyNames();
+	String @Nullable [] getAccumulatingPropertyNames();
 
 	/**
 	 * Get the first status property name.
 	 *
 	 * <p>
 	 * This returns the first available status property name from the
-	 * {@link #getStatusPropertyNames()} array, or {@literal null} if not
+	 * {@link #getStatusPropertyNames()} array, or {@code null} if not
 	 * available.
 	 * </p>
 	 *
-	 * @return the status property name, or {@literal null} if not available
+	 * @return the status property name, or {@code null} if not available
 	 */
-	default String getStatusPropertyName() {
+	default @Nullable String getStatusPropertyName() {
 		String[] names = getStatusPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
 	}
@@ -158,9 +157,9 @@ public interface GeneralDatumMetadataFilter extends Filter {
 	/**
 	 * Get an array of status property names.
 	 *
-	 * @return array of status property names (may be {@literal null})
+	 * @return array of status property names (may be {@code null})
 	 */
-	String[] getStatusPropertyNames();
+	String @Nullable [] getStatusPropertyNames();
 
 	/**
 	 * Test if this filter has any property name criteria.

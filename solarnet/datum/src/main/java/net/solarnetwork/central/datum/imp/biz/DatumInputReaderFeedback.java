@@ -40,14 +40,14 @@ public interface DatumInputReaderFeedback {
 	/**
 	 * Get the line number to reference, from the input data.
 	 * 
-	 * @return the line number, or {@literal null} if not known
+	 * @return the line number, or {@code null} if not known
 	 */
 	Long getLineNumber();
 
 	/**
 	 * Get the original line from the input data.
 	 * 
-	 * @return the line, or {@literal null} if not available
+	 * @return the line, or {@code null} if not available
 	 */
 	String getLine();
 

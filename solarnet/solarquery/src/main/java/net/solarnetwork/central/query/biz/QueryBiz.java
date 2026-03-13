@@ -74,7 +74,7 @@ public interface QueryBiz {
 	 * range of data available.
 	 * </p>
 	 * <p>
-	 * If the {@code sourceId} parameter is {@literal null} then the returned
+	 * If the {@code sourceId} parameter is {@code null} then the returned
 	 * interval will be for the node as a whole, for any sources.
 	 * </p>
 	 *
@@ -82,8 +82,7 @@ public interface QueryBiz {
 	 *        the ID of the node to look for
 	 * @param sourceId
 	 *        an optional source ID to find the available interval for
-	 * @return ReadableInterval instance, or {@literal null} if no data
-	 *         available
+	 * @return ReadableInterval instance, or {@code null} if no data available
 	 */
 	ReportableInterval getReportableInterval(Long nodeId, String sourceId);
 
@@ -105,8 +104,7 @@ public interface QueryBiz {
 	 *
 	 * @param filter
 	 *        the node, source, and optional date range to search for
-	 * @return ReadableInterval instance, or {@literal null} if no data
-	 *         available
+	 * @return ReadableInterval instance, or {@code null} if no data available
 	 * @since 4.3
 	 */
 	ReportableInterval findReportableInterval(GeneralNodeDatumFilter filter);
@@ -127,7 +125,7 @@ public interface QueryBiz {
 	 *
 	 * @param filter
 	 *        the query filter
-	 * @return the distinct source IDs available (never {@literal null})
+	 * @return the distinct source IDs available (never {@code null})
 	 * @since 2.1
 	 * @see #findAvailableSources(GeneralNodeDatumFilter)
 	 */
@@ -149,8 +147,7 @@ public interface QueryBiz {
 	 *
 	 * @param filter
 	 *        the query filter
-	 * @return the distinct node and source IDs available (never
-	 *         {@literal null})
+	 * @return the distinct node and source IDs available (never {@code null})
 	 * @since 2.5
 	 */
 	Set<NodeSourcePK> findAvailableSources(GeneralNodeDatumFilter filter);
@@ -160,7 +157,7 @@ public interface QueryBiz {
 	 *
 	 * @param actor
 	 *        the actor to get nodes for
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 * @since 2.2
 	 */
 	Set<Long> findAvailableNodes(SecurityActor actor);
@@ -173,7 +170,7 @@ public interface QueryBiz {
 	 * @param filter
 	 *        an optional filter, from which a start and/or end dates can be
 	 *        provided
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 * @since 2.3
 	 */
 	Set<NodeSourcePK> findAvailableSources(SecurityActor actor, DatumFilter filter);
@@ -190,7 +187,7 @@ public interface QueryBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 * @since 1.4
 	 */
 	FilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> findFilteredGeneralNodeDatum(
@@ -209,7 +206,7 @@ public interface QueryBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 * @since 1.4
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredAggregateGeneralNodeDatum(
@@ -247,8 +244,8 @@ public interface QueryBiz {
 	 *        the type of reading to perform
 	 * @param tolerance
 	 *        a time period of tolerance to use when querying around the
-	 *        start/end dates, or {@literal null} for a default tolerance based
-	 *        on {@code readingType}
+	 *        start/end dates, or {@code null} for a default tolerance based on
+	 *        {@code readingType}
 	 * @param processor
 	 *        the processor for the results
 	 * @param sortDescriptors
@@ -282,9 +279,9 @@ public interface QueryBiz {
 	 *        the type of reading to perform
 	 * @param tolerance
 	 *        a time period of tolerance to use when querying around the
-	 *        start/end dates, or {@literal null} for a default tolerance based
-	 *        on {@code readingType}
-	 * @return the results, never {@literal null}
+	 *        start/end dates, or {@code null} for a default tolerance based on
+	 *        {@code readingType}
+	 * @return the results, never {@code null}
 	 * @since 2.4
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredReading(
@@ -307,15 +304,15 @@ public interface QueryBiz {
 	 *        the type of reading to perform
 	 * @param tolerance
 	 *        a time period of tolerance to use when querying around the
-	 *        start/end dates, or {@literal null} for a default tolerance based
-	 *        on {@code readingType}
+	 *        start/end dates, or {@code null} for a default tolerance based on
+	 *        {@code readingType}
 	 * @param sortDescriptors
 	 *        the optional sort descriptors
 	 * @param offset
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 * @since 2.7
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredAggregateReading(
@@ -335,7 +332,7 @@ public interface QueryBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 * @since 1.5
 	 */
 	FilterResults<GeneralLocationDatumFilterMatch, GeneralLocationDatumPK> findGeneralLocationDatum(
@@ -355,7 +352,7 @@ public interface QueryBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 * @since 1.5
 	 */
 	FilterResults<ReportingGeneralLocationDatumMatch, GeneralLocationDatumPK> findAggregateGeneralLocationDatum(
@@ -372,7 +369,7 @@ public interface QueryBiz {
 	 *        an optional start date (inclusive) to filter on
 	 * @param end
 	 *        an optional end date (inclusive) to filter on
-	 * @return the distinct source IDs available (never {@literal null})
+	 * @return the distinct source IDs available (never {@code null})
 	 * @since 1.5
 	 */
 	Set<String> getLocationAvailableSources(Long locationId, Instant start, Instant end);
@@ -388,7 +385,7 @@ public interface QueryBiz {
 	 * range of data available.
 	 * </p>
 	 * <p>
-	 * If the {@code sourceId} parameter is {@literal null} then the returned
+	 * If the {@code sourceId} parameter is {@code null} then the returned
 	 * interval will be for the node as a whole, for any sources.
 	 * </p>
 	 *
@@ -396,8 +393,7 @@ public interface QueryBiz {
 	 *        the ID of the location to look for
 	 * @param sourceId
 	 *        an optional source ID to find the available interval for
-	 * @return ReadableInterval instance, or {@literal null} if no data
-	 *         available
+	 * @return ReadableInterval instance, or {@code null} if no data available
 	 * @since 1.5
 	 */
 	ReportableInterval getLocationReportableInterval(Long locationId, String sourceId);
@@ -415,7 +411,7 @@ public interface QueryBiz {
 	 * @param max
 	 *        an optional maximum number of returned results
 	 *
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 * @since 1.4
 	 */
 	FilterResults<LocationMatch, Long> findFilteredLocations(Location filter,

@@ -27,7 +27,6 @@ import static net.solarnetwork.central.web.support.ContentCachingService.CONTENT
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -88,7 +87,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	private final int lockPoolCapacity;
 	private final LongAccumulator lockPoolMinSize;
 
-	private Set<String> methodsToCache = Collections.singleton("GET");
+	private Set<String> methodsToCache = Set.of("GET");
 	private long requestLockTimeout = TimeUnit.SECONDS.toMillis(240);
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -223,7 +222,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	 * @param lockPoolCapacity
 	 *        the lock pool capacity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ContentCachingFilter(ContentCachingService contentCachingService, int lockPoolCapacity) {
 		this(contentCachingService, lockPoolWithCapacity(lockPoolCapacity),
@@ -241,7 +240,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	 * @param requestLocks
 	 *        the request lock map to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null} or the lock pool is empty
+	 *         if any argument is {@code null} or the lock pool is empty
 	 */
 	public ContentCachingFilter(ContentCachingService contentCachingService,
 			BlockingQueue<LockAndCount> lockPool, ConcurrentMap<String, LockAndCount> requestLocks) {
@@ -450,7 +449,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	 * @param methodsToCache
 	 *        the methods to cache; defaults to {@literal GET} only
 	 */
-	public void setMethodsToCache(Set<String> methodsToCache) {
+	public final void setMethodsToCache(Set<String> methodsToCache) {
 		this.methodsToCache = methodsToCache;
 	}
 
@@ -460,7 +459,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	 * @param requestLockTimeout
 	 *        the timeout to use, in milliseconds; defaults to 4 minutes
 	 */
-	public void setRequestLockTimeout(long requestLockTimeout) {
+	public final void setRequestLockTimeout(long requestLockTimeout) {
 		this.requestLockTimeout = requestLockTimeout;
 	}
 
@@ -478,7 +477,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	 *        {@link #DEFAULT_STAT_LOG_ACCESS_COUNT}
 	 * @since 3.0
 	 */
-	public void setStatLogAccessCount(int statLogAccessCount) {
+	public final void setStatLogAccessCount(int statLogAccessCount) {
 		this.stats.setLogFrequency(statLogAccessCount);
 	}
 }

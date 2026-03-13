@@ -212,7 +212,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 		@SuppressWarnings("MixedMutabilityReturnType")
 		private Map<String, Object> datumMap(GeneralNodeDatumFilterMatch match) {
 			if ( match == null || match.getId() == null ) {
-				return Collections.emptyMap();
+				return Map.of();
 			}
 			Map<String, Object> map = new LinkedHashMap<>(8);
 
@@ -315,7 +315,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			flush();
 			close();
 			if ( temporaryFile == null ) {
-				return Collections.emptyList();
+				return List.of();
 			}
 			log.info("Wrote {} bytes to temporary file [{}]", temporaryFile.length(), temporaryFile);
 			final boolean decompressTemp = (config == null || config.getCompressionType() == null
@@ -343,15 +343,14 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 				log.info("Wrote {} bytes to temporary file [{}]", temporaryFile.length(), temporaryFile);
 			}
 			if ( temporaryFile == null ) {
-				return Collections.emptyList();
+				return List.of();
 			}
 			Resource outputResource = new FileSystemResource(temporaryFile);
 			if ( decompressTemp ) {
 				outputResource = new DecompressingResource(outputResource);
 			}
-			return Collections.singleton(
-					new BasicDatumExportResource(new DeleteOnCloseFileResource(outputResource),
-							getContentType(config), getExportContentType()));
+			return Set.of(new BasicDatumExportResource(new DeleteOnCloseFileResource(outputResource),
+					getContentType(config), getExportContentType()));
 		}
 
 		@Override

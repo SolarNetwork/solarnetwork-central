@@ -101,7 +101,7 @@ public interface UserDatumDeleteBiz {
 	 *        the user ID that owns the job
 	 * @param jobId
 	 *        the ID of the job to get
-	 * @return the job status, or {@literal null} if not available
+	 * @return the job status, or {@code null} if not available
 	 */
 	DatumDeleteJobInfo datumDeleteJobForUser(Long userId, String jobId);
 
@@ -111,9 +111,9 @@ public interface UserDatumDeleteBiz {
 	 * @param userId
 	 *        the ID of the user to find the job statuses for
 	 * @param states
-	 *        the specific states to limit the results to, or {@literal null}
-	 *        for all states
-	 * @return the job statuses, never {@literal null}
+	 *        the specific states to limit the results to, or {@code null} for
+	 *        all states
+	 * @return the job statuses, never {@code null}
 	 */
 	Collection<DatumDeleteJobInfo> datumDeleteJobsForUser(Long userId, Set<DatumDeleteJobState> states);
 

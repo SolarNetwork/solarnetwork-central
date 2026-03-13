@@ -82,7 +82,7 @@ public class AssetEnergyDatumConfiguration extends BaseAssetDatumConfiguration
 	 * Get the statistics type, defaulting to {@code Difference} if not
 	 * configured.
 	 * 
-	 * @return the statistics type, never {@literal null}.
+	 * @return the statistics type, never {@code null}.
 	 */
 	public StatisticType statisticType() {
 		StatisticType type = getStatisticType();

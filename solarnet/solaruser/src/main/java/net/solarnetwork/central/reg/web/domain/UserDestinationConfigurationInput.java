@@ -23,6 +23,7 @@
 package net.solarnetwork.central.reg.web.domain;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseUserRelatedStdIdentifiableConfigurationInput;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
@@ -36,7 +37,7 @@ import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 public final class UserDestinationConfigurationInput extends
 		BaseUserRelatedStdIdentifiableConfigurationInput<UserDestinationConfiguration, UserLongCompositePK> {
 
-	private Long id;
+	private @Nullable Long id;
 
 	/**
 	 * Constructor.
@@ -47,7 +48,8 @@ public final class UserDestinationConfigurationInput extends
 
 	@Override
 	public UserDestinationConfiguration toEntity(UserLongCompositePK id, Instant date) {
-		UserDestinationConfiguration entity = new UserDestinationConfiguration(id, date);
+		UserDestinationConfiguration entity = new UserDestinationConfiguration(id, date, getName(),
+				getServiceIdentifier());
 		populateConfiguration(entity);
 		return entity;
 	}
@@ -57,7 +59,7 @@ public final class UserDestinationConfigurationInput extends
 	 *
 	 * @return the ID
 	 */
-	public Long getId() {
+	public final @Nullable Long getId() {
 		return id;
 	}
 
@@ -67,7 +69,7 @@ public final class UserDestinationConfigurationInput extends
 	 * @param id
 	 *        the ID to set
 	 */
-	public void setId(Long id) {
+	public final void setId(@Nullable Long id) {
 		this.id = id;
 	}
 

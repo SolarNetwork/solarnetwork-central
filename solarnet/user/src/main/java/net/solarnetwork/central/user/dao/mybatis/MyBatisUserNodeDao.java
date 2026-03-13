@@ -28,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
@@ -109,11 +110,11 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	}
 
 	@Override
-	protected Long handleInsert(UserNode datum) {
-		super.handleInsert(datum);
-		// as our primary key is actually the node ID, return that
+	protected void preprocessInsert(UserNode datum) {
+		super.preprocessInsert(datum);
 		assert datum.getNode() != null;
-		return datum.getNode().getId();
+		// set node ID as primary key for result
+		datum.setId(datum.getNode().getId());
 	}
 
 	@Override
@@ -136,7 +137,7 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	}
 
 	@Override
-	public UserNodeTransfer getUserNodeTransfer(UserNodePK pk) {
+	public @Nullable UserNodeTransfer getUserNodeTransfer(UserNodePK pk) {
 		return getSqlSession().selectOne(QUERY_USER_NODE_TRANSFERS_FOR_ID, pk);
 	}
 

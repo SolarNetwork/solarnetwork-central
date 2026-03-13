@@ -59,6 +59,8 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 	 *        {@literal true} to publish each message as retained
 	 * @param publishQos
 	 *        the publish QoS
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public MqttJsonPublisher(String name, ObjectMapper objectMapper, Function<T, String> topicFn,
 			boolean retained, MqttQos publishQos) {

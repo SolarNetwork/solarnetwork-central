@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.mail;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 
 /**
@@ -43,15 +44,17 @@ public interface MessageDataSource {
 	/**
 	 * Get the message body.
 	 * 
-	 * @return the message body, or {@literal null} if none
+	 * @return the message body, or {@code null} if none
 	 */
+	@Nullable
 	String getBody();
 
 	/**
 	 * Get a collection of message attachments.
 	 * 
-	 * @return the attachments, or {@literal null} if none
+	 * @return the attachments, or {@code null} if none
 	 */
+	@Nullable
 	Iterable<Resource> getAttachments();
 
 }

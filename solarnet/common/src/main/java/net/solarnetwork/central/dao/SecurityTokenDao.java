@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.security.SecurityToken;
 
 /**
@@ -39,6 +40,7 @@ public interface SecurityTokenDao {
 	 *        the token ID
 	 * @return the token
 	 */
+	@Nullable
 	SecurityToken securityTokenForId(String tokenId);
 
 }

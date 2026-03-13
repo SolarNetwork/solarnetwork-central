@@ -40,9 +40,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -113,7 +113,7 @@ public class LocusEnergyCloudIntegrationServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		service = new LocusEnergyCloudIntegrationService(Collections.singleton(datumStreamService),
+		service = new LocusEnergyCloudIntegrationService(Set.of(datumStreamService),
 				userEventAppenderBiz, encryptor, restOps, oauthClientManager, clock, null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
@@ -126,7 +126,7 @@ public class LocusEnergyCloudIntegrationServiceTests {
 	public void validate_missingAuthSettings() {
 		// GIVEN
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				"foo", "bar"
@@ -198,7 +198,7 @@ public class LocusEnergyCloudIntegrationServiceTests {
 		final String password = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,

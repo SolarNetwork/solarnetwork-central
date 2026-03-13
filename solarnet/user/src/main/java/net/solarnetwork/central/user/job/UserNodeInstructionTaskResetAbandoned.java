@@ -52,7 +52,7 @@ public class UserNodeInstructionTaskResetAbandoned extends JobSupport {
 	 * @param service
 	 *        the service to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserNodeInstructionTaskResetAbandoned(UserNodeInstructionService service) {
 		this(Clock.systemUTC(), service);
@@ -66,14 +66,12 @@ public class UserNodeInstructionTaskResetAbandoned extends JobSupport {
 	 * @param service
 	 *        the service to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserNodeInstructionTaskResetAbandoned(Clock clock, UserNodeInstructionService service) {
-		super();
+		super("User", "UserNodeInstructionTaskResetAbandoned");
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.service = requireNonNullArgument(service, "service");
-		setGroupId("User");
-		setId("UserNodeInstructionTaskResetAbandoned");
 	}
 
 	@Override
@@ -88,7 +86,7 @@ public class UserNodeInstructionTaskResetAbandoned extends JobSupport {
 	/**
 	 * Get the minimum age before tasks are eligible for being reset.
 	 *
-	 * @return the minimum age, never {@literal null}; defaults to
+	 * @return the minimum age, never {@code null}; defaults to
 	 *         {@link #DEFAULT_MINIMUM_AGE}
 	 */
 	public final Duration getMinimumAge() {
@@ -99,7 +97,7 @@ public class UserNodeInstructionTaskResetAbandoned extends JobSupport {
 	 * Set the minimum age before tasks are eligible for being reset.
 	 *
 	 * @param minimumAge
-	 *        the minimum age to set; if {@literal null} then set as
+	 *        the minimum age to set; if {@code null} then set as
 	 *        {@link #DEFAULT_MINIMUM_AGE}
 	 */
 	public final void setMinimumAge(Duration minimumAge) {

@@ -41,7 +41,7 @@ public interface AuthTokenAuthorizationDao {
 	 * @param oauth
 	 *        {@literal true} if the token is an OAuth value, {@literal false}
 	 *        if OSCP
-	 * @return the ID, or {@literal null} if not available (or disabled)
+	 * @return the ID, or {@code null} if not available (or disabled)
 	 */
 	UserLongCompositePK idForToken(String token, boolean oauth);
 
@@ -51,7 +51,7 @@ public interface AuthTokenAuthorizationDao {
 	 * @param authId
 	 *        the authorization ID to get the role for, as previously returned
 	 *        from {@link #idForToken(String,boolean)}
-	 * @return the role, or {@literal null} if not available (or disabled)
+	 * @return the role, or {@code null} if not available (or disabled)
 	 */
 	AuthRoleInfo roleForAuthorization(UserLongCompositePK authId);
 

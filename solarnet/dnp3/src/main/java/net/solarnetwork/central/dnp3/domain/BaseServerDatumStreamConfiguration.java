@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dnp3.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -64,7 +65,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseServerDatumStreamConfiguration(UserLongIntegerCompositePK id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
@@ -98,18 +99,18 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public boolean isSameAs(C other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final C o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.nodeId, other.getNodeId())
-				&& Objects.equals(this.sourceId, other.getSourceId())
-				&& Objects.equals(this.property, other.getProperty())
-				&& Objects.equals(this.type, other.getType())
-				&& ObjectUtils.comparativelyEqual(this.multiplier, other.getMultiplier())
-				&& ObjectUtils.comparativelyEqual(this.offset, other.getOffset())
-				&& Objects.equals(this.scale, other.getScale())
+		return Objects.equals(this.nodeId, o.getNodeId())
+				&& Objects.equals(this.sourceId, o.getSourceId())
+				&& Objects.equals(this.property, o.getProperty())
+				&& Objects.equals(this.type, o.getType())
+				&& ObjectUtils.comparativelyEqual(this.multiplier, o.getMultiplier())
+				&& ObjectUtils.comparativelyEqual(this.offset, o.getOffset())
+				&& Objects.equals(this.scale, o.getScale())
 				;
 		// @formatter:on
 	}

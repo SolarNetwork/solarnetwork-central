@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
@@ -58,7 +59,7 @@ public class CredentialConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CredentialConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
@@ -74,7 +75,7 @@ public class CredentialConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CredentialConfiguration(Long userId, Long credentialId, Instant created) {
 		this(new UserLongCompositePK(userId, credentialId), created);
@@ -102,14 +103,14 @@ public class CredentialConfiguration
 
 	@Override
 	public boolean isSameAs(CredentialConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.username, other.username)
-				&& Objects.equals(this.password, other.password)
-				&& Objects.equals(this.expires, other.expires)
+		return Objects.equals(this.username, o.username)
+				&& Objects.equals(this.password, o.password)
+				&& Objects.equals(this.expires, o.expires)
 				;
 		// @formatter:on
 	}

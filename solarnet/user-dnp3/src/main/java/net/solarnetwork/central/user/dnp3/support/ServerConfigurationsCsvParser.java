@@ -89,7 +89,7 @@ public class ServerConfigurationsCsvParser {
 	 * @param locale
 	 *        the locale for messages
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ServerConfigurationsCsvParser(MessageSource messageSource, Locale locale) {
 		super();

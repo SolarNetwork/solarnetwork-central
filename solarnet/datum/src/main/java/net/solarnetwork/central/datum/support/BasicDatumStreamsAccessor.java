@@ -23,16 +23,18 @@
 package net.solarnetwork.central.datum.support;
 
 import static java.util.Collections.emptyMap;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.PathMatcher;
@@ -40,7 +42,6 @@ import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Basic implementation of {@link DatumStreamsAccessor}.
@@ -57,7 +58,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	private final PathMatcher pathMatcher;
 	private final Collection<? extends Datum> datum;
 
-	private Map<ObjectDatumKind, Map<Long, Map<String, List<Datum>>>> timeSortedDatumBySource;
+	private @Nullable Map<ObjectDatumKind, Map<Long, Map<String, List<Datum>>>> timeSortedDatumBySource;
 
 	/**
 	 * Constructor.
@@ -69,10 +70,11 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	 * @throws IllegalArgumentException
 	 *         if {@code PathMatcher} is {@code null}
 	 */
-	public BasicDatumStreamsAccessor(PathMatcher pathMatcher, Collection<? extends Datum> datum) {
+	public BasicDatumStreamsAccessor(PathMatcher pathMatcher,
+			@Nullable Collection<? extends Datum> datum) {
 		super();
-		this.pathMatcher = ObjectUtils.requireNonNullArgument(pathMatcher, "pathMatcher");
-		this.datum = (datum != null ? datum : Collections.emptyList());
+		this.pathMatcher = requireNonNullArgument(pathMatcher, "pathMatcher");
+		this.datum = (datum != null ? datum : List.of());
 	}
 
 	/**
@@ -88,8 +90,9 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 			for ( Datum d : datum ) {
 				SortedSet<Datum> set = map.computeIfAbsent(d.getKind(), _ -> new HashMap<>(2))
 						.computeIfAbsent(d.getObjectId(), _ -> new HashMap<>(8))
-						.computeIfAbsent(d.getSourceId(), _ -> new TreeSet<>(
-								(l, r) -> r.getTimestamp().compareTo(l.getTimestamp())));
+						.computeIfAbsent(d.getSourceId(),
+								_ -> new TreeSet<>((l, r) -> nonnull(r.getTimestamp(), "Right timestamp")
+										.compareTo(l.getTimestamp())));
 
 				if ( !set.contains(d) ) {
 					set.add(d);
@@ -130,22 +133,22 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	}
 
 	@Override
-	public Datum at(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp) {
+	public @Nullable Datum at(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp) {
 		final var map = sortedDatumStreams(kind, objectId);
 		final List<Datum> list = map.computeIfAbsent(sourceId, _ -> new ArrayList<>(2));
 		return at(kind, objectId, sourceId, list, timestamp);
 	}
 
 	@Override
-	public Collection<Datum> atMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
-			Instant timestamp) {
+	public Collection<Datum> atMatching(ObjectDatumKind kind, Long objectId,
+			@Nullable String sourceIdPattern, Instant timestamp) {
 		final var map = sortedDatumStreams(kind, objectId);
 		final var result = new ArrayList<Datum>(map.size());
 		for ( Entry<String, List<Datum>> e : map.entrySet() ) {
 			if ( sourceIdPattern == null || sourceIdPattern.isEmpty()
 					|| pathMatcher.match(sourceIdPattern, e.getKey()) ) {
 				List<Datum> list = e.getValue();
-				Datum d = at(kind, objectId, sourceIdPattern, list, timestamp);
+				Datum d = at(kind, objectId, e.getKey(), list, timestamp);
 				if ( d != null ) {
 					result.add(d);
 				}
@@ -155,8 +158,8 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	}
 
 	@Override
-	public Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
-			int offset) {
+	public Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId,
+			@Nullable String sourceIdPattern, int offset) {
 		final var map = sortedDatumStreams(kind, objectId);
 		final var result = new ArrayList<Datum>(map.size());
 		for ( Entry<String, List<Datum>> e : map.entrySet() ) {
@@ -173,15 +176,15 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	}
 
 	@Override
-	public Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, int offset) {
+	public @Nullable Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, int offset) {
 		final var map = sortedDatumStreams(kind, objectId);
 		final List<Datum> list = map.computeIfAbsent(sourceId, _ -> new ArrayList<>(2));
 		return offset(kind, objectId, sourceId, list, offset);
 	}
 
 	@Override
-	public Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
-			Instant timestamp, int offset) {
+	public Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId,
+			@Nullable String sourceIdPattern, Instant timestamp, int offset) {
 		final var map = sortedDatumStreams(kind, objectId);
 		final var result = new ArrayList<Datum>(map.size());
 		for ( Entry<String, List<Datum>> e : map.entrySet() ) {
@@ -198,8 +201,8 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	}
 
 	@Override
-	public Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp,
-			int offset) {
+	public @Nullable Datum offset(ObjectDatumKind kind, Long objectId, String sourceId,
+			Instant timestamp, int offset) {
 		final var map = sortedDatumStreams(kind, objectId);
 		final List<Datum> list = map.computeIfAbsent(sourceId, _ -> new ArrayList<>(2));
 		return offset(kind, objectId, sourceId, list, timestamp, offset);
@@ -218,11 +221,11 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	 *        the list of available datum
 	 * @param offset
 	 *        the desired offset (will be higher than {@code list.size()})
-	 * @return the resolved datum, or {@literal null}
+	 * @return the resolved datum, or {@code null}
 	 * @since 2.0
 	 */
-	protected Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
-			int offset) {
+	protected @Nullable Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId,
+			List<Datum> list, int offset) {
 		return null;
 	}
 
@@ -244,11 +247,11 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	 * @param referenceIndex
 	 *        the index within {@code list} for a datum found already for the
 	 *        given {@code timestamp}, or {@code -1} if not found
-	 * @return the resolved datum, or {@literal null}
+	 * @return the resolved datum, or {@code null}
 	 * @since 2.0
 	 */
-	protected Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
-			Instant timestamp, int offset, int referenceIndex) {
+	protected @Nullable Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId,
+			List<Datum> list, Instant timestamp, int offset, int referenceIndex) {
 		return null;
 	}
 
@@ -268,15 +271,15 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	 * @param referenceIndex
 	 *        the index within {@code list} the resolved datum should be
 	 *        inserted at
-	 * @return the resolved datum, or {@literal null}
+	 * @return the resolved datum, or {@code null}
 	 * @since 2.1
 	 */
-	protected Datum atMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
-			Instant timestamp, int referenceIndex) {
+	protected @Nullable Datum atMiss(ObjectDatumKind kind, Long objectId, String sourceId,
+			List<Datum> list, Instant timestamp, int referenceIndex) {
 		return null;
 	}
 
-	private Datum at(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
+	private @Nullable Datum at(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
 			Instant timestamp) {
 		assert list != null;
 		if ( timestamp == null ) {
@@ -294,8 +297,8 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 		return atMiss(kind, objectId, sourceId, list, timestamp, list.size());
 	}
 
-	private Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
-			int offset) {
+	private @Nullable Datum offset(ObjectDatumKind kind, Long objectId, String sourceId,
+			List<Datum> list, int offset) {
 		assert list != null;
 		if ( offset < 0 ) {
 			return null;
@@ -306,12 +309,12 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 		return offsetMiss(kind, objectId, sourceId, list, offset);
 	}
 
-	private Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
-			Instant timestamp, int offset) {
+	private @Nullable Datum offset(ObjectDatumKind kind, Long objectId, String sourceId,
+			List<Datum> list, Instant timestamp, int offset) {
 		assert list != null;
 		for ( int idx = 0, len = list.size(); idx < len; idx++ ) {
 			Datum d = list.get(idx);
-			if ( !d.getTimestamp().isAfter(timestamp) ) {
+			if ( !nonnull(d.getTimestamp(), "Timestamp").isAfter(timestamp) ) {
 				if ( offset == 0 ) {
 					return d;
 				}
@@ -327,7 +330,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 
 	@Override
 	public final Collection<Datum> rangeMatching(ObjectDatumKind kind, Long objectId,
-			String sourceIdPattern, Instant from, Instant to) {
+			@Nullable String sourceIdPattern, Instant from, Instant to) {
 		final var map = sortedDatumStreams(kind, objectId);
 		return rangeMatching(kind, objectId, sourceIdPattern, from, to, map);
 	}
@@ -352,15 +355,19 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	 * @return the matching datum, never {@code null}
 	 */
 	protected Collection<Datum> rangeMatching(ObjectDatumKind kind, Long objectId,
-			String sourceIdPattern, Instant from, Instant to, Map<String, List<Datum>> datumBySourceId) {
+			@Nullable String sourceIdPattern, Instant from, Instant to,
+			Map<String, List<Datum>> datumBySourceId) {
 		final var result = new ArrayList<Datum>(8);
 		for ( Entry<String, List<Datum>> e : datumBySourceId.entrySet() ) {
 			if ( sourceIdPattern == null || sourceIdPattern.isEmpty()
 					|| pathMatcher.match(sourceIdPattern, e.getKey()) ) {
 				for ( Datum d : e.getValue() ) {
-					if ( from != null && d.getTimestamp().isBefore(from) ) {
+					final Instant ts = d.getTimestamp();
+					if ( ts == null ) {
 						continue;
-					} else if ( to != null && !d.getTimestamp().isBefore(to) ) {
+					} else if ( from != null && ts.isBefore(from) ) {
+						continue;
+					} else if ( to != null && !ts.isBefore(to) ) {
 						continue;
 					}
 					result.add(d);
@@ -372,7 +379,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 
 	@Override
 	public Collection<ObjectDatumStreamMetadata> findStreams(ObjectDatumKind kind, String query,
-			String sourceIdPattern, String... tags) {
+			@Nullable String sourceIdPattern, String @Nullable... tags) {
 		// not supported
 		return List.of();
 	}

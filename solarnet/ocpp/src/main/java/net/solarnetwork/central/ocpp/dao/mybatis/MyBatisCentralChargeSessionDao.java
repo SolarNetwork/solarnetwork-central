@@ -61,7 +61,7 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 		 */
 		DeleteByPosted("delete-CentralChargeSession-for-posted"),
 
-		/** Find entities with a {@literal null} {@code ended} value. */
+		/** Find entities with a {@code null} {@code ended} value. */
 		FindByIncomplete("findall-CentralChargeSession-incomplete"),
 
 		/** Find all sampled value readings for a charge session ID. */

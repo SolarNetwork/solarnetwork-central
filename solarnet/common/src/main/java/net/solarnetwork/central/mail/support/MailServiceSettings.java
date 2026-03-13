@@ -23,6 +23,7 @@
 package net.solarnetwork.central.mail.support;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Settings for a mail service.
@@ -32,14 +33,14 @@ import java.util.Map;
  */
 public class MailServiceSettings {
 
-	private Map<String, String> headers;
+	private @Nullable Map<String, String> headers;
 
 	/**
 	 * Get static headers to apply to all messages.
 	 * 
 	 * @return the headers
 	 */
-	public Map<String, String> getHeaders() {
+	public final @Nullable Map<String, String> getHeaders() {
 		return headers;
 	}
 
@@ -49,7 +50,7 @@ public class MailServiceSettings {
 	 * @param headers
 	 *        the headers to set
 	 */
-	public void setHeaders(Map<String, String> headers) {
+	public final void setHeaders(@Nullable Map<String, String> headers) {
 		this.headers = headers;
 	}
 

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Criteria API for a "tag" qualifier.
  * 
@@ -43,21 +45,21 @@ public interface TagCriteria {
 	/**
 	 * Get an array of tags.
 	 * 
-	 * @return array of tags (may be {@literal null})
+	 * @return array of tags (may be {@code null})
 	 */
-	String[] getTags();
+	String @Nullable [] getTags();
 
 	/**
 	 * Get the first tag.
 	 * 
 	 * <p>
 	 * This returns the first available tag from the {@link #getTags()} array,
-	 * or {@literal null} if not available.
+	 * or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the tag, or {@literal null} if not available
+	 * @return the tag, or {@code null} if not available
 	 */
-	default String getTag() {
+	default @Nullable String getTag() {
 		String[] kinds = getTags();
 		return (kinds != null && kinds.length > 0 ? kinds[0] : null);
 	}

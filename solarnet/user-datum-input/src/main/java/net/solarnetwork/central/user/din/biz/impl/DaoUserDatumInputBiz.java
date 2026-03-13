@@ -104,7 +104,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	 * @param transformServices
 	 *        the transform services
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserDatumInputBiz(CredentialConfigurationDao credentialDao,
 			TransformConfigurationDao transformDao, EndpointConfigurationDao endpointDao,

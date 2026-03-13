@@ -23,8 +23,10 @@
 package net.solarnetwork.central.user.biz.dao;
 
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
@@ -59,7 +61,7 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 	private final UserNodeInstructionService instructionService;
 	private final UserNodeInstructionTaskDao instructionTaskDao;
 
-	private Validator validator;
+	private @Nullable Validator validator;
 
 	/**
 	 * Constructor.
@@ -81,7 +83,7 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<UserNodeInstructionTaskEntity, UserLongCompositePK> listControlInstructionTasksForUser(
-			Long userId, UserNodeInstructionTaskFilter filter) {
+			Long userId, @Nullable UserNodeInstructionTaskFilter filter) {
 		requireNonNullArgument(userId, "userId");
 		BasicUserNodeInstructionTaskFilter f = new BasicUserNodeInstructionTaskFilter(filter);
 		f.setUserId(userId);
@@ -93,54 +95,54 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public UserNodeInstructionTaskEntity updateControlInstructionTaskState(UserLongCompositePK id,
-			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates) {
-		requireNonNullArgument(id, "id");
-		requireNonNullArgument(desiredState, "desiredState");
-		if ( !id.allKeyComponentsAreAssigned() ) {
+			BasicClaimableJobState desiredState, BasicClaimableJobState @Nullable... expectedStates) {
+		final UserLongCompositePK taskId = requireNonNullArgument(id, "id");
+		final BasicClaimableJobState destState = requireNonNullArgument(desiredState, "desiredState");
+		if ( !taskId.allKeyComponentsAreAssigned() ) {
 			throw new IllegalArgumentException("The userId and configId components must be provided.");
 		}
 
-		restrictToSecurityPolicy(instructionTaskDao.get(id));
+		restrictToSecurityPolicy(instructionTaskDao.get(taskId));
 
 		// only update state if a user-settable value (start, stop)
-		if ( desiredState == BasicClaimableJobState.Queued
-				|| desiredState == BasicClaimableJobState.Completed ) {
-			instructionTaskDao.updateTaskState(id, desiredState, expectedStates);
+		if ( destState == BasicClaimableJobState.Queued
+				|| destState == BasicClaimableJobState.Completed ) {
+			instructionTaskDao.updateTaskState(taskId, destState, expectedStates);
 		}
-		return instructionTaskDao.get(id);
+		return nonnull(instructionTaskDao.get(taskId), "Instruction task");
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public UserNodeInstructionTaskEntity saveControlInstructionTask(UserLongCompositePK id,
-			UserNodeInstructionTaskEntityInput input, BasicClaimableJobState... expectedStates) {
-		requireNonNullArgument(id, "id");
-		requireNonNullArgument(input, "input");
+			UserNodeInstructionTaskEntityInput input,
+			BasicClaimableJobState @Nullable... expectedStates) {
+		final UserLongCompositePK taskId = requireNonNullArgument(id, "id");
+		final UserNodeInstructionTaskEntityInput in = requireNonNullArgument(input, "input");
 
-		validateInput(input);
+		validateInput(in);
 
-		final UserNodeInstructionTaskEntity entity = input.toEntity(id);
+		final UserNodeInstructionTaskEntity entity = in.toEntity(taskId);
 		restrictToSecurityPolicy(entity);
-		UserLongCompositePK pk = id;
+		UserLongCompositePK pk = taskId;
 		if ( expectedStates == null || expectedStates.length < 1 ) {
 			pk = instructionTaskDao.save(entity);
 		} else {
-			if ( !id.allKeyComponentsAreAssigned() ) {
+			if ( !taskId.allKeyComponentsAreAssigned() ) {
 				throw new IllegalArgumentException(
 						"The userId and configId components must be provided.");
 			}
 			instructionTaskDao.updateTask(entity, expectedStates);
 		}
-		return instructionTaskDao.get(pk);
+		return nonnull(instructionTaskDao.get(pk), "Instruction task");
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteControlInstructionTask(UserLongCompositePK id) {
-		requireNonNullArgument(id, "id");
-		requireNonNullArgument(id.getUserId(), "id.userId");
+		final UserLongCompositePK taskId = requireNonNullArgument(id, "id");
 
-		final var task = instructionTaskDao.get(id);
+		final var task = instructionTaskDao.get(taskId);
 		if ( task == null ) {
 			return;
 		}
@@ -187,7 +189,7 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		validateInput(input, getValidator());
 	}
 
-	private static void validateInput(final Object input, final Validator v) {
+	private static void validateInput(final @Nullable Object input, final @Nullable Validator v) {
 		if ( input == null || v == null ) {
 			return;
 		}
@@ -207,7 +209,7 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 		f.setNodeIds(SecurityUtils.restrictNodeIds(f.getNodeIds(), policy));
 	}
 
-	private void restrictToSecurityPolicy(UserNodeInstructionTaskEntity task) {
+	private void restrictToSecurityPolicy(@Nullable UserNodeInstructionTaskEntity task) {
 		if ( task == null || task.getNodeId() == null ) {
 			return;
 		}
@@ -223,7 +225,7 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 	 *
 	 * @return the validator
 	 */
-	public Validator getValidator() {
+	public final @Nullable Validator getValidator() {
 		return validator;
 	}
 
@@ -233,7 +235,7 @@ public class DaoUserNodeInstructionBiz implements UserNodeInstructionBiz {
 	 * @param validator
 	 *        the validator to set
 	 */
-	public void setValidator(Validator validator) {
+	public final void setValidator(@Nullable Validator validator) {
 		this.validator = validator;
 	}
 

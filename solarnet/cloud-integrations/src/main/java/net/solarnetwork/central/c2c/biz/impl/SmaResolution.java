@@ -72,7 +72,7 @@ public enum SmaResolution {
 	/**
 	 * Get the key.
 	 *
-	 * @return the key, never {@literal null}
+	 * @return the key, never {@code null}
 	 */
 	public final String getKey() {
 		return key;
@@ -81,7 +81,7 @@ public enum SmaResolution {
 	/**
 	 * Get a clock tick duration appropriate for this granularity.
 	 *
-	 * @return the duration, never {@literal null}
+	 * @return the duration, never {@code null}
 	 */
 	public TemporalAmount getTickAmount() {
 		return tickAmount;
@@ -131,7 +131,7 @@ public enum SmaResolution {
 	 *
 	 * @param value
 	 *        the enumeration name or key value, case-insensitve
-	 * @return the enum; if {@code value} is {@literal null} or empty then
+	 * @return the enum; if {@code value} is {@code null} or empty then
 	 *         {@link #FiveMinute} is returned
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value

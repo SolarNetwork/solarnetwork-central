@@ -36,7 +36,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -117,7 +117,7 @@ public class SolarInputDatumObserverTests extends MqttServerSupport {
 				datumStreamMetadataDao);
 
 		mqttConnection = new ObservableMqttConnection(factory, mqttStats, "Test SolarInput Datum Obs",
-				Collections.singletonList(service));
+				List.of(service));
 		mqttConnection.getMqttConfig().setReconnectDelaySeconds(1);
 		mqttConnection.getMqttConfig().setClientId(TEST_CLIENT_ID);
 		mqttConnection.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));

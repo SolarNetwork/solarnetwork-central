@@ -48,8 +48,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -234,10 +235,12 @@ public class OcppSessionDatumManagerTests {
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
 		chargeSessionDao.addReadings(capture(readingsCaptor));
 
+		final Instant tsStart = Instant.now();
+
 		// generate datum from initial reading
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
 		UUID streamId = UUID.randomUUID();
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null));
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, tsStart));
 
 		// publish to SolarFlux
 		Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>();
@@ -249,7 +252,7 @@ public class OcppSessionDatumManagerTests {
 
 		// @formatter:off
 		ChargeSessionStartInfo info = ChargeSessionStartInfo.builder()
-				.withTimestampStart(Instant.now())
+				.withTimestampStart(tsStart)
 				.withChargePointId(chargePointId)
 				.withAuthorizationId(idTag)
 				.withConnectorId(connectorId)
@@ -462,10 +465,12 @@ public class OcppSessionDatumManagerTests {
 		Capture<Iterable<SampledValue>> newReadingsCapture = new Capture<>();
 		chargeSessionDao.addReadings(capture(newReadingsCapture));
 
+		final Instant tsEnd = Instant.now();
+
 		// generate datum from initial reading
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
 		UUID streamId = UUID.randomUUID();
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null));
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, tsEnd));
 
 		// publish to SolarFlux
 		Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>();
@@ -477,7 +482,7 @@ public class OcppSessionDatumManagerTests {
 
 		// @formatter:off
 		ChargeSessionEndInfo info = ChargeSessionEndInfo.builder()
-				.withTimestampEnd(Instant.now())
+				.withTimestampEnd(tsEnd)
 				.withAuthorizationId(idTag)
 				.withChargePointId(chargePointId)
 				.withTransactionId(txId)
@@ -580,15 +585,21 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
 		chargeSessionDao.addReadings(capture(readingsCaptor));
 
+		final List<Instant> timestamps = List.of(sess.getCreated(), sess.getCreated().plusSeconds(60),
+				sess.getCreated().plusSeconds(90));
+
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
-		UUID streamId = UUID.randomUUID();
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null)).times(3);
+		final UUID streamId = UUID.randomUUID();
+		final Queue<Instant> tsQueue = new LinkedList<>(timestamps);
+		expect(datumDao.store(capture(datumCaptor))).andAnswer(() -> {
+			return new DatumPK(streamId, tsQueue.remove());
+		}).times(3);
 
 		// publish to SolarFlux
 		Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>(CaptureType.ALL);
@@ -600,7 +611,7 @@ public class OcppSessionDatumManagerTests {
 
 		// @formatter:off
 		SampledValue r1 = SampledValue.builder()
-				.withTimestamp(sess.getCreated())
+				.withTimestamp(timestamps.get(0))
 				.withSessionId(sess.getId())
 				.withContext(ReadingContext.TransactionBegin)
 				.withLocation(Location.Outlet)
@@ -609,7 +620,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("1234")
 				.build();
 		SampledValue r2 = SampledValue.builder()
-				.withTimestamp(sess.getCreated())
+				.withTimestamp(timestamps.get(0))
 				.withSessionId(sess.getId())
 				.withContext(ReadingContext.TransactionBegin)
 				.withLocation(Location.Outlet)
@@ -618,7 +629,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("500")
 				.build();
 		SampledValue r3 = SampledValue.builder()
-				.withTimestamp(sess.getCreated().plusSeconds(60))
+				.withTimestamp(timestamps.get(1))
 				.withSessionId(sess.getId())
 				.withContext(ReadingContext.SamplePeriodic)
 				.withLocation(Location.Outlet)
@@ -627,7 +638,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("2345")
 				.build();
 		SampledValue r4 = SampledValue.builder()
-				.withTimestamp(sess.getCreated().plusSeconds(60))
+				.withTimestamp(timestamps.get(1))
 				.withSessionId(sess.getId())
 				.withContext(ReadingContext.SamplePeriodic)
 				.withLocation(Location.Outlet)
@@ -636,7 +647,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("400")
 				.build();
 		SampledValue r5 = SampledValue.builder()
-				.withTimestamp(sess.getCreated().plusSeconds(60))
+				.withTimestamp(timestamps.get(1))
 				.withSessionId(sess.getId())
 				.withContext(ReadingContext.SamplePeriodic)
 				.withLocation(Location.Outlet)
@@ -644,7 +655,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("59.89")
 				.build();
 		SampledValue r6 = SampledValue.builder()
-				.withTimestamp(sess.getCreated().plusSeconds(90))
+				.withTimestamp(timestamps.get(2))
 				.withSessionId(sess.getId())
 				.withContext(ReadingContext.TransactionEnd)
 				.withLocation(Location.Outlet)
@@ -684,8 +695,8 @@ public class OcppSessionDatumManagerTests {
 						hasEntry("frequency", new BigDecimal(r5.getValue()))));
 
 		d = persistedDatum.get(2);
-		assertThat("Datum 2 @ transaction end", d.getCreated(), equalTo(r6.getTimestamp()));
-		assertThat("Datum 2 consolidated properties", d.getSampleData(),
+		assertThat("Datum 3 @ transaction end", d.getCreated(), equalTo(r6.getTimestamp()));
+		assertThat("Datum 3 consolidated properties", d.getSampleData(),
 				hasEntry("wattHours", new BigDecimal(r6.getValue())));
 
 		List<Identity<GeneralNodeDatumPK>> fluxDatum = fluxPublishCaptor.getValues();
@@ -723,7 +734,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -731,7 +742,7 @@ public class OcppSessionDatumManagerTests {
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
 		UUID streamId = UUID.randomUUID();
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null));
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, sess.getCreated()));
 
 		// publish to SolarFlux
 		Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>();
@@ -807,7 +818,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -815,7 +826,7 @@ public class OcppSessionDatumManagerTests {
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
 		UUID streamId = UUID.randomUUID();
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null));
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, sess.getCreated()));
 
 		// when
 		replayAll();
@@ -874,7 +885,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -882,7 +893,7 @@ public class OcppSessionDatumManagerTests {
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
 		UUID streamId = UUID.randomUUID();
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null));
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, sess.getCreated()));
 
 		// when
 		replayAll();
@@ -952,7 +963,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -960,7 +971,7 @@ public class OcppSessionDatumManagerTests {
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
 		UUID streamId = UUID.randomUUID();
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null));
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, sess.getCreated()));
 
 		// WHEN
 		replayAll();
@@ -1109,7 +1120,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -1117,7 +1128,7 @@ public class OcppSessionDatumManagerTests {
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
 		UUID streamId = UUID.randomUUID();
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null));
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, sess.getCreated()));
 
 		// publish to SolarFlux
 		//Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>();
@@ -1185,7 +1196,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -1256,7 +1267,7 @@ public class OcppSessionDatumManagerTests {
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
-		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(List.of());
 
 		// save readings
 		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
@@ -1299,11 +1310,12 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		final int expectedDatumCount = 1;
+		final Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES);
 
 		// save readings (datum only)
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
 		UUID streamId = UUID.randomUUID();
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null))
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, ts))
 				.times(expectedDatumCount);
 
 		// publish to SolarFlux
@@ -1316,7 +1328,6 @@ public class OcppSessionDatumManagerTests {
 		replayAll();
 
 		// @formatter:off
-		final Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES);
 		SampledValue r1 = SampledValue.builder()
 				.withTimestamp(ts)
 				.withContext(ReadingContext.Trigger)
@@ -1377,11 +1388,12 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		final int expectedDatumCount = 2;
+		final Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES);
 
 		// save readings (datum only)
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
 		UUID streamId = UUID.randomUUID();
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null))
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, ts))
 				.times(expectedDatumCount);
 
 		// publish to SolarFlux
@@ -1394,7 +1406,6 @@ public class OcppSessionDatumManagerTests {
 		replayAll();
 
 		// @formatter:off
-		final Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES);
 		SampledValue r1 = SampledValue.builder()
 				.withTimestamp(ts)
 				.withContext(ReadingContext.Trigger)
@@ -1464,11 +1475,12 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		final int expectedDatumCount = 1;
+		final Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES);
 
 		// save readings (datum only)
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
 		UUID streamId = UUID.randomUUID();
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null))
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, ts))
 				.times(expectedDatumCount);
 
 		// publish to SolarFlux
@@ -1481,7 +1493,6 @@ public class OcppSessionDatumManagerTests {
 		replayAll();
 
 		// @formatter:off
-		final Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES);
 		SampledValue r1 = SampledValue.builder()
 				.withTimestamp(ts)
 				.withContext(ReadingContext.Trigger)

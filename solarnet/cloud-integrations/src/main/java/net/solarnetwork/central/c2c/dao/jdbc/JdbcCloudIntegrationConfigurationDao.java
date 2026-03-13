@@ -22,13 +22,15 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
-import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
@@ -45,6 +47,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * JDBC implementation of {@link CloudIntegrationConfigurationDao}.
@@ -62,7 +65,7 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudIntegrationConfigurationDao(JdbcOperations jdbcOps) {
 		super();
@@ -76,18 +79,20 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 
 	@Override
 	public CloudIntegrationConfiguration entityKey(UserLongCompositePK id) {
-		return new CloudIntegrationConfiguration(id, now());
+		return new CloudIntegrationConfiguration(id, Instant.EPOCH, "", "");
 	}
 
 	@Override
 	public UserLongCompositePK create(Long userId, CloudIntegrationConfiguration entity) {
 		final var sql = new InsertCloudIntegrationConfiguration(userId, entity);
-		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		return (id != null ? new UserLongCompositePK(userId, id) : null);
+		final Long id = ObjectUtils.nonnull(CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id"),
+				"Generated ID");
+		return new UserLongCompositePK(userId, id);
 	}
 
 	@Override
-	public Collection<CloudIntegrationConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<CloudIntegrationConfiguration> findAll(Long userId,
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectCloudIntegrationConfiguration(filter);
@@ -98,7 +103,8 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 
 	@Override
 	public FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> findFiltered(
-			CloudIntegrationFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			CloudIntegrationFilter filter, @Nullable List<SortDescriptor> sorts, @Nullable Long offset,
+			@Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCloudIntegrationConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, CloudIntegrationConfigurationRowMapper.INSTANCE);
@@ -106,17 +112,19 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 
 	@Override
 	public UserLongCompositePK save(CloudIntegrationConfiguration entity) {
-		if ( !entity.getId().entityIdIsAssigned() ) {
-			return create(entity.getId().getUserId(), entity);
+		UserLongCompositePK pk = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(),
+				"entity.id");
+		if ( !pk.entityIdIsAssigned() ) {
+			return create(pk.getUserId(), entity);
 		}
-		final UpdateCloudIntegrationConfiguration sql = new UpdateCloudIntegrationConfiguration(
-				entity.getId(), entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		final UpdateCloudIntegrationConfiguration sql = new UpdateCloudIntegrationConfiguration(pk,
+				entity);
+		jdbcOps.update(sql);
+		return pk;
 	}
 
 	@Override
-	public CloudIntegrationConfiguration get(UserLongCompositePK id) {
+	public @Nullable CloudIntegrationConfiguration get(UserLongCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -128,7 +136,7 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 	}
 
 	@Override
-	public Collection<CloudIntegrationConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<CloudIntegrationConfiguration> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -138,23 +146,24 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 
 	@Override
 	public void delete(CloudIntegrationConfiguration entity) {
-		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+		UserLongCompositePK pk = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(),
+				"entity.id");
+		var sql = new DeleteForCompositeKey(pk, TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 
 	@Override
 	public int updateEnabledStatus(Long userId, CloudIntegrationFilter filter, boolean enabled) {
 		UserLongCompositePK key = filter != null && filter.hasIntegrationCriteria()
-				? new UserLongCompositePK(userId, filter.getIntegrationId())
+				? new UserLongCompositePK(userId, nonnull(filter.getIntegrationId(), "integrationId"))
 				: UserLongCompositePK.unassignedEntityIdKey(userId);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);
 	}
 
 	@Override
-	public boolean saveOAuthAuthorizationState(UserLongCompositePK id, String state,
-			String expectedState) {
+	public boolean saveOAuthAuthorizationState(UserLongCompositePK id, @Nullable String state,
+			@Nullable String expectedState) {
 		var sql = new UpdateCloudIntegrationOAuthAuthorizationState(id, state, expectedState);
 		return jdbcOps.update(sql) > 0;
 	}

@@ -30,6 +30,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.CodedValue;
 
 /**
@@ -47,7 +48,7 @@ public class CodedValueTypeHandler<E extends Enum<E> & CodedValue> extends BaseT
 	 * {@link CodedValue} enum handler that defaults to code {@literal 0}.
 	 * <p>
 	 * This will attempt to resolve a code value {@literal 0} for a default
-	 * value, falling back to {@literal null} if that is not found.
+	 * value, falling back to {@code null} if that is not found.
 	 * </p>
 	 * 
 	 * @param <E>
@@ -68,14 +69,14 @@ public class CodedValueTypeHandler<E extends Enum<E> & CodedValue> extends BaseT
 
 	private final Class<E> type;
 	private final E[] values;
-	private final E defaultValue;
+	private final @Nullable E defaultValue;
 
 	/**
 	 * Constructor.
 	 * 
 	 * <p>
 	 * This will attempt to resolve a code value {@literal 0} for a default
-	 * value, falling back to {@literal null} if that is not found.
+	 * value, falling back to {@code null} if that is not found.
 	 * </p>
 	 * 
 	 * @param type
@@ -93,7 +94,7 @@ public class CodedValueTypeHandler<E extends Enum<E> & CodedValue> extends BaseT
 	 * @param defaultValue
 	 *        the default value to use if no matching code is found
 	 */
-	public CodedValueTypeHandler(Class<E> type, E defaultValue) {
+	public CodedValueTypeHandler(Class<E> type, @Nullable E defaultValue) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
 		this.values = type.getEnumConstants();
@@ -101,20 +102,20 @@ public class CodedValueTypeHandler<E extends Enum<E> & CodedValue> extends BaseT
 	}
 
 	@Override
-	public void setParameter(PreparedStatement ps, int i, E parameter, JdbcType jdbcType)
-			throws SQLException {
+	public void setParameter(PreparedStatement ps, int i, @Nullable E parameter,
+			@Nullable JdbcType jdbcType) throws SQLException {
 		super.setParameter(ps, i, parameter == null && defaultValue != null ? defaultValue : parameter,
 				jdbcType);
 	}
 
 	@Override
-	public void setNonNullParameter(PreparedStatement ps, int i, E parameter, JdbcType jdbcType)
-			throws SQLException {
+	public void setNonNullParameter(PreparedStatement ps, int i, E parameter,
+			@Nullable JdbcType jdbcType) throws SQLException {
 		ps.setInt(i, parameter.getCode());
 	}
 
 	@Override
-	public E getNullableResult(ResultSet rs, String columnName) throws SQLException {
+	public @Nullable E getNullableResult(ResultSet rs, String columnName) throws SQLException {
 		int code = rs.getInt(columnName);
 		if ( rs.wasNull() ) {
 			return defaultValue;
@@ -123,7 +124,7 @@ public class CodedValueTypeHandler<E extends Enum<E> & CodedValue> extends BaseT
 	}
 
 	@Override
-	public E getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+	public @Nullable E getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
 		int code = rs.getInt(columnIndex);
 		if ( rs.wasNull() ) {
 			return defaultValue;
@@ -132,7 +133,7 @@ public class CodedValueTypeHandler<E extends Enum<E> & CodedValue> extends BaseT
 	}
 
 	@Override
-	public E getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
+	public @Nullable E getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
 		int code = cs.getInt(columnIndex);
 		if ( cs.wasNull() ) {
 			return defaultValue;
@@ -143,7 +144,7 @@ public class CodedValueTypeHandler<E extends Enum<E> & CodedValue> extends BaseT
 	/**
 	 * Get the class type.
 	 * 
-	 * @return the type, never {@literal null}
+	 * @return the type, never {@code null}
 	 */
 	public Class<E> getType() {
 		return type;

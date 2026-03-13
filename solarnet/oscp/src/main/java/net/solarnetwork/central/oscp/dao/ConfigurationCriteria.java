@@ -43,7 +43,7 @@ public interface ConfigurationCriteria {
 	/**
 	 * Get an array of configuration IDs.
 	 * 
-	 * @return array of IDs (may be {@literal null})
+	 * @return array of IDs (may be {@code null})
 	 */
 	Long[] getConfigurationIds();
 
@@ -52,11 +52,10 @@ public interface ConfigurationCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available ID from the
-	 * {@link #getConfigurationIds()} array, or {@literal null} if not
-	 * available.
+	 * {@link #getConfigurationIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the configuration ID, or {@literal null} if not available
+	 * @return the configuration ID, or {@code null} if not available
 	 */
 	default Long getConfigurationId() {
 		Long[] ids = getConfigurationIds();

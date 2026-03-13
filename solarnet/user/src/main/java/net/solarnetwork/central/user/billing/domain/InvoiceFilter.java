@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.Filter;
 
 /**
@@ -45,6 +46,7 @@ public interface InvoiceFilter extends Filter {
 	 * @return {@literal true} for only unpaid invoices; {@literal false} for
 	 *         only fully paid invoices; {@code null} for both
 	 */
+	@Nullable
 	Boolean getUnpaid();
 
 }

@@ -84,9 +84,8 @@ public abstract class AbstractMyBatisUserEventDaoTestSupport
 	 * @return the primary key
 	 */
 	protected Long storeNewUser(String email) {
-		User newUser = new User();
+		User newUser = new User(email);
 		newUser.setCreated(Instant.now());
-		newUser.setEmail(email);
 		newUser.setName(email);
 		newUser.setPassword(UUID.randomUUID().toString());
 		newUser.setEnabled(Boolean.TRUE);

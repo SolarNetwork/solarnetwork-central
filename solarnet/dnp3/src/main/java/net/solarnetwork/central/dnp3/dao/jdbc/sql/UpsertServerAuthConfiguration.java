@@ -69,7 +69,7 @@ public final class UpsertServerAuthConfiguration implements PreparedStatementCre
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertServerAuthConfiguration(Long userId, Long serverId, ServerAuthConfiguration entity) {
 		super();

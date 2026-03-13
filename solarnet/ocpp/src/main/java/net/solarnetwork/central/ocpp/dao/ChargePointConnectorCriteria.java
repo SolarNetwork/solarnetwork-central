@@ -35,17 +35,17 @@ public interface ChargePointConnectorCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available connector ID from the
-	 * {@link #getConnectorIds()} array, or {@literal null} if not available.
+	 * {@link #getConnectorIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first connector ID, or {@literal null} if not available
+	 * @return the first connector ID, or {@code null} if not available
 	 */
 	Integer getConnectorId();
 
 	/**
 	 * Get an array of connector IDs.
 	 * 
-	 * @return array of connector IDs (may be {@literal null})
+	 * @return array of connector IDs (may be {@code null})
 	 */
 	Integer[] getConnectorIds();
 
@@ -63,10 +63,10 @@ public interface ChargePointConnectorCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available EVSE ID from the {@link #getEvseIds()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first EVSE ID, or {@literal null} if not available
+	 * @return the first EVSE ID, or {@code null} if not available
 	 * @since 1.2
 	 */
 	Integer getEvseId();
@@ -74,7 +74,7 @@ public interface ChargePointConnectorCriteria {
 	/**
 	 * Get an array of EVSE IDs.
 	 * 
-	 * @return array of EVSE IDs (may be {@literal null})
+	 * @return array of EVSE IDs (may be {@code null})
 	 * @since 1.2
 	 */
 	Integer[] getEvseIds();

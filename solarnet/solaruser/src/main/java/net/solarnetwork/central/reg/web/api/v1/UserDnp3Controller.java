@@ -26,6 +26,7 @@ import static java.lang.String.format;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP3;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.central.security.CertificateUtils.X509_CERTIFICATE_FACTORY;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -39,7 +40,6 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 import java.io.IOException;
 import java.net.URI;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.List;
@@ -73,7 +73,6 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.central.domain.UserLongStringCompositePK;
 import net.solarnetwork.central.domain.UserStringCompositePK;
-import net.solarnetwork.central.security.CertificateUtils;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz;
 import net.solarnetwork.central.user.dnp3.domain.ServerAuthConfigurationInput;
@@ -117,7 +116,7 @@ public class UserDnp3Controller {
 	/**
 	 * Get the {@link UserDnp3Biz}.
 	 *
-	 * @return the service; never {@literal null}
+	 * @return the service; never {@code null}
 	 * @throws UnsupportedOperationException
 	 *         if the service is not available
 	 */
@@ -139,10 +138,9 @@ public class UserDnp3Controller {
 	public Result<Collection<TrustedIssuerCertificate>> importTrustedIssuerCertificates(
 			@RequestPart("file") MultipartFile data) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		CertificateFactory cf = CertificateUtils.x509CertificateFactory();
 		Collection<? extends Certificate> certs;
 		try {
-			certs = cf.generateCertificates(data.getInputStream());
+			certs = X509_CERTIFICATE_FACTORY.generateCertificates(data.getInputStream());
 		} catch ( java.security.cert.CertificateException | IOException e ) {
 			throw new CertificateException("Error parsing certificate data.", e);
 		}

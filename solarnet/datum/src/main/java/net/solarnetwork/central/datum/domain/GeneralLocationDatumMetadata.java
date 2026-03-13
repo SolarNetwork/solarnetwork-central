@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -53,13 +56,42 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 	@Serial
 	private static final long serialVersionUID = 7692101091820630679L;
 
-	private LocationSourcePK id = new LocationSourcePK();
-	private Instant created;
-	private Instant updated;
-	private GeneralDatumMetadata meta;
-	private String metaJson;
+	private final LocationSourcePK id;
+	private @Nullable Instant created;
+	private @Nullable Instant updated;
+	private @Nullable GeneralDatumMetadata meta;
+	private @Nullable String metaJson;
 
-	private SolarLocation location;
+	private @Nullable SolarLocation location;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public GeneralLocationDatumMetadata(LocationSourcePK id) {
+		super();
+		this.id = requireNonNullArgument(id, "id");
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param locationId
+	 *        the location ID
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	@JsonCreator
+	public GeneralLocationDatumMetadata(@JsonProperty("locationId") Long locationId,
+			@JsonProperty("sourceId") String sourceId) {
+		this(new LocationSourcePK(locationId, sourceId));
+	}
 
 	@Override
 	public GeneralLocationDatumMetadata clone() {
@@ -79,15 +111,12 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
 		if ( !(obj instanceof GeneralLocationDatumMetadata other) ) {
 			return false;
-		}
-		if ( id == null ) {
-			return other.id == null;
 		}
 		return id.equals(other.id);
 	}
@@ -97,21 +126,8 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 	 *
 	 * @return the locationId
 	 */
-	public Long getLocationId() {
-		return (id == null ? null : id.getLocationId());
-	}
-
-	/**
-	 * Convenience setter for {@link LocationSourcePK#setLocationId(Long)}.
-	 *
-	 * @param locationId
-	 *        the locationId to set
-	 */
-	public void setLocationId(Long locationId) {
-		if ( id == null ) {
-			id = new LocationSourcePK();
-		}
-		id.setLocationId(locationId);
+	public final Long getLocationId() {
+		return id.getLocationId();
 	}
 
 	/**
@@ -119,25 +135,12 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 	 *
 	 * @return the sourceId
 	 */
-	public String getSourceId() {
-		return (id == null ? null : id.getSourceId());
+	public final String getSourceId() {
+		return id.getSourceId();
 	}
 
 	/**
-	 * Convenience setter for {@link LocationSourcePK#setSourceId(String)}.
-	 *
-	 * @param sourceId
-	 *        the sourceId to set
-	 */
-	public void setSourceId(String sourceId) {
-		if ( id == null ) {
-			id = new LocationSourcePK();
-		}
-		id.setSourceId(sourceId);
-	}
-
-	/**
-	 * Alternative for {@link #getMeta()}. This method exists so that we can
+	 * /** Alternative for {@link #getMeta()}. This method exists so that we can
 	 * configure {@code @JsonUnwrapped} on our {@link GeneralDatumMetadata} but
 	 * still support setting it in a normal, wrapped fashion via
 	 * {@link #setMeta(GeneralDatumMetadata)}.
@@ -145,13 +148,13 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 	 * @return GeneralDatumMetadata
 	 */
 	@JsonUnwrapped
-	public GeneralDatumMetadata getMetadata() {
+	public final @Nullable GeneralDatumMetadata getMetadata() {
 		return getMeta();
 	}
 
 	@JsonIgnore
 	@SerializeIgnore
-	public GeneralDatumMetadata getMeta() {
+	public final @Nullable GeneralDatumMetadata getMeta() {
 		if ( meta == null && metaJson != null ) {
 			meta = DatumUtils.getObjectFromJSON(metaJson, GeneralDatumMetadata.class);
 			metaJson = null; // clear this out, because we might mutate meta and invalidate our cached JSON value
@@ -160,14 +163,14 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 	}
 
 	@JsonProperty
-	public void setMeta(GeneralDatumMetadata meta) {
+	public final void setMeta(@Nullable GeneralDatumMetadata meta) {
 		this.meta = meta;
 		this.metaJson = null;
 	}
 
 	@JsonIgnore
 	@SerializeIgnore
-	public String getMetaJson() {
+	public final @Nullable String getMetaJson() {
 		if ( metaJson == null ) {
 			metaJson = DatumUtils.getJSONString(meta, "{}");
 			meta = null; // clear this out, because we might otherwise mutate it and invalidate our cached JSON value
@@ -175,7 +178,7 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 		return metaJson;
 	}
 
-	public void setMetaJson(String infoJson) {
+	public final void setMetaJson(@Nullable String infoJson) {
 		this.metaJson = infoJson;
 		this.meta = null;
 	}
@@ -183,36 +186,32 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 	@Override
 	@JsonIgnore
 	@SerializeIgnore
-	public LocationSourcePK getId() {
+	public final @Nullable LocationSourcePK getId() {
 		return id;
 	}
 
-	public void setId(LocationSourcePK id) {
-		this.id = id;
-	}
-
 	@Override
-	public Instant getCreated() {
+	public final @Nullable Instant getCreated() {
 		return created;
 	}
 
-	public void setCreated(Instant created) {
+	public final void setCreated(@Nullable Instant created) {
 		this.created = created;
 	}
 
-	public Instant getUpdated() {
+	public final @Nullable Instant getUpdated() {
 		return updated;
 	}
 
-	public void setUpdated(Instant updated) {
+	public final void setUpdated(@Nullable Instant updated) {
 		this.updated = updated;
 	}
 
-	public SolarLocation getLocation() {
+	public final @Nullable SolarLocation getLocation() {
 		return location;
 	}
 
-	public void setLocation(SolarLocation location) {
+	public final void setLocation(@Nullable SolarLocation location) {
 		this.location = location;
 	}
 

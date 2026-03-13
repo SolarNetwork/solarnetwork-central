@@ -30,10 +30,14 @@ import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudDatumStreamSe
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyFieldFunction.Avg;
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyFieldFunction.Last;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.SpelExpression;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
 import static net.solarnetwork.codec.jackson.JsonUtils.getObjectFromJSON;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -90,14 +94,12 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.http.OAuth2Utils;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -185,7 +187,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
@@ -310,7 +312,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
@@ -322,33 +324,26 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "KW";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
 		prop1.setMultiplier(new BigDecimal("1000"));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
+		prop1.setEnabled(true);
 
 		final String fieldName2 = "KWh";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
 		prop2.setMultiplier(new BigDecimal("1000"));
 		prop2.setScale(0);
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
+		prop2.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -357,9 +352,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -467,7 +461,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
@@ -479,33 +473,26 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "KW";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
 		prop1.setMultiplier(new BigDecimal("1000"));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
+		prop1.setEnabled(true);
 
 		final String fieldName2 = "KWh";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
 		prop2.setMultiplier(new BigDecimal("1000"));
 		prop2.setScale(0);
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
+		prop2.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -514,9 +501,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -586,7 +572,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
@@ -598,33 +584,26 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "KW";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
 		prop1.setMultiplier(new BigDecimal("1000"));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
+		prop1.setEnabled(true);
 
 		final String fieldName2 = "KWh";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
 		prop2.setMultiplier(new BigDecimal("1000"));
 		prop2.setScale(0);
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
+		prop2.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -633,9 +612,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -758,7 +736,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
@@ -770,50 +748,37 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "KW";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
 
 		final String fieldName2 = "KWh";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
 		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
 
 		final String fieldName3 = "diff";
 		final CloudDatumStreamPropertyConfiguration prop3 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, fieldName3, SpelExpression,
+				"""
+						hasOffset(1, timestamp) && offset(1, timestamp).props['diff'] != null
+						? (offset(1, timestamp).diff * 2)
+						: 123""");
 		prop3.setEnabled(true);
-		prop3.setPropertyType(DatumSamplesType.Instantaneous);
-		prop3.setPropertyName(fieldName3);
-		prop3.setValueType(CloudDatumStreamValueType.SpelExpression);
-		prop3.setValueReference("""
-				hasOffset(1, timestamp) && offset(1, timestamp).props['diff'] != null
-				? (offset(1, timestamp).diff * 2)
-				: 123""");
 
 		final String fieldName4 = "tdiff";
 		final CloudDatumStreamPropertyConfiguration prop4 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, fieldName4, SpelExpression,
+				"secondsBetween(offset(1, timestamp).timestamp, timestamp)");
 		prop4.setEnabled(true);
-		prop4.setPropertyType(DatumSamplesType.Instantaneous);
-		prop4.setPropertyName(fieldName4);
-		prop4.setValueType(CloudDatumStreamValueType.SpelExpression);
-		prop4.setValueReference("secondsBetween(offset(1, timestamp).timestamp, timestamp)");
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2, prop3, prop4));
@@ -822,9 +787,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -954,7 +918,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
@@ -966,29 +930,22 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "KW";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(fieldName1, Avg.name()));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(fieldName1, Avg.name()));
 
 		final String fieldName2 = "KWh";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(fieldName2, Last.name()));
 		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(fieldName2, Last.name()));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -997,9 +954,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -1179,7 +1135,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
@@ -1191,29 +1147,22 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "KW";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(fieldName1, Avg.name()));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(componentValueRef(fieldName1, Avg.name()));
 
 		final String fieldName2 = "KWh";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(fieldName2, Last.name()));
 		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Accumulating);
-		prop2.setPropertyName("wattHours");
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(componentValueRef(fieldName2, Last.name()));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -1222,9 +1171,8 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off

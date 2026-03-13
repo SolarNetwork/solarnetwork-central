@@ -53,7 +53,7 @@ public class EndpointAuthConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EndpointAuthConfiguration(UserUuidLongCompositePK id, Instant created) {
 		super(id, created);
@@ -71,7 +71,7 @@ public class EndpointAuthConfiguration
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EndpointAuthConfiguration(Long userId, UUID endpointId, Long credentialId, Instant created) {
 		this(new UserUuidLongCompositePK(userId, endpointId, credentialId), created);

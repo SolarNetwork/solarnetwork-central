@@ -28,10 +28,10 @@ import static net.solarnetwork.central.query.config.RateLimitConfig.RATE_LIMIT;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -205,7 +205,7 @@ public class WebConfig implements WebMvcConfigurer {
 		csv.setPropertySerializerRegistrar(propertySerializerRegistrar());
 
 		var xml = new SimpleXmlHttpMessageConverter();
-		xml.setClassNamesAllowedForNesting(Collections.singleton("net.solarnetwork"));
+		xml.setClassNamesAllowedForNesting(Set.of("net.solarnetwork"));
 		xml.setPropertySerializerRegistrar(xmlPropertySerializerRegistrar());
 
 		var json = new JacksonJsonHttpMessageConverter(jsonMapper);
