@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.inin.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for transform related data.
  *
@@ -40,7 +42,7 @@ public interface TransformCriteria {
 	 *
 	 * @return the first transform ID, or {@code null} if not available
 	 */
-	default Long getTransformId() {
+	default @Nullable Long getTransformId() {
 		final Long[] array = getTransformIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -50,7 +52,7 @@ public interface TransformCriteria {
 	 *
 	 * @return array of transform IDs (may be {@code null})
 	 */
-	Long[] getTransformIds();
+	Long @Nullable [] getTransformIds();
 
 	/**
 	 * Test if this filter has any transform criteria.

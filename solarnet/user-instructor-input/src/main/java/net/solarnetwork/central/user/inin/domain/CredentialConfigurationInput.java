@@ -63,7 +63,7 @@ public class CredentialConfigurationInput
 	@Override
 	public CredentialConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		CredentialConfiguration conf = new CredentialConfiguration(requireNonNullArgument(id, "id"),
-				date);
+				date, username);
 		populateConfiguration(conf);
 		return conf;
 	}

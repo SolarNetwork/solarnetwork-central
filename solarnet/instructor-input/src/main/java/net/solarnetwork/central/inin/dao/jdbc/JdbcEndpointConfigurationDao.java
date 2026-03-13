@@ -24,6 +24,7 @@ package net.solarnetwork.central.inin.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
@@ -146,9 +147,9 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, EndpointFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable EndpointFilter filter, boolean enabled) {
 		UserUuidPK key = filter != null && filter.hasEndpointCriteria()
-				? new UserUuidPK(userId, filter.getEndpointId())
+				? new UserUuidPK(userId, nonnull(filter.getEndpointId(), "Endpoint ID"))
 				: UserUuidPK.unassignedUuidKey(userId);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);

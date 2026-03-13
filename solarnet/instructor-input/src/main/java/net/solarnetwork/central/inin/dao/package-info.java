@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserModifiableEnabledStatusDao.java - 8/08/2023 8:22:16 am
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2023 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,31 +20,11 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dao;
-
-import org.jspecify.annotations.Nullable;
-
 /**
- * DAO API for updating user-modifiable enabled status on entities.
- *
- * @param <F>
- *        the filter type
- * @author matt
- * @version 1.0
+ * SolarNetwork instructor input DAO APIs.
  */
-public interface UserModifiableEnabledStatusDao<F> {
 
-	/**
-	 * Update the enabled status of entities, optionally filtered.
-	 *
-	 * @param userId
-	 *        the user ID to update configurations for
-	 * @param filter
-	 *        an optional filter
-	 * @param enabled
-	 *        the enabled status to set
-	 * @return the number of entities updated
-	 */
-	int updateEnabledStatus(Long userId, @Nullable F filter, boolean enabled);
+@NullMarked
+package net.solarnetwork.central.inin.dao;
 
-}
+import org.jspecify.annotations.NullMarked;

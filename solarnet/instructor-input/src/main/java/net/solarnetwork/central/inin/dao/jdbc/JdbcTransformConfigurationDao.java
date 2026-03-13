@@ -25,6 +25,8 @@ package net.solarnetwork.central.inin.dao.jdbc;
 import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
@@ -33,7 +35,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.inin.dao.BasicFilter;
@@ -105,7 +106,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 		@Override
 		protected PreparedStatementCreator saveSql(RequestTransformConfiguration entity) {
-			return new UpdateRequestTransformConfiguration(entity.getId(), entity);
+			return new UpdateRequestTransformConfiguration(entity.pk(), entity);
 		}
 
 	}
@@ -152,7 +153,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 		@Override
 		protected PreparedStatementCreator saveSql(ResponseTransformConfiguration entity) {
-			return new UpdateResponseTransformConfiguration(entity.getId(), entity);
+			return new UpdateResponseTransformConfiguration(entity.pk(), entity);
 		}
 
 	}
@@ -208,9 +209,9 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 		validatePhase(entity);
 		final var sql = createSql(userId, entity);
 
-		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
+		final Long id = nonnull(updateWithGeneratedLong(jdbcOps, sql, "id"), "Generated ID");
 
-		return (id != null ? new UserLongCompositePK(userId, id) : null);
+		return new UserLongCompositePK(userId, id);
 	}
 
 	@Override
@@ -269,7 +270,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 	protected abstract RowMapper<C> rowMapper();
 
 	@Override
-	public Collection<C> getAll(List<SortDescriptor> sorts) {
+	public Collection<C> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 

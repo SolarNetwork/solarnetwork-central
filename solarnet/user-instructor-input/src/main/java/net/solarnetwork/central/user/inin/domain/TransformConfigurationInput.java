@@ -89,7 +89,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 		@Override
 		public RequestTransformConfiguration toEntity(UserLongCompositePK id, Instant date) {
 			RequestTransformConfiguration conf = new RequestTransformConfiguration(
-					requireNonNullArgument(id, "id"), date);
+					requireNonNullArgument(id, "id"), date, getName(), getServiceIdentifier());
 			populateConfiguration(conf);
 			return conf;
 		}
@@ -112,7 +112,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 		@Override
 		public ResponseTransformConfiguration toEntity(UserLongCompositePK id, Instant date) {
 			ResponseTransformConfiguration conf = new ResponseTransformConfiguration(
-					requireNonNullArgument(id, "id"), date);
+					requireNonNullArgument(id, "id"), date, getName(), getServiceIdentifier());
 			populateConfiguration(conf);
 			return conf;
 		}

@@ -88,7 +88,7 @@ public class EndpointConfigurationRowMapper implements RowMapper<EndpointConfigu
 	public EndpointConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
 		Long userId = rs.getLong(++p);
-		UUID entityId = CommonJdbcUtils.getUuid(rs, ++p);
+		UUID entityId = nonnull(CommonJdbcUtils.getUuid(rs, ++p), "entityId");
 		Instant ts = nonnull(getTimestampInstant(rs, ++p), "created");
 		Instant mod = getTimestampInstant(rs, ++p);
 		boolean enabled = rs.getBoolean(++p);

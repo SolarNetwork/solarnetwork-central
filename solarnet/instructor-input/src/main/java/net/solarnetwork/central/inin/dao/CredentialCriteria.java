@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.inin.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for credential related data.
  *
@@ -40,7 +42,7 @@ public interface CredentialCriteria {
 	 *
 	 * @return the first credential ID, or {@code null} if not available
 	 */
-	default Long getCredentialId() {
+	default @Nullable Long getCredentialId() {
 		final Long[] array = getCredentialIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -50,7 +52,7 @@ public interface CredentialCriteria {
 	 *
 	 * @return array of credential IDs (may be {@code null})
 	 */
-	Long[] getCredentialIds();
+	Long @Nullable [] getCredentialIds();
 
 	/**
 	 * Test if this filter has any credential criteria.

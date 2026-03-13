@@ -75,7 +75,8 @@ public class EndpointConfigurationInput
 
 	@Override
 	public EndpointConfiguration toEntity(UserUuidPK id, Instant date) {
-		EndpointConfiguration conf = new EndpointConfiguration(requireNonNullArgument(id, "id"), date);
+		EndpointConfiguration conf = new EndpointConfiguration(requireNonNullArgument(id, "id"), date,
+				name);
 		populateConfiguration(conf);
 		return conf;
 	}
@@ -265,8 +266,8 @@ public class EndpointConfigurationInput
 	 * Set an implicit request content type.
 	 *
 	 * @param requestContentType
-	 *        the request content to assume, or {@code null} to; a blank
-	 *        value will be normalized to {@code null}
+	 *        the request content to assume, or {@code null} to; a blank value
+	 *        will be normalized to {@code null}
 	 * @since 1.2
 	 */
 	public void setRequestContentType(String requestContentType) {
@@ -290,8 +291,8 @@ public class EndpointConfigurationInput
 	 * Set an implicit response content type.
 	 *
 	 * @param responseContentType
-	 *        the response content to assume, or {@code null} to; a blank
-	 *        value will be normalized to {@code null}
+	 *        the response content to assume, or {@code null} to; a blank value
+	 *        will be normalized to {@code null}
 	 * @since 1.2
 	 */
 	public void setResponseContentType(String responseContentType) {

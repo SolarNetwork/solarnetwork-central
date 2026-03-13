@@ -79,8 +79,8 @@ public class EndpointAuthConfigurationRowMapper implements RowMapper<EndpointAut
 	public EndpointAuthConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
 		Long userId = rs.getObject(++p, Long.class);
-		UUID endpointId = CommonJdbcUtils.getUuid(rs, ++p);
-		Long credentialId = rs.getObject(++p, Long.class);
+		UUID endpointId = nonnull(CommonJdbcUtils.getUuid(rs, ++p), "endpointId");
+		Long credentialId = nonnull(rs.getObject(++p, Long.class), "credentialId");
 		Instant ts = nonnull(getTimestampInstant(rs, ++p), "created");
 		Instant mod = getTimestampInstant(rs, ++p);
 		boolean enabled = rs.getBoolean(++p);
