@@ -151,7 +151,8 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, CloudDatumStreamPropertyFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable CloudDatumStreamPropertyFilter filter,
+			boolean enabled) {
 		UserLongIntegerCompositePK key = filter != null && filter.hasIndexCriteria()
 				? new UserLongIntegerCompositePK(
 						userId, requireNonNullArgument(filter.getDatumStreamMappingId(), "mappingId"),

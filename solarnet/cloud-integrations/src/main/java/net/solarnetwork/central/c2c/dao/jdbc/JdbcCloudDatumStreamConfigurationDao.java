@@ -147,7 +147,8 @@ public class JdbcCloudDatumStreamConfigurationDao implements CloudDatumStreamCon
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, CloudDatumStreamFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable CloudDatumStreamFilter filter,
+			boolean enabled) {
 		UserLongCompositePK key = filter != null && filter.hasDatumStreamCriteria()
 				? new UserLongCompositePK(userId, nonnull(filter.getDatumStreamId(), "datumStreamId"))
 				: UserLongCompositePK.unassignedEntityIdKey(userId);

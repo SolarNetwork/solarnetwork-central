@@ -49,7 +49,7 @@ public class SelectAuthenticatedEndpointCredentials implements PreparedStatement
 	 * Constructor.
 	 *
 	 * @param endpointId
-	 *        the endpoint ID, or {@code null} if {@code oath} is
+	 *        the endpoint ID, or {@code null} if {@code oauth} is
 	 *        {@literal true}
 	 * @param username
 	 *        the username
