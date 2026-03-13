@@ -799,9 +799,6 @@ public class DatumExpressionRootTests {
 		final DatumExpressionRoot root = new DatumExpressionRoot(userId, d, d.getSamples(), Map.of(),
 				null, datumStreamsAccessor, null, null, httpOperations, userSecretProvider);
 
-		// get end datum
-		//given(datumStreamsAccessor.at(Node, nodeId, sourceId, root.getTimestamp())).willReturn(d);
-
 		// get offset earlier datum
 		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, ts, 1)).willReturn(d1);
 
