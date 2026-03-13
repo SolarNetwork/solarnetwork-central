@@ -50,6 +50,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -143,7 +144,7 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 
 	@Override
 	public Iterable<NodeInstruction> transformInput(Object input, MimeType type,
-			IdentifiableConfiguration config, Map<String, ?> parameters) throws IOException {
+			IdentifiableConfiguration config, @Nullable Map<String, ?> parameters) throws IOException {
 		String inputText = inputText(input);
 		Map<String, ?> props = config.getServiceProperties();
 		Object xslt = (props != null ? props.get(SETTING_XSLT) : null);
@@ -198,8 +199,8 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 		}
 	}
 
-	private Templates templates(String xslt, IdentifiableConfiguration config, Map<String, ?> parameters)
-			throws IOException {
+	private Templates templates(String xslt, IdentifiableConfiguration config,
+			@Nullable Map<String, ?> parameters) throws IOException {
 		return templates(xslt, config,
 				parameters != null ? parameters.get(PARAM_CONFIGURATION_CACHE_KEY) : null);
 	}

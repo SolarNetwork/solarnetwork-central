@@ -186,8 +186,8 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 * @throws IOException
 	 *         if any error occurs parsing the XSLT
 	 */
-	protected Templates templates(String xslt, IdentifiableConfiguration config, Object cacheKey)
-			throws IOException {
+	protected Templates templates(String xslt, @Nullable IdentifiableConfiguration config,
+			@Nullable Object cacheKey) throws IOException {
 		final long cacheTtlSeconds = (templatesCache != null ? templatesCacheTtlSeconds(config) : 0L);
 
 		String xsltCacheKey = null;
@@ -243,7 +243,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 * @return the TTL, in seconds
 	 */
 	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
-	protected long templatesCacheTtlSeconds(IdentifiableConfiguration config) {
+	protected long templatesCacheTtlSeconds(@Nullable IdentifiableConfiguration config) {
 		Map<String, ?> props = (config != null ? config.getServiceProperties() : null);
 		Object val = (props != null ? props.get(SETTING_XSLT_CACHE_DURATION) : null);
 		if ( val != null ) {

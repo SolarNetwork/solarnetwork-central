@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 
@@ -62,7 +63,7 @@ public interface InstructionInputEndpointBiz {
 	 *         if any argument is {@code null}
 	 */
 	List<NodeInstruction> importInstructions(Long userId, UUID endpointId, MimeType contentType,
-			InputStream in, Map<String, String> parameters) throws IOException;
+			InputStream in, @Nullable Map<String, String> parameters) throws IOException;
 
 	/**
 	 * Generate instructions response.
@@ -85,6 +86,7 @@ public interface InstructionInputEndpointBiz {
 	 *         if any argument is {@code null}
 	 */
 	void generateResponse(Long userId, UUID endpointId, List<NodeInstruction> instructions,
-			MimeType outputType, OutputStream out, Map<String, String> parameters) throws IOException;
+			MimeType outputType, OutputStream out, @Nullable Map<String, String> parameters)
+			throws IOException;
 
 }

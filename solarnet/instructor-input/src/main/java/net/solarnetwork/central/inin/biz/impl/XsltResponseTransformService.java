@@ -40,6 +40,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.inin.biz.ResponseTransformService;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -136,7 +137,7 @@ public class XsltResponseTransformService extends BaseXsltService implements Res
 
 	@Override
 	public void transformOutput(Iterable<NodeInstruction> instructions, MimeType type,
-			IdentifiableConfiguration config, Map<String, ?> parameters, OutputStream out)
+			IdentifiableConfiguration config, @Nullable Map<String, ?> parameters, OutputStream out)
 			throws IOException {
 		if ( instructions == null ) {
 			return;
@@ -176,8 +177,8 @@ public class XsltResponseTransformService extends BaseXsltService implements Res
 		}
 	}
 
-	private Templates templates(String xslt, IdentifiableConfiguration config, Map<String, ?> parameters)
-			throws IOException {
+	private Templates templates(String xslt, IdentifiableConfiguration config,
+			@Nullable Map<String, ?> parameters) throws IOException {
 		return templates(xslt, config,
 				parameters != null ? parameters.get(PARAM_CONFIGURATION_CACHE_KEY) : null);
 	}
