@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import net.solarnetwork.domain.datum.DatumId;
 
@@ -66,6 +67,7 @@ public interface DatumInputEndpointBiz {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
+	@Nullable
 	Collection<DatumId> importDatum(Long userId, UUID endpointId, MimeType contentType, InputStream in,
-			Map<String, String> parameters) throws IOException;
+			@Nullable Map<String, String> parameters) throws IOException;
 }

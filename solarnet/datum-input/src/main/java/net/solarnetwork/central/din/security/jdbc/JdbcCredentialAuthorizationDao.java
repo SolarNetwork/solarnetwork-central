@@ -24,6 +24,7 @@ package net.solarnetwork.central.din.security.jdbc;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.din.security.CredentialAuthorizationDao;
 import net.solarnetwork.central.din.security.EndpointUserDetails;
@@ -52,7 +53,7 @@ public class JdbcCredentialAuthorizationDao implements CredentialAuthorizationDa
 	}
 
 	@Override
-	public EndpointUserDetails credentialsForEndpoint(UUID endpointId, String username) {
+	public @Nullable EndpointUserDetails credentialsForEndpoint(UUID endpointId, String username) {
 		var sql = new SelectAuthenticatedEndpointCredentials(endpointId, username);
 		var results = jdbcOps.query(sql, AuthenticatedEndpointCredentialsRowMapper.INSTANCE);
 		return (!results.isEmpty() ? results.getFirst() : null);

@@ -24,12 +24,13 @@ package net.solarnetwork.central.din.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
 import net.solarnetwork.central.din.dao.BasicFilter;
@@ -73,20 +74,21 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 
 	@Override
 	public CredentialConfiguration entityKey(UserLongCompositePK id) {
-		return new CredentialConfiguration(id, Instant.EPOCH);
+		return new CredentialConfiguration(id, Instant.EPOCH, "");
 	}
 
 	@Override
 	public UserLongCompositePK create(Long userId, CredentialConfiguration entity) {
 		final var sql = new InsertCredentialConfiguration(userId, entity);
 
-		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
+		final Long id = updateWithGeneratedLong(jdbcOps, sql, "id");
 
-		return (id != null ? new UserLongCompositePK(userId, id) : null);
+		return new UserLongCompositePK(userId, id);
 	}
 
 	@Override
-	public Collection<CredentialConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<CredentialConfiguration> findAll(Long userId,
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectCredentialConfiguration(filter);
@@ -97,7 +99,8 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 
 	@Override
 	public FilterResults<CredentialConfiguration, UserLongCompositePK> findFiltered(
-			CredentialFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			CredentialFilter filter, @Nullable List<SortDescriptor> sorts, @Nullable Long offset,
+			@Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCredentialConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, CredentialConfigurationRowMapper.INSTANCE);
@@ -105,17 +108,16 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 
 	@Override
 	public UserLongCompositePK save(CredentialConfiguration entity) {
-		if ( !entity.getId().entityIdIsAssigned() ) {
-			return create(entity.getId().getUserId(), entity);
+		if ( !entity.pk().entityIdIsAssigned() ) {
+			return create(entity.getUserId(), entity);
 		}
-		final UpdateCredentialConfiguration sql = new UpdateCredentialConfiguration(entity.getId(),
-				entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		final var sql = new UpdateCredentialConfiguration(entity.pk(), entity);
+		jdbcOps.update(sql);
+		return entity.pk();
 	}
 
 	@Override
-	public CredentialConfiguration get(UserLongCompositePK id) {
+	public @Nullable CredentialConfiguration get(UserLongCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -127,7 +129,7 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 	}
 
 	@Override
-	public Collection<CredentialConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<CredentialConfiguration> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -138,14 +140,14 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 	@Override
 	public void delete(CredentialConfiguration entity) {
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+				requireNonNullArgument(entity, "entity").pk(), TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, CredentialFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable CredentialFilter filter, boolean enabled) {
 		UserLongCompositePK key = filter != null && filter.hasCredentialCriteria()
-				? new UserLongCompositePK(userId, filter.getCredentialId())
+				? new UserLongCompositePK(userId, filter.credentialId())
 				: UserLongCompositePK.unassignedEntityIdKey(userId);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);

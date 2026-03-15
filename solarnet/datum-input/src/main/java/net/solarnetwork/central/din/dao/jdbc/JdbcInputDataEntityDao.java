@@ -28,9 +28,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.PreparedStatementCallback;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.din.dao.InputDataEntityDao;
 import net.solarnetwork.central.din.dao.jdbc.sql.SelectInputDataEntity;
@@ -71,19 +71,19 @@ public class JdbcInputDataEntityDao implements InputDataEntityDao {
 	@Override
 	public UserLongStringCompositePK save(InputDataEntity entity) {
 		final var sql = new UpsertInputDataEntity(entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		jdbcOps.update(sql);
+		return entity.pk();
 	}
 
 	@Override
-	public InputDataEntity get(UserLongStringCompositePK id) {
+	public @Nullable InputDataEntity get(UserLongStringCompositePK id) {
 		var sql = new SelectInputDataEntity(id);
 		var results = jdbcOps.query(sql, InputDataEntityRowMapper.INSTANCE);
 		return (!results.isEmpty() ? results.getFirst() : null);
 	}
 
 	@Override
-	public Collection<InputDataEntity> getAll(List<SortDescriptor> sorts) {
+	public Collection<InputDataEntity> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -92,31 +92,28 @@ public class JdbcInputDataEntityDao implements InputDataEntityDao {
 
 	@Override
 	public void delete(InputDataEntity entity) {
-		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").pk(), TABLE_NAME,
+				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 
-	private static final PreparedStatementCallback<byte[]> DATA_CALLBACK = new PreparedStatementCallback<>() {
-
-		@Override
-		public byte[] doInPreparedStatement(PreparedStatement ps)
-				throws SQLException, DataAccessException {
-			if ( ps.execute() ) {
-				try (ResultSet rs = ps.getResultSet()) {
-					if ( rs.next() ) {
-						return rs.getBytes(1);
-					}
+	private static byte @Nullable [] dataCallback(PreparedStatement ps)
+			throws SQLException, DataAccessException {
+		if ( ps.execute() ) {
+			try (ResultSet rs = ps.getResultSet()) {
+				if ( rs.next() ) {
+					return rs.getBytes(1);
 				}
 			}
-			return null;
 		}
-	};
+		return null;
+	}
 
+	@SuppressWarnings("NullAway")
 	@Override
-	public byte[] getAndPut(UserLongStringCompositePK id, byte[] data) {
+	public byte @Nullable [] getAndPut(UserLongStringCompositePK id, byte[] data) {
 		UpsertInputDataReturnPrevious sql = new UpsertInputDataReturnPrevious(id, data);
-		return jdbcOps.execute(sql, DATA_CALLBACK);
+		return jdbcOps.execute(sql, JdbcInputDataEntityDao::dataCallback);
 	}
 
 }

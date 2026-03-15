@@ -25,6 +25,7 @@ package net.solarnetwork.central.din.domain;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Arrays;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserLongStringCompositePK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
@@ -41,7 +42,7 @@ public class InputDataEntity extends BasicEntity<UserLongStringCompositePK>
 	@Serial
 	private static final long serialVersionUID = -8181765903228308150L;
 
-	private final byte[] data;
+	private final byte @Nullable [] data;
 
 	/**
 	 * Constructor.
@@ -55,7 +56,7 @@ public class InputDataEntity extends BasicEntity<UserLongStringCompositePK>
 	 * @throws IllegalArgumentException
 	 *         if any argument except {@code data} is {@code null}
 	 */
-	public InputDataEntity(UserLongStringCompositePK id, Instant created, byte[] data) {
+	public InputDataEntity(UserLongStringCompositePK id, Instant created, byte @Nullable [] data) {
 		super(id, created);
 		this.data = data;
 	}
@@ -76,7 +77,8 @@ public class InputDataEntity extends BasicEntity<UserLongStringCompositePK>
 	 * @throws IllegalArgumentException
 	 *         if any argument except {@code data} is {@code null}
 	 */
-	public InputDataEntity(Long userId, Long nodeId, String sourceId, Instant created, byte[] data) {
+	public InputDataEntity(Long userId, Long nodeId, String sourceId, Instant created,
+			byte @Nullable [] data) {
 		this(new UserLongStringCompositePK(userId, nodeId, sourceId), created, data);
 	}
 
@@ -92,13 +94,26 @@ public class InputDataEntity extends BasicEntity<UserLongStringCompositePK>
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
-	public boolean isSameAs(InputDataEntity other) {
+	public boolean isSameAs(@Nullable InputDataEntity other) {
+		if ( other == null ) {
+			return false;
+		}
 		return Arrays.equals(data, other.data);
 	}
 
 	@Override
-	public boolean differsFrom(InputDataEntity other) {
+	public boolean differsFrom(@Nullable InputDataEntity other) {
 		return !isSameAs(other);
+	}
+
+	/**
+	 * Get the primary key.
+	 *
+	 * @return the primary key
+	 */
+	@SuppressWarnings("NullAway")
+	public final UserLongStringCompositePK pk() {
+		return getId();
 	}
 
 	/**
@@ -106,7 +121,7 @@ public class InputDataEntity extends BasicEntity<UserLongStringCompositePK>
 	 *
 	 * @return the data
 	 */
-	public byte[] getData() {
+	public final byte @Nullable [] getData() {
 		return data;
 	}
 
@@ -115,9 +130,8 @@ public class InputDataEntity extends BasicEntity<UserLongStringCompositePK>
 	 *
 	 * @return the user ID
 	 */
-	public Long getUserId() {
-		var id = getId();
-		return (id != null ? id.getUserId() : null);
+	public final Long getUserId() {
+		return pk().getUserId();
 	}
 
 	/**
@@ -125,9 +139,8 @@ public class InputDataEntity extends BasicEntity<UserLongStringCompositePK>
 	 *
 	 * @return the node ID
 	 */
-	public Long getNodeId() {
-		var id = getId();
-		return (id != null ? id.getGroupId() : null);
+	public final Long getNodeId() {
+		return pk().getGroupId();
 	}
 
 	/**
@@ -135,9 +148,8 @@ public class InputDataEntity extends BasicEntity<UserLongStringCompositePK>
 	 *
 	 * @return the source ID
 	 */
-	public String getSourceId() {
-		var id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final String getSourceId() {
+		return pk().getEntityId();
 	}
 
 }

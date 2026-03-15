@@ -1,7 +1,7 @@
 /* ==================================================================
- * CredentialAuthorizationDao.java - 23/02/2024 1:36:28 pm
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2024 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,29 +20,11 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.din.security;
-
-import java.util.UUID;
-import org.jspecify.annotations.Nullable;
-
 /**
- * API for endpoint credential authorization.
- *
- * @author matt
- * @version 1.0
+ * SolarNetwork user datum input AOP services.
  */
-public interface CredentialAuthorizationDao {
 
-	/**
-	 * Look up the credentials for an endpoint with the given username.
-	 *
-	 * @param endpointId
-	 *        the endpoint ID
-	 * @param username
-	 *        the username
-	 * @return the matching credentials, or {@code null} if not available
-	 */
-	@Nullable
-	EndpointUserDetails credentialsForEndpoint(UUID endpointId, String username);
+@NullMarked
+package net.solarnetwork.central.user.din.aop;
 
-}
+import org.jspecify.annotations.NullMarked;

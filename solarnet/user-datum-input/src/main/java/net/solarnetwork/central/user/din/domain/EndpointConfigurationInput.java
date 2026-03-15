@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.din.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -37,19 +38,20 @@ import net.solarnetwork.central.domain.UserUuidPK;
  * @author matt
  * @version 1.2
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class EndpointConfigurationInput
 		extends BaseDatumInputConfigurationInput<EndpointConfiguration, UserUuidPK> {
 
 	@NotNull
 	@NotBlank
 	@Size(max = 64)
-	private String name;
+	private @Nullable String name;
 
-	private Long nodeId;
-	private String sourceId;
+	private @Nullable Long nodeId;
+	private @Nullable String sourceId;
 
 	@NotNull
-	private Long transformId;
+	private @Nullable Long transformId;
 
 	private boolean publishToSolarFlux = true;
 	private boolean previousInputTracking = false;
@@ -57,7 +59,7 @@ public class EndpointConfigurationInput
 	private boolean includeResponseBody = false;
 
 	@Size(max = 96)
-	private String requestContentType;
+	private @Nullable String requestContentType;
 
 	/**
 	 * Constructor.
@@ -66,13 +68,16 @@ public class EndpointConfigurationInput
 		super();
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public EndpointConfiguration toEntity(UserUuidPK id, Instant date) {
-		EndpointConfiguration conf = new EndpointConfiguration(requireNonNullArgument(id, "id"), date);
+		EndpointConfiguration conf = new EndpointConfiguration(requireNonNullArgument(id, "id"), date,
+				name);
 		populateConfiguration(conf);
 		return conf;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(EndpointConfiguration conf) {
 		super.populateConfiguration(conf);
@@ -91,7 +96,7 @@ public class EndpointConfigurationInput
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
@@ -101,7 +106,7 @@ public class EndpointConfigurationInput
 	 * @param name
 	 *        the name to set
 	 */
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
@@ -111,7 +116,7 @@ public class EndpointConfigurationInput
 	 *
 	 * @return the node ID
 	 */
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
@@ -122,7 +127,7 @@ public class EndpointConfigurationInput
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
@@ -132,7 +137,7 @@ public class EndpointConfigurationInput
 	 *
 	 * @return the source ID
 	 */
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return sourceId;
 	}
 
@@ -143,7 +148,7 @@ public class EndpointConfigurationInput
 	 * @param sourceId
 	 *        the source ID to set
 	 */
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(@Nullable String sourceId) {
 		this.sourceId = sourceId;
 	}
 
@@ -152,7 +157,7 @@ public class EndpointConfigurationInput
 	 *
 	 * @return the ID
 	 */
-	public Long getTransformId() {
+	public final @Nullable Long getTransformId() {
 		return transformId;
 	}
 
@@ -162,7 +167,7 @@ public class EndpointConfigurationInput
 	 * @param transformId
 	 *        the ID to set
 	 */
-	public void setTransformId(Long transformId) {
+	public final void setTransformId(@Nullable Long transformId) {
 		this.transformId = transformId;
 	}
 
@@ -172,7 +177,7 @@ public class EndpointConfigurationInput
 	 * @return {@literal true} if data from this endpoint should be published to
 	 *         SolarFlux; defaults to {@literal true}
 	 */
-	public boolean isPublishToSolarFlux() {
+	public final boolean isPublishToSolarFlux() {
 		return publishToSolarFlux;
 	}
 
@@ -183,7 +188,7 @@ public class EndpointConfigurationInput
 	 *        {@literal true} if data from this endpoint should be published to
 	 *        SolarFlux
 	 */
-	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+	public final void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
 	}
 
@@ -194,7 +199,7 @@ public class EndpointConfigurationInput
 	 *         {@literal false}
 	 * @since 1.1
 	 */
-	public boolean isPreviousInputTracking() {
+	public final boolean isPreviousInputTracking() {
 		return previousInputTracking;
 	}
 
@@ -205,7 +210,7 @@ public class EndpointConfigurationInput
 	 *        {@literal true} to track previous input values
 	 * @since 1.1
 	 */
-	public void setPreviousInputTracking(boolean previousInputTracking) {
+	public final void setPreviousInputTracking(boolean previousInputTracking) {
 		this.previousInputTracking = previousInputTracking;
 	}
 
@@ -215,7 +220,7 @@ public class EndpointConfigurationInput
 	 * @return {@literal true} to not include any response content
 	 * @since 1.2
 	 */
-	public boolean isIncludeResponseBody() {
+	public final boolean isIncludeResponseBody() {
 		return includeResponseBody;
 	}
 
@@ -226,7 +231,7 @@ public class EndpointConfigurationInput
 	 *        {@literal true} to not include any response content
 	 * @since 1.2
 	 */
-	public void setIncludeResponseBody(boolean includeResponseBody) {
+	public final void setIncludeResponseBody(boolean includeResponseBody) {
 		this.includeResponseBody = includeResponseBody;
 	}
 
@@ -236,7 +241,7 @@ public class EndpointConfigurationInput
 	 * @return the request content type to assume
 	 * @since 1.2
 	 */
-	public String getRequestContentType() {
+	public final @Nullable String getRequestContentType() {
 		return requestContentType;
 	}
 
@@ -248,7 +253,7 @@ public class EndpointConfigurationInput
 	 *        will be normalized to {@code null}
 	 * @since 1.2
 	 */
-	public void setRequestContentType(String requestContentType) {
+	public final void setRequestContentType(@Nullable String requestContentType) {
 		if ( requestContentType != null && requestContentType.isBlank() ) {
 			requestContentType = null;
 		}

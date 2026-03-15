@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.CachingGenericDao;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -61,7 +62,8 @@ public class CachingTransformConfigurationDao
 
 	@Override
 	public FilterResults<TransformConfiguration, UserLongCompositePK> findFiltered(
-			TransformFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			TransformFilter filter, @Nullable List<SortDescriptor> sorts, @Nullable Long offset,
+			@Nullable Integer max) {
 		return delegate.findFiltered(filter, sorts, offset, max);
 	}
 
@@ -71,7 +73,8 @@ public class CachingTransformConfigurationDao
 	}
 
 	@Override
-	public Collection<TransformConfiguration> findAll(Long keyComponent1, List<SortDescriptor> sorts) {
+	public Collection<TransformConfiguration> findAll(Long keyComponent1,
+			@Nullable List<SortDescriptor> sorts) {
 		return delegate.findAll(keyComponent1, sorts);
 	}
 

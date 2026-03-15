@@ -23,10 +23,12 @@
 package net.solarnetwork.central.din.domain;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
@@ -49,13 +51,13 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	private static final long serialVersionUID = -3845517573525287732L;
 
 	private String name;
-	private Long nodeId;
-	private String sourceId;
-	private Long transformId;
+	private @Nullable Long nodeId;
+	private @Nullable String sourceId;
+	private @Nullable Long transformId;
 	private boolean publishToSolarFlux = true;
 	private boolean previousInputTracking;
 	private boolean includeResponseBody;
-	private String requestContentType;
+	private @Nullable String requestContentType;
 
 	/**
 	 * Constructor.
@@ -64,11 +66,14 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public EndpointConfiguration(UserUuidPK id, Instant created) {
+	public EndpointConfiguration(UserUuidPK id, Instant created, String name) {
 		super(id, created);
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	/**
@@ -80,16 +85,19 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *        the entity ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public EndpointConfiguration(Long userId, UUID entityId, Instant created) {
-		this(new UserUuidPK(userId, entityId), created);
+	public EndpointConfiguration(Long userId, UUID entityId, Instant created, String name) {
+		this(new UserUuidPK(userId, entityId), created, name);
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	@Override
 	public EndpointConfiguration copyWithId(UserUuidPK id) {
-		var copy = new EndpointConfiguration(id, getCreated());
+		var copy = new EndpointConfiguration(id, nonnull(getCreated(), "created"), name);
 		copyTo(copy);
 		return copy;
 	}
@@ -108,7 +116,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	}
 
 	@Override
-	public boolean isSameAs(EndpointConfiguration other) {
+	public boolean isSameAs(@Nullable EndpointConfiguration other) {
 		if ( !super.isSameAs(other) ) {
 			return false;
 		}
@@ -171,9 +179,8 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @return the endpoint ID
 	 */
-	public UUID getEndpointId() {
-		UserUuidPK id = getId();
-		return (id != null ? id.getUuid() : null);
+	public final UUID getEndpointId() {
+		return pk().getUuid();
 	}
 
 	/**
@@ -181,7 +188,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -190,9 +197,11 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @param name
 	 *        the name to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	/**
@@ -201,7 +210,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @return the node ID
 	 */
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
@@ -212,7 +221,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
@@ -222,7 +231,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @return the source ID
 	 */
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return sourceId;
 	}
 
@@ -234,7 +243,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *        the source ID to set; a blank value will be normalized to
 	 *        {@code null}
 	 */
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(@Nullable String sourceId) {
 		if ( sourceId != null && sourceId.isBlank() ) {
 			sourceId = null;
 		}
@@ -246,7 +255,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @return the ID
 	 */
-	public Long getTransformId() {
+	public final @Nullable Long getTransformId() {
 		return transformId;
 	}
 
@@ -256,7 +265,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @param transformId
 	 *        the ID to set
 	 */
-	public void setTransformId(Long transformId) {
+	public final void setTransformId(@Nullable Long transformId) {
 		this.transformId = transformId;
 	}
 
@@ -266,7 +275,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @return {@literal true} if data from this endpoint should be published to
 	 *         SolarFlux; defaults to {@literal true}
 	 */
-	public boolean isPublishToSolarFlux() {
+	public final boolean isPublishToSolarFlux() {
 		return publishToSolarFlux;
 	}
 
@@ -277,7 +286,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *        {@literal true} if data from this endpoint should be published to
 	 *        SolarFlux
 	 */
-	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+	public final void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
 	}
 
@@ -288,7 +297,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *         {@literal false}
 	 * @since 1.1
 	 */
-	public boolean isPreviousInputTracking() {
+	public final boolean isPreviousInputTracking() {
 		return previousInputTracking;
 	}
 
@@ -299,7 +308,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *        {@literal true} to track previous input values
 	 * @since 1.1
 	 */
-	public void setPreviousInputTracking(boolean previousInputTracking) {
+	public final void setPreviousInputTracking(boolean previousInputTracking) {
 		this.previousInputTracking = previousInputTracking;
 	}
 
@@ -309,7 +318,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @return {@literal true} to include the response content
 	 * @since 1.2
 	 */
-	public boolean isIncludeResponseBody() {
+	public final boolean isIncludeResponseBody() {
 		return includeResponseBody;
 	}
 
@@ -320,7 +329,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *        {@literal true} to include the response content
 	 * @since 1.2
 	 */
-	public void setIncludeResponseBody(boolean includeResponseBody) {
+	public final void setIncludeResponseBody(boolean includeResponseBody) {
 		this.includeResponseBody = includeResponseBody;
 	}
 
@@ -330,7 +339,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @return the request content type to assume
 	 * @since 1.2
 	 */
-	public String getRequestContentType() {
+	public final @Nullable String getRequestContentType() {
 		return requestContentType;
 	}
 
@@ -342,7 +351,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *        will be normalized to {@code null}
 	 * @since 1.2
 	 */
-	public void setRequestContentType(String requestContentType) {
+	public final void setRequestContentType(@Nullable String requestContentType) {
 		if ( requestContentType != null && requestContentType.isBlank() ) {
 			requestContentType = null;
 		}

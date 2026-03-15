@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.din.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.Datum;
 
 /**
@@ -30,6 +31,7 @@ import net.solarnetwork.domain.datum.Datum;
  * @author matt
  * @version 1.0
  */
-public record TransformOutput(Iterable<Datum> datum, String transformOutput, String message) {
+public record TransformOutput(@Nullable Iterable<Datum> datum, @Nullable String transformOutput,
+		@Nullable String message) {
 
 }

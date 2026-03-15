@@ -23,6 +23,7 @@
 package net.solarnetwork.central.din.dao;
 
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
 import net.solarnetwork.central.din.domain.EndpointConfiguration;
@@ -47,6 +48,7 @@ public interface EndpointConfigurationDao
 	 *        the endpoint ID
 	 * @return the configuration, or {@code null} if not found
 	 */
+	@Nullable
 	EndpointConfiguration getForEndpointId(UUID endpointId);
 
 }

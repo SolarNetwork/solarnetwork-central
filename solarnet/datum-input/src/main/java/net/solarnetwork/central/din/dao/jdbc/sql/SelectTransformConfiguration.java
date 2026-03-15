@@ -95,10 +95,10 @@ public final class SelectTransformConfiguration
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		if ( filter.hasUserCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getUserIds(), "dx.user_id", where);
+			idx += whereOptimizedArrayContains(filter.userIds(), "dx.user_id", where);
 		}
 		if ( filter.hasTransformCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getTransformIds(), "dx.id", where);
+			idx += whereOptimizedArrayContains(filter.transformIds(), "dx.id", where);
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -123,10 +123,10 @@ public final class SelectTransformConfiguration
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		if ( filter.hasUserCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.userIds());
 		}
 		if ( filter.hasTransformCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getTransformIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.transformIds());
 		}
 		return p;
 	}

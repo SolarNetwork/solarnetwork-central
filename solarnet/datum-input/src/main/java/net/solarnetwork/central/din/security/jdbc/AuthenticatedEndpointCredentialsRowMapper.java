@@ -66,7 +66,7 @@ public class AuthenticatedEndpointCredentialsRowMapper
 	public AuthenticatedEndpointCredentials mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = 0;
 		Long userId = rs.getObject(++p, Long.class);
-		UUID entityId = CommonJdbcUtils.getUuid(rs, ++p);
+		UUID entityId = CommonJdbcUtils.uuid(rs, ++p);
 		String username = rs.getString(++p);
 		String password = rs.getString(++p);
 		boolean enabled = rs.getBoolean(++p);

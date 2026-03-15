@@ -66,10 +66,9 @@ public final class DinJdbcTestUtils {
 	public static CredentialConfiguration newCredentialConfiguration(Long userId, String username,
 			String password) {
 		CredentialConfiguration conf = new CredentialConfiguration(unassignedEntityIdKey(userId),
-				Instant.now());
+				Instant.now(), username);
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
-		conf.setUsername(username);
 		conf.setPassword(password);
 		return conf;
 	}
@@ -105,10 +104,8 @@ public final class DinJdbcTestUtils {
 	public static TransformConfiguration newTransformConfiguration(Long userId, String name,
 			String serviceId, Map<String, Object> serviceProps) {
 		TransformConfiguration conf = new TransformConfiguration(unassignedEntityIdKey(userId),
-				Instant.now());
+				Instant.now(), name, serviceId);
 		conf.setModified(conf.getCreated());
-		conf.setName(name);
-		conf.setServiceIdentifier(serviceId);
 		conf.setServiceProps(serviceProps);
 		return conf;
 	}
@@ -148,10 +145,9 @@ public final class DinJdbcTestUtils {
 	public static EndpointConfiguration newEndpointConfiguration(Long userId, UUID endpointId,
 			String name, Long nodeId, String sourceId, Long transformId) {
 		EndpointConfiguration conf = new EndpointConfiguration(new UserUuidPK(userId, endpointId),
-				Instant.now());
+				Instant.now(), name);
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
-		conf.setName(name);
 		conf.setNodeId(nodeId);
 		conf.setSourceId(sourceId);
 		conf.setTransformId(transformId);

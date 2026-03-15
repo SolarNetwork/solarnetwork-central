@@ -24,12 +24,13 @@ package net.solarnetwork.central.din.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.din.dao.BasicFilter;
 import net.solarnetwork.central.din.dao.TransformConfigurationDao;
@@ -72,20 +73,21 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 
 	@Override
 	public TransformConfiguration entityKey(UserLongCompositePK id) {
-		return new TransformConfiguration(id, Instant.EPOCH);
+		return new TransformConfiguration(id, Instant.EPOCH, "", "");
 	}
 
 	@Override
 	public UserLongCompositePK create(Long userId, TransformConfiguration entity) {
 		final var sql = new InsertTransformConfiguration(userId, entity);
 
-		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
+		final Long id = updateWithGeneratedLong(jdbcOps, sql, "id");
 
-		return (id != null ? new UserLongCompositePK(userId, id) : null);
+		return new UserLongCompositePK(userId, id);
 	}
 
 	@Override
-	public Collection<TransformConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<TransformConfiguration> findAll(Long userId,
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectTransformConfiguration(filter);
@@ -95,7 +97,8 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 
 	@Override
 	public FilterResults<TransformConfiguration, UserLongCompositePK> findFiltered(
-			TransformFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			TransformFilter filter, @Nullable List<SortDescriptor> sorts, @Nullable Long offset,
+			@Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectTransformConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, TransformConfigurationRowMapper.INSTANCE);
@@ -103,17 +106,16 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 
 	@Override
 	public UserLongCompositePK save(TransformConfiguration entity) {
-		if ( !entity.getId().entityIdIsAssigned() ) {
-			return create(entity.getId().getUserId(), entity);
+		if ( !entity.pk().entityIdIsAssigned() ) {
+			return create(entity.getUserId(), entity);
 		}
-		final UpdateTransformConfiguration sql = new UpdateTransformConfiguration(entity.getId(),
-				entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		final var sql = new UpdateTransformConfiguration(entity.pk(), entity);
+		jdbcOps.update(sql);
+		return entity.pk();
 	}
 
 	@Override
-	public TransformConfiguration get(UserLongCompositePK id) {
+	public @Nullable TransformConfiguration get(UserLongCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -124,7 +126,7 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 	}
 
 	@Override
-	public Collection<TransformConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<TransformConfiguration> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -134,8 +136,8 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 
 	@Override
 	public void delete(TransformConfiguration entity) {
-		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").pk(), TABLE_NAME,
+				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 

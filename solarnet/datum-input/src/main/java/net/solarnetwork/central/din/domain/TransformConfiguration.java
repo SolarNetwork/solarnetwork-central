@@ -23,11 +23,13 @@
 package net.solarnetwork.central.din.domain;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -57,9 +59,9 @@ public class TransformConfiguration
 
 	private String name;
 	private String serviceIdentifier;
-	private String servicePropsJson;
+	private @Nullable String servicePropsJson;
 
-	private Map<String, Object> serviceProps;
+	private @Nullable Map<String, Object> serviceProps;
 
 	/**
 	 * Constructor.
@@ -68,11 +70,18 @@ public class TransformConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public TransformConfiguration(UserLongCompositePK id, Instant created) {
+	public TransformConfiguration(UserLongCompositePK id, Instant created, String name,
+			String serviceIdentifier) {
 		super(id, created);
+		this.name = requireNonNullArgument(name, "name");
+		this.serviceIdentifier = requireNonNullArgument(serviceIdentifier, "serviceIdentifier");
 		setEnabled(true);
 	}
 
@@ -85,16 +94,22 @@ public class TransformConfiguration
 	 *        the transform ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public TransformConfiguration(Long userId, Long transformId, Instant created) {
-		this(new UserLongCompositePK(userId, transformId), created);
+	public TransformConfiguration(Long userId, Long transformId, Instant created, String name,
+			String serviceIdentifier) {
+		this(new UserLongCompositePK(userId, transformId), created, name, serviceIdentifier);
 	}
 
 	@Override
 	public TransformConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new TransformConfiguration(id, getCreated());
+		var copy = new TransformConfiguration(id, nonnull(getCreated(), "created"), name,
+				serviceIdentifier);
 		copyTo(copy);
 		return copy;
 	}
@@ -108,7 +123,7 @@ public class TransformConfiguration
 	}
 
 	@Override
-	public boolean isSameAs(TransformConfiguration other) {
+	public boolean isSameAs(@Nullable TransformConfiguration other) {
 		if ( !super.isSameAs(other) ) {
 			return false;
 		}
@@ -156,13 +171,12 @@ public class TransformConfiguration
 	 *
 	 * @return the endpoint ID
 	 */
-	public Long getTransformId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getTransformId() {
+		return pk().getEntityId();
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -171,13 +185,15 @@ public class TransformConfiguration
 	 *
 	 * @param name
 	 *        the name to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	@Override
-	public String getServiceIdentifier() {
+	public final String getServiceIdentifier() {
 		return serviceIdentifier;
 	}
 
@@ -187,9 +203,11 @@ public class TransformConfiguration
 	 *
 	 * @param serviceIdentifier
 	 *        the identifier to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setServiceIdentifier(String serviceIdentifier) {
-		this.serviceIdentifier = serviceIdentifier;
+	public final void setServiceIdentifier(String serviceIdentifier) {
+		this.serviceIdentifier = requireNonNullArgument(serviceIdentifier, "serviceIdentifier");
 	}
 
 	/**
@@ -199,7 +217,7 @@ public class TransformConfiguration
 	 *         available
 	 */
 	@JsonIgnore
-	public String getServicePropsJson() {
+	public final @Nullable String getServicePropsJson() {
 		return servicePropsJson;
 	}
 
@@ -217,7 +235,7 @@ public class TransformConfiguration
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setServicePropsJson(String json) {
+	public final void setServicePropsJson(@Nullable String json) {
 		servicePropsJson = json;
 		serviceProps = null;
 	}
@@ -233,7 +251,7 @@ public class TransformConfiguration
 	 * @return the service properties
 	 */
 	@JsonIgnore
-	public Map<String, Object> getServiceProps() {
+	public final @Nullable Map<String, Object> getServiceProps() {
 		if ( serviceProps == null && servicePropsJson != null ) {
 			serviceProps = JsonUtils.getStringMap(servicePropsJson);
 		}
@@ -252,13 +270,13 @@ public class TransformConfiguration
 	 *        the service properties to set
 	 */
 	@JsonSetter("serviceProperties")
-	public void setServiceProps(Map<String, Object> serviceProps) {
+	public final void setServiceProps(@Nullable Map<String, Object> serviceProps) {
 		this.serviceProps = serviceProps;
 		servicePropsJson = JsonUtils.getJSONString(serviceProps, null);
 	}
 
 	@Override
-	public Map<String, ?> getServiceProperties() {
+	public final @Nullable Map<String, ?> getServiceProperties() {
 		return getServiceProps();
 	}
 }

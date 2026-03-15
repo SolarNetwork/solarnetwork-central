@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.din.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.din.domain.CredentialConfiguration;
@@ -77,13 +79,16 @@ public class CredentialConfigurationRowMapper implements RowMapper<CredentialCon
 	@Override
 	public CredentialConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
-		Long userId = rs.getObject(++p, Long.class);
-		Long entityId = rs.getObject(++p, Long.class);
-		Timestamp ts = rs.getTimestamp(++p);
-		CredentialConfiguration conf = new CredentialConfiguration(userId, entityId, ts.toInstant());
-		conf.setModified(rs.getTimestamp(++p).toInstant());
-		conf.setEnabled(rs.getBoolean(++p));
-		conf.setUsername(rs.getString(++p));
+		Long userId = nonnull(rs.getObject(++p, Long.class), "userId");
+		Long entityId = nonnull(rs.getObject(++p, Long.class), "entityId");
+		Instant ts = timestampInstant(rs, ++p);
+		Instant mod = timestampInstant(rs, ++p);
+		boolean enabled = rs.getBoolean(++p);
+		String username = nonnull(rs.getString(++p), "username");
+
+		final var conf = new CredentialConfiguration(userId, entityId, ts, username);
+		conf.setModified(mod);
+		conf.setEnabled(enabled);
 		conf.setPassword(rs.getString(++p));
 		conf.setExpires(CommonJdbcUtils.getTimestampInstant(rs, ++p));
 		return conf;

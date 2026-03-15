@@ -152,7 +152,8 @@ public class DaoUserDatumInputBizTests {
 	public void credentialConfigurationsForUser() {
 		// GIVEN
 		Long userId = randomLong();
-		CredentialConfiguration conf = new CredentialConfiguration(userId, randomLong(), now());
+		CredentialConfiguration conf = new CredentialConfiguration(userId, randomLong(), now(),
+				randomString());
 		final BasicFilterResults<CredentialConfiguration, UserLongCompositePK> daoResults = new BasicFilterResults<>(
 				Arrays.asList(conf));
 		given(credentialDao.findFiltered(any(BasicFilter.class), isNull(), isNull(), isNull()))
@@ -177,7 +178,8 @@ public class DaoUserDatumInputBizTests {
 	public void transformConfigurationsForUser() {
 		// GIVEN
 		Long userId = randomLong();
-		TransformConfiguration conf = new TransformConfiguration(userId, randomLong(), now());
+		TransformConfiguration conf = new TransformConfiguration(userId, randomLong(), now(),
+				randomString(), randomString());
 		final BasicFilterResults<TransformConfiguration, UserLongCompositePK> daoResults = new BasicFilterResults<>(
 				Arrays.asList(conf));
 		given(transformDao.findFiltered(any(BasicFilter.class), isNull(), isNull(), isNull()))
@@ -202,7 +204,8 @@ public class DaoUserDatumInputBizTests {
 	public void endpointConfigurationsForUser() {
 		// GIVEN
 		Long userId = randomLong();
-		EndpointConfiguration conf = new EndpointConfiguration(userId, randomUUID(), now());
+		EndpointConfiguration conf = new EndpointConfiguration(userId, randomUUID(), now(),
+				randomString());
 		final BasicFilterResults<EndpointConfiguration, UserUuidPK> daoResults = new BasicFilterResults<>(
 				Arrays.asList(conf));
 		given(endpointDao.findFiltered(any(BasicFilter.class), isNull(), isNull(), isNull()))
@@ -256,7 +259,7 @@ public class DaoUserDatumInputBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CredentialConfiguration conf = new CredentialConfiguration(pk, now());
+		CredentialConfiguration conf = new CredentialConfiguration(pk, now(), randomString());
 
 		given(credentialDao.get(pk)).willReturn(conf);
 
@@ -273,7 +276,8 @@ public class DaoUserDatumInputBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		TransformConfiguration conf = new TransformConfiguration(pk, now());
+		TransformConfiguration conf = new TransformConfiguration(pk, now(), randomString(),
+				randomString());
 
 		given(transformDao.get(pk)).willReturn(conf);
 
@@ -290,7 +294,7 @@ public class DaoUserDatumInputBizTests {
 		Long userId = randomLong();
 		UUID entityId = randomUUID();
 		UserUuidPK pk = new UserUuidPK(userId, entityId);
-		EndpointConfiguration conf = new EndpointConfiguration(pk, now());
+		EndpointConfiguration conf = new EndpointConfiguration(pk, now(), randomString());
 
 		given(endpointDao.get(pk)).willReturn(conf);
 
@@ -325,7 +329,7 @@ public class DaoUserDatumInputBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CredentialConfiguration conf = new CredentialConfiguration(pk, now());
+		CredentialConfiguration conf = new CredentialConfiguration(pk, now(), randomString());
 		conf.setPassword("this should be erased");
 
 		// encode password
@@ -377,7 +381,8 @@ public class DaoUserDatumInputBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		TransformConfiguration conf = new TransformConfiguration(pk, now());
+		TransformConfiguration conf = new TransformConfiguration(pk, now(), randomString(),
+				randomString());
 
 		// save and retrieve
 		given(transformDao.save(any(TransformConfiguration.class))).willReturn(pk);
@@ -420,7 +425,7 @@ public class DaoUserDatumInputBizTests {
 		Long userId = randomLong();
 		UUID entityId = randomUUID();
 		UserUuidPK pk = new UserUuidPK(userId, entityId);
-		EndpointConfiguration conf = new EndpointConfiguration(pk, now());
+		EndpointConfiguration conf = new EndpointConfiguration(pk, now(), randomString());
 
 		// save and retrieve
 		given(endpointDao.save(any(EndpointConfiguration.class))).willReturn(pk);
@@ -499,7 +504,7 @@ public class DaoUserDatumInputBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CredentialConfiguration conf = new CredentialConfiguration(pk, now());
+		CredentialConfiguration conf = new CredentialConfiguration(pk, now(), randomString());
 
 		given(credentialDao.entityKey(pk)).willReturn(conf);
 
@@ -523,7 +528,8 @@ public class DaoUserDatumInputBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		TransformConfiguration conf = new TransformConfiguration(pk, now());
+		TransformConfiguration conf = new TransformConfiguration(pk, now(), randomString(),
+				randomString());
 
 		given(transformDao.entityKey(pk)).willReturn(conf);
 
@@ -547,7 +553,7 @@ public class DaoUserDatumInputBizTests {
 		Long userId = randomLong();
 		UUID entityId = randomUUID();
 		UserUuidPK pk = new UserUuidPK(userId, entityId);
-		EndpointConfiguration conf = new EndpointConfiguration(pk, now());
+		EndpointConfiguration conf = new EndpointConfiguration(pk, now(), randomString());
 
 		given(endpointDao.entityKey(pk)).willReturn(conf);
 

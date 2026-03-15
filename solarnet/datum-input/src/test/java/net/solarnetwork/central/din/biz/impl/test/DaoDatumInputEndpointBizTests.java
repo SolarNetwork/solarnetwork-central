@@ -159,11 +159,11 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final var transform = new TransformConfiguration(userId, randomLong(), now());
-		transform.setServiceIdentifier(xformServiceId);
+		final var transform = new TransformConfiguration(userId, randomLong(), now(), randomString(),
+				xformServiceId);
 		transform.setModified(Instant.now());
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), randomString());
 		endpoint.setNodeId(nodeId);
 		endpoint.setSourceId(sourceId);
 		endpoint.setTransformId(transform.getTransformId());
@@ -257,10 +257,10 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final var transform = new TransformConfiguration(userId, randomLong(), now());
-		transform.setServiceIdentifier(xformServiceId);
+		final var transform = new TransformConfiguration(userId, randomLong(), now(), randomString(),
+				xformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), randomString());
 		endpoint.setNodeId(nodeId);
 		endpoint.setSourceId(sourceId);
 		endpoint.setTransformId(transform.getTransformId());
@@ -337,10 +337,10 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final var transform = new TransformConfiguration(userId, randomLong(), now());
-		transform.setServiceIdentifier(xformServiceId);
+		final var transform = new TransformConfiguration(userId, randomLong(), now(), randomString(),
+				xformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), randomString());
 		endpoint.setTransformId(transform.getTransformId());
 		endpoint.setIncludeResponseBody(true);
 		endpoint.setPublishToSolarFlux(false);
@@ -419,10 +419,10 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final var transform = new TransformConfiguration(userId, randomLong(), now());
-		transform.setServiceIdentifier(xformServiceId);
+		final var transform = new TransformConfiguration(userId, randomLong(), now(), randomString(),
+				xformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), randomString());
 		endpoint.setTransformId(transform.getTransformId());
 		endpoint.setIncludeResponseBody(true);
 		endpoint.setPublishToSolarFlux(false);
@@ -518,10 +518,10 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final var transform = new TransformConfiguration(userId, randomLong(), now());
-		transform.setServiceIdentifier(xformServiceId);
+		final var transform = new TransformConfiguration(userId, randomLong(), now(), randomString(),
+				xformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), randomString());
 		endpoint.setTransformId(transform.getTransformId());
 		endpoint.setIncludeResponseBody(true);
 		endpoint.setPublishToSolarFlux(false);
@@ -573,10 +573,10 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final var transform = new TransformConfiguration(userId, randomLong(), now());
-		transform.setServiceIdentifier(xformServiceId);
+		final var transform = new TransformConfiguration(userId, randomLong(), now(), randomString(),
+				xformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), randomString());
 		endpoint.setTransformId(transform.getTransformId());
 		endpoint.setIncludeResponseBody(true);
 		endpoint.setPublishToSolarFlux(false);
@@ -683,10 +683,10 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final var transform = new TransformConfiguration(userId, randomLong(), now());
-		transform.setServiceIdentifier(xformServiceId);
+		final var transform = new TransformConfiguration(userId, randomLong(), now(), randomString(),
+				xformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), randomString());
 		endpoint.setNodeId(nodeId);
 		endpoint.setSourceId(sourceId);
 		endpoint.setTransformId(transform.getTransformId());
@@ -754,10 +754,10 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final var transform = new TransformConfiguration(userId, randomLong(), now());
-		transform.setServiceIdentifier(xformServiceId);
+		final var transform = new TransformConfiguration(userId, randomLong(), now(), randomString(),
+				xformServiceId);
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), randomString());
 		endpoint.setNodeId(nodeId);
 		endpoint.setSourceId(sourceId);
 		endpoint.setTransformId(transform.getTransformId());
@@ -827,11 +827,11 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final var transform = new TransformConfiguration(userId, randomLong(), now());
-		transform.setServiceIdentifier(xformServiceId);
+		final var transform = new TransformConfiguration(userId, randomLong(), now(), randomString(),
+				xformServiceId);
 		transform.setModified(Instant.now());
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), randomString());
 		endpoint.setNodeId(nodeId);
 		endpoint.setSourceId(sourceId);
 		endpoint.setTransformId(transform.getTransformId());
@@ -931,11 +931,11 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final var transform = new TransformConfiguration(userId, randomLong(), now());
-		transform.setServiceIdentifier(xformServiceId);
+		final var transform = new TransformConfiguration(userId, randomLong(), now(), randomString(),
+				xformServiceId);
 		transform.setModified(Instant.now());
 
-		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now(), randomString());
 		endpoint.setNodeId(nodeId);
 		endpoint.setSourceId(sourceId);
 		endpoint.setTransformId(transform.getTransformId());

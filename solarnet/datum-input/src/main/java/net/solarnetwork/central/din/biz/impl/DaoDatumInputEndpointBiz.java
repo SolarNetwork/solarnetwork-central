@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
@@ -90,8 +91,8 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 	private final DatumWriteOnlyDao datumDao;
 	private final InputDataEntityDao previousInputDataDao;
 	private final Map<String, TransformService> transformServices;
-	private DatumProcessor fluxPublisher;
-	private UserEventAppenderBiz userEventAppenderBiz;
+	private @Nullable DatumProcessor fluxPublisher;
+	private @Nullable UserEventAppenderBiz userEventAppenderBiz;
 
 	/**
 	 * Constructor.
@@ -126,9 +127,9 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 	private static final MimeType JSON_TYPE = MimeType.valueOf("application/json");
 	private static final MimeType TEXT_TYPE = MimeType.valueOf("text/*");
 
-	private static LogEventInfo importErrorEvent(String msg, EndpointConfiguration endpoint,
-			TransformConfiguration xform, MimeType contentType, byte[] content, byte[] previousContent,
-			Map<String, String> parameters) {
+	private static LogEventInfo importErrorEvent(@Nullable String msg, EndpointConfiguration endpoint,
+			TransformConfiguration xform, MimeType contentType, byte @Nullable [] content,
+			byte @Nullable [] previousContent, @Nullable Map<String, String> parameters) {
 		var eventData = new LinkedHashMap<>(8);
 		eventData.put(ENDPOINT_ID_DATA_KEY, endpoint.getEndpointId());
 		eventData.put(TRANSFORM_ID_DATA_KEY, endpoint.getTransformId());
@@ -151,7 +152,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 		return event(DATUM_TAGS, msg, getJSONString(eventData, null), ERROR_TAG);
 	}
 
-	private static String eventContentValue(MimeType contentType, byte[] content) {
+	private static @Nullable String eventContentValue(MimeType contentType, byte @Nullable [] content) {
 		if ( content == null ) {
 			return null;
 		}
@@ -166,8 +167,8 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 	}
 
 	@Override
-	public Collection<DatumId> importDatum(Long userId, UUID endpointId, MimeType contentType,
-			InputStream in, Map<String, String> parameters) throws IOException {
+	public @Nullable Collection<DatumId> importDatum(Long userId, UUID endpointId, MimeType contentType,
+			InputStream in, @Nullable Map<String, String> parameters) throws IOException {
 		final UserUuidPK endpointPk = new UserUuidPK(requireNonNullArgument(userId, "userId"),
 				requireNonNullArgument(endpointId, "endpointId"));
 		final EndpointConfiguration endpoint = requireNonNullObject(endpointDao.get(endpointPk),
@@ -316,7 +317,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 				}
 
 				DatumPK pk = datumDao.persist(gnd);
-				if ( result != null ) {
+				if ( pk != null && result != null ) {
 					result.add(DatumId.nodeId(nodeId, sourceId, pk.getTimestamp()));
 				}
 
@@ -337,7 +338,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 	 *
 	 * @return the publisher, or {@code null}
 	 */
-	public DatumProcessor getFluxPublisher() {
+	public final @Nullable DatumProcessor getFluxPublisher() {
 		return fluxPublisher;
 	}
 
@@ -347,7 +348,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
-	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+	public final void setFluxPublisher(@Nullable DatumProcessor fluxPublisher) {
 		this.fluxPublisher = fluxPublisher;
 	}
 
@@ -357,7 +358,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 	 * @return the service
 	 * @since 1.2
 	 */
-	public UserEventAppenderBiz getUserEventAppenderBiz() {
+	public final @Nullable UserEventAppenderBiz getUserEventAppenderBiz() {
 		return userEventAppenderBiz;
 	}
 
@@ -368,7 +369,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 	 *        the service to set
 	 * @since 1.2
 	 */
-	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
+	public final void setUserEventAppenderBiz(@Nullable UserEventAppenderBiz userEventAppenderBiz) {
 		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 

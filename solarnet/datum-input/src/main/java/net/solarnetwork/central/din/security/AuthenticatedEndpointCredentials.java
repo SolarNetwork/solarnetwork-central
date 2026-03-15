@@ -26,6 +26,7 @@ import static org.springframework.security.core.authority.AuthorityUtils.createA
 import java.io.Serial;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.userdetails.User;
 import net.solarnetwork.central.support.EventDetailsProvider;
 import net.solarnetwork.util.ObjectUtils;
@@ -62,7 +63,7 @@ public class AuthenticatedEndpointCredentials extends User
 	 *        the expiration state
 	 */
 	public AuthenticatedEndpointCredentials(Long userId, UUID endpointId, String username,
-			String password, boolean enabled, boolean expired) {
+			@Nullable String password, boolean enabled, boolean expired) {
 		super(username, password, enabled, true, !expired, true,
 				createAuthorityList(SecurityUtils.ROLE_DIN));
 		this.userId = ObjectUtils.requireNonNullArgument(userId, "userId");
