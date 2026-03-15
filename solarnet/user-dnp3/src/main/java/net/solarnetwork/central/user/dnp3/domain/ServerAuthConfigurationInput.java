@@ -36,6 +36,7 @@ import net.solarnetwork.central.domain.UserLongStringCompositePK;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class ServerAuthConfigurationInput
 		extends BaseDnp3ConfigurationInput<ServerAuthConfiguration, UserLongStringCompositePK> {
 
@@ -49,6 +50,7 @@ public class ServerAuthConfigurationInput
 	@Size(max = 64)
 	private @Nullable String name;
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public ServerAuthConfiguration toEntity(UserLongStringCompositePK id, Instant date) {
 		ServerAuthConfiguration conf = new ServerAuthConfiguration(id, date, name);
@@ -56,6 +58,7 @@ public class ServerAuthConfigurationInput
 		return conf;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(ServerAuthConfiguration conf) {
 		super.populateConfiguration(conf);

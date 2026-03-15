@@ -30,6 +30,7 @@ import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsv
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.PROPERTY;
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.SOURCE_ID;
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.TYPE;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.parseBoolean;
 import java.io.IOException;
@@ -37,6 +38,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import de.siegmar.fastcsv.reader.CsvReader;
 import de.siegmar.fastcsv.reader.CsvRecord;
@@ -107,7 +109,7 @@ public class ServerConfigurationsCsvParser {
 	 * @throws IllegalArgumentException
 	 *         if invalid data is parsed
 	 */
-	public ServerConfigurationsInput parse(CsvReader<CsvRecord> csv) throws IOException {
+	public @Nullable ServerConfigurationsInput parse(CsvReader<CsvRecord> csv) throws IOException {
 		if ( csv == null ) {
 			return null;
 		}
@@ -158,11 +160,11 @@ public class ServerConfigurationsCsvParser {
 	}
 
 	private String colName(ServerConfigurationsCsvColumn col) {
-		return messageSource.getMessage("dnp3.config.import.csv.col.%s".formatted(col.name()), null,
-				col.getName(), locale);
+		return nonnull(messageSource.getMessage("dnp3.config.import.csv.col.%s".formatted(col.name()),
+				null, col.getName(), locale), "Column name");
 	}
 
-	private String parseStringValue(CsvRecord row, int rowLen, int rowNum,
+	private @Nullable String parseStringValue(CsvRecord row, int rowLen, int rowNum,
 			ServerConfigurationsCsvColumn col, boolean required) {
 		final int colNum = col.getCode();
 		String s = null;
@@ -184,7 +186,7 @@ public class ServerConfigurationsCsvParser {
 		return s;
 	}
 
-	private Integer parseIntegerValue(CsvRecord row, int rowLen, int rowNum,
+	private @Nullable Integer parseIntegerValue(CsvRecord row, int rowLen, int rowNum,
 			ServerConfigurationsCsvColumn col, boolean required) {
 		final String s = parseStringValue(row, rowLen, rowNum, col, required);
 		Integer result = null;
@@ -201,8 +203,8 @@ public class ServerConfigurationsCsvParser {
 		return result;
 	}
 
-	private Long parseLongValue(CsvRecord row, int rowLen, int rowNum, ServerConfigurationsCsvColumn col,
-			boolean required) {
+	private @Nullable Long parseLongValue(CsvRecord row, int rowLen, int rowNum,
+			ServerConfigurationsCsvColumn col, boolean required) {
 		final String s = parseStringValue(row, rowLen, rowNum, col, required);
 		Long result = null;
 		if ( s != null ) {
@@ -218,7 +220,7 @@ public class ServerConfigurationsCsvParser {
 		return result;
 	}
 
-	private BigDecimal parseBigDecimalValue(CsvRecord row, int rowLen, int rowNum,
+	private @Nullable BigDecimal parseBigDecimalValue(CsvRecord row, int rowLen, int rowNum,
 			ServerConfigurationsCsvColumn col, boolean required) {
 		String s = parseStringValue(row, rowLen, rowNum, col, required);
 		if ( s != null ) {
@@ -237,7 +239,7 @@ public class ServerConfigurationsCsvParser {
 	private static final String CONTROL_PREFIX = "control";
 
 	private CodedValue parseTypeValue(CsvRecord row, int rowLen, int rowNum) {
-		String s = parseStringValue(row, rowLen, rowNum, TYPE, true);
+		String s = nonnull(parseStringValue(row, rowLen, rowNum, TYPE, true), "Type");
 		try {
 			return MeasurementType.valueOf(s);
 		} catch ( IllegalArgumentException e ) {

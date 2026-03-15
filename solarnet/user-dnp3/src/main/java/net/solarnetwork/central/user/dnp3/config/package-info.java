@@ -21,10 +21,10 @@
  */
 
 /**
- * SolarNetwork DNP3 domain.
+ * SolarNetwork user DNP3 configuration.
  */
 
 @NullMarked
-package net.solarnetwork.central.dnp3.domain;
+package net.solarnetwork.central.user.dnp3.config;
 
 import org.jspecify.annotations.NullMarked;

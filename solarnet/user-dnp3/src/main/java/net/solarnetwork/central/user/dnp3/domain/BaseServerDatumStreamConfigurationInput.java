@@ -42,6 +42,7 @@ import net.solarnetwork.domain.CodedValue;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServerDatumStreamConfiguration<C, T>, T extends Enum<? extends CodedValue>>
 		extends BaseDnp3ConfigurationInput<C, UserLongIntegerCompositePK> {
 
@@ -65,6 +66,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	private @Nullable Integer scale;
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(C conf) {
 		super.populateConfiguration(conf);

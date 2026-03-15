@@ -21,10 +21,10 @@
  */
 
 /**
- * SolarNetwork DNP3 domain.
+ * SolarNetwork DNP3 DAO APIs.
  */
 
 @NullMarked
-package net.solarnetwork.central.dnp3.domain;
+package net.solarnetwork.central.dnp3.dao;
 
 import org.jspecify.annotations.NullMarked;

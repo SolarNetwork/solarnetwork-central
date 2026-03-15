@@ -28,6 +28,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
@@ -72,13 +73,13 @@ public class JdbcServerAuthConfigurationDao implements ServerAuthConfigurationDa
 	@Override
 	public UserLongStringCompositePK create(Long userId, Long serverId, ServerAuthConfiguration entity) {
 		final var sql = new UpsertServerAuthConfiguration(userId, serverId, entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		jdbcOps.update(sql);
+		return entity.pk();
 	}
 
 	@Override
 	public Collection<ServerAuthConfiguration> findAll(Long userId, Long serverId,
-			List<SortDescriptor> sorts) {
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		filter.setServerId(serverId);
@@ -94,7 +95,7 @@ public class JdbcServerAuthConfigurationDao implements ServerAuthConfigurationDa
 	}
 
 	@Override
-	public ServerAuthConfiguration get(UserLongStringCompositePK id) {
+	public @Nullable ServerAuthConfiguration get(UserLongStringCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -107,7 +108,7 @@ public class JdbcServerAuthConfigurationDao implements ServerAuthConfigurationDa
 	}
 
 	@Override
-	public Collection<ServerAuthConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<ServerAuthConfiguration> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -118,29 +119,30 @@ public class JdbcServerAuthConfigurationDao implements ServerAuthConfigurationDa
 
 	@Override
 	public void delete(ServerAuthConfiguration entity) {
-		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").pk(), TABLE_NAME,
+				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 
 	@Override
 	public FilterResults<ServerAuthConfiguration, UserLongStringCompositePK> findFiltered(
-			ServerFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			ServerFilter filter, @Nullable List<SortDescriptor> sorts, @Nullable Long offset,
+			@Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectServerAuthConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, ServerAuthConfigurationRowMapper.INSTANCE);
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable ServerFilter filter, boolean enabled) {
 		var sql = new UpdateEnabledServerFilter(TABLE_NAME, SERVER_ID_COLUMN_NAME, userId, filter,
 				enabled);
 		return jdbcOps.update(sql);
 	}
 
 	@Override
-	public ServerAuthConfiguration findForIdentifier(String subjectDn) {
-		BasicFilter filter = new BasicFilter();
+	public @Nullable ServerAuthConfiguration findForIdentifier(String subjectDn) {
+		var filter = new BasicFilter();
 		filter.setIdentifier(subjectDn);
 		filter.setEnabled(true);
 		var sql = new SelectServerAuthConfiguration(filter);

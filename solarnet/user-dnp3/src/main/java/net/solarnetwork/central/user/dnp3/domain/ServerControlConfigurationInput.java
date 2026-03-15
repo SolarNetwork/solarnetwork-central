@@ -38,6 +38,7 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 public class ServerControlConfigurationInput
 		extends BaseServerDatumStreamConfigurationInput<ServerControlConfiguration, ControlType> {
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public ServerControlConfiguration toEntity(UserLongIntegerCompositePK id, Instant date) {
 		ServerControlConfiguration conf = new ServerControlConfiguration(

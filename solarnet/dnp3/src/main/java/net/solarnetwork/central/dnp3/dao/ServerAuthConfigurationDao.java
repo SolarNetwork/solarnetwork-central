@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dnp3.dao;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.GenericCompositeKey3Dao;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
 import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
@@ -56,6 +57,7 @@ public interface ServerAuthConfigurationDao extends
 	 *        the identifier to search for
 	 * @return the entity, or {@code null} if not found
 	 */
+	@Nullable
 	ServerAuthConfiguration findForIdentifier(String identifier);
 
 }

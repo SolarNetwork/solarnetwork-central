@@ -37,9 +37,11 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class ServerMeasurementConfigurationInput extends
 		BaseServerDatumStreamConfigurationInput<ServerMeasurementConfiguration, MeasurementType> {
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public ServerMeasurementConfiguration toEntity(UserLongIntegerCompositePK id, Instant date) {
 		ServerMeasurementConfiguration conf = new ServerMeasurementConfiguration(

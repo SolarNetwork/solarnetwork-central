@@ -37,6 +37,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class ServerConfigurationInput
 		extends BaseDnp3ConfigurationInput<ServerConfiguration, UserLongCompositePK> {
 
@@ -45,6 +46,7 @@ public class ServerConfigurationInput
 	@Size(max = 64)
 	private @Nullable String name;
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public ServerConfiguration toEntity(UserLongCompositePK id, Instant date) {
 		ServerConfiguration conf = new ServerConfiguration(requireNonNullArgument(id, "id"), date, name);
@@ -52,6 +54,7 @@ public class ServerConfigurationInput
 		return conf;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(ServerConfiguration conf) {
 		super.populateConfiguration(conf);
@@ -63,7 +66,7 @@ public class ServerConfigurationInput
 	 *
 	 * @return the name
 	 */
-	public final String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
@@ -73,7 +76,7 @@ public class ServerConfigurationInput
 	 * @param name
 	 *        the name to set
 	 */
-	public final void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
