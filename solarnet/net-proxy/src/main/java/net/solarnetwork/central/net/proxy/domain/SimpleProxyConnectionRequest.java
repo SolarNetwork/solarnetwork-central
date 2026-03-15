@@ -24,6 +24,7 @@ package net.solarnetwork.central.net.proxy.domain;
 
 import java.security.cert.X509Certificate;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Simple implementation of {@link ProxyConnectionRequest}.
@@ -35,7 +36,7 @@ import java.util.List;
  * @author matt
  * @version 1.1
  */
-public record SimpleProxyConnectionRequest(String principal, List<X509Certificate> principalIdentity)
-		implements ProxyConnectionRequest {
+public record SimpleProxyConnectionRequest(@Nullable String principal,
+		List<X509Certificate> principalIdentity) implements ProxyConnectionRequest {
 
 }

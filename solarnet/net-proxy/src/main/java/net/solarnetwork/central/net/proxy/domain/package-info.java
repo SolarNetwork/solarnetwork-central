@@ -1,7 +1,7 @@
 /* ==================================================================
- * ProxyConnectionRequest.java - 1/08/2023 10:55:28 am
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2023 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,33 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork network proxy domain.
+ */
+
+@NullMarked
 package net.solarnetwork.central.net.proxy.domain;
 
-import java.security.cert.X509Certificate;
-import java.util.List;
-import org.jspecify.annotations.Nullable;
-
-/**
- * API for a proxy connection request.
- *
- * @author matt
- * @version 1.1
- */
-public interface ProxyConnectionRequest {
-
-	/**
-	 * Get a principal name.
-	 *
-	 * @return the principal name
-	 */
-	@Nullable
-	String principal();
-
-	/**
-	 * Get the principal identity, if available.
-	 *
-	 * @return the principal identity
-	 */
-	List<X509Certificate> principalIdentity();
-
-}
+import org.jspecify.annotations.NullMarked;

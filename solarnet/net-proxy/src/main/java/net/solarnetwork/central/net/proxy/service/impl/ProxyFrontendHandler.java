@@ -25,6 +25,7 @@ package net.solarnetwork.central.net.proxy.service.impl;
 import static net.solarnetwork.central.net.proxy.service.impl.NettyDynamicProxyServer.SSL_SESSION_PROXY_SETTINGS_KEY;
 import java.io.IOException;
 import javax.net.ssl.SSLException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.netty.bootstrap.Bootstrap;
@@ -64,8 +65,8 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
 	private static final Logger log = LoggerFactory.getLogger(ProxyFrontendHandler.class);
 
-	private Bootstrap b;
-	private Channel outboundChannel;
+	private @Nullable Bootstrap b;
+	private @Nullable Channel outboundChannel;
 
 	/**
 	 * Constructor.
@@ -78,6 +79,10 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 	@Override
 	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 		if ( evt instanceof SslHandshakeCompletionEvent hs && hs.isSuccess() ) {
+			final Bootstrap b = this.b;
+			if ( b == null ) {
+				return;
+			}
 			// get proxy settings from SSL session
 			final Channel inboundChannel = ctx.channel();
 			final SslHandler ssl = inboundChannel.pipeline().get(SslHandler.class);
@@ -154,7 +159,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 		if (root instanceof io.netty.handler.ssl.NotSslRecordException e ) {
 			String msg = e.getMessage();
 			final int max = 64;
-			if ( msg.length() > max ) {
+			if ( msg != null && msg.length() > max ) {
 				msg = msg.substring(0, max) + "... and " +(msg.length() - max) +" more";
 			}
 			log.debug("Non-TLS client message; dropping connection: {}", msg);
