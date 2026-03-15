@@ -23,13 +23,13 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getArray;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
@@ -97,9 +97,9 @@ public class ReadingDatumEntityRowMapper implements RowMapper<ReadingDatum> {
 
 	@Override
 	public ReadingDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = nonnull(getUuid(rs, 1), "Stream ID");
-		Instant ts = nonnull(rs.getTimestamp(2), "Timestamp").toInstant();
-		Timestamp tsEnd = rs.getTimestamp(3);
+		UUID streamId = uuid(rs, 1);
+		Instant ts = timestampInstant(rs, 2);
+		Instant tsEnd = getTimestampInstant(rs, 3);
 		BigDecimal[] data_i = getArray(rs, 4);
 		BigDecimal[] data_a = getArray(rs, 5);
 		String[] data_s = getArray(rs, 6);
@@ -107,8 +107,7 @@ public class ReadingDatumEntityRowMapper implements RowMapper<ReadingDatum> {
 		BigDecimal[][] stat_i = getArray(rs, 8);
 		BigDecimal[][] stat_a = getArray(rs, 9);
 
-		return new ReadingDatumEntity(streamId, ts, aggregation,
-				tsEnd != null ? tsEnd.toInstant() : null,
+		return new ReadingDatumEntity(streamId, ts, aggregation, tsEnd,
 				DatumProperties.propertiesOf(data_i, data_a, data_s, data_t),
 				DatumPropertiesStatistics.statisticsOf(stat_i, stat_a));
 	}

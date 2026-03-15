@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.lang.String.format;
+import static net.solarnetwork.central.datum.v2.dao.CombiningConfig.OBJECT_IDS_CONFIG;
+import static net.solarnetwork.central.datum.v2.dao.CombiningConfig.SOURCE_IDS_CONFIG;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
@@ -520,7 +522,7 @@ public final class DatumSqlUtils {
 			paramCount += 1;
 		}
 		if ( filter.hasLocationCriteria() ) {
-			Location l = nonnull(filter.getLocation(), "Location");
+			Location l = filter.location();
 			if ( l.getCountry() != null ) {
 				buf.append("	AND l.country = ?\n");
 				paramCount += 1;
@@ -649,18 +651,18 @@ public final class DatumSqlUtils {
 	 */
 	public static int whereDatumMetadata(DatumStreamCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
-		if ( filter.getLocationId() != null ) {
+		if ( filter.hasLocationIdCriteria() ) {
 			buf.append("\tAND s.loc_id = ");
-			if ( nonnull(filter.getLocationIds(), "locationIds").length > 1 ) {
+			if ( filter.locationIds().length > 1 ) {
 				buf.append("ANY(?)");
 			} else {
 				buf.append("?");
 			}
 			buf.append("\n");
 			paramCount += 1;
-		} else if ( filter.getNodeId() != null ) {
+		} else if ( filter.hasNodeCriteria() ) {
 			buf.append("\tAND s.node_id = ");
-			if ( nonnull(filter.getNodeIds(), "nodeIds").length > 1 ) {
+			if ( filter.nodeIds().length > 1 ) {
 				buf.append("ANY(?)");
 			} else {
 				buf.append("?");
@@ -836,9 +838,7 @@ public final class DatumSqlUtils {
 				buf.append("\n, 0 AS obj_rank");
 			}
 		} else {
-			CombiningIdsConfig<Long> objIdConfig = nonnull(
-					combiningConfig.getIdsConfig(CombiningConfig.OBJECT_IDS_CONFIG),
-					"Combining object IDs config");
+			CombiningIdsConfig<Long> objIdConfig = combiningConfig.idsConfig(OBJECT_IDS_CONFIG);
 			buf.append("\n, CASE\n");
 			for ( Iterator<Long> iterator = objIdConfig.getIdSets().keySet().iterator(); iterator
 					.hasNext(); ) {
@@ -861,9 +861,7 @@ public final class DatumSqlUtils {
 				buf.append("\n, 0 AS source_rank");
 			}
 		} else {
-			CombiningIdsConfig<String> objIdConfig = nonnull(
-					combiningConfig.getIdsConfig(CombiningConfig.SOURCE_IDS_CONFIG),
-					"Combining source IDs config");
+			CombiningIdsConfig<String> objIdConfig = combiningConfig.idsConfig(SOURCE_IDS_CONFIG);
 			buf.append("\n, CASE\n");
 			for ( Iterator<String> iterator = objIdConfig.getIdSets().keySet().iterator(); iterator
 					.hasNext(); ) {
@@ -925,10 +923,10 @@ public final class DatumSqlUtils {
 			buf.append(", COALESCE(l.time_zone, 'UTC') AS time_zone");
 		}
 		buf.append("\nFROM solardatm.da_datm_meta s\n");
-		if ( filter != null && (filter.getUserIds() != null || filter.getTokenIds() != null) ) {
+		if ( filter != null && (filter.hasUserCriteria() || filter.hasTokenCriteria()) ) {
 			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = s.node_id\n");
 		}
-		if ( filter != null && filter.getTokenIds() != null ) {
+		if ( filter != null && filter.hasTokenCriteria() ) {
 			buf.append("INNER JOIN solaruser.user_auth_token ut ON ut.user_id = un.user_id\n");
 		}
 		// for Minimum style we don't need to find the time zone so don't have to join to sn_loc table
@@ -1252,7 +1250,7 @@ public final class DatumSqlUtils {
 				array.free();
 			}
 			if ( filter.hasLocationCriteria() ) {
-				Location l = nonnull(filter.getLocation(), "Location");
+				Location l = filter.location();
 				if ( l.getCountry() != null ) {
 					stmt.setString(++parameterOffset, l.getCountry());
 				}
@@ -1382,9 +1380,7 @@ public final class DatumSqlUtils {
 			@Nullable CombiningConfig combiningConfig, Connection con, PreparedStatement stmt,
 			int parameterOffset) throws SQLException {
 		if ( combiningConfig != null && combiningConfig.isWithObjectIds() ) {
-			CombiningIdsConfig<Long> objIdConfig = nonnull(
-					combiningConfig.getIdsConfig(CombiningConfig.OBJECT_IDS_CONFIG),
-					"Combining object IDs config");
+			CombiningIdsConfig<Long> objIdConfig = combiningConfig.idsConfig(OBJECT_IDS_CONFIG);
 			List<Long> allIds = new ArrayList<>();
 			for ( Map.Entry<Long, Set<Long>> me : objIdConfig.getIdSets().entrySet() ) {
 				allIds.addAll(me.getValue());
@@ -1399,9 +1395,7 @@ public final class DatumSqlUtils {
 			array.free();
 		}
 		if ( combiningConfig != null && combiningConfig.isWithSourceIds() ) {
-			CombiningIdsConfig<String> sourceIdConfig = nonnull(
-					combiningConfig.getIdsConfig(CombiningConfig.SOURCE_IDS_CONFIG),
-					"Combining source IDs config");
+			CombiningIdsConfig<String> sourceIdConfig = combiningConfig.idsConfig(SOURCE_IDS_CONFIG);
 			List<String> allIds = new ArrayList<>();
 			for ( Map.Entry<String, Set<String>> me : sourceIdConfig.getIdSets().entrySet() ) {
 				allIds.addAll(me.getValue());
@@ -1416,21 +1410,21 @@ public final class DatumSqlUtils {
 			array.free();
 		}
 		if ( filter != null ) {
-			if ( filter.getLocationId() != null ) {
-				if ( nonnull(filter.getLocationIds(), "locationIds").length > 1 ) {
-					Array array = con.createArrayOf("bigint", filter.getLocationIds());
+			if ( filter.hasLocationIdCriteria() ) {
+				if ( filter.locationIds().length > 1 ) {
+					Array array = con.createArrayOf("bigint", filter.locationIds());
 					stmt.setArray(++parameterOffset, array);
 					array.free();
 				} else {
-					stmt.setObject(++parameterOffset, filter.getLocationId());
+					stmt.setObject(++parameterOffset, filter.locationId());
 				}
-			} else if ( filter.getNodeId() != null ) {
-				if ( nonnull(filter.getNodeIds(), "nodeIds").length > 1 ) {
-					Array array = con.createArrayOf("bigint", filter.getNodeIds());
+			} else if ( filter.hasNodeCriteria() ) {
+				if ( filter.nodeIds().length > 1 ) {
+					Array array = con.createArrayOf("bigint", filter.nodeIds());
 					stmt.setArray(++parameterOffset, array);
 					array.free();
 				} else {
-					stmt.setObject(++parameterOffset, filter.getNodeId());
+					stmt.setObject(++parameterOffset, filter.nodeId());
 				}
 			}
 			parameterOffset = prepareStreamMetadataFilter(filter, filter.getObjectKind(), con, stmt,

@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for task related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface TaskCriteria {
 
@@ -61,6 +61,40 @@ public interface TaskCriteria {
 	 */
 	default boolean hasTaskCriteria() {
 		return getTaskId() != null;
+	}
+
+	/**
+	 * Get the first task ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTaskCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first task ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long taskId() {
+		return getTaskId();
+	}
+
+	/**
+	 * Get an array of task IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTaskCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of task IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] taskIds() {
+		return getTaskIds();
 	}
 
 }

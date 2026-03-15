@@ -24,7 +24,6 @@ package net.solarnetwork.central.inin.dao.jdbc.sql;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -95,13 +94,13 @@ public final class SelectEndpointAuthConfiguration
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		if ( filter.hasUserCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getUserIds(), "iac.user_id", where);
+			idx += whereOptimizedArrayContains(filter.userIds(), "iac.user_id", where);
 		}
 		if ( filter.hasEndpointCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getEndpointIds(), "iac.endpoint_id", where);
+			idx += whereOptimizedArrayContains(filter.endpointIds(), "iac.endpoint_id", where);
 		}
 		if ( filter.hasCredentialCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getCredentialIds(), "iac.cred_id", where);
+			idx += whereOptimizedArrayContains(filter.credentialIds(), "iac.cred_id", where);
 		}
 		if ( filter.hasEnabledCriteria() ) {
 			where.append("\tAND iac.enabled = ?\n");
@@ -130,16 +129,16 @@ public final class SelectEndpointAuthConfiguration
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		if ( filter.hasUserCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.userIds());
 		}
 		if ( filter.hasEndpointCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getEndpointIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.endpointIds());
 		}
 		if ( filter.hasCredentialCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getCredentialIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.credentialIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, nonnull(filter.getEnabled(), "enabled"));
+			stmt.setBoolean(++p, filter.enabled());
 		}
 		return p;
 	}

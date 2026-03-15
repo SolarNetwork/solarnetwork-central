@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for node related data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 public interface NodeCriteria {
@@ -61,6 +61,40 @@ public interface NodeCriteria {
 	 */
 	default boolean hasNodeCriteria() {
 		return getNodeId() != null;
+	}
+
+	/**
+	 * Get the first node ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasNodeCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first node ID (presumed non-null)
+	 * @since 1.2
+	 */
+	@SuppressWarnings("NullAway")
+	default Long nodeId() {
+		return getNodeId();
+	}
+
+	/**
+	 * Get an array of node IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasNodeCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of node IDs (presumed non-null)
+	 * @since 1.2
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] nodeIds() {
+		return getNodeIds();
 	}
 
 }

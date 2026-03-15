@@ -22,8 +22,7 @@
 
 package net.solarnetwork.central.user.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -77,8 +76,8 @@ public class UserKeyPairEntityRowMapper implements RowMapper<UserKeyPairEntity> 
 		int p = columnOffset;
 		Long userId = rs.getObject(++p, Long.class);
 		String key = rs.getString(++p);
-		Instant ts = nonnull(getTimestampInstant(rs, ++p), "created");
-		Instant mod = nonnull(getTimestampInstant(rs, ++p), "modified");
+		Instant ts = timestampInstant(rs, ++p);
+		Instant mod = timestampInstant(rs, ++p);
 		byte[] keystore = rs.getBytes(++p);
 		return new UserKeyPairEntity(userId, key, ts, mod, keystore);
 	}

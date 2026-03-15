@@ -22,8 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -94,7 +93,7 @@ public class ObjectDatumStreamMetadataGeoRowMapper implements RowMapper<ObjectDa
 
 	@Override
 	public ObjectDatumStreamMetadata mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = nonnull(getUuid(rs, 1), "Stream ID");
+		UUID streamId = uuid(rs, 1);
 		Long objId = rs.getLong(2);
 		String sourceId = rs.getString(3);
 		String jmeta = rs.getString(4);

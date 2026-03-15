@@ -24,7 +24,7 @@ package net.solarnetwork.central.c2c.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
@@ -41,13 +41,11 @@ import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudIntegrationConfigura
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudIntegrationMergeServiceProperties;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudIntegrationOAuthAuthorizationState;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * JDBC implementation of {@link CloudIntegrationConfigurationDao}.
@@ -85,8 +83,7 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 	@Override
 	public UserLongCompositePK create(Long userId, CloudIntegrationConfiguration entity) {
 		final var sql = new InsertCloudIntegrationConfiguration(userId, entity);
-		final Long id = ObjectUtils.nonnull(CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id"),
-				"Generated ID");
+		final Long id = updateWithGeneratedLong(jdbcOps, sql, "id");
 		return new UserLongCompositePK(userId, id);
 	}
 
@@ -156,7 +153,7 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 	public int updateEnabledStatus(Long userId, @Nullable CloudIntegrationFilter filter,
 			boolean enabled) {
 		UserLongCompositePK key = filter != null && filter.hasIntegrationCriteria()
-				? new UserLongCompositePK(userId, nonnull(filter.getIntegrationId(), "integrationId"))
+				? new UserLongCompositePK(userId, filter.integrationId())
 				: UserLongCompositePK.unassignedEntityIdKey(userId);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);

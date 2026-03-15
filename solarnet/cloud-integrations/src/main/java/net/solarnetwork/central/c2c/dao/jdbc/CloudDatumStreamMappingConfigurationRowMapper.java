@@ -22,8 +22,7 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -80,8 +79,8 @@ public class CloudDatumStreamMappingConfigurationRowMapper
 		int p = columnOffset;
 		Long userId = rs.getObject(++p, Long.class);
 		Long entityId = rs.getObject(++p, Long.class);
-		Instant ts = nonnull(getTimestampInstant(rs, ++p), "created");
-		Instant mod = getTimestampInstant(rs, ++p);
+		Instant ts = timestampInstant(rs, ++p);
+		Instant mod = timestampInstant(rs, ++p);
 
 		final CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(
 				userId, entityId, ts, rs.getString(++p), rs.getObject(++p, Long.class));

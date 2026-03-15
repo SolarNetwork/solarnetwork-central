@@ -24,11 +24,11 @@ package net.solarnetwork.central.dnp3.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerConfigurationDao;
@@ -74,7 +74,7 @@ public class JdbcServerConfigurationDao implements ServerConfigurationDao {
 	public UserLongCompositePK create(Long userId, ServerConfiguration entity) {
 		final var sql = new InsertServerConfiguration(userId, entity);
 
-		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
+		final Long id = updateWithGeneratedLong(jdbcOps, sql, "id");
 
 		return (id != null ? new UserLongCompositePK(userId, id) : null);
 	}

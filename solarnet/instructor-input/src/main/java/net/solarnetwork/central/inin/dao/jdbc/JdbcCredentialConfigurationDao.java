@@ -25,7 +25,6 @@ package net.solarnetwork.central.inin.dao.jdbc;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
@@ -82,7 +81,7 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 	public UserLongCompositePK create(Long userId, CredentialConfiguration entity) {
 		final var sql = new InsertCredentialConfiguration(userId, entity);
 
-		final Long id = nonnull(updateWithGeneratedLong(jdbcOps, sql, "id"), "Generated ID");
+		final Long id = updateWithGeneratedLong(jdbcOps, sql, "id");
 
 		return new UserLongCompositePK(userId, id);
 	}
@@ -148,7 +147,7 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 	@Override
 	public int updateEnabledStatus(Long userId, @Nullable CredentialFilter filter, boolean enabled) {
 		UserLongCompositePK key = filter != null && filter.hasCredentialCriteria()
-				? new UserLongCompositePK(userId, nonnull(filter.getCredentialId(), "Credential ID"))
+				? new UserLongCompositePK(userId, filter.credentialId())
 				: UserLongCompositePK.unassignedEntityIdKey(userId);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);

@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for cloud integration related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudIntegrationCriteria {
 
@@ -61,6 +61,40 @@ public interface CloudIntegrationCriteria {
 	 */
 	default boolean hasIntegrationCriteria() {
 		return getIntegrationId() != null;
+	}
+
+	/**
+	 * Get the first cloud integration ID.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasIntegrationCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return the first cloud integration ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long integrationId() {
+		return getIntegrationId();
+	}
+
+	/**
+	 * Get an array of cloud integration IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasIntegrationCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of cloud integration IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] integrationIds() {
+		return getIntegrationIds();
 	}
 
 }

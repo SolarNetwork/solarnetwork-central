@@ -22,8 +22,7 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -76,9 +75,9 @@ public class UserSettingsEntityRowMapper implements RowMapper<UserSettingsEntity
 	public UserSettingsEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
 		Long userId = rs.getObject(++p, Long.class);
-		Instant ts = nonnull(getTimestampInstant(rs, ++p), "created");
+		Instant ts = timestampInstant(rs, ++p);
 		UserSettingsEntity conf = new UserSettingsEntity(userId, ts);
-		conf.setModified(getTimestampInstant(rs, ++p));
+		conf.setModified(timestampInstant(rs, ++p));
 		conf.setPublishToSolarIn(rs.getBoolean(++p));
 		conf.setPublishToSolarFlux(rs.getBoolean(++p));
 		return conf;

@@ -36,7 +36,7 @@ import net.solarnetwork.central.datum.domain.CombiningType;
  * Data structure to help with combining query execution.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public class CombiningConfig {
@@ -142,6 +142,30 @@ public class CombiningConfig {
 	@SuppressWarnings("unchecked")
 	public final <T> @Nullable CombiningIdsConfig<T> getIdsConfig(String key) {
 		return (CombiningIdsConfig<T>) configMap.get(key);
+	}
+
+	/**
+	 * Get the IDs configuration for a specific key, casting the result.
+	 *
+	 * <p>
+	 * This method has been designed to be used after calling
+	 * {@link #isWithObjectIds()} or {@link #isWithSourceIds()}, to avoid
+	 * nullnuess-checks.
+	 * </p>
+	 *
+	 * @param <T>
+	 *        the expected IDs configuration type
+	 * @param key
+	 *        the configuration key to get
+	 * @return the configuration (presumed non-null)
+	 * @throws ClassCastException
+	 *         if the value cannot be cast to {@code T}
+	 * @see #getIdsConfig(String)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	public final <T> CombiningIdsConfig<T> idsConfig(String key) {
+		return getIdsConfig(key);
 	}
 
 	/**

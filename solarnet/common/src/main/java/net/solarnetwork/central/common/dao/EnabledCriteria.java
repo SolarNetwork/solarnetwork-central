@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for enabled-state data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface EnabledCriteria {
 
@@ -48,6 +48,24 @@ public interface EnabledCriteria {
 	 */
 	default boolean hasEnabledCriteria() {
 		return getEnabled() != null;
+	}
+
+	/**
+	 * Get the enabled flag.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasEnabledCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the {@literal true} or {@literal false} to filter by that state
+	 *         (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Boolean enabled() {
+		return getEnabled();
 	}
 
 }

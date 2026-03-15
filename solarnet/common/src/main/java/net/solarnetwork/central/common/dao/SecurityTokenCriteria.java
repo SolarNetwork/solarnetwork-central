@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for security token related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface SecurityTokenCriteria {
@@ -44,7 +44,10 @@ public interface SecurityTokenCriteria {
 	 * @return the first token ID, or {@code null} if not available
 	 */
 	@Nullable
-	String getTokenId();
+	default String getTokenId() {
+		var a = getTokenIds();
+		return (a != null && a.length > 0 ? a[0] : null);
+	}
 
 	/**
 	 * Get an array of token IDs.
@@ -60,6 +63,40 @@ public interface SecurityTokenCriteria {
 	 */
 	default boolean hasTokenCriteria() {
 		return getTokenId() != null;
+	}
+
+	/**
+	 * Get the first token ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTokenCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first source ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String tokenId() {
+		return getTokenId();
+	}
+
+	/**
+	 * Get an array of token IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTokenCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of source IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] tokenIds() {
+		return getTokenIds();
 	}
 
 }

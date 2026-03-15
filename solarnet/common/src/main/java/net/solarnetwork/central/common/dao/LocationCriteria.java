@@ -29,7 +29,7 @@ import net.solarnetwork.domain.Location;
  * Search criteria for location related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface LocationCriteria {
@@ -45,7 +45,10 @@ public interface LocationCriteria {
 	 * @return the location ID, or {@code null} if not available
 	 */
 	@Nullable
-	Long getLocationId();
+	default Long getLocationId() {
+		var a = getLocationIds();
+		return (a != null && a.length > 0 ? a[0] : null);
+	}
 
 	/**
 	 * Get an array of location IDs.
@@ -71,6 +74,67 @@ public interface LocationCriteria {
 	 */
 	default boolean hasLocationCriteria() {
 		return (getLocation() != null && getLocation().hasLocationCriteria());
+	}
+
+	/**
+	 * Get the location.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasLocationCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the location (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Location location() {
+		return getLocation();
+	}
+
+	/**
+	 * Test if a location ID is present.
+	 * 
+	 * @return {@literal true} if a location ID is available
+	 * @since 1.1
+	 */
+	default boolean hasLocationIdCriteria() {
+		return getLocationId() != null;
+	}
+
+	/**
+	 * Get the first location ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasLocationIdCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first location ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long locationId() {
+		return getLocationId();
+	}
+
+	/**
+	 * Get an array of location IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasLocationIdCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of location IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] locationIds() {
+		return getLocationIds();
 	}
 
 }

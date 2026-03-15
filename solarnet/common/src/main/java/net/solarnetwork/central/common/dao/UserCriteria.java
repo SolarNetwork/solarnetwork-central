@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for user related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface UserCriteria {
@@ -44,7 +44,10 @@ public interface UserCriteria {
 	 * @return the first user ID, or {@code null} if not available
 	 */
 	@Nullable
-	Long getUserId();
+	default Long getUserId() {
+		final var a = getUserIds();
+		return (a != null && a.length > 0 ? a[0] : null);
+	}
 
 	/**
 	 * Get an array of user IDs.
@@ -60,6 +63,40 @@ public interface UserCriteria {
 	 */
 	default boolean hasUserCriteria() {
 		return getUserId() != null;
+	}
+
+	/**
+	 * Get the first user ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasUserCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first user ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long userId() {
+		return getUserId();
+	}
+
+	/**
+	 * Get an array of user IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasUserCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of user IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] userIds() {
+		return getUserIds();
 	}
 
 }

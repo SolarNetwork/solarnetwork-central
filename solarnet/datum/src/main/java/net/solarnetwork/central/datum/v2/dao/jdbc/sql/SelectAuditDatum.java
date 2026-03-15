@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -283,7 +282,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	private void sqlRollupGroup(StringBuilder buf) {
 		if ( filter.hasDatumRollupCriteria() && !filter.hasDatumRollupType(DatumRollupType.All) ) {
 			StringBuilder group = new StringBuilder();
-			for ( DatumRollupType t : nonnull(filter.getDatumRollupTypes(), "datumRollupTypes") ) {
+			for ( DatumRollupType t : filter.datumRollupTypes() ) {
 				switch (t) {
 					case Time:
 						group.append(", datum.ts_start");

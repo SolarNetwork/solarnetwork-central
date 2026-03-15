@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for source related data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 public interface SourceCriteria {
@@ -61,6 +61,40 @@ public interface SourceCriteria {
 	 */
 	default boolean hasSourceCriteria() {
 		return getSourceId() != null;
+	}
+
+	/**
+	 * Get the first source ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasSourceCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first source ID (presumed non-null)
+	 * @since 1.2
+	 */
+	@SuppressWarnings("NullAway")
+	default String sourceId() {
+		return getSourceId();
+	}
+
+	/**
+	 * Get an array of source IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasSourceCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of source IDs (presumed non-null)
+	 * @since 1.2
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] sourceIds() {
+		return getSourceIds();
 	}
 
 }

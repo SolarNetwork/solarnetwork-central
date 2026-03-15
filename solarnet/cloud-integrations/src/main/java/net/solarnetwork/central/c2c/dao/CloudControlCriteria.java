@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for cloud control related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudControlCriteria {
 
@@ -61,6 +61,40 @@ public interface CloudControlCriteria {
 	 */
 	default boolean hasCloudControlCriteria() {
 		return getCloudControlId() != null;
+	}
+
+	/**
+	 * Get the first cloud control ID.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasCloudControlCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return the first cloud control ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long cloudControlId() {
+		return getCloudControlId();
+	}
+
+	/**
+	 * Get an array of cloud control IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasCloudControlCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return array of cloud control IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] cloudControlIds() {
+		return getCloudControlIds();
 	}
 
 }

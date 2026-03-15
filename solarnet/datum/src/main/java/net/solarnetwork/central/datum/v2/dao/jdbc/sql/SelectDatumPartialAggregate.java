@@ -24,7 +24,6 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.lang.String.format;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -244,16 +243,16 @@ public final class SelectDatumPartialAggregate
 
 	private void sqlFrom(DatumCriteria filter, StringBuilder buf) {
 		buf.append("FROM s\n");
-		buf.append("INNER JOIN ").append(sqlTableName(filter))
+		buf.append("INNER JOIN ").append(sqlTableName(filter.getAggregation()))
 				.append(" datum ON datum.stream_id = s.stream_id\n");
 	}
 
-	private String sqlTableName(DatumCriteria filter) {
-		return switch (nonnull(filter.getAggregation(), "aggregation")) {
+	private String sqlTableName(@Nullable Aggregation aggregation) {
+		return switch (aggregation) {
 			case Hour -> "solardatm.agg_datm_hourly";
 			case Day -> "solardatm.agg_datm_daily";
 			case Month, Year -> "solardatm.agg_datm_monthly";
-			default -> "solardatm.da_datm";
+			case null, default -> "solardatm.da_datm";
 		};
 	}
 

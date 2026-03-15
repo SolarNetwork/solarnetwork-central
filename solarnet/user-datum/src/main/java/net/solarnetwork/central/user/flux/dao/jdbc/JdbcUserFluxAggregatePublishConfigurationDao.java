@@ -77,7 +77,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDao
 		final UpsertUserFluxAggregatePublishConfiguration sql = new UpsertUserFluxAggregatePublishConfiguration(
 				userId, entity);
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		return (id != null ? new UserLongCompositePK(userId, id) : null);
+		return new UserLongCompositePK(userId, id);
 	}
 
 	@Override

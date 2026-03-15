@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.Array;
 import java.sql.ResultSet;
@@ -56,8 +57,8 @@ public class ZonedStreamsTimeRangeRowMapper implements RowMapper<ZonedStreamsTim
 
 	@Override
 	public ZonedStreamsTimeRange mapRow(ResultSet rs, int rowNum) throws SQLException {
-		Instant startDate = nonnull(rs.getTimestamp(1), "startDate").toInstant();
-		Instant endDate = nonnull(rs.getTimestamp(2), "endDate").toInstant();
+		Instant startDate = timestampInstant(rs, 1);
+		Instant endDate = timestampInstant(rs, 2);
 		String timeZoneId = nonnull(rs.getString(3), "timeZoneId");
 		Array array = rs.getArray(4);
 		UUID[] streamIds = (array != null ? (UUID[]) array.getArray() : null);

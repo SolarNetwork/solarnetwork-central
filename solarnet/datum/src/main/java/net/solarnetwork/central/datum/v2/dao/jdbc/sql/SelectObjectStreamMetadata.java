@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -108,14 +107,14 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 		this.style = (style != null ? style
 				: filter.hasLocationCriteria() ? MetadataSelectStyle.WithGeography
 						: MetadataSelectStyle.Full);
-		this.searchFilter = filter.searchFilter();
+		this.searchFilter = filter.toSearchFilter();
 	}
 
 	@Override
 	public String getSql() {
 		final boolean withNameFts = (kind == ObjectDatumKind.Location
 				&& style == MetadataSelectStyle.WithGeography && filter.hasLocationCriteria()
-				&& nonnull(filter.getLocation(), "Location").getName() != null);
+				&& filter.location().getName() != null);
 
 		StringBuilder buf = new StringBuilder();
 		int idx;
@@ -165,7 +164,7 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		final boolean withNameFts = (kind == ObjectDatumKind.Location
 				&& style == MetadataSelectStyle.WithGeography && filter.hasLocationCriteria()
-				&& nonnull(filter.getLocation(), "Location").getName() != null);
+				&& filter.location().getName() != null);
 
 		int p = 0;
 		if ( filter.hasLocalDateRange() ) {

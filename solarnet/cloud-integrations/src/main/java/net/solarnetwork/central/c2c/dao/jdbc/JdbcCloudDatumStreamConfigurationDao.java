@@ -24,7 +24,7 @@ package net.solarnetwork.central.c2c.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
@@ -38,7 +38,6 @@ import net.solarnetwork.central.c2c.dao.jdbc.sql.InsertCloudDatumStreamConfigura
 import net.solarnetwork.central.c2c.dao.jdbc.sql.SelectCloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -82,8 +81,7 @@ public class JdbcCloudDatumStreamConfigurationDao implements CloudDatumStreamCon
 	@Override
 	public UserLongCompositePK create(Long userId, CloudDatumStreamConfiguration entity) {
 		final var sql = new InsertCloudDatumStreamConfiguration(userId, entity);
-		final Long id = nonnull(CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id"),
-				"Generated ID");
+		final Long id = updateWithGeneratedLong(jdbcOps, sql, "id");
 		return new UserLongCompositePK(userId, id);
 	}
 
@@ -150,7 +148,7 @@ public class JdbcCloudDatumStreamConfigurationDao implements CloudDatumStreamCon
 	public int updateEnabledStatus(Long userId, @Nullable CloudDatumStreamFilter filter,
 			boolean enabled) {
 		UserLongCompositePK key = filter != null && filter.hasDatumStreamCriteria()
-				? new UserLongCompositePK(userId, nonnull(filter.getDatumStreamId(), "datumStreamId"))
+				? new UserLongCompositePK(userId, filter.datumStreamId())
 				: UserLongCompositePK.unassignedEntityIdKey(userId);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);

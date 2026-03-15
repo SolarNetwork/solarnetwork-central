@@ -27,7 +27,6 @@ import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Refe
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.central.domain.UserLongIntegerCompositePK.UNASSIGNED_GROUP_ID;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
@@ -154,12 +153,12 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 	public int updateEnabledStatus(Long userId, @Nullable CloudDatumStreamPropertyFilter filter,
 			boolean enabled) {
 		UserLongIntegerCompositePK key = filter != null && filter.hasIndexCriteria()
-				? new UserLongIntegerCompositePK(
-						userId, requireNonNullArgument(filter.getDatumStreamMappingId(), "mappingId"),
-						nonnull(filter.getIndex(), "index"))
+				? new UserLongIntegerCompositePK(userId,
+						requireNonNullArgument(filter.getDatumStreamMappingId(), "mappingId"),
+						filter.index())
 				: filter != null && filter.hasDatumStreamMappingCriteria()
 						? UserLongIntegerCompositePK.unassignedEntityIdKey(userId,
-								nonnull(filter.getDatumStreamMappingId(), "mappingId"))
+								filter.datumStreamMappingId())
 						: UserLongIntegerCompositePK.unassignedEntityIdKey(userId, UNASSIGNED_GROUP_ID);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);

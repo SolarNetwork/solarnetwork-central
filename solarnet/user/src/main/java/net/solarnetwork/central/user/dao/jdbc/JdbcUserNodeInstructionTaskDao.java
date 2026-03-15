@@ -103,7 +103,7 @@ public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	public UserLongCompositePK create(Long userId, UserNodeInstructionTaskEntity entity) {
 		final var sql = new InsertUserNodeInstructionTaskEntity(userId, entity);
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		return new UserLongCompositePK(userId, nonnull(id, "id"));
+		return new UserLongCompositePK(userId, id);
 	}
 
 	@Override
@@ -231,7 +231,7 @@ public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	public int updateEnabledStatus(Long userId, @Nullable UserNodeInstructionTaskFilter filter,
 			boolean enabled) {
 		UserLongCompositePK key = filter != null && filter.hasTaskCriteria()
-				? new UserLongCompositePK(userId, nonnull(filter.getTaskId(), "taskId"))
+				? new UserLongCompositePK(userId, filter.taskId())
 				: UserLongCompositePK.unassignedEntityIdKey(userId);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled, true);
 		return jdbcOps.update(sql);

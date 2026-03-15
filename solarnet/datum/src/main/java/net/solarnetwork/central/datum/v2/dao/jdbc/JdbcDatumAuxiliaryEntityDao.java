@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
@@ -80,7 +79,7 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 			cs.execute();
 			return null;
 		});
-		return nonnull(entity.getId(), "ID");
+		return entity.pk();
 	}
 
 	@Override

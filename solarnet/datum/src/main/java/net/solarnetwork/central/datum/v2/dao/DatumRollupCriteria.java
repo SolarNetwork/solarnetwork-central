@@ -29,7 +29,7 @@ import net.solarnetwork.central.datum.domain.DatumRollupType;
  * Search criteria for datum rollup queries.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface DatumRollupCriteria {
@@ -84,6 +84,40 @@ public interface DatumRollupCriteria {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Get the first rollup type.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasDatumRollupCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return the first node ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default DatumRollupType datumRollupType() {
+		return getDatumRollupType();
+	}
+
+	/**
+	 * Get an array of rollup types.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasDatumRollupCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of node IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default DatumRollupType[] datumRollupTypes() {
+		return getDatumRollupTypes();
 	}
 
 }

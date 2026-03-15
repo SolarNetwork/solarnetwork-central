@@ -22,8 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getArray;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -35,7 +36,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
@@ -105,18 +105,18 @@ public class VirtualAggregateDatumEntityRowMapper
 
 	@Override
 	public AggregateDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = nonnull(getUuid(rs, 1), "Stream ID");
-		Instant ts = nonnull(rs.getTimestamp(2), "Timestamp").toInstant();
-		BigDecimal[] data_i = CommonJdbcUtils.getArray(rs, 3);
-		BigDecimal[] data_a = CommonJdbcUtils.getArray(rs, 4);
-		String[] data_s = CommonJdbcUtils.getArray(rs, 5);
-		String[] data_t = CommonJdbcUtils.getArray(rs, 6);
-		BigDecimal[][] stat_i = CommonJdbcUtils.getArray(rs, 7);
-		BigDecimal[][] stat_a = CommonJdbcUtils.getArray(rs, 8);
+		UUID streamId = uuid(rs, 1);
+		Instant ts = timestampInstant(rs, 2);
+		BigDecimal[] data_i = getArray(rs, 3);
+		BigDecimal[] data_a = getArray(rs, 4);
+		String[] data_s = getArray(rs, 5);
+		String[] data_t = getArray(rs, 6);
+		BigDecimal[][] stat_i = getArray(rs, 7);
+		BigDecimal[][] stat_a = getArray(rs, 8);
 
 		if ( !metadata.containsKey(streamId) ) {
-			String[] names_i = CommonJdbcUtils.getArray(rs, 9);
-			String[] names_a = CommonJdbcUtils.getArray(rs, 10);
+			String[] names_i = getArray(rs, 9);
+			String[] names_a = getArray(rs, 10);
 			Long objectId = rs.getLong(11);
 			String sourceId = rs.getString(12);
 			metadata.put(streamId, new BasicObjectDatumStreamMetadata(streamId, null, kind, objectId,

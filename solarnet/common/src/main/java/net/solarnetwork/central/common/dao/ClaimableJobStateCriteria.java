@@ -69,7 +69,7 @@ public interface ClaimableJobStateCriteria {
 	 * 
 	 * @return the claimable job states, as key values
 	 */
-	default String @Nullable [] claimableJobStateKeys() {
+	default String @Nullable [] getClaimableJobStateKeys() {
 		ClaimableJobState[] states = getClaimableJobStates();
 		if ( states == null ) {
 			return null;
@@ -83,6 +83,57 @@ public interface ClaimableJobStateCriteria {
 			result[i] = states[i].keyValue();
 		}
 		return result;
+	}
+
+	/**
+	 * Get the first claimable job state.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasClaimableJobStateCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 * 
+	 * @return the first claimableJobState ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default ClaimableJobState claimableJobState() {
+		return getClaimableJobState();
+	}
+
+	/**
+	 * Get an array of claimable job states.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasClaimableJobStateCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return array of claimableJobState IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default ClaimableJobState[] claimableJobStates() {
+		return getClaimableJobStates();
+	}
+
+	/**
+	 * Get the set of claimable job state keys.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasClaimableJobStateCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return the claimable job states, as key values (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] claimableJobStateKeys() {
+		return getClaimableJobStateKeys();
 	}
 
 }

@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Criteria API for a "tag" qualifier.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface TagCriteria {
 
@@ -62,6 +62,40 @@ public interface TagCriteria {
 	default @Nullable String getTag() {
 		String[] kinds = getTags();
 		return (kinds != null && kinds.length > 0 ? kinds[0] : null);
+	}
+
+	/**
+	 * Get the first tag.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTagCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first tag (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String tag() {
+		return getTag();
+	}
+
+	/**
+	 * Get an array of tags.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTagCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of tags (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] tags() {
+		return getTags();
 	}
 
 }

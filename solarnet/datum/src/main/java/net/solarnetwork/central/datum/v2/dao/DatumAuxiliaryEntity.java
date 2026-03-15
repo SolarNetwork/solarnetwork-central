@@ -155,6 +155,16 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 	}
 
 	/**
+	 * Get the primary key.
+	 *
+	 * @return the primary key
+	 */
+	@SuppressWarnings("NullAway")
+	public final DatumAuxiliaryPK pk() {
+		return getId();
+	}
+
+	/**
 	 * Get the last updated date.
 	 *
 	 * @return the updated date

@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for credential related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CredentialCriteria {
 
@@ -61,6 +61,40 @@ public interface CredentialCriteria {
 	 */
 	default boolean hasCredentialCriteria() {
 		return getCredentialId() != null;
+	}
+
+	/**
+	 * Get the first credential ID.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasCredentialCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return the first credential ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long credentialId() {
+		return getCredentialId();
+	}
+
+	/**
+	 * Get an array of credential IDs
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasCredentialCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of credential IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] credentialIds() {
+		return getCredentialIds();
 	}
 
 }

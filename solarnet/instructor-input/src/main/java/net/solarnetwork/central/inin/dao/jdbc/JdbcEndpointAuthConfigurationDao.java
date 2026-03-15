@@ -24,7 +24,6 @@ package net.solarnetwork.central.inin.dao.jdbc;
 
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
@@ -151,12 +150,10 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 	public int updateEnabledStatus(Long userId, @Nullable EndpointAuthFilter filter, boolean enabled) {
 		UserUuidLongCompositePK key = filter != null && filter.hasEndpointCriteria()
 				&& filter.hasCredentialCriteria()
-						? new UserUuidLongCompositePK(userId,
-								nonnull(filter.getEndpointId(), "Endpoint ID"),
-								nonnull(filter.getCredentialId(), "Credential ID"))
+						? new UserUuidLongCompositePK(userId, filter.endpointId(), filter.credentialId())
 						: filter != null && filter.hasEndpointCriteria()
 								? UserUuidLongCompositePK.unassignedEntityIdKey(userId,
-										nonnull(filter.getEndpointId(), "Endpoint ID"))
+										filter.endpointId())
 								: UserUuidLongCompositePK.unassignedEntityIdKey(userId);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);

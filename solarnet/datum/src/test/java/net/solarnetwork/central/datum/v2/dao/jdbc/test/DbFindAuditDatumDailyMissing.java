@@ -26,12 +26,12 @@ import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -112,8 +112,8 @@ public class DbFindAuditDatumDailyMissing extends BaseDatumJdbcTestSupport {
 
 		@Override
 		public MissingDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-			UUID streamId = nonnull(getUuid(rs, 1), "Stream ID");
-			Instant ts = nonnull(rs.getTimestamp(2), "Timestamp").toInstant();
+			UUID streamId = uuid(rs, 1);
+			Instant ts = timestampInstant(rs, 2);
 			return new MissingDatum(streamId, ts, rs.getString(3));
 		}
 

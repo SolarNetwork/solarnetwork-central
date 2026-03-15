@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
@@ -159,7 +158,17 @@ public class TypedDatumEntity extends BasicIdentity<DatumPK>
 
 	@Override
 	public boolean hasId() {
-		return nonnull(getId(), "ID").streamIdIsAssigned();
+		return pk().streamIdIsAssigned();
+	}
+
+	/**
+	 * Get the primary key.
+	 *
+	 * @return the primary key
+	 */
+	@SuppressWarnings("NullAway")
+	public DatumPK pk() {
+		return getId();
 	}
 
 	@Override

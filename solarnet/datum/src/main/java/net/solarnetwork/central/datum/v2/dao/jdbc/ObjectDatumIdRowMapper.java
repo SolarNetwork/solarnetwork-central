@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -93,8 +93,8 @@ public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {
 
 	@Override
 	public ObjectDatumId mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = nonnull(getUuid(rs, 1), "Stream ID");
-		Instant ts = nonnull(rs.getTimestamp(2), "Timestamp").toInstant();
+		UUID streamId = uuid(rs, 1);
+		Instant ts = timestampInstant(rs, 2);
 		Aggregation agg = Aggregation.forKey(rs.getString(3));
 		Object objId = rs.getObject(4);
 		String sourceId = rs.getString(5);

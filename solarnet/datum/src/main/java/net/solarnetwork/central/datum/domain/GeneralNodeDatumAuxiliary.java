@@ -193,6 +193,18 @@ public class GeneralNodeDatumAuxiliary
 		this.updated = updated;
 	}
 
+	/**
+	 * Get the primary key.
+	 *
+	 * @return the primary key
+	 */
+	@JsonIgnore
+	@SerializeIgnore
+	@SuppressWarnings("NullAway")
+	public GeneralNodeDatumAuxiliaryPK pk() {
+		return getId();
+	}
+
 	@Override
 	@JsonIgnore
 	@SerializeIgnore

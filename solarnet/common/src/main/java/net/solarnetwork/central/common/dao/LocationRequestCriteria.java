@@ -31,7 +31,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Criteria API for location requests.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.3
  */
 public interface LocationRequestCriteria extends LocationCriteria, UserCriteria, PaginationCriteria {
@@ -68,6 +68,40 @@ public interface LocationRequestCriteria extends LocationCriteria, UserCriteria,
 	default boolean hasRequestStatusCriteria() {
 		Set<LocationRequestStatus> s = getRequestStatuses();
 		return (s != null && !s.isEmpty());
+	}
+
+	/**
+	 * Get the first request status.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasRequestStatusCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 * 
+	 * @return the first request status (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default LocationRequestStatus requestStatus() {
+		return getRequestStatus();
+	}
+
+	/**
+	 * Get the location request statuses.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasRequestStatusCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return request statuses (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Set<LocationRequestStatus> requestStatuses() {
+		return getRequestStatuses();
 	}
 
 }

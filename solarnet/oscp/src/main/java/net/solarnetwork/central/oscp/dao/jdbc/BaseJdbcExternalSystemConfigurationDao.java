@@ -122,9 +122,6 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	public final UserLongCompositePK create(Long userId, C entity) {
 		final var sql = createSql(userId, entity);
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		if ( id == null ) {
-			return null;
-		}
 		UserLongCompositePK pk = new UserLongCompositePK(userId, id);
 		// make sure heartbeat row created at same time
 		jdbcOps.update(new InsertHeartbeatDate(role, pk, null));

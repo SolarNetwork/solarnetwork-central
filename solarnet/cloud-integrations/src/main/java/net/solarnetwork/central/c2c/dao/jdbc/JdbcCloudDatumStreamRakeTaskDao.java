@@ -25,8 +25,8 @@ package net.solarnetwork.central.c2c.dao.jdbc;
 import static java.time.Instant.EPOCH;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
 import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENTITY_ID;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.time.Instant;
@@ -44,7 +44,6 @@ import net.solarnetwork.central.c2c.dao.jdbc.sql.SelectCloudDatumStreamRakeTaskE
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamRakeTaskEntity;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamRakeTaskEntityState;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamRakeTaskEntity;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.FilterResults;
@@ -106,8 +105,7 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 	@Override
 	public UserLongCompositePK create(Long userId, CloudDatumStreamRakeTaskEntity entity) {
 		final var sql = new InsertCloudDatumStreamRakeTaskEntity(userId, entity);
-		final Long id = nonnull(CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id"),
-				"Generated ID");
+		final Long id = updateWithGeneratedLong(jdbcOps, sql, "id");
 		return new UserLongCompositePK(userId, id);
 	}
 

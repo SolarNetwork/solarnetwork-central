@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -82,8 +82,7 @@ public class CloudDatumStreamPollTaskEntityRowMapper
 		Long entityId = rs.getObject(++p, Long.class);
 		CloudDatumStreamPollTaskEntity conf = new CloudDatumStreamPollTaskEntity(userId, entityId,
 				nonnull(BasicClaimableJobState.fromValue(rs.getString(++p)), "state"),
-				nonnull(getTimestampInstant(rs, ++p), "executeAt"),
-				nonnull(getTimestampInstant(rs, ++p), "startAt"));
+				timestampInstant(rs, ++p), timestampInstant(rs, ++p));
 		conf.setMessage(rs.getString(++p));
 		conf.setServicePropsJson(rs.getString(++p));
 		return conf;

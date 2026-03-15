@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Criteria API for topical entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface TopicCriteria {
 
@@ -62,6 +62,40 @@ public interface TopicCriteria {
 	default @Nullable String getTopic() {
 		String[] ids = getTopics();
 		return (ids != null && ids.length > 0 ? ids[0] : null);
+	}
+
+	/**
+	 * Get the first topic.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTopicCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first topic (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String topic() {
+		return getTopic();
+	}
+
+	/**
+	 * Get an array of topics.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTopicCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of topics (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] topics() {
+		return getTopics();
 	}
 
 }

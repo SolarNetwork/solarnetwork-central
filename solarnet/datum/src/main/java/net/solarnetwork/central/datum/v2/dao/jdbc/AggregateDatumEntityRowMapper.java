@@ -23,8 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getArray;
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -147,8 +147,8 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 
 	@Override
 	public AggregateDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = nonnull(getUuid(rs, 1), "Stream ID");
-		Instant ts = nonnull(rs.getTimestamp(2), "Timestamp").toInstant();
+		UUID streamId = uuid(rs, 1);
+		Instant ts = timestampInstant(rs, 2);
 		BigDecimal[] data_i = getArray(rs, 3);
 		BigDecimal[] data_a = getArray(rs, 4);
 		String[] data_s = getArray(rs, 5);

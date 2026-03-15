@@ -285,7 +285,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
-	protected static String inputText(Object input) throws IOException {
+	protected static String inputText(@Nullable Object input) throws IOException {
 		String result = "";
 		if ( input instanceof InputStream stream ) {
 			result = FileCopyUtils.copyToString(new InputStreamReader(stream, StandardCharsets.UTF_8));

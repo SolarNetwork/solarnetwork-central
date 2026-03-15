@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for indexed related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface IndexCriteria {
 
@@ -61,6 +61,40 @@ public interface IndexCriteria {
 	 */
 	default boolean hasIndexCriteria() {
 		return getIndex() != null;
+	}
+
+	/**
+	 * Get the first index ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasIndexCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first index ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Integer index() {
+		return getIndex();
+	}
+
+	/**
+	 * Get an array of index IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasIndexCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of index IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Integer[] indexes() {
+		return getIndexes();
 	}
 
 }

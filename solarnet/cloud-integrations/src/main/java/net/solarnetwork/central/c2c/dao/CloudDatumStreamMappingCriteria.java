@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for cloud datum stream related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudDatumStreamMappingCriteria {
 
@@ -63,6 +63,40 @@ public interface CloudDatumStreamMappingCriteria {
 	 */
 	default boolean hasDatumStreamMappingCriteria() {
 		return getDatumStreamMappingId() != null;
+	}
+
+	/**
+	 * Get the first cloud datum stream mapping ID.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasDatumStreamMappingCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return the first cloud datum stream mapping ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long datumStreamMappingId() {
+		return getDatumStreamMappingId();
+	}
+
+	/**
+	 * Get an array of cloud datum stream mapping IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasDatumStreamMappingCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return array of cloud datum stream mapping IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] datumStreamMappingIds() {
+		return getDatumStreamMappingIds();
 	}
 
 }

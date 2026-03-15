@@ -26,7 +26,6 @@ import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
@@ -209,7 +208,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 		validatePhase(entity);
 		final var sql = createSql(userId, entity);
 
-		final Long id = nonnull(updateWithGeneratedLong(jdbcOps, sql, "id"), "Generated ID");
+		final Long id = updateWithGeneratedLong(jdbcOps, sql, "id");
 
 		return new UserLongCompositePK(userId, id);
 	}

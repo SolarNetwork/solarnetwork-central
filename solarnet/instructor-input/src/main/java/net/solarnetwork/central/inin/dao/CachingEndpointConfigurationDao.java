@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.inin.dao;
 
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -115,7 +114,7 @@ public class CachingEndpointConfigurationDao
 				return false;
 			}
 			if ( filter != null && filter.hasEndpointCriteria() ) {
-				for ( UUID endpointId : nonnull(filter.getEndpointIds(), "Endpoint IDs") ) {
+				for ( UUID endpointId : filter.endpointIds() ) {
 					if ( endpointId.equals(id.getUuid()) ) {
 						return true;
 					}

@@ -207,7 +207,7 @@ public class JdbcDatumEntityDao
 	@Override
 	public DatumPK save(DatumEntity entity) {
 		jdbcTemplate.update(new InsertDatum(requireNonNullArgument(entity, "entity")));
-		return nonnull(entity.getId(), "ID");
+		return entity.pk();
 	}
 
 	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Objecct>
@@ -262,7 +262,7 @@ public class JdbcDatumEntityDao
 		StoreDatum sql = new StoreDatum(entity);
 		return jdbcTemplate.execute(sql, cs -> {
 			cs.execute();
-			return nonnull(entity.getId(), "ID");
+			return entity.pk();
 		});
 	}
 
@@ -344,14 +344,10 @@ public class JdbcDatumEntityDao
 				&& filter.getAggregation() != Aggregation.None
 				&& filter.getAggregation().compareLevel(Aggregation.Hour) < 0 ) {
 			if ( filter.hasDateOrLocalDateRange() ) {
-				LocalDateTime s = (filter.hasLocalDateRange()
-						? nonnull(filter.getLocalStartDate(), "Local start date")
-						: nonnull(filter.getStartDate(), "Start Date").atOffset(ZoneOffset.UTC)
-								.toLocalDateTime());
-				LocalDateTime e = (filter.hasLocalDateRange()
-						? nonnull(filter.getLocalEndDate(), "Local end date")
-						: nonnull(filter.getEndDate(), "End date").atOffset(ZoneOffset.UTC)
-								.toLocalDateTime());
+				LocalDateTime s = (filter.hasLocalDateRange() ? filter.localStartDate()
+						: filter.startDate().atOffset(ZoneOffset.UTC).toLocalDateTime());
+				LocalDateTime e = (filter.hasLocalDateRange() ? filter.localEndDate()
+						: filter.endDate().atOffset(ZoneOffset.UTC).toLocalDateTime());
 				long hours = ChronoUnit.HOURS.between(s, e);
 				if ( hours > maxHours ) {
 					throw new IllegalArgumentException(
@@ -723,7 +719,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-		
+
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/

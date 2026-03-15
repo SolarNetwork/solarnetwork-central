@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.inin.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -88,9 +88,9 @@ public class EndpointConfigurationRowMapper implements RowMapper<EndpointConfigu
 	public EndpointConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
 		Long userId = rs.getLong(++p);
-		UUID entityId = nonnull(CommonJdbcUtils.getUuid(rs, ++p), "entityId");
-		Instant ts = nonnull(getTimestampInstant(rs, ++p), "created");
-		Instant mod = getTimestampInstant(rs, ++p);
+		UUID entityId = uuid(rs, ++p);
+		Instant ts = timestampInstant(rs, ++p);
+		Instant mod = timestampInstant(rs, ++p);
 		boolean enabled = rs.getBoolean(++p);
 
 		final EndpointConfiguration conf = new EndpointConfiguration(userId, entityId, ts,

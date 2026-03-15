@@ -26,7 +26,6 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
 import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENTITY_ID;
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
@@ -83,7 +82,7 @@ public class JdbcCloudControlConfigurationDao implements CloudControlConfigurati
 	@Override
 	public UserLongCompositePK create(Long userId, CloudControlConfiguration entity) {
 		final var sql = new InsertCloudControlConfiguration(userId, entity);
-		final Long id = nonnull(updateWithGeneratedLong(jdbcOps, sql, "id"), "Generated ID");
+		final Long id = updateWithGeneratedLong(jdbcOps, sql, "id");
 		return new UserLongCompositePK(userId, id);
 	}
 
@@ -149,7 +148,7 @@ public class JdbcCloudControlConfigurationDao implements CloudControlConfigurati
 	@Override
 	public int updateEnabledStatus(Long userId, @Nullable CloudControlFilter filter, boolean enabled) {
 		UserLongCompositePK key = filter != null && filter.hasCloudControlCriteria()
-				? new UserLongCompositePK(userId, nonnull(filter.getCloudControlId(), "cloudControlId"))
+				? new UserLongCompositePK(userId, filter.cloudControlId())
 				: UserLongCompositePK.unassignedEntityIdKey(userId);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);

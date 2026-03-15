@@ -29,7 +29,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for arbitrary parameters.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface ParameterCriteria {
 
@@ -75,6 +75,42 @@ public interface ParameterCriteria {
 	default @Nullable Object parameter(String key) {
 		final var params = getParameters();
 		return params != null ? params.get(key) : null;
+	}
+
+	/**
+	 * Get a map of parameter values.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasParameterCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the parameters (presumed non-null)
+	 * @since 1.3
+	 */
+	@SuppressWarnings("NullAway")
+	default Map<String, ?> parameters() {
+		return getParameters();
+	}
+
+	/**
+	 * Get a parameter value.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasParameter(String)} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @param key
+	 *        the key to get
+	 * @return the parameter value (presumed non-null)
+	 * @since 1.3
+	 */
+	@SuppressWarnings("NullAway")
+	default Object param(String key) {
+		return parameter(key);
 	}
 
 }

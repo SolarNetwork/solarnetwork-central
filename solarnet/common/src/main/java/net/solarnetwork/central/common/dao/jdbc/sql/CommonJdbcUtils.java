@@ -53,12 +53,13 @@ import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.CodedValue;
 import net.solarnetwork.domain.Unique;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Common JDBC utilities.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public final class CommonJdbcUtils {
 
@@ -126,6 +127,28 @@ public final class CommonJdbcUtils {
 			}
 			throw e;
 		}
+	}
+
+	/**
+	 * Get an array result column value.
+	 * 
+	 * @param <T>
+	 *        the expected array type
+	 * @param rs
+	 *        the result set
+	 * @param colNum
+	 *        the column number
+	 * @return the array
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @throws ClassCastException
+	 *         if a casting error occurs
+	 * @see #getArray(ResultSet, int)
+	 * @since 3.2
+	 */
+	@SuppressWarnings({ "NullAway", "TypeParameterUnusedInFormals" })
+	public static <T> T array(ResultSet rs, int colNum) throws SQLException {
+		return getArray(rs, colNum);
 	}
 
 	private static List<Object> parseBigDecimalArray(Array a) throws SQLException {
@@ -213,6 +236,27 @@ public final class CommonJdbcUtils {
 	/**
 	 * Get a UUID column value.
 	 *
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as a UUID
+	 * @return the UUID (presumed null)
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @throws IllegalArgumentException
+	 *         if the column value is non-null but does not conform to the
+	 *         string representation as described in {@link UUID#toString()}
+	 * @see #getUuid(ResultSet, int)
+	 * @since 2.3
+	 */
+	@SuppressWarnings("NullAway")
+	public static UUID uuid(ResultSet rs, int column) throws SQLException {
+		return uuid(rs, column, null);
+	}
+
+	/**
+	 * Get a UUID column value.
+	 *
 	 * <p>
 	 * This method can be more efficient than calling
 	 * {@link ResultSet#getString(int)} if the JDBC driver returns a UUID
@@ -238,6 +282,29 @@ public final class CommonJdbcUtils {
 		Object sid = rs.getObject(column);
 		return (sid instanceof UUID uuid ? uuid
 				: sid != null ? UUID.fromString(sid.toString()) : defaultValue);
+	}
+
+	/**
+	 * Get a UUID column value.
+	 *
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as a UUID
+	 * @param defaultValue
+	 *        the default value to use if the UUID column value is {@code null}
+	 * @return the UUID, or {@code defaultValue} if the column value is null
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @throws IllegalArgumentException
+	 *         if the column value is non-null but does not conform to the
+	 *         string representation as described in {@link UUID#toString()}
+	 * @see #getUuid(ResultSet, int, UUID)
+	 * @since 2.3
+	 */
+	@SuppressWarnings("NullAway")
+	public static UUID uuid(ResultSet rs, int column, UUID defaultValue) throws SQLException {
+		return getUuid(rs, column, defaultValue);
 	}
 
 	/**
@@ -381,17 +448,21 @@ public final class CommonJdbcUtils {
 	 *        the SQL to execute
 	 * @param keyColumnName
 	 *        the name of the generated key column to extract
-	 * @return the generated key value, or {@code null} if the key is not
-	 *         returned or is not a {@code Long} instance
+	 * @return the generated key value
+	 * @throws IllegalStageException
+	 *         if the key is not returned returned or is not a {@code Long}
+	 *         instance
 	 * @since 1.1
 	 */
-	public static @Nullable Long updateWithGeneratedLong(JdbcOperations jdbcTemplate,
-			PreparedStatementCreator sql, String keyColumnName) {
+	public static Long updateWithGeneratedLong(JdbcOperations jdbcTemplate, PreparedStatementCreator sql,
+			String keyColumnName) {
 		KeyHolder keyHolder = new GeneratedKeyHolder();
 		jdbcTemplate.update(sql, keyHolder);
 		Map<String, Object> keys = keyHolder.getKeys();
 		Object id = keys != null ? keys.get(keyColumnName) : null;
-		return (id instanceof Long n ? n : null);
+		return ObjectUtils.nonnull(
+				id instanceof Long n ? n : id instanceof Number n ? n.longValue() : null,
+				"Generated ID");
 	}
 
 	/**
@@ -446,6 +517,23 @@ public final class CommonJdbcUtils {
 	}
 
 	/**
+	 * Get a Timestamp column value as an Instant.
+	 *
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as an Instant
+	 * @return the instant (presumed non-null)
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @since 2.3
+	 */
+	@SuppressWarnings("NullAway")
+	public static Instant timestampInstant(ResultSet rs, int column) throws SQLException {
+		return getTimestampInstant(rs, column);
+	}
+
+	/**
 	 * Get a Period from an INTERVAL column value.
 	 * 
 	 * @param rs
@@ -467,6 +555,25 @@ public final class CommonJdbcUtils {
 			throw new IllegalArgumentException(
 					"Unsupported Period type in column %d: %s".formatted(column, o.getClass()));
 		}
+	}
+
+	/**
+	 * Get a Period from an INTERVAL column value.
+	 * 
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as a Period
+	 * @return the period (presumed non-null)
+	 * @throws IllegalArgumentException
+	 *         if {@code value} is not of a supported type
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @since 2.3
+	 */
+	@SuppressWarnings("NullAway")
+	public static Period intervalPeriod(ResultSet rs, int column) throws SQLException {
+		return getIntervalPeriod(rs, column);
 	}
 
 	/**
