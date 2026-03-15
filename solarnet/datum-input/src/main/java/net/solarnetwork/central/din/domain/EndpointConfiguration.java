@@ -97,7 +97,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 
 	@Override
 	public EndpointConfiguration copyWithId(UserUuidPK id) {
-		var copy = new EndpointConfiguration(id, nonnull(getCreated(), "created"), name);
+		var copy = new EndpointConfiguration(id, created(), name);
 		copyTo(copy);
 		return copy;
 	}

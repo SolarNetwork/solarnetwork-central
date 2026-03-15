@@ -119,9 +119,8 @@ public class ClientAccessTokenEntity
 
 	@Override
 	public ClientAccessTokenEntity copyWithId(@Nullable UserStringStringCompositePK id) {
-		var copy = new ClientAccessTokenEntity(requireNonNullArgument(id, "id"),
-				nonnull(getCreated(), "created"), accessTokenType, accessToken, accessTokenIssuedAt,
-				accessTokenExpiresAt);
+		var copy = new ClientAccessTokenEntity(requireNonNullArgument(id, "id"), created(),
+				accessTokenType, accessToken, accessTokenIssuedAt, accessTokenExpiresAt);
 		copyTo(copy);
 		return copy;
 	}

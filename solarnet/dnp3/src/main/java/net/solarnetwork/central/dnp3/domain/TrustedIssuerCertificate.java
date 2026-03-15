@@ -91,7 +91,7 @@ public class TrustedIssuerCertificate extends BaseUserCertificate<TrustedIssuerC
 
 	@Override
 	public TrustedIssuerCertificate copyWithId(UserStringCompositePK id) {
-		var copy = new TrustedIssuerCertificate(id, getCreated());
+		var copy = new TrustedIssuerCertificate(id, created());
 		copyTo(copy);
 		return copy;
 	}

@@ -166,7 +166,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 
 		@Override
 		public RequestTransformConfiguration copyWithId(UserLongCompositePK id) {
-			var copy = new RequestTransformConfiguration(id, nonnull(getCreated(), "created"), getName(),
+			var copy = new RequestTransformConfiguration(id, created(), getName(),
 					getServiceIdentifier());
 			copyTo(copy);
 			return copy;
@@ -228,8 +228,8 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 
 		@Override
 		public ResponseTransformConfiguration copyWithId(UserLongCompositePK id) {
-			var copy = new ResponseTransformConfiguration(id, nonnull(getCreated(), "created"),
-					getName(), getServiceIdentifier());
+			var copy = new ResponseTransformConfiguration(id, created(), getName(),
+					getServiceIdentifier());
 			copyTo(copy);
 			return copy;
 		}

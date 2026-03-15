@@ -133,8 +133,8 @@ public final class CloudDatumStreamRakeTaskEntity
 
 	@Override
 	public CloudDatumStreamRakeTaskEntity copyWithId(UserLongCompositePK id) {
-		var copy = new CloudDatumStreamRakeTaskEntity(id, nonnull(getCreated(), "created"),
-				datumStreamId, state, executeAt, offset);
+		var copy = new CloudDatumStreamRakeTaskEntity(id, created(), datumStreamId, state, executeAt,
+				offset);
 		copyTo(copy);
 		return copy;
 	}

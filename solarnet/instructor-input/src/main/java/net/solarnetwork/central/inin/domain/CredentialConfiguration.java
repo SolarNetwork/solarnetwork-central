@@ -96,7 +96,7 @@ public class CredentialConfiguration
 
 	@Override
 	public CredentialConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CredentialConfiguration(id, nonnull(getCreated(), "created"), username);
+		var copy = new CredentialConfiguration(id, created(), username);
 		copyTo(copy);
 		return copy;
 	}

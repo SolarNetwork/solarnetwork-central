@@ -129,7 +129,7 @@ public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserSt
 
 	@Override
 	public UserKeyPairEntity copyWithId(@Nullable UserStringCompositePK id) {
-		return new UserKeyPairEntity(requireNonNullArgument(id, "id"), nonnull(getCreated(), "created"),
+		return new UserKeyPairEntity(requireNonNullArgument(id, "id"), created(),
 				nonnull(getModified(), "modified"), keystore);
 	}
 

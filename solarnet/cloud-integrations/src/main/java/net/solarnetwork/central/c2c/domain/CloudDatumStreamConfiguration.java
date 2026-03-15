@@ -124,8 +124,8 @@ public final class CloudDatumStreamConfiguration
 
 	@Override
 	public CloudDatumStreamConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CloudDatumStreamConfiguration(id, nonnull(getCreated(), "created"), getName(),
-				getServiceIdentifier(), kind);
+		var copy = new CloudDatumStreamConfiguration(id, created(), getName(), getServiceIdentifier(),
+				kind);
 		copyTo(copy);
 		return copy;
 	}

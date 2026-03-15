@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dao;
 
 import java.io.Serializable;
+import java.time.Instant;
 import org.jspecify.annotations.NonNull;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
@@ -60,6 +61,24 @@ public interface UserRelatedStdEntity<T extends UserRelatedStdEntity<T, K>, K ex
 	@JsonIgnore
 	default K pk() {
 		return getId();
+	}
+
+	/**
+	 * Get the primary identifier of the object.
+	 *
+	 * @return the primary identifier, never {@code null}
+	 */
+	@NonNull
+	@Override
+	Instant getCreated();
+
+	/**
+	 * Get the creation date.
+	 * 
+	 * @return the creation date
+	 */
+	default Instant created() {
+		return getCreated();
 	}
 
 }

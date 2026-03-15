@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dnp3.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -50,11 +51,21 @@ public final class ServerMeasurementConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the sourceId
+	 * @param type
+	 *        the type
+	 * @param property
+	 *        the property
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public ServerMeasurementConfiguration(UserLongIntegerCompositePK id, Instant created) {
-		super(id, created);
+	public ServerMeasurementConfiguration(UserLongIntegerCompositePK id, Instant created, Long nodeId,
+			String sourceId, MeasurementType type, String property) {
+		super(id, created, nodeId, sourceId, type);
+		setProperty(requireNonNullArgument(property, "property"));
 	}
 
 	/**
@@ -68,18 +79,39 @@ public final class ServerMeasurementConfiguration
 	 *        the index
 	 * @param created
 	 *        the creation date
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the sourceId
+	 * @param type
+	 *        the type
+	 * @param property
+	 *        the property
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public ServerMeasurementConfiguration(Long userId, Long serverId, Integer index, Instant created) {
-		this(new UserLongIntegerCompositePK(userId, serverId, index), created);
+	public ServerMeasurementConfiguration(Long userId, Long serverId, Integer index, Instant created,
+			Long nodeId, String sourceId, MeasurementType type, String property) {
+		this(new UserLongIntegerCompositePK(userId, serverId, index), created, nodeId, sourceId, type,
+				property);
 	}
 
 	@Override
 	public ServerMeasurementConfiguration copyWithId(UserLongIntegerCompositePK id) {
-		var copy = new ServerMeasurementConfiguration(id, getCreated());
+		var copy = new ServerMeasurementConfiguration(id, created(), getNodeId(), getSourceId(),
+				getType(), property());
 		copyTo(copy);
 		return copy;
+	}
+
+	/**
+	 * Get the property.
+	 *
+	 * @return the property
+	 */
+	@SuppressWarnings("NullAway")
+	public final String property() {
+		return getProperty();
 	}
 
 }

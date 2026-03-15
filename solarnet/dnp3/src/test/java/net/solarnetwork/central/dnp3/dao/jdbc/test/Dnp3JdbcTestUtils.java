@@ -1,21 +1,21 @@
 /* ==================================================================
  * Dnp3JdbcTestUtils.java - 5/08/2023 6:11:11 pm
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -37,7 +37,7 @@ import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
 
 /**
  * Helper methods for DNP3 JDBC tests.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -51,7 +51,7 @@ public final class Dnp3JdbcTestUtils {
 
 	/**
 	 * Create a new trusted issuer certificate instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param certResource
@@ -66,7 +66,7 @@ public final class Dnp3JdbcTestUtils {
 
 	/**
 	 * Create a new trusted issuer certificate instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param cert
@@ -83,7 +83,7 @@ public final class Dnp3JdbcTestUtils {
 
 	/**
 	 * List all trusted issuer certificate rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the rows
@@ -98,7 +98,7 @@ public final class Dnp3JdbcTestUtils {
 
 	/**
 	 * Create a new server configuration instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param name
@@ -106,16 +106,16 @@ public final class Dnp3JdbcTestUtils {
 	 * @return the entity
 	 */
 	public static ServerConfiguration newServerConfiguration(Long userId, String name) {
-		ServerConfiguration conf = new ServerConfiguration(unassignedEntityIdKey(userId), Instant.now());
+		ServerConfiguration conf = new ServerConfiguration(unassignedEntityIdKey(userId), Instant.now(),
+				name);
 		conf.setModified(conf.getCreated());
 		conf.setEnabled(true);
-		conf.setName(name);
 		return conf;
 	}
 
 	/**
 	 * List server configuration rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the rows
@@ -130,7 +130,7 @@ public final class Dnp3JdbcTestUtils {
 
 	/**
 	 * List server auth configuration rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the rows
@@ -145,7 +145,7 @@ public final class Dnp3JdbcTestUtils {
 
 	/**
 	 * List server measurement configuration rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the rows
@@ -161,7 +161,7 @@ public final class Dnp3JdbcTestUtils {
 
 	/**
 	 * List server control configuration rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the rows

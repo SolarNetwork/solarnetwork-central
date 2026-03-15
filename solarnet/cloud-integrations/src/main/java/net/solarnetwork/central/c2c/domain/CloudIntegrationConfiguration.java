@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.c2c.domain;
 
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -103,8 +102,7 @@ public final class CloudIntegrationConfiguration
 
 	@Override
 	public CloudIntegrationConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CloudIntegrationConfiguration(id, nonnull(getCreated(), "created"), getName(),
-				getServiceIdentifier());
+		var copy = new CloudIntegrationConfiguration(id, created(), getName(), getServiceIdentifier());
 		copyTo(copy);
 		return copy;
 	}

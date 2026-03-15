@@ -108,8 +108,7 @@ public class TransformConfiguration
 
 	@Override
 	public TransformConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new TransformConfiguration(id, nonnull(getCreated(), "created"), name,
-				serviceIdentifier);
+		var copy = new TransformConfiguration(id, created(), name, serviceIdentifier);
 		copyTo(copy);
 		return copy;
 	}

@@ -88,7 +88,7 @@ public final class CloudDatumStreamSettingsEntity
 
 	@Override
 	public CloudDatumStreamSettingsEntity copyWithId(UserLongCompositePK id) {
-		var copy = new CloudDatumStreamSettingsEntity(id, nonnull(getCreated(), "created"));
+		var copy = new CloudDatumStreamSettingsEntity(id, created());
 		copyTo(copy);
 		return copy;
 	}

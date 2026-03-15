@@ -128,8 +128,8 @@ public class CloudControlConfiguration
 
 	@Override
 	public CloudControlConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CloudControlConfiguration(id, nonnull(getCreated(), "created"), getName(),
-				getServiceIdentifier(), integrationId, nodeId, controlId);
+		var copy = new CloudControlConfiguration(id, created(), getName(), getServiceIdentifier(),
+				integrationId, nodeId, controlId);
 		copyTo(copy);
 		return copy;
 	}

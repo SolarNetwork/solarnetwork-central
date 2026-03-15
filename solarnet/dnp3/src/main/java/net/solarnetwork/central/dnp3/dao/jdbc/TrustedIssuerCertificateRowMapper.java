@@ -22,13 +22,14 @@
 
 package net.solarnetwork.central.dnp3.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
 import net.solarnetwork.central.security.CertificateUtils;
@@ -102,11 +103,11 @@ public class TrustedIssuerCertificateRowMapper implements RowMapper<TrustedIssue
 	public TrustedIssuerCertificate mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
 		String subjectDn = rs.getString(++p);
-		Timestamp ts = rs.getTimestamp(++p);
-		Timestamp mod = rs.getTimestamp(++p);
-		Long userId = rs.getLong(++p);
-		TrustedIssuerCertificate conf = new TrustedIssuerCertificate(userId, subjectDn, ts.toInstant());
-		conf.setModified(mod.toInstant());
+		Instant ts = timestampInstant(rs, ++p);
+		Instant mod = timestampInstant(rs, ++p);
+		Long userId = rs.getObject(++p, Long.class);
+		TrustedIssuerCertificate conf = new TrustedIssuerCertificate(userId, subjectDn, ts);
+		conf.setModified(mod);
 		++p; // skip expires
 		conf.setEnabled(rs.getBoolean(++p));
 		try {

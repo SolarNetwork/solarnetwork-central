@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.inin.domain;
 
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.UUID;
@@ -80,7 +79,7 @@ public class EndpointAuthConfiguration
 
 	@Override
 	public EndpointAuthConfiguration copyWithId(UserUuidLongCompositePK id) {
-		var copy = new EndpointAuthConfiguration(id, nonnull(getCreated(), "created"));
+		var copy = new EndpointAuthConfiguration(id, created());
 		copyTo(copy);
 		return copy;
 	}

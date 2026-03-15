@@ -125,8 +125,8 @@ public final class CloudDatumStreamPropertyConfiguration extends
 
 	@Override
 	public CloudDatumStreamPropertyConfiguration copyWithId(UserLongIntegerCompositePK id) {
-		var copy = new CloudDatumStreamPropertyConfiguration(id, nonnull(getCreated(), "created"),
-				propertyType, propertyName, valueType, valueReference);
+		var copy = new CloudDatumStreamPropertyConfiguration(id, created(), propertyType, propertyName,
+				valueType, valueReference);
 		copyTo(copy);
 		return copy;
 	}

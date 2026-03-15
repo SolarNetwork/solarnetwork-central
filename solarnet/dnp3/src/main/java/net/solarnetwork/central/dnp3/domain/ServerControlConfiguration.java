@@ -50,11 +50,18 @@ public final class ServerControlConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the sourceId
+	 * @param type
+	 *        the type
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public ServerControlConfiguration(UserLongIntegerCompositePK id, Instant created) {
-		super(id, created);
+	public ServerControlConfiguration(UserLongIntegerCompositePK id, Instant created, Long nodeId,
+			String sourceId, ControlType type) {
+		super(id, created, nodeId, sourceId, type);
 	}
 
 	/**
@@ -68,16 +75,23 @@ public final class ServerControlConfiguration
 	 *        the index
 	 * @param created
 	 *        the creation date
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the sourceId
+	 * @param type
+	 *        the type
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public ServerControlConfiguration(Long userId, Long serverId, Integer index, Instant created) {
-		this(new UserLongIntegerCompositePK(userId, serverId, index), created);
+	public ServerControlConfiguration(Long userId, Long serverId, Integer index, Instant created,
+			Long nodeId, String sourceId, ControlType type) {
+		this(new UserLongIntegerCompositePK(userId, serverId, index), created, nodeId, sourceId, type);
 	}
 
 	@Override
 	public ServerControlConfiguration copyWithId(UserLongIntegerCompositePK id) {
-		var copy = new ServerControlConfiguration(id, getCreated());
+		var copy = new ServerControlConfiguration(id, created(), getNodeId(), getSourceId(), getType());
 		copyTo(copy);
 		return copy;
 	}

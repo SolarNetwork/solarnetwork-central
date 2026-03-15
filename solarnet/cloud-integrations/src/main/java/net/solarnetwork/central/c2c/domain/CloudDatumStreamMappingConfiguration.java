@@ -118,8 +118,7 @@ public final class CloudDatumStreamMappingConfiguration extends
 
 	@Override
 	public CloudDatumStreamMappingConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CloudDatumStreamMappingConfiguration(id, nonnull(getCreated(), "created"), name,
-				integrationId);
+		var copy = new CloudDatumStreamMappingConfiguration(id, created(), name, integrationId);
 		copyTo(copy);
 		return copy;
 	}

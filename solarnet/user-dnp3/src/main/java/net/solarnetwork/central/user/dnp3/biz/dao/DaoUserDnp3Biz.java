@@ -197,7 +197,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteServer(Long userId, Long serverId) {
-		serverDao.delete(new ServerConfiguration(userId, serverId, Instant.EPOCH));
+		serverDao.delete(new ServerConfiguration(userId, serverId, Instant.EPOCH, ""));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -223,7 +223,8 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteServerAuth(Long userId, Long serverId, String identifier) {
-		serverAuthDao.delete(new ServerAuthConfiguration(userId, serverId, identifier, Instant.EPOCH));
+		var key = serverAuthDao.entityKey(new UserLongStringCompositePK(userId, serverId, identifier));
+		serverAuthDao.delete(key);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -249,8 +250,9 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteServerMeasurement(Long userId, Long serverId, Integer index) {
-		serverMeasurementDao
-				.delete(new ServerMeasurementConfiguration(userId, serverId, index, Instant.EPOCH));
+		final var key = serverMeasurementDao
+				.entityKey(new UserLongIntegerCompositePK(userId, serverId, index));
+		serverMeasurementDao.delete(key);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -276,7 +278,8 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteServerControl(Long userId, Long serverId, Integer index) {
-		serverControlDao.delete(new ServerControlConfiguration(userId, serverId, index, Instant.EPOCH));
+		var key = serverControlDao.entityKey(new UserLongIntegerCompositePK(userId, serverId, index));
+		serverControlDao.delete(key);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

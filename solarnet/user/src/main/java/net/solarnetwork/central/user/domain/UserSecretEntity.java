@@ -175,7 +175,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 
 	@Override
 	public UserSecretEntity copyWithId(@Nullable UserStringStringCompositePK id) {
-		return new UserSecretEntity(requireNonNullArgument(id, "id"), nonnull(getCreated(), "created"),
+		return new UserSecretEntity(requireNonNullArgument(id, "id"), created(),
 				nonnull(getModified(), "modified"), secret);
 	}
 
