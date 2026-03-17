@@ -27,6 +27,7 @@ import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttQos;
@@ -44,7 +45,7 @@ import tools.jackson.databind.ObjectMapper;
 public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements Function<T, Future<?>> {
 
 	private final ObjectMapper objectMapper;
-	private final Function<T, String> topicFn;
+	private final Function<T, @Nullable String> topicFn;
 
 	/**
 	 * Constructor.
@@ -62,8 +63,8 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public MqttJsonPublisher(String name, ObjectMapper objectMapper, Function<T, String> topicFn,
-			boolean retained, MqttQos publishQos) {
+	public MqttJsonPublisher(String name, ObjectMapper objectMapper,
+			Function<T, @Nullable String> topicFn, boolean retained, MqttQos publishQos) {
 		setDisplayName(requireNonNullArgument(name, "name"));
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.topicFn = requireNonNullArgument(topicFn, "topicFn");
@@ -72,8 +73,8 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 	}
 
 	@Override
-	public Future<?> apply(T item) {
-		String topic = topicFn.apply(item);
+	public Future<?> apply(@Nullable T item) {
+		String topic = (item != null ? topicFn.apply(item) : null);
 		return publish(item, topic);
 	}
 
@@ -86,7 +87,7 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 	 *        the topic
 	 * @return the publish future
 	 */
-	protected Future<?> publish(T item, String topic) {
+	protected Future<?> publish(@Nullable T item, @Nullable String topic) {
 		return publish(item, topic, isRetained(), getPublishQos());
 	}
 
@@ -105,7 +106,8 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 	 * @return the publish future
 	 * @since 1.1
 	 */
-	protected Future<?> publish(T item, String topic, boolean retained, MqttQos qos) {
+	protected Future<?> publish(@Nullable T item, @Nullable String topic, boolean retained,
+			MqttQos qos) {
 		if ( item == null || topic == null ) {
 			return CompletableFuture.completedFuture(null);
 		}
