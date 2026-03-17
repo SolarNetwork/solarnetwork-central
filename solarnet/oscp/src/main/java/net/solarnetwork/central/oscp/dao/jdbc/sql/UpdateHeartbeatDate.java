@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -44,7 +45,7 @@ public final class UpdateHeartbeatDate implements PreparedStatementCreator, SqlP
 
 	private final OscpRole type;
 	private final UserLongCompositePK id;
-	private final Instant expected;
+	private final @Nullable Instant expected;
 	private final Instant ts;
 
 	/**
@@ -62,7 +63,8 @@ public final class UpdateHeartbeatDate implements PreparedStatementCreator, SqlP
 	 *         if any argument except {@code expected} is {@code null} or the
 	 *         {@code id} is not assigned
 	 */
-	public UpdateHeartbeatDate(OscpRole type, UserLongCompositePK id, Instant expected, Instant ts) {
+	public UpdateHeartbeatDate(OscpRole type, UserLongCompositePK id, @Nullable Instant expected,
+			Instant ts) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
 		this.id = requireNonNullArgument(id, "id");

@@ -27,6 +27,7 @@ import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.execu
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -76,16 +77,18 @@ public class JdbcAssetConfigurationDao implements AssetConfigurationDao {
 
 	@Override
 	public UserLongCompositePK save(AssetConfiguration entity) {
-		if ( !entity.getId().entityIdIsAssigned() ) {
-			return create(entity.getId().getUserId(), entity);
+		final var id = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(),
+				"entity.id");
+		if ( !id.entityIdIsAssigned() ) {
+			return create(id.getUserId(), entity);
 		}
-		final UpdateAssetConfiguration sql = new UpdateAssetConfiguration(entity.getId(), entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		final var sql = new UpdateAssetConfiguration(id, entity);
+		jdbcOps.update(sql);
+		return id;
 	}
 
 	@Override
-	public Collection<AssetConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<AssetConfiguration> findAll(Long userId, @Nullable List<SortDescriptor> sorts) {
 		BasicConfigurationFilter filter = new BasicConfigurationFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		SelectAssetConfiguration sql = new SelectAssetConfiguration(filter);
@@ -95,7 +98,7 @@ public class JdbcAssetConfigurationDao implements AssetConfigurationDao {
 
 	@Override
 	public Collection<AssetConfiguration> findAllForCapacityGroup(Long userId, Long capacityGroupId,
-			List<SortDescriptor> sorts) {
+			@Nullable List<SortDescriptor> sorts) {
 		BasicConfigurationFilter filter = new BasicConfigurationFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		filter.setGroupId(requireNonNullArgument(capacityGroupId, "capacityGroupId"));
@@ -105,7 +108,7 @@ public class JdbcAssetConfigurationDao implements AssetConfigurationDao {
 	}
 
 	@Override
-	public AssetConfiguration get(UserLongCompositePK id) {
+	public @Nullable AssetConfiguration get(UserLongCompositePK id) {
 		BasicConfigurationFilter filter = new BasicConfigurationFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -116,7 +119,7 @@ public class JdbcAssetConfigurationDao implements AssetConfigurationDao {
 	}
 
 	@Override
-	public Collection<AssetConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<AssetConfiguration> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 

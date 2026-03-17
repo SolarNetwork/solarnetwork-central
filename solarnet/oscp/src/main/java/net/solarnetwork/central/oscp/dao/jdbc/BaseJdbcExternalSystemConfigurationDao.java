@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
@@ -140,7 +141,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	protected abstract PreparedStatementCreator createSql(Long userId, C entity);
 
 	@Override
-	public Collection<C> getAll(List<SortDescriptor> sorts) {
+	public Collection<C> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -169,13 +170,15 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	}
 
 	@Override
-	public boolean compareAndSetHeartbeat(UserLongCompositePK id, Instant expected, Instant ts) {
+	public boolean compareAndSetHeartbeat(UserLongCompositePK id, @Nullable Instant expected,
+			Instant ts) {
 		int count = jdbcOps.update(new UpdateHeartbeatDate(role, id, expected, ts));
 		return (count > 0);
 	}
 
 	@Override
-	public boolean compareAndSetMeasurement(UserLongCompositePK groupId, Instant expected, Instant ts) {
+	public boolean compareAndSetMeasurement(UserLongCompositePK groupId, @Nullable Instant expected,
+			Instant ts) {
 		int count = jdbcOps.update(new UpdateCapacityGroupMeasurementDate(role, groupId, expected, ts));
 		return (count > 0);
 	}
@@ -225,7 +228,8 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	protected abstract List<String> expiredMeasurementEventErrorTags();
 
 	@Override
-	public boolean processExternalSystemWithExpiredHeartbeat(Function<TaskContext<C>, Instant> handler) {
+	public boolean processExternalSystemWithExpiredHeartbeat(
+			Function<TaskContext<C>, @Nullable Instant> handler) {
 		PreparedStatementCreator sql = new SelectExternalSystemForHeartbeat(role, ONE_FOR_UPDATE_SKIP);
 		List<C> rows = jdbcOps.query(sql, rowMapperForEntity());
 		if ( !rows.isEmpty() ) {
@@ -235,7 +239,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 					Map.of());
 			Instant ts = handler.apply(context);
 			if ( ts != null ) {
-				compareAndSetHeartbeat(row.getId(), row.getHeartbeatDate(), ts);
+				compareAndSetHeartbeat(row.id(), row.getHeartbeatDate(), ts);
 			}
 			return (ts != null);
 		}
@@ -244,7 +248,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 
 	@Override
 	public boolean processExternalSystemWithExpiredMeasurement(
-			Function<CapacityGroupTaskContext<C>, Instant> handler) {
+			Function<CapacityGroupTaskContext<C>, @Nullable Instant> handler) {
 		PreparedStatementCreator sql = new SelectExternalSystemForMeasurement(role, ONE_FOR_UPDATE_SKIP);
 		RowMapper<C> entityMapper = rowMapperForEntity();
 		if ( !(entityMapper instanceof ColumnCountProvider ccp) ) {
@@ -276,7 +280,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 					Map.of());
 			Instant ts = handler.apply(context);
 			if ( ts != null ) {
-				compareAndSetMeasurement(row.group().getId(), measurementDate, ts);
+				compareAndSetMeasurement(row.group().id(), measurementDate, ts);
 			}
 			return (ts != null);
 		}

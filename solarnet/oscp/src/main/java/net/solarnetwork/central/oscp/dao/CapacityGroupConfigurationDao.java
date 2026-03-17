@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.dao;
 import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENTITY_ID;
 import java.time.Instant;
 import java.util.Collection;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
@@ -57,6 +58,7 @@ public interface CapacityGroupConfigurationDao
 	 *        the identifier of the group to get
 	 * @return the configuration, or {@code null} if not found
 	 */
+	@Nullable
 	CapacityGroupConfiguration findForCapacityProvider(Long userId, Long capacityProviderId,
 			String groupIdentifier);
 
@@ -83,6 +85,7 @@ public interface CapacityGroupConfigurationDao
 	 *        the identifier of the group to get
 	 * @return the configuration, or {@code null} if not found
 	 */
+	@Nullable
 	CapacityGroupConfiguration findForCapacityOptimizer(Long userId, Long capacityOptimizerId,
 			String groupIdentifier);
 
@@ -110,6 +113,7 @@ public interface CapacityGroupConfigurationDao
 	 *        the expected value
 	 * @param ts
 	 *        the timestamp to set of {@code expected} matches the current value
+	 * @return {@code true} if the measurement was updated
 	 */
 	boolean compareAndSetMeasurement(UserLongCompositePK id, OscpRole role, Instant expected,
 			Instant ts);

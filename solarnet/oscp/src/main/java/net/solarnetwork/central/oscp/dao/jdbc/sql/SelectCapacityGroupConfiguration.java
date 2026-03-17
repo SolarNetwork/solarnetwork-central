@@ -29,6 +29,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
@@ -52,7 +53,7 @@ public final class SelectCapacityGroupConfiguration
 	private static final String[] LOCK_TABLE_NAMES = new String[] { "ocg" };
 
 	private final ConfigurationFilter filter;
-	private final CapacityGroupFilter groupFilter;
+	private final @Nullable CapacityGroupFilter groupFilter;
 	private final int fetchSize;
 
 	/**

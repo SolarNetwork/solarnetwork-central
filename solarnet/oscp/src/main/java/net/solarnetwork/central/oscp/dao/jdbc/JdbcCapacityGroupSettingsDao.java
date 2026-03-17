@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcCapacityGroupSettingsDao.java - 10/10/2022 9:48:00 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.dao.jdbc;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.CapacityGroupSettingsDao;
@@ -37,7 +38,7 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * JDBC implementation of {@link CapacityGroupSettingsDao}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -47,7 +48,7 @@ public class JdbcCapacityGroupSettingsDao implements CapacityGroupSettingsDao {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
@@ -60,12 +61,11 @@ public class JdbcCapacityGroupSettingsDao implements CapacityGroupSettingsDao {
 
 	@Override
 	public UserLongCompositePK create(Long userId, CapacityGroupSettings entity) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Collection<CapacityGroupSettings> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<CapacityGroupSettings> findAll(Long userId, @Nullable List<SortDescriptor> sorts) {
 		final var sql = new SelectCapacityGroupSettings(requireNonNullArgument(userId, "userId"),
 				(Long) null, false);
 		return jdbcOps.query(sql, CapacityGroupSettingsRowMapper.INSTANCE);
@@ -80,11 +80,11 @@ public class JdbcCapacityGroupSettingsDao implements CapacityGroupSettingsDao {
 	public UserLongCompositePK save(CapacityGroupSettings entity) {
 		final var sql = new InsertCapacityGroupSettings(entity);
 		jdbcOps.update(sql);
-		return entity.getId();
+		return entity.id();
 	}
 
 	@Override
-	public CapacityGroupSettings get(UserLongCompositePK id) {
+	public @Nullable CapacityGroupSettings get(UserLongCompositePK id) {
 		final var sql = new SelectCapacityGroupSettings(requireNonNullArgument(id, "id").getUserId(),
 				id.getEntityId(), false);
 		Collection<CapacityGroupSettings> results = jdbcOps.query(sql,
@@ -93,7 +93,7 @@ public class JdbcCapacityGroupSettingsDao implements CapacityGroupSettingsDao {
 	}
 
 	@Override
-	public Collection<CapacityGroupSettings> getAll(List<SortDescriptor> sorts) {
+	public Collection<CapacityGroupSettings> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -107,7 +107,8 @@ public class JdbcCapacityGroupSettingsDao implements CapacityGroupSettingsDao {
 	}
 
 	@Override
-	public DatumPublishSettings resolveDatumPublishSettings(Long userId, String groupIdentifier) {
+	public @Nullable DatumPublishSettings resolveDatumPublishSettings(Long userId,
+			String groupIdentifier) {
 		final var sql = new SelectCapacityGroupSettings(userId, groupIdentifier, true);
 		Collection<CapacityGroupSettings> results = jdbcOps.query(sql,
 				CapacityGroupSettingsRowMapper.INSTANCE);
@@ -115,7 +116,7 @@ public class JdbcCapacityGroupSettingsDao implements CapacityGroupSettingsDao {
 	}
 
 	@Override
-	public DatumPublishSettings resolveDatumPublishSettings(Long userId, Long groupId) {
+	public @Nullable DatumPublishSettings resolveDatumPublishSettings(Long userId, Long groupId) {
 		final var sql = new SelectCapacityGroupSettings(userId, groupId, true);
 		Collection<CapacityGroupSettings> results = jdbcOps.query(sql,
 				CapacityGroupSettingsRowMapper.INSTANCE);

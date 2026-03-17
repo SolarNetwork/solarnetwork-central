@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.dao;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityGroupSettings;
@@ -54,6 +55,7 @@ public interface CapacityGroupSettingsDao
 	 * @return the settings, or {@code null} if no capacity group or user
 	 *         settings exist
 	 */
+	@Nullable
 	DatumPublishSettings resolveDatumPublishSettings(Long userId, Long groupId);
 
 	/**
@@ -67,6 +69,7 @@ public interface CapacityGroupSettingsDao
 	 * @return the settings, or {@code null} if no capacity group or user
 	 *         settings exist
 	 */
+	@Nullable
 	DatumPublishSettings resolveDatumPublishSettings(Long userId, String groupIdentifier);
 
 }

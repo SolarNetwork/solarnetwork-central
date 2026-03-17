@@ -28,6 +28,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 
@@ -40,8 +41,8 @@ import org.springframework.jdbc.core.SqlProvider;
 public final class SelectCapacityGroupSettings implements PreparedStatementCreator, SqlProvider {
 
 	private final Long userId;
-	private final Long groupId;
-	private final String groupIdentifier;
+	private final @Nullable Long groupId;
+	private final @Nullable String groupIdentifier;
 	private final boolean resolve;
 
 	/**
@@ -52,7 +53,7 @@ public final class SelectCapacityGroupSettings implements PreparedStatementCreat
 	 * @param groupId
 	 *        the capacity group ID
 	 */
-	public SelectCapacityGroupSettings(Long userId, Long groupId) {
+	public SelectCapacityGroupSettings(Long userId, @Nullable Long groupId) {
 		this(userId, groupId, false);
 	}
 
@@ -69,7 +70,7 @@ public final class SelectCapacityGroupSettings implements PreparedStatementCreat
 	 * @throws IllegalArgumentException
 	 *         if {@code userId} is {@code null}
 	 */
-	public SelectCapacityGroupSettings(Long userId, Long groupId, boolean resolve) {
+	public SelectCapacityGroupSettings(Long userId, @Nullable Long groupId, boolean resolve) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.groupId = groupId;

@@ -68,14 +68,14 @@ public final class InsertCapacityProviderConfiguration implements PreparedStatem
 		StringBuilder buf = new StringBuilder("""
 				INSERT INTO solaroscp.oscp_cp_conf (
 					created, modified, user_id""");
-		if ( entity.getId().entityIdIsAssigned() ) {
+		if ( entity.id().entityIdIsAssigned() ) {
 			buf.append(", id");
 		}
 		buf.append("""
 				, enabled, fp_id, reg_status, cname, url, sprops
 				)
 				VALUES (""");
-		if ( entity.getId().entityIdIsAssigned() ) {
+		if ( entity.id().entityIdIsAssigned() ) {
 			buf.append("?,");
 		}
 		buf.append("?,?,?,?,?,?,?,?,?::jsonb)");
@@ -90,7 +90,7 @@ public final class InsertCapacityProviderConfiguration implements PreparedStatem
 		stmt.setTimestamp(++p, ts);
 		stmt.setTimestamp(++p, ts);
 		stmt.setObject(++p, userId);
-		if ( entity.getId().entityIdIsAssigned() ) {
+		if ( entity.id().entityIdIsAssigned() ) {
 			stmt.setObject(++p, entity.getEntityId());
 		}
 		stmt.setBoolean(++p, entity.isEnabled());

@@ -28,6 +28,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -76,7 +77,7 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 		final InsertCapacityGroupConfiguration sql = new InsertCapacityGroupConfiguration(userId,
 				entity);
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		var pk = new UserLongCompositePK(userId, id);
+		final var pk = new UserLongCompositePK(userId, id);
 
 		// make sure measurement rows created at same time, for CP and CO
 		jdbcOps.update(new InsertCapacityGroupMeasurementDate(OscpRole.CapacityProvider, pk, null));
@@ -87,17 +88,19 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 
 	@Override
 	public UserLongCompositePK save(CapacityGroupConfiguration entity) {
-		if ( !entity.getId().entityIdIsAssigned() ) {
-			return create(entity.getId().getUserId(), entity);
+		final var id = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(),
+				"entity.id");
+		if ( !id.entityIdIsAssigned() ) {
+			return create(id.getUserId(), entity);
 		}
-		final UpdateCapacityGroupConfiguration sql = new UpdateCapacityGroupConfiguration(entity.getId(),
-				entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		final var sql = new UpdateCapacityGroupConfiguration(id, entity);
+		jdbcOps.update(sql);
+		return id;
 	}
 
 	@Override
-	public Collection<CapacityGroupConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<CapacityGroupConfiguration> findAll(Long userId,
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicConfigurationFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectCapacityGroupConfiguration(filter);
@@ -131,7 +134,7 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 	}
 
 	@Override
-	public CapacityGroupConfiguration get(UserLongCompositePK id) {
+	public @Nullable CapacityGroupConfiguration get(UserLongCompositePK id) {
 		var filter = new BasicConfigurationFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -143,7 +146,7 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 	}
 
 	@Override
-	public Collection<CapacityGroupConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<CapacityGroupConfiguration> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -158,8 +161,8 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 	}
 
 	@Override
-	public CapacityGroupConfiguration findForCapacityProvider(Long userId, Long capacityProviderId,
-			String groupIdentifier) {
+	public @Nullable CapacityGroupConfiguration findForCapacityProvider(Long userId,
+			Long capacityProviderId, String groupIdentifier) {
 		var filter = BasicConfigurationFilter.filterForUsers(requireNonNullArgument(userId, "userId"));
 		filter.setProviderId(capacityProviderId);
 		filter.setIdentifier(groupIdentifier);
@@ -170,8 +173,8 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 	}
 
 	@Override
-	public CapacityGroupConfiguration findForCapacityOptimizer(Long userId, Long capacityOptimizerId,
-			String groupIdentifier) {
+	public @Nullable CapacityGroupConfiguration findForCapacityOptimizer(Long userId,
+			Long capacityOptimizerId, String groupIdentifier) {
 		var filter = BasicConfigurationFilter.filterForUsers(requireNonNullArgument(userId, "userId"));
 		filter.setOptimizerId(capacityOptimizerId);
 		filter.setIdentifier(groupIdentifier);

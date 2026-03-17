@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 
@@ -43,6 +44,7 @@ public interface AuthTokenAuthorizationDao {
 	 *        if OSCP
 	 * @return the ID, or {@code null} if not available (or disabled)
 	 */
+	@Nullable
 	UserLongCompositePK idForToken(String token, boolean oauth);
 
 	/**
@@ -53,6 +55,7 @@ public interface AuthTokenAuthorizationDao {
 	 *        from {@link #idForToken(String,boolean)}
 	 * @return the role, or {@code null} if not available (or disabled)
 	 */
+	@Nullable
 	AuthRoleInfo roleForAuthorization(UserLongCompositePK authId);
 
 }

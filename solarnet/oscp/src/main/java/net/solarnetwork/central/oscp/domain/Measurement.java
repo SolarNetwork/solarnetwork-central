@@ -66,9 +66,10 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 	 *        the timestamp of the measurement
 	 * @return the new instance
 	 */
-	public static Measurement instantaneousMeasurement(BigDecimal value, Phase phase,
+	public static Measurement instantaneousMeasurement(BigDecimal value, @Nullable Phase phase,
 			MeasurementUnit unit, Instant measureTime) {
-		return new Measurement(value, phase, unit, measureTime, null, null, null);
+		return new Measurement(value, phase != null ? phase : Phase.Unknown, unit, measureTime, null,
+				null, null);
 	}
 
 	/**
@@ -90,11 +91,11 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 	 *        the start of the measurement period
 	 * @return the measurement
 	 */
-	public static Measurement energyMeasurement(BigDecimal value, Phase phase, MeasurementUnit unit,
-			Instant measureTime, EnergyType energyType, EnergyDirection energyDirection,
-			Instant startMeasureTime) {
-		return new Measurement(value, phase, unit, measureTime, energyType, energyDirection,
-				startMeasureTime);
+	public static Measurement energyMeasurement(BigDecimal value, @Nullable Phase phase,
+			MeasurementUnit unit, Instant measureTime, EnergyType energyType,
+			EnergyDirection energyDirection, Instant startMeasureTime) {
+		return new Measurement(value, phase != null ? phase : Phase.Unknown, unit, measureTime,
+				energyType, energyDirection, startMeasureTime);
 	}
 
 	/**

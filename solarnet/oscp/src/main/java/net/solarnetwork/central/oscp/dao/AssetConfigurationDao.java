@@ -26,6 +26,7 @@ import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENT
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.AssetCategory;
@@ -65,6 +66,6 @@ public interface AssetConfigurationDao
 	 * @return list of all assets, or empty list if none available
 	 */
 	Collection<AssetConfiguration> findAllForCapacityGroup(Long userId, Long capacityGroupId,
-			List<SortDescriptor> sorts);
+			@Nullable List<SortDescriptor> sorts);
 
 }
