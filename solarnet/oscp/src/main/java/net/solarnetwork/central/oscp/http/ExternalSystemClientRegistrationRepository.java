@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.http;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Map;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -52,8 +53,8 @@ import net.solarnetwork.central.oscp.util.AuthRoleSecretKeyFormatter;
 public class ExternalSystemClientRegistrationRepository implements ClientRegistrationRepository {
 
 	private final ExternalSystemSupportDao systemSupportDao;
-	private Function<AuthRoleInfo, String> secretsKeyFormatter;
-	private SecretsBiz secretsBiz;
+	private @Nullable Function<AuthRoleInfo, String> secretsKeyFormatter;
+	private @Nullable SecretsBiz secretsBiz;
 
 	/**
 	 * Constructor.
@@ -69,7 +70,7 @@ public class ExternalSystemClientRegistrationRepository implements ClientRegistr
 	}
 
 	@Override
-	public ClientRegistration findByRegistrationId(String registrationId) {
+	public @Nullable ClientRegistration findByRegistrationId(String registrationId) {
 		AuthRoleInfo role = AuthRoleInfo.forIdentifier(registrationId);
 		ExternalSystemConfiguration conf = systemSupportDao.externalSystemConfiguration(role.role(),
 				role.id());
@@ -120,7 +121,7 @@ public class ExternalSystemClientRegistrationRepository implements ClientRegistr
 	 * @param secretsBiz
 	 *        the service to set
 	 */
-	public void setSecretsBiz(SecretsBiz secretsBiz) {
+	public final void setSecretsBiz(@Nullable SecretsBiz secretsBiz) {
 		this.secretsBiz = secretsBiz;
 		if ( secretsBiz != null && secretsKeyFormatter == null ) {
 			setSecretsKeyFormatter(AuthRoleSecretKeyFormatter.INSTANCE);
@@ -138,7 +139,8 @@ public class ExternalSystemClientRegistrationRepository implements ClientRegistr
 	 * @param secretsKeyFormatter
 	 *        the formatter to use
 	 */
-	public void setSecretsKeyFormatter(Function<AuthRoleInfo, String> secretsKeyFormatter) {
+	public final void setSecretsKeyFormatter(
+			@Nullable Function<AuthRoleInfo, String> secretsKeyFormatter) {
 		this.secretsKeyFormatter = secretsKeyFormatter;
 	}
 
