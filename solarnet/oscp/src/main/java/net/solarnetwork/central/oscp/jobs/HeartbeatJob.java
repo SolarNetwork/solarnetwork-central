@@ -29,6 +29,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpMethod;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
@@ -59,7 +60,7 @@ public class HeartbeatJob extends JobSupport {
 
 	private final ExternalSystemConfigurationDao<?> dao;
 	private final ExternalSystemClient client;
-	private TransactionTemplate txTemplate;
+	private @Nullable TransactionTemplate txTemplate;
 
 	/**
 	 * Construct with properties.
@@ -123,7 +124,9 @@ public class HeartbeatJob extends JobSupport {
 	private boolean exchange(Set<String> supportedOscpVersions, AtomicInteger remainingIterations) {
 		return dao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
 			remainingIterations.decrementAndGet();
-			Integer secs = ctx.config().getSettings().heartbeatSeconds();
+			Integer secs = (ctx.config().getSettings() != null
+					? ctx.config().getSettings().heartbeatSeconds()
+					: null);
 			if ( secs == null ) {
 				return null;
 			}

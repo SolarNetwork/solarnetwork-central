@@ -26,6 +26,7 @@ import static java.util.Collections.singleton;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_ASSET_MEASUREMENTS_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_MEASUREMENTS_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpMethod;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
@@ -68,7 +70,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 	private final AssetConfigurationDao assetDao;
 	private final MeasurementDao measurementDao;
 	private final ExternalSystemClient client;
-	private TransactionTemplate txTemplate;
+	private @Nullable TransactionTemplate txTemplate;
 
 	/**
 	 * Construct with properties.
@@ -146,14 +148,14 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 		return dao.processExternalSystemWithExpiredMeasurement((ctx) -> {
 			remainingIterataions.decrementAndGet();
 
-			final CapacityGroupConfiguration group = switch (role) {
+			final CapacityGroupConfiguration group = nonnull(switch (role) {
 				case CapacityProvider -> capacityGroupDao.findForCapacityProvider(
 						ctx.config().getUserId(), ctx.config().getEntityId(), ctx.groupIdentifier());
 				case CapacityOptimizer -> capacityGroupDao.findForCapacityOptimizer(
 						ctx.config().getUserId(), ctx.config().getEntityId(), ctx.groupIdentifier());
 				default -> throw new IllegalArgumentException(
 						"OSCP role [%s] not supported.".formatted(role));
-			};
+			}, "Group");
 			final String combinedAssetId = group.combinedGroupAssetId() != null
 					? group.combinedGroupAssetId()
 					: ctx.config().combinedGroupAssetId();
@@ -213,7 +215,8 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 		});
 	}
 
-	private EnergyMeasurement combineEnergyMeasurements(List<EnergyMeasurement> measurements) {
+	private @Nullable EnergyMeasurement combineEnergyMeasurements(
+			@Nullable List<EnergyMeasurement> measurements) {
 		if ( measurements == null || measurements.isEmpty() ) {
 			return null;
 		}
@@ -246,8 +249,8 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 		return result;
 	}
 
-	private InstantaneousMeasurement combineInstantaneousMeasurements(
-			List<InstantaneousMeasurement> measurements) {
+	private @Nullable InstantaneousMeasurement combineInstantaneousMeasurements(
+			@Nullable List<InstantaneousMeasurement> measurements) {
 		if ( measurements == null || measurements.isEmpty() ) {
 			return null;
 		}
@@ -275,8 +278,8 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 		return result;
 	}
 
-	private AssetMeasurement combineAssetMeasurements(String combinedAssetId,
-			List<AssetMeasurement> measurements) {
+	private @Nullable AssetMeasurement combineAssetMeasurements(String combinedAssetId,
+			@Nullable List<AssetMeasurement> measurements) {
 		if ( measurements == null || measurements.isEmpty() ) {
 			return null;
 		}
