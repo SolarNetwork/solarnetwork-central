@@ -255,7 +255,7 @@ public class CloudControlConfiguration
 	 * @return the configuration ID
 	 */
 	public final Long getConfigId() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	/**

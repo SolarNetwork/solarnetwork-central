@@ -300,7 +300,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	 * @return the endpoint ID
 	 */
 	public final Long getTransformId() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	@Override

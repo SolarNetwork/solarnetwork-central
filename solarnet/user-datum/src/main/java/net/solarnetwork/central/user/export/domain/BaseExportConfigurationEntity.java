@@ -72,7 +72,7 @@ public abstract class BaseExportConfigurationEntity<C extends BaseIdentifiableUs
 		if ( configId != null ) {
 			return configId;
 		}
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	/**

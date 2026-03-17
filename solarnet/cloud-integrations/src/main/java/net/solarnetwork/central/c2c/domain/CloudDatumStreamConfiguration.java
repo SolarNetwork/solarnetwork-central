@@ -253,7 +253,7 @@ public final class CloudDatumStreamConfiguration
 	 * @return the configuration ID
 	 */
 	public final Long getConfigId() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	@Override

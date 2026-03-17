@@ -928,7 +928,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return result;
 	}
 
-	private CloudDataValue systemInfo(String systemId,
+	private @Nullable CloudDataValue systemInfo(String systemId,
 			Supplier<CloudIntegrationConfiguration> integrationProvider) {
 		final var cache = getSystemCache();
 		CloudDataValue result = null;

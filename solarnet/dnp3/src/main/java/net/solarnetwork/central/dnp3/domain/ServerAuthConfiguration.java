@@ -145,7 +145,7 @@ public class ServerAuthConfiguration
 	 * @return the server ID
 	 */
 	public final Long getServerId() {
-		return pk().getGroupId();
+		return id().getGroupId();
 	}
 
 	/**
@@ -154,7 +154,7 @@ public class ServerAuthConfiguration
 	 * @return the identifier
 	 */
 	public final String getIdentifier() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	/**

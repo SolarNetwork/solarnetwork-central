@@ -413,7 +413,9 @@ public final class WebServiceControllerSupport {
 			if ( sqlEx != null ) {
 				log.warn("Root SQLException from {}: {}", e.getMessage(), sqlEx.getMessage(), sqlEx);
 				sqlState = sqlEx.getSQLState();
-				params[0] = sqlEx.getMessage();
+				if ( sqlEx.getMessage() != null ) {
+					params[0] = sqlEx.getMessage();
+				}
 			}
 			if ( sqlState != null && sqlState.startsWith("22") ) {
 				// Class 22 — Data Exception

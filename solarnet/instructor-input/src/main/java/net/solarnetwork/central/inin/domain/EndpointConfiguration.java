@@ -189,7 +189,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @return the endpoint ID
 	 */
 	public final UUID getEndpointId() {
-		return pk().getUuid();
+		return id().getUuid();
 	}
 
 	/**

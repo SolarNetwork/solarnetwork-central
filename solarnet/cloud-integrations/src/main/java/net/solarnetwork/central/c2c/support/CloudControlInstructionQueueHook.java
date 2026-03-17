@@ -209,7 +209,7 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 			return;
 		}
 		try {
-			InstructionStatus status = service.executeInstruction(instr.control.pk(), instruction);
+			InstructionStatus status = service.executeInstruction(instr.control.id(), instruction);
 			final InstructionState newState = status != null && status.getInstructionState() != null
 					&& status.getInstructionState() != InstructionState.Queuing
 							? status.getInstructionState()

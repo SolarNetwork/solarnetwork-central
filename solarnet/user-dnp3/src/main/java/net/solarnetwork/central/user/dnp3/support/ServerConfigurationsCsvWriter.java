@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.dnp3.support;
 
 import static java.util.Arrays.fill;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -102,10 +103,10 @@ public class ServerConfigurationsCsvWriter {
 	 *         if any IO error occurs
 	 */
 	public void generateCsv(ServerConfigurations configurations) throws IOException {
-		String[] row = new String[rowLen];
+		var row = new @Nullable String[rowLen];
 		for ( ServerConfigurationsCsvColumn col : ServerConfigurationsCsvColumn.values() ) {
-			row[col.getCode()] = messageSource.getMessage("dnp3.config.import.csv.col." + col.name(),
-					null, col.getName(), locale);
+			row[col.getCode()] = nonnull(messageSource.getMessage(
+					"dnp3.config.import.csv.col." + col.name(), null, col.getName(), locale), "Message");
 		}
 		writer.writeRecord(row);
 		if ( configurations == null || configurations.isEmpty() ) {
@@ -127,7 +128,7 @@ public class ServerConfigurationsCsvWriter {
 		}
 	}
 
-	private void populateRow(BaseServerDatumStreamConfiguration<?, ?> config, String[] row) {
+	private void populateRow(BaseServerDatumStreamConfiguration<?, ?> config, @Nullable String[] row) {
 		row[ServerConfigurationsCsvColumn.NODE_ID
 				.getCode()] = (config.getNodeId() != null ? config.getNodeId().toString() : null);
 		row[ServerConfigurationsCsvColumn.SOURCE_ID.getCode()] = config.getSourceId();

@@ -206,7 +206,7 @@ public final class CloudDatumStreamRakeTaskEntity
 	 * @return the configuration ID
 	 */
 	public final Long getConfigId() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	/**

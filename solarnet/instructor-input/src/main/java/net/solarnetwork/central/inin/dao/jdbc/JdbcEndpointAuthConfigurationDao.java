@@ -82,7 +82,7 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 		final var sql = new UpsertEndpointAuthConfiguration(userId, endpointId, entity);
 
 		jdbcOps.update(sql);
-		return entity.pk();
+		return entity.id();
 	}
 
 	@Override
@@ -112,7 +112,7 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 				entity);
 
 		jdbcOps.update(sql);
-		return entity.pk();
+		return entity.id();
 	}
 
 	@Override
@@ -142,7 +142,7 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 	@Override
 	public void delete(EndpointAuthConfiguration entity) {
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").pk(), TABLE_NAME, PK_COLUMN_NAMES);
+				requireNonNullArgument(entity, "entity").id(), TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 

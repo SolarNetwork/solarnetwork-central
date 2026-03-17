@@ -41,6 +41,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.resolvePlaceholders;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.StringUtils.collectionToCommaDelimitedString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
@@ -71,7 +72,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.validation.BindException;
@@ -649,7 +649,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 									return b.buildAndExpand(
 											Map.of(COMPONENT_ID_FILTER, reqEntry.getKey())).toUri();
 
-								}, HttpEntity::getBody);
+								}, r -> nonnull(r.getBody(), "Response body"));
 
 						for ( JsonNode dataNode : json.path("data") ) {
 							if ( dataNode instanceof ObjectNode o && o.has("ts") ) {

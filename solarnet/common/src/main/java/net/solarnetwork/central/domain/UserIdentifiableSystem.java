@@ -145,7 +145,7 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 * @return the system identifier components
 	 */
 	static <T> @Nullable List<T> systemIdentifierComponents(@Nullable String systemIdentifier,
-			boolean omitNulls, Function<String, T> mapper) {
+			boolean omitNulls, Function<@Nullable String, @Nullable T> mapper) {
 		if ( systemIdentifier == null || systemIdentifier.isEmpty() ) {
 			return null;
 		}
@@ -191,6 +191,7 @@ public interface UserIdentifiableSystem extends UserIdRelated {
 	 *        the system identifier to decompose
 	 * @return the system identifier components
 	 */
+	@SuppressWarnings("NullAway")
 	static @Nullable List<String> systemIdentifierComponents(@Nullable String systemIdentifier) {
 		return systemIdentifierComponents(systemIdentifier, false, Function.identity());
 	}

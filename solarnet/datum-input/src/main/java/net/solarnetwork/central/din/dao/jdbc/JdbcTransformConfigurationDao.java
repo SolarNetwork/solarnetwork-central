@@ -106,12 +106,12 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 
 	@Override
 	public UserLongCompositePK save(TransformConfiguration entity) {
-		if ( !entity.pk().entityIdIsAssigned() ) {
+		if ( !entity.id().entityIdIsAssigned() ) {
 			return create(entity.getUserId(), entity);
 		}
-		final var sql = new UpdateTransformConfiguration(entity.pk(), entity);
+		final var sql = new UpdateTransformConfiguration(entity.id(), entity);
 		jdbcOps.update(sql);
-		return entity.pk();
+		return entity.id();
 	}
 
 	@Override
@@ -136,7 +136,7 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 
 	@Override
 	public void delete(TransformConfiguration entity) {
-		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").pk(), TABLE_NAME,
+		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").id(), TABLE_NAME,
 				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}

@@ -159,7 +159,8 @@ public final class DatumCsvUtils {
 		return commaDelimitedListToStringArray(value);
 	}
 
-	private static String @Nullable [][] parse2dArrayValue(@Nullable String value) {
+	@SuppressWarnings("NullAway")
+	private static String @Nullable [] @Nullable [] parse2dArrayValue(@Nullable String value) {
 		if ( value == null ) {
 			return null;
 		}
@@ -170,21 +171,23 @@ public final class DatumCsvUtils {
 			value = value.substring(0, value.length() - 1);
 		}
 		String[] components = value.split("}\\s*,\\s*\\{", 0);
-		String[][] result = new String[components.length][];
+		var result = new String[components.length][];
 		for ( int i = 0; i < components.length; i++ ) {
 			result[i] = parseArrayValue(components[i]);
 		}
 		return result;
 	}
 
-	private static BigDecimal @Nullable [][] parase2dDecimalArray(String @Nullable [][] strings) {
+	@SuppressWarnings("NullAway")
+	private static BigDecimal @Nullable [] @Nullable [] parase2dDecimalArray(
+			String[] @Nullable [] strings) {
 		if ( strings == null ) {
 			return null;
 		}
 		if ( strings.length == 0 ) {
 			return new BigDecimal[0][];
 		}
-		BigDecimal[][] result = new BigDecimal[strings.length][];
+		var result = new BigDecimal[strings.length][];
 		for ( int i = 0; i < strings.length; i++ ) {
 			result[i] = decimalArray(strings[i]);
 		}
@@ -214,6 +217,7 @@ public final class DatumCsvUtils {
 	 * @throws IOException
 	 *         if any parsing error occurs
 	 */
+	@SuppressWarnings("NullAway")
 	public static List<AggregateDatum> parseAggregateDatum(Reader in, Aggregation aggregation)
 			throws IOException {
 		List<AggregateDatum> result = new ArrayList<>();
@@ -235,8 +239,8 @@ public final class DatumCsvUtils {
 				DatumProperties props = DatumProperties.propertiesOf(decimalArray(iCol),
 						decimalArray(aCol), sCol, tCol);
 
-				String[][] statsCol = parse2dArrayValue(row.getField(6));
-				String[][] readingStatsCol = parse2dArrayValue(row.getField(7));
+				var statsCol = parse2dArrayValue(row.getField(6));
+				var readingStatsCol = parse2dArrayValue(row.getField(7));
 
 				DatumPropertiesStatistics stats = DatumPropertiesStatistics.statisticsOf(
 						parase2dDecimalArray(statsCol), parase2dDecimalArray(readingStatsCol));

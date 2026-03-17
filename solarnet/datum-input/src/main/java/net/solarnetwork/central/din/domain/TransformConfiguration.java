@@ -171,7 +171,7 @@ public class TransformConfiguration
 	 * @return the endpoint ID
 	 */
 	public final Long getTransformId() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	@Override

@@ -244,7 +244,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public @Nullable V getAndReplace(K key, V value) {
-		AtomicReference<V> old = new AtomicReference<>();
+		AtomicReference<@Nullable V> old = new AtomicReference<>();
 		data.compute(key, (_, v) -> {
 			if ( v != null && v.isValid() ) {
 				old.set(v.getResult());

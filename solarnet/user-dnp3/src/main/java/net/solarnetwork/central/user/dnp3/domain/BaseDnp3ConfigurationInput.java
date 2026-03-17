@@ -51,7 +51,7 @@ public abstract class BaseDnp3ConfigurationInput<C extends BaseUserModifiableEnt
 		requireNonNullArgument(conf, "conf");
 
 		// if the most-specific key component is not assigned, set the modified date to the creation date
-		if ( !conf.pk().keyComponentIsAssigned(conf.pk().keyComponentLength() - 1) ) {
+		if ( !conf.id().keyComponentIsAssigned(conf.id().keyComponentLength() - 1) ) {
 			conf.setModified(conf.created());
 		}
 

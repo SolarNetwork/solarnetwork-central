@@ -144,7 +144,8 @@ public class PasswordOAuth2AuthorizedClientProvider implements OAuth2AuthorizedC
 	}
 
 	private boolean hasTokenExpired(OAuth2Token token) {
-		return this.clock.instant().isAfter(token.getExpiresAt().minus(this.clockSkew));
+		final var expiresAt = token.getExpiresAt();
+		return expiresAt == null || clock.instant().isAfter(expiresAt.minus(this.clockSkew));
 	}
 
 	/**

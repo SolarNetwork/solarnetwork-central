@@ -75,7 +75,7 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 			ServerMeasurementConfiguration entity) {
 		final var sql = new UpsertServerMeasurementConfiguration(userId, serverId, entity);
 		jdbcOps.update(sql);
-		return entity.pk();
+		return entity.id();
 	}
 
 	@Override
@@ -120,7 +120,7 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 
 	@Override
 	public void delete(ServerMeasurementConfiguration entity) {
-		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").pk(), TABLE_NAME,
+		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").id(), TABLE_NAME,
 				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}

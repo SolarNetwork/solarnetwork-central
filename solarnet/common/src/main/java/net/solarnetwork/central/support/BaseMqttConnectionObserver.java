@@ -61,7 +61,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
-	protected final AtomicReference<MqttConnection> mqttConnection = new AtomicReference<>();
+	protected final AtomicReference<@Nullable MqttConnection> mqttConnection = new AtomicReference<>();
 
 	private boolean retained;
 	private MqttQos publishQos = DEFAULT_PUBLISH_QOS;

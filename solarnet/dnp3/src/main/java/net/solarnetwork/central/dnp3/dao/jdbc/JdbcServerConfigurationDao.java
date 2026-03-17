@@ -91,12 +91,12 @@ public class JdbcServerConfigurationDao implements ServerConfigurationDao {
 
 	@Override
 	public UserLongCompositePK save(ServerConfiguration entity) {
-		if ( !entity.pk().entityIdIsAssigned() ) {
+		if ( !entity.id().entityIdIsAssigned() ) {
 			return create(entity.getUserId(), entity);
 		}
-		final var sql = new UpdateServerConfiguration(entity.pk(), entity);
+		final var sql = new UpdateServerConfiguration(entity.id(), entity);
 		jdbcOps.update(sql);
-		return entity.pk();
+		return entity.id();
 	}
 
 	@Override
@@ -121,7 +121,7 @@ public class JdbcServerConfigurationDao implements ServerConfigurationDao {
 
 	@Override
 	public void delete(ServerConfiguration entity) {
-		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").pk(), TABLE_NAME,
+		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").id(), TABLE_NAME,
 				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}

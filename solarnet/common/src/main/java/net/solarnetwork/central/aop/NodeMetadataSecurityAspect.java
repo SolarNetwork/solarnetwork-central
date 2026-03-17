@@ -27,6 +27,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -105,7 +106,7 @@ public class NodeMetadataSecurityAspect extends AuthorizationSupport {
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
 
-		final Object[] args = pjp.getArgs();
+		final @Nullable Object[] args = pjp.getArgs();
 
 		SolarNodeMetadataFilter f = policyEnforcerCheck(filter);
 		if ( f != filter ) {

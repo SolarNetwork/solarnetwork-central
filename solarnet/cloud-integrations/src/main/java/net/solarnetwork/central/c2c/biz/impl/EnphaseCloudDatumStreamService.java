@@ -326,7 +326,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	}
 
 	private @Nullable List<CloudDataValue> systems(CloudIntegrationConfiguration integration) {
-		final var decryp = integration.copyWithId(integration.pk());
+		final var decryp = integration.copyWithId(integration.id());
 		decryp.unmaskSensitiveInformation(_ -> SECURE_SETTINGS, encryptor);
 		List<CloudDataValue> result = null;
 
@@ -362,7 +362,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 	private List<CloudDataValue> systemDevices(final CloudIntegrationConfiguration integration,
 			final String systemId, Map<String, ?> filters) {
-		final var decryp = integration.copyWithId(integration.pk());
+		final var decryp = integration.copyWithId(integration.id());
 		decryp.unmaskSensitiveInformation(_ -> SECURE_SETTINGS, encryptor);
 
 		return restOpsHelper.httpGet("List system devices", integration, JsonNode.class,
@@ -781,7 +781,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				throw new ValidationException(msg, errors, ms);
 			}
 
-			final var decryptedIntegration = integration.copyWithId(integration.pk());
+			final var decryptedIntegration = integration.copyWithId(integration.id());
 			decryptedIntegration.unmaskSensitiveInformation(_ -> SECURE_SETTINGS, encryptor);
 
 			final Duration deviceReportingMaxLag = nonnull(

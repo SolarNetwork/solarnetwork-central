@@ -68,17 +68,17 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	private final @Nullable DatumMetadataOperations metadata;
 
 	// a function to lookup metadata based on an object ID
-	private final @Nullable Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider;
+	private final @Nullable Function<ObjectDatumStreamMetadataId, @Nullable DatumMetadataOperations> metadataProvider;
 
 	// a function to parse a metadata tariff schedule associated with an object ID
-	private final @Nullable BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider;
+	private final @Nullable BiFunction<@Nullable DatumMetadataOperations, ObjectDatumStreamMetadataId, @Nullable TariffSchedule> tariffScheduleProvider;
 
 	private final @Nullable DatumStreamsAccessor datumStreamsAccessor;
 
 	private final @Nullable HttpOperations httpOperations;
 
 	// a function to return decrypted user secrets based on a key
-	private final @Nullable BiFunction<Long, String, byte[]> secretProvider;
+	private final @Nullable BiFunction<Long, String, byte @Nullable []> secretProvider;
 
 	/**
 	 * Constructor.
@@ -112,10 +112,10 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 			@Nullable DatumSamplesOperations sample, @Nullable Map<String, ?> parameters,
 			@Nullable DatumMetadataOperations metadata,
 			@Nullable DatumStreamsAccessor datumStreamsAccessor,
-			@Nullable Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
-			@Nullable BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider,
+			@Nullable Function<ObjectDatumStreamMetadataId, @Nullable DatumMetadataOperations> metadataProvider,
+			@Nullable BiFunction<@Nullable DatumMetadataOperations, ObjectDatumStreamMetadataId, @Nullable TariffSchedule> tariffScheduleProvider,
 			@Nullable HttpOperations httpOperations,
-			@Nullable BiFunction<Long, String, byte[]> secretProvider) {
+			@Nullable BiFunction<Long, String, byte @Nullable []> secretProvider) {
 		super(datum, sample, parameters);
 		this.userId = ObjectUtils.requireNonNullArgument(userId, "userId");
 		this.metadata = metadata;

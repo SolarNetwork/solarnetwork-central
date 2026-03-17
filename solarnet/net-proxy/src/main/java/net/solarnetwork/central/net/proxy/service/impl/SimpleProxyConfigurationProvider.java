@@ -208,7 +208,8 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 			final int cmdLen = externalServerCommand.length;
 			String[] cmd = new String[cmdLen];
 			for ( int i = 0; i < cmdLen; i++ ) {
-				cmd[i] = StringUtils.expandTemplateString(externalServerCommand[i], cmdParameters);
+				var c = StringUtils.expandTemplateString(externalServerCommand[i], cmdParameters);
+				cmd[i] = (c != null ? c : "");
 			}
 
 			// start up dynamic server to proxy to

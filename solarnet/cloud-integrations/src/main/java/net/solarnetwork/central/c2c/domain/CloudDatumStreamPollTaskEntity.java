@@ -187,7 +187,7 @@ public final class CloudDatumStreamPollTaskEntity
 	 * @return the cloud datum stream ID
 	 */
 	public final Long getDatumStreamId() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	/**

@@ -106,8 +106,8 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
-	public static void writeJsonArrayValues(JsonGenerator generator, BigDecimal @Nullable [] array)
-			throws JacksonException {
+	public static void writeJsonArrayValues(JsonGenerator generator,
+			@Nullable BigDecimal @Nullable [] array) throws JacksonException {
 		if ( array == null ) {
 			return;
 		}
@@ -133,7 +133,7 @@ public final class DatumJsonUtils {
 	 *         if any IO error occurs
 	 */
 	public static void writeJsonArrayValues(JsonGenerator generator,
-			BigDecimal @Nullable [][] arrayOfArrays) throws JacksonException {
+			BigDecimal @Nullable [] @Nullable [] arrayOfArrays) throws JacksonException {
 		if ( arrayOfArrays == null ) {
 			return;
 		}
@@ -163,13 +163,17 @@ public final class DatumJsonUtils {
 	 * @throws JacksonException
 	 *         if any IO error occurs
 	 */
-	public static void writeJsonArrayValues(JsonGenerator generator, String @Nullable [] array)
+	public static void writeJsonArrayValues(JsonGenerator generator, @Nullable String @Nullable [] array)
 			throws JacksonException {
 		if ( array == null ) {
 			return;
 		}
 		for ( String s : array ) {
-			generator.writeString(s);
+			if ( s == null ) {
+				generator.writeNull();
+			} else {
+				generator.writeString(s);
+			}
 		}
 	}
 
@@ -860,10 +864,13 @@ public final class DatumJsonUtils {
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public static @Nullable DatumProperties parseDatumSamples(JsonParser parser,
 			ObjectDatumStreamMetadata meta) throws JacksonException {
-		BigDecimal[] instantaneous = null;
-		BigDecimal[] accumulating = null;
-		String[] status = null;
-		String[] tags = null;
+		@Nullable
+		BigDecimal @Nullable [] instantaneous = null;
+		@Nullable
+		BigDecimal @Nullable [] accumulating = null;
+		@Nullable
+		String @Nullable [] status = null;
+		String @Nullable [] tags = null;
 		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
 			JsonToken t = parser.currentToken();
 			if ( t == null ) {
@@ -887,7 +894,7 @@ public final class DatumJsonUtils {
 						break;
 
 					case "t":
-						tags = parseStringArrayForSamplesType(parser, meta, DatumSamplesType.Tag);
+						tags = parseStringArrayForSamplesTypeStrict(parser, meta, DatumSamplesType.Tag);
 						break;
 				}
 			}
@@ -955,9 +962,10 @@ public final class DatumJsonUtils {
 		return DatumPropertiesStatistics.statisticsOf(instantaneous, accumulating);
 	}
 
-	private static BigDecimal @Nullable [] parseDecimalArrayForSamplesType(JsonParser parser,
+	private static @Nullable BigDecimal @Nullable [] parseDecimalArrayForSamplesType(JsonParser parser,
 			ObjectDatumStreamMetadata meta, DatumSamplesType type) throws JacksonException {
-		BigDecimal[] result = null;
+		@Nullable
+		BigDecimal @Nullable [] result = null;
 		if ( parser.currentToken() == JsonToken.START_OBJECT ) {
 			Map<String, BigDecimal> map = parseDecimalsObject(parser);
 			String[] names = meta.propertyNamesForType(type);
@@ -971,9 +979,10 @@ public final class DatumJsonUtils {
 		return result;
 	}
 
-	private static String @Nullable [] parseStringArrayForSamplesType(JsonParser parser,
+	private static @Nullable String @Nullable [] parseStringArrayForSamplesType(JsonParser parser,
 			ObjectDatumStreamMetadata meta, DatumSamplesType type) throws JacksonException {
-		String[] result = null;
+		@Nullable
+		String @Nullable [] result = null;
 		if ( type == DatumSamplesType.Tag ) {
 			if ( parser.currentToken() == JsonToken.START_ARRAY ) {
 				List<String> tags = new ArrayList<>(4);
@@ -998,6 +1007,36 @@ public final class DatumJsonUtils {
 			}
 		}
 		return result;
+	}
+
+	private static String @Nullable [] parseStringArrayForSamplesTypeStrict(JsonParser parser,
+			ObjectDatumStreamMetadata meta, DatumSamplesType type) throws JacksonException {
+		var result = parseStringArrayForSamplesType(parser, meta, type);
+		if ( result == null ) {
+			return null;
+		}
+		List<String> tmpList = null;
+		for ( int i = 0; i < result.length; i++ ) {
+			if ( result[i] == null ) {
+				if ( tmpList == null ) {
+					tmpList = new ArrayList<>(result.length);
+					for ( int j = 0; j < i; j++ ) {
+						tmpList.add(result[j]);
+					}
+				}
+			} else if ( tmpList != null ) {
+				tmpList.add(result[i]);
+			}
+		}
+		if ( tmpList == null ) {
+			return stringArrayStrictCast(result);
+		}
+		return tmpList.toArray(String[]::new);
+	}
+
+	@SuppressWarnings("NullAway")
+	private static String @Nullable [] stringArrayStrictCast(@Nullable String @Nullable [] array) {
+		return array;
 	}
 
 	private static BigDecimal @Nullable [][] parseDecimalArrayOfArraysForSamplesType(JsonParser parser,

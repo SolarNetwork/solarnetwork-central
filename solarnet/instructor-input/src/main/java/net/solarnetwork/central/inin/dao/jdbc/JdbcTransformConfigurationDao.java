@@ -105,7 +105,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 		@Override
 		protected PreparedStatementCreator saveSql(RequestTransformConfiguration entity) {
-			return new UpdateRequestTransformConfiguration(entity.pk(), entity);
+			return new UpdateRequestTransformConfiguration(entity.id(), entity);
 		}
 
 	}
@@ -152,7 +152,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 		@Override
 		protected PreparedStatementCreator saveSql(ResponseTransformConfiguration entity) {
-			return new UpdateResponseTransformConfiguration(entity.pk(), entity);
+			return new UpdateResponseTransformConfiguration(entity.id(), entity);
 		}
 
 	}
@@ -241,13 +241,13 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 	@Override
 	public UserLongCompositePK save(C entity) {
-		if ( !entity.pk().entityIdIsAssigned() ) {
-			return create(entity.pk().getUserId(), entity);
+		if ( !entity.id().entityIdIsAssigned() ) {
+			return create(entity.id().getUserId(), entity);
 		}
 		validatePhase(entity);
 		final var sql = saveSql(entity);
 		jdbcOps.update(sql);
-		return entity.pk();
+		return entity.id();
 	}
 
 	@Override
@@ -286,7 +286,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 	@Override
 	public void delete(C entity) {
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").pk(), tableName(), PK_COLUMN_NAMES);
+				requireNonNullArgument(entity, "entity").id(), tableName(), PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 

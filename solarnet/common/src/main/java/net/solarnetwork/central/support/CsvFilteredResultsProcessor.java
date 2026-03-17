@@ -224,6 +224,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 			writer.writeRecord(columnOrder.keySet().toArray(String[]::new));
 		}
 
+		@Nullable
 		String[] row = new String[columnCount];
 		int i = 0;
 		for ( String key : columnOrder.keySet() ) {

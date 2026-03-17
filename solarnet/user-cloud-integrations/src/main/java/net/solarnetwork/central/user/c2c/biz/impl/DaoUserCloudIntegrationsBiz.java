@@ -463,14 +463,14 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			}
 		}
 
-		integrationDao.mergeServiceProperties(config.pk(), propsToMerge);
+		integrationDao.mergeServiceProperties(config.id(), propsToMerge);
 
 		@SuppressWarnings("unchecked")
-		C result = (C) integrationDao.get(config.pk());
+		C result = (C) integrationDao.get(config.id());
 
 		saveOAuthTokens((UserIdentifiableSystem) result, oauthTokenProperties);
 
-		return requireNonNullObject(digestSensitiveInformation(result), config.pk());
+		return requireNonNullObject(digestSensitiveInformation(result), config.id());
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -553,7 +553,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				"integration");
 		var service = resolveDatumStreamService(integration.getServiceIdentifier(),
 				datumStreamServiceIdentifier);
-		return service.dataValues(integration.pk(), filters);
+		return service.dataValues(integration.id(), filters);
 	}
 
 	private CloudDatumStreamService resolveDatumStreamService(String integrationServiceIdentifier,
@@ -606,7 +606,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				"integration");
 		var service = resolveControlService(integration.getServiceIdentifier(),
 				controlServiceIdentifier);
-		return service.dataValues(integration.pk(), filters);
+		return service.dataValues(integration.id(), filters);
 	}
 
 	private CloudControlService resolveControlService(String integrationServiceIdentifier,

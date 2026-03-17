@@ -243,13 +243,12 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
 			@Nullable Map<String, ?> filters) {
-		filters = requireNonNullArgument(filters, "filters");
+		final Map<String, ?> f = requireNonNullArgument(filters, "filters");
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
 		final Long datumStreamId = requireNonNullArgument(
-				filters.get(DATUM_STREAM_ID_FILTER) instanceof Object o ? Long.valueOf(o.toString())
-						: null,
+				f.get(DATUM_STREAM_ID_FILTER) instanceof Object o ? Long.valueOf(o.toString()) : null,
 				"filters.datumStreamId");
 		final CloudDatumStreamConfiguration datumStream = requireNonNullObject(
 				datumStreamDao.get(new UserLongCompositePK(integrationId.getUserId(), datumStreamId)),
@@ -558,13 +557,8 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 * This method can return a timestamp value for fields like these examples:
 	 * </p>
 	 *
-	 * <pre>{@code
-	 * {
-	 *   "ts":    "1729907680",
-	 *   "ts2":   "1729907680.123",
-	 *   "delta": 60.000,
-	 * }
-	 * }</pre>
+	 * <pre>{@code { "ts": "1729907680", "ts2": "1729907680.123", "delta":
+	 * 60.000, } }</pre>
 	 *
 	 * @param json
 	 *        the JSON node

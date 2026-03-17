@@ -143,7 +143,7 @@ public final class CloudIntegrationConfiguration
 	 * @return the configuration ID
 	 */
 	public final Long getConfigId() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	/**

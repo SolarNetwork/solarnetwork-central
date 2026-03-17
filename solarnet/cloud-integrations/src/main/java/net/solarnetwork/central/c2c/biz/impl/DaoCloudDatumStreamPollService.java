@@ -212,9 +212,9 @@ public class DaoCloudDatumStreamPollService
 			log.debug("Datum stream poll task execution rejected, resetting state to Queued: {}",
 					e.getMessage());
 			// go back to queued
-			if ( !taskDao.updateTaskState(task.pk(), Queued, task.getState()) ) {
+			if ( !taskDao.updateTaskState(task.id(), Queued, task.getState()) ) {
 				log.warn("Failed to update rejected datum stream poll task {} state from {} to Queued",
-						task.pk().ident(), task.getState());
+						task.id().ident(), task.getState());
 			}
 			throw e;
 		}
@@ -243,10 +243,10 @@ public class DaoCloudDatumStreamPollService
 				try {
 					if ( log.isDebugEnabled() || !(e instanceof RemoteServiceException) ) {
 						// log full stack trace when debug enabled or not a RemoteServiceException
-						log.warn("Error executing datum stream {} poll task", taskInfo.pk().ident(), e);
+						log.warn("Error executing datum stream {} poll task", taskInfo.id().ident(), e);
 					} else {
 						// otherwise just print exception message, to cut down on log clutter
-						log.warn("Error executing datum stream {} poll task: {}", taskInfo.pk().ident(),
+						log.warn("Error executing datum stream {} poll task: {}", taskInfo.id().ident(),
 								e.toString());
 					}
 					var errMsg = "Error executing poll task.";
@@ -258,7 +258,7 @@ public class DaoCloudDatumStreamPollService
 						// reset back to queued to try again if HTTP client or IO error
 						log.info(
 								"Resetting datum stream {} poll task by changing state from {} to {} after error: {}",
-								taskInfo.pk().ident(), oldState, Queued, e.toString());
+								taskInfo.id().ident(), oldState, Queued, e.toString());
 						taskInfo.setState(Queued);
 						if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
 							// bump date into future by 1 minute so we do not immediately try to process again
@@ -268,7 +268,7 @@ public class DaoCloudDatumStreamPollService
 						// stop processing job if not what appears to be an API IO exception
 						log.info(
 								"Stopping datum stream {} poll task by changing state from {} to {} after error: {}",
-								taskInfo.pk().ident(), oldState, Completed, e.toString());
+								taskInfo.id().ident(), oldState, Completed, e.toString());
 						taskInfo.setState(Completed);
 					}
 					userEventAppenderBiz.addEvent(taskInfo.getUserId(), eventForUserRelatedKey(
@@ -276,11 +276,11 @@ public class DaoCloudDatumStreamPollService
 					if ( !taskDao.updateTask(taskInfo, oldState) ) {
 						log.warn(
 								"Unable to update datum stream {} poll task info with expected state {} with details: {}",
-								taskInfo.pk().ident(), oldState, taskInfo);
+								taskInfo.id().ident(), oldState, taskInfo);
 					}
 				} catch ( Exception e2 ) {
 					log.warn("Error updating datum stream {} poll task state after error",
-							taskInfo.pk().ident(), e2);
+							taskInfo.id().ident(), e2);
 					// ignore, return original
 				}
 				throw e;
@@ -290,7 +290,7 @@ public class DaoCloudDatumStreamPollService
 		private CloudDatumStreamPollTaskEntity executeTask() throws Exception {
 			final Instant execTime = clock.instant();
 
-			final CloudDatumStreamConfiguration datumStream = datumStreamDao.get(taskInfo.pk());
+			final CloudDatumStreamConfiguration datumStream = datumStreamDao.get(taskInfo.id());
 			if ( datumStream == null ) {
 				// configuration has been deleted... abort
 				return taskInfo;
@@ -299,12 +299,12 @@ public class DaoCloudDatumStreamPollService
 			final CloudDatumStreamSettings datumStreamSettings = datumStreamSettingsDao.resolveSettings(
 					datumStream.getUserId(), datumStream.getConfigId(), defaultDatumStreamSettings);
 
-			final String datumStreamIdent = datumStream.pk().ident();
+			final String datumStreamIdent = datumStream.id().ident();
 
 			if ( !datumStream.isFullyConfigured() ) {
 				var errMsg = "Datum stream not fully configured.";
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForUserRelatedKey(datumStream.pk(), INTEGRATION_POLL_ERROR_TAGS, errMsg));
+						eventForUserRelatedKey(datumStream.id(), INTEGRATION_POLL_ERROR_TAGS, errMsg));
 				taskInfo.setMessage(errMsg);
 				taskInfo.setState(Completed); // stop processing job
 				taskDao.updateTask(taskInfo, startState);
@@ -334,7 +334,7 @@ public class DaoCloudDatumStreamPollService
 			}
 
 			// save task state to Executing (TODO maybe we don't need this step?)
-			if ( !taskDao.updateTaskState(taskInfo.pk(), Executing, startState) ) {
+			if ( !taskDao.updateTaskState(taskInfo.id(), Executing, startState) ) {
 				log.warn("Failed to update poll task {} state to Executing @ {} starting @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to update task state from Claimed to Executing.";

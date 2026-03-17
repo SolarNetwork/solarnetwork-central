@@ -23,6 +23,7 @@
 package net.solarnetwork.central.web.support;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.webmvc.error.DefaultErrorAttributes;
 import org.springframework.stereotype.Component;
@@ -38,8 +39,9 @@ import org.springframework.web.context.request.WebRequest;
 public class WebServiceErrorAttributes extends DefaultErrorAttributes {
 
 	@Override
-	public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
-		Map<String, Object> errorAttributes = super.getErrorAttributes(webRequest, options);
+	public Map<String, @Nullable Object> getErrorAttributes(WebRequest webRequest,
+			ErrorAttributeOptions options) {
+		Map<String, @Nullable Object> errorAttributes = super.getErrorAttributes(webRequest, options);
 		errorAttributes.put("success", false);
 		return errorAttributes;
 	}

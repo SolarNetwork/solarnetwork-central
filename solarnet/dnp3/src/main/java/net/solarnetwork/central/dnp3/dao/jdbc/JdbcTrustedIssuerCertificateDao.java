@@ -73,7 +73,7 @@ public class JdbcTrustedIssuerCertificateDao implements TrustedIssuerCertificate
 	public UserStringCompositePK create(Long userId, TrustedIssuerCertificate entity) {
 		final var sql = new UpsertTrustedIssuerCertificate(userId, entity);
 		jdbcOps.update(sql);
-		return entity.pk();
+		return entity.id();
 	}
 
 	@Override
@@ -114,7 +114,7 @@ public class JdbcTrustedIssuerCertificateDao implements TrustedIssuerCertificate
 
 	@Override
 	public void delete(TrustedIssuerCertificate entity) {
-		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").pk(), TABLE_NAME,
+		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").id(), TABLE_NAME,
 				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}

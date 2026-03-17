@@ -170,7 +170,7 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 						clientAccessTokenDao.delete(registration);
 						JsonNode realm = ex.getResponseBodyAs(JsonNode.class);
 						return super.httpGet(description, configuration, responseType, (headers) -> {
-							var integration = integrationDao.integrationForDatumStream(datumStream.pk());
+							var integration = integrationDao.integrationForDatumStream(datumStream.id());
 							if ( integration != null && realm != null ) {
 								addEgaugeBearerAuthorization(integration, datumStream, headers,
 										accessTokenId, realm);
@@ -230,7 +230,7 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 		}
 
 		final CloudIntegrationConfiguration integration = integrationDao
-				.integrationForDatumStream(config.pk());
+				.integrationForDatumStream(config.id());
 		if ( integration == null ) {
 			return;
 		}

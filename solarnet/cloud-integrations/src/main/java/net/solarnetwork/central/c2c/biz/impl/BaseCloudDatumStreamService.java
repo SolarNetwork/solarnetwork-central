@@ -538,7 +538,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 					Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY, config.getValueReference())));
 			throw new IllegalArgumentException(
 					"Error evaluating datum stream %s property configuration %s: %s"
-							.formatted(datumStream.pk().ident(), config.pk().ident(), exMsg),
+							.formatted(datumStream.id().ident(), config.id().ident(), exMsg),
 					e);
 		}
 		return expression;

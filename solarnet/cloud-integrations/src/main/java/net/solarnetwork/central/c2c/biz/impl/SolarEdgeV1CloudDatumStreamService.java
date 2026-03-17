@@ -45,6 +45,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDat
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.pathReferenceValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
@@ -75,7 +76,6 @@ import javax.cache.Cache;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -951,7 +951,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 									.queryParam("timeUnit", resolution.getKey())
 									.buildAndExpand(queryPlan.siteId)
 									.toUri(),
-							HttpEntity::getBody);
+									r -> nonnull(r.getBody(), "Response body"));
 					JsonNode meterEnergy = restOpsHelper.httpGet("List meter energy data", integration,
 							JsonNode.class,
 							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
@@ -961,7 +961,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 									.queryParam("timeUnit", resolution.getKey())
 									.buildAndExpand(queryPlan.siteId)
 									.toUri(),
-							HttpEntity::getBody);
+									r -> nonnull(r.getBody(), "Response body"));
 					// @formatter:on
 					Collection<GeneralDatum> datum = parseMeterDatum(meterPower, meterEnergy, queryPlan,
 							ds, sourceIdMap, timestampFmt, resolution);

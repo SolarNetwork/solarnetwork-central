@@ -115,7 +115,7 @@ public class EndpointAuthConfiguration
 	 * @return the endpoint ID
 	 */
 	public UUID getEndpointId() {
-		return pk().getGroupId();
+		return id().getGroupId();
 	}
 
 	/**
@@ -124,7 +124,7 @@ public class EndpointAuthConfiguration
 	 * @return the credential ID
 	 */
 	public Long getCredentialId() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 }

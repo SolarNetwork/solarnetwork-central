@@ -185,6 +185,7 @@ public final class DatumDbUtils {
 	 *        the aggregate statistics
 	 * @return the datum
 	 */
+	@SuppressWarnings("NullAway")
 	public static ReadingDatum readingWith(UUID streamId, @Nullable Aggregation agg, ZonedDateTime start,
 			ZonedDateTime end, BigDecimal[] @Nullable... stats) {
 		BigDecimal[] acc = new BigDecimal[stats.length];
@@ -212,7 +213,7 @@ public final class DatumDbUtils {
 	 * @return the datum
 	 */
 	public static ReadingDatum readingWith(UUID streamId, @Nullable Aggregation agg, ZonedDateTime start,
-			ZonedDateTime end, BigDecimal @Nullable [] acc, BigDecimal @Nullable [][] stats) {
+			ZonedDateTime end, BigDecimal @Nullable [] acc, BigDecimal[] @Nullable [] stats) {
 		return new ReadingDatumEntity(streamId, start.toInstant(),
 				(agg != null ? agg : Aggregation.None), end.toInstant(),
 				propertiesOf(null, acc, null, null), statisticsOf(null, stats));
@@ -468,7 +469,7 @@ public final class DatumDbUtils {
 				if ( AGG.matcher(line).find() ) {
 					JsonParser parser = factory.createParser(ObjectReadContext.empty(), line);
 					AggregateDatum d = DatumJsonUtils.parseAggregateDatum(parser, metadataProvider);
-					if ( mapper != null ) {
+					if ( d != null && mapper != null ) {
 						d = mapper.apply(d);
 					}
 					if ( d != null ) {
@@ -1396,7 +1397,7 @@ public final class DatumDbUtils {
 		if ( log == null ) {
 			return;
 		}
-		List<Map<String, Object>> staleRows = jdbcTemplate
+		List<Map<String, @Nullable Object>> staleRows = jdbcTemplate
 				.queryForList("SELECT * FROM solardatm.agg_stale_datm ORDER BY ts_start, stream_id");
 		log.debug("{}:\n{}", msg, staleRows.stream().map(Object::toString).collect(joining("\n")));
 	}
@@ -1605,7 +1606,7 @@ public final class DatumDbUtils {
 		if ( log == null ) {
 			return;
 		}
-		List<Map<String, Object>> staleRows = jdbcTemplate
+		List<Map<String, @Nullable Object>> staleRows = jdbcTemplate
 				.queryForList("SELECT * FROM solardatm.aud_stale_datm ORDER BY ts_start, stream_id");
 		log.debug("{}:\n{}", msg, staleRows.stream().map(Object::toString).collect(joining("\n")));
 	}

@@ -25,6 +25,7 @@ package net.solarnetwork.central.support;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import org.jspecify.annotations.Nullable;
@@ -73,7 +74,7 @@ public final class SearchFilterUtils {
 	 *        the filter
 	 * @return the JSON Path expression
 	 */
-	@SuppressWarnings("StatementSwitchToExpressionSwitch")
+	@SuppressWarnings({ "StatementSwitchToExpressionSwitch", "NullAway" })
 	public static @Nullable String toSqlJsonPath(@Nullable SearchFilter filter) {
 		if ( filter == null ) {
 			return null;
@@ -130,7 +131,8 @@ public final class SearchFilterUtils {
 				}
 				if ( !node.hasNestedFilter() ) {
 					LogicOperator op = (ref != null ? ref.op : LogicOperator.AND);
-					for ( Entry<String, ?> e : nonnull(node.getFilter(), "filter").entrySet() ) {
+					final Map<String, ?> filter = nonnull(node.getFilter(), "filter");
+					for ( Entry<String, ?> e : filter.entrySet() ) {
 						switch (op) {
 							case AND:
 								if ( ref != null && ref.count > 0 ) {

@@ -270,7 +270,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 * @return the cloud datum stream mapping ID
 	 */
 	public final Long getDatumStreamMappingId() {
-		return pk().getGroupId();
+		return id().getGroupId();
 	}
 
 	/**
@@ -279,7 +279,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 * @return the index
 	 */
 	public final Integer getIndex() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	/**

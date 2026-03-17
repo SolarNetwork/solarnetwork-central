@@ -79,16 +79,16 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	private final @Nullable HttpOperations httpOperations;
 
 	// a function to lookup user metadata based on user ID
-	private final @Nullable Function<Long, DatumMetadataOperations> userMetadataProvider;
+	private final @Nullable Function<Long, @Nullable DatumMetadataOperations> userMetadataProvider;
 
 	// a function to lookup node or datum stream metadata based on an object ID
-	private final @Nullable Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider;
+	private final @Nullable Function<ObjectDatumStreamMetadataId, @Nullable DatumMetadataOperations> metadataProvider;
 
 	// a function to parse a metadata tariff schedule at a path
-	private final @Nullable BiFunction<DatumMetadataOperations, String, TariffSchedule> tariffScheduleProvider;
+	private final @Nullable BiFunction<@Nullable DatumMetadataOperations, String, @Nullable TariffSchedule> tariffScheduleProvider;
 
 	// a function to return decrypted user secrets based on a user ID and key
-	private final @Nullable BiFunction<Long, String, byte[]> secretProvider;
+	private final @Nullable BiFunction<Long, String, byte @Nullable []> secretProvider;
 
 	// dynamic runtime data to pass to runtime services
 	private @Nullable Map<String, Object> runtimeData;
@@ -129,10 +129,10 @@ public class NodeInstructionExpressionRoot implements DatumCollectionFunctions, 
 	public NodeInstructionExpressionRoot(SolarNodeOwnership owner, NodeInstruction instruction,
 			@Nullable Map<String, ?> parameters, @Nullable DatumStreamsAccessor datumStreamsAccessor,
 			@Nullable HttpOperations httpOperations,
-			@Nullable Function<Long, DatumMetadataOperations> userMetadataProvider,
-			@Nullable Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
-			@Nullable BiFunction<DatumMetadataOperations, String, TariffSchedule> tariffScheduleProvider,
-			@Nullable BiFunction<Long, String, byte[]> secretProvider) {
+			@Nullable Function<Long, @Nullable DatumMetadataOperations> userMetadataProvider,
+			@Nullable Function<ObjectDatumStreamMetadataId, @Nullable DatumMetadataOperations> metadataProvider,
+			@Nullable BiFunction<@Nullable DatumMetadataOperations, String, @Nullable TariffSchedule> tariffScheduleProvider,
+			@Nullable BiFunction<Long, String, byte @Nullable []> secretProvider) {
 		super();
 		this.owner = requireNonNullArgument(owner, "owner");
 		this.instruction = requireNonNullArgument(instruction, "instruction");

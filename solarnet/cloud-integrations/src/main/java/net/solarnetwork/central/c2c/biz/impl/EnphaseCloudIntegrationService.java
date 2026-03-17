@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.time.Clock;
@@ -40,7 +41,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
@@ -242,7 +242,7 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 
 		// validate by requesting the available sites
 		try {
-			final var decrypted = integration.copyWithId(integration.pk());
+			final var decrypted = integration.copyWithId(integration.id());
 			decrypted.unmaskSensitiveInformation(_ -> SECURE_SETTINGS, encryptor);
 
 			final String response = restOpsHelper.httpGet("List systems", integration, String.class,
@@ -251,7 +251,7 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 							.queryParam(API_KEY_PARAM,
 									decrypted.serviceProperty(API_KEY_SETTING, String.class))
 							.buildAndExpand().toUri(),
-					HttpEntity::getBody);
+					r -> nonnull(r.getBody(), "Response body"));
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( RemoteServiceException e ) {
@@ -280,7 +280,7 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 		final String stateToken = Base64.getUrlEncoder().encodeToString(DigestUtils.sha3_224(rand))
 				.replace("=", "");
 
-		integrationDao.saveOAuthAuthorizationState(integration.pk(), stateToken, null);
+		integrationDao.saveOAuthAuthorizationState(integration.id(), stateToken, null);
 
 		String stateValue = new AuthorizationState(integration.getConfigId(), stateToken).stateValue();
 
@@ -318,13 +318,13 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 			throw new AuthorizationException(Reason.ACCESS_DENIED, state.integrationId());
 		}
 
-		if ( !integrationDao.saveOAuthAuthorizationState(integration.pk(), null, state.token()) ) {
+		if ( !integrationDao.saveOAuthAuthorizationState(integration.id(), null, state.token()) ) {
 			// state mis-match; abort
 			String errMsg = ms.getMessage("error.oauth.state.mismtach", null, locale);
 			throw new IllegalArgumentException(errMsg);
 		}
 
-		final var decrypted = integration.copyWithId(integration.pk());
+		final var decrypted = integration.copyWithId(integration.id());
 		decrypted.unmaskSensitiveInformation(_ -> SECURE_SETTINGS, encryptor);
 
 		final JsonNode json = tokenFetchHelper.http("Get OAuth token", HttpMethod.POST, null,
@@ -344,7 +344,7 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 						req.setBasicAuth(username, password);
 					}
 					return uri;
-				}, HttpEntity::getBody);
+				}, r -> nonnull(r.getBody(), "Response body"));
 
 		/*- JSON example:
 			{

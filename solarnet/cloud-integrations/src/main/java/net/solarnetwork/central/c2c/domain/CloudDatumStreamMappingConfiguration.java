@@ -185,7 +185,7 @@ public final class CloudDatumStreamMappingConfiguration extends
 	 * @return the configuration ID
 	 */
 	public final Long getConfigId() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	@Override

@@ -181,7 +181,7 @@ public class UserDatumExportConfiguration
 		if ( configId != null ) {
 			return configId;
 		}
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	/**

@@ -137,7 +137,7 @@ public class ServerConfiguration
 	 * @return the server ID
 	 */
 	public final Long getServerId() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	/**

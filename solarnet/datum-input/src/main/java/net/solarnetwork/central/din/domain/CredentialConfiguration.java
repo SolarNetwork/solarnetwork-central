@@ -158,7 +158,7 @@ public class CredentialConfiguration
 	 * @return the credential ID
 	 */
 	public final Long getCredentialId() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	/**

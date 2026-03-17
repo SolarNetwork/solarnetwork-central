@@ -123,10 +123,10 @@ public final class OAuth2Utils {
 				authReq.principal(config.serviceProp(OAUTH_CLIENT_ID_SETTING, String.class));
 			}
 		} else {
-			authReq.principal("%s %s".formatted(config.pk().ident(), config.getName()));
+			authReq.principal("%s %s".formatted(config.id().ident(), config.getName()));
 		}
 
-		final Lock lock = (lockProvider != null ? lockProvider.apply(config.getId()) : null);
+		final Lock lock = (lockProvider != null ? lockProvider.apply(config.id()) : null);
 		try {
 			if ( lock != null ) {
 				lock.lock();

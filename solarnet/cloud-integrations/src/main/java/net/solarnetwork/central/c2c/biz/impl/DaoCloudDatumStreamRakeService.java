@@ -205,9 +205,9 @@ public class DaoCloudDatumStreamRakeService
 			log.debug("Datum stream rake task execution rejected, resetting state to Queued: {}",
 					e.getMessage());
 			// go back to queued
-			if ( !taskDao.updateTaskState(task.pk(), Queued, task.getState()) ) {
+			if ( !taskDao.updateTaskState(task.id(), Queued, task.getState()) ) {
 				log.warn("Failed to update rejected datum stream rake task {} state from {} to Queued",
-						task.pk().ident(), task.getState());
+						task.id().ident(), task.getState());
 			}
 			throw e;
 		}
@@ -241,10 +241,10 @@ public class DaoCloudDatumStreamRakeService
 				try {
 					if ( log.isDebugEnabled() || !(e instanceof RemoteServiceException) ) {
 						// log full stack trace when debug enabled or not a RemoteServiceException
-						log.warn("Error executing datum stream {} rake task", taskInfo.pk().ident(), e);
+						log.warn("Error executing datum stream {} rake task", taskInfo.id().ident(), e);
 					} else {
 						// otherwise just print exception message, to cut down on log clutter
-						log.warn("Error executing datum stream {} rake task: {}", taskInfo.pk().ident(),
+						log.warn("Error executing datum stream {} rake task: {}", taskInfo.id().ident(),
 								e.toString());
 					}
 					var errMsg = "Error executing rake task.";
@@ -258,7 +258,7 @@ public class DaoCloudDatumStreamRakeService
 						// reset back to queued to try again if HTTP client or IO error
 						log.info(
 								"Resetting datum stream {} rake task by changing state from {} to {} after error: {}",
-								taskInfo.pk().ident(), oldState, Queued, e.toString());
+								taskInfo.id().ident(), oldState, Queued, e.toString());
 						taskInfo.setState(Queued);
 						if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
 							// bump date into future by 1 minute so we do not immediately try to process again
@@ -269,19 +269,19 @@ public class DaoCloudDatumStreamRakeService
 						// stop processing job if not what appears to be an API IO exception
 						log.info(
 								"Stopping datum stream {} rake task by changing state from {} to {} after error: {}",
-								taskInfo.pk().ident(), oldState, Completed, e.toString());
+								taskInfo.id().ident(), oldState, Completed, e.toString());
 						taskInfo.setState(Completed);
 					}
 					userEventAppenderBiz.addEvent(taskInfo.getUserId(), eventForUserRelatedKey(
-							taskInfo.pk(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
+							taskInfo.id(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 					if ( !taskDao.updateTask(taskInfo, oldState) ) {
 						log.warn(
 								"Unable to update datum stream {} rake task info with expected state {} with details: {}",
-								taskInfo.pk().ident(), oldState, taskInfo);
+								taskInfo.id().ident(), oldState, taskInfo);
 					}
 				} catch ( Exception e2 ) {
 					log.warn("Error updating datum stream {} rake task state after error",
-							taskInfo.pk().ident(), e2);
+							taskInfo.id().ident(), e2);
 					// ignore, return original
 				}
 				throw e;
@@ -299,12 +299,12 @@ public class DaoCloudDatumStreamRakeService
 				return taskInfo;
 			}
 
-			final String datumStreamIdent = datumStream.pk().ident();
+			final String datumStreamIdent = datumStream.id().ident();
 
 			if ( !datumStream.isFullyConfigured() ) {
 				var errMsg = "Datum stream not fully configured.";
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForUserRelatedKey(datumStream.pk(), INTEGRATION_RAKE_ERROR_TAGS, errMsg));
+						eventForUserRelatedKey(datumStream.id(), INTEGRATION_RAKE_ERROR_TAGS, errMsg));
 				taskInfo.setMessage(errMsg);
 				taskInfo.setState(Completed); // stop processing job
 				taskDao.updateTask(taskInfo, startState);
@@ -331,7 +331,7 @@ public class DaoCloudDatumStreamRakeService
 					taskInfo.putServiceProps(errData);
 					taskInfo.setState(Completed); // stop processing job
 					userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
-							datumStream.pk(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
+							datumStream.id(), INTEGRATION_RAKE_ERROR_TAGS, errMsg, errData));
 					taskDao.updateTask(taskInfo, startState);
 					return taskInfo;
 				}
@@ -344,7 +344,7 @@ public class DaoCloudDatumStreamRakeService
 			final ZonedDateTime endDate = startDate.plusDays(1);
 
 			// verify poll task is after the rake end date, so the two tasks do not overlap
-			CloudDatumStreamPollTaskEntity pollTask = pollTaskDao.get(datumStream.pk());
+			CloudDatumStreamPollTaskEntity pollTask = pollTaskDao.get(datumStream.id());
 			if ( pollTask != null && pollTask.getStartAt() != null
 					&& endDate.isAfter(pollTask.getStartAt().atZone(rakeZone)) ) {
 				log.debug(
@@ -363,7 +363,7 @@ public class DaoCloudDatumStreamRakeService
 			}
 
 			// save task state to Executing
-			if ( !taskDao.updateTaskState(taskInfo.pk(), Executing, startState) ) {
+			if ( !taskDao.updateTaskState(taskInfo.id(), Executing, startState) ) {
 				log.warn("Failed to update rake task {} state to Executing @ {} offset @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getOffset());
 				var errMsg = "Failed to update task state from Claimed to Executing.";

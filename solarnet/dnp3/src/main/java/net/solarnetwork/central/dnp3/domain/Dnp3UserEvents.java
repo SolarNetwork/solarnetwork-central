@@ -150,7 +150,7 @@ public interface Dnp3UserEvents {
 	 */
 	static LogEventInfo eventWithEntity(Entity<? extends CompositeKey> entity, List<String> baseTags,
 			@Nullable String message, @Nullable Map<String, ?> extraData,
-			@Nullable String @Nullable... extraTags) {
+			String @Nullable... extraTags) {
 		Map<String, Object> data = eventDataForEntity(entity, extraData);
 		return event(baseTags, message, getJSONString(data, null), extraTags);
 	}

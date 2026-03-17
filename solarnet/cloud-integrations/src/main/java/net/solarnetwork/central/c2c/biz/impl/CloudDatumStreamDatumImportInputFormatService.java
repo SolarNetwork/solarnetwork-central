@@ -110,7 +110,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 	}
 
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
-	private final Function<String, CloudDatumStreamService> datumStreamServiceProvider;
+	private final Function<String, @Nullable CloudDatumStreamService> datumStreamServiceProvider;
 
 	/**
 	 * Constructor.
@@ -124,7 +124,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamDatumImportInputFormatService(CloudDatumStreamConfigurationDao datumStreamDao,
-			Function<String, CloudDatumStreamService> datumStreamServiceProvider) {
+			Function<String, @Nullable CloudDatumStreamService> datumStreamServiceProvider) {
 		super(SERVICE_IDENTIFIER);
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
 		this.datumStreamServiceProvider = requireNonNullArgument(datumStreamServiceProvider,
@@ -133,7 +133,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 
 	@Override
 	public ImportContext createImportContext(InputConfiguration config, DatumImportResource resource,
-			ProgressListener<DatumImportService> progressListener) throws IOException {
+			@Nullable ProgressListener<DatumImportService> progressListener) throws IOException {
 		requireNonNullArgument(config, "config");
 		return new DatumStreamImportContext(config, resource, progressListener);
 	}

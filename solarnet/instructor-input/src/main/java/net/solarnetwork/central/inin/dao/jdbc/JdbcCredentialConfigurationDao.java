@@ -108,12 +108,12 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 
 	@Override
 	public UserLongCompositePK save(CredentialConfiguration entity) {
-		if ( !entity.pk().entityIdIsAssigned() ) {
-			return create(entity.pk().getUserId(), entity);
+		if ( !entity.id().entityIdIsAssigned() ) {
+			return create(entity.id().getUserId(), entity);
 		}
-		final var sql = new UpdateCredentialConfiguration(entity.pk(), entity);
+		final var sql = new UpdateCredentialConfiguration(entity.id(), entity);
 		jdbcOps.update(sql);
-		return entity.pk();
+		return entity.id();
 	}
 
 	@Override
@@ -140,7 +140,7 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 	@Override
 	public void delete(CredentialConfiguration entity) {
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").pk(), TABLE_NAME, PK_COLUMN_NAMES);
+				requireNonNullArgument(entity, "entity").id(), TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 

@@ -23,6 +23,9 @@
 package net.solarnetwork.central.security.jdbc;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.Instant.now;
+import static java.time.temporal.ChronoUnit.HOURS;
+import static java.util.Objects.requireNonNullElse;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdFromSystemIdentifier;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
@@ -304,11 +307,15 @@ public class JdbcOAuth2AuthorizedClientService
 		if ( refreshToken != null ) {
 			refreshTokenValue = encryptor.encrypt(refreshToken.getTokenValue().getBytes(UTF_8));
 		}
+		var now = now();
+		var issuedAt = requireNonNullElse(accessToken.getIssuedAt(), now);
+		// TODO: this fallback expire of 1 hour: should probably make this configurable at least
+		var expiresAt = requireNonNullElse(accessToken.getExpiresAt(), issuedAt.plus(1, HOURS));
 		var entity = new ClientAccessTokenEntity(
 				nonnull(userIdFromSystemIdentifier(clientRegistration.getRegistrationId()), "userId"),
-				clientRegistration.getRegistrationId(), principal.getName(), Instant.now(),
+				clientRegistration.getRegistrationId(), principal.getName(), now,
 				accessToken.getTokenType().getValue(), accessToken.getTokenValue().getBytes(UTF_8),
-				accessToken.getIssuedAt(), accessToken.getExpiresAt());
+				issuedAt, expiresAt);
 		entity.setAccessTokenScopes(accessToken.getScopes());
 		entity.setRefreshToken(refreshTokenValue);
 		if ( refreshToken != null ) {

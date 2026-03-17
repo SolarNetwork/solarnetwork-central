@@ -74,7 +74,7 @@ public class JdbcServerAuthConfigurationDao implements ServerAuthConfigurationDa
 	public UserLongStringCompositePK create(Long userId, Long serverId, ServerAuthConfiguration entity) {
 		final var sql = new UpsertServerAuthConfiguration(userId, serverId, entity);
 		jdbcOps.update(sql);
-		return entity.pk();
+		return entity.id();
 	}
 
 	@Override
@@ -119,7 +119,7 @@ public class JdbcServerAuthConfigurationDao implements ServerAuthConfigurationDa
 
 	@Override
 	public void delete(ServerAuthConfiguration entity) {
-		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").pk(), TABLE_NAME,
+		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").id(), TABLE_NAME,
 				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}

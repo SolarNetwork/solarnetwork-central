@@ -135,7 +135,7 @@ public final class CloudDatumStreamSettingsEntity
 	 */
 	@Override
 	public final Long getDatumStreamId() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	@Override

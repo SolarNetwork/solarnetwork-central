@@ -108,7 +108,7 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 * @throws IllegalArgumentException
 	 *         if {@code integration} is {@code null}
 	 */
-	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T httpGet(
+	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T extends @Nullable Object> T httpGet(
 			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
 			Function<ResponseEntity<R>, T> handler) {
 		return http(description, HttpMethod.GET, null, configuration, responseType, setup, handler);
@@ -147,7 +147,7 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 *         if {@code integration} is {@code null}
 	 * @since 1.2
 	 */
-	public <B extends @Nullable Object, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
+	public <B extends @Nullable Object, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T extends @Nullable Object> T http(
 			String description, HttpMethod method, @Nullable B body, C configuration,
 			Class<R> responseType, Function<HttpHeaders, URI> setup,
 			Function<ResponseEntity<R>, T> handler) {

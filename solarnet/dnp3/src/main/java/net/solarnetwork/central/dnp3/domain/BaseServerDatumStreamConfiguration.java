@@ -212,7 +212,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * @return the server ID
 	 */
 	public final Long getServerId() {
-		return pk().getGroupId();
+		return id().getGroupId();
 	}
 
 	/**
@@ -221,7 +221,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 	 * @return the index
 	 */
 	public final Integer getIndex() {
-		return pk().getEntityId();
+		return id().getEntityId();
 	}
 
 	/**

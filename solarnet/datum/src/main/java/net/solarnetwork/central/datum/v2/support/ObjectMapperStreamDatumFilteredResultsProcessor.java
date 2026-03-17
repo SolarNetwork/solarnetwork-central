@@ -389,9 +389,10 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 *         if any IO error occurs
 	 */
 	private static void writeAggregateProperty(final JsonGenerator generator,
-			final DatumSamplesType type, final boolean reading, final BigDecimal @Nullable [] values,
-			final BigDecimal @Nullable [][] statValues, final int len, final int @Nullable [] mapping)
-			throws JacksonException {
+			final DatumSamplesType type, final boolean reading,
+			final @Nullable BigDecimal @Nullable [] values,
+			final BigDecimal @Nullable [] @Nullable [] statValues, final int len,
+			final int @Nullable [] mapping) throws JacksonException {
 		for ( int i = 0, idx = 0; i < len; i++ ) {
 			if ( mapping != null && i < mapping.length ) {
 				idx = mapping[i];
@@ -459,7 +460,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 *         if any IO error occurs
 	 */
 	private static void writeStringArrayValues(final JsonGenerator generator,
-			final String @Nullable [] array, final int count, final int @Nullable [] mapping)
+			final @Nullable String @Nullable [] array, final int count, final int @Nullable [] mapping)
 			throws JacksonException {
 		int i, idx;
 		final int arrayLen = (array != null ? array.length : 0);
@@ -504,8 +505,8 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 *         if any IO error occurs
 	 */
 	private static void writeDecimalArrayValues(final JsonGenerator generator,
-			final BigDecimal @Nullable [] array, final int count, final int @Nullable [] mapping)
-			throws JacksonException {
+			final @Nullable BigDecimal @Nullable [] array, final int count,
+			final int @Nullable [] mapping) throws JacksonException {
 		int i, idx;
 		final int arrayLen = (array != null ? array.length : 0);
 		for ( i = 0; i < count && i < arrayLen; i++ ) {

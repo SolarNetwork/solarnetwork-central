@@ -217,7 +217,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 			Function<ResponseEntity<R>, T> handler) {
 		return super.http(description, method, body, configuration, responseType, (headers) -> {
 			if ( configuration instanceof CloudIntegrationConfiguration integration ) {
-				final var decrypted = integration.copyWithId(integration.pk());
+				final var decrypted = integration.copyWithId(integration.id());
 				decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
 				addOAuthBearerAuthorization(decrypted, headers, oauthClientManager, userEventAppenderBiz,
 						integrationLocksCache != null ? (id) -> integrationLocksCache.get(id) : null);
