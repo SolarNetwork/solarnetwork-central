@@ -99,7 +99,7 @@ public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 
 	@Override
 	public String getUsername() {
-		return null;
+		return "";
 	}
 
 }
