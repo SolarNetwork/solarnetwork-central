@@ -48,11 +48,18 @@ public class CapacityOptimizerConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param flexibilityProviderId
+	 *        the flexibility provider ID
+	 * @param registrationStatus
+	 *        the registration status
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public CapacityOptimizerConfiguration(UserLongCompositePK id, Instant created) {
-		super(id, created);
+	public CapacityOptimizerConfiguration(UserLongCompositePK id, Instant created, String name,
+			Long flexibilityProviderId, RegistrationStatus registrationStatus) {
+		super(id, created, name, flexibilityProviderId, registrationStatus);
 	}
 
 	/**
@@ -64,11 +71,19 @@ public class CapacityOptimizerConfiguration
 	 *        the entity ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param flexibilityProviderId
+	 *        the flexibility provider ID
+	 * @param registrationStatus
+	 *        the registration status
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public CapacityOptimizerConfiguration(Long userId, Long entityId, Instant created) {
-		super(userId, entityId, created);
+	public CapacityOptimizerConfiguration(Long userId, Long entityId, Instant created, String name,
+			Long flexibilityProviderId, RegistrationStatus registrationStatus) {
+		this(new UserLongCompositePK(userId, entityId), created, name, flexibilityProviderId,
+				registrationStatus);
 	}
 
 	@Override
@@ -78,7 +93,8 @@ public class CapacityOptimizerConfiguration
 
 	@Override
 	public CapacityOptimizerConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CapacityOptimizerConfiguration(id, getCreated());
+		var copy = new CapacityOptimizerConfiguration(id, created(), getName(),
+				getFlexibilityProviderId(), getRegistrationStatus());
 		copyTo(copy);
 		return copy;
 	}
@@ -86,7 +102,7 @@ public class CapacityOptimizerConfiguration
 	@JsonIgnore
 	@Override
 	public AuthRoleInfo getAuthRole() {
-		return new AuthRoleInfo(getId(), OscpRole.CapacityOptimizer);
+		return new AuthRoleInfo(id(), OscpRole.CapacityOptimizer);
 	}
 
 }

@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.sql.test;
 
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,7 +38,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.time.Instant;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,15 +79,13 @@ public class UpdateCapacityProviderConfigurationTests {
 
 	private CapacityProviderConfiguration createCapacityProviderConfiguration(Long userId,
 			Long entityId) {
-		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(userId, entityId,
-				Instant.now());
+		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(userId, entityId, now(),
+				randomString(), randomLong(), RegistrationStatus.Registered);
 		conf.setModified(conf.getCreated().plusMillis(555));
-		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
+		conf.setBaseUrl("http://example.com/" + randomString());
 		conf.setEnabled(true);
-		conf.setName(randomUUID().toString());
 		conf.setOscpVersion("2.0");
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomString()));
 		return conf;
 	}
 

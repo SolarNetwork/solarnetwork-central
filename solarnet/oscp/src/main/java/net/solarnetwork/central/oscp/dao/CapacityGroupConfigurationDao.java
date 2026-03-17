@@ -1,46 +1,54 @@
 /* ==================================================================
  * CapacityOptimizerConfigurationDao.java - 14/08/2022 7:32:46 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.oscp.dao;
 
+import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENTITY_ID;
 import java.time.Instant;
 import java.util.Collection;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
  * DAO API for {@link CapacityGroupConfiguration} entities.
- * 
+ *
  * @author matt
  * @version 1.0
  */
 public interface CapacityGroupConfigurationDao
 		extends GenericCompositeKey2Dao<CapacityGroupConfiguration, UserLongCompositePK, Long, Long> {
 
+	@Override
+	default CapacityGroupConfiguration entityKey(UserLongCompositePK id) {
+		return new CapacityGroupConfiguration(id, Instant.EPOCH, "", "", UNASSIGNED_ENTITY_ID,
+				UNASSIGNED_ENTITY_ID, MeasurementPeriod.Hour, MeasurementPeriod.Hour);
+	}
+
 	/**
 	 * Find a group for a given capacity provider and group identifier.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to get the group for
 	 * @param capacityProviderId
@@ -54,7 +62,7 @@ public interface CapacityGroupConfigurationDao
 
 	/**
 	 * Find all groups for a given capacity provider.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to get the group for
 	 * @param capacityProviderId
@@ -66,7 +74,7 @@ public interface CapacityGroupConfigurationDao
 
 	/**
 	 * Find a group for a given capacity optimizer and group identifier.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to get the group for
 	 * @param capacityOptimizerId
@@ -80,7 +88,7 @@ public interface CapacityGroupConfigurationDao
 
 	/**
 	 * Find all groups for a given capacity optimizer.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to get the group for
 	 * @param capacityOptimizerId
@@ -92,7 +100,7 @@ public interface CapacityGroupConfigurationDao
 
 	/**
 	 * Compare and update the measurement date.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key to save the settings for
 	 * @param role

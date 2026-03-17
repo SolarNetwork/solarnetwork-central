@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.sql.test;
 
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,7 +39,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.time.Instant;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,15 +81,10 @@ public class InsertCapacityGroupConfigurationTests {
 	private CapacityGroupConfiguration createCapacityGroupConfiguration(Long userId, Long providerId,
 			Long optimizerId) {
 		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now());
+				UserLongCompositePK.unassignedEntityIdKey(userId), now(), randomString(), randomString(),
+				providerId, optimizerId, MeasurementPeriod.FiveMinute, MeasurementPeriod.TenMinute);
 		conf.setEnabled(true);
-		conf.setName(randomUUID().toString());
-		conf.setIdentifier(randomUUID().toString());
-		conf.setCapacityProviderMeasurementPeriod(MeasurementPeriod.FiveMinute);
-		conf.setCapacityOptimizerMeasurementPeriod(MeasurementPeriod.TenMinute);
-		conf.setCapacityProviderId(providerId);
-		conf.setCapacityOptimizerId(optimizerId);
-		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomString()));
 		return conf;
 	}
 

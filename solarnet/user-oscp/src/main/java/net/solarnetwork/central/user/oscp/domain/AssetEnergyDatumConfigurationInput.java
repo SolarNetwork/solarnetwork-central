@@ -1,21 +1,21 @@
 /* ==================================================================
  * AssetInstantaneousDatumConfigurationInput.java - 6/09/2022 7:40:33 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -29,11 +29,11 @@ import net.solarnetwork.central.oscp.domain.EnergyType;
 
 /**
  * Input for asset energy datum configuration.
- * 
+ *
  * @author matt
  * @version 1.0
  */
-public class AssetEnergyDatumConfigurationInput extends BaseAssetDatumConfigurationInput {
+public final class AssetEnergyDatumConfigurationInput extends BaseAssetDatumConfigurationInput {
 
 	@NotNull
 	private EnergyType type;
@@ -43,21 +43,24 @@ public class AssetEnergyDatumConfigurationInput extends BaseAssetDatumConfigurat
 
 	/**
 	 * Create an entity from this input.
-	 * 
+	 *
 	 * @return the entity
 	 */
+	@SuppressWarnings("NullAway")
 	public AssetEnergyDatumConfiguration toEntity() {
-		AssetEnergyDatumConfiguration conf = new AssetEnergyDatumConfiguration();
+		AssetEnergyDatumConfiguration conf = new AssetEnergyDatumConfiguration(getPropertyNames(),
+				getUnit(), getStatisticType(), getType(), getDirection());
 		populateConfiguration(conf);
 		return conf;
 	}
 
 	/**
 	 * Populate an entity configuration with values from this input.
-	 * 
+	 *
 	 * @param conf
 	 *        the configuration to populate
 	 */
+	@SuppressWarnings("NullAway")
 	public void populateConfiguration(AssetEnergyDatumConfiguration conf) {
 		super.populateConfiguration(conf);
 		conf.setType(type);
@@ -66,7 +69,7 @@ public class AssetEnergyDatumConfigurationInput extends BaseAssetDatumConfigurat
 
 	/**
 	 * Get the energy type.
-	 * 
+	 *
 	 * @return the energy type.
 	 */
 	public EnergyType getType() {
@@ -75,7 +78,7 @@ public class AssetEnergyDatumConfigurationInput extends BaseAssetDatumConfigurat
 
 	/**
 	 * Set the energy type.
-	 * 
+	 *
 	 * @param type
 	 *        the type to set
 	 */
@@ -85,7 +88,7 @@ public class AssetEnergyDatumConfigurationInput extends BaseAssetDatumConfigurat
 
 	/**
 	 * Get the energy direction.
-	 * 
+	 *
 	 * @return the energy direction
 	 */
 	public EnergyDirection getDirection() {
@@ -94,7 +97,7 @@ public class AssetEnergyDatumConfigurationInput extends BaseAssetDatumConfigurat
 
 	/**
 	 * Set the energy direction.
-	 * 
+	 *
 	 * @param direction
 	 *        the direction to set
 	 */

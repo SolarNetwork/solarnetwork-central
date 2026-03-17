@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.oscp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Configuration for capacity groups.
@@ -40,12 +43,12 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	private static final long serialVersionUID = 2002817702265442625L;
 
 	private String identifier;
-	private MeasurementPeriod capacityProviderMeasurementPeriod;
-	private MeasurementPeriod capacityOptimizerMeasurementPeriod;
 	private Long capacityProviderId;
 	private Long capacityOptimizerId;
-	private Instant capacityProviderMeasurementDate;
-	private Instant capacityOptimizerMeasurementDate;
+	private MeasurementPeriod capacityProviderMeasurementPeriod;
+	private MeasurementPeriod capacityOptimizerMeasurementPeriod;
+	private @Nullable Instant capacityProviderMeasurementDate;
+	private @Nullable Instant capacityOptimizerMeasurementDate;
 
 	/**
 	 * Constructor.
@@ -54,11 +57,33 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param identifier
+	 *        the identifier
+	 * @param capacityProviderId
+	 *        the capacity provider ID
+	 * @param capacityOptimizerId
+	 *        the capacity optimizer ID
+	 * @param capacityProviderMeasurementPeriod
+	 *        the capacity provider measurement period
+	 * @param capacityOptimizerMeasurementPeriod
+	 *        the capacity optimizer measurement period
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public CapacityGroupConfiguration(UserLongCompositePK id, Instant created) {
-		super(id, created);
+	public CapacityGroupConfiguration(UserLongCompositePK id, Instant created, String name,
+			String identifier, Long capacityProviderId, Long capacityOptimizerId,
+			MeasurementPeriod capacityProviderMeasurementPeriod,
+			MeasurementPeriod capacityOptimizerMeasurementPeriod) {
+		super(id, created, name);
+		this.identifier = requireNonNullArgument(identifier, "identifier");
+		this.capacityProviderId = requireNonNullArgument(capacityProviderId, "capacityProviderId");
+		this.capacityOptimizerId = requireNonNullArgument(capacityOptimizerId, "capacityOptimizerId");
+		this.capacityProviderMeasurementPeriod = requireNonNullArgument(
+				capacityProviderMeasurementPeriod, "capacityProviderMeasurementPeriod");
+		this.capacityOptimizerMeasurementPeriod = requireNonNullArgument(
+				capacityOptimizerMeasurementPeriod, "capacityOptimizerMeasurementPeriod");
 	}
 
 	/**
@@ -70,11 +95,28 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *        the entity ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param identifier
+	 *        the identifier
+	 * @param capacityProviderId
+	 *        the capacity provider ID
+	 * @param capacityOptimizerId
+	 *        the capacity optimizer ID
+	 * @param capacityProviderMeasurementPeriod
+	 *        the capacity provider measurement period
+	 * @param capacityOptimizerMeasurementPeriod
+	 *        the capacity optimizer measurement period
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public CapacityGroupConfiguration(Long userId, Long entityId, Instant created) {
-		super(userId, entityId, created);
+	public CapacityGroupConfiguration(Long userId, Long entityId, Instant created, String name,
+			String identifier, Long capacityProviderId, Long capacityOptimizerId,
+			MeasurementPeriod capacityProviderMeasurementPeriod,
+			MeasurementPeriod capacityOptimizerMeasurementPeriod) {
+		this(new UserLongCompositePK(userId, entityId), created, name, identifier, capacityProviderId,
+				capacityOptimizerId, capacityProviderMeasurementPeriod,
+				capacityOptimizerMeasurementPeriod);
 	}
 
 	@Override
@@ -84,7 +126,9 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	@Override
 	public CapacityGroupConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CapacityGroupConfiguration(id, getCreated());
+		var copy = new CapacityGroupConfiguration(id, created(), getName(), identifier,
+				capacityProviderId, capacityOptimizerId, capacityProviderMeasurementPeriod,
+				capacityOptimizerMeasurementPeriod);
 		copyTo(copy);
 		return copy;
 	}
@@ -102,19 +146,20 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	}
 
 	@Override
-	public boolean isSameAs(CapacityGroupConfiguration other) {
+	public boolean isSameAs(@Nullable CapacityGroupConfiguration other) {
 		boolean result = super.isSameAs(other);
 		if ( !result ) {
 			return false;
 		}
+		final var o = ObjectUtils.nonnull(other, "other");
 		// @formatter:off
-		return (Objects.equals(this.identifier, other.identifier)
-				&& Objects.equals(this.capacityProviderMeasurementPeriod, other.capacityProviderMeasurementPeriod)
-				&& Objects.equals(this.capacityOptimizerMeasurementPeriod, other.capacityOptimizerMeasurementPeriod)
-				&& Objects.equals(this.capacityProviderId, other.capacityProviderId)
-				&& Objects.equals(this.capacityOptimizerId, other.capacityOptimizerId)
-				&& Objects.equals(this.capacityProviderMeasurementDate, other.capacityProviderMeasurementDate)
-				&& Objects.equals(this.capacityOptimizerMeasurementDate, other.capacityOptimizerMeasurementDate));
+		return (Objects.equals(identifier, o.identifier)
+				&& Objects.equals(capacityProviderMeasurementPeriod, o.capacityProviderMeasurementPeriod)
+				&& Objects.equals(capacityOptimizerMeasurementPeriod, o.capacityOptimizerMeasurementPeriod)
+				&& Objects.equals(capacityProviderId, o.capacityProviderId)
+				&& Objects.equals(capacityOptimizerId, o.capacityOptimizerId)
+				&& Objects.equals(capacityProviderMeasurementDate, o.capacityProviderMeasurementDate)
+				&& Objects.equals(capacityOptimizerMeasurementDate, o.capacityOptimizerMeasurementDate));
 		// @formatter:on
 	}
 
@@ -126,7 +171,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *         assets
 	 * @since 1.1
 	 */
-	public String combinedGroupAssetId() {
+	public final @Nullable String combinedGroupAssetId() {
 		Map<String, Object> props = getServiceProps();
 		Object v = (props != null ? props.get(ExternalSystemServiceProperties.COMBINED_ASSET_ID) : null);
 		return (v != null ? v.toString() : null);
@@ -137,7 +182,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *
 	 * @return the identifier
 	 */
-	public String getIdentifier() {
+	public final String getIdentifier() {
 		return identifier;
 	}
 
@@ -146,9 +191,11 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *
 	 * @param identifier
 	 *        the identifier to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setIdentifier(String identifier) {
-		this.identifier = identifier;
+	public final void setIdentifier(String identifier) {
+		this.identifier = requireNonNullArgument(identifier, "identifier");
 	}
 
 	/**
@@ -156,7 +203,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *
 	 * @return the period
 	 */
-	public MeasurementPeriod getCapacityProviderMeasurementPeriod() {
+	public final MeasurementPeriod getCapacityProviderMeasurementPeriod() {
 		return capacityProviderMeasurementPeriod;
 	}
 
@@ -165,10 +212,13 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *
 	 * @param capacityProviderMeasurementPeriod
 	 *        the period to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setCapacityProviderMeasurementPeriod(
+	public final void setCapacityProviderMeasurementPeriod(
 			MeasurementPeriod capacityProviderMeasurementPeriod) {
-		this.capacityProviderMeasurementPeriod = capacityProviderMeasurementPeriod;
+		this.capacityProviderMeasurementPeriod = requireNonNullArgument(
+				capacityProviderMeasurementPeriod, "capacityProviderMeasurementPeriod");
 	}
 
 	/**
@@ -176,7 +226,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *
 	 * @return the period
 	 */
-	public MeasurementPeriod getCapacityOptimizerMeasurementPeriod() {
+	public final MeasurementPeriod getCapacityOptimizerMeasurementPeriod() {
 		return capacityOptimizerMeasurementPeriod;
 	}
 
@@ -185,10 +235,13 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *
 	 * @param capacityOptimizerMeasurementPeriod
 	 *        the period to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setCapacityOptimizerMeasurementPeriod(
+	public final void setCapacityOptimizerMeasurementPeriod(
 			MeasurementPeriod capacityOptimizerMeasurementPeriod) {
-		this.capacityOptimizerMeasurementPeriod = capacityOptimizerMeasurementPeriod;
+		this.capacityOptimizerMeasurementPeriod = requireNonNullArgument(
+				capacityOptimizerMeasurementPeriod, "capacityOptimizerMeasurementPeriod");
 	}
 
 	/**
@@ -201,7 +254,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *
 	 * @return the ID of the associated {@link CapacityProviderConfiguration}
 	 */
-	public Long getCapacityProviderId() {
+	public final Long getCapacityProviderId() {
 		return capacityProviderId;
 	}
 
@@ -210,9 +263,11 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *
 	 * @param capacityProviderId
 	 *        the ID of the capacity provider to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setCapacityProviderId(Long capacityProviderId) {
-		this.capacityProviderId = capacityProviderId;
+	public final void setCapacityProviderId(Long capacityProviderId) {
+		this.capacityProviderId = requireNonNullArgument(capacityProviderId, "capacityProviderId");
 	}
 
 	/**
@@ -224,7 +279,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *
 	 * @return the ID of the associated {@link CapacityOptimizerConfiguration}
 	 */
-	public Long getCapacityOptimizerId() {
+	public final Long getCapacityOptimizerId() {
 		return capacityOptimizerId;
 	}
 
@@ -233,9 +288,11 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *
 	 * @param capacityOptimizerId
 	 *        the ID of the capacity optimizer to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setCapacityOptimizerId(Long capacityOptimizerId) {
-		this.capacityOptimizerId = capacityOptimizerId;
+	public final void setCapacityOptimizerId(Long capacityOptimizerId) {
+		this.capacityOptimizerId = requireNonNullArgument(capacityOptimizerId, "capacityOptimizerId");
 	}
 
 	/**
@@ -243,7 +300,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *
 	 * @return the measurement date
 	 */
-	public Instant getCapacityProviderMeasurementDate() {
+	public final @Nullable Instant getCapacityProviderMeasurementDate() {
 		return capacityProviderMeasurementDate;
 	}
 
@@ -253,7 +310,8 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 * @param capacityProviderMeasurementDate
 	 *        the measurement date to set
 	 */
-	public void setCapacityProviderMeasurementDate(Instant capacityProviderMeasurementDate) {
+	public final void setCapacityProviderMeasurementDate(
+			@Nullable Instant capacityProviderMeasurementDate) {
 		this.capacityProviderMeasurementDate = capacityProviderMeasurementDate;
 	}
 
@@ -262,7 +320,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 *
 	 * @return the measurement date
 	 */
-	public Instant getCapacityOptimizerMeasurementDate() {
+	public final @Nullable Instant getCapacityOptimizerMeasurementDate() {
 		return capacityOptimizerMeasurementDate;
 	}
 
@@ -272,7 +330,8 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 * @param capacityOptimizerMeasurementDate
 	 *        the measurement date to set
 	 */
-	public void setCapacityOptimizerMeasurementDate(Instant capacityOptimizerMeasurementDate) {
+	public final void setCapacityOptimizerMeasurementDate(
+			@Nullable Instant capacityOptimizerMeasurementDate) {
 		this.capacityOptimizerMeasurementDate = capacityOptimizerMeasurementDate;
 	}
 

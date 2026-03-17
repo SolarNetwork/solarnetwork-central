@@ -25,7 +25,6 @@ package net.solarnetwork.central.user.oscp.biz.dao;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
@@ -190,20 +189,23 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteUserSettings(Long userId) {
-		userSettingsDao.delete(new UserSettings(userId));
+		var key = userSettingsDao.entityKey(userId);
+		userSettingsDao.delete(key);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteCapacityProvider(Long userId, Long entityId) {
-		capacityProviderDao.delete(new CapacityProviderConfiguration(userId, entityId, Instant.now()));
+		final var key = capacityProviderDao.entityKey(new UserLongCompositePK(userId, entityId));
+		capacityProviderDao.delete(key);
 		deleteOauthClientSecret(OscpRole.CapacityProvider, userId, entityId);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteCapacityOptimizer(Long userId, Long entityId) {
-		capacityOptimizerDao.delete(new CapacityOptimizerConfiguration(userId, entityId, Instant.now()));
+		final var key = capacityOptimizerDao.entityKey(new UserLongCompositePK(userId, entityId));
+		capacityOptimizerDao.delete(key);
 		deleteOauthClientSecret(OscpRole.CapacityOptimizer, userId, entityId);
 	}
 
@@ -218,19 +220,22 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteCapacityGroup(Long userId, Long entityId) {
-		capacityGroupDao.delete(new CapacityGroupConfiguration(userId, entityId, Instant.now()));
+		final var key = capacityGroupDao.entityKey(new UserLongCompositePK(userId, entityId));
+		capacityGroupDao.delete(key);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteCapacityGroupSettings(Long userId, Long entityId) {
-		capacityGroupSettingsDao.delete(new CapacityGroupSettings(userId, entityId));
+		final var key = capacityGroupSettingsDao.entityKey(new UserLongCompositePK(userId, entityId));
+		capacityGroupSettingsDao.delete(key);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteAsset(Long userId, Long entityId) {
-		assetDao.delete(new AssetConfiguration(userId, entityId, Instant.now()));
+		final var key = assetDao.entityKey(new UserLongCompositePK(userId, entityId));
+		assetDao.delete(key);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

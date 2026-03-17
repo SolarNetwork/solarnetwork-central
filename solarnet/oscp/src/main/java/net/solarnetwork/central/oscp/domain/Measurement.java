@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.domain;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import oscp.v20.EnergyMeasurement;
 import oscp.v20.InstantaneousMeasurement;
 
@@ -49,7 +50,8 @@ import oscp.v20.InstantaneousMeasurement;
  * @version 1.0
  */
 public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, Instant measureTime,
-		EnergyType energyType, EnergyDirection energyDirection, Instant startMeasureTime) {
+		@Nullable EnergyType energyType, @Nullable EnergyDirection energyDirection,
+		@Nullable Instant startMeasureTime) {
 
 	/**
 	 * Get an instantaneous measurement instance.
@@ -116,8 +118,12 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 				phase != null ? phase.toOscp20Value() : null,
 				unit != null ? unit.toOscp20EnergyValue() : null,
 				energyDirection != null ? energyDirection.toOscp20Value() : null, measureTime);
-		result.setEnergyType(energyType.toOscp20Value());
-		result.setInitialMeasureTime(startMeasureTime);
+		if ( energyType != null ) {
+			result.setEnergyType(energyType.toOscp20Value());
+		}
+		if ( startMeasureTime != null ) {
+			result.setInitialMeasureTime(startMeasureTime);
+		}
 		return result;
 	}
 
@@ -141,12 +147,11 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 	 *        the OSCP 2.0 value to get an instance for
 	 * @return the instance
 	 */
-	public static Measurement forOscp20Value(InstantaneousMeasurement measurement) {
+	public static @Nullable Measurement forOscp20Value(@Nullable InstantaneousMeasurement measurement) {
 		if ( measurement == null ) {
 			return null;
 		}
-		return instantaneousMeasurement(
-				measurement.getValue() != null ? BigDecimal.valueOf(measurement.getValue()) : null,
+		return instantaneousMeasurement(BigDecimal.valueOf(measurement.getValue()),
 				Phase.forOscp20Value(measurement.getPhase()),
 				MeasurementUnit.forOscp20Value(measurement.getUnit()), measurement.getMeasureTime());
 	}
@@ -158,12 +163,11 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 	 *        the OSCP 2.0 value to get an instance for
 	 * @return the instance
 	 */
-	public static Measurement forOscp20Value(EnergyMeasurement measurement) {
+	public static @Nullable Measurement forOscp20Value(@Nullable EnergyMeasurement measurement) {
 		if ( measurement == null ) {
 			return null;
 		}
-		return energyMeasurement(
-				measurement.getValue() != null ? BigDecimal.valueOf(measurement.getValue()) : null,
+		return energyMeasurement(BigDecimal.valueOf(measurement.getValue()),
 				Phase.forOscp20Value(measurement.getPhase()),
 				MeasurementUnit.forOscp20Value(measurement.getUnit()), measurement.getMeasureTime(),
 				EnergyType.forOscp20Value(measurement.getEnergyType()),

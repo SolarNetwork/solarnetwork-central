@@ -138,8 +138,9 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 	 */
 	public EgaugeRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
-			Function<String, Set<String>> sensitiveKeyProvider, InstantSource clock, RandomGenerator rng,
-			ClientAccessTokenDao clientAccessTokenDao, CloudIntegrationConfigurationDao integrationDao) {
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider, InstantSource clock,
+			RandomGenerator rng, ClientAccessTokenDao clientAccessTokenDao,
+			CloudIntegrationConfigurationDao integrationDao) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.rng = requireNonNullArgument(rng, "rng");

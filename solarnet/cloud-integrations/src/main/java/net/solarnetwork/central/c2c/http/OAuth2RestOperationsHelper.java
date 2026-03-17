@@ -119,7 +119,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
-			Function<String, Set<String>> sensitiveKeyProvider,
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock) {
 		this(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider,
 				oauthClientManager, clock, null);
@@ -157,7 +157,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
-			Function<String, Set<String>> sensitiveKeyProvider,
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
 			@Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		this(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider,
@@ -199,7 +199,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
-			Function<String, Set<String>> sensitiveKeyProvider,
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
 			@Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache,
 			@Nullable Map<String, String> extraServicePropertyHeaders) {

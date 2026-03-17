@@ -316,9 +316,9 @@ public final class CommonDbTestUtils {
 	 * @return the rows
 	 * @since 1.1
 	 */
-	public static List<Map<String, Object>> allTableData(Logger log, JdbcOperations jdbcOps,
+	public static List<Map<String, @Nullable Object>> allTableData(Logger log, JdbcOperations jdbcOps,
 			String table, String order) {
-		List<Map<String, Object>> data = jdbcOps
+		List<Map<String, @Nullable Object>> data = jdbcOps
 				.queryForList("SELECT * FROM %s ORDER BY %s".formatted(table, order));
 		log.debug("%s table has {} items: [{}]".formatted(table), data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));

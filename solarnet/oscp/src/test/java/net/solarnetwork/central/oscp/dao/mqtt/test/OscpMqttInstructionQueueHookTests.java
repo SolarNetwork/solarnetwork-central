@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.oscp.dao.mqtt.test;
 
+import static java.time.Instant.now;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_ACTION_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_OPTIMIZER_ID_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_MESSAGE_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_V20_TOPIC;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Declined;
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Queuing;
@@ -69,7 +72,9 @@ import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
 import net.solarnetwork.central.oscp.domain.OscpUserEvents;
+import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructionQueueHook;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructions;
 import net.solarnetwork.central.oscp.util.OscpUtils;
@@ -93,11 +98,12 @@ import tools.jackson.databind.ObjectMapper;
 @ExtendWith(MockitoExtension.class)
 public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, OscpUserEvents {
 
-	private static final Long TEST_NODE_ID = UUID.randomUUID().getMostSignificantBits();
-	private static final Long TEST_LOC_ID = UUID.randomUUID().getMostSignificantBits();
-	private static final Long TEST_USER_ID = UUID.randomUUID().getMostSignificantBits();
-	private static final Long TEST_CO_ID = UUID.randomUUID().getMostSignificantBits();
-	private static final Long TEST_CP_ID = UUID.randomUUID().getMostSignificantBits();
+	private static final Long TEST_NODE_ID = randomLong();
+	private static final Long TEST_LOC_ID = randomLong();
+	private static final Long TEST_USER_ID = randomLong();
+	private static final Long TEST_FP_ID = randomLong();
+	private static final Long TEST_CO_ID = randomLong();
+	private static final Long TEST_CP_ID = randomLong();
 	private static final String TEST_CG_IDENT = UUID.randomUUID().toString();
 
 	private static final Logger log = LoggerFactory.getLogger(OscpMqttInstructionQueueHookTests.class);
@@ -230,7 +236,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		given(userNodeDao.get(TEST_NODE_ID)).willReturn(userNode);
 
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(false);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
@@ -282,7 +288,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		given(userNodeDao.get(TEST_NODE_ID)).willReturn(userNode);
 
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
@@ -337,16 +343,14 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		given(userNodeDao.get(TEST_NODE_ID)).willReturn(userNode);
 
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
 
-		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID,
-				UUID.randomUUID().getMostSignificantBits(), Instant.now());
-		group.setIdentifier(TEST_CG_IDENT);
-		group.setCapacityOptimizerId(TEST_CO_ID);
-		group.setCapacityProviderId(TEST_CP_ID);
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID, randomLong(),
+				now(), randomString(), TEST_CG_IDENT, TEST_CP_ID, TEST_CO_ID,
+				MeasurementPeriod.FifteenMinute, MeasurementPeriod.FifteenMinute);
 		group.setEnabled(false);
 		given(capacityGroupDao.findForCapacityOptimizer(TEST_USER_ID, TEST_CO_ID, TEST_CG_IDENT))
 				.willReturn(group);
@@ -398,22 +402,20 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		given(userNodeDao.get(TEST_NODE_ID)).willReturn(userNode);
 
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
 
-		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID,
-				UUID.randomUUID().getMostSignificantBits(), Instant.now());
-		group.setIdentifier(TEST_CG_IDENT);
-		group.setCapacityOptimizerId(TEST_CO_ID);
-		group.setCapacityProviderId(TEST_CP_ID);
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID, randomLong(),
+				now(), randomString(), TEST_CG_IDENT, TEST_CP_ID, TEST_CO_ID,
+				MeasurementPeriod.FifteenMinute, MeasurementPeriod.FifteenMinute);
 		group.setEnabled(true);
 		given(capacityGroupDao.findForCapacityOptimizer(TEST_USER_ID, TEST_CO_ID, TEST_CG_IDENT))
 				.willReturn(group);
 
 		CapacityProviderConfiguration provider = new CapacityProviderConfiguration(TEST_USER_ID,
-				TEST_CP_ID, Instant.now());
+				TEST_CP_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		provider.setEnabled(false);
 		given(capacityProviderDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CP_ID)))
 				.willReturn(provider);
@@ -465,22 +467,20 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		given(userNodeDao.get(TEST_NODE_ID)).willReturn(userNode);
 
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
 
-		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID,
-				UUID.randomUUID().getMostSignificantBits(), Instant.now());
-		group.setIdentifier(TEST_CG_IDENT);
-		group.setCapacityOptimizerId(TEST_CO_ID);
-		group.setCapacityProviderId(TEST_CP_ID);
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID, randomLong(),
+				now(), randomString(), TEST_CG_IDENT, TEST_CP_ID, TEST_CO_ID,
+				MeasurementPeriod.FifteenMinute, MeasurementPeriod.FifteenMinute);
 		group.setEnabled(true);
 		given(capacityGroupDao.findForCapacityOptimizer(TEST_USER_ID, TEST_CO_ID, TEST_CG_IDENT))
 				.willReturn(group);
 
 		CapacityProviderConfiguration provider = new CapacityProviderConfiguration(TEST_USER_ID,
-				TEST_CP_ID, Instant.now());
+				TEST_CP_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		provider.setEnabled(true);
 		given(capacityProviderDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CP_ID)))
 				.willReturn(provider);
@@ -540,22 +540,20 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		given(userNodeDao.get(TEST_NODE_ID)).willReturn(userNode);
 
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
 
-		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID,
-				UUID.randomUUID().getMostSignificantBits(), Instant.now());
-		group.setIdentifier(TEST_CG_IDENT);
-		group.setCapacityOptimizerId(TEST_CO_ID);
-		group.setCapacityProviderId(TEST_CP_ID);
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID, randomLong(),
+				now(), randomString(), TEST_CG_IDENT, TEST_CP_ID, TEST_CO_ID,
+				MeasurementPeriod.FifteenMinute, MeasurementPeriod.FifteenMinute);
 		group.setEnabled(true);
 		given(capacityGroupDao.findForCapacityOptimizer(TEST_USER_ID, TEST_CO_ID, TEST_CG_IDENT))
 				.willReturn(group);
 
 		CapacityProviderConfiguration provider = new CapacityProviderConfiguration(TEST_USER_ID,
-				TEST_CP_ID, Instant.now());
+				TEST_CP_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		provider.setEnabled(true);
 		given(capacityProviderDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CP_ID)))
 				.willReturn(provider);
@@ -618,22 +616,20 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		given(userNodeDao.get(TEST_NODE_ID)).willReturn(userNode);
 
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
 
-		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID,
-				UUID.randomUUID().getMostSignificantBits(), Instant.now());
-		group.setIdentifier(TEST_CG_IDENT);
-		group.setCapacityOptimizerId(TEST_CO_ID);
-		group.setCapacityProviderId(TEST_CP_ID);
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID, randomLong(),
+				now(), randomString(), TEST_CG_IDENT, TEST_CP_ID, TEST_CO_ID,
+				MeasurementPeriod.FifteenMinute, MeasurementPeriod.FifteenMinute);
 		group.setEnabled(true);
 		given(capacityGroupDao.findForCapacityOptimizer(TEST_USER_ID, TEST_CO_ID, TEST_CG_IDENT))
 				.willReturn(group);
 
 		CapacityProviderConfiguration provider = new CapacityProviderConfiguration(TEST_USER_ID,
-				TEST_CP_ID, Instant.now());
+				TEST_CP_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		provider.setEnabled(true);
 		given(capacityProviderDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CP_ID)))
 				.willReturn(provider);
@@ -645,7 +641,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		// WHEN
 		hook.onMqttServerConnectionEstablished(conn, false);
 		NodeInstruction result = hook.willQueueNodeInstruction(instruction);
-		Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		Long instructionId = randomLong();
 		hook.didQueueNodeInstruction(result, instructionId);
 
 		// THEN
@@ -724,22 +720,20 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		given(userNodeDao.get(TEST_NODE_ID)).willReturn(userNode);
 
 		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
-				TEST_CO_ID, Instant.now());
+				TEST_CO_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		optimizer.setEnabled(true);
 		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
 				.willReturn(optimizer);
 
-		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID,
-				UUID.randomUUID().getMostSignificantBits(), Instant.now());
-		group.setIdentifier(TEST_CG_IDENT);
-		group.setCapacityOptimizerId(TEST_CO_ID);
-		group.setCapacityProviderId(TEST_CP_ID);
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID, randomLong(),
+				now(), randomString(), TEST_CG_IDENT, TEST_CP_ID, TEST_CO_ID,
+				MeasurementPeriod.FifteenMinute, MeasurementPeriod.FifteenMinute);
 		group.setEnabled(true);
 		given(capacityGroupDao.findForCapacityOptimizer(TEST_USER_ID, TEST_CO_ID, TEST_CG_IDENT))
 				.willReturn(group);
 
 		CapacityProviderConfiguration provider = new CapacityProviderConfiguration(TEST_USER_ID,
-				TEST_CP_ID, Instant.now());
+				TEST_CP_ID, now(), randomString(), TEST_FP_ID, RegistrationStatus.Registered);
 		provider.setEnabled(true);
 		given(capacityProviderDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CP_ID)))
 				.willReturn(provider);
@@ -751,7 +745,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		// WHEN
 		hook.onMqttServerConnectionEstablished(conn, false);
 		NodeInstruction result = hook.willQueueNodeInstruction(instruction);
-		Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		Long instructionId = randomLong();
 		hook.didQueueNodeInstruction(result, instructionId);
 
 		// THEN

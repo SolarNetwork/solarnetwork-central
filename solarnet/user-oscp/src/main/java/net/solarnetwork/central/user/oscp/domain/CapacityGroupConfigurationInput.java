@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.oscp.domain;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -38,33 +39,38 @@ import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class CapacityGroupConfigurationInput
 		extends BaseOscpConfigurationInput<CapacityGroupConfiguration> {
 
 	@NotNull
 	@NotBlank
 	@Size(max = 128)
-	private String identifier;
+	private @Nullable String identifier;
 
 	@NotNull
-	private MeasurementPeriod capacityProviderMeasurementPeriod;
+	private @Nullable MeasurementPeriod capacityProviderMeasurementPeriod;
 
 	@NotNull
-	private MeasurementPeriod capacityOptimizerMeasurementPeriod;
+	private @Nullable MeasurementPeriod capacityOptimizerMeasurementPeriod;
 
 	@NotNull
-	private Long capacityProviderId;
+	private @Nullable Long capacityProviderId;
 
 	@NotNull
-	private Long capacityOptimizerId;
+	private @Nullable Long capacityOptimizerId;
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public CapacityGroupConfiguration toEntity(UserLongCompositePK id) {
-		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(id, Instant.now());
+		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(id, Instant.now(), getName(),
+				identifier, capacityProviderId, capacityOptimizerId, capacityProviderMeasurementPeriod,
+				capacityOptimizerMeasurementPeriod);
 		populateConfiguration(conf);
 		return conf;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(CapacityGroupConfiguration conf) {
 		super.populateConfiguration(conf);
@@ -80,7 +86,7 @@ public class CapacityGroupConfigurationInput
 	 *
 	 * @return the identifier
 	 */
-	public String getIdentifier() {
+	public final @Nullable String getIdentifier() {
 		return identifier;
 	}
 
@@ -90,7 +96,7 @@ public class CapacityGroupConfigurationInput
 	 * @param identifier
 	 *        the identifier to set
 	 */
-	public void setIdentifier(String identifier) {
+	public final void setIdentifier(@Nullable String identifier) {
 		this.identifier = identifier;
 	}
 
@@ -99,7 +105,7 @@ public class CapacityGroupConfigurationInput
 	 *
 	 * @return the period
 	 */
-	public MeasurementPeriod getCapacityProviderMeasurementPeriod() {
+	public final @Nullable MeasurementPeriod getCapacityProviderMeasurementPeriod() {
 		return capacityProviderMeasurementPeriod;
 	}
 
@@ -109,8 +115,8 @@ public class CapacityGroupConfigurationInput
 	 * @param capacityProviderMeasurementPeriod
 	 *        the period to set
 	 */
-	public void setCapacityProviderMeasurementPeriod(
-			MeasurementPeriod capacityProviderMeasurementPeriod) {
+	public final void setCapacityProviderMeasurementPeriod(
+			@Nullable MeasurementPeriod capacityProviderMeasurementPeriod) {
 		this.capacityProviderMeasurementPeriod = capacityProviderMeasurementPeriod;
 	}
 
@@ -119,7 +125,7 @@ public class CapacityGroupConfigurationInput
 	 *
 	 * @return the period
 	 */
-	public MeasurementPeriod getCapacityOptimizerMeasurementPeriod() {
+	public final @Nullable MeasurementPeriod getCapacityOptimizerMeasurementPeriod() {
 		return capacityOptimizerMeasurementPeriod;
 	}
 
@@ -129,8 +135,8 @@ public class CapacityGroupConfigurationInput
 	 * @param capacityOptimizerMeasurementPeriod
 	 *        the period to set
 	 */
-	public void setCapacityOptimizerMeasurementPeriod(
-			MeasurementPeriod capacityOptimizerMeasurementPeriod) {
+	public final void setCapacityOptimizerMeasurementPeriod(
+			@Nullable MeasurementPeriod capacityOptimizerMeasurementPeriod) {
 		this.capacityOptimizerMeasurementPeriod = capacityOptimizerMeasurementPeriod;
 	}
 
@@ -139,7 +145,7 @@ public class CapacityGroupConfigurationInput
 	 *
 	 * @return the ID of the associated {@link CapacityProviderConfiguration}
 	 */
-	public Long getCapacityProviderId() {
+	public final @Nullable Long getCapacityProviderId() {
 		return capacityProviderId;
 	}
 
@@ -149,7 +155,7 @@ public class CapacityGroupConfigurationInput
 	 * @param capacityProviderId
 	 *        the ID of the capacity provider to set
 	 */
-	public void setCapacityProviderId(Long capacityProviderId) {
+	public final void setCapacityProviderId(@Nullable Long capacityProviderId) {
 		this.capacityProviderId = capacityProviderId;
 	}
 
@@ -158,7 +164,7 @@ public class CapacityGroupConfigurationInput
 	 *
 	 * @return the ID of the associated {@link CapacityOptimizerConfiguration}
 	 */
-	public Long getCapacityOptimizerId() {
+	public final @Nullable Long getCapacityOptimizerId() {
 		return capacityOptimizerId;
 	}
 
@@ -168,7 +174,7 @@ public class CapacityGroupConfigurationInput
 	 * @param capacityOptimizerId
 	 *        the ID of the capacity optimizer to set
 	 */
-	public void setCapacityOptimizerId(Long capacityOptimizerId) {
+	public final void setCapacityOptimizerId(@Nullable Long capacityOptimizerId) {
 		this.capacityOptimizerId = capacityOptimizerId;
 	}
 

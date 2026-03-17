@@ -27,6 +27,7 @@ import static java.util.Collections.singletonMap;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.oscp.domain.ExternalSystemServiceProperties.ASSET_MEAESUREMENT;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -145,8 +146,8 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		final Instant end = start.plus(10, ChronoUnit.MINUTES);
 		final CapacityProviderConfiguration systemConf = systemConf();
 		final CapacityGroupConfiguration group = OscpJdbcTestUtils
-				.newCapacityGroupConfiguration(systemConf.getUserId(), systemConf.getEntityId(), null,
-						start)
+				.newCapacityGroupConfiguration(systemConf.getUserId(), systemConf.getEntityId(),
+						randomLong(), start)
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 
@@ -173,11 +174,11 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 				group.getIdentifier())).willReturn(group);
 
 		AssetConfiguration cpAsset = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		AssetConfiguration coAsset = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		coAsset.setAudience(OscpRole.CapacityOptimizer);
@@ -227,8 +228,8 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		final Instant end = start.plus(10, ChronoUnit.MINUTES);
 		final CapacityProviderConfiguration systemConf = systemConf();
 		final CapacityGroupConfiguration group = OscpJdbcTestUtils
-				.newCapacityGroupConfiguration(systemConf.getUserId(), systemConf.getEntityId(), null,
-						start)
+				.newCapacityGroupConfiguration(systemConf.getUserId(), systemConf.getEntityId(),
+						randomLong(), start)
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 
@@ -255,11 +256,11 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 				group.getIdentifier())).willReturn(group);
 
 		AssetConfiguration cpAsset = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		AssetConfiguration coAsset = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		coAsset.setAudience(OscpRole.CapacityOptimizer);
@@ -363,8 +364,8 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		final Instant end = start.plus(10, ChronoUnit.MINUTES);
 		final CapacityProviderConfiguration systemConf = systemConf();
 		final CapacityGroupConfiguration group = OscpJdbcTestUtils
-				.newCapacityGroupConfiguration(systemConf.getUserId(), systemConf.getEntityId(), null,
-						start)
+				.newCapacityGroupConfiguration(systemConf.getUserId(), systemConf.getEntityId(),
+						randomLong(), start)
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 
@@ -391,15 +392,15 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 				group.getIdentifier())).willReturn(group);
 
 		AssetConfiguration cpAsset1 = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		AssetConfiguration cpAsset2 = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		AssetConfiguration coAsset = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		coAsset.setAudience(OscpRole.CapacityOptimizer);
@@ -465,8 +466,8 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		final Instant end = start.plus(10, ChronoUnit.MINUTES);
 		final CapacityProviderConfiguration systemConf = systemConf();
 		final CapacityGroupConfiguration group = OscpJdbcTestUtils
-				.newCapacityGroupConfiguration(systemConf.getUserId(), systemConf.getEntityId(), null,
-						start)
+				.newCapacityGroupConfiguration(systemConf.getUserId(), systemConf.getEntityId(),
+						randomLong(), start)
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 
@@ -496,15 +497,15 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 				group.getIdentifier())).willReturn(group);
 
 		AssetConfiguration cpAsset1 = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		AssetConfiguration cpAsset2 = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		AssetConfiguration coAsset = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		coAsset.setAudience(OscpRole.CapacityOptimizer);
@@ -573,8 +574,8 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		final Instant end = start.plus(10, ChronoUnit.MINUTES);
 		final CapacityProviderConfiguration systemConf = systemConf();
 		final CapacityGroupConfiguration group = OscpJdbcTestUtils
-				.newCapacityGroupConfiguration(systemConf.getUserId(), systemConf.getEntityId(), null,
-						start)
+				.newCapacityGroupConfiguration(systemConf.getUserId(), systemConf.getEntityId(),
+						randomLong(), start)
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 
@@ -604,15 +605,15 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 				group.getIdentifier())).willReturn(group);
 
 		AssetConfiguration cpAsset1 = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		AssetConfiguration cpAsset2 = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		AssetConfiguration coAsset = OscpJdbcTestUtils
-				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.newAssetConfiguration(systemConf.getUserId(), Instant.now(), group.getEntityId())
 				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
 						randomUUID().getMostSignificantBits()));
 		coAsset.setAudience(OscpRole.CapacityOptimizer);

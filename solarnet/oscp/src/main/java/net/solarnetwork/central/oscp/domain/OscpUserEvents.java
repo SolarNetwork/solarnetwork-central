@@ -27,6 +27,7 @@ import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
@@ -150,8 +151,8 @@ public interface OscpUserEvents {
 	 *        optional extra tags
 	 * @return the log event
 	 */
-	static LogEventInfo eventForConfiguration(UserLongCompositePK configId, List<String> baseTags,
-			String message, String... extraTags) {
+	static LogEventInfo eventForConfiguration(UserLongCompositePK configId,
+			@Nullable List<String> baseTags, @Nullable String message, String @Nullable... extraTags) {
 		return eventForConfiguration(configId, baseTags, message, (Map<String, ?>) null);
 	}
 
@@ -169,7 +170,7 @@ public interface OscpUserEvents {
 	 * @return the log event
 	 */
 	static LogEventInfo eventForConfiguration(BaseOscpExternalSystemConfiguration<?> config,
-			List<String> baseTags, String message, String... extraTags) {
+			@Nullable List<String> baseTags, @Nullable String message, String @Nullable... extraTags) {
 		return eventForConfiguration(config, baseTags, message, (Map<String, ?>) null);
 	}
 
@@ -189,8 +190,9 @@ public interface OscpUserEvents {
 	 * @return the log event
 	 * @since 1.1
 	 */
-	static LogEventInfo eventForConfiguration(UserLongCompositePK configId, List<String> baseTags,
-			String message, Map<String, ?> info, String... extraTags) {
+	static LogEventInfo eventForConfiguration(UserLongCompositePK configId,
+			@Nullable List<String> baseTags, @Nullable String message, @Nullable Map<String, ?> info,
+			String @Nullable... extraTags) {
 		Map<String, Object> data = new LinkedHashMap<>(4);
 		data.put(CONFIG_ID_DATA_KEY, configId.getEntityId());
 		if ( info != null ) {
@@ -216,7 +218,8 @@ public interface OscpUserEvents {
 	 * @since 1.1
 	 */
 	static LogEventInfo eventForConfiguration(BaseOscpExternalSystemConfiguration<?> config,
-			List<String> baseTags, String message, Map<String, ?> info, String... extraTags) {
+			@Nullable List<String> baseTags, @Nullable String message, @Nullable Map<String, ?> info,
+			String @Nullable... extraTags) {
 		Map<String, Object> data = new LinkedHashMap<>(4);
 		if ( config != null ) {
 			data.put(CONFIG_ID_DATA_KEY, config.getEntityId());

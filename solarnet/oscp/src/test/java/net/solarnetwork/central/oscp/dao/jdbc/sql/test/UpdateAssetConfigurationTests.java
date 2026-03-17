@@ -129,8 +129,8 @@ public class UpdateAssetConfigurationTests {
 		// GIVEN
 		Long userId = randomUUID().getMostSignificantBits();
 		UserLongCompositePK id = new UserLongCompositePK(userId, randomUUID().getMostSignificantBits());
-		AssetConfiguration conf = newAssetConfiguration(userId, randomUUID().getMostSignificantBits(),
-				Instant.now());
+		AssetConfiguration conf = newAssetConfiguration(userId, Instant.now(),
+				randomUUID().getMostSignificantBits());
 		conf.setModified(Instant.now());
 
 		// WHEN
@@ -147,8 +147,8 @@ public class UpdateAssetConfigurationTests {
 		// GIVEN
 		Long userId = randomUUID().getMostSignificantBits();
 		UserLongCompositePK id = new UserLongCompositePK(userId, randomUUID().getMostSignificantBits());
-		AssetConfiguration conf = newAssetConfiguration(userId, randomUUID().getMostSignificantBits(),
-				Instant.now()).copyWithId(id);
+		AssetConfiguration conf = newAssetConfiguration(userId, Instant.now(),
+				randomUUID().getMostSignificantBits()).copyWithId(id);
 		conf.setModified(Instant.now());
 
 		// GIVEN

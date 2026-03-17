@@ -1,29 +1,30 @@
 /* ==================================================================
  * OscpJdbcTestUtils.java - 22/08/2022 3:03:15 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
-import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.oscp.domain.MeasurementUnit.KILO_MULTIPLIER;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +54,7 @@ import net.solarnetwork.central.oscp.domain.UserSettings;
 
 /**
  * Test utilities for OSCP.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -67,7 +68,7 @@ public class OscpJdbcTestUtils {
 
 	/**
 	 * Create a new configuration instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param flexibilityProviderId
@@ -79,21 +80,19 @@ public class OscpJdbcTestUtils {
 	public static CapacityProviderConfiguration newCapacityProviderConf(Long userId,
 			Long flexibilityProviderId, Instant created) {
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), created);
+				UserLongCompositePK.unassignedEntityIdKey(userId), created, randomString(),
+				flexibilityProviderId, RegistrationStatus.Registered);
 		conf.setModified(created);
-		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
+		conf.setBaseUrl("http://example.com/" + randomString());
 		conf.setEnabled(true);
-		conf.setFlexibilityProviderId(flexibilityProviderId);
-		conf.setName(randomUUID().toString());
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
-		conf.setToken(randomUUID().toString());
+		conf.setServiceProps(Map.of("foo", randomString()));
+		conf.setToken(randomString());
 		return conf;
 	}
 
 	/**
 	 * Create a new capacity optimizer configuration instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param flexibilityProviderId
@@ -105,89 +104,76 @@ public class OscpJdbcTestUtils {
 	public static CapacityOptimizerConfiguration newCapacityOptimizerConf(Long userId,
 			Long flexibilityProviderId, Instant created) {
 		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), created);
+				UserLongCompositePK.unassignedEntityIdKey(userId), created, randomString(),
+				flexibilityProviderId, RegistrationStatus.Registered);
 		conf.setModified(created);
-		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
+		conf.setBaseUrl("http://example.com/" + randomString());
 		conf.setEnabled(true);
-		conf.setFlexibilityProviderId(flexibilityProviderId);
-		conf.setName(randomUUID().toString());
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
-		conf.setToken(randomUUID().toString());
+		conf.setServiceProps(Map.of("foo", randomString()));
+		conf.setToken(randomString());
 		return conf;
 	}
 
 	/**
 	 * Create a new asset configuration instance.
-	 * 
+	 *
 	 * <p>
 	 * The audience will be {@link OscpRole#CapacityProvider}.
 	 * </p>
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
-	 * @param capacityGroupId
-	 *        the capacity group configuration ID
 	 * @param created
 	 *        the creation date
+	 * @param capacityGroupId
+	 *        the capacity group configuration ID
 	 * @return the new instance
 	 * @see #newAssetConfiguration(Long, Long, OscpRole, Instant)
 	 */
-	public static AssetConfiguration newAssetConfiguration(Long userId, Long capacityGroupId,
-			Instant created) {
-		return newAssetConfiguration(userId, capacityGroupId, OscpRole.CapacityProvider, created);
+	public static AssetConfiguration newAssetConfiguration(Long userId, Instant created,
+			Long capacityGroupId) {
+		return newAssetConfiguration(userId, created, capacityGroupId, OscpRole.CapacityProvider);
 	}
 
 	/**
 	 * Create a new asset configuration instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
+	 * @param created
+	 *        the creation date
 	 * @param capacityGroupId
 	 *        the capacity group configuration ID
 	 * @param audience
 	 *        the audience
-	 * @param created
-	 *        the creation date
 	 * @return the new instance
 	 */
-	public static AssetConfiguration newAssetConfiguration(Long userId, Long capacityGroupId,
-			OscpRole audience, Instant created) {
+	public static AssetConfiguration newAssetConfiguration(Long userId, Instant created,
+			Long capacityGroupId, OscpRole audience) {
 		AssetConfiguration conf = new AssetConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), created);
+				UserLongCompositePK.unassignedEntityIdKey(userId), created, randomString(),
+				capacityGroupId, randomString(), audience, randomLong(), randomString(),
+				AssetCategory.Charging);
 		conf.setEnabled(true);
-		conf.setName(randomUUID().toString());
-		conf.setCapacityGroupId(capacityGroupId);
-		conf.setIdentifier(randomUUID().toString());
-		conf.setAudience(audience);
-		conf.setNodeId(randomUUID().getMostSignificantBits());
-		conf.setSourceId(randomUUID().toString());
-		conf.setCategory(AssetCategory.Charging);
 		conf.setPhase(Phase.All);
 
-		var inst = new AssetInstantaneousDatumConfiguration();
-		inst.setPropertyNames(new String[] { "watts" });
-		inst.setStatisticType(StatisticType.Maximum);
-		inst.setUnit(MeasurementUnit.kW);
+		var inst = new AssetInstantaneousDatumConfiguration(new String[] { "watts" }, MeasurementUnit.kW,
+				StatisticType.Maximum);
 		inst.setMultiplier(KILO_MULTIPLIER);
 		conf.setInstantaneous(inst);
 
-		var energy = new AssetEnergyDatumConfiguration();
-		energy.setPropertyNames(new String[] { "wattHours" });
-		energy.setStatisticType(StatisticType.Difference);
-		energy.setUnit(MeasurementUnit.kWh);
+		var energy = new AssetEnergyDatumConfiguration(new String[] { "wattHours" }, MeasurementUnit.kWh,
+				StatisticType.Difference, EnergyType.Total, EnergyDirection.Import);
 		energy.setMultiplier(KILO_MULTIPLIER);
-		energy.setType(EnergyType.Total);
-		energy.setDirection(EnergyDirection.Import);
 		conf.setEnergy(energy);
 
-		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomString()));
 		return conf;
 	}
 
 	/**
 	 * Create a new capacity group configuration instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param capacityProviderId
@@ -201,40 +187,38 @@ public class OscpJdbcTestUtils {
 	public static CapacityGroupConfiguration newCapacityGroupConfiguration(Long userId,
 			Long capacityProviderId, Long capacityOptimizerId, Instant created) {
 		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), created);
+				UserLongCompositePK.unassignedEntityIdKey(userId), created, randomString(),
+				randomString(), capacityProviderId, capacityOptimizerId, MeasurementPeriod.TenMinute,
+				MeasurementPeriod.TenMinute);
 		conf.setModified(created);
 		conf.setEnabled(true);
-		conf.setName(randomUUID().toString());
-		conf.setIdentifier(randomUUID().toString());
-		conf.setCapacityProviderMeasurementPeriod(MeasurementPeriod.TenMinute);
-		conf.setCapacityProviderId(capacityProviderId);
-		conf.setCapacityOptimizerId(capacityOptimizerId);
-		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomString()));
 		return conf;
 	}
 
 	/**
 	 * Create a new user settings instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param created
 	 *        the creation date
+	 * @param nodeId
+	 *        the node ID
 	 * @return the instance
 	 */
-	public static UserSettings newUserSettings(Long userId, Instant created) {
-		UserSettings conf = new UserSettings(userId, created);
+	public static UserSettings newUserSettings(Long userId, Instant created, Long nodeId) {
+		UserSettings conf = new UserSettings(userId, created, nodeId);
 		conf.setModified(created);
 		conf.setPublishToSolarIn(true);
 		conf.setPublishToSolarFlux(true);
-		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		conf.setSourceIdTemplate("foo/bar");
 		return conf;
 	}
 
 	/**
 	 * Create a new user settings instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param groupId
@@ -256,7 +240,7 @@ public class OscpJdbcTestUtils {
 
 	/**
 	 * List all configuration table rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @param role
@@ -273,7 +257,7 @@ public class OscpJdbcTestUtils {
 
 	/**
 	 * List all heartbeat table rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @param role
@@ -291,7 +275,7 @@ public class OscpJdbcTestUtils {
 
 	/**
 	 * List all capacity group measurement table rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @param role
@@ -310,7 +294,7 @@ public class OscpJdbcTestUtils {
 
 	/**
 	 * List all token table rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @param role
@@ -327,7 +311,7 @@ public class OscpJdbcTestUtils {
 
 	/**
 	 * List all capacity group table rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the rows
@@ -342,7 +326,7 @@ public class OscpJdbcTestUtils {
 
 	/**
 	 * List all asset configuration table rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the rows
@@ -357,7 +341,7 @@ public class OscpJdbcTestUtils {
 
 	/**
 	 * List all user setting table rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the rows
@@ -372,7 +356,7 @@ public class OscpJdbcTestUtils {
 
 	/**
 	 * List all capacity group setting table rows.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @return the rows

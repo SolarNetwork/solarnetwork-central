@@ -24,8 +24,9 @@ package net.solarnetwork.central.oscp.domain.test;
 
 import static java.time.Instant.now;
 import static java.util.Collections.singleton;
-import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.domain.GeneralObjectDatumKey.UNASSIGNED_OBJECT_ID;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -38,7 +39,9 @@ import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.DatumPublishEvent;
+import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
 import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.UserSettings;
 import net.solarnetwork.domain.KeyValuePair;
 import oscp.v20.GroupCapacityComplianceError;
@@ -58,20 +61,19 @@ public class DatumPublishEventTests {
 
 	@BeforeEach
 	public void setup() {
-		userId = randomUUID().getMostSignificantBits();
+		userId = randomLong();
 
-		optimizer = new CapacityOptimizerConfiguration(userId, randomUUID().getMostSignificantBits(),
-				now());
-		optimizer.setName(randomUUID().toString());
+		optimizer = new CapacityOptimizerConfiguration(userId, randomLong(), now(), randomString(),
+				randomLong(), RegistrationStatus.Pending);
+		optimizer.setName(randomString());
 
-		provider = new CapacityProviderConfiguration(userId, randomUUID().getMostSignificantBits(),
-				now());
-		provider.setName(randomUUID().toString());
+		provider = new CapacityProviderConfiguration(userId, randomLong(), now(), randomString(),
+				randomLong(), RegistrationStatus.Pending);
+		provider.setName(randomString());
 
-		group = new CapacityGroupConfiguration(userId, randomUUID().getMostSignificantBits(), now());
-		group.setName(randomUUID().toString());
-		group.setIdentifier(randomUUID().toString());
-
+		group = new CapacityGroupConfiguration(userId, randomLong(), now(), randomString(),
+				randomString(), provider.getConfigId(), optimizer.getConfigId(),
+				MeasurementPeriod.FifteenMinute, MeasurementPeriod.FifteenMinute);
 	}
 
 	@Test
@@ -80,7 +82,7 @@ public class DatumPublishEventTests {
 		OwnedGeneralNodeDatum d = new OwnedGeneralNodeDatum(
 				new GeneralNodeDatumPK(UNASSIGNED_OBJECT_ID, now(), ""), userId);
 
-		UserSettings settings = new UserSettings();
+		UserSettings settings = new UserSettings(randomLong(), now(), randomLong());
 		settings.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
 
 		DatumPublishEvent event = new DatumPublishEvent(OscpRole.CapacityOptimizer,
@@ -105,7 +107,7 @@ public class DatumPublishEventTests {
 		OwnedGeneralNodeDatum d = new OwnedGeneralNodeDatum(
 				new GeneralNodeDatumPK(UNASSIGNED_OBJECT_ID, now(), ""), userId);
 
-		UserSettings settings = new UserSettings();
+		UserSettings settings = new UserSettings(randomLong(), now(), randomLong());
 		settings.setSourceIdTemplate("/oscp/{role}/{actionCode}/{cp}/{co}/{cgIdentifier}");
 
 		DatumPublishEvent event = new DatumPublishEvent(OscpRole.CapacityOptimizer,

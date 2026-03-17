@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.oscp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -81,7 +83,10 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Use
 	 *        the source ID to remove empty path segments from
 	 * @return the resulting source ID
 	 */
-	public static String removeEmptySourceIdSegments(String sourceId) {
+	public static String removeEmptySourceIdSegments(@Nullable String sourceId) {
+		if ( sourceId == null ) {
+			return "";
+		}
 		return SOURCE_ID_EMPTY_SEGMENT_PAT.matcher(sourceId).replaceAll("");
 	}
 
@@ -92,34 +97,18 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Use
 	 *        the user to associate the settings with
 	 * @return the default settings
 	 */
+	@SuppressWarnings("NullAway")
 	public static DatumPublishSettings defaultSettings(Long userId) {
-		UserSettings s = new UserSettings(userId);
+		var s = new UserSettings(userId, null, null);
 		s.setSourceIdTemplate(DEFAULT_SOURCE_ID_TEMPLATE);
 		return s;
 	}
 
-	private Instant modified;
+	private @Nullable Instant modified;
 	private boolean publishToSolarIn = true;
 	private boolean publishToSolarFlux = true;
-	private String sourceIdTemplate;
+	private @Nullable String sourceIdTemplate;
 	private Long nodeId;
-
-	/**
-	 * Default constructor.
-	 */
-	public UserSettings() {
-		super();
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param userId
-	 *        the user ID
-	 */
-	public UserSettings(Long userId) {
-		super(userId, null);
-	}
 
 	/**
 	 * Constructor.
@@ -128,16 +117,22 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Use
 	 *        the user ID
 	 * @param created
 	 *        the creation date
+	 * @param nodeId
+	 *        the node ID
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
 	@JsonCreator
 	public UserSettings(@JsonProperty(value = "userId", required = true) Long userId,
-			@JsonProperty("created") Instant created) {
-		super(userId, created);
+			@JsonProperty("created") @Nullable Instant created,
+			@JsonProperty(value = "nodeId", required = true) Long nodeId) {
+		super(requireNonNullArgument(userId, "userId"), created);
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
 	}
 
 	@Override
 	public UserSettings copyWithId(Long id) {
-		var copy = new UserSettings(id, getCreated());
+		var copy = new UserSettings(id, getCreated(), nodeId);
 		copyTo(copy);
 		return copy;
 	}
@@ -165,7 +160,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Use
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(UserSettings other) {
+	public boolean isSameAs(@Nullable UserSettings other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -178,7 +173,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Use
 	}
 
 	@Override
-	public boolean differsFrom(UserSettings other) {
+	public boolean differsFrom(@Nullable UserSettings other) {
 		return !isSameAs(other);
 	}
 
@@ -192,8 +187,8 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Use
 	 * @return the user ID
 	 */
 	@Override
-	public Long getUserId() {
-		return getId();
+	public final Long getUserId() {
+		return id();
 	}
 
 	/**
@@ -201,7 +196,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Use
 	 *
 	 * @return the modified
 	 */
-	public Instant getModified() {
+	public final @Nullable Instant getModified() {
 		return modified;
 	}
 
@@ -211,12 +206,12 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Use
 	 * @param modified
 	 *        the modified to set
 	 */
-	public void setModified(Instant modified) {
+	public final void setModified(@Nullable Instant modified) {
 		this.modified = modified;
 	}
 
 	@Override
-	public boolean isPublishToSolarIn() {
+	public final boolean isPublishToSolarIn() {
 		return publishToSolarIn;
 	}
 
@@ -227,12 +222,12 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Use
 	 *        {@literal true} if data from this charge point should be published
 	 *        to SolarIn
 	 */
-	public void setPublishToSolarIn(boolean publishToSolarIn) {
+	public final void setPublishToSolarIn(boolean publishToSolarIn) {
 		this.publishToSolarIn = publishToSolarIn;
 	}
 
 	@Override
-	public boolean isPublishToSolarFlux() {
+	public final boolean isPublishToSolarFlux() {
 		return publishToSolarFlux;
 	}
 
@@ -243,12 +238,12 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Use
 	 *        {@literal true} if data from this charge point should be published
 	 *        to SolarFlux
 	 */
-	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+	public final void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
 	}
 
 	@Override
-	public String getSourceIdTemplate() {
+	public final @Nullable String getSourceIdTemplate() {
 		return sourceIdTemplate;
 	}
 
@@ -258,12 +253,12 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Use
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 */
-	public void setSourceIdTemplate(String sourceIdTemplate) {
+	public final void setSourceIdTemplate(@Nullable String sourceIdTemplate) {
 		this.sourceIdTemplate = sourceIdTemplate;
 	}
 
 	@Override
-	public Long getNodeId() {
+	public final Long getNodeId() {
 		return nodeId;
 	}
 
@@ -272,9 +267,11 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Use
 	 *
 	 * @param nodeId
 	 *        the nodeId to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setNodeId(Long nodeId) {
-		this.nodeId = nodeId;
+	public final void setNodeId(Long nodeId) {
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
 	}
 
 }

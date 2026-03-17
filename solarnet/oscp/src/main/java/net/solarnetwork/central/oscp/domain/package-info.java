@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserSettingsDao.java - 10/10/2022 8:36:24 am
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2022 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,24 +20,11 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.dao;
-
-import java.time.Instant;
-import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.oscp.domain.UserSettings;
-import net.solarnetwork.dao.GenericDao;
-
 /**
- * DAO API for {@link UserSettings}.
- *
- * @author matt
- * @version 1.0
+ * SolarNetwork OSCP domain.
  */
-public interface UserSettingsDao extends GenericDao<UserSettings, Long> {
 
-	@Override
-	default UserSettings entityKey(Long userId) {
-		return new UserSettings(userId, Instant.EPOCH, UserLongCompositePK.UNASSIGNED_ENTITY_ID);
-	}
+@NullMarked
+package net.solarnetwork.central.oscp.domain;
 
-}
+import org.jspecify.annotations.NullMarked;

@@ -25,6 +25,7 @@ package net.solarnetwork.central.dao;
 import java.io.Serializable;
 import java.util.Set;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
@@ -60,7 +61,7 @@ public interface UserRelatedStdIdentifiableConfigurationEntity<T extends UserRel
 	 * @since 1.1
 	 */
 	default UserRelatedStdIdentifiableConfigurationEntity<T, K> digestSensitiveInformation(
-			Function<String, Set<String>> sensitiveKeyProvider) {
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
 		return this;
 	}
 

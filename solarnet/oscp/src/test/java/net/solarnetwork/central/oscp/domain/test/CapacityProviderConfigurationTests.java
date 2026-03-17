@@ -23,12 +23,14 @@
 package net.solarnetwork.central.oscp.domain.test;
 
 import static java.lang.String.format;
+import static java.time.Instant.now;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 import org.json.JSONException;
@@ -52,11 +54,12 @@ public class CapacityProviderConfigurationTests {
 	@Test
 	public void createWithUnassignedEntityId() {
 		// GIVEN
-		Long userId = UUID.randomUUID().getMostSignificantBits();
+		Long userId = randomLong();
 
 		// WHEN
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now());
+				UserLongCompositePK.unassignedEntityIdKey(userId), now(), randomString(), randomLong(),
+				RegistrationStatus.Pending);
 
 		// THEN
 		assertThat("Entity key component not null", conf.getId().getEntityId(), is(notNullValue()));
@@ -74,6 +77,7 @@ public class CapacityProviderConfigurationTests {
 				, "modified":"%s"
 				, "enabled":%s
 				, "name":"%s"
+				, "flexibilityProviderId":%d
 				, "baseUrl":"%s"
 				, "registrationStatus":"%s"
 				, "serviceProps":%s
@@ -85,6 +89,7 @@ public class CapacityProviderConfigurationTests {
 				DateUtils.ISO_DATE_TIME_ALT_UTC.format(conf.getModified()),
 				conf.isEnabled(),
 				conf.getName(),
+				conf.getFlexibilityProviderId(),
 				conf.getBaseUrl(),
 				conf.getRegistrationStatus().name(),
 				JsonUtils.getJSONString(conf.getServiceProps(), "null")
@@ -97,10 +102,10 @@ public class CapacityProviderConfigurationTests {
 		// GIVEN
 		ObjectMapper mapper = JsonUtils.JSON_OBJECT_MAPPER;
 
-		Long userId = UUID.randomUUID().getMostSignificantBits();
-		Long confId = UUID.randomUUID().getMostSignificantBits();
-		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(userId, confId,
-				Instant.now());
+		Long userId = randomLong();
+		Long confId = randomLong();
+		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(userId, confId, now(),
+				randomString(), randomLong(), RegistrationStatus.Pending);
 		conf.setModified(conf.getCreated().plusSeconds(9));
 		conf.setEnabled(true);
 		conf.setName("Howdy");

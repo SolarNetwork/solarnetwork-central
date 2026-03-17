@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.domain;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import oscp.v20.ForecastedBlock;
 
 /**
@@ -32,8 +33,8 @@ import oscp.v20.ForecastedBlock;
  * @author matt
  * @version 1.0
  */
-public record TimeBlockAmount(Instant start, Instant end, Phase phase, BigDecimal amount,
-		MeasurementUnit unit) {
+public record TimeBlockAmount(Instant start, Instant end, @Nullable Phase phase,
+		@Nullable BigDecimal amount, @Nullable MeasurementUnit unit) {
 
 	/**
 	 * Get an OSCP 2.0 forecast block value for this instance.
@@ -61,9 +62,9 @@ public record TimeBlockAmount(Instant start, Instant end, Phase phase, BigDecima
 	 *
 	 * @param block
 	 *        the OSCP 2.0 value to get an instance for
-	 * @return the instance
+	 * @return the instance, or {@code null} if {@code block} is {@code null}
 	 */
-	public static TimeBlockAmount forOscp20ForecastValue(ForecastedBlock block) {
+	public static @Nullable TimeBlockAmount forOscp20ForecastValue(@Nullable ForecastedBlock block) {
 		if ( block == null ) {
 			return null;
 		}

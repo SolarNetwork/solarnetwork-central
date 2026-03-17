@@ -26,6 +26,7 @@ import static java.time.Instant.now;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.oscp.domain.MeasurementPeriod.FifteenMinute;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.CAPACITY_PROVIDER_TAG;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.HTTP_TAG;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.OSCP_TAG;
@@ -39,6 +40,7 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.ADJUST_
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_ACK_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -70,7 +72,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -225,9 +226,7 @@ public class DaoFlexibilityProviderBizTests {
 	public void register_cp_configurationNotFound() {
 		// GIVEN
 		final AuthRoleInfo authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
-						randomUUID().getMostSignificantBits()),
-				OscpRole.CapacityProvider);
+				new UserLongCompositePK(randomLong(), randomLong()), OscpRole.CapacityProvider);
 		final String sysToken = randomUUID().toString();
 		final KeyValuePair versionUrl = new KeyValuePair("2.0", "http://localhost:9991/oscp/cp/2.0");
 
@@ -257,9 +256,7 @@ public class DaoFlexibilityProviderBizTests {
 	public void register_co_configurationNotFound() {
 		// GIVEN
 		final AuthRoleInfo authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
-						randomUUID().getMostSignificantBits()),
-				OscpRole.CapacityOptimizer);
+				new UserLongCompositePK(randomLong(), randomLong()), OscpRole.CapacityOptimizer);
 		final String sysToken = randomUUID().toString();
 		final KeyValuePair versionUrl = new KeyValuePair("2.0", "http://localhost:9991/oscp/co/2.0");
 
@@ -288,19 +285,17 @@ public class DaoFlexibilityProviderBizTests {
 	@Test
 	public void register_cp() throws Exception {
 		// GIVEN
-		final Long userId = randomUUID().getMostSignificantBits();
-		final AuthRoleInfo authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()),
+		final Long userId = randomLong();
+		final AuthRoleInfo authInfo = new AuthRoleInfo(new UserLongCompositePK(userId, randomLong()),
 				OscpRole.CapacityProvider);
 		final String sysToken = randomUUID().toString();
 		final String oscpVersion = "2.0";
 		final KeyValuePair sysVersionUrl = new KeyValuePair(oscpVersion,
 				"http://oscp.example.com/oscp/cp/2.0");
 
-		final CapacityProviderConfiguration cp = new CapacityProviderConfiguration(userId,
-				randomUUID().getMostSignificantBits(), Instant.now());
-		cp.setRegistrationStatus(RegistrationStatus.Pending);
-		cp.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		final CapacityProviderConfiguration cp = new CapacityProviderConfiguration(userId, randomLong(),
+				now(), randomString(), randomLong(), RegistrationStatus.Pending);
+		cp.setFlexibilityProviderId(randomLong());
 		final FilterResults<CapacityProviderConfiguration, UserLongCompositePK> cpResults = new BasicFilterResults<>(
 				singleton(cp));
 		given(capacityProviderDao.findFiltered(any())).willReturn(cpResults);
@@ -404,18 +399,15 @@ public class DaoFlexibilityProviderBizTests {
 	@Test
 	public void register_co() throws Exception {
 		// GIVEN
-		final Long userId = randomUUID().getMostSignificantBits();
-		final AuthRoleInfo authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()),
+		final Long userId = randomLong();
+		final AuthRoleInfo authInfo = new AuthRoleInfo(new UserLongCompositePK(userId, randomLong()),
 				OscpRole.CapacityOptimizer);
 		final String sysToken = randomUUID().toString();
 		final KeyValuePair sysVersionUrl = new KeyValuePair("2.0",
 				"http://oscp.example.com/oscp/co/2.0");
 
 		final CapacityOptimizerConfiguration co = new CapacityOptimizerConfiguration(userId,
-				randomUUID().getMostSignificantBits(), Instant.now());
-		co.setRegistrationStatus(RegistrationStatus.Pending);
-		co.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+				randomLong(), now(), randomString(), randomLong(), RegistrationStatus.Pending);
 		final FilterResults<CapacityOptimizerConfiguration, UserLongCompositePK> coResults = new BasicFilterResults<>(
 				singleton(co));
 		given(capacityOptimizerDao.findFiltered(any())).willReturn(coResults);
@@ -474,19 +466,16 @@ public class DaoFlexibilityProviderBizTests {
 	@Test
 	public void handshake_cp() throws Exception {
 		// GIVEN
-		final Long userId = randomUUID().getMostSignificantBits();
-		final AuthRoleInfo authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()),
+		final Long userId = randomLong();
+		final AuthRoleInfo authInfo = new AuthRoleInfo(new UserLongCompositePK(userId, randomLong()),
 				OscpRole.CapacityProvider);
 		final SystemSettings settings = new SystemSettings(123, EnumSet.of(MeasurementStyle.Continuous));
 
 		// load the configuration
-		final CapacityProviderConfiguration cp = new CapacityProviderConfiguration(authInfo.id(),
-				Instant.now());
+		final CapacityProviderConfiguration cp = new CapacityProviderConfiguration(authInfo.id(), now(),
+				randomString(), randomLong(), RegistrationStatus.Registered);
 		cp.setOscpVersion("2.0");
-		cp.setBaseUrl("http://localhost/" + UUID.randomUUID().toString());
-		cp.setRegistrationStatus(RegistrationStatus.Registered);
-		cp.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		cp.setBaseUrl("http://localhost/" + randomString());
 		final FilterResults<CapacityProviderConfiguration, UserLongCompositePK> cpResults = new BasicFilterResults<>(
 				singleton(cp));
 		given(capacityProviderDao.findFiltered(any())).willReturn(cpResults);
@@ -531,19 +520,16 @@ public class DaoFlexibilityProviderBizTests {
 	@Test
 	public void handshake_co() throws Exception {
 		// GIVEN
-		final Long userId = randomUUID().getMostSignificantBits();
-		final AuthRoleInfo authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()),
+		final Long userId = randomLong();
+		final AuthRoleInfo authInfo = new AuthRoleInfo(new UserLongCompositePK(userId, randomLong()),
 				OscpRole.CapacityOptimizer);
 		final SystemSettings settings = new SystemSettings(123, EnumSet.of(MeasurementStyle.Continuous));
 
 		// load the configuration
 		final CapacityOptimizerConfiguration cp = new CapacityOptimizerConfiguration(authInfo.id(),
-				Instant.now());
+				now(), randomString(), randomLong(), RegistrationStatus.Registered);
 		cp.setOscpVersion("2.0");
-		cp.setBaseUrl("http://localhost/" + UUID.randomUUID().toString());
-		cp.setRegistrationStatus(RegistrationStatus.Registered);
-		cp.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		cp.setBaseUrl("http://localhost/" + randomString());
 		final FilterResults<CapacityOptimizerConfiguration, UserLongCompositePK> cpResults = new BasicFilterResults<>(
 				singleton(cp));
 		given(capacityOptimizerDao.findFiltered(any())).willReturn(cpResults);
@@ -589,9 +575,7 @@ public class DaoFlexibilityProviderBizTests {
 	public void heartbeat_cp() {
 		// GIVEN
 		final AuthRoleInfo authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
-						randomUUID().getMostSignificantBits()),
-				OscpRole.CapacityProvider);
+				new UserLongCompositePK(randomLong(), randomLong()), OscpRole.CapacityProvider);
 		final Instant expires = Instant.now().plusSeconds(1);
 
 		// WHEN
@@ -605,9 +589,7 @@ public class DaoFlexibilityProviderBizTests {
 	public void heartbeat_co() {
 		// GIVEN
 		final AuthRoleInfo authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
-						randomUUID().getMostSignificantBits()),
-				OscpRole.CapacityOptimizer);
+				new UserLongCompositePK(randomLong(), randomLong()), OscpRole.CapacityOptimizer);
 		final Instant expires = Instant.now().plusSeconds(1);
 
 		// WHEN
@@ -632,20 +614,19 @@ public class DaoFlexibilityProviderBizTests {
 
 		// find the group
 		CapacityGroupConfiguration group = new CapacityGroupConfiguration(authInfo.userId(),
-				randomUUID().getMostSignificantBits(), Instant.now());
-		group.setCapacityOptimizerId(randomUUID().getMostSignificantBits());
-		group.setCapacityProviderId(randomUUID().getMostSignificantBits());
-		group.setIdentifier(groupIdentifier);
+				randomLong(), now(), randomString(), groupIdentifier, randomLong(), randomLong(),
+				FifteenMinute, FifteenMinute);
 		given(capacityGroupDao.findForCapacityProvider(authInfo.userId(), authInfo.entityId(),
 				groupIdentifier)).willReturn(group);
 
 		// get the optimizer
 		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(authInfo.userId(),
-				group.getCapacityOptimizerId(), Instant.now());
+				group.getCapacityOptimizerId(), now(), randomString(), randomLong(),
+				RegistrationStatus.Registered);
 		conf.setOscpVersion("2.0");
-		conf.setBaseUrl("http://localhost/" + UUID.randomUUID().toString());
+		conf.setBaseUrl("http://localhost/" + randomString());
 		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		conf.setFlexibilityProviderId(randomLong());
 		given(capacityOptimizerDao.get(conf.getId())).willReturn(conf);
 
 		// get the system auth token
@@ -706,9 +687,7 @@ public class DaoFlexibilityProviderBizTests {
 		// GIVEN
 		final String groupIdentifier = randomUUID().toString();
 		final AuthRoleInfo authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
-						randomUUID().getMostSignificantBits()),
-				OscpRole.CapacityProvider);
+				new UserLongCompositePK(randomLong(), randomLong()), OscpRole.CapacityProvider);
 		final Instant topOfHour = Instant.now().truncatedTo(ChronoUnit.HOURS);
 		TimeBlockAmount amount = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
 				Phase.All, new BigDecimal("3.3"), MeasurementUnit.kW);
@@ -718,20 +697,17 @@ public class DaoFlexibilityProviderBizTests {
 
 		// find the group
 		CapacityGroupConfiguration group = new CapacityGroupConfiguration(authInfo.userId(),
-				randomUUID().getMostSignificantBits(), Instant.now());
-		group.setCapacityOptimizerId(randomUUID().getMostSignificantBits());
-		group.setCapacityProviderId(randomUUID().getMostSignificantBits());
-		group.setIdentifier(groupIdentifier);
+				randomLong(), now(), randomString(), groupIdentifier, randomLong(), randomLong(),
+				FifteenMinute, FifteenMinute);
 		given(capacityGroupDao.findForCapacityProvider(authInfo.userId(), authInfo.entityId(),
 				groupIdentifier)).willReturn(group);
 
 		// get the optimizer
 		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(authInfo.userId(),
-				group.getCapacityOptimizerId(), Instant.now());
+				group.getCapacityOptimizerId(), now(), randomString(), randomLong(),
+				RegistrationStatus.Registered);
 		conf.setOscpVersion("2.0");
-		conf.setBaseUrl("http://localhost/" + UUID.randomUUID().toString());
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		conf.setBaseUrl("http://localhost/" + randomString());
 		conf.setServiceProps(Map.of(ExternalSystemServiceProperties.URL_PATHS,
 				Map.of("UpdateGroupCapacityForecast", customUrlPath)));
 		given(capacityOptimizerDao.get(conf.getId())).willReturn(conf);
@@ -762,9 +738,7 @@ public class DaoFlexibilityProviderBizTests {
 		// GIVEN
 		final String groupIdentifier = randomUUID().toString();
 		final AuthRoleInfo authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
-						randomUUID().getMostSignificantBits()),
-				OscpRole.CapacityProvider);
+				new UserLongCompositePK(randomLong(), randomLong()), OscpRole.CapacityProvider);
 		final Instant topOfHour = Instant.now().truncatedTo(ChronoUnit.HOURS);
 		TimeBlockAmount amount = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
 				Phase.All, new BigDecimal("3.3"), MeasurementUnit.kW);
@@ -773,29 +747,25 @@ public class DaoFlexibilityProviderBizTests {
 
 		// find the group
 		CapacityGroupConfiguration group = new CapacityGroupConfiguration(authInfo.userId(),
-				randomUUID().getMostSignificantBits(), Instant.now());
-		group.setCapacityOptimizerId(randomUUID().getMostSignificantBits());
-		group.setCapacityProviderId(authInfo.entityId());
-		group.setIdentifier(groupIdentifier);
+				randomLong(), now(), randomString(), groupIdentifier, randomLong(), randomLong(),
+				FifteenMinute, FifteenMinute);
 		given(capacityGroupDao.findForCapacityProvider(authInfo.userId(), authInfo.entityId(),
 				groupIdentifier)).willReturn(group);
 
 		// get the optimizer
 		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(authInfo.userId(),
-				group.getCapacityOptimizerId(), Instant.now());
+				group.getCapacityOptimizerId(), now(), randomString(), randomLong(),
+				RegistrationStatus.Registered);
 		conf.setOscpVersion("2.0");
-		conf.setBaseUrl("http://localhost/" + UUID.randomUUID().toString());
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		conf.setBaseUrl("http://localhost/" + randomString());
 		given(capacityOptimizerDao.get(conf.getId())).willReturn(conf);
 
 		// get the provider
 		var provider = new CapacityProviderConfiguration(authInfo.userId(),
-				group.getCapacityProviderId(), Instant.now());
+				group.getCapacityProviderId(), now(), randomString(), randomLong(),
+				RegistrationStatus.Registered);
 		provider.setOscpVersion("2.0");
 		provider.setBaseUrl(null);
-		provider.setRegistrationStatus(RegistrationStatus.Registered);
-		provider.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
 		given(capacityProviderDao.get(provider.getId())).willReturn(provider);
 
 		// get the group publish settings
@@ -803,7 +773,7 @@ public class DaoFlexibilityProviderBizTests {
 		settings.setPublishToSolarIn(true);
 		settings.setPublishToSolarFlux(true);
 		settings.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
-		settings.setNodeId(randomUUID().getMostSignificantBits());
+		settings.setNodeId(randomLong());
 		given(capacitySettingsDao.resolveDatumPublishSettings(authInfo.userId(), groupIdentifier))
 				.willReturn(settings);
 
@@ -841,9 +811,7 @@ public class DaoFlexibilityProviderBizTests {
 	public void updateGroupCapacityForecast_noOptimizerUriWithDatumPublish() throws Exception {
 		// GIVEN
 		final String groupIdentifier = randomUUID().toString();
-		final var authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
-						randomUUID().getMostSignificantBits()),
+		final var authInfo = new AuthRoleInfo(new UserLongCompositePK(randomLong(), randomLong()),
 				OscpRole.CapacityProvider);
 		final var topOfHour = now().truncatedTo(ChronoUnit.HOURS);
 		final var amount1 = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
@@ -854,30 +822,26 @@ public class DaoFlexibilityProviderBizTests {
 				Arrays.asList(amount1, amount2));
 
 		// find the group
-		var group = new CapacityGroupConfiguration(authInfo.userId(),
-				randomUUID().getMostSignificantBits(), now());
-		group.setCapacityOptimizerId(randomUUID().getMostSignificantBits());
-		group.setCapacityProviderId(randomUUID().getMostSignificantBits());
-		group.setIdentifier(groupIdentifier);
+		var group = new CapacityGroupConfiguration(authInfo.userId(), randomLong(), now(),
+				randomString(), groupIdentifier, randomLong(), randomLong(), FifteenMinute,
+				FifteenMinute);
 		given(capacityGroupDao.findForCapacityProvider(authInfo.userId(), authInfo.entityId(),
 				groupIdentifier)).willReturn(group);
 
 		// get the optimizer
 		var optimizer = new CapacityOptimizerConfiguration(authInfo.userId(),
-				group.getCapacityOptimizerId(), Instant.now());
+				group.getCapacityOptimizerId(), now(), randomString(), randomLong(),
+				RegistrationStatus.Registered);
 		optimizer.setOscpVersion("2.0");
 		optimizer.setBaseUrl(null);
-		optimizer.setRegistrationStatus(RegistrationStatus.Registered);
-		optimizer.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
 		given(capacityOptimizerDao.get(optimizer.getId())).willReturn(optimizer);
 
 		// get the provider
 		var provider = new CapacityProviderConfiguration(authInfo.userId(),
-				group.getCapacityProviderId(), Instant.now());
+				group.getCapacityProviderId(), now(), randomString(), randomLong(),
+				RegistrationStatus.Registered);
 		provider.setOscpVersion("2.0");
 		provider.setBaseUrl(null);
-		provider.setRegistrationStatus(RegistrationStatus.Registered);
-		provider.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
 		given(capacityProviderDao.get(provider.getId())).willReturn(provider);
 
 		// get the group publish settings
@@ -885,7 +849,7 @@ public class DaoFlexibilityProviderBizTests {
 		settings.setPublishToSolarIn(true);
 		settings.setPublishToSolarFlux(true);
 		settings.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
-		settings.setNodeId(randomUUID().getMostSignificantBits());
+		settings.setNodeId(randomLong());
 		given(capacitySettingsDao.resolveDatumPublishSettings(authInfo.userId(), groupIdentifier))
 				.willReturn(settings);
 
@@ -944,9 +908,7 @@ public class DaoFlexibilityProviderBizTests {
 		// GIVEN
 		final String groupIdentifier = randomUUID().toString();
 		final AuthRoleInfo authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
-						randomUUID().getMostSignificantBits()),
-				OscpRole.CapacityOptimizer);
+				new UserLongCompositePK(randomLong(), randomLong()), OscpRole.CapacityOptimizer);
 		final Instant topOfHour = Instant.now().truncatedTo(ChronoUnit.HOURS);
 		TimeBlockAmount amount = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
 				Phase.All, new BigDecimal("3.3"), MeasurementUnit.kW);
@@ -955,19 +917,17 @@ public class DaoFlexibilityProviderBizTests {
 
 		// find the group
 		CapacityGroupConfiguration group = new CapacityGroupConfiguration(authInfo.userId(),
-				randomUUID().getMostSignificantBits(), Instant.now());
-		group.setCapacityProviderId(randomUUID().getMostSignificantBits());
-		group.setIdentifier(groupIdentifier);
+				randomLong(), now(), randomString(), groupIdentifier, randomLong(), randomLong(),
+				FifteenMinute, FifteenMinute);
 		given(capacityGroupDao.findForCapacityOptimizer(authInfo.userId(), authInfo.entityId(),
 				groupIdentifier)).willReturn(group);
 
 		// get the optimizer
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(authInfo.userId(),
-				group.getCapacityProviderId(), Instant.now());
+				group.getCapacityProviderId(), now(), randomString(), randomLong(),
+				RegistrationStatus.Registered);
 		conf.setOscpVersion("2.0");
-		conf.setBaseUrl("http://localhost/" + UUID.randomUUID().toString());
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		conf.setBaseUrl("http://localhost/" + randomString());
 		given(capacityProviderDao.get(conf.getId())).willReturn(conf);
 
 		// get the system auth token

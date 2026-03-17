@@ -27,13 +27,15 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Configuration for an asset.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfiguration> {
 
@@ -46,9 +48,9 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	private Long nodeId;
 	private String sourceId;
 	private AssetCategory category;
-	private Phase phase;
-	private AssetInstantaneousDatumConfiguration instantaneous;
-	private AssetEnergyDatumConfiguration energy;
+	private @Nullable Phase phase;
+	private @Nullable AssetInstantaneousDatumConfiguration instantaneous;
+	private @Nullable AssetEnergyDatumConfiguration energy;
 
 	/**
 	 * Constructor.
@@ -57,11 +59,32 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param capacityGroupId
+	 *        the capacity group ID
+	 * @param identifier
+	 *        the identifier
+	 * @param audience
+	 *        the audience
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param category
+	 *        the category
 	 * @throws IllegalArgumentException
-	 *         if the {code id} argument is {@code null}
+	 *         if any argument is {@code null}
 	 */
-	public AssetConfiguration(UserLongCompositePK id, Instant created) {
-		super(requireNonNullArgument(id, "id"), created);
+	public AssetConfiguration(UserLongCompositePK id, Instant created, String name, Long capacityGroupId,
+			String identifier, OscpRole audience, Long nodeId, String sourceId, AssetCategory category) {
+		super(id, created, name);
+		this.capacityGroupId = requireNonNullArgument(capacityGroupId, "capacityGroupId");
+		this.identifier = requireNonNullArgument(identifier, "identifier");
+		this.audience = requireNonNullArgument(audience, "audience");
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
+		this.sourceId = requireNonNullArgument(sourceId, "sourceId");
+		this.category = requireNonNullArgument(category, "category");
 	}
 
 	/**
@@ -73,16 +96,34 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 *        the entity ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param capacityGroupId
+	 *        the capacity group ID
+	 * @param identifier
+	 *        the identifier
+	 * @param audience
+	 *        the audience
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param category
+	 *        the category
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public AssetConfiguration(Long userId, Long entityId, Instant created) {
-		super(new UserLongCompositePK(userId, entityId), created);
+	public AssetConfiguration(Long userId, Long entityId, Instant created, String name,
+			Long capacityGroupId, String identifier, OscpRole audience, Long nodeId, String sourceId,
+			AssetCategory category) {
+		this(new UserLongCompositePK(userId, entityId), created, name, capacityGroupId, identifier,
+				audience, nodeId, sourceId, category);
 	}
 
 	@Override
 	public AssetConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new AssetConfiguration(id, getCreated());
+		var copy = new AssetConfiguration(id, created(), getName(), capacityGroupId, identifier,
+				audience, nodeId, sourceId, category);
 		copyTo(copy);
 		return copy;
 	}
@@ -105,33 +146,30 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 		entity.setCategory(category);
 		entity.setPhase(phase);
 		if ( instantaneous != null ) {
-			AssetInstantaneousDatumConfiguration copy = new AssetInstantaneousDatumConfiguration();
-			instantaneous.copyTo(copy);
-			entity.setInstantaneous(copy);
+			entity.setInstantaneous(instantaneous.clone());
 		}
 		if ( energy != null ) {
-			AssetEnergyDatumConfiguration copy = new AssetEnergyDatumConfiguration();
-			energy.copyTo(copy);
-			entity.setEnergy(copy);
+			entity.setEnergy(energy.clone());
 		}
 	}
 
 	@Override
-	public boolean isSameAs(AssetConfiguration other) {
+	public boolean isSameAs(@Nullable AssetConfiguration other) {
 		boolean result = super.isSameAs(other);
 		if ( !result ) {
 			return false;
 		}
+		final var o = ObjectUtils.nonnull(other, "other");
 		// @formatter:off
-		return (Objects.equals(this.capacityGroupId, other.capacityGroupId)
-				&& Objects.equals(this.identifier, other.identifier)
-				&& Objects.equals(this.audience, other.audience)
-				&& Objects.equals(this.nodeId, other.nodeId)
-				&& Objects.equals(this.sourceId, other.sourceId)
-				&& Objects.equals(this.category, other.category)
-				&& Objects.equals(this.phase, other.phase)
-				&& !differ(this.instantaneous, other.instantaneous)
-				&& !differ(this.energy, other.energy));
+		return (Objects.equals(capacityGroupId, o.capacityGroupId)
+				&& Objects.equals(identifier, o.identifier)
+				&& Objects.equals(audience, o.audience)
+				&& Objects.equals(nodeId, o.nodeId)
+				&& Objects.equals(sourceId, o.sourceId)
+				&& Objects.equals(category, o.category)
+				&& Objects.equals(phase, o.phase)
+				&& !differ(instantaneous, o.instantaneous)
+				&& !differ(energy, o.energy));
 		// @formatter:on
 	}
 
@@ -141,7 +179,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @return the ID of the {@link CapacityGroupConfiguration} associated with
 	 *         this entity
 	 */
-	public Long getCapacityGroupId() {
+	public final Long getCapacityGroupId() {
 		return capacityGroupId;
 	}
 
@@ -151,7 +189,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @param capacityGroupId
 	 *        the ID of the capacity group to set
 	 */
-	public void setCapacityGroupId(Long capacityGroupId) {
+	public final void setCapacityGroupId(Long capacityGroupId) {
 		this.capacityGroupId = capacityGroupId;
 	}
 
@@ -160,7 +198,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 *
 	 * @return the identifier
 	 */
-	public String getIdentifier() {
+	public final String getIdentifier() {
 		return identifier;
 	}
 
@@ -170,7 +208,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @param identifier
 	 *        the identifier to set
 	 */
-	public void setIdentifier(String identifier) {
+	public final void setIdentifier(String identifier) {
 		this.identifier = identifier;
 	}
 
@@ -179,7 +217,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 *
 	 * @return the audience
 	 */
-	public OscpRole getAudience() {
+	public final OscpRole getAudience() {
 		return audience;
 	}
 
@@ -192,7 +230,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 *         if {@code audience} is {@code null} or not supported
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	public void setAudience(OscpRole audience) {
+	public final void setAudience(OscpRole audience) {
 		switch (requireNonNullArgument(audience, "audience")) {
 			case CapacityProvider:
 			case CapacityOptimizer:
@@ -209,7 +247,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 *
 	 * @return the nodeId the node ID
 	 */
-	public Long getNodeId() {
+	public final Long getNodeId() {
 		return nodeId;
 	}
 
@@ -219,7 +257,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
@@ -228,7 +266,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 *
 	 * @return the source ID
 	 */
-	public String getSourceId() {
+	public final String getSourceId() {
 		return sourceId;
 	}
 
@@ -238,7 +276,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @param sourceId
 	 *        the source ID to set
 	 */
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(String sourceId) {
 		this.sourceId = sourceId;
 	}
 
@@ -247,7 +285,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 *
 	 * @return the category
 	 */
-	public AssetCategory getCategory() {
+	public final AssetCategory getCategory() {
 		return category;
 	}
 
@@ -257,7 +295,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @param category
 	 *        the category to set
 	 */
-	public void setCategory(AssetCategory category) {
+	public final void setCategory(AssetCategory category) {
 		this.category = category;
 	}
 
@@ -266,7 +304,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 *
 	 * @return the instantaneous phase
 	 */
-	public Phase getPhase() {
+	public final @Nullable Phase getPhase() {
 		return phase;
 	}
 
@@ -276,7 +314,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @param phase
 	 *        the phase to set
 	 */
-	public void setPhase(Phase phase) {
+	public final void setPhase(@Nullable Phase phase) {
 		this.phase = phase;
 	}
 
@@ -285,7 +323,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 *
 	 * @return the configuration
 	 */
-	public AssetInstantaneousDatumConfiguration getInstantaneous() {
+	public final @Nullable AssetInstantaneousDatumConfiguration getInstantaneous() {
 		return instantaneous;
 	}
 
@@ -295,7 +333,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @param instantaneous
 	 *        the configuration to set
 	 */
-	public void setInstantaneous(AssetInstantaneousDatumConfiguration instantaneous) {
+	public final void setInstantaneous(@Nullable AssetInstantaneousDatumConfiguration instantaneous) {
 		this.instantaneous = instantaneous;
 	}
 
@@ -304,7 +342,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 *
 	 * @return the configuration
 	 */
-	public AssetEnergyDatumConfiguration getEnergy() {
+	public final @Nullable AssetEnergyDatumConfiguration getEnergy() {
 		return energy;
 	}
 
@@ -314,7 +352,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @param energy
 	 *        the configuration to set
 	 */
-	public void setEnergy(AssetEnergyDatumConfiguration energy) {
+	public final void setEnergy(@Nullable AssetEnergyDatumConfiguration energy) {
 		this.energy = energy;
 	}
 

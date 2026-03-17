@@ -73,7 +73,7 @@ public class FroniusRestOperationsHelper extends RestOperationsHelper {
 	 */
 	public FroniusRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
-			Function<String, Set<String>> sensitiveKeyProvider) {
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
 	}
 

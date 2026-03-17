@@ -24,20 +24,18 @@ package net.solarnetwork.central.oscp.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
-import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.dao.UserRelatedEntity;
+import net.solarnetwork.central.dao.UserRelatedStdEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.dao.Entity;
-import net.solarnetwork.domain.CopyingIdentity;
-import net.solarnetwork.domain.Differentiable;
 import net.solarnetwork.util.ObjectUtils;
 
 /**
@@ -52,16 +50,15 @@ import net.solarnetwork.util.ObjectUtils;
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "name", "enabled", "serviceProps" })
 public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfigurationEntity<T>>
 		extends BasicEntity<UserLongCompositePK>
-		implements Entity<UserLongCompositePK>, UserRelatedEntity<UserLongCompositePK>,
-		CopyingIdentity<T, UserLongCompositePK>, Differentiable<T>, Serializable, Cloneable {
+		implements Entity<UserLongCompositePK>, UserRelatedStdEntity<T, UserLongCompositePK> {
 
 	@Serial
 	private static final long serialVersionUID = -4040376195754476954L;
 
-	private Instant modified;
+	private @Nullable Instant modified;
 	private String name;
 	private boolean enabled;
-	private Map<String, Object> serviceProps;
+	private @Nullable Map<String, Object> serviceProps;
 
 	/**
 	 * Constructor.
@@ -70,11 +67,14 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public BaseOscpConfigurationEntity(UserLongCompositePK id, Instant created) {
+	public BaseOscpConfigurationEntity(UserLongCompositePK id, Instant created, String name) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	/**
@@ -86,11 +86,13 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *        the entity ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public BaseOscpConfigurationEntity(Long userId, Long entityId, Instant created) {
-		super(new UserLongCompositePK(userId, entityId), created);
+	public BaseOscpConfigurationEntity(Long userId, Long entityId, Instant created, String name) {
+		this(new UserLongCompositePK(userId, entityId), created, name);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -122,16 +124,19 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
-	public boolean isSameAs(T other) {
+	public boolean isSameAs(@Nullable T other) {
+		if ( other == null ) {
+			return false;
+		}
 		// @formatter:off
 		return (this.enabled == other.isEnabled()
-				&& Objects.equals(this.name, other.getName())
+				&& Objects.equals(name, other.getName())
 				&& Objects.equals(serviceProps, other.getServiceProps()));
 		// @formatter:on
 	}
 
 	@Override
-	public boolean differsFrom(T other) {
+	public boolean differsFrom(@Nullable T other) {
 		return !isSameAs(other);
 	}
 
@@ -140,7 +145,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *
 	 * @return the OAuth client settings, or {@code null} if not available
 	 */
-	public OAuthClientSettings oauthClientSettings() {
+	public @Nullable OAuthClientSettings oauthClientSettings() {
 		final Map<String, Object> props = getServiceProps();
 		if ( props == null ) {
 			return null;
@@ -180,7 +185,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *        the unique name of the custom URL path to get
 	 * @return the associated custom URL path, or {@code null} if not available
 	 */
-	public String customUrlPath(String name) {
+	public @Nullable String customUrlPath(String name) {
 		final Map<String, Object> props = getServiceProps();
 		if ( props == null ) {
 			return null;
@@ -217,7 +222,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 * @return the extra HTTP headers, or {@code null}
 	 */
 	@SuppressWarnings("unchecked")
-	public Map<String, ?> extraHttpHeaders() {
+	public @Nullable Map<String, ?> extraHttpHeaders() {
 		final Map<String, Object> props = getServiceProps();
 		final Object o = (props != null ? props.get(ExternalSystemServiceProperties.EXTRA_HTTP_HEADERS)
 				: null);
@@ -228,13 +233,13 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	}
 
 	@Override
-	public Long getUserId() {
-		return getId().getUserId();
+	public final Long getUserId() {
+		return id().getUserId();
 	}
 
 	@JsonIgnore
-	public Long getEntityId() {
-		return getId().getEntityId();
+	public final Long getEntityId() {
+		return id().getEntityId();
 	}
 
 	/**
@@ -242,8 +247,8 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *
 	 * @return the configuration ID
 	 */
-	public Long getConfigId() {
-		return getId().getEntityId();
+	public final Long getConfigId() {
+		return id().getEntityId();
 	}
 
 	/**
@@ -251,7 +256,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *
 	 * @return the modified
 	 */
-	public Instant getModified() {
+	public final @Nullable Instant getModified() {
 		return modified;
 	}
 
@@ -261,7 +266,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 * @param modified
 	 *        the modified to set
 	 */
-	public void setModified(Instant modified) {
+	public final void setModified(@Nullable Instant modified) {
 		this.modified = modified;
 	}
 
@@ -270,7 +275,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -280,7 +285,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 * @param name
 	 *        the name to set
 	 */
-	public void setName(String name) {
+	public final void setName(String name) {
 		this.name = name;
 	}
 
@@ -289,7 +294,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *
 	 * @return the enabled
 	 */
-	public boolean isEnabled() {
+	public final boolean isEnabled() {
 		return enabled;
 	}
 
@@ -299,7 +304,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 * @param enabled
 	 *        the enabled to set
 	 */
-	public void setEnabled(boolean enabled) {
+	public final void setEnabled(boolean enabled) {
 		this.enabled = enabled;
 	}
 
@@ -308,7 +313,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *
 	 * @return the serviceProps
 	 */
-	public Map<String, Object> getServiceProps() {
+	public final @Nullable Map<String, Object> getServiceProps() {
 		return serviceProps;
 	}
 
@@ -318,7 +323,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 * @param serviceProps
 	 *        the serviceProps to set
 	 */
-	public void setServiceProps(Map<String, Object> serviceProps) {
+	public final void setServiceProps(@Nullable Map<String, Object> serviceProps) {
 		this.serviceProps = serviceProps;
 	}
 
@@ -336,7 +341,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *         if {@code key} is {@code null}
 	 * @since 1.1
 	 */
-	public Object putServiceProp(String key, Object value) {
+	public final @Nullable Object putServiceProp(String key, @Nullable Object value) {
 		ObjectUtils.requireNonNullArgument(key, "key");
 		Map<String, Object> props = getServiceProps();
 		if ( props == null ) {
@@ -362,7 +367,7 @@ public abstract class BaseOscpConfigurationEntity<T extends BaseOscpConfiguratio
 	 *         associated
 	 * @since 1.1
 	 */
-	public Object getServiceProp(String key) {
+	public final @Nullable Object getServiceProp(String key) {
 		final Map<String, Object> props = getServiceProps();
 		if ( props != null ) {
 			return props.get(key);

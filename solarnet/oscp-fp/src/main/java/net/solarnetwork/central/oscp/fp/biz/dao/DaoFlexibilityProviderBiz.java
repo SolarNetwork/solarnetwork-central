@@ -63,6 +63,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
@@ -442,7 +443,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			Long userId, BaseOscpExternalSystemConfiguration<?> src,
 			BaseOscpExternalSystemConfiguration<?> dest, CapacityGroupConfiguration group,
 			DatumPublishSettings settings, Supplier<Collection<OwnedGeneralNodeDatum>> datumSupplier,
-			KeyValuePair... sourceIdParameters) {
+			KeyValuePair @Nullable... sourceIdParameters) {
 		if ( !shouldPublishForSettings(settings) || (fluxPublisher == null && datumDao == null) ) {
 			return null;
 		}
@@ -520,7 +521,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 				BaseOscpExternalSystemConfiguration<?> src, BaseOscpExternalSystemConfiguration<?> dest,
 				CapacityGroupConfiguration group, DatumPublishSettings settings,
 				Supplier<Collection<OwnedGeneralNodeDatum>> datumSupplier,
-				KeyValuePair... sourceIdParameters) {
+				KeyValuePair @Nullable... sourceIdParameters) {
 			return DaoFlexibilityProviderBiz.this.publishDatum(action, sourceIdSuffix, role,
 					configId.getUserId(), src, dest, group, settings, datumSupplier, sourceIdParameters);
 		}

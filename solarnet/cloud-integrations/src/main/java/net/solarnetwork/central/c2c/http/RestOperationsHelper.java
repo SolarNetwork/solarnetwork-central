@@ -53,7 +53,7 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	protected final TextEncryptor encryptor;
 
 	/** The sensitive key provider. */
-	protected final Function<String, Set<String>> sensitiveKeyProvider;
+	protected final Function<String, @Nullable Set<String>> sensitiveKeyProvider;
 
 	/**
 	 * Constructor.
@@ -75,7 +75,7 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 */
 	public RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
-			Function<String, Set<String>> sensitiveKeyProvider) {
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags);
 		this.encryptor = requireNonNullArgument(encryptor, "encryptor");
 		this.sensitiveKeyProvider = requireNonNullArgument(sensitiveKeyProvider, "sensitiveKeyProvider");

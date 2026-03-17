@@ -346,7 +346,7 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	public Object listForUserIdAndFilterAndClassAccessCheck(ProceedingJoinPoint pjp, Long userId,
 			CloudIntegrationsFilter filter, Class<?> entityClass) throws Throwable {
 		final SecurityPolicy policy = getActiveSecurityPolicy();
-		final Object[] args = pjp.getArgs();
+		final @Nullable Object[] args = pjp.getArgs();
 		if ( !SecurityUtils.policyIsUnrestricted(policy) ) {
 			// enforce policy on filter
 			args[1] = enforceSecurityPolicyOnFilter(policy, filter, entityClass);

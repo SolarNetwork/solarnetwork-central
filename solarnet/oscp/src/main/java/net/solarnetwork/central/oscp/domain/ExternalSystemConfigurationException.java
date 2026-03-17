@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.domain;
 
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.LogEventInfo;
 
 /**
@@ -71,7 +72,7 @@ public class ExternalSystemConfigurationException extends RuntimeException {
 	 */
 	public ExternalSystemConfigurationException(OscpRole role,
 			BaseOscpExternalSystemConfiguration<?> config, LogEventInfo event, String message,
-			Throwable cause) {
+			@Nullable Throwable cause) {
 		super(message, cause);
 		this.role = role;
 		this.config = config;

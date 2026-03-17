@@ -52,7 +52,8 @@ public interface UserRelatedEntity<K extends Comparable<K> & Serializable>
 	 *        the encryptor to use
 	 * @since 1.2
 	 */
-	default void maskSensitiveInformation(@Nullable Function<String, Set<String>> sensitiveKeyProvider,
+	default void maskSensitiveInformation(
+			@Nullable Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			TextEncryptor encryptor) {
 		// nothing
 	}
@@ -67,7 +68,8 @@ public interface UserRelatedEntity<K extends Comparable<K> & Serializable>
 	 *        the encryptor to use
 	 * @since 1.2
 	 */
-	default void unmaskSensitiveInformation(@Nullable Function<String, Set<String>> sensitiveKeyProvider,
+	default void unmaskSensitiveInformation(
+			@Nullable Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			TextEncryptor encryptor) {
 		// nothing
 	}

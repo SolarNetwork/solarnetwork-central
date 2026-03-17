@@ -111,7 +111,8 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	}
 
 	@Override
-	public void maskSensitiveInformation(@Nullable Function<String, Set<String>> sensitiveKeyProvider,
+	public void maskSensitiveInformation(
+			@Nullable Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			TextEncryptor encryptor) {
 		Set<String> secureKeys = (sensitiveKeyProvider != null && serviceIdentifier != null
 				? sensitiveKeyProvider.apply(serviceIdentifier)
@@ -122,7 +123,8 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	}
 
 	@Override
-	public void unmaskSensitiveInformation(@Nullable Function<String, Set<String>> sensitiveKeyProvider,
+	public void unmaskSensitiveInformation(
+			@Nullable Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			TextEncryptor encryptor) {
 		Set<String> secureKeys = (sensitiveKeyProvider != null && serviceIdentifier != null
 				? sensitiveKeyProvider.apply(serviceIdentifier)
@@ -134,7 +136,7 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 
 	@Override
 	public BaseIdentifiableUserModifiableEntity<C, K> digestSensitiveInformation(
-			Function<String, Set<String>> sensitiveKeyProvider) {
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
 		Set<String> secureKeys = (sensitiveKeyProvider != null && serviceIdentifier != null
 				? sensitiveKeyProvider.apply(serviceIdentifier)
 				: null);

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.oscp.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Settings related to datum publishing.
  *
@@ -51,6 +53,7 @@ public interface DatumPublishSettings {
 	 *
 	 * @return the node ID
 	 */
+	@Nullable
 	Long getNodeId();
 
 	/**
@@ -58,6 +61,7 @@ public interface DatumPublishSettings {
 	 *
 	 * @return the template, or {@code null}
 	 */
+	@Nullable
 	String getSourceIdTemplate();
 
 	/**

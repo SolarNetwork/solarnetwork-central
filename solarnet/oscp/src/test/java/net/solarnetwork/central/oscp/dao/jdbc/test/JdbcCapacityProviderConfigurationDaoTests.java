@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allCapacityGroupMeasurementData;
@@ -601,8 +602,8 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 				capacityGroupDao.create(userId, OscpJdbcTestUtils.newCapacityGroupConfiguration(userId,
 						id.getEntityId(), optConf.getEntityId(), Instant.now())));
 
-		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, group.getEntityId(),
-				OscpRole.CapacityProvider, Instant.now()));
+		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, now(),
+				group.getEntityId(), OscpRole.CapacityProvider));
 
 		// WHEN
 		Instant expectedTaskDate = group.getCapacityProviderMeasurementPeriod()
@@ -646,8 +647,8 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 				capacityGroupDao.create(userId, OscpJdbcTestUtils.newCapacityGroupConfiguration(userId,
 						id.getEntityId(), optConf.getEntityId(), Instant.now())));
 
-		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, group.getEntityId(),
-				OscpRole.CapacityProvider, Instant.now()));
+		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, now(),
+				group.getEntityId(), OscpRole.CapacityProvider));
 
 		// WHEN
 		Instant expectedTaskDate = group.getCapacityProviderMeasurementPeriod()
