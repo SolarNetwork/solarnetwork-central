@@ -27,6 +27,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
@@ -67,6 +68,7 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *
 	 * @return the error tags
 	 */
+	@Nullable
 	List<String> errorEventTags();
 
 	/**
@@ -74,6 +76,7 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *
 	 * @return the success tags
 	 */
+	@Nullable
 	List<String> successEventTags();
 
 	/**
@@ -88,6 +91,7 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *
 	 * @return the parameters
 	 */
+	@Nullable
 	Map<String, ?> parameters();
 
 	/**
@@ -101,7 +105,7 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 * @throws ExternalSystemConfigurationException
 	 *         if an error occurs
 	 */
-	default URI systemUri(String path, String... extraErrorTags) {
+	default @Nullable URI systemUri(String path, String @Nullable... extraErrorTags) {
 		String baseUrl = config().getBaseUrl();
 		if ( baseUrl == null || baseUrl.isBlank() ) {
 			return null;
@@ -110,7 +114,7 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 			return URI.create(config().getBaseUrl() + path);
 		} catch ( IllegalArgumentException | NullPointerException e ) {
 			var msg = "[%s] task with %s %s failed because the OSCP URL [%s] is not valid: %s".formatted(
-					name(), role(), config().getId().ident(), config().getBaseUrl(), e.getMessage());
+					name(), role(), config().id().ident(), config().getBaseUrl(), e.getMessage());
 			LogEventInfo event = eventForConfiguration(config(), errorEventTags(), "Invalid URL",
 					extraErrorTags);
 			throw new ExternalSystemConfigurationException(role(), config(), event, msg);
@@ -124,8 +128,8 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *        error tags to include in a user event if an error occurs
 	 * @return the token, or {@code null} if not available
 	 */
-	default String authToken(String... extraErrorTags) {
-		return dao().getExternalSystemAuthToken(config().getId());
+	default @Nullable String authToken(String @Nullable... extraErrorTags) {
+		return dao().getExternalSystemAuthToken(config().id());
 	}
 
 	/**
@@ -136,10 +140,11 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 * @param extraErrorTags
 	 *        error tags to include in a user event if an error occurs
 	 */
-	default void verifySystemOscpVersion(Set<String> supportedVersions, String... extraErrorTags) {
+	default void verifySystemOscpVersion(Set<String> supportedVersions,
+			String @Nullable... extraErrorTags) {
 		if ( !supportedVersions.contains(config().getOscpVersion()) ) {
 			var msg = "[%s] task with %s %s failed because the OSCP version %s is not supported."
-					.formatted(name(), role(), config().getId().ident(), config().getOscpVersion());
+					.formatted(name(), role(), config().id().ident(), config().getOscpVersion());
 			LogEventInfo event = eventForConfiguration(config(), errorEventTags(),
 					"Unsupported OSCP version");
 			throw new ExternalSystemConfigurationException(role(), config(), event, msg);

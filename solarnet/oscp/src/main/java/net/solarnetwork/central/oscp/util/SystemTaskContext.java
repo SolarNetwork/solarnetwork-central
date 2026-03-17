@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.util;
 
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.OscpRole;
@@ -37,7 +38,8 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
  * @version 1.0
  */
 public record SystemTaskContext<C extends BaseOscpExternalSystemConfiguration<C>>(String name,
-		OscpRole role, C config, List<String> errorEventTags, List<String> successEventTags,
-		ExternalSystemConfigurationDao<C> dao, Map<String, ?> parameters) implements TaskContext<C> {
+		OscpRole role, C config, @Nullable List<String> errorEventTags,
+		@Nullable List<String> successEventTags, ExternalSystemConfigurationDao<C> dao,
+		@Nullable Map<String, ?> parameters) implements TaskContext<C> {
 
 }

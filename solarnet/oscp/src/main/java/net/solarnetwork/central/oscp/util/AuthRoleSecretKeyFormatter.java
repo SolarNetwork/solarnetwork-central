@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.util;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.expandTemplateString;
 import java.util.Map;
@@ -88,7 +89,7 @@ public final class AuthRoleSecretKeyFormatter implements Function<AuthRoleInfo, 
 	public String apply(AuthRoleInfo role) {
 		Map<String, Object> params = Map.of("role", role.role().getAlias(), "userId", role.userId(),
 				"configId", role.entityId());
-		return expandTemplateString(template, params);
+		return nonnull(expandTemplateString(template, params), "Formatted key");
 
 	}
 

@@ -1,7 +1,7 @@
 /* ==================================================================
- * CapacityGroupTaskContext.java - 1/09/2022 5:28:12 pm
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2022 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,32 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork OSCP utilities.
+ */
+
+@NullMarked
 package net.solarnetwork.central.oscp.util;
 
-import java.time.Instant;
-import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
-
-/**
- * Extension of {@link TaskContext} to add capacity group related information.
- *
- * @author matt
- * @version 1.0
- */
-public interface CapacityGroupTaskContext<C extends BaseOscpExternalSystemConfiguration<C>>
-		extends TaskContext<C> {
-
-	/**
-	 * Get the capacity group identifier.
-	 *
-	 * @return the group
-	 */
-	String groupIdentifier();
-
-	/**
-	 * Get the task date, which is task specific.
-	 *
-	 * @return the task date
-	 */
-	Instant taskDate();
-
-}
+import org.jspecify.annotations.NullMarked;

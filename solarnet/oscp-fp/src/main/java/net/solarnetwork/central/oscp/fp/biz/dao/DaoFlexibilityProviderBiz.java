@@ -819,12 +819,13 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 						singleton(V20));
 				doWork20(config);
 			} catch ( ExternalSystemConfigurationException confEx ) {
-				if ( confEx.getConfig().getRegistrationStatus() != RegistrationStatus.Pending ) {
+				if ( confEx.hasConfig()
+						&& confEx.config().getRegistrationStatus() != RegistrationStatus.Pending ) {
 					log.info(
 							"Unable to register with {} {} because the registration status is not Pending.",
 							role, configId.ident());
-				} else {
-					confEx.getConfig().setRegistrationStatus(RegistrationStatus.Failed);
+				} else if ( confEx.hasConfig() ) {
+					confEx.config().setRegistrationStatus(RegistrationStatus.Failed);
 					dao.save((C) confEx.getConfig());
 					throw confEx;
 				}
