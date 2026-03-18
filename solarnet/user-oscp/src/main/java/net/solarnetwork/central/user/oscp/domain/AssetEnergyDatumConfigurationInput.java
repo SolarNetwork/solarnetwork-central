@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.oscp.domain;
 
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
 import net.solarnetwork.central.oscp.domain.AssetEnergyDatumConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyDirection;
@@ -33,13 +34,14 @@ import net.solarnetwork.central.oscp.domain.EnergyType;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public final class AssetEnergyDatumConfigurationInput extends BaseAssetDatumConfigurationInput {
 
 	@NotNull
-	private EnergyType type;
+	private @Nullable EnergyType type;
 
 	@NotNull
-	private EnergyDirection direction;
+	private @Nullable EnergyDirection direction;
 
 	/**
 	 * Create an entity from this input.
@@ -72,7 +74,7 @@ public final class AssetEnergyDatumConfigurationInput extends BaseAssetDatumConf
 	 *
 	 * @return the energy type.
 	 */
-	public EnergyType getType() {
+	public final @Nullable EnergyType getType() {
 		return type;
 	}
 
@@ -82,7 +84,7 @@ public final class AssetEnergyDatumConfigurationInput extends BaseAssetDatumConf
 	 * @param type
 	 *        the type to set
 	 */
-	public void setType(EnergyType type) {
+	public final void setType(@Nullable EnergyType type) {
 		this.type = type;
 	}
 
@@ -91,7 +93,7 @@ public final class AssetEnergyDatumConfigurationInput extends BaseAssetDatumConf
 	 *
 	 * @return the energy direction
 	 */
-	public EnergyDirection getDirection() {
+	public final @Nullable EnergyDirection getDirection() {
 		return direction;
 	}
 
@@ -101,7 +103,7 @@ public final class AssetEnergyDatumConfigurationInput extends BaseAssetDatumConf
 	 * @param direction
 	 *        the direction to set
 	 */
-	public void setDirection(EnergyDirection direction) {
+	public final void setDirection(@Nullable EnergyDirection direction) {
 		this.direction = direction;
 	}
 

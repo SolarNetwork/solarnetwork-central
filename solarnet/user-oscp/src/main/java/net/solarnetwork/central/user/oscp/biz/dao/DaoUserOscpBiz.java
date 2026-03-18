@@ -24,10 +24,12 @@ package net.solarnetwork.central.user.oscp.biz.dao;
 
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.biz.SecretsBiz;
@@ -76,7 +78,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	private final CapacityGroupSettingsDao capacityGroupSettingsDao;
 	private final AssetConfigurationDao assetDao;
 
-	private SecretsBiz secretsBiz;
+	private @Nullable SecretsBiz secretsBiz;
 	private Function<AuthRoleInfo, String> configSecretsNameFormatter = AuthRoleSecretKeyFormatter.INSTANCE;
 
 	/**
@@ -118,7 +120,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public UserSettings settingsForUser(Long userId) {
+	public @Nullable UserSettings settingsForUser(Long userId) {
 		return userSettingsDao.get(userId);
 	}
 
@@ -176,7 +178,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public CapacityGroupSettings capacityGroupSettingsForUser(Long userId, Long entityId) {
+	public @Nullable CapacityGroupSettings capacityGroupSettingsForUser(Long userId, Long entityId) {
 		return capacityGroupSettingsDao.get(new UserLongCompositePK(userId, entityId));
 	}
 
@@ -282,10 +284,10 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 
 		OAuthClientSettings oauthSettings = null;
 		if ( conf.hasOauthClientSettings() ) {
-			oauthSettings = conf.oauthClientSettings();
+			oauthSettings = nonnull(conf.oauthClientSettings(), "OAuth Client Settings");
 			if ( oauthSettings.clientSecret() != null && secretsBiz != null ) {
 				// have to save this in SecretsBiz so clear from props
-				conf.getServiceProps().remove(ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET);
+				conf.putServiceProp(ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET, null);
 			}
 		}
 
@@ -304,7 +306,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 			secretsBiz.putSecret(secretName, oauthSettings.asMap());
 		}
 
-		CapacityProviderConfiguration result = capacityProviderDao.get(pk);
+		CapacityProviderConfiguration result = requireNonNullObject(capacityProviderDao.get(pk), pk);
 		result.setToken(token);
 		return result;
 	}
@@ -320,10 +322,10 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 
 		OAuthClientSettings oauthSettings = null;
 		if ( conf.hasOauthClientSettings() ) {
-			oauthSettings = conf.oauthClientSettings();
+			oauthSettings = nonnull(conf.oauthClientSettings(), "OAuth Client Settings");
 			if ( oauthSettings.clientSecret() != null && secretsBiz != null ) {
 				// have to save this in SecretsBiz so clear from props
-				conf.getServiceProps().remove(ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET);
+				conf.putServiceProp(ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET, null);
 			}
 		}
 
@@ -342,7 +344,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 			secretsBiz.putSecret(secretName, oauthSettings.asMap());
 		}
 
-		CapacityOptimizerConfiguration result = capacityOptimizerDao.get(pk);
+		CapacityOptimizerConfiguration result = requireNonNullObject(capacityOptimizerDao.get(pk), pk);
 		result.setToken(token);
 		return result;
 	}
@@ -354,7 +356,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		CapacityGroupConfiguration conf = input
 				.toEntity(unassignedEntityIdKey(requireNonNullArgument(userId, "userId")));
 		UserLongCompositePK pk = capacityGroupDao.create(userId, conf);
-		return capacityGroupDao.get(pk);
+		return requireNonNullObject(capacityGroupDao.get(pk), pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -364,7 +366,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		AssetConfiguration conf = input
 				.toEntity(unassignedEntityIdKey(requireNonNullArgument(userId, "userId")));
 		UserLongCompositePK pk = assetDao.create(userId, conf);
-		return assetDao.get(pk);
+		return requireNonNullObject(assetDao.get(pk), pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -373,7 +375,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 			throws AuthorizationException {
 		UserSettings settings = input.toEntity(requireNonNullArgument(userId, "userId"));
 		Long pk = requireNonNullObject(userSettingsDao.save(settings), userId);
-		return userSettingsDao.get(pk);
+		return requireNonNullObject(userSettingsDao.get(pk), pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -404,12 +406,12 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 
 	private void saveOauthClientSecret(BaseOscpExternalSystemConfiguration<?> conf) {
 		if ( conf.hasOauthClientSettings() ) {
-			OAuthClientSettings oauthSettings = conf.oauthClientSettings();
+			var oauthSettings = nonnull(conf.oauthClientSettings(), "OAuth Client Settings");
 			if ( oauthSettings.clientSecret() != null && secretsBiz != null ) {
 				AuthRoleInfo role = conf.getAuthRole();
 				String secretName = configSecretsNameFormatter.apply(role);
 				secretsBiz.putSecret(secretName, oauthSettings.asMap());
-				conf.getServiceProps().remove(ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET);
+				conf.putServiceProp(ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET, null);
 			}
 		}
 	}
@@ -421,7 +423,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		CapacityGroupConfiguration conf = input.toEntity(new UserLongCompositePK(
 				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
 		UserLongCompositePK pk = requireNonNullObject(capacityGroupDao.save(conf), entityId);
-		return capacityGroupDao.get(pk);
+		return requireNonNullObject(capacityGroupDao.get(pk), pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -431,7 +433,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		CapacityGroupSettings settings = input.toEntity(new UserLongCompositePK(
 				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
 		UserLongCompositePK pk = requireNonNullObject(capacityGroupSettingsDao.save(settings), entityId);
-		return capacityGroupSettingsDao.get(pk);
+		return requireNonNullObject(capacityGroupSettingsDao.get(pk), pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -441,7 +443,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		AssetConfiguration conf = input.toEntity(new UserLongCompositePK(
 				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
 		UserLongCompositePK pk = requireNonNullObject(assetDao.save(conf), entityId);
-		return assetDao.get(pk);
+		return requireNonNullObject(assetDao.get(pk), pk);
 	}
 
 	/**
@@ -450,7 +452,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	 * @param secretsBiz
 	 *        the service to use
 	 */
-	public void setSecretsBiz(SecretsBiz secretsBiz) {
+	public void setSecretsBiz(@Nullable SecretsBiz secretsBiz) {
 		this.secretsBiz = secretsBiz;
 	}
 
@@ -462,7 +464,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	 *        {@link AuthRoleSecretKeyFormatter#INSTANCE}
 	 */
 	public void setConfigSecretsNameFormatter(
-			Function<AuthRoleInfo, String> configSecretsNameFormatter) {
+			@Nullable Function<AuthRoleInfo, String> configSecretsNameFormatter) {
 		if ( configSecretsNameFormatter == null ) {
 			configSecretsNameFormatter = AuthRoleSecretKeyFormatter.INSTANCE;
 		}

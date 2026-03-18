@@ -65,7 +65,7 @@ public class UserSettingsInput implements OscpConfigurationInput<UserSettings, L
 	 * @return {@literal true} if data from this group should be published to
 	 *         SolarIn
 	 */
-	public boolean isPublishToSolarIn() {
+	public final boolean isPublishToSolarIn() {
 		return publishToSolarIn;
 	}
 
@@ -76,7 +76,7 @@ public class UserSettingsInput implements OscpConfigurationInput<UserSettings, L
 	 *        {@literal true} if data from this group should be published to
 	 *        SolarIn
 	 */
-	public void setPublishToSolarIn(boolean publishToSolarIn) {
+	public final void setPublishToSolarIn(boolean publishToSolarIn) {
 		this.publishToSolarIn = publishToSolarIn;
 	}
 
@@ -86,7 +86,7 @@ public class UserSettingsInput implements OscpConfigurationInput<UserSettings, L
 	 * @return {@literal true} if data from this group should be published to
 	 *         SolarFlux
 	 */
-	public boolean isPublishToSolarFlux() {
+	public final boolean isPublishToSolarFlux() {
 		return publishToSolarFlux;
 	}
 
@@ -97,7 +97,7 @@ public class UserSettingsInput implements OscpConfigurationInput<UserSettings, L
 	 *        {@literal true} if data from this group should be published to
 	 *        SolarFlux
 	 */
-	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+	public final void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
 	}
 
@@ -106,7 +106,7 @@ public class UserSettingsInput implements OscpConfigurationInput<UserSettings, L
 	 *
 	 * @return the source ID template
 	 */
-	public String getSourceIdTemplate() {
+	public final @Nullable String getSourceIdTemplate() {
 		return sourceIdTemplate;
 	}
 
@@ -116,7 +116,7 @@ public class UserSettingsInput implements OscpConfigurationInput<UserSettings, L
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 */
-	public void setSourceIdTemplate(String sourceIdTemplate) {
+	public final void setSourceIdTemplate(@Nullable String sourceIdTemplate) {
 		this.sourceIdTemplate = sourceIdTemplate;
 	}
 
@@ -125,7 +125,7 @@ public class UserSettingsInput implements OscpConfigurationInput<UserSettings, L
 	 *
 	 * @return the node ID
 	 */
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
@@ -135,7 +135,8 @@ public class UserSettingsInput implements OscpConfigurationInput<UserSettings, L
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
+
 }
