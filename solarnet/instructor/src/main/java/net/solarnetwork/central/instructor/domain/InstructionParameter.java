@@ -43,6 +43,19 @@ public final class InstructionParameter implements Serializable {
 	private String value;
 
 	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * This constructor is a temporary work-around for Spring binding in the web
+	 * API.
+	 * </p>
+	 */
+	@SuppressWarnings("NullAway.Init")
+	public InstructionParameter() {
+		super();
+	}
+
+	/**
 	 * Construct with values.
 	 *
 	 * @param name
