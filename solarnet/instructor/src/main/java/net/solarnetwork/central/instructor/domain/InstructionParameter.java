@@ -25,6 +25,7 @@ package net.solarnetwork.central.instructor.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -39,18 +40,12 @@ public final class InstructionParameter implements Serializable {
 	@Serial
 	private static final long serialVersionUID = 2828143065346415324L;
 
-	private String name;
-	private String value;
+	private @Nullable String name;
+	private @Nullable String value;
 
 	/**
 	 * Constructor.
-	 * 
-	 * <p>
-	 * This constructor is a temporary work-around for Spring binding in the web
-	 * API.
-	 * </p>
 	 */
-	@SuppressWarnings("NullAway.Init")
 	public InstructionParameter() {
 		super();
 	}
@@ -104,19 +99,19 @@ public final class InstructionParameter implements Serializable {
 		return builder.toString();
 	}
 
-	public final String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
-	public final void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
-	public final String getValue() {
+	public final @Nullable String getValue() {
 		return value;
 	}
 
-	public final void setValue(String value) {
+	public final void setValue(@Nullable String value) {
 		this.value = value;
 	}
 

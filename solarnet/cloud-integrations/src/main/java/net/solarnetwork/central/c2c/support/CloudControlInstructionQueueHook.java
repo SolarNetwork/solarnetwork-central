@@ -31,9 +31,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
+import java.util.SequencedSet;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -280,11 +281,14 @@ public class CloudControlInstructionQueueHook extends BasicIdentifiable
 		if ( params == null || params.isEmpty() ) {
 			return null;
 		}
-		String[] keys = new String[params.size()];
-		for ( ListIterator<InstructionParameter> itr = params.listIterator(); itr.hasNext(); ) {
-			keys[itr.nextIndex()] = itr.next().getName();
+		SequencedSet<String> keys = new LinkedHashSet<>(params.size());
+		for ( InstructionParameter param : params ) {
+			if ( param.getName() == null ) {
+				continue;
+			}
+			keys.add(param.getName());
 		}
-		return keys;
+		return keys.toArray(String[]::new);
 	}
 
 	private void incrementInstructionExecutedStat(String topic, InstructionState resultState) {

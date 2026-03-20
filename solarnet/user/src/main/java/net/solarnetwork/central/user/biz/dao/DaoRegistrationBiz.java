@@ -727,6 +727,9 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		if ( instruction.getInstruction().getParameters() != null ) {
 			StringBuilder buf = new StringBuilder();
 			for ( InstructionParameter param : instruction.getInstruction().getParameters() ) {
+				if ( param.getName() == null || param.getValue() == null ) {
+					continue;
+				}
 				if ( INSTRUCTION_PARAM_CERTIFICATE.equals(param.getName()) ) {
 					buf.append(param.getValue());
 				}

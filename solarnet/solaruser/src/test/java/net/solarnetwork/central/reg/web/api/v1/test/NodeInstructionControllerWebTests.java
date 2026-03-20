@@ -669,11 +669,6 @@ public class NodeInstructionControllerWebTests extends AbstractJUnit5CentralTran
 	@Test
 	@WithMockSecurityUser
 	public void add_SolarSSH() throws Exception {
-		//NodeInstruction ni = new NodeInstruction(randomString(), clock.instant(), nodeId);
-		//ni.setCreated(ni.getInstruction().getInstructionDate());
-		//ni.getInstruction().setParams(Map.of("a", "one"));
-		//ni = nodeInstructionDao.get(nodeInstructionDao.save(ni));
-
 		// GIVEN
 		final String reqBody = """
 				parameters[0].name=host&parameters[0].value=ssh.solarnetwork.net&parameters[1].name=user&parameters[1].value=1442d538-ee1a-4057-a158-e5638b9ecb26&parameters[2].name=port&parameters[2].value=8022&parameters[3].name=rport&parameters[3].value=43342&nodeId=%d&topic=StartRemoteSsh
