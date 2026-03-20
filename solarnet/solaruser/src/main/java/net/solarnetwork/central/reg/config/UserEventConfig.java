@@ -171,6 +171,7 @@ public class UserEventConfig {
 						settings.newAsyncClient(), settings.getUrl(),
 						new ArrayBlockingQueue<>(settings.getWorkQueueSize()),
 						new LinkedHashSetBlockingQueue<>(9), userEventAppenderDao, ENTITY_CODEC);
+				collector.setPingTestName("SQS UserEvent Collector");
 				collector.setReadConcurrency(settings.getReadConcurrency());
 				collector.setWriteConcurrency(settings.getWriteConcurrency());
 				if ( settings.getWorkItemMaxWait() != null ) {
