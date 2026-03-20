@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.support.test;
 
-import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.joining;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
+import static java.util.Map.entry;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.Clock;
@@ -38,11 +38,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.support.UserEventSerializer;
+import net.solarnetwork.codec.jackson.CborUtils;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidUtils;
-import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 /**
  * Test cases for the {@link UserEventSerializer}.
@@ -58,60 +60,109 @@ public class UserEventSerializerTests {
 	private static final String TEST_DATE_STRING = "2021-08-11 16:45:01.234567Z";
 
 	private TimeBasedV7UuidGenerator uuidGenerator;
-	private ObjectMapper mapper;
-
-	private ObjectMapper createObjectMapper() {
-		SimpleModule mod = new SimpleModule("Test");
-		mod.addSerializer(UserEvent.class, UserEventSerializer.INSTANCE);
-		return JsonUtils.JSON_OBJECT_MAPPER.rebuild().addModule(mod).build();
-	}
+	private JsonMapper mapper;
+	private CBORMapper cborMapper;
 
 	@BeforeEach
 	public void setup() {
 		uuidGenerator = new TimeBasedV7UuidGenerator(new SecureRandom(),
 				Clock.fixed(TEST_DATE, ZoneOffset.UTC), UuidUtils.V7_MICRO_COUNT_PRECISION);
-		mapper = createObjectMapper();
+		SimpleModule mod = new SimpleModule("Test");
+		mod.addSerializer(UserEvent.class, UserEventSerializer.INSTANCE);
+		mapper = JsonUtils.JSON_OBJECT_MAPPER.rebuild().addModule(mod).build();
+		cborMapper = CborUtils.CBOR_OBJECT_MAPPER.rebuild().addModule(mod).build();
 	}
 
 	@Test
-	public void serialize_typical() throws IOException {
+	public void json_typical() throws IOException {
 		// GIVEN
-		UserEvent event = new UserEvent(1L, uuidGenerator.generate(), new String[] { "foo", "bar" },
-				"test", "{\"foo\":1}");
+		UserEvent event = new UserEvent(randomLong(), uuidGenerator.generate(),
+				new String[] { randomString(), randomString() }, randomString(), "{\"foo\":1}");
 
 		// WHEN
 		String json = mapper.writeValueAsString(event);
 
 		// THEN
 		// @formatter:off
-		assertThat("JSON", json,
-				is(equalTo("{\"userId\":" + event.getUserId()						
-						+ ",\"created\":\"" + TEST_DATE_STRING + "\""
-						+ ",\"eventId\":\"" + event.getEventId() + "\""
-						+ ",\"tags\":" + stream(event.getTags()).collect(joining("\",\"", "[\"", "\"]"))
-						+ ",\"message\":\"" + event.getMessage() + "\""
-						+ ",\"data\":" + event.getData()
-						+ "}")));
+		then(json)
+			.asInstanceOf(JSON)
+			.isObject()
+			.containsOnly(
+				entry("userId", event.getUserId()),
+				entry("created", TEST_DATE_STRING),
+				entry("eventId", event.getEventId().toString()),
+				entry("tags", event.getTags()),
+				entry("message", event.getMessage()),
+				entry("data",  JsonUtils.getStringMap(event.getData()))
+			)
+			;
 		// @formatter:on
 	}
 
 	@Test
-	public void serialize_noMessageOrData() throws IOException {
+	public void cbor_typical() throws IOException {
 		// GIVEN
-		UserEvent event = new UserEvent(1L, uuidGenerator.generate(), new String[] { "foo", "bar" },
-				null, null);
+		UserEvent event = new UserEvent(randomLong(), uuidGenerator.generate(),
+				new String[] { randomString(), randomString() }, randomString(), "{\"foo\":1}");
+
+		// WHEN
+		byte[] cbor = cborMapper.writeValueAsBytes(event);
+		String json = mapper.writeValueAsString(cborMapper.readTree(cbor));
+
+		// THEN
+		// @formatter:off
+		then(json)
+			.asInstanceOf(JSON)
+			.isObject()
+			.containsOnly(
+				entry("userId", event.getUserId()),
+				entry("created", TEST_DATE_STRING),
+				entry("eventId", event.getEventId().toString()),
+				entry("tags", event.getTags()),
+				entry("message", event.getMessage()),
+				entry("data",  JsonUtils.getStringMap(event.getData()))
+			)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void json_noMessageOrData() throws IOException {
+		// GIVEN
+		UserEvent event = new UserEvent(randomLong(), uuidGenerator.generate(),
+				new String[] { randomString(), randomString() }, null, null);
 
 		// WHEN
 		String json = mapper.writeValueAsString(event);
 
 		// THEN
 		// @formatter:off
-		assertThat("JSON", json,
-				is(equalTo("{\"userId\":" + event.getUserId()
-						+ ",\"created\":\"" + TEST_DATE_STRING + "\""
-						+ ",\"eventId\":\"" + event.getEventId() + "\""
-						+ ",\"tags\":" + stream(event.getTags()).collect(joining("\",\"", "[\"", "\"]"))
-						+ "}")));
+		then(json)
+			.asInstanceOf(JSON)
+			.isObject()
+			.containsOnly(
+				entry("userId", event.getUserId()),
+				entry("created", TEST_DATE_STRING),
+				entry("eventId", event.getEventId().toString()),
+				entry("tags", event.getTags())
+			)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void json_null() throws IOException {
+		// GIVEN
+
+		// WHEN
+		String json = mapper.writeValueAsString((UserEvent) null);
+
+		// THEN
+		// @formatter:off
+		then(json)
+			.asInstanceOf(JSON)
+			.isNull()
+			;
 		// @formatter:on
 	}
 

@@ -49,7 +49,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link UserEventDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 
@@ -69,9 +69,10 @@ public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 	}
 
 	@Override
-	public void add(UserEvent event) {
+	public UserUuidPK persist(UserEvent event) {
 		final InsertUserEvent sql = new InsertUserEvent(event);
 		jdbcOps.update(sql);
+		return event.id();
 	}
 
 	@Override

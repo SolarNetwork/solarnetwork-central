@@ -40,6 +40,7 @@ dependencies {
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
 	implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 		
 	// SolarNetwork
 	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.v16.jakarta:${snExternalOcpp16JakartaVersion}"

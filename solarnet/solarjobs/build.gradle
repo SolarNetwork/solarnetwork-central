@@ -38,7 +38,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
-	// Utils
+	// Utilities
 	implementation "com.bucket4j:bucket4j_jdk17-core:${bucket4jVersion}"
 	implementation "com.bucket4j:bucket4j_jdk17-postgresql:${bucket4jVersion}"
     implementation "de.siegmar:fastcsv:${fastCsvVersion}"
@@ -49,6 +49,7 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	implementation "org.tukaani:xz:${xzVersion}"
 	implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 
 	// SolarNetwork
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"

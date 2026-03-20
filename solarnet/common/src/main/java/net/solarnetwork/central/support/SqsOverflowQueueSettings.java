@@ -1,5 +1,5 @@
 /* ==================================================================
- * SqsDatumCollectorSettings.java - 30/04/2025 5:32:23 pm
+ * SqsOverflowQueueSettings.java - 30/04/2025 5:32:23 pm
  *
  * Copyright 2025 SolarNetwork.net Dev Team
  *
@@ -20,10 +20,10 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.support;
+package net.solarnetwork.central.support;
 
 import java.time.Duration;
-import net.solarnetwork.central.support.SqsProperties;
+import net.solarnetwork.central.common.biz.impl.SqsOverflowQueue;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -31,12 +31,12 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsAsyncClientBuilder;
 
 /**
- * Settings for the {@link SqsDatumCollector} class.
+ * Settings for the {@link SqsOverflowQueue} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class SqsDatumCollectorSettings extends SqsProperties {
+public class SqsOverflowQueueSettings extends SqsProperties {
 
 	/** The {@code statFrequency} property default value. */
 	public static final int DEFAULT_STAT_FREQUENCY = 200;
@@ -46,17 +46,16 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 
 	private int statFrequency = DEFAULT_STAT_FREQUENCY;
 	private int workQueueSize = DEFUALT_WORK_QUEUE_SIZE;
-	private Duration workItemMaxWait = Duration
-			.ofMillis(SqsDatumCollector.DEFAULT_WORK_ITEM_MAX_WAIT_MS);
-	private int readConcurrency = SqsDatumCollector.DEFAULT_READ_CONCURRENCY;
-	private int writeConcurrency = SqsDatumCollector.DEFAULT_WRITE_CONCURRENCY;
-	private int readMaxMessageCount = SqsDatumCollector.DEFAULT_READ_MAX_MESSAGE_COUNT;
+	private Duration workItemMaxWait = Duration.ofMillis(SqsOverflowQueue.DEFAULT_WORK_ITEM_MAX_WAIT_MS);
+	private int readConcurrency = SqsOverflowQueue.DEFAULT_READ_CONCURRENCY;
+	private int writeConcurrency = SqsOverflowQueue.DEFAULT_WRITE_CONCURRENCY;
+	private int readMaxMessageCount = SqsOverflowQueue.DEFAULT_READ_MAX_MESSAGE_COUNT;
 	private Duration readMaxWaitTime = Duration
-			.ofSeconds(SqsDatumCollector.DEFAULT_READ_MAX_WAIT_TIME_SECS);
-	private Duration readSleepMin = Duration.ofMillis(SqsDatumCollector.DEFAULT_READ_SLEEP_MIN_MS);
-	private Duration readSleepMax = Duration.ofMillis(SqsDatumCollector.DEFAULT_READ_SLEEP_MAX_MS);
+			.ofSeconds(SqsOverflowQueue.DEFAULT_READ_MAX_WAIT_TIME_SECS);
+	private Duration readSleepMin = Duration.ofMillis(SqsOverflowQueue.DEFAULT_READ_SLEEP_MIN_MS);
+	private Duration readSleepMax = Duration.ofMillis(SqsOverflowQueue.DEFAULT_READ_SLEEP_MAX_MS);
 	private Duration readSleepThrottleStep = Duration
-			.ofMillis(SqsDatumCollector.DEFAULT_READ_SLEEP_THROTTLE_STEP_MS);
+			.ofMillis(SqsOverflowQueue.DEFAULT_READ_SLEEP_THROTTLE_STEP_MS);
 
 	private Duration shutdownWait = Duration.ZERO;
 
@@ -286,7 +285,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @param readSleepMax
 	 *        the maximum sleep amount to set
 	 */
-	public final void setReadSseepMax(Duration readSleepMax) {
+	public final void setReadSleepMax(Duration readSleepMax) {
 		this.readSleepMax = readSleepMax;
 	}
 
@@ -310,7 +309,7 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 	 * @param readSleepThrottleStep
 	 *        the step amount to set
 	 */
-	public final void setReadRejectionSleepStep(Duration readSleepThrottleStep) {
+	public final void setReadSleepThrottleStep(Duration readSleepThrottleStep) {
 		this.readSleepThrottleStep = readSleepThrottleStep;
 	}
 

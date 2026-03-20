@@ -39,11 +39,11 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventBiz;
+import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.BasicUserEventFilter;
 import net.solarnetwork.central.common.dao.UserEventFilter;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.reg.config.JsonConfig;
-import net.solarnetwork.central.reg.config.UserEventConfig;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.support.OutputSerializationSupportContext;
@@ -143,7 +143,7 @@ public class UserEventController {
 	 *         class
 	 */
 	@Autowired
-	@Qualifier(UserEventConfig.USER_EVENT)
+	@Qualifier(SolarNetCommonConfiguration.USER_EVENTS)
 	public void setFilterValidator(Validator filterValidator) {
 		if ( filterValidator != null && !filterValidator.supports(UserEventFilter.class) ) {
 			throw new IllegalArgumentException("The Validator must support the UserEventFilter class.");

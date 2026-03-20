@@ -47,6 +47,7 @@ dependencies {
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 
 	// Testing
 	testImplementation project(':solarnet-common-test')

@@ -41,6 +41,7 @@ The following Spring runtime profiles are available:
 | `oscp-v20`    | Enable OSCP v2.0 integration. See references to [SolarNetOscpConfiguration][SolarNetOscpConfiguration]. |
 | `rate-limit` | Enables rate-limiting API access. See [RateLimitConfig][RateLimitConfig]. |
 | `snf-billing` | Enable SNF billing. See [SnfBillingConfig][SnfBillingConfig]. |
+| `sqs-user-event-appender` | Enable the SQS-backed user event queue processor. :warning: By default reading from SQS is disabled, under the assumption that the SolarJobs app will process SQS messages. |
 | `user-event-sqs` | Enable the SQS user event service. See [UserEventServiceSqsConfig][UserEventServiceSqsConfig]. |
 | `user-instructions` | Enable user instructions. |
 | `user-secrets` | Enable user secrets. |

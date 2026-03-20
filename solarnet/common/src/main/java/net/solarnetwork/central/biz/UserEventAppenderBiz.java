@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.biz;
 
+import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserEvent;
@@ -30,7 +31,7 @@ import net.solarnetwork.central.domain.UserEvent;
  * Service API for appending user events.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface UserEventAppenderBiz {
 
@@ -68,5 +69,30 @@ public interface UserEventAppenderBiz {
 		}
 		return biz.addEvent(userId, info);
 	}
+
+	/**
+	 * A function to generate a SolarFlux MQTT topic from a user event.
+	 *
+	 * @since 2.1
+	 */
+	public static Function<UserEvent, String> SOLARFLUX_TOPIC_FN = (event) -> "user/" + event.getUserId()
+			+ "/event";
+
+	/**
+	 * A function to generate a SolarFlux MQTT topic from a user event.
+	 *
+	 * @since 2.1
+	 */
+	public static final Function<UserEvent, String> SOLARFLUX_TAGGED_TOPIC_FN = (event) -> {
+		final StringBuilder buf = new StringBuilder("user/");
+		buf.append(event.getUserId()).append("/event");
+
+		final String[] tags = event.getTags();
+		for ( String tag : tags ) {
+			buf.append('/');
+			buf.append(tag);
+		}
+		return buf.toString();
+	};
 
 }

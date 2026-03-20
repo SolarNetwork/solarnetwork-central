@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.domain;
 
-import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
@@ -139,7 +138,7 @@ public final class UserEvent extends BasicSerializableIdentity<UserUuidPK>
 
 	@Override
 	public final Long getUserId() {
-		return nonnull(getId(), "id").getUserId();
+		return id().getUserId();
 	}
 
 	@Override
@@ -153,7 +152,7 @@ public final class UserEvent extends BasicSerializableIdentity<UserUuidPK>
 	 * @return the event ID
 	 */
 	public UUID getEventId() {
-		return nonnull(getId(), "id").getUuid();
+		return id().getUuid();
 	}
 
 	/**

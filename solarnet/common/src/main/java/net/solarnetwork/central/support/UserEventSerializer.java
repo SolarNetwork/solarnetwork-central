@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.support;
 
+import static tools.jackson.core.StreamWriteCapability.CAN_WRITE_BINARY_NATIVELY;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserEvent;
@@ -33,11 +34,18 @@ import tools.jackson.databind.ser.std.StdSerializer;
 
 /**
  * JSON serializer for {@link UserEvent} objects.
+ * 
+ * <p>
+ * The {@code data} property is presumed to be a JSON string, and serialized as
+ * raw JSON. If the generator does not support writing raw JSON, {@code data}
+ * will be parsed as a basic {@link Map} and that will be serialized, achieving
+ * essentially the same output.
+ * </p>
  *
  * @author matt
  * @version 2.0
  */
-public class UserEventSerializer extends StdSerializer<@Nullable UserEvent> {
+public final class UserEventSerializer extends StdSerializer<@Nullable UserEvent> {
 
 	/** A default instance. */
 	public static final UserEventSerializer INSTANCE = new UserEventSerializer();
@@ -70,15 +78,24 @@ public class UserEventSerializer extends StdSerializer<@Nullable UserEvent> {
 		}
 		if ( haveData ) {
 			generator.writeName("data");
-			try {
-				generator.writeRawValue(event.getData());
-			} catch ( UnsupportedOperationException e ) {
-				// can happen with things like CBOR, so parse as Map
-				Map<String, Object> dataMap = JsonUtils.getStringMap(event.getData());
-				generator.writePOJO(dataMap);
+			// test for CAN_WRITE_BINARY_NATIVELY to avoid throwing UnsupportedOperationException
+			// in writeRawValue() as CBOR does not support that
+			if ( generator.streamWriteCapabilities().isEnabled(CAN_WRITE_BINARY_NATIVELY) ) {
+				writeEventDataMap(event, generator);
+			} else {
+				try {
+					generator.writeRawValue(event.getData());
+				} catch ( UnsupportedOperationException e ) {
+					writeEventDataMap(event, generator);
+				}
 			}
 		}
 		generator.writeEndObject();
+	}
+
+	private static void writeEventDataMap(UserEvent event, JsonGenerator generator) {
+		Map<String, Object> dataMap = JsonUtils.getStringMap(event.getData());
+		generator.writePOJO(dataMap);
 	}
 
 }

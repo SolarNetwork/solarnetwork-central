@@ -50,6 +50,7 @@ dependencies {
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 
 	// Testing
 	testImplementation project(':solarnet-common-test')

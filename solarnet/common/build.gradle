@@ -78,6 +78,7 @@ dependencies {
 	implementation "software.amazon.awssdk:ec2:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:secretsmanager:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 	
 	// Swagger support
 	implementation "io.swagger.core.v3:swagger-annotations-jakarta:${swaggerVersion}"

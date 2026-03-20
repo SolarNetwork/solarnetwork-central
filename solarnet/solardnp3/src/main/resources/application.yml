@@ -98,12 +98,26 @@ app:
     thread-name-prefix: "SolarNet-Sched-"
     pool-size: 2
     remove-on-cancel-policy: true
-  user.events:
-    async-appender:
-      threads: 1
-      stat-frequency: 500
-      queue-lag-alert-threshold: 500
-      queue-capacity: 500000
+  user-events:
+    dao:
+      mqtt-publish-timeout: "100ms"
+    sqs:
+      region: "us-west-2"
+      queue-name: "user-events"
+      url: "https://sqs.us-west-2.amazonaws.com/1234567890/user-events"
+      access-key: "ACCESS_KEY_HERE"
+      secret-key: "SECRET_KEY_HERE"
+      work-queue-size: 100
+      work-item-max-wait: "5s"
+      read-concurrency: 0
+      write-concurrency: 1
+      read-max-message-count: 10
+      read-max-wait-time: "20s"
+      read-sleep-min: "0s"
+      read-sleep-max: "30s"
+      read-sleep-throttle-step: "1s"
+      shutdown-wait: "30s"
+      stat-frequency: 200
 
 logging:
   level:

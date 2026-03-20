@@ -39,7 +39,8 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 	implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
-		
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
+
 	// SolarNetwork
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"

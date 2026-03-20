@@ -22,6 +22,7 @@ The following Spring runtime profiles are available:
 | `mqtt` | Enables integration with SolarIn/MQTT. See [MqttDataCollectorConfig][MqttDataCollectorConfig]. |
 | `no-solarflux` | Disable SolarFlux MQTT integration when `mqtt` profile is active. |
 | `datum-collector-sqs` | Use the SQS datum collector instead of the in-process one. |
+| `sqs-user-event-appender` | Enable the SQS-backed user event queue processor. :warning: By default reading from SQS is disabled, under the assumption that the SolarJobs app will process SQS messages. |
 
 For example, in a production deployment the `SPRING_PROFILES_ACTIVE` environment variable can be
 configured as

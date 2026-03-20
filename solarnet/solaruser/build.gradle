@@ -58,7 +58,7 @@ dependencies {
 	// Template support
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 	
-	// Utils
+	// Utilities
 	implementation 'commons-codec:commons-codec'
 	implementation "com.bucket4j:bucket4j_jdk17-core:${bucket4jVersion}"
 	implementation "com.bucket4j:bucket4j_jdk17-postgresql:${bucket4jVersion}"
@@ -70,6 +70,7 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	implementation "org.tukaani:xz:${xzVersion}"
 	implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 		
 	// SolarNetwork
 	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.v16.jakarta:${snExternalOcpp16JakartaVersion}"

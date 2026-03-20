@@ -31,10 +31,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import net.solarnetwork.central.datum.support.SqsDatumCollector;
-import net.solarnetwork.central.datum.support.SqsDatumCollectorSettings;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
+import net.solarnetwork.central.support.SqsOverflowQueueSettings;
 import net.solarnetwork.util.StatTracker;
 
 /**
@@ -52,13 +52,13 @@ public class SqsDatumCollectorConfig implements SolarInConfiguration {
 
 	@ConfigurationProperties(prefix = "app.solarin.sqs-collector")
 	@Bean
-	public SqsDatumCollectorSettings sqsDatumCollectorSettings() {
-		return new SqsDatumCollectorSettings();
+	public SqsOverflowQueueSettings sqsDatumCollectorSettings() {
+		return new SqsOverflowQueueSettings();
 	}
 
 	@Qualifier(DATUM_COLLECTOR)
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public SqsDatumCollector sqsDatumCollector(SqsDatumCollectorSettings settings) {
+	public SqsDatumCollector sqsDatumCollector(SqsOverflowQueueSettings settings) {
 		StatTracker stats = new StatTracker("SqsDatumCollector", null,
 				LoggerFactory.getLogger(SqsDatumCollector.class), settings.getStatFrequency());
 

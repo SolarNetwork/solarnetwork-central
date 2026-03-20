@@ -480,6 +480,26 @@ app:
       destination-cache:
         ttl: 600
         heap-max-entries: 1000
+  user-events:
+    dao:
+      mqtt-publish-timeout: "100ms"
+    sqs:
+      region: "us-west-2"
+      queue-name: "user-events"
+      url: "https://sqs.us-west-2.amazonaws.com/1234567890/user-events"
+      access-key: "ACCESS_KEY_HERE"
+      secret-key: "SECRET_KEY_HERE"
+      work-queue-size: 100
+      work-item-max-wait: "5s"
+      read-concurrency: 1
+      write-concurrency: 2
+      read-max-message-count: 10
+      read-max-wait-time: "20s"
+      read-sleep-min: "0s"
+      read-sleep-max: "30s"
+      read-sleep-throttle-step: "1s"
+      shutdown-wait: "30s"
+      stat-frequency: 200
   user-instr:
     allow-http-local-hosts: false
     cache:
