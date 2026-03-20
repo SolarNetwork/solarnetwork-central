@@ -32,7 +32,7 @@ package net.solarnetwork.central.support;
 public interface EntityCodec<T, K, S> {
 
 	/**
-	 * Serialize an entity to JSON.
+	 * Serialize an entity to external form.
 	 *
 	 * @param entity
 	 *        the entity to serialize
@@ -41,7 +41,7 @@ public interface EntityCodec<T, K, S> {
 	S serialize(T entity);
 
 	/**
-	 * Deserialize an entity from JSON.
+	 * Deserialize an entity from external form.
 	 *
 	 * @param json
 	 *        the JSON to deserialize

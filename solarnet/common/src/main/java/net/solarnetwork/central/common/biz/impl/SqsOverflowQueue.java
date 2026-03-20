@@ -509,10 +509,6 @@ public class SqsOverflowQueue<T, K>
 
 	@Override
 	public @Nullable K persist(T entity) {
-		return submitWorkOrAddToSqsQueue(entity);
-	}
-
-	protected K submitWorkOrAddToSqsQueue(T entity) {
 		stats.increment(BasicCount.ObjectsReceived);
 		CompletableFuture<K> f = new CompletableFuture<>();
 		if ( queue.offer(new WorkItem<T, K>(entity, f)) ) {

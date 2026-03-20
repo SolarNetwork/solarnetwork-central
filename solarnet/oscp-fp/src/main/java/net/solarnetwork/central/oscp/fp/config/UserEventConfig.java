@@ -152,6 +152,7 @@ public class UserEventConfig {
 			private Duration mqttTimeout = ObservableGenericWriteOnlyDao.DEFAULT_OBSERVER_TIMEOUT;
 
 			@ConfigurationProperties(prefix = "app.user-events.sqs")
+			@Qualifier(USER_EVENTS)
 			@Bean
 			public SqsOverflowQueueSettings userEventsSqsOverflowQueueSettings() {
 				return new SqsOverflowQueueSettings();
@@ -160,7 +161,8 @@ public class UserEventConfig {
 			@Qualifier(USER_EVENTS)
 			@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 			public SqsOverflowQueue<UserEvent, UserUuidPK> userEventsSqsOverflowQueue(
-					SqsOverflowQueueSettings settings, UserEventAppenderDao userEventAppenderDao) {
+					@Qualifier(USER_EVENTS) SqsOverflowQueueSettings settings,
+					UserEventAppenderDao userEventAppenderDao) {
 				StatTracker stats = new StatTracker("SqsUserEventsCollector", null,
 						LoggerFactory.getLogger(SqsOverflowQueue.class), settings.getStatFrequency());
 
@@ -168,6 +170,7 @@ public class UserEventConfig {
 						settings.newAsyncClient(), settings.getUrl(),
 						new ArrayBlockingQueue<>(settings.getWorkQueueSize()),
 						new LinkedHashSetBlockingQueue<>(9), userEventAppenderDao, ENTITY_CODEC);
+				collector.setPingTestName("SQS UserEvent Collector");
 				collector.setReadConcurrency(settings.getReadConcurrency());
 				collector.setWriteConcurrency(settings.getWriteConcurrency());
 				if ( settings.getWorkItemMaxWait() != null ) {

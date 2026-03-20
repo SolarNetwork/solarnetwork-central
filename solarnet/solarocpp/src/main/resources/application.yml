@@ -77,6 +77,7 @@ app:
         client-id: "solarocpp-${app.meta.instance-id}"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
+        clean-session: true
         connect-timeout-seconds: 10
         keep-alive-seconds: 60
         read-timeout-seconds: 0
@@ -116,7 +117,7 @@ app:
     sqs:
       region: "us-west-2"
       queue-name: "user-events"
-      url: "https://sqs.us-west-2.amazonaws.com/1234567890/user-events"
+      url: "https://sqs.us-west-2.amazonaws.com/1234567890/user-events-queue"
       access-key: "ACCESS_KEY_HERE"
       secret-key: "SECRET_KEY_HERE"
       work-queue-size: 100
