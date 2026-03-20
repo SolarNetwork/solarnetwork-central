@@ -116,7 +116,7 @@ app:
     sqs:
       region: "us-west-2"
       queue-name: "user-events"
-      url: "https://sqs.us-west-2.amazonaws.com/1234567890/user-events"
+      url: "https://sqs.us-west-2.amazonaws.com/1234567890/user-events-queue"
       access-key: "ACCESS_KEY_HERE"
       secret-key: "SECRET_KEY_HERE"
       work-queue-size: 100
