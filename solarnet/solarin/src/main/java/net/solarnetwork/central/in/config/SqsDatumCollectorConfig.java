@@ -51,6 +51,7 @@ public class SqsDatumCollectorConfig implements SolarInConfiguration {
 	private DatumEntityDao datumDao;
 
 	@ConfigurationProperties(prefix = "app.solarin.sqs-collector")
+	@Qualifier(DATUM_COLLECTOR)
 	@Bean
 	public SqsOverflowQueueSettings sqsDatumCollectorSettings() {
 		return new SqsOverflowQueueSettings();
@@ -58,7 +59,8 @@ public class SqsDatumCollectorConfig implements SolarInConfiguration {
 
 	@Qualifier(DATUM_COLLECTOR)
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public SqsDatumCollector sqsDatumCollector(SqsOverflowQueueSettings settings) {
+	public SqsDatumCollector sqsDatumCollector(
+			@Qualifier(DATUM_COLLECTOR) SqsOverflowQueueSettings settings) {
 		StatTracker stats = new StatTracker("SqsDatumCollector", null,
 				LoggerFactory.getLogger(SqsDatumCollector.class), settings.getStatFrequency());
 
