@@ -68,7 +68,7 @@ public abstract class BaseSqsIntegrationTestsSupport implements UncaughtExceptio
 	public static void setupClass() {
 		Properties p = new Properties();
 		try {
-			InputStream in = SqsDatumCollector_IntegrationTests.class.getClassLoader()
+			InputStream in = BaseSqsIntegrationTestsSupport.class.getClassLoader()
 					.getResourceAsStream("sqs-datum-queue.properties");
 			if ( in != null ) {
 				p.load(in);

@@ -44,18 +44,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import net.solarnetwork.central.common.biz.impl.SqsOverflowQueue;
-import net.solarnetwork.central.common.dao.GenericWriteOnlyDao;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
 import net.solarnetwork.central.datum.support.DatumJsonEntityCodec;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
+import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDaoGenericAdapter;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
@@ -122,27 +121,6 @@ public class DatumSqsOverflowQueue_IntegrationTests extends BaseSqsIntegrationTe
 
 	}
 
-	private static final class DatumWriteOnlyDaoAdapter implements GenericWriteOnlyDao<Object, DatumPK> {
-
-		private final DatumWriteOnlyDao delegate;
-
-		private DatumWriteOnlyDaoAdapter(DatumWriteOnlyDao delegate) {
-			super();
-			this.delegate = requireNonNullArgument(delegate, "delegate");
-		}
-
-		@Override
-		public @Nullable DatumPK persist(Object entity) {
-			return switch (entity) {
-				case GeneralObjectDatum<?> gd -> delegate.persist(gd);
-				case StreamDatum sd -> delegate.store(sd);
-				case Datum cd -> delegate.store(cd);
-				default -> throw new IllegalArgumentException("Unsupported datum type: " + entity);
-			};
-		}
-
-	}
-
 	private static final int WORK_QUEUE_SIZE = 4;
 
 	private StatTracker stats;
@@ -162,7 +140,7 @@ public class DatumSqsOverflowQueue_IntegrationTests extends BaseSqsIntegrationTe
 
 		collector = new SqsOverflowQueue<Object, DatumPK>(stats, "Datum", client, SQS_PROPS.getUrl(),
 				workQueue, completedSqsMessageHandles,
-				new DatumWriteOnlyDaoAdapter(new TestDatumDao(entityCodec::entityId)), entityCodec);
+				new DatumWriteOnlyDaoGenericAdapter(new TestDatumDao(entityCodec::entityId)), entityCodec);
 		collector.setExceptionHandler(this);
 		collector.setReadConcurrency(1);
 		collector.setWriteConcurrency(2);
