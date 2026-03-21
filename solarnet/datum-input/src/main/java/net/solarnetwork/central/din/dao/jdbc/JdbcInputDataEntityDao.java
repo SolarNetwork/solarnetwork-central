@@ -23,13 +23,10 @@
 package net.solarnetwork.central.din.dao.jdbc;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.din.dao.InputDataEntityDao;
@@ -97,23 +94,19 @@ public class JdbcInputDataEntityDao implements InputDataEntityDao {
 		jdbcOps.update(sql);
 	}
 
-	private static byte @Nullable [] dataCallback(PreparedStatement ps)
-			throws SQLException, DataAccessException {
-		if ( ps.execute() ) {
-			try (ResultSet rs = ps.getResultSet()) {
-				if ( rs.next() ) {
-					return rs.getBytes(1);
-				}
-			}
-		}
-		return null;
-	}
-
-	@SuppressWarnings("NullAway")
 	@Override
 	public byte @Nullable [] getAndPut(UserLongStringCompositePK id, byte[] data) {
 		UpsertInputDataReturnPrevious sql = new UpsertInputDataReturnPrevious(id, data);
-		return jdbcOps.execute(sql, JdbcInputDataEntityDao::dataCallback);
+		return jdbcOps.execute(sql, ps -> {
+			if ( ps.execute() ) {
+				try (ResultSet rs = ps.getResultSet()) {
+					if ( rs.next() ) {
+						return rs.getBytes(1);
+					}
+				}
+			}
+			return null;
+		});
 	}
 
 }
