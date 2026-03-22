@@ -180,7 +180,7 @@ public class CentralSystemUser extends SystemUser implements UserRelatedEntity<L
 	 * @return the owner user ID
 	 */
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 

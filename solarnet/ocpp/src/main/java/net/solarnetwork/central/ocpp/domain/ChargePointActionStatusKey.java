@@ -209,7 +209,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 *
 	 * @return the user ID
 	 */
-	public long getUserId() {
+	public final long getUserId() {
 		return userId;
 	}
 
@@ -218,7 +218,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 *
 	 * @return the Charge Point ID
 	 */
-	public long getChargePointId() {
+	public final long getChargePointId() {
 		return chargePointId;
 	}
 
@@ -227,7 +227,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 *
 	 * @return the EVSE ID, or {@literal 0} for the charger itself
 	 */
-	public int getEvseId() {
+	public final int getEvseId() {
 		return evseId;
 	}
 
@@ -236,7 +236,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 *
 	 * @return the connector ID, or {@literal 0} for the EVSE itself
 	 */
-	public int getConnectorId() {
+	public final int getConnectorId() {
 		return connectorId;
 	}
 
@@ -245,7 +245,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 *
 	 * @return the action, never {@code null}
 	 */
-	public String getAction() {
+	public final String getAction() {
 		return action;
 	}
 

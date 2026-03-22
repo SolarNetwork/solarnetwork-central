@@ -233,7 +233,7 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 	 * @return the owner user ID
 	 */
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 
@@ -243,7 +243,7 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 	 * @return the node ID
 	 */
 	@Override
-	public Long getNodeId() {
+	public final Long getNodeId() {
 		return nodeId;
 	}
 

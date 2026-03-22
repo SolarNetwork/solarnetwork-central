@@ -107,7 +107,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	}
 
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return id().getUserId();
 	}
 
@@ -116,7 +116,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *
 	 * @return the Charge Point ID
 	 */
-	public Long getChargePointId() {
+	public final Long getChargePointId() {
 		return id().getEntityId();
 	}
 
@@ -125,7 +125,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *
 	 * @return the instance name, or {@code null} if not connected
 	 */
-	public @Nullable String getConnectedTo() {
+	public final @Nullable String getConnectedTo() {
 		return connectedTo;
 	}
 
@@ -135,7 +135,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 * @param connectedTo
 	 *        the instance name, or {@code null} if not connected
 	 */
-	public void setConnectedTo(@Nullable String connectedTo) {
+	public final void setConnectedTo(@Nullable String connectedTo) {
 		this.connectedTo = connectedTo;
 	}
 
@@ -145,7 +145,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 * @return the sessionId the session ID
 	 * @since 1.1
 	 */
-	public @Nullable String getSessionId() {
+	public final @Nullable String getSessionId() {
 		return sessionId;
 	}
 
@@ -156,7 +156,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *        the session ID to set
 	 * @since 1.1
 	 */
-	public void setSessionId(@Nullable String sessionId) {
+	public final void setSessionId(@Nullable String sessionId) {
 		this.sessionId = sessionId;
 	}
 
@@ -165,7 +165,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *
 	 * @return the date, or {@code null} if never connected
 	 */
-	public @Nullable Instant getConnectedDate() {
+	public final @Nullable Instant getConnectedDate() {
 		return connectedDate;
 	}
 
@@ -175,7 +175,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 * @param connectedDate
 	 *        the date to set
 	 */
-	public void setConnectedDate(@Nullable Instant connectedDate) {
+	public final void setConnectedDate(@Nullable Instant connectedDate) {
 		this.connectedDate = connectedDate;
 	}
 

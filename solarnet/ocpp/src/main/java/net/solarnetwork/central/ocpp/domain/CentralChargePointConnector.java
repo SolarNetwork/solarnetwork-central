@@ -230,7 +230,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 *
 	 * @return the charge point ID
 	 */
-	public @Nullable Long getChargePointId() {
+	public final @Nullable Long getChargePointId() {
 		ChargePointConnectorKey id = getId();
 		return (id != null ? id.getChargePointId() : null);
 	}
@@ -241,7 +241,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 * @return the EVSE ID
 	 * @since 1.2
 	 */
-	public @Nullable Integer getEvseId() {
+	public final @Nullable Integer getEvseId() {
 		ChargePointConnectorKey id = getId();
 		return (id != null ? id.getEvseId() : null);
 	}
@@ -251,7 +251,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 *
 	 * @return the connector ID
 	 */
-	public @Nullable Integer getConnectorId() {
+	public final @Nullable Integer getConnectorId() {
 		ChargePointConnectorKey id = getId();
 		return (id != null ? id.getConnectorId() : null);
 	}
@@ -262,7 +262,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 * @return the owner user ID
 	 */
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 

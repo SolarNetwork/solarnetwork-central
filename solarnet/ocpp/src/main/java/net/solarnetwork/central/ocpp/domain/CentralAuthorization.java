@@ -168,7 +168,7 @@ public class CentralAuthorization extends Authorization implements UserRelatedEn
 	 * @return the owner user ID
 	 */
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 

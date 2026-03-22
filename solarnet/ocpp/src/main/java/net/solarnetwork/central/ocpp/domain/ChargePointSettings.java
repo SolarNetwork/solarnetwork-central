@@ -145,12 +145,12 @@ public class ChargePointSettings extends BasicLongEntity
 	 *
 	 * @return the charge point ID
 	 */
-	public @Nullable Long getChargePointId() {
+	public final @Nullable Long getChargePointId() {
 		return getId();
 	}
 
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 
@@ -160,7 +160,7 @@ public class ChargePointSettings extends BasicLongEntity
 	 * @return {@literal true} if data from this charge point should be
 	 *         published to SolarIn; defaults to {@literal true}
 	 */
-	public boolean isPublishToSolarIn() {
+	public final boolean isPublishToSolarIn() {
 		return publishToSolarIn;
 	}
 
@@ -171,7 +171,7 @@ public class ChargePointSettings extends BasicLongEntity
 	 *        {@literal true} if data from this charge point should be published
 	 *        to SolarIn
 	 */
-	public void setPublishToSolarIn(boolean publishToSolarIn) {
+	public final void setPublishToSolarIn(boolean publishToSolarIn) {
 		this.publishToSolarIn = publishToSolarIn;
 	}
 
@@ -181,7 +181,7 @@ public class ChargePointSettings extends BasicLongEntity
 	 * @return {@literal true} if data from this charge point should be
 	 *         published to SolarFlux; defaults to {@literal true}
 	 */
-	public boolean isPublishToSolarFlux() {
+	public final boolean isPublishToSolarFlux() {
 		return publishToSolarFlux;
 	}
 
@@ -192,7 +192,7 @@ public class ChargePointSettings extends BasicLongEntity
 	 *        {@literal true} if data from this charge point should be published
 	 *        to SolarFlux
 	 */
-	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+	public final void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
 	}
 
@@ -201,7 +201,7 @@ public class ChargePointSettings extends BasicLongEntity
 	 *
 	 * @return the template, or {@code null}
 	 */
-	public @Nullable String getSourceIdTemplate() {
+	public final @Nullable String getSourceIdTemplate() {
 		return sourceIdTemplate;
 	}
 
@@ -211,7 +211,7 @@ public class ChargePointSettings extends BasicLongEntity
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 */
-	public void setSourceIdTemplate(@Nullable String sourceIdTemplate) {
+	public final void setSourceIdTemplate(@Nullable String sourceIdTemplate) {
 		this.sourceIdTemplate = sourceIdTemplate;
 	}
 

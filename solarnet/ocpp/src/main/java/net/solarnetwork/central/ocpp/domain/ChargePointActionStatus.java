@@ -115,7 +115,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	}
 
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return id().getUserId();
 	}
 
@@ -124,7 +124,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 *
 	 * @return the Charge Point ID
 	 */
-	public long getChargePointId() {
+	public final long getChargePointId() {
 		return id().getChargePointId();
 	}
 
@@ -134,7 +134,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @return the EVSE ID, or {@literal 0} for the charger itself
 	 * @since 1.1
 	 */
-	public int getEvseId() {
+	public final int getEvseId() {
 		return id().getEvseId();
 	}
 
@@ -143,7 +143,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 *
 	 * @return the connector ID, or {@literal 0} for the EVSE itself
 	 */
-	public int getConnectorId() {
+	public final int getConnectorId() {
 		return id().getConnectorId();
 	}
 
@@ -152,7 +152,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 *
 	 * @return the action, never {@code null}
 	 */
-	public String getAction() {
+	public final String getAction() {
 		return id().getAction();
 	}
 
@@ -161,7 +161,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 *
 	 * @return the message ID
 	 */
-	public @Nullable String getMessageId() {
+	public final @Nullable String getMessageId() {
 		return messageId;
 	}
 
@@ -171,7 +171,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @param messageId
 	 *        the message ID to set
 	 */
-	public void setMessageId(@Nullable String messageId) {
+	public final void setMessageId(@Nullable String messageId) {
 		this.messageId = messageId;
 	}
 
@@ -180,7 +180,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 *
 	 * @return the timestamp
 	 */
-	public @Nullable Instant getTimestamp() {
+	public final @Nullable Instant getTimestamp() {
 		return timestamp;
 	}
 
@@ -190,7 +190,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @param timestamp
 	 *        the timestamp to set
 	 */
-	public void setTimestamp(@Nullable Instant timestamp) {
+	public final void setTimestamp(@Nullable Instant timestamp) {
 		this.timestamp = timestamp;
 	}
 
