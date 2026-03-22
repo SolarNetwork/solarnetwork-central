@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -89,7 +90,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	private UserEventAppenderBiz userEventAppenderBiz;
 	private ChargePointStatusDao chargePointStatusDao;
 	private ChargePointActionStatusUpdateDao chargePointActionStatusUpdateDao;
-	private Function<Object, ChargePointConnectorKey> connectorIdExtractor;
+	private Function<Object, @Nullable ChargePointConnectorKey> connectorIdExtractor;
 	private ApplicationMetadata applicationMetadata;
 	private String instructionTopic;
 
@@ -560,7 +561,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * 
 	 * @return the function
 	 */
-	public Function<Object, ChargePointConnectorKey> getConnectorIdExtractor() {
+	public Function<Object, @Nullable ChargePointConnectorKey> getConnectorIdExtractor() {
 		return connectorIdExtractor;
 	}
 
@@ -570,7 +571,8 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param connectorIdExtractor
 	 *        the function to set
 	 */
-	public void setConnectorIdExtractor(Function<Object, ChargePointConnectorKey> connectorIdExtractor) {
+	public void setConnectorIdExtractor(
+			Function<Object, @Nullable ChargePointConnectorKey> connectorIdExtractor) {
 		this.connectorIdExtractor = connectorIdExtractor;
 	}
 
