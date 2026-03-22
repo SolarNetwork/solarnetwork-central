@@ -62,6 +62,17 @@ public class User extends BaseEntity implements UserInfo {
 	/**
 	 * Constructor.
 	 * 
+	 * <p>
+	 * Sets an emtpy email.
+	 * </p>
+	 */
+	public User() {
+		this("");
+	}
+
+	/**
+	 * Constructor.
+	 * 
 	 * @param email
 	 *        the email
 	 * @throws IllegalArgumentException
