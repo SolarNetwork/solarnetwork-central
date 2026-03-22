@@ -1,6 +1,6 @@
 plugins {
-    id 'java-library'
-    id 'eclipse'
+	id 'java-library'
+	id 'eclipse'
 	id 'org.springframework.boot' version '4.0.4' apply false
 }
 
@@ -15,42 +15,20 @@ dependencyManagement {
 	}
 }
 
-description = 'SolarNet: User'
-version = '6.0.1'
+description = 'SolarNet: Common Test Support'
+version = '1.0.0'
 
 base {
-	archivesName = 'solarnet-user'
+	archivesName = 'solarnet-common-test-support'
 }
 
 dependencies {
 	implementation project(':solarnet-common')
-	implementation project(':solarnet-common-web')
-	implementation project(':solarnet-datum')
-	implementation project(':solarnet-instructor')
-
-	// Spring
-	implementation 'org.springframework.boot:spring-boot-starter'
-	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
-	
-	// JCache
-	implementation 'javax.cache:cache-api'
-	implementation 'org.ehcache:ehcache'
-	
-	// Utilities
-	implementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"
-	implementation 'org.apache.httpcomponents.client5:httpclient5'
-	implementation 'org.aspectj:aspectjweaver'
-	implementation 'org.javamoney:moneta:1.4.2'
-	
-	// Testing
-	testImplementation project(':solarnet-common-test')
-    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+	implementation 'org.springframework.boot:spring-boot-starter-security-test'
 }
 
 jar.manifest {
-    attributes('Implementation-Version': version)
+	attributes('Implementation-Version': version)
 }
 
 publishing {
@@ -59,7 +37,7 @@ publishing {
 			from components.java
 			pom {
 				name = project.description
-				description = 'Core user library all SolarNet projects.'
+				description = 'Shared testing support library for all SolarNet projects.'
 				url = 'https://github.com/SolarNetwork/solarnetwork-central'
 				licenses {
 					license {

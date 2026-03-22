@@ -52,9 +52,9 @@ dependencies {
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
+    testImplementation "io.moquette:moquette-broker:${moquetteVersion}"
 	testImplementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
 	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-	testImplementation 'io.moquette:moquette-broker:0.15'
 	testImplementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"
 	testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	testImplementation 'org.eclipse.jetty:jetty-server'
@@ -73,7 +73,7 @@ publishing {
 			from components.java
 			pom {
 				name = project.description
-				description = 'Shared library for all SolarNet projects.'
+				description = 'Core datum library for all SolarNet projects.'
 				url = 'https://github.com/SolarNetwork/solarnetwork-central'
 				licenses {
 					license {
