@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.util;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonGenerator;
@@ -35,17 +36,17 @@ import tools.jackson.databind.ser.std.StdSerializer;
  * @author matt
  * @version 2.0
  */
-public class ChargePointActionStatusSerializer extends StdSerializer<ChargePointActionStatus> {
+public class ChargePointActionStatusSerializer extends StdSerializer<@Nullable ChargePointActionStatus> {
 
 	/** A default instance. */
-	public static final ValueSerializer<ChargePointActionStatus> INSTANCE = new ChargePointActionStatusSerializer();
+	public static final ValueSerializer<@Nullable ChargePointActionStatus> INSTANCE = new ChargePointActionStatusSerializer();
 
 	public ChargePointActionStatusSerializer() {
 		super(ChargePointActionStatus.class);
 	}
 
 	@Override
-	public void serialize(ChargePointActionStatus status, JsonGenerator generator,
+	public void serialize(@Nullable ChargePointActionStatus status, JsonGenerator generator,
 			SerializationContext provider) throws JacksonException {
 		if ( status == null ) {
 			generator.writeNull();

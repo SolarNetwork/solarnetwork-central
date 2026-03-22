@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.util;
 
 import java.io.IOException;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.SchemaValidationException;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
@@ -79,7 +80,8 @@ public final class OcppInstructionUtils {
 		 *        occurred
 		 * @return the result
 		 */
-		T handleMessage(Exception e, ObjectNode jsonPayload, Object payload);
+		T handleMessage(@Nullable Exception e, @Nullable ObjectNode jsonPayload,
+				@Nullable Object payload);
 	}
 
 	/**
@@ -130,7 +132,7 @@ public final class OcppInstructionUtils {
 			} else {
 				jsonPayload = objectMapper.valueToTree(params);
 			}
-			if ( chargePointActionPayloadDecoder != null ) {
+			if ( chargePointActionPayloadDecoder != null && jsonPayload != null ) {
 				payload = chargePointActionPayloadDecoder.decodeActionPayload(action, false,
 						jsonPayload);
 			} else {
