@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusFilter;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
 import net.solarnetwork.central.ocpp.dao.ChargeSessionFilter;
@@ -164,7 +165,7 @@ public interface UserOcppBiz {
 	 */
 	default Collection<CentralChargePoint> chargePointsForUser(Long userId) {
 		FilterResults<CentralChargePoint, Long> result = listChargePointsForUser(userId, null);
-		return (result != null ? StreamSupport.stream(result.spliterator(), false).toList() : null);
+		return (result != null ? StreamSupport.stream(result.spliterator(), false).toList() : List.of());
 	}
 
 	/**
@@ -178,7 +179,7 @@ public interface UserOcppBiz {
 	 * @since 1.4
 	 */
 	FilterResults<CentralChargePoint, Long> listChargePointsForUser(Long userId,
-			CentralChargePointFilter filter);
+			@Nullable CentralChargePointFilter filter);
 
 	/**
 	 * Create a new charge point registration, or update an existing
@@ -337,8 +338,9 @@ public interface UserOcppBiz {
 	 * @since 1.1
 	 */
 	void findFilteredChargePointStatus(ChargePointStatusFilter filter,
-			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
-			Long offset, Integer max) throws IOException;
+			FilteredResultsProcessor<ChargePointStatus> processor,
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset, @Nullable Integer max)
+			throws IOException;
 
 	/**
 	 * API for querying for a filtered set of charger point action statuses,
@@ -360,7 +362,8 @@ public interface UserOcppBiz {
 	 */
 	void findFilteredChargePointActionStatus(ChargePointActionStatusFilter filter,
 			FilteredResultsProcessor<ChargePointActionStatus> processor,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset, @Nullable Integer max)
+			throws IOException;
 
 	/**
 	 * Get the available settings entities for a given user.
@@ -369,6 +372,7 @@ public interface UserOcppBiz {
 	 *        the SolarUser user ID to get settings entity for
 	 * @return the settings entity, or {@code null} if not available
 	 */
+	@Nullable
 	UserSettings settingsForUser(Long userId);
 
 	/**
@@ -400,6 +404,7 @@ public interface UserOcppBiz {
 	 *        the charge session ID to get
 	 * @return the session entity, or {@code null} if not available
 	 */
+	@Nullable
 	ChargeSession chargeSessionForUser(Long userId, UUID sessionId);
 
 	/**
@@ -437,6 +442,6 @@ public interface UserOcppBiz {
 	 *         the session was already ended or does not exist
 	 */
 	boolean endChargeSession(Long userId, UUID sessionId, ChargeSessionEndReason reason,
-			String endAuthId);
+			@Nullable String endAuthId);
 
 }

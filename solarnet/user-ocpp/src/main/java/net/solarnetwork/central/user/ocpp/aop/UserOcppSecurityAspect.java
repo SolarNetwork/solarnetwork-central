@@ -148,7 +148,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 		if ( !filter.hasUserCriteria() ) {
 			throw new IllegalArgumentException("The userId filter criteria must not be null.");
 		}
-		for ( Long userId : filter.getUserIds() ) {
+		for ( Long userId : filter.userIds() ) {
 			requireUserReadAccess(userId);
 		}
 	}
