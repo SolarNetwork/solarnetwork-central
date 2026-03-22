@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.v16.service;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -125,15 +126,16 @@ public class DiagnosticsStatusDatumPublisher extends DiagnosticsStatusNotificati
 					DatumProperty.Status.getPropertyName(), req.getStatus().toString());
 		}
 
-		if ( s != null && !s.isEmpty() ) {
+		if ( s != null && !s.isEmpty() && message.getClientId() != null ) {
 			final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
-			final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(),
-					cp.getId());
-
-			GeneralNodeDatum d = new GeneralNodeDatum(cp.getNodeId(), Instant.now(),
-					pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
-			d.setSamples(s);
-			pubSupport.publishDatum(cps, d);
+			if ( cp.getInfo().getId() != null ) {
+				final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(),
+						cp.id());
+				final var d = new GeneralNodeDatum(cp.getNodeId(), Instant.now(),
+						pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
+				d.setSamples(s);
+				pubSupport.publishDatum(cps, d);
+			}
 		}
 
 		super.handleActionMessage(message, resultHandler, req);
@@ -145,7 +147,7 @@ public class DiagnosticsStatusDatumPublisher extends DiagnosticsStatusNotificati
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
-	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+	public final void setFluxPublisher(@Nullable DatumProcessor fluxPublisher) {
 		pubSupport.setFluxPublisher(fluxPublisher);
 	}
 
@@ -165,8 +167,10 @@ public class DiagnosticsStatusDatumPublisher extends DiagnosticsStatusNotificati
 	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setSourceIdTemplate(String sourceIdTemplate) {
+	public final void setSourceIdTemplate(String sourceIdTemplate) {
 		pubSupport.setSourceIdTemplate(sourceIdTemplate);
 	}
 
@@ -176,7 +180,7 @@ public class DiagnosticsStatusDatumPublisher extends DiagnosticsStatusNotificati
 	 * @param sourceIdSuffix
 	 *        the suffix to add
 	 */
-	public void setSourceIdSuffix(String sourceIdSuffix) {
+	public final void setSourceIdSuffix(@Nullable String sourceIdSuffix) {
 		pubSupport.setSourceIdSuffix(sourceIdSuffix);
 	}
 

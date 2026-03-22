@@ -111,7 +111,7 @@ public final class OcppInstructionUtils {
 	 * @return the handler result
 	 */
 	public static <T> T decodeJsonOcppInstructionMessage(ObjectMapper objectMapper, Action action,
-			Map<String, String> params, ActionPayloadDecoder chargePointActionPayloadDecoder,
+			Map<String, String> params, @Nullable ActionPayloadDecoder chargePointActionPayloadDecoder,
 			JsonOcppInstructionMessageHandler<T> handler) {
 		if ( handler == null ) {
 			throw new IllegalArgumentException("The handler argument must be provided.");

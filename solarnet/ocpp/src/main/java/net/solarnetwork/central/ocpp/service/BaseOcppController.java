@@ -246,8 +246,8 @@ public abstract class BaseOcppController extends BasicIdentifiable
 		}
 	}
 
-	protected final <T, R> void sendToChargePoint(ChargePointIdentity identity, Action action, T payload,
-			ActionMessageResultHandler<T, R> handler, ErrorCode noClientError) {
+	protected final <T, R> void sendToChargePoint(ChargePointIdentity identity, Action action,
+			@Nullable T payload, ActionMessageResultHandler<T, R> handler, ErrorCode noClientError) {
 		executor.execute(() -> {
 			ActionMessage<T> msg = new BasicActionMessage<>(identity, UUID.randomUUID().toString(),
 					action, payload);

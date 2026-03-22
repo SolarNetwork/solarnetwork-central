@@ -135,13 +135,17 @@ public final class DatumPublisherSupport {
 	 *        the connector ID
 	 * @return the source ID, never {@code null}
 	 */
-	public String sourceId(ChargePointSettings chargePointSettings, String identifier, Integer evseId,
-			Integer connectorId) {
+	public String sourceId(ChargePointSettings chargePointSettings, String identifier,
+			@Nullable Integer evseId, @Nullable Integer connectorId) {
 		Map<String, Object> params = new HashMap<>(4);
 		params.put("chargerIdentifier", identifier);
 		params.put("chargePointId", chargePointSettings.getId());
-		params.put("evseId", evseId);
-		params.put("connectorId", connectorId);
+		if ( evseId != null ) {
+			params.put("evseId", evseId);
+		}
+		if ( connectorId != null ) {
+			params.put("connectorId", connectorId);
+		}
 		String template = chargePointSettings.getSourceIdTemplate() != null
 				? chargePointSettings.getSourceIdTemplate()
 				: sourceIdTemplate;
