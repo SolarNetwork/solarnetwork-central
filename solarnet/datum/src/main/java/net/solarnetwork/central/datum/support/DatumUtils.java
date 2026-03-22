@@ -226,7 +226,7 @@ public final class DatumUtils {
 		s.setS((Map) ops.getSampleData(DatumSamplesType.Status));
 		s.setT(ops.getTags());
 
-		final Long objectId = (datum.getKind() == ObjectDatumKind.Node && authNode != null
+		final Long objectId = (datum.getKind() != ObjectDatumKind.Location && authNode != null
 				? authNode.getNodeId()
 				: datum.getObjectId() != null ? datum.getObjectId()
 						: GeneralObjectDatumKey.UNASSIGNED_OBJECT_ID);
