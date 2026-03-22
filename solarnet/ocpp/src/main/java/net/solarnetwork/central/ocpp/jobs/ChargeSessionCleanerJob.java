@@ -84,7 +84,7 @@ public class ChargeSessionCleanerJob extends JobSupport {
 	 * 
 	 * @return the delete count
 	 */
-	public int getDeleteCount() {
+	public final int getDeleteCount() {
 		return deleteCount;
 	}
 
@@ -93,7 +93,7 @@ public class ChargeSessionCleanerJob extends JobSupport {
 	 * 
 	 * @return the expire period, never {@code null}
 	 */
-	public Period getExpirePeriod() {
+	public final Period getExpirePeriod() {
 		return expirePeriod;
 	}
 
@@ -104,7 +104,7 @@ public class ChargeSessionCleanerJob extends JobSupport {
 	 *        the period to set; if {@code null} then
 	 *        {@link #DEFAULT_EXPIRE_PERIOD} will be used instead
 	 */
-	public void setExpirePeriod(Period expirePeriod) {
+	public final void setExpirePeriod(Period expirePeriod) {
 		this.expirePeriod = (expirePeriod != null ? expirePeriod : DEFAULT_EXPIRE_PERIOD);
 	}
 
