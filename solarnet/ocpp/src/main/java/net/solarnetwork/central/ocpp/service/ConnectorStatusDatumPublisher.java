@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.service;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -65,6 +66,8 @@ public class ConnectorStatusDatumPublisher {
 	 *        charge session DAO to use
 	 * @param datumDao
 	 *        the datum DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public ConnectorStatusDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,
@@ -142,12 +145,12 @@ public class ConnectorStatusDatumPublisher {
 	 */
 	public void processStatusNotification(CentralChargePoint chargePoint, StatusNotification info) {
 		ChargePointSettings cps = pubSupport.settingsForChargePoint(chargePoint.getUserId(),
-				chargePoint.getId());
+				requireNonNullArgument(chargePoint.getId(), "chargePoint.id"));
 		if ( !(cps.isPublishToSolarIn() || cps.isPublishToSolarFlux()) ) {
 			return;
 		}
 
-		ChargePointConnectorKey key = new ChargePointConnectorKey(chargePoint.getId(),
+		ChargePointConnectorKey key = new ChargePointConnectorKey(chargePoint.id(),
 				info.getConnectorId());
 		CentralChargePointConnector cpc = pubSupport.getChargePointConnectorDao()
 				.get(chargePoint.getUserId(), key);
@@ -157,8 +160,8 @@ public class ConnectorStatusDatumPublisher {
 	}
 
 	private void processStatusNotification(CentralChargePoint chargePoint, ChargePointSettings cps,
-			StatusNotification info) {
-		if ( info == null ) {
+			@Nullable StatusNotification info) {
+		if ( info == null || chargePoint.getInfo().getId() == null ) {
 			return;
 		}
 
@@ -179,14 +182,18 @@ public class ConnectorStatusDatumPublisher {
 		s.putSampleValue(DatumProperty.VendorErrorCode.getClassification(),
 				DatumProperty.VendorErrorCode.getPropertyName(), info.getVendorErrorCode());
 
-		ChargeSession cs = chargeSessionDao.getIncompleteChargeSessionForConnector(chargePoint.getId(),
-				info.getEvseId(), info.getConnectorId());
-		if ( cs != null && !cs.getCreated().isAfter(info.getTimestamp()) ) {
-			s.putSampleValue(DatumProperty.SessionId.getClassification(),
-					DatumProperty.SessionId.getPropertyName(), cs.getId().toString());
-			s.putSampleValue(DatumProperty.TransactionId.getClassification(),
-					DatumProperty.TransactionId.getPropertyName(),
-					String.valueOf(cs.getTransactionId()));
+		ChargeSession cs = null;
+		if ( chargePoint.getId() != null ) {
+			cs = chargeSessionDao.getIncompleteChargeSessionForConnector(chargePoint.getId(),
+					info.getEvseId(), info.getConnectorId());
+			if ( cs != null && cs.getCreated() != null
+					&& !cs.getCreated().isAfter(info.getTimestamp()) ) {
+				s.putSampleValue(DatumProperty.SessionId.getClassification(),
+						DatumProperty.SessionId.getPropertyName(), cs.id().toString());
+				s.putSampleValue(DatumProperty.TransactionId.getClassification(),
+						DatumProperty.TransactionId.getPropertyName(),
+						String.valueOf(cs.getTransactionId()));
+			}
 		}
 
 		final Instant ts = info.getTimestamp() != null ? info.getTimestamp() : Instant.now();
@@ -203,7 +210,7 @@ public class ConnectorStatusDatumPublisher {
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
-	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+	public void setFluxPublisher(@Nullable DatumProcessor fluxPublisher) {
 		pubSupport.setFluxPublisher(fluxPublisher);
 	}
 
@@ -223,8 +230,10 @@ public class ConnectorStatusDatumPublisher {
 	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setSourceIdTemplate(String sourceIdTemplate) {
+	public final void setSourceIdTemplate(String sourceIdTemplate) {
 		pubSupport.setSourceIdTemplate(sourceIdTemplate);
 	}
 
@@ -234,7 +243,7 @@ public class ConnectorStatusDatumPublisher {
 	 * @param sourceIdSuffix
 	 *        the suffix to add
 	 */
-	public void setSourceIdSuffix(String sourceIdSuffix) {
+	public final void setSourceIdSuffix(@Nullable String sourceIdSuffix) {
 		pubSupport.setSourceIdSuffix(sourceIdSuffix);
 	}
 

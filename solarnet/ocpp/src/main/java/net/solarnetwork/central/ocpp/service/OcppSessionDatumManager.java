@@ -24,7 +24,9 @@ package net.solarnetwork.central.ocpp.service;
 
 import static java.util.Collections.singleton;
 import static net.solarnetwork.domain.datum.Datum.REVERSE_ACCUMULATING_SUFFIX_KEY;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.expandTemplateString;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -42,6 +44,7 @@ import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -84,7 +87,6 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.service.support.BasicIdentifiable;
 import net.solarnetwork.settings.SettingsChangeObserver;
 import net.solarnetwork.util.NumberUtils;
-import net.solarnetwork.util.StringUtils;
 
 /**
  * A {@link ChargeSessionManager} that generates datum from charge session
@@ -168,14 +170,14 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	private final CentralChargeSessionDao chargeSessionDao;
 	private final DatumEntityDao datumDao;
 	private final ChargePointSettingsDao chargePointSettingsDao;
-	private DatumProcessor fluxPublisher;
+	private @Nullable DatumProcessor fluxPublisher;
 	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
 	private int maxTemperatureScale = DEFAULT_MAX_TEMPERATURE_SCALE;
-	private TaskScheduler taskScheduler;
+	private @Nullable TaskScheduler taskScheduler;
 
 	private final PurgePostedChargeSessionsTask purgePostedTask = new PurgePostedChargeSessionsTask();
-	private ScheduledFuture<?> configurationFuture;
-	private ScheduledFuture<?> purgePostedFuture;
+	private @Nullable ScheduledFuture<?> configurationFuture;
+	private @Nullable ScheduledFuture<?> purgePostedFuture;
 
 	/**
 	 * Constructor.
@@ -199,14 +201,11 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			ChargePointSettingsDao chargePointSettingsDao) {
 		super();
 		this.authService = requireNonNullArgument(authService, "authService");
-		if ( chargePointDao == null ) {
-			throw new IllegalArgumentException("The chargePointDao parameter must not be null.");
-		}
+		this.chargePointDao = requireNonNullArgument(chargePointDao, "chargePointDao");
 		if ( !CentralChargePoint.class.isAssignableFrom(chargePointDao.getObjectType()) ) {
 			throw new IllegalArgumentException(
 					"The chargePointDao objectType must be CentralChargePoint.");
 		}
-		this.chargePointDao = chargePointDao;
 		this.chargeSessionDao = requireNonNullArgument(chargeSessionDao, "chargeSessionDao");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 		this.chargePointSettingsDao = requireNonNullArgument(chargePointSettingsDao,
@@ -225,7 +224,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	}
 
 	@Override
-	public synchronized void configurationChanged(Map<String, Object> properties) {
+	public synchronized void configurationChanged(@Nullable Map<String, Object> properties) {
 		if ( properties == null || properties.isEmpty() ) {
 			return;
 		}
@@ -279,9 +278,13 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	}
 
+	private @Nullable CentralChargePoint chargePoint(ChargePointIdentity identifier) {
+		return (CentralChargePoint) chargePointDao.getForIdentity(identifier);
+	}
+
 	private CentralChargePoint chargePoint(ChargePointIdentity identifier, String authId,
-			final String txId) {
-		CentralChargePoint cp = (CentralChargePoint) chargePointDao.getForIdentity(identifier);
+			final @Nullable String txId) {
+		CentralChargePoint cp = chargePoint(identifier);
 		if ( cp == null ) {
 			throw new AuthorizationException(
 					String.format("ChargePoint %s not available.", identifier.getIdentifier()),
@@ -300,23 +303,28 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 				? String.valueOf(chargeSessionDao.nextTransactionId())
 				: info.getTransactionId());
 
-		CentralChargePoint cp = chargePoint(info.getChargePointId(), info.getAuthorizationId(), txId);
+		final String authId = info.getAuthorizationId();
+		if ( authId == null ) {
+			throw new AuthorizationException("Missing authorization.",
+					new AuthorizationInfo("", AuthorizationStatus.Invalid));
+		}
+		final CentralChargePoint cp = chargePoint(info.getChargePointId(), authId, txId);
 
 		// persist a new session
 		final ChargeSession sess;
 		try {
-			sess = chargeSessionDao.get(
-					chargeSessionDao.save(new ChargeSession(UUID.randomUUID(), info.getTimestampStart(),
-							info.getAuthorizationId(), cp.getId(), info.getConnectorId(), txId)));
+			sess = nonnull(
+					chargeSessionDao.get(chargeSessionDao.save(new ChargeSession(UUID.randomUUID(),
+							info.getTimestampStart(), authId, cp.id(), info.getConnectorId(), txId))),
+					"ChargeSession");
 		} catch ( DataIntegrityViolationException e ) {
 			// assume this is from no matching Charge Point for the given chargePointId value
-			throw new AuthorizationException(new AuthorizationInfo(info.getAuthorizationId(),
-					AuthorizationStatus.Invalid, null, null));
+			throw new AuthorizationException(
+					new AuthorizationInfo(authId, AuthorizationStatus.Invalid, null, null));
 		}
 
 		// check authorization
-		AuthorizationInfo authInfo = authService.authorize(info.getChargePointId(),
-				info.getAuthorizationId());
+		AuthorizationInfo authInfo = authService.authorize(info.getChargePointId(), authId);
 		if ( authInfo == null || AuthorizationStatus.Accepted != authInfo.getStatus() ) {
 			throw new AuthorizationException(authInfo, txId);
 		}
@@ -325,7 +333,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 		// @formatter:off
 		SampledValue reading = SampledValue.builder()
-				.withSessionId(sess.getId())
+				.withSessionId(sess.id())
 				.withTimestamp(sess.getCreated())
 				.withContext(ReadingContext.TransactionBegin)
 				.withLocation(Location.Outlet)
@@ -336,51 +344,56 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		// @formatter:on
 		chargeSessionDao.addReadings(singleton(reading));
 
-		ChargePointSettings cps = settingsForChargePoint(cp.getUserId(), cp.getId());
+		ChargePointSettings cps = settingsForChargePoint(cp.getUserId(), cp.id());
 		publishDatum(datum(cp, cps, sess, reading));
 
 		return sess;
 	}
 
-	private void publishDatum(Datum d) {
-		if ( d != null ) {
-			if ( d.settings.isPublishToSolarIn() ) {
-				datumDao.store(d);
-			}
-			if ( d.settings.isPublishToSolarFlux() ) {
-				final DatumProcessor publisher = getFluxPublisher();
-				if ( publisher != null && publisher.isConfigured() ) {
-					publisher.processDatum(d);
-				}
+	private void publishDatum(@Nullable Datum d) {
+		if ( d == null ) {
+			return;
+		}
+		if ( d.settings.isPublishToSolarIn() ) {
+			datumDao.store(d);
+		}
+		if ( d.settings.isPublishToSolarFlux() ) {
+			final DatumProcessor publisher = getFluxPublisher();
+			if ( publisher != null && publisher.isConfigured() ) {
+				publisher.processDatum(d);
 			}
 		}
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public ChargeSession getActiveChargingSession(ChargePointIdentity identifier, String transactionId)
-			throws AuthorizationException {
-		ChargePoint cp = chargePoint(identifier, null, transactionId);
-		return chargeSessionDao.getIncompleteChargeSessionForTransaction(cp.getId(), transactionId);
+	public @Nullable ChargeSession getActiveChargingSession(ChargePointIdentity identifier,
+			String transactionId) throws AuthorizationException {
+		ChargePoint cp = chargePoint(identifier, "", transactionId);
+		return chargeSessionDao.getIncompleteChargeSessionForTransaction(cp.id(), transactionId);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Collection<ChargeSession> getActiveChargingSessions(ChargePointIdentity identifier) {
 		if ( identifier != null ) {
-			ChargePoint cp = chargePoint(identifier, null, null);
-			return chargeSessionDao.getIncompleteChargeSessionsForChargePoint(cp.getId());
+			ChargePoint cp = chargePoint(identifier, "", null);
+			return chargeSessionDao.getIncompleteChargeSessionsForChargePoint(cp.id());
 		}
 		return chargeSessionDao.getIncompleteChargeSessions();
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
-	public AuthorizationInfo endChargingSession(ChargeSessionEndInfo info) {
-		CentralChargePoint cp = chargePoint(info.getChargePointId(), info.getAuthorizationId(),
-				info.getTransactionId());
-		ChargeSession sess = chargeSessionDao.getIncompleteChargeSessionForTransaction(cp.getId(),
-				info.getTransactionId());
+	public @Nullable AuthorizationInfo endChargingSession(ChargeSessionEndInfo info) {
+		final @Nullable CentralChargePoint cp = chargePoint(info.getChargePointId());
+		if ( cp == null ) {
+			return null;
+		}
+		final ChargeSession sess = (info.getTransactionId() != null
+				? chargeSessionDao.getIncompleteChargeSessionForTransaction(cp.id(),
+						info.getTransactionId())
+				: null);
 		if ( sess == null ) {
 			return null;
 		}
@@ -395,7 +408,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 		// @formatter:off
 		SampledValue reading = SampledValue.builder()
-				.withSessionId(sess.getId())
+				.withSessionId(sess.id())
 				.withTimestamp(sess.getEnded())
 				.withContext(ReadingContext.TransactionEnd)
 				.withLocation(Location.Outlet)
@@ -420,8 +433,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		addReadings(info.getChargePointId(), sess.getEvseId(), sess.getConnectorId(), readings, sessions,
 				chargePoints, new HashMap<>(2));
 
-		return new AuthorizationInfo(info.getAuthorizationId(), AuthorizationStatus.Accepted, null,
-				null);
+		return new AuthorizationInfo(info.getAuthorizationId() != null ? info.getAuthorizationId() : "",
+				AuthorizationStatus.Accepted, null, null);
 	}
 
 	/** Class to associate settings with datum. */
@@ -439,60 +452,60 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	}
 
-	private Datum datum(CentralChargePoint chargePoint, ChargePointSettings chargePointSettings,
-			ChargeSession sess, SampledValue reading) {
-		final String sourceId = sourceId(chargePointSettings, chargePoint.getInfo().getId(),
-				sess != null ? sess.getEvseId() : 0, sess != null ? sess.getConnectorId() : 0,
-				reading.getLocation());
+	private @Nullable Datum datum(CentralChargePoint chargePoint,
+			ChargePointSettings chargePointSettings, ChargeSession sess, SampledValue reading) {
+		final String ident = nonnull(chargePoint.getInfo().getId(), "ChargePoint identifier");
+		final String sourceId = sourceId(chargePointSettings, ident, sess != null ? sess.getEvseId() : 0,
+				sess != null ? sess.getConnectorId() : 0, reading.getLocation());
 		return datum(sourceId, chargePoint, chargePointSettings, sess, reading);
 	}
 
 	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
-	private Datum datum(String sourceId, CentralChargePoint chargePoint,
-			ChargePointSettings chargePointSettings, ChargeSession sess, SampledValue reading) {
+	private @Nullable Datum datum(String sourceId, CentralChargePoint chargePoint,
+			ChargePointSettings chargePointSettings, @Nullable ChargeSession sess,
+			SampledValue reading) {
 		final Long nodeId = chargePoint.getNodeId();
 		final DatumSamples samples = new DatumSamples();
 		populateProperty(samples, reading.getMeasurand(), reading.getUnit(), reading.getPhase(),
 				reading.getValue());
-		if ( !samples.isEmpty() ) {
-			if ( sess != null ) {
-				samples.putSampleValue(DatumProperty.AuthorizationToken.getClassification(),
-						DatumProperty.AuthorizationToken.getPropertyName(), sess.getAuthId());
-				// TODO - implement support for reservation ID
-				//d.getSamples().putSampleValue(DatumProperty.ReservationId.getClassification(),
-				//		DatumProperty.ReservationId.getPropertyName(), sess.getReservationId());
-				samples.putSampleValue(DatumProperty.SessionId.getClassification(),
-						DatumProperty.SessionId.getPropertyName(), sess.getId().toString());
-				samples.putSampleValue(DatumProperty.TransactionId.getClassification(),
-						DatumProperty.TransactionId.getPropertyName(),
-						String.valueOf(sess.getTransactionId()));
-				if ( sess.getEnded() != null ) {
-					samples.putSampleValue(DatumProperty.SessionEndDate.getClassification(),
-							DatumProperty.SessionEndDate.getPropertyName(),
-							sess.getEnded().toEpochMilli());
-				}
-				samples.putSampleValue(DatumProperty.SessionEndAuthorizationToken.getClassification(),
-						DatumProperty.SessionEndAuthorizationToken.getPropertyName(),
-						sess.getEndAuthId());
-				if ( sess.getEndReason() != null ) {
-					samples.putSampleValue(DatumProperty.SessionEndReason.getClassification(),
-							DatumProperty.SessionEndReason.getPropertyName(),
-							sess.getEndReason().toString());
-				}
-				if ( sess.getCreated() != null
-						&& (sess.getEnded() != null || reading.getTimestamp() != null) ) {
-					Duration dur = Duration.between(sess.getCreated(),
-							sess.getEnded() != null ? sess.getEnded() : reading.getTimestamp());
-					samples.putSampleValue(DatumProperty.SessionDuration.getClassification(),
-							DatumProperty.SessionDuration.getPropertyName(), dur.getSeconds());
-				}
-			}
-			Datum d = new Datum(new GeneralNodeDatumPK(nodeId, reading.getTimestamp(), sourceId),
-					chargePointSettings);
-			d.setSamples(samples);
-			return d;
+		if ( samples.isEmpty() ) {
+			return null;
 		}
-		return null;
+		if ( sess != null ) {
+			samples.putSampleValue(DatumProperty.AuthorizationToken.getClassification(),
+					DatumProperty.AuthorizationToken.getPropertyName(), sess.getAuthId());
+			// TODO - implement support for reservation ID
+			//d.getSamples().putSampleValue(DatumProperty.ReservationId.getClassification(),
+			//		DatumProperty.ReservationId.getPropertyName(), sess.getReservationId());
+			samples.putSampleValue(DatumProperty.SessionId.getClassification(),
+					DatumProperty.SessionId.getPropertyName(), sess.id().toString());
+			samples.putSampleValue(DatumProperty.TransactionId.getClassification(),
+					DatumProperty.TransactionId.getPropertyName(),
+					String.valueOf(sess.getTransactionId()));
+			if ( sess.getEnded() != null ) {
+				samples.putSampleValue(DatumProperty.SessionEndDate.getClassification(),
+						DatumProperty.SessionEndDate.getPropertyName(), sess.getEnded().toEpochMilli());
+			}
+			samples.putSampleValue(DatumProperty.SessionEndAuthorizationToken.getClassification(),
+					DatumProperty.SessionEndAuthorizationToken.getPropertyName(), sess.getEndAuthId());
+			if ( sess.getEndReason() != null ) {
+				samples.putSampleValue(DatumProperty.SessionEndReason.getClassification(),
+						DatumProperty.SessionEndReason.getPropertyName(),
+						sess.getEndReason().toString());
+			}
+			if ( sess.getCreated() != null
+					&& (sess.getEnded() != null || reading.getTimestamp() != null) ) {
+				Duration dur = Duration.between(sess.getCreated(),
+						sess.getEnded() != null ? sess.getEnded() : reading.getTimestamp());
+				samples.putSampleValue(DatumProperty.SessionDuration.getClassification(),
+						DatumProperty.SessionDuration.getPropertyName(), dur.getSeconds());
+			}
+		}
+		Datum d = new Datum(new GeneralNodeDatumPK(nodeId,
+				reading.getTimestamp() != null ? reading.getTimestamp() : Instant.now(), sourceId),
+				chargePointSettings);
+		d.setSamples(samples);
+		return d;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -503,17 +516,17 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
-	public void addChargingSessionReadings(ChargePointIdentity chargePointId, Integer evseId,
-			Integer connectorId, Iterable<SampledValue> readings) {
+	public void addChargingSessionReadings(ChargePointIdentity chargePointId, @Nullable Integer evseId,
+			@Nullable Integer connectorId, Iterable<SampledValue> readings) {
 		addReadings(chargePointId, evseId, connectorId, readings, new HashMap<>(2), new HashMap<>(2),
 				new HashMap<>(2));
 	}
 
 	// NOTE that the Map implementations passed here MUST support null key and values,
 	// in order to support meter values not associated with a charge session
-	private void addReadings(ChargePointIdentity chargePointId, Integer evseId, Integer connectorId,
-			Iterable<SampledValue> readings, Map<UUID, ChargeSession> sessions,
-			Map<ChargePointIdentity, CentralChargePoint> chargePoints,
+	private void addReadings(ChargePointIdentity chargePointId, @Nullable Integer evseId,
+			@Nullable Integer connectorId, Iterable<SampledValue> readings,
+			Map<UUID, ChargeSession> sessions, Map<ChargePointIdentity, CentralChargePoint> chargePoints,
 			Map<Long, ChargePointSettings> settings) {
 		if ( readings == null ) {
 			return;
@@ -565,10 +578,11 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 				ChargePointSettings cps = settings.get(cp.getId());
 				if ( cps == null ) {
-					cps = settingsForChargePoint(cp.getUserId(), cp.getId());
+					cps = settingsForChargePoint(cp.getUserId(), cp.id());
 					settings.put(cp.getId(), cps);
 				}
-				final String sourceId = sourceId(cps, cp.getInfo().getId(),
+				final String cpIdent = nonnull(cp.getInfo().getId(), "ChargePoint identifier");
+				final String sourceId = sourceId(cps, cpIdent,
 						s != null ? s.getEvseId() : evseId != null ? evseId : 0,
 						s != null ? s.getConnectorId() : connectorId != null ? connectorId : 0,
 						reading.getLocation());
@@ -638,25 +652,28 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 * @return the source ID, never {@code null}
 	 */
 	private String sourceId(ChargePointSettings chargePointSettings, String identifier, int evseId,
-			int connectorId, Location location) {
+			int connectorId, @Nullable Location location) {
 		Map<String, Object> params = new HashMap<>(4);
 		params.put("chargerIdentifier", identifier);
 		params.put("chargePointId", chargePointSettings.getId());
 		params.put("evseId", evseId);
 		params.put("connectorId", connectorId);
-		params.put("location", location);
+		if ( location != null ) {
+			params.put("location", location);
+		}
 		return UserSettings.removeEmptySourceIdSegments(
-				StringUtils.expandTemplateString(sourceIdTemplate(chargePointSettings), params));
+				nonnull(expandTemplateString(sourceIdTemplate(chargePointSettings), params),
+						"Source ID template"));
 	}
 
-	private void populateProperty(DatumSamples samples, Measurand measurand, UnitOfMeasure unit,
-			Phase phase, Object value) {
+	private void populateProperty(DatumSamples samples, @Nullable Measurand measurand,
+			@Nullable UnitOfMeasure unit, @Nullable Phase phase, @Nullable Object value) {
 		if ( value == null ) {
 			return;
 		}
 		BigDecimal num;
 		if ( value instanceof Number n ) {
-			num = NumberUtils.bigDecimalForNumber(n);
+			num = nonnull(NumberUtils.bigDecimalForNumber(n), "Value");
 		} else {
 			try {
 				num = new BigDecimal(value.toString());
@@ -673,7 +690,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		}
 	}
 
-	private BigDecimal normalizedUnit(BigDecimal num, UnitOfMeasure unit) {
+	private BigDecimal normalizedUnit(BigDecimal num, @Nullable UnitOfMeasure unit) {
 		if ( unit == null ) {
 			return num;
 		}
@@ -702,15 +719,15 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		};
 	}
 
-	private DatumSamplesType propertyType(Measurand measurand) {
+	private DatumSamplesType propertyType(@Nullable Measurand measurand) {
 		return switch (measurand) {
 			case EnergyActiveExportRegister, EnergyActiveImportRegister, EnergyReactiveExportRegister, EnergyReactiveImportRegister, PowerReactiveExport, PowerReactiveImport -> DatumSamplesType.Accumulating;
-			default -> DatumSamplesType.Instantaneous;
+			case null, default -> DatumSamplesType.Instantaneous;
 		};
 	}
 
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	private String propertyName(Measurand measurand, Phase phase) {
+	private @Nullable String propertyName(@Nullable Measurand measurand, @Nullable Phase phase) {
 		if ( phase == null || phase == Phase.Unknown ) {
 			return propertyName(measurand);
 		}
@@ -759,7 +776,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		return buf.toString();
 	}
 
-	private String propertyName(Measurand measurand) {
+	private @Nullable String propertyName(@Nullable Measurand measurand) {
 		return switch (measurand) {
 			case CurrentExport -> AcEnergyDatum.CURRENT_KEY + REVERSE_ACCUMULATING_SUFFIX_KEY;
 			case CurrentImport -> AcEnergyDatum.CURRENT_KEY;
@@ -786,7 +803,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			case SoC -> "soc";
 			case Temperature -> AtmosphericDatum.TEMPERATURE_KEY;
 			case Voltage -> AcEnergyDatum.VOLTAGE_KEY;
-			default -> null;
+			case null, default -> null;
 		};
 	}
 
@@ -795,7 +812,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *
 	 * @return the publisher, or {@code null}
 	 */
-	public DatumProcessor getFluxPublisher() {
+	public final @Nullable DatumProcessor getFluxPublisher() {
 		return fluxPublisher;
 	}
 
@@ -805,7 +822,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
-	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+	public final void setFluxPublisher(@Nullable DatumProcessor fluxPublisher) {
 		this.fluxPublisher = fluxPublisher;
 	}
 
@@ -815,7 +832,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 * @return the template; defaults to
 	 *         {@link UserSettings#DEFAULT_SOURCE_ID_TEMPLATE}
 	 */
-	public String getSourceIdTemplate() {
+	public final String getSourceIdTemplate() {
 		return sourceIdTemplate;
 	}
 
@@ -836,9 +853,11 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setSourceIdTemplate(String sourceIdTemplate) {
-		this.sourceIdTemplate = sourceIdTemplate;
+	public final void setSourceIdTemplate(String sourceIdTemplate) {
+		this.sourceIdTemplate = requireNonNullArgument(sourceIdTemplate, "sourceIdTemplate");
 	}
 
 	/**
@@ -847,7 +866,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 * @return the maximum scale; defaults to
 	 *         {@link #DEFAULT_MAX_TEMPERATURE_SCALE}
 	 */
-	public int getMaxTemperatureScale() {
+	public final int getMaxTemperatureScale() {
 		return maxTemperatureScale;
 	}
 
@@ -862,7 +881,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 * @param maxTemperatureScale
 	 *        the maximum scale to set
 	 */
-	public void setMaxTemperatureScale(int maxTemperatureScale) {
+	public final void setMaxTemperatureScale(int maxTemperatureScale) {
 		this.maxTemperatureScale = maxTemperatureScale;
 	}
 
@@ -871,7 +890,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *
 	 * @return the task scheduler
 	 */
-	public TaskScheduler getTaskScheduler() {
+	public final @Nullable TaskScheduler getTaskScheduler() {
 		return taskScheduler;
 	}
 
@@ -881,7 +900,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 * @param taskScheduler
 	 *        the task scheduler to set
 	 */
-	public void setTaskScheduler(TaskScheduler taskScheduler) {
+	public final void setTaskScheduler(@Nullable TaskScheduler taskScheduler) {
 		this.taskScheduler = taskScheduler;
 	}
 
@@ -891,7 +910,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *
 	 * @return the posted charge sessions expiration time, in hours
 	 */
-	public int getPurgePostedChargeSessionsExpirationHours() {
+	public final int getPurgePostedChargeSessionsExpirationHours() {
 		return purgePostedTask.getExpirationHours();
 	}
 
@@ -902,7 +921,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 * @param hours
 	 *        posted charge sessions expiration time, in hours
 	 */
-	public void setPurgePostedChargeSessionsExpirationHours(int hours) {
+	public final void setPurgePostedChargeSessionsExpirationHours(int hours) {
 		purgePostedTask.setExpirationHours(hours);
 	}
 

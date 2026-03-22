@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.ocpp.service;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.expandTemplateString;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -55,9 +57,9 @@ public final class DatumPublisherSupport {
 	private final ChargePointSettingsDao chargePointSettingsDao;
 	private final CentralChargePointConnectorDao chargePointConnectorDao;
 	private final DatumEntityDao datumDao;
-	private DatumProcessor fluxPublisher;
+	private @Nullable DatumProcessor fluxPublisher;
 	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
-	private String sourceIdSuffix = DEFAULT_SOURCE_ID_SUFFIX;
+	private @Nullable String sourceIdSuffix = DEFAULT_SOURCE_ID_SUFFIX;
 
 	/**
 	 * Constructor.
@@ -147,7 +149,8 @@ public final class DatumPublisherSupport {
 		if ( suffix != null ) {
 			template = template + suffix;
 		}
-		return UserSettings.removeEmptySourceIdSegments(expandTemplateString(template, params));
+		return UserSettings.removeEmptySourceIdSegments(
+				nonnull(expandTemplateString(template, params), "Template"));
 	}
 
 	/**
@@ -175,7 +178,7 @@ public final class DatumPublisherSupport {
 	 * 
 	 * @return the DAO
 	 */
-	public CentralChargePointDao getChargePointDao() {
+	public final CentralChargePointDao getChargePointDao() {
 		return chargePointDao;
 	}
 
@@ -184,7 +187,7 @@ public final class DatumPublisherSupport {
 	 * 
 	 * @return the DAO
 	 */
-	public ChargePointSettingsDao getChargePointSettingsDao() {
+	public final ChargePointSettingsDao getChargePointSettingsDao() {
 		return chargePointSettingsDao;
 	}
 
@@ -193,7 +196,7 @@ public final class DatumPublisherSupport {
 	 * 
 	 * @return the DAO
 	 */
-	public CentralChargePointConnectorDao getChargePointConnectorDao() {
+	public final CentralChargePointConnectorDao getChargePointConnectorDao() {
 		return chargePointConnectorDao;
 	}
 
@@ -202,7 +205,7 @@ public final class DatumPublisherSupport {
 	 * 
 	 * @return the DAO
 	 */
-	public DatumEntityDao getDatumDao() {
+	public final DatumEntityDao getDatumDao() {
 		return datumDao;
 	}
 
@@ -211,7 +214,7 @@ public final class DatumPublisherSupport {
 	 * 
 	 * @return the publisher, or {@code null}
 	 */
-	public DatumProcessor getFluxPublisher() {
+	public final @Nullable DatumProcessor getFluxPublisher() {
 		return fluxPublisher;
 	}
 
@@ -221,7 +224,7 @@ public final class DatumPublisherSupport {
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
-	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+	public final void setFluxPublisher(@Nullable DatumProcessor fluxPublisher) {
 		this.fluxPublisher = fluxPublisher;
 	}
 
@@ -231,7 +234,7 @@ public final class DatumPublisherSupport {
 	 * @return the template; defaults to
 	 *         {@link UserSettings#DEFAULT_SOURCE_ID_TEMPLATE}
 	 */
-	public String getSourceIdTemplate() {
+	public final String getSourceIdTemplate() {
 		return sourceIdTemplate;
 	}
 
@@ -251,9 +254,11 @@ public final class DatumPublisherSupport {
 	 * 
 	 * @param sourceIdTemplate
 	 *        the template to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setSourceIdTemplate(String sourceIdTemplate) {
-		this.sourceIdTemplate = sourceIdTemplate;
+	public final void setSourceIdTemplate(String sourceIdTemplate) {
+		this.sourceIdTemplate = requireNonNullArgument(sourceIdTemplate, "sourceIdTemplate");
 	}
 
 	/**
@@ -261,7 +266,7 @@ public final class DatumPublisherSupport {
 	 * 
 	 * @return the suffix; defaults to {@link #DEFAULT_SOURCE_ID_SUFFIX}
 	 */
-	public String getSourceIdSuffix() {
+	public final @Nullable String getSourceIdSuffix() {
 		return sourceIdSuffix;
 	}
 
@@ -271,7 +276,7 @@ public final class DatumPublisherSupport {
 	 * @param sourceIdSuffix
 	 *        the suffix to add
 	 */
-	public void setSourceIdSuffix(String sourceIdSuffix) {
+	public final void setSourceIdSuffix(@Nullable String sourceIdSuffix) {
 		this.sourceIdSuffix = sourceIdSuffix;
 	}
 
