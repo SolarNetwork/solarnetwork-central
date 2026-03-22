@@ -495,11 +495,11 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 	@Test
 	public void insert_defaultStatus() {
 		// given
-		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
+		CentralChargePoint cp = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
 
 		// when
-		ChargePointConnector conn = new ChargePointConnector(new ChargePointConnectorKey(cp.getId(), 1),
-				Instant.now());
+		var conn = new CentralChargePointConnector(new ChargePointConnectorKey(cp.getId(), 1),
+				cp.getUserId());
 		conn.setInfo(StatusNotification.builder().withConnectorId(1).withTimestamp(conn.getCreated())
 				.build());
 		ChargePointConnectorKey pk = dao.save(conn);

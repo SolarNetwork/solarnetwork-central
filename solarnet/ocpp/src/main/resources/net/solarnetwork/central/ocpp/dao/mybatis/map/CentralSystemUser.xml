@@ -100,7 +100,7 @@
 				<if test="filter.id != null">
 					AND su.id = #{filter.id}
 				</if>
-				<if test="filter.userId != null">
+				<if test="filter.userIdIsAssigned">
 					AND su.user_id = #{filter.userId}
 				</if>
 				<if test="filter.username != null">

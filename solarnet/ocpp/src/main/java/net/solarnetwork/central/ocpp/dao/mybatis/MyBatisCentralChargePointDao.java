@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao.mybatis;
 
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.central.domain.NodeIdRelated.UNASSIGNED_NODE_ID;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
@@ -86,20 +87,21 @@ public class MyBatisCentralChargePointDao extends
 
 	@Override
 	public ChargePoint getForIdentifier(Long userId, String identifier) {
-		return selectFirst(getQueryForAll(), singletonMap(FILTER_PROPERTY,
-				new CentralChargePoint(null, userId, null, null, new ChargePointInfo(identifier))));
+		return selectFirst(getQueryForAll(), singletonMap(FILTER_PROPERTY, new CentralChargePoint(null,
+				userId, UNASSIGNED_NODE_ID, null, new ChargePointInfo(identifier))));
 	}
 
 	@Override
 	public Collection<CentralChargePoint> findAllForOwner(Long userId) {
 		return selectList(getQueryForAll(),
-				singletonMap(FILTER_PROPERTY, new CentralChargePoint(userId, null)), null, null);
+				singletonMap(FILTER_PROPERTY, new CentralChargePoint(userId, UNASSIGNED_NODE_ID)), null,
+				null);
 	}
 
 	@Override
 	public CentralChargePoint get(Long userId, Long id) {
 		CentralChargePoint result = selectFirst(getQueryForAll(),
-				singletonMap(FILTER_PROPERTY, new CentralChargePoint(id, userId, null)));
+				singletonMap(FILTER_PROPERTY, new CentralChargePoint(id, userId, UNASSIGNED_NODE_ID)));
 		if ( result == null ) {
 			throw new DataRetrievalFailureException("Entity not found.");
 		}
@@ -108,8 +110,9 @@ public class MyBatisCentralChargePointDao extends
 
 	@Override
 	public void delete(Long userId, Long id) {
-		int count = getLastUpdateCount(getSqlSession().delete(
-				QueryName.DeleteForUserAndId.getQueryName(), new CentralChargePoint(id, userId, null)));
+		int count = getLastUpdateCount(
+				getSqlSession().delete(QueryName.DeleteForUserAndId.getQueryName(),
+						new CentralChargePoint(id, userId, UNASSIGNED_NODE_ID)));
 		if ( count < 1 ) {
 			throw new DataRetrievalFailureException("Entity not found.");
 		}

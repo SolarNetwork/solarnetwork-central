@@ -131,10 +131,10 @@
 				<if test="filter.id != null">
 					AND cp.id = #{filter.id}
 				</if>
-				<if test="filter.userId != null">
+				<if test="filter.userIdIsAssigned">
 					AND cp.user_id = #{filter.userId}
 				</if>
-				<if test="filter.nodeId != null">
+				<if test="filter.nodeIdIsAssigned">
 					AND cp.node_id = #{filter.nodeId}
 				</if>
 				<if test="filter.info != null and filter.info.id != null">

@@ -22,14 +22,15 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.BasicEntity;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * OCPP charger overall status.
@@ -46,13 +47,13 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	private static final long serialVersionUID = -4350200357133821464L;
 
 	/** The SolarIn instance connected to. */
-	private String connectedTo;
+	private @Nullable String connectedTo;
 
 	/** The connection session ID. */
-	private String sessionId;
+	private @Nullable String sessionId;
 
 	/** The connection date. */
-	private Instant connectedDate;
+	private @Nullable Instant connectedDate;
 
 	/**
 	 * Constructor.
@@ -73,8 +74,8 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 * @throws IllegalArgumentException
 	 *         if {@code userId} or {@code chargePointId} is {@code null}
 	 */
-	public ChargePointStatus(Long userId, Long chargePointId, Instant created, String connectedTo,
-			String sessionId, Instant connectedDate) {
+	public ChargePointStatus(Long userId, Long chargePointId, @Nullable Instant created,
+			@Nullable String connectedTo, @Nullable String sessionId, @Nullable Instant connectedDate) {
 		this(new UserLongCompositePK(userId, chargePointId), created, connectedTo, sessionId,
 				connectedDate);
 	}
@@ -96,9 +97,9 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 * @throws IllegalArgumentException
 	 *         if {@code id} is {@code null}
 	 */
-	public ChargePointStatus(UserLongCompositePK id, Instant created, String connectedTo,
-			String sessionId, Instant connectedDate) {
-		super(ObjectUtils.requireNonNullArgument(id, "id"), created);
+	public ChargePointStatus(UserLongCompositePK id, @Nullable Instant created,
+			@Nullable String connectedTo, @Nullable String sessionId, @Nullable Instant connectedDate) {
+		super(requireNonNullArgument(id, "id"), created);
 		this.connectedTo = connectedTo;
 		this.sessionId = sessionId;
 		this.connectedDate = connectedDate;
@@ -107,7 +108,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 
 	@Override
 	public Long getUserId() {
-		return getId().getUserId();
+		return id().getUserId();
 	}
 
 	/**
@@ -116,7 +117,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 * @return the Charge Point ID
 	 */
 	public Long getChargePointId() {
-		return getId().getEntityId();
+		return id().getEntityId();
 	}
 
 	/**
@@ -124,7 +125,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *
 	 * @return the instance name, or {@code null} if not connected
 	 */
-	public String getConnectedTo() {
+	public @Nullable String getConnectedTo() {
 		return connectedTo;
 	}
 
@@ -134,7 +135,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 * @param connectedTo
 	 *        the instance name, or {@code null} if not connected
 	 */
-	public void setConnectedTo(String connectedTo) {
+	public void setConnectedTo(@Nullable String connectedTo) {
 		this.connectedTo = connectedTo;
 	}
 
@@ -144,7 +145,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 * @return the sessionId the session ID
 	 * @since 1.1
 	 */
-	public String getSessionId() {
+	public @Nullable String getSessionId() {
 		return sessionId;
 	}
 
@@ -155,7 +156,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *        the session ID to set
 	 * @since 1.1
 	 */
-	public void setSessionId(String sessionId) {
+	public void setSessionId(@Nullable String sessionId) {
 		this.sessionId = sessionId;
 	}
 
@@ -164,7 +165,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *
 	 * @return the date, or {@code null} if never connected
 	 */
-	public Instant getConnectedDate() {
+	public @Nullable Instant getConnectedDate() {
 		return connectedDate;
 	}
 
@@ -174,7 +175,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 * @param connectedDate
 	 *        the date to set
 	 */
-	public void setConnectedDate(Instant connectedDate) {
+	public void setConnectedDate(@Nullable Instant connectedDate) {
 		this.connectedDate = connectedDate;
 	}
 

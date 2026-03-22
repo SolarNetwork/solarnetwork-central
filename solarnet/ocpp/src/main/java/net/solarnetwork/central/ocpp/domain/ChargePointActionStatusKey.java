@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 import net.solarnetwork.central.domain.BasePK;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A primary key for a Charge Point action status.
@@ -140,7 +140,7 @@ public class ChargePointActionStatusKey extends BasePK
 		this.chargePointId = chargePointId;
 		this.evseId = evseId;
 		this.connectorId = connectorId;
-		this.action = ObjectUtils.requireNonNullArgument(action, "action");
+		this.action = requireNonNullArgument(action, "action");
 	}
 
 	@Override

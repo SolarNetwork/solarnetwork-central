@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -55,21 +57,15 @@ public class ChargePointSettings extends BasicLongEntity
 	private final Long userId;
 	private boolean publishToSolarIn = true;
 	private boolean publishToSolarFlux = true;
-	private String sourceIdTemplate;
-
-	/**
-	 * Default constructor.
-	 */
-	public ChargePointSettings() {
-		super();
-		this.userId = null;
-	}
+	private @Nullable String sourceIdTemplate;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param userId
 	 *        the user ID
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
 	public ChargePointSettings(Long userId) {
 		this(null, userId, null);
@@ -82,8 +78,10 @@ public class ChargePointSettings extends BasicLongEntity
 	 *        the charge point ID
 	 * @param userId
 	 *        the user ID
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
-	public ChargePointSettings(Long chargePointId, Long userId) {
+	public ChargePointSettings(@Nullable Long chargePointId, Long userId) {
 		this(chargePointId, userId, null);
 	}
 
@@ -96,14 +94,16 @@ public class ChargePointSettings extends BasicLongEntity
 	 *        the user ID
 	 * @param created
 	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
 	@JsonCreator
 	public ChargePointSettings(
-			@JsonProperty(value = "chargePointId", required = true) Long chargePointId,
+			@JsonProperty(value = "chargePointId", required = true) @Nullable Long chargePointId,
 			@JsonProperty(value = "userId", required = true) Long userId,
-			@JsonProperty("created") Instant created) {
+			@JsonProperty("created") @Nullable Instant created) {
 		super(chargePointId, created);
-		this.userId = userId;
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
@@ -120,7 +120,7 @@ public class ChargePointSettings extends BasicLongEntity
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(ChargePointSettings other) {
+	public boolean isSameAs(@Nullable ChargePointSettings other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -132,7 +132,7 @@ public class ChargePointSettings extends BasicLongEntity
 	}
 
 	@Override
-	public boolean differsFrom(ChargePointSettings other) {
+	public boolean differsFrom(@Nullable ChargePointSettings other) {
 		return !isSameAs(other);
 	}
 
@@ -145,7 +145,7 @@ public class ChargePointSettings extends BasicLongEntity
 	 *
 	 * @return the charge point ID
 	 */
-	public Long getChargePointId() {
+	public @Nullable Long getChargePointId() {
 		return getId();
 	}
 
@@ -201,7 +201,7 @@ public class ChargePointSettings extends BasicLongEntity
 	 *
 	 * @return the template, or {@code null}
 	 */
-	public String getSourceIdTemplate() {
+	public @Nullable String getSourceIdTemplate() {
 		return sourceIdTemplate;
 	}
 
@@ -211,7 +211,7 @@ public class ChargePointSettings extends BasicLongEntity
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 */
-	public void setSourceIdTemplate(String sourceIdTemplate) {
+	public void setSourceIdTemplate(@Nullable String sourceIdTemplate) {
 		this.sourceIdTemplate = sourceIdTemplate;
 	}
 

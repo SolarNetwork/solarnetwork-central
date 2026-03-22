@@ -77,7 +77,7 @@
 				<if test="filter.id != null">
 					AND ca.id = #{filter.id}
 				</if>
-				<if test="filter.userId != null">
+				<if test="filter.userIdIsAssigned != null">
 					AND ca.user_id = #{filter.userId}
 				</if>
 				<if test="filter.token != null">

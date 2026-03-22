@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -51,10 +53,12 @@ public class CentralAuthorization extends Authorization implements UserRelatedEn
 	 *
 	 * @param userId
 	 *        the owner user ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public CentralAuthorization(Long userId) {
 		super();
-		this.userId = userId;
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
@@ -64,10 +68,12 @@ public class CentralAuthorization extends Authorization implements UserRelatedEn
 	 *        the ID
 	 * @param userId
 	 *        the owner user ID
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
-	public CentralAuthorization(Long id, Long userId) {
+	public CentralAuthorization(@Nullable Long id, Long userId) {
 		super(id);
-		this.userId = userId;
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
@@ -79,13 +85,15 @@ public class CentralAuthorization extends Authorization implements UserRelatedEn
 	 *        the owner user ID
 	 * @param created
 	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
 	@JsonCreator
-	public CentralAuthorization(@JsonProperty("id") Long id,
+	public CentralAuthorization(@JsonProperty("id") @Nullable Long id,
 			@JsonProperty(value = "userId", required = true) Long userId,
-			@JsonProperty("created") Instant created) {
+			@JsonProperty("created") @Nullable Instant created) {
 		super(id, created);
-		this.userId = userId;
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
@@ -97,25 +105,27 @@ public class CentralAuthorization extends Authorization implements UserRelatedEn
 	 *        the created date
 	 * @param token
 	 *        the token
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
-	public CentralAuthorization(Long userId, Instant created, String token) {
+	public CentralAuthorization(Long userId, @Nullable Instant created, @Nullable String token) {
 		super(created, token);
-		this.userId = userId;
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
 	 * Copy constructor.
-	 *
+	 * 
 	 * @param other
 	 *        the authorization to copy
 	 */
-	public CentralAuthorization(Authorization other) {
+	public CentralAuthorization(CentralAuthorization other) {
 		super(other);
-		this.userId = (other instanceof CentralAuthorization u ? u.userId : null);
+		this.userId = other.userId;
 	}
 
 	@Override
-	public boolean isSameAs(Authorization other) {
+	public boolean isSameAs(@Nullable Authorization other) {
 		if ( !(other instanceof CentralAuthorization u) ) {
 			return false;
 		}

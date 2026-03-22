@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -53,10 +55,12 @@ public class CentralSystemUser extends SystemUser implements UserRelatedEntity<L
 	 *
 	 * @param userId
 	 *        the owner user ID
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
 	public CentralSystemUser(Long userId) {
 		super();
-		this.userId = userId;
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
@@ -66,10 +70,12 @@ public class CentralSystemUser extends SystemUser implements UserRelatedEntity<L
 	 *        the ID
 	 * @param userId
 	 *        the owner user ID
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
-	public CentralSystemUser(Long id, Long userId) {
+	public CentralSystemUser(@Nullable Long id, Long userId) {
 		super(id, null);
-		this.userId = userId;
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
@@ -83,10 +89,13 @@ public class CentralSystemUser extends SystemUser implements UserRelatedEntity<L
 	 *        the username
 	 * @param password
 	 *        the password
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
-	public CentralSystemUser(Long userId, Instant created, String username, String password) {
+	public CentralSystemUser(Long userId, @Nullable Instant created, @Nullable String username,
+			@Nullable String password) {
 		super(created, username, password);
-		this.userId = userId;
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
@@ -100,11 +109,11 @@ public class CentralSystemUser extends SystemUser implements UserRelatedEntity<L
 	 *        the creation date
 	 */
 	@JsonCreator
-	public CentralSystemUser(@JsonProperty("id") Long id,
+	public CentralSystemUser(@JsonProperty("id") @Nullable Long id,
 			@JsonProperty(value = "userId", required = true) Long userId,
-			@JsonProperty("created") Instant created) {
+			@JsonProperty("created") @Nullable Instant created) {
 		super(id, created);
-		this.userId = userId;
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
@@ -113,9 +122,9 @@ public class CentralSystemUser extends SystemUser implements UserRelatedEntity<L
 	 * @param other
 	 *        the other system
 	 */
-	public CentralSystemUser(SystemUser other) {
+	public CentralSystemUser(CentralSystemUser other) {
 		super(other);
-		this.userId = (other instanceof CentralSystemUser u ? u.userId : null);
+		this.userId = other.userId;
 	}
 
 	/**
@@ -132,7 +141,7 @@ public class CentralSystemUser extends SystemUser implements UserRelatedEntity<L
 	}
 
 	@Override
-	public boolean isSameAs(SystemUser other) {
+	public boolean isSameAs(@Nullable SystemUser other) {
 		if ( !(other instanceof CentralSystemUser u) ) {
 			return false;
 		}

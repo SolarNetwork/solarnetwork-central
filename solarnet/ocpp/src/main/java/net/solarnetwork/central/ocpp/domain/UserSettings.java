@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.dao.BasicLongEntity;
 import net.solarnetwork.domain.Differentiable;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * OCPP settings for a SolarNet user.
@@ -85,23 +86,18 @@ public class UserSettings extends BasicLongEntity
 		return SOURCE_ID_EMPTY_SEGMENT_PAT.matcher(sourceId).replaceAll("");
 	}
 
-	private final String hid;
+	private final @Nullable String hid;
 	private boolean publishToSolarIn = true;
 	private boolean publishToSolarFlux = true;
-	private String sourceIdTemplate;
-
-	/**
-	 * Default constructor.
-	 */
-	public UserSettings() {
-		this(null, null, null);
-	}
+	private @Nullable String sourceIdTemplate;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param userId
 	 *        the user ID
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
 	public UserSettings(Long userId) {
 		this(userId, null, null);
@@ -114,10 +110,12 @@ public class UserSettings extends BasicLongEntity
 	 *        the user ID
 	 * @param created
 	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 */
 	@JsonCreator
 	public UserSettings(@JsonProperty(value = "userId", required = true) Long userId,
-			@JsonProperty("created") Instant created) {
+			@JsonProperty("created") @Nullable Instant created) {
 		this(userId, created, null);
 	}
 
@@ -130,10 +128,12 @@ public class UserSettings extends BasicLongEntity
 	 *        the creation date
 	 * @param hid
 	 *        the human ID
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
 	 * @since 1.2
 	 */
-	public UserSettings(Long userId, Instant created, String hid) {
-		super(userId, created);
+	public UserSettings(Long userId, @Nullable Instant created, @Nullable String hid) {
+		super(ObjectUtils.requireNonNullArgument(userId, "userId"), created);
 		this.hid = hid;
 	}
 
@@ -151,7 +151,7 @@ public class UserSettings extends BasicLongEntity
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(UserSettings other) {
+	public boolean isSameAs(@Nullable UserSettings other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -159,7 +159,7 @@ public class UserSettings extends BasicLongEntity
 	}
 
 	@Override
-	public boolean differsFrom(UserSettings other) {
+	public boolean differsFrom(@Nullable UserSettings other) {
 		return !isSameAs(other);
 	}
 
@@ -174,7 +174,7 @@ public class UserSettings extends BasicLongEntity
 	 */
 	@Override
 	public Long getUserId() {
-		return getId();
+		return id();
 	}
 
 	/**
@@ -222,10 +222,9 @@ public class UserSettings extends BasicLongEntity
 	/**
 	 * Set the source ID template.
 	 *
-	 * @return the template, never {@code null}; defaults to
-	 *         {@link #DEFAULT_SOURCE_ID_TEMPLATE}
+	 * @return the template, never {@code null}
 	 */
-	public String getSourceIdTemplate() {
+	public @Nullable String getSourceIdTemplate() {
 		return sourceIdTemplate;
 	}
 
@@ -234,11 +233,9 @@ public class UserSettings extends BasicLongEntity
 	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
-	 * @throws IllegalArgumentException
-	 *         if {@code sourceIdTemplate} is {@code null}
 	 */
-	public void setSourceIdTemplate(String sourceIdTemplate) {
-		this.sourceIdTemplate = requireNonNullArgument(sourceIdTemplate, "sourceIdTemplate");
+	public void setSourceIdTemplate(@Nullable String sourceIdTemplate) {
+		this.sourceIdTemplate = sourceIdTemplate;
 	}
 
 	/**
@@ -247,7 +244,7 @@ public class UserSettings extends BasicLongEntity
 	 * @return the human ID
 	 * @since 1.2
 	 */
-	public String getHid() {
+	public @Nullable String getHid() {
 		return hid;
 	}
 

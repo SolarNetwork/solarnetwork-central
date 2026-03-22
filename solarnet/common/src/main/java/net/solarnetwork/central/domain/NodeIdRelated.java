@@ -28,9 +28,17 @@ import org.jspecify.annotations.Nullable;
  * API for objects related to a node entity by way of a node ID.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface NodeIdRelated {
+
+	/**
+	 * A special "not a value" instance to be used for node ID values yet to be
+	 * assigned.
+	 * 
+	 * @since 1.1
+	 */
+	Long UNASSIGNED_NODE_ID = Long.MIN_VALUE;
 
 	/**
 	 * Get node ID this entity relates to.
@@ -39,5 +47,18 @@ public interface NodeIdRelated {
 	 */
 	@Nullable
 	Long getNodeId();
+
+	/**
+	 * Test if a node ID is available.
+	 * 
+	 * @return {@code true} if a node ID is available (and not
+	 *         {@link #UNASSIGNED_NODE_ID})
+	 * @since 1.1
+	 */
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
+	default boolean nodeIdIsAssigned() {
+		Long nodeId = getNodeId();
+		return (nodeId != null && nodeId != UNASSIGNED_NODE_ID);
+	}
 
 }
