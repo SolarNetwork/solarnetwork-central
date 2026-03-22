@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.mqtt;
 
 import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -87,7 +89,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 	private final ChargePointRouter chargePointRouter;
 	private final CentralChargePointDao chargePointDao;
 	private final Class<T> actionClass;
-	private UserEventAppenderBiz userEventAppenderBiz;
+	private @Nullable UserEventAppenderBiz userEventAppenderBiz;
 
 	/**
 	 * Constructor.
@@ -117,7 +119,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 
 	@Override
 	public Set<Action> getSupportedActions() {
-		return null;
+		return Set.of();
 	}
 
 	@Override
@@ -295,7 +297,8 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 		}
 	}
 
-	private void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, @Nullable String message,
+			Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
@@ -310,7 +313,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 	 *
 	 * @return the topic
 	 */
-	public String getMqttTopic() {
+	public final String getMqttTopic() {
 		return mqttTopic;
 	}
 
@@ -320,13 +323,10 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 	 * @param mqttTopic
 	 *        the topic
 	 * @throws IllegalArgumentException
-	 *         if {@code topic} is {@code null}
+	 *         if {@code topic} is {@code null} or empty
 	 */
-	public void setMqttTopic(String mqttTopic) {
-		if ( mqttTopic == null || mqttTopic.isEmpty() ) {
-			throw new IllegalArgumentException("The mqttTopic parameter must not be null.");
-		}
-		this.mqttTopic = mqttTopic;
+	public final void setMqttTopic(String mqttTopic) {
+		this.mqttTopic = requireNonEmptyArgument(mqttTopic, "mqttTopic");
 	}
 
 	/**
@@ -335,7 +335,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 	 * @return {@literal true} to not subscribe to the MQTT topic; defaults to
 	 *         {@link #DEFAULT_PUBLISH_ONLY}
 	 */
-	public boolean isPublishOnly() {
+	public final boolean isPublishOnly() {
 		return publishOnly;
 	}
 
@@ -345,7 +345,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 	 * @param publishOnly
 	 *        {@literal true} to not subscribe to the MQTT topic
 	 */
-	public void setPublishOnly(boolean publishOnly) {
+	public final void setPublishOnly(boolean publishOnly) {
 		this.publishOnly = publishOnly;
 	}
 
@@ -355,7 +355,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 	 * @return the service
 	 * @since 2.1
 	 */
-	public UserEventAppenderBiz getUserEventAppenderBiz() {
+	public final @Nullable UserEventAppenderBiz getUserEventAppenderBiz() {
 		return userEventAppenderBiz;
 	}
 
@@ -366,7 +366,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 	 *        the service to set
 	 * @since 2.1
 	 */
-	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
+	public final void setUserEventAppenderBiz(@Nullable UserEventAppenderBiz userEventAppenderBiz) {
 		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 
