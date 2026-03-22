@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
 
@@ -43,14 +44,17 @@ public interface ChargeSessionEndReasonCriteria {
 	 * 
 	 * @return the first end reason, or {@code null} if not available
 	 */
-	ChargeSessionEndReason getEndReason();
+	default @Nullable ChargeSessionEndReason getEndReason() {
+		final var array = getEndReasons();
+		return (array != null && array.length > 0 ? array[0] : null);
+	}
 
 	/**
 	 * Get an array of end reasons.
 	 * 
 	 * @return array of end reasons (may be {@code null})
 	 */
-	ChargeSessionEndReason[] getEndReasons();
+	ChargeSessionEndReason @Nullable [] getEndReasons();
 
 	/**
 	 * Get an array of end reason code values.
@@ -59,9 +63,12 @@ public interface ChargeSessionEndReasonCriteria {
 	 */
 	@SuppressWarnings("null")
 	@JsonIgnore
-	default Integer[] getEndReasonCodes() {
+	default Integer @Nullable [] getEndReasonCodes() {
 		final ChargeSessionEndReason[] a = getEndReasons();
-		int len = (a != null ? a.length : 0);
+		if ( a == null ) {
+			return null;
+		}
+		final int len = a.length;
 		if ( len < 1 ) {
 			return null;
 		}

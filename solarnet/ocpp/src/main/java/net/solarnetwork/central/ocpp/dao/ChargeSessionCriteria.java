@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao;
 
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Search criteria for charge session related data.
@@ -42,14 +43,17 @@ public interface ChargeSessionCriteria {
 	 * 
 	 * @return the first charge session ID, or {@code null} if not available
 	 */
-	UUID getChargeSessionId();
+	default @Nullable UUID getChargeSessionId() {
+		final var array = getChargeSessionIds();
+		return (array != null && array.length > 0 ? array[0] : null);
+	}
 
 	/**
 	 * Get an array of charge session IDs.
 	 * 
 	 * @return array of charge session IDs (may be {@code null})
 	 */
-	UUID[] getChargeSessionIds();
+	UUID @Nullable [] getChargeSessionIds();
 
 	/**
 	 * Test if this filter has any charge session criteria.
@@ -65,6 +69,7 @@ public interface ChargeSessionCriteria {
 	 * 
 	 * @return {@literal true} to only include sessions that have not ended
 	 */
+	@Nullable
 	Boolean getActive();
 
 }

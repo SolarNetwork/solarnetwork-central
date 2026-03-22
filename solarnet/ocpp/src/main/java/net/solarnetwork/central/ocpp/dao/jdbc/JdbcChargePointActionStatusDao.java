@@ -28,6 +28,7 @@ import java.sql.ResultSet;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -80,7 +81,8 @@ public class JdbcChargePointActionStatusDao implements ChargePointActionStatusDa
 
 	@Override
 	public FilterResults<ChargePointActionStatus, ChargePointActionStatusKey> findFiltered(
-			ChargePointActionStatusFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			ChargePointActionStatusFilter filter, @Nullable List<SortDescriptor> sorts,
+			@Nullable Long offset, @Nullable Integer max) {
 		requireNonNullArgument(filter, "filter");
 		final PreparedStatementCreator sql = new SelectChargePointActionStatus(filter);
 		List<ChargePointActionStatus> list = jdbcOps.query(sql,
@@ -91,14 +93,15 @@ public class JdbcChargePointActionStatusDao implements ChargePointActionStatusDa
 	@Override
 	public void findFilteredStream(ChargePointActionStatusFilter filter,
 			FilteredResultsProcessor<ChargePointActionStatus> processor,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException {
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset, @Nullable Integer max)
+			throws IOException {
 		requireNonNullArgument(filter, "filter");
 		requireNonNullArgument(processor, "processor");
 		final PreparedStatementCreator sql = new SelectChargePointActionStatus(filter);
 		final RowMapper<ChargePointActionStatus> mapper = ChargePointActionStatusRowMapper.INSTANCE;
 		processor.start(null, null, null, Map.of());
 		try {
-			jdbcOps.execute(sql, (PreparedStatementCallback<Void>) ps -> {
+			jdbcOps.execute(sql, (PreparedStatementCallback<@Nullable Void>) ps -> {
 				try (ResultSet rs = ps.executeQuery()) {
 					int row = 0;
 					while ( rs.next() ) {

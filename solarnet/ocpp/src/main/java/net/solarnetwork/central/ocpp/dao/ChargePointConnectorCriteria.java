@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for connector related data.
  * 
@@ -40,14 +42,17 @@ public interface ChargePointConnectorCriteria {
 	 * 
 	 * @return the first connector ID, or {@code null} if not available
 	 */
-	Integer getConnectorId();
+	default @Nullable Integer getConnectorId() {
+		final var array = getConnectorIds();
+		return (array != null && array.length > 0 ? array[0] : null);
+	}
 
 	/**
 	 * Get an array of connector IDs.
 	 * 
 	 * @return array of connector IDs (may be {@code null})
 	 */
-	Integer[] getConnectorIds();
+	Integer @Nullable [] getConnectorIds();
 
 	/**
 	 * Test if this filter has any connector criteria.
@@ -69,7 +74,10 @@ public interface ChargePointConnectorCriteria {
 	 * @return the first EVSE ID, or {@code null} if not available
 	 * @since 1.2
 	 */
-	Integer getEvseId();
+	default @Nullable Integer getEvseId() {
+		final var array = getEvseIds();
+		return (array != null && array.length > 0 ? array[0] : null);
+	}
 
 	/**
 	 * Get an array of EVSE IDs.
@@ -77,7 +85,7 @@ public interface ChargePointConnectorCriteria {
 	 * @return array of EVSE IDs (may be {@code null})
 	 * @since 1.2
 	 */
-	Integer[] getEvseIds();
+	Integer @Nullable [] getEvseIds();
 
 	/**
 	 * Test if this filter has any EVSE criteria.
@@ -86,7 +94,7 @@ public interface ChargePointConnectorCriteria {
 	 * @since 1.2
 	 */
 	default boolean hasEvseCriteria() {
-		return getConnectorId() != null;
+		return getEvseId() != null;
 	}
 
 }

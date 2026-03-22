@@ -27,6 +27,7 @@ import static net.solarnetwork.central.domain.NodeIdRelated.UNASSIGNED_NODE_ID;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
@@ -81,12 +82,12 @@ public class MyBatisCentralChargePointDao extends
 	}
 
 	@Override
-	public ChargePoint getForIdentity(ChargePointIdentity identity) {
+	public @Nullable ChargePoint getForIdentity(ChargePointIdentity identity) {
 		return selectFirst(QueryName.GetForIdentity.getQueryName(), identity);
 	}
 
 	@Override
-	public ChargePoint getForIdentifier(Long userId, String identifier) {
+	public @Nullable ChargePoint getForIdentifier(Long userId, String identifier) {
 		return selectFirst(getQueryForAll(), singletonMap(FILTER_PROPERTY, new CentralChargePoint(null,
 				userId, UNASSIGNED_NODE_ID, null, new ChargePointInfo(identifier))));
 	}
@@ -120,7 +121,7 @@ public class MyBatisCentralChargePointDao extends
 
 	@Override
 	public FilterResults<CentralChargePoint, Long> findFiltered(CentralChargePointFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		return doFindFiltered(filter, sorts, offset, max);
 	}

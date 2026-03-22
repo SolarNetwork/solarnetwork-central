@@ -31,6 +31,7 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
@@ -92,14 +93,16 @@ public class AsyncChargePointStatusDao
 
 	@Override
 	public FilterResults<ChargePointStatus, UserLongCompositePK> findFiltered(
-			ChargePointStatusFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			ChargePointStatusFilter filter, @Nullable List<SortDescriptor> sorts, @Nullable Long offset,
+			@Nullable Integer max) {
 		return delegate.findFiltered(filter, sorts, offset, max);
 	}
 
 	@Override
 	public void findFilteredStream(ChargePointStatusFilter filter,
-			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
-			Long offset, Integer max) throws IOException {
+			FilteredResultsProcessor<ChargePointStatus> processor,
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset, @Nullable Integer max)
+			throws IOException {
 		delegate.findFilteredStream(filter, processor, sortDescriptors, offset, max);
 	}
 

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao;
 
 import java.util.Collection;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.dao.GenericDao;
@@ -80,6 +81,7 @@ public interface ChargePointSettingsDao extends GenericDao<ChargePointSettings, 
 	 * @return the settings, or {@code null} if no charge point or user settings
 	 *         exist
 	 */
+	@Nullable
 	ChargePointSettings resolveSettings(Long userId, Long id);
 
 }

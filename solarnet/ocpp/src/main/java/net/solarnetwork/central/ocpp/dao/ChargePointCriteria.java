@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for charge point related data.
  * 
@@ -40,14 +42,17 @@ public interface ChargePointCriteria {
 	 * 
 	 * @return the first charge point ID, or {@code null} if not available
 	 */
-	Long getChargePointId();
+	default @Nullable Long getChargePointId() {
+		final var array = getChargePointIds();
+		return (array != null && array.length > 0 ? array[0] : null);
+	}
 
 	/**
 	 * Get an array of charge point IDs.
 	 * 
 	 * @return array of charge point IDs (may be {@code null})
 	 */
-	Long[] getChargePointIds();
+	Long @Nullable [] getChargePointIds();
 
 	/**
 	 * Test if this filter has any charge point criteria.

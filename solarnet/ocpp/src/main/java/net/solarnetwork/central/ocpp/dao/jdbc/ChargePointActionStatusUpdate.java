@@ -27,6 +27,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasePK;
 
 /**
@@ -85,8 +86,9 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 	 *         if any argument other than {@code evseId} or {@code connectorId}
 	 *         are {@code null}
 	 */
-	public ChargePointActionStatusUpdate(Long userId, String chargePointIdentifier, Integer evseId,
-			Integer connectorId, String action, String messageId, Instant date) {
+	public ChargePointActionStatusUpdate(Long userId, String chargePointIdentifier,
+			@Nullable Integer evseId, @Nullable Integer connectorId, String action, String messageId,
+			Instant date) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.chargePointIdentifier = requireNonNullArgument(chargePointIdentifier,

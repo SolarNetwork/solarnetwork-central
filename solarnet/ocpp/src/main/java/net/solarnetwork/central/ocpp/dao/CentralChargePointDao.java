@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao;
 
 import java.util.Collection;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointFilter;
 import net.solarnetwork.dao.FilterableDao;
@@ -53,6 +54,7 @@ public interface CentralChargePointDao
 	 *        the charge point identifier to look for
 	 * @return the matching charge point, or {@code null} if not found
 	 */
+	@Nullable
 	ChargePoint getForIdentifier(Long userId, String identifier);
 
 	/**

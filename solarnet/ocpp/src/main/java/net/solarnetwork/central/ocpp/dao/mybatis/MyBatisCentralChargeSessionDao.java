@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao.mybatis;
 
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.ibatis.session.SqlSession;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
 import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
@@ -108,7 +110,7 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 	}
 
 	@Override
-	public ChargeSession getIncompleteChargeSessionForTransaction(long chargePointId,
+	public @Nullable ChargeSession getIncompleteChargeSessionForTransaction(long chargePointId,
 			String transactionId) {
 		BasicOcppCriteria filter = new BasicOcppCriteria();
 		filter.setChargePointId(chargePointId);
@@ -118,7 +120,7 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 	}
 
 	@Override
-	public ChargeSession getIncompleteChargeSessionForConnector(long chargePointId, int evseId,
+	public @Nullable ChargeSession getIncompleteChargeSessionForConnector(long chargePointId, int evseId,
 			int connectorId) {
 		BasicOcppCriteria filter = new BasicOcppCriteria();
 		filter.setChargePointId(chargePointId);
@@ -164,7 +166,7 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 	}
 
 	@Override
-	public ChargeSession get(UUID id, Long userId) {
+	public @Nullable ChargeSession get(UUID id, Long userId) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("userId", userId);
 		params.put("id", id);
@@ -189,13 +191,14 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 	}
 
 	@Override
-	public int deletePostedChargeSessions(Instant expirationDate) {
-		return getSqlSession().delete(QueryName.DeleteByPosted.getQueryName(), expirationDate);
+	public int deletePostedChargeSessions(@Nullable Instant expirationDate) {
+		return getSqlSession().delete(QueryName.DeleteByPosted.getQueryName(),
+				expirationDate != null ? expirationDate : Instant.now());
 	}
 
 	@Override
 	public FilterResults<ChargeSession, UUID> findFiltered(ChargeSessionFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		List<ChargeSession> results = selectList(QueryName.FindFiltered.getQueryName(), filter, null,
 				null);
 		return new BasicFilterResults<>(results, null, offset != null ? offset.intValue() : 0,
@@ -204,7 +207,7 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 
 	@Override
 	public boolean endSession(Long userId, UUID sessionId, ChargeSessionEndReason reason,
-			String endAuthId) {
+			@Nullable String endAuthId) {
 		Map<String, Object> params = new LinkedHashMap<>(4);
 		params.put("id", sessionId);
 		params.put("userId", ObjectUtils.requireNonNullArgument(userId, "userId"));
@@ -219,7 +222,7 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 	@Override
 	public int nextTransactionId() {
 		Long id = selectLong(QueryName.GetNextTransactinoId.getQueryName(), null);
-		return id.intValue();
+		return nonnull(id, "id").intValue();
 	}
 
 }

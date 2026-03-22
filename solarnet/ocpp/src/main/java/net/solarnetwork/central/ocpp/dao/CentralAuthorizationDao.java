@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao;
 
 import java.util.Collection;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.ocpp.dao.AuthorizationDao;
 import net.solarnetwork.ocpp.domain.Authorization;
@@ -50,6 +51,7 @@ public interface CentralAuthorizationDao extends AuthorizationDao {
 	 *        the token to find
 	 * @return the matching entity, or {@code null} if not found
 	 */
+	@Nullable
 	Authorization getForToken(Long userId, String token);
 
 	/**

@@ -25,6 +25,7 @@ package net.solarnetwork.central.ocpp.dao;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
@@ -83,7 +84,8 @@ public interface ChargePointStatusDao
 	 *         if any IO error occurs
 	 */
 	void findFilteredStream(ChargePointStatusFilter filter,
-			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
-			Long offset, Integer max) throws IOException;
+			FilteredResultsProcessor<ChargePointStatus> processor,
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset, @Nullable Integer max)
+			throws IOException;
 
 }

@@ -35,6 +35,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.DataSource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusUpdateDao;
@@ -74,7 +75,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	private final BlockingQueue<ChargePointActionStatusUpdate> statuses;
 	private final StatTracker stats;
 
-	private WriterThread writerThread;
+	private @Nullable WriterThread writerThread;
 	private long updateDelay;
 	private long connectionRecoveryDelay;
 	private int bufferRemovalLagAlertThreshold;

@@ -617,7 +617,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param endReasons
 	 *        the end reasons to set
 	 */
-	public final void setEndReasons(@Nullable ChargeSessionEndReason[] endReasons) {
+	public final void setEndReasons(ChargeSessionEndReason @Nullable [] endReasons) {
 		this.endReasons = endReasons;
 	}
 
