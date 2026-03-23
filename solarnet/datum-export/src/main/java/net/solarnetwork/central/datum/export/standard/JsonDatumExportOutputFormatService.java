@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.export.standard;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,6 +31,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -72,7 +74,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 	 * @param objectMapper
 	 *        the object mapper to use, or {@code null} to create a standard one
 	 */
-	public JsonDatumExportOutputFormatService(ObjectMapper objectMapper) {
+	public JsonDatumExportOutputFormatService(@Nullable ObjectMapper objectMapper) {
 		super("net.solarnetwork.central.datum.export.standard.JsonDatumExportOutputFormatService");
 		if ( objectMapper == null ) {
 			objectMapper = JsonUtils.JSON_OBJECT_MAPPER;
@@ -102,8 +104,8 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 
 	private class JsonExportContext extends BaseDatumExportOutputFormatServiceExportContext {
 
-		private File temporaryFile;
-		private JsonGenerator generator;
+		private @Nullable File temporaryFile;
+		private @Nullable JsonGenerator generator;
 		private boolean started;
 
 		private JsonExportContext(OutputConfiguration config) {
@@ -125,7 +127,8 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 
 		@Override
 		public void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable,
-				ProgressListener<DatumExportService> progressListener) throws IOException {
+				@Nullable ProgressListener<DatumExportService> progressListener) throws IOException {
+			final JsonGenerator generator = nonnull(this.generator, "JsonGenerator");
 			if ( !started ) {
 				generator.writeStartArray();
 				started = true;
@@ -138,7 +141,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 
 		@Override
 		public Iterable<DatumExportResource> finish() throws IOException {
-			if ( started && !generator.isClosed() ) {
+			if ( started && generator != null && !generator.isClosed() ) {
 				generator.writeEndArray();
 			}
 			flush();

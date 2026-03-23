@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.export.standard;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,6 +48,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
@@ -130,11 +132,11 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 	private class CsvExportContext extends BaseDatumExportOutputFormatServiceExportContext {
 
 		private final CsvOutputFormatProperties props;
-		private File temporaryFile;
-		private CsvWriter writer;
-		private Set<String> headerSet;
-		private String[] headers;
-		private List<Function<Object, String>> cellProcessors;
+		private @Nullable File temporaryFile;
+		private @Nullable CsvWriter writer;
+		private @Nullable Set<String> headerSet;
+		private String @Nullable [] headers;
+		private @Nullable List<Function<@Nullable Object, @Nullable String>> cellProcessors;
 		private int rowNum;
 
 		private CsvExportContext(OutputConfiguration config) {
@@ -164,7 +166,8 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			return headers;
 		}
 
-		private Function<Object, String> processorForDatumProperty(final Object value) {
+		private @Nullable Function<@Nullable Object, @Nullable String> processorForDatumProperty(
+				final Object value) {
 			if ( value instanceof java.time.Instant || value instanceof ZonedDateTime
 					|| value instanceof LocalDateTime ) {
 				return (v) -> (String) INSTANT_PROP_SERIALIZER.serialize(null, null, v);
@@ -173,7 +176,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			} else if ( value instanceof LocalTime ) {
 				return (v) -> (String) TIME_PROP_SERIALIZER.serialize(null, null, v);
 			} else if ( value instanceof Date ) {
-				return (v) -> DATE_TIME_FORMATTER.format(((Date) v).toInstant());
+				return (v) -> v != null ? DATE_TIME_FORMATTER.format(((Date) v).toInstant()) : null;
 			} else if ( value.getClass().isArray() ) {
 				return (v) -> {
 					String result = null;
@@ -190,8 +193,9 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			return null;
 		}
 
-		private List<Function<Object, String>> processorsForDatumMap(Map<String, Object> map) {
-			List<Function<Object, String>> processors = new ArrayList<>(
+		private List<Function<@Nullable Object, @Nullable String>> processorsForDatumMap(
+				Map<String, Object> map) {
+			List<Function<@Nullable Object, @Nullable String>> processors = new ArrayList<>(
 					Math.max(CSV_CORE_HEADERS.size(), map.size()));
 			processors.add((value) -> (String) INSTANT_PROP_SERIALIZER.serialize(null, null, value));
 			processors.add(null);
@@ -203,7 +207,8 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 				if ( CSV_CORE_HEADERS.contains(me.getKey()) ) {
 					continue;
 				}
-				Function<Object, String> proc = processorForDatumProperty(me.getValue());
+				Function<@Nullable Object, @Nullable String> proc = processorForDatumProperty(
+						me.getValue());
 				processors.add(idx++, proc);
 			}
 			return processors;
@@ -262,7 +267,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 
 		@Override
 		public void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable,
-				ProgressListener<DatumExportService> progressListener) throws IOException {
+				@Nullable ProgressListener<DatumExportService> progressListener) throws IOException {
 			if ( writer == null ) {
 				throw new UnsupportedOperationException("The start method must be called first.");
 			}
@@ -279,13 +284,15 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 					} else {
 						// check for column additions, and adjust header/processor structures accordingly
 						for ( Map.Entry<String, Object> me : map.entrySet() ) {
-							if ( !headerSet.contains(me.getKey()) ) {
+							if ( !nonnull(headerSet, "Header set").contains(me.getKey()) ) {
 								// new column!
 								addColumnForMapProperty(me.getKey(), me.getValue());
 							}
 						}
 					}
+					String[] headers = nonnull(this.headers, "Headers");
 					String[] csvRow = new String[headers.length];
+					var cellProcessors = nonnull(this.cellProcessors, "Cell processors");
 					for ( int i = 0; i < headers.length; i++ ) {
 						Object val = map.get(headers[i]);
 						if ( cellProcessors.get(i) != null ) {
@@ -302,12 +309,13 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 		}
 
 		private void addColumnForMapProperty(String key, Object value) {
+			final String[] headers = nonnull(this.headers, "Headers");
 			String[] newHeaders = new String[headers.length + 1];
 			System.arraycopy(headers, 0, newHeaders, 0, headers.length);
 			newHeaders[headers.length] = key;
-			headers = newHeaders;
-			headerSet.add(key);
-			cellProcessors.add(processorForDatumProperty(value));
+			this.headers = newHeaders;
+			nonnull(headerSet, "Header set").add(key);
+			nonnull(cellProcessors, "Cell processors").add(processorForDatumProperty(value));
 		}
 
 		@Override

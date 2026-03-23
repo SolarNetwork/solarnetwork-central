@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService.ExportContext;
 import net.solarnetwork.central.datum.export.biz.DatumExportService;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
@@ -55,18 +56,36 @@ public abstract class BaseDatumExportOutputFormatServiceExportContext implements
 		this.config = config;
 	}
 
+	/**
+	 * Set an estimated result count.
+	 *
+	 * @param estimatedResultCount
+	 *        the estimated count
+	 */
 	protected void setEstimatedResultCount(long estimatedResultCount) {
 		this.estimatedResultCount = estimatedResultCount;
 	}
 
+	/**
+	 * Increment progress.
+	 *
+	 * @param context
+	 *        the context
+	 * @param count
+	 *        the current count
+	 * @param progressListener
+	 *        an optional progress listener
+	 */
 	protected void incrementProgress(DatumExportService context, int count,
-			ProgressListener<DatumExportService> progressListener) {
+			@Nullable ProgressListener<DatumExportService> progressListener) {
 		if ( estimatedResultCount < 1 ) {
 			return;
 		}
 		complete += count;
-		progressListener.progressChanged(context,
-				Math.min(1.0, (double) complete / (double) estimatedResultCount));
+		if ( progressListener != null ) {
+			progressListener.progressChanged(context,
+					Math.min(1.0, (double) complete / (double) estimatedResultCount));
+		}
 	}
 
 	/**
