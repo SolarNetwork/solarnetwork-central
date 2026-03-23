@@ -382,6 +382,7 @@ public class DatumExportController {
 	public Result<UserAdhocDatumExportTaskInfo> submitAdhocExportJobRequest(
 			@RequestBody UserDatumExportConfigurationInput input) {
 		if ( exportBiz != null ) {
+			input.setSchedule(ScheduleType.Adhoc);
 			UserDatumExportConfiguration config = input.toEntity(new UserLongCompositePK(
 					getCurrentActorUserId(),
 					input.getId() != null ? input.getId() : UserLongCompositePK.UNASSIGNED_ENTITY_ID));
@@ -410,6 +411,7 @@ public class DatumExportController {
 	public Result<UserAdhocDatumExportTaskInfo> submitAdhocExportReferenceJobRequest(
 			@RequestBody UserDatumExportConfigurationInput input) {
 		if ( exportBiz != null ) {
+			input.setSchedule(ScheduleType.Adhoc);
 			UserDatumExportConfiguration config = input.toEntity(new UserLongCompositePK(
 					getCurrentActorUserId(),
 					input.getId() != null ? input.getId() : UserLongCompositePK.UNASSIGNED_ENTITY_ID));

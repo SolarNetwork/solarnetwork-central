@@ -83,6 +83,12 @@ public final class UserDatumExportConfigurationInput
 		conf.setTokenId(tokenId);
 
 		if ( dataConfiguration != null ) {
+			if ( dataConfiguration.getName() == null ) {
+				dataConfiguration.setName(name);
+			}
+			if ( dataConfiguration.getServiceIdentifier() == null ) {
+				dataConfiguration.setServiceIdentifier("");
+			}
 			conf.setUserDataConfiguration(
 					dataConfiguration.toEntity(
 							new UserLongCompositePK(conf.getUserId(),
@@ -94,6 +100,12 @@ public final class UserDatumExportConfigurationInput
 		}
 
 		if ( outputConfiguration != null ) {
+			if ( outputConfiguration.getName() == null ) {
+				outputConfiguration.setName(name);
+			}
+			if ( outputConfiguration.getServiceIdentifier() == null ) {
+				outputConfiguration.setServiceIdentifier("");
+			}
 			conf.setUserOutputConfiguration(
 					outputConfiguration.toEntity(
 							new UserLongCompositePK(conf.getUserId(),
@@ -105,6 +117,12 @@ public final class UserDatumExportConfigurationInput
 		}
 
 		if ( destinationConfiguration != null ) {
+			if ( destinationConfiguration.getName() == null ) {
+				destinationConfiguration.setName(name);
+			}
+			if ( destinationConfiguration.getServiceIdentifier() == null ) {
+				destinationConfiguration.setServiceIdentifier("");
+			}
 			conf.setUserDestinationConfiguration(
 					destinationConfiguration.toEntity(
 							new UserLongCompositePK(conf.getUserId(),

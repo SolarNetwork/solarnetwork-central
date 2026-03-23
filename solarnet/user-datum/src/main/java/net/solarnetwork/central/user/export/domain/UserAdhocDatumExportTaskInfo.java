@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.export.domain;
 
 import java.io.Serial;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseObjectEntity;
@@ -48,12 +49,13 @@ public class UserAdhocDatumExportTaskInfo extends BaseObjectEntity<UUID>
 
 	@Serial
 	private static final long serialVersionUID = 3607582937761384987L;
-	private Long userId;
-	private ScheduleType scheduleType;
-	private Configuration config;
-	private String configJson;
-	private String tokenId;
-	private DatumExportTaskInfo task;
+
+	private @Nullable Long userId;
+	private @Nullable ScheduleType scheduleType;
+	private @Nullable Configuration config;
+	private @Nullable String configJson;
+	private @Nullable String tokenId;
+	private @Nullable DatumExportTaskInfo task;
 
 	@Override
 	public String toString() {
@@ -61,18 +63,18 @@ public class UserAdhocDatumExportTaskInfo extends BaseObjectEntity<UUID>
 				+ ",scheduleType=" + getScheduleType() + ",id=" + getId() + "}";
 	}
 
-	public DatumExportTaskInfo getTask() {
+	public final @Nullable DatumExportTaskInfo getTask() {
 		return task;
 	}
 
-	public void setTask(DatumExportTaskInfo task) {
+	public final void setTask(@Nullable DatumExportTaskInfo task) {
 		this.task = task;
 		if ( task != null ) {
 			setConfig(task.getConfig());
 		}
 	}
 
-	public Configuration getConfig() {
+	public final @Nullable Configuration getConfig() {
 		if ( config == null && configJson != null ) {
 			config = JsonUtils.getObjectFromJSON(configJson, BasicConfiguration.class);
 		}
@@ -86,8 +88,8 @@ public class UserAdhocDatumExportTaskInfo extends BaseObjectEntity<UUID>
 	 *        the configuration to set
 	 */
 	@JsonDeserialize(as = BasicConfiguration.class)
-	public void setConfig(Configuration config) {
-		if ( !config.getClass().equals(BasicConfiguration.class) ) {
+	public final void setConfig(@Nullable Configuration config) {
+		if ( config != null && !config.getClass().equals(BasicConfiguration.class) ) {
 			config = new BasicConfiguration(config);
 		}
 		this.config = config;
@@ -95,42 +97,42 @@ public class UserAdhocDatumExportTaskInfo extends BaseObjectEntity<UUID>
 	}
 
 	@JsonIgnore
-	public String getConfigJson() {
+	public final @Nullable String getConfigJson() {
 		if ( configJson == null ) {
 			configJson = JsonUtils.getJSONString(config, null);
 		}
 		return configJson;
 	}
 
-	public void setConfigJson(String configJson) {
+	public final void setConfigJson(@Nullable String configJson) {
 		this.configJson = configJson;
 		config = null;
 	}
 
 	@Override
-	public Long getUserId() {
+	public final @Nullable Long getUserId() {
 		return userId;
 	}
 
-	public void setUserId(Long userId) {
+	public final void setUserId(@Nullable Long userId) {
 		this.userId = userId;
 	}
 
 	@JsonIgnore
-	public ScheduleType getScheduleType() {
+	public final @Nullable ScheduleType getScheduleType() {
 		return scheduleType;
 	}
 
-	public void setScheduleType(ScheduleType scheduleType) {
+	public final void setScheduleType(@Nullable ScheduleType scheduleType) {
 		this.scheduleType = scheduleType;
 	}
 
-	public char getScheduleTypeKey() {
+	public final char getScheduleTypeKey() {
 		ScheduleType type = getScheduleType();
 		return (type != null ? type.getKey() : ScheduleType.Adhoc.getKey());
 	}
 
-	public void setScheduleTypeKey(char key) {
+	public final void setScheduleTypeKey(char key) {
 		try {
 			setScheduleType(ScheduleType.forKey(key));
 		} catch ( IllegalArgumentException e ) {
@@ -143,7 +145,7 @@ public class UserAdhocDatumExportTaskInfo extends BaseObjectEntity<UUID>
 	 *
 	 * @return the token ID
 	 */
-	public String getTokenId() {
+	public final @Nullable String getTokenId() {
 		return tokenId;
 	}
 
@@ -153,7 +155,7 @@ public class UserAdhocDatumExportTaskInfo extends BaseObjectEntity<UUID>
 	 * @param tokenId
 	 *        the token ID to set
 	 */
-	public void setTokenId(String tokenId) {
+	public final void setTokenId(@Nullable String tokenId) {
 		this.tokenId = tokenId;
 	}
 
