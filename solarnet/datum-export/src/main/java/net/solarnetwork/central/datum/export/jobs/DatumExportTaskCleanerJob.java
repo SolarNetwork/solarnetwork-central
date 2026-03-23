@@ -70,7 +70,7 @@ public class DatumExportTaskCleanerJob extends JobSupport {
 	 *        the minimum age since completion, in minutes; defaults to
 	 *        {@link #DEFAULT_MINIMUM_AGE_MINUTES}
 	 */
-	public void setMinimumAgeMinutes(int minimumAgeMinutes) {
+	public final void setMinimumAgeMinutes(int minimumAgeMinutes) {
 		this.minimumAgeMinutes = minimumAgeMinutes;
 	}
 
