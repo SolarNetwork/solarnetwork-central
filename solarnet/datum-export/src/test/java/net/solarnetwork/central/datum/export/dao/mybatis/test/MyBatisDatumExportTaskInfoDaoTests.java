@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.export.dao.mybatis.test;
 
+import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -82,10 +83,9 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 
 	@Test
 	public void storeNew() {
-		DatumExportTaskInfo info = new DatumExportTaskInfo();
+		DatumExportTaskInfo info = new DatumExportTaskInfo(randomUUID());
 		info.setConfig(new BasicConfiguration(TEST_NAME, ScheduleType.Daily, TEST_HOUR_OFFSET));
 		info.setExportDate(TEST_EXPORT_DATE);
-		info.setId(UUID.randomUUID());
 		info.setStatus(DatumExportState.Queued);
 		UUID id = dao.save(info);
 		assertThat("Primary key assigned", id, notNullValue());
@@ -102,10 +102,9 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		setupTestUser(userId);
 		this.lastUserId = userId;
 
-		DatumExportTaskInfo info = new DatumExportTaskInfo();
+		DatumExportTaskInfo info = new DatumExportTaskInfo(randomUUID());
 		info.setConfig(new BasicConfiguration(TEST_NAME, ScheduleType.Daily, TEST_HOUR_OFFSET));
 		info.setExportDate(TEST_EXPORT_DATE);
-		info.setId(UUID.randomUUID());
 		info.setStatus(DatumExportState.Queued);
 
 		final String tokenId = randomString();
@@ -134,10 +133,9 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		setupTestUser(userId);
 		this.lastUserId = userId;
 
-		DatumExportTaskInfo info = new DatumExportTaskInfo();
+		DatumExportTaskInfo info = new DatumExportTaskInfo(randomUUID());
 		info.setConfig(new BasicConfiguration(TEST_NAME, ScheduleType.Daily, TEST_HOUR_OFFSET));
 		info.setExportDate(TEST_EXPORT_DATE);
-		info.setId(UUID.randomUUID());
 		info.setStatus(DatumExportState.Queued);
 
 		// WHEN
@@ -181,10 +179,9 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		setupTestUser(userId);
 		this.lastUserId = userId;
 
-		DatumExportTaskInfo info = new DatumExportTaskInfo();
+		DatumExportTaskInfo info = new DatumExportTaskInfo(randomUUID());
 		info.setConfig(new BasicConfiguration(TEST_NAME, ScheduleType.Daily, TEST_HOUR_OFFSET));
 		info.setExportDate(TEST_EXPORT_DATE);
-		info.setId(UUID.randomUUID());
 		info.setStatus(DatumExportState.Queued);
 
 		final String tokenId = randomString();

@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.export.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
@@ -45,7 +46,7 @@ public class BasicOutputConfiguration extends BasicIdentifiableConfiguration
 	@Serial
 	private static final long serialVersionUID = -588365600656134370L;
 
-	private OutputCompressionType compressionType;
+	private @Nullable OutputCompressionType compressionType;
 
 	/**
 	 * Default constructor.
@@ -61,8 +62,11 @@ public class BasicOutputConfiguration extends BasicIdentifiableConfiguration
 	 *        the configuration to copy
 	 * @since 1.1
 	 */
-	public BasicOutputConfiguration(OutputConfiguration other) {
+	public BasicOutputConfiguration(@Nullable OutputConfiguration other) {
 		super(other);
+		if ( other == null ) {
+			return;
+		}
 		setCompressionType(other.getCompressionType());
 	}
 
@@ -98,11 +102,11 @@ public class BasicOutputConfiguration extends BasicIdentifiableConfiguration
 
 	@JsonIgnore
 	@Override
-	public OutputCompressionType getCompressionType() {
+	public final @Nullable OutputCompressionType getCompressionType() {
 		return compressionType;
 	}
 
-	public void setCompressionType(OutputCompressionType compressionType) {
+	public final void setCompressionType(@Nullable OutputCompressionType compressionType) {
 		this.compressionType = compressionType;
 	}
 
@@ -113,7 +117,7 @@ public class BasicOutputConfiguration extends BasicIdentifiableConfiguration
 	 *         {@code null} this will return the key value for
 	 *         {@link OutputCompressionType#None}
 	 */
-	public char getCompressionTypeKey() {
+	public final char getCompressionTypeKey() {
 		OutputCompressionType type = getCompressionType();
 		return (type != null ? type.getKey() : OutputCompressionType.None.getKey());
 	}
@@ -126,7 +130,7 @@ public class BasicOutputConfiguration extends BasicIdentifiableConfiguration
 	 *        unsupported, the compression will be set to
 	 *        {@link OutputCompressionType#None}
 	 */
-	public void setCompressionTypeKey(char key) {
+	public final void setCompressionTypeKey(char key) {
 		OutputCompressionType type = OutputCompressionType.None;
 		try {
 			type = OutputCompressionType.forKey(key);

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.export.domain;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Basic implementation of {@link DatumExportResult}.
@@ -33,8 +34,8 @@ import java.time.Instant;
 public class BasicDatumExportResult implements DatumExportResult {
 
 	private final boolean success;
-	private final String message;
-	private final Instant completionDate;
+	private final @Nullable String message;
+	private final @Nullable Instant completionDate;
 
 	/**
 	 * Constructor.
@@ -46,7 +47,8 @@ public class BasicDatumExportResult implements DatumExportResult {
 	 * @param completionDate
 	 *        the completion date
 	 */
-	public BasicDatumExportResult(boolean success, String message, Instant completionDate) {
+	public BasicDatumExportResult(boolean success, @Nullable String message,
+			@Nullable Instant completionDate) {
 		super();
 		this.success = success;
 		this.message = message;
@@ -70,12 +72,12 @@ public class BasicDatumExportResult implements DatumExportResult {
 	}
 
 	@Override
-	public String getMessage() {
+	public @Nullable String getMessage() {
 		return message;
 	}
 
 	@Override
-	public Instant getCompletionDate() {
+	public @Nullable Instant getCompletionDate() {
 		return completionDate;
 	}
 

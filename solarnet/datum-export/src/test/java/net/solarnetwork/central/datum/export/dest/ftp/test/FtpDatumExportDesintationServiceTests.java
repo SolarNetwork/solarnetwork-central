@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.export.dest.ftp.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
+import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -145,9 +146,8 @@ public class FtpDatumExportDesintationServiceTests {
 		destConfig.setServiceProps(destProps);
 		config.setDestinationConfiguration(destConfig);
 
-		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo(randomUUID());
 		taskInfo.setConfig(config);
-		taskInfo.setId(UUID.randomUUID());
 		taskInfo.setExportDate(ts);
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
 				new CsvDatumExportOutputFormatService());
@@ -207,9 +207,8 @@ public class FtpDatumExportDesintationServiceTests {
 		destConfig.setServiceProps(destProps);
 		config.setDestinationConfiguration(destConfig);
 
-		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo(randomUUID());
 		taskInfo.setConfig(config);
-		taskInfo.setId(UUID.randomUUID());
 		taskInfo.setExportDate(ts);
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
 				new CsvDatumExportOutputFormatService());

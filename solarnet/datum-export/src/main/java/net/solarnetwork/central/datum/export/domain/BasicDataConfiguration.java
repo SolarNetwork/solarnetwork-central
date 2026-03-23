@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.export.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
@@ -45,7 +46,7 @@ public class BasicDataConfiguration extends BasicIdentifiableConfiguration
 	@Serial
 	private static final long serialVersionUID = -4639476112147998835L;
 
-	private AggregateGeneralNodeDatumFilter datumFilter;
+	private @Nullable AggregateGeneralNodeDatumFilter datumFilter;
 
 	/**
 	 * Default constructor.
@@ -60,7 +61,7 @@ public class BasicDataConfiguration extends BasicIdentifiableConfiguration
 	 * @param other
 	 *        the configuration to copy
 	 */
-	public BasicDataConfiguration(DataConfiguration other) {
+	public BasicDataConfiguration(@Nullable DataConfiguration other) {
 		super(other);
 		if ( other == null ) {
 			return;
@@ -99,12 +100,12 @@ public class BasicDataConfiguration extends BasicIdentifiableConfiguration
 	}
 
 	@Override
-	public AggregateGeneralNodeDatumFilter getDatumFilter() {
+	public final @Nullable AggregateGeneralNodeDatumFilter getDatumFilter() {
 		return datumFilter;
 	}
 
 	@JsonDeserialize(as = DatumFilterCommand.class)
-	public void setDatumFilter(AggregateGeneralNodeDatumFilter datumFilter) {
+	public final void setDatumFilter(@Nullable AggregateGeneralNodeDatumFilter datumFilter) {
 		this.datumFilter = datumFilter;
 	}
 

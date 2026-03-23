@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.export.dest.http.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
+import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -178,9 +179,8 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		destConfig.setServiceProps(destProps);
 		config.setDestinationConfiguration(destConfig);
 
-		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo(randomUUID());
 		taskInfo.setConfig(config);
-		taskInfo.setId(UUID.randomUUID());
 		taskInfo.setExportDate(ts);
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
 				new CsvDatumExportOutputFormatService());
@@ -197,7 +197,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 	@Test
 	public void parameters() throws Exception {
 		// GIVEN
-		final UUID jobId = UUID.randomUUID();
+		final UUID jobId = randomUUID();
 		final String jobName = "My: Job";
 		final Resource data = getTestDataResource();
 		final String dataContent = FileCopyUtils
@@ -276,9 +276,8 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		destConfig.setServiceProps(destProps);
 		config.setDestinationConfiguration(destConfig);
 
-		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo(jobId);
 		taskInfo.setConfig(config);
-		taskInfo.setId(jobId);
 		taskInfo.setExportDate(ts);
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
 				new CsvDatumExportOutputFormatService());
@@ -295,7 +294,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 	@Test
 	public void multipart() throws Exception {
 		// GIVEN
-		final UUID jobId = UUID.randomUUID();
+		final UUID jobId = randomUUID();
 		final Resource data = getTestDataResource();
 		final String dataContent = FileCopyUtils
 				.copyToString(new InputStreamReader(data.getInputStream(), UTF_8));
@@ -400,9 +399,8 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		destConfig.setServiceProps(destProps);
 		config.setDestinationConfiguration(destConfig);
 
-		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo(jobId);
 		taskInfo.setConfig(config);
-		taskInfo.setId(jobId);
 		taskInfo.setExportDate(ts);
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
 				new CsvDatumExportOutputFormatService());
@@ -481,9 +479,8 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		destConfig.setServiceProps(destProps);
 		config.setDestinationConfiguration(destConfig);
 
-		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo(randomUUID());
 		taskInfo.setConfig(config);
-		taskInfo.setId(UUID.randomUUID());
 		taskInfo.setExportDate(ts);
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
 				new CsvDatumExportOutputFormatService());

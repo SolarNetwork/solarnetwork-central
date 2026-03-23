@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.datum.export.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.io.InputStream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 
 /**
@@ -47,6 +49,8 @@ public class BasicDatumExportResource implements DatumExportResource {
 	 *        the resource to delegate to
 	 * @param contentType
 	 *        the content type
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code nul}
 	 */
 	public BasicDatumExportResource(Resource delegate, String contentType) {
 		this(delegate, contentType, null);
@@ -61,13 +65,16 @@ public class BasicDatumExportResource implements DatumExportResource {
 	 *        the content type
 	 * @param encodedContentType
 	 *        the encoded content type
+	 * @throws IllegalArgumentException
+	 *         if {@code delegate} or {@code contentType} is {@code nul}
 	 * @since 1.1
 	 */
-	public BasicDatumExportResource(Resource delegate, String contentType, String encodedContentType) {
+	public BasicDatumExportResource(Resource delegate, String contentType,
+			@Nullable String encodedContentType) {
 		super();
-		this.delegate = delegate;
-		this.contentType = contentType;
-		this.encodedContentType = encodedContentType != null ? encodedContentType : contentType;
+		this.delegate = requireNonNullArgument(delegate, "delegate");
+		this.contentType = requireNonNullArgument(contentType, "contentType");
+		this.encodedContentType = encodedContentType != null ? encodedContentType : this.contentType;
 	}
 
 	@Override
@@ -88,27 +95,27 @@ public class BasicDatumExportResource implements DatumExportResource {
 	}
 
 	@Override
-	public InputStream getInputStream() throws IOException {
+	public final InputStream getInputStream() throws IOException {
 		return delegate.getInputStream();
 	}
 
 	@Override
-	public long contentLength() throws IOException {
+	public final long contentLength() throws IOException {
 		return delegate.contentLength();
 	}
 
 	@Override
-	public long lastModified() throws IOException {
+	public final long lastModified() throws IOException {
 		return delegate.lastModified();
 	}
 
 	@Override
-	public String getContentType() {
+	public final String getContentType() {
 		return contentType;
 	}
 
 	@Override
-	public String getEncodedContentType() {
+	public final String getEncodedContentType() {
 		return encodedContentType;
 	}
 
@@ -117,7 +124,7 @@ public class BasicDatumExportResource implements DatumExportResource {
 	 *
 	 * @return the delegate
 	 */
-	public Resource getDelegate() {
+	public final Resource getDelegate() {
 		return delegate;
 	}
 

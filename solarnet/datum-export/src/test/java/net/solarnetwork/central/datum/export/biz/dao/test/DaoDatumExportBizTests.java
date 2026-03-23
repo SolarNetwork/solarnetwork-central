@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.export.biz.dao.test;
 
 import static java.util.Collections.singletonMap;
+import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -45,7 +46,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -198,8 +198,7 @@ public class DaoDatumExportBizTests {
 
 		final Long userId = randomLong();
 		final String tokenId = randomString();
-		final DatumExportTaskInfo req = new DatumExportTaskInfo();
-		req.setId(UUID.randomUUID());
+		final DatumExportTaskInfo req = new DatumExportTaskInfo(randomUUID());
 		req.setUserId(userId);
 		req.setTokenId(tokenId);
 		req.setExportDate(Instant.now());

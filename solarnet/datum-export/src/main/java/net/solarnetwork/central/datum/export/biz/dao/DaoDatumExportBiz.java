@@ -525,6 +525,9 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		if ( info == null ) {
 			throw new IllegalArgumentException("The task info argument is required.");
 		}
+		if ( !info.hasId() ) {
+			throw new IllegalArgumentException("The task info must have an ID.");
+		}
 		if ( info.getConfiguration() == null ) {
 			throw new IllegalArgumentException("The configuration argument is required.");
 		}
@@ -540,10 +543,9 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 					new BasicDestinationConfiguration(config.getDestinationConfiguration())));
 		}
 
-		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo(info.id());
 		taskInfo.setConfig(config);
 		taskInfo.setExportDate(info.getExportDate());
-		taskInfo.setId(info.getId());
 		taskInfo.setCreated(Instant.now());
 		taskInfo.setStatus(DatumExportState.Claimed);
 		taskInfo.setTokenId(info.getTokenId());

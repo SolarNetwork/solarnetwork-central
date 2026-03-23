@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.export.dest.s3.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toSet;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -261,8 +262,7 @@ public class S3DatumExportDestinationServiceTests {
 		destConfig.setServiceProps(destProps);
 		config.setDestinationConfiguration(destConfig);
 
-		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
-		taskInfo.setId(UUID.randomUUID());
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo(randomUUID());
 		taskInfo.setExportDate(ts);
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
 				new CsvDatumExportOutputFormatService());

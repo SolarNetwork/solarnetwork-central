@@ -34,6 +34,7 @@ import java.time.temporal.IsoFields;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 
 /**
@@ -50,6 +51,7 @@ public interface Configuration {
 	 *
 	 * @return a configuration name
 	 */
+	@Nullable
 	String getName();
 
 	/**
@@ -57,6 +59,7 @@ public interface Configuration {
 	 *
 	 * @return the data configuration
 	 */
+	@Nullable
 	DataConfiguration getDataConfiguration();
 
 	/**
@@ -64,6 +67,7 @@ public interface Configuration {
 	 *
 	 * @return the output configuration
 	 */
+	@Nullable
 	OutputConfiguration getOutputConfiguration();
 
 	/**
@@ -71,6 +75,7 @@ public interface Configuration {
 	 *
 	 * @return the destination configuration
 	 */
+	@Nullable
 	DestinationConfiguration getDestinationConfiguration();
 
 	/**
@@ -78,6 +83,7 @@ public interface Configuration {
 	 *
 	 * @return the desired export schedule
 	 */
+	@Nullable
 	ScheduleType getSchedule();
 
 	/**
@@ -85,6 +91,7 @@ public interface Configuration {
 	 *
 	 * @return the time zone
 	 */
+	@Nullable
 	String getTimeZoneId();
 
 	/**
@@ -172,8 +179,9 @@ public interface Configuration {
 	 *        use
 	 * @return the properties, never {@code null}
 	 */
-	default Map<String, Object> createRuntimeProperties(DatumExportRequest request,
-			DateTimeFormatter dateFormatter, DatumExportOutputFormatService outputFormatService) {
+	default Map<String, Object> createRuntimeProperties(@Nullable DatumExportRequest request,
+			@Nullable DateTimeFormatter dateFormatter,
+			@Nullable DatumExportOutputFormatService outputFormatService) {
 		Map<String, Object> result = new LinkedHashMap<>(8);
 
 		if ( request != null && request.getId() != null ) {

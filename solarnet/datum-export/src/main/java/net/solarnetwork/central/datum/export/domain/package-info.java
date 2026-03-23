@@ -1,7 +1,7 @@
 /* ==================================================================
- * OutputConfiguration.java - 5/03/2018 8:14:15 PM
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,30 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork datum export domain.
+ */
+
+@NullMarked
 package net.solarnetwork.central.datum.export.domain;
 
-import org.jspecify.annotations.Nullable;
-import net.solarnetwork.service.IdentifiableConfiguration;
-
-/**
- * A output format configuration object for a datum export.
- *
- * <p>
- * This API defines the format of the data to export as.
- * </p>
- *
- * @author matt
- * @version 2.0
- * @since 1.23
- */
-public interface OutputConfiguration extends IdentifiableConfiguration {
-
-	/**
-	 * Get the desired compression to apply to the output.
-	 *
-	 * @return the desired compression type
-	 */
-	@Nullable
-	OutputCompressionType getCompressionType();
-
-}
+import org.jspecify.annotations.NullMarked;

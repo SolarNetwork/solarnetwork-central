@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.datum.export.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.BaseObjectEntity;
 import net.solarnetwork.codec.jackson.JsonUtils;
@@ -41,40 +43,53 @@ public class DatumExportTaskInfo extends BaseObjectEntity<UUID>
 	@Serial
 	private static final long serialVersionUID = -6825907221034388360L;
 
-	private Instant exportDate;
-	private DatumExportState status;
-	private BasicConfiguration config;
-	private String configJson;
-	private Boolean taskSuccess;
-	private String message;
-	private Instant completed;
-	private Long userId;
-	private String tokenId;
+	private @Nullable Instant exportDate;
+	private @Nullable DatumExportState status;
+	private @Nullable BasicConfiguration config;
+	private @Nullable String configJson;
+	private @Nullable Boolean taskSuccess;
+	private @Nullable String message;
+	private @Nullable Instant completed;
+	private @Nullable Long userId;
+	private @Nullable String tokenId;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public DatumExportTaskInfo(UUID id) {
+		super();
+		setId(requireNonNullArgument(id, "id"));
+	}
 
 	@Override
-	public Instant getExportDate() {
+	public final @Nullable Instant getExportDate() {
 		return exportDate;
 	}
 
-	public void setExportDate(Instant exportDate) {
+	public final void setExportDate(@Nullable Instant exportDate) {
 		this.exportDate = exportDate;
 	}
 
 	@JsonIgnore
-	public DatumExportState getStatus() {
+	public final @Nullable DatumExportState getStatus() {
 		return status;
 	}
 
-	public void setStatus(DatumExportState status) {
+	public final void setStatus(@Nullable DatumExportState status) {
 		this.status = status;
 	}
 
-	public char getStatusKey() {
+	public final char getStatusKey() {
 		DatumExportState status = getStatus();
 		return (status != null ? status.getKey() : DatumExportState.Unknown.getKey());
 	}
 
-	public void setStatusKey(char key) {
+	public final void setStatusKey(char key) {
 		DatumExportState status;
 		try {
 			status = DatumExportState.forKey(key);
@@ -84,39 +99,39 @@ public class DatumExportTaskInfo extends BaseObjectEntity<UUID>
 		setStatus(status);
 	}
 
-	public BasicConfiguration getConfig() {
+	public final @Nullable BasicConfiguration getConfig() {
 		if ( config == null && configJson != null ) {
 			config = JsonUtils.getObjectFromJSON(configJson, BasicConfiguration.class);
 		}
 		return config;
 	}
 
-	public void setConfig(BasicConfiguration config) {
+	public final void setConfig(@Nullable BasicConfiguration config) {
 		this.config = config;
 		configJson = null;
 	}
 
 	@JsonIgnore
 	@Override
-	public Configuration getConfiguration() {
+	public final @Nullable Configuration getConfiguration() {
 		return getConfig();
 	}
 
 	@JsonIgnore
-	public String getConfigJson() {
+	public final @Nullable String getConfigJson() {
 		if ( configJson == null ) {
 			configJson = JsonUtils.getJSONString(config, null);
 		}
 		return configJson;
 	}
 
-	public void setConfigJson(String configJson) {
+	public final void setConfigJson(@Nullable String configJson) {
 		this.configJson = configJson;
 		config = null;
 	}
 
 	@Override
-	public Long getUserId() {
+	public final @Nullable Long getUserId() {
 		return userId;
 	}
 
@@ -127,12 +142,12 @@ public class DatumExportTaskInfo extends BaseObjectEntity<UUID>
 	 *        the ID to set
 	 * @since 2.1
 	 */
-	public void setUserId(Long userId) {
+	public final void setUserId(@Nullable Long userId) {
 		this.userId = userId;
 	}
 
 	@Override
-	public String getTokenId() {
+	public final @Nullable String getTokenId() {
 		return tokenId;
 	}
 
@@ -143,44 +158,44 @@ public class DatumExportTaskInfo extends BaseObjectEntity<UUID>
 	 *        the token ID to set
 	 * @since 2.1
 	 */
-	public void setTokenId(String tokenId) {
+	public final void setTokenId(@Nullable String tokenId) {
 		this.tokenId = tokenId;
 	}
 
 	@Override
-	public boolean isSuccess() {
+	public final boolean isSuccess() {
 		return (taskSuccess != null && taskSuccess);
 	}
 
 	@JsonIgnore
-	public Boolean getTaskSuccess() {
+	public final @Nullable Boolean getTaskSuccess() {
 		return taskSuccess;
 	}
 
-	public void setTaskSuccess(Boolean taskSuccess) {
+	public final void setTaskSuccess(@Nullable Boolean taskSuccess) {
 		this.taskSuccess = taskSuccess;
 	}
 
 	@Override
-	public String getMessage() {
+	public final @Nullable String getMessage() {
 		return message;
 	}
 
-	public void setMessage(String message) {
+	public final void setMessage(@Nullable String message) {
 		this.message = message;
 	}
 
 	@Override
-	public Instant getCompletionDate() {
+	public final @Nullable Instant getCompletionDate() {
 		return getCompleted();
 	}
 
 	@JsonIgnore
-	public Instant getCompleted() {
+	public final @Nullable Instant getCompleted() {
 		return completed;
 	}
 
-	public void setCompleted(Instant completed) {
+	public final void setCompleted(@Nullable Instant completed) {
 		this.completed = completed;
 	}
 

@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.export.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
@@ -38,13 +39,13 @@ public class BasicConfiguration implements Configuration, Serializable {
 	@Serial
 	private static final long serialVersionUID = 5872632878013036272L;
 
-	private String name;
-	private DataConfiguration dataConfiguration;
-	private OutputConfiguration outputConfiguration;
-	private DestinationConfiguration destinationConfiguration;
-	private ScheduleType schedule;
+	private @Nullable String name;
+	private @Nullable DataConfiguration dataConfiguration;
+	private @Nullable OutputConfiguration outputConfiguration;
+	private @Nullable DestinationConfiguration destinationConfiguration;
+	private @Nullable ScheduleType schedule;
 	private int hourDelayOffset;
-	private String timeZoneId;
+	private @Nullable String timeZoneId;
 
 	/**
 	 * Default constructor.
@@ -63,7 +64,8 @@ public class BasicConfiguration implements Configuration, Serializable {
 	 * @param hourDelayOffset
 	 *        the offset
 	 */
-	public BasicConfiguration(String name, ScheduleType schedule, int hourDelayOffset) {
+	public BasicConfiguration(@Nullable String name, @Nullable ScheduleType schedule,
+			int hourDelayOffset) {
 		super();
 		setName(name);
 		setSchedule(schedule);
@@ -76,7 +78,7 @@ public class BasicConfiguration implements Configuration, Serializable {
 	 * @param other
 	 *        the configuration to copy
 	 */
-	public BasicConfiguration(Configuration other) {
+	public BasicConfiguration(@Nullable Configuration other) {
 		super();
 		if ( other == null ) {
 			return;
@@ -131,68 +133,69 @@ public class BasicConfiguration implements Configuration, Serializable {
 	}
 
 	@Override
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
 	@Override
-	public DataConfiguration getDataConfiguration() {
+	public final @Nullable DataConfiguration getDataConfiguration() {
 		return dataConfiguration;
 	}
 
 	@JsonDeserialize(as = BasicDataConfiguration.class)
-	public void setDataConfiguration(DataConfiguration dataConfiguration) {
+	public final void setDataConfiguration(@Nullable DataConfiguration dataConfiguration) {
 		this.dataConfiguration = dataConfiguration;
 	}
 
 	@Override
-	public OutputConfiguration getOutputConfiguration() {
+	public final @Nullable OutputConfiguration getOutputConfiguration() {
 		return outputConfiguration;
 	}
 
 	@JsonDeserialize(as = BasicOutputConfiguration.class)
-	public void setOutputConfiguration(OutputConfiguration outputConfiguration) {
+	public final void setOutputConfiguration(@Nullable OutputConfiguration outputConfiguration) {
 		this.outputConfiguration = outputConfiguration;
 	}
 
 	@Override
-	public DestinationConfiguration getDestinationConfiguration() {
+	public final @Nullable DestinationConfiguration getDestinationConfiguration() {
 		return destinationConfiguration;
 	}
 
 	@JsonDeserialize(as = BasicDestinationConfiguration.class)
-	public void setDestinationConfiguration(DestinationConfiguration destinationConfiguration) {
+	public final void setDestinationConfiguration(
+			@Nullable DestinationConfiguration destinationConfiguration) {
 		this.destinationConfiguration = destinationConfiguration;
 	}
 
 	@Override
-	public ScheduleType getSchedule() {
+	public final @Nullable ScheduleType getSchedule() {
 		return schedule;
 	}
 
-	public void setSchedule(ScheduleType schedule) {
+	public final void setSchedule(@Nullable ScheduleType schedule) {
 		this.schedule = schedule;
 	}
 
 	@Override
-	public int getHourDelayOffset() {
+	public final int getHourDelayOffset() {
 		return hourDelayOffset;
 	}
 
-	public void setHourDelayOffset(int hourDelayOffset) {
+	public final void setHourDelayOffset(int hourDelayOffset) {
 		this.hourDelayOffset = hourDelayOffset;
 	}
 
 	@Override
-	public String getTimeZoneId() {
+	public final @Nullable String getTimeZoneId() {
 		return timeZoneId;
 	}
 
-	public void setTimeZoneId(String timeZoneId) {
+	public final void setTimeZoneId(@Nullable String timeZoneId) {
 		this.timeZoneId = timeZoneId;
 	}
 

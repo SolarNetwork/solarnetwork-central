@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.export.domain.test;
 
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import java.time.ZoneId;
@@ -96,8 +97,7 @@ public class ConfigurationTests {
 	}
 
 	private DatumExportTaskInfo testTask() {
-		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
-		taskInfo.setId(UUID.randomUUID());
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo(randomUUID());
 		taskInfo.setExportDate(TEST_DATE.toInstant());
 		return taskInfo;
 	}

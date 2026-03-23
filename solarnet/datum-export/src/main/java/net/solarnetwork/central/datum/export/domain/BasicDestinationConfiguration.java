@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.export.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 
 /**
@@ -53,7 +54,7 @@ public class BasicDestinationConfiguration extends BasicIdentifiableConfiguratio
 	 *        the configuration to copy
 	 * @since 1.1
 	 */
-	public BasicDestinationConfiguration(DestinationConfiguration other) {
+	public BasicDestinationConfiguration(@Nullable DestinationConfiguration other) {
 		super(other);
 	}
 
