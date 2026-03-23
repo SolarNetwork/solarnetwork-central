@@ -35,6 +35,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportService;
 import net.solarnetwork.central.datum.export.domain.Configuration;
@@ -104,8 +105,8 @@ public class S3DatumExportDestinationService extends BaseDatumExportDestinationS
 
 	@Override
 	public void export(Configuration config, Iterable<DatumExportResource> resources,
-			Map<String, ?> runtimeProperties, ProgressListener<DatumExportService> progressListener)
-			throws IOException {
+			Map<String, ?> runtimeProperties,
+			@Nullable ProgressListener<DatumExportService> progressListener) throws IOException {
 		if ( config == null ) {
 			throw new IOException("No configuration provided.");
 		}
@@ -134,7 +135,10 @@ public class S3DatumExportDestinationService extends BaseDatumExportDestinationS
 				TransferProgressSnapshot tps = xfer.progressSnapshot();
 				double resourceProgress = tps.ratioTransferred().orElse(0.0);
 				overallProgress += (resourceProgress / resourceCount);
-				progressListener.progressChanged(S3DatumExportDestinationService.this, overallProgress);
+				if ( progressListener != null ) {
+					progressListener.progressChanged(S3DatumExportDestinationService.this,
+							overallProgress);
+				}
 			}
 
 		};

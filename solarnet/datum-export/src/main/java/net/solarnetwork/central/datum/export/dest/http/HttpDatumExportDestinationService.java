@@ -41,6 +41,7 @@ import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.io.entity.InputStreamEntity;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportService;
 import net.solarnetwork.central.datum.export.domain.Configuration;
@@ -97,8 +98,8 @@ public class HttpDatumExportDestinationService extends BaseDatumExportDestinatio
 
 	@Override
 	public void export(Configuration config, Iterable<DatumExportResource> resources,
-			Map<String, ?> runtimeProperties, ProgressListener<DatumExportService> progressListener)
-			throws IOException {
+			Map<String, ?> runtimeProperties,
+			@Nullable ProgressListener<DatumExportService> progressListener) throws IOException {
 		if ( config == null ) {
 			throw new IOException("No configuration provided.");
 		}

@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.export.biz;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.export.domain.DatumExportResource;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
@@ -99,7 +100,7 @@ public interface DatumExportOutputFormatService extends DatumExportService {
 		 *         if an IO error occurs
 		 */
 		void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable,
-				ProgressListener<DatumExportService> progressListener) throws IOException;
+				@Nullable ProgressListener<DatumExportService> progressListener) throws IOException;
 
 		/**
 		 * Called at the end of the export process, to clean up any necessary

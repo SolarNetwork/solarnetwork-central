@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.export.biz;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DatumExportResource;
 import net.solarnetwork.service.ProgressListener;
@@ -73,7 +74,7 @@ public interface DatumExportDestinationService extends DatumExportService {
 	 *         if a remote access error occurs
 	 */
 	void export(Configuration config, Iterable<DatumExportResource> resources,
-			Map<String, ?> runtimeProperties, ProgressListener<DatumExportService> progressListener)
-			throws IOException;
+			Map<String, ?> runtimeProperties,
+			@Nullable ProgressListener<DatumExportService> progressListener) throws IOException;
 
 }

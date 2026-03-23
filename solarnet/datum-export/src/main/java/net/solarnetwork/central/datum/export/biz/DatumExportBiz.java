@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.export.biz;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.export.domain.DatumExportRequest;
 import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 
@@ -57,6 +58,7 @@ public interface DatumExportBiz {
 	 *        the identifier of the job to get the status of
 	 * @return the status, or {@code null} if status not found
 	 */
+	@Nullable
 	DatumExportStatus statusForJob(String jobId);
 
 }

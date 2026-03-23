@@ -37,6 +37,7 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPConnectionClosedException;
 import org.apache.commons.net.ftp.FTPReply;
 import org.apache.commons.net.ftp.FTPSClient;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportService;
@@ -92,8 +93,8 @@ public class FtpDatumExportDestinationService extends BaseDatumExportDestination
 
 	@Override
 	public void export(Configuration config, Iterable<DatumExportResource> resources,
-			Map<String, ?> runtimeProperties, ProgressListener<DatumExportService> progressListener)
-			throws IOException {
+			Map<String, ?> runtimeProperties,
+			@Nullable ProgressListener<DatumExportService> progressListener) throws IOException {
 		if ( config == null ) {
 			throw new IOException("No configuration provided.");
 		}

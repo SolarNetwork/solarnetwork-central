@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumExportService.java - 23/04/2018 3:38:12 PM
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,24 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork datum export service APIs.
+ */
+
+@NullMarked
 package net.solarnetwork.central.datum.export.biz;
 
-import org.jspecify.annotations.NonNull;
-import net.solarnetwork.domain.Identity;
-import net.solarnetwork.service.LocalizedServiceInfoProvider;
-import net.solarnetwork.settings.SettingSpecifierProvider;
-
-/**
- * A service used with datum export.
- *
- * @author matt
- * @version 2.0
- */
-public interface DatumExportService
-		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
-
-	@Override
-	@NonNull
-	String getId();
-
-}
+import org.jspecify.annotations.NullMarked;

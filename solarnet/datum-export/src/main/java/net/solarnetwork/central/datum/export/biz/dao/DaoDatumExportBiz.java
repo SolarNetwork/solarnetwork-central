@@ -25,6 +25,8 @@ package net.solarnetwork.central.datum.export.biz.dao;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toUnmodifiableMap;
+import static net.solarnetwork.central.datum.v2.support.DatumUtils.criteriaFromFilter;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Duration;
@@ -48,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -74,11 +77,11 @@ import net.solarnetwork.central.datum.export.domain.DatumExportResult;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
+import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.datum.export.support.DatumExportException;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
-import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.dao.BasicBulkExportOptions;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
@@ -113,18 +116,18 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	private final DatumEntityDao datumDao;
 	private final TaskScheduler scheduler;
 	private final AsyncTaskExecutor executor;
-	private final TransactionTemplate transactionTemplate;
+	private final @Nullable TransactionTemplate transactionTemplate;
 	private final TextEncryptor textEncryptor;
 
 	private final List<DatumExportOutputFormatService> outputFormatServices;
 	private final List<DatumExportDestinationService> destinationServices;
 	private final Map<String, Set<String>> serviceSecureKeys;
 
-	private AppEventPublisher eventPublisher;
+	private @Nullable AppEventPublisher eventPublisher;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
 
-	private ScheduledFuture<?> taskPurgerTask;
-	private QueryAuditor queryAuditor;
+	private @Nullable ScheduledFuture<?> taskPurgerTask;
+	private @Nullable QueryAuditor queryAuditor;
 
 	/**
 	 * Constructor.
@@ -145,6 +148,8 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	 *        the output format services
 	 * @param destinationServices
 	 *        the destination services
+	 * @param transactionTemplate
+	 *        an optional transaction template
 	 * @throws IllegalArgumentException
 	 *         if any argument other than {@code transactionTemplate} is
 	 *         {@code null}
@@ -153,7 +158,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			TaskScheduler scheduler, AsyncTaskExecutor executor, TextEncryptor textEncryptor,
 			List<DatumExportOutputFormatService> outputFormatServices,
 			List<DatumExportDestinationService> destinationServices,
-			TransactionTemplate transactionTemplate) {
+			@Nullable TransactionTemplate transactionTemplate) {
 		super();
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
@@ -238,10 +243,12 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			ProgressListener<DatumExportService> {
 
 		private static final int COUNT_UNKNOWN = -1;
+
 		private final DatumExportTaskInfo info;
+		private final Configuration config;
 		private DatumExportState jobState;
 		private double percentComplete;
-		private Future<DatumExportResult> delegate;
+		private @Nullable Future<DatumExportResult> delegate;
 
 		/**
 		 * Construct from a task info.
@@ -258,6 +265,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			super();
 			this.info = info;
 			this.jobState = DatumExportState.Claimed;
+			this.config = requireNonNullArgument(info.getConfiguration(), "info.configuration");
 		}
 
 		/**
@@ -266,7 +274,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		 * @param delegate
 		 *        the delegate
 		 */
-		private void setDelegate(Future<DatumExportResult> delegate) {
+		private void setDelegate(@Nullable Future<DatumExportResult> delegate) {
 			this.delegate = delegate;
 		}
 
@@ -279,11 +287,11 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 			try {
 				// first step: export to resources
-				Iterable<DatumExportResource> resources = exportToResources(info.getConfiguration());
+				Iterable<DatumExportResource> resources = exportToResources();
 
 				// second step: upload the resources to the destination
 				if ( resources != null ) {
-					uploadToDestination(info.getConfiguration(), resources);
+					uploadToDestination(resources);
 				}
 
 				updateTaskStatus(DatumExportState.Completed, Boolean.TRUE, null, Instant.now());
@@ -318,8 +326,8 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			updateTaskStatus(state, null, null, null);
 		}
 
-		private void updateTaskStatus(DatumExportState state, Boolean success, String message,
-				Instant completionDate) {
+		private void updateTaskStatus(DatumExportState state, @Nullable Boolean success,
+				@Nullable String message, @Nullable Instant completionDate) {
 			log.info("Datum export job {} transitioned to state {} with success {}", info.getId(), state,
 					success);
 			this.jobState = state;
@@ -340,7 +348,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			postJobStatusChangedEvent(this);
 		}
 
-		private Iterable<DatumExportResource> exportToResources(Configuration config) {
+		private Iterable<DatumExportResource> exportToResources() {
 			AggregateGeneralNodeDatumFilter datumFilter = (config.getDataConfiguration() != null
 					? config.getDataConfiguration().getDatumFilter()
 					: null);
@@ -355,7 +363,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 				throw new DatumExportException(info.getId(), "No export date available", null);
 			}
 
-			DatumExportOutputFormatService outputService = optionalService(outputFormatServices,
+			final DatumExportOutputFormatService outputService = optionalService(outputFormatServices,
 					config.getOutputConfiguration());
 			if ( outputService == null ) {
 				String serviceId = (config.getOutputConfiguration() != null
@@ -365,11 +373,11 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 						"No output service available for identifier [" + serviceId + "]", null);
 			}
 
-			ZoneId zone = (config.getTimeZoneId() != null ? ZoneId.of(config.getTimeZoneId())
+			final ZoneId zone = (config.getTimeZoneId() != null ? ZoneId.of(config.getTimeZoneId())
 					: ZoneOffset.UTC);
 
 			// validate export criteria
-			BasicDatumCriteria filter = DatumUtils.criteriaFromFilter(datumFilter);
+			final BasicDatumCriteria filter = nonnull(criteriaFromFilter(datumFilter), "Datum filter");
 			filter.setTokenId(info.getTokenId()); // restrict to token if available
 			filter.setUserId(info.getUserId()); // restrict to user if available
 			if ( schedule == ScheduleType.Adhoc ) {
@@ -378,15 +386,18 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 							"Adhoc export missing start or end date in data configuration", null);
 				}
 			} else {
-				filter.setStartDate(info.getExportDate());
+				final Instant exportDate = nonnull(info.getExportDate(), "Export date");
+				filter.setStartDate(exportDate);
 				filter.setEndDate(
-						schedule.nextExportDate(filter.getStartDate().atZone(ZoneId.of(zone.getId())))
-								.toInstant());
+						schedule.nextExportDate(exportDate.atZone(ZoneId.of(zone.getId()))).toInstant());
 			}
+
+			final OutputConfiguration outputConfig = nonnull(config.getOutputConfiguration(),
+					"Output configuration");
 
 			return doWithinOptionalTransaction(() -> {
 				try (DatumExportOutputFormatService.ExportContext exportContext = outputService
-						.createExportContext(config.getOutputConfiguration())) {
+						.createExportContext(outputConfig)) {
 
 					BasicBulkExportOptions options = new BasicBulkExportOptions(DATUM_EXPORT_NAME,
 							singletonMap(DatumEntityDao.EXPORT_PARAMETER_DATUM_CRITERIA, filter));
@@ -402,7 +413,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 					datumDao.bulkExport(new ExportCallback<>() {
 
 						@Override
-						public void didBegin(Long totalResultCountEstimate) {
+						public void didBegin(@Nullable Long totalResultCountEstimate) {
 							try {
 								exportContext.start(
 										totalResultCountEstimate != null ? totalResultCountEstimate
@@ -435,8 +446,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			});
 		}
 
-		private void uploadToDestination(Configuration config, Iterable<DatumExportResource> resources)
-				throws IOException {
+		private void uploadToDestination(Iterable<DatumExportResource> resources) throws IOException {
 			DatumExportDestinationService destService = optionalService(destinationServices,
 					config.getDestinationConfiguration());
 			if ( destService == null ) {
@@ -457,7 +467,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		}
 
 		@Override
-		public void progressChanged(DatumExportService context, double amountComplete) {
+		public void progressChanged(@Nullable DatumExportService context, double amountComplete) {
 			// each progress here counts for 50% of overall progress
 			this.percentComplete += (amountComplete / 2.0);
 			postJobStatusChangedEvent(this);
@@ -465,7 +475,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 		@Override
 		public String getJobId() {
-			return info.getId().toString();
+			return info.id().toString();
 		}
 
 		@Override
@@ -486,27 +496,32 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 		@Override
 		public boolean cancel(boolean mayInterruptIfRunning) {
-			return delegate.cancel(mayInterruptIfRunning);
+			final var delegate = this.delegate;
+			return (delegate != null ? delegate.cancel(mayInterruptIfRunning) : false);
 		}
 
 		@Override
 		public boolean isCancelled() {
-			return delegate.isCancelled();
+			final var delegate = this.delegate;
+			return (delegate != null ? delegate.isCancelled() : false);
 		}
 
 		@Override
 		public boolean isDone() {
-			return delegate.isDone();
+			final var delegate = this.delegate;
+			return (delegate != null ? delegate.isDone() : false);
 		}
 
 		@Override
 		public DatumExportResult get() throws InterruptedException, ExecutionException {
+			final var delegate = nonnull(this.delegate, "Task future");
 			return delegate.get();
 		}
 
 		@Override
 		public DatumExportResult get(long timeout, TimeUnit unit)
 				throws InterruptedException, ExecutionException, TimeoutException {
+			final var delegate = nonnull(this.delegate, "Task future");
 			return delegate.get(timeout, unit);
 		}
 
@@ -558,7 +573,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	}
 
 	@Override
-	public DatumExportStatus statusForJob(String jobId) {
+	public @Nullable DatumExportStatus statusForJob(String jobId) {
 		return taskMap.get(jobId);
 	}
 
@@ -581,8 +596,8 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		}
 	}
 
-	private <T extends Identity<String>> T optionalService(List<T> collection,
-			IdentifiableConfiguration config) {
+	private <T extends Identity<String>> @Nullable T optionalService(@Nullable List<T> collection,
+			@Nullable IdentifiableConfiguration config) {
 		if ( collection == null || config == null ) {
 			return null;
 		}
@@ -605,7 +620,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	 * @param completedTaskMinimumCacheTime
 	 *        the cache time, in milliseconds; defaults to 4 hours
 	 */
-	public void setCompletedTaskMinimumCacheTime(long completedTaskMinimumCacheTime) {
+	public final void setCompletedTaskMinimumCacheTime(long completedTaskMinimumCacheTime) {
 		this.completedTaskMinimumCacheTime = completedTaskMinimumCacheTime;
 	}
 
@@ -615,7 +630,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	 * @param eventPublisher
 	 *        the optional event admin service
 	 */
-	public void setEventPublisher(AppEventPublisher eventPublisher) {
+	public final void setEventPublisher(@Nullable AppEventPublisher eventPublisher) {
 		this.eventPublisher = eventPublisher;
 	}
 
@@ -626,7 +641,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	 *        the auditor
 	 * @since 1.2
 	 */
-	public void setQueryAuditor(QueryAuditor queryAuditor) {
+	public final void setQueryAuditor(@Nullable QueryAuditor queryAuditor) {
 		this.queryAuditor = queryAuditor;
 	}
 
