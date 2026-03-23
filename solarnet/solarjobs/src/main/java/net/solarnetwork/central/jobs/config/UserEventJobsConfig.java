@@ -30,10 +30,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.scheduler.ManagedJob;
-import net.solarnetwork.central.user.event.biz.UserNodeEventHookService;
-import net.solarnetwork.central.user.event.dao.UserNodeEventTaskDao;
-import net.solarnetwork.central.user.event.dao.jobs.UserNodeEventTaskCleanerJob;
-import net.solarnetwork.central.user.event.dao.jobs.UserNodeEventTaskProcessorJob;
+import net.solarnetwork.central.user.datum.event.biz.UserNodeEventHookService;
+import net.solarnetwork.central.user.datum.event.dao.UserNodeEventTaskDao;
+import net.solarnetwork.central.user.datum.event.dao.jobs.UserNodeEventTaskCleanerJob;
+import net.solarnetwork.central.user.datum.event.dao.jobs.UserNodeEventTaskProcessorJob;
 
 /**
  * User event jobs configuration.

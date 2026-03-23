@@ -23,7 +23,7 @@
 package net.solarnetwork.central.reg.web.domain;
 
 import java.util.List;
-import net.solarnetwork.central.user.expire.domain.DataConfiguration;
+import net.solarnetwork.central.user.datum.expire.domain.DataConfiguration;
 
 /**
  * DTO to consolidate datum expire configuration details into a single response.

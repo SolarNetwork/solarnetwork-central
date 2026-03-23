@@ -41,10 +41,10 @@ import net.solarnetwork.central.mail.config.SolarNetCommonMailConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
 import net.solarnetwork.central.security.web.config.SolarNetCommonWebSecurityConfiguration;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
-import net.solarnetwork.central.user.event.config.SolarNetUserEventConfiguration;
-import net.solarnetwork.central.user.expire.config.SolarNetUserExpireConfiguration;
+import net.solarnetwork.central.user.datum.event.config.SolarNetUserEventConfiguration;
+import net.solarnetwork.central.user.datum.expire.config.SolarNetUserExpireConfiguration;
+import net.solarnetwork.central.user.datum.flux.config.SolarNetUserFluxConfiguration;
 import net.solarnetwork.central.user.export.config.SolarNetUserExportConfiguration;
-import net.solarnetwork.central.user.flux.config.SolarNetUserFluxConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
 
 /**
