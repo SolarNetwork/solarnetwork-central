@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.datum.export.dao.mybatis;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.export.dao.DatumExportTaskInfoDao;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
@@ -56,16 +58,16 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 	 */
 	public MyBatisDatumExportTaskInfoDao() {
 		super(DatumExportTaskInfo.class, UUID.class);
-		setQueryForClaimQueuedTask(QUERY_FOR_CLAIMING_TASK);
-		setUpdateDeleteCompletedTasks(UPDATE_PURGE_COMPLETED);
+		this.queryForClaimQueuedTask = QUERY_FOR_CLAIMING_TASK;
+		this.updateDeleteCompletedTasks = UPDATE_PURGE_COMPLETED;
 	}
 
 	@Override
-	public DatumExportTaskInfo claimQueuedTask() {
+	public @Nullable DatumExportTaskInfo claimQueuedTask() {
 		DatumExportTaskInfo info = selectFirst(queryForClaimQueuedTask, null);
 		if ( info != null ) {
 			// re-fetch
-			info = get(info.getId());
+			info = get(info.id());
 		}
 		return info;
 	}
@@ -73,7 +75,7 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 	@Override
 	public long purgeCompletedTasks(Instant olderThanDate) {
 		Map<String, Object> params = new HashMap<>(2);
-		params.put("date", olderThanDate);
+		params.put("date", requireNonNullArgument(olderThanDate, "olderThanDate"));
 		getSqlSession().update(updateDeleteCompletedTasks, params);
 		Long result = (Long) params.get("result");
 		return (result == null ? 0 : result);
@@ -83,10 +85,12 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 	 * Set the query name for the {@link #claimQueuedTask()} method to use.
 	 *
 	 * @param queryForClaimQueuedTask
-	 *        the query name; defaults to {@link #QUERY_FOR_CLAIMING_TASK}
+	 *        the query name; if {@code null} then
+	 *        {@link #QUERY_FOR_CLAIMING_TASK} will be used
 	 */
-	public void setQueryForClaimQueuedTask(String queryForClaimQueuedTask) {
-		this.queryForClaimQueuedTask = queryForClaimQueuedTask;
+	public final void setQueryForClaimQueuedTask(@Nullable String queryForClaimQueuedTask) {
+		this.queryForClaimQueuedTask = queryForClaimQueuedTask != null ? queryForClaimQueuedTask
+				: QUERY_FOR_CLAIMING_TASK;
 	}
 
 	/**
@@ -94,10 +98,12 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 	 * method to use.
 	 *
 	 * @param updateDeleteCompletedTasks
-	 *        the statement name; defaults to {@link #UPDATE_PURGE_COMPLETED}
+	 *        the statement name; if {@code null} then
+	 *        {@link #UPDATE_PURGE_COMPLETED} will be used
 	 */
-	public void setUpdateDeleteCompletedTasks(String updateDeleteCompletedTasks) {
-		this.updateDeleteCompletedTasks = updateDeleteCompletedTasks;
+	public final void setUpdateDeleteCompletedTasks(@Nullable String updateDeleteCompletedTasks) {
+		this.updateDeleteCompletedTasks = updateDeleteCompletedTasks != null ? updateDeleteCompletedTasks
+				: UPDATE_PURGE_COMPLETED;
 	}
 
 }

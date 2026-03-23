@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.export.dao;
 
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 import net.solarnetwork.dao.GenericDao;
 
@@ -47,6 +48,7 @@ public interface DatumExportTaskInfoDao extends GenericDao<DatumExportTaskInfo, 
 	 *
 	 * @return a claimed task, or {@code null} if none could be claimed
 	 */
+	@Nullable
 	DatumExportTaskInfo claimQueuedTask();
 
 	/**
