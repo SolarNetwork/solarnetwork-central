@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.datum.alert.jobs;
+package net.solarnetwork.central.user.alert.jobs;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;

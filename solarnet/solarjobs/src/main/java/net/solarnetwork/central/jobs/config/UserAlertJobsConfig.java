@@ -38,13 +38,13 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.DefaultMailService;
 import net.solarnetwork.central.mail.support.MailServiceSettings;
+import net.solarnetwork.central.user.alert.jobs.UserAlertSituationCleanerJob;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.datum.alert.jobs.EmailNodeStaleDataAlertProcessor;
 import net.solarnetwork.central.user.datum.alert.jobs.UserAlertBatchJob;
-import net.solarnetwork.central.user.datum.alert.jobs.UserAlertSituationCleanerJob;
 
 /**
  * User alert jobs configuration.

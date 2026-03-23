@@ -30,6 +30,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.dao.AppSettingDao;
 import net.solarnetwork.central.domain.AppSetting;
 import net.solarnetwork.central.scheduler.JobSupport;
+import net.solarnetwork.central.user.alert.jobs.UserAlertBatchProcessor;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 import net.solarnetwork.central.user.domain.UserAlertType;
 import net.solarnetwork.service.ServiceLifecycleObserver;

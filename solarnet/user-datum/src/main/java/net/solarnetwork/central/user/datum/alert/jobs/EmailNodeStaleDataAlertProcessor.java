@@ -57,6 +57,7 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
 import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
+import net.solarnetwork.central.user.alert.jobs.UserAlertBatchProcessor;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
 import net.solarnetwork.central.user.dao.UserDao;

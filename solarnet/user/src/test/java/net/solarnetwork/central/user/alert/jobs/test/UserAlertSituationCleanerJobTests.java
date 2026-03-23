@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.datum.alert.jobs.test;
+package net.solarnetwork.central.user.alert.jobs.test;
 
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,8 +38,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.test.CommonTestUtils;
+import net.solarnetwork.central.user.alert.jobs.UserAlertSituationCleanerJob;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
-import net.solarnetwork.central.user.datum.alert.jobs.UserAlertSituationCleanerJob;
 
 /**
  * Test cases for the {@link UserAlertSituationCleanerJob} class.

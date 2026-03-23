@@ -38,8 +38,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.common.dao.jdbc.JdbcAppSettingDao;
 import net.solarnetwork.central.dao.AppSettingDao;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
+import net.solarnetwork.central.user.alert.jobs.UserAlertBatchProcessor;
 import net.solarnetwork.central.user.datum.alert.jobs.UserAlertBatchJob;
-import net.solarnetwork.central.user.datum.alert.jobs.UserAlertBatchProcessor;
 
 /**
  * Test cases for the {@link UserAlertBatchJob} class.
