@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.BaseUserRelatedStdIdentifiableConfigurationInput;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
+import net.solarnetwork.central.user.datum.export.domain.UserOutputConfiguration;
 
 /**
  * Input DTO for {@link UserOutputConfiguration} entities.

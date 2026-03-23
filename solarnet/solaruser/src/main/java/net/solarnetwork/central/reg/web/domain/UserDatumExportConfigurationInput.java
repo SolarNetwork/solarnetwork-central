@@ -29,7 +29,7 @@ import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseUserRelatedStdInput;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
+import net.solarnetwork.central.user.datum.export.domain.UserDatumExportConfiguration;
 
 /**
  * Input DTO for {@link UserDatumExportConfiguration} entities.

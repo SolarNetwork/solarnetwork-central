@@ -25,7 +25,7 @@ package net.solarnetwork.central.reg.web.domain;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
-import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
+import net.solarnetwork.central.user.datum.export.domain.UserDatumExportConfiguration;
 
 /**
  * DTO for datum export configuration.

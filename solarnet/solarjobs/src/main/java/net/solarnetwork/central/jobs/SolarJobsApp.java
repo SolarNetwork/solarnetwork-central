@@ -43,8 +43,8 @@ import net.solarnetwork.central.security.web.config.SolarNetCommonWebSecurityCon
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.central.user.datum.event.config.SolarNetUserEventConfiguration;
 import net.solarnetwork.central.user.datum.expire.config.SolarNetUserExpireConfiguration;
+import net.solarnetwork.central.user.datum.export.config.SolarNetUserExportConfiguration;
 import net.solarnetwork.central.user.datum.flux.config.SolarNetUserFluxConfiguration;
-import net.solarnetwork.central.user.export.config.SolarNetUserExportConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
 
 /**

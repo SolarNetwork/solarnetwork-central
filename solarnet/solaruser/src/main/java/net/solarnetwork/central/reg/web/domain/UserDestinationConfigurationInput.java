@@ -26,7 +26,7 @@ import java.time.Instant;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseUserRelatedStdIdentifiableConfigurationInput;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
+import net.solarnetwork.central.user.datum.export.domain.UserDestinationConfiguration;
 
 /**
  * Input DTO for {@link UserDestinationConfiguration} entities.

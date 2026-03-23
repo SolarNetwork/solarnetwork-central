@@ -27,7 +27,7 @@ import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.BaseUserRelatedStdIdentifiableConfigurationInput;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
+import net.solarnetwork.central.user.datum.export.domain.UserDataConfiguration;
 
 /**
  * Input DTO for {@link UserDataConfiguration} entities.
