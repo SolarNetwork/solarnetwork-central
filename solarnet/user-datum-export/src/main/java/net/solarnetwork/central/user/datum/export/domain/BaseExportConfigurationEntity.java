@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.datum.export.domain;
 
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.dao.BaseIdentifiableUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -40,11 +41,11 @@ public abstract class BaseExportConfigurationEntity<C extends BaseIdentifiableUs
 	@Serial
 	private static final long serialVersionUID = 6321748992039317099L;
 
-	private transient Long configId;
+	private transient @Nullable Long configId;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param created
@@ -77,16 +78,16 @@ public abstract class BaseExportConfigurationEntity<C extends BaseIdentifiableUs
 
 	/**
 	 * Set the temporary configuration ID.
-	 * 
+	 *
 	 * <p>
 	 * This method is here to support DAO mapping that wants to set new primary
 	 * key values on creation.
 	 * </p>
-	 * 
+	 *
 	 * @param configId
 	 *        the configuration ID to set
 	 */
-	public final void setConfigId(Long configId) {
+	public final void setConfigId(@Nullable Long configId) {
 		this.configId = configId;
 	}
 

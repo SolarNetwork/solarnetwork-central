@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.user.datum.export.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.BaseObjectEntity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
@@ -47,11 +49,54 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 	@Serial
 	private static final long serialVersionUID = -7053341262497665231L;
 
-	private UUID taskId;
-	private Long userDatumExportConfigurationId;
-	private Configuration config;
-	private String configJson;
-	private DatumExportTaskInfo task;
+	private final Long userDatumExportConfigurationId;
+	private @Nullable UUID taskId;
+	private @Nullable Configuration config;
+	private @Nullable String configJson;
+	private @Nullable DatumExportTaskInfo task;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the primary key
+	 * @param created
+	 *        the creation date
+	 * @param userDatumExportConfigurationId
+	 *        the export configuration ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public UserDatumExportTaskInfo(UserDatumExportTaskPK id, Instant created,
+			Long userDatumExportConfigurationId) {
+		super();
+		setId(requireNonNullArgument(id, "id"));
+		setCreated(requireNonNullArgument(created, "created"));
+		this.userDatumExportConfigurationId = requireNonNullArgument(userDatumExportConfigurationId,
+				"userDatumExportConfigurationId");
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param scheduleType
+	 *        the schedule type
+	 * @param date
+	 *        the date
+	 * @param created
+	 *        the creation date
+	 * @param userDatumExportConfigurationId
+	 *        the export configuration ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public UserDatumExportTaskInfo(Long userId, ScheduleType scheduleType, Instant date, Instant created,
+			Long userDatumExportConfigurationId) {
+		this(new UserDatumExportTaskPK(userId, scheduleType, date), created,
+				userDatumExportConfigurationId);
+	}
 
 	@Override
 	public String toString() {
@@ -65,40 +110,30 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 	 *
 	 * @return the user configuration ID
 	 */
-	public Long getUserDatumExportConfigurationId() {
+	public final Long getUserDatumExportConfigurationId() {
 		return userDatumExportConfigurationId;
 	}
 
-	/**
-	 * Set the related {@link UserDatumExportConfiguration#getId()} value.
-	 *
-	 * @param userDatumExportConfigurationId
-	 *        the user configuration ID to set
-	 */
-	public void setUserDatumExportConfigurationId(Long userDatumExportConfigurationId) {
-		this.userDatumExportConfigurationId = userDatumExportConfigurationId;
-	}
-
-	public UUID getTaskId() {
+	public final @Nullable UUID getTaskId() {
 		return taskId;
 	}
 
-	public void setTaskId(UUID taskId) {
+	public final void setTaskId(@Nullable UUID taskId) {
 		this.taskId = taskId;
 	}
 
-	public DatumExportTaskInfo getTask() {
+	public final @Nullable DatumExportTaskInfo getTask() {
 		return task;
 	}
 
-	public void setTask(DatumExportTaskInfo task) {
+	public final void setTask(@Nullable DatumExportTaskInfo task) {
 		this.task = task;
 		if ( task != null ) {
 			setConfig(task.getConfig());
 		}
 	}
 
-	public Configuration getConfig() {
+	public final @Nullable Configuration getConfig() {
 		if ( config == null && configJson != null ) {
 			config = JsonUtils.getObjectFromJSON(configJson, BasicConfiguration.class);
 		}
@@ -108,21 +143,12 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 	/**
 	 * Set the configuration.
 	 *
-	 * <p>
-	 * If {@code config} is a {@link UserDatumExportConfiguration} then
-	 * {@link #setUserDatumExportConfigurationId(Long)} will be invoked with the
-	 * value's {@link UserDatumExportConfiguration#getId()}.
-	 * </p>
-	 *
 	 * @param config
 	 *        the configuration to set
 	 */
 	@JsonDeserialize(as = BasicConfiguration.class)
-	public void setConfig(Configuration config) {
-		if ( config instanceof UserDatumExportConfiguration ) {
-			setUserDatumExportConfigurationId(((UserDatumExportConfiguration) config).getConfigId());
-		}
-		if ( !config.getClass().equals(BasicConfiguration.class) ) {
+	public final void setConfig(@Nullable Configuration config) {
+		if ( config != null && !config.getClass().equals(BasicConfiguration.class) ) {
 			config = new BasicConfiguration(config);
 		}
 		this.config = config;
@@ -130,74 +156,34 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 	}
 
 	@JsonIgnore
-	public String getConfigJson() {
+	public final @Nullable String getConfigJson() {
 		if ( configJson == null ) {
 			configJson = JsonUtils.getJSONString(config, null);
 		}
 		return configJson;
 	}
 
-	public void setConfigJson(String configJson) {
+	public final void setConfigJson(@Nullable String configJson) {
 		this.configJson = configJson;
 		config = null;
 	}
 
 	@Override
-	public Long getUserId() {
-		UserDatumExportTaskPK id = getId();
-		return (id != null ? id.getUserId() : null);
-	}
-
-	public void setUserId(Long userId) {
-		UserDatumExportTaskPK id = getId();
-		if ( id == null ) {
-			id = new UserDatumExportTaskPK();
-			setId(id);
-		}
-		id.setUserId(userId);
+	public final Long getUserId() {
+		return id().getUserId();
 	}
 
 	@JsonIgnore
-	public ScheduleType getScheduleType() {
-		UserDatumExportTaskPK id = getId();
-		return (id != null ? id.getScheduleType() : ScheduleType.Daily);
+	public final ScheduleType getScheduleType() {
+		return id().getScheduleType();
 	}
 
-	public void setScheduleType(ScheduleType type) {
-		UserDatumExportTaskPK id = getId();
-		if ( id == null ) {
-			id = new UserDatumExportTaskPK();
-			setId(id);
-		}
-		id.setScheduleType(type);
+	public final char getScheduleTypeKey() {
+		return id().getScheduleTypeKey();
 	}
 
-	public char getScheduleTypeKey() {
-		UserDatumExportTaskPK id = getId();
-		return (id != null ? id.getScheduleTypeKey() : ScheduleType.Daily.getKey());
-	}
-
-	public void setScheduleTypeKey(char key) {
-		UserDatumExportTaskPK id = getId();
-		if ( id == null ) {
-			id = new UserDatumExportTaskPK();
-			setId(id);
-		}
-		id.setScheduleTypeKey(key);
-	}
-
-	public Instant getExportDate() {
-		UserDatumExportTaskPK id = getId();
-		return (id != null ? id.getDate() : null);
-	}
-
-	public void setExportDate(Instant date) {
-		UserDatumExportTaskPK id = getId();
-		if ( id == null ) {
-			id = new UserDatumExportTaskPK();
-			setId(id);
-		}
-		id.setDate(date);
+	public final Instant getExportDate() {
+		return id().getDate();
 	}
 
 }

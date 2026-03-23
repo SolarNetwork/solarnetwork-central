@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.datum.export.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
@@ -50,12 +51,25 @@ public class UserAdhocDatumExportTaskInfo extends BaseObjectEntity<UUID>
 	@Serial
 	private static final long serialVersionUID = 3607582937761384987L;
 
-	private @Nullable Long userId;
+	private final Long userId;
 	private @Nullable ScheduleType scheduleType;
 	private @Nullable Configuration config;
 	private @Nullable String configJson;
 	private @Nullable String tokenId;
 	private @Nullable DatumExportTaskInfo task;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public UserAdhocDatumExportTaskInfo(Long userId) {
+		super();
+		this.userId = requireNonNullArgument(userId, "userId");
+	}
 
 	@Override
 	public String toString() {
@@ -110,12 +124,8 @@ public class UserAdhocDatumExportTaskInfo extends BaseObjectEntity<UUID>
 	}
 
 	@Override
-	public final @Nullable Long getUserId() {
+	public final Long getUserId() {
 		return userId;
-	}
-
-	public final void setUserId(@Nullable Long userId) {
-		this.userId = userId;
 	}
 
 	@JsonIgnore

@@ -82,7 +82,7 @@ public class DatumExportControllerTests {
 		final String outputServiceId = randomString();
 
 		// submit export
-		final var taskInfo = new UserAdhocDatumExportTaskInfo();
+		final var taskInfo = new UserAdhocDatumExportTaskInfo(userId);
 		given(userExportBiz.saveAdhocDatumExportTaskForConfiguration(any())).willReturn(taskInfo);
 
 		final var input = JsonUtils.JSON_OBJECT_MAPPER.readValue("""
@@ -157,7 +157,7 @@ public class DatumExportControllerTests {
 				.willReturn(outputConfig);
 
 		// submit export
-		final var taskInfo = new UserAdhocDatumExportTaskInfo();
+		final var taskInfo = new UserAdhocDatumExportTaskInfo(userId);
 		given(userExportBiz.saveAdhocDatumExportTaskForConfiguration(any())).willReturn(taskInfo);
 
 		final var input = JsonUtils.JSON_OBJECT_MAPPER.readValue("""

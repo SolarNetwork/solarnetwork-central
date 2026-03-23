@@ -1,21 +1,21 @@
 /* ==================================================================
  * DefaultUserExportJobsServiceTests.java - 19/04/2018 7:05:17 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -48,11 +48,12 @@ import net.solarnetwork.central.user.datum.export.biz.UserExportTaskBiz;
 import net.solarnetwork.central.user.datum.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.datum.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.datum.export.domain.UserDatumExportTaskInfo;
+import net.solarnetwork.central.user.datum.export.domain.UserDatumExportTaskPK;
 import net.solarnetwork.central.user.datum.export.jobs.DefaultUserExportJobsService;
 
 /**
  * Test cases for the {@link DefaultUserExportJobsService} class.
- * 
+ *
  * @author matt
  * @version 1.2
  */
@@ -116,7 +117,9 @@ public class DefaultUserExportJobsServiceTests {
 		expect(configurationDao.findForExecution(now.toInstant(), ScheduleType.Hourly))
 				.andReturn(List.of(config));
 
-		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
+		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo(
+				new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Hourly, minExportDate.toInstant()),
+				now(), config.getConfigId());
 		Capture<UserDatumExportConfiguration> configCaptor = new Capture<>(CaptureType.ALL);
 		expect(taskBiz.submitDatumExportConfiguration(capture(configCaptor),
 				eq(minExportDate.toInstant()))).andReturn(task);
@@ -143,7 +146,9 @@ public class DefaultUserExportJobsServiceTests {
 		expect(configurationDao.findForExecution(now.toInstant(), ScheduleType.Daily))
 				.andReturn(List.of(config));
 
-		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
+		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo(
+				new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Daily, minExportDate.toInstant()),
+				now(), config.getConfigId());
 		Capture<UserDatumExportConfiguration> configCaptor = new Capture<>(CaptureType.ALL);
 		expect(taskBiz.submitDatumExportConfiguration(capture(configCaptor),
 				eq(minExportDate.toInstant()))).andReturn(task);
@@ -171,7 +176,10 @@ public class DefaultUserExportJobsServiceTests {
 
 		for ( int i = 0; i < 3; i++ ) {
 			ZonedDateTime exportDate = minExportDate.plus(i, ScheduleType.Hourly.temporalUnit());
-			UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
+			UserDatumExportTaskInfo task = new UserDatumExportTaskInfo(
+					new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Hourly,
+							minExportDate.toInstant()),
+					now(), config.getConfigId());
 			expect(taskBiz.submitDatumExportConfiguration(config, exportDate.toInstant()))
 					.andReturn(task);
 
@@ -196,7 +204,9 @@ public class DefaultUserExportJobsServiceTests {
 		expect(configurationDao.findForExecution(now.toInstant(), ScheduleType.Hourly))
 				.andReturn(List.of(config));
 
-		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
+		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo(
+				new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Hourly, minExportDate.toInstant()),
+				now(), config.getConfigId());
 		for ( int i = 0; i < expectedHourCount; i++ ) {
 			expect(taskBiz.submitDatumExportConfiguration(config,
 					minExportDate.plusHours(i).toInstant())).andReturn(task);

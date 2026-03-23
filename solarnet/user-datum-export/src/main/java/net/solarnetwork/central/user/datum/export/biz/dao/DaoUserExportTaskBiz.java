@@ -156,9 +156,8 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		// NOTE: assume node and source IDs will be enforced by query, using userId and tokenId
 		// see net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.whereStreamMetadata()
 
-		UserAdhocDatumExportTaskInfo task = new UserAdhocDatumExportTaskInfo();
+		UserAdhocDatumExportTaskInfo task = new UserAdhocDatumExportTaskInfo(config.getUserId());
 		task.setCreated(Instant.now());
-		task.setUserId(config.getUserId());
 		task.setScheduleType(scheduleType);
 		task.setConfig(taskConfig);
 		task.setTokenId(SecurityUtils.currentTokenId());
@@ -216,12 +215,10 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		ZonedDateTime currExportDate = scheduleType
 				.exportDate(exportDate != null ? exportDate.atZone(zone) : ZonedDateTime.now(zone));
 
-		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
+		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo(
+				new UserDatumExportTaskPK(config.getUserId(), scheduleType, currExportDate.toInstant()),
+				Instant.now(), config.getConfigId());
 		task.setCreated(Instant.now());
-		task.setUserId(config.getUserId());
-		task.setExportDate(currExportDate.toInstant());
-		task.setScheduleType(scheduleType);
-		task.setUserDatumExportConfigurationId(config.getConfigId());
 		task.setConfig(taskConfig);
 		UserDatumExportTaskPK pk = taskDao.save(task);
 		task.setId(pk);

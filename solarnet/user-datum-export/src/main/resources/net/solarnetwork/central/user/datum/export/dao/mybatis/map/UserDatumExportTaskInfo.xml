@@ -41,14 +41,17 @@
 	</sql>
 
 	<resultMap id="UserDatumExportTaskInfoFullResult" type="net.solarnetwork.central.user.datum.export.domain.UserDatumExportTaskInfo">
-		<id property="userId" column="user_export_task_user_id"/>
-		<id property="scheduleTypeKey" column="user_export_task_schedule"/>
-		<id property="exportDate" column="user_export_task_export_date"/>
-		<result property="created" column="user_export_task_created"/>
-		<result property="taskId" column="user_export_task_task_id"/>
-		<result property="userDatumExportConfigurationId" column="user_export_task_conf_id"/>
-		
-		<association property="task" resultMap="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.DatumExportTaskInfoFullResult" />
+		<constructor>
+			<idArg column="user_export_task_user_id" javaType="java.lang.Long"/>
+			<idArg column="user_export_task_schedule" javaType="net.solarnetwork.central.datum.export.domain.ScheduleType"
+				typeHandler="net.solarnetwork.central.dao.mybatis.type.KeyCodedValueTypeHandler"/>
+			<idArg column="user_export_task_export_date" javaType="java.time.Instant"/>
+			<arg column="user_export_task_created" javaType="java.time.Instant"/>
+			<arg column="user_export_task_conf_id" javaType="java.lang.Long"/>
+		</constructor>
+		<result property="taskId" column="user_export_task_task_id"/>		
+		<association property="task" notNullColumn="datum_export_task_id"
+			resultMap="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.DatumExportTaskInfoFullResult"/>
 	</resultMap>
 	
 	<sql id="fragment-UserDatumExportTaskInfo-select-full">

@@ -76,7 +76,7 @@ public class UserDatumExportConfiguration
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param created
@@ -103,7 +103,7 @@ public class UserDatumExportConfiguration
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param configId
@@ -129,8 +129,8 @@ public class UserDatumExportConfiguration
 
 	@Override
 	public UserDatumExportConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new UserDatumExportConfiguration(id, getCreated(), name, schedule, hourDelayOffset,
-				minimumExportDate);
+		var copy = new UserDatumExportConfiguration(id, nonnull(getCreated(), "Created"), name, schedule,
+				hourDelayOffset, minimumExportDate);
 		copyTo(copy);
 		return copy;
 	}
@@ -186,12 +186,12 @@ public class UserDatumExportConfiguration
 
 	/**
 	 * Set the temporary configuration ID.
-	 * 
+	 *
 	 * <p>
 	 * This method is here to support DAO mapping that wants to set new primary
 	 * key values on creation.
 	 * </p>
-	 * 
+	 *
 	 * @param configId
 	 *        the configuration ID to set
 	 */
@@ -206,7 +206,7 @@ public class UserDatumExportConfiguration
 
 	/**
 	 * Set the name.
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 * @throws IllegalArgumentException
@@ -224,7 +224,7 @@ public class UserDatumExportConfiguration
 
 	/**
 	 * Set the schedule.
-	 * 
+	 *
 	 * @param schedule
 	 *        the schedule to set
 	 * @throws IllegalArgumentException
@@ -269,7 +269,7 @@ public class UserDatumExportConfiguration
 
 	/**
 	 * Set the hour delay offset.
-	 * 
+	 *
 	 * @param hourDelayOffset
 	 *        the offset to set
 	 */
@@ -476,7 +476,7 @@ public class UserDatumExportConfiguration
 
 	/**
 	 * Set the time zone ID.
-	 * 
+	 *
 	 * @param timeZoneId
 	 *        the time zone ID to set
 	 */

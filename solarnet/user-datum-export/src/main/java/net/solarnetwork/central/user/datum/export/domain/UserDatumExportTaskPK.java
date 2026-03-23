@@ -22,16 +22,18 @@
 
 package net.solarnetwork.central.user.datum.export.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 
 /**
  * Primary key for a user export task.
  *
  * @author matt
- * @version .0
+ * @version 1.1
  */
 public class UserDatumExportTaskPK
 		implements Serializable, Cloneable, Comparable<UserDatumExportTaskPK> {
@@ -44,13 +46,6 @@ public class UserDatumExportTaskPK
 	private ScheduleType scheduleType;
 
 	/**
-	 * Default constructor.
-	 */
-	public UserDatumExportTaskPK() {
-		super();
-	}
-
-	/**
 	 * Constructor.
 	 *
 	 * @param userId
@@ -59,12 +54,14 @@ public class UserDatumExportTaskPK
 	 *        the schedule type
 	 * @param date
 	 *        the date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public UserDatumExportTaskPK(Long userId, ScheduleType scheduleType, Instant date) {
 		super();
-		this.userId = userId;
-		this.scheduleType = scheduleType;
-		this.date = date;
+		this.userId = requireNonNullArgument(userId, "userId");
+		this.scheduleType = requireNonNullArgument(scheduleType, "scheduleType");
+		this.date = requireNonNullArgument(date, "date");
 	}
 
 	@Override
@@ -84,7 +81,7 @@ public class UserDatumExportTaskPK
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -130,7 +127,7 @@ public class UserDatumExportTaskPK
 	 * </p>
 	 */
 	@Override
-	public int compareTo(UserDatumExportTaskPK o) {
+	public int compareTo(@Nullable UserDatumExportTaskPK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -170,31 +167,31 @@ public class UserDatumExportTaskPK
 		}
 	}
 
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 
-	public void setUserId(Long userId) {
+	public final void setUserId(Long userId) {
 		this.userId = userId;
 	}
 
-	public Instant getDate() {
+	public final Instant getDate() {
 		return date;
 	}
 
-	public void setDate(Instant date) {
+	public final void setDate(Instant date) {
 		this.date = date;
 	}
 
-	public ScheduleType getScheduleType() {
+	public final ScheduleType getScheduleType() {
 		return scheduleType;
 	}
 
-	public void setScheduleType(ScheduleType scheduleType) {
+	public final void setScheduleType(ScheduleType scheduleType) {
 		this.scheduleType = scheduleType;
 	}
 
-	public char getScheduleTypeKey() {
+	public final char getScheduleTypeKey() {
 		ScheduleType type = getScheduleType();
 		if ( type == null ) {
 			type = ScheduleType.Daily;
@@ -202,7 +199,7 @@ public class UserDatumExportTaskPK
 		return type.getKey();
 	}
 
-	public void setScheduleTypeKey(char key) {
+	public final void setScheduleTypeKey(char key) {
 		ScheduleType type;
 		try {
 			type = ScheduleType.forKey(key);

@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisUserDatumExportTaskInfoDaoTests.java - 18/04/2018 9:43:43 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -57,7 +57,7 @@ import net.solarnetwork.central.user.domain.User;
 
 /**
  * Test cases for the {@link MyBatisUserDatumExportTaskInfoDao} class.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -105,8 +105,9 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 	@Test
 	public void storeNew() {
 		Instant date = LocalDateTime.of(2017, 4, 18, 9, 0, 0).toInstant(ZoneOffset.UTC);
-		UserDatumExportTaskInfo info = new UserDatumExportTaskInfo();
-		info.setId(new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Hourly, date));
+		UserDatumExportTaskInfo info = new UserDatumExportTaskInfo(
+				new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Hourly, date), now(),
+				this.userDatumExportConfig.getConfigId());
 		info.setConfig(this.userDatumExportConfig);
 
 		UserDatumExportTaskPK id = dao.save(info);
@@ -142,7 +143,7 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 	public void update() {
 		storeNew();
 
-		// updates are actually NOT allowed; we will get back the same task ID and 
+		// updates are actually NOT allowed; we will get back the same task ID and
 		// no properties will change when we check
 
 		UserDatumExportTaskInfo info = dao.get(this.info.getId(), this.user.getId());
@@ -229,9 +230,10 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		datumTask.setCompleted(Instant.now().truncatedTo(ChronoUnit.MINUTES));
 		datumTaskDao.save(datumTask);
 
-		UserDatumExportTaskInfo info = new UserDatumExportTaskInfo();
-		info.setId(new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Hourly,
-				LocalDateTime.of(2017, 4, 18, 10, 0, 0).toInstant(ZoneOffset.UTC)));
+		UserDatumExportTaskInfo info = new UserDatumExportTaskInfo(
+				new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Hourly,
+						LocalDateTime.of(2017, 4, 18, 10, 0, 0).toInstant(ZoneOffset.UTC)),
+				now(), this.userDatumExportConfig.getConfigId());
 		info.setConfig(this.userDatumExportConfig);
 		info = dao.get(dao.save(info), this.user.getId());
 		datumTask = datumTaskDao.get(info.getTaskId());

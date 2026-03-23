@@ -37,8 +37,10 @@
 	</sql>
 
 	<resultMap id="UserAdhocDatumExportTaskInfoFullResult" type="net.solarnetwork.central.user.datum.export.domain.UserAdhocDatumExportTaskInfo">
+		<constructor>
+			<arg column="user_adhoc_export_task_user_id" javaType="java.lang.Long"/>
+		</constructor>
 		<id property="id" column="user_adhoc_export_task_task_id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
-		<result property="userId" column="user_adhoc_export_task_user_id"/>
 		<result property="scheduleTypeKey" column="user_adhoc_export_task_schedule"/>
 		<result property="tokenId" column="user_adhoc_export_task_auth_token"/>
 		<result property="created" column="user_adhoc_export_task_created"/>

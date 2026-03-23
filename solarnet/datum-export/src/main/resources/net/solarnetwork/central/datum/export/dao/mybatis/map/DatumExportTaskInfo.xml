@@ -46,7 +46,9 @@
 	</sql>
 	
 	<resultMap id="DatumExportTaskInfoFullResult" type="DatumExportTaskInfo">
-		<id property="id" column="datum_export_task_id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+		<constructor>
+			<idArg column="datum_export_task_id" javaType="java.util.UUID" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+		</constructor>
 		<result property="created" column="datum_export_task_created"/>
 		<result property="modified" column="datum_export_task_modified"/>
 		<result property="exportDate" column="datum_export_task_export_date"/>
@@ -60,7 +62,9 @@
 	</resultMap>
 
 	<resultMap id="DatumExportTaskInfoDirectResult" type="DatumExportTaskInfo">
-		<id property="id" column="id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+		<constructor>
+			<idArg column="id" javaType="java.util.UUID" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+		</constructor>
 		<result property="created" column="created"/>
 		<result property="modified" column="modified"/>
 		<result property="exportDate" column="export_date"/>

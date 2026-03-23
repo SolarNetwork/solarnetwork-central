@@ -55,7 +55,7 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param created
@@ -77,7 +77,7 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param configId
@@ -101,8 +101,8 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 
 	@Override
 	public UserOutputConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new UserOutputConfiguration(id, getCreated(), getName(), getServiceIdentifier(),
-				compressionType);
+		var copy = new UserOutputConfiguration(id, nonnull(getCreated(), "Created"), getName(),
+				getServiceIdentifier(), compressionType);
 		copyTo(copy);
 		return copy;
 	}
@@ -130,7 +130,7 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserO
 
 	/**
 	 * Set the compression type.
-	 * 
+	 *
 	 * @param compressionType
 	 *        the type to set
 	 * @throws IllegalArgumentException

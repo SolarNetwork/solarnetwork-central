@@ -58,7 +58,7 @@ public class UserDataConfiguration extends BaseExportConfigurationEntity<UserDat
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param created
@@ -77,7 +77,7 @@ public class UserDataConfiguration extends BaseExportConfigurationEntity<UserDat
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param configId
@@ -98,7 +98,8 @@ public class UserDataConfiguration extends BaseExportConfigurationEntity<UserDat
 
 	@Override
 	public UserDataConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new UserDataConfiguration(id, getCreated(), getName(), getServiceIdentifier());
+		var copy = new UserDataConfiguration(id, nonnull(getCreated(), "Created"), getName(),
+				getServiceIdentifier());
 		copyTo(copy);
 		return copy;
 	}

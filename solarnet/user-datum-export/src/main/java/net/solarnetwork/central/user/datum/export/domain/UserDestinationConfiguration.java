@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.datum.export.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
@@ -47,7 +48,7 @@ public class UserDestinationConfiguration
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param created
@@ -66,7 +67,7 @@ public class UserDestinationConfiguration
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param configId
@@ -87,7 +88,8 @@ public class UserDestinationConfiguration
 
 	@Override
 	public UserDestinationConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new UserDestinationConfiguration(id, getCreated(), getName(), getServiceIdentifier());
+		var copy = new UserDestinationConfiguration(id, nonnull(getCreated(), "Created"), getName(),
+				getServiceIdentifier());
 		copyTo(copy);
 		return copy;
 	}

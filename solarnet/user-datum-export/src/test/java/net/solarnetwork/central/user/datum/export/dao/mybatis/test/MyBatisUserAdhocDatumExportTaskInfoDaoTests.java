@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisUserAdhocDatumExportTaskInfoDaoTests.java - 18/04/2018 9:43:43 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -60,7 +60,7 @@ import net.solarnetwork.central.user.domain.User;
 
 /**
  * Test cases for the {@link MyBatisUserAdhocDatumExportTaskInfoDao} class.
- * 
+ *
  * @author matt
  * @version 2.2
  * @since 1.1
@@ -102,17 +102,15 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 	}
 
 	private UUID storeTask(Long userId) {
-		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo();
-		info.setUserId(this.user.getId());
+		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo(this.user.getId());
 		info.setConfig(createNewUserDatumExportConfig());
 		return dao.save(info);
 	}
 
 	@Test
 	public void storeNew() {
-		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo();
+		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo(this.user.getId());
 		info.setConfig(createNewUserDatumExportConfig());
-		info.setUserId(this.user.getId());
 
 		UUID id = dao.save(info);
 		assertThat("Primary key assigned", id, notNullValue());
@@ -126,9 +124,8 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 	@Test
 	public void storeNew_withToken() {
 		// GIVEN
-		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo();
+		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo(this.user.getId());
 		info.setConfig(createNewUserDatumExportConfig());
-		info.setUserId(this.user.getId());
 		info.setTokenId(randomString());
 
 		// WHEN
@@ -212,7 +209,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 	public void update() {
 		storeNew();
 
-		// updates are actually NOT allowed; we will get back the same task ID and 
+		// updates are actually NOT allowed; we will get back the same task ID and
 		// no properties will change when we check
 
 		UserAdhocDatumExportTaskInfo info = dao.get(this.info.getId(), this.user.getId());
@@ -290,8 +287,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		datumTask.setCompleted(Instant.now().truncatedTo(ChronoUnit.MINUTES));
 		datumTaskDao.save(datumTask);
 
-		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo();
-		info.setUserId(this.info.getUserId());
+		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo(this.info.getUserId());
 		info.setConfig(createNewUserDatumExportConfig());
 		info = dao.get(dao.save(info), this.user.getId());
 		datumTask = datumTaskDao.get(info.getId());
