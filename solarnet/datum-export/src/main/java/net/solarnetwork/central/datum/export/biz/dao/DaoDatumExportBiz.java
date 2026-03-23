@@ -353,14 +353,14 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 					? config.getDataConfiguration().getDatumFilter()
 					: null);
 			if ( datumFilter == null ) {
-				throw new DatumExportException(info.getId(), "No datum filter available", null);
+				throw new DatumExportException(info.id(), "No datum filter available", null);
 			}
 			ScheduleType schedule = config.getSchedule();
 			if ( schedule == null ) {
 				schedule = ScheduleType.Daily;
 			}
 			if ( info.getExportDate() == null ) {
-				throw new DatumExportException(info.getId(), "No export date available", null);
+				throw new DatumExportException(info.id(), "No export date available", null);
 			}
 
 			final DatumExportOutputFormatService outputService = optionalService(outputFormatServices,
@@ -369,7 +369,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 				String serviceId = (config.getOutputConfiguration() != null
 						? config.getOutputConfiguration().getServiceIdentifier()
 						: null);
-				throw new DatumExportException(info.getId(),
+				throw new DatumExportException(info.id(),
 						"No output service available for identifier [" + serviceId + "]", null);
 			}
 
@@ -382,7 +382,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			filter.setUserId(info.getUserId()); // restrict to user if available
 			if ( schedule == ScheduleType.Adhoc ) {
 				if ( !(filter.hasLocalDateRange() || filter.hasDateRange()) ) {
-					throw new DatumExportException(info.getId(),
+					throw new DatumExportException(info.id(),
 							"Adhoc export missing start or end date in data configuration", null);
 				}
 			} else {
@@ -419,7 +419,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 										totalResultCountEstimate != null ? totalResultCountEstimate
 												: COUNT_UNKNOWN);
 							} catch ( IOException e ) {
-								throw new DatumExportException(info.getId(), e.getMessage(), e);
+								throw new DatumExportException(info.id(), e.getMessage(), e);
 							}
 						}
 
@@ -433,7 +433,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 							try {
 								exportContext.appendDatumMatch(singleton(d), DatumExportTask.this);
 							} catch ( IOException e ) {
-								throw new DatumExportException(info.getId(), e.getMessage(), e);
+								throw new DatumExportException(info.id(), e.getMessage(), e);
 							}
 							return ExportCallbackAction.CONTINUE;
 						}
@@ -441,7 +441,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 					return exportContext.finish();
 				} catch ( IOException e ) {
-					throw new DatumExportException(info.getId(), e.getMessage(), e);
+					throw new DatumExportException(info.id(), e.getMessage(), e);
 				}
 			});
 		}
@@ -453,7 +453,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 				String serviceId = (config.getDestinationConfiguration() != null
 						? config.getDestinationConfiguration().getServiceIdentifier()
 						: null);
-				throw new DatumExportException(info.getId(),
+				throw new DatumExportException(info.id(),
 						"No destination service available for identifier [" + serviceId + "]", null);
 			}
 			DatumExportOutputFormatService outputService = optionalService(outputFormatServices,

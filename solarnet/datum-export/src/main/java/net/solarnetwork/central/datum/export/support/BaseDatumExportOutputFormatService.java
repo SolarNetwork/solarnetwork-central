@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
@@ -51,6 +52,7 @@ public abstract class BaseDatumExportOutputFormatService extends
 	 * @param id
 	 *        the identity of this service
 	 */
+	@SuppressWarnings("NullAway.Init")
 	public BaseDatumExportOutputFormatService(String id) {
 		super(id);
 		setTemporaryPath(null);
@@ -112,7 +114,7 @@ public abstract class BaseDatumExportOutputFormatService extends
 	 * @return the temporary directory; defaults to the system property
 	 *         {@literal java.io.tmpdir}
 	 */
-	public File getTemporaryDir() {
+	public @Nullable File getTemporaryDir() {
 		return temporaryDir;
 	}
 
@@ -135,7 +137,7 @@ public abstract class BaseDatumExportOutputFormatService extends
 	 *        the path to use, or {@code null} or an empty string to use the
 	 *        system property {@literal java.io.tmpdir}
 	 */
-	public void setTemporaryPath(String path) {
+	public void setTemporaryPath(@Nullable String path) {
 		if ( path == null || path.isEmpty() ) {
 			path = System.getProperty("java.io.tmpdir");
 		}

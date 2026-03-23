@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.export.support;
 
 import java.io.Serial;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An exception related to the datum export process.
@@ -46,7 +47,7 @@ public class DatumExportException extends RuntimeException {
 	 * @param cause
 	 *        the cause
 	 */
-	public DatumExportException(UUID requestId, String message, Throwable cause) {
+	public DatumExportException(UUID requestId, @Nullable String message, @Nullable Throwable cause) {
 		super(message, cause);
 		this.requestId = requestId;
 	}
@@ -56,7 +57,7 @@ public class DatumExportException extends RuntimeException {
 	 *
 	 * @return the request ID
 	 */
-	public UUID getRequestId() {
+	public final UUID getRequestId() {
 		return requestId;
 	}
 
