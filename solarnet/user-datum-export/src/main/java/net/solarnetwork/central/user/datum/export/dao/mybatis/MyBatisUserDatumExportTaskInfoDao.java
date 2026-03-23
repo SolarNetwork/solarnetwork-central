@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.datum.export.dao.mybatis;
 
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.datum.export.dao.UserDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.datum.export.domain.UserDatumExportTaskInfo;
@@ -49,7 +50,7 @@ public class MyBatisUserDatumExportTaskInfoDao
 	}
 
 	@Override
-	public UserDatumExportTaskInfo getForTaskId(UUID taskId) {
+	public @Nullable UserDatumExportTaskInfo getForTaskId(UUID taskId) {
 		return selectFirst(QUERY_TASK_INFO_FOR_TASK_ID, taskId);
 	}
 

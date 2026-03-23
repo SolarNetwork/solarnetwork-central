@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.datum.export.dao.UserAdhocDatumExportTaskInfoDao;
@@ -57,8 +58,8 @@ public class MyBatisUserAdhocDatumExportTaskInfoDao
 	}
 
 	@Override
-	public List<UserAdhocDatumExportTaskInfo> findTasksForUser(Long userId, Set<DatumExportState> states,
-			Boolean success) {
+	public List<UserAdhocDatumExportTaskInfo> findTasksForUser(Long userId,
+			@Nullable Set<DatumExportState> states, @Nullable Boolean success) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("user", userId);
 		if ( states != null && !states.isEmpty() ) {
