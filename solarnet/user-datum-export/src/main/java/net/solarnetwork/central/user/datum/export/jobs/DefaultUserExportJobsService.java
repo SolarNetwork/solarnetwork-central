@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.datum.export.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -54,12 +55,14 @@ public class DefaultUserExportJobsService implements UserExportJobsService {
 	 *        the configuration DAO
 	 * @param taskBiz
 	 *        the task service
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public DefaultUserExportJobsService(UserDatumExportConfigurationDao configurationDao,
 			UserExportTaskBiz taskBiz) {
 		super();
-		this.configurationDao = configurationDao;
-		this.taskBiz = taskBiz;
+		this.configurationDao = requireNonNullArgument(configurationDao, "configurationDao");
+		this.taskBiz = requireNonNullArgument(taskBiz, "taskBiz");
 	}
 
 	@Override
