@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.test;
+package net.solarnetwork.central.test.security;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
