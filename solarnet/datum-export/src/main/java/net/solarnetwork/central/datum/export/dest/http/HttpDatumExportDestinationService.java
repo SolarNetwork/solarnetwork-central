@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.export.dest.http;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.expandTemplateString;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,7 +55,6 @@ import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextAreaSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.util.ClassUtils;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * HTTP implementation of {@link DatumExportDestinationService}.
@@ -74,7 +74,7 @@ public class HttpDatumExportDestinationService extends BaseDatumExportDestinatio
 	 */
 	public HttpDatumExportDestinationService(HttpClient client) {
 		super("net.solarnetwork.central.datum.export.dest.http.HttpDatumExportDestinationService");
-		this.client = ObjectUtils.requireNonNullArgument(client, "client");
+		this.client = requireNonNullArgument(client, "client");
 	}
 
 	@Override

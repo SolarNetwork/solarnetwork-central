@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.export.dest.s3;
 
 import java.net.URI;
+import org.jspecify.annotations.Nullable;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Uri;
@@ -52,13 +53,13 @@ public class S3DestinationProperties {
 	/** A filename parameter for the export extension. */
 	public static final String FILENAME_PARAM_EXTENSION = "ext";
 
-	private String path;
+	private @Nullable String path;
 	private String filenameTemplate = DEFAULT_FILENAME_TEMPLATE;
-	private String accessKey;
-	private String secretKey;
+	private @Nullable String accessKey;
+	private @Nullable String secretKey;
 	private String storageClass = DEFAULT_STORAGE_CLASS;
 
-	private S3Uri uri;
+	private @Nullable S3Uri uri;
 
 	/**
 	 * Test if the configuration appears valid.
@@ -79,7 +80,7 @@ public class S3DestinationProperties {
 	 *
 	 * @return the S3 path
 	 */
-	public String getPath() {
+	public final @Nullable String getPath() {
 		return path;
 	}
 
@@ -94,7 +95,7 @@ public class S3DestinationProperties {
 	 * @param path
 	 *        the S3 path to export to
 	 */
-	public synchronized void setPath(String path) {
+	public final synchronized void setPath(@Nullable String path) {
 		this.path = path;
 		this.uri = null;
 	}
@@ -104,7 +105,7 @@ public class S3DestinationProperties {
 	 *
 	 * @return the URI
 	 */
-	public synchronized S3Uri getUri() {
+	public synchronized @Nullable S3Uri getUri() {
 		S3Uri result = uri;
 		if ( result == null && path != null ) {
 			String absUri = path;
@@ -125,7 +126,7 @@ public class S3DestinationProperties {
 	 *
 	 * @return the filename template
 	 */
-	public String getFilenameTemplate() {
+	public final String getFilenameTemplate() {
 		return filenameTemplate;
 	}
 
@@ -140,10 +141,11 @@ public class S3DestinationProperties {
 	 * </p>
 	 *
 	 * @param filenameTemplate
-	 *        the filename template to use
+	 *        the filename template to use; if {@code null} then
+	 *        {@link #DEFAULT_FILENAME_TEMPLATE} will be used
 	 */
-	public void setFilenameTemplate(String filenameTemplate) {
-		this.filenameTemplate = filenameTemplate;
+	public final void setFilenameTemplate(String filenameTemplate) {
+		this.filenameTemplate = filenameTemplate != null ? filenameTemplate : DEFAULT_FILENAME_TEMPLATE;
 	}
 
 	/**
@@ -151,7 +153,7 @@ public class S3DestinationProperties {
 	 *
 	 * @return the access key
 	 */
-	public String getAccessKey() {
+	public final @Nullable String getAccessKey() {
 		return accessKey;
 	}
 
@@ -161,7 +163,7 @@ public class S3DestinationProperties {
 	 * @param accessKey
 	 *        the key to use
 	 */
-	public void setAccessKey(String accessKey) {
+	public final void setAccessKey(@Nullable String accessKey) {
 		this.accessKey = accessKey;
 	}
 
@@ -170,7 +172,7 @@ public class S3DestinationProperties {
 	 *
 	 * @return the S3 secret key
 	 */
-	public String getSecretKey() {
+	public final @Nullable String getSecretKey() {
 		return secretKey;
 	}
 
@@ -180,7 +182,7 @@ public class S3DestinationProperties {
 	 * @param secretKey
 	 *        the S3 secret key to use
 	 */
-	public void setSecretKey(String secretKey) {
+	public final void setSecretKey(@Nullable String secretKey) {
 		this.secretKey = secretKey;
 	}
 
@@ -190,7 +192,7 @@ public class S3DestinationProperties {
 	 * @return the S3 storage class; defaults to {@link #DEFAULT_STORAGE_CLASS}
 	 * @since 1.1
 	 */
-	public String getStorageClass() {
+	public final String getStorageClass() {
 		return storageClass;
 	}
 
@@ -198,11 +200,12 @@ public class S3DestinationProperties {
 	 * Set the S3 storage class to use.
 	 *
 	 * @param storageClass
-	 *        the S3 storage class to set
+	 *        the S3 storage class to set; if {@code null} then
+	 *        {@link #DEFAULT_STORAGE_CLASS} will be used
 	 * @since 1.1
 	 */
-	public void setStorageClass(String storageClass) {
-		this.storageClass = storageClass;
+	public final void setStorageClass(String storageClass) {
+		this.storageClass = storageClass != null ? storageClass : DEFAULT_STORAGE_CLASS;
 	}
 
 }

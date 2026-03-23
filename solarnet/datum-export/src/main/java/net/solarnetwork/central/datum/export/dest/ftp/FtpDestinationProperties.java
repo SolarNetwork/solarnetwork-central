@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.export.dest.ftp;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Service properties for the FTP export destination.
  *
@@ -33,9 +35,9 @@ public class FtpDestinationProperties {
 	/** The {@code dataTls} property default value. */
 	public static final boolean DEFAULT_DATA_TLS = true;
 
-	private String url;
-	private String username;
-	private String password;
+	private @Nullable String url;
+	private @Nullable String username;
+	private @Nullable String password;
 	private boolean implicitTls;
 	private boolean dataTls = DEFAULT_DATA_TLS;
 
@@ -60,7 +62,7 @@ public class FtpDestinationProperties {
 	 *
 	 * @return the url
 	 */
-	public String getUrl() {
+	public final @Nullable String getUrl() {
 		return url;
 	}
 
@@ -70,7 +72,7 @@ public class FtpDestinationProperties {
 	 * @param url
 	 *        the url to set
 	 */
-	public void setUrl(String url) {
+	public final void setUrl(@Nullable String url) {
 		this.url = url;
 	}
 
@@ -79,7 +81,7 @@ public class FtpDestinationProperties {
 	 *
 	 * @return the username
 	 */
-	public String getUsername() {
+	public final @Nullable String getUsername() {
 		return username;
 	}
 
@@ -89,7 +91,7 @@ public class FtpDestinationProperties {
 	 * @param username
 	 *        the username to set
 	 */
-	public void setUsername(String username) {
+	public final void setUsername(@Nullable String username) {
 		this.username = username != null && !username.isBlank() ? username : null;
 	}
 
@@ -98,7 +100,7 @@ public class FtpDestinationProperties {
 	 *
 	 * @return the password
 	 */
-	public String getPassword() {
+	public final @Nullable String getPassword() {
 		return password;
 	}
 
@@ -108,7 +110,7 @@ public class FtpDestinationProperties {
 	 * @param password
 	 *        the password to set
 	 */
-	public void setPassword(String password) {
+	public final void setPassword(@Nullable String password) {
 		this.password = password != null && !password.isBlank() ? password : null;
 	}
 
@@ -129,7 +131,7 @@ public class FtpDestinationProperties {
 	 * @return {@literal true} if TLS is implied for {@literal ftps://} URLs,
 	 *         e.g. ports 990 (control) 989 (data)
 	 */
-	public boolean isImplicitTls() {
+	public final boolean isImplicitTls() {
 		return implicitTls;
 	}
 
@@ -140,7 +142,7 @@ public class FtpDestinationProperties {
 	 *        {@literal true} if TLS is implied for {@literal ftps://} URLs,
 	 *        e.g. ports 990 (control) 989 (data)
 	 */
-	public void setImplicitTls(boolean implicitTls) {
+	public final void setImplicitTls(boolean implicitTls) {
 		this.implicitTls = implicitTls;
 	}
 
@@ -150,7 +152,7 @@ public class FtpDestinationProperties {
 	 * @return {@literal true} to use TLS for data transfers on {code ftps}
 	 *         connections
 	 */
-	public boolean isDataTls() {
+	public final boolean isDataTls() {
 		return dataTls;
 	}
 
@@ -161,7 +163,7 @@ public class FtpDestinationProperties {
 	 *        {@literal true} to use TLS for data transfers on {code ftps}
 	 *        connections
 	 */
-	public void setDataTls(boolean dataTls) {
+	public final void setDataTls(boolean dataTls) {
 		this.dataTls = dataTls;
 	}
 

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.export.dest.http;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpMethod;
 import net.solarnetwork.util.StringUtils;
 
@@ -38,11 +39,11 @@ public class HttpDestinationProperties {
 	public static final HttpMethod DEFAULT_METHOD = HttpMethod.POST;
 
 	private String method = DEFAULT_METHOD.toString();
-	private String url;
-	private String username;
-	private String password;
-	private String multipartFilenameTemplate;
-	private Map<String, String> headers;
+	private @Nullable String url;
+	private @Nullable String username;
+	private @Nullable String password;
+	private @Nullable String multipartFilenameTemplate;
+	private @Nullable Map<String, String> headers;
 
 	/**
 	 * Constructor.
@@ -65,7 +66,7 @@ public class HttpDestinationProperties {
 	 *
 	 * @return the instance, never {@code null}
 	 */
-	public HttpMethod method() {
+	public final HttpMethod method() {
 		try {
 			return HttpMethod.valueOf(method);
 		} catch ( Exception e ) {
@@ -79,7 +80,7 @@ public class HttpDestinationProperties {
 	 *
 	 * @return the method
 	 */
-	public String getMethod() {
+	public final String getMethod() {
 		return method;
 	}
 
@@ -89,8 +90,8 @@ public class HttpDestinationProperties {
 	 * @param method
 	 *        the method to set, for example {@code POST} or {@code PUT}
 	 */
-	public void setMethod(String method) {
-		this.method = method;
+	public final void setMethod(String method) {
+		this.method = method != null ? method : DEFAULT_METHOD.toString();
 	}
 
 	/**
@@ -98,7 +99,7 @@ public class HttpDestinationProperties {
 	 *
 	 * @return the url
 	 */
-	public String getUrl() {
+	public final @Nullable String getUrl() {
 		return url;
 	}
 
@@ -108,7 +109,7 @@ public class HttpDestinationProperties {
 	 * @param url
 	 *        the url to set
 	 */
-	public void setUrl(String url) {
+	public final void setUrl(@Nullable String url) {
 		this.url = url;
 	}
 
@@ -117,7 +118,7 @@ public class HttpDestinationProperties {
 	 *
 	 * @return the username
 	 */
-	public String getUsername() {
+	public final @Nullable String getUsername() {
 		return username;
 	}
 
@@ -127,7 +128,7 @@ public class HttpDestinationProperties {
 	 * @param username
 	 *        the username to set
 	 */
-	public void setUsername(String username) {
+	public final void setUsername(@Nullable String username) {
 		this.username = username != null && !username.isBlank() ? username : null;
 	}
 
@@ -136,7 +137,7 @@ public class HttpDestinationProperties {
 	 *
 	 * @return the password
 	 */
-	public String getPassword() {
+	public final @Nullable String getPassword() {
 		return password;
 	}
 
@@ -146,7 +147,7 @@ public class HttpDestinationProperties {
 	 * @param password
 	 *        the password to set
 	 */
-	public void setPassword(String password) {
+	public final void setPassword(@Nullable String password) {
 		this.password = password != null && !password.isBlank() ? password : null;
 	}
 
@@ -166,7 +167,7 @@ public class HttpDestinationProperties {
 	 *
 	 * @return the multipart filename template
 	 */
-	public String getMultipartFilenameTemplate() {
+	public final @Nullable String getMultipartFilenameTemplate() {
 		return multipartFilenameTemplate;
 	}
 
@@ -181,7 +182,7 @@ public class HttpDestinationProperties {
 	 *        the multipart filename template to use, or {@code null} for a
 	 *        normal HTTP request
 	 */
-	public void setMultipartFilenameTemplate(String multipartFilenameTemplate) {
+	public final void setMultipartFilenameTemplate(@Nullable String multipartFilenameTemplate) {
 		this.multipartFilenameTemplate = multipartFilenameTemplate != null
 				&& !multipartFilenameTemplate.isBlank() ? multipartFilenameTemplate : null;
 	}
@@ -192,7 +193,7 @@ public class HttpDestinationProperties {
 	 * @return {@literal true} if {@code multipartFilenameTemplate} is
 	 *         configured
 	 */
-	public boolean isMultipart() {
+	public final boolean isMultipart() {
 		return (multipartFilenameTemplate != null && !multipartFilenameTemplate.isBlank());
 	}
 
@@ -201,7 +202,7 @@ public class HttpDestinationProperties {
 	 *
 	 * @return the headers
 	 */
-	public Map<String, String> getHeaders() {
+	public final @Nullable Map<String, String> getHeaders() {
 		return headers;
 	}
 
@@ -211,7 +212,7 @@ public class HttpDestinationProperties {
 	 * @param headers
 	 *        the headers to set
 	 */
-	public void setHeaders(Map<String, String> headers) {
+	public final void setHeaders(@Nullable Map<String, String> headers) {
 		this.headers = headers;
 	}
 
@@ -225,7 +226,7 @@ public class HttpDestinationProperties {
 	 *
 	 * @return the headers as a delimited string
 	 */
-	public String getHeadersValue() {
+	public final @Nullable String getHeadersValue() {
 		return StringUtils.delimitedStringFromMap(headers, ": ", ", ");
 	}
 
@@ -240,7 +241,7 @@ public class HttpDestinationProperties {
 	 * @param value
 	 *        the headers to set
 	 */
-	public void setHeadersValue(String value) {
+	public final void setHeadersValue(@Nullable String value) {
 		this.headers = StringUtils.delimitedStringToMap(value, ",", ":");
 	}
 

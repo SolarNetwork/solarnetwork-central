@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.export.dest.s3;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static software.amazon.awssdk.core.async.AsyncRequestBody.fromInputStream;
 import java.io.IOException;
@@ -138,13 +139,13 @@ public class S3DatumExportDestinationService extends BaseDatumExportDestinationS
 
 		};
 
-		S3TransferManager mgr = getTransferManager(props);
-		S3Uri uri = props.getUri();
+		S3Uri uri = nonnull(props.getUri(), "S3 URI");
+		S3TransferManager mgr = getTransferManager(uri, props);
 		for ( ListIterator<DatumExportResource> itr = resourceList.listIterator(); itr.hasNext(); ) {
 			// if we have >1 resource to upload, then we'll insert an index suffix in the key name, like -1, -2, etc.
 			int idx = (resourceCount > 1 ? itr.nextIndex() + 1 : 0);
 			DatumExportResource resource = itr.next();
-			String key = getDestinationPath(props, runtimeProperties, idx);
+			String key = getDestinationPath(uri, props, runtimeProperties, idx);
 			// TODO: how set in v2 SDK? objectMetadata.setLastModified(new Date(resource.lastModified()));
 			try (InputStream in = resource.getInputStream()) {
 				PutObjectRequest.Builder req = PutObjectRequest.builder().key(key)
@@ -181,9 +182,8 @@ public class S3DatumExportDestinationService extends BaseDatumExportDestinationS
 		}
 	}
 
-	private String getDestinationPath(S3DestinationProperties props, Map<String, ?> runtimeProperties,
-			int resourceIndex) {
-		S3Uri uri = props.getUri();
+	private String getDestinationPath(S3Uri uri, S3DestinationProperties props,
+			Map<String, ?> runtimeProperties, int resourceIndex) {
 		String key = uri.key().orElse("") + "/"
 				+ StringUtils.expandTemplateString(props.getFilenameTemplate(), runtimeProperties);
 		if ( resourceIndex > 0 ) {
@@ -198,13 +198,12 @@ public class S3DatumExportDestinationService extends BaseDatumExportDestinationS
 		return key;
 	}
 
-	private S3TransferManager getTransferManager(S3DestinationProperties props) {
-		S3AsyncClient client = getClient(props);
+	private S3TransferManager getTransferManager(S3Uri uri, S3DestinationProperties props) {
+		S3AsyncClient client = getClient(uri, props);
 		return S3TransferManager.builder().s3Client(client).build();
 	}
 
-	private S3AsyncClient getClient(S3DestinationProperties props) {
-		S3Uri uri = props.getUri();
+	private S3AsyncClient getClient(S3Uri uri, S3DestinationProperties props) {
 		S3AsyncClientBuilder builder = S3AsyncClient.builder();
 		if ( uri.region().isPresent() ) {
 			builder.region(uri.region().get());
