@@ -15,16 +15,17 @@ dependencyManagement {
 	}
 }
 
-description = 'SolarNet: Datum'
-version = '6.1.0'
+description = 'SolarNet: Datum Export'
+version = '1.0.0'
 
 base {
-	archivesName = 'solarnet-datum'
+	archivesName = 'solarnet-datum-export'
 }
 
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-common-web')
+	implementation project(':solarnet-datum')
 
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
@@ -45,10 +46,6 @@ dependencies {
 	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:s3-transfer-manager:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
-	
-	// SolarNetwork
-	api 'net.solarnetwork.common:net.solarnetwork.common.s3:4.0.0'
-	api 'net.solarnetwork.common:net.solarnetwork.common.s3.sdk2:2.0.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
@@ -73,7 +70,7 @@ publishing {
 			from components.java
 			pom {
 				name = project.description
-				description = 'Core datum library for all SolarNet projects.'
+				description = 'Core datum export library.'
 				url = 'https://github.com/SolarNetwork/solarnetwork-central'
 				licenses {
 					license {

@@ -24,6 +24,7 @@ dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-common-web')
 	implementation project(':solarnet-datum')
+	implementation project(':solarnet-datum-import')
 	implementation project(':solarnet-instructor')
 	implementation project(':solarnet-user')
 
