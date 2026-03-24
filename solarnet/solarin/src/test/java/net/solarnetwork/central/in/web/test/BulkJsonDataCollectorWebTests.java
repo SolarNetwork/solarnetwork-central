@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.in.web.test;
 
+import static java.time.Instant.now;
 import static java.util.Map.entry;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
 import static net.solarnetwork.central.datum.v2.support.DatumJsonUtils.DATUM_JSON_OBJECT_MAPPER;
 import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.central.test.security.WithMockAuthenticatedNode.DEFAULT_NODE_ID;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -35,6 +37,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -51,8 +54,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.common.dao.jdbc.CommonDbUtils;
 import net.solarnetwork.central.in.web.BulkJsonDataCollector;
+import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.central.test.CommonTestUtils;
 import net.solarnetwork.central.test.security.WithMockAuthenticatedNode;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.DatumProperties;
@@ -79,6 +86,9 @@ public class BulkJsonDataCollectorWebTests {
 
 	@Autowired
 	private JdbcOperations jdbcOperations;
+
+	@Autowired
+	private NodeInstructionDao nodeInstructionDao;
 
 	@Test
 	@WithMockAuthenticatedNode
@@ -198,4 +208,67 @@ public class BulkJsonDataCollectorWebTests {
 		// @formatter:on
 	}
 
+	@Test
+	@WithMockAuthenticatedNode
+	public void post_InstructionStatus() throws Exception {
+		// GIVEN
+		final Long locId = CommonDbTestUtils.insertLocation(jdbcOperations, "NZ", "Pacific/Auckland");
+		final Long nodeId = DEFAULT_NODE_ID;
+		CommonDbTestUtils.insertNode(jdbcOperations, nodeId, locId);
+		final Instant ts = now().truncatedTo(ChronoUnit.MILLIS);
+		final InstructionState state = InstructionState.Completed;
+
+		NodeInstruction ni = new NodeInstruction(randomString(), ts, nodeId);
+		ni.setCreated(ts);
+		ni.getInstruction().setParams(Map.of("a", randomInt().toString()));
+		ni.getInstruction().setState(InstructionState.Executing);
+		ni = nodeInstructionDao.get(nodeInstructionDao.save(ni));
+
+		final String postJson = """
+				[{
+					"__type__":"InstructionStatus",
+					"created":%d,
+					"instructionId":%d,
+					"status":"%s"
+				}]
+				""".formatted(ts.toEpochMilli(), ni.id(), state.name());
+
+		// WHEN
+		// @formatter:off
+		var response = mvc.perform(post("/solarin/bulkCollector.do")
+				.accept(MediaType.APPLICATION_JSON)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(postJson)
+				)
+			.andExpect(status().isOk())
+			.andReturn()
+			.getResponse()
+			.getContentAsString()
+			;
+
+		// THEN
+		then(response)
+			.isNotNull()
+			.asInstanceOf(JSON)
+			.isObject()
+			.as("Success result")
+			.containsEntry("success", true)
+			.node("data")
+			.as("Data is object")
+			.isObject()
+			.as("Data contains datum result list")
+			.containsOnlyKeys("datum")
+			.node("datum")
+			.isArray()
+			.as("One result per input datum provided")
+			.hasSize(1)
+			.element(0)
+			.isObject()
+			.contains(
+					entry("id", ni.id()),
+					entry("state", state.name())
+				)
+			;
+		// @formatter:on
+	}
 }
