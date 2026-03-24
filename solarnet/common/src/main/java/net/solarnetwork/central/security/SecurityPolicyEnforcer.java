@@ -510,10 +510,12 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 
 			// resolve source ID patterns against policy
 			if ( sourceIdPatterns != null ) {
-				// if a source ID pattern exactly matches a policy source ID pattern, allow
+				// if a source ID pattern exactly matches a policy source ID pattern, 
+				// or matches the start of policy pattern, allow
 				if ( policySourceIdPatterns != null ) {
 					for ( String sourceIdPattern : sourceIdPatterns ) {
-						if ( policySourceIdPatterns.contains(sourceIdPattern) ) {
+						if ( policySourceIdPatterns.contains(sourceIdPattern)
+								|| matchesPatternStart(policySourceIdPatterns, sourceIdPattern) ) {
 							sourceIdsSet.add(sourceIdPattern);
 							continue;
 						}
@@ -523,10 +525,13 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 						removedSourceIds.add(sourceIdPattern);
 					}
 				}
-				// if a source ID pattern matches a policy source ID, fill in that policy ID
+				// if a source ID pattern matches a policy source ID and does not match
+				// an existing resolved source ID, fill in that policy ID
 				for ( String policySourceId : policySourceIds ) {
-					if ( matchesPattern(sourceIdPatterns, policySourceId) ) {
+					if ( matchesPattern(sourceIdPatterns, policySourceId)
+							&& !matchesPatternStart(sourceIdsSet, policySourceId) ) {
 						sourceIdsSet.add(policySourceId);
+
 					}
 				}
 			}
@@ -542,7 +547,9 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 				filtered = true;
 				sourceIds = sourceIdsSet.toArray(String[]::new);
 			}
-		} else {
+		} else
+
+		{
 			// no source IDs provided, set to policy source IDs
 			LOG.info("Access RESTRICTED to sources {} for {}: policy restriction", policySourceIds,
 					principal);
