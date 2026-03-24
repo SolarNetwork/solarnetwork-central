@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.biz;
 
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 
 /**
  * General exception for the datum import process.
@@ -35,9 +36,9 @@ public class DatumImportException extends RuntimeException implements DatumInput
 	@Serial
 	private static final long serialVersionUID = 182518709233660990L;
 
-	private final Long lineNumber;
-	private final String line;
-	private final Long loadedCount;
+	private final @Nullable Long lineNumber;
+	private final @Nullable String line;
+	private final @Nullable Long loadedCount;
 
 	/**
 	 * Construct with a message.
@@ -60,7 +61,7 @@ public class DatumImportException extends RuntimeException implements DatumInput
 	 * @param cause
 	 *        the cause
 	 */
-	public DatumImportException(String message, Throwable cause) {
+	public DatumImportException(String message, @Nullable Throwable cause) {
 		this(message, cause, null, null);
 	}
 
@@ -77,7 +78,8 @@ public class DatumImportException extends RuntimeException implements DatumInput
 	 * @param line
 	 *        the original line of input data being processed
 	 */
-	public DatumImportException(String message, Throwable cause, Long lineNumber, String line) {
+	public DatumImportException(String message, @Nullable Throwable cause, @Nullable Long lineNumber,
+			@Nullable String line) {
 		this(message, cause, lineNumber, line, null);
 	}
 
@@ -95,8 +97,8 @@ public class DatumImportException extends RuntimeException implements DatumInput
 	 * @param loadedCount
 	 *        the loaded count
 	 */
-	public DatumImportException(String message, Throwable cause, Long lineNumber, String line,
-			Long loadedCount) {
+	public DatumImportException(String message, @Nullable Throwable cause, @Nullable Long lineNumber,
+			@Nullable String line, @Nullable Long loadedCount) {
 		super(message, cause);
 		this.lineNumber = lineNumber;
 		this.line = line;
@@ -104,17 +106,17 @@ public class DatumImportException extends RuntimeException implements DatumInput
 	}
 
 	@Override
-	public Long getLineNumber() {
+	public final @Nullable Long getLineNumber() {
 		return lineNumber;
 	}
 
 	@Override
-	public String getLine() {
+	public final @Nullable String getLine() {
 		return line;
 	}
 
 	@Override
-	public Long getLoadedCount() {
+	public final @Nullable Long getLoadedCount() {
 		return loadedCount;
 	}
 

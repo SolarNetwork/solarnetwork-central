@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.biz;
 
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Exception thrown when a validation error occurs while importing data.
@@ -53,7 +54,7 @@ public class DatumImportValidationException extends DatumImportException {
 	 * @param cause
 	 *        the cause
 	 */
-	public DatumImportValidationException(String message, Throwable cause) {
+	public DatumImportValidationException(String message, @Nullable Throwable cause) {
 		this(message, cause, null, null);
 	}
 
@@ -70,8 +71,8 @@ public class DatumImportValidationException extends DatumImportException {
 	 * @param line
 	 *        the original line of input data being processed
 	 */
-	public DatumImportValidationException(String message, Throwable cause, Long lineNumber,
-			String line) {
+	public DatumImportValidationException(String message, @Nullable Throwable cause,
+			@Nullable Long lineNumber, @Nullable String line) {
 		super(message, cause, lineNumber, line, null);
 	}
 

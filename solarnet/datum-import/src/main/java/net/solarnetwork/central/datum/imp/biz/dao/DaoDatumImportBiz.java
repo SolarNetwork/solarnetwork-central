@@ -26,6 +26,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Claimed;
 import static net.solarnetwork.central.datum.imp.domain.DatumImportState.Executing;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -59,6 +60,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -115,6 +117,7 @@ import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.service.ResourceStorageService;
 import net.solarnetwork.service.ServiceLifecycleObserver;
+import net.solarnetwork.util.ObjectUtils;
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -135,6 +138,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	/** The default value for the {@code resourceStorageWaitMs} property. */
 	public static final long DEFAULT_RESOURCE_STORAGE_WAIT_MS = TimeUnit.MINUTES.toMillis(1);
 
+	/** The {@code completedTaskMinimumCacheTime} default value. */
+	public static final long DEFAULT_COMPLETED_TASK_MINIMUM_CACHE_TIME = TimeUnit.HOURS.toMillis(4);
+
 	/**
 	 * A job metadata key to signal that the job input data resource is empty.
 	 *
@@ -148,14 +154,14 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	private final DatumImportJobInfoDao jobInfoDao;
 	private final DatumEntityDao datumDao;
 	private final SecurityTokenDao securityTokenDao;
-	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
-	private AsyncTaskExecutor previewExecutor;
-	private ResourceStorageService resourceStorageService;
+	private long completedTaskMinimumCacheTime = DEFAULT_COMPLETED_TASK_MINIMUM_CACHE_TIME;
+	private @Nullable AsyncTaskExecutor previewExecutor;
+	private @Nullable ResourceStorageService resourceStorageService;
 	private long resourceStorageWaitMs = DEFAULT_RESOURCE_STORAGE_WAIT_MS;
 	private int maxPreviewCount = DEFAULT_MAX_PREVIEW_COUNT;
 	private int progressLogCount = DEFAULT_PROGRESS_LOG_COUNT;
 
-	private ScheduledFuture<?> taskPurgerTask = null;
+	private @Nullable ScheduledFuture<?> taskPurgerTask = null;
 	private final ConcurrentMap<UserUuidPK, DatumImportTask> taskMap = new ConcurrentHashMap<>(16, 0.9f,
 			1);
 
@@ -249,9 +255,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		UUID jobId = UUID.randomUUID();
 		UserUuidPK id = new UserUuidPK(request.getUserId(), jobId);
 		DatumImportJobInfo info = new DatumImportJobInfo(id, request.getImportDate());
-		info.setConfig(new BasicConfiguration(request.getConfiguration()));
-		info.setImportState(
-				info.getConfig().isStage() ? DatumImportState.Staged : DatumImportState.Queued);
+		BasicConfiguration config = new BasicConfiguration(request.getConfiguration());
+		info.setConfig(config);
+		info.setImportState(config.isStage() ? DatumImportState.Staged : DatumImportState.Queued);
 		info.setGroupKey(groupKeyForRequest(request));
 		info.setTokenId(SecurityUtils.currentTokenId());
 
@@ -303,7 +309,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
 		task.setDelegate(future);
 
-		return new BasicDatumImportReceipt(jobId.toString(), info.getImportState(), info.getGroupKey());
+		return new BasicDatumImportReceipt(jobId.toString(),
+				info.getImportState() != null ? info.getImportState() : DatumImportState.Unknown,
+				info.getGroupKey());
 	}
 
 	private CompletableFuture<Boolean> saveToResourceStorage(File f, UserUuidPK id,
@@ -367,7 +375,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	}
 
 	@Override
-	public DatumImportJobInfo claimQueuedJob() {
+	public @Nullable DatumImportJobInfo claimQueuedJob() {
 		return jobInfoDao.claimQueuedJob();
 	}
 
@@ -409,36 +417,43 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	@Override
 	public Collection<DatumImportStatus> datumImportJobStatusesForUser(Long userId,
-			Set<DatumImportState> states) {
+			@Nullable Set<DatumImportState> states) {
 		return jobInfoDao.findForUser(userId, states).stream().map(this::taskForJobInfo)
 				.collect(toList());
 	}
 
 	@Override
-	public DatumImportStatus updateDatumImportJobConfigurationForUser(Long userId, String jobId,
-			Configuration configuration) {
+	public @Nullable DatumImportStatus updateDatumImportJobConfigurationForUser(Long userId,
+			String jobId, Configuration configuration) {
 		UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
 		jobInfoDao.updateJobConfiguration(id, configuration);
 		DatumImportJobInfo info = jobInfoDao.get(id);
+		if ( info == null ) {
+			return null;
+		}
 		DatumImportTask task = taskForId(id);
 		task.info.setConfig(info.getConfig());
 		return task;
 	}
 
 	@Override
-	public DatumImportStatus updateDatumImportJobStateForUser(Long userId, String jobId,
-			DatumImportState desiredState, Set<DatumImportState> expectedStates) {
+	public @Nullable DatumImportStatus updateDatumImportJobStateForUser(Long userId, String jobId,
+			DatumImportState desiredState, @Nullable Set<DatumImportState> expectedStates) {
 		UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
 		jobInfoDao.updateJobState(id, desiredState, expectedStates);
 		DatumImportJobInfo info = jobInfoDao.get(id);
+		if ( info == null ) {
+			return null;
+		}
 		DatumImportTask task = taskForId(id);
-		task.info.setImportState(info.getImportState());
+		task.info.setImportState(
+				info.getImportState() != null ? info.getImportState() : DatumImportState.Unknown);
 		return task;
 	}
 
 	@Override
 	public boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
-			Set<DatumImportState> expectedStates) {
+			@Nullable Set<DatumImportState> expectedStates) {
 		return jobInfoDao.updateJobState(id, desiredState, expectedStates);
 	}
 
@@ -467,30 +482,29 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			return remove;
 		});
 		return jobInfoDao.findForUser(userId, null).stream().filter(
-				job -> userId.equals(job.getUserId()) && jobIds.contains(job.getId().getId().toString()))
+				job -> userId.equals(job.getUserId()) && jobIds.contains(job.id().id().toString()))
 				.map(this::taskForJobInfo).collect(toList());
 	}
 
 	private ImportContext createImportContext(DatumImportJobInfo info,
-			ProgressListener<DatumImportService> progressListener) throws IOException {
+			@Nullable ProgressListener<DatumImportService> progressListener) throws IOException {
 		Resource inputData;
 		if ( info.hasMetadataValue(EMPTY_INPUT_RESOURCE_META, true) ) {
-			inputData = new ByteArrayResource(new byte[0],
-					info.getUserId() + "-" + info.getId().getId());
+			inputData = new ByteArrayResource(new byte[0], info.getUserId() + "-" + info.id().id());
 		} else {
-			File dataFile = getImportDataFile(info.getId());
+			File dataFile = getImportDataFile(info.id());
 			if ( !dataFile.canRead() ) {
 				boolean fetched = fetchImportResource(dataFile);
 				if ( !fetched || !dataFile.canRead() ) {
 					throw new FileNotFoundException(
-							"Data file for job " + info.getId().getId() + " not found");
+							"Data file for job " + info.id().id() + " not found");
 				}
 			}
 			inputData = new FileSystemResource(dataFile);
 		}
 		Configuration config = info.getConfiguration();
 		if ( config == null || config.getInputConfiguration() == null ) {
-			throw new IllegalArgumentException("Configuration missing for job " + info.getId());
+			throw new IllegalArgumentException("Configuration missing for job " + info.id());
 		}
 		InputConfiguration inputConfig = config.getInputConfiguration();
 		DatumImportInputFormatService inputService = optionalService(getInputServices(), inputConfig);
@@ -645,7 +659,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		}
 
 		@Override
-		public void progressChanged(DatumImportService context, double amountComplete) {
+		public void progressChanged(@Nullable DatumImportService context, double amountComplete) {
 			this.percentComplete = amountComplete;
 		}
 
@@ -655,8 +669,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			ProgressListener<DatumImportService>, LoadingExceptionHandler<GeneralNodeDatum> {
 
 		private DatumImportJobInfo info;
-		private Future<DatumImportResult> delegate;
-		private ExecutorService progressExecutor;
+		private @Nullable Future<DatumImportResult> delegate;
+		private @Nullable ExecutorService progressExecutor;
 
 		/**
 		 * Construct from a task info.
@@ -671,7 +685,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		 */
 		private DatumImportTask(DatumImportJobInfo info) {
 			super();
-			setInfo(info);
+			this.info = requireNonNullArgument(info, "info");
 		}
 
 		private void setDelegate(Future<DatumImportResult> delegate) {
@@ -679,7 +693,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		}
 
 		private void setInfo(DatumImportJobInfo info) {
-			this.info = info;
+			this.info = requireNonNullArgument(info, "info");
 		}
 
 		private synchronized boolean isExecuting() {
@@ -773,11 +787,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			updateTaskStatus(state, null, null, null);
 		}
 
-		private void updateTaskStatus(DatumImportState state, Boolean success, String message,
-				Instant completionDate) {
+		private void updateTaskStatus(DatumImportState state, @Nullable Boolean success,
+				@Nullable String message, @Nullable Instant completionDate) {
 			log.info(
 					"Datum import job {} for user {} transitioned to state {} with success {}; loaded {} datum",
-					info.getId().getId(), info.getUserId(), state, success, getLoadedCount());
+					info.id().id(), info.getUserId(), state, success, getLoadedCount());
 			info.setImportState(state);
 			if ( success != null ) {
 				info.setJobSuccess(success);
@@ -795,8 +809,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		@Override
 		public void handleLoadingException(Throwable t, LoadingContext<GeneralNodeDatum> context) {
 			if ( t instanceof DatumImportValidationException ve ) {
-				throw new DatumImportException(ve.getMessage(), ve.getCause(), ve.getLineNumber(),
-						ve.getLine(), context.getCommittedCount());
+				throw new DatumImportException(
+						ve.getMessage() != null ? ve.getMessage() : ve.getClass().getSimpleName(),
+						ve.getCause(), ve.getLineNumber(), ve.getLine(), context.getCommittedCount());
 			}
 			throw new DatumImportException("Error importing datum " + context.getLastLoadedEntity(), t,
 					context.getLoadedCount() + 1, null, context.getCommittedCount());
@@ -805,7 +820,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		private void doImport() throws IOException {
 			Configuration config = info.getConfiguration();
 			if ( config == null || config.getInputConfiguration() == null ) {
-				throw new IllegalArgumentException("Configuration missing for job " + info.getId());
+				throw new IllegalArgumentException("Configuration missing for job " + info.id());
 			}
 
 			final SolarNodeOwnership[] ownerships = nodeOwnershipDao
@@ -845,8 +860,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 			log.info(
 					"Starting datum import job {} for user {} from resource {} and tx mode {}; configuration: {}",
-					info.getId().getId(), info.getUserId(), getImportDataFile(info.getId()), txMode,
-					config);
+					info.id().id(), info.getUserId(), getImportDataFile(info.id()), txMode, config);
 
 			try (ImportContext input = createImportContext(info, this);
 					LoadingContext<GeneralNodeDatum> loader = datumDao
@@ -870,7 +884,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 							} catch ( AuthorizationException authException ) {
 								log.warn(
 										"Datum import job {} denied access to source {}; allowed sources are: {}",
-										info.getId(), d.getSourceId(), StringUtils
+										info.id(), d.getSourceId(), StringUtils
 												.commaDelimitedStringFromCollection(allowedSourceIds));
 								throw new AuthorizationException(Reason.ACCESS_DENIED, d.getSourceId());
 							}
@@ -881,8 +895,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 						info.setLoadedCount(count);
 						if ( progressLogCount > 0 && count % progressLogCount == 0 ) {
 							log.info("Datum import job {} for user {} loaded {} datum with progress {}",
-									info.getId().getId(), info.getUserId(), count,
-									info.getPercentComplete());
+									info.id().id(), info.getUserId(), count, info.getPercentComplete());
 						}
 					}
 					loader.commit();
@@ -901,20 +914,21 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		}
 
 		@Override
-		public synchronized void progressChanged(DatumImportService context, double amountComplete) {
-			log.trace("Datum import job {} for user {} progress changed: {}", info.getId().getId(),
+		public synchronized void progressChanged(@Nullable DatumImportService context,
+				double amountComplete) {
+			log.trace("Datum import job {} for user {} progress changed: {}", info.id().id(),
 					info.getUserId(), amountComplete);
 			// update progress in different thread, so state updated outside import transaction
 			DatumImportJobInfo info = this.info;
 			var _ = progressExecutor()
-					.submit(new ProgressUpdater(info.getId(), amountComplete, getLoadedCount()));
+					.submit(new ProgressUpdater(info.id(), amountComplete, getLoadedCount()));
 			info.setPercentComplete(amountComplete);
 			postJobStatusChangedEvent(this, info);
 		}
 
 		@Override
 		public Configuration getConfiguration() {
-			return info.getConfiguration();
+			return ObjectUtils.nonnull(info.getConfiguration(), "Configuration");
 		}
 
 		@Override
@@ -924,16 +938,16 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 		@Override
 		public String getJobId() {
-			return info.getId().getId().toString();
+			return info.id().id().toString();
 		}
 
 		@Override
 		public DatumImportState getJobState() {
-			return info.getImportState();
+			return info.getImportState() != null ? info.getImportState() : DatumImportState.Unknown;
 		}
 
 		@Override
-		public String getGroupKey() {
+		public @Nullable String getGroupKey() {
 			return info.getGroupKey();
 		}
 
@@ -983,13 +997,15 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 		@Override
 		public DatumImportResult get() throws InterruptedException, ExecutionException {
-			return (delegate != null ? delegate.get() : null);
+			final var delegate = nonnull(this.delegate, "Task future");
+			return delegate.get();
 		}
 
 		@Override
 		public DatumImportResult get(long timeout, TimeUnit unit)
 				throws InterruptedException, ExecutionException, TimeoutException {
-			return (delegate != null ? delegate.get(timeout, unit) : null);
+			final var delegate = nonnull(this.delegate, "Task future");
+			return delegate.get(timeout, unit);
 		}
 
 		@Override
@@ -998,7 +1014,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		}
 
 		@Override
-		public String getMessage() {
+		public @Nullable String getMessage() {
 			return info.getMessage();
 		}
 
@@ -1063,7 +1079,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 *         if {@code token} is not {@code null} but a {@link SecurityToken}
 	 *         is not found for it
 	 */
-	private SecurityToken tokenForId(String tokenId) throws AuthorizationException {
+	private @Nullable SecurityToken tokenForId(@Nullable String tokenId) throws AuthorizationException {
 		if ( tokenId == null ) {
 			return null;
 		}
@@ -1085,7 +1101,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 *         if {@code token} is not {@code null} but a {@link SecurityToken}
 	 *         is not found for it
 	 */
-	private SecurityPolicy tokenPolicyForId(String tokenId) throws AuthorizationException {
+	private @Nullable SecurityPolicy tokenPolicyForId(@Nullable String tokenId)
+			throws AuthorizationException {
 		SecurityToken token = tokenForId(tokenId);
 		return token != null ? token.getPolicy() : null;
 	}
@@ -1097,7 +1114,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * @param completedTaskMinimumCacheTime
 	 *        the time in milliseconds to set
 	 */
-	public void setCompletedTaskMinimumCacheTime(long completedTaskMinimumCacheTime) {
+	public final void setCompletedTaskMinimumCacheTime(long completedTaskMinimumCacheTime) {
 		this.completedTaskMinimumCacheTime = completedTaskMinimumCacheTime;
 	}
 
@@ -1114,7 +1131,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * @param previewExecutor
 	 *        the executor to set
 	 */
-	public void setPreviewExecutor(AsyncTaskExecutor previewExecutor) {
+	public final void setPreviewExecutor(@Nullable AsyncTaskExecutor previewExecutor) {
 		this.previewExecutor = previewExecutor;
 	}
 
@@ -1125,7 +1142,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 *        the maximum number of datum to preview; defaults to
 	 *        {@link #DEFAULT_MAX_PREVIEW_COUNT}
 	 */
-	public void setMaxPreviewCount(int maxPreviewCount) {
+	public final void setMaxPreviewCount(int maxPreviewCount) {
 		this.maxPreviewCount = maxPreviewCount;
 	}
 
@@ -1140,7 +1157,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * @param progressLogCount
 	 *        the count of datum imported to emit a status log
 	 */
-	public void setProgressLogCount(int progressLogCount) {
+	public final void setProgressLogCount(int progressLogCount) {
 		this.progressLogCount = progressLogCount;
 	}
 
@@ -1160,7 +1177,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 *        the storage service to use
 	 * @since 1.1
 	 */
-	public void setResourceStorageService(ResourceStorageService resourceStorageService) {
+	public final void setResourceStorageService(
+			@Nullable ResourceStorageService resourceStorageService) {
 		this.resourceStorageService = resourceStorageService;
 	}
 
@@ -1173,7 +1191,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 *        {@link #DEFAULT_RESOURCE_STORAGE_WAIT_MS}
 	 * @since 1.1
 	 */
-	public void setResourceStorageWaitMs(long resourceStorageWaitMs) {
+	public final void setResourceStorageWaitMs(long resourceStorageWaitMs) {
 		this.resourceStorageWaitMs = resourceStorageWaitMs;
 	}
 

@@ -31,7 +31,7 @@ import org.jspecify.annotations.Nullable;
  * Primary key based on a user ID and a UUID.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.0
  */
 public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidPK> {
@@ -152,18 +152,66 @@ public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidP
 		}
 	}
 
+	/**
+	 * Get the ID.
+	 * 
+	 * @return the ID
+	 */
 	public final @Nullable UUID getId() {
 		return id;
 	}
 
+	/**
+	 * Test if an ID is available.
+	 * 
+	 * @return {@code true} if an {@code id} value is available
+	 * @since 1.1
+	 */
+	public boolean hasId() {
+		return id != null;
+	}
+
+	/**
+	 * Get the ID.
+	 * 
+	 * <p>
+	 * This is a nullability shortcut, for example after {@link #hasId()}
+	 * returns {@code true}.
+	 * </p>
+	 * 
+	 * @return the ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	public final UUID id() {
+		return id;
+	}
+
+	/**
+	 * Set the ID.
+	 * 
+	 * @param id
+	 *        the ID to set
+	 */
 	public final void setId(@Nullable UUID id) {
 		this.id = id;
 	}
 
+	/**
+	 * Get the user ID.
+	 * 
+	 * @return the user ID to set
+	 */
 	public final @Nullable Long getUserId() {
 		return userId;
 	}
 
+	/**
+	 * Set the user ID.
+	 * 
+	 * @param userId
+	 *        the user ID to set
+	 */
 	public final void setUserId(@Nullable Long userId) {
 		this.userId = userId;
 	}

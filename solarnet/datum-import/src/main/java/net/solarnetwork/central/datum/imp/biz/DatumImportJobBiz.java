@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.imp.biz;
 
 import java.time.Instant;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
@@ -56,6 +57,7 @@ public interface DatumImportJobBiz {
 	 *        the ID of the import job to perform
 	 * @return the job status, or {@code null} if the job is not available
 	 */
+	@Nullable
 	DatumImportStatus performImport(UserUuidPK id);
 
 	/**
@@ -85,6 +87,7 @@ public interface DatumImportJobBiz {
 	 *
 	 * @return a claimed job, or {@code null} if none could be claimed
 	 */
+	@Nullable
 	DatumImportJobInfo claimQueuedJob();
 
 	/**
@@ -111,6 +114,6 @@ public interface DatumImportJobBiz {
 	 * @since 2.1
 	 */
 	boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
-			Set<DatumImportState> expectedStates);
+			@Nullable Set<DatumImportState> expectedStates);
 
 }

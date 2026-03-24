@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Future;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.imp.domain.Configuration;
@@ -104,6 +105,7 @@ public interface DatumImportBiz {
 	 *        the ID of the job to get
 	 * @return the job status, or {@code null} if not available
 	 */
+	@Nullable
 	DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId);
 
 	/**
@@ -122,6 +124,7 @@ public interface DatumImportBiz {
 	 *        the configuration to save with the job
 	 * @return the job status, or {@code null} if not available
 	 */
+	@Nullable
 	DatumImportStatus updateDatumImportJobConfigurationForUser(Long userId, String jobId,
 			Configuration configuration);
 
@@ -136,7 +139,7 @@ public interface DatumImportBiz {
 	 * @return the job statuses, never {@code null}
 	 */
 	Collection<DatumImportStatus> datumImportJobStatusesForUser(Long userId,
-			Set<DatumImportState> states);
+			@Nullable Set<DatumImportState> states);
 
 	/**
 	 * Update the state of a specific job.
@@ -153,8 +156,9 @@ public interface DatumImportBiz {
 	 *        current state of the job does not matter
 	 * @return the job status, or {@code null} if not available
 	 */
+	@Nullable
 	DatumImportStatus updateDatumImportJobStateForUser(Long userId, String jobId,
-			DatumImportState desiredState, Set<DatumImportState> expectedStates);
+			DatumImportState desiredState, @Nullable Set<DatumImportState> expectedStates);
 
 	/**
 	 * Delete jobs.
