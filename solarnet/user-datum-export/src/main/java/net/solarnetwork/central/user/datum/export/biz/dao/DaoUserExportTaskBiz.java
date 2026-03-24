@@ -134,7 +134,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 				taskDatumFilter.setNodeIds(nodeIds.toArray(Long[]::new));
 			} else {
 				log.info("User {} has no nodes available for datum export", config.getUserId());
-				return null;
+				throw new IllegalStateException("No nodes available for datum export.");
 			}
 		}
 
@@ -191,7 +191,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 				taskDatumFilter.setNodeIds(nodeIds.toArray(Long[]::new));
 			} else {
 				log.info("User {} has no nodes available for datum export", config.getUserId());
-				return null;
+				throw new IllegalStateException("No nodes available for datum export.");
 			}
 		}
 

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.datum.export.biz.dao;
 
 import static java.util.stream.Collectors.toUnmodifiableMap;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -39,6 +40,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -101,7 +103,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	private final List<DatumExportDestinationService> destinationServices;
 	private final Map<String, Set<String>> serviceSecureKeys;
 
-	private MessageSource messageSource;
+	private @Nullable MessageSource messageSource;
 
 	/**
 	 * Constructor.
@@ -227,7 +229,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public UserDatumExportConfiguration datumExportConfigurationForUser(Long userId, Long id) {
+	public @Nullable UserDatumExportConfiguration datumExportConfigurationForUser(Long userId, Long id) {
 		return datumExportConfigDao.get(new UserLongCompositePK(userId, id), userId);
 	}
 
@@ -258,8 +260,8 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	@SuppressWarnings("unchecked")
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <T extends UserRelatedIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
-			Class<T> configurationClass, Long id) {
+	public <T extends UserRelatedIdentifiableConfigurationEntity<?>> @Nullable T configurationForUser(
+			Long userId, Class<T> configurationClass, Long id) {
 		final var pk = new UserLongCompositePK(userId, id);
 		if ( UserDataConfiguration.class.isAssignableFrom(configurationClass) ) {
 			return (T) dataConfigDao.get(pk, userId);
@@ -286,10 +288,8 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 		}
 	}
 
-	private <T extends BaseExportConfigurationEntity<?>> T mergeServiceProperties(T entity) {
-		if ( entity == null ) {
-			return null;
-		}
+	private <T extends BaseExportConfigurationEntity<?>> T mergeServiceProperties(@Nullable T entity) {
+		entity = requireNonNullArgument(entity, "entity");
 		Map<String, Object> serviceProps = entity.getServiceProps();
 		if ( serviceProps == null || serviceProps.isEmpty() ) {
 			return entity;
@@ -307,7 +307,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 			Entry<String, Object> prop = propItr.next();
 			String propName = prop.getKey();
 			String propStringVal = prop.getValue() != null ? prop.getValue().toString() : null;
-			if ( secureEntrySettings.contains(propName) ) {
+			if ( secureEntrySettings != null && secureEntrySettings.contains(propName) ) {
 				if ( propStringVal != null && !propStringVal.isEmpty() && propStringVal.isBlank() ) {
 					// provided non-empty but blank password: remove password from config
 					propItr.remove();
@@ -343,14 +343,15 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public Long saveConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
-		if ( configuration instanceof UserDataConfiguration c ) {
-			return dataConfigDao.save(mergeServiceProperties(c)).getEntityId();
-		} else if ( configuration instanceof UserDestinationConfiguration c ) {
-			return destinationConfigDao.save(mergeServiceProperties(c)).getEntityId();
-		} else if ( configuration instanceof UserOutputConfiguration c ) {
-			return outputConfigDao.save(mergeServiceProperties(c)).getEntityId();
-		}
-		throw new IllegalArgumentException("Unsupported configuration: " + configuration);
+		return nonnull(switch (configuration) {
+			case UserDataConfiguration c -> dataConfigDao.save(mergeServiceProperties(c)).getEntityId();
+			case UserDestinationConfiguration c -> destinationConfigDao.save(mergeServiceProperties(c))
+					.getEntityId();
+			case UserOutputConfiguration c -> outputConfigDao.save(mergeServiceProperties(c))
+					.getEntityId();
+			case null, default -> throw new IllegalArgumentException(
+					"Unsupported configuration: " + configuration);
+		}, "Primary key");
 	}
 
 	@SuppressWarnings("unchecked")
@@ -393,7 +394,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	@Transactional(propagation = Propagation.SUPPORTS)
 	@Override
 	public List<UserAdhocDatumExportTaskInfo> adhocExportTasksForUser(Long userId,
-			Set<DatumExportState> states, Boolean success) {
+			@Nullable Set<DatumExportState> states, @Nullable Boolean success) {
 		return adhocTaskDao.findTasksForUser(userId, states, success);
 	}
 
@@ -452,7 +453,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	 * @param messageSource
 	 *        the message source
 	 */
-	public void setMessageSource(MessageSource messageSource) {
+	public final void setMessageSource(@Nullable MessageSource messageSource) {
 		this.messageSource = messageSource;
 	}
 
