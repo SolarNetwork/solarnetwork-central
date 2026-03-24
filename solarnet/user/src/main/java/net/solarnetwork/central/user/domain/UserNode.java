@@ -60,7 +60,14 @@ public class UserNode extends BaseEntity implements UserRelatedEntity<Long> {
 	private @Nullable UserNodeTransfer transfer;
 
 	/**
-	 * Construct for a user and node.
+	 * Constructor.
+	 */
+	public UserNode() {
+		this(new User(), new SolarNode());
+	}
+
+	/**
+	 * Construct for a node.
 	 *
 	 * @param id
 	 *        the ID (node ID)
