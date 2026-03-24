@@ -63,11 +63,11 @@ public class DatumImportProcessorJob extends JobSupport {
 				break;
 			}
 			try {
-				DatumImportStatus status = importJobBiz.performImport(info.getId());
+				DatumImportStatus status = importJobBiz.performImport(info.id());
 				log.info("Submitted datum import task {}", status);
 			} catch ( TaskRejectedException e ) {
 				log.debug("Import task rejected, setting back to Claimed state: {}", info);
-				importJobBiz.updateJobState(info.getId(), DatumImportState.Queued,
+				importJobBiz.updateJobState(info.id(), DatumImportState.Queued,
 						EnumSet.of(DatumImportState.Claimed));
 				break;
 			} catch ( RuntimeException e ) {

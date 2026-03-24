@@ -71,7 +71,7 @@ public class DatumImportJobInfoCleanerJob extends JobSupport {
 	 *        the minimum age since completion or abandonment, in minutes;
 	 *        defaults to {@link #DEFAULT_MINIMUM_AGE_MINUTES}
 	 */
-	public void setMinimumAgeMinutes(int minimumAgeMinutes) {
+	public final void setMinimumAgeMinutes(int minimumAgeMinutes) {
 		this.minimumAgeMinutes = minimumAgeMinutes;
 	}
 
