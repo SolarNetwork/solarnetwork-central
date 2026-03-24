@@ -73,7 +73,7 @@ public class UserExportSecurityAspect extends AuthorizationSupport {
 
 	@Before(value = "saveConfiguration(config) || deleteConfiguration(config)", argNames = "config")
 	public void saveConfigurationCheck(UserRelatedEntity<?> config) {
-		final Long userId = config != null ? config.getUserId() : null;
+		final Long userId = config != null && config.userIdIsAssigned() ? config.getUserId() : null;
 		requireUserWriteAccess(userId);
 
 		DataConfiguration dataConfiguration = null;

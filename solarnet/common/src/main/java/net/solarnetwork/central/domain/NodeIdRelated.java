@@ -57,8 +57,12 @@ public interface NodeIdRelated {
 	 */
 	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	default boolean nodeIdIsAssigned() {
-		Long nodeId = getNodeId();
-		return (nodeId != null && nodeId != UNASSIGNED_NODE_ID);
+		try {
+			Long nodeId = getNodeId();
+			return (nodeId != null && nodeId != UNASSIGNED_NODE_ID);
+		} catch ( IllegalStateException e ) {
+			return false;
+		}
 	}
 
 }

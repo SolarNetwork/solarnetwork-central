@@ -64,8 +64,12 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 */
 	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	default boolean objectIdIsAssigned() {
-		final Long userId = getObjectId();
-		return userId != null && userId != UNASSIGNED_OBJECT_ID;
+		try {
+			final Long objId = getObjectId();
+			return objId != null && objId != UNASSIGNED_OBJECT_ID;
+		} catch ( IllegalStateException e ) {
+			return false;
+		}
 	}
 
 	/**

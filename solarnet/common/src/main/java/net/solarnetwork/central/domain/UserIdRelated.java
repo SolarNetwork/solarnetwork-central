@@ -56,8 +56,12 @@ public interface UserIdRelated {
 	 */
 	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	default boolean userIdIsAssigned() {
-		final Long userId = getUserId();
-		return userId != null && userId != UNASSIGNED_USER_ID;
+		try {
+			final Long userId = getUserId();
+			return userId != null && userId != UNASSIGNED_USER_ID;
+		} catch ( IllegalStateException e ) {
+			return false;
+		}
 	}
 
 }

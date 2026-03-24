@@ -55,7 +55,11 @@ public interface UserRelatedCompositeKey<K extends UserIdRelated & CompositeKey 
 	 */
 	@Override
 	default boolean userIdIsAssigned() {
-		return keyComponentIsAssigned(0);
+		try {
+			return keyComponentIsAssigned(0);
+		} catch ( IllegalStateException e ) {
+			return false;
+		}
 	}
 
 }
