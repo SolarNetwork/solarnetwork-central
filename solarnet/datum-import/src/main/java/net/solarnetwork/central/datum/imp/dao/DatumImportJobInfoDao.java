@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.imp.dao;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.ClaimableJobDao;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.domain.Configuration;
@@ -51,7 +52,7 @@ public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, Us
 	 *        {@code null} for any state
 	 * @return the matching results, never {@code null}
 	 */
-	List<DatumImportJobInfo> findForUser(Long userId, Set<DatumImportState> states);
+	List<DatumImportJobInfo> findForUser(Long userId, @Nullable Set<DatumImportState> states);
 
 	/**
 	 * Delete job info entities for a specific user.
@@ -66,6 +67,6 @@ public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, Us
 	 *        {@code null} for any state
 	 * @return the number of deleted jobs
 	 */
-	int deleteForUser(Long userId, Set<UUID> jobIds, Set<DatumImportState> states);
+	int deleteForUser(Long userId, @Nullable Set<UUID> jobIds, @Nullable Set<DatumImportState> states);
 
 }

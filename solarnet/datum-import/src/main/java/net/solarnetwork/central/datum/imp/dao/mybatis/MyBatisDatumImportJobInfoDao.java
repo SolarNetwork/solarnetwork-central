@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
@@ -95,17 +96,17 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 */
 	public MyBatisDatumImportJobInfoDao() {
 		super(DatumImportJobInfo.class, UserUuidPK.class);
-		setQueryForUser(QUERY_FOR_USER);
-		setQueryForClaimQueuedJob(QUERY_FOR_CLAIMING_JOB);
-		setUpdateDeleteCompletedJobs(UPDATE_PURGE_COMPLETED);
-		setUpdateJobState(UPDATE_JOB_STATE);
-		setUpdateJobConfiguration(UPDATE_JOB_CONFIG);
-		setUpdateJobProgress(UPDATE_JOB_PROGRESS);
-		setUpdateDeleteForUser(UPDATE_DELETE_FOR_USER);
+		this.queryForUser = QUERY_FOR_USER;
+		this.queryForClaimQueuedJob = QUERY_FOR_CLAIMING_JOB;
+		this.updateDeleteCompletedJobs = UPDATE_PURGE_COMPLETED;
+		this.updateJobState = UPDATE_JOB_STATE;
+		this.updateJobConfiguration = UPDATE_JOB_CONFIG;
+		this.updateJobProgress = UPDATE_JOB_PROGRESS;
+		this.updateDeleteForUser = UPDATE_DELETE_FOR_USER;
 	}
 
 	@Override
-	public DatumImportJobInfo claimQueuedJob() {
+	public @Nullable DatumImportJobInfo claimQueuedJob() {
 		return selectFirst(queryForClaimQueuedJob, null);
 	}
 
@@ -120,7 +121,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	@Override
 	public boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
-			Set<DatumImportState> expectedStates) {
+			@Nullable Set<DatumImportState> expectedStates) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", id);
 		params.put("desiredState", desiredState.getKey());
@@ -147,7 +148,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	}
 
 	@Override
-	public boolean updateJobProgress(UserUuidPK id, double percentComplete, Long loadedCount) {
+	public boolean updateJobProgress(UserUuidPK id, double percentComplete, @Nullable Long loadedCount) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", id);
 		params.put("progress", percentComplete);
@@ -157,7 +158,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	}
 
 	@Override
-	public List<DatumImportJobInfo> findForUser(Long userId, Set<DatumImportState> states) {
+	public List<DatumImportJobInfo> findForUser(Long userId, @Nullable Set<DatumImportState> states) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("userId", userId);
 		if ( states != null && !states.isEmpty() ) {
@@ -168,7 +169,8 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	}
 
 	@Override
-	public int deleteForUser(Long userId, Set<UUID> jobIds, Set<DatumImportState> states) {
+	public int deleteForUser(Long userId, @Nullable Set<UUID> jobIds,
+			@Nullable Set<DatumImportState> states) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("userId", userId);
 		if ( jobIds != null && !jobIds.isEmpty() ) {
@@ -186,10 +188,12 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 * Set the query name for the {@link #claimQueuedJob()} method to use.
 	 *
 	 * @param queryForClaimQueuedJob
-	 *        the query name; defaults to {@link #QUERY_FOR_CLAIMING_JOB}
+	 *        the query name; if {@code null} then
+	 *        {@link #QUERY_FOR_CLAIMING_JOB} will be used
 	 */
-	public void setQueryForClaimQueuedJob(String queryForClaimQueuedJob) {
-		this.queryForClaimQueuedJob = queryForClaimQueuedJob;
+	public final void setQueryForClaimQueuedJob(String queryForClaimQueuedJob) {
+		this.queryForClaimQueuedJob = (queryForClaimQueuedJob != null ? queryForClaimQueuedJob
+				: QUERY_FOR_CLAIMING_JOB);
 	}
 
 	/**
@@ -197,10 +201,12 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 * use.
 	 *
 	 * @param updateDeleteCompletedJobs
-	 *        the statement name; defaults to {@link #UPDATE_PURGE_COMPLETED}
+	 *        the statement name; if {@code null} then
+	 *        {@link #UPDATE_PURGE_COMPLETED} will be used
 	 */
-	public void setUpdateDeleteCompletedJobs(String updateDeleteCompletedJobs) {
-		this.updateDeleteCompletedJobs = updateDeleteCompletedJobs;
+	public final void setUpdateDeleteCompletedJobs(String updateDeleteCompletedJobs) {
+		this.updateDeleteCompletedJobs = (updateDeleteCompletedJobs != null ? updateDeleteCompletedJobs
+				: UPDATE_PURGE_COMPLETED);
 	}
 
 	/**
@@ -208,10 +214,11 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)} method to use.
 	 *
 	 * @param updateJobState
-	 *        the statement name; defaults to {@link #UPDATE_JOB_STATE}
+	 *        the statement name; if {@code null} then {@link #UPDATE_JOB_STATE}
+	 *        will be used
 	 */
-	public void setUpdateJobState(String updateJobState) {
-		this.updateJobState = updateJobState;
+	public final void setUpdateJobState(String updateJobState) {
+		this.updateJobState = (updateJobState != null ? updateJobState : UPDATE_JOB_STATE);
 	}
 
 	/**
@@ -219,10 +226,11 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 * use.
 	 *
 	 * @param queryForUser
-	 *        the statement name; defaults to {@link #QUERY_FOR_USER}
+	 *        the statement name; if {@code null} then {@link #QUERY_FOR_USER}
+	 *        will be used
 	 */
-	public void setQueryForUser(String queryForUser) {
-		this.queryForUser = queryForUser;
+	public final void setQueryForUser(String queryForUser) {
+		this.queryForUser = (queryForUser != null ? queryForUser : QUERY_FOR_USER);
 	}
 
 	/**
@@ -230,10 +238,12 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 * {@link #updateJobConfiguration(UserUuidPK, Configuration)} method to use.
 	 *
 	 * @param updateJobConfiguration
-	 *        the statement name; defaults to {@link #UPDATE_JOB_CONFIG}
+	 *        the statement name; if {@code null} then
+	 *        {@link #UPDATE_JOB_CONFIG} will be used
 	 */
-	public void setUpdateJobConfiguration(String updateJobConfiguration) {
-		this.updateJobConfiguration = updateJobConfiguration;
+	public final void setUpdateJobConfiguration(String updateJobConfiguration) {
+		this.updateJobConfiguration = (updateJobConfiguration != null ? updateJobConfiguration
+				: UPDATE_JOB_CONFIG);
 	}
 
 	/**
@@ -241,10 +251,11 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 * {@link #updateJobProgress(UserUuidPK, double, Long)} method to use.
 	 *
 	 * @param updateJobProgress
-	 *        the statement name; defaults to {@link #UPDATE_JOB_PROGRESS}
+	 *        the statement name; if {@code null} then
+	 *        {@link #UPDATE_JOB_PROGRESS} will be used
 	 */
-	public void setUpdateJobProgress(String updateJobProgress) {
-		this.updateJobProgress = updateJobProgress;
+	public final void setUpdateJobProgress(String updateJobProgress) {
+		this.updateJobProgress = (updateJobProgress != null ? updateJobProgress : UPDATE_JOB_PROGRESS);
 	}
 
 	/**
@@ -252,10 +263,12 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 * method to use.
 	 *
 	 * @param updateDeleteForUser
-	 *        the statement name; defaults to {@link #UPDATE_DELETE_FOR_USER}
+	 *        the statement name; if {@code null} then
+	 *        {@link #UPDATE_DELETE_FOR_USER} will be used
 	 */
-	public void setUpdateDeleteForUser(String updateDeleteForUser) {
-		this.updateDeleteForUser = updateDeleteForUser;
+	public final void setUpdateDeleteForUser(String updateDeleteForUser) {
+		this.updateDeleteForUser = (updateDeleteForUser != null ? updateDeleteForUser
+				: UPDATE_DELETE_FOR_USER);
 	}
 
 }
