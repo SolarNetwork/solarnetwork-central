@@ -758,7 +758,7 @@ public class SqsOverflowQueue<T, K>
 						}
 					}
 				} catch ( Exception ex ) {
-					Throwable t = ex.getCause();
+					final Throwable t = (ex.getCause() != null ? ex.getCause() : ex);
 					if ( t instanceof AwsServiceException e ) {
 						log.warn(
 								"AWS error processing SQS queue [{}]: {}; HTTP code {}; AWS code {}; request ID {}",
@@ -776,13 +776,13 @@ public class SqsOverflowQueue<T, K>
 								e.getMessage());
 					} else if ( !(t instanceof InterruptedException) ) {
 						log.error("Fatal error in entity collector SQS queue [{}]: {}", sqsQueueUrl,
-								(t != null ? t.toString() : ex), (t != null ? t : ex));
+								t.toString(), t);
 						return;
 					}
 					if ( sleep < readSleepMaxMs ) {
 						sleep = Math.min(sleep + readSleepThrottleStepMs, readSleepMaxMs);
 						log.info("Increased read throttle from SQS queue to {}ms after exception: {}",
-								sleep, (t != null ? t : ex).getMessage());
+								sleep, t.getMessage());
 					}
 				}
 				if ( writeEnabled && sleep > 0 ) {
