@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -46,8 +47,8 @@ public class DatumImportPreview extends BasicFilterResults<GeneralNodeDatum, Gen
 	 * @param returnedResultCount
 	 *        the number of items in {@code results}
 	 */
-	public DatumImportPreview(Iterable<GeneralNodeDatum> results, Long totalResults, long startingOffset,
-			int returnedResultCount) {
+	public DatumImportPreview(@Nullable Iterable<GeneralNodeDatum> results, @Nullable Long totalResults,
+			long startingOffset, int returnedResultCount) {
 		super(results, totalResults, startingOffset, returnedResultCount);
 	}
 

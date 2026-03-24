@@ -248,10 +248,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			DatumImportResource resource) throws IOException {
 		UUID jobId = UUID.randomUUID();
 		UserUuidPK id = new UserUuidPK(request.getUserId(), jobId);
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(id);
+		DatumImportJobInfo info = new DatumImportJobInfo(id, request.getImportDate());
 		info.setConfig(new BasicConfiguration(request.getConfiguration()));
-		info.setImportDate(request.getImportDate());
 		info.setImportState(
 				info.getConfig().isStage() ? DatumImportState.Staged : DatumImportState.Queued);
 		info.setGroupKey(groupKeyForRequest(request));
@@ -501,11 +499,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					"No InputService found for ID " + inputConfig.getServiceIdentifier());
 		}
 
-		BasicInputConfiguration basicInput = new BasicInputConfiguration(inputConfig);
-		basicInput.setUserId(info.getUserId());
+		var basicInput = new BasicInputConfiguration(info.getUserId(), inputConfig);
 
-		BasicDatumImportResource resource = new BasicDatumImportResource(inputData,
-				inputService.getInputContentType());
+		var resource = new BasicDatumImportResource(inputData, inputService.getInputContentType());
 		return inputService.createImportContext(basicInput, resource, progressListener);
 	}
 

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.dao.mybatis;
 
+import static java.time.Instant.now;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -134,7 +135,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	@Override
 	public boolean updateJobConfiguration(UserUuidPK id, Configuration configuration) {
-		DatumImportJobInfo info = new DatumImportJobInfo();
+		DatumImportJobInfo info = new DatumImportJobInfo(id, now());
 		info.setConfig(new BasicConfiguration(configuration));
 
 		Map<String, Object> params = new HashMap<>(3);

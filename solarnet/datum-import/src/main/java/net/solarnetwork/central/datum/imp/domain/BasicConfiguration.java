@@ -22,9 +22,13 @@
 
 package net.solarnetwork.central.datum.imp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
@@ -40,16 +44,9 @@ public class BasicConfiguration implements Configuration, Serializable {
 
 	private String name;
 	private boolean stage;
-	private Integer batchSize;
-	private String groupKey;
-	private InputConfiguration inputConfiguration;
-
-	/**
-	 * Default constructor.
-	 */
-	public BasicConfiguration() {
-		super();
-	}
+	private @Nullable Integer batchSize;
+	private @Nullable String groupKey;
+	private @Nullable InputConfiguration inputConfiguration;
 
 	/**
 	 * Construct with values.
@@ -58,8 +55,11 @@ public class BasicConfiguration implements Configuration, Serializable {
 	 *        the name
 	 * @param stage
 	 *        {@literal true} to stage the import
+	 * @throws IllegalArgumentException
+	 *         if {@code name} is {@code null}
 	 */
-	public BasicConfiguration(String name, boolean stage) {
+	@JsonCreator
+	public BasicConfiguration(@JsonProperty("name") String name, @JsonProperty("stage") boolean stage) {
 		this(name, stage, null);
 	}
 
@@ -72,12 +72,14 @@ public class BasicConfiguration implements Configuration, Serializable {
 	 *        {@literal true} to stage the import
 	 * @param batchSize
 	 *        the batch size
+	 * @throws IllegalArgumentException
+	 *         if {@code name} is {@code null}
 	 */
-	public BasicConfiguration(String name, boolean stage, Integer batchSize) {
+	public BasicConfiguration(String name, boolean stage, @Nullable Integer batchSize) {
 		super();
-		setName(name);
-		setStage(stage);
-		setBatchSize(batchSize);
+		this.name = requireNonNullArgument(name, "name");
+		this.stage = stage;
+		this.batchSize = batchSize;
 	}
 
 	/**
@@ -88,9 +90,7 @@ public class BasicConfiguration implements Configuration, Serializable {
 	 */
 	public BasicConfiguration(Configuration other) {
 		super();
-		if ( other == null ) {
-			return;
-		}
+		other = requireNonNullArgument(other, "other");
 		setName(other.getName());
 		setStage(other.isStage());
 		setBatchSize(other.getBatchSize());
@@ -106,55 +106,55 @@ public class BasicConfiguration implements Configuration, Serializable {
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public final void setName(String name) {
 		this.name = name;
 	}
 
 	@Override
-	public boolean isStage() {
+	public final boolean isStage() {
 		return stage;
 	}
 
-	public void setStage(boolean stage) {
+	public final void setStage(boolean stage) {
 		this.stage = stage;
 	}
 
 	@Override
-	public Integer getBatchSize() {
+	public final @Nullable Integer getBatchSize() {
 		return batchSize;
 	}
 
-	public void setBatchSize(Integer batchSize) {
+	public final void setBatchSize(@Nullable Integer batchSize) {
 		this.batchSize = batchSize;
 	}
 
 	@Override
-	public InputConfiguration getInputConfiguration() {
+	public final @Nullable InputConfiguration getInputConfiguration() {
 		return inputConfiguration;
 	}
 
 	@JsonIgnore
-	public BasicInputConfiguration getInputConfig() {
+	public final @Nullable BasicInputConfiguration getInputConfig() {
 		return (inputConfiguration instanceof BasicInputConfiguration
 				? ((BasicInputConfiguration) inputConfiguration)
 				: null);
 	}
 
 	@JsonDeserialize(as = BasicInputConfiguration.class)
-	public void setInputConfiguration(InputConfiguration inputConfiguration) {
+	public final void setInputConfiguration(@Nullable InputConfiguration inputConfiguration) {
 		this.inputConfiguration = inputConfiguration;
 	}
 
 	@Override
-	public String getGroupKey() {
+	public final @Nullable String getGroupKey() {
 		return groupKey;
 	}
 
-	public void setGroupKey(String groupKey) {
+	public final void setGroupKey(@Nullable String groupKey) {
 		this.groupKey = groupKey;
 	}
 

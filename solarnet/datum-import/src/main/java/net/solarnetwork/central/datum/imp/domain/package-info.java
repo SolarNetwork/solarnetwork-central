@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumImportReceipt.java - 11/11/2018 8:14:07 AM
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2026 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,38 +20,11 @@
  * ==================================================================
  */
 
+/**
+ * SolarNetwork datum import domain.
+ */
+
+@NullMarked
 package net.solarnetwork.central.datum.imp.domain;
 
-import org.jspecify.annotations.Nullable;
-
-/**
- * Receipt information about a datum import request.
- *
- * @author matt
- * @version 1.1
- */
-public interface DatumImportReceipt {
-
-	/**
-	 * Get a unique ID for this import job.
-	 *
-	 * @return the unique ID of this import job
-	 */
-	String getJobId();
-
-	/**
-	 * Get the state of the import job.
-	 *
-	 * @return the state, never {@code null}
-	 */
-	DatumImportState getJobState();
-
-	/**
-	 * Get the group key.
-	 *
-	 * @return the group key
-	 */
-	@Nullable
-	String getGroupKey();
-
-}
+import org.jspecify.annotations.NullMarked;

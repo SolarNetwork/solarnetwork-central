@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.datum.imp.dao.mybatis.test;
 
+import static java.time.Instant.now;
 import static java.util.Collections.singleton;
+import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -85,9 +88,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	}
 
 	private BasicConfiguration createNewConfig() {
-		BasicConfiguration conf = new BasicConfiguration();
-		conf.setName(TEST_NAME);
-		conf.setStage(true);
+		BasicConfiguration conf = new BasicConfiguration(TEST_NAME, true);
 
 		BasicInputConfiguration inputConfig = new BasicInputConfiguration(userId);
 		inputConfig.setName(TEST_NAME);
@@ -100,9 +101,8 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	}
 
 	private DatumImportJobInfo createTestInfo() {
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
-		info.setImportDate(Instant.now());
+		DatumImportJobInfo info = new DatumImportJobInfo(new UserUuidPK(this.userId, randomUUID()),
+				now());
 		info.setConfig(createNewConfig());
 		return info;
 	}
@@ -297,10 +297,9 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void purgeCompleted() {
 		getByPrimaryKey();
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(Instant.now());
+		DatumImportJobInfo info = new DatumImportJobInfo(new UserUuidPK(this.userId, randomUUID()),
+				now());
+		info.setConfig(new BasicConfiguration(randomString(), false));
 		info.setImportState(DatumImportState.Completed);
 		info.setCompleted(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		info = dao.get(dao.save(info));
@@ -317,10 +316,9 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	public void purgeStaged() {
 		getByPrimaryKey();
 
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(Instant.now());
+		DatumImportJobInfo info = new DatumImportJobInfo(new UserUuidPK(this.userId, randomUUID()),
+				now());
+		info.setConfig(new BasicConfiguration(randomString(), false));
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		info = dao.get(dao.save(info));
@@ -391,10 +389,9 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		storeNew();
 
 		// add another job
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(Instant.now());
+		DatumImportJobInfo info = new DatumImportJobInfo(new UserUuidPK(this.userId, randomUUID()),
+				now());
+		info.setConfig(new BasicConfiguration(randomString(), false));
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));
 		info = dao.get(dao.save(info));
@@ -467,10 +464,8 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		Long userId2 = storeNewUser("user2@localhost");
 
 		// add another job that should _not_ be found
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(userId2, UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(Instant.now());
+		DatumImportJobInfo info = new DatumImportJobInfo(new UserUuidPK(userId2, randomUUID()), now());
+		info.setConfig(new BasicConfiguration(randomString(), true));
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		info = dao.get(dao.save(info));
@@ -486,10 +481,9 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		storeNew();
 
 		// add another job that _should_ be found
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(Instant.now());
+		DatumImportJobInfo info = new DatumImportJobInfo(new UserUuidPK(this.userId, randomUUID()),
+				now());
+		info.setConfig(new BasicConfiguration(randomString(), true));
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		info = dao.get(dao.save(info));
@@ -508,10 +502,9 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		final String groupKey = UUID.randomUUID().toString();
 
 		// add another job that _should_ be found
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(Instant.now());
+		DatumImportJobInfo info = new DatumImportJobInfo(new UserUuidPK(this.userId, randomUUID()),
+				now());
+		info.setConfig(new BasicConfiguration(randomString(), true));
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		info.setGroupKey(groupKey);
@@ -529,10 +522,9 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		storeNew();
 
 		// add another job
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(Instant.now());
+		DatumImportJobInfo info = new DatumImportJobInfo(new UserUuidPK(this.userId, randomUUID()),
+				now());
+		info.setConfig(new BasicConfiguration(randomString(), true));
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));
 		info = dao.get(dao.save(info));

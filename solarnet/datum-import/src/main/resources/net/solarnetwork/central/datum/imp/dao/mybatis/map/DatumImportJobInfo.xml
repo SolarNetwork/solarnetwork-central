@@ -70,11 +70,13 @@
 	</sql>
 	
 	<resultMap id="DatumImportJobInfoFullResult" type="net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo">
-		<id property="uuid" column="datum_import_job_id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
-		<id property="userId" column="datum_import_job_user_id"/>
+		<constructor>
+			<idArg column="datum_import_job_user_id" javaType="java.lang.Long"/>
+			<idArg column="datum_import_job_id" javaType="java.util.UUID" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+			<arg column="datum_import_job_import_date" javaType="java.time.Instant"/>
+		</constructor>
 		<result property="created" column="datum_import_job_created"/>
 		<result property="modified" column="datum_import_job_modified"/>
-		<result property="importDate" column="datum_import_job_import_date"/>
 		<result property="importStateKey" column="datum_import_job_state"/>
 		<result property="groupKey" column="datum_import_job_group_key"/>
 		<result property="tokenId" column="datum_import_job_auth_token"/>
@@ -89,11 +91,13 @@
 	</resultMap>
 
 	<resultMap id="DatumImportJobInfoDirectResult" type="net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo">
-		<id property="uuid" column="id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
-		<id property="userId" column="user_id"/>
+		<constructor>
+			<idArg column="user_id" javaType="java.lang.Long"/>
+			<idArg column="id" javaType="java.util.UUID" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+			<arg column="import_date" javaType="java.time.Instant"/>
+		</constructor>
 		<result property="created" column="created"/>
 		<result property="modified" column="modified"/>
-		<result property="importDate" column="import_date"/>
 		<result property="importStateKey" column="state"/>
 		<result property="groupKey" column="group_key"/>
 		<result property="tokenId" column="auth_token"/>

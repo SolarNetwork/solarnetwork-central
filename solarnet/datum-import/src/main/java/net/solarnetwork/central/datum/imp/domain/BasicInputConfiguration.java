@@ -26,8 +26,10 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 import net.solarnetwork.util.CollectionUtils;
 import net.solarnetwork.util.StringUtils;
@@ -47,13 +49,17 @@ public class BasicInputConfiguration extends BasicIdentifiableConfiguration
 	private static final long serialVersionUID = 3386550853352176750L;
 
 	private Long userId;
-	private String timeZoneId;
+	private @Nullable String timeZoneId;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
+	 *
+	 * <p>
+	 * An unassigned user ID will be configured.
+	 * </p>
 	 */
 	public BasicInputConfiguration() {
-		super();
+		this(UserIdRelated.UNASSIGNED_USER_ID);
 	}
 
 	/**
@@ -61,10 +67,12 @@ public class BasicInputConfiguration extends BasicIdentifiableConfiguration
 	 *
 	 * @param userId
 	 *        the user ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public BasicInputConfiguration(Long userId) {
 		super();
-		this.userId = userId;
+		this.userId = requireNonNullArgument(userId, "userId");
 	}
 
 	/**
@@ -77,6 +85,24 @@ public class BasicInputConfiguration extends BasicIdentifiableConfiguration
 		super(other);
 		this.userId = requireNonNullArgument(other, "other").getUserId();
 		setTimeZoneId(other.getTimeZoneId());
+	}
+
+	/**
+	 * Copy constructor.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param other
+	 *        the configuration to copy
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
+	 */
+	public BasicInputConfiguration(Long userId, @Nullable InputConfiguration other) {
+		super(other);
+		this.userId = requireNonNullArgument(userId, "userId");
+		if ( other != null ) {
+			setTimeZoneId(other.getTimeZoneId());
+		}
 	}
 
 	@Override
@@ -128,7 +154,7 @@ public class BasicInputConfiguration extends BasicIdentifiableConfiguration
 	}
 
 	@Override
-	public String getTimeZoneId() {
+	public final @Nullable String getTimeZoneId() {
 		return timeZoneId;
 	}
 
@@ -138,7 +164,7 @@ public class BasicInputConfiguration extends BasicIdentifiableConfiguration
 	 * @param timeZoneId
 	 *        the time zone identifier to set
 	 */
-	public void setTimeZoneId(String timeZoneId) {
+	public final void setTimeZoneId(@Nullable String timeZoneId) {
 		this.timeZoneId = timeZoneId;
 	}
 

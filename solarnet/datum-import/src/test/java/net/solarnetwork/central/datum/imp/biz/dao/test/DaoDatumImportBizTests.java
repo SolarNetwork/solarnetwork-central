@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.datum.imp.biz.dao.test;
 
+import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
+import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.datum.imp.biz.dao.DaoDatumImportBiz.EMPTY_INPUT_RESOURCE_META;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
@@ -599,10 +601,8 @@ public class DaoDatumImportBizTests {
 		inputConfiguration.setServiceProps(Map.of("foo", "bar"));
 		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
 		configuration.setInputConfiguration(inputConfiguration);
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(pk);
+		DatumImportJobInfo info = new DatumImportJobInfo(pk, now());
 		info.setConfig(configuration);
-		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Queued);
 		return info;
 	}
@@ -1451,11 +1451,10 @@ public class DaoDatumImportBizTests {
 
 		// after delete, DAO returns list that still includes the requested job ID, along with
 		// another job not requested; we need to verify that the Biz filters out the non-requested job
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(TEST_USER_ID, uuid));
+		DatumImportJobInfo info = new DatumImportJobInfo(new UserUuidPK(TEST_USER_ID, uuid), now());
 		info.setImportState(DatumImportState.Executing);
-		DatumImportJobInfo info2 = new DatumImportJobInfo();
-		info2.setId(new UserUuidPK(TEST_USER_ID, UUID.randomUUID()));
+		DatumImportJobInfo info2 = new DatumImportJobInfo(new UserUuidPK(TEST_USER_ID, randomUUID()),
+				now());
 		info2.setImportState(DatumImportState.Queued);
 		List<DatumImportJobInfo> result = new ArrayList<>(Arrays.asList(info, info2));
 		expect(jobInfoDao.findForUser(TEST_USER_ID, null)).andReturn(result);
@@ -1486,11 +1485,9 @@ public class DaoDatumImportBizTests {
 
 		// after delete, DAO returns list that still includes the requested job ID, along with
 		// another job not requested; we need to verify that the Biz filters out the non-requested job
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(TEST_USER_ID, uuid1));
+		DatumImportJobInfo info = new DatumImportJobInfo(new UserUuidPK(TEST_USER_ID, uuid1), now());
 		info.setImportState(DatumImportState.Executing);
-		DatumImportJobInfo info2 = new DatumImportJobInfo();
-		info2.setId(new UserUuidPK(TEST_USER_ID, uuid2));
+		DatumImportJobInfo info2 = new DatumImportJobInfo(new UserUuidPK(TEST_USER_ID, uuid2), now());
 		info2.setImportState(DatumImportState.Queued);
 		expect(jobInfoDao.findForUser(TEST_USER_ID, null)).andReturn(List.of());
 

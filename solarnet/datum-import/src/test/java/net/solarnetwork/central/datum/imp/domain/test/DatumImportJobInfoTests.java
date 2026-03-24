@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.datum.imp.domain.test;
 
+import static java.time.Instant.now;
 import static java.util.Map.entry;
 import static java.util.UUID.randomUUID;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
 import static org.assertj.core.api.BDDAssertions.then;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.UserUuidPK;
@@ -43,8 +45,8 @@ public class DatumImportJobInfoTests {
 	@Test
 	public void toJson() {
 		// GIVEN
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(randomLong(), randomUUID()));
+		DatumImportJobInfo info = new DatumImportJobInfo(new UserUuidPK(randomLong(), randomUUID()),
+				now());
 
 		// WHEN
 		String json = JsonUtils.getJSONString(info);
@@ -57,6 +59,7 @@ public class DatumImportJobInfoTests {
 			.containsOnly(
 				entry("id", info.getId().getId().toString()),
 				entry("userId", info.getUserId()),
+				entry("importDate", ISO_DATE_TIME_ALT_UTC.format(info.getImportDate())),
 				entry("importStateKey", String.valueOf(info.getImportStateKey())),
 				entry("jobDuration", info.getJobDuration().toString()),
 				entry("jobStateKey", String.valueOf(info.getJobStateKey())),

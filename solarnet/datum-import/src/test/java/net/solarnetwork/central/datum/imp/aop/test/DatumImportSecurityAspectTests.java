@@ -32,6 +32,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.imp.aop.DatumImportSecurityAspect;
+import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportRequest;
 import net.solarnetwork.central.security.AuthenticatedUser;
@@ -103,7 +104,8 @@ public class DatumImportSecurityAspectTests {
 	@Test
 	public void makeRequestNoAuth() {
 		replayAll();
-		BasicDatumImportRequest request = new BasicDatumImportRequest(null, TEST_USER_ID);
+		var config = new BasicConfiguration("", true);
+		BasicDatumImportRequest request = new BasicDatumImportRequest(config, TEST_USER_ID);
 
 		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> aspect.requestCheck(request));
 	}
@@ -112,15 +114,8 @@ public class DatumImportSecurityAspectTests {
 	public void makeRequestWrongUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		BasicDatumImportRequest request = new BasicDatumImportRequest(null, -2L);
-		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> aspect.requestCheck(request));
-	}
-
-	@Test
-	public void makeRequestMissingUser() {
-		becomeUser("ROLE_USER");
-		replayAll();
-		BasicDatumImportRequest request = new BasicDatumImportRequest(null, null);
+		var config = new BasicConfiguration("", true);
+		BasicDatumImportRequest request = new BasicDatumImportRequest(config, -2L);
 		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> aspect.requestCheck(request));
 	}
 
@@ -128,15 +123,15 @@ public class DatumImportSecurityAspectTests {
 	public void makeRequestAllowed() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		BasicDatumImportRequest request = new BasicDatumImportRequest(null, TEST_USER_ID);
+		var config = new BasicConfiguration("", true);
+		BasicDatumImportRequest request = new BasicDatumImportRequest(config, TEST_USER_ID);
 		aspect.requestCheck(request);
 	}
 
 	@Test
 	public void makePreviewRequestNoAuth() {
 		replayAll();
-		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(TEST_USER_ID, null,
-				1);
+		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(TEST_USER_ID, "", 1);
 		thenExceptionOfType(AuthorizationException.class)
 				.isThrownBy(() -> aspect.previewRequestCheck(request));
 	}
@@ -145,16 +140,7 @@ public class DatumImportSecurityAspectTests {
 	public void makePreviewRequestWrongUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(-2L, null, 1);
-		thenExceptionOfType(AuthorizationException.class)
-				.isThrownBy(() -> aspect.previewRequestCheck(request));
-	}
-
-	@Test
-	public void makePreviewRequestMissingUser() {
-		becomeUser("ROLE_USER");
-		replayAll();
-		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(null, null, 1);
+		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(-2L, "", 1);
 		thenExceptionOfType(AuthorizationException.class)
 				.isThrownBy(() -> aspect.previewRequestCheck(request));
 	}
@@ -163,8 +149,7 @@ public class DatumImportSecurityAspectTests {
 	public void makePreviewRequestAllowed() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(TEST_USER_ID, null,
-				1);
+		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(TEST_USER_ID, "", 1);
 		aspect.previewRequestCheck(request);
 	}
 

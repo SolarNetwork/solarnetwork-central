@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.imp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
@@ -51,7 +53,7 @@ public class DatumImportJobInfo
 	@Serial
 	private static final long serialVersionUID = -7688580940916750418L;
 
-	private @Nullable Instant importDate;
+	private final Instant importDate;
 	private @Nullable String configJson;
 	private @Nullable String metaJson;
 
@@ -59,65 +61,70 @@ public class DatumImportJobInfo
 
 	/**
 	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null} or the {@code id.userId} property
+	 *         is {@code null}
 	 */
-	public DatumImportJobInfo() {
+	public DatumImportJobInfo(UserUuidPK id, Instant importDate) {
 		super();
+		setId(requireNonNullArgument(id, "id"));
+		requireNonNullArgument(id.getUserId(), "id.userId");
+		this.importDate = requireNonNullArgument(importDate, "importDate");
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param jobId
+	 *        the job ID
+	 * @param importDate
+	 *        the import date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public DatumImportJobInfo(Long userId, UUID jobId, Instant importDate) {
+		this(new UserUuidPK(userId, jobId), importDate);
 	}
 
 	@Override
-	public @Nullable Long getUserId() {
-		UserUuidPK pk = getId();
-		return (pk != null ? pk.getUserId() : null);
-	}
-
-	public void setUserId(@Nullable Long userId) {
-		UserUuidPK pk = getId();
-		if ( pk == null ) {
-			setId(new UserUuidPK(userId, null));
-		} else {
-			pk.setUserId(userId);
-		}
+	public final Long getUserId() {
+		return nonnull(id().getUserId(), "User ID");
 	}
 
 	@JsonGetter("id")
-	public @Nullable UUID getUuid() {
-		UserUuidPK pk = getId();
-		return (pk != null ? pk.getId() : null);
+	public final @Nullable UUID getUuid() {
+		return id().getId();
 	}
 
 	@JsonSetter("id")
-	public void setUuid(@Nullable UUID id) {
-		UserUuidPK pk = getId();
-		if ( pk == null ) {
-			setId(new UserUuidPK(null, id));
-		} else {
-			pk.setId(id);
-		}
+	public final void setUuid(@Nullable UUID id) {
+		id().setId(id);
 	}
 
 	@Override
-	public @Nullable Instant getImportDate() {
+	public final Instant getImportDate() {
 		return importDate;
 	}
 
-	public void setImportDate(Instant importDate) {
-		this.importDate = importDate;
-	}
-
 	@JsonIgnore
-	public @Nullable DatumImportState getImportState() {
+	public final @Nullable DatumImportState getImportState() {
 		return getJobState();
 	}
 
-	public void setImportState(@Nullable DatumImportState state) {
+	public final void setImportState(@Nullable DatumImportState state) {
 		setJobState(state);
 	}
 
-	public char getImportStateKey() {
+	public final char getImportStateKey() {
 		return getJobStateKey();
 	}
 
-	public void setImportStateKey(char key) {
+	public final void setImportStateKey(char key) {
 		DatumImportState state;
 		try {
 			state = DatumImportState.forKey(key);
@@ -127,16 +134,16 @@ public class DatumImportJobInfo
 		setJobState(state);
 	}
 
-	public @Nullable BasicConfiguration getConfig() {
+	public final @Nullable BasicConfiguration getConfig() {
 		return (BasicConfiguration) getConfiguration();
 	}
 
-	public void setConfig(@Nullable BasicConfiguration config) {
+	public final void setConfig(@Nullable BasicConfiguration config) {
 		setConfiguration(config);
 	}
 
 	@Override
-	public @Nullable Configuration didGetConfiguration(Configuration config) {
+	public final @Nullable Configuration didGetConfiguration(@Nullable Configuration config) {
 		if ( config == null && configJson != null ) {
 			config = JsonUtils.getObjectFromJSON(configJson, BasicConfiguration.class);
 			replaceConfiguration(config);
@@ -145,7 +152,7 @@ public class DatumImportJobInfo
 	}
 
 	@Override
-	public void didSetConfiguration(Configuration config) {
+	public final void didSetConfiguration(@Nullable Configuration config) {
 		this.configJson = null;
 	}
 
@@ -163,17 +170,17 @@ public class DatumImportJobInfo
 	}
 
 	@Override
-	public @Nullable Instant getCompletionDate() {
+	public final @Nullable Instant getCompletionDate() {
 		return getCompleted();
 	}
 
 	@Override
-	public long getLoadedCount() {
+	public final long getLoadedCount() {
 		Long result = getResult();
 		return (result != null ? result : 0L);
 	}
 
-	public void setLoadedCount(long loadedCount) {
+	public final void setLoadedCount(long loadedCount) {
 		setResult(loadedCount);
 	}
 
@@ -189,7 +196,7 @@ public class DatumImportJobInfo
 	 *         {@code value} is given then also equals {@code value}
 	 * @since 2.1
 	 */
-	public boolean hasMetadataValue(String key, Object value) {
+	public final boolean hasMetadataValue(String key, Object value) {
 		Map<String, Object> meta = getMetadata();
 		if ( meta == null ) {
 			return false;

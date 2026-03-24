@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.service.IdentifiableConfiguration;
 
@@ -51,6 +52,7 @@ public interface InputConfiguration extends IdentifiableConfiguration, UserIdRel
 	 * @return the time zone to apply to all imported data, or {@code null} if
 	 *         the data already has time zone information
 	 */
+	@Nullable
 	String getTimeZoneId();
 
 }

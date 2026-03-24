@@ -22,10 +22,11 @@
 
 package net.solarnetwork.central.datum.imp.jobs.test;
 
+import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.util.EnumSet;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,12 +66,12 @@ public class DatumImportProcessorJobTests {
 	@Test
 	public void executeJob() {
 		// GIVEN
-		DatumImportJobInfo info1 = new DatumImportJobInfo();
-		info1.setId(new UserUuidPK(TEST_USER_ID, UUID.randomUUID()));
+		DatumImportJobInfo info1 = new DatumImportJobInfo(new UserUuidPK(TEST_USER_ID, randomUUID()),
+				now());
 		DatumImportStatus status1 = Mockito.mock(DatumImportStatus.class);
 
-		DatumImportJobInfo info2 = new DatumImportJobInfo();
-		info2.setId(new UserUuidPK(TEST_USER_ID, UUID.randomUUID()));
+		DatumImportJobInfo info2 = new DatumImportJobInfo(new UserUuidPK(TEST_USER_ID, randomUUID()),
+				now());
 		DatumImportStatus status2 = Mockito.mock(DatumImportStatus.class);
 
 		given(importJobBiz.claimQueuedJob()).willReturn(info1, info2);
@@ -87,8 +88,8 @@ public class DatumImportProcessorJobTests {
 	@Test
 	public void executeJob_rejected() {
 		// GIVEN
-		DatumImportJobInfo info1 = new DatumImportJobInfo();
-		info1.setId(new UserUuidPK(TEST_USER_ID, UUID.randomUUID()));
+		DatumImportJobInfo info1 = new DatumImportJobInfo(new UserUuidPK(TEST_USER_ID, randomUUID()),
+				now());
 		given(importJobBiz.claimQueuedJob()).willReturn(info1);
 
 		TaskRejectedException tre = new TaskRejectedException("Rejected");
