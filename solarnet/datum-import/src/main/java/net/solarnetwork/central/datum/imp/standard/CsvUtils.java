@@ -23,7 +23,9 @@
 package net.solarnetwork.central.datum.imp.standard;
 
 import static java.lang.String.format;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.util.IntRangeSet;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * CSV utilities.
@@ -49,7 +51,8 @@ public final class CsvUtils {
 	 *         {@literal Z}, e.g. {@literal A} for column 1, {@code AA} for
 	 *         column 27, and so on
 	 */
-	public static int parseColumnReference(String ref) {
+	public static int parseColumnReference(@Nullable String ref) {
+		ref = ObjectUtils.requireNonNullArgument(ref, "ref");
 		int c = 0;
 		try {
 			c = Integer.parseInt(ref);
@@ -88,7 +91,7 @@ public final class CsvUtils {
 	 * @return the column numbers as a set, or {@code null} if {@code value} is
 	 *         {@code null} or empty or has no valid references
 	 */
-	public static IntRangeSet parseColumnsReference(String value) {
+	public static @Nullable IntRangeSet parseColumnsReference(@Nullable String value) {
 		if ( value == null || value.trim().isEmpty() ) {
 			return null;
 		}

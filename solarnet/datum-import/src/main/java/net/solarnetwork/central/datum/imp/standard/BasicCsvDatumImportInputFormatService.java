@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Iterator;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import de.siegmar.fastcsv.reader.CsvReader;
 import de.siegmar.fastcsv.reader.CsvRecord;
 import de.siegmar.fastcsv.reader.CsvRecordHandler;
@@ -58,7 +59,7 @@ public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFo
 
 	@Override
 	public ImportContext createImportContext(InputConfiguration config, DatumImportResource resource,
-			ProgressListener<DatumImportService> progressListener) throws IOException {
+			@Nullable ProgressListener<DatumImportService> progressListener) throws IOException {
 		if ( config == null ) {
 			throw new IllegalArgumentException("No configuration provided.");
 		}
@@ -81,7 +82,7 @@ public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFo
 		 *        the data to import
 		 */
 		private CsvImportContext(InputConfiguration config, DatumImportResource resource,
-				ProgressListener<DatumImportService> progressListener) throws IOException {
+				@Nullable ProgressListener<DatumImportService> progressListener) throws IOException {
 			super(config, resource, progressListener);
 			BasicCsvDatumImportInputProperties props = new BasicCsvDatumImportInputProperties();
 			ClassUtils.setBeanProperties(props, config.getServiceProperties(), true);

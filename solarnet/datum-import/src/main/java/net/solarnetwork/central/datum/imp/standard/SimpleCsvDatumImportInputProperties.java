@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.imp.standard;
 
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
@@ -37,10 +38,10 @@ import net.solarnetwork.util.IntRangeSet;
  */
 public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProperties {
 
-	private String instantaneousDataColumns;
-	private String accumulatingDataColumns;
-	private String statusDataColumns;
-	private String tagDataColumns;
+	private @Nullable String instantaneousDataColumns;
+	private @Nullable String accumulatingDataColumns;
+	private @Nullable String statusDataColumns;
+	private @Nullable String tagDataColumns;
 
 	/**
 	 * Get settings for configuring an instance of this class.
@@ -153,7 +154,7 @@ public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProp
 	 *        the type of column to get the set for
 	 * @return the set, or {@code null} if nothing configured for that type
 	 */
-	public IntRangeSet columnsForType(DatumSamplesType type) {
+	public @Nullable IntRangeSet columnsForType(DatumSamplesType type) {
 		String refs = switch (type) {
 			case Instantaneous -> getInstantaneousDataColumns();
 			case Accumulating -> getAccumulatingDataColumns();
@@ -164,35 +165,35 @@ public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProp
 		return CsvUtils.parseColumnsReference(refs);
 	}
 
-	public String getInstantaneousDataColumns() {
+	public final @Nullable String getInstantaneousDataColumns() {
 		return instantaneousDataColumns;
 	}
 
-	public void setInstantaneousDataColumns(String instantaneousDataColumns) {
+	public final void setInstantaneousDataColumns(@Nullable String instantaneousDataColumns) {
 		this.instantaneousDataColumns = instantaneousDataColumns;
 	}
 
-	public String getAccumulatingDataColumns() {
+	public final @Nullable String getAccumulatingDataColumns() {
 		return accumulatingDataColumns;
 	}
 
-	public void setAccumulatingDataColumns(String accumulatingDataColumns) {
+	public final void setAccumulatingDataColumns(@Nullable String accumulatingDataColumns) {
 		this.accumulatingDataColumns = accumulatingDataColumns;
 	}
 
-	public String getStatusDataColumns() {
+	public final @Nullable String getStatusDataColumns() {
 		return statusDataColumns;
 	}
 
-	public void setStatusDataColumns(String statusDataColumns) {
+	public final void setStatusDataColumns(@Nullable String statusDataColumns) {
 		this.statusDataColumns = statusDataColumns;
 	}
 
-	public String getTagDataColumns() {
+	public final @Nullable String getTagDataColumns() {
 		return tagDataColumns;
 	}
 
-	public void setTagDataColumns(String tagDataColumns) {
+	public final void setTagDataColumns(@Nullable String tagDataColumns) {
 		this.tagDataColumns = tagDataColumns;
 	}
 

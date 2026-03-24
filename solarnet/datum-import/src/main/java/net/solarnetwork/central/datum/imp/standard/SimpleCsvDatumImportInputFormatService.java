@@ -32,6 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import de.siegmar.fastcsv.reader.CsvReader;
 import de.siegmar.fastcsv.reader.CsvRecord;
 import de.siegmar.fastcsv.reader.CsvRecordHandler;
@@ -69,7 +70,7 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 
 	@Override
 	public ImportContext createImportContext(InputConfiguration config, DatumImportResource resource,
-			ProgressListener<DatumImportService> progressListener) throws IOException {
+			@Nullable ProgressListener<DatumImportService> progressListener) throws IOException {
 		if ( config == null ) {
 			throw new IllegalArgumentException("No configuration provided.");
 		}
@@ -79,9 +80,9 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 		return new CsvImportContext(config, resource, progressListener);
 	}
 
-	private static Map<String, Number> parseNumberColumns(List<String> headerRow, CsvRecord row,
-			IntRangeSet columns) {
-		if ( columns == null ) {
+	private static @Nullable Map<String, Number> parseNumberColumns(@Nullable List<String> headerRow,
+			@Nullable CsvRecord row, @Nullable IntRangeSet columns) {
+		if ( headerRow == null || row == null || columns == null ) {
 			return null;
 		}
 		Map<String, Number> result = new LinkedHashMap<>(4);
@@ -99,9 +100,9 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 		return (result.isEmpty() ? null : result);
 	}
 
-	private static Map<String, Object> parseObjectColumns(List<String> headerRow, CsvRecord row,
-			IntRangeSet columns) {
-		if ( columns == null ) {
+	private static @Nullable Map<String, Object> parseObjectColumns(@Nullable List<String> headerRow,
+			@Nullable CsvRecord row, @Nullable IntRangeSet columns) {
+		if ( headerRow == null || row == null || columns == null ) {
 			return null;
 		}
 		Map<String, Object> result = new LinkedHashMap<>(4);
@@ -115,8 +116,9 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 		return (result.isEmpty() ? null : result);
 	}
 
-	private static Set<String> parseSetColumns(CsvRecord row, IntRangeSet columns) {
-		if ( columns == null ) {
+	private static @Nullable Set<String> parseSetColumns(@Nullable CsvRecord row,
+			@Nullable IntRangeSet columns) {
+		if ( row == null || columns == null ) {
 			return null;
 		}
 		Set<String> result = new LinkedHashSet<>(4);
@@ -133,10 +135,10 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 	private class CsvImportContext extends BaseDatumImportInputFormatServiceImportContext {
 
 		private final SimpleCsvDatumImportInputProperties props;
-		private final IntRangeSet instantaneousColumns;
-		private final IntRangeSet accumulatingColumns;
-		private final IntRangeSet statusColumns;
-		private final IntRangeSet tagColumns;
+		private final @Nullable IntRangeSet instantaneousColumns;
+		private final @Nullable IntRangeSet accumulatingColumns;
+		private final @Nullable IntRangeSet statusColumns;
+		private final @Nullable IntRangeSet tagColumns;
 
 		/**
 		 * Constructor.
@@ -147,7 +149,7 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 		 *        the data to import
 		 */
 		private CsvImportContext(InputConfiguration config, DatumImportResource resource,
-				ProgressListener<DatumImportService> progressListener) throws IOException {
+				@Nullable ProgressListener<DatumImportService> progressListener) throws IOException {
 			super(config, resource, progressListener);
 			SimpleCsvDatumImportInputProperties props = new SimpleCsvDatumImportInputProperties();
 			ClassUtils.setBeanProperties(props, config.getServiceProperties(), true);

@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.imp.standard;
 
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.datum.imp.standard.CsvUtils.parseColumnsReference;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.util.StringUtils;
@@ -67,7 +69,7 @@ public class CsvDatumImportInputProperties {
 	private String dateFormat = DEFAULT_DATE_FORMAT;
 	private String nodeIdColumn = DEFAULT_NODE_ID_COLUMN.toString();
 	private String sourceIdColumn = DEFAULT_SOURCE_ID_COLUMN.toString();
-	private String timeZoneId;
+	private @Nullable String timeZoneId;
 
 	/**
 	 * Get a set of {@link SettingSpecifier} instances suitable for configuring
@@ -111,7 +113,7 @@ public class CsvDatumImportInputProperties {
 	 *        the value to test
 	 * @return {@literal true} if {@code value} is a valid columns reference
 	 */
-	protected static boolean isValidColumnsReference(String value) {
+	protected static boolean isValidColumnsReference(@Nullable String value) {
 		return CsvUtils.parseColumnsReference(value) != null;
 	}
 
@@ -140,47 +142,86 @@ public class CsvDatumImportInputProperties {
 		return result;
 	}
 
-	public Integer getHeaderRowCount() {
+	/**
+	 * Get the header row count.
+	 *
+	 * @return the count
+	 */
+	public final Integer getHeaderRowCount() {
 		return headerRowCount;
 	}
 
-	public void setHeaderRowCount(Integer headerRowCount) {
-		this.headerRowCount = headerRowCount;
+	/**
+	 * Set the header row count.
+	 *
+	 * @param headerRowCount
+	 *        the count to set; if {@code null} then
+	 *        {@link #DEFAULT_HEADER_ROW_COUNT} will be used
+	 */
+	public final void setHeaderRowCount(Integer headerRowCount) {
+		this.headerRowCount = (headerRowCount != null ? headerRowCount : DEFAULT_HEADER_ROW_COUNT);
 	}
 
-	public List<Integer> getDateColumns() {
+	public final List<Integer> getDateColumns() {
 		Set<String> set = StringUtils.commaDelimitedStringToSet(dateColumns);
-		List<Integer> cols;
-		try {
-			cols = set.stream().flatMap(s -> parseColumnsReference(s).stream()).collect(toList());
-		} catch ( NumberFormatException e ) {
-			// ignore
-			cols = DEFAULT_DATE_COLUMNS;
+		List<Integer> cols = DEFAULT_DATE_COLUMNS;
+		if ( set != null ) {
+			try {
+				cols = set.stream()
+						.flatMap(s -> nonnull(parseColumnsReference(s), "Column reference").stream())
+						.collect(toList());
+			} catch ( NumberFormatException | IllegalStateException e ) {
+				// ignore
+			}
 		}
 		return cols;
 	}
 
-	public void setDateColumns(List<Integer> dateColumnPositions) {
+	public final void setDateColumns(List<Integer> dateColumnPositions) {
 		setDateColumnsValue(StringUtils.commaDelimitedStringFromCollection(dateColumnPositions));
 	}
 
-	public String getDateColumnsValue() {
+	/**
+	 * Set the date columns value.
+	 *
+	 * @return the value
+	 */
+	public final String getDateColumnsValue() {
 		return dateColumns;
 	}
 
-	public void setDateColumnsValue(String dateColumns) {
-		this.dateColumns = dateColumns;
+	/**
+	 * Set the date columns value.
+	 *
+	 * @param dateColumns
+	 *        the value to set; if {@code null} then
+	 *        {@link #DEFAULT_DATE_COLUMN} will be used
+	 */
+	public final void setDateColumnsValue(@Nullable String dateColumns) {
+		this.dateColumns = (dateColumns != null ? dateColumns : DEFAULT_DATE_COLUMN.toString());
 	}
 
-	public String getDateFormat() {
+	/**
+	 * Get the date format.
+	 *
+	 * @return the format
+	 */
+	public final String getDateFormat() {
 		return dateFormat;
 	}
 
-	public void setDateFormat(String dateFormat) {
-		this.dateFormat = dateFormat;
+	/**
+	 * Set the date format.
+	 *
+	 * @param dateFormat
+	 *        the format to set; if {@code null} then
+	 *        {@link #DEFAULT_DATE_FORMAT} will be used
+	 */
+	public final void setDateFormat(@Nullable String dateFormat) {
+		this.dateFormat = (dateFormat != null ? dateFormat : DEFAULT_DATE_FORMAT);
 	}
 
-	public Integer nodeIdColumn() {
+	public final @Nullable Integer nodeIdColumn() {
 		try {
 			return CsvUtils.parseColumnReference(nodeIdColumn);
 		} catch ( IllegalArgumentException | NullPointerException e ) {
@@ -188,15 +229,27 @@ public class CsvDatumImportInputProperties {
 		}
 	}
 
-	public String getNodeIdColumn() {
+	/**
+	 * Get the node ID column.
+	 *
+	 * @return the column
+	 */
+	public final String getNodeIdColumn() {
 		return nodeIdColumn;
 	}
 
-	public void setNodeIdColumn(String nodeIdColumn) {
-		this.nodeIdColumn = nodeIdColumn;
+	/**
+	 * Set the node ID column.
+	 *
+	 * @param nodeIdColumn
+	 *        the column to set; if {@code null} then
+	 *        {@link #DEFAULT_NODE_ID_COLUMN} will be used
+	 */
+	public final void setNodeIdColumn(@Nullable String nodeIdColumn) {
+		this.nodeIdColumn = (nodeIdColumn != null ? nodeIdColumn : DEFAULT_NODE_ID_COLUMN.toString());
 	}
 
-	public Integer sourceIdColumn() {
+	public final @Nullable Integer sourceIdColumn() {
 		try {
 			return CsvUtils.parseColumnReference(sourceIdColumn);
 		} catch ( IllegalArgumentException | NullPointerException e ) {
@@ -204,19 +257,32 @@ public class CsvDatumImportInputProperties {
 		}
 	}
 
-	public String getSourceIdColumn() {
+	/**
+	 * Get the source ID column.
+	 *
+	 * @return the column
+	 */
+	public final String getSourceIdColumn() {
 		return sourceIdColumn;
 	}
 
-	public void setSourceIdColumn(String sourceIdColumn) {
-		this.sourceIdColumn = sourceIdColumn;
+	/**
+	 * Set the source ID column.
+	 *
+	 * @param sourceIdColumn
+	 *        the column to set; if {@code null} then
+	 *        {@link #DEFAULT_SOURCE_ID_COLUMN} will be used
+	 */
+	public final void setSourceIdColumn(@Nullable String sourceIdColumn) {
+		this.sourceIdColumn = (sourceIdColumn != null ? sourceIdColumn
+				: DEFAULT_SOURCE_ID_COLUMN.toString());
 	}
 
-	public String getTimeZoneId() {
+	public final @Nullable String getTimeZoneId() {
 		return timeZoneId;
 	}
 
-	public void setTimeZoneId(String timeZoneId) {
+	public final void setTimeZoneId(@Nullable String timeZoneId) {
 		this.timeZoneId = timeZoneId;
 	}
 
