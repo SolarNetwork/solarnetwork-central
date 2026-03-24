@@ -26,6 +26,7 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
+import static net.solarnetwork.util.CollectionUtils.getMapLong;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
@@ -80,7 +81,7 @@ import net.solarnetwork.util.StringNaturalSortComparator;
  * DAO based implementation of {@link CloudDatumStreamPollService}.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class DaoCloudDatumStreamPollService
 		implements CloudDatumStreamPollService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
@@ -102,6 +103,13 @@ public class DaoCloudDatumStreamPollService
 	 */
 	public static final Duration DEFAULT_FAST_RESCHEDULE_AMOUNT = Duration.ofMinutes(5);
 
+	/**
+	 * The {@code requeueErrorCountMaximum} property default value.
+	 *
+	 * @since 1.9
+	 */
+	public static final int DEFAULT_REQUEUE_ERROR_COUNT_MAXIMUM = 100;
+
 	/** The {@code defaultDatumStreamSettings} default value. */
 	public static final CloudDatumStreamSettings DEFAULT_DATUM_STREAM_SETTINGS = new BasicCloudDatumStreamSettings(
 			true, false);
@@ -120,6 +128,7 @@ public class DaoCloudDatumStreamPollService
 	private Duration fastRescheduleMinLag = DEFAULT_FAST_RESCHEDULE_MIN_LAG;
 	private Duration fastRescheduleAmount = DEFAULT_FAST_RESCHEDULE_AMOUNT;
 	private Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
+	private int requeueErrorCountMaximum = DEFAULT_REQUEUE_ERROR_COUNT_MAXIMUM;
 	private CloudDatumStreamSettings defaultDatumStreamSettings = DEFAULT_DATUM_STREAM_SETTINGS;
 	private @Nullable DatumProcessor fluxPublisher;
 
@@ -249,20 +258,32 @@ public class DaoCloudDatumStreamPollService
 						log.warn("Error executing datum stream {} poll task: {}", taskInfo.id().ident(),
 								e.toString());
 					}
+					var prevErrorCount = getMapLong(ERROR_COUNT_DATA_KEY,
+							taskInfo.getServiceProperties());
+					long errorCount = prevErrorCount != null ? prevErrorCount + 1L : 1L;
 					var errMsg = "Error executing poll task.";
-					var errData = Map.of(MESSAGE_DATA_KEY, (Object) t.getMessage());
+					var errData = Map.of(MESSAGE_DATA_KEY, (Object) t.getMessage(), ERROR_COUNT_DATA_KEY,
+							errorCount);
 					var oldState = taskInfo.getState();
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
 					if ( t instanceof RestClientResponseException || t instanceof IOException ) {
-						// reset back to queued to try again if HTTP client or IO error
-						log.info(
-								"Resetting datum stream {} poll task by changing state from {} to {} after error: {}",
-								taskInfo.id().ident(), oldState, Queued, e.toString());
-						taskInfo.setState(Queued);
-						if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
-							// bump date into future by 1 minute so we do not immediately try to process again
-							taskInfo.setExecuteAt(clock.instant().plus(1, ChronoUnit.MINUTES));
+						if ( errorCount < requeueErrorCountMaximum ) {
+							// reset back to queued to try again if HTTP client or IO error
+							log.info(
+									"Resetting datum stream {} poll task by changing state from {} to {} after error: {}",
+									taskInfo.id().ident(), oldState, Queued, e.toString());
+							taskInfo.setState(Queued);
+							if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
+								// bump date into future by 1 minute so we do not immediately try to process again
+								taskInfo.setExecuteAt(clock.instant().plus(1, ChronoUnit.MINUTES));
+							}
+						} else {
+							log.info(
+									"Stopping datum stream {} poll task by changing state from {} to {} after {} repeated errors, most recently: {}",
+									taskInfo.id().ident(), oldState, Completed, errorCount,
+									e.toString());
+							taskInfo.setState(Completed);
 						}
 					} else {
 						// stop processing job if not what appears to be an API IO exception
@@ -694,6 +715,28 @@ public class DaoCloudDatumStreamPollService
 	public final void setFastRescheduleAmount(Duration fastRescheduleAmount) {
 		this.fastRescheduleAmount = (fastRescheduleAmount != null ? fastRescheduleAmount
 				: DEFAULT_FAST_RESCHEDULE_AMOUNT);
+	}
+
+	/**
+	 * Set the "requeue" after error count maximum.
+	 *
+	 * @return the maximum count; defaults to
+	 *         {@link #DEFAULT_REQUEUE_ERROR_COUNT_MAXIMUM}
+	 * @since 1.9
+	 */
+	public final int getRequeueErrorCountMaximum() {
+		return requeueErrorCountMaximum;
+	}
+
+	/**
+	 * Set the "requeue" after error count maximum.
+	 *
+	 * @param requeueErrorCountMaximum
+	 *        the maximum count to set
+	 * @since 1.9
+	 */
+	public final void setRequeueErrorCountMaximum(int requeueErrorCountMaximum) {
+		this.requeueErrorCountMaximum = requeueErrorCountMaximum;
 	}
 
 }

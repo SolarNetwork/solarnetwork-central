@@ -34,7 +34,7 @@ import org.jspecify.annotations.Nullable;
  * Constants and helpers for common user event handling.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CommonUserEvents {
 
@@ -85,6 +85,13 @@ public interface CommonUserEvents {
 
 	/** User event data key for an execution date. */
 	String EXECUTE_AT_DATA_KEY = "executeAt";
+
+	/**
+	 * User event data key for a count, such as a task repeat count.
+	 * 
+	 * @since 1.1
+	 */
+	String ERROR_COUNT_DATA_KEY = "errorCount";
 
 	/**
 	 * Populate user-related composite key components to a parameter map.

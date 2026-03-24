@@ -29,6 +29,7 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
+import static net.solarnetwork.util.CollectionUtils.getMapLong;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
@@ -93,13 +94,20 @@ import net.solarnetwork.util.StringUtils;
  * DAO based implementation of {@link CloudDatumStreamRakeService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoCloudDatumStreamRakeService
 		implements CloudDatumStreamRakeService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
 
 	/** The {@code shutdownMaxWait} property default value: 1 minute. */
 	public static final Duration DEFAULT_SHUTDOWN_MAX_WAIT = Duration.ofMinutes(1);
+
+	/**
+	 * The {@code requeueErrorCountMaximum} property default value.
+	 *
+	 * @since 1.3
+	 */
+	public static final int DEFAULT_REQUEUE_ERROR_COUNT_MAXIMUM = 100;
 
 	/** The default datum stream settings value. */
 	public static final CloudDatumStreamSettings DEFAULT_DATUM_STREAM_SETTINGS = new BasicCloudDatumStreamSettings(
@@ -116,6 +124,7 @@ public class DaoCloudDatumStreamRakeService
 	private final DatumEntityDao datumDao;
 	private final ExecutorService executorService;
 	private final Function<String, CloudDatumStreamService> datumStreamServiceProvider;
+	private int requeueErrorCountMaximum = DEFAULT_REQUEUE_ERROR_COUNT_MAXIMUM;
 	private Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
 
 	/**
@@ -247,23 +256,35 @@ public class DaoCloudDatumStreamRakeService
 						log.warn("Error executing datum stream {} rake task: {}", taskInfo.id().ident(),
 								e.toString());
 					}
+					var prevErrorCount = getMapLong(ERROR_COUNT_DATA_KEY,
+							taskInfo.getServiceProperties());
+					long errorCount = prevErrorCount != null ? prevErrorCount + 1L : 0L;
 					var errMsg = "Error executing rake task.";
 					var errData = Map.of(CONFIG_SUB_ID_DATA_KEY, taskInfo.getConfigId(),
 							MESSAGE_DATA_KEY,
-							(Object) (e instanceof RemoteServiceException ? e : t).getMessage());
+							(Object) (e instanceof RemoteServiceException ? e : t).getMessage(),
+							ERROR_COUNT_DATA_KEY, errorCount);
 					var oldState = taskInfo.getState();
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
 					if ( t instanceof RestClientResponseException || t instanceof IOException ) {
-						// reset back to queued to try again if HTTP client or IO error
-						log.info(
-								"Resetting datum stream {} rake task by changing state from {} to {} after error: {}",
-								taskInfo.id().ident(), oldState, Queued, e.toString());
-						taskInfo.setState(Queued);
-						if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
-							// bump date into future by 1 minute so we do not immediately try to process again
-							taskInfo.setExecuteAt(clock.instant().truncatedTo(ChronoUnit.SECONDS).plus(1,
-									ChronoUnit.MINUTES));
+						if ( errorCount < requeueErrorCountMaximum ) {
+							// reset back to queued to try again if HTTP client or IO error
+							log.info(
+									"Resetting datum stream {} rake task by changing state from {} to {} after error: {}",
+									taskInfo.id().ident(), oldState, Queued, e.toString());
+							taskInfo.setState(Queued);
+							if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
+								// bump date into future by 1 minute so we do not immediately try to process again
+								taskInfo.setExecuteAt(clock.instant().truncatedTo(ChronoUnit.SECONDS)
+										.plus(1, ChronoUnit.MINUTES));
+							}
+						} else {
+							log.info(
+									"Stopping datum stream {} rake task by changing state from {} to {} after {} repeated errors, most recently: {}",
+									taskInfo.id().ident(), oldState, Completed, errorCount,
+									e.toString());
+							taskInfo.setState(Completed);
 						}
 					} else {
 						// stop processing job if not what appears to be an API IO exception
@@ -619,6 +640,28 @@ public class DaoCloudDatumStreamRakeService
 	 */
 	public final void setShutdownMaxWait(Duration shutdownMaxWait) {
 		this.shutdownMaxWait = (shutdownMaxWait != null ? shutdownMaxWait : DEFAULT_SHUTDOWN_MAX_WAIT);
+	}
+
+	/**
+	 * Set the "requeue" after error count maximum.
+	 *
+	 * @return the maximum count; defaults to
+	 *         {@link #DEFAULT_REQUEUE_ERROR_COUNT_MAXIMUM}
+	 * @since 1.3
+	 */
+	public final int getRequeueErrorCountMaximum() {
+		return requeueErrorCountMaximum;
+	}
+
+	/**
+	 * Set the "requeue" after error count maximum.
+	 *
+	 * @param requeueErrorCountMaximum
+	 *        the maximum count to set
+	 * @since 1.3
+	 */
+	public final void setRequeueErrorCountMaximum(int requeueErrorCountMaximum) {
+		this.requeueErrorCountMaximum = requeueErrorCountMaximum;
 	}
 
 }

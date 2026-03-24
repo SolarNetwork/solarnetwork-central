@@ -79,6 +79,7 @@ app:
         shutdown-max-wait: "5m"
         fast-reschedule-min-lag: "2d"
         fast-reschedule-amount: "1m"
+        requeue-error-count-maximum: 250
     ds-rake:
       executor:
         thread-name-prefix: "SolarNet-C2C-DsRake-"
@@ -88,6 +89,7 @@ app:
         allow-core-thread-time-out: true
       service:
         shutdown-max-wait: "1m"
+        requeue-error-count-maximum: 50
   datasource:
     hikari:
       minimumIdle: 1
