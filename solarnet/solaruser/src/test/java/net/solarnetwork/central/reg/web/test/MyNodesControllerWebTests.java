@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.reg.web.test;
 
+import static java.util.Map.entry;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.JSON;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertLocation;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
@@ -68,14 +70,16 @@ public class MyNodesControllerWebTests {
 
 	@WithMockSecurityUser
 	@Test
-	public void submitNewRegistrationForm() throws Exception {
+	public void updateNodeName() throws Exception {
 		// GIVEN
 		final String zoneId = "Pacific/Auckland";
 		final String country = "NZ";
 		final Long locId = insertLocation(jdbcOperations, country, zoneId);
 
 		final Long userId = DEFAULT_USER_ID;
-		insertUser(jdbcOperations, userId, randomString(), randomString(), randomString());
+		final String username = randomString();
+		final String userDisplayName = randomString();
+		insertUser(jdbcOperations, userId, username, randomString(), userDisplayName);
 
 		final Long nodeId = insertNode(jdbcOperations, locId);
 		insertUserNode(jdbcOperations, userId, nodeId);
@@ -109,11 +113,76 @@ public class MyNodesControllerWebTests {
 			.andExpect(status().isOk())
 			.andReturn()
 			.getResponse()
+			.getContentAsString()
 			;
 
 		// THEN
+		/*-
+		{
+			"created":"2026-03-24 02:06:55.20377Z",
+			"description":"32ce31f5d98045",
+			"id":927073525524430549,
+			"idAndName":"927073525524430549 - d94954eaf65a40",
+			"name":"d94954eaf65a40",
+			"node":{
+				"id":927073525524430549,
+				"locationId":3774925088062166984,
+				"created":"2026-03-24 02:06:55.20377Z",
+				"timeZone":"Pacific/Auckland"
+			},
+			"nodeLocation":{
+				"id":3774925088062166984,
+				"country":"NZ",
+				"zone":"Pacific/Auckland"
+			},
+			"requiresAuthorization":true,
+			"user":{
+				"created":"2026-03-24 02:06:55.20377Z",
+				"email":"f75817ab3c6c45",
+				"enabled":true,
+				"id":1,
+				"name":"e9b84b8a861b44"
+			},
+			"userId":1}
+		 */
 		then(response)
 			.isNotNull()
+			.asInstanceOf(JSON)
+			.isObject()
+			.contains(
+				entry("id", nodeId),
+				entry("name", name),
+				entry("description", desc),
+				entry("userId", userId),
+				entry("requiresAuthorization", reqAuth)
+			)
+			;
+
+		then(response).asInstanceOf(JSON).node("node")
+			.isObject()
+			.contains(
+				entry("id", nodeId),
+				entry("locationId", locId),
+				entry("timeZone", zoneId)
+			)
+			;
+
+		then(response).asInstanceOf(JSON).node("nodeLocation")
+			.isObject()
+			.contains(
+				entry("id", locId),
+				entry("country", country),
+				entry("zone", zoneId)
+			)
+			;
+
+		then(response).asInstanceOf(JSON).node("user")
+			.isObject()
+			.contains(
+				entry("id", userId),
+				entry("email", username),
+				entry("name", userDisplayName)
+			)
 			;
 
 		// @formatter:on
