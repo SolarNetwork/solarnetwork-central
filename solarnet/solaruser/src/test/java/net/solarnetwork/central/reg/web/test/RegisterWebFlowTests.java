@@ -46,9 +46,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage.RecipientType;
 import net.solarnetwork.central.mail.mock.MockMailSender;
+import net.solarnetwork.central.user.biz.RegistrationBiz;
+import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.domain.RegistrationReceipt;
 
 /**
  * Registration WebFlow tests.
@@ -69,6 +74,9 @@ public class RegisterWebFlowTests {
 
 	@Autowired
 	private MockMailSender mailSender;
+
+	@Autowired
+	private RegistrationBiz registrationBiz;
 
 	private MockMvc mvc;
 
@@ -180,6 +188,32 @@ public class RegisterWebFlowTests {
 			.asInstanceOf(InstanceOfAssertFactories.STRING)
 			.as("Email body contains link to confirmation flow")
 			.contains("/register/confirm.do")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void confirmNewRegistrationForm() throws Exception {
+		// GIVEN
+		// register new user
+		final var email = randomString() + "@localhost";
+		final var regUser = new User(email);
+		regUser.setName(randomString());
+		regUser.setPassword(randomString());
+		final RegistrationReceipt receipt = registrationBiz.registerUser(regUser);
+
+		// WHEN
+		// @formatter:off
+		final UriComponents confirmUri = UriComponentsBuilder.fromPath("/register/confirm")
+			.queryParam("m", receipt.getUsername())
+			.queryParam("c", receipt.getConfirmationCode())
+			.build()
+			;
+
+		mvc.perform(get(confirmUri.toUriString())
+				.accept(MediaType.TEXT_HTML)
+			)
+			.andExpect(status().isOk())
 			;
 		// @formatter:on
 	}
