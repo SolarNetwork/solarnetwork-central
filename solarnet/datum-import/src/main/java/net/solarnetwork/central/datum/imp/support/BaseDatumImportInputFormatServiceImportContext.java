@@ -141,7 +141,7 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 	 * @return the count
 	 * @see #setEstimatedResultCount(long)
 	 */
-	protected long getCompleteCount() {
+	protected final long getCompleteCount() {
 		return complete;
 	}
 
@@ -150,7 +150,7 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 	 *
 	 * @return the estimated result count
 	 */
-	protected long getEstimatedResultCount() {
+	protected final long getEstimatedResultCount() {
 		return estimatedResultCount;
 	}
 
@@ -162,7 +162,7 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 	 * @see #incrementProgress(DatumImportService, long, ProgressListener)
 	 * @see #updateProgress(DatumImportService, long, ProgressListener)
 	 */
-	protected void setEstimatedResultCount(long estimatedResultCount) {
+	protected final void setEstimatedResultCount(long estimatedResultCount) {
 		this.estimatedResultCount = estimatedResultCount;
 	}
 
@@ -184,13 +184,15 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 	 * @see #setEstimatedResultCount(long)
 	 */
 	protected void incrementProgress(DatumImportService context, long count,
-			ProgressListener<DatumImportService> progressListener) {
+			@Nullable ProgressListener<DatumImportService> progressListener) {
 		if ( estimatedResultCount < 1 ) {
 			return;
 		}
 		complete += count;
-		progressListener.progressChanged(context,
-				Math.min(1.0, (double) complete / (double) estimatedResultCount));
+		if ( progressListener != null ) {
+			progressListener.progressChanged(context,
+					Math.min(1.0, (double) complete / (double) estimatedResultCount));
+		}
 	}
 
 	/**
@@ -211,13 +213,15 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 	 * @see #setEstimatedResultCount(long)
 	 */
 	protected void updateProgress(DatumImportService context, long amount,
-			ProgressListener<DatumImportService> progressListener) {
+			@Nullable ProgressListener<DatumImportService> progressListener) {
 		if ( estimatedResultCount < 1 ) {
 			return;
 		}
 		complete = amount;
-		progressListener.progressChanged(context,
-				Math.min(1.0, (double) complete / (double) estimatedResultCount));
+		if ( progressListener != null ) {
+			progressListener.progressChanged(context,
+					Math.min(1.0, (double) complete / (double) estimatedResultCount));
+		}
 	}
 
 	@Override
