@@ -1,5 +1,5 @@
 /* ==================================================================
- * BulkJsonDataCollectorTests.java - 23/03/2026 11:04:48 am
+ * BulkJsonDataCollectorWebTests.java - 23/03/2026 11:04:48 am
  * 
  * Copyright 2026 SolarNetwork.net Dev Team
  * 
@@ -70,9 +70,9 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 @Rollback
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("logging-user-event-appender")
-public class BulkJsonDataCollectorTests {
+public class BulkJsonDataCollectorWebTests {
 
-	private static final Logger log = LoggerFactory.getLogger(BulkJsonDataCollectorTests.class);
+	private static final Logger log = LoggerFactory.getLogger(BulkJsonDataCollectorWebTests.class);
 
 	@Autowired
 	private MockMvc mvc;
