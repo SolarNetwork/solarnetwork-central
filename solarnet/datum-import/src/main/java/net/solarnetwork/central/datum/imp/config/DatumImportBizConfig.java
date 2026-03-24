@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.imp.config;
 import static net.solarnetwork.central.datum.imp.config.SolarNetDatumImportConfiguration.DATUM_IMPORT;
 import java.time.Duration;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -84,7 +85,7 @@ public class DatumImportBizConfig {
 		private int previewMaxCount = 100;
 		private int progressLogCount = 25_000;
 		private long completedTaskMinimumCacheTime = 14_400_000L;
-		private String workPath;
+		private @Nullable String workPath;
 		private long resourceStorageWaitMs = 60_000L;
 		private String resourceStorageUid = "Datum-Import";
 		private Duration shutdownMaxWait = Duration.ofMinutes(5);
@@ -129,11 +130,11 @@ public class DatumImportBizConfig {
 			this.completedTaskMinimumCacheTime = completedTaskMinimumCacheTime;
 		}
 
-		public String getWorkPath() {
+		public @Nullable String getWorkPath() {
 			return workPath;
 		}
 
-		public void setWorkPath(String workPath) {
+		public void setWorkPath(@Nullable String workPath) {
 			this.workPath = workPath;
 		}
 
