@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.support;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResult;
 
 /**
@@ -34,8 +35,8 @@ import net.solarnetwork.central.datum.imp.domain.DatumImportResult;
 public class BasicDatumImportResult implements DatumImportResult {
 
 	private final boolean success;
-	private final String message;
-	private final Instant completionDate;
+	private final @Nullable String message;
+	private final @Nullable Instant completionDate;
 	private final long loadedCount;
 
 	/**
@@ -50,8 +51,8 @@ public class BasicDatumImportResult implements DatumImportResult {
 	 * @param loadedCount
 	 *        the loaded count
 	 */
-	public BasicDatumImportResult(boolean success, String message, Instant completionDate,
-			long loadedCount) {
+	public BasicDatumImportResult(boolean success, @Nullable String message,
+			@Nullable Instant completionDate, long loadedCount) {
 		super();
 		this.success = success;
 		this.message = message;
@@ -77,12 +78,12 @@ public class BasicDatumImportResult implements DatumImportResult {
 	}
 
 	@Override
-	public String getMessage() {
+	public @Nullable String getMessage() {
 		return message;
 	}
 
 	@Override
-	public Instant getCompletionDate() {
+	public @Nullable Instant getCompletionDate() {
 		return completionDate;
 	}
 

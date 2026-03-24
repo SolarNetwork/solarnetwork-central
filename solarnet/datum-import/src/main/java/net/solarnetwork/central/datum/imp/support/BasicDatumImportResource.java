@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
@@ -55,12 +56,13 @@ public class BasicDatumImportResource implements DatumImportResource, Transferra
 	 * @param delegate
 	 *        the resource to delegate to
 	 * @param contentType
-	 *        the content type
+	 *        the content type; if {@code null} then
+	 *        {@code "application/octet-stream"} will be used
 	 */
-	public BasicDatumImportResource(Resource delegate, String contentType) {
+	public BasicDatumImportResource(Resource delegate, @Nullable String contentType) {
 		super();
 		this.delegate = delegate;
-		this.contentType = contentType;
+		this.contentType = (contentType != null ? contentType : "application/octet-stream");
 	}
 
 	@Override

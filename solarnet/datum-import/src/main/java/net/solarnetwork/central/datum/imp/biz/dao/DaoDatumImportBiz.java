@@ -908,7 +908,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				throw new RuntimeException(e);
 			} finally {
 				if ( !info.hasMetadataValue(EMPTY_INPUT_RESOURCE_META, true) ) {
-					cleanupAfterImportDone(getImportDataFile(info.getId()));
+					cleanupAfterImportDone(getImportDataFile(info.id()));
 				}
 			}
 		}

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.config;
 
 import static net.solarnetwork.central.datum.imp.config.SolarNetDatumImportConfiguration.DATUM_IMPORT;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Duration;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
@@ -191,7 +192,7 @@ public class DatumImportBizConfig {
 		biz.setMaxPreviewCount(settings.previewMaxCount);
 		biz.setProgressLogCount(settings.progressLogCount);
 		biz.setCompletedTaskMinimumCacheTime(settings.completedTaskMinimumCacheTime);
-		biz.setWorkPath(settings.workPath);
+		biz.setWorkPath(nonnull(settings.workPath, "Datum import work path setting"));
 		biz.setResourceStorageWaitMs(settings.resourceStorageWaitMs);
 		biz.setResourceStorageService(resourceStorageService);
 		biz.setInputServices(datumImportInputFormatServices);

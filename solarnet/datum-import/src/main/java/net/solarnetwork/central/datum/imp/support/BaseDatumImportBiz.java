@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
@@ -53,8 +54,8 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	private File workDirectory = defaultWorkDirectory();
-	private List<DatumImportInputFormatService> inputServices;
-	private AppEventPublisher eventPublisher;
+	private @Nullable List<DatumImportInputFormatService> inputServices;
+	private @Nullable AppEventPublisher eventPublisher;
 
 	private static File defaultWorkDirectory() {
 		String path = System.getProperty("java.io.tmpdir");
@@ -88,7 +89,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * @return the file
 	 */
 	protected File getImportDataFile(UserUuidPK id) {
-		String fileName = id.getUserId() + "-" + id.getId().toString();
+		String fileName = id.getUserId() + "-" + (id.hasId() ? id.id().toString() : "");
 		return new File(getWorkDirectory(), fileName);
 	}
 
@@ -132,8 +133,8 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 *        the service configuration to find a matching service for
 	 * @return the found service, or {@code null} if not found
 	 */
-	protected <T extends Identity<String>> T optionalService(List<T> collection,
-			IdentifiableConfiguration config) {
+	protected <T extends Identity<String>> @Nullable T optionalService(@Nullable List<T> collection,
+			@Nullable IdentifiableConfiguration config) {
 		if ( collection == null || config == null ) {
 			return null;
 		}
@@ -173,7 +174,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 *
 	 * @return the work directory
 	 */
-	public File getWorkDirectory() {
+	public final File getWorkDirectory() {
 		return workDirectory;
 	}
 
@@ -190,7 +191,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * @throws IllegalArgumentException
 	 *         if {@code workDirectory} is {@code null}
 	 */
-	public void setWorkDirectory(File workDirectory) {
+	public final void setWorkDirectory(File workDirectory) {
 		this.workDirectory = requireNonNullArgument(workDirectory, "workDirectory");
 	}
 
@@ -199,9 +200,8 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 *
 	 * @return the work directory as a string
 	 */
-	public String getWorkPath() {
-		File d = getWorkDirectory();
-		return (d != null ? d.getAbsolutePath() : null);
+	public final String getWorkPath() {
+		return getWorkDirectory().getAbsolutePath();
 	}
 
 	/**
@@ -213,7 +213,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * @throws IllegalArgumentException
 	 *         if {@code path} is {@code null}
 	 */
-	public void setWorkPath(String path) {
+	public final void setWorkPath(String path) {
 		if ( path == null ) {
 			throw new IllegalArgumentException("The path must not be null");
 		}
@@ -225,7 +225,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 *
 	 * @return the inputServices the input services
 	 */
-	public List<DatumImportInputFormatService> getInputServices() {
+	public final @Nullable List<DatumImportInputFormatService> getInputServices() {
 		return inputServices;
 	}
 
@@ -235,7 +235,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * @param inputServices
 	 *        the services to set
 	 */
-	public void setInputServices(List<DatumImportInputFormatService> inputServices) {
+	public final void setInputServices(@Nullable List<DatumImportInputFormatService> inputServices) {
 		this.inputServices = inputServices;
 	}
 
@@ -244,7 +244,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 *
 	 * @return the service
 	 */
-	public AppEventPublisher getEventPublisher() {
+	public final @Nullable AppEventPublisher getEventPublisher() {
 		return eventPublisher;
 	}
 
@@ -254,7 +254,8 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * @param eventPublisher
 	 *        the optional event admin service
 	 */
-	public void setEventPublisher(AppEventPublisher eventPublisher) {
+	public final void setEventPublisher(@Nullable AppEventPublisher eventPublisher) {
 		this.eventPublisher = eventPublisher;
 	}
+
 }
