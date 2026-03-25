@@ -1,11 +1,10 @@
 WITH s AS (
-	SELECT DISTINCT ON (s.stream_id) s.stream_id, s.node_id, s.source_id, COALESCE(l.time_zone, 'UTC') AS time_zone
-	FROM solardatm.da_datm_meta_aliased s
+	SELECT s.stream_id, s.node_id, s.source_id, COALESCE(l.time_zone, 'UTC') AS time_zone
+	FROM solardatm.da_datm_meta s
 	INNER JOIN solaruser.user_node un ON un.node_id = s.node_id
 	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
 	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 	WHERE un.user_id = ANY(?)
-	ORDER BY s.stream_id, s.mtype
 )
 SELECT datum.ts_start AS aud_ts,
 	s.node_id AS aud_node_id,

@@ -1,11 +1,10 @@
 WITH s AS (
-	SELECT DISTINCT ON (s.stream_id) s.stream_id, s.node_id, s.source_id
-	FROM solardatm.da_datm_meta_aliased s
+	SELECT s.stream_id, s.node_id, s.source_id
+	FROM solardatm.da_datm_meta s
 	INNER JOIN solaruser.user_node un ON un.node_id = s.node_id
 	WHERE s.node_id = ?
 		AND s.source_id = ?
 		AND un.user_id = ?
-	ORDER BY s.stream_id, s.mtype
 )
 SELECT rlp.stream_id
 	, MIN(rlp.ts) AS ts_start

@@ -1,5 +1,5 @@
 WITH rs AS (
-	SELECT DISTINCT ON (s.stream_id) s.stream_id
+	SELECT s.stream_id
 		, CASE
 			WHEN array_position(?, s.node_id) IS NOT NULL THEN ?
 			ELSE s.node_id
@@ -9,10 +9,9 @@ WITH rs AS (
 		, 0 AS source_rank
 		, s.names_i
 		, s.names_a
-	FROM solardatm.da_datm_meta_aliased s
+	FROM solardatm.da_datm_meta s
 	WHERE s.node_id = ANY(?)
 		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
-	ORDER BY s.stream_id, s.mtype
 )
 , s AS (
 	SELECT solardatm.virutal_stream_id(node_id, source_id) AS vstream_id
