@@ -1,7 +1,8 @@
 WITH s AS (
-	SELECT s.stream_id, s.node_id, s.source_id
-	FROM solardatm.da_datm_meta s 
+	SELECT DISTINCT ON (s.stream_id) s.stream_id, s.node_id, s.source_id
+	FROM solardatm.da_datm_meta_aliased s 
 	WHERE s.node_id = ANY(?)
+	ORDER BY s.stream_id, s.mtype
 )
 SELECT (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).*
 	, min(d.ts) AS ts, min(s.node_id) AS node_id, min(s.source_id) AS source_id

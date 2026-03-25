@@ -49,6 +49,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
@@ -75,13 +76,43 @@ public class DatumSqlUtilsTests {
 	private Array sqlArray2;
 
 	@Test
-	public void nodeMetadataFilterSql_all() {
+	public void nodeMetadataFilterSql_all_WithGeography() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.WithGeography, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(count)
+			.as("No parameters added")
+			.isEqualTo(0)
+			;
+		and.then(buf.toString())
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace("""
+					SELECT s.stream_id, s.node_id, s.source_id, s.jdata
+						, l.country, l.region, l.state_prov, l.locality, l.postal_code
+						, l.address, l.latitude, l.longitude, l.elevation
+						, COALESCE(l.time_zone, 'UTC') AS time_zone
+					FROM solardatm.da_datm_meta s
+					INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+					INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeMetadataFilterSql_all_Full() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -103,6 +134,61 @@ public class DatumSqlUtilsTests {
 	}
 
 	@Test
+	public void nodeMetadataFilterSql_all_WithZone() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.WithZone, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(count)
+			.as("No parameters added")
+			.isEqualTo(0)
+			;
+		and.then(buf.toString())
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace("""
+					SELECT DISTINCT ON (s.stream_id) s.stream_id, s.node_id, s.source_id,
+						COALESCE(l.time_zone, 'UTC') AS time_zone
+					FROM solardatm.da_datm_meta_aliased s
+					LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+					LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+					ORDER BY s.stream_id, s.mtype
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeMetadataFilterSql_all_Minimum() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Minimum, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(count)
+			.as("No parameters added")
+			.isEqualTo(0)
+			;
+		and.then(buf.toString())
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace("""
+					SELECT DISTINCT ON (s.stream_id) s.stream_id, s.node_id, s.source_id
+					FROM solardatm.da_datm_meta_aliased s
+					ORDER BY s.stream_id, s.mtype
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void nodeMetadataFilterSql_forNode() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -110,7 +196,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -140,7 +226,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -170,7 +256,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -200,7 +286,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -230,7 +316,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -260,7 +346,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -290,7 +376,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -320,7 +406,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -350,7 +436,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -381,7 +467,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -413,7 +499,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -895,4 +981,5 @@ public class DatumSqlUtilsTests {
 				) late ON late.stream_id = s.stream_id
 				""");
 	}
+
 }

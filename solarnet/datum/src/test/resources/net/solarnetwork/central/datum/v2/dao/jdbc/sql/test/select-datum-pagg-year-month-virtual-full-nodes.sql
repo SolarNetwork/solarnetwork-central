@@ -1,5 +1,5 @@
 WITH rs AS (
-	SELECT s.stream_id
+	SELECT DISTINCT ON (s.stream_id) s.stream_id
 		, CASE
 			WHEN array_position(?, s.node_id) IS NOT NULL THEN ?
 			ELSE s.node_id
@@ -12,10 +12,11 @@ WITH rs AS (
 		, COALESCE(array_position(?, s.source_id::TEXT), 0) AS source_rank
 		, s.names_i
 		, s.names_a, COALESCE(l.time_zone, 'UTC') AS time_zone
-	FROM solardatm.da_datm_meta s
+	FROM solardatm.da_datm_meta_aliased s
 	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
 	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 	WHERE s.node_id = ANY(?)
+	ORDER BY s.stream_id, s.mtype
 )
 , s AS (
 	SELECT solardatm.virutal_stream_id(node_id, source_id) AS vstream_id

@@ -757,7 +757,7 @@ public final class DatumSqlUtils {
 		Full;
 	}
 
-	/**
+	/*-
 	 * Generate SQL query to find full node metadata.
 	 *
 	 * @param filter
@@ -767,10 +767,10 @@ public final class DatumSqlUtils {
 	 * @return the number of JDBC query parameters generated
 	 * @see #nodeMetadataFilterSql(ObjectMetadataCriteria, MetadataSelectStyle,
 	 *      StringBuilder)
-	 */
+	 *
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, StringBuilder buf) {
 		return nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
-	}
+	}*/
 
 	/**
 	 * Generate SQL query to find node metadata.
@@ -910,7 +910,13 @@ public final class DatumSqlUtils {
 			@Nullable ObjectStreamCriteria streamFilter, @Nullable String datumTableName,
 			@Nullable Aggregation aggregation, @Nullable CombiningConfig combiningConfig,
 			@Nullable String zoneClause, StringBuilder buf) {
-		buf.append("SELECT s.stream_id");
+		final boolean aliased = (style == MetadataSelectStyle.Minimum
+				|| style == MetadataSelectStyle.WithZone);
+		buf.append("SELECT");
+		if ( aliased ) {
+			buf.append(" DISTINCT ON (s.stream_id)");
+		}
+		buf.append(" s.stream_id");
 		int paramCount = metadataObjectSourceIdsSql(combiningConfig, ObjectDatumKind.Node, buf);
 		if ( style == MetadataSelectStyle.WithGeography ) {
 			buf.append(", s.jdata\n");
@@ -922,7 +928,11 @@ public final class DatumSqlUtils {
 		if ( style != MetadataSelectStyle.Minimum ) {
 			buf.append(", COALESCE(l.time_zone, 'UTC') AS time_zone");
 		}
-		buf.append("\nFROM solardatm.da_datm_meta s\n");
+		buf.append("\nFROM solardatm.da_datm_meta");
+		if ( aliased ) {
+			buf.append("_aliased");
+		}
+		buf.append(" s\n");
 		if ( filter != null && (filter.hasUserCriteria() || filter.hasTokenCriteria()) ) {
 			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = s.node_id\n");
 		}
@@ -951,6 +961,9 @@ public final class DatumSqlUtils {
 				buf.append("WHERE");
 				buf.append(where.substring(4));
 			}
+		}
+		if ( aliased ) {
+			buf.append("ORDER BY s.stream_id, s.mtype\n");
 		}
 		return paramCount;
 	}

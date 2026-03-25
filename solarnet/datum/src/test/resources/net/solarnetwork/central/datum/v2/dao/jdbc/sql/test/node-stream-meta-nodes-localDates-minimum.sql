@@ -1,5 +1,5 @@
-SELECT s.stream_id, s.node_id, s.source_id
-FROM solardatm.da_datm_meta s
+SELECT DISTINCT ON (s.stream_id) s.stream_id, s.node_id, s.source_id
+FROM solardatm.da_datm_meta_aliased s
 LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
 LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 INNER JOIN LATERAL (
@@ -11,3 +11,4 @@ INNER JOIN LATERAL (
 	LIMIT 1
 ) d ON d.stream_id = s.stream_id
 WHERE s.node_id = ANY(?)
+ORDER BY s.stream_id, s.mtype
