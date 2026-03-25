@@ -63,7 +63,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
@@ -210,7 +209,6 @@ public class JdbcDatumEntityDao
 		return entity.pk();
 	}
 
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Objecct>
 	@Override
 	public @Nullable DatumPK persist(GeneralObjectDatum<? extends GeneralObjectDatumKey> datum) {
 		if ( datum == null || datum.getId() == null || datum.getId().getObjectId() == null
@@ -223,7 +221,7 @@ public class JdbcDatumEntityDao
 		}
 		var sql = new StoreGeneralObjectDatum(datum);
 
-		return jdbcTemplate.execute(sql, cs -> {
+		return jdbcTemplate.execute(sql, (CallableStatement cs) -> {
 			cs.execute();
 			UUID streamId = uuidFromCall(cs, 1);
 			if ( streamId == null ) {
@@ -396,7 +394,6 @@ public class JdbcDatumEntityDao
 				results.getReturnedResultCount());
 	}
 
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	@Override
 	public void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
 			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset, @Nullable Integer max)
@@ -426,7 +423,7 @@ public class JdbcDatumEntityDao
 		}
 		processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, metadataProvider)); // TODO: support count total results/offset/max
 		try {
-			jdbcTemplate.execute(sql, (PreparedStatementCallback<Void>) ps -> {
+			jdbcTemplate.execute(sql, (PreparedStatement ps) -> {
 				try (ResultSet rs = ps.executeQuery()) {
 					int row = 0;
 					while ( rs.next() ) {
@@ -469,7 +466,6 @@ public class JdbcDatumEntityDao
 		});
 	}
 
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	@Override
 	public Set<ObjectDatumId> deleteForIds(Long userId, @Nullable Set<ObjectDatumId> ids) {
 		if ( ids == null || ids.isEmpty() ) {
@@ -577,7 +573,6 @@ public class JdbcDatumEntityDao
 		return (result != null ? ObjectDatumStreamMetadataId.idForMetadata(result) : null);
 	}
 
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	@Override
 	public @Nullable ObjectDatumStreamMetadata updateAttributes(ObjectDatumKind kind, UUID streamId,
 			@Nullable Long objectId, @Nullable String sourceId,
@@ -586,7 +581,7 @@ public class JdbcDatumEntityDao
 		UpdateObjectStreamMetadataAttributes sql = new UpdateObjectStreamMetadataAttributes(kind,
 				streamId, objectId, sourceId, instantaneousProperties, accumulatingProperties,
 				statusProperties);
-		ObjectDatumStreamMetadata result = jdbcTemplate.execute(sql, ps -> {
+		ObjectDatumStreamMetadata result = jdbcTemplate.execute(sql, (PreparedStatement ps) -> {
 			RowMapper<ObjectDatumStreamMetadata> rowMapper;
 			if ( kind == ObjectDatumKind.Location ) {
 				rowMapper = ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE;

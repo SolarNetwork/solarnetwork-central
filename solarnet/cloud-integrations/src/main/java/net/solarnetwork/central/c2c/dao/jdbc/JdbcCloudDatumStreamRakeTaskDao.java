@@ -176,9 +176,8 @@ public class JdbcCloudDatumStreamRakeTaskDao implements CloudDatumStreamRakeTask
 		return jdbcOps.update(sql);
 	}
 
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	@Override
-	public CloudDatumStreamRakeTaskEntity claimQueuedTask() {
+	public @Nullable CloudDatumStreamRakeTaskEntity claimQueuedTask() {
 		return jdbcOps.execute(claimTaskSql, (CallableStatement cs) -> {
 			if ( cs.execute() ) {
 				try (var rs = cs.getResultSet()) {

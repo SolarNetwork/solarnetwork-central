@@ -24,10 +24,10 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.sql.CallableStatement;
 import java.util.Collection;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
-import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
@@ -72,10 +72,9 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 		return DatumAuxiliaryEntity.class;
 	}
 
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	@Override
 	public DatumAuxiliaryPK save(DatumAuxiliaryEntity entity) {
-		jdbcTemplate.execute(new StoreDatumAuxiliary(entity), (CallableStatementCallback<Void>) cs -> {
+		jdbcTemplate.execute(new StoreDatumAuxiliary(entity), (CallableStatement cs) -> {
 			cs.execute();
 			return null;
 		});
@@ -94,14 +93,12 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 		throw new UnsupportedOperationException();
 	}
 
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	@Override
 	public void delete(DatumAuxiliaryEntity entity) {
-		jdbcTemplate.execute(new DeleteDatumAuxiliary(entity.getId()),
-				(CallableStatementCallback<Void>) cs -> {
-					cs.execute();
-					return null;
-				});
+		jdbcTemplate.execute(new DeleteDatumAuxiliary(entity.id()), (CallableStatement cs) -> {
+			cs.execute();
+			return null;
+		});
 	}
 
 	@Override

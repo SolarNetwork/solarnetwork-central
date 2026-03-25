@@ -185,12 +185,18 @@ public final class DatumDbUtils {
 	 *        the aggregate statistics
 	 * @return the datum
 	 */
-	@SuppressWarnings("NullAway")
 	public static ReadingDatum readingWith(UUID streamId, @Nullable Aggregation agg, ZonedDateTime start,
-			ZonedDateTime end, BigDecimal[] @Nullable... stats) {
-		BigDecimal[] acc = new BigDecimal[stats.length];
-		for ( int i = 0; i < stats.length; i++ ) {
-			acc[i] = stats[i][0];
+			ZonedDateTime end, BigDecimal @Nullable [] @Nullable... stats) {
+		@Nullable
+		BigDecimal @Nullable [] acc = null;
+		if ( stats != null ) {
+			acc = new BigDecimal[stats.length];
+			for ( int i = 0; i < stats.length; i++ ) {
+				var statRow = stats[i];
+				if ( statRow != null && statRow.length > 0 ) {
+					acc[i] = statRow[0];
+				}
+			}
 		}
 		return readingWith(streamId, agg, start, end, acc, stats);
 	}
@@ -213,7 +219,8 @@ public final class DatumDbUtils {
 	 * @return the datum
 	 */
 	public static ReadingDatum readingWith(UUID streamId, @Nullable Aggregation agg, ZonedDateTime start,
-			ZonedDateTime end, BigDecimal @Nullable [] acc, BigDecimal[] @Nullable [] stats) {
+			ZonedDateTime end, @Nullable BigDecimal @Nullable [] acc,
+			BigDecimal @Nullable [] @Nullable [] stats) {
 		return new ReadingDatumEntity(streamId, start.toInstant(),
 				(agg != null ? agg : Aggregation.None), end.toInstant(),
 				propertiesOf(null, acc, null, null), statisticsOf(null, stats));
@@ -554,11 +561,10 @@ public final class DatumDbUtils {
 	 *        the time zone ID
 	 * @return the resulting stream metadata
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> insertDatumStream(@Nullable Logger log,
 			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums, String timeZoneId) {
 		final Map<NodeSourcePK, ObjectDatumStreamMetadata> result = new LinkedHashMap<>();
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement("""
 					INSERT INTO solardatm.da_datm (stream_id,ts,received,data_i,data_a,data_s,data_t)
 					VALUES (?::uuid,?,?,?::numeric[],?::numeric[],?::text[],?::text[])""")) {
@@ -584,6 +590,7 @@ public final class DatumDbUtils {
 							|| s.getInstantaneous().isEmpty() ) {
 						datumStmt.setNull(4, Types.OTHER);
 					} else {
+						@Nullable
 						BigDecimal[] numbers = new BigDecimal[iNames.length];
 						for ( int i = 0; i < iNames.length; i++ ) {
 							numbers[i] = s.getInstantaneousSampleBigDecimal(iNames[i]);
@@ -597,6 +604,7 @@ public final class DatumDbUtils {
 							|| s.getAccumulating().isEmpty() ) {
 						datumStmt.setNull(5, Types.OTHER);
 					} else {
+						@Nullable
 						BigDecimal[] numbers = new BigDecimal[aNames.length];
 						for ( int i = 0; i < aNames.length; i++ ) {
 							numbers[i] = s.getAccumulatingSampleBigDecimal(aNames[i]);
@@ -610,6 +618,7 @@ public final class DatumDbUtils {
 							|| s.getStatus().isEmpty() ) {
 						datumStmt.setNull(6, Types.OTHER);
 					} else {
+						@Nullable
 						String[] strings = new String[sNames.length];
 						for ( int i = 0; i < sNames.length; i++ ) {
 							strings[i] = s.getStatusSampleString(sNames[i]);
@@ -774,11 +783,10 @@ public final class DatumDbUtils {
 	 *        the time zone ID
 	 * @return the resulting stream metadata
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> ingestDatumStream(@Nullable Logger log,
 			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums, String timeZoneId) {
 		final Map<NodeSourcePK, ObjectDatumStreamMetadata> result = new LinkedHashMap<>();
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (CallableStatement datumStmt = con
 					.prepareCall("{? = call solardatm.store_datum(?,?,?,?,?)}")) {
 				datumStmt.registerOutParameter(1, Types.OTHER);
@@ -848,10 +856,9 @@ public final class DatumDbUtils {
 	 * @param datums
 	 *        the datum to insert
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static void insertDatumAuxiliary(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<DatumAuxiliary> datums) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement(
 					"insert into solardatm.da_datm_aux (stream_id,ts,atype,jdata_af,jdata_as) "
 							+ "VALUES (?::uuid,?,?::solardatm.da_datm_aux_type,?::jsonb,?::jsonb)")) {
@@ -887,10 +894,9 @@ public final class DatumDbUtils {
 	 * @param datums
 	 *        the datum to insert
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static void insertDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<Datum> datums) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement(insertDatumSql())) {
 				final Timestamp now = Timestamp.from(Instant.now());
 				for ( Datum d : datums ) {
@@ -1017,10 +1023,9 @@ public final class DatumDbUtils {
 	 * @param datums
 	 *        the datum to insert
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static void insertAggregateDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<AggregateDatum> datums) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement rawStmt = con.prepareStatement(insertDatumSql());
 					PreparedStatement hourStmt = con
 							.prepareStatement(insertAggDatumSql(Aggregation.Hour));
@@ -1113,10 +1118,9 @@ public final class DatumDbUtils {
 	 *        the data to insert
 	 * @since 2.5
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static void insertAuditNodeServiceValueDaily(@Nullable Logger log,
 			JdbcOperations jdbcTemplate, Iterable<AuditNodeServiceValue> data) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement stmt = con.prepareStatement("""
 					INSERT INTO solardatm.aud_node_daily
 						(node_id, service, ts_start, cnt)
@@ -1149,10 +1153,9 @@ public final class DatumDbUtils {
 	 *        the data to insert
 	 * @since 2.5
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static void insertAuditUserServiceValueDaily(@Nullable Logger log,
 			JdbcOperations jdbcTemplate, Iterable<AuditUserServiceValue> data) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement stmt = con.prepareStatement("""
 					INSERT INTO solardatm.aud_user_daily
 						(user_id, service, ts_start, cnt)
@@ -1296,10 +1299,9 @@ public final class DatumDbUtils {
 	 * @param datums
 	 *        the datum to insert
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static void ingestDatumAuxiliary(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			UUID streamId, Iterable<GeneralNodeDatumAuxiliary> datums) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (CallableStatement stmt = con.prepareCall(
 					"{call solardatm.store_datum_aux(?,?,?::solardatm.da_datm_aux_type,?,?::jsonb,?::jsonb,?::jsonb)}")) {
 				for ( GeneralNodeDatumAuxiliary d : datums ) {
@@ -1371,10 +1373,9 @@ public final class DatumDbUtils {
 	 * @param stales
 	 *        the stale datum to insert
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static void insertStaleAggregateDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<StaleAggregateDatum> stales) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement(
 					"INSERT INTO solardatm.agg_stale_datm (stream_id,ts_start,agg_kind) VALUES (?::uuid,?,?)")) {
 				for ( StaleAggregateDatum d : stales ) {
@@ -1414,14 +1415,13 @@ public final class DatumDbUtils {
 	 *        the kinds of stale aggregate records to process; e.g.
 	 *        {@code Hour}, {@code Day}, or {@code Month}
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static void processStaleAggregateDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Set<Aggregation> kinds) {
 		debugStaleAggregateDatumTable(log, jdbcTemplate, "Stale datum at start");
 
 		List<Aggregation> sortedKinds = kinds.stream().sorted(Aggregation::compareLevel).toList();
 
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (CallableStatement cs = con
 					.prepareCall("{call solardatm.process_one_agg_stale_datm(?)}")) {
 				for ( Aggregation kind : sortedKinds ) {
@@ -1486,10 +1486,9 @@ public final class DatumDbUtils {
 	 * @param stales
 	 *        the stale datum to insert
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static void insertStaleFluxDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<StaleFluxDatum> stales) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement(
 					"INSERT INTO solardatm.agg_stale_flux (stream_id,agg_kind) VALUES (?::uuid,?)")) {
 				for ( StaleFluxDatum d : stales ) {
@@ -1516,10 +1515,9 @@ public final class DatumDbUtils {
 	 * @param stales
 	 *        the stale datum to insert
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static void insertStaleAuditDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<StaleAuditDatum> stales) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement(
 					"INSERT INTO solardatm.aud_stale_datm (stream_id,ts_start,aud_kind) VALUES (?::uuid,?,?)")) {
 				for ( StaleAuditDatum d : stales ) {
@@ -1549,14 +1547,13 @@ public final class DatumDbUtils {
 	 *        the kinds of stale audit records to process; e.g. {@code None},
 	 *        {@code Hour}, {@code Day}, or {@code Month}
 	 */
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	public static void processStaleAuditDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Set<Aggregation> kinds) {
 		debugStaleAuditDatumTable(log, jdbcTemplate, "Stale audit datum at start");
 
 		List<Aggregation> sortedKinds = kinds.stream().sorted(Aggregation::compareLevel).toList();
 
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (CallableStatement cs = con
 					.prepareCall("{? = call solardatm.process_one_aud_stale_datm(?)}")) {
 				cs.registerOutParameter(1, Types.INTEGER);

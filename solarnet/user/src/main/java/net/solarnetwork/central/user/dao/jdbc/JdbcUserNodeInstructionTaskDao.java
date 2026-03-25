@@ -171,7 +171,6 @@ public class JdbcUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	}
 
 	@Override
-	@SuppressWarnings("NullAway") // until supports E extends @Nullable Object
 	public @Nullable UserNodeInstructionTaskEntity claimQueuedTask() {
 		return jdbcOps.execute(claimTaskSql, (CallableStatement cs) -> {
 			if ( cs.execute() ) {
