@@ -23,12 +23,12 @@
 package net.solarnetwork.central.datum.agg;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.springframework.dao.PessimisticLockingFailureException;
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.job.TieredStaleRecordProcessor;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
@@ -97,7 +97,6 @@ public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 		setJdbcCall(SelectStaleFluxDatum.ANY_ONE_FOR_UPDATE.getSql());
 	}
 
-	@SuppressWarnings("NullAway") // until supports <E extends @Nullable Object>
 	@Override
 	protected final int execute(AtomicInteger remainingCount) {
 		if ( !publisher.isConfigured() ) {
@@ -105,7 +104,7 @@ public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 		}
 		final MutableInt processedCount = new MutableInt(0);
 		try {
-			getJdbcOps().execute((ConnectionCallback<Void>) con -> {
+			getJdbcOps().execute((Connection con) -> {
 				con.setAutoCommit(false);
 				BasicDatumCriteria filter = new BasicDatumCriteria();
 				filter.setMostRecent(true);

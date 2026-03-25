@@ -25,6 +25,7 @@ package net.solarnetwork.central.common.dao.jdbc.sql;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Array;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -40,7 +41,6 @@ import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.postgresql.util.PGInterval;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -319,7 +319,6 @@ public final class CommonJdbcUtils {
 	 *        will be used
 	 * @return the result, or {@code null} if no result count is available
 	 */
-	@SuppressWarnings("NullAway") // does not handle Spring's <T extends @Nullable Object> signature
 	public static @Nullable Long executeCountQuery(JdbcOperations jdbcTemplate,
 			PreparedStatementCreator creator) {
 		return jdbcTemplate.query(creator, rs -> rs.next() ? rs.getLong(1) : null);
@@ -410,7 +409,6 @@ public final class CommonJdbcUtils {
 	 *         if any IO error occurs
 	 * @since 1.2
 	 */
-	@SuppressWarnings("NullAway") // does not handle Spring's <T extends @Nullable Object> signature
 	public static <T> void executeStreamingQuery(JdbcOperations jdbcOps,
 			FilteredResultsProcessor<T> processor, PreparedStatementCreator sql, RowMapper<T> mapper,
 			@Nullable Long totalResultCount, @Nullable Integer startingOffset,
@@ -418,7 +416,7 @@ public final class CommonJdbcUtils {
 			throws IOException {
 		processor.start(totalResultCount, startingOffset, expectedResultCount, attributes);
 		try {
-			jdbcOps.execute(sql, (PreparedStatementCallback<Void>) ps -> {
+			jdbcOps.execute(sql, (PreparedStatement ps) -> {
 				try (ResultSet rs = ps.executeQuery()) {
 					int row = 0;
 					while ( rs.next() ) {
