@@ -31,6 +31,7 @@ import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToke
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserRoles;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.domain.datum.Aggregation.Hour;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_DATE_HEADER_FORMATTER;
 import static net.solarnetwork.security.AuthorizationUtils.SN_DATE_HEADER;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -169,7 +170,7 @@ public class UserCloudIntegrationsController_UserSettingsWebTests
 		final String tokenId = randomString(20);
 		final String tokenSecret = randomString();
 		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, objectMapper
-				.writeValueAsString(BasicSecurityPolicy.builder().withRefreshAllowed(false).build()));
+				.writeValueAsString(BasicSecurityPolicy.builder().withMinAggregation(Hour).build()));
 
 		final UserSettingsEntityInput input = new UserSettingsEntityInput();
 		input.setPublishToSolarFlux(true);
@@ -272,7 +273,7 @@ public class UserCloudIntegrationsController_UserSettingsWebTests
 		final String tokenId = randomString(20);
 		final String tokenSecret = randomString();
 		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId, Active, User, objectMapper
-				.writeValueAsString(BasicSecurityPolicy.builder().withRefreshAllowed(false).build()));
+				.writeValueAsString(BasicSecurityPolicy.builder().withMinAggregation(Hour).build()));
 
 		createSettings(true, true);
 
