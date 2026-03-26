@@ -47,7 +47,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Basic implementation of {@link DatumCriteria}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  * @since 2.8
  */
 public class BasicDatumCriteria extends BasicCoreCriteria
@@ -65,6 +65,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	private @Nullable DatumReadingType readingType;
 	private @Nullable Period timeTolerance;
 	private @Nullable ObjectDatumKind objectKind;
+	private @Nullable Boolean includeStreamAliases;
 
 	private @Nullable DatumAuxiliaryType datumAuxiliaryType;
 
@@ -95,7 +96,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		result = prime * result + Objects.hash(aggregation, combiningType, datumAuxiliaryType, endDate,
 				localEndDate, localStartDate, mostRecent, objectIdMappings, objectKind,
 				partialAggregation, readingType, sourceIdMappings, startDate, timeTolerance,
-				withoutTotalResultsCount);
+				withoutTotalResultsCount, includeStreamAliases);
 		result = prime * result + Arrays.hashCode(propertyNames);
 		result = prime * result + Arrays.hashCode(instantaneousPropertyNames);
 		result = prime * result + Arrays.hashCode(accumulatingPropertyNames);
@@ -125,6 +126,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 				&& Arrays.equals(streamIds, other.streamIds)
 				&& Objects.equals(timeTolerance, other.timeTolerance)
 				&& withoutTotalResultsCount == other.withoutTotalResultsCount
+				&& Objects.equals(includeStreamAliases, other.includeStreamAliases)
 				&& Arrays.equals(propertyNames, other.propertyNames)
 				&& Arrays.equals(instantaneousPropertyNames, other.instantaneousPropertyNames)
 				&& Arrays.equals(accumulatingPropertyNames, other.accumulatingPropertyNames)
@@ -162,23 +164,36 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		setInstantaneousPropertyNames(criteria.getInstantaneousPropertyNames());
 		setAccumulatingPropertyNames(criteria.getAccumulatingPropertyNames());
 		setStatusPropertyNames(criteria.getStatusPropertyNames());
-		if ( criteria instanceof RecentCriteria c ) {
+		if ( criteria instanceof BasicDatumCriteria c ) {
 			setMostRecent(c.isMostRecent());
-		}
-		if ( criteria instanceof OptimizedQueryCriteria c ) {
 			setWithoutTotalResultsCount(c.isWithoutTotalResultsCount());
-		}
-		if ( criteria instanceof ReadingTypeCriteria c ) {
+			setIncludeStreamAliases(c.getIncludeStreamAliases());
 			setReadingType(c.getReadingType());
-		}
-		if ( criteria instanceof TimeToleranceCriteria c ) {
 			setTimeTolerance(c.getTimeTolerance());
-		}
-		if ( criteria instanceof DatumAuxiliaryCriteria c ) {
 			setDatumAuxiliaryType(c.getDatumAuxiliaryType());
-		}
-		if ( criteria instanceof DatumRollupCriteria c ) {
 			setDatumRollupTypes(c.getDatumRollupTypes());
+		} else {
+			if ( criteria instanceof RecentCriteria c ) {
+				setMostRecent(c.isMostRecent());
+			}
+			if ( criteria instanceof OptimizedQueryCriteria c ) {
+				setWithoutTotalResultsCount(c.isWithoutTotalResultsCount());
+			}
+			if ( criteria instanceof StreamAliasCriteria c ) {
+				setIncludeStreamAliases(c.getIncludeStreamAliases());
+			}
+			if ( criteria instanceof ReadingTypeCriteria c ) {
+				setReadingType(c.getReadingType());
+			}
+			if ( criteria instanceof TimeToleranceCriteria c ) {
+				setTimeTolerance(c.getTimeTolerance());
+			}
+			if ( criteria instanceof DatumAuxiliaryCriteria c ) {
+				setDatumAuxiliaryType(c.getDatumAuxiliaryType());
+			}
+			if ( criteria instanceof DatumRollupCriteria c ) {
+				setDatumRollupTypes(c.getDatumRollupTypes());
+			}
 		}
 	}
 
@@ -315,7 +330,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 				|| (statusPropertyNames != null && statusPropertyNames.length > 0)
 				|| (streamIds != null && streamIds.length > 0)
 				|| timeTolerance != null
-				// withoutTotalResultsCount ignored
+				// withoutTotalResultsCount, includeStreamAliases ignored
 				;
 		// @formatter:on
 	}
@@ -813,6 +828,22 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 */
 	public final void setStatusPropertyNames(String @Nullable [] statusPropertyNames) {
 		this.statusPropertyNames = statusPropertyNames;
+	}
+
+	@Override
+	public final @Nullable Boolean getIncludeStreamAliases() {
+		return includeStreamAliases;
+	}
+
+	/**
+	 * Set the include stream aliases mode.
+	 *
+	 * @param includeStreamAliases
+	 *        the includeStreamAliases to set
+	 * @since 1.5
+	 */
+	public final void setIncludeStreamAliases(@Nullable Boolean includeStreamAliases) {
+		this.includeStreamAliases = includeStreamAliases;
 	}
 
 }

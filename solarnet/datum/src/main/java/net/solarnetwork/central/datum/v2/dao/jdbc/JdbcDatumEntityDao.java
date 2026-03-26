@@ -878,6 +878,11 @@ public class JdbcDatumEntityDao
 			return null;
 		}
 
+		@Override
+		public @Nullable Boolean getIncludeStreamAliases() {
+			return null;
+		}
+
 	}
 
 	@Override
