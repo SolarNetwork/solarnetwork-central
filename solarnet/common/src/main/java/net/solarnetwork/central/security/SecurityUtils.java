@@ -748,7 +748,8 @@ public class SecurityUtils {
 	 * Test if a policy is unrestricted.
 	 * 
 	 * <p>
-	 * The {@code notAfter} property is not considered.
+	 * The {@code notAfter} and {@code refreshAllowed} properties are not
+	 * considered.
 	 * </p>
 	 * 
 	 * @param policy
@@ -764,8 +765,8 @@ public class SecurityUtils {
 		return policy.getAggregations() == null && policy.getApiPaths() == null
 				&& policy.getLocationPrecisions() == null && policy.getMinAggregation() == null
 				&& policy.getMinLocationPrecision() == null && policy.getNodeIds() == null
-				&& policy.getNodeMetadataPaths() == null && policy.getRefreshAllowed() == null
-				&& policy.getSourceIds() == null && policy.getUserMetadataPaths() == null;
+				&& policy.getNodeMetadataPaths() == null && policy.getSourceIds() == null
+				&& policy.getUserMetadataPaths() == null;
 	}
 
 }

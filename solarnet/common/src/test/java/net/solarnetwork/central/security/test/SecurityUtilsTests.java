@@ -747,11 +747,14 @@ public class SecurityUtilsTests {
 	@Test
 	public void policyIsUnrestricted_refreshAllowed() {
 		// GIVEN
-		final SecurityPolicy policy = BasicSecurityPolicy.builder().withRefreshAllowed(false).build();
+		final SecurityPolicy policy1 = BasicSecurityPolicy.builder().withRefreshAllowed(false).build();
+		final SecurityPolicy policy2 = BasicSecurityPolicy.builder().withRefreshAllowed(true).build();
 
 		// THEN
-		and.then(SecurityUtils.policyIsUnrestricted(policy))
-				.as("Policy with refresh allowed is restricted").isFalse();
+		and.then(SecurityUtils.policyIsUnrestricted(policy1))
+				.as("Policy with refresh allowed FALSE is NOT restricted").isTrue();
+		and.then(SecurityUtils.policyIsUnrestricted(policy2))
+				.as("Policy with refresh allowed TRUE is NOT restricted").isTrue();
 	}
 
 	@Test
