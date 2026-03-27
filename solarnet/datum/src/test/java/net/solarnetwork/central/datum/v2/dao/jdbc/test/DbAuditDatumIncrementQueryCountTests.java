@@ -23,17 +23,22 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.time.Instant.now;
-import static java.util.Collections.singleton;
+import static java.time.temporal.ChronoUnit.DAYS;
+import static java.time.temporal.ChronoUnit.HOURS;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.ioAuditDatum;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
+import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.domain.datum.Aggregation.Day;
+import static net.solarnetwork.domain.datum.Aggregation.Hour;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -46,9 +51,8 @@ import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
-import net.solarnetwork.domain.datum.Aggregation;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
@@ -56,11 +60,16 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * database procedure.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSupport {
 
 	private AuditDatum incrementAndGet(ObjectDatumStreamMetadata meta, Instant ts, int datumCount) {
+		return incrementAndGet(meta, ts, datumCount, meta.getStreamId());
+	}
+
+	private AuditDatum incrementAndGet(ObjectDatumStreamMetadata meta, Instant ts, int datumCount,
+			UUID expectedStreamId) {
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
 			@Override
@@ -78,64 +87,97 @@ public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSuppo
 				return null;
 			}
 		});
-		Instant tsHour = ts.truncatedTo(ChronoUnit.HOURS);
-		return DatumDbUtils.listAuditDatum(jdbcTemplate, Aggregation.Hour).stream().filter(e -> {
-			return (e.getStreamId().equals(meta.getStreamId()) && e.getTimestamp().equals(tsHour));
-		}).findAny().orElseThrow(RuntimeException::new);
+		Instant tsHour = ts.truncatedTo(HOURS);
+		return DatumDbUtils.listAuditDatum(jdbcTemplate, Hour).stream().filter(e -> {
+			return (e.getStreamId().equals(expectedStreamId) && e.getTimestamp().equals(tsHour));
+		}).findAny().orElseThrow(IllegalStateException::new);
 	}
 
 	@Test
 	public void insert() {
 		// GIVEN
 		setupTestNode(); // for TZ
-		UUID streamId = UUID.randomUUID();
-		Instant now = Instant.now();
-		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(streamId, TEST_TZ,
-				ObjectDatumKind.Node, TEST_NODE_ID, "a");
-		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		final UUID streamId = UUID.randomUUID();
+		final Instant now = Instant.now();
+		final ObjectDatumStreamMetadata meta = emptyMeta(streamId, TEST_TZ, Node, TEST_NODE_ID, "a");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta));
 
 		// WHEN
-		AuditDatum d = incrementAndGet(meta, now, 123);
+		final AuditDatum d = incrementAndGet(meta, now, 123);
 
 		// THEN
-		DatumTestUtils.assertAuditDatum("Inserted query row", d, AuditDatumEntity.ioAuditDatum(streamId,
-				now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L, 0L, 0L));
+		DatumTestUtils.assertAuditDatum("Inserted query row", d,
+				AuditDatumEntity.ioAuditDatum(streamId, now.truncatedTo(HOURS), 0L, 0L, 123L, 0L, 0L));
 
 		// verify stale record added for Day
 		List<StaleAuditDatum> stale = DatumDbUtils.listStaleAuditDatum(jdbcTemplate);
-		assertThat("One stale audit row created", stale, hasSize(1));
+		then(stale).as("One stale audit row created").hasSize(1);
 		DatumTestUtils.assertStaleAuditDatum("Stale", stale.get(0),
 				new StaleAuditDatumEntity(meta.getStreamId(),
-						now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS).toInstant(),
-						Aggregation.Day, now()));
+						now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(DAYS).toInstant(), Day, now()));
 	}
 
 	@Test
 	public void update() {
 		// GIVEN
 		setupTestNode(); // for TZ
-		UUID streamId = UUID.randomUUID();
-		Instant now = Instant.now();
-		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(streamId, TEST_TZ,
-				ObjectDatumKind.Node, TEST_NODE_ID, "a");
-		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		final UUID streamId = UUID.randomUUID();
+		final Instant now = Instant.now();
+		final ObjectDatumStreamMetadata meta = emptyMeta(streamId, TEST_TZ, Node, TEST_NODE_ID, "a");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta));
 		DatumDbUtils.insertAuditDatum(log, jdbcTemplate,
-				Set.of(ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L, 0L, 0L)));
+				Set.of(ioAuditDatum(streamId, now.truncatedTo(HOURS), 0L, 0L, 123L, 0L, 0L)));
 
 		// WHEN
-		AuditDatum d = incrementAndGet(meta, now, 321);
+		final AuditDatum d = incrementAndGet(meta, now, 321);
 
 		// THEN
 		DatumTestUtils.assertAuditDatum("Updated query row", d,
-				ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 444L, 0L, 0L));
+				ioAuditDatum(streamId, now.truncatedTo(HOURS), 0L, 0L, 444L, 0L, 0L));
 
 		// verify stale record added for Day
 		List<StaleAuditDatum> stale = DatumDbUtils.listStaleAuditDatum(jdbcTemplate);
-		assertThat("One stale audit row created", stale, hasSize(1));
-		DatumTestUtils.assertStaleAuditDatum("Stale", stale.get(0),
-				new StaleAuditDatumEntity(meta.getStreamId(),
-						now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS).toInstant(),
-						Aggregation.Day, now()));
+		then(stale).as("One stale audit row created").hasSize(1);
+		DatumTestUtils.assertStaleAuditDatum("Stale", stale.get(0), new StaleAuditDatumEntity(streamId,
+				now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(DAYS).toInstant(), Day, now()));
+	}
+
+	@Test
+	public void insert_alias() {
+		// GIVEN
+		setupTestNode(); // for TZ
+
+		final UUID streamId = UUID.randomUUID();
+		final Instant now = Instant.now();
+		final ObjectDatumStreamMetadata meta = emptyMeta(streamId, TEST_TZ, Node, TEST_NODE_ID, "a");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta));
+
+		final Long aliasNodeId = randomLong();
+		setupTestNode(aliasNodeId);
+
+		final UUID aliasStreamId = UUID.randomUUID();
+		final ObjectDatumStreamMetadata aliasMeta = BasicObjectDatumStreamMetadata
+				.emptyMeta(aliasStreamId, TEST_TZ, Node, aliasNodeId, "b");
+
+		final var alias = new ObjectDatumStreamAliasEntity(aliasStreamId, now, now, Node,
+				aliasMeta.getObjectId(), aliasMeta.getSourceId(), meta.getObjectId(),
+				meta.getSourceId());
+		DatumDbUtils.insertObjectDatumStreamAliases(log, jdbcTemplate, List.of(alias));
+
+		// WHEN
+		final int count = randomInt();
+		final AuditDatum d = incrementAndGet(aliasMeta, now, count, streamId);
+
+		// THEN
+		DatumTestUtils.assertAuditDatum("Inserted query row for ORIGINAL stream", d, AuditDatumEntity
+				.ioAuditDatum(streamId, now.truncatedTo(HOURS), 0L, 0L, (long) count, 0L, 0L));
+
+		// verify stale record added for Day
+		List<StaleAuditDatum> stale = DatumDbUtils.listStaleAuditDatum(jdbcTemplate);
+		then(stale).as("One stale audit row created").hasSize(1);
+		DatumTestUtils.assertStaleAuditDatum("Stale for ORIGINAL stream", stale.get(0),
+				new StaleAuditDatumEntity(streamId,
+						now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(DAYS).toInstant(), Day, now()));
 	}
 
 }
