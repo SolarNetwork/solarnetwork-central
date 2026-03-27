@@ -64,6 +64,7 @@ import net.solarnetwork.central.datum.domain.ReadingTypeFilter;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.SourceFilter;
+import net.solarnetwork.central.datum.domain.StreamAliasFilter;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.datum.domain.UserFilter;
@@ -175,6 +176,7 @@ public final class DatumUtils {
 			c.setMostRecent(f.isMostRecent());
 			c.setDatumRollupTypes(f.getDatumRollupTypes());
 			c.setWithoutTotalResultsCount(f.isWithoutTotalResultsCount());
+			c.setIncludeStreamAliases(f.getIncludeStreamAliases());
 			c.setCombiningType(f.getCombiningType());
 			c.setObjectIdMappings(f.getNodeIdMappings());
 			c.setSourceIdMappings(f.getSourceIdMappings());
@@ -213,6 +215,7 @@ public final class DatumUtils {
 			c.setMostRecent(f.isMostRecent());
 			c.setDatumRollupTypes(f.getDatumRollupTypes());
 			c.setWithoutTotalResultsCount(f.isWithoutTotalResultsCount());
+			c.setIncludeStreamAliases(f.getIncludeStreamAliases());
 			c.setCombiningType(f.getCombiningType());
 			c.setObjectIdMappings(f.getNodeIdMappings());
 			c.setSourceIdMappings(f.getSourceIdMappings());
@@ -291,6 +294,9 @@ public final class DatumUtils {
 				c.setInstantaneousPropertyNames(f.getInstantaneousPropertyNames());
 				c.setAccumulatingPropertyNames(f.getAccumulatingPropertyNames());
 				c.setStatusPropertyNames(f.getStatusPropertyNames());
+			}
+			if ( filter instanceof StreamAliasFilter f ) {
+				c.setIncludeStreamAliases(f.getIncludeStreamAliases());
 			}
 		}
 
@@ -432,6 +438,7 @@ public final class DatumUtils {
 			c.setEndDate(criteria.getEndDate());
 			c.setLocalStartDate(criteria.getLocalStartDate());
 			c.setLocalEndDate(criteria.getLocalEndDate());
+			c.setIncludeStreamAliases(criteria.getIncludeStreamAliases());
 		}
 		return c;
 	}

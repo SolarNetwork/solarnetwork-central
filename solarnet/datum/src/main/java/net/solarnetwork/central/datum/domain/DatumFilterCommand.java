@@ -56,7 +56,7 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  *
  * @author matt
- * @version 2.9
+ * @version 2.10
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
 		"partialAggregation", "partialAggregationKey", "readingType", "combiningType",
@@ -79,7 +79,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	private @Nullable Instant endDate;
 	private @Nullable LocalDateTime localStartDate;
 	private @Nullable LocalDateTime localEndDate;
-	private boolean mostRecent = false;
+	private boolean mostRecent;
 	private @Nullable String type; // e.g. Power, Consumption, etc.
 	private @Nullable List<MutableSortDescriptor> sorts;
 	private @Nullable Long offset;
@@ -90,6 +90,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	private @Nullable Aggregation aggregation;
 	private @Nullable Aggregation partialAggregation;
 	private boolean withoutTotalResultsCount;
+	private @Nullable Boolean includeStreamAliases;
 
 	private @Nullable CombiningType combiningType;
 	private @Nullable Map<Long, Set<Long>> nodeIdMappings;
@@ -198,6 +199,9 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 			setAccumulatingPropertyNames(f.getAccumulatingPropertyNames());
 			setStatusPropertyNames(f.getStatusPropertyNames());
 		}
+		if ( other instanceof StreamAliasFilter f ) {
+			setIncludeStreamAliases(f.getIncludeStreamAliases());
+		}
 	}
 
 	@Override
@@ -283,6 +287,11 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		builder.append("withoutTotalResultsCount=");
 		builder.append(withoutTotalResultsCount);
 		builder.append(", ");
+		if ( includeStreamAliases != null ) {
+			builder.append("includeStreamAliases=");
+			builder.append(includeStreamAliases);
+			builder.append(", ");
+		}
 		if ( combiningType != null ) {
 			builder.append("combiningType=");
 			builder.append(combiningType);
@@ -381,6 +390,9 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( statusPropertyNames != null ) {
 			filter.put("statusPropertyNames", statusPropertyNames);
 		}
+		if ( includeStreamAliases != null ) {
+			filter.put("includeStreamAliases", includeStreamAliases);
+		}
 		return filter;
 	}
 
@@ -395,8 +407,10 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(datumRollupTypes);
 		result = prime * result + Objects.hash(aggregation, readingType, combiningType, dataPath,
-				endDate, localEndDate, localStartDate, location, max, mostRecent, nodeIdMappings, offset,
-				sorts, sourceIdMappings, startDate, type, withoutTotalResultsCount);
+				endDate, localEndDate, localStartDate, location, max, nodeIdMappings, offset, sorts,
+				sourceIdMappings, startDate, type, includeStreamAliases);
+		result = prime * result + Boolean.hashCode(mostRecent);
+		result = prime * result + Boolean.hashCode(withoutTotalResultsCount);
 		result = prime * result + Arrays.hashCode(propertyNames);
 		result = prime * result + Arrays.hashCode(instantaneousPropertyNames);
 		result = prime * result + Arrays.hashCode(accumulatingPropertyNames);
@@ -429,6 +443,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 				&& Objects.equals(sourceIdMappings, other.sourceIdMappings)
 				&& Objects.equals(startDate, other.startDate) && Objects.equals(type, other.type)
 				&& withoutTotalResultsCount == other.withoutTotalResultsCount
+				&& Objects.equals(includeStreamAliases, other.includeStreamAliases)
 				&& Arrays.equals(propertyNames, other.propertyNames)
 				&& Arrays.equals(instantaneousPropertyNames, other.instantaneousPropertyNames)
 				&& Arrays.equals(accumulatingPropertyNames, other.accumulatingPropertyNames)
@@ -1195,6 +1210,22 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 */
 	public final void setStatusPropertyNames(String @Nullable [] statusPropertyNames) {
 		this.statusPropertyNames = statusPropertyNames;
+	}
+
+	@Override
+	public final @Nullable Boolean getIncludeStreamAliases() {
+		return includeStreamAliases;
+	}
+
+	/**
+	 * Set the include stream aliases mode.
+	 *
+	 * @param includeStreamAliases
+	 *        the includeStreamAliases to set
+	 * @since 2.10
+	 */
+	public final void setIncludeStreamAliases(@Nullable Boolean includeStreamAliases) {
+		this.includeStreamAliases = includeStreamAliases;
 	}
 
 }

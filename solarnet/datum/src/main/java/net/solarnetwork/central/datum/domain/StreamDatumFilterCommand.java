@@ -56,7 +56,7 @@ import net.solarnetwork.util.StringUtils;
  * Implementation of {@link StreamDatumFilter}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  * @since 1.3
  */
 @JsonPropertyOrder({ "streamIds", "kind", "objectIds", "sourceIds", "userIds", "aggregation",
@@ -79,7 +79,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	private @Nullable Instant endDate;
 	private @Nullable LocalDateTime localStartDate;
 	private @Nullable LocalDateTime localEndDate;
-	private boolean mostRecent = false;
+	private boolean mostRecent;
 
 	private String @Nullable [] propertyNames;
 	private @Nullable List<MutableSortDescriptor> sorts;
@@ -89,6 +89,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	private @Nullable Aggregation aggregation;
 	private @Nullable Aggregation partialAggregation;
 	private boolean withoutTotalResultsCount;
+	private @Nullable Boolean includeStreamAliases;
 
 	private @Nullable CombiningType combiningType;
 	private @Nullable Map<Long, Set<Long>> nodeIdMappings;
@@ -106,8 +107,10 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		result = prime * result + Arrays.hashCode(streamIds);
 		result = prime * result + Arrays.hashCode(propertyNames);
 		result = prime * result + Objects.hash(aggregation, combiningType, endDate, kind, localEndDate,
-				localStartDate, max, mostRecent, nodeIdMappings, offset, partialAggregation, sorts,
-				sourceIdMappings, startDate, withoutTotalResultsCount);
+				localStartDate, max, nodeIdMappings, offset, partialAggregation, sorts, sourceIdMappings,
+				startDate, includeStreamAliases);
+		result = prime * result + Boolean.hashCode(mostRecent);
+		result = prime * result + Boolean.hashCode(withoutTotalResultsCount);
 		return result;
 	}
 
@@ -119,20 +122,30 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		if ( !super.equals(obj) || !(obj instanceof StreamDatumFilterCommand other) ) {
 			return false;
 		}
-		return aggregation == other.aggregation && combiningType == other.combiningType
+		// @formatter:off
+		return aggregation == other.aggregation
+				&& combiningType == other.combiningType
 				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)
-				&& Objects.equals(endDate, other.endDate) && kind == other.kind
+				&& Objects.equals(endDate, other.endDate)
+				&& kind == other.kind
 				&& Objects.equals(localEndDate, other.localEndDate)
-				&& Objects.equals(localStartDate, other.localStartDate) && Objects.equals(max, other.max)
-				&& mostRecent == other.mostRecent && Objects.equals(nodeIdMappings, other.nodeIdMappings)
-				&& Arrays.equals(objectIds, other.objectIds) && Objects.equals(offset, other.offset)
-				&& partialAggregation == other.partialAggregation && Objects.equals(sorts, other.sorts)
+				&& Objects.equals(localStartDate, other.localStartDate)
+				&& Objects.equals(max, other.max)
+				&& mostRecent == other.mostRecent
+				&& Objects.equals(nodeIdMappings, other.nodeIdMappings)
+				&& Arrays.equals(objectIds, other.objectIds)
+				&& Objects.equals(offset, other.offset)
+				&& partialAggregation == other.partialAggregation
+				&& Objects.equals(sorts, other.sorts)
 				&& Objects.equals(sourceIdMappings, other.sourceIdMappings)
 				&& Arrays.equals(sourceIds, other.sourceIds)
 				&& Objects.equals(startDate, other.startDate)
 				&& Arrays.equals(streamIds, other.streamIds)
 				&& Arrays.equals(propertyNames, other.propertyNames)
-				&& withoutTotalResultsCount == other.withoutTotalResultsCount;
+				&& withoutTotalResultsCount == other.withoutTotalResultsCount
+				&& Objects.equals(includeStreamAliases, other.includeStreamAliases)
+				;
+		// @formatter:on
 	}
 
 	@Override
@@ -210,6 +223,9 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		if ( !withoutTotalResultsCount ) {
 			builder.append("withoutTotalResultsCount=false,");
 		}
+		if ( includeStreamAliases != null && includeStreamAliases ) {
+			builder.append("includeStreamAliases=true,");
+		}
 		if ( combiningType != null ) {
 			builder.append("combiningType=");
 			builder.append(combiningType);
@@ -285,6 +301,9 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		}
 		if ( propertyNames != null ) {
 			filter.put("propertyNames", propertyNames);
+		}
+		if ( includeStreamAliases != null ) {
+			filter.put("includeStreamAliases", includeStreamAliases);
 		}
 		return filter;
 	}
@@ -1020,6 +1039,22 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		return (propertyNames != null && propertyNames.length > 0
 				? new LinkedHashSet<>(List.of(propertyNames))
 				: null);
+	}
+
+	@Override
+	public final @Nullable Boolean getIncludeStreamAliases() {
+		return includeStreamAliases;
+	}
+
+	/**
+	 * Set the include stream aliases mode.
+	 *
+	 * @param includeStreamAliases
+	 *        the includeStreamAliases to set
+	 * @since 1.7
+	 */
+	public final void setIncludeStreamAliases(@Nullable Boolean includeStreamAliases) {
+		this.includeStreamAliases = includeStreamAliases;
 	}
 
 }

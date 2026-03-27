@@ -37,7 +37,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @since 1.3
  */
 public interface StreamDatumFilter extends Filter, DateRangeFilter, LocalDateRangeFilter,
-		MostRecentFilter, PropertyNameFilter, SourceFilter {
+		MostRecentFilter, PropertyNameFilter, SourceFilter, StreamAliasFilter {
 
 	/**
 	 * Get the first stream ID.
