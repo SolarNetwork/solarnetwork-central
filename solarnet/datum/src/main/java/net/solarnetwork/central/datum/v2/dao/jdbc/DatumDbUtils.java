@@ -79,6 +79,7 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
@@ -107,7 +108,7 @@ import tools.jackson.core.json.JsonFactory;
  * </p>
  *
  * @author matt
- * @version 2.7
+ * @version 2.8
  * @since 3.8
  */
 public final class DatumDbUtils {
@@ -759,13 +760,81 @@ public final class DatumDbUtils {
 	 * @param con
 	 *        the JDBC connection to use
 	 * @param metas
-	 *        the metadata to insert, can be either ndoe or location
+	 *        the metadata to insert, can be either node or location
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
 	public static void insertObjectDatumStreamMetadata(@Nullable Logger log, Connection con,
 			Iterable<? extends ObjectDatumStreamMetadata> metas) throws SQLException {
 		CommonDbUtils.insertObjectDatumStreamMetadata(log, con, metas);
+	}
+
+	/**
+	 * Insert datum stream aliases.
+	 *
+	 * @param log
+	 *        an optional logger
+	 * @param jdbcTemplate
+	 *        the JDBC operations to use
+	 * @param aliases
+	 *        the aliases to insert
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.8
+	 */
+	public static void insertObjectDatumStreamAliases(@Nullable Logger log, JdbcOperations jdbcTemplate,
+			Iterable<ObjectDatumStreamAliasEntity> aliases) {
+		jdbcTemplate.execute((ConnectionCallback<@Nullable Void>) con -> {
+			insertObjectDatumStreamAliases(log, con, aliases);
+			return null;
+		});
+	}
+
+	/**
+	 * Insert datum stream aliases.
+	 *
+	 * @param log
+	 *        an optional logger
+	 * @param con
+	 *        the JDBC connection to use
+	 * @param aliases
+	 *        the aliases to insert
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.8
+	 */
+	public static void insertObjectDatumStreamAliases(@Nullable Logger log, Connection con,
+			Iterable<ObjectDatumStreamAliasEntity> aliases) throws SQLException {
+		final Timestamp now = Timestamp.from(Instant.now());
+		try (PreparedStatement stmt = con.prepareStatement("""
+				INSERT INTO solardatm.da_datm_alias (
+					  stream_id
+					, created
+					, modified
+					, node_id
+					, source_id
+					, alias_node_id
+					, alias_source_id
+				) VALUES (?::UUID, ?, ?, ?, ?, ?, ?)
+				""")) {
+			for ( ObjectDatumStreamAliasEntity alias : aliases ) {
+				if ( alias.getKind() != ObjectDatumKind.Node ) {
+					throw new IllegalArgumentException("Only Node kind is supported.");
+				}
+				if ( log != null ) {
+					log.debug("Inserting ObjectDatumStreamAliasEntity {}", alias);
+				}
+				stmt.setString(1, alias.getStreamId().toString());
+				stmt.setTimestamp(2, Timestamp.from(alias.created()));
+				stmt.setTimestamp(3,
+						alias.getModified() != null ? Timestamp.from(alias.getModified()) : now);
+				stmt.setObject(4, alias.getOriginalObjectId());
+				stmt.setString(5, alias.getOriginalSourceId());
+				stmt.setObject(6, alias.getObjectId());
+				stmt.setString(7, alias.getSourceId());
+				stmt.execute();
+			}
+		}
 	}
 
 	/**
