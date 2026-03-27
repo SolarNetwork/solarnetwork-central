@@ -49,4 +49,4 @@ WITH s AS (
 )
 SELECT datum.*
 FROM datum
-ORDER BY datum.stream_id, ts
+ORDER BY stream_id, ts

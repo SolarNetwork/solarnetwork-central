@@ -64,6 +64,8 @@ public final class SelectDatum
 
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
+	private final boolean aliased;
+	private final String metaStreamIdColumnName;
 	private final @Nullable CombiningConfig combine;
 	private final @Nullable DatumRollupType rollup;
 	private final int fetchSize;
@@ -130,6 +132,9 @@ public final class SelectDatum
 		}
 
 		this.fetchSize = fetchSize;
+		this.aliased = (filter.includeStreamAliases()
+				&& filter.getObjectKind() != ObjectDatumKind.Location);
+		this.metaStreamIdColumnName = (aliased ? "s.orig_stream_id" : "s.stream_id");
 	}
 
 	private boolean isDateOrLocalDateRangeRequired() {
@@ -208,8 +213,10 @@ public final class SelectDatum
 				buf.append("	s.names_i,\n");
 				buf.append("	s.names_a,\n");
 			}
+		} else if ( aliased ) {
+			buf.append("s.stream_id,\n");
 		} else {
-			buf.append("	datum.stream_id,\n");
+			buf.append("datum.stream_id,\n");
 		}
 		if ( combine != null && isMinuteAggregation() ) {
 			buf.append("	ds.ts,\n");
@@ -275,9 +282,11 @@ public final class SelectDatum
 
 	private String sqlTableName() {
 		return switch (aggregation) {
-			case FiveMinute, TenMinute, FifteenMinute, ThirtyMinute -> filter.hasLocalDateRange()
-					? "solardatm.rollup_datm_for_time_span_slots(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone, ?)"
-					: "solardatm.rollup_datm_for_time_span_slots(s.stream_id, ?, ?, ?)";
+			case FiveMinute, TenMinute, FifteenMinute, ThirtyMinute -> String.format(
+					filter.hasLocalDateRange()
+							? "solardatm.rollup_datm_for_time_span_slots(%s, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone, ?)"
+							: "solardatm.rollup_datm_for_time_span_slots(%s, ?, ?, ?)",
+					metaStreamIdColumnName);
 
 			case Hour -> "solardatm.agg_datm_hourly";
 
@@ -285,33 +294,35 @@ public final class SelectDatum
 
 			case Month -> "solardatm.agg_datm_monthly";
 
-			case DayOfWeek -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
-					? "solardatm.find_agg_datm_dow(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-					: "solardatm.find_agg_datm_dow(s.stream_id, ?, ?)";
+			case DayOfWeek -> String.format(filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					? "solardatm.find_agg_datm_dow(%s, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+					: "solardatm.find_agg_datm_dow(%s, ?, ?)", metaStreamIdColumnName);
 
-			case SeasonalDayOfWeek -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
-					? "solardatm.find_agg_datm_dow_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-					: "solardatm.find_agg_datm_dow_seasonal(s.stream_id, ?, ?)";
+			case SeasonalDayOfWeek -> String
+					.format(filter.hasLocalDateRange() || isDefaultLocalDateRange()
+							? "solardatm.find_agg_datm_dow_seasonal(%s, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+							: "solardatm.find_agg_datm_dow_seasonal(%s, ?, ?)", metaStreamIdColumnName);
 
-			case DayOfYear -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
-					? "solardatm.find_agg_datm_doy(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-					: "solardatm.find_agg_datm_doy(s.stream_id, ?, ?)";
+			case DayOfYear -> String.format(filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					? "solardatm.find_agg_datm_doy(%s, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+					: "solardatm.find_agg_datm_doy(%s, ?, ?)", metaStreamIdColumnName);
 
-			case HourOfDay -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
-					? "solardatm.find_agg_datm_hod(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-					: "solardatm.find_agg_datm_hod(s.stream_id, ?, ?)";
+			case HourOfDay -> String.format(filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					? "solardatm.find_agg_datm_hod(%s, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+					: "solardatm.find_agg_datm_hod(%s, ?, ?)", metaStreamIdColumnName);
 
-			case SeasonalHourOfDay -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
-					? "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-					: "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ?, ?)";
+			case SeasonalHourOfDay -> String
+					.format(filter.hasLocalDateRange() || isDefaultLocalDateRange()
+							? "solardatm.find_agg_datm_hod_seasonal(%s, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+							: "solardatm.find_agg_datm_hod_seasonal(%s, ?, ?)", metaStreamIdColumnName);
 
-			case HourOfYear -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
-					? "solardatm.find_agg_datm_hoy(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-					: "solardatm.find_agg_datm_hoy(s.stream_id, ?, ?)";
+			case HourOfYear -> String.format(filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					? "solardatm.find_agg_datm_hoy(%s, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+					: "solardatm.find_agg_datm_hoy(%s, ?, ?)", metaStreamIdColumnName);
 
-			case WeekOfYear -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
-					? "solardatm.find_agg_datm_woy(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-					: "solardatm.find_agg_datm_woy(s.stream_id, ?, ?)";
+			case WeekOfYear -> String.format(filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					? "solardatm.find_agg_datm_woy(%s, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+					: "solardatm.find_agg_datm_woy(%s, ?, ?)", metaStreamIdColumnName);
 
 			default -> "solardatm.da_datm";
 		};
@@ -323,16 +334,16 @@ public final class SelectDatum
 			buf.append("INNER JOIN LATERAL (\n");
 			buf.append("		SELECT datum.*\n");
 			buf.append("		FROM ").append(sqlTableName()).append(" datum\n");
-			buf.append("		WHERE datum.stream_id = s.stream_id\n");
+			buf.append("		WHERE datum.stream_id = ").append(metaStreamIdColumnName).append("\n");
 			if ( filter.hasDateOrLocalDate() ) {
 				addSqlWhere(buf, true);
 			}
 			buf.append("		ORDER BY datum.").append(timeColumnName(aggregation)).append(" DESC\n");
 			buf.append("		LIMIT 1\n");
-			buf.append("	) datum ON datum.stream_id = s.stream_id\n");
+			buf.append("	) datum ON datum.stream_id = ").append(metaStreamIdColumnName).append("\n");
 		} else {
-			buf.append("INNER JOIN ").append(sqlTableName())
-					.append(" datum ON datum.stream_id = s.stream_id\n");
+			buf.append("INNER JOIN ").append(sqlTableName()).append(" datum ON datum.stream_id = ")
+					.append(metaStreamIdColumnName).append("\n");
 		}
 	}
 
@@ -374,7 +385,7 @@ public final class SelectDatum
 							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
 					order);
 		} else {
-			order.append(", datum.stream_id, ts");
+			order.append(", stream_id, ts");
 		}
 		if ( !order.isEmpty() ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
@@ -402,7 +413,7 @@ public final class SelectDatum
 		if ( combine != null ) {
 			if ( isMinuteAggregation() ) {
 				buf.append("	GROUP BY datum.stream_id, ts\n");
-				buf.append(") AS ds ON ds.stream_id = s.stream_id\n");
+				buf.append(") AS ds ON ds.stream_id = ").append(metaStreamIdColumnName).append("\n");
 			}
 			buf.append(")\n");
 			buf.append(VirtualDatumSqlUtils.combineCteSql(combine.getType())).append("\n");
@@ -478,7 +489,8 @@ public final class SelectDatum
 				sqlCte(buf);
 				buf.append("SELECT SUM(datum.dcount) AS dcount\n");
 				buf.append("FROM s\n");
-				buf.append("INNER JOIN solardatm.count_datm_time_span_slots(s.stream_id");
+				buf.append("INNER JOIN solardatm.count_datm_time_span_slots(%s"
+						.formatted(metaStreamIdColumnName));
 				if ( filter.hasLocalDateRange() ) {
 					buf.append(", ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone");
 				} else {

@@ -67,6 +67,8 @@ public final class SelectDatumPartialAggregate
 
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
+	private final boolean aliased;
+	private final String metaStreamIdColumnName;
 	private final @Nullable CombiningConfig combine;
 	private final @Nullable DatumRollupType rollup;
 	private final List<DatumCriteria> intervalFilters;
@@ -162,6 +164,10 @@ public final class SelectDatumPartialAggregate
 			f.setLocalEndDate(e.getEnd());
 			return f;
 		}).collect(Collectors.toList());
+
+		this.aliased = (filter.includeStreamAliases()
+				&& filter.getObjectKind() != ObjectDatumKind.Location);
+		this.metaStreamIdColumnName = (aliased ? "s.orig_stream_id" : "s.stream_id");
 	}
 
 	private void sqlCte(StringBuilder buf) {
@@ -208,6 +214,8 @@ public final class SelectDatumPartialAggregate
 			buf.append("	s.source_rank,\n");
 			buf.append("	s.names_i,\n");
 			buf.append("	s.names_a,\n");
+		} else if ( aliased ) {
+			buf.append("s.stream_id,\n");
 		} else {
 			buf.append("datum.stream_id,\n");
 		}
@@ -233,7 +241,13 @@ public final class SelectDatumPartialAggregate
 				buf.append("	ds.read_a\n");
 				buf.append("FROM s\n");
 				buf.append("INNER JOIN (\n");
-				buf.append("	SELECT datum.stream_id,\n");
+				buf.append("	SELECT ");
+				if ( aliased ) {
+					buf.append("s.stream_id");
+				} else {
+					buf.append("datum.stream_id");
+				}
+				buf.append(",\n");
 			}
 			buf.append("	date_trunc('").append(sqlAgg(aggregation)).append(
 					"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,\n");
@@ -244,7 +258,7 @@ public final class SelectDatumPartialAggregate
 	private void sqlFrom(DatumCriteria filter, StringBuilder buf) {
 		buf.append("FROM s\n");
 		buf.append("INNER JOIN ").append(sqlTableName(filter.getAggregation()))
-				.append(" datum ON datum.stream_id = s.stream_id\n");
+				.append(" datum ON datum.stream_id = ").append(metaStreamIdColumnName).append("\n");
 	}
 
 	private String sqlTableName(@Nullable Aggregation aggregation) {
@@ -263,8 +277,15 @@ public final class SelectDatumPartialAggregate
 		buf.append("WHERE").append(where.substring(4));
 		if ( filter.getAggregation() != aggregation || aggregation == Aggregation.Year ) {
 			if ( rollup == null ) {
-				buf.append("GROUP BY datum.stream_id, date_trunc('").append(sqlAgg(aggregation)).append(
-						"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone\n");
+				buf.append("GROUP BY ");
+				if ( aliased ) {
+					buf.append("s.stream_id");
+				} else {
+					buf.append("datum.stream_id");
+				}
+				buf.append(", date_trunc('");
+				buf.append(sqlAgg(aggregation));
+				buf.append("', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone\n");
 				// partial aggregation can produce NULL output; omit those
 				buf.append("HAVING COUNT(*) > 0\n");
 			}
@@ -283,7 +304,7 @@ public final class SelectDatumPartialAggregate
 							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
 					order);
 		} else {
-			order.append(", datum.stream_id, ts");
+			order.append(", stream_id, ts");
 		}
 		if ( !order.isEmpty() ) {
 			buf.append("ORDER BY ").append(order.substring(idx));

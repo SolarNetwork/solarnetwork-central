@@ -15,4 +15,4 @@ SELECT datum.stream_id,
 FROM s
 -- stream_id, start, end, secs
 INNER JOIN solardatm.rollup_datm_for_time_span_slots(s.stream_id, ?, ?, ?) datum ON datum.stream_id = s.stream_id
-ORDER BY datum.stream_id, ts
+ORDER BY stream_id, ts

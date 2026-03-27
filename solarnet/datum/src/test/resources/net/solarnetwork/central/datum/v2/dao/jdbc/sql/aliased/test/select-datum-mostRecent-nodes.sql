@@ -1,0 +1,24 @@
+WITH s AS (
+	SELECT s.stream_id, s.node_id, s.source_id, s.orig_stream_id
+	FROM solardatm.da_datm_meta_aliased s
+	WHERE s.node_id = ANY(?)
+)
+SELECT s.stream_id, 
+	datum.ts, 
+	datum.received, 
+	datum.data_i, 
+	datum.data_a, 
+	datum.data_s, 
+	datum.data_t
+FROM s
+INNER JOIN LATERAL (
+		SELECT datum.*
+		FROM solardatm.da_datm datum
+		WHERE datum.stream_id = s.orig_stream_id
+		-- this style lateral join was found to execute fastest under Timescale's ChunkAppend scan
+		-- but was only selected if the ORDER BY was by time only, even though the index is defined
+		-- as (stream_id, ts)
+		ORDER BY datum.ts DESC
+		LIMIT 1
+	) datum ON datum.stream_id = s.orig_stream_id
+ORDER BY stream_id, ts

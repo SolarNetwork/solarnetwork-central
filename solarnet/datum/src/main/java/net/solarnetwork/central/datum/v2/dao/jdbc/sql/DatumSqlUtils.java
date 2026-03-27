@@ -758,21 +758,6 @@ public final class DatumSqlUtils {
 	}
 
 	/**
-	 * Generate SQL query to find full node metadata.
-	 *
-	 * @param filter
-	 *        the search criteria
-	 * @param buf
-	 *        the buffer to append the SQL to
-	 * @return the number of JDBC query parameters generated
-	 * @see #nodeMetadataFilterSql(ObjectMetadataCriteria, MetadataSelectStyle,
-	 *      StringBuilder)
-	 */
-	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, StringBuilder buf) {
-		return nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
-	}
-
-	/**
 	 * Generate SQL query to find node metadata.
 	 *
 	 * @param filter
@@ -922,7 +907,14 @@ public final class DatumSqlUtils {
 		if ( style != MetadataSelectStyle.Minimum ) {
 			buf.append(", COALESCE(l.time_zone, 'UTC') AS time_zone");
 		}
-		buf.append("\nFROM solardatm.da_datm_meta s\n");
+		if ( filter.includeStreamAliases() ) {
+			buf.append(", s.orig_stream_id");
+		}
+		buf.append("\nFROM solardatm.da_datm_meta");
+		if ( filter.includeStreamAliases() ) {
+			buf.append("_aliased");
+		}
+		buf.append(" s\n");
 		if ( filter != null && (filter.hasUserCriteria() || filter.hasTokenCriteria()) ) {
 			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = s.node_id\n");
 		}
@@ -980,14 +972,21 @@ public final class DatumSqlUtils {
 	public static int joinStreamMetadataExtremeDatumSql(ObjectStreamCriteria filter, String tableName,
 			@Nullable Aggregation aggregation, @Nullable String zoneClause, boolean latest,
 			StringBuilder buf) {
-		StringBuilder where = new StringBuilder();
-		int paramCount = filter.hasLocalDate()
+		final StringBuilder where = new StringBuilder();
+		final int paramCount = filter.hasLocalDate()
 				? DatumSqlUtils.whereLocalDateRange(filter, aggregation, zoneClause, where)
 				: DatumSqlUtils.whereDateRange(filter, aggregation, where);
+		final boolean aliased = (filter.includeStreamAliases()
+				&& filter.getObjectKind() != ObjectDatumKind.Location);
+
 		buf.append("INNER JOIN LATERAL (\n");
 		buf.append("		SELECT datum.*\n");
 		buf.append("		FROM ").append(tableName).append(" datum\n");
-		buf.append("		WHERE datum.stream_id = s.stream_id\n");
+		buf.append("		WHERE datum.stream_id = s.");
+		if ( aliased ) {
+			buf.append("orig_");
+		}
+		buf.append("stream_id\n");
 		buf.append(where);
 		buf.append("		ORDER BY datum.").append(timeColumnName(aggregation));
 		if ( latest ) {
@@ -996,7 +995,11 @@ public final class DatumSqlUtils {
 		buf.append("\n");
 		buf.append("		LIMIT 1\n");
 		buf.append("	) ").append(latest ? "late" : "early").append(" ON ")
-				.append(latest ? "late" : "early").append(".stream_id = s.stream_id\n");
+				.append(latest ? "late" : "early").append(".stream_id = s.");
+		if ( aliased ) {
+			buf.append("orig_");
+		}
+		buf.append("stream_id\n");
 		return paramCount;
 	}
 
@@ -1020,20 +1023,31 @@ public final class DatumSqlUtils {
 	 */
 	public static int joinStreamMetadataDateRangeSql(ObjectStreamCriteria filter, String tableName,
 			@Nullable Aggregation aggregation, @Nullable String zoneClause, StringBuilder buf) {
-		StringBuilder where = new StringBuilder();
-		int paramCount = filter.hasLocalDate()
+		final StringBuilder where = new StringBuilder();
+		final int paramCount = filter.hasLocalDate()
 				? DatumSqlUtils.whereLocalDateRange(filter, aggregation, zoneClause, where)
 				: DatumSqlUtils.whereDateRange(filter, aggregation, where);
 		if ( paramCount < 1 ) {
 			return 0;
 		}
+		final boolean aliased = (filter.includeStreamAliases()
+				&& filter.getObjectKind() != ObjectDatumKind.Location);
+
 		buf.append("INNER JOIN LATERAL (\n");
 		buf.append("	SELECT stream_id\n");
 		buf.append("	FROM ").append(tableName).append(" datum\n");
-		buf.append("	WHERE datum.stream_id = s.stream_id\n");
+		buf.append("	WHERE datum.stream_id = s.");
+		if ( aliased ) {
+			buf.append("orig_");
+		}
+		buf.append("stream_id\n");
 		buf.append(where);
 		buf.append("	LIMIT 1\n");
-		buf.append(") d ON d.stream_id = s.stream_id\n");
+		buf.append(") d ON d.stream_id = s.");
+		if ( aliased ) {
+			buf.append("orig_");
+		}
+		buf.append("stream_id\n");
 		return paramCount;
 	}
 

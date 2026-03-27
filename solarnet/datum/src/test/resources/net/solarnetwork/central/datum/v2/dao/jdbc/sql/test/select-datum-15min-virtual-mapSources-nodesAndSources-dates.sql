@@ -149,4 +149,4 @@ WITH rs AS (
 SELECT datum.*, vs.node_id, vs.source_id
 FROM datum
 INNER JOIN vs ON vs.vstream_id = datum.stream_id
-ORDER BY datum.stream_id, ts
+ORDER BY stream_id, ts

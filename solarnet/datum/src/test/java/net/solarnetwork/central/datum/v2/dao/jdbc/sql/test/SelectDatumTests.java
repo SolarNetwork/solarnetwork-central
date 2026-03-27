@@ -22,26 +22,29 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
+import static java.sql.ResultSet.CLOSE_CURSORS_AT_COMMIT;
+import static java.sql.ResultSet.CONCUR_READ_ONLY;
+import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
+import static java.sql.Types.TIMESTAMP;
+import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
-import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum.DEFAULT_FETCH_SIZE;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
+import static net.solarnetwork.util.ClassUtils.getResourceAsString;
+import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.thenIllegalArgumentException;
-import static org.easymock.EasyMock.aryEq;
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.sameInstance;
+import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -53,17 +56,22 @@ import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.aliased.test.TestAliasedSqlResources;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -74,11 +82,55 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @author matt
  * @version 1.4
  */
+@ParameterizedClass
+@ValueSource(booleans = { false, true }) // for aliased or not
+@SuppressWarnings("static-access")
+@ExtendWith(MockitoExtension.class)
 public class SelectDatumTests {
 
 	private static final int TEST_FETCH_SIZE = 567;
 
-	private final Logger log = LoggerFactory.getLogger(getClass());
+	@Parameter
+	private boolean aliased;
+
+	@Mock
+	private Connection con;
+
+	@Mock
+	private PreparedStatement stmt;
+
+	@Mock
+	private Array nodeIdsArray;
+
+	@Mock
+	private Array sourceIdsArray;
+
+	@Mock
+	private Array virtRealNodeIdsArray;
+
+	@Mock
+	private Array virtRealNodeIdsOrderArray;
+
+	@Mock
+	private Array virtRealSourceIdsArray;
+
+	@Mock
+	private Array virtRealSourceIdsOrderArray;
+
+	@Captor
+	private ArgumentCaptor<String> sqlCaptor;
+
+	private void thenSqlEqualsResource(String sql, String resource) {
+		// @formatter:off
+		and.then(sql)
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace(getResourceAsString(
+					resource,
+					(aliased ? TestAliasedSqlResources.class : TestSqlResources.class),
+					SQL_COMMENT))
+			;
+		// @formatter:on
+	}
 
 	@Test
 	public void sql_find_minute() {
@@ -107,6 +159,7 @@ public class SelectDatumTests {
 	public void sql_find_mostRecent_users() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setUserIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 
@@ -114,15 +167,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource("select-datum-mostRecent-users.sql",
-				TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-mostRecent-users.sql");
 	}
 
 	@Test
 	public void sql_find_mostRecent_nodes() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 
@@ -130,15 +182,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource("select-datum-mostRecent-nodes.sql",
-				TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-mostRecent-nodes.sql");
 	}
 
 	@Test
 	public void sql_find_mostRecent_nodes_localStartDate() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setLocalStartDate(LocalDateTime.of(2022, 03, 28, 0, 0));
@@ -147,16 +198,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-mostRecent-nodes-localStartDate.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-mostRecent-nodes-localStartDate.sql");
 	}
 
 	@Test
 	public void sql_find_mostRecent_nodes_localEndDate() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setLocalEndDate(LocalDateTime.of(2022, 03, 28, 0, 0));
@@ -165,51 +214,44 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource(
-				"select-datum-mostRecent-nodes-localEndDate.sql", TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-mostRecent-nodes-localEndDate.sql");
 	}
 
 	@Test
 	public void prep_find_mostRecent_nodes_localStartDate() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setLocalStartDate(LocalDateTime.of(2022, 03, 28, 0, 0));
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
-		stmt.setFetchSize(TEST_FETCH_SIZE);
-
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
-
-		stmt.setObject(eq(2), eq(filter.getLocalStartDate()), eq(Types.TIMESTAMP));
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray);
 		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(),
-				equalToTextResource("select-datum-mostRecent-nodes-localStartDate.sql",
-						TestSqlResources.class, SQL_COMMENT));
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "select-datum-mostRecent-nodes-localStartDate.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setObject(eq(2), eq(filter.getLocalStartDate()), eq(Types.TIMESTAMP));
+		then(stmt).should().setFetchSize(TEST_FETCH_SIZE);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
 	public void sql_find_daily_mostRecent_nodes() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
@@ -218,9 +260,7 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource("select-datum-daily-mostRecent-nodes.sql",
-				TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-daily-mostRecent-nodes.sql");
 	}
 
 	@Test
@@ -230,16 +270,15 @@ public class SelectDatumTests {
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
-		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
-		filter.setEndDate(Instant.now());
+		filter.setStartDate(now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
+		filter.setEndDate(now());
+		filter.setIncludeStreamAliases(aliased);
 
 		// WHEN
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource(
-				"select-datum-daily-mostRecent-nodes-dates.sql", TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-daily-mostRecent-nodes-dates.sql");
 	}
 
 	@Test
@@ -249,150 +288,131 @@ public class SelectDatumTests {
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
+		filter.setIncludeStreamAliases(aliased);
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
-		stmt.setFetchSize(SelectDatum.DEFAULT_FETCH_SIZE);
-
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray);
 		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
-				"select-datum-daily-mostRecent-nodes.sql", TestSqlResources.class, SQL_COMMENT));
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "select-datum-daily-mostRecent-nodes.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setFetchSize(DEFAULT_FETCH_SIZE);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
 	public void prep_find_daily_mostRecent_nodes_absoluteDates() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
 		filter.setEndDate(Instant.now());
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
-		stmt.setFetchSize(TEST_FETCH_SIZE);
-
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
-
-		stmt.setTimestamp(2, Timestamp.from(filter.getStartDate()));
-		stmt.setTimestamp(3, Timestamp.from(filter.getEndDate()));
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray);
 		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
-				"select-datum-daily-mostRecent-nodes-dates.sql", TestSqlResources.class, SQL_COMMENT));
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "select-datum-daily-mostRecent-nodes-dates.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setTimestamp(eq(2), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(3), eq(Timestamp.from(filter.getEndDate())));
+		then(stmt).should().setFetchSize(TEST_FETCH_SIZE);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
 	public void prep_find_daily_mostRecent_nodes_absoluteMinDate() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
-		stmt.setFetchSize(SelectDatum.DEFAULT_FETCH_SIZE);
-
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
-
-		stmt.setTimestamp(2, Timestamp.from(filter.getStartDate()));
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray);
 		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(),
-				equalToTextResource("select-datum-daily-mostRecent-nodes-date-min.sql",
-						TestSqlResources.class, SQL_COMMENT));
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "select-datum-daily-mostRecent-nodes-date-min.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setTimestamp(eq(2), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setFetchSize(DEFAULT_FETCH_SIZE);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
 	public void prep_find_daily_mostRecent_nodes_localDates() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setLocalStartDate(LocalDateTime.of(2022, 2, 1, 0, 0));
 		filter.setLocalEndDate(LocalDateTime.of(2022, 2, 7, 0, 0));
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
-		stmt.setFetchSize(TEST_FETCH_SIZE);
-
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
-
-		stmt.setObject(eq(2), eq(filter.getLocalStartDate()), eq(Types.TIMESTAMP));
-		stmt.setObject(eq(3), eq(filter.getLocalEndDate()), eq(Types.TIMESTAMP));
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray);
 		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(),
-				equalToTextResource("select-datum-daily-mostRecent-nodes-localDates.sql",
-						TestSqlResources.class, SQL_COMMENT));
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(),
+				"select-datum-daily-mostRecent-nodes-localDates.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setObject(eq(2), eq(filter.getLocalStartDate()), eq(Types.TIMESTAMP));
+		then(stmt).should().setObject(eq(3), eq(filter.getLocalEndDate()), eq(Types.TIMESTAMP));
+		then(stmt).should().setFetchSize(TEST_FETCH_SIZE);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
 	public void sql_find_15min_nodesAndSources_absoluteDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.FifteenMinute);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
@@ -403,15 +423,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource(
-				"select-datum-15min-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-15min-nodesAndSources-dates.sql");
 	}
 
 	@Test
 	public void sql_find_15min_nodesAndSources_absoluteDates_count() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.FifteenMinute);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
@@ -422,16 +441,14 @@ public class SelectDatumTests {
 		String sql = ((SqlProvider) new SelectDatum(filter).countPreparedStatementCreator()).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-15min-nodesAndSources-dates-count.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-15min-nodesAndSources-dates-count.sql");
 	}
 
 	@Test
 	public void sql_find_15min_nodesAndSources_absoluteDates_sortTimeNodeSource() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.FifteenMinute);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
@@ -443,16 +460,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-15min-nodesAndSources-dates-sortTimeNodeSource.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-15min-nodesAndSources-dates-sortTimeNodeSource.sql");
 	}
 
 	@Test
 	public void sql_find_15min_nodesAndSources_absoluteDates_sortTimeNodeSource_count() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.FifteenMinute);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
@@ -464,10 +479,7 @@ public class SelectDatumTests {
 		String sql = ((SqlProvider) new SelectDatum(filter).countPreparedStatementCreator()).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-15min-nodesAndSources-dates-count.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-15min-nodesAndSources-dates-count.sql");
 	}
 
 	@Test
@@ -475,50 +487,45 @@ public class SelectDatumTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.FifteenMinute);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(1).toInstant());
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
-		stmt.setFetchSize(TEST_FETCH_SIZE);
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
-
-		Array sourceIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
-		stmt.setArray(2, sourceIdsArray);
-		sourceIdsArray.free();
-
-		stmt.setTimestamp(3, Timestamp.from(filter.getStartDate()));
-		stmt.setTimestamp(4, Timestamp.from(filter.getEndDate()));
-		stmt.setObject(5, filter.getAggregation().getLevel());
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray, sourceIdsArray);
 		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
-				"select-datum-15min-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray, sourceIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "select-datum-15min-nodesAndSources-dates.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+		then(stmt).should().setTimestamp(eq(3), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getEndDate())));
+		then(stmt).should().setObject(eq(5), eq(filter.getAggregation().getLevel()));
+		then(stmt).should().setFetchSize(TEST_FETCH_SIZE);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
 	public void sql_find_daily_nodesAndSources_absoluteDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
@@ -529,15 +536,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource(
-				"select-datum-daily-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-daily-nodesAndSources-dates.sql");
 	}
 
 	@Test
 	public void sql_find_daily_nodesAndSources_absoluteDates_count() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
@@ -548,16 +554,14 @@ public class SelectDatumTests {
 		String sql = ((SqlProvider) new SelectDatum(filter).countPreparedStatementCreator()).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-daily-nodesAndSources-dates-count.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-daily-nodesAndSources-dates-count.sql");
 	}
 
 	@Test
 	public void sql_find_daily_nodesAndSources_absoluteDates_sortTimeNodeSource() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
@@ -569,16 +573,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-daily-nodesAndSources-dates-sortTimeNodeSource.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-daily-nodesAndSources-dates-sortTimeNodeSource.sql");
 	}
 
 	@Test
 	public void sql_find_daily_nodesAndSources_absoluteDates_sortTimeNodeSource_count() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
@@ -590,16 +592,14 @@ public class SelectDatumTests {
 		String sql = ((SqlProvider) new SelectDatum(filter).countPreparedStatementCreator()).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-daily-nodesAndSources-dates-count.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-daily-nodesAndSources-dates-count.sql");
 	}
 
 	@Test
 	public void sql_find_15min_vids() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.FifteenMinute);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "a/*", "b", "c" });
@@ -613,16 +613,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-15min-virtual-nodesAndSources-dates.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-15min-virtual-nodesAndSources-dates.sql");
 	}
 
 	@Test
 	public void sql_find_15min_vids_combineNodeOnly() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.FifteenMinute);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "a/*", "b", "c" });
@@ -635,16 +633,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-15min-virtual-mapNodes-nodesAndSources-dates.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-15min-virtual-mapNodes-nodesAndSources-dates.sql");
 	}
 
 	@Test
 	public void sql_find_15min_vids_combineSourceOnly() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.FifteenMinute);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "a/*", "b", "c" });
@@ -657,16 +653,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-15min-virtual-mapSources-nodesAndSources-dates.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-15min-virtual-mapSources-nodesAndSources-dates.sql");
 	}
 
 	@Test
 	public void sql_find_daily_vids_nodeAndSources_absoluteDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "a", "b", "c" });
@@ -680,16 +674,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-daily-virtual-nodesAndSources-dates.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-daily-virtual-nodesAndSources-dates.sql");
 	}
 
 	@Test
 	public void prep_find_daily_vids_nodeAndSources_localDates() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "a", "b", "c" });
@@ -699,77 +691,65 @@ public class SelectDatumTests {
 		filter.setObjectIdMaps(new String[] { "100:1,2,3" });
 		filter.setSourceIdMaps(new String[] { "V:a,b,c" });
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
-		stmt.setFetchSize(TEST_FETCH_SIZE);
+		// @formatter:off
+		given(con.createArrayOf(eq("bigint"), eq(filter.getNodeIds())))
+			.willReturn(virtRealNodeIdsArray)
+			.willReturn(virtRealNodeIdsOrderArray)
+			.willReturn(nodeIdsArray);
 
-		// set virtual ID parameters
-		Long[] virtRealNodeIds = new Long[] { 1L, 2L, 3L };
-		Array virtRealNodeIdsArray = createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(virtRealNodeIds))).andReturn(virtRealNodeIdsArray);
-		stmt.setArray(1, virtRealNodeIdsArray);
-		virtRealNodeIdsArray.free();
-		stmt.setObject(2, 100L);
-
-		// set read ID virtual ordering
-		Array virtRealNodeIdsOrderArray = createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(virtRealNodeIds)))
-				.andReturn(virtRealNodeIdsOrderArray);
-		stmt.setArray(3, virtRealNodeIdsOrderArray);
-		virtRealNodeIdsOrderArray.free();
-
-		String[] virtRealSourceIds = new String[] { "a", "b", "c" };
-		Array virtRealSourceIdsArray = createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(virtRealSourceIds)))
-				.andReturn(virtRealSourceIdsArray);
-		stmt.setArray(4, virtRealSourceIdsArray);
-		virtRealSourceIdsArray.free();
-		stmt.setString(5, "V");
-
-		Array virtRealSourceIdsOrderArray = createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(virtRealSourceIds)))
-				.andReturn(virtRealSourceIdsOrderArray);
-		stmt.setArray(6, virtRealSourceIdsOrderArray);
-		virtRealSourceIdsOrderArray.free();
-
-		// set metadata parameters
-		Array nodeIdsArray = createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(7, nodeIdsArray);
-		nodeIdsArray.free();
-
-		Array sourceIdsArray = createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
-		stmt.setArray(8, sourceIdsArray);
-		sourceIdsArray.free();
-
-		// main date parameters
-		stmt.setTimestamp(9, Timestamp.from(filter.getStartDate()));
-		stmt.setTimestamp(10, Timestamp.from(filter.getEndDate()));
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds())))
+			.willReturn(virtRealSourceIdsArray)
+			.willReturn(virtRealSourceIdsOrderArray)
+			.willReturn(sourceIdsArray);
+		// @formatter:on
 
 		// WHEN
-		replay(con, stmt, virtRealNodeIdsArray, virtRealNodeIdsOrderArray, virtRealSourceIdsArray,
-				virtRealSourceIdsOrderArray, nodeIdsArray, sourceIdsArray);
 		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(),
-				equalToTextResource("select-datum-daily-virtual-nodesAndSources-dates.sql",
-						TestSqlResources.class, SQL_COMMENT));
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, virtRealNodeIdsArray, virtRealNodeIdsOrderArray, virtRealSourceIdsArray,
-				virtRealSourceIdsOrderArray, nodeIdsArray, sourceIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(),
+				"select-datum-daily-virtual-nodesAndSources-dates.sql");
+
+		// set virtual node ID parameters
+		then(stmt).should().setArray(eq(1), same(virtRealNodeIdsArray));
+		then(virtRealNodeIdsArray).should().free();
+		then(stmt).should().setObject(2, 100L);
+
+		// set virtual node ID ordering
+		then(stmt).should().setArray(eq(3), same(virtRealNodeIdsOrderArray));
+		then(virtRealNodeIdsOrderArray).should().free();
+
+		// set virtual node ID parameters
+		then(stmt).should().setArray(eq(4), same(virtRealSourceIdsArray));
+		then(virtRealSourceIdsArray).should().free();
+		then(stmt).should().setString(5, "V");
+
+		// set virtual node ID ordering
+		then(stmt).should().setArray(eq(6), same(virtRealSourceIdsOrderArray));
+		then(virtRealSourceIdsOrderArray).should().free();
+
+		// general criteria
+		then(stmt).should().setArray(eq(7), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setArray(eq(8), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+		then(stmt).should().setTimestamp(eq(9), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(10), eq(Timestamp.from(filter.getEndDate())));
+		then(stmt).should().setFetchSize(TEST_FETCH_SIZE);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
 	public void sql_find_daily_vids_nodeAndSources_absoluteDates_counts() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "a/*", "b", "c" });
@@ -783,16 +763,14 @@ public class SelectDatumTests {
 		String sql = ((SqlProvider) new SelectDatum(filter).countPreparedStatementCreator()).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-daily-virtual-nodesAndSources-dates-counts.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-daily-virtual-nodesAndSources-dates-counts.sql");
 	}
 
 	@Test
 	public void sql_find_daily_vids_nodeAndSources_absoluteDates_sortTimeNodeSource() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "a/*", "b", "c" });
@@ -807,17 +785,15 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource(
-						"select-datum-daily-virtual-nodesAndSources-dates-sortTimeNodeSource.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql,
+				"select-datum-daily-virtual-nodesAndSources-dates-sortTimeNodeSource.sql");
 	}
 
 	@Test
 	public void sql_find_daily_vids_nodeAndSources_absoluteDates_sortTimeNodeSource_counts() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "a/*", "b", "c" });
@@ -832,16 +808,14 @@ public class SelectDatumTests {
 		String sql = ((SqlProvider) new SelectDatum(filter).countPreparedStatementCreator()).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-daily-virtual-nodesAndSources-dates-counts.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-daily-virtual-nodesAndSources-dates-counts.sql");
 	}
 
 	@Test
 	public void sql_find_weekly_vids_nodeAndSources_absoluteDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.Week);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "a/*", "b", "c" });
@@ -855,16 +829,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-weekly-virtual-nodesAndSources-dates.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-weekly-virtual-nodesAndSources-dates.sql");
 	}
 
 	@Test
 	public void sql_find_seasonal_hod_nodesAndSources_absoluteDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.SeasonalHourOfDay);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
@@ -875,60 +847,52 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-seasonal_hod-nodesAndSources-dates.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-seasonal_hod-nodesAndSources-dates.sql");
 	}
 
 	@Test
 	public void prep_find_seasonal_hod_nodesAndSources_absoluteDates() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.SeasonalHourOfDay);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
-		stmt.setFetchSize(SelectDatum.DEFAULT_FETCH_SIZE);
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
-
-		Array sourceIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
-		stmt.setArray(2, sourceIdsArray);
-		sourceIdsArray.free();
-
-		stmt.setTimestamp(3, Timestamp.from(filter.getStartDate()));
-		stmt.setTimestamp(4, Timestamp.from(filter.getEndDate()));
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray, sourceIdsArray);
-		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
+		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(),
-				equalToTextResource("select-datum-seasonal_hod-nodesAndSources-dates.sql",
-						TestSqlResources.class, SQL_COMMENT));
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray, sourceIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(),
+				"select-datum-seasonal_hod-nodesAndSources-dates.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+		then(stmt).should().setTimestamp(eq(3), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getEndDate())));
+		then(stmt).should().setFetchSize(TEST_FETCH_SIZE);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
 	public void sql_find_seasonal_hod_nodesAndSources_defaultDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.SeasonalHourOfDay);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
@@ -937,58 +901,50 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-seasonal_hod-nodesAndSources-localDates.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-seasonal_hod-nodesAndSources-localDates.sql");
 	}
 
 	@Test
 	public void prep_find_seasonal_hod_nodesAndSources_defaultDates() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.SeasonalHourOfDay);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
-		stmt.setFetchSize(SelectDatum.DEFAULT_FETCH_SIZE);
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
-
-		Array sourceIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
-		stmt.setArray(2, sourceIdsArray);
-		sourceIdsArray.free();
-
-		stmt.setObject(3, LocalDate.now(UTC).minusYears(2).atStartOfDay(), Types.TIMESTAMP);
-		stmt.setObject(4, LocalDate.now(UTC).plusDays(1).atStartOfDay(), Types.TIMESTAMP);
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray, sourceIdsArray);
-		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
+		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(),
-				equalToTextResource("select-datum-seasonal_hod-nodesAndSources-localDates.sql",
-						TestSqlResources.class, SQL_COMMENT));
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray, sourceIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(),
+				"select-datum-seasonal_hod-nodesAndSources-localDates.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+		then(stmt).should().setObject(3, LocalDate.now(UTC).minusYears(2).atStartOfDay(), TIMESTAMP);
+		then(stmt).should().setObject(4, LocalDate.now(UTC).plusDays(1).atStartOfDay(), TIMESTAMP);
+		then(stmt).should().setFetchSize(TEST_FETCH_SIZE);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
 	public void sql_find_doy_nodesAndSources_absoluteDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.DayOfYear);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
@@ -999,15 +955,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource("select-datum-doy-nodesAndSources-dates.sql",
-				TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-doy-nodesAndSources-dates.sql");
 	}
 
 	@Test
 	public void sql_find_hoy_nodesAndSources_absoluteDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.HourOfYear);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
@@ -1018,15 +973,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource("select-datum-hoy-nodesAndSources-dates.sql",
-				TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-hoy-nodesAndSources-dates.sql");
 	}
 
 	@Test
 	public void sql_find_reverse_limit() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setObjectKind(ObjectDatumKind.Node);
 		filter.setNodeId(randomLong());
 		filter.setSourceId(randomString());
@@ -1040,16 +994,14 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.info("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-datum-node-source-user-time-reverse-limit.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-node-source-user-time-reverse-limit.sql");
 	}
 
 	@Test
 	public void sql_find_reading_month_rollup_all() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.Difference);
 		filter.setAggregation(Aggregation.Month);
 		filter.setDatumRollupType(DatumRollupType.All);
@@ -1065,10 +1017,7 @@ public class SelectDatumTests {
 		String sql = new SelectDatum(filter).getSql();
 
 		// THEN
-		log.info("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql,
-				equalToTextResource("select-reading-node-source-user-time-month-rollup.sql",
-						TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-reading-node-source-user-time-month-rollup.sql");
 	}
 
 }

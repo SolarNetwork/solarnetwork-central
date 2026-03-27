@@ -164,6 +164,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		setInstantaneousPropertyNames(criteria.getInstantaneousPropertyNames());
 		setAccumulatingPropertyNames(criteria.getAccumulatingPropertyNames());
 		setStatusPropertyNames(criteria.getStatusPropertyNames());
+		setIncludeStreamAliases(criteria.getIncludeStreamAliases());
 		if ( criteria instanceof BasicDatumCriteria c ) {
 			setMostRecent(c.isMostRecent());
 			setWithoutTotalResultsCount(c.isWithoutTotalResultsCount());
@@ -178,9 +179,6 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 			}
 			if ( criteria instanceof OptimizedQueryCriteria c ) {
 				setWithoutTotalResultsCount(c.isWithoutTotalResultsCount());
-			}
-			if ( criteria instanceof StreamAliasCriteria c ) {
-				setIncludeStreamAliases(c.getIncludeStreamAliases());
 			}
 			if ( criteria instanceof ReadingTypeCriteria c ) {
 				setReadingType(c.getReadingType());

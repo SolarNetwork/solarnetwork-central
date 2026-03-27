@@ -20,4 +20,4 @@ INNER JOIN LATERAL (
 		ORDER BY datum.ts_start DESC
 		LIMIT 1
 	) datum ON datum.stream_id = s.stream_id
-ORDER BY datum.stream_id, ts
+ORDER BY stream_id, ts

@@ -16,4 +16,4 @@ FROM s
 INNER JOIN solardatm.agg_datm_daily datum ON datum.stream_id = s.stream_id
 WHERE datum.ts_start >= ?
 	AND datum.ts_start < ?
-ORDER BY datum.stream_id, ts
+ORDER BY stream_id, ts

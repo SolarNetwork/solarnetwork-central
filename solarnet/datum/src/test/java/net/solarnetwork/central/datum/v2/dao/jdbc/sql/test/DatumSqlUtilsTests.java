@@ -23,6 +23,10 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle.Full;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle.Minimum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle.WithGeography;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle.WithZone;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
@@ -75,13 +79,74 @@ public class DatumSqlUtilsTests {
 	private Array sqlArray2;
 
 	@Test
-	public void nodeMetadataFilterSql_all() {
+	public void nodeMetadataFilterSql_all_WithGeography() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, WithGeography, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(count)
+			.as("No parameters added")
+			.isEqualTo(0)
+			;
+		and.then(buf.toString())
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace("""
+					SELECT s.stream_id, s.node_id, s.source_id, s.jdata
+						, l.country, l.region, l.state_prov, l.locality, l.postal_code
+						, l.address, l.latitude, l.longitude, l.elevation
+						, COALESCE(l.time_zone, 'UTC') AS time_zone
+					FROM solardatm.da_datm_meta s
+					INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+					INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeMetadataFilterSql_all_WithGeography_Aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, WithGeography, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(count)
+			.as("No parameters added")
+			.isEqualTo(0)
+			;
+		and.then(buf.toString())
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace("""
+					SELECT s.stream_id, s.node_id, s.source_id, s.jdata
+						, l.country, l.region, l.state_prov, l.locality, l.postal_code
+						, l.address, l.latitude, l.longitude, l.elevation
+						, COALESCE(l.time_zone, 'UTC') AS time_zone, s.orig_stream_id
+					FROM solardatm.da_datm_meta_aliased s
+					INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+					INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeMetadataFilterSql_all_Full() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -103,6 +168,141 @@ public class DatumSqlUtilsTests {
 	}
 
 	@Test
+	public void nodeMetadataFilterSql_all_Full_Aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(count)
+			.as("No parameters added")
+			.isEqualTo(0)
+			;
+		and.then(buf.toString())
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace("""
+					SELECT s.stream_id, s.node_id, s.source_id, s.names_i, s.names_a, s.names_s, s.jdata,
+						'n'::CHARACTER AS kind, COALESCE(l.time_zone, 'UTC') AS time_zone, s.orig_stream_id
+					FROM solardatm.da_datm_meta_aliased s
+					LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+					LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeMetadataFilterSql_all_WithZone() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, WithZone, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(count)
+			.as("No parameters added")
+			.isEqualTo(0)
+			;
+		and.then(buf.toString())
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace("""
+					SELECT s.stream_id, s.node_id, s.source_id, COALESCE(l.time_zone, 'UTC') AS time_zone
+					FROM solardatm.da_datm_meta s
+					LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+					LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeMetadataFilterSql_all_WithZone_Aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, WithZone, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(count)
+			.as("No parameters added")
+			.isEqualTo(0)
+			;
+		and.then(buf.toString())
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace("""
+					SELECT s.stream_id, s.node_id, s.source_id, COALESCE(l.time_zone, 'UTC') AS time_zone, s.orig_stream_id
+					FROM solardatm.da_datm_meta_aliased s
+					LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+					LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeMetadataFilterSql_all_Minimum() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Minimum, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(count)
+			.as("No parameters added")
+			.isEqualTo(0)
+			;
+		and.then(buf.toString())
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace("""
+					SELECT s.stream_id, s.node_id, s.source_id
+					FROM solardatm.da_datm_meta s
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeMetadataFilterSql_all_Minimum_Aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Minimum, buf);
+
+		// THEN
+		// @formatter:off
+		and.then(count)
+			.as("No parameters added")
+			.isEqualTo(0)
+			;
+		and.then(buf.toString())
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace("""
+					SELECT s.stream_id, s.node_id, s.source_id, s.orig_stream_id
+					FROM solardatm.da_datm_meta_aliased s
+					""")
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void nodeMetadataFilterSql_forNode() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -110,7 +310,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -140,7 +340,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -170,7 +370,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -200,7 +400,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -230,7 +430,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -260,7 +460,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -290,7 +490,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -320,7 +520,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -350,7 +550,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -381,7 +581,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -413,7 +613,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		StringBuilder buf = new StringBuilder();
-		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, Full, buf);
 
 		// THEN
 		// @formatter:off
@@ -716,6 +916,30 @@ public class DatumSqlUtilsTests {
 	}
 
 	@Test
+	public void joinStreamMetadataExtremeDatumSql_noDateRange_latest_aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm",
+				Aggregation.None, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, true, buf);
+
+		// THEN
+		and.then(result).as("No parameters generated").isZero();
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.da_datm datum
+					WHERE datum.stream_id = s.orig_stream_id
+					ORDER BY datum.ts DESC
+					LIMIT 1
+				) late ON late.stream_id = s.orig_stream_id
+				""");
+	}
+
+	@Test
 	public void joinStreamMetadataExtremeDatumSql_noDateRange_earliest() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -735,6 +959,30 @@ public class DatumSqlUtilsTests {
 					ORDER BY datum.ts
 					LIMIT 1
 				) early ON early.stream_id = s.stream_id
+				""");
+	}
+
+	@Test
+	public void joinStreamMetadataExtremeDatumSql_noDateRange_earliest_aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm",
+				Aggregation.None, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, false, buf);
+
+		// THEN
+		and.then(result).as("No parameters generated").isZero();
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.da_datm datum
+					WHERE datum.stream_id = s.orig_stream_id
+					ORDER BY datum.ts
+					LIMIT 1
+				) early ON early.stream_id = s.orig_stream_id
 				""");
 	}
 
@@ -766,6 +1014,34 @@ public class DatumSqlUtilsTests {
 	}
 
 	@Test
+	public void joinStreamMetadataExtremeDatumSql_dateRange_latest_aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm",
+				Aggregation.None, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, true, buf);
+
+		// THEN
+		and.then(result).as("Start/date parameters generated").isEqualTo(2);
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.da_datm datum
+					WHERE datum.stream_id = s.orig_stream_id
+						AND datum.ts >= ?
+						AND datum.ts < ?
+					ORDER BY datum.ts DESC
+					LIMIT 1
+				) late ON late.stream_id = s.orig_stream_id
+				""");
+	}
+
+	@Test
 	public void joinStreamMetadataExtremeDatumSql_dateRange_earliest() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -789,6 +1065,34 @@ public class DatumSqlUtilsTests {
 					ORDER BY datum.ts
 					LIMIT 1
 				) early ON early.stream_id = s.stream_id
+				""");
+	}
+
+	@Test
+	public void joinStreamMetadataExtremeDatumSql_dateRange_earliest_aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm",
+				Aggregation.None, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, false, buf);
+
+		// THEN
+		and.then(result).as("Start/date parameters generated").isEqualTo(2);
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.da_datm datum
+					WHERE datum.stream_id = s.orig_stream_id
+						AND datum.ts >= ?
+						AND datum.ts < ?
+					ORDER BY datum.ts
+					LIMIT 1
+				) early ON early.stream_id = s.orig_stream_id
 				""");
 	}
 
@@ -820,6 +1124,34 @@ public class DatumSqlUtilsTests {
 	}
 
 	@Test
+	public void joinStreamMetadataExtremeDatumSql_localDateRange_latest_aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setLocalStartDate(LocalDateTime.now());
+		filter.setLocalEndDate(filter.getLocalStartDate().plusHours(1));
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm",
+				Aggregation.None, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, true, buf);
+
+		// THEN
+		and.then(result).as("Local start/date parameters generated").isEqualTo(2);
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.da_datm datum
+					WHERE datum.stream_id = s.orig_stream_id
+						AND datum.ts >= ? AT TIME ZONE s.time_zone
+						AND datum.ts < ? AT TIME ZONE s.time_zone
+					ORDER BY datum.ts DESC
+					LIMIT 1
+				) late ON late.stream_id = s.orig_stream_id
+				""");
+	}
+
+	@Test
 	public void joinStreamMetadataExtremeDatumSql_localDateRange_earliest() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -847,6 +1179,34 @@ public class DatumSqlUtilsTests {
 	}
 
 	@Test
+	public void joinStreamMetadataExtremeDatumSql_localDateRange_earliest_aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setLocalStartDate(LocalDateTime.now());
+		filter.setLocalEndDate(filter.getLocalStartDate().plusHours(1));
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.da_datm",
+				Aggregation.None, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, false, buf);
+
+		// THEN
+		and.then(result).as("Local start/date parameters generated").isEqualTo(2);
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.da_datm datum
+					WHERE datum.stream_id = s.orig_stream_id
+						AND datum.ts >= ? AT TIME ZONE s.time_zone
+						AND datum.ts < ? AT TIME ZONE s.time_zone
+					ORDER BY datum.ts
+					LIMIT 1
+				) early ON early.stream_id = s.orig_stream_id
+				""");
+	}
+
+	@Test
 	public void joinStreamMetadataExtremeDatumSql_agg_hourly_latest() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -866,6 +1226,30 @@ public class DatumSqlUtilsTests {
 					ORDER BY datum.ts_start DESC
 					LIMIT 1
 				) late ON late.stream_id = s.stream_id
+				""");
+	}
+
+	@Test
+	public void joinStreamMetadataExtremeDatumSql_agg_hourly_latest_aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.agg_datm_hourly",
+				Aggregation.Hour, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, true, buf);
+
+		// THEN
+		and.then(result).as("No parameters generated").isZero();
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.agg_datm_hourly datum
+					WHERE datum.stream_id = s.orig_stream_id
+					ORDER BY datum.ts_start DESC
+					LIMIT 1
+				) late ON late.stream_id = s.orig_stream_id
 				""");
 	}
 
@@ -895,4 +1279,33 @@ public class DatumSqlUtilsTests {
 				) late ON late.stream_id = s.stream_id
 				""");
 	}
+
+	@Test
+	public void joinStreamMetadataExtremeDatumSql_agg_hourly_dateRange_latest_aliased() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+		filter.setIncludeStreamAliases(true);
+
+		// WHEN
+		StringBuilder buf = new StringBuilder();
+		int result = DatumSqlUtils.joinStreamMetadataExtremeDatumSql(filter, "solardatm.agg_datm_hourly",
+				Aggregation.Hour, DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, true, buf);
+
+		// THEN
+		and.then(result).as("Start/date parameters generated").isEqualTo(2);
+		and.then(buf.toString()).as("SQL generated").isEqualToIgnoringWhitespace("""
+				INNER JOIN LATERAL (
+					SELECT datum.*
+					FROM solardatm.agg_datm_hourly datum
+					WHERE datum.stream_id = s.orig_stream_id
+						AND datum.ts_start >= ?
+						AND datum.ts_start < ?
+					ORDER BY datum.ts_start DESC
+					LIMIT 1
+				) late ON late.stream_id = s.orig_stream_id
+				""");
+	}
+
 }
