@@ -47,11 +47,11 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Basic implementation of {@link DatumCriteria}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  * @since 2.8
  */
-public class BasicDatumCriteria extends BasicCoreCriteria
-		implements DatumCriteria, AuditDatumCriteria, DatumAuxiliaryCriteria {
+public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriteria, AuditDatumCriteria,
+		DatumAuxiliaryCriteria, ObjectDatumStreamAliasFilter {
 
 	private UUID @Nullable [] streamIds;
 	private @Nullable Instant startDate;

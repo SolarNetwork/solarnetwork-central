@@ -29,7 +29,7 @@ import org.jspecify.annotations.Nullable;
  * Search criteria for streams.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface StreamCriteria {
@@ -55,5 +55,15 @@ public interface StreamCriteria {
 	 * @return the datum stream IDs
 	 */
 	UUID @Nullable [] getStreamIds();
+
+	/**
+	 * Test if this filter has stream criteria.
+	 *
+	 * @return {@literal true} if the {@link #getStreamId()} is non-null
+	 * @since 1.1
+	 */
+	default boolean hasStreamCriteria() {
+		return (getStreamId() != null);
+	}
 
 }

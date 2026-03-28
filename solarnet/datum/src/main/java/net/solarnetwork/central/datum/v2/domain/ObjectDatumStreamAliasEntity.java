@@ -88,7 +88,7 @@ public final class ObjectDatumStreamAliasEntity extends BasicEntity<UUID>
 		this.sourceId = requireNonNullArgument(sourceId, "sourceId");
 		this.originalObjectId = requireNonNullArgument(originalObjectId, "originalObjectId");
 		this.originalSourceId = requireNonNullArgument(originalSourceId, "originalSourceId");
-		this.modified = requireNonNullArgument(modified, "modified");
+		this.modified = modified;
 	}
 
 	@Override

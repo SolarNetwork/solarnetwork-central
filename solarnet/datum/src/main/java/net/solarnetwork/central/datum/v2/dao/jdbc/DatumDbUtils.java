@@ -778,8 +778,6 @@ public final class DatumDbUtils {
 	 *        the JDBC operations to use
 	 * @param aliases
 	 *        the aliases to insert
-	 * @throws SQLException
-	 *         if any SQL error occurs
 	 * @since 2.8
 	 */
 	public static void insertObjectDatumStreamAliases(@Nullable Logger log, JdbcOperations jdbcTemplate,
