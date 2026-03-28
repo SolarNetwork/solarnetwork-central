@@ -38,7 +38,7 @@ public interface NodeIdRelated {
 	 * 
 	 * @since 1.1
 	 */
-	Long UNASSIGNED_NODE_ID = Long.MIN_VALUE;
+	Long UNASSIGNED_NODE_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	/**
 	 * Get node ID this entity relates to.
@@ -55,11 +55,9 @@ public interface NodeIdRelated {
 	 *         {@link #UNASSIGNED_NODE_ID})
 	 * @since 1.1
 	 */
-	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	default boolean nodeIdIsAssigned() {
 		try {
-			Long nodeId = getNodeId();
-			return (nodeId != null && nodeId != UNASSIGNED_NODE_ID);
+			return EntityConstants.isAssigned(getNodeId());
 		} catch ( IllegalStateException e ) {
 			return false;
 		}

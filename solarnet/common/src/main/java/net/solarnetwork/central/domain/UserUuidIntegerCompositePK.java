@@ -44,19 +44,19 @@ public final class UserUuidIntegerCompositePK extends BasePK implements
 	 * A special "not a value" instance to be used for generated user ID values
 	 * yet to be generated.
 	 */
-	public static final Long UNASSIGNED_USER_ID = UserIdRelated.UNASSIGNED_USER_ID;
+	public static final Long UNASSIGNED_USER_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	/**
 	 * A special "not a value" instance to be used for generated group ID values
 	 * yet to be generated.
 	 */
-	public static final UUID UNASSIGNED_GROUP_ID = new UUID(0L, 0L);
+	public static final UUID UNASSIGNED_GROUP_ID = EntityConstants.UNASSIGNED_UUID_ID;
 
 	/**
 	 * A special "not a value" instance to be used for generated entity ID
 	 * values yet to be generated.
 	 */
-	public static final Integer UNASSIGNED_ENTITY_ID = Integer.MIN_VALUE;
+	public static final Integer UNASSIGNED_ENTITY_ID = EntityConstants.UNASSIGNED_INTEGER_ID;
 
 	/**
 	 * Create a new instance using the "unassigned" entity ID value.
@@ -182,13 +182,12 @@ public final class UserUuidIntegerCompositePK extends BasePK implements
 		return entityId;
 	}
 
-	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
 		return switch (index) {
-			case 0 -> userId != UNASSIGNED_USER_ID;
-			case 1 -> groupId != UNASSIGNED_GROUP_ID;
-			case 2 -> entityId != UNASSIGNED_ENTITY_ID;
+			case 0 -> EntityConstants.isAssigned(userId);
+			case 1 -> EntityConstants.isAssigned(groupId);
+			case 2 -> EntityConstants.isAssigned(entityId);
 			default -> CompositeKey3.super.keyComponentIsAssigned(index);
 		};
 	}

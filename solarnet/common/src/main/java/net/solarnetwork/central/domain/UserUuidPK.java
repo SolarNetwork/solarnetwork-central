@@ -46,14 +46,13 @@ public final class UserUuidPK extends BasePK
 	 * A special "not a value" instance to be used for generated user ID values
 	 * yet to be generated.
 	 */
-	public static final Long UNASSIGNED_USER_ID = UserIdRelated.UNASSIGNED_USER_ID;
+	public static final Long UNASSIGNED_USER_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	/**
 	 * A special "not a value" instance to be used for generated UUID values yet
 	 * to be generated.
 	 */
-	public static final UUID UNASSIGNED_UUID_ID = UUID
-			.fromString("00000000-0000-7000-b000-000000000000");
+	public static final UUID UNASSIGNED_UUID_ID = EntityConstants.UNASSIGNED_UUID_ID;
 
 	/**
 	 * Create a new instance using the "unassigned" UUID value.
@@ -154,12 +153,11 @@ public final class UserUuidPK extends BasePK
 		return uuid;
 	}
 
-	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public boolean keyComponentIsAssigned(int index) {
 		return switch (index) {
-			case 0 -> userId != UNASSIGNED_USER_ID;
-			case 1 -> uuid != UNASSIGNED_UUID_ID;
+			case 0 -> EntityConstants.isAssigned(userId);
+			case 1 -> EntityConstants.isAssigned(uuid);
 			default -> CompositeKey2.super.keyComponentIsAssigned(index);
 		};
 	}

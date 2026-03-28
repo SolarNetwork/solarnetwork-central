@@ -44,13 +44,13 @@ public final class UserLongCompositePK extends BasePK
 	 * A special "not a value" instance to be used for generated user ID values
 	 * yet to be generated.
 	 */
-	public static final Long UNASSIGNED_USER_ID = UserIdRelated.UNASSIGNED_USER_ID;
+	public static final Long UNASSIGNED_USER_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	/**
 	 * A special "not a value" instance to be used for generated entity ID
 	 * values yet to be generated.
 	 */
-	public static final Long UNASSIGNED_ENTITY_ID = Long.MIN_VALUE;
+	public static final Long UNASSIGNED_ENTITY_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	/**
 	 * Create a new instance using the "unassigned" entity ID value.
@@ -150,12 +150,11 @@ public final class UserLongCompositePK extends BasePK
 		return entityId;
 	}
 
-	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public boolean keyComponentIsAssigned(int index) {
 		return switch (index) {
-			case 0 -> userId != UNASSIGNED_USER_ID;
-			case 1 -> entityId != UNASSIGNED_ENTITY_ID;
+			case 0 -> EntityConstants.isAssigned(userId);
+			case 1 -> EntityConstants.isAssigned(entityId);
 			default -> CompositeKey2.super.keyComponentIsAssigned(index);
 		};
 	}

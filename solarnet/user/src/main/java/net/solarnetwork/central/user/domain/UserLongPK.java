@@ -27,7 +27,7 @@ import java.io.Serial;
 import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.CompositeKey2;
-import net.solarnetwork.central.domain.UserIdRelated;
+import net.solarnetwork.central.domain.EntityConstants;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
@@ -43,13 +43,13 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	 * A special "not a value" instance to be used for generated user ID values
 	 * yet to be generated.
 	 */
-	public static final Long UNASSIGNED_USER_ID = UserIdRelated.UNASSIGNED_USER_ID;
+	public static final Long UNASSIGNED_USER_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	/**
 	 * A special "not a value" instance to be used for generated entity ID
 	 * values yet to be generated.
 	 */
-	public static final Long UNASSIGNED_ENTITY_ID = Long.MIN_VALUE;
+	public static final Long UNASSIGNED_ENTITY_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	@Serial
 	private static final long serialVersionUID = -4475927214213411061L;
@@ -207,12 +207,11 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 		return nonnull(id, "id");
 	}
 
-	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
 		return switch (index) {
-			case 0 -> userId != null && userId != UNASSIGNED_USER_ID;
-			case 1 -> id != null && id != UNASSIGNED_ENTITY_ID;
+			case 0 -> EntityConstants.isAssigned(userId);
+			case 1 -> EntityConstants.isAssigned(id);
 			default -> CompositeKey2.super.keyComponentIsAssigned(index);
 		};
 	}

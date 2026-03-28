@@ -36,7 +36,7 @@ public interface UserIdRelated {
 	 * 
 	 * @since 1.1
 	 */
-	Long UNASSIGNED_USER_ID = Long.MIN_VALUE;
+	Long UNASSIGNED_USER_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	/**
 	 * Get the user ID this entity is related to.
@@ -54,11 +54,9 @@ public interface UserIdRelated {
 	 *         {@literal false} if it is considered "not a value"
 	 * @since 1.1
 	 */
-	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	default boolean userIdIsAssigned() {
 		try {
-			final Long userId = getUserId();
-			return userId != null && userId != UNASSIGNED_USER_ID;
+			return EntityConstants.isAssigned(getUserId());
 		} catch ( IllegalStateException e ) {
 			return false;
 		}

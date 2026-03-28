@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
 import java.time.Instant;
+import net.solarnetwork.central.domain.EntityConstants;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -39,7 +40,7 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 *
 	 * @since 1.1
 	 */
-	Long UNASSIGNED_OBJECT_ID = Long.MIN_VALUE;
+	Long UNASSIGNED_OBJECT_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	/**
 	 * Get the object kind.
@@ -62,11 +63,9 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	 *         {@literal false} if it is considered "not a value"
 	 * @since 1.1
 	 */
-	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	default boolean objectIdIsAssigned() {
 		try {
-			final Long objId = getObjectId();
-			return objId != null && objId != UNASSIGNED_OBJECT_ID;
+			return EntityConstants.isAssigned(getObjectId());
 		} catch ( IllegalStateException e ) {
 			return false;
 		}

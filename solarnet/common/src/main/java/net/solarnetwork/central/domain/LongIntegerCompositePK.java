@@ -44,13 +44,13 @@ public final class LongIntegerCompositePK extends BasePK implements Serializable
 	 * A special "not a value" instance to be used for generated group ID values
 	 * yet to be generated.
 	 */
-	public static final Long UNASSIGNED_GROUP_ID = Long.MIN_VALUE;
+	public static final Long UNASSIGNED_GROUP_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	/**
 	 * A special "not a value" instance to be used for generated entity ID
 	 * values yet to be generated.
 	 */
-	public static final Integer UNASSIGNED_ENTITY_ID = Integer.MIN_VALUE;
+	public static final Integer UNASSIGNED_ENTITY_ID = EntityConstants.UNASSIGNED_INTEGER_ID;
 
 	/**
 	 * Create a new instance using the "unassigned" entity ID value.
@@ -157,12 +157,11 @@ public final class LongIntegerCompositePK extends BasePK implements Serializable
 		return getEntityId();
 	}
 
-	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public boolean keyComponentIsAssigned(int index) {
 		return switch (index) {
-			case 0 -> groupId != UNASSIGNED_GROUP_ID;
-			case 1 -> entityId != UNASSIGNED_ENTITY_ID;
+			case 0 -> EntityConstants.isAssigned(groupId);
+			case 1 -> EntityConstants.isAssigned(entityId);
 			default -> CompositeKey2.super.keyComponentIsAssigned(index);
 		};
 	}
