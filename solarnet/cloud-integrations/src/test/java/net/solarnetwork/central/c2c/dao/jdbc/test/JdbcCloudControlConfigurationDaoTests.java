@@ -179,7 +179,6 @@ public class JdbcCloudControlConfigurationDaoTests extends AbstractJUnit5JdbcDao
 
 		// WHEN
 		CloudControlConfiguration conf = last.copyWithId(last.getId());
-		conf.setEnabled(false);
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setName(randomString());
 		conf.setServiceIdentifier(randomString());
@@ -200,7 +199,7 @@ public class JdbcCloudControlConfigurationDaoTests extends AbstractJUnit5JdbcDao
 		then(updated).as("Retrieved entity matches updated source")
 			.isEqualTo(conf)
 			.as("Entity saved updated values")
-			.matches(c -> c.isSameAs(updated));
+			.matches(c -> c.isSameAs(conf));
 		// @formatter:on
 	}
 

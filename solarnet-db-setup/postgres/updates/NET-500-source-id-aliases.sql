@@ -3,6 +3,8 @@
  */
 CREATE TABLE solardatm.da_datm_alias (
 	stream_id			UUID NOT NULL DEFAULT uuid_generate_v4(),
+	created				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	node_id				BIGINT NOT NULL,
 	source_id			CHARACTER VARYING(64) NOT NULL COLLATE solarcommon.naturalsort,
 	alias_node_id		BIGINT NOT NULL,
@@ -92,7 +94,7 @@ BEGIN
 	FROM solardatm.da_datm_meta_aliased m
 	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
 	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-	WHERE m.node_id = node AND m.source_id = SOURCE
+	WHERE m.node_id = node AND m.source_id = source
 	INTO sid, tz;
 
 	IF FOUND THEN
