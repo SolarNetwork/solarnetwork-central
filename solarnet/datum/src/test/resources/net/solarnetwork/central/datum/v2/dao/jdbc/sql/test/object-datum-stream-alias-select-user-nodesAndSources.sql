@@ -12,4 +12,4 @@ AND (
 	da.alias_source_id = ANY(?)
 	OR da.source_id = ANY(?)
 )
-ORDER BY da.node_id, da.source_id
+ORDER BY da.node_id, da.source_id, da.alias_node_id, da.alias_source_id

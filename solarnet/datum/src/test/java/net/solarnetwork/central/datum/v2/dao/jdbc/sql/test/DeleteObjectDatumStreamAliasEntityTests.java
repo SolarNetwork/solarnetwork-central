@@ -51,6 +51,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteObjectDatumStreamAliasEntity;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
 
 /**
  * Test cases for the {@link DeleteObjectDatumStreamAliasEntity} class.
@@ -158,10 +159,34 @@ public class DeleteObjectDatumStreamAliasEntityTests {
 				.createPreparedStatement(con);
 
 		// THEN
-		thenShouldPrepareSql("delete-object-datum-stream-alias-nodes.sql");
+		thenShouldPrepareSql("object-datum-stream-alias-delete-nodes.sql");
 
 		thenStatementShouldSetAndFreeArray(1, nodeIdsArray);
 		thenStatementShouldSetAndFreeArray(2, aliasNodeIdsArray);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
+	}
+
+	@Test
+	public void delete_nodes_originalOnly() throws SQLException {
+		// GIVEN
+		final var filter = new BasicDatumCriteria();
+		filter.setStreamAliasMatchType(ObjectDatumStreamAliasMatchType.OriginalOnly);
+		filter.setNodeIds(new Long[] { randomLong(), randomLong() });
+
+		// WHEN
+
+		givenPrepareStatement();
+		givenCreateSqlArray(filter.getNodeIds(), nodeIdsArray);
+
+		// WHEN
+		final PreparedStatement result = new DeleteObjectDatumStreamAliasEntity(filter)
+				.createPreparedStatement(con);
+
+		// THEN
+		thenShouldPrepareSql("object-datum-stream-alias-delete-nodes-originalOnly.sql");
+
+		thenStatementShouldSetAndFreeArray(1, nodeIdsArray);
 
 		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
@@ -182,7 +207,7 @@ public class DeleteObjectDatumStreamAliasEntityTests {
 				.createPreparedStatement(con);
 
 		// THEN
-		thenShouldPrepareSql("delete-object-datum-stream-alias-nodes-aliasOnly.sql");
+		thenShouldPrepareSql("object-datum-stream-alias-delete-nodes-aliasOnly.sql");
 
 		thenStatementShouldSetAndFreeArray(1, aliasNodeIdsArray);
 
@@ -215,7 +240,7 @@ public class DeleteObjectDatumStreamAliasEntityTests {
 				.createPreparedStatement(con);
 
 		// THEN
-		thenShouldPrepareSql("delete-object-datum-stream-alias-user-nodesAndSources.sql");
+		thenShouldPrepareSql("object-datum-stream-alias-delete-user-nodesAndSources.sql");
 
 		then(stmt).should().setObject(1, filter.getUserId());
 		thenStatementShouldSetAndFreeArray(2, userNodeIdsArray);
@@ -223,6 +248,39 @@ public class DeleteObjectDatumStreamAliasEntityTests {
 		thenStatementShouldSetAndFreeArray(4, nodeIdsArray);
 		thenStatementShouldSetAndFreeArray(5, aliasSourceIdsArray);
 		thenStatementShouldSetAndFreeArray(6, sourceIdsArray);
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
+	}
+
+	@Test
+	public void delete_user_aliasOnly() throws SQLException {
+		// GIVEN
+		final var filter = new BasicDatumCriteria();
+		filter.setUserId(randomLong());
+		filter.setNodeIds(new Long[] { randomLong(), randomLong() });
+		filter.setSourceIds(new String[] { randomString(), randomString() });
+
+		// WHEN
+
+		givenPrepareStatement();
+		// @formatter:off
+		givenCreateSqlArray(filter.getNodeIds(), userNodeIdsArray)
+			.willReturn(aliasNodeIdsArray)
+			;
+		givenCreateSqlArray(filter.getSourceIds(), aliasSourceIdsArray);
+		// @formatter:on
+
+		// WHEN
+		final PreparedStatement result = new DeleteObjectDatumStreamAliasEntity(filter, true)
+				.createPreparedStatement(con);
+
+		// THEN
+		thenShouldPrepareSql("object-datum-stream-alias-delete-user-nodesAndSources-aliasOnly.sql");
+
+		then(stmt).should().setObject(1, filter.getUserId());
+		thenStatementShouldSetAndFreeArray(2, userNodeIdsArray);
+		thenStatementShouldSetAndFreeArray(3, aliasNodeIdsArray);
+		thenStatementShouldSetAndFreeArray(4, aliasSourceIdsArray);
 
 		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
@@ -242,7 +300,30 @@ public class DeleteObjectDatumStreamAliasEntityTests {
 				.createPreparedStatement(con);
 
 		// THEN
-		thenShouldPrepareSql("delete-object-datum-stream-alias-stream-aliasOnly.sql");
+		thenShouldPrepareSql("object-datum-stream-alias-delete-stream-aliasOnly.sql");
+
+		then(stmt).should().setObject(1, filter.getStreamId());
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
+	}
+
+	@Test
+	public void delete_stream_originalOnly() throws SQLException {
+		// GIVEN
+		final var filter = new BasicDatumCriteria();
+		filter.setStreamAliasMatchType(ObjectDatumStreamAliasMatchType.OriginalOnly);
+		filter.setStreamId(randomUUID());
+
+		// WHEN
+
+		givenPrepareStatement();
+
+		// WHEN
+		final PreparedStatement result = new DeleteObjectDatumStreamAliasEntity(filter)
+				.createPreparedStatement(con);
+
+		// THEN
+		thenShouldPrepareSql("object-datum-stream-alias-delete-stream-originalOnly.sql");
 
 		then(stmt).should().setObject(1, filter.getStreamId());
 
@@ -269,7 +350,7 @@ public class DeleteObjectDatumStreamAliasEntityTests {
 				.createPreparedStatement(con);
 
 		// THEN
-		thenShouldPrepareSql("delete-object-datum-stream-alias-streams.sql");
+		thenShouldPrepareSql("object-datum-stream-alias-delete-streams.sql");
 
 		thenStatementShouldSetAndFreeArray(1, aliasStreamIdsArray);
 		thenStatementShouldSetAndFreeArray(2, streamIdsArray);

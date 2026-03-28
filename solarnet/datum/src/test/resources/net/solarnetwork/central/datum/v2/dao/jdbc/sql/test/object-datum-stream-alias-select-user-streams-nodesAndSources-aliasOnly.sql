@@ -7,4 +7,4 @@ WHERE un.user_id = ?
 AND da.stream_id = ANY(?)
 AND da.alias_node_id = ANY(?)
 AND da.alias_source_id = ANY(?)
-ORDER BY da.node_id, da.source_id
+ORDER BY da.node_id, da.source_id, da.alias_node_id, da.alias_source_id

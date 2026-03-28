@@ -22,13 +22,16 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.util.Comparator.comparing;
 import static java.util.Map.entry;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumJdbcTestUtils.allObjectDatumStreamAliasData;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.domain.EntityConstants.isAssigned;
+import static net.solarnetwork.central.test.CommonTestUtils.RNG;
+import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
-import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.central.test.CommonTestUtils.randomSourceId;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
@@ -36,8 +39,12 @@ import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.BDDMockito.given;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,12 +52,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcObjectDatumStreamAliasDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
 import net.solarnetwork.central.domain.EntityConstants;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.util.UuidGenerator;
 
 /**
@@ -110,11 +120,11 @@ public class JdbcObjectDatumStreamAliasDaoTests extends BaseDatumJdbcTestSupport
 		setupUserNodeEntity(nodeId, userId);
 
 		final Instant now = Instant.now();
-		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeId, randomString());
+		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeId, randomSourceId());
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta));
 
 		final ObjectDatumStreamAliasEntity alias = new ObjectDatumStreamAliasEntity(randomUUID(),
-				now.minusSeconds(1), now, Node, randomLong(), randomString(), meta.getObjectId(),
+				now.minusSeconds(1), now, Node, randomLong(), randomSourceId(), meta.getObjectId(),
 				meta.getSourceId());
 
 		// WHEN
@@ -155,12 +165,12 @@ public class JdbcObjectDatumStreamAliasDaoTests extends BaseDatumJdbcTestSupport
 		setupUserNodeEntity(nodeId, userId);
 
 		final Instant now = Instant.now();
-		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeId, randomString());
+		final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeId, randomSourceId());
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta));
 
 		final ObjectDatumStreamAliasEntity alias = new ObjectDatumStreamAliasEntity(
 				EntityConstants.UNASSIGNED_UUID_ID, now.minusSeconds(1), now, Node, randomLong(),
-				randomString(), meta.getObjectId(), meta.getSourceId());
+				randomSourceId(), meta.getObjectId(), meta.getSourceId());
 
 		final UUID generatedPk = randomUUID();
 		given(uuidGenerator.generate()).willReturn(generatedPk);
@@ -216,8 +226,8 @@ public class JdbcObjectDatumStreamAliasDaoTests extends BaseDatumJdbcTestSupport
 		// WHEN
 		final Instant modified = Instant.now().plusSeconds(1);
 		final ObjectDatumStreamAliasEntity entity = new ObjectDatumStreamAliasEntity(last.id(),
-				last.created(), modified, Node, randomLong(), randomString(), last.getOriginalObjectId(),
-				last.getOriginalSourceId());
+				last.created(), modified, Node, randomLong(), randomSourceId(),
+				last.getOriginalObjectId(), last.getOriginalSourceId());
 
 		final UUID result = dao.save(entity);
 		final ObjectDatumStreamAliasEntity updated = dao.get(result);
@@ -246,5 +256,192 @@ public class JdbcObjectDatumStreamAliasDaoTests extends BaseDatumJdbcTestSupport
 		then(data).as("Row deleted from db").isEmpty();
 	}
 
-	// FIXME: more tests
+	private SortedMap<Long, List<ObjectDatumStreamAliasEntity>> setupRandomAliases() {
+		final int userCount = 3;
+		final int nodeCount = 3;
+		final int sourceCount = 3;
+		final int aliasCount = 3;
+		final Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+		final SortedMap<Long, List<ObjectDatumStreamAliasEntity>> entitiesByUser = new TreeMap<>();
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int n = 0; n < nodeCount; n++ ) {
+				final Long nodeId = randomInt().longValue();
+				setupTestNode(nodeId, locId);
+				setupUserNodeEntity(nodeId, userId);
+				for ( int s = 0; s < sourceCount; s++ ) {
+					final var meta = emptyMeta(randomUUID(), TEST_TZ, Node, nodeId, randomSourceId());
+					DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, List.of(meta));
+					for ( int a = 0; a < aliasCount; a++ ) {
+						final ObjectDatumStreamAliasEntity alias = new ObjectDatumStreamAliasEntity(
+								randomUUID(), now, now, Node, randomInt().longValue(), randomSourceId(),
+								meta.getObjectId(), meta.getSourceId());
+						dao.save(alias);
+						entitiesByUser
+								.computeIfAbsent(userId,
+										_ -> new ArrayList<>(aliasCount * nodeCount * sourceCount))
+								.add(alias);
+					}
+				}
+			}
+		}
+		allObjectDatumStreamAliasData(jdbcTemplate);
+		return entitiesByUser;
+	}
+
+	@Test
+	public void findFiltered_forUser() throws Exception {
+		// GIVEN
+		final SortedMap<Long, List<ObjectDatumStreamAliasEntity>> entitiesByUser = setupRandomAliases();
+		final Long randomUserId = List.copyOf(entitiesByUser.keySet())
+				.get(RNG.nextInt(entitiesByUser.size()));
+
+		// WHEN
+		final var filter = new BasicDatumCriteria();
+		filter.setUserId(randomUserId);
+		FilterResults<ObjectDatumStreamAliasEntity, UUID> results = dao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		ObjectDatumStreamAliasEntity[] expected = entitiesByUser.get(randomUserId)
+				.stream()
+				.sorted(comparing(ObjectDatumStreamAliasEntity::getOriginalObjectId)
+					.thenComparing(ObjectDatumStreamAliasEntity::getOriginalSourceId)
+					.thenComparing(ObjectDatumStreamAliasEntity::getObjectId)
+					.thenComparing(ObjectDatumStreamAliasEntity::getSourceId)
+				)
+				.toArray(ObjectDatumStreamAliasEntity[]::new);
+		then(results).as("Results for single user sorted in default order").containsExactly(expected);
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_forNodesAndSources() throws Exception {
+		// GIVEN
+		final SortedMap<Long, List<ObjectDatumStreamAliasEntity>> entitiesByUser = setupRandomAliases();
+		final Long randomUserId = List.copyOf(entitiesByUser.keySet())
+				.get(RNG.nextInt(entitiesByUser.size()));
+		// @formatter:off
+		final List<ObjectDatumStreamAliasEntity> userEntities = entitiesByUser.get(randomUserId)
+				.stream()
+				.sorted(comparing(ObjectDatumStreamAliasEntity::getOriginalObjectId)
+				.thenComparing(ObjectDatumStreamAliasEntity::getOriginalSourceId)
+				.thenComparing(ObjectDatumStreamAliasEntity::getObjectId)
+				.thenComparing(ObjectDatumStreamAliasEntity::getSourceId)
+			).toList();
+		// @formatter:on
+		final ObjectDatumStreamAliasEntity randomAlias1 = userEntities
+				.get(RNG.nextInt(userEntities.size()));
+		final ObjectDatumStreamAliasEntity randomAlias2 = userEntities
+				.get(RNG.nextInt(userEntities.size()));
+
+		// WHEN
+		final var filter = new BasicDatumCriteria();
+		filter.setUserId(randomUserId);
+		filter.setNodeIds(new Long[] { randomAlias1.getOriginalObjectId(), randomAlias2.getObjectId() });
+		filter.setSourceIds(
+				new String[] { randomAlias1.getOriginalSourceId(), randomAlias2.getSourceId() });
+		FilterResults<ObjectDatumStreamAliasEntity, UUID> results = dao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		ObjectDatumStreamAliasEntity[] expected = userEntities.stream()
+				.filter(a -> (a.getOriginalObjectId().equals(randomAlias1.getOriginalObjectId())
+						|| a.getObjectId().equals(randomAlias2.getObjectId()))
+						&& (a.getOriginalSourceId().equals(randomAlias1.getOriginalSourceId())
+						|| a.getSourceId().equals(randomAlias2.getSourceId())))
+				.toArray(ObjectDatumStreamAliasEntity[]::new);
+		then(results)
+			.as("Results for single user and nodes and sources sorted in default order")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_forNodesAndSources_aliasOnly() throws Exception {
+		// GIVEN
+		final SortedMap<Long, List<ObjectDatumStreamAliasEntity>> entitiesByUser = setupRandomAliases();
+		final Long randomUserId = List.copyOf(entitiesByUser.keySet())
+				.get(RNG.nextInt(entitiesByUser.size()));
+		// @formatter:off
+		final List<ObjectDatumStreamAliasEntity> userEntities = entitiesByUser.get(randomUserId)
+				.stream()
+				.sorted(comparing(ObjectDatumStreamAliasEntity::getOriginalObjectId)
+				.thenComparing(ObjectDatumStreamAliasEntity::getOriginalSourceId)
+				.thenComparing(ObjectDatumStreamAliasEntity::getObjectId)
+				.thenComparing(ObjectDatumStreamAliasEntity::getSourceId)
+			).toList();
+		// @formatter:on
+		final ObjectDatumStreamAliasEntity randomAlias1 = userEntities
+				.get(RNG.nextInt(userEntities.size()));
+		final ObjectDatumStreamAliasEntity randomAlias2 = userEntities
+				.get(RNG.nextInt(userEntities.size()));
+
+		// WHEN
+		final var filter = new BasicDatumCriteria();
+		filter.setStreamAliasMatchType(ObjectDatumStreamAliasMatchType.AliasOnly);
+		filter.setUserId(randomUserId);
+		filter.setNodeIds(new Long[] { randomAlias1.getOriginalObjectId(), randomAlias2.getObjectId() });
+		filter.setSourceIds(
+				new String[] { randomAlias1.getOriginalSourceId(), randomAlias2.getSourceId() });
+		FilterResults<ObjectDatumStreamAliasEntity, UUID> results = dao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		ObjectDatumStreamAliasEntity[] expected = userEntities.stream()
+				.filter(a -> a.getObjectId().equals(randomAlias2.getObjectId())
+						&& a.getSourceId().equals(randomAlias2.getSourceId()))
+				.toArray(ObjectDatumStreamAliasEntity[]::new);
+		then(results)
+			.as("Results for single user and alias nodes and sources sorted in default order")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_forNodesAndSources_originalOnly() throws Exception {
+		// GIVEN
+		final SortedMap<Long, List<ObjectDatumStreamAliasEntity>> entitiesByUser = setupRandomAliases();
+		final Long randomUserId = List.copyOf(entitiesByUser.keySet())
+				.get(RNG.nextInt(entitiesByUser.size()));
+		// @formatter:off
+		final List<ObjectDatumStreamAliasEntity> userEntities = entitiesByUser.get(randomUserId)
+				.stream()
+				.sorted(comparing(ObjectDatumStreamAliasEntity::getOriginalObjectId)
+				.thenComparing(ObjectDatumStreamAliasEntity::getOriginalSourceId)
+				.thenComparing(ObjectDatumStreamAliasEntity::getObjectId)
+				.thenComparing(ObjectDatumStreamAliasEntity::getSourceId)
+			).toList();
+		// @formatter:on
+		final ObjectDatumStreamAliasEntity randomAlias1 = userEntities
+				.get(RNG.nextInt(userEntities.size()));
+		final ObjectDatumStreamAliasEntity randomAlias2 = userEntities
+				.get(RNG.nextInt(userEntities.size()));
+
+		// WHEN
+		final var filter = new BasicDatumCriteria();
+		filter.setStreamAliasMatchType(ObjectDatumStreamAliasMatchType.OriginalOnly);
+		filter.setUserId(randomUserId);
+		filter.setNodeIds(new Long[] { randomAlias1.getOriginalObjectId(), randomAlias2.getObjectId() });
+		filter.setSourceIds(
+				new String[] { randomAlias1.getOriginalSourceId(), randomAlias2.getSourceId() });
+		FilterResults<ObjectDatumStreamAliasEntity, UUID> results = dao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		ObjectDatumStreamAliasEntity[] expected = userEntities.stream()
+				.filter(a -> a.getOriginalObjectId().equals(randomAlias1.getOriginalObjectId())
+						&& a.getOriginalSourceId().equals(randomAlias1.getOriginalSourceId()))
+				.toArray(ObjectDatumStreamAliasEntity[]::new);
+		then(results)
+			.as("Results for single user and original nodes and sources sorted in default order")
+			.containsExactly(expected)
+			;
+		// @formatter:on
+	}
+
+	// FIXME: more tests on da_datm_meta updates/delete with cascade
 }

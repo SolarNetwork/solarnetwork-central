@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
+import static net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType.AliasOnly;
+import static net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType.OriginalOrAlias;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,6 +38,7 @@ import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorPro
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasFilter;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
 
 /**
  * Support for SELECT for {@link ObjectDatumStreamAliasEntity} entities.
@@ -49,7 +52,7 @@ public class SelectObjectDatumStreamAliasEntity
 	/** The {@code fetchSize} property default value. */
 	public static final int DEFAULT_FETCH_SIZE = 1000;
 
-	private final boolean matchAliasOnly;
+	private final ObjectDatumStreamAliasMatchType matchType;
 	private final ObjectDatumStreamAliasFilter filter;
 	private final int fetchSize;
 
@@ -98,7 +101,7 @@ public class SelectObjectDatumStreamAliasEntity
 			boolean matchAliasOnly, int fetchSize) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
-		this.matchAliasOnly = matchAliasOnly;
+		this.matchType = (matchAliasOnly ? AliasOnly : filter.streamAliasMatchType());
 		this.fetchSize = fetchSize;
 	}
 
@@ -124,7 +127,7 @@ public class SelectObjectDatumStreamAliasEntity
 					INNER JOIN solaruser.user_node un ON un.node_id = da.node_id
 					""");
 		}
-		if ( filter.hasStreamCriteria() && !matchAliasOnly ) {
+		if ( filter.hasStreamCriteria() && matchType != AliasOnly ) {
 			buf.append("""
 					INNER JOIN solardatm.da_datum_meta m
 						ON m.node_id = da.node_id
@@ -157,25 +160,28 @@ public class SelectObjectDatumStreamAliasEntity
 			idx += whereOptimizedArrayContains(filter.getUserIds(), "un.user_id", where);
 		}
 		if ( filter.hasStreamCriteria() ) {
-			if ( matchAliasOnly ) {
-				idx += whereOptimizedArrayContains(filter.getStreamIds(), "da.stream_id", where);
-			} else {
+			if ( matchType == OriginalOrAlias ) {
 				idx += sqlWhereOr(idx, filter.getStreamIds(), "da.stream_id", "m.stream_id", where);
+			} else {
+				idx += whereOptimizedArrayContains(filter.getStreamIds(),
+						(matchType == AliasOnly ? "da.stream_id" : "m.stream_id"), where);
 			}
 		}
 		if ( filter.hasNodeCriteria() ) {
-			if ( matchAliasOnly ) {
-				idx += whereOptimizedArrayContains(filter.getNodeIds(), "da.alias_node_id", where);
-			} else {
+			if ( matchType == OriginalOrAlias ) {
 				idx += sqlWhereOr(idx, filter.getNodeIds(), "da.alias_node_id", "da.node_id", where);
+			} else {
+				idx += whereOptimizedArrayContains(filter.getNodeIds(),
+						(matchType == AliasOnly ? "da.alias_node_id" : "da.node_id"), where);
 			}
 		}
 		if ( filter.hasSourceCriteria() ) {
-			if ( matchAliasOnly ) {
-				idx += whereOptimizedArrayContains(filter.getSourceIds(), "da.alias_source_id", where);
-			} else {
+			if ( matchType == OriginalOrAlias ) {
 				idx += sqlWhereOr(idx, filter.getSourceIds(), "da.alias_source_id", "da.source_id",
 						where);
+			} else {
+				idx += whereOptimizedArrayContains(filter.getSourceIds(),
+						(matchType == AliasOnly ? "da.alias_source_id" : "da.source_id"), where);
 			}
 		}
 		if ( idx > 0 ) {
@@ -184,7 +190,7 @@ public class SelectObjectDatumStreamAliasEntity
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		buf.append("ORDER BY da.node_id, da.source_id");
+		buf.append("ORDER BY da.node_id, da.source_id, da.alias_node_id, da.alias_source_id");
 	}
 
 	@Override
@@ -203,19 +209,19 @@ public class SelectObjectDatumStreamAliasEntity
 		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 		if ( filter.hasStreamCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getStreamIds());
-			if ( !matchAliasOnly ) {
+			if ( matchType == OriginalOrAlias ) {
 				p = prepareOptimizedArrayParameter(con, stmt, p, filter.getStreamIds());
 			}
 		}
 		if ( filter.hasNodeCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());
-			if ( !matchAliasOnly ) {
+			if ( matchType == OriginalOrAlias ) {
 				p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());
 			}
 		}
 		if ( filter.hasSourceCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getSourceIds());
-			if ( !matchAliasOnly ) {
+			if ( matchType == OriginalOrAlias ) {
 				p = prepareOptimizedArrayParameter(con, stmt, p, filter.getSourceIds());
 			}
 		}

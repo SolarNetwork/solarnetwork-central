@@ -42,7 +42,7 @@ import net.solarnetwork.util.ClassUtils;
  * Common test utilities.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public final class CommonTestUtils {
 
@@ -119,6 +119,28 @@ public final class CommonTestUtils {
 			buf.append(UUID.randomUUID().toString().replace("-", ""));
 		}
 		buf.setLength(len);
+		return buf.toString();
+	}
+
+	private static final int ALPHA_CHAR_OFFSET = 'a';
+	private static final int ALPHA_CHAR_LEN = 'z' - ALPHA_CHAR_OFFSET;
+
+	/**
+	 * Get a random source ID value.
+	 *
+	 * @return the string
+	 * @since 1.8
+	 */
+	public static String randomSourceId() {
+		StringBuilder buf = new StringBuilder();
+		buf.append('/');
+		for ( int i = 0; i < 3; i++ ) {
+			for ( int j = 0; j < 5; j++ ) {
+				buf.append((char) (ALPHA_CHAR_OFFSET + RNG.nextInt(ALPHA_CHAR_LEN)));
+			}
+			buf.append('/');
+		}
+		buf.append(1 + RNG.nextInt(8));
 		return buf.toString();
 	}
 

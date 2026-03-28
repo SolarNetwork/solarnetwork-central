@@ -33,7 +33,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @author matt
  * @version 1.0
  */
-public interface ObjectDatumStreamAliasFilter
-		extends NodeCriteria, SourceCriteria, StreamCriteria, UserCriteria, PaginationCriteria {
+public interface ObjectDatumStreamAliasFilter extends NodeCriteria, SourceCriteria, StreamCriteria,
+		StreamAliasMatchCriteria, UserCriteria, PaginationCriteria {
 
 }

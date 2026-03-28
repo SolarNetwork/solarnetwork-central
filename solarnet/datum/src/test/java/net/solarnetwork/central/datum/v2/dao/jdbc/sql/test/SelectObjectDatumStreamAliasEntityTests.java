@@ -144,6 +144,7 @@ public class SelectObjectDatumStreamAliasEntityTests {
 	public void find() throws SQLException {
 		// GIVEN
 		final var filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(true);
 
 		// WHEN
 
@@ -154,7 +155,7 @@ public class SelectObjectDatumStreamAliasEntityTests {
 				.createPreparedStatement(con);
 
 		// THEN
-		thenShouldPrepareSql("select-object-datum-stream-alias.sql");
+		thenShouldPrepareSql("object-datum-stream-alias-select.sql");
 
 		then(stmt).should().setFetchSize(DEFAULT_FETCH_SIZE);
 
@@ -177,7 +178,7 @@ public class SelectObjectDatumStreamAliasEntityTests {
 				.createPreparedStatement(con);
 
 		// THEN
-		thenShouldPrepareSql("select-object-datum-stream-alias-nodes.sql");
+		thenShouldPrepareSql("object-datum-stream-alias-select-nodes.sql");
 
 		thenStatementShouldSetAndFreeArray(1, nodeIdsArray);
 		thenStatementShouldSetAndFreeArray(2, aliasNodeIdsArray);
@@ -204,7 +205,7 @@ public class SelectObjectDatumStreamAliasEntityTests {
 				.createPreparedStatement(con);
 
 		// THEN
-		thenShouldPrepareSql("select-object-datum-stream-alias-nodesAndSources.sql");
+		thenShouldPrepareSql("object-datum-stream-alias-select-nodesAndSources.sql");
 
 		thenStatementShouldSetAndFreeArray(1, nodeIdsArray);
 		thenStatementShouldSetAndFreeArray(2, aliasNodeIdsArray);
@@ -234,7 +235,7 @@ public class SelectObjectDatumStreamAliasEntityTests {
 				.createPreparedStatement(con);
 
 		// THEN
-		thenShouldPrepareSql("select-object-datum-stream-alias-user-nodesAndSources.sql");
+		thenShouldPrepareSql("object-datum-stream-alias-select-user-nodesAndSources.sql");
 
 		then(stmt).should().setObject(1, filter.getUserId());
 		thenStatementShouldSetAndFreeArray(2, nodeIdsArray);
@@ -262,7 +263,7 @@ public class SelectObjectDatumStreamAliasEntityTests {
 				.createPreparedStatement(con);
 
 		// THEN
-		thenShouldPrepareSql("select-object-datum-stream-alias-streams.sql");
+		thenShouldPrepareSql("object-datum-stream-alias-select-streams.sql");
 
 		thenStatementShouldSetAndFreeArray(1, aliasStreamIdsArray);
 		thenStatementShouldSetAndFreeArray(2, streamIdsArray);
@@ -287,7 +288,7 @@ public class SelectObjectDatumStreamAliasEntityTests {
 				.createPreparedStatement(con);
 
 		// THEN
-		thenShouldPrepareSql("select-object-datum-stream-alias-streams-aliasOnly.sql");
+		thenShouldPrepareSql("object-datum-stream-alias-select-streams-aliasOnly.sql");
 
 		thenStatementShouldSetAndFreeArray(1, aliasStreamIdsArray);
 		then(stmt).should().setFetchSize(DEFAULT_FETCH_SIZE);
@@ -316,7 +317,7 @@ public class SelectObjectDatumStreamAliasEntityTests {
 				.createPreparedStatement(con);
 
 		// THEN
-		thenShouldPrepareSql("select-object-datum-stream-alias-user-streams-nodesAndSources.sql");
+		thenShouldPrepareSql("object-datum-stream-alias-select-user-streams-nodesAndSources.sql");
 
 		then(stmt).should().setObject(1, filter.getUserId());
 		thenStatementShouldSetAndFreeArray(2, aliasStreamIdsArray);
@@ -352,7 +353,7 @@ public class SelectObjectDatumStreamAliasEntityTests {
 
 		// THEN
 		thenShouldPrepareSql(
-				"select-object-datum-stream-alias-user-streams-nodesAndSources-aliasOnly.sql");
+				"object-datum-stream-alias-select-user-streams-nodesAndSources-aliasOnly.sql");
 
 		then(stmt).should().setObject(1, filter.getUserId());
 		thenStatementShouldSetAndFreeArray(2, aliasStreamIdsArray);

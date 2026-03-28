@@ -38,6 +38,7 @@ import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.RecentCriteria;
 import net.solarnetwork.domain.datum.Aggregation;
@@ -66,6 +67,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	private @Nullable Period timeTolerance;
 	private @Nullable ObjectDatumKind objectKind;
 	private @Nullable Boolean includeStreamAliases;
+	private @Nullable ObjectDatumStreamAliasMatchType streamAliasMatchType;
 
 	private @Nullable DatumAuxiliaryType datumAuxiliaryType;
 
@@ -96,7 +98,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 		result = prime * result + Objects.hash(aggregation, combiningType, datumAuxiliaryType, endDate,
 				localEndDate, localStartDate, mostRecent, objectIdMappings, objectKind,
 				partialAggregation, readingType, sourceIdMappings, startDate, timeTolerance,
-				withoutTotalResultsCount, includeStreamAliases);
+				withoutTotalResultsCount, includeStreamAliases, streamAliasMatchType);
 		result = prime * result + Arrays.hashCode(propertyNames);
 		result = prime * result + Arrays.hashCode(instantaneousPropertyNames);
 		result = prime * result + Arrays.hashCode(accumulatingPropertyNames);
@@ -112,14 +114,18 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 		if ( !super.equals(obj) || !(obj instanceof BasicDatumCriteria other) ) {
 			return false;
 		}
-		return aggregation == other.aggregation && combiningType == other.combiningType
+		// @formatter:off
+		return aggregation == other.aggregation
+				&& combiningType == other.combiningType
 				&& datumAuxiliaryType == other.datumAuxiliaryType
 				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)
 				&& Objects.equals(endDate, other.endDate)
 				&& Objects.equals(localEndDate, other.localEndDate)
-				&& Objects.equals(localStartDate, other.localStartDate) && mostRecent == other.mostRecent
+				&& Objects.equals(localStartDate, other.localStartDate)
+				&& mostRecent == other.mostRecent
 				&& Objects.equals(objectIdMappings, other.objectIdMappings)
-				&& objectKind == other.objectKind && partialAggregation == other.partialAggregation
+				&& objectKind == other.objectKind
+				&& partialAggregation == other.partialAggregation
 				&& readingType == other.readingType
 				&& Objects.equals(sourceIdMappings, other.sourceIdMappings)
 				&& Objects.equals(startDate, other.startDate)
@@ -127,10 +133,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 				&& Objects.equals(timeTolerance, other.timeTolerance)
 				&& withoutTotalResultsCount == other.withoutTotalResultsCount
 				&& Objects.equals(includeStreamAliases, other.includeStreamAliases)
+				&& Objects.equals(streamAliasMatchType, other.streamAliasMatchType)
 				&& Arrays.equals(propertyNames, other.propertyNames)
 				&& Arrays.equals(instantaneousPropertyNames, other.instantaneousPropertyNames)
 				&& Arrays.equals(accumulatingPropertyNames, other.accumulatingPropertyNames)
 				&& Arrays.equals(statusPropertyNames, other.statusPropertyNames);
+		// @formatter:on
 	}
 
 	/**
@@ -173,6 +181,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 			setTimeTolerance(c.getTimeTolerance());
 			setDatumAuxiliaryType(c.getDatumAuxiliaryType());
 			setDatumRollupTypes(c.getDatumRollupTypes());
+			setStreamAliasMatchType(c.getStreamAliasMatchType());
 		} else {
 			if ( criteria instanceof RecentCriteria c ) {
 				setMostRecent(c.isMostRecent());
@@ -191,6 +200,9 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 			}
 			if ( criteria instanceof DatumRollupCriteria c ) {
 				setDatumRollupTypes(c.getDatumRollupTypes());
+			}
+			if ( criteria instanceof StreamAliasMatchCriteria c ) {
+				setStreamAliasMatchType(c.getStreamAliasMatchType());
 			}
 		}
 	}
@@ -837,11 +849,27 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	 * Set the include stream aliases mode.
 	 *
 	 * @param includeStreamAliases
-	 *        the includeStreamAliases to set
+	 *        the mode to set
 	 * @since 1.5
 	 */
 	public final void setIncludeStreamAliases(@Nullable Boolean includeStreamAliases) {
 		this.includeStreamAliases = includeStreamAliases;
+	}
+
+	@Override
+	public final ObjectDatumStreamAliasMatchType getStreamAliasMatchType() {
+		return streamAliasMatchType;
+	}
+
+	/**
+	 * Set the stream alias match type.
+	 *
+	 * @param streamAliasMatchType
+	 *        the match type to set
+	 * @since 1.6
+	 */
+	public final void setStreamAliasMatchType(ObjectDatumStreamAliasMatchType streamAliasMatchType) {
+		this.streamAliasMatchType = streamAliasMatchType;
 	}
 
 }
