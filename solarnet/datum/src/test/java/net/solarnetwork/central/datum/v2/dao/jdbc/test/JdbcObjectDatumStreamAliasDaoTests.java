@@ -54,10 +54,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
+import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcObjectDatumStreamAliasDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
 import net.solarnetwork.central.domain.EntityConstants;
+import net.solarnetwork.central.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
@@ -75,6 +77,8 @@ public class JdbcObjectDatumStreamAliasDaoTests extends BaseDatumJdbcTestSupport
 	@Mock
 	private UuidGenerator uuidGenerator;
 
+	private JdbcDatumEntityDao datumDao;
+
 	private JdbcObjectDatumStreamAliasDao dao;
 	private Long userId;
 	private Long locId;
@@ -83,6 +87,8 @@ public class JdbcObjectDatumStreamAliasDaoTests extends BaseDatumJdbcTestSupport
 
 	@BeforeEach
 	public void setup() {
+		datumDao = new JdbcDatumEntityDao(jdbcTemplate);
+
 		dao = new JdbcObjectDatumStreamAliasDao(uuidGenerator, jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		locId = randomLong();
@@ -443,5 +449,78 @@ public class JdbcObjectDatumStreamAliasDaoTests extends BaseDatumJdbcTestSupport
 		// @formatter:on
 	}
 
-	// FIXME: more tests on da_datm_meta updates/delete with cascade
+	@Test
+	public void updateOriginalNodeSourceUpdatesAlias() {
+		// GIVEN
+		insert();
+
+		final ObjectDatumStreamAliasEntity origAlias = this.last;
+
+		final var metaFilter = new BasicDatumCriteria();
+		metaFilter.setObjectKind(Node);
+		metaFilter.setNodeId(origAlias.getOriginalObjectId());
+		metaFilter.setSourceId(origAlias.getOriginalSourceId());
+		final ObjectDatumStreamMetadataId origStreamId = datumDao.findDatumStreamMetadataIds(metaFilter)
+				.iterator().next();
+
+		final Long newNodeId = randomInt().longValue();
+		final String newSourceId = randomSourceId();
+
+		// WHEN
+		// update the original stream node/source details: then alias should be updated also in the DB
+		datumDao.updateAttributes(origAlias.getKind(), origStreamId.getStreamId(), newNodeId,
+				newSourceId, null, null, null);
+
+		// now reload alias
+		final ObjectDatumStreamAliasEntity updatedAlias = dao.get(origAlias.id());
+
+		// THEN
+		// @formatter:off
+		then(updatedAlias)
+			.isNotNull()
+			.as("Alias stream ID unchanged")
+			.isEqualTo(origAlias)
+			.as("Orig stream attributes have been updated")
+			.returns(true, a -> a.isSameAs(new ObjectDatumStreamAliasEntity(
+					origAlias.id(),
+					origAlias.created(),
+					null,
+					origAlias.getKind(),
+					origAlias.getObjectId(),
+					origAlias.getSourceId(),
+					newNodeId,
+					newSourceId))
+			)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void deleteOriginalNodeSourceDeletesAlias() {
+		// GIVEN
+		insert();
+
+		// WHEN
+		// delete original stream meta
+		final int deleteCount = jdbcTemplate.update("""
+				DELETE FROM solardatm.da_datm_meta
+				WHERE node_id = ? AND source_id = ?
+				""", last.getOriginalObjectId(), last.getOriginalSourceId());
+
+		// THEN
+		// @formatter:off
+		then(deleteCount)
+			.as("Deleted original stream meta row")
+			.isOne()
+			;
+
+		List<Map<String, Object>> data = allObjectDatumStreamAliasData(jdbcTemplate);
+		then(data)
+			.as("Alias row cascade deleted from DB")
+			.isEmpty()
+			;
+		// @formatter:on
+
+	}
+
 }
