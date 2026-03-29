@@ -547,9 +547,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 				filtered = true;
 				sourceIds = sourceIdsSet.toArray(String[]::new);
 			}
-		} else
-
-		{
+		} else {
 			// no source IDs provided, set to policy source IDs
 			LOG.info("Access RESTRICTED to sources {} for {}: policy restriction", policySourceIds,
 					principal);
