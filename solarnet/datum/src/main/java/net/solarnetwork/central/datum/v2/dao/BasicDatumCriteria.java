@@ -40,6 +40,7 @@ import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.dao.RecentCriteria;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -152,27 +153,30 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	 * @param criteria
 	 *        the criteria to copy
 	 */
-	public void copyFrom(@Nullable ObjectStreamCriteria criteria) {
+	@Override
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria == null ) {
 			return;
 		}
-		setStreamIds(criteria.getStreamIds());
-		setStartDate(criteria.getStartDate());
-		setEndDate(criteria.getEndDate());
-		setLocalStartDate(criteria.getLocalStartDate());
-		setLocalEndDate(criteria.getLocalEndDate());
-		setAggregation(criteria.getAggregation());
-		setPartialAggregation(criteria.getPartialAggregation());
-		setObjectKind(criteria.getObjectKind());
-		setCombiningType(criteria.getCombiningType());
-		setObjectIdMappings(criteria.getObjectIdMappings());
-		setSourceIdMappings(criteria.getSourceIdMappings());
-		setPropertyNames(criteria.getPropertyNames());
-		setInstantaneousPropertyNames(criteria.getInstantaneousPropertyNames());
-		setAccumulatingPropertyNames(criteria.getAccumulatingPropertyNames());
-		setStatusPropertyNames(criteria.getStatusPropertyNames());
-		setIncludeStreamAliases(criteria.getIncludeStreamAliases());
+		if ( criteria instanceof ObjectStreamCriteria c ) {
+			setStreamIds(c.getStreamIds());
+			setStartDate(c.getStartDate());
+			setEndDate(c.getEndDate());
+			setLocalStartDate(c.getLocalStartDate());
+			setLocalEndDate(c.getLocalEndDate());
+			setAggregation(c.getAggregation());
+			setPartialAggregation(c.getPartialAggregation());
+			setObjectKind(c.getObjectKind());
+			setCombiningType(c.getCombiningType());
+			setObjectIdMappings(c.getObjectIdMappings());
+			setSourceIdMappings(c.getSourceIdMappings());
+			setPropertyNames(c.getPropertyNames());
+			setInstantaneousPropertyNames(c.getInstantaneousPropertyNames());
+			setAccumulatingPropertyNames(c.getAccumulatingPropertyNames());
+			setStatusPropertyNames(c.getStatusPropertyNames());
+			setIncludeStreamAliases(c.getIncludeStreamAliases());
+		}
 		if ( criteria instanceof BasicDatumCriteria c ) {
 			setMostRecent(c.isMostRecent());
 			setWithoutTotalResultsCount(c.isWithoutTotalResultsCount());

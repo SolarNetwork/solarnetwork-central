@@ -1,5 +1,5 @@
 /* ==================================================================
- * ObjectDatumStreamAliasDao.java - 28/03/2026 6:27:41 am
+ * package-info.java - 20/02/2026 5:55:36 pm
  *
  * Copyright 2026 SolarNetwork.net Dev Team
  *
@@ -20,22 +20,11 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
-
-import java.util.UUID;
-import net.solarnetwork.central.common.dao.FilterableDeleteDao;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
-import net.solarnetwork.dao.FilterableDao;
-import net.solarnetwork.dao.GenericDao;
-
 /**
- * DAO API for {@link ObjectDatumStreamAliasEntity} entities.
- *
- * @author matt
- * @version 1.0
+ * SolarNetwork user datum stream service APIs.
  */
-public interface ObjectDatumStreamAliasDao extends GenericDao<ObjectDatumStreamAliasEntity, UUID>,
-		FilterableDao<ObjectDatumStreamAliasEntity, UUID, ObjectDatumStreamAliasFilter>,
-		FilterableDeleteDao<ObjectDatumStreamAliasFilter> {
 
-}
+@NullMarked
+package net.solarnetwork.central.user.datum.stream.biz;
+
+import org.jspecify.annotations.NullMarked;

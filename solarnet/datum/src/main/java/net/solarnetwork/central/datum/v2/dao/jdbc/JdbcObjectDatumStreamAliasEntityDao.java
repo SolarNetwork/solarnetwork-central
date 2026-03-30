@@ -1,5 +1,5 @@
 /* ==================================================================
- * JdbcObjectDatumStreamAliasDao.java - 28/03/2026 6:32:17 am
+ * JdbcObjectDatumStreamAliasEntityDao.java - 28/03/2026 6:32:17 am
  *
  * Copyright 2026 SolarNetwork.net Dev Team
  *
@@ -34,7 +34,7 @@ import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasEntityDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasFilter;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteObjectDatumStreamAliasEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectDatumStreamAliasEntity;
@@ -47,12 +47,12 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.UuidGenerator;
 
 /**
- * JDBC implementation of {@link ObjectDatumStreamAliasDao}.
+ * JDBC implementation of {@link ObjectDatumStreamAliasEntityDao}.
  *
  * @author matt
  * @version 1.0
  */
-public class JdbcObjectDatumStreamAliasDao implements ObjectDatumStreamAliasDao {
+public class JdbcObjectDatumStreamAliasEntityDao implements ObjectDatumStreamAliasEntityDao {
 
 	private final UuidGenerator uuidGenerator;
 	private final JdbcOperations jdbcOps;
@@ -65,7 +65,7 @@ public class JdbcObjectDatumStreamAliasDao implements ObjectDatumStreamAliasDao 
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public JdbcObjectDatumStreamAliasDao(JdbcOperations jdbcOps) {
+	public JdbcObjectDatumStreamAliasEntityDao(JdbcOperations jdbcOps) {
 		this(UUID::randomUUID, jdbcOps);
 	}
 
@@ -79,7 +79,7 @@ public class JdbcObjectDatumStreamAliasDao implements ObjectDatumStreamAliasDao 
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public JdbcObjectDatumStreamAliasDao(UuidGenerator uuidGenerator, JdbcOperations jdbcOps) {
+	public JdbcObjectDatumStreamAliasEntityDao(UuidGenerator uuidGenerator, JdbcOperations jdbcOps) {
 		super();
 		this.uuidGenerator = requireNonNullArgument(uuidGenerator, "uuidGenerator");
 		this.jdbcOps = requireNonNullArgument(jdbcOps, "jdbcOps");

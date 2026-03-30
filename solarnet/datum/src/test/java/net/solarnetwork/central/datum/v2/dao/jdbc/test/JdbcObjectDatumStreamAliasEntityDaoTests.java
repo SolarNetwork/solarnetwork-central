@@ -1,5 +1,5 @@
 /* ==================================================================
- * JdbcObjectDatumStreamAliasDaoTests.java - 28/03/2026 3:18:56 pm
+ * JdbcObjectDatumStreamAliasEntityDaoTests.java - 28/03/2026 3:18:56 pm
  *
  * Copyright 2026 SolarNetwork.net Dev Team
  *
@@ -55,7 +55,7 @@ import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
-import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcObjectDatumStreamAliasDao;
+import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcObjectDatumStreamAliasEntityDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
 import net.solarnetwork.central.domain.EntityConstants;
@@ -66,20 +66,20 @@ import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.util.UuidGenerator;
 
 /**
- * Test cases for the {@link JdbcObjectDatumStreamAliasDao} class.
+ * Test cases for the {@link JdbcObjectDatumStreamAliasEntityDao} class.
  *
  * @author matt
  * @version 1.0
  */
 @ExtendWith(MockitoExtension.class)
-public class JdbcObjectDatumStreamAliasDaoTests extends BaseDatumJdbcTestSupport {
+public class JdbcObjectDatumStreamAliasEntityDaoTests extends BaseDatumJdbcTestSupport {
 
 	@Mock
 	private UuidGenerator uuidGenerator;
 
 	private JdbcDatumEntityDao datumDao;
 
-	private JdbcObjectDatumStreamAliasDao dao;
+	private JdbcObjectDatumStreamAliasEntityDao dao;
 	private Long userId;
 	private Long locId;
 
@@ -89,7 +89,7 @@ public class JdbcObjectDatumStreamAliasDaoTests extends BaseDatumJdbcTestSupport
 	public void setup() {
 		datumDao = new JdbcDatumEntityDao(jdbcTemplate);
 
-		dao = new JdbcObjectDatumStreamAliasDao(uuidGenerator, jdbcTemplate);
+		dao = new JdbcObjectDatumStreamAliasEntityDao(uuidGenerator, jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		locId = randomLong();
 		setupTestLocation(locId);
