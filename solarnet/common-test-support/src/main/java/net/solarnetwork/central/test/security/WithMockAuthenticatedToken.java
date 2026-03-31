@@ -44,7 +44,7 @@ public @interface WithMockAuthenticatedToken {
 	 *
 	 * @return the user ID
 	 */
-	String userId() default "1";
+	long userId() default 1L;
 
 	/**
 	 * The token ID.
