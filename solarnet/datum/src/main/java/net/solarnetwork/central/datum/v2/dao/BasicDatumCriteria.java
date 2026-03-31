@@ -861,7 +861,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	}
 
 	@Override
-	public final ObjectDatumStreamAliasMatchType getStreamAliasMatchType() {
+	public final @Nullable ObjectDatumStreamAliasMatchType getStreamAliasMatchType() {
 		return streamAliasMatchType;
 	}
 
@@ -872,7 +872,8 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	 *        the match type to set
 	 * @since 1.6
 	 */
-	public final void setStreamAliasMatchType(ObjectDatumStreamAliasMatchType streamAliasMatchType) {
+	public final void setStreamAliasMatchType(
+			@Nullable ObjectDatumStreamAliasMatchType streamAliasMatchType) {
 		this.streamAliasMatchType = streamAliasMatchType;
 	}
 
