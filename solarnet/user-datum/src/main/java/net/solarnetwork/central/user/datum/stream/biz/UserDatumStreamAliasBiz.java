@@ -47,7 +47,7 @@ public interface UserDatumStreamAliasBiz {
 	 * @throws AuthorizationException
 	 *         if the entity is not available
 	 */
-	ObjectDatumStreamAliasEntity aliasForId(Long userId, UUID id);
+	ObjectDatumStreamAliasEntity aliasForUser(Long userId, UUID id);
 
 	/**
 	 * Get a list of all available alias entities for a given user.
@@ -66,7 +66,7 @@ public interface UserDatumStreamAliasBiz {
 	 *
 	 * @param userId
 	 *        the user ID of the entity owner
-	 * @param id
+	 * @param aliasId
 	 *        the ID of the entity to save
 	 * @param input
 	 *        the entity input to save

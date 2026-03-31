@@ -84,7 +84,7 @@ public class ObjectDatumStreamAliasEntityInput {
 	 * 
 	 * @return the object ID
 	 */
-	public final Long getObjectId() {
+	public final @Nullable Long getObjectId() {
 		return objectId;
 	}
 
@@ -94,7 +94,7 @@ public class ObjectDatumStreamAliasEntityInput {
 	 * @param objectId
 	 *        the ID to set
 	 */
-	public final void setObjectId(Long objectId) {
+	public final void setObjectId(@Nullable Long objectId) {
 		this.objectId = objectId;
 	}
 
@@ -103,7 +103,7 @@ public class ObjectDatumStreamAliasEntityInput {
 	 * 
 	 * @return the source ID
 	 */
-	public final String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return sourceId;
 	}
 
@@ -113,7 +113,7 @@ public class ObjectDatumStreamAliasEntityInput {
 	 * @param sourceId
 	 *        the source ID to set
 	 */
-	public final void setSourceId(String sourceId) {
+	public final void setSourceId(@Nullable String sourceId) {
 		this.sourceId = sourceId;
 	}
 
@@ -122,7 +122,7 @@ public class ObjectDatumStreamAliasEntityInput {
 	 * 
 	 * @return the original object ID
 	 */
-	public final Long getOriginalObjectId() {
+	public final @Nullable Long getOriginalObjectId() {
 		return originalObjectId;
 	}
 
@@ -132,7 +132,7 @@ public class ObjectDatumStreamAliasEntityInput {
 	 * @param originalObjectId
 	 *        the original object ID to set
 	 */
-	public final void setOriginalObjectId(Long originalObjectId) {
+	public final void setOriginalObjectId(@Nullable Long originalObjectId) {
 		this.originalObjectId = originalObjectId;
 	}
 
@@ -141,7 +141,7 @@ public class ObjectDatumStreamAliasEntityInput {
 	 * 
 	 * @return the original source ID
 	 */
-	public final String getOriginalSourceId() {
+	public final @Nullable String getOriginalSourceId() {
 		return originalSourceId;
 	}
 
@@ -151,7 +151,7 @@ public class ObjectDatumStreamAliasEntityInput {
 	 * @param originalSourceId
 	 *        the original source ID to set
 	 */
-	public final void setOriginalSourceId(String originalSourceId) {
+	public final void setOriginalSourceId(@Nullable String originalSourceId) {
 		this.originalSourceId = originalSourceId;
 	}
 

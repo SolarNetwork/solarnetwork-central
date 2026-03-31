@@ -23,7 +23,6 @@
 package net.solarnetwork.central.user.datum.stream.biz.test;
 
 import static java.time.Instant.EPOCH;
-import static java.time.ZoneOffset.UTC;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType.AliasOnly;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -31,13 +30,11 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomSourceId;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
-import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.util.List;
 import java.util.UUID;
-import org.assertj.core.api.BDDAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,14 +42,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasEntityDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasFilter;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
-import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
-import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.datum.stream.biz.impl.DaoUserDatumStreamAliasBiz;
 import net.solarnetwork.central.user.datum.stream.domain.ObjectDatumStreamAliasEntityInput;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -71,9 +65,6 @@ public class DaoUserDatumStreamAliasBizTests {
 	@Mock
 	private ObjectDatumStreamAliasEntityDao aliasDao;
 
-	@Mock
-	private SolarNodeOwnershipDao nodeOwnershipDao;
-
 	@Captor
 	private ArgumentCaptor<ObjectDatumStreamAliasFilter> filterCaptor;
 
@@ -84,7 +75,7 @@ public class DaoUserDatumStreamAliasBizTests {
 
 	@BeforeEach
 	public void setup() {
-		service = new DaoUserDatumStreamAliasBiz(aliasDao, nodeOwnershipDao);
+		service = new DaoUserDatumStreamAliasBiz(aliasDao);
 	}
 
 	@Test
@@ -98,7 +89,7 @@ public class DaoUserDatumStreamAliasBizTests {
 		given(aliasDao.findFiltered(any())).willReturn(new BasicFilterResults<>(List.of(daoResult)));
 
 		// WHEN
-		final ObjectDatumStreamAliasEntity result = service.aliasForId(userId, aliasId);
+		final ObjectDatumStreamAliasEntity result = service.aliasForUser(userId, aliasId);
 
 		// THEN
 		// @formatter:off
@@ -171,10 +162,6 @@ public class DaoUserDatumStreamAliasBizTests {
 		final UUID aliasId = randomUUID();
 		final Long nodeId = randomLong();
 
-		// verify original node ownership
-		final var ownership = new BasicSolarNodeOwnership(nodeId, userId, "NZ", UTC, false, false);
-		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(ownership);
-
 		// persist alias
 		final var daoResult = new ObjectDatumStreamAliasEntity(aliasId, EPOCH, EPOCH, Node, randomLong(),
 				randomSourceId(), randomLong(), randomSourceId());
@@ -211,34 +198,6 @@ public class DaoUserDatumStreamAliasBizTests {
 		and.then(result)
 			.as("Result from DAO get() returned")
 			.isSameAs(daoResult)
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void saveAlias_nodeIdNotAllowed() {
-		// GIVEN
-		final Long userId = randomLong();
-		final Long nodeId = randomLong();
-
-		// verify original node ownership... different user in this case
-		final var ownership = new BasicSolarNodeOwnership(nodeId, randomLong(), "NZ", UTC, false, false);
-		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(ownership);
-
-		// WHEN
-		final var input = new ObjectDatumStreamAliasEntityInput();
-		input.setObjectId(randomLong());
-		input.setSourceId(randomSourceId());
-		input.setOriginalObjectId(nodeId);
-		input.setOriginalSourceId(randomSourceId());
-		final var saveId = randomUUID();
-
-		// THEN
-		// @formatter:off
-		thenExceptionOfType(AuthorizationException.class)
-			.isThrownBy(() -> service.saveAlias(userId, saveId, input))
-			.as("Node ID is rejected value")
-			.returns(nodeId, BDDAssertions.from(AuthorizationException::getId))
 			;
 		// @formatter:on
 	}
