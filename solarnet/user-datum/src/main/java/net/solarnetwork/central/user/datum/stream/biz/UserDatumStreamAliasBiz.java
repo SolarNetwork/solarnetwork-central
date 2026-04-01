@@ -62,7 +62,7 @@ public interface UserDatumStreamAliasBiz {
 			@Nullable ObjectDatumStreamAliasFilter filter);
 
 	/**
-	 * Save a cloud integration configuration for a user.
+	 * Save an alias entity for a user.
 	 *
 	 * @param userId
 	 *        the user ID of the entity owner
@@ -76,5 +76,15 @@ public interface UserDatumStreamAliasBiz {
 	 */
 	ObjectDatumStreamAliasEntity saveAlias(Long userId, UUID aliasId,
 			ObjectDatumStreamAliasEntityInput input);
+
+	/**
+	 * Get a list of all available alias entities for a given user.
+	 *
+	 * @param userId
+	 *        the user ID to get entities for
+	 * @param filter
+	 *        an optional filter
+	 */
+	void deleteAliases(Long userId, @Nullable ObjectDatumStreamAliasFilter filter);
 
 }

@@ -27,11 +27,19 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.BindingResult;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasEntityDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasFilter;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
+import net.solarnetwork.central.domain.Securable;
+import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.datum.stream.biz.UserDatumStreamAliasBiz;
 import net.solarnetwork.central.user.datum.stream.domain.ObjectDatumStreamAliasEntityInput;
 import net.solarnetwork.dao.FilterResults;
@@ -42,9 +50,12 @@ import net.solarnetwork.dao.FilterResults;
  * @author matt
  * @version 1.0
  */
+@Securable
 public class DaoUserDatumStreamAliasBiz implements UserDatumStreamAliasBiz {
 
 	private final ObjectDatumStreamAliasEntityDao aliasDao;
+
+	private @Nullable Validator validator;
 
 	/**
 	 * Constructor.
@@ -59,6 +70,7 @@ public class DaoUserDatumStreamAliasBiz implements UserDatumStreamAliasBiz {
 		this.aliasDao = requireNonNullArgument(aliasDao, "aliasDao");
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public ObjectDatumStreamAliasEntity aliasForUser(Long userId, UUID id) {
 		final var f = new BasicDatumCriteria();
@@ -68,6 +80,7 @@ public class DaoUserDatumStreamAliasBiz implements UserDatumStreamAliasBiz {
 		return requireNonNullObject(aliasDao.findFiltered(f).firstResult(), id);
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<ObjectDatumStreamAliasEntity, UUID> listAliases(Long userId,
 			@Nullable ObjectDatumStreamAliasFilter filter) {
@@ -77,12 +90,61 @@ public class DaoUserDatumStreamAliasBiz implements UserDatumStreamAliasBiz {
 		return aliasDao.findFiltered(f);
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public ObjectDatumStreamAliasEntity saveAlias(Long userId, UUID aliasId,
 			ObjectDatumStreamAliasEntityInput input) {
+		validateInput(input);
 		final ObjectDatumStreamAliasEntity alias = input.toEntity(aliasId, Instant.now());
 		final var pk = aliasDao.save(alias);
 		return requireNonNullObject(aliasDao.get(pk), pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteAliases(Long userId, @Nullable ObjectDatumStreamAliasFilter filter) {
+		final var f = new BasicDatumCriteria();
+		f.copyFrom(filter);
+		f.setUserId(userId);
+		aliasDao.delete(f);
+	}
+
+	private void validateInput(final @Nullable Object input) {
+		validateInput(input, getValidator());
+	}
+
+	private static void validateInput(final @Nullable Object input, final @Nullable Validator v) {
+		if ( input == null || v == null ) {
+			return;
+		}
+		var violations = v.validate(input);
+		if ( violations == null || violations.isEmpty() ) {
+			return;
+		}
+		BindingResult errors = ExceptionUtils
+				.toBindingResult(new ConstraintViolationException(violations), v);
+		if ( errors.hasErrors() ) {
+			throw new ValidationException(errors);
+		}
+	}
+
+	/**
+	 * Get the validator.
+	 *
+	 * @return the validator
+	 */
+	public @Nullable Validator getValidator() {
+		return validator;
+	}
+
+	/**
+	 * Set the validator.
+	 *
+	 * @param validator
+	 *        the validator to set
+	 */
+	public void setValidator(@Nullable Validator validator) {
+		this.validator = validator;
 	}
 
 }

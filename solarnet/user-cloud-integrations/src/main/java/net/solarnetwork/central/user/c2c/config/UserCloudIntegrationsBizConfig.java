@@ -35,6 +35,7 @@ import org.springframework.security.crypto.encrypt.BytesEncryptor;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import jakarta.validation.Validator;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudControlConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
@@ -99,6 +100,9 @@ public class UserCloudIntegrationsBizConfig {
 	@Autowired
 	private JdbcOperations jdbcOperations;
 
+	@Autowired
+	private Validator validator;
+
 	@Bean
 	public DaoUserCloudIntegrationsBiz userCloudIntegrationsBiz() {
 		var clientAccessTokenDao = new JdbcOAuth2AuthorizedClientService(bytesEncryptor, jdbcOperations,
@@ -114,6 +118,7 @@ public class UserCloudIntegrationsBizConfig {
 				userSettingsDao, integrationDao, datumStreamDao, datumStreamSettingsDao,
 				datumStreamMappingDao, datumStreamPropertyDao, controlDao, datumStreamPollTaskDao,
 				datumStreamRakeTaskDao, clientAccessTokenDao, textEncryptor, integrationServices);
+		biz.setValidator(validator);
 		return biz;
 	}
 

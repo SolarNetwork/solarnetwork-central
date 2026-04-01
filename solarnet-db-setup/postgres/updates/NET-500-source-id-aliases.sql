@@ -25,23 +25,26 @@ DROP VIEW IF EXISTS solardatm.da_datm_meta_aliased;
  * View combining da_datm_meta and da_datm_alias, to ease querying.
  */
 CREATE OR REPLACE VIEW solardatm.da_datm_meta_aliased AS
-SELECT s.stream_id, s.node_id, s.source_id, s.names_i, s.names_a, s.names_s, s.jdata, s.stream_id AS orig_stream_id, FALSE AS is_alias
+SELECT s.stream_id, s.node_id, s.source_id, s.names_i, s.names_a, s.names_s, s.jdata, s.stream_id AS orig_stream_id, FALSE AS is_alias, s.created, s.updated
 FROM solardatm.da_datm_meta s
 UNION ALL
-SELECT a.stream_id, a.alias_node_id AS node_id, a.alias_source_id AS source_id, s.names_i, s.names_a, s.names_s, s.jdata, s.stream_id AS orig_stream_id, TRUE AS is_alias
+SELECT a.stream_id, a.alias_node_id AS node_id, a.alias_source_id AS source_id, s.names_i, s.names_a, s.names_s, s.jdata, s.stream_id AS orig_stream_id, TRUE AS is_alias, a.created, a.modified AS updated
 FROM solardatm.da_datm_alias a
 INNER JOIN solardatm.da_datm_meta s ON s.node_id = a.node_id AND s.source_id = a.source_id
 ;
+
+DROP VIEW IF EXISTS solaruser.da_datm_meta_aliased;
+
 
 /**
  * View combining user ID with da_datm_meta and da_datm_alias, to ease querying.
  */
 CREATE OR REPLACE VIEW solaruser.da_datm_meta_aliased AS
-SELECT un.user_id, s.stream_id, s.node_id, s.source_id, s.names_i, s.names_a, s.names_s, s.jdata, s.stream_id AS orig_stream_id, FALSE AS is_alias
+SELECT un.user_id, s.stream_id, s.node_id, s.source_id, s.names_i, s.names_a, s.names_s, s.jdata, s.stream_id AS orig_stream_id, FALSE AS is_alias, s.created, s.updated
 FROM solardatm.da_datm_meta s
 INNER JOIN solaruser.user_node un ON un.node_id = s.node_id
 UNION ALL
-SELECT un.user_id, a.stream_id, a.alias_node_id AS node_id, a.alias_source_id AS source_id, s.names_i, s.names_a, s.names_s, s.jdata, s.stream_id AS orig_stream_id, TRUE AS is_alias
+SELECT un.user_id, a.stream_id, a.alias_node_id AS node_id, a.alias_source_id AS source_id, s.names_i, s.names_a, s.names_s, s.jdata, s.stream_id AS orig_stream_id, TRUE AS is_alias, a.created, a.modified AS updated
 FROM solardatm.da_datm_alias a
 INNER JOIN solardatm.da_datm_meta s ON s.node_id = a.node_id AND s.source_id = a.source_id
 INNER JOIN solaruser.user_node un ON un.node_id = a.node_id
@@ -123,4 +126,55 @@ BEGIN
 		ON CONFLICT DO NOTHING;
 	END IF;
 END
+$$;
+
+
+/**
+ * Get the metadata associated with a node datum or location datum stream.
+ *
+ * The `kind` output column will be `n` if the found metadata is for a node datum stream,
+ * or `l` for a location datum stream, by looking in the `da_datum_meta_aliased` and `da_loc_datm_meta`
+ * tables for a matching stream ID. If the stream ID is found in both tables, the node metadata
+ * will be returned.
+ *
+ * The `time_zone` output column will be the time zone associated with the location of the stream,
+ * either via the location of the node for a node stream or the location itself for a location
+ * stream. If no time zone is available, it will be returned as `UTC`.
+ *
+ * @param sid the stream ID to find metadata for
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_metadata_for_stream(
+		sid 		UUID
+	) RETURNS TABLE(
+		stream_id 	UUID,
+		obj_id		BIGINT,
+		source_id	CHARACTER VARYING(64),
+		created		TIMESTAMP WITH TIME ZONE,
+		updated		TIMESTAMP WITH TIME ZONE,
+		names_i		TEXT[],
+		names_a		TEXT[],
+		names_s		TEXT[],
+		jdata		JSONB,
+		kind		CHARACTER,
+		time_zone	CHARACTER VARYING(64)
+	) LANGUAGE SQL STABLE ROWS 1 AS
+$$
+	SELECT * FROM (
+		SELECT m.stream_id, m.node_id AS obj_id, m.source_id, m.created, m.updated
+			, m.names_i, m.names_a, m.names_s, m.jdata, 'n' AS kind
+			, COALESCE(l.time_zone, 'UTC') AS time_zone
+		FROM solardatm.da_datm_meta_aliased m
+		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE stream_id = sid
+		UNION ALL
+		SELECT m.stream_id, m.loc_id AS obj_id, m.source_id, m.created, m.updated
+			, m.names_i, m.names_a, m.names_s, m.jdata, 'l' AS kind
+			, COALESCE(l.time_zone, 'UTC') AS time_zone
+		FROM solardatm.da_loc_datm_meta m
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = m.loc_id
+		WHERE stream_id = sid
+	) m
+	ORDER BY kind DESC
+	LIMIT 1
 $$;

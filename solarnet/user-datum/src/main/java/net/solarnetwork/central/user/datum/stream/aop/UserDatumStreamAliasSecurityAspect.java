@@ -23,12 +23,15 @@
 package net.solarnetwork.central.user.datum.stream.aop;
 
 import java.util.UUID;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamAliasFilter;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityPolicyMetadataType;
@@ -63,31 +66,57 @@ public class UserDatumStreamAliasSecurityAspect extends AuthorizationSupport {
 	 * @param userId
 	 *        the user ID
 	 */
-	@Pointcut("execution(* net.solarnetwork.central.user.datum.stream.biz.UserDatumStreamAliasBiz.*ForUser(..)) && args(userId,..)")
+	@Pointcut("""
+			execution(* net.solarnetwork.central.user.datum.stream.biz.UserDatumStreamAliasBiz.*ForUser(..))
+			&& args(userId,..)
+			&& @target(net.solarnetwork.central.domain.Securable)
+			""")
 	public void readForUserId(Long userId) {
 	}
 
 	/**
-	 * Match methods like {@code list*(userId, ...)}.
+	 * Match methods like {@code list*(userId, filter)}.
 	 *
 	 * @param userId
 	 *        the user ID
 	 */
-	@Pointcut("execution(* net.solarnetwork.central.user.datum.stream.biz.UserDatumStreamAliasBiz.list*(..)) && args(userId,..)")
-	public void listForUserId(Long userId) {
+	@Pointcut("""
+			execution(* net.solarnetwork.central.user.datum.stream.biz.UserDatumStreamAliasBiz.list*(..))
+			&& args(userId,filter)
+			&& @target(net.solarnetwork.central.domain.Securable)
+			""")
+	public void listForUserId(Long userId, ObjectDatumStreamAliasFilter filter) {
 	}
 
 	/**
-	 * Match methods like {@code list*(userId, ...)}.
+	 * Match methods like {@code save*(userId, pk, input))}.
 	 *
 	 * @param userId
 	 *        the user ID
 	 */
-	@Pointcut("execution(* net.solarnetwork.central.user.datum.stream.biz.UserDatumStreamAliasBiz.save*(..)) && args(userId,pk,input)")
+	@Pointcut("""
+			execution(* net.solarnetwork.central.user.datum.stream.biz.UserDatumStreamAliasBiz.save*(..))
+			&& args(userId,id,input)
+			&& @target(net.solarnetwork.central.domain.Securable)
+			""")
 	public void saveAliasForUserId(Long userId, UUID id, ObjectDatumStreamAliasEntityInput input) {
 	}
 
-	@Before(value = "readForUserId(userId) || listForUserId(userId)")
+	/**
+	 * Match methods like {@code delete*(userId, filter))}.
+	 *
+	 * @param userId
+	 *        the user ID
+	 */
+	@Pointcut("""
+			execution(* net.solarnetwork.central.user.datum.stream.biz.UserDatumStreamAliasBiz.delete*(..))
+			&& args(userId,filter)
+			&& @target(net.solarnetwork.central.domain.Securable)
+			""")
+	public void deleteAliasForUserId(Long userId, ObjectDatumStreamAliasFilter filter) {
+	}
+
+	@Before(value = "readForUserId(userId)")
 	public void userIdReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
@@ -105,12 +134,13 @@ public class UserDatumStreamAliasSecurityAspect extends AuthorizationSupport {
 			return;
 		}
 
-		final Authentication authentication = SecurityUtils.getCurrentAuthentication();
 		final SecurityPolicy policy = getActiveSecurityPolicy();
-		if ( policy == null ) {
+		if ( policy == null || ((policy.getNodeIds() == null || policy.getNodeIds().isEmpty())
+				&& (policy.getSourceIds() == null || policy.getSourceIds().isEmpty())) ) {
 			return;
 		}
 
+		final Authentication authentication = SecurityUtils.getCurrentAuthentication();
 		final Object principal = (authentication != null ? authentication.getPrincipal() : null);
 		final var enforcer = new SecurityPolicyEnforcer(policy, principal, input, getPathMatcher(),
 				SecurityPolicyMetadataType.Node, this::requireNodeReadAccess,
@@ -121,6 +151,29 @@ public class UserDatumStreamAliasSecurityAspect extends AuthorizationSupport {
 		} else {
 			enforcer.verifySourceIds(new String[] { input.getSourceId() });
 		}
+	}
+
+	private Object enforceFilterPolicy(ProceedingJoinPoint pjp, Long userId,
+			ObjectDatumStreamAliasFilter filter) throws Throwable {
+		var filterToUse = policyEnforcerCheck(filter);
+		if ( filterToUse == filter ) {
+			return pjp.proceed();
+		}
+		return pjp.proceed(new Object[] { userId, filterToUse });
+	}
+
+	@Around(value = "listForUserId(userId,filter)", argNames = "pjp,userId,filter")
+	public Object listAliasAccessCheck(ProceedingJoinPoint pjp, Long userId,
+			ObjectDatumStreamAliasFilter filter) throws Throwable {
+		requireUserReadAccess(userId);
+		return enforceFilterPolicy(pjp, userId, filter);
+	}
+
+	@Around(value = "deleteAliasForUserId(userId,filter)", argNames = "pjp,userId,filter")
+	public Object deleteAliasAccessCheck(ProceedingJoinPoint pjp, Long userId,
+			ObjectDatumStreamAliasFilter filter) throws Throwable {
+		requireUserWriteAccess(userId);
+		return enforceFilterPolicy(pjp, userId, filter);
 	}
 
 }

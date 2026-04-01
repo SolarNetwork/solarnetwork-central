@@ -59,6 +59,8 @@ import net.solarnetwork.central.user.datum.export.aop.SolarNetUserExportAopConfi
 import net.solarnetwork.central.user.datum.export.config.SolarNetUserExportConfiguration;
 import net.solarnetwork.central.user.datum.flux.aop.SolarNetUserFluxAopConfiguration;
 import net.solarnetwork.central.user.datum.flux.config.SolarNetUserFluxConfiguration;
+import net.solarnetwork.central.user.datum.stream.aop.SolarNetUserDatumStreamAopConfiguration;
+import net.solarnetwork.central.user.datum.stream.config.SolarNetUserDatumStreamConfiguration;
 import net.solarnetwork.central.user.din.aop.SolarNetUserDatumInputAopConfiguration;
 import net.solarnetwork.central.user.din.config.SolarNetUserDatumInputConfiguration;
 import net.solarnetwork.central.user.dnp3.aop.SolarNetUserDnp3AopConfiguration;
@@ -97,6 +99,8 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetUserCloudIntegrationsConfiguration.class,
 		SolarNetUserDatumInputAopConfiguration.class,
 		SolarNetUserDatumInputConfiguration.class,
+		SolarNetUserDatumStreamAopConfiguration.class,
+		SolarNetUserDatumStreamConfiguration.class,
 		SolarNetUserDnp3AopConfiguration.class,
 		SolarNetUserDnp3Configuration.class,
 		SolarNetUserInstructionInputAopConfiguration.class,

@@ -202,4 +202,38 @@ public class DaoUserDatumStreamAliasBizTests {
 		// @formatter:on
 	}
 
+	@Test
+	public void deleteFiltered() {
+		// GIVEN
+		final Long userId = randomLong();
+
+		given(aliasDao.delete(any(ObjectDatumStreamAliasFilter.class))).willReturn(1);
+
+		// WHEN
+		final var filter = new BasicDatumCriteria();
+		filter.setStreamAliasMatchType(ObjectDatumStreamAliasMatchType.AliasOnly);
+		filter.setNodeId(randomLong());
+		filter.setSourceId(randomSourceId());
+		service.deleteAliases(userId, filter);
+
+		// THEN
+		// @formatter:off
+		then(aliasDao).should().delete(filterCaptor.capture());
+		and.then(filterCaptor.getValue())
+			.as("DAO queried")
+			.isNotNull()
+			.as("Is not same filter intance as input argument")
+			.isNotSameAs(filter)
+			.as("Match type from argument filter used in search filter")
+			.returns(filter.getStreamAliasMatchType(), from(ObjectDatumStreamAliasFilter::getStreamAliasMatchType))
+			.as("User ID from argument used as filter property")
+			.returns(userId, from(ObjectDatumStreamAliasFilter::getUserId))
+			.as("Node IDs from argument filter used in search filter")
+			.returns(filter.getNodeIds(), from(ObjectDatumStreamAliasFilter::getNodeIds))
+			.as("Source IDs from argument filter used in search filter")
+			.returns(filter.getSourceIds(), from(ObjectDatumStreamAliasFilter::getSourceIds))
+			;
+		// @formatter:on
+	}
+
 }
