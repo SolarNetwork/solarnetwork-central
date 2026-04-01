@@ -1,5 +1,5 @@
 /* ==================================================================
- * QueryingDatumStraemsAccessor_ExpressionTests.java - 12/06/2025 5:19:01 am
+ * QueryingDatumStreamsAccessor_ExpressionTests.java - 12/06/2025 5:19:01 am
  *
  * Copyright 2025 SolarNetwork.net Dev Team
  *
