@@ -91,7 +91,7 @@ INNER JOIN solaruser.user_node un ON un.node_id = a.node_id
 /**
  * Disallow saving node/source combo that exists as an alias.
  */
-CREATE OR REPLACE FUNCTION solardatm.validate_node_source()
+CREATE OR REPLACE FUNCTION solardatm.da_datm_validate_node_source()
 	RETURNS "trigger"  LANGUAGE 'plpgsql' VOLATILE AS $$
 DECLARE
 	found BOOLEAN;
@@ -116,7 +116,7 @@ CREATE TRIGGER da_datm_meta_node_source_checker
     AFTER INSERT OR UPDATE
     ON solardatm.da_datm_meta
     FOR EACH ROW
-    EXECUTE PROCEDURE solardatm.validate_node_source();
+    EXECUTE PROCEDURE solardatm.da_datm_validate_node_source();
 
 
 -- ==========================================================================================
