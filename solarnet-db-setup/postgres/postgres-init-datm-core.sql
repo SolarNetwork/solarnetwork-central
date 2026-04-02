@@ -87,6 +87,95 @@ CREATE TABLE solardatm.da_datm_aux (
 
 /*
 	================================================================================================
+	Datum stream alias support
+	================================================================================================
+*/
+
+/**
+ * Node/source ID aliases for datum streams
+ */
+CREATE TABLE solardatm.da_datm_alias (
+	stream_id			UUID NOT NULL DEFAULT uuid_generate_v4(),
+	created				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	node_id				BIGINT NOT NULL,
+	source_id			CHARACTER VARYING(64) NOT NULL COLLATE solarcommon.naturalsort,
+	alias_node_id		BIGINT NOT NULL,
+	alias_source_id		CHARACTER VARYING(64) NOT NULL COLLATE solarcommon.naturalsort,
+	CONSTRAINT da_datm_alias_pk PRIMARY KEY (stream_id),
+	CONSTRAINT da_datm_alias_unq UNIQUE (alias_node_id, alias_source_id),
+	CONSTRAINT da_datm_alias_alias_chk CHECK (NOT(node_id = alias_node_id AND source_id = alias_source_id)),
+	CONSTRAINT da_datm_alias_stream_fk FOREIGN KEY (node_id, source_id)
+		REFERENCES solardatm.da_datm_meta (node_id, source_id) MATCH SIMPLE
+		ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE INDEX da_datm_alias_node_source_idx ON solardatm.da_datm_alias (node_id, source_id);
+
+/**
+ * View combining da_datm_meta and da_datm_alias, to ease querying.
+ */
+CREATE OR REPLACE VIEW solardatm.da_datm_meta_aliased AS
+SELECT s.stream_id
+	, s.node_id
+	, s.source_id
+	, s.names_i
+	, s.names_a
+	, s.names_s
+	, s.jdata
+	, s.stream_id AS orig_stream_id
+	, FALSE AS is_alias
+	, s.created
+	, s.updated
+FROM solardatm.da_datm_meta s
+UNION ALL
+SELECT a.stream_id
+	, a.alias_node_id AS node_id
+	, a.alias_source_id AS source_id
+	, s.names_i
+	, s.names_a
+	, s.names_s
+	, s.jdata
+	, s.stream_id AS orig_stream_id
+	, TRUE AS is_alias
+	, a.created
+	, a.modified AS updated
+FROM solardatm.da_datm_alias a
+INNER JOIN solardatm.da_datm_meta s ON s.node_id = a.node_id AND s.source_id = a.source_id
+;
+
+/**
+ * Disallow saving node/source combo that exists as an alias.
+ */
+CREATE OR REPLACE FUNCTION solardatm.validate_node_source()
+	RETURNS "trigger"  LANGUAGE 'plpgsql' VOLATILE AS $$
+DECLARE
+	found BOOLEAN;
+BEGIN
+	SELECT TRUE
+	FROM solardatm.da_datm_alias
+	WHERE alias_node_id = NEW.node_id AND alias_source_id = NEW.source_id
+	INTO found;
+
+	IF FOUND THEN
+		RAISE EXCEPTION 'Node % source "%" already exists as a datum stream alias.', NEW.node_id, NEW.source_id
+		USING ERRCODE = 'integrity_constraint_violation',
+			SCHEMA = 'solardatm',
+			TABLE = 'da_datm_meta',
+			HINT = 'Use a different node/source combination or change/delete the datum stream alias.';
+	END IF;
+	RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER da_datm_meta_node_source_checker
+    AFTER INSERT OR UPDATE
+    ON solardatm.da_datm_meta
+    FOR EACH ROW
+    EXECUTE PROCEDURE solardatm.validate_node_source();
+
+/*
+	================================================================================================
 	Aggregate datm tables
 	================================================================================================
 */
@@ -488,7 +577,7 @@ $$;
  * Get the metadata associated with a node datum or location datum stream.
  *
  * The `kind` output column will be `n` if the found metadata is for a node datum stream,
- * or `l` for a location datum stream, by looking in the `da_datum_meta` and `da_loc_datm_meta`
+ * or `l` for a location datum stream, by looking in the `da_datum_meta_aliased` and `da_loc_datm_meta`
  * tables for a matching stream ID. If the stream ID is found in both tables, the node metadata
  * will be returned.
  *
@@ -518,7 +607,7 @@ $$
 		SELECT m.stream_id, m.node_id AS obj_id, m.source_id, m.created, m.updated
 			, m.names_i, m.names_a, m.names_s, m.jdata, 'n' AS kind
 			, COALESCE(l.time_zone, 'UTC') AS time_zone
-		FROM solardatm.da_datm_meta m
+		FROM solardatm.da_datm_meta_aliased m
 		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
 		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 		WHERE stream_id = sid
@@ -530,6 +619,7 @@ $$
 		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = m.loc_id
 		WHERE stream_id = sid
 	) m
+	ORDER BY kind DESC
 	LIMIT 1
 $$;
 
