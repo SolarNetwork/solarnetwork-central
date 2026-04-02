@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumController_MostRecentTests.java - 10/10/2021 6:48:33 PM
+ * DatumController_MostRecentWebTests.java - 10/10/2021 6:48:33 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -67,7 +67,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-public class DatumController_MostRecentTests extends AbstractJUnit5CentralTransactionalTest {
+public class DatumController_MostRecentWebTests extends AbstractJUnit5CentralTransactionalTest {
 
 	private static final Long TEST_NODE_ID = 1L;
 

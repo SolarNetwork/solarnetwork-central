@@ -1,5 +1,5 @@
 /* ==================================================================
- * AuthTokenControllerTests.java - 9/10/2021 5:41:35 PM
+ * AuthTokenControllerWebTests.java - 9/10/2021 5:41:35 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -65,7 +65,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-public class AuthTokenControllerTests extends AbstractJUnit5CentralTransactionalTest {
+public class AuthTokenControllerWebTests extends AbstractJUnit5CentralTransactionalTest {
 
 	private static final String TEST_TOKEN_SECRET = "secret";
 

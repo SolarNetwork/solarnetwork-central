@@ -1,5 +1,5 @@
 /* ==================================================================
- * AuthTokenControllerTests.java - 9/10/2021 5:41:35 PM
+ * AuthTokenControllerWebTests.java - 9/10/2021 5:41:35 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -43,7 +43,7 @@ import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-public class ConfigurationControllerTests extends AbstractJUnit5CentralTransactionalTest {
+public class ConfigurationControllerWebTests extends AbstractJUnit5CentralTransactionalTest {
 
 	@Autowired
 	private MockMvc mvc;
