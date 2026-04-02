@@ -26,13 +26,13 @@ import static java.util.Collections.singletonMap;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
-import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
+import static org.mockito.BDDMockito.then;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -90,8 +90,9 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Test cases for the {@link DaoDatumExportBiz} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
+@SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class DaoDatumExportBizTests {
 
@@ -221,11 +222,11 @@ public class DaoDatumExportBizTests {
 		DatumExportStatus result = service.performExport(req);
 
 		// THEN
-		then(result).as("Future status provided").isNotNull();
-		then(result.getJobId()).as("Job ID assigned").isNotNull();
+		and.then(result).as("Future status provided").isNotNull();
+		and.then(result.getJobId()).as("Job ID assigned").isNotNull();
 
 		// @formatter:off
-		then(result)
+		and.then(result)
 			.as("Export completes")
 			.succeedsWithin(Duration.ofDays(1))
 			.as("Result is not null")
@@ -234,7 +235,7 @@ public class DaoDatumExportBizTests {
 			.returns(true, from(DatumExportResult::isSuccess))
 			;
 
-		then(destService.exports)
+		and.then(destService.exports)
 			.as("Single resource exported")
 			.hasSize(1)
 			.element(0)
@@ -242,7 +243,7 @@ public class DaoDatumExportBizTests {
 			.returns("text/csv;charset=UTF-8", from(DatumExportResource::getContentType))
 			;
 
-		then(destService.config.getDestinationConfiguration().getServiceProperties())
+		and.then(destService.config.getDestinationConfiguration().getServiceProperties())
 			.as("Service props preserved")
 			.asInstanceOf(map(String.class, Object.class))
 			.hasSize(2)
@@ -252,8 +253,8 @@ public class DaoDatumExportBizTests {
 			.containsEntry(TEST_SECURE_SETTING, "bam")
 			;
 
-		verify(datumDao).bulkExport(any(), exportOptionsCaptor.capture());
-		then(exportOptionsCaptor.getValue())
+		then(datumDao).should().bulkExport(any(), exportOptionsCaptor.capture());
+		and.then(exportOptionsCaptor.getValue())
 			.as("Options provided")
 			.isNotNull()
 			.extracting(ExportOptions::getParameters, map(String.class, Object.class))
@@ -268,7 +269,7 @@ public class DaoDatumExportBizTests {
 
 		String csv = FileCopyUtils.copyToString(new InputStreamReader(
 				destService.exports.get(0).getInputStream(), StandardCharsets.UTF_8));
-		then(csv).as("Exported data").isEqualTo("""
+		and.then(csv).as("Exported data").isEqualTo("""
 				created,nodeId,sourceId,localDate,localTime,a\r
 				%s,%d,%s,,,1\r
 				""".formatted(CSV_INSTANT_FORMAT.format(d.getCreated()), d.getNodeId(),
