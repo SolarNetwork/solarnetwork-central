@@ -194,24 +194,28 @@ CREATE OR REPLACE FUNCTION solardatm.find_metadata_for_stream(
 		jdata		JSONB,
 		kind		CHARACTER,
 		time_zone	CHARACTER VARYING(64)
-	) LANGUAGE SQL STABLE ROWS 1 AS
+	) LANGUAGE plpgsql STABLE ROWS 1 AS
 $$
-	SELECT * FROM (
-		SELECT m.stream_id, m.node_id AS obj_id, m.source_id, m.created, m.updated
-			, m.names_i, m.names_a, m.names_s, m.jdata, 'n' AS kind
-			, COALESCE(l.time_zone, 'UTC') AS time_zone
-		FROM solardatm.da_datm_meta_aliased m
-		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
-		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-		WHERE stream_id = sid
-		UNION ALL
+BEGIN
+	RETURN QUERY
+	SELECT m.stream_id, m.node_id AS obj_id, m.source_id, m.created, m.updated
+		, m.names_i, m.names_a, m.names_s, m.jdata, 'n'::CHARACTER AS kind
+		, COALESCE(l.time_zone, 'UTC') AS time_zone
+	FROM solardatm.da_datm_meta_aliased m
+	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
+	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+	WHERE m.stream_id = sid
+	LIMIT 1;
+
+	IF NOT FOUND THEN
+		RETURN QUERY
 		SELECT m.stream_id, m.loc_id AS obj_id, m.source_id, m.created, m.updated
-			, m.names_i, m.names_a, m.names_s, m.jdata, 'l' AS kind
+			, m.names_i, m.names_a, m.names_s, m.jdata, 'l'::CHARACTER AS kind
 			, COALESCE(l.time_zone, 'UTC') AS time_zone
 		FROM solardatm.da_loc_datm_meta m
 		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = m.loc_id
-		WHERE stream_id = sid
-	) m
-	ORDER BY kind DESC
-	LIMIT 1
+		WHERE m.stream_id = sid
+		LIMIT 1;
+	END IF;
+END;
 $$;
