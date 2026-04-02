@@ -30,11 +30,11 @@ import net.solarnetwork.central.domain.SourceMappingFilter;
  * Filter API for {@link GeneralNodeDatum}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  * @since 1.35
  */
 public interface GeneralNodeDatumFilter extends CommonFilter, CombiningFilter, DatumRollupFilter,
-		NodeMappingFilter, SourceMappingFilter, PropertyNameFilter {
+		NodeMappingFilter, SourceMappingFilter, PropertyNameFilter, StreamAliasFilter {
 
 	/**
 	 * Get the first node ID. This returns the first available node ID from the

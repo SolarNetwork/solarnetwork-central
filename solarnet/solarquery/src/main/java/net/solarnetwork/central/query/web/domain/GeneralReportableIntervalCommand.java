@@ -25,14 +25,17 @@ package net.solarnetwork.central.query.web.domain;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Map;
+import org.jspecify.annotations.Nullable;
+import net.solarnetwork.central.query.domain.NodeSourceMetadataSearchFilter;
 
 /**
  * Command for general reportable interval queries.
  * 
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
-public class GeneralReportableIntervalCommand {
+public class GeneralReportableIntervalCommand implements NodeSourceMetadataSearchFilter {
 
 	private Long locationId;
 	private Long[] nodeIds;
@@ -43,6 +46,7 @@ public class GeneralReportableIntervalCommand {
 	private Instant endDate;
 	private String metadataFilter;
 	private boolean withNodeIds;
+	private @Nullable Boolean includeStreamAliases;
 
 	@Override
 	public String toString() {
@@ -113,6 +117,7 @@ public class GeneralReportableIntervalCommand {
 	 * 
 	 * @return the first node ID
 	 */
+	@Override
 	public Long getNodeId() {
 		return this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0];
 	}
@@ -123,6 +128,7 @@ public class GeneralReportableIntervalCommand {
 	 * @return The node IDs.
 	 * @since 1.2
 	 */
+	@Override
 	public Long[] getNodeIds() {
 		return nodeIds;
 	}
@@ -138,6 +144,7 @@ public class GeneralReportableIntervalCommand {
 		this.nodeIds = nodeIds;
 	}
 
+	@Override
 	public String getSourceId() {
 		return sourceId;
 	}
@@ -152,6 +159,7 @@ public class GeneralReportableIntervalCommand {
 	 * @return the start date
 	 * @since 1.3
 	 */
+	@Override
 	public Instant getStartDate() {
 		return startDate;
 	}
@@ -173,6 +181,7 @@ public class GeneralReportableIntervalCommand {
 	 * @return the end date
 	 * @since 1.3
 	 */
+	@Override
 	public Instant getEndDate() {
 		return endDate;
 	}
@@ -244,6 +253,7 @@ public class GeneralReportableIntervalCommand {
 	 * @return The configured filter.
 	 * @since 1.2
 	 */
+	@Override
 	public String getMetadataFilter() {
 		return metadataFilter;
 	}
@@ -282,6 +292,32 @@ public class GeneralReportableIntervalCommand {
 	 */
 	public void setWithNodeIds(boolean withNodeIds) {
 		this.withNodeIds = withNodeIds;
+	}
+
+	@Override
+	public Boolean getWithNodeIds() {
+		return withNodeIds;
+	}
+
+	@Override
+	public Map<String, ?> getFilter() {
+		return Map.of();
+	}
+
+	@Override
+	public final @Nullable Boolean getIncludeStreamAliases() {
+		return includeStreamAliases;
+	}
+
+	/**
+	 * Set the include stream aliases mode.
+	 *
+	 * @param includeStreamAliases
+	 *        the mode to set
+	 * @since 3.3
+	 */
+	public final void setIncludeStreamAliases(@Nullable Boolean includeStreamAliases) {
+		this.includeStreamAliases = includeStreamAliases;
 	}
 
 }
