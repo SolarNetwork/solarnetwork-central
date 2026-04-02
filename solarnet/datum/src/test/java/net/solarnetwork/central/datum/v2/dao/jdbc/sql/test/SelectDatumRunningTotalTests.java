@@ -22,31 +22,37 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
+import static java.sql.ResultSet.CLOSE_CURSORS_AT_COMMIT;
+import static java.sql.ResultSet.CONCUR_READ_ONLY;
+import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
-import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
-import static org.easymock.EasyMock.aryEq;
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.sameInstance;
+import static net.solarnetwork.util.ClassUtils.getResourceAsString;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumRunningTotal;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.aliased.test.TestAliasedSqlResources;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
@@ -55,124 +61,112 @@ import net.solarnetwork.domain.datum.Aggregation;
  * @author matt
  * @version 1.1
  */
+@ParameterizedClass
+@ValueSource(booleans = { false, true }) // for aliased or not
+@SuppressWarnings("static-access")
+@ExtendWith(MockitoExtension.class)
 public class SelectDatumRunningTotalTests {
 
-	private final Logger log = LoggerFactory.getLogger(getClass());
+	@Parameter
+	private boolean aliased;
 
-	@Test
-	public void sql_find_runningTotal_nodesAndSources_absoluteDates() {
-		// GIVEN
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setAggregation(Aggregation.RunningTotal);
-		filter.setNodeIds(new Long[] { 1L, 2L });
-		filter.setSourceIds(new String[] { "a/*", "b" });
-		filter.setStartDate(Instant.EPOCH);
-		filter.setEndDate(Instant.now());
+	@Mock
+	private Connection con;
 
-		// WHEN
-		String sql = new SelectDatumRunningTotal(filter).getSql();
+	@Mock
+	private PreparedStatement stmt;
 
-		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource(
-				"select-datum-runtot-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
+	@Mock
+	private Array nodeIdsArray;
+
+	@Mock
+	private Array sourceIdsArray;
+
+	@Captor
+	private ArgumentCaptor<String> sqlCaptor;
+
+	private void thenSqlEqualsResource(String sql, String resource) {
+		// @formatter:off
+		and.then(sql)
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace(getResourceAsString(
+					resource,
+					(aliased ? TestAliasedSqlResources.class : TestSqlResources.class),
+					SQL_COMMENT))
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void prep_find_runningTotal_nodesAndSources_absoluteDates() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.RunningTotal);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.EPOCH);
 		filter.setEndDate(Instant.now());
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
-
-		Array sourceIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
-		stmt.setArray(2, sourceIdsArray);
-		sourceIdsArray.free();
-
-		stmt.setTimestamp(3, Timestamp.from(filter.getStartDate()));
-		stmt.setTimestamp(4, Timestamp.from(filter.getEndDate()));
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray, sourceIdsArray);
 		PreparedStatement result = new SelectDatumRunningTotal(filter).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
-				"select-datum-runtot-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray, sourceIdsArray);
-	}
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "select-datum-runtot-nodesAndSources-dates.sql");
 
-	@Test
-	public void sql_find_runningTotal_nodes() {
-		// GIVEN
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setAggregation(Aggregation.RunningTotal);
-		filter.setNodeIds(new Long[] { 1L, 2L });
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+		then(stmt).should().setTimestamp(eq(3), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getEndDate())));
 
-		// WHEN
-		String sql = new SelectDatumRunningTotal(filter).getSql();
-
-		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource("select-datum-runtot-nodes.sql",
-				TestSqlResources.class, SQL_COMMENT));
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
 	public void prep_find_runningTotal_nodes() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.RunningTotal);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
-
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
-
-		stmt.setTimestamp(2, Timestamp.from(Instant.EPOCH));
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray);
-		PreparedStatement result = new SelectDatumRunningTotal(filter).createPreparedStatement(con);
+		final PreparedStatement result = new SelectDatumRunningTotal(filter)
+				.createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
-				"select-datum-runtot-nodes.sql", TestSqlResources.class, SQL_COMMENT));
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "select-datum-runtot-nodes.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setTimestamp(eq(2), eq(Timestamp.from(Instant.EPOCH)));
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
 	public void sql_find_runningTotal_nodes_sortNodeSource() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setAggregation(Aggregation.RunningTotal);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSorts(sorts("node", "source"));
@@ -181,9 +175,7 @@ public class SelectDatumRunningTotalTests {
 		String sql = new SelectDatumRunningTotal(filter).getSql();
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		assertThat("SQL matches", sql, equalToTextResource(
-				"select-datum-runtot-nodes-sortNodeSource.sql", TestSqlResources.class, SQL_COMMENT));
+		thenSqlEqualsResource(sql, "select-datum-runtot-nodes-sortNodeSource.sql");
 	}
 
 }

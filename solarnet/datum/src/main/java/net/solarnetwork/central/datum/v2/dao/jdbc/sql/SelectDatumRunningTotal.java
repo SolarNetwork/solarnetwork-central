@@ -45,12 +45,14 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * filter.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public final class SelectDatumRunningTotal implements PreparedStatementCreator, SqlProvider {
 
 	private final DatumCriteria filter;
+	private final boolean aliased;
+	private final String metaStreamIdColumnName;
 
 	/**
 	 * Constructor.
@@ -63,6 +65,9 @@ public final class SelectDatumRunningTotal implements PreparedStatementCreator, 
 	public SelectDatumRunningTotal(DatumCriteria filter) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
+		this.aliased = (filter.includeStreamAliases()
+				&& filter.getObjectKind() != ObjectDatumKind.Location);
+		this.metaStreamIdColumnName = (aliased ? "s.orig_stream_id" : "s.stream_id");
 	}
 
 	private void sqlCte(StringBuilder buf) {
@@ -82,22 +87,27 @@ public final class SelectDatumRunningTotal implements PreparedStatementCreator, 
 		if ( !filter.hasDateOrLocalDateRange() ) {
 			// query based on epoch - latest available
 			buf.append(", r AS (\n");
-			buf.append("	SELECT s.stream_id, MAX(latest.ts_start) AS ts_max\n");
+			buf.append("	SELECT ").append(metaStreamIdColumnName);
+			if ( aliased ) {
+				buf.append(" AS stream_id");
+			}
+			buf.append(", MAX(latest.ts_start) AS ts_max\n");
 			buf.append("	FROM s\n");
 			buf.append("		, unnest(ARRAY['h','d','M']) AS agg\n");
-			buf.append("		, solardatm.find_agg_time_greatest(s.stream_id, agg.agg) latest\n");
-			buf.append("	GROUP BY s.stream_id\n");
+			buf.append("		, solardatm.find_agg_time_greatest(").append(metaStreamIdColumnName)
+					.append(", agg.agg) latest\n");
+			buf.append("	GROUP BY ").append(metaStreamIdColumnName).append("\n");
 			buf.append(")\n");
 		}
+		buf.append(", datum AS (\n");
+		sqlCteDatum(buf);
+		buf.append(")\n");
 	}
 
-	private void sqlSelect(StringBuilder buf) {
+	private void sqlCteDatum(StringBuilder buf) {
 		buf.append("SELECT datum.stream_id,\n");
-		buf.append("	CURRENT_TIMESTAMP AS ts,\n");
+		buf.append("	CURRENT_TIMESTAMP AS ts,\n\t");
 		DatumSqlUtils.rollupAggDataSql(buf);
-	}
-
-	private void sqlFrom(StringBuilder buf) {
 		buf.append("FROM ");
 		if ( filter.hasDateOrLocalDateRange() ) {
 			buf.append("s");
@@ -106,35 +116,43 @@ public final class SelectDatumRunningTotal implements PreparedStatementCreator, 
 		}
 		buf.append(", solardatm.find_agg_datm_running_total(");
 		if ( filter.hasDateOrLocalDateRange() ) {
-			buf.append("s");
+			buf.append(metaStreamIdColumnName);
 		} else {
-			buf.append("r");
+			buf.append("r.stream_id");
 		}
-		buf.append(".stream_id, ");
 		if ( filter.hasLocalDateRange() ) {
-			buf.append("? ").append(SQL_AT_STREAM_METADATA_TIME_ZONE);
+			buf.append(", ? ").append(SQL_AT_STREAM_METADATA_TIME_ZONE);
 			buf.append(", ? ").append(SQL_AT_STREAM_METADATA_TIME_ZONE);
 		} else if ( filter.hasDateRange() ) {
-			buf.append("?, ?");
+			buf.append(", ?, ?");
 		} else {
 			// start date will be epoch
-			buf.append("?, r.ts_max");
+			buf.append(", ?, r.ts_max");
 		}
 		buf.append(") datum\n");
 		buf.append("GROUP BY datum.stream_id\n");
 	}
 
-	private void sqlCore(StringBuilder buf, boolean ordered) {
+	private void sqlSelect(StringBuilder buf) {
+		buf.append("SELECT ").append(aliased ? "s" : "datum").append(".stream_id\n");
+		buf.append("""
+					, datum.ts
+					, datum.data_i
+					, datum.data_a
+					, datum.data_s
+					, datum.data_t
+					, datum.stat_i
+					, datum.read_a
+				""");
+	}
+
+	private void sqlFrom(StringBuilder buf) {
 		final boolean metaSort = DatumSqlUtils.hasMetadataSortKey(filter.getSorts());
-		sqlCte(buf);
-		if ( ordered && metaSort ) {
-			buf.append(", datum AS (\n");
-		}
-		sqlSelect(buf);
-		sqlFrom(buf);
-		if ( ordered && metaSort ) {
-			buf.append(")\n");
-			buf.append("SELECT datum.*\n");
+		if ( aliased || metaSort ) {
+			buf.append("FROM s\n");
+			buf.append("INNER JOIN datum ON datum.stream_id = ").append(metaStreamIdColumnName)
+					.append("\n");
+		} else {
 			buf.append("FROM datum\n");
 		}
 	}
@@ -148,7 +166,7 @@ public final class SelectDatumRunningTotal implements PreparedStatementCreator, 
 							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
 					order);
 		} else {
-			order.append(", datum.stream_id");
+			order.append(", ").append(aliased ? "s" : "datum").append(".stream_id");
 		}
 		if ( !order.isEmpty() ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
@@ -158,10 +176,9 @@ public final class SelectDatumRunningTotal implements PreparedStatementCreator, 
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		sqlCore(buf, true);
-		if ( DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
-			buf.append("INNER JOIN s ON s.stream_id = datum.stream_id\n");
-		}
+		sqlCte(buf);
+		sqlSelect(buf);
+		sqlFrom(buf);
 		sqlOrderBy(buf);
 		CommonSqlUtils.limitOffset(filter, buf);
 		return buf.toString();
