@@ -126,10 +126,6 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		BasicDataConfiguration taskDataConfig = new BasicDataConfiguration(
 				taskConfig.getDataConfiguration());
 		DatumFilterCommand taskDatumFilter = new DatumFilterCommand(taskDataConfig.getDatumFilter());
-		if ( !taskDatumFilter.hasStreamAliasCriteria() ) {
-			// default to supporting stream aliases
-			taskDatumFilter.setIncludeStreamAliases(true);
-		}
 
 		if ( taskDatumFilter.getNodeId() == null ) {
 			// set to all available node IDs

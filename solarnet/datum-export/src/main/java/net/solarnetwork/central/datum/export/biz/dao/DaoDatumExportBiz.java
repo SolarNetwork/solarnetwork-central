@@ -380,6 +380,10 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			final BasicDatumCriteria filter = nonnull(criteriaFromFilter(datumFilter), "Datum filter");
 			filter.setTokenId(info.getTokenId()); // restrict to token if available
 			filter.setUserId(info.getUserId()); // restrict to user if available
+			if ( !filter.hasStreamAliasCriteria() ) {
+				// default to supporting stream aliases
+				filter.setIncludeStreamAliases(true);
+			}
 			if ( schedule == ScheduleType.Adhoc ) {
 				if ( !(filter.hasLocalDateRange() || filter.hasDateRange()) ) {
 					throw new DatumExportException(info.id(),
