@@ -8,7 +8,7 @@ WITH s AS (
 , datum AS (
 	-- main agg
 	SELECT s.stream_id,
-		datum.ts_start AS ts,
+		datum.ts_start,
 		datum.data_i,
 		datum.data_a,
 		datum.data_s,
@@ -22,4 +22,4 @@ WITH s AS (
 )
 SELECT datum.*
 FROM datum
-ORDER BY stream_id, ts
+ORDER BY stream_id, ts_start

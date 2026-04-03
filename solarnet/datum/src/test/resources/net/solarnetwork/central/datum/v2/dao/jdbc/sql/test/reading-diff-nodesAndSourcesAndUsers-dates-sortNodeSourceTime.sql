@@ -11,4 +11,4 @@ SELECT (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).*
 FROM s
 INNER JOIN solardatm.find_datm_diff_rows(s.stream_id, ?, ?) d ON TRUE
 GROUP BY s.stream_id
-ORDER BY node_id, source_id, ts
+ORDER BY node_id, source_id, ts_start

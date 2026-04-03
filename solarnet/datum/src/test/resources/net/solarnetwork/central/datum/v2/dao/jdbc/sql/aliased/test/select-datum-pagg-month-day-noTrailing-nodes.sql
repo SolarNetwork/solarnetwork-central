@@ -8,7 +8,7 @@ WITH s AS (
 , datum AS (
 	-- leading partial agg
 	SELECT s.stream_id,
-		date_trunc('month', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
+		date_trunc('month', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,
 		(solardatm.rollup_agg_data(
 			(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
 			ORDER BY datum.ts_start)).*
@@ -22,7 +22,7 @@ WITH s AS (
 	-- middle main agg
 	UNION ALL
 	SELECT s.stream_id,
-		datum.ts_start AS ts,
+		datum.ts_start,
 		datum.data_i,
 		datum.data_a,
 		datum.data_s,
@@ -36,4 +36,4 @@ WITH s AS (
 )
 SELECT datum.*
 FROM datum
-ORDER BY stream_id, ts
+ORDER BY stream_id, ts_start

@@ -6,7 +6,7 @@ WITH s AS (
 	WHERE s.node_id = ANY(?) 
 )
 SELECT datum.stream_id, 
-	datum.ts_start AS ts, 
+	datum.ts_start, 
 	datum.data_i, 
 	datum.data_a, 
 	datum.data_s, 
@@ -23,4 +23,4 @@ INNER JOIN LATERAL (
 		ORDER BY datum.ts_start DESC
 		LIMIT 1
 	) datum ON datum.stream_id = s.stream_id
-ORDER BY stream_id, ts
+ORDER BY stream_id, ts_start

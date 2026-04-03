@@ -23,7 +23,10 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.datumStreamSortMapping;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Location;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,7 +40,6 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.domain.datum.Aggregation;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Select for {@link AggregateDatum} instances for
@@ -65,14 +67,13 @@ public final class SelectDatumRunningTotal implements PreparedStatementCreator, 
 	public SelectDatumRunningTotal(DatumCriteria filter) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
-		this.aliased = (filter.includeStreamAliases()
-				&& filter.getObjectKind() != ObjectDatumKind.Location);
+		this.aliased = (filter.includeStreamAliases() && filter.getObjectKind() != Location);
 		this.metaStreamIdColumnName = (aliased ? "s.orig_stream_id" : "s.stream_id");
 	}
 
 	private void sqlCte(StringBuilder buf) {
 		buf.append("WITH s AS (\n");
-		if ( filter.getObjectKind() == ObjectDatumKind.Location ) {
+		if ( filter.getObjectKind() == Location ) {
 			DatumSqlUtils.locationMetadataFilterSql(filter,
 					filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 							: DatumSqlUtils.MetadataSelectStyle.Minimum,
@@ -161,10 +162,8 @@ public final class SelectDatumRunningTotal implements PreparedStatementCreator, 
 		StringBuilder order = new StringBuilder();
 		int idx = 2;
 		if ( filter.hasSorts() ) {
-			idx = orderBySorts(filter.getSorts(),
-					filter.getLocationId() != null ? DatumSqlUtils.LOCATION_STREAM_SORT_KEY_MAPPING
-							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
-					order);
+			idx = orderBySorts(filter.getSorts(), datumStreamSortMapping(
+					filter.getLocationId() != null ? Location : Node, Aggregation.RunningTotal), order);
 		} else {
 			order.append(", ").append(aliased ? "s" : "datum").append(".stream_id");
 		}

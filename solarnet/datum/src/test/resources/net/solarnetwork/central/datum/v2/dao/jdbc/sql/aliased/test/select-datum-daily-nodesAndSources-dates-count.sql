@@ -5,7 +5,7 @@ SELECT COUNT(*) FROM (WITH s AS (
 			AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 	)
 	SELECT s.stream_id, 
-		datum.ts_start AS ts, 
+		datum.ts_start, 
 		datum.data_i, 
 		datum.data_a, 
 		datum.data_s, 

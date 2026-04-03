@@ -7,7 +7,7 @@ WITH s AS (
 		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 )
 SELECT datum.stream_id,
-	date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
+	date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,
 	(solardatm.rollup_agg_data(
 		(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
 		ORDER BY datum.ts_start)).*
@@ -16,4 +16,4 @@ INNER JOIN solardatm.agg_datm_daily datum ON datum.stream_id = s.stream_id
 WHERE datum.ts_start >= ?
 	AND datum.ts_start < ?
 GROUP BY datum.stream_id, date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
-ORDER BY stream_id, ts
+ORDER BY stream_id, ts_start

@@ -178,4 +178,20 @@ public class SelectDatumRunningTotalTests {
 		thenSqlEqualsResource(sql, "select-datum-runtot-nodes-sortNodeSource.sql");
 	}
 
+	@Test
+	public void sql_find_runningTotal_nodes_sortNodeSourceTime() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
+		filter.setAggregation(Aggregation.RunningTotal);
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSorts(sorts("node", "source", "time"));
+
+		// WHEN
+		String sql = new SelectDatumRunningTotal(filter).getSql();
+
+		// THEN
+		thenSqlEqualsResource(sql, "select-datum-runtot-nodes-sortNodeSourceTime.sql");
+	}
+
 }

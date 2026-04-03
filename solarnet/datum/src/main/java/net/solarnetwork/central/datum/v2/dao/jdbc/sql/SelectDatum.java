@@ -24,8 +24,11 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.datumStreamSortMapping;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.timeColumnName;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Location;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -43,7 +46,6 @@ import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.domain.datum.Aggregation;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
@@ -132,8 +134,7 @@ public final class SelectDatum
 		}
 
 		this.fetchSize = fetchSize;
-		this.aliased = (filter.includeStreamAliases()
-				&& filter.getObjectKind() != ObjectDatumKind.Location);
+		this.aliased = (filter.includeStreamAliases() && filter.getObjectKind() != Location);
 		this.metaStreamIdColumnName = (aliased ? "s.orig_stream_id" : "s.stream_id");
 	}
 
@@ -152,7 +153,7 @@ public final class SelectDatum
 
 	private void sqlCte(StringBuilder buf) {
 		buf.append("WITH ").append(combine != null ? "rs" : "s").append(" AS (\n");
-		if ( filter.getObjectKind() == ObjectDatumKind.Location ) {
+		if ( filter.getObjectKind() == Location ) {
 			DatumSqlUtils.locationMetadataFilterSql(filter,
 					isMetadataTimeZoneRequired() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 							: DatumSqlUtils.MetadataSelectStyle.Minimum,
@@ -167,14 +168,14 @@ public final class SelectDatum
 		if ( combine != null ) {
 			buf.append(", s AS (\n");
 			buf.append("	SELECT solardatm.virutal_stream_id(")
-					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
+					.append(filter.getObjectKind() == Location ? "loc_id" : "node_id")
 					.append(", source_id) AS vstream_id\n");
 			buf.append("	, *\n");
 			buf.append("	FROM rs\n");
 			buf.append(")\n");
 			buf.append(", vs AS (\n");
 			buf.append("	SELECT DISTINCT ON (vstream_id) vstream_id, ")
-					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
+					.append(filter.getObjectKind() == Location ? "loc_id" : "node_id")
 					.append(", source_id\n");
 			buf.append("	FROM s\n");
 			buf.append(")\n");
@@ -234,9 +235,17 @@ public final class SelectDatum
 		} else {
 			if ( aggregation == Aggregation.Week ) {
 				buf.append(
-						"	date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,\n");
+						"	date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts");
+				if ( combine == null && rollup == null ) {
+					buf.append("_start");
+				}
+				buf.append(",\n");
 			} else if ( aggregation != Aggregation.None ) {
-				buf.append("	datum.ts_start AS ts,\n");
+				buf.append("	datum.ts_start");
+				if ( combine != null || rollup != null ) {
+					buf.append(" AS ts");
+				}
+				buf.append(",\n");
 			} else {
 				buf.append("	datum.ts,\n");
 				buf.append("	datum.received,\n");
@@ -378,16 +387,11 @@ public final class SelectDatum
 
 	private void sqlOrderBy(StringBuilder buf) {
 		StringBuilder order = new StringBuilder();
-		int idx = 2;
-		if ( filter.hasSorts() ) {
-			idx = orderBySorts(filter.getSorts(),
-					filter.getLocationId() != null ? DatumSqlUtils.LOCATION_STREAM_SORT_KEY_MAPPING
-							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
-					order);
-		} else {
-			order.append(", stream_id, ts");
-		}
-		if ( !order.isEmpty() ) {
+		int idx = orderBySorts(
+				filter.getSorts() != null ? filter.getSorts() : DatumSqlUtils.SORTS_BY_STREAM_TIME,
+				datumStreamSortMapping(filter.getLocationId() != null ? Location : Node, aggregation),
+				order);
+		if ( idx > 0 ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
 		}
 	}
@@ -418,7 +422,7 @@ public final class SelectDatum
 			buf.append(")\n");
 			buf.append(VirtualDatumSqlUtils.combineCteSql(combine.getType())).append("\n");
 			buf.append("SELECT datum.*, vs.")
-					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
+					.append(filter.getObjectKind() == Location ? "loc_id" : "node_id")
 					.append(", vs.source_id\n");
 			buf.append("FROM datum\n");
 		}

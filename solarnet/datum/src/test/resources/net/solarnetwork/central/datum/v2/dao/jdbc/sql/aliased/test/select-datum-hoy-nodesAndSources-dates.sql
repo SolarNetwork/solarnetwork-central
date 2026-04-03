@@ -5,7 +5,7 @@ WITH s AS (
 		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 )
 SELECT s.stream_id,
-	datum.ts_start AS ts,
+	datum.ts_start,
 	datum.data_i,
 	datum.data_a,
 	datum.data_s,
@@ -14,4 +14,4 @@ SELECT s.stream_id,
 	datum.read_a
 FROM s
 INNER JOIN solardatm.find_agg_datm_hoy(s.orig_stream_id, ?, ?) datum ON datum.stream_id = s.orig_stream_id
-ORDER BY stream_id, ts
+ORDER BY stream_id, ts_start

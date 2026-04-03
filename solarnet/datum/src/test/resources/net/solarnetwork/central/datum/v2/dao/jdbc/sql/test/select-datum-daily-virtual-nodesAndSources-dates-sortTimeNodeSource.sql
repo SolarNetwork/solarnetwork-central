@@ -130,7 +130,7 @@ WITH rs AS (
 , datum AS (
 	SELECT
 		  COALESCE(di_ary.stream_id, da_ary.stream_id) AS stream_id
-		, COALESCE(di_ary.ts, da_ary.ts) AS ts
+		, COALESCE(di_ary.ts, da_ary.ts) AS ts_start
 		, di_ary.data_i
 		, da_ary.data_a
 		, NULL::BIGINT[] AS data_s
@@ -145,4 +145,4 @@ WITH rs AS (
 SELECT datum.*, vs.node_id, vs.source_id
 FROM datum
 INNER JOIN vs ON vs.vstream_id = datum.stream_id
-ORDER BY ts, node_id, source_id
+ORDER BY ts_start, node_id, source_id

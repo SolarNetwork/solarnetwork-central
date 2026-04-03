@@ -22,13 +22,14 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
+import static net.solarnetwork.util.ClassUtils.getResourceAsString;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.CombiningType;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.VirtualDatumSqlUtils;
-import net.solarnetwork.util.ClassUtils;
 
 /**
  * Test cases for the {@link VirtualDatumSqlUtils} class.
@@ -71,9 +72,8 @@ public class VirtualDatumSqlUtilsTests {
 		String sql = VirtualDatumSqlUtils.combineCteSql(CombiningType.Sum);
 
 		// THEN
-		assertThat("SQL templates resolved", sql,
-				equalTo(ClassUtils.getResourceAsString("datum-combine-cte-sum.sql", getClass(),
-						DatumSqlUtils.SQL_COMMENT)));
+		then(sql).as("Generated SQL").isEqualToNormalizingWhitespace(
+				getResourceAsString("datum-combine-cte-sum.sql", getClass(), SQL_COMMENT));
 	}
 
 }

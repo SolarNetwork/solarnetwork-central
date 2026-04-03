@@ -62,6 +62,7 @@ import net.solarnetwork.dao.LocalDateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.ByteOrdering;
 import net.solarnetwork.domain.Location;
+import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -74,7 +75,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  *
  * @author matt
- * @version 2.8
+ * @version 2.9
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -148,6 +149,14 @@ public final class DatumSqlUtils {
 	 * @since 2.6
 	 */
 	public static final String SORT_BY_STREAM = "stream";
+
+	/**
+	 * Standard sort descriptor list for sorting by stream, time.
+	 *
+	 * @since 2.9
+	 */
+	public static final List<SortDescriptor> SORTS_BY_STREAM_TIME = List
+			.of(new SimpleSortDescriptor(SORT_BY_STREAM), new SimpleSortDescriptor(SORT_BY_TIME));
 
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
@@ -259,6 +268,33 @@ public final class DatumSqlUtils {
 
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
+	 * by datum stream columns.
+	 *
+	 * <p>
+	 * This map contains the entries from
+	 * {@link #NODE_STREAM_METADATA_SORT_KEY_MAPPING} and following entries:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li>created -&gt; ts_start</li>
+	 * <li>time -&gt; ts_start</li>
+	 * </ol>
+	 *
+	 * @see #orderBySorts(Iterable, Map, StringBuilder)
+	 * @since 2.9
+	 */
+	public static final Map<String, String> NODE_AGGREGATE_STREAM_SORT_KEY_MAPPING;
+
+	static {
+		Map<String, String> map = new LinkedHashMap<>(5);
+		map.putAll(NODE_STREAM_METADATA_SORT_KEY_MAPPING);
+		map.put(SORT_BY_CREATED, "ts_start");
+		map.put(SORT_BY_TIME, "ts_start");
+		NODE_AGGREGATE_STREAM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
+	}
+
+	/**
+	 * A standard mapping of sort keys to SQL column names suitable for ordering
 	 * by location datum stream metadata.
 	 *
 	 * <p>
@@ -307,6 +343,33 @@ public final class DatumSqlUtils {
 		map.put(SORT_BY_CREATED, "ts");
 		map.put(SORT_BY_TIME, "ts");
 		LOCATION_STREAM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
+	}
+
+	/**
+	 * A standard mapping of sort keys to SQL column names suitable for ordering
+	 * by location aggregate datum stream columns.
+	 *
+	 * <p>
+	 * This map contains the entries from
+	 * {@link #LOCATION_STREAM_METADATA_SORT_KEY_MAPPING} and following entries:
+	 * </p>
+	 *
+	 * <ol>
+	 * <li>created -&gt; ts_start</li>
+	 * <li>time -&gt; ts_start</li>
+	 * </ol>
+	 *
+	 * @see #orderBySorts(Iterable, Map, StringBuilder)
+	 * @since 2.9
+	 */
+	public static final Map<String, String> LOCATION_AGGREGATE_STREAM_SORT_KEY_MAPPING;
+
+	static {
+		Map<String, String> map = new LinkedHashMap<>(5);
+		map.putAll(LOCATION_STREAM_METADATA_SORT_KEY_MAPPING);
+		map.put(SORT_BY_CREATED, "ts_start");
+		map.put(SORT_BY_TIME, "ts_start");
+		LOCATION_AGGREGATE_STREAM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
 	/**
@@ -417,6 +480,38 @@ public final class DatumSqlUtils {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Get a sort mapping for a datum stream.
+	 *
+	 * <p>
+	 * This will return one of:
+	 * </p>
+	 *
+	 * <ul>
+	 * <li>{@link #NODE_STREAM_SORT_KEY_MAPPING}</li>
+	 * <li>{@link #NODE_AGG_STREAM_SORT_KEY_MAPPING}</li>
+	 * <li>{@link #LOCATION_STREAM_SORT_KEY_MAPPING}</li>
+	 * <li>{@link #LOCATION_AGG_STREAM_SORT_KEY_MAPPING}</li>
+	 * </ul>
+	 *
+	 * @param kind
+	 *        the kind of stream
+	 * @param aggregation
+	 *        the aggregation type
+	 * @return the appropriate sort mapping
+	 * @since 2.9
+	 */
+	public static Map<String, String> datumStreamSortMapping(@Nullable ObjectDatumKind kind,
+			@Nullable Aggregation aggregation) {
+		final boolean nonAgg = (aggregation == null || aggregation == Aggregation.None
+				|| aggregation == Aggregation.RunningTotal);
+		if ( kind == ObjectDatumKind.Location ) {
+			return (nonAgg ? LOCATION_STREAM_SORT_KEY_MAPPING
+					: LOCATION_AGGREGATE_STREAM_SORT_KEY_MAPPING);
+		}
+		return (nonAgg ? NODE_STREAM_SORT_KEY_MAPPING : NODE_AGGREGATE_STREAM_SORT_KEY_MAPPING);
 	}
 
 	/**
@@ -1303,7 +1398,10 @@ public final class DatumSqlUtils {
 	 * @param filter
 	 *        the search criteria
 	 * @param kind
-	 *        the stream kind
+	 *        the stream kind; if {@code null} then
+	 *        {@code filter.getObjectKind()} will be used if available,
+	 *        otherwise if {@code filter.getLocationId()} is available
+	 *        {@code Location} will be used, otherwise {@code Node}
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -1318,8 +1416,9 @@ public final class DatumSqlUtils {
 	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria,
 	 *      ObjectDatumKind, Connection, PreparedStatement, int)
 	 */
-	public static int prepareObjectMetadataFilter(ObjectMetadataCriteria filter, ObjectDatumKind kind,
-			Connection con, PreparedStatement stmt, int parameterOffset) throws SQLException {
+	public static int prepareObjectMetadataFilter(ObjectMetadataCriteria filter,
+			@Nullable ObjectDatumKind kind, Connection con, PreparedStatement stmt, int parameterOffset)
+			throws SQLException {
 		if ( filter != null ) {
 			if ( filter.getObjectIds() != null ) {
 				if ( filter.getObjectIds().length > 1 ) {
@@ -1330,8 +1429,17 @@ public final class DatumSqlUtils {
 					stmt.setObject(++parameterOffset, filter.getObjectId());
 				}
 			}
-			parameterOffset = prepareStreamMetadataFilter(filter,
-					kind != null ? kind : filter.getObjectKind(), con, stmt, parameterOffset);
+			// @formatter:off
+			parameterOffset = prepareStreamMetadataFilter(filter, (
+						kind != null
+						? kind
+						: filter.getObjectKind() != null
+						? filter.getObjectKind()
+						: filter.getLocationId() != null
+						? ObjectDatumKind.Location
+						: ObjectDatumKind.Node
+					), con, stmt, parameterOffset);
+			// @formatter:on
 		}
 		return parameterOffset;
 	}

@@ -47,6 +47,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -60,7 +62,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link DatumSqlUtils} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -1306,6 +1308,66 @@ public class DatumSqlUtilsTests {
 					LIMIT 1
 				) late ON late.stream_id = s.orig_stream_id
 				""");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "None", "RunningTotal" })
+	public void datumStreamSortMapping_node(final Aggregation agg) {
+		// WHEN
+		var result = DatumSqlUtils.datumStreamSortMapping(ObjectDatumKind.Node, agg);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Non-aggregate node stream mapping for aggregate %s", agg)
+			.isSameAs(DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING)
+			;
+		// @formatter:on
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "TenMinute", "Hour", "Day", "Month", "Year" })
+	public void datumStreamSortMapping_node_aggregate(final Aggregation agg) {
+		// WHEN
+		var result = DatumSqlUtils.datumStreamSortMapping(ObjectDatumKind.Node, agg);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Aggregate node stream mapping for aggregate %s", agg)
+			.isSameAs(DatumSqlUtils.NODE_AGGREGATE_STREAM_SORT_KEY_MAPPING)
+			;
+		// @formatter:on
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "None", "RunningTotal" })
+	public void datumStreamSortMapping_location(final Aggregation agg) {
+		// WHEN
+		var result = DatumSqlUtils.datumStreamSortMapping(ObjectDatumKind.Location, agg);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Non-aggregate location stream mapping for aggregate %s", agg)
+			.isSameAs(DatumSqlUtils.LOCATION_STREAM_SORT_KEY_MAPPING)
+			;
+		// @formatter:on
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "TenMinute", "Hour", "Day", "Month", "Year" })
+	public void datumStreamSortMapping_location_aggregate(final Aggregation agg) {
+		// WHEN
+		var result = DatumSqlUtils.datumStreamSortMapping(ObjectDatumKind.Location, agg);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Aggregate location stream mapping for aggregate %s", agg)
+			.isSameAs(DatumSqlUtils.LOCATION_AGGREGATE_STREAM_SORT_KEY_MAPPING)
+			;
+		// @formatter:on
 	}
 
 }
