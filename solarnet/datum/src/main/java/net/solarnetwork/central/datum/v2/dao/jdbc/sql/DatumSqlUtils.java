@@ -491,9 +491,9 @@ public final class DatumSqlUtils {
 	 *
 	 * <ul>
 	 * <li>{@link #NODE_STREAM_SORT_KEY_MAPPING}</li>
-	 * <li>{@link #NODE_AGG_STREAM_SORT_KEY_MAPPING}</li>
+	 * <li>{@link #NODE_AGGREGATE_STREAM_SORT_KEY_MAPPING}</li>
 	 * <li>{@link #LOCATION_STREAM_SORT_KEY_MAPPING}</li>
-	 * <li>{@link #LOCATION_AGG_STREAM_SORT_KEY_MAPPING}</li>
+	 * <li>{@link #LOCATION_AGGREGATE_STREAM_SORT_KEY_MAPPING}</li>
 	 * </ul>
 	 *
 	 * @param kind
