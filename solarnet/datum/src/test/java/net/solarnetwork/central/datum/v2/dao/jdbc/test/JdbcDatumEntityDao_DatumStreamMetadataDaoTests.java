@@ -121,9 +121,6 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	@Mock
 	private Cache<UUID, ObjectDatumStreamMetadata> cache;
 
-	@Mock
-	private Cache<UUID, ObjectDatumStreamMetadataId> idCache;
-
 	@Captor
 	private ArgumentCaptor<ObjectDatumStreamMetadata> metaCaptor;
 
