@@ -45,7 +45,7 @@ public class InvoiceGenerationTaskCreatorJob extends JobSupport {
 	 *         if any argument is {@code null}
 	 */
 	public InvoiceGenerationTaskCreatorJob(InvoiceGenerationTaskCreator creator) {
-		super("Billing", "InvoiceGEnerationTaskCreator");
+		super("Billing", "InvoiceGenerationTaskCreator");
 		this.creator = requireNonNullArgument(creator, "creator");
 	}
 
