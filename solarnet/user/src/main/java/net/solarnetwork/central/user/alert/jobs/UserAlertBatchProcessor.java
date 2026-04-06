@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.alert.jobs;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.domain.UserAlert;
 
 /**
@@ -45,6 +46,7 @@ public interface UserAlertBatchProcessor {
 	 * @return The ID of the last {@link UserAlert} processed, or {@code null}
 	 *         if no more alerts are available to process.
 	 */
-	Long processAlerts(Long lastProcessedAlertId, Instant validDate);
+	@Nullable
+	Long processAlerts(@Nullable Long lastProcessedAlertId, Instant validDate);
 
 }
