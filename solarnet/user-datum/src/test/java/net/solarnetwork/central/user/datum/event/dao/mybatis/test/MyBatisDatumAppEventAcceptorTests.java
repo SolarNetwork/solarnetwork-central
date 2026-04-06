@@ -111,12 +111,10 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 	private UserNodeEventHookConfiguration createHookConf(Long userId, Long[] nodeIds,
 			String[] sourceIds) {
 		final UserNodeEventHookConfiguration hookConf = new UserNodeEventHookConfiguration(userId,
-				Instant.now());
-		hookConf.setName("Test");
+				Instant.now(), "Test", TEST_SERVICE_ID);
 		hookConf.setNodeIds(nodeIds);
 		hookConf.setSourceIds(sourceIds);
 		hookConf.setTopic(AGGREGATE_UPDATED_TOPIC);
-		hookConf.setServiceIdentifier(TEST_SERVICE_ID);
 		UserNodeEventHookConfiguration entity = hookConfDao.get(hookConfDao.save(hookConf));
 		return entity;
 	}

@@ -68,10 +68,10 @@
 			<idArg  column="node_event_hook_id" javaType="Long"/>
 			<arg column="node_event_hook_user_id" javaType="Long"/>
 			<arg column="node_event_hook_created" javaType="java.time.Instant"/>
+			<arg column="node_event_hook_cname" javaType="String"/>
+			<arg column="node_event_hook_sident" javaType="String"/>
 		</constructor>
 		<result property="topic" column="node_event_hook_topic"/>
-		<result property="name" column="node_event_hook_cname"/>
-		<result property="serviceIdentifier" column="node_event_hook_sident"/>
 		<result property="serviceProps" column="node_event_hook_sprops" jdbcType="VARCHAR" typeHandler="net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler"/>
 		<result property="nodeIds" column="node_event_hook_node_ids" typeHandler="net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler"/>
 		<result property="sourceIds" column="node_event_hook_source_ids" typeHandler="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>

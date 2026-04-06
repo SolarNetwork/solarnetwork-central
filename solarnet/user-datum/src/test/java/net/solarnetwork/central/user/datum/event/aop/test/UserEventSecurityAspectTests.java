@@ -106,7 +106,7 @@ public class UserEventSecurityAspectTests implements CentralTestConstants {
 	@Test
 	public void saveConfigNoAuth() {
 		replayAll();
-		UserNodeEventHookConfiguration config = new UserNodeEventHookConfiguration(TEST_USER_ID, now());
+		var config = new UserNodeEventHookConfiguration(TEST_USER_ID, now(), "", "");
 		thenExceptionOfType(AuthorizationException.class)
 				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 		verifyAll();
@@ -116,7 +116,7 @@ public class UserEventSecurityAspectTests implements CentralTestConstants {
 	public void saveConfigWrongUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		UserNodeEventHookConfiguration config = new UserNodeEventHookConfiguration(-99L, now());
+		var config = new UserNodeEventHookConfiguration(-99L, now(), "", "");
 		thenExceptionOfType(AuthorizationException.class)
 				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 		verifyAll();
@@ -126,9 +126,8 @@ public class UserEventSecurityAspectTests implements CentralTestConstants {
 	public void saveConfigMissingUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		UserNodeEventHookConfiguration config = new UserNodeEventHookConfiguration((Long) null, now());
-		thenExceptionOfType(AuthorizationException.class)
-				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
+		thenExceptionOfType(IllegalArgumentException.class)
+				.isThrownBy(() -> new UserNodeEventHookConfiguration((Long) null, now(), "", ""));
 		verifyAll();
 	}
 
@@ -136,7 +135,7 @@ public class UserEventSecurityAspectTests implements CentralTestConstants {
 	public void saveConfigAllowed() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		UserNodeEventHookConfiguration config = new UserNodeEventHookConfiguration(TEST_USER_ID, now());
+		var config = new UserNodeEventHookConfiguration(TEST_USER_ID, now(), "", "");
 		aspect.saveConfigurationCheck(config);
 		verifyAll();
 	}

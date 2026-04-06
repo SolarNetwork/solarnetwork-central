@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.user.datum.event.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.dao.UserNodeRelatedEntity;
 import net.solarnetwork.dao.BasicUuidEntity;
 
@@ -33,27 +35,38 @@ import net.solarnetwork.dao.BasicUuidEntity;
  * {@link UserNodeEventTask}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UserNodeEvent extends BasicUuidEntity implements UserNodeRelatedEntity<UUID> {
 
 	@Serial
 	private static final long serialVersionUID = -7055529796513860954L;
 
-	private UserNodeEventHookConfiguration config;
-	private UserNodeEventTask task;
+	private @Nullable UserNodeEventHookConfiguration config;
+	private @Nullable UserNodeEventTask task;
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the ID
+	 * @param created
+	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
 	public UserNodeEvent(UUID id, Instant created) {
-		super(id, created);
+		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
-	public Long getUserId() {
+	public @Nullable Long getUserId() {
 		return (task != null ? task.getUserId() : null);
 	}
 
 	@Override
-	public Long getNodeId() {
+	public @Nullable Long getNodeId() {
 		return (task != null ? task.getNodeId() : null);
 	}
 
@@ -71,7 +84,7 @@ public class UserNodeEvent extends BasicUuidEntity implements UserNodeRelatedEnt
 	 *
 	 * @return the config
 	 */
-	public UserNodeEventHookConfiguration getConfig() {
+	public final @Nullable UserNodeEventHookConfiguration getConfig() {
 		return config;
 	}
 
@@ -81,7 +94,7 @@ public class UserNodeEvent extends BasicUuidEntity implements UserNodeRelatedEnt
 	 * @param config
 	 *        the config to set
 	 */
-	public void setConfig(UserNodeEventHookConfiguration config) {
+	public final void setConfig(@Nullable UserNodeEventHookConfiguration config) {
 		this.config = config;
 	}
 
@@ -90,7 +103,7 @@ public class UserNodeEvent extends BasicUuidEntity implements UserNodeRelatedEnt
 	 *
 	 * @return the task
 	 */
-	public UserNodeEventTask getTask() {
+	public final @Nullable UserNodeEventTask getTask() {
 		return task;
 	}
 
@@ -100,7 +113,7 @@ public class UserNodeEvent extends BasicUuidEntity implements UserNodeRelatedEnt
 	 * @param task
 	 *        the task to set
 	 */
-	public void setTask(UserNodeEventTask task) {
+	public final void setTask(@Nullable UserNodeEventTask task) {
 		this.task = task;
 	}
 

@@ -44,26 +44,25 @@ public class UserNodeEventHookConfigurationTests {
 	public void asJson_minimumProperties() {
 		// GIVEN
 		Instant date = LocalDateTime.of(2020, 6, 1, 2, 3, 4).toInstant(ZoneOffset.UTC);
-		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(1L, 2L, date);
+		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(1L, 2L, date, "", "");
 
 		// WHEN
 		String json = JsonUtils.getJSONString(conf, null);
 
 		// THEN
-		assertThat("JSON generated", json,
-				equalTo("{\"id\":1,\"userId\":2,\"created\":\"2020-06-01 02:03:04Z\"}"));
+		assertThat("JSON generated", json, equalTo(
+				"{\"id\":1,\"userId\":2,\"created\":\"2020-06-01 02:03:04Z\",\"name\":\"\",\"serviceIdentifier\":\"\"}"));
 	}
 
 	@Test
 	public void asJson_typicalProperties() {
 		// GIVEN
 		Instant date = LocalDateTime.of(2020, 6, 1, 2, 3, 4).toInstant(ZoneOffset.UTC);
-		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(1L, 2L, date);
-		conf.setName("Test");
+		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(1L, 2L, date, "Test",
+				"foobar");
 		conf.setTopic("test");
 		conf.setNodeIds(new Long[] { 1L, 2L });
 		conf.setSourceIds(new String[] { "A", "B" });
-		conf.setServiceIdentifier("foobar");
 		conf.setServiceProps(Map.of("foo", "bar"));
 
 		// WHEN

@@ -78,13 +78,11 @@ public class MyBatisUserNodeEventHookConfigurationDaoTests
 		props.put("foo", "bar");
 
 		final UserNodeEventHookConfiguration hook = new UserNodeEventHookConfiguration(user.getId(),
-				Instant.now());
-		hook.setName(TEST_CONFIG_NAME);
+				Instant.now(), TEST_CONFIG_NAME, TEST_SERVICE_ID);
 		hook.setNodeIds(new Long[] { TEST_NODE_ID });
 		hook.setSourceIds(new String[] { TEST_SOURCE_ID });
 		hook.setTopic(TEST_TOPIC);
 		hook.setServiceProps(props);
-		hook.setServiceIdentifier(TEST_SERVICE_ID);
 
 		UserLongPK savedKey = dao.save(hook);
 		assertThat("Primary key returned", savedKey, notNullValue());

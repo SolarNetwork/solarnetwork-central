@@ -248,7 +248,7 @@ public class DaoUserEventHookBizTests {
 		// GIVEN
 		final Long userId = 1L;
 		final Long confId = 2L;
-		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(confId, userId, now());
+		var conf = new UserNodeEventHookConfiguration(confId, userId, now(), "", "");
 		expect(nodeEventHookConfigurationDao.get(eq(new UserLongPK(userId, confId)))).andReturn(conf);
 
 		// WHEN
@@ -264,7 +264,7 @@ public class DaoUserEventHookBizTests {
 	public void saveConfiguration() {
 		// GIVEN
 		final Long userId = 1L;
-		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(null, userId, now());
+		var conf = new UserNodeEventHookConfiguration(null, userId, now(), "", "");
 		final UserLongPK pk = new UserLongPK(userId, 2L);
 		expect(nodeEventHookConfigurationDao.save(conf)).andReturn(pk);
 
@@ -281,15 +281,14 @@ public class DaoUserEventHookBizTests {
 		// GIVEN
 		final String serviceId = "test.service";
 		final Long userId = 1L;
-		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(2L, userId, now());
+		var conf = new UserNodeEventHookConfiguration(2L, userId, now(), "", "");
 		Map<String, Object> confProps = new LinkedHashMap<>(2);
 		confProps.put("name", "foo");
 		confProps.put("password", "");
 		conf.setServiceProps(confProps);
 		conf.setServiceIdentifier(serviceId);
 
-		UserNodeEventHookConfiguration existing = new UserNodeEventHookConfiguration(conf.getId(),
-				conf.getCreated());
+		var existing = new UserNodeEventHookConfiguration(conf.getId(), conf.getCreated(), "", "");
 		Map<String, Object> existingProps = new LinkedHashMap<>(2);
 		existingProps.put("name", "bar");
 		existingProps.put("password", "existing.secret");
@@ -326,7 +325,7 @@ public class DaoUserEventHookBizTests {
 		// GIVEN
 		final Long userId = 1L;
 		final Long confId = 2L;
-		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(confId, userId, now());
+		var conf = new UserNodeEventHookConfiguration(confId, userId, now(), "", "");
 		nodeEventHookConfigurationDao.delete(conf);
 
 		// WHEN

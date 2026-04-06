@@ -22,12 +22,14 @@
 
 package net.solarnetwork.central.user.datum.event.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.dao.UserNodeRelatedEntity;
 import net.solarnetwork.dao.BasicUuidEntity;
 
@@ -35,29 +37,22 @@ import net.solarnetwork.dao.BasicUuidEntity;
  * Entity for a user node event task.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelatedEntity<UUID> {
 
 	@Serial
 	private static final long serialVersionUID = -71612276091455732L;
 
-	private Long userId;
+	private @Nullable Long userId;
 	private Long nodeId;
 	private Long hookId;
-	private String sourceId;
-	private Map<String, Object> taskProperties;
-	private UserNodeEventTaskState status;
-	private Boolean success;
-	private String message;
-	private Instant completed;
-
-	/**
-	 * Constructor.
-	 */
-	public UserNodeEventTask() {
-		super();
-	}
+	private @Nullable String sourceId;
+	private @Nullable Map<String, Object> taskProperties;
+	private @Nullable UserNodeEventTaskState status;
+	private @Nullable Boolean success;
+	private @Nullable String message;
+	private @Nullable Instant completed;
 
 	/**
 	 * Constructor.
@@ -66,9 +61,17 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param nodeId
+	 *        the node ID
+	 * @param hookId
+	 *        the hook ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public UserNodeEventTask(UUID id, Instant created) {
-		super(id, created);
+	public UserNodeEventTask(UUID id, Instant created, Long nodeId, Long hookId) {
+		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
+		this.hookId = requireNonNullArgument(hookId, "hookId");
 	}
 
 	/**
@@ -101,8 +104,9 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 		return msg;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
-	public Long getUserId() {
+	public final @Nullable Long getUserId() {
 		return userId;
 	}
 
@@ -112,12 +116,12 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 * @param userId
 	 *        the user ID to set
 	 */
-	public void setUserId(Long userId) {
+	public final void setUserId(@Nullable Long userId) {
 		this.userId = userId;
 	}
 
 	@Override
-	public Long getNodeId() {
+	public final Long getNodeId() {
 		return nodeId;
 	}
 
@@ -127,8 +131,8 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public void setNodeId(Long nodeId) {
-		this.nodeId = nodeId;
+	public final void setNodeId(Long nodeId) {
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
 	}
 
 	/**
@@ -140,7 +144,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 *
 	 * @return the source ID
 	 */
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return sourceId;
 	}
 
@@ -150,7 +154,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 * @param sourceId
 	 *        the source ID or source ID Ant-style pattern to set
 	 */
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(@Nullable String sourceId) {
 		this.sourceId = sourceId;
 	}
 
@@ -159,7 +163,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 *
 	 * @return the hook ID
 	 */
-	public Long getHookId() {
+	public final Long getHookId() {
 		return hookId;
 	}
 
@@ -169,8 +173,8 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 * @param hookId
 	 *        the hook ID to set
 	 */
-	public void setHookId(Long hookId) {
-		this.hookId = hookId;
+	public final void setHookId(Long hookId) {
+		this.hookId = requireNonNullArgument(hookId, "hookId");
 	}
 
 	/**
@@ -178,7 +182,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 *
 	 * @return the taskProperties
 	 */
-	public Map<String, Object> getTaskProperties() {
+	public final @Nullable Map<String, Object> getTaskProperties() {
 		return taskProperties;
 	}
 
@@ -188,7 +192,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 * @param taskProperties
 	 *        the taskProperties to set
 	 */
-	public void setTaskProperties(Map<String, Object> taskProperties) {
+	public final void setTaskProperties(@Nullable Map<String, Object> taskProperties) {
 		this.taskProperties = taskProperties;
 	}
 
@@ -197,7 +201,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 *
 	 * @return the status
 	 */
-	public UserNodeEventTaskState getStatus() {
+	public final @Nullable UserNodeEventTaskState getStatus() {
 		return status;
 	}
 
@@ -207,7 +211,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 * @param status
 	 *        the status to set
 	 */
-	public void setStatus(UserNodeEventTaskState status) {
+	public final void setStatus(@Nullable UserNodeEventTaskState status) {
 		this.status = status;
 	}
 
@@ -216,7 +220,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 *
 	 * @return the task status key
 	 */
-	public char getStatusKey() {
+	public final char getStatusKey() {
 		UserNodeEventTaskState status = getStatus();
 		return (status != null ? status.getKey() : UserNodeEventTaskState.Unknown.getKey());
 	}
@@ -227,7 +231,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 * @param key
 	 *        the task status key to set
 	 */
-	public void setStatusKey(char key) {
+	public final void setStatusKey(char key) {
 		UserNodeEventTaskState status;
 		try {
 			status = UserNodeEventTaskState.forKey(key);
@@ -242,7 +246,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 *
 	 * @return the success
 	 */
-	public Boolean getSuccess() {
+	public final @Nullable Boolean getSuccess() {
 		return success;
 	}
 
@@ -252,7 +256,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 * @param success
 	 *        the success to set
 	 */
-	public void setSuccess(Boolean success) {
+	public final void setSuccess(@Nullable Boolean success) {
 		this.success = success;
 	}
 
@@ -261,7 +265,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 *
 	 * @return the message
 	 */
-	public String getMessage() {
+	public final @Nullable String getMessage() {
 		return message;
 	}
 
@@ -271,7 +275,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 * @param message
 	 *        the message to set
 	 */
-	public void setMessage(String message) {
+	public final void setMessage(@Nullable String message) {
 		this.message = message;
 	}
 
@@ -280,7 +284,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 *
 	 * @return the completed
 	 */
-	public Instant getCompleted() {
+	public final @Nullable Instant getCompleted() {
 		return completed;
 	}
 
@@ -290,7 +294,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 * @param completed
 	 *        the completed to set
 	 */
-	public void setCompleted(Instant completed) {
+	public final void setCompleted(@Nullable Instant completed) {
 		this.completed = completed;
 	}
 

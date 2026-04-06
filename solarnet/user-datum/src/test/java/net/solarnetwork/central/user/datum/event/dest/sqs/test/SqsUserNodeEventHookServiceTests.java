@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.datum.event.dest.sqs.test;
 
 import static java.time.Instant.now;
+import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -207,13 +208,13 @@ public class SqsUserNodeEventHookServiceTests {
 		// GIVEN
 		SqsUserNodeEventHookService service = new SqsUserNodeEventHookService(new SqsStats("Test", 1));
 
-		UserNodeEventHookConfiguration config = new UserNodeEventHookConfiguration(1L, 2L, now());
+		UserNodeEventHookConfiguration config = new UserNodeEventHookConfiguration(1L, 2L, now(), "",
+				"");
 		config.setServiceProps(TEST_PROPS);
 
-		UserNodeEventTask event = new UserNodeEventTask(UUID.randomUUID(), now());
-		event.setHookId(config.getConfigurationId());
+		UserNodeEventTask event = new UserNodeEventTask(randomUUID(), now(), 3L,
+				config.getConfigurationId());
 		event.setUserId(config.getUserId());
-		event.setNodeId(3L);
 		event.setSourceId("test.soruce");
 
 		Map<String, Object> eventProps = new LinkedHashMap<>(2);

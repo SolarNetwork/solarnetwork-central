@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.user.datum.event.dao.jobs.test;
 
+import static java.time.Instant.now;
 import static java.util.Arrays.asList;
+import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.user.datum.event.dao.jobs.UserNodeEventTaskProcessorJob.DEFAULT_TOPIC;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,7 +37,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javax.cache.Cache;
@@ -118,7 +120,8 @@ public class UserNodeEventTaskProcessorJobTests {
 
 	public static CacheManager createCacheManager() {
 		try {
-			File path = Files.createTempDirectory("net.solarnetwork.central.user.datum.event.dao.jobs.test")
+			File path = Files
+					.createTempDirectory("net.solarnetwork.central.user.datum.event.dao.jobs.test")
 					.toFile();
 			path.deleteOnExit();
 			EhcacheCachingProvider cachingProvider = (EhcacheCachingProvider) Caching
@@ -190,12 +193,11 @@ public class UserNodeEventTaskProcessorJobTests {
 		TransactionStatus tx = EasyMock.createMock(TransactionStatus.class);
 		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(tx);
 
-		UserNodeEvent event = new UserNodeEvent(UUID.randomUUID(), Instant.now());
-		UserNodeEventTask task = new UserNodeEventTask(event.getId(), event.getCreated());
-		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(
-				UUID.randomUUID().getMostSignificantBits(), TEST_USER_ID, Instant.now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
-		task.setHookId(conf.getConfigurationId());
+		var conf = new UserNodeEventHookConfiguration(randomLong(), TEST_USER_ID, now(), "",
+				TEST_SERVICE_ID);
+		UserNodeEvent event = new UserNodeEvent(randomUUID(), Instant.now());
+		UserNodeEventTask task = new UserNodeEventTask(event.getId(), event.getCreated(), randomLong(),
+				conf.getConfigurationId());
 		event.setTask(task);
 		event.setConfig(conf);
 
@@ -232,12 +234,11 @@ public class UserNodeEventTaskProcessorJobTests {
 		TransactionStatus tx = EasyMock.createMock(TransactionStatus.class);
 		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(tx);
 
-		UserNodeEvent event = new UserNodeEvent(UUID.randomUUID(), Instant.now());
-		UserNodeEventTask task = new UserNodeEventTask(event.getId(), event.getCreated());
-		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(
-				UUID.randomUUID().getMostSignificantBits(), TEST_USER_ID, Instant.now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
-		task.setHookId(conf.getConfigurationId());
+		var conf = new UserNodeEventHookConfiguration(randomLong(), TEST_USER_ID, now(), "",
+				TEST_SERVICE_ID);
+		var event = new UserNodeEvent(randomUUID(), now());
+		var task = new UserNodeEventTask(event.getId(), event.getCreated(), randomLong(),
+				conf.getConfigurationId());
 		event.setTask(task);
 		event.setConfig(conf);
 
@@ -276,12 +277,11 @@ public class UserNodeEventTaskProcessorJobTests {
 		TransactionStatus tx = EasyMock.createMock(TransactionStatus.class);
 		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(tx);
 
-		UserNodeEvent event = new UserNodeEvent(UUID.randomUUID(), Instant.now());
-		UserNodeEventTask task = new UserNodeEventTask(event.getId(), event.getCreated());
-		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(
-				UUID.randomUUID().getMostSignificantBits(), TEST_USER_ID, Instant.now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
-		task.setHookId(conf.getConfigurationId());
+		var conf = new UserNodeEventHookConfiguration(randomLong(), TEST_USER_ID, now(), "",
+				TEST_SERVICE_ID);
+		var event = new UserNodeEvent(randomUUID(), now());
+		var task = new UserNodeEventTask(event.getId(), event.getCreated(), randomLong(),
+				conf.getConfigurationId());
 		event.setTask(task);
 		event.setConfig(conf);
 
@@ -328,12 +328,11 @@ public class UserNodeEventTaskProcessorJobTests {
 		TransactionStatus tx = EasyMock.createMock(TransactionStatus.class);
 		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(tx);
 
-		UserNodeEvent event = new UserNodeEvent(UUID.randomUUID(), Instant.now());
-		UserNodeEventTask task = new UserNodeEventTask(event.getId(), event.getCreated());
-		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(
-				UUID.randomUUID().getMostSignificantBits(), TEST_USER_ID, Instant.now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
-		task.setHookId(conf.getConfigurationId());
+		var conf = new UserNodeEventHookConfiguration(randomLong(), TEST_USER_ID, now(), "",
+				TEST_SERVICE_ID);
+		var event = new UserNodeEvent(randomUUID(), now());
+		var task = new UserNodeEventTask(event.getId(), event.getCreated(), randomLong(),
+				conf.getConfigurationId());
 		event.setTask(task);
 		event.setConfig(conf);
 
