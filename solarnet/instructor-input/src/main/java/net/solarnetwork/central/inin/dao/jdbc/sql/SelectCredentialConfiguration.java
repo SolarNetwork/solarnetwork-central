@@ -95,10 +95,10 @@ public final class SelectCredentialConfiguration
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		if ( filter.hasUserCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getUserIds(), "ic.user_id", where);
+			idx += whereOptimizedArrayContains(filter.userIds(), "ic.user_id", where);
 		}
 		if ( filter.hasCredentialCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getCredentialIds(), "ic.id", where);
+			idx += whereOptimizedArrayContains(filter.credentialIds(), "ic.id", where);
 		}
 		if ( filter.hasEnabledCriteria() ) {
 			where.append("\tAND ic.enabled = ?\n");
@@ -127,13 +127,13 @@ public final class SelectCredentialConfiguration
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		if ( filter.hasUserCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.userIds());
 		}
 		if ( filter.hasCredentialCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getCredentialIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.credentialIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled());
+			stmt.setBoolean(++p, filter.enabled());
 		}
 		return p;
 	}

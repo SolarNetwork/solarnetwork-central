@@ -69,7 +69,7 @@ public class InstructionInputController {
 	 * @param maxInputLength
 	 *        the maximum datum input length
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InstructionInputController(InstructionInputEndpointBiz inputBiz,
 			@Value("${app.inin.max-input-length}") long maxInputLength) {

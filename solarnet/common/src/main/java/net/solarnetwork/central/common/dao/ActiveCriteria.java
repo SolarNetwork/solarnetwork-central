@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Criteria API for active status entities.
  * 
@@ -45,6 +47,7 @@ public interface ActiveCriteria {
 	 * 
 	 * @return the active criteria (may be {@code null})
 	 */
+	@Nullable
 	Boolean getActive();
 
 	/**

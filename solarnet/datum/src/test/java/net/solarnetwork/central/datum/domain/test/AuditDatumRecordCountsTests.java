@@ -29,6 +29,7 @@ import java.time.Instant;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
+import net.solarnetwork.central.datum.domain.ObjectRecordId;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import tools.jackson.databind.JsonNode;
@@ -58,8 +59,8 @@ public class AuditDatumRecordCountsTests {
 	public void serializeJsonPrimaryKeyProperties() throws Exception {
 		// given
 		Instant ts = Instant.ofEpochMilli(1408665600000L);
-		AuditDatumRecordCounts c = new AuditDatumRecordCounts(100L, "test.source", 1L, 2L, 3, 4);
-		c.setCreated(ts);
+		AuditDatumRecordCounts c = new AuditDatumRecordCounts(
+				new ObjectRecordId(100L, "test.source", ts), 1L, 2L, 3, 4);
 
 		// when
 		JsonNode tree = objectMapper().valueToTree(c);
@@ -75,7 +76,7 @@ public class AuditDatumRecordCountsTests {
 
 	@Test
 	public void totalCountAllNull() {
-		AuditDatumRecordCounts c = new AuditDatumRecordCounts();
+		AuditDatumRecordCounts c = new AuditDatumRecordCounts(new ObjectRecordId(null, null, null));
 		assertThat("Total count", c.getDatumTotalCount(), equalTo(0L));
 	}
 

@@ -29,6 +29,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpMethod;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
@@ -57,10 +58,9 @@ import oscp.v20.Heartbeat;
  */
 public class HeartbeatJob extends JobSupport {
 
-	private final OscpRole role;
 	private final ExternalSystemConfigurationDao<?> dao;
 	private final ExternalSystemClient client;
-	private TransactionTemplate txTemplate;
+	private @Nullable TransactionTemplate txTemplate;
 
 	/**
 	 * Construct with properties.
@@ -72,16 +72,13 @@ public class HeartbeatJob extends JobSupport {
 	 * @param client
 	 *        the client to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public HeartbeatJob(OscpRole role, ExternalSystemConfigurationDao<?> dao,
 			ExternalSystemClient client) {
-		super();
-		this.role = requireNonNullArgument(role, "role");
+		super("OSCP", "Heartbeat-" + requireNonNullArgument(role, "role"));
 		this.dao = requireNonNullArgument(dao, "dao");
 		this.client = requireNonNullArgument(client, "client");
-		setGroupId("OSCP");
-		setId(this.role + "-Heartbeat");
 		setMaximumWaitMs(1800000L);
 	}
 
@@ -92,7 +89,7 @@ public class HeartbeatJob extends JobSupport {
 	 *        the template
 	 * @return this instance for method chaining
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public HeartbeatJob withTxTemplate(TransactionTemplate txTemplate) {
 		this.txTemplate = requireNonNullArgument(txTemplate, "txTemplate");
@@ -127,7 +124,9 @@ public class HeartbeatJob extends JobSupport {
 	private boolean exchange(Set<String> supportedOscpVersions, AtomicInteger remainingIterations) {
 		return dao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
 			remainingIterations.decrementAndGet();
-			Integer secs = ctx.config().getSettings().heartbeatSeconds();
+			Integer secs = (ctx.config().getSettings() != null
+					? ctx.config().getSettings().heartbeatSeconds()
+					: null);
 			if ( secs == null ) {
 				return null;
 			}

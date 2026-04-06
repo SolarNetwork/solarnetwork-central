@@ -55,14 +55,12 @@ public class ChargeSessionCleanerJob extends JobSupport {
 	 * @param chargeSessionDao
 	 *        the charge session DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ChargeSessionCleanerJob(Clock clock, CentralChargeSessionDao chargeSessionDao) {
-		super();
+		super("OCPP", "ChargeSessionCleaner");
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.chargeSessionDao = requireNonNullArgument(chargeSessionDao, "chargeSessionDao");
-		setGroupId("OCPP");
-		setId("ChargeSessionCleaner");
 		setMaximumWaitMs(1800000L);
 	}
 
@@ -86,16 +84,16 @@ public class ChargeSessionCleanerJob extends JobSupport {
 	 * 
 	 * @return the delete count
 	 */
-	public int getDeleteCount() {
+	public final int getDeleteCount() {
 		return deleteCount;
 	}
 
 	/**
 	 * Get the expire period.
 	 * 
-	 * @return the expire period, never {@literal null}
+	 * @return the expire period, never {@code null}
 	 */
-	public Period getExpirePeriod() {
+	public final Period getExpirePeriod() {
 		return expirePeriod;
 	}
 
@@ -103,10 +101,10 @@ public class ChargeSessionCleanerJob extends JobSupport {
 	 * SEt the expire period.
 	 * 
 	 * @param expirePeriod
-	 *        the period to set; if {@literal null} then
+	 *        the period to set; if {@code null} then
 	 *        {@link #DEFAULT_EXPIRE_PERIOD} will be used instead
 	 */
-	public void setExpirePeriod(Period expirePeriod) {
+	public final void setExpirePeriod(Period expirePeriod) {
 		this.expirePeriod = (expirePeriod != null ? expirePeriod : DEFAULT_EXPIRE_PERIOD);
 	}
 

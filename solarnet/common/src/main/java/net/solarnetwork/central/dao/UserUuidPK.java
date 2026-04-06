@@ -25,12 +25,13 @@ package net.solarnetwork.central.dao;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Primary key based on a user ID and a UUID.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.0
  */
 public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidPK> {
@@ -38,8 +39,8 @@ public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidP
 	@Serial
 	private static final long serialVersionUID = -235030587630636014L;
 
-	private UUID id;
-	private Long userId;
+	private @Nullable UUID id;
+	private @Nullable Long userId;
 
 	/**
 	 * Default constructor.
@@ -56,7 +57,7 @@ public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidP
 	 * @param id
 	 *        the UUID
 	 */
-	public UserUuidPK(Long userId, UUID id) {
+	public UserUuidPK(@Nullable Long userId, @Nullable UUID id) {
 		super();
 		this.id = id;
 		this.userId = userId;
@@ -70,10 +71,10 @@ public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidP
 	 * <li>id</li>
 	 * </ol>
 	 *
-	 * {@literal null} values will be sorted before non-{@literal null} values.
+	 * {@code null} values will be sorted before non-{@code null} values.
 	 */
 	@Override
-	public int compareTo(UserUuidPK o) {
+	public int compareTo(@Nullable UserUuidPK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -121,7 +122,7 @@ public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidP
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -151,19 +152,67 @@ public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidP
 		}
 	}
 
-	public UUID getId() {
+	/**
+	 * Get the ID.
+	 * 
+	 * @return the ID
+	 */
+	public final @Nullable UUID getId() {
 		return id;
 	}
 
-	public void setId(UUID id) {
+	/**
+	 * Test if an ID is available.
+	 * 
+	 * @return {@code true} if an {@code id} value is available
+	 * @since 1.1
+	 */
+	public boolean hasId() {
+		return id != null;
+	}
+
+	/**
+	 * Get the ID.
+	 * 
+	 * <p>
+	 * This is a nullability shortcut, for example after {@link #hasId()}
+	 * returns {@code true}.
+	 * </p>
+	 * 
+	 * @return the ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	public final UUID id() {
+		return id;
+	}
+
+	/**
+	 * Set the ID.
+	 * 
+	 * @param id
+	 *        the ID to set
+	 */
+	public final void setId(@Nullable UUID id) {
 		this.id = id;
 	}
 
-	public Long getUserId() {
+	/**
+	 * Get the user ID.
+	 * 
+	 * @return the user ID to set
+	 */
+	public final @Nullable Long getUserId() {
 		return userId;
 	}
 
-	public void setUserId(Long userId) {
+	/**
+	 * Set the user ID.
+	 * 
+	 * @param userId
+	 *        the user ID to set
+	 */
+	public final void setUserId(@Nullable Long userId) {
 		this.userId = userId;
 	}
 

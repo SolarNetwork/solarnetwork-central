@@ -29,6 +29,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.codec.digest.MurmurHash2;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -72,9 +73,9 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 
 	private final ProxyManager<Long> proxyManager;
 	private final Supplier<BucketConfiguration> bucketConfigurationProvider;
-	private final String keyPrefix;
+	private final @Nullable String keyPrefix;
 
-	private HandlerExceptionResolver exceptionResolver;
+	private @Nullable HandlerExceptionResolver exceptionResolver;
 
 	/**
 	 * Constructor.
@@ -106,7 +107,7 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 	 * @since 1.1
 	 */
 	public RateLimitingFilter(ProxyManager<Long> proxyManager,
-			Supplier<BucketConfiguration> bucketConfigurationProvider, String keyPrefix) {
+			Supplier<BucketConfiguration> bucketConfigurationProvider, @Nullable String keyPrefix) {
 		super();
 		this.proxyManager = requireNonNullArgument(proxyManager, "proxyManager");
 		this.bucketConfigurationProvider = requireNonNullArgument(bucketConfigurationProvider,
@@ -179,7 +180,7 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 	 * @param exceptionResolver
 	 *        the resolver to set
 	 */
-	public void setExceptionResolver(HandlerExceptionResolver exceptionResolver) {
+	public void setExceptionResolver(@Nullable HandlerExceptionResolver exceptionResolver) {
 		this.exceptionResolver = exceptionResolver;
 	}
 

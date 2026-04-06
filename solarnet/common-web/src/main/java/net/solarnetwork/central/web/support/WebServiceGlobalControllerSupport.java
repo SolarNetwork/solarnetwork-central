@@ -59,6 +59,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import jakarta.annotation.Nullable;
 import jakarta.servlet.ServletRequest;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.BasicSecurityException;
@@ -81,7 +82,7 @@ public class WebServiceGlobalControllerSupport {
 	private static final Logger log = LoggerFactory.getLogger(WebServiceGlobalControllerSupport.class);
 
 	@Autowired
-	private MessageSource messageSource;
+	private @Nullable MessageSource messageSource;
 
 	@Value("${spring.servlet.multipart.max-file-size:1MB}")
 	private DataSize maxUploadSize = DataSize.ofMegabytes(1);
@@ -432,7 +433,7 @@ public class WebServiceGlobalControllerSupport {
 		return error(null, "Internal error");
 	}
 
-	private Result<?> handleCause(Throwable e, WebRequest request) {
+	private @Nullable Result<?> handleCause(Throwable e, WebRequest request) {
 		Throwable cause = e;
 		Result<?> result = null;
 		do {
@@ -565,7 +566,7 @@ public class WebServiceGlobalControllerSupport {
 	 */
 	@ExceptionHandler(AsyncRequestNotUsableException.class)
 	public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e,
-			WebRequest request, ServletRequest servletRequest) {
+			WebRequest request, @Nullable ServletRequest servletRequest) {
 		log.info("AsyncRequestNotUsableException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request));
 	}
@@ -583,7 +584,7 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(IOException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_CONTENT)
-	public Result<?> handleIOException(IOException e, WebRequest request) {
+	public @Nullable Result<?> handleIOException(IOException e, WebRequest request) {
 		Throwable cause = e;
 		do {
 			if ( cause instanceof AsyncRequestNotUsableException ex ) {

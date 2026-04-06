@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.oscp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.util.ObjectUtils;
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -45,14 +48,14 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	@Serial
 	private static final long serialVersionUID = 2484734886666757050L;
 
-	private String token;
-	private String baseUrl;
-	private String oscpVersion;
+	private @Nullable String token;
+	private @Nullable String baseUrl;
+	private @Nullable String oscpVersion;
 	private Long flexibilityProviderId;
 	private RegistrationStatus registrationStatus;
-	private SystemSettings settings;
-	private Instant heartbeatDate;
-	private Instant offlineDate;
+	private @Nullable SystemSettings settings;
+	private @Nullable Instant heartbeatDate;
+	private @Nullable Instant offlineDate;
 
 	/**
 	 * Constructor.
@@ -61,27 +64,21 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param flexibilityProviderId
+	 *        the flexibility provider ID
+	 * @param registrationStatus
+	 *        the registration status
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public BaseOscpExternalSystemConfiguration(UserLongCompositePK id, Instant created) {
-		super(id, created);
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param userId
-	 *        the user ID
-	 * @param entityId
-	 *        the entity ID
-	 * @param created
-	 *        the creation date
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
-	 */
-	public BaseOscpExternalSystemConfiguration(Long userId, Long entityId, Instant created) {
-		super(userId, entityId, created);
+	public BaseOscpExternalSystemConfiguration(UserLongCompositePK id, Instant created, String name,
+			Long flexibilityProviderId, RegistrationStatus registrationStatus) {
+		super(id, created, name);
+		this.flexibilityProviderId = requireNonNullArgument(flexibilityProviderId,
+				"flexibilityProviderId");
+		this.registrationStatus = requireNonNullArgument(registrationStatus, "registrationStatus");
 	}
 
 	@Override
@@ -102,20 +99,21 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	}
 
 	@Override
-	public boolean isSameAs(C other) {
+	public boolean isSameAs(@Nullable C other) {
 		boolean result = super.isSameAs(other);
 		if ( !result ) {
 			return false;
 		}
+		final var o = ObjectUtils.nonnull(other, "other");
 		// @formatter:off
-		return (Objects.equals(this.token, other.getToken())
-				&& Objects.equals(this.baseUrl, other.getBaseUrl())
-				&& Objects.equals(this.oscpVersion, other.getOscpVersion())
-				&& Objects.equals(this.flexibilityProviderId, other.getFlexibilityProviderId())
-				&& Objects.equals(this.registrationStatus, other.getRegistrationStatus())
-				&& Objects.equals(this.settings, other.getSettings())
-				&& Objects.equals(this.heartbeatDate, other.getHeartbeatDate())
-				&& Objects.equals(this.offlineDate, other.getOfflineDate()));
+		return (Objects.equals(token, o.getToken())
+				&& Objects.equals(baseUrl, o.getBaseUrl())
+				&& Objects.equals(oscpVersion, o.getOscpVersion())
+				&& Objects.equals(flexibilityProviderId, o.getFlexibilityProviderId())
+				&& Objects.equals(registrationStatus, o.getRegistrationStatus())
+				&& Objects.equals(settings, o.getSettings())
+				&& Objects.equals(heartbeatDate, o.getHeartbeatDate())
+				&& Objects.equals(offlineDate, o.getOfflineDate()));
 		// @formatter:on
 	}
 
@@ -135,7 +133,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	}
 
 	@Override
-	public String combinedGroupAssetId() {
+	public @Nullable String combinedGroupAssetId() {
 		Map<String, Object> props = getServiceProps();
 		Object v = (props != null ? props.get(ExternalSystemServiceProperties.COMBINED_ASSET_ID) : null);
 		return (v != null ? v.toString() : null);
@@ -151,7 +149,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 *
 	 * @return the token
 	 */
-	public String getToken() {
+	public final @Nullable String getToken() {
 		return token;
 	}
 
@@ -161,7 +159,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 * @param token
 	 *        the token to set
 	 */
-	public void setToken(String token) {
+	public final void setToken(@Nullable String token) {
 		this.token = token;
 	}
 
@@ -170,7 +168,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 *
 	 * @return the baseUrl the base URL
 	 */
-	public String getBaseUrl() {
+	public final @Nullable String getBaseUrl() {
 		return baseUrl;
 	}
 
@@ -180,7 +178,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 * @param baseUrl
 	 *        the URL to set
 	 */
-	public void setBaseUrl(String baseUrl) {
+	public final void setBaseUrl(@Nullable String baseUrl) {
 		this.baseUrl = baseUrl;
 	}
 
@@ -189,7 +187,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 *
 	 * @return the version
 	 */
-	public String getOscpVersion() {
+	public final @Nullable String getOscpVersion() {
 		return oscpVersion;
 	}
 
@@ -199,7 +197,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 * @param oscpVersion
 	 *        the version to set
 	 */
-	public void setOscpVersion(String oscpVersion) {
+	public final void setOscpVersion(@Nullable String oscpVersion) {
 		this.oscpVersion = oscpVersion;
 	}
 
@@ -208,7 +206,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 *
 	 * @return the registrationStatus
 	 */
-	public RegistrationStatus getRegistrationStatus() {
+	public final RegistrationStatus getRegistrationStatus() {
 		return registrationStatus;
 	}
 
@@ -217,9 +215,11 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 *
 	 * @param registrationStatus
 	 *        the registrationStatus to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setRegistrationStatus(RegistrationStatus registrationStatus) {
-		this.registrationStatus = registrationStatus;
+	public final void setRegistrationStatus(RegistrationStatus registrationStatus) {
+		this.registrationStatus = requireNonNullArgument(registrationStatus, "registrationStatus");
 	}
 
 	/**
@@ -229,7 +229,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 * @return the flexibility provider ID
 	 */
 	@Override
-	public Long getFlexibilityProviderId() {
+	public final Long getFlexibilityProviderId() {
 		return flexibilityProviderId;
 	}
 
@@ -239,9 +239,12 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 *
 	 * @param flexibilityProviderId
 	 *        the flexibility provider ID to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setFlexibilityProviderId(Long flexibilityProviderId) {
-		this.flexibilityProviderId = flexibilityProviderId;
+	public final void setFlexibilityProviderId(Long flexibilityProviderId) {
+		this.flexibilityProviderId = requireNonNullArgument(flexibilityProviderId,
+				"flexibilityProviderId");
 	}
 
 	/**
@@ -249,7 +252,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 *
 	 * @return the settings
 	 */
-	public SystemSettings getSettings() {
+	public final @Nullable SystemSettings getSettings() {
 		return settings;
 	}
 
@@ -259,7 +262,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 * @param settings
 	 *        the settings to set
 	 */
-	public void setSettings(SystemSettings settings) {
+	public final void setSettings(@Nullable SystemSettings settings) {
 		this.settings = settings;
 	}
 
@@ -268,7 +271,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 *
 	 * @return the heartbeat date
 	 */
-	public Instant getHeartbeatDate() {
+	public final @Nullable Instant getHeartbeatDate() {
 		return heartbeatDate;
 	}
 
@@ -278,7 +281,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 * @param heartbeatDate
 	 *        the heartbeat date to set
 	 */
-	public void setHeartbeatDate(Instant heartbeatDate) {
+	public final void setHeartbeatDate(@Nullable Instant heartbeatDate) {
 		this.heartbeatDate = heartbeatDate;
 	}
 
@@ -287,7 +290,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 *
 	 * @return the offline date
 	 */
-	public Instant getOfflineDate() {
+	public final @Nullable Instant getOfflineDate() {
 		return offlineDate;
 	}
 
@@ -297,7 +300,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 * @param offlineDate
 	 *        the offline date to set
 	 */
-	public void setOfflineDate(Instant offlineDate) {
+	public final void setOfflineDate(@Nullable Instant offlineDate) {
 		this.offlineDate = offlineDate;
 	}
 

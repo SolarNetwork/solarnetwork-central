@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.inin.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.inin.domain.TransformConfiguration;
@@ -71,9 +71,9 @@ public abstract sealed class TransformConfigurationRowMapper<C extends Transform
 		}
 
 		@Override
-		protected RequestTransformConfiguration newConfiguration(Long userId, Long entityId,
-				Instant ts) {
-			return new RequestTransformConfiguration(userId, entityId, ts);
+		protected RequestTransformConfiguration newConfiguration(Long userId, Long entityId, Instant ts,
+				String name, String serviceIdentifier) {
+			return new RequestTransformConfiguration(userId, entityId, ts, name, serviceIdentifier);
 		}
 
 	}
@@ -95,9 +95,9 @@ public abstract sealed class TransformConfigurationRowMapper<C extends Transform
 		}
 
 		@Override
-		protected ResponseTransformConfiguration newConfiguration(Long userId, Long entityId,
-				Instant ts) {
-			return new ResponseTransformConfiguration(userId, entityId, ts);
+		protected ResponseTransformConfiguration newConfiguration(Long userId, Long entityId, Instant ts,
+				String name, String serviceIdentifier) {
+			return new ResponseTransformConfiguration(userId, entityId, ts, name, serviceIdentifier);
 		}
 
 	}
@@ -118,20 +118,25 @@ public abstract sealed class TransformConfigurationRowMapper<C extends Transform
 	 *        the entity ID
 	 * @param ts
 	 *        the timestamp
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @return the new instance
 	 */
-	protected abstract C newConfiguration(Long userId, Long entityId, Instant ts);
+	protected abstract C newConfiguration(Long userId, Long entityId, Instant ts, String name,
+			String serviceIdentifier);
 
 	@Override
 	public C mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = 0;
 		Long userId = rs.getObject(++p, Long.class);
 		Long entityId = rs.getObject(++p, Long.class);
-		Timestamp ts = rs.getTimestamp(++p);
-		C conf = newConfiguration(userId, entityId, ts.toInstant());
-		conf.setModified(rs.getTimestamp(++p).toInstant());
-		conf.setName(rs.getString(++p));
-		conf.setServiceIdentifier(rs.getString(++p));
+		Instant ts = timestampInstant(rs, ++p);
+		Instant mod = timestampInstant(rs, ++p);
+
+		final C conf = newConfiguration(userId, entityId, ts, rs.getString(++p), rs.getString(++p));
+		conf.setModified(mod);
 		conf.setServicePropsJson(rs.getString(++p));
 		return conf;
 	}

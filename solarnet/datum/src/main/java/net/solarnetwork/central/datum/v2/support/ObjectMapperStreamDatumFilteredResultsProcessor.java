@@ -27,21 +27,23 @@ import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerial
 import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerializer.RETURNED_RESULT_COUNT_FIELD_NAME;
 import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerializer.STARTING_OFFSET_FIELD_NAME;
 import static net.solarnetwork.codec.jackson.BasicObjectDatumStreamDataSetSerializer.TOTAL_RESULT_COUNT_FIELD_NAME;
-import static net.solarnetwork.codec.jackson.JsonUtils.writeDecimalArrayValues;
-import static net.solarnetwork.codec.jackson.JsonUtils.writeStringArrayValues;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Status;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.PropertyRestrictedObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.codec.jackson.BasicObjectDatumStreamMetadataSerializer;
@@ -51,6 +53,7 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.StreamDatum;
+import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.core.exc.StreamWriteException;
 import tools.jackson.databind.SerializationContext;
@@ -130,7 +133,7 @@ import tools.jackson.databind.SerializationContext;
  * millisecond epoch form</li>
  * <li>4-element arrays with the property value, count, minimum, and maximum,
  * for each instantaneous property value (elements in order of the
- * {@code meta.i} array); values may be {@literal null} if no instantaneous
+ * {@code meta.i} array); values may be {@code null} if no instantaneous
  * property data is available</li>
  * <li>3-element arrays with the accumulating property value, starting value,
  * ending value, for each accumulating property value (elements in order of the
@@ -153,7 +156,7 @@ import tools.jackson.databind.SerializationContext;
  * </pre>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.3
  */
 public final class ObjectMapperStreamDatumFilteredResultsProcessor
@@ -165,10 +168,13 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	private final JsonGenerator generator;
 	private final SerializationContext provider;
 	private final MimeType mimeType;
+	private final @Nullable Set<String> allowedPropertyNames;
 
-	private ObjectDatumStreamMetadataProvider metadataProvider;
-	private Collection<UUID> streamIds;
-	private Map<UUID, Integer> metaIndexMap;
+	private final @Nullable Map<UUID, PropertyRestrictedObjectDatumStreamMetadata> restrictedMetadata;
+
+	private @Nullable ObjectDatumStreamMetadataProvider metadataProvider;
+	private @Nullable Collection<UUID> streamIds;
+	private @Nullable Map<UUID, Integer> metaIndexMap;
 	private int resultIndex = 0;
 
 	/**
@@ -181,14 +187,39 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	 * @param provider
 	 *        the provider to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ObjectMapperStreamDatumFilteredResultsProcessor(JsonGenerator generator,
 			SerializationContext provider, MimeType mimeType) {
+		this(generator, provider, mimeType, null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param generator
+	 *        the generator to use; <b>note</b> that
+	 *        {@code StreamWriteFeature.AUTO_CLOSE_TARGET} should be enabled for
+	 *        the underlying stream to be closed when {@code #close()} is called
+	 * @param provider
+	 *        the provider to use
+	 * @param allowedPropertyNames
+	 *        an optional set of property names to restrict the output to, or
+	 *        {@code null} to allow all properties
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code allowedPropertyNames} is
+	 *         {@code null}
+	 * @since 2.1
+	 */
+	public ObjectMapperStreamDatumFilteredResultsProcessor(JsonGenerator generator,
+			SerializationContext provider, MimeType mimeType,
+			@Nullable Set<String> allowedPropertyNames) {
 		super();
 		this.generator = requireNonNullArgument(generator, "generator");
 		this.provider = requireNonNullArgument(provider, "provider");
 		this.mimeType = requireNonNullArgument(mimeType, "mimeType");
+		this.allowedPropertyNames = allowedPropertyNames;
+		this.restrictedMetadata = (allowedPropertyNames != null ? new HashMap<>(8, 0.9f) : null);
 	}
 
 	@Override
@@ -197,14 +228,14 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 	}
 
 	@Override
-	public void start(final Long totalResultCount, final Integer startingOffset,
-			final Integer expectedResultCount, Map<String, ?> attributes) throws IOException {
-		if ( attributes == null || !(attributes
-				.get(METADATA_PROVIDER_ATTR) instanceof ObjectDatumStreamMetadataProvider) ) {
+	public void start(final @Nullable Long totalResultCount, final @Nullable Integer startingOffset,
+			final @Nullable Integer expectedResultCount, @Nullable Map<String, ?> attributes)
+			throws IOException {
+		if ( attributes == null || !(attributes.get(
+				METADATA_PROVIDER_ATTR) instanceof ObjectDatumStreamMetadataProvider metaProvider) ) {
 			throw new IllegalArgumentException("No metadata provider provided.");
 		}
-		this.metadataProvider = (ObjectDatumStreamMetadataProvider) attributes
-				.get(METADATA_PROVIDER_ATTR);
+		this.metadataProvider = metaProvider;
 		this.streamIds = metadataProvider.metadataStreamIds();
 		this.metaIndexMap = new HashMap<>(streamIds != null ? streamIds.size() : 0);
 
@@ -236,7 +267,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			for ( UUID streamId : streamIds ) {
 				metaIndexMap.put(streamId, i);
 				BasicObjectDatumStreamMetadataSerializer.INSTANCE
-						.serialize(metadataProvider.metadataForStreamId(streamId), generator, provider);
+						.serialize(metadataForStreamId(streamId), generator, provider);
 				i++;
 			}
 			generator.writeEndArray();
@@ -246,9 +277,30 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 		}
 	}
 
+	private @Nullable ObjectDatumStreamMetadata metadataForStreamId(UUID streamId) {
+		ObjectDatumStreamMetadata result = null;
+		if ( restrictedMetadata != null ) {
+			result = restrictedMetadata.get(streamId);
+			if ( result != null ) {
+				return result;
+			}
+		}
+		if ( metadataProvider == null ) {
+			return null;
+		}
+		result = metadataProvider.metadataForStreamId(streamId);
+		if ( result != null && restrictedMetadata != null && allowedPropertyNames != null ) {
+			var restricted = new PropertyRestrictedObjectDatumStreamMetadata(result,
+					allowedPropertyNames);
+			restrictedMetadata.put(streamId, restricted);
+			result = restricted;
+		}
+		return result;
+	}
+
 	@Override
 	public void handleResultItem(StreamDatum d) throws IOException {
-		final ObjectDatumStreamMetadata meta = metadataProvider.metadataForStreamId(d.getStreamId());
+		final ObjectDatumStreamMetadata meta = metadataForStreamId(d.getStreamId());
 		if ( meta == null ) {
 			throw new StreamWriteException(generator, String.format(
 					"Metadata for stream %s not available for datum %d", d.getStreamId(), resultIndex));
@@ -266,8 +318,22 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 		int tLen = (p != null ? p.getTagsLength() : 0);
 		int totalLen = 1 + baseLen + tLen;
 
+		final int[] iMapping;
+		final int[] aMapping;
+		final int[] sMapping;
+		if ( meta instanceof PropertyRestrictedObjectDatumStreamMetadata r ) {
+			iMapping = r.propertyMappingForType(Instantaneous);
+			aMapping = r.propertyMappingForType(Accumulating);
+			sMapping = r.propertyMappingForType(Status);
+		} else {
+			iMapping = aMapping = sMapping = null;
+		}
+
+		final Integer metaIdx = nonnull(nonnull(metaIndexMap, "metaIndexMap").get(d.getStreamId()),
+				"Metadata index");
+
 		generator.writeStartArray(d, totalLen);
-		generator.writeNumber(metaIndexMap.get(d.getStreamId()));
+		generator.writeNumber(metaIdx);
 		if ( d instanceof AggregateDatum agg ) {
 			generator.writeStartArray(d, 2);
 			generator.writeNumber(ts);
@@ -280,40 +346,69 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 
 			DatumPropertiesStatistics stats = agg.getStatistics();
 			if ( stats != null && p != null ) {
-				writeAggregateProperty(generator, Instantaneous, reading, iLen, p.getInstantaneous(),
-						stats.getInstantaneous());
-				writeAggregateProperty(generator, Accumulating, reading, aLen, p.getAccumulating(),
-						stats.getAccumulating());
-				writeStringArrayValues(generator, p.getStatus(), sLen);
-				writeStringArrayValues(generator, p.getTags(), tLen);
+				writeAggregateProperty(generator, Instantaneous, reading, p.getInstantaneous(),
+						stats.getInstantaneous(), iLen, iMapping);
+				writeAggregateProperty(generator, Accumulating, reading, p.getAccumulating(),
+						stats.getAccumulating(), aLen, aMapping);
+				writeStringArrayValues(generator, p.getStatus(), sLen, sMapping);
+				writeStringArrayValues(generator, p.getTags(), tLen, null);
 			} else {
 				generator.writeNull();
 			}
 		} else if ( p != null ) {
 			generator.writeNumber(ts);
-			writeDecimalArrayValues(generator, p.getInstantaneous(), iLen);
-			writeDecimalArrayValues(generator, p.getAccumulating(), aLen);
-			writeStringArrayValues(generator, p.getStatus(), sLen);
-			writeStringArrayValues(generator, p.getTags(), tLen);
+			writeDecimalArrayValues(generator, p.getInstantaneous(), iLen, iMapping);
+			writeDecimalArrayValues(generator, p.getAccumulating(), aLen, aMapping);
+			writeStringArrayValues(generator, p.getStatus(), sLen, sMapping);
+			writeStringArrayValues(generator, p.getTags(), tLen, null);
 		}
 		generator.writeEndArray();
 		resultIndex++;
 	}
 
+	/**
+	 * Write aggregate property array.
+	 *
+	 * @param generator
+	 *        the generator
+	 * @param type
+	 *        the sample type
+	 * @param reading
+	 *        {@code true} if data from a {@code ReadingDatum}
+	 * @param values
+	 *        the values
+	 * @param statValues
+	 *        the statistic values, or {@code null}
+	 * @param len
+	 *        the length of values to write
+	 * @param mapping
+	 *        an optional mapping of value indexes; the length of the array
+	 *        should be {@code len} and each position in the array is the actual
+	 *        index within {@code values} and {@code statValues} to use
+	 * @throws JacksonException
+	 *         if any IO error occurs
+	 */
 	private static void writeAggregateProperty(final JsonGenerator generator,
-			final DatumSamplesType type, final boolean reading, final int len, final BigDecimal[] values,
-			final BigDecimal[][] statValues) throws IOException {
-		for ( int i = 0; i < len; i++ ) {
-			BigDecimal[] sv = (statValues != null && statValues.length > i ? statValues[i] : null);
+			final DatumSamplesType type, final boolean reading,
+			final @Nullable BigDecimal @Nullable [] values,
+			final BigDecimal @Nullable [] @Nullable [] statValues, final int len,
+			final int @Nullable [] mapping) throws JacksonException {
+		for ( int i = 0, idx = 0; i < len; i++ ) {
+			if ( mapping != null && i < mapping.length ) {
+				idx = mapping[i];
+			} else {
+				idx = i;
+			}
+			BigDecimal[] sv = (statValues != null && statValues.length > idx ? statValues[idx] : null);
 			int arrayLen = (sv != null ? sv.length : 0);
 			if ( (type == Instantaneous || (!reading && type == Accumulating)) && values != null
-					&& values.length > i ) {
+					&& values.length > idx ) {
 				arrayLen++;
 			}
 			if ( arrayLen > 0 ) {
 				generator.writeStartArray(sv, arrayLen);
 				if ( (type == Instantaneous || (!reading && type == Accumulating)) && values != null ) {
-					BigDecimal v = values[i];
+					BigDecimal v = values[idx];
 					if ( v != null ) {
 						generator.writeNumber(v);
 					} else {
@@ -338,6 +433,96 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			} else {
 				generator.writeNull();
 			}
+		}
+	}
+
+	/**
+	 * Write a fixed number of string array values as JSON array numbers.
+	 *
+	 * <p>
+	 * This method does not write any starting or ending JSON array, it only
+	 * writes the values. It always writes {@code count} values, regardless of
+	 * the length of {@code array}. JSON {@code null} values will be written for
+	 * any missing {@code array} values.
+	 * </p>
+	 *
+	 * @param generator
+	 *        the generator to write to
+	 * @param array
+	 *        the array values to write
+	 * @param count
+	 *        the number of string values to write
+	 * @param mapping
+	 *        an optional mapping of value indexes; the length of the array
+	 *        should be {@code len} and each position in the array is the actual
+	 *        index within {@code values} and {@code statValues} to use
+	 * @throws JacksonException
+	 *         if any IO error occurs
+	 */
+	private static void writeStringArrayValues(final JsonGenerator generator,
+			final @Nullable String @Nullable [] array, final int count, final int @Nullable [] mapping)
+			throws JacksonException {
+		int i, idx;
+		final int arrayLen = (array != null ? array.length : 0);
+		for ( i = 0; i < count && i < arrayLen; i++ ) {
+			if ( mapping != null && i < mapping.length ) {
+				idx = mapping[i];
+			} else {
+				idx = i;
+			}
+			if ( array != null && idx < arrayLen && array[idx] != null ) {
+				generator.writeString(array[idx]);
+			} else {
+				generator.writeNull();
+			}
+		}
+		for ( ; i < count; i++ ) {
+			generator.writeNull();
+		}
+	}
+
+	/**
+	 * Write a fixed number of decimal array values as JSON array numbers.
+	 *
+	 * <p>
+	 * This method does not write any starting or ending JSON array, it only
+	 * writes the values. It always writes {@code count} values, regardless of
+	 * the length of {@code array}. JSON {@code null} values will be written for
+	 * any missing {@code array} values.
+	 * </p>
+	 *
+	 * @param generator
+	 *        the generator to write to
+	 * @param array
+	 *        the array values to write
+	 * @param count
+	 *        the number of string values to write
+	 * @param mapping
+	 *        an optional mapping of value indexes; the length of the array
+	 *        should be {@code len} and each position in the array is the actual
+	 *        index within {@code values} and {@code statValues} to use
+	 * @throws JacksonException
+	 *         if any IO error occurs
+	 */
+	private static void writeDecimalArrayValues(final JsonGenerator generator,
+			final @Nullable BigDecimal @Nullable [] array, final int count,
+			final int @Nullable [] mapping) throws JacksonException {
+		int i, idx;
+		final int arrayLen = (array != null ? array.length : 0);
+		for ( i = 0; i < count && i < arrayLen; i++ ) {
+			if ( mapping != null && i < mapping.length ) {
+				idx = mapping[i];
+			} else {
+				idx = i;
+			}
+			if ( array != null && idx < arrayLen && array[idx] != null ) {
+				generator.writeNumber(array[idx]);
+			} else {
+				generator.writeNull();
+			}
+		}
+		for ( ; i < count; i++ ) {
+			generator.writeNull();
 		}
 	}
 

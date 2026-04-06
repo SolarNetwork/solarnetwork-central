@@ -23,15 +23,23 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.time.Instant.now;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.datumStreamSortMapping;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Location;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Period;
+import java.util.List;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Generate dynamic SQL for a {@link DatumCriteria} "calculate datum at a point
@@ -51,6 +59,9 @@ public final class SelectDatumCalculatedAt implements PreparedStatementCreator, 
 	public static final Period DEFAULT_CALCULATED_AT_TIME_TOLERANCE = Period.ofMonths(1);
 
 	private final DatumCriteria filter;
+	private final boolean aliased;
+	private final boolean sortByNode;
+	private final boolean sortBySource;
 
 	/**
 	 * Constructor.
@@ -58,54 +69,106 @@ public final class SelectDatumCalculatedAt implements PreparedStatementCreator, 
 	 * @param filter
 	 *        the filter
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectDatumCalculatedAt(DatumCriteria filter) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
+		this.aliased = (filter.includeStreamAliases() && filter.getObjectKind() != Location);
+
+		List<SortDescriptor> sorts = filter.getSorts();
+		if ( sorts == null ) {
+			sortByNode = false;
+			sortBySource = false;
+		} else {
+			boolean byNode = false;
+			boolean bySource = false;
+			for ( SortDescriptor sort : sorts ) {
+				if ( DatumSqlUtils.SORT_BY_NODE.equalsIgnoreCase(sort.getSortKey()) ) {
+					byNode = true;
+				} else if ( DatumSqlUtils.SORT_BY_SOURCE.equalsIgnoreCase(sort.getSortKey()) ) {
+					bySource = true;
+				}
+			}
+			sortByNode = byNode;
+			sortBySource = bySource;
+		}
 	}
 
-	private void appendCoreSql(StringBuilder buf) {
+	private void sqlCore(StringBuilder buf) {
 		buf.append("WITH s AS (\n");
 		DatumSqlUtils.nodeMetadataFilterSql(filter,
 				filter.hasLocalStartDate() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 						: DatumSqlUtils.MetadataSelectStyle.Minimum,
 				buf);
 		buf.append(")\n");
+		if ( aliased ) {
+			buf.append(", datum AS (\n");
+		}
 		buf.append("SELECT (solardatm.calc_datm_at(d, ?");
 		if ( filter.hasLocalStartDate() ) {
 			buf.append(" AT TIME ZONE s.time_zone");
 		}
 		buf.append(")).*\n");
-		buf.append("\t, min(d.ts) AS ts, min(s.node_id) AS node_id, min(s.source_id) AS source_id\n");
-		buf.append("FROM s\n");
-		buf.append("INNER JOIN solardatm.find_datm_around(s.stream_id");
+		if ( !aliased && (sortByNode || sortBySource) ) {
+			buf.append("\t");
+			if ( sortByNode ) {
+				buf.append(", min(s.node_id) AS node_id");
+			}
+			if ( sortBySource ) {
+				buf.append(", min(s.source_id) AS source_id");
+			}
+			buf.append("\n");
+		}
+		buf.append("FROM s, solardatm.find_datm_around(s.");
+		if ( aliased ) {
+			buf.append("orig_");
+		}
+		buf.append("stream_id");
 		if ( filter.hasLocalStartDate() ) {
 			buf.append(", ? AT TIME ZONE s.time_zone");
 		} else {
 			buf.append(", ?");
 		}
-		buf.append(", ?) d ON TRUE\n");
-		buf.append("GROUP BY s.stream_id");
+		buf.append(", ?) d\n");
+		buf.append("GROUP BY d.stream_id\n");
+		if ( aliased ) {
+			buf.append("""
+					)
+					SELECT s.stream_id
+						, datum.ts
+						, datum.received
+						, datum.data_i
+						, datum.data_a
+						, datum.data_s
+						, datum.data_t
+					FROM s
+					INNER JOIN datum ON datum.stream_id = s.orig_stream_id
+					""");
+		}
+	}
+
+	private void sqlOrderBy(StringBuilder buf) {
+		StringBuilder order = new StringBuilder();
+		int idx = orderBySorts(filter.getSorts(),
+				datumStreamSortMapping(filter.getLocationId() != null ? Location : Node, null), order);
+		if ( idx > 0 ) {
+			buf.append("ORDER BY ").append(order.substring(idx));
+		}
 	}
 
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		appendCoreSql(buf);
-		StringBuilder order = new StringBuilder();
-		int idx = orderBySorts(filter.getSorts(), NODE_STREAM_SORT_KEY_MAPPING, order);
-		if ( idx > 0 ) {
-			buf.append("\nORDER BY ");
-			buf.append(order.substring(idx));
-		}
+		sqlCore(buf);
+		sqlOrderBy(buf);
 		return buf.toString();
 	}
 
 	private PreparedStatement createStatement(Connection con, String sql) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		int p = DatumSqlUtils.prepareObjectMetadataFilter(filter, ObjectDatumKind.Node, con, stmt, 0);
+		int p = DatumSqlUtils.prepareObjectMetadataFilter(filter, null, con, stmt, 0);
 		if ( filter.hasLocalStartDate() ) {
 			stmt.setObject(++p, filter.getLocalStartDate(), Types.TIMESTAMP);
 			stmt.setObject(++p, filter.getLocalStartDate(), Types.TIMESTAMP);

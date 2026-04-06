@@ -31,6 +31,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -135,13 +136,13 @@ public class AuditNodeServiceEntity extends BasicSerializableIdentity<DatumId> i
 	 * @param id
 	 *        the ID
 	 * @param aggregation
-	 *        the aggregation
+	 *        the aggregation; if {@code null} then {@code None} will be used
 	 * @param count
 	 *        the count
 	 */
-	public AuditNodeServiceEntity(DatumId id, Aggregation aggregation, long count) {
+	public AuditNodeServiceEntity(DatumId id, @Nullable Aggregation aggregation, long count) {
 		super(id);
-		this.aggregation = (aggregation == null ? Aggregation.None : aggregation);
+		this.aggregation = (aggregation != null ? aggregation : Aggregation.None);
 		this.count = count;
 	}
 
@@ -176,7 +177,7 @@ public class AuditNodeServiceEntity extends BasicSerializableIdentity<DatumId> i
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(AuditNodeServiceValue other) {
+	public boolean isSameAs(@Nullable AuditNodeServiceValue other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -188,7 +189,7 @@ public class AuditNodeServiceEntity extends BasicSerializableIdentity<DatumId> i
 	}
 
 	@Override
-	public boolean differsFrom(AuditNodeServiceValue other) {
+	public boolean differsFrom(@Nullable AuditNodeServiceValue other) {
 		return !isSameAs(other);
 	}
 
@@ -199,12 +200,12 @@ public class AuditNodeServiceEntity extends BasicSerializableIdentity<DatumId> i
 	}
 
 	@Override
-	public Aggregation getAggregation() {
+	public final Aggregation getAggregation() {
 		return aggregation;
 	}
 
 	@Override
-	public long getCount() {
+	public final long getCount() {
 		return count;
 	}
 

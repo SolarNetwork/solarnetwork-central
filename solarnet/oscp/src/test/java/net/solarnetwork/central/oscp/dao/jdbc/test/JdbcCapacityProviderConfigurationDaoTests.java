@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allCapacityGroupMeasurementData;
@@ -43,7 +44,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -266,7 +266,7 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setName(randomUUID().toString());
 		conf.setRegistrationStatus(RegistrationStatus.Failed);
-		conf.setServiceProps(Collections.singletonMap("bim", "bam"));
+		conf.setServiceProps(Map.of("bim", "bam"));
 
 		UserLongCompositePK result = dao.save(conf);
 
@@ -602,8 +602,8 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 				capacityGroupDao.create(userId, OscpJdbcTestUtils.newCapacityGroupConfiguration(userId,
 						id.getEntityId(), optConf.getEntityId(), Instant.now())));
 
-		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, group.getEntityId(),
-				OscpRole.CapacityProvider, Instant.now()));
+		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, now(),
+				group.getEntityId(), OscpRole.CapacityProvider));
 
 		// WHEN
 		Instant expectedTaskDate = group.getCapacityProviderMeasurementPeriod()
@@ -647,8 +647,8 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 				capacityGroupDao.create(userId, OscpJdbcTestUtils.newCapacityGroupConfiguration(userId,
 						id.getEntityId(), optConf.getEntityId(), Instant.now())));
 
-		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, group.getEntityId(),
-				OscpRole.CapacityProvider, Instant.now()));
+		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, now(),
+				group.getEntityId(), OscpRole.CapacityProvider));
 
 		// WHEN
 		Instant expectedTaskDate = group.getCapacityProviderMeasurementPeriod()

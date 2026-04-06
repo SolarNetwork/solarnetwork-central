@@ -34,10 +34,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import java.net.URI;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -81,8 +82,7 @@ public class FroniusCloudIntegrationServiceTests {
 	@Mock
 	private RestOperations restOps;
 
-	@Mock
-	private TextEncryptor encryptor;
+	private TextEncryptor encryptor = noOpText();
 
 	@Captor
 	private ArgumentCaptor<RequestEntity<String>> httpRequestCaptor;
@@ -91,8 +91,8 @@ public class FroniusCloudIntegrationServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		service = new FroniusCloudIntegrationService(Collections.singleton(datumStreamService),
-				userEventAppenderBiz, encryptor, restOps);
+		service = new FroniusCloudIntegrationService(Set.of(datumStreamService), userEventAppenderBiz,
+				encryptor, restOps);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(FroniusCloudIntegrationService.class.getName(),
@@ -104,7 +104,7 @@ public class FroniusCloudIntegrationServiceTests {
 	public void validate_missingAuthSettings() {
 		// GIVEN
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				"foo", "bar"
@@ -154,7 +154,7 @@ public class FroniusCloudIntegrationServiceTests {
 		final String apiSecret = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				FroniusCloudIntegrationService.ACCESS_KEY_ID_SETTING, apiKey,

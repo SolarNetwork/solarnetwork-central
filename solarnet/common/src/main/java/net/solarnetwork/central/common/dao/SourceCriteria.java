@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for source related data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 public interface SourceCriteria {
@@ -36,19 +38,20 @@ public interface SourceCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available source ID from the
-	 * {@link #getSourceIds()} array, or {@literal null} if not available.
+	 * {@link #getSourceIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first source ID, or {@literal null} if not available
+	 * @return the first source ID, or {@code null} if not available
 	 */
+	@Nullable
 	String getSourceId();
 
 	/**
 	 * Get an array of source IDs.
 	 * 
-	 * @return array of source IDs (may be {@literal null})
+	 * @return array of source IDs (may be {@code null})
 	 */
-	String[] getSourceIds();
+	String @Nullable [] getSourceIds();
 
 	/**
 	 * Test if this filter has any source criteria.
@@ -58,6 +61,40 @@ public interface SourceCriteria {
 	 */
 	default boolean hasSourceCriteria() {
 		return getSourceId() != null;
+	}
+
+	/**
+	 * Get the first source ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasSourceCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first source ID (presumed non-null)
+	 * @since 1.2
+	 */
+	@SuppressWarnings("NullAway")
+	default String sourceId() {
+		return getSourceId();
+	}
+
+	/**
+	 * Get an array of source IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasSourceCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of source IDs (presumed non-null)
+	 * @since 1.2
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] sourceIds() {
+		return getSourceIds();
 	}
 
 }

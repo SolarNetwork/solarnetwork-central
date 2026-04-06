@@ -100,7 +100,7 @@
 				<if test="filter.id != null">
 					AND su.id = #{filter.id}
 				</if>
-				<if test="filter.userId != null">
+				<if test="filter.userIdIsAssigned">
 					AND su.user_id = #{filter.userId}
 				</if>
 				<if test="filter.username != null">
@@ -129,7 +129,7 @@
 				</foreach>
 			</when>
 			<otherwise>
-				ocpp_system_user_user_id, ocpp_system_user_created, ocpp_system_user_id
+				ocpp_system_user_id
 			</otherwise>
 		</choose>
 	</sql>

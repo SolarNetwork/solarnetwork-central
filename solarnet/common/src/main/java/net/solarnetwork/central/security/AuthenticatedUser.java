@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.security;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.userdetails.User;
 
 /**
@@ -38,7 +40,7 @@ public class AuthenticatedUser extends User implements SecurityUser {
 	private static final long serialVersionUID = 4517031455367343502L;
 
 	private final Long userId;
-	private final String name;
+	private final @Nullable String name;
 	private final boolean authenticatedWithToken;
 
 	/**
@@ -49,13 +51,17 @@ public class AuthenticatedUser extends User implements SecurityUser {
 	 * @param userId
 	 *        the user ID
 	 * @param name
-	 *        the name
+	 *        the optional name
 	 * @param authenticatedWithToken
 	 *        the authenticated with token flag
+	 * @throws IllegalArgumentException
+	 *         if any argument other than {@code name} is {@code null}
 	 */
-	public AuthenticatedUser(User user, Long userId, String name, boolean authenticatedWithToken) {
-		super(user.getUsername(), user.getPassword(), user.isEnabled(), user.isAccountNonExpired(),
-				user.isCredentialsNonExpired(), user.isAccountNonLocked(), user.getAuthorities());
+	public AuthenticatedUser(User user, Long userId, @Nullable String name,
+			boolean authenticatedWithToken) {
+		super(requireNonNullArgument(user, "user").getUsername(), user.getPassword(), user.isEnabled(),
+				user.isAccountNonExpired(), user.isCredentialsNonExpired(), user.isAccountNonLocked(),
+				user.getAuthorities());
 		this.userId = userId;
 		this.name = name;
 		this.authenticatedWithToken = authenticatedWithToken;
@@ -66,12 +72,12 @@ public class AuthenticatedUser extends User implements SecurityUser {
 		return userId;
 	}
 
-	public String getName() {
+	public @Nullable String getName() {
 		return name;
 	}
 
 	@Override
-	public String getDisplayName() {
+	public @Nullable String getDisplayName() {
 		return name;
 	}
 

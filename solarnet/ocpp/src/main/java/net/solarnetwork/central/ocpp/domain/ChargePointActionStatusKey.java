@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 import net.solarnetwork.central.domain.BasePK;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A primary key for a Charge Point action status.
@@ -68,7 +68,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 *        the action name
 	 * @return the new key
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static ChargePointActionStatusKey keyFor(long userId, long chargePointId, int connectorId,
 			String action) {
@@ -90,7 +90,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 *        the action name
 	 * @return the new key
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 1.1
 	 */
 	public static ChargePointActionStatusKey keyFor(long userId, long chargePointId, int evseId,
@@ -110,7 +110,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 * @param action
 	 *        the action name
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ChargePointActionStatusKey(long userId, long chargePointId, int connectorId, String action) {
 		this(userId, chargePointId, 0, connectorId, action);
@@ -130,7 +130,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 * @param action
 	 *        the action name
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 1.1
 	 */
 	public ChargePointActionStatusKey(long userId, long chargePointId, int evseId, int connectorId,
@@ -140,7 +140,7 @@ public class ChargePointActionStatusKey extends BasePK
 		this.chargePointId = chargePointId;
 		this.evseId = evseId;
 		this.connectorId = connectorId;
-		this.action = ObjectUtils.requireNonNullArgument(action, "action");
+		this.action = requireNonNullArgument(action, "action");
 	}
 
 	@Override
@@ -209,7 +209,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 *
 	 * @return the user ID
 	 */
-	public long getUserId() {
+	public final long getUserId() {
 		return userId;
 	}
 
@@ -218,7 +218,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 *
 	 * @return the Charge Point ID
 	 */
-	public long getChargePointId() {
+	public final long getChargePointId() {
 		return chargePointId;
 	}
 
@@ -227,7 +227,7 @@ public class ChargePointActionStatusKey extends BasePK
 	 *
 	 * @return the EVSE ID, or {@literal 0} for the charger itself
 	 */
-	public int getEvseId() {
+	public final int getEvseId() {
 		return evseId;
 	}
 
@@ -236,16 +236,16 @@ public class ChargePointActionStatusKey extends BasePK
 	 *
 	 * @return the connector ID, or {@literal 0} for the EVSE itself
 	 */
-	public int getConnectorId() {
+	public final int getConnectorId() {
 		return connectorId;
 	}
 
 	/**
 	 * Get the action.
 	 *
-	 * @return the action, never {@literal null}
+	 * @return the action, never {@code null}
 	 */
-	public String getAction() {
+	public final String getAction() {
 		return action;
 	}
 

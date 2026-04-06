@@ -199,7 +199,7 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		obj3 = dao.get(dao.save(obj3));
 
 		Collection<SystemUser> results = dao.getAll(null);
-		assertThat("Results found in order", results, contains(obj2, obj1, obj3));
+		assertThat("Results found in order", results, contains(obj1, obj2, obj3));
 		assertThat("No password returned",
 				results.stream().map(SystemUser::getPassword).allMatch(s -> s == null), equalTo(true));
 	}
@@ -218,7 +218,7 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		obj3 = dao.get(dao.save(obj3));
 
 		Collection<CentralSystemUser> results = dao.findAllForOwner(userId);
-		assertThat("Results found in order", results, contains(obj2, obj1));
+		assertThat("Results found in order", results, contains(obj1, obj2));
 		assertThat("No password returned",
 				results.stream().map(SystemUser::getPassword).allMatch(s -> s == null), equalTo(true));
 	}
@@ -248,10 +248,10 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		obj3 = dao.get(dao.save(obj3));
 
 		List<SystemUser> results = dao.getAll(null).stream().collect(Collectors.toList());
-		assertThat("Results found in order", results, contains(obj2, obj1, obj3));
+		assertThat("Results found in order", results, contains(obj1, obj2, obj3));
 
-		assertThat("Result 0 same", results.get(0).isSameAs(obj2), equalTo(true));
-		assertThat("Result 1 same", results.get(1).isSameAs(obj1), equalTo(true));
+		assertThat("Result 0 same", results.get(0).isSameAs(obj1), equalTo(true));
+		assertThat("Result 1 same", results.get(1).isSameAs(obj2), equalTo(true));
 		assertThat("Result 2 same", results.get(2).isSameAs(obj3), equalTo(true));
 	}
 

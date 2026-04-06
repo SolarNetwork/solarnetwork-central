@@ -27,6 +27,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.AppSetting;
@@ -40,8 +41,8 @@ import net.solarnetwork.central.domain.AppSetting;
  */
 public final class DeleteAppSetting implements PreparedStatementCreator, SqlProvider {
 
-	private final String[] keys;
-	private final String[] types;
+	private final String @Nullable [] keys;
+	private final String @Nullable [] types;
 
 	/**
 	 * Select for a single key.
@@ -50,7 +51,7 @@ public final class DeleteAppSetting implements PreparedStatementCreator, SqlProv
 	 *        the key
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static DeleteAppSetting deleteForKey(String key) {
 		return new DeleteAppSetting(new String[] { requireNonNullArgument(key, "key") }, null);
@@ -65,7 +66,7 @@ public final class DeleteAppSetting implements PreparedStatementCreator, SqlProv
 	 *        the type
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public static DeleteAppSetting deleteForKeyType(String key, String type) {
 		return new DeleteAppSetting(new String[] { requireNonNullArgument(key, "key") },
@@ -80,7 +81,7 @@ public final class DeleteAppSetting implements PreparedStatementCreator, SqlProv
 	 * @param types
 	 *        the optional types to filter on
 	 */
-	public DeleteAppSetting(String[] keys, String[] types) {
+	public DeleteAppSetting(String @Nullable [] keys, String @Nullable [] types) {
 		super();
 		this.keys = keys;
 		this.types = types;

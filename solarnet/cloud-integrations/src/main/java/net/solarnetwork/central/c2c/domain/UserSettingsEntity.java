@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.UserRelatedEntity;
@@ -52,7 +54,7 @@ public final class UserSettingsEntity extends BasicLongEntity
 	@Serial
 	private static final long serialVersionUID = 2463852724878062639L;
 
-	private Instant modified;
+	private @Nullable Instant modified;
 	private boolean publishToSolarIn = true;
 	private boolean publishToSolarFlux = false;
 
@@ -64,15 +66,16 @@ public final class UserSettingsEntity extends BasicLongEntity
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserSettingsEntity(Long userId, Instant created) {
-		super(userId, created);
+		super(requireNonNullArgument(userId, "userId"), requireNonNullArgument(created, "created"));
 	}
 
 	@Override
 	public UserSettingsEntity copyWithId(Long id) {
-		var copy = new UserSettingsEntity(requireNonNullArgument(id, "id"), getCreated());
+		var copy = new UserSettingsEntity(requireNonNullArgument(id, "id"),
+				nonnull(getCreated(), "created"));
 		copyTo(copy);
 		return copy;
 	}
@@ -85,7 +88,7 @@ public final class UserSettingsEntity extends BasicLongEntity
 	}
 
 	@Override
-	public boolean differsFrom(UserSettingsEntity other) {
+	public boolean differsFrom(@Nullable UserSettingsEntity other) {
 		return !isSameAs(other);
 	}
 
@@ -103,7 +106,7 @@ public final class UserSettingsEntity extends BasicLongEntity
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(UserSettingsEntity other) {
+	public boolean isSameAs(@Nullable UserSettingsEntity other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -142,8 +145,8 @@ public final class UserSettingsEntity extends BasicLongEntity
 	 * @return the user ID
 	 */
 	@Override
-	public Long getUserId() {
-		return getId();
+	public final Long getUserId() {
+		return nonnull(getId(), "id");
 	}
 
 	/**
@@ -151,7 +154,7 @@ public final class UserSettingsEntity extends BasicLongEntity
 	 *
 	 * @return the modified date
 	 */
-	public Instant getModified() {
+	public final @Nullable Instant getModified() {
 		return modified;
 	}
 
@@ -161,12 +164,12 @@ public final class UserSettingsEntity extends BasicLongEntity
 	 * @param modified
 	 *        the modified date to set
 	 */
-	public void setModified(Instant modified) {
+	public final void setModified(@Nullable Instant modified) {
 		this.modified = modified;
 	}
 
 	@Override
-	public boolean isPublishToSolarIn() {
+	public final boolean isPublishToSolarIn() {
 		return publishToSolarIn;
 	}
 
@@ -176,12 +179,12 @@ public final class UserSettingsEntity extends BasicLongEntity
 	 * @param publishToSolarIn
 	 *        {@literal true} if data should be published to SolarIn
 	 */
-	public void setPublishToSolarIn(boolean publishToSolarIn) {
+	public final void setPublishToSolarIn(boolean publishToSolarIn) {
 		this.publishToSolarIn = publishToSolarIn;
 	}
 
 	@Override
-	public boolean isPublishToSolarFlux() {
+	public final boolean isPublishToSolarFlux() {
 		return publishToSolarFlux;
 	}
 
@@ -191,7 +194,7 @@ public final class UserSettingsEntity extends BasicLongEntity
 	 * @param publishToSolarFlux
 	 *        {@literal true} if data should be published to SolarFlux
 	 */
-	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+	public final void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
 	}
 

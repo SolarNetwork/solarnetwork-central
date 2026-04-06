@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import net.solarnetwork.dao.BasicEntity;
 
@@ -40,8 +42,8 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	@Serial
 	private static final long serialVersionUID = -7907835439616081294L;
 
-	private final Instant modified;
-	private final String value;
+	private final @Nullable Instant modified;
+	private final @Nullable String value;
 
 	/**
 	 * Create a new setting instance.
@@ -54,7 +56,7 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	 *        the value
 	 * @return the new instance
 	 * @throws IllegalArgumentException
-	 *         if {@code key} or {@code type} are {@literal null}
+	 *         if {@code key} or {@code type} are {@code null}
 	 */
 	public static AppSetting appSetting(String key, String type, String value) {
 		return new AppSetting(key, type, null, null, value);
@@ -72,9 +74,10 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	 * @param value
 	 *        the value
 	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
+	 *         if {@code id} is {@code null}
 	 */
-	public AppSetting(KeyTypePK id, Instant created, Instant modified, String value) {
+	public AppSetting(KeyTypePK id, @Nullable Instant created, @Nullable Instant modified,
+			@Nullable String value) {
 		super(requireNonNullArgument(id, "id"), created);
 		this.modified = modified;
 		this.value = value;
@@ -94,9 +97,10 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	 * @param value
 	 *        the value
 	 * @throws IllegalArgumentException
-	 *         any argument other than {@code value} is {@literal null}
+	 *         if {@code key} or {@code type} are {@code null}
 	 */
-	public AppSetting(String key, String type, Instant created, Instant modified, String value) {
+	public AppSetting(String key, String type, @Nullable Instant created, @Nullable Instant modified,
+			@Nullable String value) {
 		this(new KeyTypePK(key, type), created, modified, value);
 	}
 
@@ -107,8 +111,8 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	 *        the new value to set
 	 * @return the new copy
 	 */
-	public AppSetting withValue(String value) {
-		return new AppSetting(getId(), getCreated(), Instant.now(), value);
+	public AppSetting withValue(@Nullable String value) {
+		return new AppSetting(nonnull(getId(), "id"), getCreated(), Instant.now(), value);
 	}
 
 	@Override
@@ -137,9 +141,9 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	/**
 	 * Get the modification date.
 	 *
-	 * @return the modification date, or {@literal null}
+	 * @return the modification date, or {@code null}
 	 */
-	public Instant getModified() {
+	public final @Nullable Instant getModified() {
 		return modified;
 	}
 
@@ -148,8 +152,8 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	 *
 	 * @return the key
 	 */
-	public String getKey() {
-		return getId().getKey();
+	public final String getKey() {
+		return nonnull(getId(), "id").getKey();
 	}
 
 	/**
@@ -157,16 +161,16 @@ public final class AppSetting extends BasicEntity<KeyTypePK> {
 	 *
 	 * @return the type
 	 */
-	public String getType() {
-		return getId().getType();
+	public final String getType() {
+		return nonnull(getId(), "id").getType();
 	}
 
 	/**
 	 * Get the value.
 	 *
-	 * @return the value, or {@literal null}
+	 * @return the value, or {@code null}
 	 */
-	public String getValue() {
+	public final @Nullable String getValue() {
 		return value;
 	}
 

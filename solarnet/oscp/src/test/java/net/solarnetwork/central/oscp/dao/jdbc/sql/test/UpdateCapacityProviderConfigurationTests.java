@@ -1,30 +1,33 @@
 /* ==================================================================
  * InsertCapacityProviderConfigurationTests.java - 12/08/2022 3:29:58 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.oscp.dao.jdbc.sql.test;
 
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,8 +38,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.time.Instant;
-import java.util.Collections;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -53,7 +55,7 @@ import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Test cases for the {@link UpdateCapacityProviderConfiguration} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -77,15 +79,13 @@ public class UpdateCapacityProviderConfigurationTests {
 
 	private CapacityProviderConfiguration createCapacityProviderConfiguration(Long userId,
 			Long entityId) {
-		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(userId, entityId,
-				Instant.now());
+		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(userId, entityId, now(),
+				randomString(), randomLong(), RegistrationStatus.Registered);
 		conf.setModified(conf.getCreated().plusMillis(555));
-		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
+		conf.setBaseUrl("http://example.com/" + randomString());
 		conf.setEnabled(true);
-		conf.setName(randomUUID().toString());
 		conf.setOscpVersion("2.0");
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomString()));
 		return conf;
 	}
 

@@ -23,6 +23,8 @@
 package net.solarnetwork.central.dnp3.dao.jdbc.test;
 
 import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.allServerMeasurementConfigurationData;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -75,16 +77,13 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 	public void insert() {
 		// GIVEN
 		lastServer = serverDao.get(serverDao.create(userId,
-				Dnp3JdbcTestUtils.newServerConfiguration(userId, UUID.randomUUID().toString())));
+				Dnp3JdbcTestUtils.newServerConfiguration(userId, randomString())));
 
 		// WHEN
 		ServerMeasurementConfiguration conf = new ServerMeasurementConfiguration(userId,
-				lastServer.getServerId(), 0, Instant.now());
+				lastServer.getServerId(), 0, Instant.now(), randomLong(), randomString(),
+				MeasurementType.AnalogInput, randomString());
 		conf.setModified(Instant.now().plusMillis(234L));
-		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
-		conf.setSourceId(UUID.randomUUID().toString());
-		conf.setProperty(UUID.randomUUID().toString());
-		conf.setType(MeasurementType.AnalogInput);
 		conf.setMultiplier(new BigDecimal("1.23"));
 		conf.setOffset(new BigDecimal("2.34"));
 		conf.setScale(3);
@@ -159,7 +158,7 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 		conf.setEnabled(false);
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
-		conf.setProperty(UUID.randomUUID().toString());
+		conf.setProperty(randomString());
 		conf.setType(MeasurementType.BinaryInput);
 		conf.setMultiplier(new BigDecimal("3.21"));
 		conf.setOffset(new BigDecimal("4.32"));
@@ -207,18 +206,15 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 
 			for ( int s = 0; s < serverCount; s++ ) {
 				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
-						UUID.randomUUID().toString());
+						randomString());
 				UserLongCompositePK serverId = serverDao.create(userId, server);
 				server = server.copyWithId(serverId);
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerMeasurementConfiguration conf = new ServerMeasurementConfiguration(userId,
-							server.getServerId(), i, Instant.now());
+							server.getServerId(), i, Instant.now(), randomLong(), randomString(),
+							MeasurementType.AnalogInput, randomString());
 					conf.setModified(conf.getCreated());
-					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
-					conf.setSourceId(UUID.randomUUID().toString());
-					conf.setProperty(UUID.randomUUID().toString());
-					conf.setType(MeasurementType.AnalogInput);
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}
@@ -251,19 +247,16 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 
 			for ( int s = 0; s < serverCount; s++ ) {
 				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
-						UUID.randomUUID().toString());
+						randomString());
 				UserLongCompositePK serverId = serverDao.create(userId, server);
 				server = server.copyWithId(serverId);
 				userGroups.get(userId).add(server.getServerId());
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerMeasurementConfiguration conf = new ServerMeasurementConfiguration(userId,
-							server.getServerId(), i, Instant.now());
+							server.getServerId(), i, Instant.now(), randomLong(), randomString(),
+							MeasurementType.AnalogInput, randomString());
 					conf.setModified(conf.getCreated());
-					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
-					conf.setSourceId(UUID.randomUUID().toString());
-					conf.setProperty(UUID.randomUUID().toString());
-					conf.setType(MeasurementType.AnalogInput);
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}
@@ -297,19 +290,16 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 
 			for ( int s = 0; s < serverCount; s++ ) {
 				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
-						UUID.randomUUID().toString());
+						randomString());
 				UserLongCompositePK serverId = serverDao.create(userId, server);
 				server = server.copyWithId(serverId);
 				userGroups.get(userId).add(server.getServerId());
 
 				for ( int i = 0; i < count; i++ ) {
 					ServerMeasurementConfiguration conf = new ServerMeasurementConfiguration(userId,
-							server.getServerId(), i, Instant.now());
+							server.getServerId(), i, Instant.now(), randomLong(), randomString(),
+							MeasurementType.AnalogInput, randomString());
 					conf.setModified(conf.getCreated());
-					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
-					conf.setSourceId(UUID.randomUUID().toString());
-					conf.setProperty(UUID.randomUUID().toString());
-					conf.setType(MeasurementType.AnalogInput);
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}

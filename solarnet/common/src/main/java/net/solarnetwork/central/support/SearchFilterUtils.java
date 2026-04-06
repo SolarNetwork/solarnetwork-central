@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.support;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.util.SearchFilter;
 import net.solarnetwork.util.SearchFilter.CompareOperator;
 import net.solarnetwork.util.SearchFilter.LogicOperator;
@@ -71,8 +74,8 @@ public final class SearchFilterUtils {
 	 *        the filter
 	 * @return the JSON Path expression
 	 */
-	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	public static String toSqlJsonPath(SearchFilter filter) {
+	@SuppressWarnings({ "StatementSwitchToExpressionSwitch", "NullAway" })
+	public static @Nullable String toSqlJsonPath(@Nullable SearchFilter filter) {
 		if ( filter == null ) {
 			return null;
 		}
@@ -81,7 +84,7 @@ public final class SearchFilterUtils {
 		filter.walk(new VisitorCallback() {
 
 			@Override
-			public boolean visit(SearchFilter node, SearchFilter parentNode) {
+			public boolean visit(SearchFilter node, @Nullable SearchFilter parentNode) {
 				StackObj ref = null;
 				if ( parentNode == null ) {
 					buf.append("$ ? (");
@@ -107,7 +110,7 @@ public final class SearchFilterUtils {
 					ancestors.add(ref);
 				}
 				if ( node.hasNestedFilter() ) {
-					if ( ref.count > 0 ) {
+					if ( ref != null && ref.count > 0 ) {
 						switch (ref.op) {
 							case AND:
 								buf.append(" && ");
@@ -119,7 +122,7 @@ public final class SearchFilterUtils {
 								// nothing
 						}
 					}
-					if ( node.getLogicOperator() == LogicOperator.NOT ) {
+					if ( node.getLogicOperator() == LogicOperator.NOT && ref != null ) {
 						ref.count++;
 					}
 					if ( node.getLogicOperator() != LogicOperator.NOT && parentNode != null ) {
@@ -127,16 +130,17 @@ public final class SearchFilterUtils {
 					}
 				}
 				if ( !node.hasNestedFilter() ) {
-					LogicOperator op = ref.op;
-					for ( Entry<String, ?> e : node.getFilter().entrySet() ) {
+					LogicOperator op = (ref != null ? ref.op : LogicOperator.AND);
+					final Map<String, ?> filter = nonnull(node.getFilter(), "filter");
+					for ( Entry<String, ?> e : filter.entrySet() ) {
 						switch (op) {
 							case AND:
-								if ( ref.count > 0 ) {
+								if ( ref != null && ref.count > 0 ) {
 									buf.append(" && ");
 								}
 								break;
 							case OR:
-								if ( ref.count > 0 ) {
+								if ( ref != null && ref.count > 0 ) {
 									buf.append(" || ");
 								}
 								break;
@@ -208,7 +212,7 @@ public final class SearchFilterUtils {
 								}
 							}
 						}
-						if ( op != LogicOperator.NOT ) {
+						if ( op != LogicOperator.NOT && ref != null ) {
 							ref.count++;
 						}
 					}

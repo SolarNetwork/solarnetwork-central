@@ -74,7 +74,7 @@ public class ResetPasswordController extends ControllerSupport {
 	 * @param authenticationManager
 	 *        the authentication manager
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ResetPasswordController(RegistrationBiz registrationBiz, MailService mailService,
 			MessageSource messageSource, AuthenticationManager authenticationManager) {

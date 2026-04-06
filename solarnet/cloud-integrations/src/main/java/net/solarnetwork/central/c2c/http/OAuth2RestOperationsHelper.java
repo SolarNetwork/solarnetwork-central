@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -84,7 +85,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 *
 	 * @since 1.1
 	 */
-	protected final Cache<UserLongCompositePK, Lock> integrationLocksCache;
+	protected final @Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache;
 
 	/**
 	 * A mapping of service property keys to associated HTTP header names to
@@ -92,7 +93,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 *
 	 * @since 1.1
 	 */
-	protected final Map<String, String> extraServicePropertyHeaders;
+	protected final @Nullable Map<String, String> extraServicePropertyHeaders;
 
 	/**
 	 * Constructor.
@@ -114,11 +115,11 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
-			Function<String, Set<String>> sensitiveKeyProvider,
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock) {
 		this(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider,
 				oauthClientManager, clock, null);
@@ -151,14 +152,14 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 *        read-through semantics that always returns a new lock for missing
 	 *        keys
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 1.1
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
-			Function<String, Set<String>> sensitiveKeyProvider,
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
-			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
+			@Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		this(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider,
 				oauthClientManager, clock, integrationLocksCache, null);
 	}
@@ -193,15 +194,15 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 *        an optional map of extra service property keys to HTTP header
 	 *        names to include with HTTP requests
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 1.1
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
-			Function<String, Set<String>> sensitiveKeyProvider,
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
-			Cache<UserLongCompositePK, Lock> integrationLocksCache,
-			Map<String, String> extraServicePropertyHeaders) {
+			@Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache,
+			@Nullable Map<String, String> extraServicePropertyHeaders) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
 		this.oauthClientManager = requireNonNullArgument(oauthClientManager, "oauthClientManager");
 		this.clock = requireNonNullArgument(clock, "clock");
@@ -211,11 +212,12 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 
 	@Override
 	public <B, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
-			String description, HttpMethod method, B body, C configuration, Class<R> responseType,
-			Function<HttpHeaders, URI> setup, Function<ResponseEntity<R>, T> handler) {
+			String description, HttpMethod method, @Nullable B body, C configuration,
+			Class<R> responseType, Function<HttpHeaders, URI> setup,
+			Function<ResponseEntity<R>, T> handler) {
 		return super.http(description, method, body, configuration, responseType, (headers) -> {
 			if ( configuration instanceof CloudIntegrationConfiguration integration ) {
-				final var decrypted = integration.copyWithId(integration.getId());
+				final var decrypted = integration.copyWithId(integration.id());
 				decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
 				addOAuthBearerAuthorization(decrypted, headers, oauthClientManager, userEventAppenderBiz,
 						integrationLocksCache != null ? (id) -> integrationLocksCache.get(id) : null);
@@ -223,7 +225,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 					for ( Entry<String, String> e : extraServicePropertyHeaders.entrySet() ) {
 						if ( integration.hasServiceProperty(e.getKey()) ) {
 							headers.add(e.getValue(),
-									integration.serviceProperty(e.getKey(), Object.class).toString());
+									integration.serviceProp(e.getKey(), Object.class).toString());
 						}
 					}
 				}

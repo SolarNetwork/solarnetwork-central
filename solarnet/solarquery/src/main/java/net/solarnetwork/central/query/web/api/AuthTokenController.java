@@ -25,7 +25,6 @@ package net.solarnetwork.central.query.web.api;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.Collections;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -97,7 +96,7 @@ public class AuthTokenController {
 			throw new IllegalArgumentException("date parameter cannot be in the future");
 		}
 		byte[] key = tokenService.computeAuthenticationTokenSigningKey(AuthenticationScheme.V2, actor,
-				Collections.singletonMap(AuthenticationTokenService.SIGN_DATE_PROP, date));
+				Map.of(AuthenticationTokenService.SIGN_DATE_PROP, date));
 		Map<String, Object> data = new LinkedHashMap<>(3);
 		data.put("key", HexFormat.of().formatHex(key));
 		return Result.success(data);

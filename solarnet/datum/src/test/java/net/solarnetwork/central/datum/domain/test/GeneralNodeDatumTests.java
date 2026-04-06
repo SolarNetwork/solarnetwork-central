@@ -62,11 +62,8 @@ public class GeneralNodeDatumTests {
 	}
 
 	private GeneralNodeDatum getTestInstance() {
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(TEST_TIMESTAMP);
-		datum.setNodeId(TEST_NODE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum(TEST_NODE_ID, TEST_TIMESTAMP, TEST_SOURCE_ID);
 		datum.setPosted(datum.getCreated());
-		datum.setSourceId(TEST_SOURCE_ID);
 
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
@@ -106,10 +103,11 @@ public class GeneralNodeDatumTests {
 	@Test
 	public void deserializeJson() throws Exception {
 		String json = "{\"created\":\"" + TEST_TIMESTAMP_STRING
-				+ "\",\"sourceId\":\"Main\",\"samples\":{\"i\":{\"watts\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
+				+ "\",\"nodeId\":-1,\"sourceId\":\"Main\",\"samples\":{\"i\":{\"watts\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
 		GeneralNodeDatum datum = objectMapper.readValue(json, GeneralNodeDatum.class);
 		assertThat(datum, is(notNullValue()));
 		assertThat(datum.getCreated(), is(TEST_TIMESTAMP));
+		assertThat(datum.getNodeId(), is(-1L));
 		assertThat(datum.getSourceId(), is("Main"));
 		assertThat(datum.getSamples(), is(notNullValue()));
 		assertThat(datum.getSamples().getInstantaneousSampleInteger("watts"), is(89));

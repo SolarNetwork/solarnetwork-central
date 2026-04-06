@@ -54,7 +54,9 @@
 	</sql>
 
 	<resultMap id="UserNodeConfirmationFullResult" type="UserNodeConfirmation">
-		<id property="id" column="unc_id"/>
+		<constructor>
+			<idArg column="unc_id" javaType="long"/>
+		</constructor>
 		<result property="created" column="unc_created"/>
 		<result property="nodeId" column="unc_node_id"/>
 		<result property="confirmationKey" column="unc_conf_key"/>

@@ -27,6 +27,7 @@ import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.execu
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForGroupMinimumIndex;
@@ -57,7 +58,7 @@ public class JdbcServerControlConfigurationDao implements ServerControlConfigura
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcServerControlConfigurationDao(JdbcOperations jdbcOps) {
 		super();
@@ -73,13 +74,13 @@ public class JdbcServerControlConfigurationDao implements ServerControlConfigura
 	public UserLongIntegerCompositePK create(Long userId, Long serverId,
 			ServerControlConfiguration entity) {
 		final var sql = new UpsertServerControlConfiguration(userId, serverId, entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		jdbcOps.update(sql);
+		return entity.id();
 	}
 
 	@Override
 	public Collection<ServerControlConfiguration> findAll(Long userId, Long serverId,
-			List<SortDescriptor> sorts) {
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		filter.setServerId(serverId);
@@ -95,7 +96,7 @@ public class JdbcServerControlConfigurationDao implements ServerControlConfigura
 	}
 
 	@Override
-	public ServerControlConfiguration get(UserLongIntegerCompositePK id) {
+	public @Nullable ServerControlConfiguration get(UserLongIntegerCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -108,7 +109,7 @@ public class JdbcServerControlConfigurationDao implements ServerControlConfigura
 	}
 
 	@Override
-	public Collection<ServerControlConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<ServerControlConfiguration> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -119,21 +120,23 @@ public class JdbcServerControlConfigurationDao implements ServerControlConfigura
 
 	@Override
 	public void delete(ServerControlConfiguration entity) {
-		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").id(), TABLE_NAME,
+				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 
 	@Override
 	public FilterResults<ServerControlConfiguration, UserLongIntegerCompositePK> findFiltered(
-			ServerDataPointFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			ServerDataPointFilter filter, @Nullable List<SortDescriptor> sorts, @Nullable Long offset,
+			@Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectServerControlConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, ServerControlConfigurationRowMapper.INSTANCE);
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, ServerDataPointFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable ServerDataPointFilter filter,
+			boolean enabled) {
 		var sql = new UpdateEnabledServerDataPointFilter(TABLE_NAME, SERVER_ID_COLUMN_NAME, userId,
 				filter, enabled);
 		return jdbcOps.update(sql);

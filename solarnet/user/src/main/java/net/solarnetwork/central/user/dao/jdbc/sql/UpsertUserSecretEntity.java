@@ -65,7 +65,7 @@ public class UpsertUserSecretEntity implements PreparedStatementCreator, SqlProv
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertUserSecretEntity(Long userId, String topic, UserSecretEntity entity) {
 		super();

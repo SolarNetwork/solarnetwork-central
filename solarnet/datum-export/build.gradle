@@ -1,0 +1,112 @@
+plugins {
+	id 'java-library'
+	id 'eclipse'
+	id 'org.springframework.boot' version '4.0.4' apply false
+}
+
+apply plugin: 'java-library'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+dependencyManagement {
+	imports {
+		mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+	}
+}
+
+description = 'SolarNet: Datum Export'
+version = '1.0.0'
+
+base {
+	archivesName = 'solarnet-datum-export'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+	implementation project(':solarnet-common-web')
+	implementation project(':solarnet-datum')
+
+	// Spring
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
+	
+	// JCache
+	implementation 'javax.cache:cache-api'
+	implementation 'org.ehcache:ehcache'
+
+	// Utilities
+	implementation "commons-io:commons-io:${commonsIoVersion}"
+	implementation 'commons-net:commons-net:3.10.0'
+	implementation "de.siegmar:fastcsv:${fastCsvVersion}"
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
+	implementation 'org.aspectj:aspectjweaver'
+    implementation "org.threeten:threeten-extra:${threetenExtraVersion}"
+	implementation "software.amazon.awssdk:netty-nio-client:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:s3-transfer-manager:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
+	
+	// Testing
+	testImplementation project(':solarnet-common-test')
+    testImplementation "io.moquette:moquette-broker:${moquetteVersion}"
+	testImplementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
+	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+	testImplementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"
+	testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
+	testImplementation 'org.eclipse.jetty:jetty-server'
+	testImplementation "org.tukaani:xz:${xzVersion}"
+	testImplementation 'org.mockftpserver:MockFtpServer:3.1.0'
+	testImplementation "software.amazon.awssdk:apache-client:${awsSdk2Version}"
+}
+
+jar.manifest {
+	attributes('Implementation-Version': version)
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+			pom {
+				name = project.description
+				description = 'Core datum export library.'
+				url = 'https://github.com/SolarNetwork/solarnetwork-central'
+				licenses {
+					license {
+						name = 'GNU General Public License, Version 2.0'
+						url = 'https://opensource.org/licenses/GPL-2.0'
+					}
+				}
+				developers {
+					developer {
+						name = 'SolarNetwork Developers'
+						email = 'code@solarnetwork.net'
+						organization = 'SolarNetwork Foundation'
+						organizationUrl = 'https://solarnetwork.net'
+					}
+				}
+				scm {
+					connection = 'scm:git:https://github.com/SolarNetwork/solarnetwork-central.git'
+					developerConnection = 'scm:git:git@github.com:SolarNetwork/solarnetwork-central.git'
+					url = 'https://github.com/SolarNetwork/solarnetwork-central'
+				}
+			}
+		}
+	}
+	repositories {
+		maven {
+			name = "OSSRH"
+			url = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+			credentials {
+				username = ossrhUsername
+				password = ossrhPassword
+			}
+		}
+	}
+}
+
+signing {
+	useGpgCmd()
+	sign publishing.publications.mavenJava
+}

@@ -263,7 +263,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 		ChargePointSettings entity = dao.resolveSettings(userId, last.getId());
 		assertThat("Settings resolved", entity, notNullValue());
 
-		ChargePointSettings expected = new ChargePointSettings();
+		ChargePointSettings expected = new ChargePointSettings(userId);
 		expected.setPublishToSolarIn(last.isPublishToSolarIn());
 		expected.setPublishToSolarFlux(last.isPublishToSolarFlux());
 		expected.setSourceIdTemplate(us.getSourceIdTemplate());

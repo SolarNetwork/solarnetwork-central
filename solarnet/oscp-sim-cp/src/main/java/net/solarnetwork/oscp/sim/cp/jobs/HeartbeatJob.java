@@ -68,12 +68,10 @@ public class HeartbeatJob extends JobSupport {
 	 */
 	public HeartbeatJob(CapacityProviderDao dao, AsyncTaskExecutor taskExecutor,
 			RestOperations restOps) {
-		super();
+		super("OSCP", "Heartbeat");
 		this.dao = requireNonNullArgument(dao, "dao");
 		this.taskExecutor = requireNonNullArgument(taskExecutor, "taskExecutor");
 		this.restOps = requireNonNullArgument(restOps, "restOps");
-		setGroupId("OSCP");
-		setId("Heartbeat");
 		setMaximumWaitMs(1800000L);
 	}
 

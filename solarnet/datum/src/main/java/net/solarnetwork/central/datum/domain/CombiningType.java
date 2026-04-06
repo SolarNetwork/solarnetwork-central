@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * An action to perform when combining data elements.
  *
@@ -77,13 +79,13 @@ public enum CombiningType {
 	 * Get an enum instance for a key value.
 	 *
 	 * @param key
-	 *        the key value; if {@literal null} or empty then {@link #Sum} will
-	 *        be returned
+	 *        the key value; if {@code null} or empty then {@link #Sum} will be
+	 *        returned
 	 * @return the enum
 	 * @throws IllegalArgumentException
 	 *         if {@code key} is not supported
 	 */
-	public static CombiningType forKey(String key) {
+	public static CombiningType forKey(@Nullable String key) {
 		if ( key == null || key.isEmpty() ) {
 			return Sum;
 		}

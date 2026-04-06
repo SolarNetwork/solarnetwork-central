@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.biz.dao.test;
 
+import static net.solarnetwork.central.security.SecurityTokenType.ReadNodeData;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
@@ -71,6 +72,8 @@ import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenFilter;
 import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
+import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
@@ -126,6 +129,12 @@ public class DaoUserBizTests {
 	private UserAlertDao userAlertDao;
 
 	@Mock
+	private UserNodeConfirmationDao userNodeConfirmationDao;
+
+	@Mock
+	private UserNodeCertificateDao userNodeCertificateDao;
+
+	@Mock
 	private Cache<UserStringCompositePK, UserAuthToken> tokenCache;
 
 	@Captor
@@ -148,9 +157,7 @@ public class DaoUserBizTests {
 
 	@BeforeEach
 	public void setup() throws Exception {
-		testUser = new User();
-		testUser.setEmail(TEST_EMAIL);
-		testUser.setId(TEST_USER_ID);
+		testUser = new User(TEST_USER_ID, TEST_EMAIL);
 		testUser.setName(TEST_NAME);
 		testUser.setPassword(TEST_ENC_PASSWORD);
 
@@ -161,13 +168,8 @@ public class DaoUserBizTests {
 		testUserRoles = new HashSet<String>();
 		testUserRoles.add(TEST_ROLE);
 
-		userBiz = new DaoUserBiz();
-		userBiz.setSolarLocationDao(solarLocationDao);
-		userBiz.setSolarNodeDao(solarNodeDao);
-		userBiz.setUserDao(userDao);
-		userBiz.setUserAuthTokenDao(userAuthTokenDao);
-		userBiz.setUserNodeDao(userNodeDao);
-		userBiz.setUserAlertDao(userAlertDao);
+		userBiz = new DaoUserBiz(userDao, userNodeDao, userNodeConfirmationDao, userNodeCertificateDao,
+				solarNodeDao, solarLocationDao, userAuthTokenDao, userAlertDao);
 		userBiz.setUserAuthTokenCache(tokenCache);
 	}
 
@@ -197,15 +199,13 @@ public class DaoUserBizTests {
 		final String name = UUID.randomUUID().toString();
 		final String desc = UUID.randomUUID().toString();
 
-		final UserAuthToken entity = new UserAuthToken();
-		entity.setUserId(TEST_USER_ID);
-		entity.setAuthToken(tokenId);
+		final UserAuthToken entity = new UserAuthToken(tokenId, TEST_USER_ID, ReadNodeData);
 
 		given(userAuthTokenDao.get(tokenId)).willReturn(entity);
 		given(userAuthTokenDao.save(entity)).willReturn(tokenId);
 
 		// WHEN
-		UserAuthToken info = new UserAuthToken();
+		UserAuthToken info = new UserAuthToken(tokenId, TEST_USER_ID, ReadNodeData);
 		info.setName(name);
 		info.setDescription(desc);
 		UserAuthToken updated = userBiz.updateUserAuthTokenInfo(TEST_USER_ID, tokenId, info);
@@ -223,16 +223,14 @@ public class DaoUserBizTests {
 		final String name = UUID.randomUUID().toString();
 		final String desc = UUID.randomUUID().toString();
 
-		final UserAuthToken entity = new UserAuthToken();
-		entity.setUserId(TEST_USER_ID);
-		entity.setAuthToken(tokenId);
+		final UserAuthToken entity = new UserAuthToken(tokenId, TEST_USER_ID, ReadNodeData);
 		entity.setName(name);
 		entity.setDescription(desc);
 
 		given(userAuthTokenDao.get(tokenId)).willReturn(entity);
 
 		// WHEN
-		UserAuthToken info = new UserAuthToken();
+		UserAuthToken info = new UserAuthToken(tokenId, TEST_USER_ID, ReadNodeData);
 		info.setName(name);
 		info.setDescription(desc);
 		UserAuthToken updated = userBiz.updateUserAuthTokenInfo(TEST_USER_ID, tokenId, info);
@@ -369,13 +367,11 @@ public class DaoUserBizTests {
 	@Test
 	public void saveUserNodeNoLocationChange() {
 		// GIVEN
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser, testNode);
 		userNode.setCreated(Instant.now());
 		userNode.setDescription("Test user node");
 		userNode.setName("Test UserNode");
 		userNode.setRequiresAuthorization(true);
-		userNode.setUser(testUser);
-		userNode.setNode(testNode);
 
 		SolarLocation loc = new SolarLocation();
 		loc.setId(testNode.getLocationId());
@@ -400,13 +396,11 @@ public class DaoUserBizTests {
 	@Test
 	public void saveUserNodeLocationChange() {
 		// GIVEN
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser, testNode);
 		userNode.setCreated(Instant.now());
 		userNode.setDescription("Test user node");
 		userNode.setName("Test UserNode");
 		userNode.setRequiresAuthorization(true);
-		userNode.setUser(testUser);
-		userNode.setNode(testNode);
 
 		SolarLocation loc = new SolarLocation();
 		loc.setId(testNode.getLocationId());
@@ -458,13 +452,11 @@ public class DaoUserBizTests {
 	@Test
 	public void saveUserNodeNewLocation() {
 		// GIVEN
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser, testNode);
 		userNode.setCreated(Instant.now());
 		userNode.setDescription("Test user node");
 		userNode.setName("Test UserNode");
 		userNode.setRequiresAuthorization(true);
-		userNode.setUser(testUser);
-		userNode.setNode(testNode);
 
 		SolarLocation loc = new SolarLocation();
 		loc.setId(testNode.getLocationId());
@@ -517,13 +509,11 @@ public class DaoUserBizTests {
 	@Test
 	public void saveUserNodeLocationNoCountry() {
 		// GIVEN
-		final UserNode userNode = new UserNode();
+		final UserNode userNode = new UserNode(testUser, testNode);
 		userNode.setCreated(Instant.now());
 		userNode.setDescription("Test user node");
 		userNode.setName("Test UserNode");
 		userNode.setRequiresAuthorization(true);
-		userNode.setUser(testUser);
-		userNode.setNode(testNode);
 
 		SolarLocation loc = new SolarLocation();
 		loc.setId(testNode.getLocationId());

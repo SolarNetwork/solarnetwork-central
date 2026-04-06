@@ -35,7 +35,6 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.domain.datum.Aggregation;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Select for {@link StaleAuditDatum} instances via a
@@ -56,7 +55,7 @@ public final class SelectStaleAggregateDatum
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectStaleAggregateDatum(DatumStreamCriteria filter) {
 		super();
@@ -151,7 +150,7 @@ public final class SelectStaleAggregateDatum
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
-		p = DatumSqlUtils.prepareObjectMetadataFilter(filter, ObjectDatumKind.Node, con, stmt, p);
+		p = DatumSqlUtils.prepareObjectMetadataFilter(filter, null, con, stmt, p);
 		if ( filter.getAggregation() != null ) {
 			stmt.setString(++p, filter.getAggregation().getKey());
 		}

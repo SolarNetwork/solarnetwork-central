@@ -49,7 +49,8 @@ import net.solarnetwork.central.din.security.AuthenticatedEndpointCredentials;
  * @author matt
  * @version 1.0
  */
-public class AuthenticatedEndpointCredentialsRowMapper implements RowMapper<AuthenticatedEndpointCredentials> {
+public class AuthenticatedEndpointCredentialsRowMapper
+		implements RowMapper<AuthenticatedEndpointCredentials> {
 
 	/** A default instance. */
 	public static final RowMapper<AuthenticatedEndpointCredentials> INSTANCE = new AuthenticatedEndpointCredentialsRowMapper();
@@ -65,7 +66,7 @@ public class AuthenticatedEndpointCredentialsRowMapper implements RowMapper<Auth
 	public AuthenticatedEndpointCredentials mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = 0;
 		Long userId = rs.getObject(++p, Long.class);
-		UUID entityId = CommonJdbcUtils.getUuid(rs, ++p);
+		UUID entityId = CommonJdbcUtils.uuid(rs, ++p);
 		String username = rs.getString(++p);
 		String password = rs.getString(++p);
 		boolean enabled = rs.getBoolean(++p);

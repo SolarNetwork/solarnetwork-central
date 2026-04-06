@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
@@ -81,7 +82,7 @@ public class MyBatisUserSettingsDao extends BaseMyBatisGenericDaoSupport<UserSet
 	}
 
 	@Override
-	public UserSettings getForHid(String hid) {
+	public @Nullable UserSettings getForHid(String hid) {
 		return selectFirst(QueryName.GetForHid.getQueryName(), hid);
 	}
 

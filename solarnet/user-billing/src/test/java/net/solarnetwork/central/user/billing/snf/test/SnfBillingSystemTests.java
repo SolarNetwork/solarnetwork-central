@@ -23,10 +23,10 @@
 package net.solarnetwork.central.user.billing.snf.test;
 
 import static java.util.Arrays.asList;
+import static net.solarnetwork.central.user.billing.snf.domain.UsageTier.tier;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Arrays;
@@ -46,7 +46,6 @@ import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
-import net.solarnetwork.central.user.billing.snf.domain.UsageTier;
 import net.solarnetwork.central.user.billing.snf.domain.UsageTiers;
 import net.solarnetwork.central.user.billing.support.LocalizedNamedCost;
 
@@ -81,12 +80,15 @@ public class SnfBillingSystemTests {
 	@Test
 	public void namedCosts() {
 		// GIVEN
-		final UsageTiers rates1 = new UsageTiers(asList(new UsageTier("s1", 0, new BigDecimal("1")),
-				new UsageTier("s1", 10, new BigDecimal("10"))), LocalDate.of(2010, 1, 1));
-		final UsageTiers rates2 = new UsageTiers(asList(new UsageTier("s1", 0, new BigDecimal("2")),
-				new UsageTier("s1", 10, new BigDecimal("20"))), LocalDate.of(2011, 1, 1));
-		final UsageTiers rates3 = new UsageTiers(asList(new UsageTier("s1", 0, new BigDecimal("3")),
-				new UsageTier("s1", 10, new BigDecimal("30"))), LocalDate.of(2012, 1, 1));
+		final LocalDate date1 = LocalDate.of(2010, 1, 1);
+		final LocalDate date2 = LocalDate.of(2011, 1, 1);
+		final LocalDate date3 = LocalDate.of(2012, 1, 1);
+		final UsageTiers rates1 = new UsageTiers(
+				asList(tier("s1", 0, "1", date1), tier("s1", 10, "10", date1)), date1);
+		final UsageTiers rates2 = new UsageTiers(
+				asList(tier("s1", 0, "2", date2), tier("s1", 10, "20", date2)), date2);
+		final UsageTiers rates3 = new UsageTiers(
+				asList(tier("s1", 0, "3", date3), tier("s1", 10, "30", date3)), date3);
 		final List<UsageTiers> allRates = Arrays.asList(rates1, rates2, rates3);
 		given(usageDao.effectiveUsageTiers()).willReturn(allRates);
 

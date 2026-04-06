@@ -22,7 +22,8 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -87,17 +88,20 @@ public class CloudDatumStreamPropertyConfigurationRowMapper
 		Long userId = rs.getObject(++p, Long.class);
 		Long dataSourceId = rs.getObject(++p, Long.class);
 		Integer idx = rs.getObject(++p, Integer.class);
-		Instant ts = getTimestampInstant(rs, ++p);
-		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(userId,
-				dataSourceId, idx, ts);
-		conf.setModified(getTimestampInstant(rs, ++p));
-		conf.setEnabled(rs.getBoolean(++p));
-		conf.setPropertyType(DatumSamplesType.fromValue(rs.getString(++p)));
-		conf.setPropertyName(rs.getString(++p));
-		conf.setValueType(CloudDatumStreamValueType.fromValue(rs.getString(++p)));
-		conf.setValueReference(rs.getString(++p));
+		Instant ts = timestampInstant(rs, ++p);
+		Instant mod = timestampInstant(rs, ++p);
+		boolean enabled = rs.getBoolean(++p);
+
+		final CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(
+				userId, dataSourceId, idx, ts,
+				nonnull(DatumSamplesType.fromValue(rs.getString(++p)), "propertyType"),
+				rs.getString(++p),
+				nonnull(CloudDatumStreamValueType.fromValue(rs.getString(++p)), "valueType"),
+				rs.getString(++p));
 		conf.setMultiplier(rs.getBigDecimal(++p));
 		conf.setScale(rs.getObject(++p, Integer.class));
+		conf.setEnabled(enabled);
+		conf.setModified(mod);
 		return conf;
 	}
 

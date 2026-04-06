@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
@@ -37,7 +38,9 @@ import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasMatchType;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.dao.RecentCriteria;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -46,37 +49,39 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Basic implementation of {@link DatumCriteria}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.6
  * @since 2.8
  */
-public class BasicDatumCriteria extends BasicCoreCriteria
-		implements DatumCriteria, AuditDatumCriteria, DatumAuxiliaryCriteria {
+public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriteria, AuditDatumCriteria,
+		DatumAuxiliaryCriteria, ObjectDatumStreamAliasFilter {
 
-	private UUID[] streamIds;
-	private Instant startDate;
-	private Instant endDate;
-	private LocalDateTime localStartDate;
-	private LocalDateTime localEndDate;
+	private UUID @Nullable [] streamIds;
+	private @Nullable Instant startDate;
+	private @Nullable Instant endDate;
+	private @Nullable LocalDateTime localStartDate;
+	private @Nullable LocalDateTime localEndDate;
 	private boolean mostRecent = false;
 	private boolean withoutTotalResultsCount = true;
-	private Aggregation aggregation;
-	private Aggregation partialAggregation;
-	private DatumReadingType readingType;
-	private Period timeTolerance;
-	private ObjectDatumKind objectKind;
+	private @Nullable Aggregation aggregation;
+	private @Nullable Aggregation partialAggregation;
+	private @Nullable DatumReadingType readingType;
+	private @Nullable Period timeTolerance;
+	private @Nullable ObjectDatumKind objectKind;
+	private @Nullable Boolean includeStreamAliases;
+	private @Nullable ObjectDatumStreamAliasMatchType streamAliasMatchType;
 
-	private DatumAuxiliaryType datumAuxiliaryType;
+	private @Nullable DatumAuxiliaryType datumAuxiliaryType;
 
-	private DatumRollupType[] datumRollupTypes;
+	private DatumRollupType @Nullable [] datumRollupTypes;
 
-	private CombiningType combiningType;
-	private Map<Long, Set<Long>> objectIdMappings;
-	private Map<String, Set<String>> sourceIdMappings;
+	private @Nullable CombiningType combiningType;
+	private @Nullable Map<Long, Set<Long>> objectIdMappings;
+	private @Nullable Map<String, Set<String>> sourceIdMappings;
 
-	private String[] propertyNames;
-	private String[] instantaneousPropertyNames;
-	private String[] accumulatingPropertyNames;
-	private String[] statusPropertyNames;
+	private String @Nullable [] propertyNames;
+	private String @Nullable [] instantaneousPropertyNames;
+	private String @Nullable [] accumulatingPropertyNames;
+	private String @Nullable [] statusPropertyNames;
 
 	/**
 	 * Default constructor.
@@ -94,7 +99,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		result = prime * result + Objects.hash(aggregation, combiningType, datumAuxiliaryType, endDate,
 				localEndDate, localStartDate, mostRecent, objectIdMappings, objectKind,
 				partialAggregation, readingType, sourceIdMappings, startDate, timeTolerance,
-				withoutTotalResultsCount);
+				withoutTotalResultsCount, includeStreamAliases, streamAliasMatchType);
 		result = prime * result + Arrays.hashCode(propertyNames);
 		result = prime * result + Arrays.hashCode(instantaneousPropertyNames);
 		result = prime * result + Arrays.hashCode(accumulatingPropertyNames);
@@ -103,31 +108,38 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
 		if ( !super.equals(obj) || !(obj instanceof BasicDatumCriteria other) ) {
 			return false;
 		}
-		return aggregation == other.aggregation && combiningType == other.combiningType
+		// @formatter:off
+		return aggregation == other.aggregation
+				&& combiningType == other.combiningType
 				&& datumAuxiliaryType == other.datumAuxiliaryType
 				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)
 				&& Objects.equals(endDate, other.endDate)
 				&& Objects.equals(localEndDate, other.localEndDate)
-				&& Objects.equals(localStartDate, other.localStartDate) && mostRecent == other.mostRecent
+				&& Objects.equals(localStartDate, other.localStartDate)
+				&& mostRecent == other.mostRecent
 				&& Objects.equals(objectIdMappings, other.objectIdMappings)
-				&& objectKind == other.objectKind && partialAggregation == other.partialAggregation
+				&& objectKind == other.objectKind
+				&& partialAggregation == other.partialAggregation
 				&& readingType == other.readingType
 				&& Objects.equals(sourceIdMappings, other.sourceIdMappings)
 				&& Objects.equals(startDate, other.startDate)
 				&& Arrays.equals(streamIds, other.streamIds)
 				&& Objects.equals(timeTolerance, other.timeTolerance)
 				&& withoutTotalResultsCount == other.withoutTotalResultsCount
+				&& Objects.equals(includeStreamAliases, other.includeStreamAliases)
+				&& Objects.equals(streamAliasMatchType, other.streamAliasMatchType)
 				&& Arrays.equals(propertyNames, other.propertyNames)
 				&& Arrays.equals(instantaneousPropertyNames, other.instantaneousPropertyNames)
 				&& Arrays.equals(accumulatingPropertyNames, other.accumulatingPropertyNames)
 				&& Arrays.equals(statusPropertyNames, other.statusPropertyNames);
+		// @formatter:on
 	}
 
 	/**
@@ -141,40 +153,61 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param criteria
 	 *        the criteria to copy
 	 */
-	public void copyFrom(ObjectStreamCriteria criteria) {
+	@Override
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
-		setStreamIds(criteria.getStreamIds());
-		setStartDate(criteria.getStartDate());
-		setEndDate(criteria.getEndDate());
-		setLocalStartDate(criteria.getLocalStartDate());
-		setLocalEndDate(criteria.getLocalEndDate());
-		setAggregation(criteria.getAggregation());
-		setPartialAggregation(criteria.getPartialAggregation());
-		setObjectKind(criteria.getObjectKind());
-		setCombiningType(criteria.getCombiningType());
-		setObjectIdMappings(criteria.getObjectIdMappings());
-		setSourceIdMappings(criteria.getSourceIdMappings());
-		setPropertyNames(criteria.getPropertyNames());
-		setInstantaneousPropertyNames(criteria.getInstantaneousPropertyNames());
-		setAccumulatingPropertyNames(criteria.getAccumulatingPropertyNames());
-		setStatusPropertyNames(criteria.getStatusPropertyNames());
-		if ( criteria instanceof RecentCriteria c ) {
+		if ( criteria == null ) {
+			return;
+		}
+		if ( criteria instanceof ObjectStreamCriteria c ) {
+			setStreamIds(c.getStreamIds());
+			setStartDate(c.getStartDate());
+			setEndDate(c.getEndDate());
+			setLocalStartDate(c.getLocalStartDate());
+			setLocalEndDate(c.getLocalEndDate());
+			setAggregation(c.getAggregation());
+			setPartialAggregation(c.getPartialAggregation());
+			setObjectKind(c.getObjectKind());
+			setCombiningType(c.getCombiningType());
+			setObjectIdMappings(c.getObjectIdMappings());
+			setSourceIdMappings(c.getSourceIdMappings());
+			setPropertyNames(c.getPropertyNames());
+			setInstantaneousPropertyNames(c.getInstantaneousPropertyNames());
+			setAccumulatingPropertyNames(c.getAccumulatingPropertyNames());
+			setStatusPropertyNames(c.getStatusPropertyNames());
+			setIncludeStreamAliases(c.getIncludeStreamAliases());
+		}
+		if ( criteria instanceof BasicDatumCriteria c ) {
 			setMostRecent(c.isMostRecent());
-		}
-		if ( criteria instanceof OptimizedQueryCriteria c ) {
 			setWithoutTotalResultsCount(c.isWithoutTotalResultsCount());
-		}
-		if ( criteria instanceof ReadingTypeCriteria c ) {
+			setIncludeStreamAliases(c.getIncludeStreamAliases());
 			setReadingType(c.getReadingType());
-		}
-		if ( criteria instanceof TimeToleranceCriteria c ) {
 			setTimeTolerance(c.getTimeTolerance());
-		}
-		if ( criteria instanceof DatumAuxiliaryCriteria c ) {
 			setDatumAuxiliaryType(c.getDatumAuxiliaryType());
-		}
-		if ( criteria instanceof DatumRollupCriteria c ) {
 			setDatumRollupTypes(c.getDatumRollupTypes());
+			setStreamAliasMatchType(c.getStreamAliasMatchType());
+		} else {
+			if ( criteria instanceof RecentCriteria c ) {
+				setMostRecent(c.isMostRecent());
+			}
+			if ( criteria instanceof OptimizedQueryCriteria c ) {
+				setWithoutTotalResultsCount(c.isWithoutTotalResultsCount());
+			}
+			if ( criteria instanceof ReadingTypeCriteria c ) {
+				setReadingType(c.getReadingType());
+			}
+			if ( criteria instanceof TimeToleranceCriteria c ) {
+				setTimeTolerance(c.getTimeTolerance());
+			}
+			if ( criteria instanceof DatumAuxiliaryCriteria c ) {
+				setDatumAuxiliaryType(c.getDatumAuxiliaryType());
+			}
+			if ( criteria instanceof DatumRollupCriteria c ) {
+				setDatumRollupTypes(c.getDatumRollupTypes());
+			}
+			if ( criteria instanceof StreamAliasMatchCriteria c ) {
+				setStreamAliasMatchType(c.getStreamAliasMatchType());
+			}
 		}
 	}
 
@@ -185,7 +218,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 *        the criteria to copy
 	 * @return the copy
 	 */
-	public static BasicDatumCriteria copy(ObjectStreamCriteria criteria) {
+	public static BasicDatumCriteria copy(@Nullable ObjectStreamCriteria criteria) {
 		BasicDatumCriteria c = new BasicDatumCriteria();
 		c.copyFrom(criteria);
 		return c;
@@ -311,13 +344,13 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 				|| (statusPropertyNames != null && statusPropertyNames.length > 0)
 				|| (streamIds != null && streamIds.length > 0)
 				|| timeTolerance != null
-				// withoutTotalResultsCount ignored
+				// withoutTotalResultsCount, includeStreamAliases ignored
 				;
 		// @formatter:on
 	}
 
 	@Override
-	public Instant getStartDate() {
+	public final @Nullable Instant getStartDate() {
 		return startDate;
 	}
 
@@ -327,12 +360,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param startDate
 	 *        the date to set
 	 */
-	public void setStartDate(Instant startDate) {
+	public final void setStartDate(@Nullable Instant startDate) {
 		this.startDate = startDate;
 	}
 
 	@Override
-	public Instant getEndDate() {
+	public final @Nullable Instant getEndDate() {
 		return endDate;
 	}
 
@@ -342,12 +375,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param endDate
 	 *        the date to set
 	 */
-	public void setEndDate(Instant endDate) {
+	public final void setEndDate(@Nullable Instant endDate) {
 		this.endDate = endDate;
 	}
 
 	@Override
-	public LocalDateTime getLocalStartDate() {
+	public final @Nullable LocalDateTime getLocalStartDate() {
 		return localStartDate;
 	}
 
@@ -357,12 +390,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param localStartDate
 	 *        the date to set
 	 */
-	public void setLocalStartDate(LocalDateTime localStartDate) {
+	public final void setLocalStartDate(@Nullable LocalDateTime localStartDate) {
 		this.localStartDate = localStartDate;
 	}
 
 	@Override
-	public LocalDateTime getLocalEndDate() {
+	public final @Nullable LocalDateTime getLocalEndDate() {
 		return localEndDate;
 	}
 
@@ -372,13 +405,13 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param localEndDate
 	 *        the date to set
 	 */
-	public void setLocalEndDate(LocalDateTime localEndDate) {
+	public final void setLocalEndDate(@Nullable LocalDateTime localEndDate) {
 		this.localEndDate = localEndDate;
 	}
 
 	@JsonIgnore
 	@Override
-	public UUID getStreamId() {
+	public final @Nullable UUID getStreamId() {
 		return (streamIds != null && streamIds.length > 0 ? streamIds[0] : null);
 	}
 
@@ -395,12 +428,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 */
 	@SuppressWarnings("InvalidParam")
 	@JsonSetter
-	public void setStreamId(UUID streamId) {
+	public final void setStreamId(@Nullable UUID streamId) {
 		setStreamIds(streamId == null ? null : new UUID[] { streamId });
 	}
 
 	@Override
-	public UUID[] getStreamIds() {
+	public final UUID @Nullable [] getStreamIds() {
 		return streamIds;
 	}
 
@@ -410,12 +443,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param streamIds
 	 *        the location IDs to set
 	 */
-	public void setStreamIds(UUID[] streamIds) {
+	public final void setStreamIds(UUID @Nullable [] streamIds) {
 		this.streamIds = streamIds;
 	}
 
 	@Override
-	public boolean isMostRecent() {
+	public final boolean isMostRecent() {
 		return mostRecent;
 	}
 
@@ -425,7 +458,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param mostRecent
 	 *        the "most recent" flag to set
 	 */
-	public void setMostRecent(boolean mostRecent) {
+	public final void setMostRecent(boolean mostRecent) {
 		this.mostRecent = mostRecent;
 	}
 
@@ -435,17 +468,17 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param mode
 	 *        the mode to set
 	 */
-	public void setWithoutTotalResultsCount(boolean mode) {
+	public final void setWithoutTotalResultsCount(boolean mode) {
 		this.withoutTotalResultsCount = mode;
 	}
 
 	@Override
-	public boolean isWithoutTotalResultsCount() {
+	public final boolean isWithoutTotalResultsCount() {
 		return withoutTotalResultsCount;
 	}
 
 	@Override
-	public Aggregation getAggregation() {
+	public final @Nullable Aggregation getAggregation() {
 		return aggregation;
 	}
 
@@ -455,12 +488,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param aggregation
 	 *        the aggregation to set
 	 */
-	public void setAggregation(Aggregation aggregation) {
+	public final void setAggregation(@Nullable Aggregation aggregation) {
 		this.aggregation = aggregation;
 	}
 
 	@Override
-	public Aggregation getPartialAggregation() {
+	public final @Nullable Aggregation getPartialAggregation() {
 		return partialAggregation;
 	}
 
@@ -470,13 +503,13 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param partialAggregation
 	 *        the partialAggregation to set
 	 */
-	public void setPartialAggregation(Aggregation partialAggregation) {
+	public final void setPartialAggregation(@Nullable Aggregation partialAggregation) {
 		this.partialAggregation = partialAggregation;
 	}
 
 	@JsonIgnore
 	@Override
-	public DatumRollupType getDatumRollupType() {
+	public final @Nullable DatumRollupType getDatumRollupType() {
 		DatumRollupType[] types = getDatumRollupTypes();
 		return types != null && types.length > 0 ? types[0] : null;
 	}
@@ -497,12 +530,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @since 1.3
 	 */
 	@JsonSetter
-	public void setDatumRollupType(DatumRollupType type) {
+	public final void setDatumRollupType(@Nullable DatumRollupType type) {
 		setDatumRollupTypes(type == null ? null : new DatumRollupType[] { type });
 	}
 
 	@Override
-	public DatumRollupType[] getDatumRollupTypes() {
+	public final DatumRollupType @Nullable [] getDatumRollupTypes() {
 		return datumRollupTypes;
 	}
 
@@ -512,12 +545,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param datumRollupTypes
 	 *        the types to set
 	 */
-	public void setDatumRollupTypes(DatumRollupType[] datumRollupTypes) {
+	public final void setDatumRollupTypes(DatumRollupType @Nullable [] datumRollupTypes) {
 		this.datumRollupTypes = datumRollupTypes;
 	}
 
 	@Override
-	public DatumReadingType getReadingType() {
+	public final @Nullable DatumReadingType getReadingType() {
 		return readingType;
 	}
 
@@ -527,12 +560,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param readingType
 	 *        the type to set
 	 */
-	public void setReadingType(DatumReadingType readingType) {
+	public final void setReadingType(@Nullable DatumReadingType readingType) {
 		this.readingType = readingType;
 	}
 
 	@Override
-	public Period getTimeTolerance() {
+	public final @Nullable Period getTimeTolerance() {
 		return timeTolerance;
 	}
 
@@ -542,12 +575,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param timeTolerance
 	 *        the period to set
 	 */
-	public void setTimeTolerance(Period timeTolerance) {
+	public final void setTimeTolerance(@Nullable Period timeTolerance) {
 		this.timeTolerance = timeTolerance;
 	}
 
 	@Override
-	public ObjectDatumKind getObjectKind() {
+	public final @Nullable ObjectDatumKind getObjectKind() {
 		return objectKind;
 	}
 
@@ -557,12 +590,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param objectKind
 	 *        the object kind to set
 	 */
-	public void setObjectKind(ObjectDatumKind objectKind) {
+	public final void setObjectKind(@Nullable ObjectDatumKind objectKind) {
 		this.objectKind = objectKind;
 	}
 
 	@Override
-	public DatumAuxiliaryType getDatumAuxiliaryType() {
+	public final @Nullable DatumAuxiliaryType getDatumAuxiliaryType() {
 		return datumAuxiliaryType;
 	}
 
@@ -572,12 +605,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param datumAuxiliaryType
 	 *        the type to set
 	 */
-	public void setDatumAuxiliaryType(DatumAuxiliaryType datumAuxiliaryType) {
+	public final void setDatumAuxiliaryType(@Nullable DatumAuxiliaryType datumAuxiliaryType) {
 		this.datumAuxiliaryType = datumAuxiliaryType;
 	}
 
 	@Override
-	public CombiningType getCombiningType() {
+	public final @Nullable CombiningType getCombiningType() {
 		return combiningType;
 	}
 
@@ -587,12 +620,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param combiningType
 	 *        the type to set
 	 */
-	public void setCombiningType(CombiningType combiningType) {
+	public final void setCombiningType(@Nullable CombiningType combiningType) {
 		this.combiningType = combiningType;
 	}
 
 	@Override
-	public Map<Long, Set<Long>> getObjectIdMappings() {
+	public final @Nullable Map<Long, Set<Long>> getObjectIdMappings() {
 		return objectIdMappings;
 	}
 
@@ -602,7 +635,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param objectIdMappings
 	 *        the objectIdMappings to set
 	 */
-	public void setObjectIdMappings(Map<Long, Set<Long>> objectIdMappings) {
+	public final void setObjectIdMappings(@Nullable Map<Long, Set<Long>> objectIdMappings) {
 		this.objectIdMappings = objectIdMappings;
 	}
 
@@ -613,12 +646,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 *        the mapping values
 	 * @see ObjectMappingCriteria#mappingsFrom(String[])
 	 */
-	public void setObjectIdMaps(String[] mappings) {
+	public final void setObjectIdMaps(String @Nullable [] mappings) {
 		setObjectIdMappings(ObjectMappingCriteria.mappingsFrom(mappings));
 	}
 
 	@Override
-	public Map<String, Set<String>> getSourceIdMappings() {
+	public final @Nullable Map<String, Set<String>> getSourceIdMappings() {
 		return sourceIdMappings;
 	}
 
@@ -628,7 +661,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param sourceIdMappings
 	 *        the sourceIdMappings to set
 	 */
-	public void setSourceIdMappings(Map<String, Set<String>> sourceIdMappings) {
+	public final void setSourceIdMappings(@Nullable Map<String, Set<String>> sourceIdMappings) {
 		this.sourceIdMappings = sourceIdMappings;
 	}
 
@@ -639,13 +672,13 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 *        the mapping values
 	 * @see SourceMappingCriteria#mappingsFrom(String[])
 	 */
-	public void setSourceIdMaps(String[] mappings) {
+	public final void setSourceIdMaps(String @Nullable [] mappings) {
 		setSourceIdMappings(SourceMappingCriteria.mappingsFrom(mappings));
 	}
 
 	@JsonIgnore
 	@Override
-	public String getPropertyName() {
+	public final @Nullable String getPropertyName() {
 		return DatumCriteria.super.getPropertyName();
 	}
 
@@ -665,12 +698,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @since 1.2
 	 */
 	@JsonSetter
-	public void setPropertyName(String name) {
+	public final void setPropertyName(@Nullable String name) {
 		setPropertyNames(name == null ? null : new String[] { name });
 	}
 
 	@Override
-	public String[] getPropertyNames() {
+	public final String @Nullable [] getPropertyNames() {
 		return propertyNames;
 	}
 
@@ -681,13 +714,13 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 *        the names to set
 	 * @since 1.2
 	 */
-	public void setPropertyNames(String[] propertyNames) {
+	public final void setPropertyNames(String @Nullable [] propertyNames) {
 		this.propertyNames = propertyNames;
 	}
 
 	@JsonIgnore
 	@Override
-	public String getInstantaneousPropertyName() {
+	public final @Nullable String getInstantaneousPropertyName() {
 		return DatumCriteria.super.getInstantaneousPropertyName();
 	}
 
@@ -707,12 +740,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @since 1.2
 	 */
 	@JsonSetter
-	public void setInstantaneousPropertyName(String name) {
+	public final void setInstantaneousPropertyName(@Nullable String name) {
 		setInstantaneousPropertyNames(name == null ? null : new String[] { name });
 	}
 
 	@Override
-	public String[] getInstantaneousPropertyNames() {
+	public final String @Nullable [] getInstantaneousPropertyNames() {
 		return instantaneousPropertyNames;
 	}
 
@@ -723,13 +756,13 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 *        the names to set
 	 * @since 1.2
 	 */
-	public void setInstantaneousPropertyNames(String[] instantaneousPropertyNames) {
+	public final void setInstantaneousPropertyNames(String @Nullable [] instantaneousPropertyNames) {
 		this.instantaneousPropertyNames = instantaneousPropertyNames;
 	}
 
 	@JsonIgnore
 	@Override
-	public String getAccumulatingPropertyName() {
+	public final @Nullable String getAccumulatingPropertyName() {
 		return DatumCriteria.super.getAccumulatingPropertyName();
 	}
 
@@ -749,12 +782,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @since 1.2
 	 */
 	@JsonSetter
-	public void setAccumulatingPropertyName(String name) {
+	public final void setAccumulatingPropertyName(@Nullable String name) {
 		setAccumulatingPropertyNames(name == null ? null : new String[] { name });
 	}
 
 	@Override
-	public String[] getAccumulatingPropertyNames() {
+	public final String @Nullable [] getAccumulatingPropertyNames() {
 		return accumulatingPropertyNames;
 	}
 
@@ -765,13 +798,13 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 *        the names to set
 	 * @since 1.2
 	 */
-	public void setAccumulatingPropertyNames(String[] accumulatingPropertyNames) {
+	public final void setAccumulatingPropertyNames(String @Nullable [] accumulatingPropertyNames) {
 		this.accumulatingPropertyNames = accumulatingPropertyNames;
 	}
 
 	@JsonIgnore
 	@Override
-	public String getStatusPropertyName() {
+	public final @Nullable String getStatusPropertyName() {
 		return DatumCriteria.super.getStatusPropertyName();
 	}
 
@@ -791,12 +824,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @since 1.2
 	 */
 	@JsonSetter
-	public void setStatusPropertyName(String name) {
+	public final void setStatusPropertyName(@Nullable String name) {
 		setStatusPropertyNames(name == null ? null : new String[] { name });
 	}
 
 	@Override
-	public String[] getStatusPropertyNames() {
+	public final String @Nullable [] getStatusPropertyNames() {
 		return statusPropertyNames;
 	}
 
@@ -807,8 +840,41 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 *        the names to set
 	 * @since 1.2
 	 */
-	public void setStatusPropertyNames(String[] statusPropertyNames) {
+	public final void setStatusPropertyNames(String @Nullable [] statusPropertyNames) {
 		this.statusPropertyNames = statusPropertyNames;
+	}
+
+	@Override
+	public final @Nullable Boolean getIncludeStreamAliases() {
+		return includeStreamAliases;
+	}
+
+	/**
+	 * Set the include stream aliases mode.
+	 *
+	 * @param includeStreamAliases
+	 *        the mode to set
+	 * @since 1.5
+	 */
+	public final void setIncludeStreamAliases(@Nullable Boolean includeStreamAliases) {
+		this.includeStreamAliases = includeStreamAliases;
+	}
+
+	@Override
+	public final @Nullable ObjectDatumStreamAliasMatchType getStreamAliasMatchType() {
+		return streamAliasMatchType;
+	}
+
+	/**
+	 * Set the stream alias match type.
+	 *
+	 * @param streamAliasMatchType
+	 *        the match type to set
+	 * @since 1.6
+	 */
+	public final void setStreamAliasMatchType(
+			@Nullable ObjectDatumStreamAliasMatchType streamAliasMatchType) {
+		this.streamAliasMatchType = streamAliasMatchType;
 	}
 
 }

@@ -23,11 +23,12 @@
 package net.solarnetwork.central.reg.web.domain;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.BaseUserRelatedStdIdentifiableConfigurationInput;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
+import net.solarnetwork.central.user.datum.export.domain.UserOutputConfiguration;
 
 /**
  * Input DTO for {@link UserOutputConfiguration} entities.
@@ -38,9 +39,9 @@ import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 public final class UserOutputConfigurationInput extends
 		BaseUserRelatedStdIdentifiableConfigurationInput<UserOutputConfiguration, UserLongCompositePK> {
 
-	private Long id;
+	private @Nullable Long id;
 
-	private OutputCompressionType compressionType;
+	private @Nullable OutputCompressionType compressionType;
 
 	/**
 	 * Constructor.
@@ -51,7 +52,8 @@ public final class UserOutputConfigurationInput extends
 
 	@Override
 	public UserOutputConfiguration toEntity(UserLongCompositePK id, Instant date) {
-		UserOutputConfiguration entity = new UserOutputConfiguration(id, date);
+		UserOutputConfiguration entity = new UserOutputConfiguration(id, date, getName(),
+				getServiceIdentifier(), compressionType);
 		populateConfiguration(entity);
 		return entity;
 	}
@@ -67,7 +69,7 @@ public final class UserOutputConfigurationInput extends
 	 *
 	 * @return the ID
 	 */
-	public Long getId() {
+	public final Long getId() {
 		return id;
 	}
 
@@ -77,7 +79,7 @@ public final class UserOutputConfigurationInput extends
 	 * @param id
 	 *        the ID to set
 	 */
-	public void setId(Long id) {
+	public final void setId(Long id) {
 		this.id = id;
 	}
 
@@ -87,7 +89,7 @@ public final class UserOutputConfigurationInput extends
 	 * @return the type
 	 */
 	@JsonIgnore
-	public OutputCompressionType getCompressionType() {
+	public final @Nullable OutputCompressionType getCompressionType() {
 		return compressionType;
 	}
 
@@ -97,7 +99,7 @@ public final class UserOutputConfigurationInput extends
 	 * @param compressionType
 	 *        the type to set
 	 */
-	public void setCompressionType(OutputCompressionType compressionType) {
+	public final void setCompressionType(@Nullable OutputCompressionType compressionType) {
 		this.compressionType = compressionType;
 	}
 
@@ -105,10 +107,10 @@ public final class UserOutputConfigurationInput extends
 	 * Get the compression type key value.
 	 *
 	 * @return the compression type; if {@link #getCompressionType()} is
-	 *         {@literal null} this will return the key value for
+	 *         {@code null} this will return the key value for
 	 *         {@link OutputCompressionType#None}
 	 */
-	public char getCompressionTypeKey() {
+	public final char getCompressionTypeKey() {
 		OutputCompressionType type = getCompressionType();
 		return (type != null ? type.getKey() : OutputCompressionType.None.getKey());
 	}
@@ -121,7 +123,7 @@ public final class UserOutputConfigurationInput extends
 	 *        unsupported, the compression will be set to
 	 *        {@link OutputCompressionType#None}
 	 */
-	public void setCompressionTypeKey(char key) {
+	public final void setCompressionTypeKey(char key) {
 		OutputCompressionType type = OutputCompressionType.None;
 		try {
 			type = OutputCompressionType.forKey(key);

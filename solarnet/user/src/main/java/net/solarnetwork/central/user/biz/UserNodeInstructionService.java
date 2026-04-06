@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.biz;
 
 import java.time.Instant;
 import java.util.concurrent.Future;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskSimulationOutput;
 
@@ -49,6 +50,7 @@ public interface UserNodeInstructionService {
 	 *
 	 * @return a claimed task, or {@code null} if none could be claimed
 	 */
+	@Nullable
 	UserNodeInstructionTaskEntity claimQueuedTask();
 
 	/**

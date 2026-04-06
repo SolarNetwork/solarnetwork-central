@@ -23,6 +23,7 @@
 package net.solarnetwork.central.security;
 
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Exception for security errors.
@@ -39,7 +40,7 @@ public class BasicSecurityException extends RuntimeException {
 		super();
 	}
 
-	public BasicSecurityException(String msg, Throwable t) {
+	public BasicSecurityException(String msg, @Nullable Throwable t) {
 		super(msg, t);
 	}
 
@@ -47,7 +48,7 @@ public class BasicSecurityException extends RuntimeException {
 		super(msg);
 	}
 
-	public BasicSecurityException(Throwable t) {
+	public BasicSecurityException(@Nullable Throwable t) {
 		super(t);
 	}
 

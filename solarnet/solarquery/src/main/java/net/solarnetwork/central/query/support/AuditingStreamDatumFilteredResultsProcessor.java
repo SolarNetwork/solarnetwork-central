@@ -77,7 +77,7 @@ public class AuditingStreamDatumFilteredResultsProcessor extends AbstractMap<Gen
 	 * @param auditor
 	 *        the auditor
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public AuditingStreamDatumFilteredResultsProcessor(StreamDatumFilteredResultsProcessor delegate,
 			QueryAuditor auditor) {

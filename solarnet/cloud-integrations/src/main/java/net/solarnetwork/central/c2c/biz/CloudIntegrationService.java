@@ -142,21 +142,21 @@ public interface CloudIntegrationService
 	/**
 	 * Get a mapping of "well known" service URIs.
 	 *
-	 * @return the well-known URLs, never {@literal null}
+	 * @return the well-known URLs, never {@code null}
 	 */
 	Map<String, URI> wellKnownUrls();
 
 	/**
 	 * Get the datum stream services supported by this integration.
 	 *
-	 * @return the supported datum stream services, never {@literal null}
+	 * @return the supported datum stream services, never {@code null}
 	 */
 	Iterable<CloudDatumStreamService> datumStreamServices();
 
 	/**
 	 * Get the control services supported by this integration.
 	 *
-	 * @return the supported control services, never {@literal null}
+	 * @return the supported control services, never {@code null}
 	 * @since 2.1
 	 */
 	default Iterable<CloudControlService> controlServices() {
@@ -175,7 +175,7 @@ public interface CloudIntegrationService
 	 *        the integration configuration to validate
 	 * @param locale
 	 *        the locale to use for error messages
-	 * @return the validation results, never {@literal null}
+	 * @return the validation results, never {@code null}
 	 */
 	Result<Void> validate(CloudIntegrationConfiguration integration, Locale locale);
 

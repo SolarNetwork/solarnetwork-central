@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.domain;
 
 import static java.util.stream.Collectors.toSet;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import oscp.v20.MeasurementConfiguration;
 import oscp.v20.RequiredBehaviour;
 
@@ -37,7 +38,8 @@ import oscp.v20.RequiredBehaviour;
  * @author matt
  * @version 1.0
  */
-public record SystemSettings(Integer heartbeatSeconds, Set<MeasurementStyle> measurementStyles) {
+public record SystemSettings(@Nullable Integer heartbeatSeconds,
+		@Nullable Set<MeasurementStyle> measurementStyles) {
 
 	/**
 	 * Get an OSCP 2.0 value for this instance.
@@ -63,10 +65,10 @@ public record SystemSettings(Integer heartbeatSeconds, Set<MeasurementStyle> mea
 	 *
 	 * @param behaviour
 	 *        the OSCP 2.0 value to get an instance for
-	 * @return the instance, or {@literal null} if {@code behaviour} is
-	 *         {@literal null}
+	 * @return the instance, or {@code null} if {@code behaviour} is
+	 *         {@code null}
 	 */
-	public static SystemSettings forOscp20Value(RequiredBehaviour behaviour) {
+	public static @Nullable SystemSettings forOscp20Value(@Nullable RequiredBehaviour behaviour) {
 		if ( behaviour == null ) {
 			return null;
 		}

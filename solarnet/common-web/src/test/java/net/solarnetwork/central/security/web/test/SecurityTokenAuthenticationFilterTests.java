@@ -132,9 +132,8 @@ public class SecurityTokenAuthenticationFilterTests {
 		List<GrantedAuthority> roles = new ArrayList<GrantedAuthority>();
 		roles.add(new SimpleGrantedAuthority("ROLE_TEST"));
 		userDetails = new User(TEST_AUTH_TOKEN, TEST_PASSWORD, roles);
-		filter = new SecurityTokenAuthenticationFilter(new AntPathMatcher(), "/mock");
-		filter.setUserDetailsService(userDetailsService);
-		filter.setAuthenticationEntryPoint(entryPoint);
+		filter = new SecurityTokenAuthenticationFilter(userDetailsService, entryPoint, null,
+				new AntPathMatcher(), "/mock", null);
 	}
 
 	@Test

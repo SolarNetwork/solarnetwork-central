@@ -28,6 +28,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.dnp3.dao.CertificateFilter;
@@ -42,7 +43,7 @@ public final class UpdateEnabledCertificateFilter implements PreparedStatementCr
 
 	private final String tableName;
 	private final Long userId;
-	private final CertificateFilter filter;
+	private final @Nullable CertificateFilter filter;
 	private final boolean enabled;
 
 	/**
@@ -57,10 +58,10 @@ public final class UpdateEnabledCertificateFilter implements PreparedStatementCr
 	 * @param enabled
 	 *        the desired enabled state
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code filter} is {@literal null}
+	 *         if any argument other than {@code filter} is {@code null}
 	 */
-	public UpdateEnabledCertificateFilter(String tableName, Long userId, CertificateFilter filter,
-			boolean enabled) {
+	public UpdateEnabledCertificateFilter(String tableName, Long userId,
+			@Nullable CertificateFilter filter, boolean enabled) {
 		super();
 		this.tableName = requireNonNullArgument(tableName, "tableName");
 		this.userId = requireNonNullArgument(userId, "userId");
@@ -110,11 +111,14 @@ public final class UpdateEnabledCertificateFilter implements PreparedStatementCr
 	}
 
 	private int prepareWhere(Connection con, PreparedStatement stmt, int p) throws SQLException {
+		if ( filter == null ) {
+			return p;
+		}
 		if ( filter.hasCertificateCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getSubjectDns());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled());
+			stmt.setBoolean(++p, filter.enabled());
 		}
 		return p;
 	}

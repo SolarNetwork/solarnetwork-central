@@ -31,6 +31,7 @@ The following Spring runtime profiles are available:
 | `snf-billing` | Enable SNF billing. See [SnfBillingConfig][SnfBillingConfig]. |
 | `user-event-sqs` | Enable the SQS user event service. See [UserEventServiceSqsConfig][UserEventServiceSqsConfig]. |
 | `ocpp-jobs` | Enable OCPP specific jobs. See [OcppJobsConfig][OcppJobsConfig]. |
+| `sqs-user-event-appender` | Enable the SQS-backed user event queue processor. |
 | `user-service-auditor` | Enable user service auditing. |
 
 For example, in a production deployment the `SPRING_PROFILES_ACTIVE` environment variable can be

@@ -22,12 +22,13 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import net.solarnetwork.central.dao.BaseObjectEntity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.domain.SerializeIgnore;
 
 /**
  * A node ownership transfer request. This entity is associated with the node
@@ -37,16 +38,17 @@ import net.solarnetwork.domain.SerializeIgnore;
  * @author matt
  * @version 3.0
  */
+@JsonIgnoreProperties({ "id" })
 public class UserNodeTransfer extends BaseObjectEntity<UserNodePK>
 		implements UserRelatedEntity<UserNodePK> {
 
 	@Serial
 	private static final long serialVersionUID = -1316805739552206861L;
 
-	private String email;
+	private @Nullable String email;
 
-	private User user;
-	private SolarNode node;
+	private @Nullable User user;
+	private @Nullable SolarNode node;
 
 	/**
 	 * Default constructor.
@@ -78,7 +80,7 @@ public class UserNodeTransfer extends BaseObjectEntity<UserNodePK>
 	 *
 	 * @return The email address.
 	 */
-	public String getEmail() {
+	public final @Nullable String getEmail() {
 		return email;
 	}
 
@@ -88,7 +90,7 @@ public class UserNodeTransfer extends BaseObjectEntity<UserNodePK>
 	 * @param email
 	 *        The email address to set.
 	 */
-	public void setEmail(String email) {
+	public final void setEmail(@Nullable String email) {
 		this.email = email;
 	}
 
@@ -97,7 +99,7 @@ public class UserNodeTransfer extends BaseObjectEntity<UserNodePK>
 	 *
 	 * @return the nodeId
 	 */
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		UserNodePK id = getId();
 		return (id == null ? null : id.getNodeId());
 	}
@@ -108,7 +110,7 @@ public class UserNodeTransfer extends BaseObjectEntity<UserNodePK>
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		UserNodePK id = getId();
 		if ( id == null ) {
 			id = new UserNodePK();
@@ -123,9 +125,8 @@ public class UserNodeTransfer extends BaseObjectEntity<UserNodePK>
 	 * @return the userId
 	 */
 	@Override
-	public Long getUserId() {
-		UserNodePK id = getId();
-		return (id == null ? null : id.getUserId());
+	public final Long getUserId() {
+		return nonnull(nonnull(getId(), "id").getUserId(), "id.userId");
 	}
 
 	/**
@@ -134,7 +135,7 @@ public class UserNodeTransfer extends BaseObjectEntity<UserNodePK>
 	 * @param userId
 	 *        the userId to set
 	 */
-	public void setUserId(Long userId) {
+	public final void setUserId(@Nullable Long userId) {
 		UserNodePK id = getId();
 		if ( id == null ) {
 			id = new UserNodePK();
@@ -143,31 +144,24 @@ public class UserNodeTransfer extends BaseObjectEntity<UserNodePK>
 		id.setUserId(userId);
 	}
 
-	@JsonIgnore
-	@SerializeIgnore
-	@Override
-	public UserNodePK getId() {
-		return super.getId();
-	}
-
 	@Override
 	public String toString() {
 		return "UserNodeTransfer{" + getId() + "}";
 	}
 
-	public User getUser() {
+	public final @Nullable User getUser() {
 		return user;
 	}
 
-	public void setUser(User user) {
+	public final void setUser(@Nullable User user) {
 		this.user = user;
 	}
 
-	public SolarNode getNode() {
+	public final @Nullable SolarNode getNode() {
 		return node;
 	}
 
-	public void setNode(SolarNode node) {
+	public void setNode(final @Nullable SolarNode node) {
 		this.node = node;
 	}
 

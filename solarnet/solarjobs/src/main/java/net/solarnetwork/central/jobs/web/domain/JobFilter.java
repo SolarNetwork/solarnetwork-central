@@ -74,7 +74,7 @@ public class JobFilter {
 	 * @param executing
 	 *        if {@literal true} then restrict results to executing jobs; if
 	 *        {@literal false} then restrict results to idle jobs; if
-	 *        {@literal null} then do not filter based on executing status
+	 *        {@code null} then do not filter based on executing status
 	 *        (include all jobs)
 	 */
 	public void setExecuting(Boolean executing) {

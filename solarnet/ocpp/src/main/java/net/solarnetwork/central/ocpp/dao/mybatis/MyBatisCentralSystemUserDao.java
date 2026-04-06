@@ -25,6 +25,7 @@ package net.solarnetwork.central.ocpp.dao.mybatis;
 import static java.util.Collections.singletonMap;
 import java.util.Collection;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
@@ -88,12 +89,13 @@ public class MyBatisCentralSystemUserDao extends BaseMyBatisGenericDaoSupport<Sy
 	}
 
 	@Override
-	public SystemUser getForUsername(String username) {
+	public @Nullable SystemUser getForUsername(String username) {
 		return selectFirst(QueryName.GetForUsername.getQueryName(), username);
 	}
 
 	@Override
-	public SystemUser getForUsernameAndChargePoint(String username, String chargePointIdentifier) {
+	public @Nullable SystemUser getForUsernameAndChargePoint(String username,
+			String chargePointIdentifier) {
 		Map<String, Object> params = Map.of("username", username, "identifier", chargePointIdentifier);
 		return selectFirst(QueryName.GetForUsernameAndCharger.getQueryName(), params);
 	}

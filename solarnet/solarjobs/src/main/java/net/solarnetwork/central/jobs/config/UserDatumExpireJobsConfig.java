@@ -28,12 +28,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import net.solarnetwork.central.scheduler.ManagedJob;
-import net.solarnetwork.central.user.expire.biz.UserDatumDeleteJobBiz;
-import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
-import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
-import net.solarnetwork.central.user.expire.jobs.DatumDeleteJobInfoCleanerJob;
-import net.solarnetwork.central.user.expire.jobs.DatumDeleteProcessorJob;
-import net.solarnetwork.central.user.expire.jobs.ExpireDatumJob;
+import net.solarnetwork.central.user.datum.expire.biz.UserDatumDeleteJobBiz;
+import net.solarnetwork.central.user.datum.expire.dao.ExpireUserDataConfigurationDao;
+import net.solarnetwork.central.user.datum.expire.dao.UserDatumDeleteJobInfoDao;
+import net.solarnetwork.central.user.datum.expire.jobs.DatumDeleteJobInfoCleanerJob;
+import net.solarnetwork.central.user.datum.expire.jobs.DatumDeleteProcessorJob;
+import net.solarnetwork.central.user.datum.expire.jobs.ExpireDatumJob;
 
 /**
  * Datum expire jobs configuration.
@@ -60,7 +60,6 @@ public class UserDatumExpireJobsConfig {
 	@Bean
 	public ManagedJob datumDeleteJobInfoCleanerJob() {
 		DatumDeleteJobInfoCleanerJob job = new DatumDeleteJobInfoCleanerJob(userDatumDeleteJobBiz);
-		job.setId("DatumDeleteJobInfoCleaner");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -70,7 +69,6 @@ public class UserDatumExpireJobsConfig {
 	public ManagedJob datumDeleteProcessorJob() {
 		DatumDeleteProcessorJob job = new DatumDeleteProcessorJob(userDatumDeleteJobBiz,
 				userDatumDeleteJobInfoDao);
-		job.setId("DatumDeleteProcessor");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -79,7 +77,6 @@ public class UserDatumExpireJobsConfig {
 	@Bean
 	public ManagedJob expireDatumJob() {
 		ExpireDatumJob job = new ExpireDatumJob(expireUserDataConfigurationDao);
-		job.setId("ExpireDatum");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}

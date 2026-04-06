@@ -22,12 +22,13 @@
 
 package net.solarnetwork.central.web.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serial;
-import java.util.Collections;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 
 /**
@@ -43,9 +44,9 @@ public class SimpleCachedContent implements CachedContent {
 	private static final long serialVersionUID = 7168846971070309662L;
 
 	private final HttpHeaders headers;
-	private final Map<String, ?> metadata;
+	private final @Nullable Map<String, ?> metadata;
 	private final byte[] data;
-	private final String contentEncoding;
+	private final @Nullable String contentEncoding;
 
 	/**
 	 * Constructor.
@@ -67,7 +68,7 @@ public class SimpleCachedContent implements CachedContent {
 	 * @param data
 	 *        the data
 	 * @param contentEncoding
-	 *        the content encoding, or {@literal null}
+	 *        the content encoding, or {@code null}
 	 */
 	public SimpleCachedContent(HttpHeaders headers, byte[] data, String contentEncoding) {
 		this(headers, data, contentEncoding, null);
@@ -81,15 +82,15 @@ public class SimpleCachedContent implements CachedContent {
 	 * @param data
 	 *        the data
 	 * @param contentEncoding
-	 *        the content encoding, or {@literal null}
+	 *        the content encoding, or {@code null}
 	 * @param metadata
-	 *        the metadata, or {@literal null}; must be fully serializable
+	 *        the metadata, or {@code null}; must be fully serializable
 	 */
-	public SimpleCachedContent(HttpHeaders headers, byte[] data, String contentEncoding,
-			Map<String, ?> metadata) {
+	public SimpleCachedContent(HttpHeaders headers, byte[] data, @Nullable String contentEncoding,
+			@Nullable Map<String, ?> metadata) {
 		super();
-		this.headers = headers;
-		this.data = data;
+		this.headers = requireNonNullArgument(headers, "headers");
+		this.data = requireNonNullArgument(data, "data");
 		this.contentEncoding = contentEncoding;
 		this.metadata = metadata;
 	}
@@ -101,16 +102,16 @@ public class SimpleCachedContent implements CachedContent {
 
 	@Override
 	public Map<String, ?> getMetadata() {
-		return (metadata != null ? metadata : Collections.emptyMap());
+		return (metadata != null ? metadata : Map.of());
 	}
 
 	@Override
-	public String getContentEncoding() {
+	public @Nullable String getContentEncoding() {
 		return contentEncoding;
 	}
 
 	@Override
-	public InputStream getContent() throws IOException {
+	public @Nullable InputStream getContent() throws IOException {
 		return (data != null ? new ByteArrayInputStream(data) : null);
 	}
 

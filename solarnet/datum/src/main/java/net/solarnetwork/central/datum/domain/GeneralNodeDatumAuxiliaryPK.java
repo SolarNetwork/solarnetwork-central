@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Primary key for a general node datum auxiliary entity.
@@ -40,14 +43,7 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	@Serial
 	private static final long serialVersionUID = 5523741563653967531L;
 
-	private DatumAuxiliaryType type;
-
-	/**
-	 * Default constructor.
-	 */
-	public GeneralNodeDatumAuxiliaryPK() {
-		super();
-	}
+	private final DatumAuxiliaryType type;
 
 	/**
 	 * Constructor.
@@ -82,7 +78,7 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	public GeneralNodeDatumAuxiliaryPK(Long nodeId, Instant created, String sourceId,
 			DatumAuxiliaryType type) {
 		super(nodeId, sourceId, created);
-		this.type = type;
+		this.type = requireNonNullArgument(type, "type");
 	}
 
 	@Override
@@ -99,7 +95,7 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -113,42 +109,35 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	protected void populateIdValue(StringBuilder buf) {
 		super.populateIdValue(buf);
 		buf.append(";t=");
-		if ( type != null ) {
-			buf.append(type);
-		}
+		buf.append(type);
 	}
 
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		super.populateStringValue(buf);
-		if ( type != null ) {
-			if ( !buf.isEmpty() ) {
-				buf.append(", ");
-			}
-			buf.append("type=").append(type);
+		if ( !buf.isEmpty() ) {
+			buf.append(", ");
 		}
+		buf.append("type=").append(type);
 	}
 
 	@Override
-	public int compareTo(GeneralNodeDatumAuxiliaryPK o) {
+	public int compareTo(@Nullable GeneralNodeDatumAuxiliaryPK o) {
 		int result = super.compareTo(o);
 		if ( result != 0 ) {
 			return result;
 		}
-		if ( o.type == null ) {
-			return 1;
-		} else if ( type == null ) {
-			return -1;
-		}
+		o = nonnull(o, "other");
 		return type.compareTo(o.type);
 	}
 
-	public DatumAuxiliaryType getType() {
+	/**
+	 * Get the datum auxiliary type.
+	 *
+	 * @return the type
+	 */
+	public final DatumAuxiliaryType getType() {
 		return type;
-	}
-
-	public void setType(DatumAuxiliaryType type) {
-		this.type = type;
 	}
 
 }

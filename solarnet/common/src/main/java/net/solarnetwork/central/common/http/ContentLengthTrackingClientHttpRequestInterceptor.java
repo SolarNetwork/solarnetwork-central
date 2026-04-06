@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.common.http;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.io.input.BoundedInputStream;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -34,7 +36,6 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Client HTTP request interceptor to track the number of bytes processed in the
@@ -52,10 +53,19 @@ public class ContentLengthTrackingClientHttpRequestInterceptor implements Client
 
 	/**
 	 * Constructor.
+	 * 
+	 * @param countThreadLocal
+	 *        the count thread local; if no value is set then {@code 0} will be
+	 *        set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public ContentLengthTrackingClientHttpRequestInterceptor(ThreadLocal<AtomicLong> countThreadLocal) {
 		super();
-		this.countThreadLocal = countThreadLocal;
+		this.countThreadLocal = requireNonNullArgument(countThreadLocal, "countThreadLocal");
+		if ( countThreadLocal.get() == null ) {
+			countThreadLocal.set(new AtomicLong(0L));
+		}
 	}
 
 	@Override
@@ -68,11 +78,11 @@ public class ContentLengthTrackingClientHttpRequestInterceptor implements Client
 	private class ResponseBodyLengthTrackingClientHttpResponse implements ClientHttpResponse {
 
 		private final ClientHttpResponse delegate;
-		private BoundedInputStream countingBody;
+		private @Nullable BoundedInputStream countingBody;
 
 		private ResponseBodyLengthTrackingClientHttpResponse(ClientHttpResponse delegate) {
 			super();
-			this.delegate = ObjectUtils.requireNonNullArgument(delegate, "delegate");
+			this.delegate = requireNonNullArgument(delegate, "delegate");
 		}
 
 		@Override

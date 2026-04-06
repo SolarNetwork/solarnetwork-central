@@ -28,12 +28,13 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Constants and helpers for common user event handling.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CommonUserEvents {
 
@@ -86,6 +87,13 @@ public interface CommonUserEvents {
 	String EXECUTE_AT_DATA_KEY = "executeAt";
 
 	/**
+	 * User event data key for a count, such as a task repeat count.
+	 * 
+	 * @since 1.1
+	 */
+	String ERROR_COUNT_DATA_KEY = "errorCount";
+
+	/**
 	 * Populate user-related composite key components to a parameter map.
 	 *
 	 * @param configId
@@ -93,7 +101,7 @@ public interface CommonUserEvents {
 	 * @param parameters
 	 *        the parameter to populate the ID components into
 	 */
-	static void populateUserRelatedKeyEventParameters(UserRelatedCompositeKey<?> configId,
+	static void populateUserRelatedKeyEventParameters(@Nullable UserRelatedCompositeKey<?> configId,
 			Map<String, Object> parameters) {
 		if ( configId == null ) {
 			return;
@@ -116,9 +124,11 @@ public interface CommonUserEvents {
 	 * @param extraTags
 	 *        optional extra tags
 	 * @return the log event
+	 * @throws IllegalArgumentException
+	 *         if no tags are provided
 	 */
-	static LogEventInfo eventForUserRelatedKey(UserRelatedCompositeKey<?> configId,
-			List<String> baseTags, String message, String... extraTags) {
+	static LogEventInfo eventForUserRelatedKey(@Nullable UserRelatedCompositeKey<?> configId,
+			List<String> baseTags, @Nullable String message, String @Nullable... extraTags) {
 		Map<String, Object> data = new HashMap<>(4);
 		populateUserRelatedKeyEventParameters(configId, data);
 		return event(baseTags, message, getJSONString(data, null), extraTags);
@@ -138,9 +148,12 @@ public interface CommonUserEvents {
 	 * @param extraTags
 	 *        optional extra tags
 	 * @return the log event
+	 * @throws IllegalArgumentException
+	 *         if no tags are provided
 	 */
-	static LogEventInfo eventForUserRelatedKey(UserRelatedCompositeKey<?> configId,
-			List<String> baseTags, String message, Map<String, ?> parameters, String... extraTags) {
+	static LogEventInfo eventForUserRelatedKey(@Nullable UserRelatedCompositeKey<?> configId,
+			@Nullable List<String> baseTags, @Nullable String message,
+			@Nullable Map<String, ?> parameters, String @Nullable... extraTags) {
 		Map<String, Object> data = new LinkedHashMap<>(parameters);
 		populateUserRelatedKeyEventParameters(configId, data);
 		return event(baseTags, message, getJSONString(data, null), extraTags);

@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.dao.BaseStringEntity;
@@ -42,27 +45,52 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A user authorization token.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity<String>, SecurityToken {
 
 	@Serial
 	private static final long serialVersionUID = -4544594854807498756L;
 
-	private Long userId;
-	private String name;
-	private String description;
-	private String authSecret;
+	private final Long userId;
+	private @Nullable String name;
+	private @Nullable String description;
+	private @Nullable String authSecret;
 	private SecurityTokenStatus status;
-	private SecurityTokenType type;
-	private SecurityPolicy policy;
-	private String policyJson;
+	private final SecurityTokenType type;
+	private @Nullable SecurityPolicy policy;
+	private @Nullable String policyJson;
 
 	/**
-	 * Default constructor.
+	 * Create a new, active {@code ReadNodeData} token.
+	 *
+	 * @param token
+	 *        the token value
+	 * @param userId
+	 *        the user ID
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code secret} is {@code null}
+	 * @since 3.1
 	 */
-	public UserAuthToken() {
-		super();
+	public UserAuthToken(String token, Long userId) {
+		this(token, userId, null, SecurityTokenType.ReadNodeData);
+	}
+
+	/**
+	 * Create a new, active token.
+	 *
+	 * @param token
+	 *        the token value
+	 * @param userId
+	 *        the user ID
+	 * @param type
+	 *        the type
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code secret} is {@code null}
+	 * @since 3.1
+	 */
+	public UserAuthToken(String token, Long userId, SecurityTokenType type) {
+		this(token, userId, null, type);
 	}
 
 	/**
@@ -76,14 +104,16 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 *        the secret
 	 * @param type
 	 *        the type
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code secret} is {@code null}
 	 */
-	public UserAuthToken(String token, Long userId, String secret, SecurityTokenType type) {
+	public UserAuthToken(String token, Long userId, @Nullable String secret, SecurityTokenType type) {
 		super();
-		setId(token);
-		setUserId(userId);
+		setId(requireNonNullArgument(token, "token"));
+		this.userId = requireNonNullArgument(userId, "userId");
 		setAuthSecret(secret);
-		setStatus(SecurityTokenStatus.Active);
-		setType(type);
+		this.status = SecurityTokenStatus.Active;
+		this.type = type != null ? type : SecurityTokenType.ReadNodeData;
 	}
 
 	@Override
@@ -132,12 +162,8 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	}
 
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
-	}
-
-	public void setUserId(Long userId) {
-		this.userId = userId;
 	}
 
 	/**
@@ -146,7 +172,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 * @return the name
 	 * @since 2.1
 	 */
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
@@ -157,7 +183,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 *        the name to set
 	 * @since 2.1
 	 */
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
@@ -167,7 +193,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 * @return the description
 	 * @since 2.1
 	 */
-	public String getDescription() {
+	public final @Nullable String getDescription() {
 		return description;
 	}
 
@@ -178,7 +204,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 *        the description to set
 	 * @since 2.1
 	 */
-	public void setDescription(String description) {
+	public final void setDescription(@Nullable String description) {
 		this.description = description;
 	}
 
@@ -193,46 +219,28 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public String getAuthToken() {
-		return getId();
+	public final String getAuthToken() {
+		return getToken();
 	}
 
-	/**
-	 * Set the ID value.
-	 *
-	 * <p>
-	 * This is just an alias for {@link BaseStringEntity#setId(String)}.
-	 * </p>
-	 *
-	 * @param authToken
-	 *        the auth token
-	 */
-	public void setAuthToken(String authToken) {
-		setId(authToken);
-	}
-
-	public String getAuthSecret() {
+	public final @Nullable String getAuthSecret() {
 		return authSecret;
 	}
 
-	public void setAuthSecret(String authSecret) {
+	public final void setAuthSecret(@Nullable String authSecret) {
 		this.authSecret = authSecret;
 	}
 
-	public SecurityTokenStatus getStatus() {
+	public final SecurityTokenStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(SecurityTokenStatus status) {
+	public final void setStatus(SecurityTokenStatus status) {
 		this.status = status;
 	}
 
-	public SecurityTokenType getType() {
+	public final SecurityTokenType getType() {
 		return type;
-	}
-
-	public void setType(SecurityTokenType type) {
-		this.type = type;
 	}
 
 	/**
@@ -242,7 +250,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public Set<Long> getNodeIds() {
+	public final @Nullable Set<Long> getNodeIds() {
 		SecurityPolicy p = getPolicy();
 		return (p == null ? null : p.getNodeIds());
 	}
@@ -259,7 +267,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 * @return the policy
 	 */
 	@Override
-	public SecurityPolicy getPolicy() {
+	public final @Nullable SecurityPolicy getPolicy() {
 		if ( policy == null && policyJson != null ) {
 			policy = JsonUtils.getObjectFromJSON(policyJson, SecurityPolicy.class);
 		}
@@ -277,7 +285,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 * @param policy
 	 *        the policy instance to set
 	 */
-	public void setPolicy(SecurityPolicy policy) {
+	public final void setPolicy(@Nullable SecurityPolicy policy) {
 		this.policy = policy;
 		policyJson = null;
 	}
@@ -286,14 +294,14 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 * Get the {@link BasicSecurityPolicy} object as a JSON string.
 	 *
 	 * <p>
-	 * This method will ignore <em>null</em> values.
+	 * This method will ignore {@code null} values.
 	 * </p>
 	 *
 	 * @return a JSON encoded string, or {@code null}
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public String getPolicyJson() {
+	public final @Nullable String getPolicyJson() {
 		if ( policyJson == null ) {
 			policyJson = JsonUtils.getJSONString(policy, null);
 		}
@@ -312,7 +320,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 *        The policy JSON to set.
 	 */
 	@JsonProperty // @JsonProperty needed because of @JsonIgnore on getter
-	public void setPolicyJson(String json) {
+	public final void setPolicyJson(@Nullable String json) {
 		policyJson = json;
 		policy = null;
 	}
@@ -323,26 +331,26 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 * @return {@literal true} if the token has expired
 	 * @since 1.3
 	 */
-	public boolean isExpired() {
+	public final boolean isExpired() {
 		SecurityPolicy policy = getPolicy();
 		return (policy != null && !policy.isValidAt(Instant.now()));
 	}
 
 	@JsonIgnore
 	@Override
-	public boolean isAuthenticatedWithToken() {
+	public final boolean isAuthenticatedWithToken() {
 		return true;
 	}
 
 	@JsonIgnore
 	@Override
-	public String getToken() {
-		return getId();
+	public final String getToken() {
+		return nonnull(getId(), "token");
 	}
 
 	@JsonIgnore
 	@Override
-	public SecurityTokenType getTokenType() {
+	public final SecurityTokenType getTokenType() {
 		return getType();
 	}
 

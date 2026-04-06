@@ -128,7 +128,7 @@ public class InsertAssetConfigurationTests {
 	public void sql() {
 		// GIVEN
 		AssetConfiguration conf = newAssetConfiguration(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), Instant.now());
+				Instant.now(), randomUUID().getMostSignificantBits());
 
 		// WHEN
 		Long userId = randomUUID().getMostSignificantBits();
@@ -144,7 +144,7 @@ public class InsertAssetConfigurationTests {
 	public void prep() throws SQLException {
 		// GIVEN
 		AssetConfiguration conf = newAssetConfiguration(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), Instant.now());
+				Instant.now(), randomUUID().getMostSignificantBits());
 
 		// GIVEN
 		givenPrepStatement();

@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.dnp3.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
@@ -53,11 +56,14 @@ public class ServerAuthConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public ServerAuthConfiguration(UserLongStringCompositePK id, Instant created) {
+	public ServerAuthConfiguration(UserLongStringCompositePK id, Instant created, String name) {
 		super(id, created);
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	/**
@@ -71,16 +77,19 @@ public class ServerAuthConfiguration
 	 *        the identity
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public ServerAuthConfiguration(Long userId, Long serverId, String identity, Instant created) {
-		this(new UserLongStringCompositePK(userId, serverId, identity), created);
+	public ServerAuthConfiguration(Long userId, Long serverId, String identity, Instant created,
+			String name) {
+		this(new UserLongStringCompositePK(userId, serverId, identity), created, name);
 	}
 
 	@Override
 	public ServerAuthConfiguration copyWithId(UserLongStringCompositePK id) {
-		var copy = new ServerAuthConfiguration(id, getCreated());
+		var copy = new ServerAuthConfiguration(id, created(), name);
 		copyTo(copy);
 		return copy;
 	}
@@ -92,12 +101,12 @@ public class ServerAuthConfiguration
 	}
 
 	@Override
-	public boolean isSameAs(ServerAuthConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable ServerAuthConfiguration other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
-		return Objects.equals(this.name, other.getName());
+		final var o = nonnull(other, "other");
+		return Objects.equals(this.name, o.getName());
 	}
 
 	@Override
@@ -135,9 +144,8 @@ public class ServerAuthConfiguration
 	 *
 	 * @return the server ID
 	 */
-	public Long getServerId() {
-		UserLongStringCompositePK id = getId();
-		return (id != null ? id.getGroupId() : null);
+	public final Long getServerId() {
+		return id().getGroupId();
 	}
 
 	/**
@@ -145,9 +153,8 @@ public class ServerAuthConfiguration
 	 *
 	 * @return the identifier
 	 */
-	public String getIdentifier() {
-		UserLongStringCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final String getIdentifier() {
+		return id().getEntityId();
 	}
 
 	/**
@@ -155,7 +162,7 @@ public class ServerAuthConfiguration
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -164,9 +171,11 @@ public class ServerAuthConfiguration
 	 *
 	 * @param name
 	 *        the name to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 }

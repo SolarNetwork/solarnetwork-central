@@ -675,3 +675,39 @@ CREATE TABLE solaruser.user_secret (
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+/**
+ * View combining user ID with da_datm_meta and da_datm_alias, to ease querying.
+ */
+CREATE OR REPLACE VIEW solaruser.da_datm_meta_aliased AS
+SELECT un.user_id
+	, s.stream_id
+	, s.node_id
+	, s.source_id
+	, s.names_i
+	, s.names_a
+	, s.names_s
+	, s.jdata
+	, s.stream_id AS orig_stream_id
+	, FALSE AS is_alias
+	, s.created
+	, s.updated
+FROM solardatm.da_datm_meta s
+INNER JOIN solaruser.user_node un ON un.node_id = s.node_id
+UNION ALL
+SELECT un.user_id
+	, a.stream_id
+	, a.alias_node_id AS node_id
+	, a.alias_source_id AS source_id
+	, s.names_i
+	, s.names_a
+	, s.names_s
+	, s.jdata
+	, s.stream_id AS orig_stream_id
+	, TRUE AS is_alias
+	, a.created
+	, a.modified AS updated
+FROM solardatm.da_datm_alias a
+INNER JOIN solardatm.da_datm_meta s ON s.node_id = a.node_id AND s.source_id = a.source_id
+INNER JOIN solaruser.user_node un ON un.node_id = a.node_id
+;

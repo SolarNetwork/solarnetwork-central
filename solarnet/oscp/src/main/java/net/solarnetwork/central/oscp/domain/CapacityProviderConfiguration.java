@@ -48,11 +48,18 @@ public class CapacityProviderConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param flexibilityProviderId
+	 *        the flexibility provider ID
+	 * @param registrationStatus
+	 *        the registration status
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CapacityProviderConfiguration(UserLongCompositePK id, Instant created) {
-		super(id, created);
+	public CapacityProviderConfiguration(UserLongCompositePK id, Instant created, String name,
+			Long flexibilityProviderId, RegistrationStatus registrationStatus) {
+		super(id, created, name, flexibilityProviderId, registrationStatus);
 	}
 
 	/**
@@ -64,11 +71,19 @@ public class CapacityProviderConfiguration
 	 *        the entity ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param flexibilityProviderId
+	 *        the flexibility provider ID
+	 * @param registrationStatus
+	 *        the registration status
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CapacityProviderConfiguration(Long userId, Long entityId, Instant created) {
-		super(userId, entityId, created);
+	public CapacityProviderConfiguration(Long userId, Long entityId, Instant created, String name,
+			Long flexibilityProviderId, RegistrationStatus registrationStatus) {
+		this(new UserLongCompositePK(userId, entityId), created, name, flexibilityProviderId,
+				registrationStatus);
 	}
 
 	@Override
@@ -78,7 +93,8 @@ public class CapacityProviderConfiguration
 
 	@Override
 	public CapacityProviderConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CapacityProviderConfiguration(id, getCreated());
+		var copy = new CapacityProviderConfiguration(id, created(), getName(),
+				getFlexibilityProviderId(), getRegistrationStatus());
 		copyTo(copy);
 		return copy;
 	}
@@ -86,7 +102,7 @@ public class CapacityProviderConfiguration
 	@JsonIgnore
 	@Override
 	public AuthRoleInfo getAuthRole() {
-		return new AuthRoleInfo(getId(), OscpRole.CapacityProvider);
+		return new AuthRoleInfo(id(), OscpRole.CapacityProvider);
 	}
 
 }

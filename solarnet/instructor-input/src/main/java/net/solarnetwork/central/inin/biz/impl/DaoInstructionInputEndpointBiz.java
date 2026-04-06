@@ -44,6 +44,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.TaskExecutor;
@@ -105,7 +106,7 @@ public class DaoInstructionInputEndpointBiz
 	private final UserMetadataDao userMetadataDao;
 	private final Map<String, RequestTransformService> requestTransformServices;
 	private final Map<String, ResponseTransformService> responseTransformServices;
-	private UserEventAppenderBiz userEventAppenderBiz;
+	private @Nullable UserEventAppenderBiz userEventAppenderBiz;
 	private Duration executionResultDelay = DEFAULT_EXECUTION_RESULT_DELAY;
 	private Duration executionResultMaxWait = DEFAULT_EXECUTION_RESULT_MAX_WAIT;
 
@@ -131,7 +132,7 @@ public class DaoInstructionInputEndpointBiz
 	 * @param responseTransformServices
 	 *        the response transform services
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoInstructionInputEndpointBiz(TaskExecutor taskExecutor, InstructorBiz instructor,
 			SolarNodeOwnershipDao nodeOwnershipDao, EndpointConfigurationDao endpointDao,
@@ -156,10 +157,11 @@ public class DaoInstructionInputEndpointBiz
 						.collect(Collectors.toMap(Identity::getId, Function.identity()));
 	}
 
-	private static LogEventInfo importEvent(String msg, EndpointConfiguration endpoint,
-			RequestTransformConfiguration requestXform, ResponseTransformConfiguration responseXform,
-			MimeType contentType, MimeType outputType, Map<String, String> parameters,
-			NodeInstruction instruction, String... tags) {
+	private static LogEventInfo importEvent(@Nullable String msg, EndpointConfiguration endpoint,
+			@Nullable RequestTransformConfiguration requestXform,
+			@Nullable ResponseTransformConfiguration responseXform, @Nullable MimeType contentType,
+			@Nullable MimeType outputType, @Nullable Map<String, String> parameters,
+			@Nullable NodeInstruction instruction, String... tags) {
 		var eventData = new LinkedHashMap<>(8);
 		eventData.put(ENDPOINT_ID_DATA_KEY, endpoint.getEndpointId());
 		eventData.put(REQ_TRANSFORM_ID_DATA_KEY, endpoint.getRequestTransformId());
@@ -185,16 +187,17 @@ public class DaoInstructionInputEndpointBiz
 		return event(INSTRUCTION_TAGS, msg, getJSONString(eventData, null), tags);
 	}
 
-	private static LogEventInfo importErrorEvent(String msg, EndpointConfiguration endpoint,
-			RequestTransformConfiguration requestXform, ResponseTransformConfiguration responseXform,
-			MimeType contentType, MimeType outputType, Map<String, String> parameters) {
+	private static LogEventInfo importErrorEvent(@Nullable String msg, EndpointConfiguration endpoint,
+			@Nullable RequestTransformConfiguration requestXform,
+			@Nullable ResponseTransformConfiguration responseXform, @Nullable MimeType contentType,
+			@Nullable MimeType outputType, @Nullable Map<String, String> parameters) {
 		return importEvent(msg, endpoint, requestXform, responseXform, contentType, outputType,
 				parameters, null, ERROR_TAG);
 	}
 
 	@Override
 	public List<NodeInstruction> importInstructions(Long userId, UUID endpointId, MimeType contentType,
-			InputStream in, Map<String, String> parameters) throws IOException {
+			InputStream in, @Nullable Map<String, String> parameters) throws IOException {
 		final UserUuidPK endpointPk = new UserUuidPK(requireNonNullArgument(userId, "userId"),
 				requireNonNullArgument(endpointId, "endpointId"));
 		final EndpointConfiguration endpoint = requireNonNullObject(endpointDao.get(endpointPk),
@@ -288,8 +291,8 @@ public class DaoInstructionInputEndpointBiz
 
 		var result = new ArrayList<NodeInstruction>(instructionCount);
 		for ( NodeInstruction instruction : instructions ) {
-			var queued = instructor.queueInstruction(instruction.getNodeId(),
-					instruction.getInstruction());
+			Long nodeId = requireNonNullArgument(instruction.getNodeId(), "nodeId");
+			var queued = instructor.queueInstruction(nodeId, instruction.getInstruction());
 			if ( queued != null ) {
 				addUserEvent(userEventAppenderBiz, userId, importEvent(null, endpoint, xform, null,
 						contentType, null, parameters, queued, INSTRUCTION_IMPORTED_TAG));
@@ -304,7 +307,8 @@ public class DaoInstructionInputEndpointBiz
 
 	@Override
 	public void generateResponse(Long userId, UUID endpointId, List<NodeInstruction> instructions,
-			MimeType outputType, OutputStream out, Map<String, String> parameters) throws IOException {
+			MimeType outputType, OutputStream out, @Nullable Map<String, String> parameters)
+			throws IOException {
 		final UserUuidPK endpointPk = new UserUuidPK(requireNonNullArgument(userId, "userId"),
 				requireNonNullArgument(endpointId, "endpointId"));
 		final EndpointConfiguration endpoint = requireNonNullObject(endpointDao.get(endpointPk),
@@ -350,6 +354,10 @@ public class DaoInstructionInputEndpointBiz
 			}
 			final CountDownLatch latch = new CountDownLatch(instructions.size());
 			for ( NodeInstruction instruction : instructions ) {
+				final Long instructionId = instruction.getId();
+				if ( instructionId == null ) {
+					continue;
+				}
 				if ( results.containsKey(instruction.getId()) ) {
 					continue;
 				}
@@ -360,9 +368,9 @@ public class DaoInstructionInputEndpointBiz
 						// ignore
 					}
 					try {
-						var instr = instructor.getInstruction(instruction.getId());
+						var instr = instructor.getInstruction(instructionId);
 						if ( instr == null ) {
-							String msg = "Instruction [%d] not found".formatted(instruction.getId());
+							String msg = "Instruction [%d] not found".formatted(instructionId);
 							addUserEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint,
 									null, xform, null, resType, parameters));
 							throw new IllegalStateException(msg);
@@ -370,7 +378,7 @@ public class DaoInstructionInputEndpointBiz
 								|| instr.getInstruction().getState() == InstructionState.Declined ) {
 							addUserEvent(userEventAppenderBiz, userId, importEvent(null, endpoint, null,
 									xform, null, resType, parameters, instr, INSTRUCTION_EXECUTED_TAG));
-							results.put(instruction.getId(), instr);
+							results.put(instructionId, instr);
 						}
 					} finally {
 						latch.countDown();
@@ -440,7 +448,7 @@ public class DaoInstructionInputEndpointBiz
 	 * @param userEventAppenderBiz
 	 *        the service to set
 	 */
-	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
+	public final void setUserEventAppenderBiz(@Nullable UserEventAppenderBiz userEventAppenderBiz) {
 		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 
@@ -450,10 +458,10 @@ public class DaoInstructionInputEndpointBiz
 	 *
 	 * @param executionResultDelay
 	 *        the executionDelay to set; defaults to
-	 *        {@link #DEFAULT_EXECUTION_RESULT_DELAY} if {@literal null} or not
+	 *        {@link #DEFAULT_EXECUTION_RESULT_DELAY} if {@code null} or not
 	 *        positive
 	 */
-	public void setExecutionResultDelay(Duration executionResultDelay) {
+	public final void setExecutionResultDelay(@Nullable Duration executionResultDelay) {
 		this.executionResultDelay = (executionResultDelay != null && executionResultDelay.isPositive()
 				? executionResultDelay
 				: DEFAULT_EXECUTION_RESULT_DELAY);
@@ -463,10 +471,14 @@ public class DaoInstructionInputEndpointBiz
 	 * Set the maximum length of time allowed to wait for instruction results.
 	 *
 	 * @param executionResultMaxWait
-	 *        the maximum time to set
+	 *        the maximum time to set; defaults to
+	 *        {@link #DEFAULT_EXECUTION_RESULT_MAX_WAIT} if {@code null} or not
+	 *        positive
 	 */
-	public void setExecutionResultMaxWait(Duration executionResultMaxWait) {
-		this.executionResultMaxWait = executionResultMaxWait;
+	public final void setExecutionResultMaxWait(@Nullable Duration executionResultMaxWait) {
+		this.executionResultMaxWait = (executionResultMaxWait != null
+				&& executionResultMaxWait.isPositive() ? executionResultMaxWait
+						: DEFAULT_EXECUTION_RESULT_MAX_WAIT);
 	}
 
 }

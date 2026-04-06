@@ -29,6 +29,7 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
@@ -91,7 +92,7 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 	}
 
 	@Override
-	public List<UsageTiers> effectiveUsageTiers() {
+	public @Nullable List<UsageTiers> effectiveUsageTiers() {
 		List<UsageTier> results = selectList(QueryName.FindEffectiveUsageTiers.getQueryName(), null,
 				null, null);
 		if ( results == null ) {
@@ -103,7 +104,7 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 	}
 
 	@Override
-	public UsageTiers effectiveUsageTiers(LocalDate date) {
+	public @Nullable UsageTiers effectiveUsageTiers(LocalDate date) {
 		if ( date == null ) {
 			date = LocalDate.now(UTC);
 		}

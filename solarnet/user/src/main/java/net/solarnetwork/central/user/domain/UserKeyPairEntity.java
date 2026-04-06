@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -40,11 +41,13 @@ import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.spec.RSAPublicKeySpec;
 import java.time.Instant;
 import java.util.Arrays;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BasicUserEntity;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.service.CertificateService;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A user key pair entity.
@@ -76,7 +79,7 @@ public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserSt
 	 * @param keystore
 	 *        the keystore value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserKeyPairEntity(UserStringCompositePK id, byte[] keystore) {
 		super(id);
@@ -95,7 +98,7 @@ public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserSt
 	 * @param keystore
 	 *        the keystore value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserKeyPairEntity(UserStringCompositePK id, Instant created, Instant modified,
 			byte[] keystore) {
@@ -117,7 +120,7 @@ public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserSt
 	 * @param keystore
 	 *        the keystore value
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserKeyPairEntity(Long userId, String key, Instant created, Instant modified,
 			byte[] keystore) {
@@ -125,13 +128,14 @@ public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserSt
 	}
 
 	@Override
-	public UserKeyPairEntity copyWithId(UserStringCompositePK id) {
-		return new UserKeyPairEntity(id, getCreated(), getModified(), keystore);
+	public UserKeyPairEntity copyWithId(@Nullable UserStringCompositePK id) {
+		return new UserKeyPairEntity(requireNonNullArgument(id, "id"), created(),
+				nonnull(getModified(), "modified"), keystore);
 	}
 
 	@Override
-	public boolean isSameAs(UserKeyPairEntity other) {
-		return Arrays.equals(keystore, other.keystore);
+	public boolean isSameAs(@Nullable UserKeyPairEntity other) {
+		return (other != null && Arrays.equals(keystore, other.keystore));
 	}
 
 	/**
@@ -141,8 +145,7 @@ public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserSt
 	 */
 	@Override
 	public String getKey() {
-		var pk = getId();
-		return (pk != null ? pk.getEntityId() : null);
+		return ObjectUtils.nonnull(getId(), "id").getEntityId();
 	}
 
 	/**

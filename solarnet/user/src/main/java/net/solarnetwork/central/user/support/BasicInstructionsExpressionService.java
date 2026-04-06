@@ -28,6 +28,7 @@ import java.util.Locale;
 import java.util.Map;
 import javax.cache.Cache;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.expression.Expression;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
@@ -61,10 +62,10 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 	private final PathMatcher sourceIdPathMatcher;
 	private final ExpressionService expressionService;
 
-	private Cache<String, Expression> expressionCache;
-	private UserMetadataReadOnlyDao userMetadataDao;
-	private SolarNodeMetadataReadOnlyDao nodeMetadataDao;
-	private UserSecretAccessDao userSecretAccessDao;
+	private @Nullable Cache<String, Expression> expressionCache;
+	private @Nullable UserMetadataReadOnlyDao userMetadataDao;
+	private @Nullable SolarNodeMetadataReadOnlyDao nodeMetadataDao;
+	private @Nullable UserSecretAccessDao userSecretAccessDao;
 
 	private static PathMatcher defaultSourceIdPathMatcher() {
 		var pm = new AntPathMatcher();
@@ -134,7 +135,7 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 		}
 		if ( result == null ) {
 			result = expressionService.parseExpression(expression);
-			if ( cacheKey != null ) {
+			if ( cache != null && cacheKey != null ) {
 				cache.put(cacheKey, result);
 			}
 		}
@@ -142,27 +143,28 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 	}
 
 	@Override
-	public <T> T evaluateExpression(Expression expression, Object root, Map<String, Object> variables,
-			Class<T> resultClass) {
+	public <T> @Nullable T evaluateExpression(Expression expression, @Nullable Object root,
+			@Nullable Map<String, Object> variables, Class<T> resultClass) {
 		return expressionService.evaluateExpression(expression, variables, root,
 				SpelExpressionService.DEFAULT_EVALUATION_CONTEXT, resultClass);
 	}
 
 	@Override
 	public NodeInstructionExpressionRoot createNodeInstructionExpressionRoot(SolarNodeOwnership owner,
-			NodeInstruction instruction, Map<String, ?> parameters,
-			DatumStreamsAccessor datumStreamsAccessor, HttpOperations httpOperations) {
+			NodeInstruction instruction, @Nullable Map<String, ?> parameters,
+			@Nullable DatumStreamsAccessor datumStreamsAccessor,
+			@Nullable HttpOperations httpOperations) {
 		return new NodeInstructionExpressionRoot(owner, instruction, parameters, datumStreamsAccessor,
 				httpOperations, this::userMetadata, this::nodeMetadata, this::tariffSchedule,
 				this::decryptUserSecret);
 	}
 
-	private DatumMetadataOperations userMetadata(Long userId) {
+	private @Nullable DatumMetadataOperations userMetadata(Long userId) {
 		final UserMetadataEntity meta = (userMetadataDao != null ? userMetadataDao.get(userId) : null);
 		return (meta != null ? meta.getMetadata() : null);
 	}
 
-	private DatumMetadataOperations nodeMetadata(ObjectDatumStreamMetadataId id) {
+	private @Nullable DatumMetadataOperations nodeMetadata(ObjectDatumStreamMetadataId id) {
 		SolarNodeMetadata meta = (id != null && id.getKind() == ObjectDatumKind.Node
 				&& id.getObjectId() != null && nodeMetadataDao != null
 						? nodeMetadataDao.get(id.getObjectId())
@@ -170,7 +172,8 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 		return (meta != null ? meta.getMetadata() : null);
 	}
 
-	private TariffSchedule tariffSchedule(final DatumMetadataOperations meta, final String path) {
+	private @Nullable TariffSchedule tariffSchedule(final @Nullable DatumMetadataOperations meta,
+			final String path) {
 		if ( meta == null ) {
 			return null;
 		}
@@ -190,7 +193,7 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 		return result;
 	}
 
-	private byte[] decryptUserSecret(final Long userId, final String key) {
+	private byte @Nullable [] decryptUserSecret(final Long userId, final String key) {
 		final var dao = getUserSecretAccessDao();
 		if ( dao == null ) {
 			return null;
@@ -209,9 +212,9 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 	 * The keys of the cache are SHA hashes of the expression value.
 	 * </p>
 	 *
-	 * @return the expression cache, or {@literal null}
+	 * @return the expression cache, or {@code null}
 	 */
-	public final Cache<String, Expression> getExpressionCache() {
+	public final @Nullable Cache<String, Expression> getExpressionCache() {
 		return expressionCache;
 	}
 
@@ -221,7 +224,7 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 	 * @param expressionCache
 	 *        the expression cache to set
 	 */
-	public final void setExpressionCache(Cache<String, Expression> expressionCache) {
+	public final void setExpressionCache(@Nullable Cache<String, Expression> expressionCache) {
 		this.expressionCache = expressionCache;
 	}
 
@@ -230,7 +233,7 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 	 *
 	 * @return the DAO
 	 */
-	public UserSecretAccessDao getUserSecretAccessDao() {
+	public final @Nullable UserSecretAccessDao getUserSecretAccessDao() {
 		return userSecretAccessDao;
 	}
 
@@ -240,7 +243,7 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 	 * @param userSecretAccessDao
 	 *        the DAO to set
 	 */
-	public void setUserSecretAccessDao(UserSecretAccessDao userSecretAccessDao) {
+	public final void setUserSecretAccessDao(@Nullable UserSecretAccessDao userSecretAccessDao) {
 		this.userSecretAccessDao = userSecretAccessDao;
 	}
 
@@ -249,7 +252,7 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 	 * 
 	 * @return the DAO
 	 */
-	public UserMetadataReadOnlyDao getUserMetadataDao() {
+	public final @Nullable UserMetadataReadOnlyDao getUserMetadataDao() {
 		return userMetadataDao;
 	}
 
@@ -259,7 +262,7 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 	 * @param userMetadataDao
 	 *        the DAO to set
 	 */
-	public void setUserMetadataDao(UserMetadataReadOnlyDao userMetadataDao) {
+	public final void setUserMetadataDao(@Nullable UserMetadataReadOnlyDao userMetadataDao) {
 		this.userMetadataDao = userMetadataDao;
 	}
 
@@ -268,7 +271,7 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 	 * 
 	 * @return the DAO
 	 */
-	public SolarNodeMetadataReadOnlyDao getNodeMetadataDao() {
+	public final @Nullable SolarNodeMetadataReadOnlyDao getNodeMetadataDao() {
 		return nodeMetadataDao;
 	}
 
@@ -278,7 +281,7 @@ public class BasicInstructionsExpressionService implements InstructionsExpressio
 	 * @param nodeMetadataDao
 	 *        the DAO to set
 	 */
-	public void setNodeMetadataDao(SolarNodeMetadataReadOnlyDao nodeMetadataDao) {
+	public final void setNodeMetadataDao(@Nullable SolarNodeMetadataReadOnlyDao nodeMetadataDao) {
 		this.nodeMetadataDao = nodeMetadataDao;
 	}
 

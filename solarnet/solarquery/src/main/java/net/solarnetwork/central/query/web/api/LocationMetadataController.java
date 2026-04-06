@@ -105,26 +105,19 @@ public class LocationMetadataController {
 	@RequestMapping(value = { "", "/", "/query" }, method = RequestMethod.GET)
 	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findGeneralLocations(
 			@RequestParam(value = "query", required = false) String query, DatumFilterCommand criteria) {
-		SolarLocation loc;
-		if ( criteria != null ) {
-			loc = new SolarLocation(criteria.getLocation());
-		} else {
-			loc = new SolarLocation();
-		}
+		final SolarLocation loc = new SolarLocation(criteria.getLocation());
 		if ( query != null ) {
 			loc.setName(query);
 		}
-		DatumFilterCommand c = new DatumFilterCommand(loc);
-		if ( criteria != null ) {
-			if ( criteria.getLocationIds() != null ) {
-				c.setLocationIds(criteria.getLocationIds());
-			}
-			if ( criteria.getSourceIds() != null ) {
-				c.setSourceIds(criteria.getSourceIds());
-			}
-			if ( criteria.getTags() != null ) {
-				c.setTags(criteria.getTags());
-			}
+		final DatumFilterCommand c = new DatumFilterCommand(loc);
+		if ( criteria.getLocationIds() != null ) {
+			c.setLocationIds(criteria.getLocationIds());
+		}
+		if ( criteria.getSourceIds() != null ) {
+			c.setSourceIds(criteria.getSourceIds());
+		}
+		if ( criteria.getTags() != null ) {
+			c.setTags(criteria.getTags());
 		}
 		FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> results = datumMetadataBiz
 				.findGeneralLocationDatumMetadata(c, criteria.getSortDescriptors(), criteria.getOffset(),

@@ -23,12 +23,12 @@
 package net.solarnetwork.central.common.http;
 
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizationContext;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -98,11 +98,11 @@ public final class OAuth2Utils {
 	 *
 	 * @param authReq
 	 *        the request to provide the context attributes for
-	 * @return the attributes, never {@literal null}
+	 * @return the attributes, never {@code null}
 	 */
 	public static Map<String, Object> principalCredentialsContextAttributes(
 			OAuth2AuthorizeRequest authReq) {
-		Map<String, Object> contextAttributes = Collections.emptyMap();
+		Map<String, Object> contextAttributes = Map.of();
 		Authentication principal = authReq.getPrincipal();
 		if ( principal.getPrincipal() != null && principal.getCredentials() != null ) {
 			contextAttributes = new HashMap<>(4);
@@ -137,7 +137,7 @@ public final class OAuth2Utils {
 	public static Entry<String, String> oauthBearerAuthorization(final UserLongCompositePK configId,
 			final String registrationId, final String principalName,
 			final OAuth2AuthorizedClientManager oauthClientManager,
-			final Function<UserLongCompositePK, Lock> lockProvider) {
+			final @Nullable Function<UserLongCompositePK, Lock> lockProvider) {
 		final OAuth2AuthorizeRequest.Builder authReq = OAuth2AuthorizeRequest
 				.withClientRegistrationId(registrationId).principal(principalName);
 

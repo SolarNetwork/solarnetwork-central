@@ -22,11 +22,10 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
-import java.time.Instant;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
@@ -106,7 +105,7 @@ public class MyBatisAddressDaoTests extends AbstractMyBatisDaoTestSupport {
 	@Test
 	public void delete_noMatch() {
 		insert();
-		Address someAddr = new Address(UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		Address someAddr = last.copyWithId(randomLong());
 		dao.delete(someAddr);
 
 		Address entity = dao.get(last.getId());

@@ -22,12 +22,14 @@
 
 package net.solarnetwork.central.user.billing.support;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Supplier;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemInfo;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemUsageRecordInfo;
@@ -56,17 +58,19 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 
 	private final Locale locale;
 	private final List<InvoiceItem> items = new ArrayList<>(4);
-	private LocalizedInvoiceItem delegate;
+	private @Nullable LocalizedInvoiceItem delegate;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param locale
 	 *        the desired locale
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public AggregateLocalizedInvoiceItem(Locale locale) {
 		super();
-		this.locale = locale;
+		this.locale = requireNonNullArgument(locale, "locale");
 	}
 
 	/**
@@ -75,9 +79,11 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 	 * @param item
 	 *        the item to add
 	 * @return this object
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public AggregateLocalizedInvoiceItem addItem(InvoiceItem item) {
-		items.add(item);
+		items.add(requireNonNullArgument(item, "item"));
 		if ( delegate == null ) {
 			delegate = new LocalizedInvoiceItem(item, locale);
 		}
@@ -89,8 +95,8 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 	 *
 	 * @return the id
 	 */
-	public String getId() {
-		return delegate.getId();
+	public @Nullable String getId() {
+		return (delegate != null ? delegate.getId() : null);
 	}
 
 	/**
@@ -112,7 +118,10 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 	 * @return this object
 	 */
 	public AggregateLocalizedInvoiceItem addItems(AggregateLocalizedInvoiceItem agg) {
-		items.addAll(agg.items);
+		final List<InvoiceItem> otherItems = (agg != null ? agg.items : null);
+		if ( otherItems != null ) {
+			items.addAll(otherItems);
+		}
 		return this;
 	}
 
@@ -141,35 +150,38 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 	@Override
 	public String getLocalizedAmount() {
 		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale,
-				delegate.getCurrencyCode(), getAmount());
+				nonnull(delegate, "Item").getCurrencyCode(), getAmount());
 	}
 
 	@Override
 	public String getLocalizedDescription() {
-		String desc = delegate.getLocalizedDescription();
-		if ( desc == null ) {
-			desc = delegate.getDescription();
+		String desc = "";
+		if ( delegate != null ) {
+			desc = delegate.getLocalizedDescription();
+			if ( desc == null ) {
+				desc = delegate.getDescription();
+			}
 		}
 		return desc;
 	}
 
 	@Override
 	public String getLocalizedStartDate() {
-		return delegate.getLocalizedStartDate();
+		return nonnull(delegate, "Item").getLocalizedStartDate();
 	}
 
 	@Override
 	public String getLocalizedEndDate() {
-		return delegate.getLocalizedEndDate();
+		return nonnull(delegate, "Item").getLocalizedEndDate();
 	}
 
 	@Override
 	public List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedInvoiceItemUsageRecords() {
-		return Collections.emptyList(); // maybe join lists into single list
+		return List.of(); // maybe join lists into single list
 	}
 
 	@Override
-	public String getLocalizedTotalUsageAmount() {
+	public @Nullable String getLocalizedTotalUsageAmount() {
 		return null;
 	}
 

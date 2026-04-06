@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.support;
 
 import static java.lang.String.format;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -43,6 +44,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.CombiningFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
@@ -53,14 +55,16 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.MostRecentFilter;
+import net.solarnetwork.central.datum.domain.ObjectRecordId;
 import net.solarnetwork.central.datum.domain.ReadingTypeFilter;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.SourceFilter;
+import net.solarnetwork.central.datum.domain.StreamAliasFilter;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.datum.domain.UserFilter;
@@ -94,6 +98,8 @@ import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics.AccumulatingStatistic;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics.InstantaneousStatistic;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
@@ -108,7 +114,7 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * General datum utility methods.
  *
  * @author matt
- * @version 2.11
+ * @version 2.12
  * @since 2.8
  */
 public final class DatumUtils {
@@ -122,10 +128,9 @@ public final class DatumUtils {
 	 *
 	 * @param filter
 	 *        the filter to convert
-	 * @return the criteria, or {@literal null} if {@code filter} is
-	 *         {@literal null}
+	 * @return the criteria, or {@code null} if {@code filter} is {@code null}
 	 */
-	public static BasicDatumCriteria criteriaFromFilter(Filter filter) {
+	public static @Nullable BasicDatumCriteria criteriaFromFilter(@Nullable Filter filter) {
 		return criteriaFromFilter(filter, null, null, null);
 	}
 
@@ -140,11 +145,11 @@ public final class DatumUtils {
 	 *        the optional offset
 	 * @param max
 	 *        the optional max
-	 * @return the criteria, or {@literal null} if {@code filter} is
-	 *         {@literal null}
+	 * @return the criteria, or {@code null} if {@code filter} is {@code null}
 	 */
-	public static BasicDatumCriteria criteriaFromFilter(Filter filter,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
+	public static @Nullable BasicDatumCriteria criteriaFromFilter(@Nullable Filter filter,
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max) {
 		if ( filter == null ) {
 			return null;
 		}
@@ -171,6 +176,7 @@ public final class DatumUtils {
 			c.setMostRecent(f.isMostRecent());
 			c.setDatumRollupTypes(f.getDatumRollupTypes());
 			c.setWithoutTotalResultsCount(f.isWithoutTotalResultsCount());
+			c.setIncludeStreamAliases(f.getIncludeStreamAliases());
 			c.setCombiningType(f.getCombiningType());
 			c.setObjectIdMappings(f.getNodeIdMappings());
 			c.setSourceIdMappings(f.getSourceIdMappings());
@@ -209,6 +215,7 @@ public final class DatumUtils {
 			c.setMostRecent(f.isMostRecent());
 			c.setDatumRollupTypes(f.getDatumRollupTypes());
 			c.setWithoutTotalResultsCount(f.isWithoutTotalResultsCount());
+			c.setIncludeStreamAliases(f.getIncludeStreamAliases());
 			c.setCombiningType(f.getCombiningType());
 			c.setObjectIdMappings(f.getNodeIdMappings());
 			c.setSourceIdMappings(f.getSourceIdMappings());
@@ -288,12 +295,17 @@ public final class DatumUtils {
 				c.setAccumulatingPropertyNames(f.getAccumulatingPropertyNames());
 				c.setStatusPropertyNames(f.getStatusPropertyNames());
 			}
+			if ( filter instanceof StreamAliasFilter f ) {
+				c.setIncludeStreamAliases(f.getIncludeStreamAliases());
+			}
 		}
 
 		if ( s != null && !s.isEmpty() ) {
 			List<SortDescriptor> sorts = new ArrayList<>(s.size());
 			for ( SortDescriptor sd : s ) {
-				sorts.add(new SimpleSortDescriptor(sd.getSortKey(), sd.isDescending()));
+				if ( sd.getSortKey() != null ) {
+					sorts.add(new SimpleSortDescriptor(sd.getSortKey(), sd.isDescending()));
+				}
 			}
 			c.setSorts(sorts);
 		} else if ( sortDescriptors != null && !sortDescriptors.isEmpty() ) {
@@ -316,7 +328,7 @@ public final class DatumUtils {
 	 * @return the metadata search filter, or {@code null}
 	 * @since 2.11
 	 */
-	public static String generateTagsSearchFilter(String... tags) {
+	public static @Nullable String generateTagsSearchFilter(String @Nullable... tags) {
 		if ( tags == null || tags.length < 1 ) {
 			return null;
 		}
@@ -335,10 +347,10 @@ public final class DatumUtils {
 	 *
 	 * @param location
 	 *        the location
-	 * @return the criteria, or {@literal null} if {@code filter} is
-	 *         {@literal null} or has only empty values
+	 * @return the criteria, or {@code null} if {@code filter} is {@code null}
+	 *         or has only empty values
 	 */
-	public static SimpleLocation locationFromFilter(Location location) {
+	public static @Nullable SimpleLocation locationFromFilter(@Nullable Location location) {
 		if ( location == null ) {
 			return null;
 		}
@@ -372,12 +384,12 @@ public final class DatumUtils {
 	 * @return the new criteria
 	 */
 	public static ObjectStreamCriteria criteriaWithoutDates(ObjectStreamCriteria criteria) {
-		requireNonNullArgument(criteria, "criteria");
+		criteria = requireNonNullArgument(criteria, "criteria");
 		BasicDatumCriteria result;
 		if ( criteria instanceof BasicDatumCriteria c ) {
 			result = c.clone();
 		} else {
-			result = toBasicDatumCriteria(criteria);
+			result = nonnull(toBasicDatumCriteria(criteria), "Criteria");
 		}
 		result.setStartDate(null);
 		result.setEndDate(null);
@@ -392,12 +404,13 @@ public final class DatumUtils {
 	 *
 	 * @param criteria
 	 *        the criteria to convert
-	 * @return the basic datum criteria, or {@literal null} if {@code criteria}
-	 *         is {@literal null}; if {@code criteria} is already a
+	 * @return the basic datum criteria, or {@code null} if {@code criteria} is
+	 *         {@code null}; if {@code criteria} is already a
 	 *         {@link BasicDatumCriteria} instance it will be returned directly
 	 * @since 2.1
 	 */
-	public static BasicDatumCriteria toBasicDatumCriteria(ObjectStreamCriteria criteria) {
+	public static @Nullable BasicDatumCriteria toBasicDatumCriteria(
+			@Nullable ObjectStreamCriteria criteria) {
 		BasicDatumCriteria c;
 		if ( criteria == null ) {
 			return null;
@@ -425,6 +438,7 @@ public final class DatumUtils {
 			c.setEndDate(criteria.getEndDate());
 			c.setLocalStartDate(criteria.getLocalStartDate());
 			c.setLocalEndDate(criteria.getLocalEndDate());
+			c.setIncludeStreamAliases(criteria.getIncludeStreamAliases());
 		}
 		return c;
 	}
@@ -436,9 +450,9 @@ public final class DatumUtils {
 	 *        the criteria to extract the type from; if instance of
 	 *        {@link DatumFilter} then the "type" value will be converted to an
 	 *        aggregation
-	 * @return the aggregation, or {@literal null} if none
+	 * @return the aggregation, or {@code null} if none
 	 */
-	public static Aggregation aggregationForType(Filter criteria) {
+	public static @Nullable Aggregation aggregationForType(@Nullable Filter criteria) {
 		Aggregation result = null;
 		if ( criteria instanceof DatumFilter f ) {
 			String type = f.getType();
@@ -462,7 +476,7 @@ public final class DatumUtils {
 	 * @param filter
 	 *        the criteria to populate the {@link Aggregation} on
 	 */
-	public static void populateAggregationType(Filter criteria, BasicDatumCriteria filter) {
+	public static void populateAggregationType(@Nullable Filter criteria, BasicDatumCriteria filter) {
 		Aggregation agg = aggregationForType(criteria);
 		if ( agg != null ) {
 			filter.setAggregation(agg);
@@ -472,22 +486,29 @@ public final class DatumUtils {
 	/**
 	 * Populate a {@link DatumSamples} instance with property values.
 	 *
+	 * @param meta
+	 *        the stream metadata
 	 * @param s
 	 *        the samples instance to populate
+	 * @param props
+	 *        the properties
 	 * @param propType
 	 *        the property type
-	 * @param propNames
-	 *        the property names
-	 * @param propValues
-	 *        the property values
+	 * @since 2.12
 	 */
-	public static void populateGeneralDatumSamples(DatumSamples s, DatumSamplesType propType,
-			String[] propNames, Object[] propValues) {
-		if ( propNames != null && propValues != null && propValues.length <= propNames.length ) {
-			for ( int i = 0, len = propValues.length; i < len; i++ ) {
-				s.putSampleValue(propType, propNames[i], propValues[i]);
+	public static void populateGeneralDatumSamples(DatumStreamMetadata meta, DatumSamples s,
+			@Nullable DatumProperties props, DatumSamplesType propType) {
+		final String[] propNames = meta.propertyNamesForType(propType);
+		if ( propNames == null || props == null ) {
+			return;
+		}
+		for ( int i = 0; i < propNames.length; i++ ) {
+			Object val = meta.value(props, propType, i);
+			if ( val != null ) {
+				s.putSampleValue(propType, propNames[i], val);
 			}
 		}
+
 	}
 
 	/**
@@ -500,15 +521,12 @@ public final class DatumUtils {
 	 * @param meta
 	 *        the metadata
 	 */
-	public static void populateGeneralDatumSamples(DatumSamples s, DatumProperties props,
+	public static void populateGeneralDatumSamples(DatumSamples s, @Nullable DatumProperties props,
 			DatumStreamMetadata meta) {
-		populateGeneralDatumSamples(s, DatumSamplesType.Instantaneous,
-				meta.propertyNamesForType(DatumSamplesType.Instantaneous), props.getInstantaneous());
-		populateGeneralDatumSamples(s, DatumSamplesType.Accumulating,
-				meta.propertyNamesForType(DatumSamplesType.Accumulating), props.getAccumulating());
-		populateGeneralDatumSamples(s, DatumSamplesType.Status,
-				meta.propertyNamesForType(DatumSamplesType.Status), props.getStatus());
-		if ( props.getTagsLength() > 0 ) {
+		populateGeneralDatumSamples(meta, s, props, DatumSamplesType.Instantaneous);
+		populateGeneralDatumSamples(meta, s, props, DatumSamplesType.Accumulating);
+		populateGeneralDatumSamples(meta, s, props, DatumSamplesType.Status);
+		if ( props != null && props.getTagsLength() > 0 ) {
 			Set<String> tags = new LinkedHashSet<>(props.getTagsLength());
 			Collections.addAll(tags, props.getTags());
 			s.setTags(tags);
@@ -533,23 +551,22 @@ public final class DatumUtils {
 	 */
 	public static void populateGeneralDatumSamplesInstantaneousStatistics(DatumSamples s,
 			DatumPropertiesStatistics stats, ObjectDatumStreamMetadata meta) {
-		final int len = stats.getInstantaneousLength();
-		if ( len < 1 ) {
+		final int statCount = stats.getInstantaneousLength();
+		if ( statCount < 1 ) {
 			return;
 		}
-		BigDecimal[][] iStats = stats.getInstantaneous();
 		String[] propNames = meta.propertyNamesForType(DatumSamplesType.Instantaneous);
 		if ( propNames == null ) {
 			return;
 		}
-		final int max = Math.min(len, propNames.length);
-		for ( int i = 0; i < max; i++ ) {
-			BigDecimal[] propStats = iStats[i]; // count, min, max
-			if ( propStats == null || propStats.length < 3 ) {
-				continue;
+		final int len = Math.min(statCount, propNames.length);
+		for ( int i = 0; i < len; i++ ) {
+			BigDecimal min = meta.stat(stats, InstantaneousStatistic.Minimum, i);
+			BigDecimal max = meta.stat(stats, InstantaneousStatistic.Maximum, i);
+			if ( min != null && max != null ) {
+				s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_min", min);
+				s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_max", max);
 			}
-			s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_min", propStats[1]);
-			s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_max", propStats[2]);
 		}
 	}
 
@@ -572,24 +589,29 @@ public final class DatumUtils {
 	 */
 	public static void populateGeneralDatumSamplesAccumulatingStatistics(DatumSamples s,
 			DatumPropertiesStatistics stats, ObjectDatumStreamMetadata meta) {
-		final int len = stats.getAccumulatingLength();
-		if ( len < 1 ) {
+		final int statCount = stats.getAccumulatingLength();
+		if ( statCount < 1 ) {
 			return;
 		}
-		BigDecimal[][] aStats = stats.getAccumulating();
-		String[] propNames = meta.propertyNamesForType(DatumSamplesType.Accumulating);
+		final String[] propNames = meta.propertyNamesForType(DatumSamplesType.Accumulating);
 		if ( propNames == null ) {
 			return;
 		}
-		final int max = Math.min(len, propNames.length);
-		for ( int i = 0; i < max; i++ ) {
-			BigDecimal[] propStats = aStats[i]; // diff, start, end
-			if ( propStats == null || propStats.length < 3 ) {
-				continue;
+		final int len = Math.min(statCount, propNames.length);
+		for ( int i = 0; i < len; i++ ) {
+			BigDecimal diff = meta.stat(stats, AccumulatingStatistic.Difference, i);
+			BigDecimal start = meta.stat(stats, AccumulatingStatistic.Start, i);
+			BigDecimal end = meta.stat(stats, AccumulatingStatistic.End, i);
+
+			if ( diff != null ) {
+				s.putSampleValue(DatumSamplesType.Accumulating, propNames[i], diff);
 			}
-			s.putSampleValue(DatumSamplesType.Accumulating, propNames[i], propStats[0]);
-			s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_start", propStats[1]);
-			s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_end", propStats[2]);
+			if ( start != null ) {
+				s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_start", start);
+			}
+			if ( end != null ) {
+				s.putSampleValue(DatumSamplesType.Instantaneous, propNames[i] + "_end", end);
+			}
 		}
 	}
 
@@ -600,12 +622,12 @@ public final class DatumUtils {
 	 *        the datum to convert
 	 * @param meta
 	 *        the datum metadata
-	 * @return the general datum, or {@literal null} if {@code datum} is
-	 *         {@literal null} or {@link ObjectDatumStreamMetadata#getKind()} is
+	 * @return the general datum, or {@code null} if {@code datum} is
+	 *         {@code null} or {@link ObjectDatumStreamMetadata#getKind()} is
 	 *         not {@code Node}
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	public static ReportingGeneralNodeDatum toGeneralNodeDatum(Datum datum,
+	public static @Nullable ReportingGeneralNodeDatum toGeneralNodeDatum(@Nullable Datum datum,
 			ObjectDatumStreamMetadata meta) {
 		if ( datum == null || meta.getKind() != ObjectDatumKind.Node ) {
 			return null;
@@ -613,18 +635,15 @@ public final class DatumUtils {
 		ZoneId zone = meta.getTimeZoneId() != null ? ZoneId.of(meta.getTimeZoneId()) : ZoneOffset.UTC;
 
 		// use ReportingGeneralNodeDatum to support localDateTime property
-		ReportingGeneralNodeDatum gnd = new ReportingGeneralNodeDatum();
-
-		gnd.setCreated(datum.getTimestamp());
-		gnd.setNodeId(meta.getObjectId());
-		gnd.setSourceId(meta.getSourceId());
+		ReportingGeneralNodeDatum gnd = new ReportingGeneralNodeDatum(meta.getObjectId(),
+				datum.getTimestamp(), meta.getSourceId());
 
 		DatumSamples s = new DatumSamples();
 
 		// populate instantaneous statistics data if available
 		if ( datum instanceof AggregateDatum agg ) {
 			DatumPropertiesStatistics stats = agg.getStatistics();
-			if ( stats != null ) {
+			if ( stats != null && !stats.isEmpty() ) {
 				populateGeneralDatumSamplesInstantaneousStatistics(s, stats, meta);
 			}
 
@@ -660,7 +679,7 @@ public final class DatumUtils {
 		if ( datum instanceof ReadingDatum read ) {
 			// populate reading (accumulating) data from stats when available
 			DatumPropertiesStatistics stats = read.getStatistics();
-			if ( stats != null ) {
+			if ( stats != null && !stats.isEmpty() ) {
 				if ( s.getA() != null ) {
 					s.getA().clear();
 				}
@@ -683,22 +702,21 @@ public final class DatumUtils {
 	}
 
 	/**
-	 * Create a new {@link GeneralLocationDatumMetadataMatch} out of an
+	 * Create a new {@link GeneralNodeDatumMetadataMatch} out of an
 	 * {@link ObjectDatumStreamMetadata}.
 	 *
 	 * @param meta
 	 *        the metadata to convert
-	 * @return the general metadata, or {@literal null} if {@code meta} is
-	 *         {@literal null}
+	 * @return the general metadata, or {@code null} if {@code meta} is
+	 *         {@code null}
 	 */
-	public static GeneralNodeDatumMetadataMatch toGeneralNodeDatumMetadataMatch(
-			ObjectDatumStreamMetadata meta) {
+	public static @Nullable GeneralNodeDatumMetadataMatch toGeneralNodeDatumMetadataMatch(
+			@Nullable ObjectDatumStreamMetadata meta) {
 		if ( meta == null ) {
 			return null;
 		}
-		GeneralNodeDatumMetadataMatch m = new GeneralNodeDatumMetadataMatch();
-		m.setNodeId(meta.getObjectId());
-		m.setSourceId(meta.getSourceId());
+		GeneralNodeDatumMetadataMatch m = new GeneralNodeDatumMetadataMatch(meta.getObjectId(),
+				meta.getSourceId());
 		m.setMetaJson(meta.getMetaJson());
 		return m;
 	}
@@ -711,25 +729,21 @@ public final class DatumUtils {
 	 *        the datum to convert
 	 * @param meta
 	 *        the metadata
-	 * @return the general datum auxiliary, or {@literal null} if either
-	 *         {@code datum} or {@code meta} is {@literal null}
+	 * @return the general datum auxiliary, or {@code null} if either
+	 *         {@code datum} or {@code meta} is {@code null}
 	 */
-	public static GeneralNodeDatumAuxiliary toGeneralNodeDatumAuxiliary(DatumAuxiliary datum,
-			ObjectDatumStreamMetadata meta) {
+	public static @Nullable GeneralNodeDatumAuxiliary toGeneralNodeDatumAuxiliary(
+			@Nullable DatumAuxiliary datum, @Nullable ObjectDatumStreamMetadata meta) {
 		if ( datum == null || meta == null ) {
 			return null;
 		}
-		GeneralNodeDatumAuxiliary aux = new GeneralNodeDatumAuxiliary();
-		populate(datum, meta, aux);
+		GeneralNodeDatumAuxiliary aux = new GeneralNodeDatumAuxiliary(new GeneralNodeDatumAuxiliaryPK(
+				meta.getObjectId(), datum.getTimestamp(), meta.getSourceId(), datum.getType()));
+		populate(datum, aux);
 		return aux;
 	}
 
-	private static void populate(DatumAuxiliary datum, ObjectDatumStreamMetadata meta,
-			GeneralNodeDatumAuxiliary aux) {
-		aux.setNodeId(meta.getObjectId());
-		aux.setSourceId(meta.getSourceId());
-		aux.setCreated(datum.getTimestamp());
-		aux.setType(datum.getType());
+	private static void populate(DatumAuxiliary datum, GeneralNodeDatumAuxiliary aux) {
 		if ( datum.getSamplesFinal() != null ) {
 			DatumSamples s = new DatumSamples();
 			s.setAccumulating(datum.getSamplesFinal().getAccumulating());
@@ -758,8 +772,10 @@ public final class DatumUtils {
 	 */
 	public static GeneralNodeDatumAuxiliaryFilterMatch toGeneralNodeDatumAuxiliaryFilterMatch(
 			DatumAuxiliary datum, ObjectDatumStreamMetadata meta) {
-		GeneralNodeDatumAuxiliaryMatch aux = new GeneralNodeDatumAuxiliaryMatch();
-		populate(datum, meta, aux);
+		GeneralNodeDatumAuxiliaryMatch aux = new GeneralNodeDatumAuxiliaryMatch(
+				new GeneralNodeDatumAuxiliaryPK(meta.getObjectId(), datum.getTimestamp(),
+						meta.getSourceId(), datum.getType()));
+		populate(datum, aux);
 		aux.setLocalDateTime(
 				datum.getTimestamp().atZone(ZoneId.of(meta.getTimeZoneId())).toLocalDateTime());
 		return aux;
@@ -773,11 +789,11 @@ public final class DatumUtils {
 	 *        the datum to convert
 	 * @param meta
 	 *        the datum metadata
-	 * @return the general datum, or {@literal null} if {@code datum} is
-	 *         {@literal null} or {@link ObjectDatumStreamMetadata#getKind()} is
+	 * @return the general datum, or {@code null} if {@code datum} is
+	 *         {@code null} or {@link ObjectDatumStreamMetadata#getKind()} is
 	 *         not {@code Location}
 	 */
-	public static ReportingGeneralLocationDatum toGeneralLocationDatum(Datum datum,
+	public static @Nullable ReportingGeneralLocationDatum toGeneralLocationDatum(@Nullable Datum datum,
 			ObjectDatumStreamMetadata meta) {
 		if ( datum == null || meta.getKind() != ObjectDatumKind.Location ) {
 			return null;
@@ -785,11 +801,9 @@ public final class DatumUtils {
 		ZoneId zone = meta.getTimeZoneId() != null ? ZoneId.of(meta.getTimeZoneId()) : ZoneOffset.UTC;
 
 		// use ReportingGeneralLocationDatum to support localDateTime property
-		ReportingGeneralLocationDatum gnd = new ReportingGeneralLocationDatum();
-		gnd.setCreated(datum.getTimestamp());
+		ReportingGeneralLocationDatum gnd = new ReportingGeneralLocationDatum(meta.getObjectId(),
+				datum.getTimestamp(), meta.getSourceId());
 		gnd.setLocalDateTime(datum.getTimestamp().atZone(zone).toLocalDateTime());
-		gnd.setLocationId(meta.getObjectId());
-		gnd.setSourceId(meta.getSourceId());
 
 		DatumSamples s = new DatumSamples();
 		// populate normal data
@@ -822,17 +836,16 @@ public final class DatumUtils {
 	 *
 	 * @param meta
 	 *        the metadata to convert
-	 * @return the general metadata, or {@literal null} if {@code meta} is
-	 *         {@literal null}
+	 * @return the general metadata, or {@code null} if {@code meta} is
+	 *         {@code null}
 	 */
-	public static GeneralLocationDatumMetadataMatch toGeneralLocationDatumMetadataMatch(
-			ObjectDatumStreamMetadata meta) {
+	public static @Nullable GeneralLocationDatumMetadataMatch toGeneralLocationDatumMetadataMatch(
+			@Nullable ObjectDatumStreamMetadata meta) {
 		if ( meta == null ) {
 			return null;
 		}
-		GeneralLocationDatumMetadataMatch m = new GeneralLocationDatumMetadataMatch();
-		m.setLocationId(meta.getObjectId());
-		m.setSourceId(meta.getSourceId());
+		GeneralLocationDatumMetadataMatch m = new GeneralLocationDatumMetadataMatch(meta.getObjectId(),
+				meta.getSourceId());
 		m.setMetaJson(meta.getMetaJson());
 
 		net.solarnetwork.domain.Location l = meta.getLocation();
@@ -903,9 +916,9 @@ public final class DatumUtils {
 	 *        the object ID
 	 * @param sourceId
 	 *        the source ID
-	 * @return the UUID, or {@literal null} if any argument is {@literal null}
+	 * @return the UUID, or {@code null} if any argument is {@code null}
 	 */
-	public static UUID virtualStreamId(Long objectId, String sourceId) {
+	public static @Nullable UUID virtualStreamId(@Nullable Long objectId, @Nullable String sourceId) {
 		if ( objectId == null || sourceId == null ) {
 			return null;
 		}
@@ -984,11 +997,11 @@ public final class DatumUtils {
 	 *
 	 * @param counts
 	 *        the counts to convert
-	 * @return the legacy instace, or {@literal null} if {@code counts} is
-	 *         {@literal null}
+	 * @return the legacy instace, or {@code null} if {@code counts} is
+	 *         {@code null}
 	 */
-	public static net.solarnetwork.central.datum.domain.DatumRecordCounts toRecordCounts(
-			DatumRecordCounts counts) {
+	public static net.solarnetwork.central.datum.domain.@Nullable DatumRecordCounts toRecordCounts(
+			@Nullable DatumRecordCounts counts) {
 		if ( counts == null ) {
 			return null;
 		}
@@ -1010,12 +1023,12 @@ public final class DatumUtils {
 	 *
 	 * @param meta
 	 *        the metadata to convert
-	 * @return the converted instance, or {@literal null} if {@code meta} is
-	 *         {@literal null}
+	 * @return the converted instance, or {@code null} if {@code meta} is
+	 *         {@code null}
 	 * @since 1.7
 	 */
-	public static BasicObjectDatumStreamMetadata toCommonObjectDatumStreamMetadata(
-			ObjectDatumStreamMetadata meta) {
+	public static @Nullable BasicObjectDatumStreamMetadata toCommonObjectDatumStreamMetadata(
+			@Nullable ObjectDatumStreamMetadata meta) {
 		if ( meta == null ) {
 			return null;
 		}
@@ -1032,23 +1045,21 @@ public final class DatumUtils {
 	 *
 	 * @param results
 	 *        the results to conver
-	 * @return the converted results, or {@literal null} if {@code results} is
-	 *         {@literal null}
+	 * @return the converted results, or {@code null} if {@code results} is
+	 *         {@code null}
 	 * @since 2.0
 	 */
-	public static FilterResults<AuditDatumRecordCounts, GeneralNodeDatumPK> toAuditDatumRecordCountsFilterResults(
-			FilterResults<AuditDatumRollup, DatumPK> results) {
+	public static @Nullable FilterResults<AuditDatumRecordCounts, ObjectRecordId> toAuditDatumRecordCountsFilterResults(
+			@Nullable FilterResults<AuditDatumRollup, DatumPK> results) {
 		if ( results == null ) {
 			return null;
 		}
 		List<AuditDatumRecordCounts> counts = StreamSupport.stream(results.spliterator(), false)
 				.map(e -> {
-					AuditDatumRecordCounts c = new AuditDatumRecordCounts(e.getNodeId(), e.getSourceId(),
+					AuditDatumRecordCounts c = new AuditDatumRecordCounts(
+							new ObjectRecordId(e.getNodeId(), e.getSourceId(), e.getTimestamp()),
 							e.getDatumCount(), e.getDatumHourlyCount(), e.getDatumDailyCount(),
 							e.getDatumMonthlyCount());
-					if ( e.getTimestamp() != null ) {
-						c.setCreated(e.getTimestamp());
-					}
 					return c;
 				}).collect(Collectors.toList());
 		return new BasicFilterResults<>(counts, results.getTotalResults(), results.getStartingOffset(),

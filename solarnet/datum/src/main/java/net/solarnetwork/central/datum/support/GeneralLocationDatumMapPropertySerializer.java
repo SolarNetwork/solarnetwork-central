@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.support;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingDatum;
 import net.solarnetwork.codec.PropertySerializer;
@@ -41,10 +42,21 @@ import net.solarnetwork.util.StringUtils;
  */
 public class GeneralLocationDatumMapPropertySerializer implements PropertySerializer {
 
+	/**
+	 * Constructor.
+	 */
+	public GeneralLocationDatumMapPropertySerializer() {
+		super();
+	}
+
 	@Override
-	public Object serialize(Object data, String propertyName, Object propertyValue) {
-		GeneralLocationDatum datum = (GeneralLocationDatum) propertyValue;
-		Map<String, Object> props = new LinkedHashMap<>(8);
+	public @Nullable Object serialize(@Nullable Object data, @Nullable String propertyName,
+			@Nullable Object propertyValue) {
+		final GeneralLocationDatum datum = (GeneralLocationDatum) propertyValue;
+		if ( datum == null ) {
+			return null;
+		}
+		final Map<String, Object> props = new LinkedHashMap<>(8);
 		props.put("created", datum.getCreated());
 		if ( datum instanceof ReportingDatum rd ) {
 			props.put("localDate", rd.getLocalDate());
@@ -66,12 +78,12 @@ public class GeneralLocationDatumMapPropertySerializer implements PropertySerial
 		return props;
 	}
 
-	private void addProps(Map<String, Object> props, Map<String, ?> data) {
+	private static void addProps(Map<String, Object> props, @Nullable Map<String, ?> data) {
 		if ( data == null ) {
 			return;
 		}
 		for ( Map.Entry<String, ?> me : data.entrySet() ) {
-			if ( !props.containsKey(me.getKey()) ) {
+			if ( !props.containsKey(me.getKey()) && me.getValue() != null ) {
 				props.put(me.getKey(), me.getValue());
 			}
 		}

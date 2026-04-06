@@ -37,10 +37,12 @@ import static net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationServi
 import static net.solarnetwork.central.c2c.biz.impl.EnphaseDeviceType.Inverter;
 import static net.solarnetwork.central.c2c.biz.impl.EnphaseDeviceType.Meter;
 import static net.solarnetwork.central.c2c.biz.impl.EnphaseGranularity.FifteenMinute;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
 import static net.solarnetwork.codec.jackson.JsonUtils.getObjectFromJSON;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -49,6 +51,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -98,13 +101,11 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -136,8 +137,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 	@Captor
 	private ArgumentCaptor<OAuth2AuthorizeRequest> authRequestCaptor;
 
-	@Mock
-	private TextEncryptor encryptor;
+	private TextEncryptor encryptor = noOpText();
 
 	@Mock
 	private CloudIntegrationConfigurationDao integrationDao;
@@ -184,7 +184,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final String refreshToken = randomString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -317,7 +317,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final String systemId = randomLong().toString();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -571,7 +571,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long systemId = randomLong();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -602,31 +602,24 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "W";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				systemComponentValueRef(systemId, Inverter, fieldName1));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemComponentValueRef(systemId, Inverter, fieldName1));
+		prop1.setEnabled(true);
 
 		final String fieldName2 = "Wh";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Instantaneous);
-		prop2.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh", Reference,
+				systemComponentValueRef(systemId, Inverter, fieldName2));
 		prop2.setScale(0);
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(systemComponentValueRef(systemId, Inverter, fieldName2));
+		prop2.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -635,9 +628,8 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -756,7 +748,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long systemId = randomLong();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -789,21 +781,17 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "W";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				systemComponentValueRef(systemId, Inverter, fieldName1));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemComponentValueRef(systemId, Inverter, fieldName1));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -812,9 +800,8 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -885,7 +872,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long systemId = randomLong();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -916,21 +903,17 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "W";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				systemPlaceholderComponentValueRef(Inverter, fieldName1));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemPlaceholderComponentValueRef(Inverter, fieldName1));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -939,9 +922,8 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		datumStream.setServiceProps(
@@ -1012,7 +994,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long systemId = randomLong();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -1043,21 +1025,17 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "W";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				systemPlaceholderComponentValueRef(Inverter, fieldName1));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemPlaceholderComponentValueRef(Inverter, fieldName1));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -1066,9 +1044,8 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		datumStream.setServiceProps(Map.of(EnphaseCloudDatumStreamService.UPPER_CASE_SOURCE_ID_SETTING,
@@ -1139,7 +1116,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long systemId = randomLong();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -1170,21 +1147,17 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "W";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				systemComponentValueRef(systemId, Inverter, fieldName1));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemComponentValueRef(systemId, Inverter, fieldName1));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -1193,9 +1166,8 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -1265,7 +1237,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long systemId = randomLong();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -1296,21 +1268,17 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "W";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				systemComponentValueRef(systemId, Inverter, fieldName1));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemComponentValueRef(systemId, Inverter, fieldName1));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -1319,9 +1287,8 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -1391,7 +1358,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long systemId = randomLong();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -1422,61 +1389,45 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "W";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName1));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemComponentValueRef(systemId, Meter, fieldName1));
+		prop1.setEnabled(true);
 
 		final String fieldName2 = "WhExp";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Instantaneous);
-		prop2.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName2));
 		prop2.setScale(0);
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(systemComponentValueRef(systemId, Meter, fieldName2));
+		prop2.setEnabled(true);
 
 		final String fieldName3 = "PWA";
 		final CloudDatumStreamPropertyConfiguration prop3 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop3.setEnabled(true);
-		prop3.setPropertyType(DatumSamplesType.Instantaneous);
-		prop3.setPropertyName("watts_a");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "watts_a", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName3));
 		prop3.setScale(0);
-		prop3.setValueType(CloudDatumStreamValueType.Reference);
-		prop3.setValueReference(systemComponentValueRef(systemId, Meter, fieldName3));
+		prop3.setEnabled(true);
 
 		final String fieldName4 = "PWB";
 		final CloudDatumStreamPropertyConfiguration prop4 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop4.setEnabled(true);
-		prop4.setPropertyType(DatumSamplesType.Instantaneous);
-		prop4.setPropertyName("watts_b");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "watts_b", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName4));
 		prop4.setScale(0);
-		prop4.setValueType(CloudDatumStreamValueType.Reference);
-		prop4.setValueReference(systemComponentValueRef(systemId, Meter, fieldName4));
+		prop4.setEnabled(true);
 
 		final String fieldName5 = "PWC";
 		final CloudDatumStreamPropertyConfiguration prop5 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop5.setEnabled(true);
-		prop5.setPropertyType(DatumSamplesType.Instantaneous);
-		prop5.setPropertyName("watts_c");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "watts_c", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName5));
 		prop5.setScale(0);
-		prop5.setValueType(CloudDatumStreamValueType.Reference);
-		prop5.setValueReference(systemComponentValueRef(systemId, Meter, fieldName5));
+		prop5.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2, prop3, prop4, prop5));
@@ -1485,9 +1436,8 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -1613,7 +1563,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long systemId = randomLong();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -1644,61 +1594,45 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "W";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName1));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemComponentValueRef(systemId, Meter, fieldName1));
+		prop1.setEnabled(true);
 
 		final String fieldName2 = "WhExp";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Instantaneous);
-		prop2.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName2));
 		prop2.setScale(0);
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(systemComponentValueRef(systemId, Meter, fieldName2));
+		prop2.setEnabled(true);
 
 		final String fieldName3 = "PWA";
 		final CloudDatumStreamPropertyConfiguration prop3 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop3.setEnabled(true);
-		prop3.setPropertyType(DatumSamplesType.Instantaneous);
-		prop3.setPropertyName("watts_a");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "watts_a", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName3));
 		prop3.setScale(0);
-		prop3.setValueType(CloudDatumStreamValueType.Reference);
-		prop3.setValueReference(systemComponentValueRef(systemId, Meter, fieldName3));
+		prop3.setEnabled(true);
 
 		final String fieldName4 = "PWB";
 		final CloudDatumStreamPropertyConfiguration prop4 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop4.setEnabled(true);
-		prop4.setPropertyType(DatumSamplesType.Instantaneous);
-		prop4.setPropertyName("watts_b");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "watts_b", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName4));
 		prop4.setScale(0);
-		prop4.setValueType(CloudDatumStreamValueType.Reference);
-		prop4.setValueReference(systemComponentValueRef(systemId, Meter, fieldName4));
+		prop4.setEnabled(true);
 
 		final String fieldName5 = "PWC";
 		final CloudDatumStreamPropertyConfiguration prop5 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop5.setEnabled(true);
-		prop5.setPropertyType(DatumSamplesType.Instantaneous);
-		prop5.setPropertyName("watts_c");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "watts_c", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName5));
 		prop5.setScale(0);
-		prop5.setValueType(CloudDatumStreamValueType.Reference);
-		prop5.setValueReference(systemComponentValueRef(systemId, Meter, fieldName5));
+		prop5.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2, prop3, prop4, prop5));
@@ -1707,9 +1641,8 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -1789,7 +1722,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long systemId = randomLong();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -1820,31 +1753,24 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "WhExp";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName1));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemComponentValueRef(systemId, Meter, fieldName1));
+		prop1.setEnabled(true);
 
 		final String fieldName2 = "DevicesReporting";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Instantaneous);
-		prop2.setPropertyName("deviceCount");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "deviceCount", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName2));
 		prop2.setScale(0);
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(systemComponentValueRef(systemId, Meter, fieldName2));
+		prop2.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -1853,9 +1779,8 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -1969,7 +1894,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long systemId = randomLong();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -2000,21 +1925,17 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "WhExp";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName1));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemComponentValueRef(systemId, Meter, fieldName1));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -2023,9 +1944,8 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -2109,7 +2029,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long systemId = randomLong();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -2140,21 +2060,17 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "WhExp";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName1));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemComponentValueRef(systemId, Meter, fieldName1));
+		prop1.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -2163,9 +2079,8 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -2239,7 +2154,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long systemId = randomLong();
 
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		integration.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
@@ -2270,31 +2185,24 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final String fieldName1 = "WhExp";
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh", Reference,
+				systemComponentValueRef(systemId, Meter, fieldName1));
 		prop1.setScale(0);
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(systemComponentValueRef(systemId, Meter, fieldName1));
+		prop1.setEnabled(true);
 
 		final String fieldName2 = "Wh";
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
-		prop2.setEnabled(true);
-		prop2.setPropertyType(DatumSamplesType.Instantaneous);
-		prop2.setPropertyName("wh");
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Instantaneous, "wh", Reference,
+				systemComponentValueRef(systemId, Inverter, fieldName2));
 		prop2.setScale(0);
-		prop2.setValueType(CloudDatumStreamValueType.Reference);
-		prop2.setValueReference(systemComponentValueRef(systemId, Inverter, fieldName2));
+		prop2.setEnabled(true);
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
@@ -2303,9 +2211,8 @@ public class EnphaseCloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 

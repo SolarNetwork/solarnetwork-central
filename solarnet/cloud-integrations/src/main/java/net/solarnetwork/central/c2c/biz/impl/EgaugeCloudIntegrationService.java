@@ -59,7 +59,7 @@ public class EgaugeCloudIntegrationService extends BaseRestOperationsCloudIntegr
 	/**
 	 * The well-known URLs.
 	 */
-	public static final Map<String, URI> WELL_KNOWN_URLS = Collections.emptyMap();
+	public static final Map<String, URI> WELL_KNOWN_URLS = Map.of();
 
 	/** The service settings . */
 	public static final List<SettingSpecifier> SETTINGS;
@@ -84,7 +84,7 @@ public class EgaugeCloudIntegrationService extends BaseRestOperationsCloudIntegr
 	 * @param restOps
 	 *        the REST operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EgaugeCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {

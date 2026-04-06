@@ -43,7 +43,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.instanceOf;
 import java.time.Instant;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -443,7 +443,7 @@ public class OcppControllerTests {
 
 		expect(chargePointDao.save(cp2)).andReturn(cp2.getId());
 
-		expect(chargePointConnectorDao.findByChargePointId(cpId)).andReturn(Collections.emptyList());
+		expect(chargePointConnectorDao.findByChargePointId(cpId)).andReturn(List.of());
 
 		final var connKey = new ChargePointConnectorKey(cpId, 1);
 		Capture<ChargePointConnector> connCaptor = new Capture<>();

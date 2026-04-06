@@ -51,18 +51,20 @@ import net.solarnetwork.central.user.billing.aop.SolarNetUserBillingAopConfigura
 import net.solarnetwork.central.user.c2c.aop.SolarNetUserCloudIntegrationsAopConfiguration;
 import net.solarnetwork.central.user.c2c.config.SolarNetUserCloudIntegrationsConfiguration;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
+import net.solarnetwork.central.user.datum.event.aop.SolarNetUserEventAopConfiguration;
+import net.solarnetwork.central.user.datum.event.config.SolarNetUserEventConfiguration;
+import net.solarnetwork.central.user.datum.expire.aop.SolarNetUserExpireAopConfiguration;
+import net.solarnetwork.central.user.datum.expire.config.SolarNetUserExpireConfiguration;
+import net.solarnetwork.central.user.datum.export.aop.SolarNetUserExportAopConfiguration;
+import net.solarnetwork.central.user.datum.export.config.SolarNetUserExportConfiguration;
+import net.solarnetwork.central.user.datum.flux.aop.SolarNetUserFluxAopConfiguration;
+import net.solarnetwork.central.user.datum.flux.config.SolarNetUserFluxConfiguration;
+import net.solarnetwork.central.user.datum.stream.aop.SolarNetUserDatumStreamAopConfiguration;
+import net.solarnetwork.central.user.datum.stream.config.SolarNetUserDatumStreamConfiguration;
 import net.solarnetwork.central.user.din.aop.SolarNetUserDatumInputAopConfiguration;
 import net.solarnetwork.central.user.din.config.SolarNetUserDatumInputConfiguration;
 import net.solarnetwork.central.user.dnp3.aop.SolarNetUserDnp3AopConfiguration;
 import net.solarnetwork.central.user.dnp3.config.SolarNetUserDnp3Configuration;
-import net.solarnetwork.central.user.event.aop.SolarNetUserEventAopConfiguration;
-import net.solarnetwork.central.user.event.config.SolarNetUserEventConfiguration;
-import net.solarnetwork.central.user.expire.aop.SolarNetUserExpireAopConfiguration;
-import net.solarnetwork.central.user.expire.config.SolarNetUserExpireConfiguration;
-import net.solarnetwork.central.user.export.aop.SolarNetUserExportAopConfiguration;
-import net.solarnetwork.central.user.export.config.SolarNetUserExportConfiguration;
-import net.solarnetwork.central.user.flux.aop.SolarNetUserFluxAopConfiguration;
-import net.solarnetwork.central.user.flux.config.SolarNetUserFluxConfiguration;
 import net.solarnetwork.central.user.inin.aop.SolarNetUserInstructionInputAopConfiguration;
 import net.solarnetwork.central.user.inin.config.SolarNetUserInstructionInputConfiguration;
 import net.solarnetwork.central.user.ocpp.aop.SolarNetUserOcppAopConfiguration;
@@ -97,6 +99,8 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetUserCloudIntegrationsConfiguration.class,
 		SolarNetUserDatumInputAopConfiguration.class,
 		SolarNetUserDatumInputConfiguration.class,
+		SolarNetUserDatumStreamAopConfiguration.class,
+		SolarNetUserDatumStreamConfiguration.class,
 		SolarNetUserDnp3AopConfiguration.class,
 		SolarNetUserDnp3Configuration.class,
 		SolarNetUserInstructionInputAopConfiguration.class,

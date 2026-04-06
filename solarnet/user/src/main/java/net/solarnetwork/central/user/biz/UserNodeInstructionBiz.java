@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.biz;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.dao.UserNodeInstructionTaskFilter;
@@ -45,10 +46,10 @@ public interface UserNodeInstructionBiz {
 	 *        the user ID to get entities for
 	 * @param filter
 	 *        an optional filter
-	 * @return the available entities, never {@literal null}
+	 * @return the available entities, never {@code null}
 	 */
 	FilterResults<UserNodeInstructionTaskEntity, UserLongCompositePK> listControlInstructionTasksForUser(
-			Long userId, UserNodeInstructionTaskFilter filter);
+			Long userId, @Nullable UserNodeInstructionTaskFilter filter);
 
 	/**
 	 * Update the state of a control instruction task.
@@ -59,12 +60,12 @@ public interface UserNodeInstructionBiz {
 	 *        the state to update the task to
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to {@code desiredState}, or {@literal null} if
-	 *        the current state of the task does not matter
-	 * @return the resulting task, or {@literal null} if no such task exists
+	 *        order to change it to {@code desiredState}, or {@code null} if the
+	 *        current state of the task does not matter
+	 * @return the resulting task, or {@code null} if no such task exists
 	 */
 	UserNodeInstructionTaskEntity updateControlInstructionTaskState(UserLongCompositePK id,
-			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates);
+			BasicClaimableJobState desiredState, BasicClaimableJobState @Nullable... expectedStates);
 
 	/**
 	 * Update the enabled status of tasks, either a specific task or all tasks
@@ -90,12 +91,13 @@ public interface UserNodeInstructionBiz {
 	 *        the info to save
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
-	 *        order to change it to the info's given state, or {@literal null}
-	 *        if the current state of the task does not matter
+	 *        order to change it to the info's given state, or {@code null} if
+	 *        the current state of the task does not matter
 	 * @return the resulting task
 	 */
 	UserNodeInstructionTaskEntity saveControlInstructionTask(UserLongCompositePK id,
-			UserNodeInstructionTaskEntityInput input, BasicClaimableJobState... expectedStates);
+			UserNodeInstructionTaskEntityInput input,
+			BasicClaimableJobState @Nullable... expectedStates);
 
 	/**
 	 * Delete a specific control instruction task.

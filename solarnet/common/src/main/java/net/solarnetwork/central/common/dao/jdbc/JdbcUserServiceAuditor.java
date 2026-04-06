@@ -59,7 +59,7 @@ public class JdbcUserServiceAuditor extends BaseJdbcDatumIdServiceAuditor implem
 	 * @param dataSource
 	 *        the JDBC DataSource
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcUserServiceAuditor(DataSource dataSource) {
 		this(dataSource, new ConcurrentHashMap<>(1000, 0.8f, 4),
@@ -77,7 +77,7 @@ public class JdbcUserServiceAuditor extends BaseJdbcDatumIdServiceAuditor implem
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcUserServiceAuditor(DataSource dataSource,
 			ConcurrentMap<DatumId, AtomicInteger> userServiceCounters, Clock clock,

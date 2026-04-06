@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.domain;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,6 +35,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.Differentiable;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * OSCP settings for a specific Capacity Group.
@@ -44,7 +46,7 @@ import net.solarnetwork.domain.Differentiable;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "groupId", "userId", "created", "publishToSolarIn", "publishToSolarFlux", "nodeId",
@@ -57,39 +59,25 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 	@Serial
 	private static final long serialVersionUID = 2982265655654356895L;
 
-	private Instant modified;
+	private @Nullable Instant modified;
 	private boolean publishToSolarIn = true;
 	private boolean publishToSolarFlux = true;
-	private String sourceIdTemplate;
-	private Long nodeId;
-
-	/**
-	 * Default constructor.
-	 */
-	public CapacityGroupSettings() {
-		super();
-	}
+	private @Nullable Long nodeId;
+	private @Nullable String sourceIdTemplate;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param userId
-	 *        the user ID
+	 * @param id
+	 *        the primary key
+	 * @param created
+	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code created} is {@code null}
+	 * @since 2.1
 	 */
-	public CapacityGroupSettings(Long userId) {
-		this(userId, null, null);
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param userId
-	 *        the user ID
-	 * @param groupId
-	 *        the group ID
-	 */
-	public CapacityGroupSettings(Long userId, Long groupId) {
-		this(userId, groupId, null);
+	public CapacityGroupSettings(UserLongCompositePK id, @Nullable Instant created) {
+		super(ObjectUtils.requireNonNullArgument(id, "id"), created);
 	}
 
 	/**
@@ -101,12 +89,14 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 	 *        the group ID
 	 * @param created
 	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code created} is {@code null}
 	 */
 	@JsonCreator
 	public CapacityGroupSettings(@JsonProperty(value = "userId", required = true) Long userId,
 			@JsonProperty(value = "groupId", required = true) Long groupId,
-			@JsonProperty("created") Instant created) {
-		super(new UserLongCompositePK(userId, groupId), created);
+			@JsonProperty("created") @Nullable Instant created) {
+		this(new UserLongCompositePK(userId, groupId), created);
 	}
 
 	@Override
@@ -139,7 +129,7 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(CapacityGroupSettings other) {
+	public boolean isSameAs(@Nullable CapacityGroupSettings other) {
 		if ( other == null ) {
 			return false;
 		}
@@ -152,7 +142,7 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 	}
 
 	@Override
-	public boolean differsFrom(CapacityGroupSettings other) {
+	public boolean differsFrom(@Nullable CapacityGroupSettings other) {
 		return !isSameAs(other);
 	}
 
@@ -165,15 +155,13 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 	 *
 	 * @return the group ID
 	 */
-	public Long getGroupId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getGroupId() {
+		return id().getEntityId();
 	}
 
 	@Override
-	public Long getUserId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getUserId() : null);
+	public final Long getUserId() {
+		return id().getUserId();
 	}
 
 	/**
@@ -181,7 +169,7 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 	 *
 	 * @return the modified
 	 */
-	public Instant getModified() {
+	public final @Nullable Instant getModified() {
 		return modified;
 	}
 
@@ -191,12 +179,12 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 	 * @param modified
 	 *        the modified to set
 	 */
-	public void setModified(Instant modified) {
+	public final void setModified(@Nullable Instant modified) {
 		this.modified = modified;
 	}
 
 	@Override
-	public boolean isPublishToSolarIn() {
+	public final boolean isPublishToSolarIn() {
 		return publishToSolarIn;
 	}
 
@@ -207,12 +195,12 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 	 *        {@literal true} if data from this group should be published to
 	 *        SolarIn
 	 */
-	public void setPublishToSolarIn(boolean publishToSolarIn) {
+	public final void setPublishToSolarIn(boolean publishToSolarIn) {
 		this.publishToSolarIn = publishToSolarIn;
 	}
 
 	@Override
-	public boolean isPublishToSolarFlux() {
+	public final boolean isPublishToSolarFlux() {
 		return publishToSolarFlux;
 	}
 
@@ -223,12 +211,12 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 	 *        {@literal true} if data from this group should be published to
 	 *        SolarFlux
 	 */
-	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+	public final void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
 	}
 
 	@Override
-	public String getSourceIdTemplate() {
+	public final @Nullable String getSourceIdTemplate() {
 		return sourceIdTemplate;
 	}
 
@@ -238,12 +226,12 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 */
-	public void setSourceIdTemplate(String sourceIdTemplate) {
+	public final void setSourceIdTemplate(@Nullable String sourceIdTemplate) {
 		this.sourceIdTemplate = sourceIdTemplate;
 	}
 
 	@Override
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
@@ -253,7 +241,7 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 

@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
     id 'eclipse'
-	id 'org.springframework.boot' version '4.0.1'
+	id 'org.springframework.boot' version '4.0.4'
 }
 
 apply plugin: 'java'
@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarIn'
-version = '5.0.1'
+version = '6.1.0'
 
 base {
 	archivesName = 'solarin'
@@ -39,15 +39,18 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 	implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
-		
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
+
 	// SolarNetwork
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
+	testImplementation project(':solarnet-common-test-support')
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-    testImplementation 'io.moquette:moquette-broker:0.15'
+    testImplementation "io.moquette:moquette-broker:${moquetteVersion}"
     testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 }
 

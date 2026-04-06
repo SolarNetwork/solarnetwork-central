@@ -1,30 +1,33 @@
 /* ==================================================================
  * AssetConfigurationRowMapper.java - 12/08/2022 4:09:13 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.oscp.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.oscp.domain.AssetCategory;
@@ -41,11 +44,11 @@ import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Row mapper for {@link AssetConfiguration} entities.
- * 
+ *
  * <p>
  * The expected column order in the SQL results is:
  * </p>
- * 
+ *
  * <ol>
  * <li>id (BIGINT)</li>
  * <li>created (TIMESTAMP)</li>
@@ -72,7 +75,7 @@ import net.solarnetwork.codec.jackson.JsonUtils;
  * <li>edir (SMALLINT)</li>
  * <li>sprops (TEXT)</li>
  * </ol>
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -83,63 +86,57 @@ public class AssetConfigurationRowMapper implements RowMapper<AssetConfiguration
 
 	@Override
 	public AssetConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
-		Long entityId = rs.getLong(1);
-		Timestamp created = rs.getTimestamp(2);
-		Long userId = rs.getLong(4);
-		AssetConfiguration conf = new AssetConfiguration(userId, entityId, created.toInstant());
-		conf.setModified(rs.getTimestamp(3).toInstant());
-		conf.setEnabled(rs.getBoolean(5));
-		conf.setName(rs.getString(6));
-		conf.setCapacityGroupId(rs.getLong(7));
-		conf.setIdentifier(rs.getString(8));
-		conf.setAudience(OscpRole.forCode(rs.getInt(9)));
-		conf.setNodeId(rs.getLong(10));
-		conf.setSourceId(rs.getString(11));
-		conf.setCategory(AssetCategory.forCode(rs.getInt(12)));
-		conf.setPhase(Phase.forCode(rs.getInt(13)));
+		int p = 0;
 
-		AssetInstantaneousDatumConfiguration inst = new AssetInstantaneousDatumConfiguration();
-		inst.setPropertyNames(CommonJdbcUtils.getArray(rs, 14));
-		int c = rs.getInt(15);
-		if ( !rs.wasNull() ) {
-			inst.setStatisticType(StatisticType.forCode(c));
-		}
-		c = rs.getInt(16);
-		if ( !rs.wasNull() ) {
-			inst.setUnit(MeasurementUnit.forCode(c));
-		}
-		inst.setMultiplier(rs.getBigDecimal(17));
-		if ( inst.getPropertyNames() != null ) {
+		Long entityId = rs.getObject(++p, Long.class);
+		Instant ts = timestampInstant(rs, ++p);
+		Instant mod = timestampInstant(rs, ++p);
+		Long userId = rs.getObject(++p, Long.class);
+		boolean enabled = rs.getBoolean(++p);
+		String name = rs.getString(++p);
+		Long capacityGroupId = rs.getObject(++p, Long.class);
+		String identifier = rs.getString(++p);
+		OscpRole audience = OscpRole.forCode(rs.getInt(++p));
+		Long nodeId = rs.getObject(++p, Long.class);
+		String sourceId = rs.getString(++p);
+		AssetCategory category = AssetCategory.forCode(rs.getInt(++p));
+
+		final var conf = new AssetConfiguration(userId, entityId, ts, name, capacityGroupId, identifier,
+				audience, nodeId, sourceId, category);
+		conf.setModified(mod);
+		conf.setEnabled(enabled);
+		conf.setPhase(Phase.forCode(rs.getInt(++p)));
+
+		String @Nullable [] propNames = CommonJdbcUtils.getArray(rs, ++p);
+		Integer statType = rs.getObject(++p, Integer.class);
+		Integer unit = rs.getObject(++p, Integer.class);
+		@Nullable
+		BigDecimal mult = rs.getBigDecimal(++p);
+
+		if ( propNames != null && propNames.length > 0 && statType != null && unit != null ) {
+			var inst = new AssetInstantaneousDatumConfiguration(propNames, MeasurementUnit.forCode(unit),
+					StatisticType.forCode(statType));
+			inst.setMultiplier(mult);
 			conf.setInstantaneous(inst);
 		}
 
-		AssetEnergyDatumConfiguration energy = new AssetEnergyDatumConfiguration();
-		energy.setPropertyNames(CommonJdbcUtils.getArray(rs, 18));
-		c = rs.getInt(19);
-		if ( !rs.wasNull() ) {
-			energy.setStatisticType(StatisticType.forCode(c));
-		}
-		c = rs.getInt(20);
-		if ( !rs.wasNull() ) {
-			energy.setUnit(MeasurementUnit.forCode(c));
-		}
-		energy.setMultiplier(rs.getBigDecimal(21));
-		if ( energy.getPropertyNames() != null ) {
-			conf.setInstantaneous(inst);
-		}
-		c = rs.getInt(22);
-		if ( !rs.wasNull() ) {
-			energy.setType(EnergyType.forCode(c));
-		}
-		c = rs.getInt(23);
-		if ( !rs.wasNull() ) {
-			energy.setDirection(EnergyDirection.forCode(c));
-		}
-		if ( energy.getPropertyNames() != null ) {
+		propNames = CommonJdbcUtils.getArray(rs, ++p);
+		statType = rs.getObject(++p, Integer.class);
+		unit = rs.getObject(++p, Integer.class);
+		mult = rs.getBigDecimal(++p);
+		Integer energyType = rs.getObject(++p, Integer.class);
+		Integer energyDirection = rs.getObject(++p, Integer.class);
+
+		if ( propNames != null && propNames.length > 0 && statType != null && unit != null
+				&& energyType != null && energyDirection != null ) {
+			var energy = new AssetEnergyDatumConfiguration(propNames, MeasurementUnit.forCode(unit),
+					StatisticType.forCode(statType), EnergyType.forCode(energyType),
+					EnergyDirection.forCode(energyDirection));
+			energy.setMultiplier(mult);
 			conf.setEnergy(energy);
 		}
 
-		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(24)));
+		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(++p)));
 		return conf;
 	}
 

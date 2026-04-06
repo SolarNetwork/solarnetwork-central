@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.domain;
 
+import net.solarnetwork.central.datum.v2.dao.StreamAliasCriteria;
 import net.solarnetwork.central.domain.DateRangeFilter;
 import net.solarnetwork.central.domain.MetadataFilter;
 
@@ -33,10 +34,10 @@ import net.solarnetwork.central.domain.MetadataFilter;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface NodeSourceMetadataSearchFilter
-		extends NodeSourceSearchFilter, DateRangeFilter, MetadataFilter {
+		extends NodeSourceSearchFilter, DateRangeFilter, MetadataFilter, StreamAliasCriteria {
 
 	/**
 	 * Get the node IDs.

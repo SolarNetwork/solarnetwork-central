@@ -27,6 +27,8 @@ import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -53,16 +55,17 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.CommonDbUtils;
+import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
@@ -76,6 +79,7 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamAliasEntity;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
@@ -104,7 +108,7 @@ import tools.jackson.core.json.JsonFactory;
  * </p>
  *
  * @author matt
- * @version 2.7
+ * @version 2.8
  * @since 3.8
  */
 public final class DatumDbUtils {
@@ -182,11 +186,18 @@ public final class DatumDbUtils {
 	 *        the aggregate statistics
 	 * @return the datum
 	 */
-	public static ReadingDatum readingWith(UUID streamId, Aggregation agg, ZonedDateTime start,
-			ZonedDateTime end, BigDecimal[]... stats) {
-		BigDecimal[] acc = new BigDecimal[stats.length];
-		for ( int i = 0; i < stats.length; i++ ) {
-			acc[i] = stats[i][0];
+	public static ReadingDatum readingWith(UUID streamId, @Nullable Aggregation agg, ZonedDateTime start,
+			ZonedDateTime end, BigDecimal @Nullable [] @Nullable... stats) {
+		@Nullable
+		BigDecimal @Nullable [] acc = null;
+		if ( stats != null ) {
+			acc = new BigDecimal[stats.length];
+			for ( int i = 0; i < stats.length; i++ ) {
+				var statRow = stats[i];
+				if ( statRow != null && statRow.length > 0 ) {
+					acc[i] = statRow[0];
+				}
+			}
 		}
 		return readingWith(streamId, agg, start, end, acc, stats);
 	}
@@ -208,9 +219,11 @@ public final class DatumDbUtils {
 	 *        the aggregate statistics
 	 * @return the datum
 	 */
-	public static ReadingDatum readingWith(UUID streamId, Aggregation agg, ZonedDateTime start,
-			ZonedDateTime end, BigDecimal[] acc, BigDecimal[][] stats) {
-		return new ReadingDatumEntity(streamId, start.toInstant(), agg, end.toInstant(),
+	public static ReadingDatum readingWith(UUID streamId, @Nullable Aggregation agg, ZonedDateTime start,
+			ZonedDateTime end, @Nullable BigDecimal @Nullable [] acc,
+			BigDecimal @Nullable [] @Nullable [] stats) {
+		return new ReadingDatumEntity(streamId, start.toInstant(),
+				(agg != null ? agg : Aggregation.None), end.toInstant(),
 				propertiesOf(null, acc, null, null), statisticsOf(null, stats));
 	}
 
@@ -223,7 +236,7 @@ public final class DatumDbUtils {
 	 *        the list to extract from
 	 * @param clazz
 	 *        the class of elements to extract
-	 * @return the list, never {@literal null}
+	 * @return the list, never {@code null}
 	 */
 	public static <T> List<T> elementsOf(List<?> list, Class<T> clazz) {
 		return list.stream().filter(clazz::isInstance).map(clazz::cast).collect(Collectors.toList());
@@ -246,7 +259,7 @@ public final class DatumDbUtils {
 	 *        the name of the resource to load
 	 * @param clazz
 	 *        the class to load the resource from
-	 * @return the loaded data, never {@literal null}
+	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 */
@@ -273,7 +286,7 @@ public final class DatumDbUtils {
 	 *        the name of the resource to load
 	 * @param clazz
 	 *        the class to load the resource from
-	 * @return the loaded data, never {@literal null}
+	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 */
@@ -290,11 +303,11 @@ public final class DatumDbUtils {
 	 *        the name of the resource to load
 	 * @param clazz
 	 *        the class to load the resource from
-	 * @return the loaded data, never {@literal null}
+	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
-	 * @see #loadJsonDatumAndAuxiliaryResource(String, Class, Consumer,
-	 *      Consumer)
+	 * @see #loadJsonDatumAndAuxiliaryResource(String, Class, Function,
+	 *      Function)
 	 */
 	public static List<?> loadJsonDatumAndAuxiliaryResource(String resource, Class<?> clazz)
 			throws IOException {
@@ -328,15 +341,16 @@ public final class DatumDbUtils {
 	 * @param clazz
 	 *        the class to load the resource from
 	 * @param datumMapper
-	 *        optional consumer to adjust datum with
+	 *        optional function to adjust datum with
 	 * @param auxMapper
-	 *        optional consumer to adjust auxiliary datum with
-	 * @return the loaded data, never {@literal null}
+	 *        optional function to adjust auxiliary datum with
+	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 */
 	public static List<?> loadJsonDatumAndAuxiliaryResource(String resource, Class<?> clazz,
-			Consumer<GeneralNodeDatum> datumMapper, Consumer<GeneralNodeDatumAuxiliary> auxMapper)
+			@Nullable Function<GeneralNodeDatum, GeneralNodeDatum> datumMapper,
+			@Nullable Function<GeneralNodeDatumAuxiliary, GeneralNodeDatumAuxiliary> auxMapper)
 			throws IOException {
 		assert clazz != null;
 		List<Object> result = new ArrayList<>();
@@ -356,7 +370,7 @@ public final class DatumDbUtils {
 							GeneralNodeDatumAuxiliary.class);
 					if ( d != null ) {
 						if ( auxMapper != null ) {
-							auxMapper.accept(d);
+							d = auxMapper.apply(d);
 						}
 						result.add(d);
 					}
@@ -364,7 +378,7 @@ public final class DatumDbUtils {
 					GeneralNodeDatum d = JsonUtils.getObjectFromJSON(line, GeneralNodeDatum.class);
 					if ( d != null ) {
 						if ( datumMapper != null ) {
-							datumMapper.accept(d);
+							d = datumMapper.apply(d);
 						}
 						result.add(d);
 					}
@@ -394,7 +408,7 @@ public final class DatumDbUtils {
 	 *        the class to load the resource from
 	 * @param metadataProvider
 	 *        the metadata provider
-	 * @return the loaded data, never {@literal null}
+	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 * @see DatumJsonUtils#parseAggregateDatum(JsonParser,
@@ -437,7 +451,7 @@ public final class DatumDbUtils {
 	 *        the metadata provider
 	 * @param mapper
 	 *        an optional function to map the parsed datum with
-	 * @return the loaded data, never {@literal null}
+	 * @return the loaded data, never {@code null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 * @see DatumJsonUtils#parseAggregateDatum(JsonParser,
@@ -445,7 +459,7 @@ public final class DatumDbUtils {
 	 */
 	public static List<AggregateDatum> loadJsonAggregateDatumResource(String resource, Class<?> clazz,
 			ObjectDatumStreamMetadataProvider metadataProvider,
-			Function<AggregateDatum, AggregateDatum> mapper) throws IOException {
+			@Nullable Function<AggregateDatum, AggregateDatum> mapper) throws IOException {
 
 		List<AggregateDatum> result = new ArrayList<>();
 		JsonFactory factory = JsonFactory.builder().build();
@@ -463,7 +477,7 @@ public final class DatumDbUtils {
 				if ( AGG.matcher(line).find() ) {
 					JsonParser parser = factory.createParser(ObjectReadContext.empty(), line);
 					AggregateDatum d = DatumJsonUtils.parseAggregateDatum(parser, metadataProvider);
-					if ( mapper != null ) {
+					if ( d != null && mapper != null ) {
 						d = mapper.apply(d);
 					}
 					if ( d != null ) {
@@ -508,12 +522,14 @@ public final class DatumDbUtils {
 	 */
 	public static ObjectDatumStreamMetadata createMetadata(UUID streamId, String timeZoneId,
 			Iterable<GeneralNodeDatum> datums, NodeSourcePK nspk) {
+		final Long nodeId = nonnull(requireNonNullArgument(nspk, "nspk").getNodeId(), "Node ID");
+		final String sourceId = nonnull(nspk.getSourceId(), "Source ID");
 		Set<String> iNames = new LinkedHashSet<>(4);
 		Set<String> aNames = new LinkedHashSet<>(4);
 		Set<String> sNames = new LinkedHashSet<>(4);
 		for ( GeneralNodeDatum d : datums ) {
-			if ( d.getSamples() == null || !(d.getNodeId().equals(nspk.getNodeId())
-					&& d.getSourceId().equals(nspk.getSourceId())) ) {
+			if ( d.getSamples() == null
+					|| !(nodeId.equals(d.getNodeId()) && sourceId.equals(d.getSourceId())) ) {
 				continue;
 			}
 			DatumSamples s = d.getSamples();
@@ -527,9 +543,8 @@ public final class DatumDbUtils {
 				sNames.addAll(s.getStatus().keySet());
 			}
 		}
-		return new BasicObjectDatumStreamMetadata(streamId, timeZoneId, ObjectDatumKind.Node,
-				nspk.getNodeId(), nspk.getSourceId(),
-				iNames.isEmpty() ? null : iNames.toArray(String[]::new),
+		return new BasicObjectDatumStreamMetadata(streamId, timeZoneId, ObjectDatumKind.Node, nodeId,
+				sourceId, iNames.isEmpty() ? null : iNames.toArray(String[]::new),
 				aNames.isEmpty() ? null : aNames.toArray(String[]::new),
 				sNames.isEmpty() ? null : sNames.toArray(String[]::new));
 	}
@@ -547,10 +562,10 @@ public final class DatumDbUtils {
 	 *        the time zone ID
 	 * @return the resulting stream metadata
 	 */
-	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> insertDatumStream(Logger log,
+	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> insertDatumStream(@Nullable Logger log,
 			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums, String timeZoneId) {
 		final Map<NodeSourcePK, ObjectDatumStreamMetadata> result = new LinkedHashMap<>();
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement("""
 					INSERT INTO solardatm.da_datm (stream_id,ts,received,data_i,data_a,data_s,data_t)
 					VALUES (?::uuid,?,?,?::numeric[],?::numeric[],?::text[],?::text[])""")) {
@@ -576,6 +591,7 @@ public final class DatumDbUtils {
 							|| s.getInstantaneous().isEmpty() ) {
 						datumStmt.setNull(4, Types.OTHER);
 					} else {
+						@Nullable
 						BigDecimal[] numbers = new BigDecimal[iNames.length];
 						for ( int i = 0; i < iNames.length; i++ ) {
 							numbers[i] = s.getInstantaneousSampleBigDecimal(iNames[i]);
@@ -589,6 +605,7 @@ public final class DatumDbUtils {
 							|| s.getAccumulating().isEmpty() ) {
 						datumStmt.setNull(5, Types.OTHER);
 					} else {
+						@Nullable
 						BigDecimal[] numbers = new BigDecimal[aNames.length];
 						for ( int i = 0; i < aNames.length; i++ ) {
 							numbers[i] = s.getAccumulatingSampleBigDecimal(aNames[i]);
@@ -602,6 +619,7 @@ public final class DatumDbUtils {
 							|| s.getStatus().isEmpty() ) {
 						datumStmt.setNull(6, Types.OTHER);
 					} else {
+						@Nullable
 						String[] strings = new String[sNames.length];
 						for ( int i = 0; i < sNames.length; i++ ) {
 							strings[i] = s.getStatusSampleString(sNames[i]);
@@ -645,11 +663,13 @@ public final class DatumDbUtils {
 	 * @throws IOException
 	 *         if any error occurs parsing the resource
 	 */
-	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> insertDatumStreamWithAuxiliary(Logger log,
-			JdbcOperations jdbcTemplate, String resource, Class<?> clazz, String timeZoneId)
-			throws IOException {
+	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> insertDatumStreamWithAuxiliary(
+			@Nullable Logger log, JdbcOperations jdbcTemplate, String resource, Class<?> clazz,
+			String timeZoneId) throws IOException {
 		List<?> data = loadJsonDatumAndAuxiliaryResource(resource, clazz);
-		log.debug("Got test data: {}", data);
+		if ( log != null ) {
+			log.debug("Got test data: {}", data);
+		}
 		List<GeneralNodeDatum> datums = elementsOf(data, GeneralNodeDatum.class);
 		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
@@ -680,8 +700,8 @@ public final class DatumDbUtils {
 	 *        the datum time zone to use
 	 * @return the resulting stream ID
 	 */
-	public static UUID insertOneDatumStreamWithAuxiliary(Logger log, JdbcOperations jdbcTemplate,
-			String resource, Class<?> clazz, String timeZoneId) {
+	public static UUID insertOneDatumStreamWithAuxiliary(@Nullable Logger log,
+			JdbcOperations jdbcTemplate, String resource, Class<?> clazz, String timeZoneId) {
 		try {
 			return insertDatumStreamWithAuxiliary(log, jdbcTemplate, resource, clazz, timeZoneId)
 					.values().iterator().next().getStreamId();
@@ -727,7 +747,7 @@ public final class DatumDbUtils {
 	 * @param metas
 	 *        the metadata to insert
 	 */
-	public static void insertObjectDatumStreamMetadata(Logger log, JdbcOperations jdbcTemplate,
+	public static void insertObjectDatumStreamMetadata(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<? extends ObjectDatumStreamMetadata> metas) {
 		CommonDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, metas);
 	}
@@ -740,13 +760,79 @@ public final class DatumDbUtils {
 	 * @param con
 	 *        the JDBC connection to use
 	 * @param metas
-	 *        the metadata to insert, can be either ndoe or location
+	 *        the metadata to insert, can be either node or location
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static void insertObjectDatumStreamMetadata(Logger log, Connection con,
+	public static void insertObjectDatumStreamMetadata(@Nullable Logger log, Connection con,
 			Iterable<? extends ObjectDatumStreamMetadata> metas) throws SQLException {
 		CommonDbUtils.insertObjectDatumStreamMetadata(log, con, metas);
+	}
+
+	/**
+	 * Insert datum stream aliases.
+	 *
+	 * @param log
+	 *        an optional logger
+	 * @param jdbcTemplate
+	 *        the JDBC operations to use
+	 * @param aliases
+	 *        the aliases to insert
+	 * @since 2.8
+	 */
+	public static void insertObjectDatumStreamAliases(@Nullable Logger log, JdbcOperations jdbcTemplate,
+			Iterable<ObjectDatumStreamAliasEntity> aliases) {
+		jdbcTemplate.execute((ConnectionCallback<@Nullable Void>) con -> {
+			insertObjectDatumStreamAliases(log, con, aliases);
+			return null;
+		});
+	}
+
+	/**
+	 * Insert datum stream aliases.
+	 *
+	 * @param log
+	 *        an optional logger
+	 * @param con
+	 *        the JDBC connection to use
+	 * @param aliases
+	 *        the aliases to insert
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.8
+	 */
+	public static void insertObjectDatumStreamAliases(@Nullable Logger log, Connection con,
+			Iterable<ObjectDatumStreamAliasEntity> aliases) throws SQLException {
+		final Timestamp now = Timestamp.from(Instant.now());
+		try (PreparedStatement stmt = con.prepareStatement("""
+				INSERT INTO solardatm.da_datm_alias (
+					  stream_id
+					, created
+					, modified
+					, node_id
+					, source_id
+					, alias_node_id
+					, alias_source_id
+				) VALUES (?::UUID, ?, ?, ?, ?, ?, ?)
+				""")) {
+			for ( ObjectDatumStreamAliasEntity alias : aliases ) {
+				if ( alias.getKind() != ObjectDatumKind.Node ) {
+					throw new IllegalArgumentException("Only Node kind is supported.");
+				}
+				if ( log != null ) {
+					log.debug("Inserting ObjectDatumStreamAliasEntity {}", alias);
+				}
+				stmt.setString(1, alias.getStreamId().toString());
+				stmt.setTimestamp(2, Timestamp.from(alias.created()));
+				stmt.setTimestamp(3,
+						alias.getModified() != null ? Timestamp.from(alias.getModified()) : now);
+				stmt.setObject(4, alias.getOriginalObjectId());
+				stmt.setString(5, alias.getOriginalSourceId());
+				stmt.setObject(6, alias.getObjectId());
+				stmt.setString(7, alias.getSourceId());
+				stmt.execute();
+			}
+		}
 	}
 
 	/**
@@ -764,10 +850,10 @@ public final class DatumDbUtils {
 	 *        the time zone ID
 	 * @return the resulting stream metadata
 	 */
-	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> ingestDatumStream(Logger log,
+	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> ingestDatumStream(@Nullable Logger log,
 			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums, String timeZoneId) {
 		final Map<NodeSourcePK, ObjectDatumStreamMetadata> result = new LinkedHashMap<>();
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (CallableStatement datumStmt = con
 					.prepareCall("{? = call solardatm.store_datum(?,?,?,?,?)}")) {
 				datumStmt.registerOutParameter(1, Types.OTHER);
@@ -794,7 +880,9 @@ public final class DatumDbUtils {
 					Object id = datumStmt.getObject(1);
 					UUID streamId = (id instanceof UUID uuid ? uuid
 							: id != null ? UUID.fromString(id.toString()) : null);
-					result.computeIfAbsent(nspk, _ -> streamMetadata(jdbcTemplate, streamId));
+					if ( streamId != null ) {
+						result.computeIfAbsent(nspk, _ -> streamMetadata(jdbcTemplate, streamId));
+					}
 				}
 			}
 			return null;
@@ -814,12 +902,14 @@ public final class DatumDbUtils {
 	 * @param datums
 	 *        the datum to insert
 	 */
-	public static void insertDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate, UUID streamId,
-			Iterable<GeneralNodeDatumAuxiliary> datums) {
-		List<DatumAuxiliary> converted = StreamSupport.stream(datums.spliterator(), false)
-				.map(d -> new DatumAuxiliaryEntity(streamId, d.getCreated(), d.getType(), d.getCreated(),
-						d.getSamplesFinal(), d.getSamplesStart(), d.getNotes(), d.getMeta()))
-				.collect(Collectors.toList());
+	public static void insertDatumAuxiliary(@Nullable Logger log, JdbcOperations jdbcTemplate,
+			UUID streamId, Iterable<GeneralNodeDatumAuxiliary> datums) {
+		List<DatumAuxiliary> converted = StreamSupport.stream(datums.spliterator(), false).map(d -> {
+			final Instant ts = nonnull(d.getCreated(), "Created");
+			final DatumAuxiliaryType kind = nonnull(d.getType(), "Type");
+			return new DatumAuxiliaryEntity(streamId, ts, kind, ts, d.getSamplesFinal(),
+					d.getSamplesStart(), d.getNotes(), d.getMeta());
+		}).collect(Collectors.toList());
 		insertDatumAuxiliary(log, jdbcTemplate, converted);
 	}
 
@@ -833,15 +923,19 @@ public final class DatumDbUtils {
 	 * @param datums
 	 *        the datum to insert
 	 */
-	public static void insertDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
+	public static void insertDatumAuxiliary(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<DatumAuxiliary> datums) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement(
 					"insert into solardatm.da_datm_aux (stream_id,ts,atype,jdata_af,jdata_as) "
 							+ "VALUES (?::uuid,?,?::solardatm.da_datm_aux_type,?::jsonb,?::jsonb)")) {
 				for ( DatumAuxiliary d : datums ) {
-					String sf = getJSONString(d.getSamplesFinal().getA(), null);
-					String ss = getJSONString(d.getSamplesStart().getA(), null);
+					String sf = (d.getSamplesFinal() != null
+							? getJSONString(d.getSamplesFinal().getA(), null)
+							: null);
+					String ss = (d.getSamplesStart() != null
+							? getJSONString(d.getSamplesStart().getA(), null)
+							: null);
 					if ( log != null ) {
 						log.debug("Inserting DatumAuxiliary {}; {} -> {}", d.getId(), sf, ss);
 					}
@@ -867,8 +961,9 @@ public final class DatumDbUtils {
 	 * @param datums
 	 *        the datum to insert
 	 */
-	public static void insertDatum(Logger log, JdbcOperations jdbcTemplate, Iterable<Datum> datums) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+	public static void insertDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
+			Iterable<Datum> datums) {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement(insertDatumSql())) {
 				final Timestamp now = Timestamp.from(Instant.now());
 				for ( Datum d : datums ) {
@@ -995,9 +1090,9 @@ public final class DatumDbUtils {
 	 * @param datums
 	 *        the datum to insert
 	 */
-	public static void insertAggregateDatum(Logger log, JdbcOperations jdbcTemplate,
+	public static void insertAggregateDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<AggregateDatum> datums) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement rawStmt = con.prepareStatement(insertDatumSql());
 					PreparedStatement hourStmt = con
 							.prepareStatement(insertAggDatumSql(Aggregation.Hour));
@@ -1090,9 +1185,9 @@ public final class DatumDbUtils {
 	 *        the data to insert
 	 * @since 2.5
 	 */
-	public static void insertAuditNodeServiceValueDaily(Logger log, JdbcOperations jdbcTemplate,
-			Iterable<AuditNodeServiceValue> data) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+	public static void insertAuditNodeServiceValueDaily(@Nullable Logger log,
+			JdbcOperations jdbcTemplate, Iterable<AuditNodeServiceValue> data) {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement stmt = con.prepareStatement("""
 					INSERT INTO solardatm.aud_node_daily
 						(node_id, service, ts_start, cnt)
@@ -1125,9 +1220,9 @@ public final class DatumDbUtils {
 	 *        the data to insert
 	 * @since 2.5
 	 */
-	public static void insertAuditUserServiceValueDaily(Logger log, JdbcOperations jdbcTemplate,
-			Iterable<AuditUserServiceValue> data) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+	public static void insertAuditUserServiceValueDaily(@Nullable Logger log,
+			JdbcOperations jdbcTemplate, Iterable<AuditUserServiceValue> data) {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement stmt = con.prepareStatement("""
 					INSERT INTO solardatm.aud_user_daily
 						(user_id, service, ts_start, cnt)
@@ -1158,8 +1253,8 @@ public final class DatumDbUtils {
 	 * @param datums
 	 *        the datum to insert
 	 */
-	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	public static void insertAuditDatum(Logger log, JdbcOperations jdbcTemplate,
+	@SuppressWarnings({ "NullAway", "StatementSwitchToExpressionSwitch" }) // NullAway until supports <E extends @Nullable Object>
+	public static void insertAuditDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<AuditDatum> datums) {
 		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
 			try (PreparedStatement hourStmt = con.prepareStatement(insertAuditStmt(Aggregation.Hour));
@@ -1178,7 +1273,7 @@ public final class DatumDbUtils {
 						case Hour -> hourStmt;
 						case Day -> dayStmt;
 						case Month -> monthStmt;
-						default -> accStmt;
+						case null, default -> accStmt;
 					};
 					datumStmt.setString(1, d.getStreamId().toString());
 					datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
@@ -1199,7 +1294,8 @@ public final class DatumDbUtils {
 							datumStmt.setObject(6, d.getFluxDataInCount());
 							datumStmt.setObject(7, d.getDatumCount());
 							datumStmt.setObject(8, d.getDatumHourlyCount());
-							datumStmt.setBoolean(9, d.getDatumDailyCount() > 0);
+							datumStmt.setBoolean(9,
+									d.getDatumDailyCount() != null && d.getDatumTotalCount() > 0);
 							break;
 
 						case Month:
@@ -1210,10 +1306,11 @@ public final class DatumDbUtils {
 							datumStmt.setObject(7, d.getDatumCount());
 							datumStmt.setObject(8, d.getDatumHourlyCount());
 							datumStmt.setObject(9, d.getDatumDailyCount());
-							datumStmt.setBoolean(10, d.getDatumMonthlyCount() > 0);
+							datumStmt.setBoolean(10,
+									d.getDatumMonthlyCount() != null && d.getDatumMonthlyCount() > 0);
 							break;
 
-						default:
+						case null, default:
 							datumStmt.setObject(3, d.getDatumCount());
 							datumStmt.setObject(4, d.getDatumHourlyCount());
 							datumStmt.setObject(5, d.getDatumDailyCount());
@@ -1235,21 +1332,21 @@ public final class DatumDbUtils {
 			case Hour -> "aud_datm_io";
 			case Day -> "aud_datm_daily";
 			case Month -> "aud_datm_monthly";
-			default -> "aud_acc_datm_daily";
+			case null, default -> "aud_acc_datm_daily";
 		});
 		buf.append(" (stream_id,ts_start,");
 		buf.append(switch (kind) {
 			case Hour -> "prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count";
 			case Day -> "prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_pres";
 			case Month -> "prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres";
-			default -> "datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count";
+			case null, default -> "datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count";
 		});
 		buf.append(") VALUES (?::uuid,?,");
 		buf.append(switch (kind) {
 			case Hour -> "?,?,?,?,?";
 			case Day -> "?,?,?,?,?,?,?";
 			case Month -> "?,?,?,?,?,?,?,?";
-			default -> "?,?,?,?";
+			case null, default -> "?,?,?,?";
 		});
 		buf.append(")");
 		return buf.toString();
@@ -1261,7 +1358,7 @@ public final class DatumDbUtils {
 	 * includes side effects like "stale" record management.
 	 *
 	 * @param log
-	 *        a logger for debug message
+	 *        an optional logger for debug message
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param streamId
@@ -1269,9 +1366,9 @@ public final class DatumDbUtils {
 	 * @param datums
 	 *        the datum to insert
 	 */
-	public static void ingestDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate, UUID streamId,
-			Iterable<GeneralNodeDatumAuxiliary> datums) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+	public static void ingestDatumAuxiliary(@Nullable Logger log, JdbcOperations jdbcTemplate,
+			UUID streamId, Iterable<GeneralNodeDatumAuxiliary> datums) {
+		jdbcTemplate.execute((Connection con) -> {
 			try (CallableStatement stmt = con.prepareCall(
 					"{call solardatm.store_datum_aux(?,?,?::solardatm.da_datm_aux_type,?,?::jsonb,?::jsonb,?::jsonb)}")) {
 				for ( GeneralNodeDatumAuxiliary d : datums ) {
@@ -1281,7 +1378,7 @@ public final class DatumDbUtils {
 					}
 					stmt.setObject(1, streamId, Types.OTHER);
 					stmt.setTimestamp(2, Timestamp.from(d.getCreated()));
-					stmt.setString(3, d.getType().name());
+					stmt.setString(3, nonnull(d.getType(), "type").name());
 					stmt.setNull(4, Types.VARCHAR);
 					stmt.setString(5, d.getSampleJsonFinal());
 					stmt.setString(6, d.getSampleJsonStart());
@@ -1299,7 +1396,7 @@ public final class DatumDbUtils {
 	 * includes side effects like "stale" record management.
 	 *
 	 * @param log
-	 *        a logger for debug message
+	 *        an optional logger for debug message
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param from
@@ -1308,7 +1405,7 @@ public final class DatumDbUtils {
 	 *        the updated datum value
 	 * @return {@literal true} if a datum was found and moved
 	 */
-	public static boolean moveDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
+	public static boolean moveDatumAuxiliary(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			DatumAuxiliaryPK from, DatumAuxiliary to) {
 		return jdbcTemplate.execute((ConnectionCallback<Boolean>) con -> {
 			try (CallableStatement stmt = con.prepareCall(
@@ -1337,15 +1434,15 @@ public final class DatumDbUtils {
 	 * Insert stale aggregate datum records.
 	 *
 	 * @param log
-	 *        a logger for debug message
+	 *        an optional logger for debug message
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param stales
 	 *        the stale datum to insert
 	 */
-	public static void insertStaleAggregateDatum(Logger log, JdbcOperations jdbcTemplate,
+	public static void insertStaleAggregateDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<StaleAggregateDatum> stales) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement(
 					"INSERT INTO solardatm.agg_stale_datm (stream_id,ts_start,agg_kind) VALUES (?::uuid,?,?)")) {
 				for ( StaleAggregateDatum d : stales ) {
@@ -1363,9 +1460,12 @@ public final class DatumDbUtils {
 		});
 	}
 
-	private static void debugStaleAggregateDatumTable(Logger log, JdbcOperations jdbcTemplate,
+	private static void debugStaleAggregateDatumTable(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			String msg) {
-		List<Map<String, Object>> staleRows = jdbcTemplate
+		if ( log == null ) {
+			return;
+		}
+		List<Map<String, @Nullable Object>> staleRows = jdbcTemplate
 				.queryForList("SELECT * FROM solardatm.agg_stale_datm ORDER BY ts_start, stream_id");
 		log.debug("{}:\n{}", msg, staleRows.stream().map(Object::toString).collect(joining("\n")));
 	}
@@ -1375,25 +1475,27 @@ public final class DatumDbUtils {
 	 * compute aggregate data.
 	 *
 	 * @param log
-	 *        the logger to use
+	 *        the optional logger to use
 	 * @param jdbcTemplate
 	 *        the JDBC template to use
 	 * @param kinds
 	 *        the kinds of stale aggregate records to process; e.g.
 	 *        {@code Hour}, {@code Day}, or {@code Month}
 	 */
-	public static void processStaleAggregateDatum(Logger log, JdbcOperations jdbcTemplate,
+	public static void processStaleAggregateDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Set<Aggregation> kinds) {
 		debugStaleAggregateDatumTable(log, jdbcTemplate, "Stale datum at start");
 
 		List<Aggregation> sortedKinds = kinds.stream().sorted(Aggregation::compareLevel).toList();
 
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (CallableStatement cs = con
 					.prepareCall("{call solardatm.process_one_agg_stale_datm(?)}")) {
 				for ( Aggregation kind : sortedKinds ) {
 					int processed = processStaleAggregateKind(log, kind.getKey(), cs);
-					log.debug("Processed {} stale {} datum", processed, kind.getKey());
+					if ( log != null ) {
+						log.debug("Processed {} stale {} datum", processed, kind.getKey());
+					}
 					debugStaleAggregateDatumTable(log, jdbcTemplate,
 							"Stale datum after process " + kind.getKey());
 				}
@@ -1407,17 +1509,17 @@ public final class DatumDbUtils {
 	 * compute aggregate data for all aggregate kinds.
 	 *
 	 * @param log
-	 *        the logger to use
+	 *        the optional logger to use
 	 * @param jdbcTemplate
 	 *        the JDBC template to use
 	 * @see #processStaleAggregateDatum(Logger, JdbcOperations, Set)
 	 */
-	public static void processStaleAggregateDatum(Logger log, JdbcOperations jdbcTemplate) {
+	public static void processStaleAggregateDatum(@Nullable Logger log, JdbcOperations jdbcTemplate) {
 		processStaleAggregateDatum(log, jdbcTemplate,
 				EnumSet.of(Aggregation.Hour, Aggregation.Day, Aggregation.Month));
 	}
 
-	private static int processStaleAggregateKind(Logger log, String kind, CallableStatement cs)
+	private static int processStaleAggregateKind(@Nullable Logger log, String kind, CallableStatement cs)
 			throws SQLException {
 		int processed = 0;
 		while ( true ) {
@@ -1426,7 +1528,9 @@ public final class DatumDbUtils {
 				try (ResultSet rs = cs.getResultSet()) {
 					if ( rs.next() ) {
 						ObjectDatumId id = ObjectDatumIdRowMapper.INSTANCE.mapRow(rs, 1);
-						log.debug("Processed stale agg row: {}", id);
+						if ( log != null ) {
+							log.debug("Processed stale agg row: {}", id);
+						}
 						processed++;
 					} else {
 						break;
@@ -1443,15 +1547,15 @@ public final class DatumDbUtils {
 	 * Insert stale aggregate datum records.
 	 *
 	 * @param log
-	 *        a logger for debug message
+	 *        an optional logger for debug message
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param stales
 	 *        the stale datum to insert
 	 */
-	public static void insertStaleFluxDatum(Logger log, JdbcOperations jdbcTemplate,
+	public static void insertStaleFluxDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<StaleFluxDatum> stales) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement(
 					"INSERT INTO solardatm.agg_stale_flux (stream_id,agg_kind) VALUES (?::uuid,?)")) {
 				for ( StaleFluxDatum d : stales ) {
@@ -1472,15 +1576,15 @@ public final class DatumDbUtils {
 	 * Insert stale audit datum records.
 	 *
 	 * @param log
-	 *        a logger for debug message
+	 *        an optional logger for debug message
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param stales
 	 *        the stale datum to insert
 	 */
-	public static void insertStaleAuditDatum(Logger log, JdbcOperations jdbcTemplate,
+	public static void insertStaleAuditDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<StaleAuditDatum> stales) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (PreparedStatement datumStmt = con.prepareStatement(
 					"INSERT INTO solardatm.aud_stale_datm (stream_id,ts_start,aud_kind) VALUES (?::uuid,?,?)")) {
 				for ( StaleAuditDatum d : stales ) {
@@ -1503,26 +1607,28 @@ public final class DatumDbUtils {
 	 * compute audit data.
 	 *
 	 * @param log
-	 *        the logger to use
+	 *        an optional logger to use
 	 * @param jdbcTemplate
 	 *        the JDBC template to use
 	 * @param kinds
 	 *        the kinds of stale audit records to process; e.g. {@code None},
 	 *        {@code Hour}, {@code Day}, or {@code Month}
 	 */
-	public static void processStaleAuditDatum(Logger log, JdbcOperations jdbcTemplate,
+	public static void processStaleAuditDatum(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Set<Aggregation> kinds) {
 		debugStaleAuditDatumTable(log, jdbcTemplate, "Stale audit datum at start");
 
 		List<Aggregation> sortedKinds = kinds.stream().sorted(Aggregation::compareLevel).toList();
 
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((Connection con) -> {
 			try (CallableStatement cs = con
 					.prepareCall("{? = call solardatm.process_one_aud_stale_datm(?)}")) {
 				cs.registerOutParameter(1, Types.INTEGER);
 				for ( Aggregation kind : sortedKinds ) {
 					int processed = processStaleAuditKind(kind.getKey(), cs);
-					log.debug("Processed {} stale {} audit datum", processed, kind.getKey());
+					if ( log != null ) {
+						log.debug("Processed {} stale {} audit datum", processed, kind.getKey());
+					}
 					debugStaleAuditDatumTable(log, jdbcTemplate,
 							"Stale audit datum after process " + kind.getKey());
 				}
@@ -1536,12 +1642,12 @@ public final class DatumDbUtils {
 	 * compute audit data for all aggregate kinds.
 	 *
 	 * @param log
-	 *        the logger to use
+	 *        an optional logger to use
 	 * @param jdbcTemplate
 	 *        the JDBC template to use
 	 * @see #processStaleAggregateDatum(Logger, JdbcOperations, Set)
 	 */
-	public static void processStaleAuditDatum(Logger log, JdbcOperations jdbcTemplate) {
+	public static void processStaleAuditDatum(@Nullable Logger log, JdbcOperations jdbcTemplate) {
 		processStaleAuditDatum(log, jdbcTemplate,
 				EnumSet.of(Aggregation.None, Aggregation.Hour, Aggregation.Day, Aggregation.Month));
 	}
@@ -1559,8 +1665,12 @@ public final class DatumDbUtils {
 		return processed;
 	}
 
-	private static void debugStaleAuditDatumTable(Logger log, JdbcOperations jdbcTemplate, String msg) {
-		List<Map<String, Object>> staleRows = jdbcTemplate
+	private static void debugStaleAuditDatumTable(@Nullable Logger log, JdbcOperations jdbcTemplate,
+			String msg) {
+		if ( log == null ) {
+			return;
+		}
+		List<Map<String, @Nullable Object>> staleRows = jdbcTemplate
 				.queryForList("SELECT * FROM solardatm.aud_stale_datm ORDER BY ts_start, stream_id");
 		log.debug("{}:\n{}", msg, staleRows.stream().map(Object::toString).collect(joining("\n")));
 	}
@@ -1572,9 +1682,10 @@ public final class DatumDbUtils {
 	 *        the JDBC accessor
 	 * @param streamId
 	 *        the stream ID to get metadata for
-	 * @return the metadata, or {@literal null}
+	 * @return the metadata, or {@code null}
 	 */
-	public static ObjectDatumStreamMetadata streamMetadata(JdbcOperations jdbcTemplate, UUID streamId) {
+	public static @Nullable ObjectDatumStreamMetadata streamMetadata(JdbcOperations jdbcTemplate,
+			UUID streamId) {
 		List<ObjectDatumStreamMetadata> results = jdbcTemplate.query(
 				"SELECT stream_id, obj_id, source_id, names_i, names_a, names_s, jdata, kind, time_zone FROM solardatm.find_metadata_for_stream(?::uuid)",
 				ObjectDatumStreamMetadataRowMapper.INSTANCE, streamId);
@@ -1586,7 +1697,7 @@ public final class DatumDbUtils {
 	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<DatumAuxiliary> listDatumAuxiliary(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
@@ -1599,7 +1710,7 @@ public final class DatumDbUtils {
 	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<StaleAggregateDatum> listStaleAggregateDatum(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
@@ -1614,7 +1725,7 @@ public final class DatumDbUtils {
 	 *        the JDBC accessor
 	 * @param type
 	 *        the type of stale aggregate records to get
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<StaleAggregateDatum> listStaleAggregateDatum(JdbcOperations jdbcTemplate,
 			Aggregation type) {
@@ -1628,7 +1739,7 @@ public final class DatumDbUtils {
 	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<StaleAuditDatum> listStaleAuditDatum(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
@@ -1643,7 +1754,7 @@ public final class DatumDbUtils {
 	 *        the JDBC accessor
 	 * @param type
 	 *        the type of stale audit records to get
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<StaleAuditDatum> listStaleAuditDatum(JdbcOperations jdbcTemplate,
 			Aggregation type) {
@@ -1659,7 +1770,7 @@ public final class DatumDbUtils {
 	 *        the JDBC accessor
 	 * @param type
 	 *        the type of stale flux records to get
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<StaleFluxDatum> listStaleFluxDatum(JdbcOperations jdbcTemplate,
 			Aggregation type) {
@@ -1673,7 +1784,7 @@ public final class DatumDbUtils {
 	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<Datum> listDatum(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query("SELECT * FROM solardatm.da_datm ORDER BY stream_id, ts",
@@ -1685,7 +1796,7 @@ public final class DatumDbUtils {
 	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<ObjectDatumStreamMetadata> listNodeMetadata(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
@@ -1702,7 +1813,7 @@ public final class DatumDbUtils {
 	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<ObjectDatumStreamMetadata> listLocationMetadata(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
@@ -1721,7 +1832,7 @@ public final class DatumDbUtils {
 	 * @param kind
 	 *        the aggregation kind to load, e.g. {@code Hour}, {@code Day}, or
 	 *        {@code Month}
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<AggregateDatum> listAggregateDatum(JdbcOperations jdbcTemplate,
 			Aggregation kind) {
@@ -1756,7 +1867,7 @@ public final class DatumDbUtils {
 	 * @param kind
 	 *        the aggregation kind to load, e.g. {@code Hour}, {@code Day}, or
 	 *        {@code Month}
-	 * @return the results, never {@literal null}
+	 * @return the results, never {@code null}
 	 */
 	public static List<AuditDatum> listAuditDatum(JdbcOperations jdbcTemplate, Aggregation kind) {
 		String tableName;

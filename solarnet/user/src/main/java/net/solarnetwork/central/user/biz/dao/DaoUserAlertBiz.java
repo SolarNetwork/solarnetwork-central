@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.user.biz.UserAlertBiz;
@@ -42,10 +44,21 @@ public class DaoUserAlertBiz implements UserAlertBiz {
 	private final UserAlertDao userAlertDao;
 	private final UserAlertSituationDao userAlertSituationDao;
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param userAlertDao
+	 *        the user alert DAO
+	 * @param userAlertSituationDao
+	 *        the user alert situation DAO
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
 	public DaoUserAlertBiz(UserAlertDao userAlertDao, UserAlertSituationDao userAlertSituationDao) {
 		super();
-		this.userAlertDao = userAlertDao;
-		this.userAlertSituationDao = userAlertSituationDao;
+		this.userAlertDao = requireNonNullArgument(userAlertDao, "userAlertDao");
+		this.userAlertSituationDao = requireNonNullArgument(userAlertSituationDao,
+				"userAlertSituationDao");
 	}
 
 	@Override
@@ -62,7 +75,7 @@ public class DaoUserAlertBiz implements UserAlertBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public UserAlert alertSituation(Long alertId) {
+	public @Nullable UserAlert alertSituation(Long alertId) {
 		return userAlertDao.getAlertSituation(alertId);
 	}
 
@@ -74,10 +87,10 @@ public class DaoUserAlertBiz implements UserAlertBiz {
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED)
-	public UserAlert updateSituationStatus(Long alertId, UserAlertSituationStatus status) {
+	public @Nullable UserAlert updateSituationStatus(Long alertId, UserAlertSituationStatus status) {
 		UserAlert alert = alertSituation(alertId);
 		if ( alert != null && alert.getSituation() != null
-				&& !alert.getSituation().getStatus().equals(status) ) {
+				&& !status.equals(alert.getSituation().getStatus()) ) {
 			alert.getSituation().setStatus(status);
 			userAlertSituationDao.save(alert.getSituation());
 		}

@@ -36,14 +36,14 @@ public interface DatumAppEvent extends AppEvent {
 	/**
 	 * Get the node ID the event is for.
 	 * 
-	 * @return the node ID, never {@literal null}
+	 * @return the node ID, never {@code null}
 	 */
 	Long getNodeId();
 
 	/**
 	 * Get the source ID the event is for.
 	 * 
-	 * @return the source ID, never {@literal null}
+	 * @return the source ID, never {@code null}
 	 */
 	String getSourceId();
 

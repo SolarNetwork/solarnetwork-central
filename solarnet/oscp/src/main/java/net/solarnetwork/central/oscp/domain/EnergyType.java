@@ -47,7 +47,7 @@ public enum EnergyType implements CodedValue {
 
 	private final char code;
 
-	EnergyType(char code) {
+	private EnergyType(char code) {
 		this.code = code;
 	}
 

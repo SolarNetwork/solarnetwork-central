@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -62,24 +65,34 @@ public final class CloudDatumStreamPollTaskEntity
 	private Instant startAt;
 
 	/** A status message. */
-	private String message;
+	private @Nullable String message;
 
 	/** The service properties as JSON. */
-	private String servicePropsJson;
+	private @Nullable String servicePropsJson;
 
 	/** The service properties. */
-	private volatile transient Map<String, Object> serviceProps;
+	private volatile transient @Nullable Map<String, Object> serviceProps;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param id
 	 *        the primary key
+	 * @param state
+	 *        the state
+	 * @param executeAt
+	 *        the execute date
+	 * @param startAt
+	 *        the start date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CloudDatumStreamPollTaskEntity(UserLongCompositePK id) {
+	public CloudDatumStreamPollTaskEntity(UserLongCompositePK id, BasicClaimableJobState state,
+			Instant executeAt, Instant startAt) {
 		super(id);
+		this.state = requireNonNullArgument(state, "state");
+		this.executeAt = requireNonNullArgument(executeAt, "executeAt");
+		this.startAt = requireNonNullArgument(startAt, "startAt");
 	}
 
 	/**
@@ -89,16 +102,23 @@ public final class CloudDatumStreamPollTaskEntity
 	 *        the user ID
 	 * @param dataSourceId
 	 *        the data source ID
+	 * @param state
+	 *        the state
+	 * @param executeAt
+	 *        the execute date
+	 * @param startAt
+	 *        the start date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CloudDatumStreamPollTaskEntity(Long userId, Long dataSourceId) {
-		this(new UserLongCompositePK(userId, dataSourceId));
+	public CloudDatumStreamPollTaskEntity(Long userId, Long dataSourceId, BasicClaimableJobState state,
+			Instant executeAt, Instant startAt) {
+		this(new UserLongCompositePK(userId, dataSourceId), state, executeAt, startAt);
 	}
 
 	@Override
 	public CloudDatumStreamPollTaskEntity copyWithId(UserLongCompositePK id) {
-		var copy = new CloudDatumStreamPollTaskEntity(id);
+		var copy = new CloudDatumStreamPollTaskEntity(id, state, executeAt, startAt);
 		copyTo(copy);
 		return copy;
 	}
@@ -114,17 +134,17 @@ public final class CloudDatumStreamPollTaskEntity
 	}
 
 	@Override
-	public boolean isSameAs(CloudDatumStreamPollTaskEntity other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable CloudDatumStreamPollTaskEntity other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.state, other.state)
-				&& Objects.equals(this.executeAt, other.executeAt)
-				&& Objects.equals(this.startAt, other.startAt)
-				&& Objects.equals(this.message, other.message)
-				&& Objects.equals(getServiceProperties(), other.getServiceProperties())
+		return Objects.equals(this.state, o.state)
+				&& Objects.equals(this.executeAt, o.executeAt)
+				&& Objects.equals(this.startAt, o.startAt)
+				&& Objects.equals(this.message, o.message)
+				&& Objects.equals(getServiceProperties(), o.getServiceProperties())
 				;
 		// @formatter:on
 	}
@@ -166,9 +186,8 @@ public final class CloudDatumStreamPollTaskEntity
 	 *
 	 * @return the cloud datum stream ID
 	 */
-	public Long getDatumStreamId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getDatumStreamId() {
+		return id().getEntityId();
 	}
 
 	/**
@@ -176,7 +195,7 @@ public final class CloudDatumStreamPollTaskEntity
 	 *
 	 * @return the state
 	 */
-	public BasicClaimableJobState getState() {
+	public final BasicClaimableJobState getState() {
 		return state;
 	}
 
@@ -185,9 +204,11 @@ public final class CloudDatumStreamPollTaskEntity
 	 *
 	 * @param state
 	 *        the state to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setState(BasicClaimableJobState state) {
-		this.state = state;
+	public final void setState(BasicClaimableJobState state) {
+		this.state = requireNonNullArgument(state, "state");
 	}
 
 	/**
@@ -195,7 +216,7 @@ public final class CloudDatumStreamPollTaskEntity
 	 *
 	 * @return the date
 	 */
-	public Instant getStartAt() {
+	public final Instant getStartAt() {
 		return startAt;
 	}
 
@@ -204,9 +225,11 @@ public final class CloudDatumStreamPollTaskEntity
 	 *
 	 * @param startAt
 	 *        the date to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setStartAt(Instant startAt) {
-		this.startAt = startAt;
+	public final void setStartAt(Instant startAt) {
+		this.startAt = requireNonNullArgument(startAt, "startAt");
 	}
 
 	/**
@@ -214,7 +237,7 @@ public final class CloudDatumStreamPollTaskEntity
 	 *
 	 * @return the date
 	 */
-	public Instant getExecuteAt() {
+	public final Instant getExecuteAt() {
 		return executeAt;
 	}
 
@@ -223,9 +246,12 @@ public final class CloudDatumStreamPollTaskEntity
 	 *
 	 * @param executeAt
 	 *        the date to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setExecuteAt(Instant executeAt) {
-		this.executeAt = executeAt;
+	public final void setExecuteAt(Instant executeAt) {
+		this.executeAt = requireNonNullArgument(executeAt, "executeAt");
+		;
 	}
 
 	/**
@@ -233,7 +259,7 @@ public final class CloudDatumStreamPollTaskEntity
 	 *
 	 * @return the message
 	 */
-	public String getMessage() {
+	public final @Nullable String getMessage() {
 		return message;
 	}
 
@@ -243,18 +269,18 @@ public final class CloudDatumStreamPollTaskEntity
 	 * @param message
 	 *        the message to set
 	 */
-	public void setMessage(String message) {
+	public final void setMessage(@Nullable String message) {
 		this.message = message;
 	}
 
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
-	 *         properties available
+	 * @return a JSON encoded string, or {@code null} if no service properties
+	 *         available
 	 */
 	@JsonIgnore
-	public String getServicePropsJson() {
+	public final @Nullable String getServicePropsJson() {
 		return servicePropsJson;
 	}
 
@@ -272,7 +298,7 @@ public final class CloudDatumStreamPollTaskEntity
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setServicePropsJson(String json) {
+	public final void setServicePropsJson(@Nullable String json) {
 		servicePropsJson = json;
 		serviceProps = null;
 	}
@@ -288,7 +314,7 @@ public final class CloudDatumStreamPollTaskEntity
 	 * @return the service properties
 	 */
 	@JsonIgnore
-	public Map<String, Object> getServiceProps() {
+	public final @Nullable Map<String, Object> getServiceProps() {
 		if ( serviceProps == null && servicePropsJson != null ) {
 			serviceProps = JsonUtils.getStringMap(servicePropsJson);
 		}
@@ -307,7 +333,7 @@ public final class CloudDatumStreamPollTaskEntity
 	 *        the service properties to set
 	 */
 	@JsonSetter("serviceProperties")
-	public void setServiceProps(Map<String, Object> serviceProps) {
+	public final void setServiceProps(@Nullable Map<String, Object> serviceProps) {
 		this.serviceProps = serviceProps;
 		servicePropsJson = JsonUtils.getJSONString(serviceProps, null);
 	}
@@ -318,7 +344,7 @@ public final class CloudDatumStreamPollTaskEntity
 	 * @param props
 	 *        the properties to add
 	 */
-	public void putServiceProps(Map<String, Object> props) {
+	public final void putServiceProps(@Nullable Map<String, Object> props) {
 		Map<String, Object> serviceProps = getServiceProps();
 		if ( serviceProps == null ) {
 			serviceProps = props;
@@ -333,7 +359,7 @@ public final class CloudDatumStreamPollTaskEntity
 	 *
 	 * @return the service properties
 	 */
-	public Map<String, ?> getServiceProperties() {
+	public final @Nullable Map<String, ?> getServiceProperties() {
 		return getServiceProps();
 	}
 

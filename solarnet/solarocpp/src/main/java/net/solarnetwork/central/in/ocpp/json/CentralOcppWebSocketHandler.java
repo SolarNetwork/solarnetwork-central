@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -89,7 +90,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	private UserEventAppenderBiz userEventAppenderBiz;
 	private ChargePointStatusDao chargePointStatusDao;
 	private ChargePointActionStatusUpdateDao chargePointActionStatusUpdateDao;
-	private Function<Object, ChargePointConnectorKey> connectorIdExtractor;
+	private Function<Object, @Nullable ChargePointConnectorKey> connectorIdExtractor;
 	private ApplicationMetadata applicationMetadata;
 	private String instructionTopic;
 
@@ -121,7 +122,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param subProtocols
 	 *        the WebSocket sub-protocols
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public CentralOcppWebSocketHandler(Class<C> chargePointActionClass,
 			Class<S> centralSystemActionClass, ErrorCodeResolver errorCodeResolver,
@@ -166,7 +167,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param subProtocols
 	 *        the WebSocket sub-protocols
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public CentralOcppWebSocketHandler(Clock clock, StatTracker stats, Class<C> chargePointActionClass,
 			Class<S> centralSystemActionClass, ErrorCodeResolver errorCodeResolver,
@@ -560,7 +561,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * 
 	 * @return the function
 	 */
-	public Function<Object, ChargePointConnectorKey> getConnectorIdExtractor() {
+	public Function<Object, @Nullable ChargePointConnectorKey> getConnectorIdExtractor() {
 		return connectorIdExtractor;
 	}
 
@@ -570,15 +571,16 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param connectorIdExtractor
 	 *        the function to set
 	 */
-	public void setConnectorIdExtractor(Function<Object, ChargePointConnectorKey> connectorIdExtractor) {
+	public void setConnectorIdExtractor(
+			Function<Object, @Nullable ChargePointConnectorKey> connectorIdExtractor) {
 		this.connectorIdExtractor = connectorIdExtractor;
 	}
 
 	/**
 	 * Get the instruction topic to listen to for OCPP messages.
 	 * 
-	 * @return the instruction topic to listen to, or {@literal null} to not
-	 *         look for OCPP instructions
+	 * @return the instruction topic to listen to, or {@code null} to not look
+	 *         for OCPP instructions
 	 * @since 2.6
 	 */
 	public String getInstructionTopic() {
@@ -613,7 +615,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param shutdownTaskMaxWait
 	 *        the maximum wait time to set
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 2.7
 	 */
 	public void setShutdownTaskMaxWait(Duration shutdownTaskMaxWait) {
@@ -640,7 +642,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param shutdownTaskPostDelay
 	 *        the delay to set
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @since 2.7
 	 */
 	public void setShutdownTaskPostDelay(Duration shutdownTaskPostDelay) {

@@ -51,7 +51,7 @@ public class InstructionEndpointAuthenticationProvider implements Authentication
 	 * @param passwordEncoder
 	 *        the password encoder
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InstructionEndpointAuthenticationProvider(CredentialAuthorizationDao authDao,
 			PasswordEncoder passwordEncoder) {

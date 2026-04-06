@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.security;
 
-import java.util.Map;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.Map.Entry;
+import java.util.SequencedMap;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.service.PasswordEncoder;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Password encoder that delegates to a configurable list of Spring Security
@@ -34,8 +37,7 @@ import net.solarnetwork.util.ObjectUtils;
  *
  * <p>
  * The first entry in the map according to iteration order will be used as the
- * primary encoder. Thus, a map implementation like
- * {@link java.util.LinkedHashMap} is recommended.
+ * primary encoder.
  * </p>
  *
  * @author matt
@@ -44,7 +46,7 @@ import net.solarnetwork.util.ObjectUtils;
 public class DelegatingPasswordEncoder
 		implements PasswordEncoder, org.springframework.security.crypto.password.PasswordEncoder {
 
-	private final Map<String, org.springframework.security.crypto.password.PasswordEncoder> encoders;
+	private final SequencedMap<String, org.springframework.security.crypto.password.PasswordEncoder> encoders;
 
 	/**
 	 * Constructor.
@@ -52,16 +54,16 @@ public class DelegatingPasswordEncoder
 	 * @param encoders
 	 *        the encoders to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DelegatingPasswordEncoder(
-			Map<String, org.springframework.security.crypto.password.PasswordEncoder> encoders) {
+			SequencedMap<String, org.springframework.security.crypto.password.PasswordEncoder> encoders) {
 		super();
-		this.encoders = ObjectUtils.requireNonNullArgument(encoders, "encoders");
+		this.encoders = requireNonNullArgument(encoders, "encoders");
 	}
 
 	@Override
-	public boolean isPasswordEncrypted(CharSequence password) {
+	public boolean isPasswordEncrypted(@Nullable CharSequence password) {
 		if ( encoders == null || password == null ) {
 			return false;
 		}
@@ -75,21 +77,21 @@ public class DelegatingPasswordEncoder
 	}
 
 	@Override
-	public String encode(CharSequence rawPassword) {
+	public @Nullable String encode(@Nullable CharSequence rawPassword) {
 		if ( encoders == null || encoders.isEmpty() ) {
 			throw new RuntimeException("No password encoders configured");
 		}
-		Map.Entry<String, org.springframework.security.crypto.password.PasswordEncoder> entry = encoders
-				.entrySet().iterator().next();
-		return entry.getValue().encode(rawPassword);
+		Entry<String, org.springframework.security.crypto.password.PasswordEncoder> entry = encoders
+				.firstEntry();
+		return nonnull(entry.getValue(), "encoder").encode(rawPassword);
 	}
 
 	@Override
-	public boolean matches(CharSequence rawPassword, String encodedPassword) {
+	public boolean matches(@Nullable CharSequence rawPassword, @Nullable String encodedPassword) {
 		if ( encodedPassword == null || rawPassword == null ) {
 			return false;
 		}
-		for ( Map.Entry<String, org.springframework.security.crypto.password.PasswordEncoder> entry : encoders
+		for ( Entry<String, org.springframework.security.crypto.password.PasswordEncoder> entry : encoders
 				.entrySet() ) {
 			String prefixTag = entry.getKey();
 			if ( encodedPassword.startsWith(prefixTag) ) {

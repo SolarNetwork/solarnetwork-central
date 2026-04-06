@@ -56,7 +56,6 @@ public class DatumExportJobsConfig {
 	public ManagedJob datumExportProcessorJob() {
 		DatumExportProcessorJob job = new DatumExportProcessorJob(datumExportTaskInfoDao,
 				datumExportBiz);
-		job.setId("DatumExportProcessor");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
@@ -65,7 +64,6 @@ public class DatumExportJobsConfig {
 	@Bean
 	public ManagedJob datumExportTaskCleanerJob() {
 		DatumExportTaskCleanerJob job = new DatumExportTaskCleanerJob(datumExportTaskInfoDao);
-		job.setId("DatumExportTaskCleaner");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}

@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -383,7 +382,7 @@ public class XsltTransformServiceTests {
 				XsltTransformService.SETTING_XSLT_CACHE_DURATION, 600L));
 
 		// WHEN
-		var params = Collections.singletonMap(XsltTransformService.PARAM_CONFIGURATION_CACHE_KEY, "a");
+		var params = Map.of(XsltTransformService.PARAM_CONFIGURATION_CACHE_KEY, "a");
 		Iterable<Datum> results = service.transform(xmlInput, XsltTransformService.XML_TYPE, conf,
 				params);
 		Iterable<Datum> results2 = service.transform(xmlInput2, XsltTransformService.XML_TYPE, conf,

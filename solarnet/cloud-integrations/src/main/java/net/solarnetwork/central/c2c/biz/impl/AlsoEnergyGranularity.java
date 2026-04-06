@@ -142,7 +142,7 @@ public enum AlsoEnergyGranularity {
 	 *
 	 * @param value
 	 *        the enumeration name or key value, case-insensitve
-	 * @return the enum; if {@code value} is {@literal null} or empty then
+	 * @return the enum; if {@code value} is {@code null} or empty then
 	 *         {@link #Raw} is returned
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value

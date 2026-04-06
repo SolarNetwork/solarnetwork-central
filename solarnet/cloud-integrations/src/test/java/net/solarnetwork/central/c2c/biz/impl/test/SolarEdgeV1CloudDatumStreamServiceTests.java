@@ -32,10 +32,14 @@ import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeDeviceType.Meter;
 import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeResolution.FifteenMinute;
 import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudDatumStreamService.SITE_ID_FILTER;
 import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.BASE_URI;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.SpelExpression;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_ALT;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -46,6 +50,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -104,7 +109,6 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
@@ -117,7 +121,6 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import tools.jackson.databind.JsonNode;
@@ -153,8 +156,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 	@Captor
 	private ArgumentCaptor<OAuth2AuthorizeRequest> authRequestCaptor;
 
-	@Mock
-	private TextEncryptor encryptor;
+	private TextEncryptor encryptor = noOpText();
 
 	@Mock
 	private CloudIntegrationConfigurationDao integrationDao;
@@ -230,66 +232,47 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		integration.setServiceProps(Map.of(API_KEY_SETTING, apiKey));
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, Inverter, inverterComponentId, "W"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("watts");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(componentValueRef(siteId, Inverter, inverterComponentId, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, Inverter, inverterComponentId, "TotWhExp"));
 		c1p2.setEnabled(true);
-		c1p2.setPropertyType(DatumSamplesType.Accumulating);
-		c1p2.setPropertyName("wattHours");
-		c1p2.setValueType(CloudDatumStreamValueType.Reference);
-		c1p2.setValueReference(componentValueRef(siteId, Inverter, inverterComponentId, "TotWhExp"));
 
 		final CloudDatumStreamPropertyConfiguration c2p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 3, now());
+				TEST_USER_ID, mapping.getConfigId(), 3, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, Meter, meterComponentId, "W"));
 		c2p1.setEnabled(true);
-		c2p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c2p1.setPropertyName("watts");
-		c2p1.setValueType(CloudDatumStreamValueType.Reference);
-		c2p1.setValueReference(componentValueRef(siteId, Meter, meterComponentId, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c2p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 4, now());
+				TEST_USER_ID, mapping.getConfigId(), 4, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, Meter, meterComponentId, "TotWh"));
 		c2p2.setEnabled(true);
-		c2p2.setPropertyType(DatumSamplesType.Accumulating);
-		c2p2.setPropertyName("wattHours");
-		c2p2.setValueType(CloudDatumStreamValueType.Reference);
-		c2p2.setValueReference(componentValueRef(siteId, Meter, meterComponentId, "TotWh"));
 
 		final CloudDatumStreamPropertyConfiguration c3p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 3, now());
+				TEST_USER_ID, mapping.getConfigId(), 3, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, Battery, batteryComponentId, "W"));
 		c3p1.setEnabled(true);
-		c3p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c3p1.setPropertyName("watts");
-		c3p1.setValueType(CloudDatumStreamValueType.Reference);
-		c3p1.setValueReference(componentValueRef(siteId, Battery, batteryComponentId, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c3p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 4, now());
+				TEST_USER_ID, mapping.getConfigId(), 4, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, Battery, batteryComponentId, "TotWhExp"));
 		c3p2.setEnabled(true);
-		c3p2.setPropertyType(DatumSamplesType.Accumulating);
-		c3p2.setPropertyName("wattHours");
-		c3p2.setValueType(CloudDatumStreamValueType.Reference);
-		c3p2.setValueReference(componentValueRef(siteId, Battery, batteryComponentId, "TotWhExp"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1, c1p2, c2p1, c2p2, c3p1, c3p2));
@@ -298,9 +281,8 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -478,76 +460,55 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		integration.setServiceProps(Map.of(API_KEY_SETTING, apiKey));
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1a = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, Inverter, inverterComponentId1, "W"));
 		c1p1a.setEnabled(true);
-		c1p1a.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1a.setPropertyName("watts");
-		c1p1a.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1a.setValueReference(componentValueRef(siteId, Inverter, inverterComponentId1, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c1p2a = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, Inverter, inverterComponentId1, "TotWhExp"));
 		c1p2a.setEnabled(true);
-		c1p2a.setPropertyType(DatumSamplesType.Accumulating);
-		c1p2a.setPropertyName("wattHours");
-		c1p2a.setValueType(CloudDatumStreamValueType.Reference);
-		c1p2a.setValueReference(componentValueRef(siteId, Inverter, inverterComponentId1, "TotWhExp"));
 
 		final CloudDatumStreamPropertyConfiguration c1p1b = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 3, now());
+				TEST_USER_ID, mapping.getConfigId(), 3, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, Inverter, inverterComponentId2, "W"));
 		c1p1b.setEnabled(true);
-		c1p1b.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1b.setPropertyName("watts");
-		c1p1b.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1b.setValueReference(componentValueRef(siteId, Inverter, inverterComponentId2, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c1p2b = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 4, now());
+				TEST_USER_ID, mapping.getConfigId(), 4, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, Inverter, inverterComponentId2, "TotWhExp"));
 		c1p2b.setEnabled(true);
-		c1p2b.setPropertyType(DatumSamplesType.Accumulating);
-		c1p2b.setPropertyName("wattHours");
-		c1p2b.setValueType(CloudDatumStreamValueType.Reference);
-		c1p2b.setValueReference(componentValueRef(siteId, Inverter, inverterComponentId2, "TotWhExp"));
 
 		final CloudDatumStreamPropertyConfiguration c2p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 5, now());
+				TEST_USER_ID, mapping.getConfigId(), 5, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, Meter, meterComponentId, "W"));
 		c2p1.setEnabled(true);
-		c2p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c2p1.setPropertyName("watts");
-		c2p1.setValueType(CloudDatumStreamValueType.Reference);
-		c2p1.setValueReference(componentValueRef(siteId, Meter, meterComponentId, "W"));
 
 		final CloudDatumStreamPropertyConfiguration c2p2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 6, now());
+				TEST_USER_ID, mapping.getConfigId(), 6, now(), Accumulating, "wattHours", Reference,
+				componentValueRef(siteId, Meter, meterComponentId, "TotWh"));
 		c2p2.setEnabled(true);
-		c2p2.setPropertyType(DatumSamplesType.Accumulating);
-		c2p2.setPropertyName("wattHours");
-		c2p2.setValueType(CloudDatumStreamValueType.Reference);
-		c2p2.setValueReference(componentValueRef(siteId, Meter, meterComponentId, "TotWh"));
 
 		final CloudDatumStreamPropertyConfiguration c2p3 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 7, now());
+				TEST_USER_ID, mapping.getConfigId(), 7, now(), Instantaneous, "invWattsTot",
+				SpelExpression,
+				"""
+						sourceId.contains("MET") ? sum(latestMatching("INV/*", timestamp).![watts]) : null
+						""");
 		c2p3.setEnabled(true);
-		c2p3.setPropertyType(DatumSamplesType.Instantaneous);
-		c2p3.setPropertyName("invWattsTot");
-		c2p3.setValueType(CloudDatumStreamValueType.SpelExpression);
-		c2p3.setValueReference("""
-				sourceId.contains("MET") ? sum(latestMatching("INV/*", timestamp).![watts]) : null
-				""");
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1a, c1p2a, c1p1b, c1p2b, c2p1, c2p2, c2p3));
@@ -556,9 +517,8 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -872,62 +832,48 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		integration.setServiceProps(Map.of(API_KEY_SETTING, apiKey));
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration invWattsProp = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				"/{siteId}/inv/*/W");
 		invWattsProp.setEnabled(true);
-		invWattsProp.setPropertyType(DatumSamplesType.Instantaneous);
-		invWattsProp.setPropertyName("watts");
-		invWattsProp.setValueType(CloudDatumStreamValueType.Reference);
-		invWattsProp.setValueReference("/{siteId}/inv/*/W");
 
 		final CloudDatumStreamPropertyConfiguration invWattHoursProp = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now(), Accumulating, "wattHours", Reference,
+				"/{siteId}/inv/*/TotWhExp");
 		invWattHoursProp.setEnabled(true);
-		invWattHoursProp.setPropertyType(DatumSamplesType.Accumulating);
-		invWattHoursProp.setPropertyName("wattHours");
-		invWattHoursProp.setValueType(CloudDatumStreamValueType.Reference);
-		invWattHoursProp.setValueReference("/{siteId}/inv/*/TotWhExp");
 
 		final CloudDatumStreamPropertyConfiguration meterWattsProp = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 3, now());
+				TEST_USER_ID, mapping.getConfigId(), 3, now(), Instantaneous, "watts", Reference,
+				"/{siteId}/met/*/W");
 		meterWattsProp.setEnabled(true);
-		meterWattsProp.setPropertyType(DatumSamplesType.Instantaneous);
-		meterWattsProp.setPropertyName("watts");
-		meterWattsProp.setValueType(CloudDatumStreamValueType.Reference);
-		meterWattsProp.setValueReference("/{siteId}/met/*/W");
 
 		final CloudDatumStreamPropertyConfiguration meterWattsExprProp = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 4, now());
+				TEST_USER_ID, mapping.getConfigId(), 4, now(), Instantaneous, "wattsInvSum",
+				SpelExpression,
+				"""
+						sourceId.contains("GEN") ? sum(latestMatching("INV/*", timestamp).![watts]) : null
+						""");
 		meterWattsExprProp.setEnabled(true);
-		meterWattsExprProp.setPropertyType(DatumSamplesType.Instantaneous);
-		meterWattsExprProp.setPropertyName("wattsInvSum");
-		meterWattsExprProp.setValueType(CloudDatumStreamValueType.SpelExpression);
-		meterWattsExprProp.setValueReference("""
-				sourceId.contains("GEN") ? sum(latestMatching("INV/*", timestamp).![watts]) : null
-				""");
 
 		final CloudDatumStreamPropertyConfiguration meterWattHoursExprProp = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 5, now());
+				TEST_USER_ID, mapping.getConfigId(), 5, now(), Accumulating, "wattHoursInvSum",
+				SpelExpression,
+				"""
+						sourceId.contains("GEN") ? sum(latestMatching("INV/*", timestamp).![wattHours]) : null
+						""");
 		meterWattHoursExprProp.setEnabled(true);
-		meterWattHoursExprProp.setPropertyType(DatumSamplesType.Accumulating);
-		meterWattHoursExprProp.setPropertyName("wattHoursInvSum");
-		meterWattHoursExprProp.setValueType(CloudDatumStreamValueType.SpelExpression);
-		meterWattHoursExprProp.setValueReference("""
-				sourceId.contains("GEN") ? sum(latestMatching("INV/*", timestamp).![wattHours]) : null
-				""");
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(invWattsProp, invWattHoursProp, meterWattsProp, meterWattsExprProp,
@@ -937,9 +883,8 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -1152,26 +1097,22 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		integration.setServiceProps(Map.of(API_KEY_SETTING, apiKey));
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				componentValueRef(siteId, Inverter, inverterComponentId, "W"));
 		c1p1.setEnabled(true);
-		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
-		c1p1.setPropertyName("watts");
-		c1p1.setValueType(CloudDatumStreamValueType.Reference);
-		c1p1.setValueReference(componentValueRef(siteId, Inverter, inverterComponentId, "W"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(c1p1));
@@ -1180,9 +1121,8 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 		// @formatter:off
@@ -1262,26 +1202,22 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		integration.setServiceProps(Map.of(API_KEY_SETTING, apiKey));
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				placeholderComponentValueRef(Inverter, "W"));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(placeholderComponentValueRef(Inverter, "W"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -1290,9 +1226,8 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -1439,26 +1374,22 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		integration.setServiceProps(Map.of(API_KEY_SETTING, apiKey));
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
-				TEST_USER_ID, randomLong(), now());
-		mapping.setIntegrationId(integration.getConfigId());
+				TEST_USER_ID, randomLong(), now(), randomString(), integration.getConfigId());
 
 		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, mapping.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now(), Instantaneous, "watts", Reference,
+				placeholderComponentValueRef(Inverter, "W"));
 		prop1.setEnabled(true);
-		prop1.setPropertyType(DatumSamplesType.Instantaneous);
-		prop1.setPropertyName("watts");
-		prop1.setValueType(CloudDatumStreamValueType.Reference);
-		prop1.setValueReference(placeholderComponentValueRef(Inverter, "W"));
 
 		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1));
@@ -1467,9 +1398,8 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString(), ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(mapping.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
 
@@ -1610,7 +1540,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		integration.setServiceProps(Map.of(API_KEY_SETTING, apiKey));
 
 		given(integrationDao.get(integration.getId())).willReturn(integration);

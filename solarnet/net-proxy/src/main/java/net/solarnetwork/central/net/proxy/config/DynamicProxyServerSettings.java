@@ -25,6 +25,7 @@ package net.solarnetwork.central.net.proxy.config;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -54,7 +55,7 @@ public record DynamicProxyServerSettings(List<String> bindAddresses, Integer por
 	 *
 	 * @return the socket addresses
 	 */
-	public SocketAddress[] bindSocketAddresses() {
+	public SocketAddress @Nullable [] bindSocketAddresses() {
 		if ( bindAddresses == null || bindAddresses.isEmpty() ) {
 			return null;
 		}

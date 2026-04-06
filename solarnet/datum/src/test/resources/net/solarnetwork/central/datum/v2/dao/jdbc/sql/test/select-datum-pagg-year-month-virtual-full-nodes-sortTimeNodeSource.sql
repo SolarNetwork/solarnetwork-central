@@ -33,7 +33,7 @@ WITH rs AS (
 		s.source_rank,
 		s.names_i,
 		s.names_a,
-		ds.ts,
+		ds.ts_start AS ts,
 		ds.data_i,
 		ds.data_a,
 		ds.data_s,
@@ -43,7 +43,7 @@ WITH rs AS (
 	FROM s
 	INNER JOIN (
 		SELECT datum.stream_id,
-			date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
+			date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,
 			(solardatm.rollup_agg_data(
 				(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
 				ORDER BY datum.ts_start)).*
@@ -62,7 +62,7 @@ WITH rs AS (
 		s.source_rank,
 		s.names_i,
 		s.names_a,
-		ds.ts,
+		ds.ts_start AS ts,
 		ds.data_i,
 		ds.data_a,
 		ds.data_s,
@@ -72,7 +72,7 @@ WITH rs AS (
 	FROM s
 	INNER JOIN (
 		SELECT datum.stream_id,
-			date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
+			date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,
 			(solardatm.rollup_agg_data(
 				(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
 				ORDER BY datum.ts_start)).*
@@ -91,7 +91,7 @@ WITH rs AS (
 		s.source_rank,
 		s.names_i,
 		s.names_a,
-		ds.ts,
+		ds.ts_start AS ts,
 		ds.data_i,
 		ds.data_a,
 		ds.data_s,
@@ -101,7 +101,7 @@ WITH rs AS (
 	FROM s
 	INNER JOIN (
 		SELECT datum.stream_id,
-			date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
+			date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,
 			(solardatm.rollup_agg_data(
 				(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
 				ORDER BY datum.ts_start)).*
@@ -200,7 +200,7 @@ WITH rs AS (
 , datum AS (
 	SELECT
 		  COALESCE(di_ary.stream_id, da_ary.stream_id) AS stream_id
-		, COALESCE(di_ary.ts, da_ary.ts) AS ts
+		, COALESCE(di_ary.ts, da_ary.ts) AS ts_start
 		, di_ary.data_i
 		, da_ary.data_a
 		, NULL::BIGINT[] AS data_s
@@ -215,4 +215,4 @@ WITH rs AS (
 SELECT datum.*, vs.node_id, vs.source_id
 FROM datum
 INNER JOIN vs ON vs.vstream_id = datum.stream_id
-ORDER BY ts, node_id, source_id
+ORDER BY ts_start, node_id, source_id

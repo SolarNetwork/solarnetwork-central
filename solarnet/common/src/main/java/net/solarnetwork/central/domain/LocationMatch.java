@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.math.BigDecimal;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.EntityMatch;
 
 /**
@@ -38,6 +39,7 @@ public interface LocationMatch extends EntityMatch {
 	 * 
 	 * @return the location name
 	 */
+	@Nullable
 	String getName();
 
 	/**
@@ -45,6 +47,7 @@ public interface LocationMatch extends EntityMatch {
 	 * 
 	 * @return 2-character country code
 	 */
+	@Nullable
 	String getCountry();
 
 	/**
@@ -52,6 +55,7 @@ public interface LocationMatch extends EntityMatch {
 	 * 
 	 * @return region identifier
 	 */
+	@Nullable
 	String getRegion();
 
 	/**
@@ -59,6 +63,7 @@ public interface LocationMatch extends EntityMatch {
 	 * 
 	 * @return state or province identifier
 	 */
+	@Nullable
 	String getStateOrProvince();
 
 	/**
@@ -66,6 +71,7 @@ public interface LocationMatch extends EntityMatch {
 	 * 
 	 * @return postal code
 	 */
+	@Nullable
 	String getPostalCode();
 
 	/**
@@ -73,6 +79,7 @@ public interface LocationMatch extends EntityMatch {
 	 * 
 	 * @return locality
 	 */
+	@Nullable
 	String getLocality();
 
 	/**
@@ -80,6 +87,7 @@ public interface LocationMatch extends EntityMatch {
 	 * 
 	 * @return street
 	 */
+	@Nullable
 	String getStreet();
 
 	/**
@@ -87,6 +95,7 @@ public interface LocationMatch extends EntityMatch {
 	 * 
 	 * @return latitude
 	 */
+	@Nullable
 	BigDecimal getLatitude();
 
 	/**
@@ -94,6 +103,7 @@ public interface LocationMatch extends EntityMatch {
 	 * 
 	 * @return longitude
 	 */
+	@Nullable
 	BigDecimal getLongitude();
 
 	/**
@@ -102,6 +112,7 @@ public interface LocationMatch extends EntityMatch {
 	 * @return the elevation
 	 * @since 1.2
 	 */
+	@Nullable
 	BigDecimal getElevation();
 
 }

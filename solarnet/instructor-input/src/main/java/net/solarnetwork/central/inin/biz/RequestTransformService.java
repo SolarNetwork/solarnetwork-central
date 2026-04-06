@@ -24,6 +24,7 @@ package net.solarnetwork.central.inin.biz;
 
 import java.io.IOException;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.domain.Identity;
@@ -69,6 +70,6 @@ public interface RequestTransformService
 	 *         if an IO error occurs
 	 */
 	Iterable<NodeInstruction> transformInput(Object input, MimeType type,
-			IdentifiableConfiguration config, Map<String, ?> parameters) throws IOException;
+			IdentifiableConfiguration config, @Nullable Map<String, ?> parameters) throws IOException;
 
 }

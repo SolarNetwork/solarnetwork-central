@@ -1,60 +1,64 @@
 /* ==================================================================
  * DatumRollupCriteria.java - 14/11/2020 4:55:30 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 
 /**
  * Search criteria for datum rollup queries.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface DatumRollupCriteria {
 
 	/**
 	 * Get the rollup type.
-	 * 
+	 *
 	 * <p>
 	 * This should always return the first value from
 	 * {@link #getDatumRollupTypes()}.
 	 * </p>
-	 * 
-	 * @return the rollup, or {@literal null} for no rollup
+	 *
+	 * @return the rollup, or {@code null} for no rollup
 	 */
-	DatumRollupType getDatumRollupType();
+	default @Nullable DatumRollupType getDatumRollupType() {
+		final var array = getDatumRollupTypes();
+		return (array != null && array.length > 0 ? array[0] : null);
+	}
 
 	/**
 	 * Get an ordered list of rollup types.
-	 * 
-	 * @return the rollup values, or {@literal null} for no rollup
+	 *
+	 * @return the rollup values, or {@code null} for no rollup
 	 */
-	DatumRollupType[] getDatumRollupTypes();
+	DatumRollupType @Nullable [] getDatumRollupTypes();
 
 	/**
 	 * Test if this filter has any datum rollup criteria.
-	 * 
+	 *
 	 * @return {@literal true} if the datum rollup type is non-null and not
 	 *         {@code None}
 	 */
@@ -64,7 +68,7 @@ public interface DatumRollupCriteria {
 
 	/**
 	 * Test if a particular rollup type is present.
-	 * 
+	 *
 	 * @param type
 	 *        the type to search for
 	 * @return {@literal true} if {@code type} is found
@@ -80,6 +84,40 @@ public interface DatumRollupCriteria {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Get the first rollup type.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasDatumRollupCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return the first node ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default DatumRollupType datumRollupType() {
+		return getDatumRollupType();
+	}
+
+	/**
+	 * Get an array of rollup types.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasDatumRollupCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of node IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default DatumRollupType[] datumRollupTypes() {
+		return getDatumRollupTypes();
 	}
 
 }

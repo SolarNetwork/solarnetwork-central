@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.FilterMatch;
 
 /**
@@ -36,9 +37,10 @@ public interface GeneralNodeDatumFilterMatch extends FilterMatch<GeneralNodeDatu
 	/**
 	 * Get all available sample data as a Map.
 	 *
-	 * @return the sample data as a Map, or <em>null</em> if no sample data
+	 * @return the sample data as a Map, or {@code null} if no sample data
 	 *         available
 	 */
+	@Nullable
 	Map<String, ?> getSampleData();
 
 }

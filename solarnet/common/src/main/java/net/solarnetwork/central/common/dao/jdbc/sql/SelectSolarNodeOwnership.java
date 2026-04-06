@@ -28,6 +28,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
@@ -53,8 +54,8 @@ import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
  */
 public final class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlProvider {
 
-	private final Long[] nodeIds;
-	private final Long[] userIds;
+	private final Long @Nullable [] nodeIds;
+	private final Long @Nullable [] userIds;
 
 	/**
 	 * Select for a single node ID.
@@ -63,7 +64,7 @@ public final class SelectSolarNodeOwnership implements PreparedStatementCreator,
 	 *        the node ID
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if {@code nodeId} is {@literal null}
+	 *         if {@code nodeId} is {@code null}
 	 */
 	public static SelectSolarNodeOwnership selectForNode(Long nodeId) {
 		return new SelectSolarNodeOwnership(new Long[] { requireNonNullArgument(nodeId, "nodeId") },
@@ -77,7 +78,7 @@ public final class SelectSolarNodeOwnership implements PreparedStatementCreator,
 	 *        the user ID
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if {@code userId} is {@literal null}
+	 *         if {@code userId} is {@code null}
 	 */
 	public static SelectSolarNodeOwnership selectForUser(Long userId) {
 		return new SelectSolarNodeOwnership(null,
@@ -93,7 +94,7 @@ public final class SelectSolarNodeOwnership implements PreparedStatementCreator,
 	 *        the user ID
 	 * @return the select statement
 	 * @throws IllegalArgumentException
-	 *         if {@code nodeId} or {@code userId} is {@literal null}
+	 *         if {@code nodeId} or {@code userId} is {@code null}
 	 */
 	public static SelectSolarNodeOwnership selectForNodeUser(Long nodeId, Long userId) {
 		return new SelectSolarNodeOwnership(new Long[] { requireNonNullArgument(nodeId, "nodeId") },
@@ -108,7 +109,7 @@ public final class SelectSolarNodeOwnership implements PreparedStatementCreator,
 	 * @param userIds
 	 *        the optional user IDs to filter on
 	 */
-	public SelectSolarNodeOwnership(Long[] nodeIds, Long[] userIds) {
+	public SelectSolarNodeOwnership(Long @Nullable [] nodeIds, Long @Nullable [] userIds) {
 		super();
 		this.nodeIds = nodeIds;
 		this.userIds = userIds;

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao.test;
 
+import static net.solarnetwork.domain.datum.DatumProperties.emptyProperties;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.sameInstance;
@@ -41,26 +43,28 @@ public class DatumEntityTests {
 
 	@Test
 	public void hasId_true() {
-		DatumEntity d = new DatumEntity(UUID.randomUUID(), Instant.now(), null, null);
+		DatumEntity d = new DatumEntity(UUID.randomUUID(), Instant.now(), null, emptyProperties());
 		assertThat("Datum with stream ID and timestamp has an ID", d.hasId(), equalTo(true));
 	}
 
 	@Test
 	public void hasId_noStreamId() {
-		DatumEntity d = new DatumEntity(null, Instant.now(), null, null);
-		assertThat("Datum without stream ID does not have an ID", d.hasId(), equalTo(false));
+		thenThrownBy(() -> {
+			new DatumEntity(null, Instant.now(), null, emptyProperties());
+		}, "Cannot create DatumEntity without stream ID").isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
 	public void hasId_noTimestamp() {
-		DatumEntity d = new DatumEntity(UUID.randomUUID(), null, null, null);
-		assertThat("Datum without timestamp does not have an ID", d.hasId(), equalTo(false));
+		thenThrownBy(() -> {
+			new DatumEntity(UUID.randomUUID(), null, null, emptyProperties());
+		}, "Cannot create DatumEntity without timestamp").isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
 	public void createdIsAliasForTimestamp() {
 		final Instant now = Instant.now();
-		DatumEntity d = new DatumEntity(UUID.randomUUID(), now, null, null);
+		DatumEntity d = new DatumEntity(UUID.randomUUID(), now, null, emptyProperties());
 		assertThat("getTimestamp() returns constructor instance", d.getTimestamp(), sameInstance(now));
 		assertThat("getCreated() is alias for getTimestamp()", d.getCreated(), sameInstance(now));
 	}
@@ -69,7 +73,7 @@ public class DatumEntityTests {
 	public void idCreatedFromConstructorArgumnets() {
 		final UUID streamId = UUID.randomUUID();
 		final Instant timestamp = Instant.now();
-		DatumEntity d = new DatumEntity(streamId, timestamp, null, null);
+		DatumEntity d = new DatumEntity(streamId, timestamp, null, emptyProperties());
 		assertThat("getId() returns PK with constructor values", d.getId(),
 				equalTo(new DatumPK(streamId, timestamp)));
 	}
@@ -78,7 +82,7 @@ public class DatumEntityTests {
 	public void streamIdIsAliasForIdTimestamp() {
 		final UUID streamId = UUID.randomUUID();
 		final Instant timestamp = Instant.now();
-		DatumEntity d = new DatumEntity(streamId, timestamp, null, null);
+		DatumEntity d = new DatumEntity(streamId, timestamp, null, emptyProperties());
 		assertThat("getStreamId() returns ID streamId instance", d.getStreamId(),
 				sameInstance(d.getId().getStreamId()));
 	}
@@ -87,7 +91,7 @@ public class DatumEntityTests {
 	public void timestampIsAliasForIdTimestamp() {
 		final UUID streamId = UUID.randomUUID();
 		final Instant timestamp = Instant.now();
-		DatumEntity d = new DatumEntity(streamId, timestamp, null, null);
+		DatumEntity d = new DatumEntity(streamId, timestamp, null, emptyProperties());
 		assertThat("getTimestamp() returns ID timestamp instance", d.getTimestamp(),
 				sameInstance(d.getId().getTimestamp()));
 	}

@@ -70,7 +70,7 @@ public class DatumInputController {
 	 * @param maxDatumInputLength
 	 *        the maximum datum input length
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DatumInputController(DatumInputEndpointBiz inputBiz,
 			@Value("${app.din.max-datum-input-length}") long maxDatumInputLength) {

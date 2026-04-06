@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.jobs;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.scheduler.JobSupport;
@@ -39,7 +40,7 @@ import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
  */
 public class AccountTaskJob extends JobSupport {
 
-	private final TransactionTemplate transactionTemplate;
+	private final @Nullable TransactionTemplate transactionTemplate;
 	private final AccountTaskDao taskDao;
 	private final AccountTaskHandler generateInvoiceTaskHandler;
 	private final AccountTaskHandler deliverInvoiceTaskHandler;
@@ -48,7 +49,7 @@ public class AccountTaskJob extends JobSupport {
 	 * Constructor.
 	 *
 	 * @param transactionTemplate
-	 *        the transaction template to use, or {@literal null}
+	 *        the transaction template to use, or {@code null}
 	 * @param taskDao
 	 *        the task DAO
 	 * @param generateInvoiceTaskHandler
@@ -57,19 +58,18 @@ public class AccountTaskJob extends JobSupport {
 	 *        the handler for {@link AccountTaskType#DeliverInvoice}
 	 * @throws IllegalArgumentException
 	 *         if {@code taskDao} or {@code generateInvoiceTaskHandler} is
-	 *         {@literal null}
+	 *         {@code null}
 	 */
-	public AccountTaskJob(TransactionTemplate transactionTemplate, AccountTaskDao taskDao,
+	public AccountTaskJob(@Nullable TransactionTemplate transactionTemplate, AccountTaskDao taskDao,
 			AccountTaskHandler generateInvoiceTaskHandler,
 			AccountTaskHandler deliverInvoiceTaskHandler) {
-		super();
+		super("Billing", "AccountTaskProcessor");
 		this.transactionTemplate = transactionTemplate;
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.generateInvoiceTaskHandler = requireNonNullArgument(generateInvoiceTaskHandler,
 				"generateInvoiceTaskHandler");
 		this.deliverInvoiceTaskHandler = requireNonNullArgument(deliverInvoiceTaskHandler,
 				"deliverInvoiceTaskHandler");
-		setGroupId("Billing");
 	}
 
 	@Override

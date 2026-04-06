@@ -29,6 +29,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.zip.GZIPOutputStream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.FastByteArrayOutputStream;
 import org.springframework.web.util.WebUtils;
@@ -63,10 +64,10 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 	private final FastByteArrayOutputStream content;
 	private final OutputStream cacheStream;
 	private final HttpHeaders headers;
-	private ServletOutputStream outputStream;
-	private PrintWriter outputWriter;
+	private @Nullable ServletOutputStream outputStream;
+	private @Nullable PrintWriter outputWriter;
 	private boolean cacheStreamFinished;
-	private IOException outputStreamException;
+	private @Nullable IOException outputStreamException;
 
 	/**
 	 * Create a new ContentCachingResponseWrapper for the given servlet

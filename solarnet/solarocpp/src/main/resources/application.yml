@@ -55,6 +55,9 @@ app:
       ping-frequency-secs: 50
       shutdown-task-post-delay: "5s"
       shutdown-task-max-wait: "1m"
+      send-time-limit: "10s"
+      send-buffer-size-limit: "512KB"
+      send-overflow-strategy: "TERMINATE"
   ocpp.v201:
     ws:
       partial-message-maximum-size: 1048576
@@ -62,6 +65,9 @@ app:
       ping-frequency-secs: 50
       shutdown-task-post-delay: "5s"
       shutdown-task-max-wait: "1m"
+      send-time-limit: "10s"
+      send-buffer-size-limit: "512KB"
+      send-overflow-strategy: "TERMINATE"
   solarflux:
     connection:
       uid: "SolarFlux-${app.meta.instance-id}"
@@ -71,6 +77,7 @@ app:
         client-id: "solarocpp-${app.meta.instance-id}"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
+        clean-session: true
         connect-timeout-seconds: 10
         keep-alive-seconds: 60
         read-timeout-seconds: 0
@@ -104,11 +111,26 @@ app:
     pool-size: 2
     remove-on-cancel-policy: true
     accept-tasks-after-context-close: true
-  user.events:
-    async-appender:
-      threads: 1
-      stat-frequency: 1000
-      queue-lag-alert-threshold: 1000
+  user-events:
+    dao:
+      mqtt-publish-timeout: "100ms"
+    sqs:
+      region: "us-west-2"
+      queue-name: "user-events"
+      url: "https://sqs.us-west-2.amazonaws.com/1234567890/user-events-queue"
+      access-key: "ACCESS_KEY_HERE"
+      secret-key: "SECRET_KEY_HERE"
+      work-queue-size: 100
+      work-item-max-wait: "5s"
+      read-concurrency: 0
+      write-concurrency: 1
+      read-max-message-count: 10
+      read-max-wait-time: "20s"
+      read-sleep-min: "0s"
+      read-sleep-max: "30s"
+      read-sleep-throttle-step: "1s"
+      shutdown-wait: "30s"
+      stat-frequency: 200
 
 logging:
   level:

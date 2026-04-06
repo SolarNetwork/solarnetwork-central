@@ -47,7 +47,7 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class GeneralLocationDatumTests {
 
-	private static final Long TEST_NODE_ID = -1L;
+	private static final Long TEST_LOCATION_ID = -1L;
 	private static final String TEST_SOURCE_ID = "test.source";
 	private static final LocalDateTime TEST_DATE = LocalDateTime.of(2014, 8, 22, 12, 1, 2,
 			(int) TimeUnit.MILLISECONDS.toNanos(345));
@@ -62,11 +62,9 @@ public class GeneralLocationDatumTests {
 	}
 
 	private GeneralLocationDatum getTestInstance() {
-		GeneralLocationDatum datum = new GeneralLocationDatum();
-		datum.setCreated(TEST_TIMESTAMP);
-		datum.setLocationId(TEST_NODE_ID);
+		GeneralLocationDatum datum = new GeneralLocationDatum(TEST_LOCATION_ID, TEST_TIMESTAMP,
+				TEST_SOURCE_ID);
 		datum.setPosted(datum.getCreated());
-		datum.setSourceId(TEST_SOURCE_ID);
 
 		DatumSamples samples = new DatumSamples();
 		datum.setSamples(samples);
@@ -106,10 +104,11 @@ public class GeneralLocationDatumTests {
 	@Test
 	public void deserializeJson() throws Exception {
 		String json = "{\"created\":\"" + TEST_TIMESTAMP_STRING
-				+ "\",\"sourceId\":\"Main\",\"samples\":{\"i\":{\"temp_f\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
+				+ "\",\"locationId\":-1,\"sourceId\":\"Main\",\"samples\":{\"i\":{\"temp_f\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
 		GeneralLocationDatum datum = objectMapper.readValue(json, GeneralLocationDatum.class);
 		assertThat(datum, is(notNullValue()));
 		assertThat(datum.getCreated(), is(TEST_TIMESTAMP));
+		assertThat(datum.getLocationId(), is(-1L));
 		assertThat(datum.getSourceId(), is("Main"));
 		assertThat(datum.getSamples(), is(notNullValue()));
 		assertThat(datum.getSamples().getInstantaneousSampleInteger("temp_f"), is(89));

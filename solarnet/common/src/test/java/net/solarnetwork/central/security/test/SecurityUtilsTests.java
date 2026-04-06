@@ -35,7 +35,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -112,7 +111,7 @@ public class SecurityUtilsTests {
 	@Test
 	public void requireAnyRoleNoAuthentication() {
 		Assertions.assertThrows(AuthorizationException.class, () -> {
-			SecurityUtils.requireAnyRole(Collections.singleton("ROLE_USER"));
+			SecurityUtils.requireAnyRole(Set.of("ROLE_USER"));
 		});
 	}
 
@@ -120,7 +119,7 @@ public class SecurityUtilsTests {
 	public void requireAnyRoleNoMatchSingle() {
 		becomeUser("ROLE_USER");
 		Assertions.assertThrows(AuthorizationException.class, () -> {
-			SecurityUtils.requireAnyRole(Collections.singleton("ROLE_FOO"));
+			SecurityUtils.requireAnyRole(Set.of("ROLE_FOO"));
 		});
 	}
 
@@ -128,14 +127,14 @@ public class SecurityUtilsTests {
 	public void requireAnyRoleNoMatchMultiple() {
 		becomeUser("ROLE_USER", "ROLE_DUDE");
 		Assertions.assertThrows(AuthorizationException.class, () -> {
-			SecurityUtils.requireAnyRole(Collections.singleton("ROLE_FOO"));
+			SecurityUtils.requireAnyRole(Set.of("ROLE_FOO"));
 		});
 	}
 
 	@Test
 	public void requireAnyRoleMatchSingle() {
 		becomeUser("ROLE_USER");
-		SecurityUtils.requireAnyRole(Collections.singleton("ROLE_USER"));
+		SecurityUtils.requireAnyRole(Set.of("ROLE_USER"));
 	}
 
 	public void requireAnyRoleMatchMulitple() {
@@ -146,7 +145,7 @@ public class SecurityUtilsTests {
 	@Test
 	public void requireAllRoleNoAuthentication() {
 		Assertions.assertThrows(AuthorizationException.class, () -> {
-			SecurityUtils.requireAllRoles(Collections.singleton("ROLE_USER"));
+			SecurityUtils.requireAllRoles(Set.of("ROLE_USER"));
 		});
 	}
 
@@ -154,7 +153,7 @@ public class SecurityUtilsTests {
 	public void requireAllRoleNoMatchSingle() {
 		becomeUser("ROLE_USER");
 		Assertions.assertThrows(AuthorizationException.class, () -> {
-			SecurityUtils.requireAllRoles(Collections.singleton("ROLE_FOO"));
+			SecurityUtils.requireAllRoles(Set.of("ROLE_FOO"));
 		});
 	}
 
@@ -169,7 +168,7 @@ public class SecurityUtilsTests {
 	@Test
 	public void requireAllRoleMatchSingle() {
 		becomeUser("ROLE_USER");
-		SecurityUtils.requireAllRoles(Collections.singleton("ROLE_USER"));
+		SecurityUtils.requireAllRoles(Set.of("ROLE_USER"));
 	}
 
 	@Test
@@ -230,8 +229,7 @@ public class SecurityUtilsTests {
 	public void authorizedNodeIds_token_user_policy() {
 		List<SolarNodeOwnership> ownerships = Arrays.asList(ownershipFor(123L, TEST_USER_ID),
 				ownershipFor(234L, TEST_USER_ID));
-		becomeToken(SecurityTokenType.User, Collections.singleton(ownerships.get(0).getNodeId()),
-				"ROLE_USER");
+		becomeToken(SecurityTokenType.User, Set.of(ownerships.get(0).getNodeId()), "ROLE_USER");
 		given(nodeOwnershipDao.ownershipsForUserId(TEST_USER_ID))
 				.willReturn(ownerships.toArray(SolarNodeOwnership[]::new));
 
@@ -749,11 +747,14 @@ public class SecurityUtilsTests {
 	@Test
 	public void policyIsUnrestricted_refreshAllowed() {
 		// GIVEN
-		final SecurityPolicy policy = BasicSecurityPolicy.builder().withRefreshAllowed(false).build();
+		final SecurityPolicy policy1 = BasicSecurityPolicy.builder().withRefreshAllowed(false).build();
+		final SecurityPolicy policy2 = BasicSecurityPolicy.builder().withRefreshAllowed(true).build();
 
 		// THEN
-		and.then(SecurityUtils.policyIsUnrestricted(policy))
-				.as("Policy with refresh allowed is restricted").isFalse();
+		and.then(SecurityUtils.policyIsUnrestricted(policy1))
+				.as("Policy with refresh allowed FALSE is NOT restricted").isTrue();
+		and.then(SecurityUtils.policyIsUnrestricted(policy2))
+				.as("Policy with refresh allowed TRUE is NOT restricted").isTrue();
 	}
 
 	@Test

@@ -50,7 +50,7 @@ public final class DeleteSolarNodeMetadata implements PreparedStatementCreator, 
 	 * @param id
 	 *        the ID to delete
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DeleteSolarNodeMetadata(Long id) {
 		super();

@@ -22,9 +22,10 @@
 
 package net.solarnetwork.central.test;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import org.jspecify.annotations.Nullable;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Helper to capture the result of an answer invotation.
@@ -37,7 +38,7 @@ import net.solarnetwork.util.ObjectUtils;
 public class ResultCaptor<T> implements Answer<T> {
 
 	private final Answer<T> delegate;
-	private T result;
+	private @Nullable T result;
 
 	/**
 	 * Constructor.
@@ -49,11 +50,11 @@ public class ResultCaptor<T> implements Answer<T> {
 	 */
 	public ResultCaptor(Answer<T> delegate) {
 		super();
-		this.delegate = ObjectUtils.requireNonNullArgument(delegate, "delegate");
+		this.delegate = requireNonNullArgument(delegate, "delegate");
 	}
 
 	@Override
-	public T answer(InvocationOnMock invocation) throws Throwable {
+	public @Nullable T answer(InvocationOnMock invocation) throws Throwable {
 		T res = delegate.answer(invocation);
 		this.result = res;
 		return res;
@@ -64,7 +65,7 @@ public class ResultCaptor<T> implements Answer<T> {
 	 *
 	 * @return the result
 	 */
-	public T getResult() {
+	public final @Nullable T getResult() {
 		return result;
 	}
 

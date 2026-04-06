@@ -42,4 +42,30 @@ public class GeneralLocationDatumMetadataMatch extends GeneralLocationDatumMetad
 	@Serial
 	private static final long serialVersionUID = -7617092801981088291L;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public GeneralLocationDatumMetadataMatch(LocationSourcePK id) {
+		super(id);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param locationId
+	 *        the location ID
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public GeneralLocationDatumMetadataMatch(Long locationId, String sourceId) {
+		super(locationId, sourceId);
+	}
+
 }

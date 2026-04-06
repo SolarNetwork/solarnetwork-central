@@ -76,7 +76,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectAuditDatum(AuditDatumCriteria filter) {
 		this(filter, aggregation(filter));
@@ -90,12 +90,12 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	 * @param aggregation
 	 *        the aggregation
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	protected SelectAuditDatum(AuditDatumCriteria filter, Aggregation aggregation) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
-		this.aggregation = aggregation;
+		this.aggregation = requireNonNullArgument(aggregation, "aggregation");
 	}
 
 	/**
@@ -282,7 +282,7 @@ public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlPro
 	private void sqlRollupGroup(StringBuilder buf) {
 		if ( filter.hasDatumRollupCriteria() && !filter.hasDatumRollupType(DatumRollupType.All) ) {
 			StringBuilder group = new StringBuilder();
-			for ( DatumRollupType t : filter.getDatumRollupTypes() ) {
+			for ( DatumRollupType t : filter.datumRollupTypes() ) {
 				switch (t) {
 					case Time:
 						group.append(", datum.ts_start");

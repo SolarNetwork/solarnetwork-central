@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.function.Supplier;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -91,7 +92,7 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 
 	private final RestOperations restOps;
 	private final UserEventAppenderBiz userEventAppenderBiz;
-	private OAuth2AuthorizedClientManager oauthClientManager;
+	private @Nullable OAuth2AuthorizedClientManager oauthClientManager;
 
 	/**
 	 * A client request interceptor that can inject the extra HTTP headers from
@@ -142,14 +143,14 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			uri = context.systemUri(path.get());
 			if ( uri == null ) {
 				log.debug("[{}] with {} {} will not be sent because the system URI is not configured.",
-						context.name(), context.role(), context.config().getId().ident());
+						context.name(), context.role(), context.config().id().ident());
 				return;
 			}
 		} catch ( ExternalSystemConfigurationException e ) {
 			log.warn("[{}] with {} {} failed because of the system URI could not be resolved: {}",
-					context.name(), context.role(), context.config().getId().ident(), e.getMessage());
+					context.name(), context.role(), context.config().id().ident(), e.getMessage());
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
-				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
+				userEventAppenderBiz.addEvent(context.config().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
 								format("System URI unresolvable: %s", e.getMessage())));
 			}
@@ -190,7 +191,7 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 				AuthRoleInfo role = context.config().getAuthRole();
 				OAuth2AuthorizeRequest authReq = OAuth2AuthorizeRequest
 						.withClientRegistrationId(role.asIdentifier())
-						.principal("%s %s %s".formatted(context.role(), context.config().getId().ident(),
+						.principal("%s %s %s".formatted(context.role(), context.config().id().ident(),
 								context.config().getName()))
 						.build();
 
@@ -222,18 +223,17 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			HttpEntity<Object> req = new HttpEntity<>(body, headers);
 			restOps.exchange(uri, method, req, Void.class);
 			log.info("[{}] with {} {} successful at: {}", context.name(), context.role(),
-					context.config().getId().ident(), uri);
+					context.config().id().ident(), uri);
 			if ( userEventAppenderBiz != null && context.successEventTags() != null ) {
-				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
+				userEventAppenderBiz.addEvent(context.config().getUserId(),
 						eventForConfiguration(context.config(), context.successEventTags(), "Success",
 								requestInfoMap(method, uri, headers, body), HTTP_TAG));
 			}
 		} catch ( ExternalSystemConfigurationException e ) {
 			log.warn("[{}] with {} {} failed at [{}] because of a system configuration error: {}",
-					context.name(), context.role(), context.config().getId().ident(), uri,
-					e.getMessage());
+					context.name(), context.role(), context.config().id().ident(), uri, e.getMessage());
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
-				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
+				userEventAppenderBiz.addEvent(context.config().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
 								format("System configuration error: %s", e.getMessage()),
 								requestInfoMap(method, uri, headers, body), HTTP_TAG));
@@ -241,10 +241,9 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			throw e;
 		} catch ( ResourceAccessException e ) {
 			log.warn("[{}] with {} {} failed at [{}] because of a communication error: {}",
-					context.name(), context.role(), context.config().getId().ident(), uri,
-					e.getMessage());
+					context.name(), context.role(), context.config().id().ident(), uri, e.getMessage());
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
-				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
+				userEventAppenderBiz.addEvent(context.config().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
 								format("Communication error: %s", e.getMessage()),
 								requestInfoMap(method, uri, headers, body), HTTP_TAG));
@@ -253,10 +252,10 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 		} catch ( RestClientResponseException e ) {
 			log.warn(
 					"[{}] with {} {} failed at [{}] because the HTTP status {} was returned (expected {}).",
-					context.name(), context.role(), context.config().getId().ident(), uri,
+					context.name(), context.role(), context.config().id().ident(), uri,
 					e.getStatusCode(), HttpStatus.NO_CONTENT.value());
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
-				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
+				userEventAppenderBiz.addEvent(context.config().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
 								format("Invalid HTTP status returned: %s", e.getStatusCode()),
 								requestInfoMap(method, uri, headers, body), HTTP_TAG));
@@ -265,10 +264,10 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 		} catch ( UnknownContentTypeException e ) {
 			log.warn(
 					"[{}] with {} {} failed at [{}] because the response Content-Type [{}] is not supported (expected {}).",
-					context.name(), context.role(), context.config().getId().ident(), uri,
+					context.name(), context.role(), context.config().id().ident(), uri,
 					e.getContentType(), MediaType.APPLICATION_JSON_VALUE);
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
-				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
+				userEventAppenderBiz.addEvent(context.config().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
 								format("Invalid HTTP Content-Type returned: %s", e.getContentType()),
 								requestInfoMap(method, uri, headers, body), HTTP_TAG));
@@ -276,9 +275,9 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			throw e;
 		} catch ( OAuth2AuthorizationException e ) {
 			log.warn("[{}] with {} {} failed at [{}] because of an OAuth error: {}", context.name(),
-					context.role(), context.config().getId().ident(), uri, e.getMessage());
+					context.role(), context.config().id().ident(), uri, e.getMessage());
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
-				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
+				userEventAppenderBiz.addEvent(context.config().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
 								format("OAuth error: %s", e.getMessage()),
 								requestInfoMap(method, uri, headers, body), HTTP_TAG));
@@ -286,9 +285,9 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			throw e;
 		} catch ( RuntimeException e ) {
 			log.warn("[{}] with {} {} failed at [{}] because of an unknown error: {}", context.name(),
-					context.role(), context.config().getId().ident(), uri, e, e);
+					context.role(), context.config().id().ident(), uri, e, e);
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
-				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
+				userEventAppenderBiz.addEvent(context.config().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
 								format("Unknown error: %s", e),
 								requestInfoMap(method, uri, headers, body), HTTP_TAG));
@@ -320,7 +319,7 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 	 * @param oauthClientManager
 	 *        the manager
 	 */
-	public void setOauthClientManager(OAuth2AuthorizedClientManager oauthClientManager) {
+	public final void setOauthClientManager(@Nullable OAuth2AuthorizedClientManager oauthClientManager) {
 		this.oauthClientManager = oauthClientManager;
 	}
 

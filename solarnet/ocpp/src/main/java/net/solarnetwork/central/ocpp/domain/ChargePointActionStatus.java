@@ -22,14 +22,15 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.dao.BasicEntity;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * OCPP "last seen" timestamp for each action of a charger.
@@ -47,11 +48,11 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	private static final long serialVersionUID = -2984317823572410962L;
 
 	/** The message ID. */
-	private String messageId;
+	private @Nullable String messageId;
 
 	/** The last action timestamp. */
 	@JsonProperty("ts")
-	private Instant timestamp;
+	private @Nullable Instant timestamp;
 
 	/**
 	 * Constructor.
@@ -67,10 +68,10 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code created} is {@literal null}
+	 *         if any argument other than {@code created} is {@code null}
 	 */
 	public ChargePointActionStatus(long userId, long chargePointId, int connectorId, String action,
-			Instant created) {
+			@Nullable Instant created) {
 		this(new ChargePointActionStatusKey(userId, chargePointId, connectorId, action), created);
 	}
 
@@ -90,11 +91,11 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code created} is {@literal null}
+	 *         if any argument other than {@code created} is {@code null}
 	 * @since 1.1
 	 */
 	public ChargePointActionStatus(long userId, long chargePointId, int evseId, int connectorId,
-			String action, Instant created) {
+			String action, @Nullable Instant created) {
 		this(new ChargePointActionStatusKey(userId, chargePointId, evseId, connectorId, action),
 				created);
 	}
@@ -107,15 +108,15 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code created} is {@literal null}
+	 *         if any argument other than {@code created} is {@code null}
 	 */
-	public ChargePointActionStatus(ChargePointActionStatusKey id, Instant created) {
-		super(ObjectUtils.requireNonNullArgument(id, "id"), created);
+	public ChargePointActionStatus(ChargePointActionStatusKey id, @Nullable Instant created) {
+		super(requireNonNullArgument(id, "id"), created);
 	}
 
 	@Override
-	public Long getUserId() {
-		return getId().getUserId();
+	public final Long getUserId() {
+		return id().getUserId();
 	}
 
 	/**
@@ -123,8 +124,8 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 *
 	 * @return the Charge Point ID
 	 */
-	public long getChargePointId() {
-		return getId().getChargePointId();
+	public final long getChargePointId() {
+		return id().getChargePointId();
 	}
 
 	/**
@@ -133,8 +134,8 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @return the EVSE ID, or {@literal 0} for the charger itself
 	 * @since 1.1
 	 */
-	public int getEvseId() {
-		return getId().getEvseId();
+	public final int getEvseId() {
+		return id().getEvseId();
 	}
 
 	/**
@@ -142,17 +143,17 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 *
 	 * @return the connector ID, or {@literal 0} for the EVSE itself
 	 */
-	public int getConnectorId() {
-		return getId().getConnectorId();
+	public final int getConnectorId() {
+		return id().getConnectorId();
 	}
 
 	/**
 	 * Get the action.
 	 *
-	 * @return the action, never {@literal null}
+	 * @return the action, never {@code null}
 	 */
-	public String getAction() {
-		return getId().getAction();
+	public final String getAction() {
+		return id().getAction();
 	}
 
 	/**
@@ -160,7 +161,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 *
 	 * @return the message ID
 	 */
-	public String getMessageId() {
+	public final @Nullable String getMessageId() {
 		return messageId;
 	}
 
@@ -170,7 +171,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @param messageId
 	 *        the message ID to set
 	 */
-	public void setMessageId(String messageId) {
+	public final void setMessageId(@Nullable String messageId) {
 		this.messageId = messageId;
 	}
 
@@ -179,7 +180,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 *
 	 * @return the timestamp
 	 */
-	public Instant getTimestamp() {
+	public final @Nullable Instant getTimestamp() {
 		return timestamp;
 	}
 
@@ -189,7 +190,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @param timestamp
 	 *        the timestamp to set
 	 */
-	public void setTimestamp(Instant timestamp) {
+	public final void setTimestamp(@Nullable Instant timestamp) {
 		this.timestamp = timestamp;
 	}
 

@@ -25,6 +25,7 @@ package net.solarnetwork.central.reg.web.api.v1.test;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToken;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
+import static net.solarnetwork.domain.datum.Aggregation.Hour;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_DATE_HEADER_FORMATTER;
 import static net.solarnetwork.security.AuthorizationUtils.SN_DATE_HEADER;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
@@ -49,11 +50,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
-import net.solarnetwork.central.reg.test.WithMockSecurityUser;
 import net.solarnetwork.central.reg.web.api.v1.UserAuthTokenController;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
+import net.solarnetwork.central.test.security.WithMockSecurityUser;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.domain.BasicSecurityPolicy;
@@ -284,7 +285,7 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 	public void createToken_asActorWithRestrictedPolicy() throws Exception {
 		// GIVEN
 		final String tokenId = randomString(20);
-		final SecurityPolicy policy = BasicSecurityPolicy.builder().withRefreshAllowed(false).build();
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withMinAggregation(Hour).build();
 		insertSecurityToken(jdbcTemplate, tokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(), getJSONString(policy));
 
@@ -388,7 +389,7 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 	public void mergePolicy_asActorWithRestrictedPolicy() throws Exception {
 		// GIVEN
 		final String tokenId = randomString(20);
-		final SecurityPolicy policy = BasicSecurityPolicy.builder().withRefreshAllowed(false).build();
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withMinAggregation(Hour).build();
 		insertSecurityToken(jdbcTemplate, tokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(), getJSONString(policy));
 
@@ -512,7 +513,7 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 	public void replacePolicy_asActorWithRestrictedPolicy() throws Exception {
 		// GIVEN
 		final String tokenId = randomString(20);
-		final SecurityPolicy policy = BasicSecurityPolicy.builder().withRefreshAllowed(false).build();
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withMinAggregation(Hour).build();
 		insertSecurityToken(jdbcTemplate, tokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(), getJSONString(policy));
 
@@ -613,7 +614,7 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 	public void updateStatus_asActorWithRestrictedPolicy() throws Exception {
 		// GIVEN
 		final String tokenId = randomString(20);
-		final SecurityPolicy policy = BasicSecurityPolicy.builder().withRefreshAllowed(false).build();
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withMinAggregation(Hour).build();
 		insertSecurityToken(jdbcTemplate, tokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(), getJSONString(policy));
 
@@ -704,7 +705,7 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 	public void delete_asActorWithRestrictedPolicy() throws Exception {
 		// GIVEN
 		final String tokenId = randomString(20);
-		final SecurityPolicy policy = BasicSecurityPolicy.builder().withRefreshAllowed(false).build();
+		final SecurityPolicy policy = BasicSecurityPolicy.builder().withMinAggregation(Hour).build();
 		insertSecurityToken(jdbcTemplate, tokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(), getJSONString(policy));
 
@@ -793,7 +794,7 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 		final String actorTokenId = randomString(20);
 		insertSecurityToken(jdbcTemplate, actorTokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(),
-				getJSONString(BasicSecurityPolicy.builder().withRefreshAllowed(false).build()));
+				getJSONString(BasicSecurityPolicy.builder().withMinAggregation(Hour).build()));
 
 		final String otherTokenId = randomString(20);
 		insertSecurityToken(jdbcTemplate, otherTokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
@@ -884,7 +885,7 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 		final String actorTokenId = randomString(20);
 		insertSecurityToken(jdbcTemplate, actorTokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(),
-				getJSONString(BasicSecurityPolicy.builder().withRefreshAllowed(false).build()));
+				getJSONString(BasicSecurityPolicy.builder().withMinAggregation(Hour).build()));
 
 		final String otherTokenId = randomString(20);
 		insertSecurityToken(jdbcTemplate, otherTokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
@@ -932,7 +933,7 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 		final String actorTokenId = randomString(20);
 		insertSecurityToken(jdbcTemplate, actorTokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(),
-				getJSONString(BasicSecurityPolicy.builder().withRefreshAllowed(false).build()));
+				getJSONString(BasicSecurityPolicy.builder().withMinAggregation(Hour).build()));
 
 		final String otherTokenId = randomString(20);
 		insertSecurityToken(jdbcTemplate, otherTokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
@@ -1023,7 +1024,7 @@ public class UserAuthTokenControllerWebTests extends AbstractJUnit5CentralTransa
 		final String tokenId = randomString(20);
 		insertSecurityToken(jdbcTemplate, tokenId, TEST_TOKEN_SECRET, TEST_USER_ID,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(),
-				getJSONString(BasicSecurityPolicy.builder().withRefreshAllowed(false).build()));
+				getJSONString(BasicSecurityPolicy.builder().withMinAggregation(Hour).build()));
 
 		final String updateTokenId = randomString(20);
 		insertSecurityToken(jdbcTemplate, updateTokenId, TEST_TOKEN_SECRET, TEST_USER_ID,

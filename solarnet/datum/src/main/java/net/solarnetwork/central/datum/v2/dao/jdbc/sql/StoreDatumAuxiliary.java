@@ -50,6 +50,8 @@ public final class StoreDatumAuxiliary implements CallableStatementCreator, SqlP
 	 *
 	 * @param datum
 	 *        the datum to store
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public StoreDatumAuxiliary(DatumAuxiliary datum) {
 		super();

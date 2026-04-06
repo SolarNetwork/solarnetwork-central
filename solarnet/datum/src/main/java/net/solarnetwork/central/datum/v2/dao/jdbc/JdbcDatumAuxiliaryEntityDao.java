@@ -24,9 +24,10 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.sql.CallableStatement;
 import java.util.Collection;
 import java.util.List;
-import org.springframework.jdbc.core.CallableStatementCallback;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
@@ -59,7 +60,7 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @throws IllegalArgumentException
-	 *         if {@code jdbcTemplate} is {@literal null}
+	 *         if {@code jdbcTemplate} is {@code null}
 	 */
 	public JdbcDatumAuxiliaryEntityDao(JdbcOperations jdbcTemplate) {
 		super();
@@ -73,35 +74,31 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 
 	@Override
 	public DatumAuxiliaryPK save(DatumAuxiliaryEntity entity) {
-		if ( entity.getTimestamp() == null ) {
-			throw new IllegalArgumentException("The timestamp property is required.");
-		}
-		jdbcTemplate.execute(new StoreDatumAuxiliary(entity), (CallableStatementCallback<Void>) cs -> {
+		jdbcTemplate.execute(new StoreDatumAuxiliary(entity), (CallableStatement cs) -> {
 			cs.execute();
 			return null;
 		});
-		return entity.getId();
+		return entity.pk();
 	}
 
 	@Override
-	public DatumAuxiliaryEntity get(DatumAuxiliaryPK id) {
+	public @Nullable DatumAuxiliaryEntity get(DatumAuxiliaryPK id) {
 		List<DatumAuxiliary> result = jdbcTemplate.query(new GetDatumAuxiliary(id),
 				DatumAuxiliaryEntityRowMapper.INSTANCE);
 		return (!result.isEmpty() ? (DatumAuxiliaryEntity) result.getFirst() : null);
 	}
 
 	@Override
-	public Collection<DatumAuxiliaryEntity> getAll(List<SortDescriptor> sorts) {
+	public Collection<DatumAuxiliaryEntity> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void delete(DatumAuxiliaryEntity entity) {
-		jdbcTemplate.execute(new DeleteDatumAuxiliary(entity.getId()),
-				(CallableStatementCallback<Void>) cs -> {
-					cs.execute();
-					return null;
-				});
+		jdbcTemplate.execute(new DeleteDatumAuxiliary(entity.id()), (CallableStatement cs) -> {
+			cs.execute();
+			return null;
+		});
 	}
 
 	@Override
@@ -114,7 +111,7 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 
 	@Override
 	public FilterResults<DatumAuxiliary, DatumAuxiliaryPK> findFiltered(DatumAuxiliaryCriteria filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		return executeFilterQuery(jdbcTemplate, filter, new SelectDatumAuxiliary(filter),
 				DatumAuxiliaryEntityRowMapper.INSTANCE);
 	}

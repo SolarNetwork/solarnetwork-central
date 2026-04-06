@@ -49,10 +49,8 @@ public class UserNodeInstructionTaskProcessor extends JobSupport {
 	 *         if any argument is {@code null}
 	 */
 	public UserNodeInstructionTaskProcessor(UserNodeInstructionService service) {
-		super();
+		super("User", "UserNodeInstructionTaskProcessor");
 		this.service = ObjectUtils.requireNonNullArgument(service, "service");
-		setGroupId("User");
-		setId("UserNodeInstructionTaskProcessor");
 	}
 
 	@Override

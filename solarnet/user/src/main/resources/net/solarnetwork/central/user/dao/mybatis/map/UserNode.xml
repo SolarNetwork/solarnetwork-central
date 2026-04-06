@@ -38,7 +38,9 @@
 	</sql>
 
 	<resultMap id="UserNodeFullResult" type="UserNode">
-		<id property="id" column="user_node_node_id"/>
+		<constructor>
+			<idArg column="user_node_node_id" javaType="long"/>
+		</constructor>
 		<result property="created" column="user_node_created"/>
 		<result property="name" column="user_node_disp_name"/>
 		<result property="description" column="user_node_description"/>

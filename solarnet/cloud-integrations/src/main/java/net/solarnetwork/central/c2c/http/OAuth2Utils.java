@@ -32,6 +32,7 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -64,7 +65,7 @@ public final class OAuth2Utils {
 	 *
 	 * @param authReq
 	 *        the request to provide the context attributes for
-	 * @return the attributes, never {@literal null}
+	 * @return the attributes, never {@code null}
 	 */
 	public static Map<String, Object> principalCredentialsContextAttributes(
 			OAuth2AuthorizeRequest authReq) {
@@ -106,7 +107,7 @@ public final class OAuth2Utils {
 	public static void addOAuthBearerAuthorization(CloudIntegrationConfiguration config,
 			HttpHeaders headers, OAuth2AuthorizedClientManager oauthClientManager,
 			UserEventAppenderBiz userEventAppenderBiz,
-			Function<UserLongCompositePK, Lock> lockProvider) {
+			@Nullable Function<UserLongCompositePK, @Nullable Lock> lockProvider) {
 		final String username = config.serviceProperty(USERNAME_SETTING, String.class);
 		final String password = config.serviceProperty(PASSWORD_SETTING, String.class);
 		final OAuth2AuthorizeRequest.Builder authReq = OAuth2AuthorizeRequest
@@ -116,16 +117,16 @@ public final class OAuth2Utils {
 		} else if ( config.hasServiceProperty(OAUTH_CLIENT_ID_SETTING, String.class) ) {
 			if ( config.hasServiceProperty(OAUTH_CLIENT_SECRET_SETTING, String.class) ) {
 				authReq.principal(new UsernamePasswordAuthenticationToken(
-						config.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class),
-						config.serviceProperty(OAUTH_CLIENT_SECRET_SETTING, String.class)));
+						config.serviceProp(OAUTH_CLIENT_ID_SETTING, String.class),
+						config.serviceProp(OAUTH_CLIENT_SECRET_SETTING, String.class)));
 			} else {
-				authReq.principal(config.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class));
+				authReq.principal(config.serviceProp(OAUTH_CLIENT_ID_SETTING, String.class));
 			}
 		} else {
-			authReq.principal("%s %s".formatted(config.getId().ident(), config.getName()));
+			authReq.principal("%s %s".formatted(config.id().ident(), config.getName()));
 		}
 
-		final Lock lock = (lockProvider != null ? lockProvider.apply(config.getId()) : null);
+		final Lock lock = (lockProvider != null ? lockProvider.apply(config.id()) : null);
 		try {
 			if ( lock != null ) {
 				lock.lock();

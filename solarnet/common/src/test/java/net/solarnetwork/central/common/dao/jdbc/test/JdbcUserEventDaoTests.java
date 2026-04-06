@@ -95,7 +95,7 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 				new String[] { "foo", "bar", "bam" }, "Test obj", "{\"foo\":123}");
 
 		// WHEN
-		dao.add(event);
+		dao.persist(event);
 
 		// THEN
 		List<Map<String, Object>> data = allUserEventData();
@@ -132,7 +132,7 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 					break;
 			}
 			UserEvent event = new UserEvent(userId, uuidGenerator.generate(), tags, null, null);
-			dao.add(event);
+			dao.persist(event);
 			events.add(event);
 			clock.add(1, ChronoUnit.SECONDS);
 		}
@@ -175,7 +175,7 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 					break;
 			}
 			UserEvent event = new UserEvent(userId, uuidGenerator.generate(), tags, null, null);
-			dao.add(event);
+			dao.persist(event);
 			events.add(event);
 			clock.add(1, ChronoUnit.SECONDS);
 		}
@@ -221,7 +221,7 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 				}
 				UserEvent event = new UserEvent(userIds[j], uuidGenerator.generate(),
 						new String[] { "foo", "bar" }, null, null);
-				dao.add(event);
+				dao.persist(event);
 				events.add(event);
 			}
 			clock.add(1, ChronoUnit.SECONDS);
@@ -270,7 +270,7 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 			}
 			UserEvent event = new UserEvent(userId, uuidGenerator.generate(), tags, null,
 					"{\"count\":%d}".formatted(i));
-			dao.add(event);
+			dao.persist(event);
 			events.add(event);
 			if ( i > 0 && i < 6 ) {
 				expected.add(event);

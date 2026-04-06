@@ -22,11 +22,12 @@
 
 package net.solarnetwork.central.din.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.din.domain.InputDataEntity;
 
 /**
@@ -61,10 +62,10 @@ public class InputDataEntityRowMapper implements RowMapper<InputDataEntity> {
 
 	@Override
 	public InputDataEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		Long userId = rs.getLong(1);
-		Long nodeId = rs.getLong(2);
-		String sourceId = rs.getString(3);
-		Instant ts = CommonJdbcUtils.getTimestampInstant(rs, 4);
+		Long userId = nonnull(rs.getObject(1, Long.class), "userId");
+		Long nodeId = nonnull(rs.getObject(2, Long.class), "nodeId");
+		String sourceId = nonnull(rs.getString(3), "sourceId");
+		Instant ts = timestampInstant(rs, 4);
 		byte[] data = rs.getBytes(5);
 		return new InputDataEntity(userId, nodeId, sourceId, ts, data);
 	}

@@ -51,7 +51,7 @@ public final class SelectDatumRecordCounts implements PreparedStatementCreator, 
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null} or invalid
+	 *         if {@code filter} is {@code null} or invalid
 	 */
 	public SelectDatumRecordCounts(ObjectStreamCriteria filter) {
 		super();

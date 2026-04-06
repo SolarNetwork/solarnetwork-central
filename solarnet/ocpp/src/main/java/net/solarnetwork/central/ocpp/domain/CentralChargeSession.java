@@ -53,6 +53,8 @@ public class CentralChargeSession extends ChargeSession {
 	 * @param transactionId
 	 *        the transactionID
 	 * @since 1.3
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public CentralChargeSession(String authId, long chargePointId, int evseId, int connectorId,
 			String transactionId) {
@@ -76,6 +78,8 @@ public class CentralChargeSession extends ChargeSession {
 	 *        the Charge Point connector ID
 	 * @param transactionId
 	 *        the transactionID
+	 * @throws IllegalArgumentException
+	 *         if {@code authId} or {@code transactionId} is {@code null}
 	 * @since 1.3
 	 */
 	public CentralChargeSession(UUID id, Instant created, String authId, long chargePointId, int evseId,
@@ -85,18 +89,28 @@ public class CentralChargeSession extends ChargeSession {
 
 	/**
 	 * Create a session filter for a charge point.
-	 *
+	 * 
+	 * <p>
+	 * The {@code authId} and {@code transactionId} will be set to empty
+	 * strings.
+	 * </p>
+	 * 
 	 * @param chargePointId
 	 *        the Charge Point ID
 	 * @return the session instance, suitable for using as a filter
 	 */
 	public static CentralChargeSession forChargePoint(long chargePointId) {
-		return new CentralChargeSession(null, chargePointId, 0, 0, null);
+		return new CentralChargeSession("", chargePointId, 0, 0, "");
 	}
 
 	/**
 	 * Create a session filter for a transaction.
 	 *
+	 * <p>
+	 * The {@code authId} and {@code transactionId} will be set to empty
+	 * strings.
+	 * </p>
+	 * 
 	 * @param chargePointId
 	 *        the Charge Point ID
 	 * @param transactionId
@@ -105,12 +119,17 @@ public class CentralChargeSession extends ChargeSession {
 	 * @since 1.3
 	 */
 	public static CentralChargeSession forTransaction(long chargePointId, String transactionId) {
-		return new CentralChargeSession(null, chargePointId, 0, 0, transactionId);
+		return new CentralChargeSession("", chargePointId, 0, 0, transactionId);
 	}
 
 	/**
 	 * Create a session filter for a connector.
 	 *
+	 * <p>
+	 * The {@code authId} and {@code transactionId} will be set to empty
+	 * strings.
+	 * </p>
+	 * 
 	 * @param chargePointId
 	 *        the Charge Point ID
 	 * @param evseId
@@ -121,7 +140,7 @@ public class CentralChargeSession extends ChargeSession {
 	 * @since 1.3
 	 */
 	public static CentralChargeSession forConnector(long chargePointId, int evseId, int connectorId) {
-		return new CentralChargeSession(null, chargePointId, evseId, connectorId, null);
+		return new CentralChargeSession("", chargePointId, evseId, connectorId, "");
 	}
 
 }

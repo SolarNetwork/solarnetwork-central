@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.biz.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
@@ -50,10 +52,12 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 	 *
 	 * @param solarNodeMetadataDao
 	 *        the node metadata DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public DaoSolarNodeMetadataBiz(SolarNodeMetadataDao solarNodeMetadataDao) {
 		super();
-		this.solarNodeMetadataDao = solarNodeMetadataDao;
+		this.solarNodeMetadataDao = requireNonNullArgument(solarNodeMetadataDao, "solarNodeMetadataDao");
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -107,8 +111,8 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<SolarNodeMetadataFilterMatch, Long> findSolarNodeMetadata(
-			SolarNodeMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max) {
+			SolarNodeMetadataFilter criteria, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max) {
 		return solarNodeMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
 	}
 

@@ -27,6 +27,7 @@ import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.execu
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
@@ -59,7 +60,7 @@ public class JdbcCapacityOptimizerConfigurationDao
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCapacityOptimizerConfigurationDao(JdbcOperations jdbcOps) {
 		super(jdbcOps, OscpRole.CapacityOptimizer, CapacityOptimizerConfiguration.class);
@@ -97,16 +98,19 @@ public class JdbcCapacityOptimizerConfigurationDao
 
 	@Override
 	public UserLongCompositePK save(CapacityOptimizerConfiguration entity) {
-		if ( !entity.getId().entityIdIsAssigned() ) {
-			return create(entity.getId().getUserId(), entity);
+		final var id = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(),
+				"entity.id");
+		if ( !id.entityIdIsAssigned() ) {
+			return create(id.getUserId(), entity);
 		}
-		final var sql = new UpdateCapacityOptimizerConfiguration(entity.getId(), entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		final var sql = new UpdateCapacityOptimizerConfiguration(id, entity);
+		jdbcOps.update(sql);
+		return id;
 	}
 
 	@Override
-	public Collection<CapacityOptimizerConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<CapacityOptimizerConfiguration> findAll(Long userId,
+			@Nullable List<SortDescriptor> sorts) {
 		BasicConfigurationFilter filter = new BasicConfigurationFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var results = findFiltered(filter);
@@ -114,14 +118,14 @@ public class JdbcCapacityOptimizerConfigurationDao
 	}
 
 	@Override
-	public CapacityOptimizerConfiguration get(UserLongCompositePK id) {
+	public @Nullable CapacityOptimizerConfiguration get(UserLongCompositePK id) {
 		BasicConfigurationFilter filter = filterForGet(id);
 		var results = findFiltered(filter);
 		return stream(results.spliterator(), false).findFirst().orElse(null);
 	}
 
 	@Override
-	public CapacityOptimizerConfiguration getForUpdate(UserLongCompositePK id) {
+	public @Nullable CapacityOptimizerConfiguration getForUpdate(UserLongCompositePK id) {
 		BasicConfigurationFilter filter = filterForGet(id);
 		filter.setLockResults(true);
 		var results = findFiltered(filter);
@@ -130,7 +134,8 @@ public class JdbcCapacityOptimizerConfigurationDao
 
 	@Override
 	public FilterResults<CapacityOptimizerConfiguration, UserLongCompositePK> findFiltered(
-			ConfigurationFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			ConfigurationFilter filter, @Nullable List<SortDescriptor> sorts, @Nullable Long offset,
+			@Nullable Integer max) {
 		var sql = new SelectCapacityOptimizerConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, rowMapperForEntity());
 	}

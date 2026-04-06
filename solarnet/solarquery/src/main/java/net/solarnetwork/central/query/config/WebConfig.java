@@ -28,10 +28,10 @@ import static net.solarnetwork.central.query.config.RateLimitConfig.RATE_LIMIT;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +60,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
+import net.solarnetwork.central.datum.support.GeneralDatumMapPropertySerializer;
 import net.solarnetwork.central.datum.support.GeneralNodeDatumMapPropertySerializer;
 import net.solarnetwork.central.support.DelegatingParser;
 import net.solarnetwork.central.support.InstantFormatter;
@@ -160,22 +161,26 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Bean
 	public PropertySerializerRegistrar propertySerializerRegistrar() {
-		PropertySerializerRegistrar reg = new PropertySerializerRegistrar();
+		final PropertySerializerRegistrar reg = new PropertySerializerRegistrar();
 
-		GeneralNodeDatumMapPropertySerializer datumMapSerializer = new GeneralNodeDatumMapPropertySerializer();
+		final GeneralNodeDatumMapPropertySerializer nodeDatumMapSerializer = new GeneralNodeDatumMapPropertySerializer();
+		final GeneralDatumMapPropertySerializer generalDatumMapSerializer = new GeneralDatumMapPropertySerializer();
 
-		Map<String, PropertySerializer> classSerializers = new LinkedHashMap<>(4);
+		final Map<String, PropertySerializer> classSerializers = new LinkedHashMap<>(4);
 		classSerializers.put("sun.util.calendar.ZoneInfo", timeZonePropertySerializer());
 		classSerializers.put("org.springframework.validation.BeanPropertyBindingResult",
 				bindingResultSerializer());
 		classSerializers.put("net.solarnetwork.central.datum.domain.GeneralNodeDatum",
-				datumMapSerializer);
+				nodeDatumMapSerializer);
 		classSerializers.put("net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch",
-				datumMapSerializer);
+				nodeDatumMapSerializer);
 		classSerializers.put("net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum",
-				datumMapSerializer);
+				nodeDatumMapSerializer);
 		classSerializers.put("net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumReading",
-				datumMapSerializer);
+				nodeDatumMapSerializer);
+		classSerializers.put("net.solarnetwork.domain.datum.GeneralDatum", generalDatumMapSerializer);
+		classSerializers.put("net.solarnetwork.central.datum.v2.domain.ObjectDatum",
+				generalDatumMapSerializer);
 		reg.setClassSerializers(classSerializers);
 
 		return reg;
@@ -200,7 +205,7 @@ public class WebConfig implements WebMvcConfigurer {
 		csv.setPropertySerializerRegistrar(propertySerializerRegistrar());
 
 		var xml = new SimpleXmlHttpMessageConverter();
-		xml.setClassNamesAllowedForNesting(Collections.singleton("net.solarnetwork"));
+		xml.setClassNamesAllowedForNesting(Set.of("net.solarnetwork"));
 		xml.setPropertySerializerRegistrar(xmlPropertySerializerRegistrar());
 
 		var json = new JacksonJsonHttpMessageConverter(jsonMapper);

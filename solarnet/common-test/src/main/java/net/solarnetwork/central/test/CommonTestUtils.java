@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.test;
 
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
@@ -34,14 +34,15 @@ import java.util.regex.Pattern;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
-import org.springframework.util.FileCopyUtils;
+import org.jspecify.annotations.Nullable;
+import org.springframework.util.StreamUtils;
 import net.solarnetwork.util.ClassUtils;
 
 /**
  * Common test utilities.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public final class CommonTestUtils {
 
@@ -82,7 +83,8 @@ public final class CommonTestUtils {
 	 * @throws RuntimeException
 	 *         if the resource cannot be loaded
 	 */
-	public static Matcher<String> equalToTextResource(String resource, Class<?> clazz, Pattern skip) {
+	public static Matcher<String> equalToTextResource(String resource, Class<?> clazz,
+			@Nullable Pattern skip) {
 		String txt = ClassUtils.getResourceAsString(resource, clazz, skip);
 		return Matchers.equalToCompressingWhiteSpace(txt);
 	}
@@ -117,6 +119,28 @@ public final class CommonTestUtils {
 			buf.append(UUID.randomUUID().toString().replace("-", ""));
 		}
 		buf.setLength(len);
+		return buf.toString();
+	}
+
+	private static final int ALPHA_CHAR_OFFSET = 'a';
+	private static final int ALPHA_CHAR_LEN = 'z' - ALPHA_CHAR_OFFSET;
+
+	/**
+	 * Get a random source ID value.
+	 *
+	 * @return the string
+	 * @since 1.8
+	 */
+	public static String randomSourceId() {
+		StringBuilder buf = new StringBuilder();
+		buf.append('/');
+		for ( int i = 0; i < 3; i++ ) {
+			for ( int j = 0; j < 5; j++ ) {
+				buf.append((char) (ALPHA_CHAR_OFFSET + RNG.nextInt(ALPHA_CHAR_LEN)));
+			}
+			buf.append('/');
+		}
+		buf.append(1 + RNG.nextInt(8));
 		return buf.toString();
 	}
 
@@ -209,7 +233,7 @@ public final class CommonTestUtils {
 			public boolean matches(Object actual) {
 				if ( actual == null && expected != null ) {
 					return false;
-				} else if ( actual instanceof BigDecimal[] array ) {
+				} else if ( expected != null && actual instanceof BigDecimal[] array ) {
 					if ( array.length != expected.length ) {
 						return false;
 					}
@@ -238,7 +262,7 @@ public final class CommonTestUtils {
 			public void describeMismatch(Object actual, Description description) {
 				if ( actual == null && expected != null ) {
 					description.appendText("was null");
-				} else if ( actual instanceof BigDecimal[] array ) {
+				} else if ( expected != null && actual instanceof BigDecimal[] array ) {
 					if ( array.length != expected.length ) {
 						description.appendText("length was %d ".formatted(expected.length))
 								.appendValue(actual);
@@ -282,9 +306,12 @@ public final class CommonTestUtils {
 	 *         if any error occurs
 	 */
 	public static String utf8StringResource(String resource, Class<?> clazz) {
-		try {
-			return FileCopyUtils.copyToString(
-					new InputStreamReader(clazz.getResourceAsStream(resource), StandardCharsets.UTF_8));
+		try (InputStream in = clazz.getResourceAsStream(resource)) {
+			if ( in == null ) {
+				throw new RuntimeException(
+						"Resource [%s] not found from class %s".formatted(resource, clazz));
+			}
+			return StreamUtils.copyToString(in, StandardCharsets.UTF_8);
 		} catch ( Exception e ) {
 			throw new RuntimeException(e);
 		}
@@ -299,9 +326,9 @@ public final class CommonTestUtils {
 	 *        the key header column name
 	 * @param valName
 	 *        the value header column name
-	 * @return the formatted table
+	 * @return the formatted table, or {@code null} if {@code map} is empty
 	 */
-	public static String basicTable(Map<?, ?> map, String keyName, String valName) {
+	public static @Nullable String basicTable(Map<?, ?> map, String keyName, String valName) {
 		if ( map == null || map.isEmpty() ) {
 			return null;
 		}

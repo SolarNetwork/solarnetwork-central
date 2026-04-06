@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.security.crypto.encrypt.AesBytesEncryptor.CipherAlgorithm.GCM;
 import java.util.Base64;
 import org.springframework.security.crypto.codec.Utf8;
@@ -85,29 +86,25 @@ public final class PrefixedTextEncryptor implements TextEncryptor, BytesEncrypto
 	}
 
 	@Override
-	public String encrypt(String text) {
-		if ( text == null ) {
-			return null;
-		}
-		if ( text.startsWith(prefix) ) {
+	public String encrypt(final String text) {
+		final String t = requireNonNullArgument(text, "text");
+		if ( t.startsWith(prefix) ) {
 			// already encrypted
-			return text;
+			return t;
 		}
 
-		byte[] cipherText = encrypt(Utf8.encode(text));
+		byte[] cipherText = encrypt(Utf8.encode(t));
 		return prefix + Base64.getUrlEncoder().encodeToString(cipherText);
 	}
 
 	@Override
 	public String decrypt(String encryptedText) {
-		if ( encryptedText == null ) {
-			return null;
-		}
-		if ( !encryptedText.startsWith(prefix) ) {
+		String enc = requireNonNullArgument(encryptedText, "encryptedText");
+		if ( !enc.startsWith(prefix) ) {
 			// note encrypted
-			return encryptedText;
+			return enc;
 		}
-		byte[] cipherText = Base64.getUrlDecoder().decode(encryptedText.substring(prefix.length()));
+		byte[] cipherText = Base64.getUrlDecoder().decode(enc.substring(prefix.length()));
 		return Utf8.decode(decrypt(cipherText));
 	}
 

@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
     id 'eclipse'
-	id 'org.springframework.boot' version '4.0.1'
+	id 'org.springframework.boot' version '4.0.4'
 	id 'org.graalvm.buildtools.native' version '0.11.1'
 }
 
@@ -117,4 +117,12 @@ graalvmNative {
 
 tasks.withType(org.springframework.boot.gradle.tasks.aot.ProcessAot).configureEach {
     args("${aotProcessArgs}")
+}
+
+compileAotJava {
+	options.errorprone.enabled = false
+}
+
+compileAotTestJava {
+	options.errorprone.enabled = false
 }

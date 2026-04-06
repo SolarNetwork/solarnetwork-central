@@ -54,12 +54,12 @@
 		<constructor>
 			<idArg column="bill_address_id" javaType="Long"/>
 			<arg column="bill_address_created" javaType="java.time.Instant"/>
+			<arg column="bill_address_user_id" javaType="Long"/>
+			<arg column="bill_address_disp_name" javaType="String"/>
+			<arg column="bill_address_email" javaType="String"/>
+			<arg column="bill_address_country" javaType="String"/>
+			<arg column="bill_address_time_zone" javaType="String"/>
 		</constructor>
-		<result property="userId" column="bill_address_user_id"/>
-		<result property="name" column="bill_address_disp_name"/>
-		<result property="email" column="bill_address_email"/>
-		<result property="country" column="bill_address_country"/>
-		<result property="timeZoneId" column="bill_address_time_zone"/>
 		<result property="region" column="bill_address_region"/>
 		<result property="stateOrProvince" column="bill_address_state_prov"/>
 		<result property="locality" column="bill_address_locality"/>

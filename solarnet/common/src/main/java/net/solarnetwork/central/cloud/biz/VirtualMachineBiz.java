@@ -24,6 +24,7 @@ package net.solarnetwork.central.cloud.biz;
 
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.cloud.domain.VirtualMachine;
 import net.solarnetwork.central.cloud.domain.VirtualMachineState;
 import net.solarnetwork.service.Identifiable;
@@ -41,8 +42,9 @@ public interface VirtualMachineBiz extends Identifiable {
 	 * 
 	 * @param name
 	 *        the name of the machine to get
-	 * @return the machine, or {@literal null} if not available
+	 * @return the machine, or {@code null} if not available
 	 */
+	@Nullable
 	VirtualMachine virtualMachineForName(String name);
 
 	/**
@@ -59,8 +61,7 @@ public interface VirtualMachineBiz extends Identifiable {
 	 * 
 	 * @param ids
 	 *        the IDs of the machines to get the state for
-	 * @return a mapping of machine IDs to associated states; never
-	 *         {@literal null}
+	 * @return a mapping of machine IDs to associated states; never {@code null}
 	 */
 	Map<String, VirtualMachineState> stateForVirtualMachines(Set<String> ids);
 

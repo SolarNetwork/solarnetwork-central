@@ -23,6 +23,7 @@
 package net.solarnetwork.central.din.security;
 
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * API for endpoint credential authorization.
@@ -39,8 +40,9 @@ public interface CredentialAuthorizationDao {
 	 *        the endpoint ID
 	 * @param username
 	 *        the username
-	 * @return the matching credentials
+	 * @return the matching credentials, or {@code null} if not available
 	 */
+	@Nullable
 	EndpointUserDetails credentialsForEndpoint(UUID endpointId, String username);
 
 }

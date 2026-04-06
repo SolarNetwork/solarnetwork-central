@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.v16.service;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -65,7 +66,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 	 * @param datumDao
 	 *        the datum DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public FirmwareStatusDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,
@@ -115,30 +116,29 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 	}
 
 	@Override
-	public void processActionMessage(ActionMessage<FirmwareStatusNotificationRequest> message,
-			ActionMessageResultHandler<FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse> resultHandler) {
-		if ( message != null && message.getMessage() != null ) {
-			FirmwareStatusNotificationRequest notif = message.getMessage();
-			DatumSamples s = new DatumSamples();
-			if ( notif.getStatus() != null ) {
-				s.putSampleValue(DatumProperty.Status.getClassification(),
-						DatumProperty.Status.getPropertyName(), notif.getStatus().toString());
-			}
+	protected void handleActionMessage(final ActionMessage<FirmwareStatusNotificationRequest> message,
+			final ActionMessageResultHandler<FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse> resultHandler,
+			final FirmwareStatusNotificationRequest req) {
+		DatumSamples s = null;
+		if ( req.getStatus() != null ) {
+			s = new DatumSamples();
+			s.putSampleValue(DatumProperty.Status.getClassification(),
+					DatumProperty.Status.getPropertyName(), req.getStatus().toString());
+		}
 
-			if ( !s.isEmpty() ) {
-				final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
+		if ( s != null && !s.isEmpty() && message.getClientId() != null ) {
+			final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
+			if ( cp.getInfo().getId() != null ) {
 				final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(),
-						cp.getId());
-
-				GeneralNodeDatum d = new GeneralNodeDatum();
-				d.setCreated(Instant.now());
-				d.setNodeId(cp.getNodeId());
-				d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
+						cp.id());
+				final var d = new GeneralNodeDatum(cp.getNodeId(), Instant.now(),
+						pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 				d.setSamples(s);
 				pubSupport.publishDatum(cps, d);
 			}
 		}
-		super.processActionMessage(message, resultHandler);
+
+		super.handleActionMessage(message, resultHandler, req);
 	}
 
 	/**
@@ -147,7 +147,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
-	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+	public void setFluxPublisher(@Nullable DatumProcessor fluxPublisher) {
 		pubSupport.setFluxPublisher(fluxPublisher);
 	}
 
@@ -167,6 +167,8 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public void setSourceIdTemplate(String sourceIdTemplate) {
 		pubSupport.setSourceIdTemplate(sourceIdTemplate);
@@ -178,7 +180,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 	 * @param sourceIdSuffix
 	 *        the suffix to add
 	 */
-	public void setSourceIdSuffix(String sourceIdSuffix) {
+	public void setSourceIdSuffix(@Nullable String sourceIdSuffix) {
 		pubSupport.setSourceIdSuffix(sourceIdSuffix);
 	}
 

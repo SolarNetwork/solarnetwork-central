@@ -23,6 +23,7 @@
 package net.solarnetwork.central.din.security;
 
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentAuthentication;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.Authentication;
 import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityUser;
@@ -45,11 +46,12 @@ public final class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityEndpointCredential}.
 	 *
-	 * @return the current security actor, never {@literal null}
+	 * @return the current security actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 */
-	public static SecurityEndpointCredential getCurrentEndpointCredential() throws BasicSecurityException {
+	public static SecurityEndpointCredential getCurrentEndpointCredential()
+			throws BasicSecurityException {
 		return getEndpointCredential(getCurrentAuthentication());
 	}
 
@@ -58,11 +60,11 @@ public final class SecurityUtils {
 	 *
 	 * @param auth
 	 *        the authentication
-	 * @return the endpoint actor, never {@literal null}
+	 * @return the endpoint actor, never {@code null}
 	 * @throws BasicSecurityException
 	 *         if the actor is not available or is not an endpoint credential
 	 */
-	public static SecurityEndpointCredential getEndpointCredential(Authentication auth)
+	public static SecurityEndpointCredential getEndpointCredential(@Nullable Authentication auth)
 			throws BasicSecurityException {
 		if ( auth != null && auth.getPrincipal() instanceof SecurityEndpointCredential c ) {
 			return c;

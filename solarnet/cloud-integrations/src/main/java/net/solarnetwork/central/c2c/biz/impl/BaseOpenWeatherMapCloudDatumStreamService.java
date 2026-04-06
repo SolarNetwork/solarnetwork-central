@@ -30,6 +30,7 @@ import static net.solarnetwork.codec.jackson.JsonUtils.parseBigDecimalAttribute;
 import static net.solarnetwork.codec.jackson.JsonUtils.parseIntegerAttribute;
 import static net.solarnetwork.codec.jackson.JsonUtils.parseLongAttribute;
 import static net.solarnetwork.util.NumberUtils.bigDecimalForNumber;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,11 +38,11 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -82,7 +83,7 @@ import tools.jackson.databind.JsonNode;
  * {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.2
  */
 public abstract class BaseOpenWeatherMapCloudDatumStreamService
 		extends BaseRestOperationsCloudDatumStreamService {
@@ -107,6 +108,42 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 
 	/** The units URL query parameter value for metric units. */
 	public static final String UNITS_METRIC_VALUE = "metric";
+
+	/**
+	 * The icon ID property name.
+	 *
+	 * @since 2.1
+	 */
+	public static final String ICON_ID_PROP = "iconId";
+
+	/**
+	 * A suffix added to daytime copies of properties.
+	 *
+	 * @since 2.1
+	 */
+	public static final String DAY_SUFFIX = "_day";
+
+	/**
+	 * A suffix added to night-time copies of properties.
+	 *
+	 * @since 2.1
+	 */
+	public static final String NIGHT_SUFFIX = "_night";
+
+	/**
+	 * List of status properties copied to day/night values.
+	 *
+	 * @since 2.1
+	 */
+	public static final List<String> DAYNIGHT_STATUS_PROPS = List.of(AtmosphericDatum.SKY_CONDITIONS_KEY,
+			ICON_ID_PROP);
+
+	/**
+	 * One hundred.
+	 *
+	 * @since 2.2
+	 */
+	public static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
 
 	/**
 	 * Constructor.
@@ -134,7 +171,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseOpenWeatherMapCloudDatumStreamService(String serviceIdentifier, String displayName,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
@@ -158,13 +195,13 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 
 	@Override
 	public Iterable<LocalizedServiceInfo> dataValueFilters(Locale locale) {
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
-			Map<String, ?> filters) {
-		return Collections.emptyList();
+			@Nullable Map<String, ?> filters) {
+		return List.of();
 	}
 
 	@Override
@@ -172,7 +209,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 			CloudDatumStreamQueryFilter filter) {
 		Iterable<Datum> result = latestDatum(datumStream);
 		List<Datum> list = (result != null ? StreamSupport.stream(result.spliterator(), false).toList()
-				: Collections.emptyList());
+				: List.of());
 		return new BasicCloudDatumStreamQueryResult(list);
 	}
 
@@ -244,10 +281,10 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 	 *        the datum stream object ID
 	 * @param sourceId
 	 *        the datum stream source ID
-	 * @return the datum, or {@literal null}
+	 * @return the datum, or {@code null}
 	 */
-	public static GeneralDatum parseWeatherData(JsonNode json, ObjectDatumKind kind, Long objectId,
-			String sourceId) {
+	public static @Nullable GeneralDatum parseWeatherData(@Nullable JsonNode json, ObjectDatumKind kind,
+			Long objectId, String sourceId) {
 		/*- EXAMPLE WEATHER JSON:
 		{
 		   "coord": {
@@ -317,7 +354,8 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 
 		populateJsonDatumPropertyValue(main, "pressure", DatumSamplesType.Instantaneous,
 				AtmosphericDatum.ATMOSPHERIC_PRESSURE_KEY, samples,
-				(val) -> bigDecimalForNumber((Number) val).multiply(new BigDecimal(100)).intValue());
+				(val) -> nonnull(bigDecimalForNumber((Number) val), "Value").multiply(ONE_HUNDRED)
+						.intValue());
 
 		populateJsonDatumPropertyValue(main, "humidity", DatumSamplesType.Instantaneous,
 				AtmosphericDatum.HUMIDITY_KEY, samples);
@@ -328,13 +366,15 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 			populateJsonDatumPropertyValue(weather, "main", DatumSamplesType.Status,
 					AtmosphericDatum.SKY_CONDITIONS_KEY, samples);
 
-			populateJsonDatumPropertyValue(weather, "icon", DatumSamplesType.Status, "iconId", samples);
+			populateJsonDatumPropertyValue(weather, "icon", DatumSamplesType.Status, ICON_ID_PROP,
+					samples);
 		}
 
 		JsonNode wind = json.path("wind");
 		populateJsonDatumPropertyValue(wind, "deg", DatumSamplesType.Instantaneous,
 				AtmosphericDatum.WIND_DIRECTION_KEY, samples,
-				(val) -> bigDecimalForNumber((Number) val).setScale(0, RoundingMode.HALF_UP).intValue());
+				(val) -> nonnull(bigDecimalForNumber((Number) val), "Value")
+						.setScale(0, RoundingMode.HALF_UP).intValue());
 
 		populateJsonDatumPropertyValue(wind, "speed", DatumSamplesType.Instantaneous,
 				AtmosphericDatum.WIND_SPEED_KEY, samples);
@@ -358,19 +398,25 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 			}
 		}
 
+		// track day/night status
+		Instant sunrise = null;
+		Instant sunset = null;
+
 		JsonNode sys = json.path("sys");
 		Integer tzOffsetSecs = parseIntegerAttribute(json, "timezone");
 		if ( tzOffsetSecs != null ) {
 			ZoneId zone = ZoneOffset.ofTotalSeconds(tzOffsetSecs);
-			JsonNode sunrise = sys.path("sunrise");
-			if ( sunrise.isNumber() ) {
-				samples.putStatusSampleValue(DayDatum.SUNRISE_KEY, DateUtils
-						.format(Instant.ofEpochSecond(sunrise.longValue()).atZone(zone).toLocalTime()));
+			JsonNode rise = sys.path("sunrise");
+			if ( rise.isNumber() ) {
+				sunrise = Instant.ofEpochSecond(rise.longValue());
+				samples.putStatusSampleValue(DayDatum.SUNRISE_KEY,
+						DateUtils.format(sunrise.atZone(zone).toLocalTime()));
 			}
-			JsonNode sunset = sys.path("sunset");
-			if ( sunset.isNumber() ) {
-				samples.putStatusSampleValue(DayDatum.SUNSET_KEY, DateUtils
-						.format(Instant.ofEpochSecond(sunset.longValue()).atZone(zone).toLocalTime()));
+			JsonNode set = sys.path("sunset");
+			if ( set.isNumber() ) {
+				sunset = Instant.ofEpochSecond(set.longValue());
+				samples.putStatusSampleValue(DayDatum.SUNSET_KEY,
+						DateUtils.format(sunset.atZone(zone).toLocalTime()));
 			}
 		}
 
@@ -378,7 +424,20 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 			return null;
 		}
 		Instant ts = parseTimestampNode(json, "dt");
-		return new GeneralDatum(new DatumId(kind, objectId, sourceId, ts), samples);
+
+		// populate day/night copies of status properties
+		if ( ts != null && sunrise != null && sunset != null ) {
+			final Map<String, Object> statusProps = samples.getStatus();
+			if ( statusProps != null ) {
+				final String suffix = (ts.isBefore(sunrise) || ts.isAfter(sunset)) ? NIGHT_SUFFIX
+						: DAY_SUFFIX;
+				for ( String propName : DAYNIGHT_STATUS_PROPS ) {
+					statusProps.put(propName + suffix, statusProps.get(propName));
+				}
+			}
+		}
+
+		return new GeneralDatum(DatumId.datumId(kind, objectId, sourceId, ts), samples);
 	}
 
 	/**
@@ -388,9 +447,9 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 	 *        the node
 	 * @param key
 	 *        the field name to parse
-	 * @return the date, or {@literal null}
+	 * @return the date, or {@code null}
 	 */
-	public static Instant parseTimestampNode(JsonNode node, String key) {
+	public static @Nullable Instant parseTimestampNode(@Nullable JsonNode node, String key) {
 		Long val = parseLongAttribute(node, key);
 		if ( val == null ) {
 			return null;

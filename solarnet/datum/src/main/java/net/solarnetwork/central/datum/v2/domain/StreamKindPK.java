@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Primary key for a stream associated with a string qualifier "kind".
@@ -51,10 +54,12 @@ public class StreamKindPK extends StreamPK implements Serializable, Cloneable, C
 	 *        the time stamp
 	 * @param kind
 	 *        the kind
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public StreamKindPK(UUID streamId, Instant timestamp, String kind) {
 		super(streamId, timestamp);
-		this.kind = kind;
+		this.kind = requireNonNullArgument(kind, "kind");
 	}
 
 	@Override
@@ -92,7 +97,7 @@ public class StreamKindPK extends StreamPK implements Serializable, Cloneable, C
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -104,11 +109,12 @@ public class StreamKindPK extends StreamPK implements Serializable, Cloneable, C
 
 	@SuppressWarnings("ReferenceEquality")
 	@Override
-	public int compareTo(StreamKindPK o) {
+	public int compareTo(@Nullable StreamKindPK o) {
 		int result = super.compareWith(o);
 		if ( result != 0 ) {
 			return result;
 		}
+		o = nonnull(o, "other");
 		if ( kind == o.kind ) {
 			return 0;
 		} else if ( kind == null ) {

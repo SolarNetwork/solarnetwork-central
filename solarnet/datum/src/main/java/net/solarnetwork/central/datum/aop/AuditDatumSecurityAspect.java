@@ -26,6 +26,7 @@ import java.util.Arrays;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -34,8 +35,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
-import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.BasicSecurityException;
+import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -92,7 +93,7 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 
 	}
 
-	private void requireUserId(Long userId, Long[] userIds) {
+	private void requireUserId(Long userId, Long @Nullable [] userIds) {
 		if ( userIds == null || userIds.length != 1 || !userId.equals(userIds[0]) ) {
 			log.warn("Access DENIED for user {} on audit filter without identical user ID: {}", userId,
 					Arrays.toString(userIds));

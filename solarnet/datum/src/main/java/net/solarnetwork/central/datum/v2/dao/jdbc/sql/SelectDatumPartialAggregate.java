@@ -23,7 +23,11 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.lang.String.format;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.datumStreamSortMapping;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Location;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -32,6 +36,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
@@ -44,7 +49,6 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.LocalDateInterval;
 import net.solarnetwork.central.datum.v2.domain.PartialAggregationInterval;
 import net.solarnetwork.domain.datum.Aggregation;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter
@@ -65,8 +69,10 @@ public final class SelectDatumPartialAggregate
 
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
-	private final CombiningConfig combine;
-	private final DatumRollupType rollup;
+	private final boolean aliased;
+	private final String metaStreamIdColumnName;
+	private final @Nullable CombiningConfig combine;
+	private final @Nullable DatumRollupType rollup;
 	private final List<DatumCriteria> intervalFilters;
 
 	/**
@@ -75,10 +81,12 @@ public final class SelectDatumPartialAggregate
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null} or invalid
+	 *         if {@code filter} is {@code null} or invalid
 	 */
 	public SelectDatumPartialAggregate(DatumCriteria filter) {
-		this(filter, filter.getPartialAggregation());
+		this(filter,
+				requireNonNullArgument(requireNonNullArgument(filter, "filter").getPartialAggregation(),
+						"filter.partialAggregation"));
 	}
 
 	/**
@@ -89,7 +97,7 @@ public final class SelectDatumPartialAggregate
 	 * @param partial
 	 *        the partial aggregation to use
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null} or invalid
+	 *         if {@code filter} is {@code null} or invalid
 	 */
 	public SelectDatumPartialAggregate(DatumCriteria filter, Aggregation partial) {
 		super();
@@ -158,11 +166,14 @@ public final class SelectDatumPartialAggregate
 			f.setLocalEndDate(e.getEnd());
 			return f;
 		}).collect(Collectors.toList());
+
+		this.aliased = (filter.includeStreamAliases() && filter.getObjectKind() != Location);
+		this.metaStreamIdColumnName = (aliased ? "s.orig_stream_id" : "s.stream_id");
 	}
 
 	private void sqlCte(StringBuilder buf) {
 		buf.append("WITH ").append(combine != null ? "rs" : "s").append(" AS (\n");
-		if ( filter.getObjectKind() == ObjectDatumKind.Location ) {
+		if ( filter.getObjectKind() == Location ) {
 			DatumSqlUtils.locationMetadataFilterSql(filter, DatumSqlUtils.MetadataSelectStyle.WithZone,
 					combine, buf);
 		} else {
@@ -173,14 +184,14 @@ public final class SelectDatumPartialAggregate
 		if ( combine != null ) {
 			buf.append(", s AS (\n");
 			buf.append("	SELECT solardatm.virutal_stream_id(")
-					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
+					.append(filter.getObjectKind() == Location ? "loc_id" : "node_id")
 					.append(", source_id) AS vstream_id\n");
 			buf.append("	, *\n");
 			buf.append("	FROM rs\n");
 			buf.append(")\n");
 			buf.append(", vs AS (\n");
 			buf.append("	SELECT DISTINCT ON (vstream_id) vstream_id, ")
-					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
+					.append(filter.getObjectKind() == Location ? "loc_id" : "node_id")
 					.append(", source_id\n");
 			buf.append("	FROM s\n");
 			buf.append(")\n");
@@ -204,13 +215,19 @@ public final class SelectDatumPartialAggregate
 			buf.append("	s.source_rank,\n");
 			buf.append("	s.names_i,\n");
 			buf.append("	s.names_a,\n");
+		} else if ( aliased ) {
+			buf.append("s.stream_id,\n");
 		} else {
 			buf.append("datum.stream_id,\n");
 		}
 		if ( rollup != null
 				|| (filter.getAggregation() == aggregation && aggregation != Aggregation.Year) ) {
 			// main agg: direct results
-			buf.append("	datum.ts_start AS ts,\n");
+			buf.append("	datum.ts_start");
+			if ( rollup != null ) {
+				buf.append(" AS ts");
+			}
+			buf.append(",\n");
 			buf.append("	datum.data_i,\n");
 			buf.append("	datum.data_a,\n");
 			buf.append("	datum.data_s,\n");
@@ -220,7 +237,7 @@ public final class SelectDatumPartialAggregate
 		} else {
 			// partial agg: dynamic rollup to main agg
 			if ( combine != null ) {
-				buf.append("	ds.ts,\n");
+				buf.append("	ds.ts_start AS ts,\n");
 				buf.append("	ds.data_i,\n");
 				buf.append("	ds.data_a,\n");
 				buf.append("	ds.data_s,\n");
@@ -229,26 +246,32 @@ public final class SelectDatumPartialAggregate
 				buf.append("	ds.read_a\n");
 				buf.append("FROM s\n");
 				buf.append("INNER JOIN (\n");
-				buf.append("	SELECT datum.stream_id,\n");
+				buf.append("	SELECT ");
+				if ( aliased ) {
+					buf.append("s.stream_id");
+				} else {
+					buf.append("datum.stream_id");
+				}
+				buf.append(",\n");
 			}
 			buf.append("	date_trunc('").append(sqlAgg(aggregation)).append(
-					"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,\n");
+					"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,\n");
 			DatumSqlUtils.rollupAggDataSql(buf);
 		}
 	}
 
 	private void sqlFrom(DatumCriteria filter, StringBuilder buf) {
 		buf.append("FROM s\n");
-		buf.append("INNER JOIN ").append(sqlTableName(filter))
-				.append(" datum ON datum.stream_id = s.stream_id\n");
+		buf.append("INNER JOIN ").append(sqlTableName(filter.getAggregation()))
+				.append(" datum ON datum.stream_id = ").append(metaStreamIdColumnName).append("\n");
 	}
 
-	private String sqlTableName(DatumCriteria filter) {
-		return switch (filter.getAggregation()) {
+	private String sqlTableName(@Nullable Aggregation aggregation) {
+		return switch (aggregation) {
 			case Hour -> "solardatm.agg_datm_hourly";
 			case Day -> "solardatm.agg_datm_daily";
 			case Month, Year -> "solardatm.agg_datm_monthly";
-			default -> "solardatm.da_datm";
+			case null, default -> "solardatm.da_datm";
 		};
 	}
 
@@ -259,8 +282,15 @@ public final class SelectDatumPartialAggregate
 		buf.append("WHERE").append(where.substring(4));
 		if ( filter.getAggregation() != aggregation || aggregation == Aggregation.Year ) {
 			if ( rollup == null ) {
-				buf.append("GROUP BY datum.stream_id, date_trunc('").append(sqlAgg(aggregation)).append(
-						"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone\n");
+				buf.append("GROUP BY ");
+				if ( aliased ) {
+					buf.append("s.stream_id");
+				} else {
+					buf.append("datum.stream_id");
+				}
+				buf.append(", date_trunc('");
+				buf.append(sqlAgg(aggregation));
+				buf.append("', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone\n");
 				// partial aggregation can produce NULL output; omit those
 				buf.append("HAVING COUNT(*) > 0\n");
 			}
@@ -272,16 +302,11 @@ public final class SelectDatumPartialAggregate
 
 	private void sqlOrderBy(StringBuilder buf) {
 		StringBuilder order = new StringBuilder();
-		int idx = 2;
-		if ( filter.hasSorts() ) {
-			idx = orderBySorts(filter.getSorts(),
-					filter.getLocationId() != null ? DatumSqlUtils.LOCATION_STREAM_SORT_KEY_MAPPING
-							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
-					order);
-		} else {
-			order.append(", datum.stream_id, ts");
-		}
-		if ( !order.isEmpty() ) {
+		int idx = orderBySorts(
+				filter.getSorts() != null ? filter.getSorts() : DatumSqlUtils.SORTS_BY_STREAM_TIME,
+				datumStreamSortMapping(filter.getLocationId() != null ? Location : Node, aggregation),
+				order);
+		if ( idx > 0 ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
 		}
 	}
@@ -332,8 +357,7 @@ public final class SelectDatumPartialAggregate
 			buf.append("SELECT datum.*");
 		}
 		if ( combine != null ) {
-			buf.append(", vs.")
-					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
+			buf.append(", vs.").append(filter.getObjectKind() == Location ? "loc_id" : "node_id")
 					.append(", vs.source_id");
 
 		}

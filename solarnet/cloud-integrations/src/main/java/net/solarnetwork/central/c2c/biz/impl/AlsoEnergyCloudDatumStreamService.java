@@ -30,6 +30,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.domain.datum.DatumId.datumId;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
@@ -57,6 +58,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpMethod;
@@ -87,7 +89,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DatumId;
+import net.solarnetwork.domain.datum.DatumIdentity;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
@@ -202,7 +204,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	 *        read-through semantics that always returns a new lock for missing
 	 *        keys
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument except {@code integrationLocksCache} is
+	 *         {@code null}
 	 */
 	public AlsoEnergyCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
@@ -211,7 +214,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
-			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
+			@Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		super(SERVICE_IDENTIFIER, "AlsoEnergy Datum Stream Service", clock, userEventAppenderBiz,
 				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
@@ -246,13 +249,13 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
-			Map<String, ?> filters) {
+			@Nullable Map<String, ?> filters) {
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
 		List<CloudDataValue> result;
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
-			result = siteHardware(integration, filters);
+			result = siteHardware(integration, filters.get(SITE_ID_FILTER).toString(), filters);
 		} else {
 			// list available sites
 			result = sites(integration);
@@ -283,7 +286,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 		final var result = datum(datumStream, filter);
 		if ( result == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return result.getResults();
 	}
@@ -311,7 +314,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 			final AlsoEnergyGranularity resolution = resolveGranularity(ds, filter.getParameters());
 
-			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
 			// construct (siteId, hardwareId) to ValueRef[] mapping
 			final Map<UserLongCompositePK, List<ValueRef>> hardwareGroups = resolveHardwareGroups(ds,
@@ -339,7 +342,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			usedQueryFilter.setStartDate(startDate);
 			usedQueryFilter.setEndDate(endDate);
 
-			final Map<DatumId, DatumSamples> dataMap = new TreeMap<>();
+			final Map<DatumIdentity, DatumSamples> dataMap = new TreeMap<>();
 
 			for ( Entry<UserLongCompositePK, List<ValueRef>> e : hardwareGroups.entrySet() ) {
 				final ZonedDateTime siteStartDate = startDate.atZone(zone);
@@ -423,15 +426,16 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private List<CloudDataValue> sites(CloudIntegrationConfiguration integration) {
+		var sprops = integration.getServiceProperties();
 		return restOpsHelper.httpGet("List sites", integration, JsonNode.class,
 				_ -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
 						.path(AlsoEnergyCloudIntegrationService.LIST_SITES_URL)
-						.buildAndExpand(integration.getServiceProperties()).toUri(),
+						.buildAndExpand(sprops != null ? sprops : Map.of()).toUri(),
 				res -> parseSites(res.getBody()));
 	}
 
 	private List<CloudDataValue> siteHardware(CloudIntegrationConfiguration integration,
-			Map<String, ?> filters) {
+			final String siteId, final Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List site hardware", integration, JsonNode.class,
 		// @formatter:off
 				_ -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
@@ -440,13 +444,13 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 						.queryParam("includeDeviceConfig", true)
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
-				res -> parseSiteHardware(res.getBody(), filters));
+				res -> parseSiteHardware(siteId, res.getBody()));
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<CloudDataValue> parseSites(JsonNode json) {
+	private static List<CloudDataValue> parseSites(@Nullable JsonNode json) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -470,9 +474,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<CloudDataValue> parseSiteHardware(JsonNode json, Map<String, ?> filters) {
+	private static List<CloudDataValue> parseSiteHardware(final String siteId,
+			final @Nullable JsonNode json) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -530,7 +535,6 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		      }
 		    },
 		*/
-		final String siteId = filters.get(SITE_ID_FILTER).toString();
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode deviceNode : json.path("hardware") ) {
 			final JsonNode fieldsNode = deviceNode.path("fieldsArchived");
@@ -567,7 +571,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private AlsoEnergyGranularity resolveGranularity(CloudDatumStreamConfiguration datumStream,
-			Map<String, ?> parameters) {
+			@Nullable Map<String, ?> parameters) {
 		AlsoEnergyGranularity result = null;
 		try {
 			String settingVal = null;
@@ -586,7 +590,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private ZoneId resolveTimeZone(CloudDatumStreamConfiguration datumStream,
-			Map<String, ?> parameters) {
+			@Nullable Map<String, ?> parameters) {
 		ZoneId result = null;
 		try {
 			String settingVal = null;
@@ -630,7 +634,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private Map<UserLongCompositePK, List<ValueRef>> resolveHardwareGroups(
-			CloudDatumStreamConfiguration datumStream, Collection<String> sourceValueRefs,
+			CloudDatumStreamConfiguration datumStream, @Nullable Collection<String> sourceValueRefs,
 			List<CloudDatumStreamPropertyConfiguration> propConfigs) {
 		@SuppressWarnings("unchecked")
 		List<Map<String, ?>> placeholderSets = resolvePlaceholderSets(
@@ -665,9 +669,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return result;
 	}
 
-	private Void parseDatum(JsonNode body, List<ValueRef> refs,
-			CloudDatumStreamConfiguration datumStream, Map<String, String> sourceIdMap,
-			Map<DatumId, DatumSamples> dataMap) {
+	private Void parseDatum(@Nullable JsonNode body, List<ValueRef> refs,
+			CloudDatumStreamConfiguration datumStream, @Nullable Map<String, String> sourceIdMap,
+			Map<DatumIdentity, DatumSamples> dataMap) {
 		/*- EXAMPLE JSON:
 		{
 		  "info": [
@@ -720,7 +724,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				propVal = ref.property.applyValueTransforms(propVal);
 				if ( propVal != null ) {
 					dataMap.computeIfAbsent(
-							new DatumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts),
+							datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts)
+									.toIdentity(),
 							_ -> new DatumSamples()).putSampleValue(ref.property.getPropertyType(),
 									ref.property.getPropertyName(), propVal);
 				}
@@ -730,8 +735,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return null;
 	}
 
-	private String resolveSourceId(CloudDatumStreamConfiguration datumStream, ValueRef ref,
-			Map<String, String> sourceIdMap) {
+	private @Nullable String resolveSourceId(CloudDatumStreamConfiguration datumStream, ValueRef ref,
+			@Nullable Map<String, String> sourceIdMap) {
 		if ( sourceIdMap != null ) {
 			return sourceIdMap.get(ref.sourceId);
 		}

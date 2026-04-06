@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.c2c.biz;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Common instruction topic enumeration.
  *
@@ -46,7 +48,7 @@ public enum CommonInstructionTopic {
 	 *        the topic string
 	 * @return the matching enum instance, or {@code null} if not found
 	 */
-	public static CommonInstructionTopic findForTopic(String topic) {
+	public static @Nullable CommonInstructionTopic findForTopic(String topic) {
 		try {
 			return CommonInstructionTopic.valueOf(topic);
 		} catch ( IllegalArgumentException e ) {

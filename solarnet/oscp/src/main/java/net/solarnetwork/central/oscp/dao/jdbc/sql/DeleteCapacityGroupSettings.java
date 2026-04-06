@@ -49,7 +49,7 @@ public final class DeleteCapacityGroupSettings implements PreparedStatementCreat
 	 * @param groupId
 	 *        the group ID to select
 	 * @throws IllegalArgumentException
-	 *         if {@code userId} is {@literal null}
+	 *         if {@code userId} is {@code null}
 	 */
 	public DeleteCapacityGroupSettings(Long userId, Long groupId) {
 		super();

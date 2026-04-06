@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.ocpp.biz.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -30,6 +31,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindException;
@@ -48,9 +50,11 @@ import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
 import net.solarnetwork.central.ocpp.dao.ChargeSessionFilter;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
+import net.solarnetwork.central.ocpp.domain.BasicOcppFilter;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointFilter;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
@@ -85,9 +89,9 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	private final ChargePointStatusDao chargePointStatusDao;
 	private final ChargePointActionStatusDao chargePointActionStatusDao;
 	private final PasswordEncoder passwordEncoder;
-	private Validator validator;
-	private Validator chargePointStatusFilterValidator;
-	private Validator chargePointActionStatusFilterValidator;
+	private @Nullable Validator validator;
+	private @Nullable Validator chargePointStatusFilterValidator;
+	private @Nullable Validator chargePointActionStatusFilterValidator;
 
 	/**
 	 * Constructor.
@@ -113,7 +117,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 * @param passwordEncoder
 	 *        the system user password encoder to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public DaoUserOcppBiz(CentralSystemUserDao systemUserDao, CentralChargePointDao chargePointDao,
 			CentralChargePointConnectorDao connectorDao, CentralAuthorizationDao authorizationDao,
@@ -189,9 +193,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CentralSystemUser saveSystemUser(CentralSystemUser systemUser) {
-		if ( systemUser == null ) {
-			return null;
-		}
+		systemUser = requireNonNullArgument(systemUser, "systemUser");
 		String generatedPassword = null;
 		if ( systemUser.getPassword() == null && systemUser.getId() == null ) {
 			// generate new password
@@ -203,7 +205,8 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 			systemUser.setPassword(passwordEncoder.encode(systemUser.getPassword()));
 		}
 		validateInput(systemUser, "credentials");
-		CentralSystemUser result = (CentralSystemUser) systemUserDao.get(systemUserDao.save(systemUser));
+		CentralSystemUser result = (CentralSystemUser) nonnull(
+				systemUserDao.get(systemUserDao.save(systemUser)), "Entity");
 		verifyUserRelatedEntityResult(systemUser, result);
 		if ( generatedPassword != null ) {
 			// return password to caller
@@ -248,11 +251,11 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		authorizationDao.delete(userId, id);
 	}
 
-	private void validateInput(Object input, String name) {
+	private void validateInput(@Nullable Object input, String name) {
 		validateInput(input, name, getValidator());
 	}
 
-	private static void validateInput(Object input, String name, Validator v) {
+	private static void validateInput(@Nullable Object input, String name, @Nullable Validator v) {
 		if ( input == null || v == null || !v.supports(input.getClass()) ) {
 			return;
 		}
@@ -266,12 +269,10 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CentralAuthorization saveAuthorization(CentralAuthorization authorization) {
-		if ( authorization == null ) {
-			return null;
-		}
+		authorization = requireNonNullArgument(authorization, "authorization");
 		validateInput(authorization, "authorization");
-		CentralAuthorization result = (CentralAuthorization) authorizationDao
-				.get(authorizationDao.save(authorization));
+		CentralAuthorization result = (CentralAuthorization) nonnull(
+				authorizationDao.get(authorizationDao.save(authorization)), "Entity");
 		verifyUserRelatedEntityResult(authorization, result);
 		return result;
 	}
@@ -282,15 +283,22 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return chargePointDao.findAllForOwner(userId);
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<CentralChargePoint, Long> listChargePointsForUser(Long userId,
+			@Nullable CentralChargePointFilter filter) {
+		var f = new BasicOcppFilter(filter);
+		f.setUserId(requireNonNullArgument(userId, "userId"));
+		return chargePointDao.findFiltered(f);
+	}
+
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CentralChargePoint saveChargePoint(CentralChargePoint chargePoint) {
-		if ( chargePoint == null ) {
-			return null;
-		}
+		chargePoint = requireNonNullArgument(chargePoint, "chargePoint");
 		validateInput(chargePoint, "chargePoint");
-		CentralChargePoint result = (CentralChargePoint) chargePointDao
-				.get(chargePointDao.save(chargePoint));
+		CentralChargePoint result = (CentralChargePoint) nonnull(
+				chargePointDao.get(chargePointDao.save(chargePoint)), "Entity");
 		verifyUserRelatedEntityResult(chargePoint, result);
 		return result;
 	}
@@ -311,29 +319,36 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Override
 	public CentralChargePointConnector chargePointConnectorForUser(Long userId,
 			ChargePointConnectorKey id) {
-		return connectorDao.get(userId, id);
+		return connectorDao.get(requireNonNullArgument(userId, "userId"),
+				requireNonNullArgument(id, "id"));
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteUserChargePointConnector(Long userId, ChargePointConnectorKey id) {
-		connectorDao.delete(userId, id);
+		connectorDao.delete(requireNonNullArgument(userId, "userId"), requireNonNullArgument(id, "id"));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Collection<CentralChargePointConnector> chargePointConnectorsForUser(Long userId) {
-		return connectorDao.findAllForOwner(userId);
+		return connectorDao.findAllForOwner(requireNonNullArgument(userId, "userId"));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Collection<CentralChargePointConnector> chargePointConnectorsForUser(Long userId,
+			long chargePointId) {
+		return connectorDao.findByChargePointId(requireNonNullArgument(userId, "userId"), chargePointId);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CentralChargePointConnector saveChargePointConnector(CentralChargePointConnector entity) {
-		if ( entity == null ) {
-			return null;
-		}
+		entity = requireNonNullArgument(entity, "entity");
 		validateInput(entity, "connector");
-		return (CentralChargePointConnector) connectorDao.get(connectorDao.save(entity));
+		return (CentralChargePointConnector) nonnull(connectorDao.get(connectorDao.save(entity)),
+				"Entity");
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -357,18 +372,17 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public ChargePointSettings saveChargePointSettings(ChargePointSettings settings) {
-		if ( settings == null ) {
-			return null;
-		}
+		settings = requireNonNullArgument(settings, "settings");
 		validateInput(settings, "settings");
-		ChargePointSettings result = chargePointSettingsDao.get(chargePointSettingsDao.save(settings));
+		ChargePointSettings result = nonnull(
+				chargePointSettingsDao.get(chargePointSettingsDao.save(settings)), "Entity");
 		verifyUserRelatedEntityResult(settings, result);
 		return result;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public UserSettings settingsForUser(Long userId) {
+	public @Nullable UserSettings settingsForUser(Long userId) {
 		return userSettingsDao.get(userId);
 	}
 
@@ -381,16 +395,14 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public UserSettings saveSettings(UserSettings settings) {
-		if ( settings == null ) {
-			return null;
-		}
+		settings = requireNonNullArgument(settings, "settings");
 		validateInput(settings, "settings");
-		return userSettingsDao.get(userSettingsDao.save(settings));
+		return nonnull(userSettingsDao.get(userSettingsDao.save(settings)), "Entity");
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public ChargeSession chargeSessionForUser(Long userId, UUID sessionId) {
+	public @Nullable ChargeSession chargeSessionForUser(Long userId, UUID sessionId) {
 		return chargeSessionDao.get(sessionId, userId);
 	}
 
@@ -404,8 +416,9 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public void findFilteredChargePointStatus(ChargePointStatusFilter filter,
-			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
-			Long offset, Integer max) throws IOException {
+			FilteredResultsProcessor<ChargePointStatus> processor,
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset, @Nullable Integer max)
+			throws IOException {
 		validateInput(filter, "filter", getChargePointStatusFilterValidator());
 		chargePointStatusDao.findFilteredStream(filter, processor, sortDescriptors, offset, max);
 	}
@@ -414,7 +427,8 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Override
 	public void findFilteredChargePointActionStatus(ChargePointActionStatusFilter filter,
 			FilteredResultsProcessor<ChargePointActionStatus> processor,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException {
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset, @Nullable Integer max)
+			throws IOException {
 		validateInput(filter, "filter", getChargePointActionStatusFilterValidator());
 		chargePointActionStatusDao.findFilteredStream(filter, processor, sortDescriptors, offset, max);
 	}
@@ -428,7 +442,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public boolean endChargeSession(Long userId, UUID sessionId, ChargeSessionEndReason reason,
-			String endAuthId) {
+			@Nullable String endAuthId) {
 		return chargeSessionDao.endSession(userId, sessionId, reason, endAuthId);
 	}
 
@@ -437,7 +451,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 *
 	 * @return the validator
 	 */
-	public Validator getValidator() {
+	public final @Nullable Validator getValidator() {
 		return validator;
 	}
 
@@ -447,7 +461,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 * @param validator
 	 *        the validator to set
 	 */
-	public void setValidator(Validator validator) {
+	public final void setValidator(@Nullable Validator validator) {
 		this.validator = validator;
 	}
 
@@ -457,7 +471,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 * @return the validator
 	 * @since 2.1
 	 */
-	public Validator getChargePointStatusFilterValidator() {
+	public final @Nullable Validator getChargePointStatusFilterValidator() {
 		return chargePointStatusFilterValidator;
 	}
 
@@ -468,7 +482,8 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 *        the validator to set
 	 * @since 2.1
 	 */
-	public void setChargePointStatusFilterValidator(Validator chargePointStatusFilterValidator) {
+	public final void setChargePointStatusFilterValidator(
+			@Nullable Validator chargePointStatusFilterValidator) {
 		this.chargePointStatusFilterValidator = chargePointStatusFilterValidator;
 	}
 
@@ -478,7 +493,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 * @return the validator
 	 * @since 2.1
 	 */
-	public Validator getChargePointActionStatusFilterValidator() {
+	public final @Nullable Validator getChargePointActionStatusFilterValidator() {
 		return chargePointActionStatusFilterValidator;
 	}
 
@@ -489,8 +504,8 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 *        the validator to set
 	 * @since 2.1
 	 */
-	public void setChargePointActionStatusFilterValidator(
-			Validator chargePointActionStatusFilterValidator) {
+	public final void setChargePointActionStatusFilterValidator(
+			@Nullable Validator chargePointActionStatusFilterValidator) {
 		this.chargePointActionStatusFilterValidator = chargePointActionStatusFilterValidator;
 	}
 

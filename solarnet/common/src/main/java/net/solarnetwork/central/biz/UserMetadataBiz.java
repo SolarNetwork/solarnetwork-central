@@ -23,6 +23,7 @@
 package net.solarnetwork.central.biz;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserMetadataFilter;
 import net.solarnetwork.dao.FilterResults;
@@ -80,9 +81,10 @@ public interface UserMetadataBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@code null}
 	 */
 	FilterResults<UserMetadataEntity, Long> findUserMetadata(UserMetadataFilter criteria,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset,
+			@Nullable Integer max);
 
 }

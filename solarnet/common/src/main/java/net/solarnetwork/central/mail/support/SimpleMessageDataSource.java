@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.mail.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.function.Supplier;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import net.solarnetwork.central.mail.MessageDataSource;
 
@@ -29,22 +32,24 @@ import net.solarnetwork.central.mail.MessageDataSource;
  * Simple implementation of {@link MessageDataSource}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SimpleMessageDataSource implements MessageDataSource {
 
 	private final String subject;
-	private final String body;
-	private final Iterable<Resource> attachments;
+	private final @Nullable Iterable<Resource> attachments;
+	private @Nullable Supplier<String> body;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param subject
 	 *        the message subject
+	 * @throws IllegalArgumentException
+	 *         if {@code subject} is {@code null}
 	 */
 	public SimpleMessageDataSource(String subject) {
-		this(subject, null, null);
+		this(subject, null);
 	}
 
 	/**
@@ -54,8 +59,10 @@ public class SimpleMessageDataSource implements MessageDataSource {
 	 *        the message subject
 	 * @param body
 	 *        the message body
+	 * @throws IllegalArgumentException
+	 *         if {@code subject} is {@code null}
 	 */
-	public SimpleMessageDataSource(String subject, String body) {
+	public SimpleMessageDataSource(String subject, @Nullable String body) {
 		this(subject, body, null);
 	}
 
@@ -68,12 +75,40 @@ public class SimpleMessageDataSource implements MessageDataSource {
 	 *        the message body
 	 * @param attachments
 	 *        the message attachments
+	 * @throws IllegalArgumentException
+	 *         if {@code subject} is {@code null}
 	 */
-	public SimpleMessageDataSource(String subject, String body, Iterable<Resource> attachments) {
+	public SimpleMessageDataSource(String subject, @Nullable String body,
+			@Nullable Iterable<Resource> attachments) {
+		this(subject, stringSupplier(body), attachments);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param subject
+	 *        the message subject
+	 * @param body
+	 *        the message body
+	 * @param attachments
+	 *        the message attachments
+	 * @throws IllegalArgumentException
+	 *         if {@code subject} is {@code null}
+	 * @since 1.1
+	 */
+	public SimpleMessageDataSource(String subject, @Nullable Supplier<String> body,
+			@Nullable Iterable<Resource> attachments) {
 		super();
-		this.subject = subject;
+		this.subject = requireNonNullArgument(subject, "subject");
 		this.body = body;
 		this.attachments = attachments;
+	}
+
+	private static @Nullable Supplier<String> stringSupplier(@Nullable String s) {
+		if ( s == null ) {
+			return null;
+		}
+		return s::toString;
 	}
 
 	@Override
@@ -86,17 +121,28 @@ public class SimpleMessageDataSource implements MessageDataSource {
 	}
 
 	@Override
-	public String getSubject() {
+	public final String getSubject() {
 		return subject;
 	}
 
 	@Override
-	public String getBody() {
-		return body;
+	public final @Nullable String getBody() {
+		final Supplier<String> b = this.body;
+		return (b != null ? b.get() : null);
+	}
+
+	/**
+	 * Set the body supplier.
+	 * 
+	 * @param supplier
+	 *        the supplier
+	 */
+	protected final void setBodySupplier(@Nullable Supplier<String> supplier) {
+		this.body = supplier;
 	}
 
 	@Override
-	public Iterable<Resource> getAttachments() {
+	public final @Nullable Iterable<Resource> getAttachments() {
 		return attachments;
 	}
 

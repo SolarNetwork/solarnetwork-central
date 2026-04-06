@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.dao.mybatis;
 
 import static java.util.Collections.singletonMap;
 import java.util.Collection;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
@@ -74,7 +75,7 @@ public class MyBatisCentralAuthorizationDao extends BaseMyBatisGenericDaoSupport
 	}
 
 	@Override
-	public Authorization getForToken(Long userId, String token) {
+	public @Nullable Authorization getForToken(Long userId, String token) {
 		return selectFirst(getQueryForAll(),
 				singletonMap(FILTER_PROPERTY, new CentralAuthorization(userId, null, token)));
 	}

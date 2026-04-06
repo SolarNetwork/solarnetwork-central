@@ -36,7 +36,7 @@ public interface AppConfigurationBiz {
 	/**
 	 * Get the application configuration.
 	 * 
-	 * @return the configuration, never {@literal null}
+	 * @return the configuration, never {@code null}
 	 */
 	AppConfiguration getAppConfiguration();
 

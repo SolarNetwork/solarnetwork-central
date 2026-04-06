@@ -1,0 +1,652 @@
+/* ==================================================================
+ * DaoDatumExportBiz.java - 18/04/2018 5:57:03 AM
+ *
+ * Copyright 2018 SolarNetwork.net Dev Team
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA
+ * ==================================================================
+ */
+
+package net.solarnetwork.central.datum.export.biz.dao;
+
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonMap;
+import static java.util.stream.Collectors.toUnmodifiableMap;
+import static net.solarnetwork.central.datum.v2.support.DatumUtils.criteriaFromFilter;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
+import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.datum.biz.QueryAuditor;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.export.biz.DatumExportBiz;
+import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
+import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.biz.DatumExportService;
+import net.solarnetwork.central.datum.export.dao.DatumExportTaskInfoDao;
+import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
+import net.solarnetwork.central.datum.export.domain.BasicDatumExportResult;
+import net.solarnetwork.central.datum.export.domain.BasicDestinationConfiguration;
+import net.solarnetwork.central.datum.export.domain.BasicOutputConfiguration;
+import net.solarnetwork.central.datum.export.domain.Configuration;
+import net.solarnetwork.central.datum.export.domain.DatumExportRequest;
+import net.solarnetwork.central.datum.export.domain.DatumExportResource;
+import net.solarnetwork.central.datum.export.domain.DatumExportResult;
+import net.solarnetwork.central.datum.export.domain.DatumExportState;
+import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
+import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
+import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
+import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.datum.export.support.DatumExportException;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.dao.BasicBulkExportOptions;
+import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
+import net.solarnetwork.dao.BulkExportingDao.ExportCallbackAction;
+import net.solarnetwork.domain.BasicIdentifiableConfiguration;
+import net.solarnetwork.domain.Identity;
+import net.solarnetwork.event.AppEventPublisher;
+import net.solarnetwork.service.IdentifiableConfiguration;
+import net.solarnetwork.service.ProgressListener;
+import net.solarnetwork.service.ServiceLifecycleObserver;
+import net.solarnetwork.settings.SettingSpecifierProvider;
+import net.solarnetwork.settings.support.SettingUtils;
+
+/**
+ * DAO-based implementation of {@link DatumExportBiz}.
+ *
+ * @author matt
+ * @version 2.4
+ */
+public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserver {
+
+	/** The datum export task name. */
+	public static final String DATUM_EXPORT_NAME = "datum-export";
+
+	/** The default query page size. */
+	public static final int DEFAULT_QUERY_PAGE_SIZE = 1000;
+
+	private final ConcurrentMap<String, DatumExportTask> taskMap = new ConcurrentHashMap<>(16);
+	private final Logger log = LoggerFactory.getLogger(getClass());
+
+	private final DatumExportTaskInfoDao taskDao;
+	private final DatumEntityDao datumDao;
+	private final TaskScheduler scheduler;
+	private final AsyncTaskExecutor executor;
+	private final @Nullable TransactionTemplate transactionTemplate;
+	private final TextEncryptor textEncryptor;
+
+	private final List<DatumExportOutputFormatService> outputFormatServices;
+	private final List<DatumExportDestinationService> destinationServices;
+	private final Map<String, Set<String>> serviceSecureKeys;
+
+	private @Nullable AppEventPublisher eventPublisher;
+	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
+
+	private @Nullable ScheduledFuture<?> taskPurgerTask;
+	private @Nullable QueryAuditor queryAuditor;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param taskDao
+	 *        the task DAO
+	 * @param datumDao
+	 *        the datum DAO
+	 * @param scheduler
+	 *        the scheduler
+	 * @param executor
+	 *        the executor
+	 * @param transactionTemplate
+	 *        the transaction template
+	 * @param textEncryptor
+	 *        the encryptor to handle sensitive properties with
+	 * @param outputFormatServices
+	 *        the output format services
+	 * @param destinationServices
+	 *        the destination services
+	 * @param transactionTemplate
+	 *        an optional transaction template
+	 * @throws IllegalArgumentException
+	 *         if any argument other than {@code transactionTemplate} is
+	 *         {@code null}
+	 */
+	public DaoDatumExportBiz(DatumExportTaskInfoDao taskDao, DatumEntityDao datumDao,
+			TaskScheduler scheduler, AsyncTaskExecutor executor, TextEncryptor textEncryptor,
+			List<DatumExportOutputFormatService> outputFormatServices,
+			List<DatumExportDestinationService> destinationServices,
+			@Nullable TransactionTemplate transactionTemplate) {
+		super();
+		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
+		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.scheduler = requireNonNullArgument(scheduler, "scheduler");
+		this.executor = requireNonNullArgument(executor, "executor");
+		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
+		this.outputFormatServices = requireNonNullArgument(outputFormatServices, "outputFormatServices");
+		this.destinationServices = requireNonNullArgument(destinationServices, "destinationServices");
+
+		this.transactionTemplate = transactionTemplate;
+
+		// create a map of all services to their corresponding secure keys
+		// we assume here that all integration and datum stream identifiers are globally unique
+		this.serviceSecureKeys = Stream.of(outputFormatServices, destinationServices)
+				.flatMap(Collection::stream).map(SettingSpecifierProvider.class::cast)
+				.collect(toUnmodifiableMap(SettingSpecifierProvider::getSettingUid,
+						s -> SettingUtils.secureKeys(s.getSettingSpecifiers())));
+	}
+
+	/**
+	 * Initialize after properties configured.
+	 *
+	 * <p>
+	 * Call this method once all properties have been configured on the
+	 * instance.
+	 * </p>
+	 *
+	 * @since 2.0
+	 */
+	@Override
+	public void serviceDidStartup() {
+		if ( taskPurgerTask != null ) {
+			return;
+		}
+		if ( scheduler != null ) {
+			// purge completed tasks every hour
+			this.taskPurgerTask = scheduler.scheduleWithFixedDelay(new TaskPurger(),
+					Instant.now().plus(1, ChronoUnit.HOURS), Duration.ofHours(1));
+		}
+	}
+
+	/**
+	 * Shutdown after the service is no longer needed.
+	 *
+	 * @since 1.1
+	 */
+	@Override
+	public void serviceDidShutdown() {
+		if ( taskPurgerTask != null ) {
+			taskPurgerTask.cancel(true);
+		}
+	}
+
+	private final class TaskPurger implements Runnable {
+
+		@Override
+		public void run() {
+			for ( Iterator<DatumExportTask> itr = taskMap.values().iterator(); itr.hasNext(); ) {
+				DatumExportTask status = itr.next();
+				long completeDate = status.getCompletionDate();
+				if ( status.isDone()
+						&& completeDate + completedTaskMinimumCacheTime < System.currentTimeMillis() ) {
+					log.info("Purging status for completed export task {}: {}", status.getJobId(),
+							status.getJobState());
+					itr.remove();
+				}
+			}
+		}
+
+	}
+
+	public <T extends BasicIdentifiableConfiguration> T unmaskSensitiveInformation(T config) {
+		Set<String> secureKeys = serviceSecureKeys.get(config.getServiceIdentifier());
+		if ( secureKeys != null && !secureKeys.isEmpty() ) {
+			config.setServiceProps(
+					SecurityUtils.decryptedMap(config.getServiceProps(), secureKeys, textEncryptor));
+		}
+		return config;
+	}
+
+	private final class DatumExportTask implements Callable<DatumExportResult>, DatumExportStatus,
+			ProgressListener<DatumExportService> {
+
+		private static final int COUNT_UNKNOWN = -1;
+
+		private final DatumExportTaskInfo info;
+		private final Configuration config;
+		private DatumExportState jobState;
+		private double percentComplete;
+		private @Nullable Future<DatumExportResult> delegate;
+
+		/**
+		 * Construct from a task info.
+		 *
+		 * <p>
+		 * Once this task has been submitted to an executor, call
+		 * {@link #setDelegate(Future)} with the resulting {@code Future}.
+		 * </p>
+		 *
+		 * @param info
+		 *        the info
+		 */
+		private DatumExportTask(DatumExportTaskInfo info) {
+			super();
+			this.info = info;
+			this.jobState = DatumExportState.Claimed;
+			this.config = requireNonNullArgument(info.getConfiguration(), "info.configuration");
+		}
+
+		/**
+		 * Set the delegate {@code Future}.
+		 *
+		 * @param delegate
+		 *        the delegate
+		 */
+		private void setDelegate(@Nullable Future<DatumExportResult> delegate) {
+			this.delegate = delegate;
+		}
+
+		@Override
+		public DatumExportResult call() throws Exception {
+			percentComplete = 0;
+
+			// update status to indicate we've started
+			updateTaskStatus(DatumExportState.Executing);
+
+			try {
+				// first step: export to resources
+				Iterable<DatumExportResource> resources = exportToResources();
+
+				// second step: upload the resources to the destination
+				if ( resources != null ) {
+					uploadToDestination(resources);
+				}
+
+				updateTaskStatus(DatumExportState.Completed, Boolean.TRUE, null, Instant.now());
+			} catch ( Exception e ) {
+				log.warn("Error exporting datum for task {}: {}", this, e.getMessage());
+				Throwable root = e;
+				while ( root.getCause() != null ) {
+					root = root.getCause();
+				}
+				final boolean justMessage = (root instanceof DatumExportException);
+				StringBuilder msg = new StringBuilder();
+				if ( !justMessage || root.getMessage() == null ) {
+					msg.append(root.getClass().getSimpleName());
+				}
+				if ( !justMessage && root.getMessage() != null ) {
+					msg.append(": ").append(root.getMessage());
+				}
+				if ( !justMessage ) {
+					log.warn("Task {} root cause", this, root);
+				}
+				updateTaskStatus(DatumExportState.Completed, Boolean.FALSE, msg.toString(),
+						Instant.now());
+			} finally {
+				if ( info.getStatus() != DatumExportState.Completed ) {
+					updateTaskStatus(DatumExportState.Completed);
+				}
+			}
+			return new BasicDatumExportResult(info);
+		}
+
+		private void updateTaskStatus(DatumExportState state) {
+			updateTaskStatus(state, null, null, null);
+		}
+
+		private void updateTaskStatus(DatumExportState state, @Nullable Boolean success,
+				@Nullable String message, @Nullable Instant completionDate) {
+			log.info("Datum export job {} transitioned to state {} with success {}", info.getId(), state,
+					success);
+			this.jobState = state;
+			doWithinOptionalTransaction(() -> {
+				info.setStatus(state);
+				if ( success != null ) {
+					info.setTaskSuccess(success);
+				}
+				if ( message != null ) {
+					info.setMessage(message);
+				}
+				if ( completionDate != null ) {
+					info.setCompleted(completionDate);
+				}
+				taskDao.save(info);
+				return null;
+			});
+			postJobStatusChangedEvent(this);
+		}
+
+		private Iterable<DatumExportResource> exportToResources() {
+			AggregateGeneralNodeDatumFilter datumFilter = (config.getDataConfiguration() != null
+					? config.getDataConfiguration().getDatumFilter()
+					: null);
+			if ( datumFilter == null ) {
+				throw new DatumExportException(info.id(), "No datum filter available", null);
+			}
+			ScheduleType schedule = config.getSchedule();
+			if ( schedule == null ) {
+				schedule = ScheduleType.Daily;
+			}
+			if ( info.getExportDate() == null ) {
+				throw new DatumExportException(info.id(), "No export date available", null);
+			}
+
+			final DatumExportOutputFormatService outputService = optionalService(outputFormatServices,
+					config.getOutputConfiguration());
+			if ( outputService == null ) {
+				String serviceId = (config.getOutputConfiguration() != null
+						? config.getOutputConfiguration().getServiceIdentifier()
+						: null);
+				throw new DatumExportException(info.id(),
+						"No output service available for identifier [" + serviceId + "]", null);
+			}
+
+			final ZoneId zone = (config.getTimeZoneId() != null ? ZoneId.of(config.getTimeZoneId())
+					: ZoneOffset.UTC);
+
+			// validate export criteria
+			final BasicDatumCriteria filter = nonnull(criteriaFromFilter(datumFilter), "Datum filter");
+			filter.setTokenId(info.getTokenId()); // restrict to token if available
+			filter.setUserId(info.getUserId()); // restrict to user if available
+			if ( !filter.hasStreamAliasCriteria() ) {
+				// default to supporting stream aliases
+				filter.setIncludeStreamAliases(true);
+			}
+			if ( schedule == ScheduleType.Adhoc ) {
+				if ( !(filter.hasLocalDateRange() || filter.hasDateRange()) ) {
+					throw new DatumExportException(info.id(),
+							"Adhoc export missing start or end date in data configuration", null);
+				}
+			} else {
+				final Instant exportDate = nonnull(info.getExportDate(), "Export date");
+				filter.setStartDate(exportDate);
+				filter.setEndDate(
+						schedule.nextExportDate(exportDate.atZone(ZoneId.of(zone.getId()))).toInstant());
+			}
+
+			final OutputConfiguration outputConfig = nonnull(config.getOutputConfiguration(),
+					"Output configuration");
+
+			return doWithinOptionalTransaction(() -> {
+				try (DatumExportOutputFormatService.ExportContext exportContext = outputService
+						.createExportContext(outputConfig)) {
+
+					BasicBulkExportOptions options = new BasicBulkExportOptions(DATUM_EXPORT_NAME,
+							singletonMap(DatumEntityDao.EXPORT_PARAMETER_DATUM_CRITERIA, filter));
+
+					final QueryAuditor auditor = queryAuditor;
+					if ( auditor != null ) {
+						auditor.resetCurrentAuditResults();
+					}
+
+					// all exported data will be audited on the hour we start the export at
+					final Instant auditDate = Instant.now().truncatedTo(ChronoUnit.HOURS);
+
+					datumDao.bulkExport(new ExportCallback<>() {
+
+						@Override
+						public void didBegin(@Nullable Long totalResultCountEstimate) {
+							try {
+								exportContext.start(
+										totalResultCountEstimate != null ? totalResultCountEstimate
+												: COUNT_UNKNOWN);
+							} catch ( IOException e ) {
+								throw new DatumExportException(info.id(), e.getMessage(), e);
+							}
+						}
+
+						@Override
+						public ExportCallbackAction handle(GeneralNodeDatumFilterMatch d) {
+							if ( d != null && d.getId() != null && auditor != null ) {
+								final var pk = new GeneralNodeDatumPK(d.getId().getNodeId(), auditDate,
+										d.getId().getSourceId());
+								auditor.addNodeDatumAuditResults(singletonMap(pk, 1));
+							}
+							try {
+								exportContext.appendDatumMatch(singleton(d), DatumExportTask.this);
+							} catch ( IOException e ) {
+								throw new DatumExportException(info.id(), e.getMessage(), e);
+							}
+							return ExportCallbackAction.CONTINUE;
+						}
+					}, options);
+
+					return exportContext.finish();
+				} catch ( IOException e ) {
+					throw new DatumExportException(info.id(), e.getMessage(), e);
+				}
+			});
+		}
+
+		private void uploadToDestination(Iterable<DatumExportResource> resources) throws IOException {
+			DatumExportDestinationService destService = optionalService(destinationServices,
+					config.getDestinationConfiguration());
+			if ( destService == null ) {
+				String serviceId = (config.getDestinationConfiguration() != null
+						? config.getDestinationConfiguration().getServiceIdentifier()
+						: null);
+				throw new DatumExportException(info.id(),
+						"No destination service available for identifier [" + serviceId + "]", null);
+			}
+			DatumExportOutputFormatService outputService = optionalService(outputFormatServices,
+					config.getOutputConfiguration());
+			DateTimeFormatter dateFormatter = config.createDateTimeFormatterForSchedule();
+			Map<String, Object> runtimeProps = config.createRuntimeProperties(info, dateFormatter,
+					outputService);
+			log.info("Uploading datum export job {} resources to {}: {}", info.getId(),
+					config.getOutputConfiguration(), resources);
+			destService.export(config, resources, runtimeProps, this);
+		}
+
+		@Override
+		public void progressChanged(@Nullable DatumExportService context, double amountComplete) {
+			// each progress here counts for 50% of overall progress
+			this.percentComplete += (amountComplete / 2.0);
+			postJobStatusChangedEvent(this);
+		}
+
+		@Override
+		public String getJobId() {
+			return info.id().toString();
+		}
+
+		@Override
+		public DatumExportState getJobState() {
+			return jobState;
+		}
+
+		@Override
+		public double getPercentComplete() {
+			return percentComplete;
+		}
+
+		@Override
+		public long getCompletionDate() {
+			Instant ts = (info != null ? info.getCompletionDate() : null);
+			return (ts != null ? ts.toEpochMilli() : 0L);
+		}
+
+		@Override
+		public boolean cancel(boolean mayInterruptIfRunning) {
+			final var delegate = this.delegate;
+			return (delegate != null ? delegate.cancel(mayInterruptIfRunning) : false);
+		}
+
+		@Override
+		public boolean isCancelled() {
+			final var delegate = this.delegate;
+			return (delegate != null ? delegate.isCancelled() : false);
+		}
+
+		@Override
+		public boolean isDone() {
+			final var delegate = this.delegate;
+			return (delegate != null ? delegate.isDone() : false);
+		}
+
+		@Override
+		public DatumExportResult get() throws InterruptedException, ExecutionException {
+			final var delegate = nonnull(this.delegate, "Task future");
+			return delegate.get();
+		}
+
+		@Override
+		public DatumExportResult get(long timeout, TimeUnit unit)
+				throws InterruptedException, ExecutionException, TimeoutException {
+			final var delegate = nonnull(this.delegate, "Task future");
+			return delegate.get(timeout, unit);
+		}
+
+		@Override
+		public String toString() {
+			return "DatumExportTask{jobId=" + getJobId() + ",config="
+					+ (info != null ? info.getConfig() : null) + ",jobState=" + jobState
+					+ ",percentComplete=" + percentComplete + ",completionDate="
+					+ (info != null ? info.getCompletionDate() : null) + "}";
+		}
+
+	}
+
+	@Override
+	public DatumExportStatus performExport(DatumExportRequest info) {
+		if ( info == null ) {
+			throw new IllegalArgumentException("The task info argument is required.");
+		}
+		if ( !info.hasId() ) {
+			throw new IllegalArgumentException("The task info must have an ID.");
+		}
+		if ( info.getConfiguration() == null ) {
+			throw new IllegalArgumentException("The configuration argument is required.");
+		}
+
+		// copy configs and decrypt
+		var config = new BasicConfiguration(info.getConfiguration());
+		if ( config.getOutputConfiguration() != null ) {
+			config.setOutputConfiguration(unmaskSensitiveInformation(
+					new BasicOutputConfiguration(config.getOutputConfiguration())));
+		}
+		if ( config.getDestinationConfiguration() != null ) {
+			config.setDestinationConfiguration(unmaskSensitiveInformation(
+					new BasicDestinationConfiguration(config.getDestinationConfiguration())));
+		}
+
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo(info.id());
+		taskInfo.setConfig(config);
+		taskInfo.setExportDate(info.getExportDate());
+		taskInfo.setCreated(Instant.now());
+		taskInfo.setStatus(DatumExportState.Claimed);
+		taskInfo.setTokenId(info.getTokenId());
+		taskInfo.setUserId(info.getUserId());
+		DatumExportTask task = new DatumExportTask(taskInfo);
+		Future<DatumExportResult> future = executor.submit(task);
+		task.setDelegate(future);
+		taskMap.putIfAbsent(task.getJobId(), task);
+		return task;
+	}
+
+	@Override
+	public @Nullable DatumExportStatus statusForJob(String jobId) {
+		return taskMap.get(jobId);
+	}
+
+	private void postJobStatusChangedEvent(DatumExportTask task) {
+		if ( task == null ) {
+			return;
+		}
+		final AppEventPublisher ea = this.eventPublisher;
+		if ( ea == null ) {
+			return;
+		}
+		ea.postEvent(task.asJobStatusChangedEvent(task.info));
+	}
+
+	private <T> T doWithinOptionalTransaction(Supplier<T> supplier) {
+		if ( transactionTemplate != null ) {
+			return transactionTemplate.execute(_ -> supplier.get());
+		} else {
+			return supplier.get();
+		}
+	}
+
+	private <T extends Identity<String>> @Nullable T optionalService(@Nullable List<T> collection,
+			@Nullable IdentifiableConfiguration config) {
+		if ( collection == null || config == null ) {
+			return null;
+		}
+		String id = config.getServiceIdentifier();
+		if ( id == null ) {
+			return null;
+		}
+		for ( T service : collection ) {
+			if ( id.equals(service.getId()) ) {
+				return service;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The minimum amount of time to maintain completed export tasks for the
+	 * purposes of returning their status in {@link #statusForJob(String)}.
+	 *
+	 * @param completedTaskMinimumCacheTime
+	 *        the cache time, in milliseconds; defaults to 4 hours
+	 */
+	public final void setCompletedTaskMinimumCacheTime(long completedTaskMinimumCacheTime) {
+		this.completedTaskMinimumCacheTime = completedTaskMinimumCacheTime;
+	}
+
+	/**
+	 * Configure a service for posting status events.
+	 *
+	 * @param eventPublisher
+	 *        the optional event admin service
+	 */
+	public final void setEventPublisher(@Nullable AppEventPublisher eventPublisher) {
+		this.eventPublisher = eventPublisher;
+	}
+
+	/**
+	 * Configure an auditor for export results.
+	 *
+	 * @param queryAuditor
+	 *        the auditor
+	 * @since 1.2
+	 */
+	public final void setQueryAuditor(@Nullable QueryAuditor queryAuditor) {
+		this.queryAuditor = queryAuditor;
+	}
+
+}

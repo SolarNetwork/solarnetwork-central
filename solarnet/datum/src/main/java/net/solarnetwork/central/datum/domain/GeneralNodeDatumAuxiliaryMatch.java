@@ -26,9 +26,11 @@ import java.io.Serial;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.SerializeIgnore;
+import net.solarnetwork.domain.datum.DatumSamples;
 
 /**
  * A "match" to a {@link GeneralNodeDatumAuxiliary}.
@@ -50,10 +52,39 @@ public class GeneralNodeDatumAuxiliaryMatch extends GeneralNodeDatumAuxiliary
 	@Serial
 	private static final long serialVersionUID = 3909545590126013044L;
 
-	private LocalDateTime localDateTime;
+	private @Nullable LocalDateTime localDateTime;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the primary key
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public GeneralNodeDatumAuxiliaryMatch(GeneralNodeDatumAuxiliaryPK id) {
+		super(id);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the primary key
+	 * @param samplesFinal
+	 *        the final samples
+	 * @param samplesStart
+	 *        the starting samples
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@code null}
+	 */
+	public GeneralNodeDatumAuxiliaryMatch(GeneralNodeDatumAuxiliaryPK id,
+			@Nullable DatumSamples samplesFinal, @Nullable DatumSamples samplesStart) {
+		super(id, samplesFinal, samplesStart);
+	}
 
 	@Override
-	public LocalDate getLocalDate() {
+	public final @Nullable LocalDate getLocalDate() {
 		if ( localDateTime == null ) {
 			return null;
 		}
@@ -61,7 +92,7 @@ public class GeneralNodeDatumAuxiliaryMatch extends GeneralNodeDatumAuxiliary
 	}
 
 	@Override
-	public LocalTime getLocalTime() {
+	public final @Nullable LocalTime getLocalTime() {
 		if ( localDateTime == null ) {
 			return null;
 		}
@@ -70,11 +101,11 @@ public class GeneralNodeDatumAuxiliaryMatch extends GeneralNodeDatumAuxiliary
 
 	@JsonIgnore
 	@SerializeIgnore
-	public LocalDateTime getLocalDateTime() {
+	public final @Nullable LocalDateTime getLocalDateTime() {
 		return localDateTime;
 	}
 
-	public void setLocalDateTime(LocalDateTime localDateTime) {
+	public final void setLocalDateTime(@Nullable LocalDateTime localDateTime) {
 		this.localDateTime = localDateTime;
 	}
 

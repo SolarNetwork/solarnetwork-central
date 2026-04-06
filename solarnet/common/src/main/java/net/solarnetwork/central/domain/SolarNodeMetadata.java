@@ -25,6 +25,7 @@ package net.solarnetwork.central.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -55,8 +56,8 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 	@Serial
 	private static final long serialVersionUID = 7366747359583724835L;
 
-	private Instant updated;
-	private GeneralDatumMetadata meta;
+	private @Nullable Instant updated;
+	private @Nullable GeneralDatumMetadata meta;
 
 	/**
 	 * Constructor.
@@ -72,7 +73,7 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 	 *        the node ID
 	 * @since 2.1
 	 */
-	public SolarNodeMetadata(Long id) {
+	public SolarNodeMetadata(@Nullable Long id) {
 		super();
 		setId(id);
 	}
@@ -88,7 +89,7 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 	 * @return the nodeId
 	 */
 	@Override
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return getId();
 	}
 
@@ -98,7 +99,7 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		setId(nodeId);
 	}
 
@@ -112,24 +113,24 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 	 */
 	@Override
 	@JsonUnwrapped
-	public GeneralDatumMetadata getMetadata() {
+	public final @Nullable GeneralDatumMetadata getMetadata() {
 		return getMeta();
 	}
 
 	@JsonIgnore
 	@SerializeIgnore
-	public GeneralDatumMetadata getMeta() {
+	public final @Nullable GeneralDatumMetadata getMeta() {
 		return meta;
 	}
 
 	@JsonProperty
-	public void setMeta(GeneralDatumMetadata meta) {
+	public final void setMeta(@Nullable GeneralDatumMetadata meta) {
 		this.meta = meta;
 	}
 
 	@JsonIgnore
 	@SerializeIgnore
-	public String getMetaJson() {
+	public final @Nullable String getMetaJson() {
 		return JsonUtils.getJSONString(meta, "{}");
 	}
 
@@ -139,12 +140,12 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 	 * @param metaJson
 	 *        the JSON metadata to set
 	 */
-	public void setMetaJson(String metaJson) {
+	public final void setMetaJson(@Nullable String metaJson) {
 		this.meta = JsonUtils.getObjectFromJSON(metaJson, GeneralDatumMetadata.class);
 	}
 
 	@Override
-	public Instant getUpdated() {
+	public final @Nullable Instant getUpdated() {
 		return updated;
 	}
 
@@ -154,7 +155,7 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 	 * @param updated
 	 *        the date to set
 	 */
-	public void setUpdated(Instant updated) {
+	public final void setUpdated(@Nullable Instant updated) {
 		this.updated = updated;
 	}
 

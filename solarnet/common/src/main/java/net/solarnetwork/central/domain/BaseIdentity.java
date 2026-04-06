@@ -25,6 +25,7 @@ package net.solarnetwork.central.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.Identity;
 
 /**
@@ -38,7 +39,7 @@ public abstract class BaseIdentity implements Cloneable, Serializable, Identity<
 	@Serial
 	private static final long serialVersionUID = -5979349641482303093L;
 
-	private Long id = null;
+	private @Nullable Long id;
 
 	@Override
 	public BaseIdentity clone() {
@@ -52,10 +53,7 @@ public abstract class BaseIdentity implements Cloneable, Serializable, Identity<
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		return result;
+		return Objects.hash(id);
 	}
 
 	/**
@@ -63,7 +61,7 @@ public abstract class BaseIdentity implements Cloneable, Serializable, Identity<
 	 */
 	@SuppressWarnings("EqualsGetClass")
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -80,7 +78,7 @@ public abstract class BaseIdentity implements Cloneable, Serializable, Identity<
 	 * @return the id
 	 */
 	@Override
-	public Long getId() {
+	public final @Nullable Long getId() {
 		return id;
 	}
 
@@ -90,7 +88,7 @@ public abstract class BaseIdentity implements Cloneable, Serializable, Identity<
 	 * @param id
 	 *        the id to set
 	 */
-	public void setId(Long id) {
+	public final void setId(@Nullable Long id) {
 		this.id = id;
 	}
 

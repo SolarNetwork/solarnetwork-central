@@ -45,14 +45,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.springframework.security.crypto.encrypt.Encryptors.noOpText;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.random.RandomGenerator;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -131,8 +132,7 @@ public class SmaCloudIntegrationServiceTests {
 	@Captor
 	private ArgumentCaptor<RequestEntity<JsonNode>> httpRequestCaptor;
 
-	@Mock
-	private TextEncryptor encryptor;
+	private TextEncryptor encryptor = noOpText();
 
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
@@ -140,9 +140,8 @@ public class SmaCloudIntegrationServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		service = new SmaCloudIntegrationService(Collections.singleton(datumStreamService),
-				userEventAppenderBiz, encryptor, integrationDao, rng, restOps, oauthClientManager, clock,
-				null);
+		service = new SmaCloudIntegrationService(Set.of(datumStreamService), userEventAppenderBiz,
+				encryptor, integrationDao, rng, restOps, oauthClientManager, clock, null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(SmaCloudIntegrationService.class.getName(),
@@ -154,7 +153,7 @@ public class SmaCloudIntegrationServiceTests {
 	public void validate_missingAuthSettings() {
 		// GIVEN
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				"foo", "bar"
@@ -219,7 +218,7 @@ public class SmaCloudIntegrationServiceTests {
 		final String refreshToken = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
@@ -294,7 +293,7 @@ public class SmaCloudIntegrationServiceTests {
 		final String clientId = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId
@@ -356,7 +355,7 @@ public class SmaCloudIntegrationServiceTests {
 		final Locale locale = Locale.getDefault();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				integrationId, now());
+				integrationId, now(), randomString(), randomString());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,

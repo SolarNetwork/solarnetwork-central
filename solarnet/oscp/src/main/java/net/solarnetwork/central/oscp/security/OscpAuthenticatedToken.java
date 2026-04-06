@@ -58,7 +58,7 @@ public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 	 * @param info
 	 *        the auth role info
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OscpAuthenticatedToken(AuthRoleInfo info) {
 		this(info, createAuthorityList(
@@ -73,7 +73,7 @@ public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 	 * @param authorities
 	 *        the granted authorities
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OscpAuthenticatedToken(AuthRoleInfo info,
 			Collection<? extends GrantedAuthority> authorities) {
@@ -99,7 +99,7 @@ public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 
 	@Override
 	public String getUsername() {
-		return null;
+		return "";
 	}
 
 }

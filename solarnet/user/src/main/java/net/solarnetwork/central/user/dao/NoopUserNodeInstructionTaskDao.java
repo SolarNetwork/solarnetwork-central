@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.user.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.domain.UserNodeInstructionTaskEntity;
@@ -44,7 +46,7 @@ public class NoopUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	/** A static shared instance. */
 	public static final UserNodeInstructionTaskDao INSTANCE = new NoopUserNodeInstructionTaskDao();
 
-	private final Map<UserLongCompositePK, UserNodeInstructionTaskEntity> data;
+	private final @Nullable Map<UserLongCompositePK, UserNodeInstructionTaskEntity> data;
 
 	/**
 	 * Constructor.
@@ -59,20 +61,21 @@ public class NoopUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	 * @param data
 	 *        optional data to use
 	 */
-	public NoopUserNodeInstructionTaskDao(Map<UserLongCompositePK, UserNodeInstructionTaskEntity> data) {
+	public NoopUserNodeInstructionTaskDao(
+			@Nullable Map<UserLongCompositePK, UserNodeInstructionTaskEntity> data) {
 		super();
 		this.data = data;
 	}
 
 	@Override
 	public boolean updateTaskState(UserLongCompositePK id, BasicClaimableJobState desiredState,
-			BasicClaimableJobState... expectedStates) {
+			BasicClaimableJobState @Nullable... expectedStates) {
 		return true;
 	}
 
 	@Override
 	public boolean updateTask(UserNodeInstructionTaskEntity info,
-			BasicClaimableJobState... expectedStates) {
+			BasicClaimableJobState @Nullable... expectedStates) {
 		return true;
 	}
 
@@ -82,7 +85,7 @@ public class NoopUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	}
 
 	@Override
-	public UserNodeInstructionTaskEntity claimQueuedTask() {
+	public @Nullable UserNodeInstructionTaskEntity claimQueuedTask() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -93,11 +96,13 @@ public class NoopUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 
 	@Override
 	public FilterResults<UserNodeInstructionTaskEntity, UserLongCompositePK> findFiltered(
-			UserNodeInstructionTaskFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			UserNodeInstructionTaskFilter filter, @Nullable List<SortDescriptor> sorts,
+			@Nullable Long offset, @Nullable Integer max) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
+	@SuppressWarnings("NullAway")
 	public UserLongCompositePK save(UserNodeInstructionTaskEntity entity) {
 		return entity.getId();
 	}
@@ -108,12 +113,12 @@ public class NoopUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	}
 
 	@Override
-	public Collection<UserNodeInstructionTaskEntity> getAll(List<SortDescriptor> sorts) {
+	public Collection<UserNodeInstructionTaskEntity> getAll(@Nullable List<SortDescriptor> sorts) {
 		return (data != null ? data.values() : List.of());
 	}
 
 	@Override
-	public UserNodeInstructionTaskEntity get(UserLongCompositePK id) {
+	public @Nullable UserNodeInstructionTaskEntity get(UserLongCompositePK id) {
 		return (data != null ? data.get(id) : null);
 	}
 
@@ -124,10 +129,10 @@ public class NoopUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 
 	@Override
 	public Collection<UserNodeInstructionTaskEntity> findAll(Long keyComponent1,
-			List<SortDescriptor> sorts) {
+			@Nullable List<SortDescriptor> sorts) {
 		return (data != null && keyComponent1 != null ? data.values().stream()
-				.filter(e -> e.hasId() && keyComponent1.equals(e.getId().keyComponent1())).toList()
-				: null);
+				.filter(e -> e.hasId() && keyComponent1.equals(nonnull(e.getId(), "id").keyComponent1()))
+				.toList() : List.of());
 	}
 
 	@Override
@@ -136,7 +141,8 @@ public class NoopUserNodeInstructionTaskDao implements UserNodeInstructionTaskDa
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, UserNodeInstructionTaskFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable UserNodeInstructionTaskFilter filter,
+			boolean enabled) {
 		throw new UnsupportedOperationException();
 	}
 

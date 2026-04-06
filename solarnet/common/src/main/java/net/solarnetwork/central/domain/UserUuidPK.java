@@ -26,6 +26,8 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.uuid.UUIDComparator;
 
 /**
@@ -44,14 +46,13 @@ public final class UserUuidPK extends BasePK
 	 * A special "not a value" instance to be used for generated user ID values
 	 * yet to be generated.
 	 */
-	public static final Long UNASSIGNED_USER_ID = Long.MIN_VALUE;
+	public static final Long UNASSIGNED_USER_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	/**
 	 * A special "not a value" instance to be used for generated UUID values yet
 	 * to be generated.
 	 */
-	public static final UUID UNASSIGNED_UUID_ID = UUID
-			.fromString("00000000-0000-7000-b000-000000000000");
+	public static final UUID UNASSIGNED_UUID_ID = EntityConstants.UNASSIGNED_UUID_ID;
 
 	/**
 	 * Create a new instance using the "unassigned" UUID value.
@@ -75,7 +76,7 @@ public final class UserUuidPK extends BasePK
 	 * @param uuid
 	 *        the UUID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserUuidPK(Long userId, UUID uuid) {
 		super();
@@ -84,7 +85,7 @@ public final class UserUuidPK extends BasePK
 	}
 
 	@Override
-	public int compareTo(UserUuidPK o) {
+	public int compareTo(@Nullable UserUuidPK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -121,7 +122,7 @@ public final class UserUuidPK extends BasePK
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -136,26 +137,27 @@ public final class UserUuidPK extends BasePK
 	 *
 	 * @return the UUID
 	 */
-	public UUID getUuid() {
+	public final UUID getUuid() {
 		return uuid;
 	}
 
 	@Override
-	public Long keyComponent1() {
+	@NonNull
+	public final Long keyComponent1() {
 		return userId;
 	}
 
 	@Override
-	public UUID keyComponent2() {
+	@NonNull
+	public final UUID keyComponent2() {
 		return uuid;
 	}
 
-	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public boolean keyComponentIsAssigned(int index) {
 		return switch (index) {
-			case 0 -> userId != UNASSIGNED_USER_ID;
-			case 1 -> uuid != UNASSIGNED_UUID_ID;
+			case 0 -> EntityConstants.isAssigned(userId);
+			case 1 -> EntityConstants.isAssigned(uuid);
 			default -> CompositeKey2.super.keyComponentIsAssigned(index);
 		};
 	}
@@ -172,7 +174,7 @@ public final class UserUuidPK extends BasePK
 
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
-	public <T> T keyComponentValue(int index, Object val) {
+	public <T> T keyComponentValue(int index, @Nullable Object val) {
 		try {
 			if ( index == 0 ) {
 				return switch (val) {
@@ -196,7 +198,7 @@ public final class UserUuidPK extends BasePK
 	}
 
 	@Override
-	public UserUuidPK createKey(CompositeKey template, Object... components) {
+	public UserUuidPK createKey(@Nullable CompositeKey template, Object... components) {
 		Object v1 = (components != null && components.length > 0 ? components[0]
 				: template != null ? template.keyComponent(0) : null);
 		Object v2 = (components != null && components.length > 1 ? components[1]

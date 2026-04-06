@@ -40,8 +40,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.domain.CompositeKey2;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.event.biz.UserEventHookBiz;
-import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
+import net.solarnetwork.central.user.datum.event.biz.UserEventHookBiz;
+import net.solarnetwork.central.user.datum.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
@@ -68,7 +68,7 @@ public class NodeEventController {
 	 * @param eventHookBiz
 	 *        the event hook biz to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public NodeEventController(@Autowired(required = false) UserEventHookBiz eventHookBiz) {
 		super();

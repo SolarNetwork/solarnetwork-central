@@ -221,12 +221,9 @@ public class WebSecurityConfig {
 			AntPathMatcher pathMatcher = new AntPathMatcher();
 			pathMatcher.setCachePatterns(true);
 			pathMatcher.setCaseSensitive(true);
-			SecurityTokenAuthenticationFilter filter = new SecurityTokenAuthenticationFilter(pathMatcher,
-					"/api/v1/sec", securityTokenFilterSettings);
-			filter.setUserDetailsService(tokenUserDetailsService());
-			filter.setAuthenticationEntryPoint(unauthorizedEntryPoint());
-
-			return filter;
+			return new SecurityTokenAuthenticationFilter(tokenUserDetailsService(),
+					unauthorizedEntryPoint(), null, pathMatcher, "/api/v1/sec",
+					securityTokenFilterSettings);
 		}
 
 		@Bean

@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.biz.dao;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralNodeDatumAuxiliaryFilterMatch;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
@@ -75,6 +77,8 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 	 *        the DAO to use
 	 * @param metaDao
 	 *        the metadata DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public DaoDatumAuxiliaryBiz(DatumAuxiliaryEntityDao datumAuxiliaryDao,
 			DatumStreamMetadataDao metaDao) {
@@ -97,9 +101,11 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public GeneralNodeDatumAuxiliary getGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
+	public @Nullable GeneralNodeDatumAuxiliary getGeneralNodeDatumAuxiliary(
+			GeneralNodeDatumAuxiliaryPK id) {
 		ObjectDatumStreamMetadata meta = metaForId(id);
-		DatumAuxiliaryPK auxId = new DatumAuxiliaryPK(meta.getStreamId(), id.getCreated(),
+		DatumAuxiliaryPK auxId = new DatumAuxiliaryPK(meta.getStreamId(),
+				requireNonNullArgument(id.getCreated(), "id.created"),
 				id.getType() != null ? id.getType() : DatumAuxiliaryType.Reset);
 		DatumAuxiliaryEntity datum = datumAuxiliaryDao.get(auxId);
 		if ( datum == null ) {
@@ -154,13 +160,14 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<GeneralNodeDatumAuxiliaryFilterMatch, GeneralNodeDatumAuxiliaryPK> findGeneralNodeDatumAuxiliary(
-			GeneralNodeDatumAuxiliaryFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max) {
-		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria, sortDescriptors, offset, max);
+			GeneralNodeDatumAuxiliaryFilter criteria, @Nullable List<SortDescriptor> sortDescriptors,
+			@Nullable Long offset, @Nullable Integer max) {
+		final BasicDatumCriteria c = requireNonNullArgument(
+				DatumUtils.criteriaFromFilter(criteria, sortDescriptors, offset, max), "criteria");
 		c.setObjectKind(ObjectDatumKind.Node);
 
 		// ignore all date ranges for meta query here
-		BasicDatumCriteria metaCriteria = c.clone();
+		final BasicDatumCriteria metaCriteria = c.clone();
 		metaCriteria.setStartDate(null);
 		metaCriteria.setEndDate(null);
 		metaCriteria.setLocalStartDate(null);
@@ -172,7 +179,8 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 		net.solarnetwork.dao.FilterResults<DatumAuxiliary, DatumAuxiliaryPK> r = datumAuxiliaryDao
 				.findFiltered(c);
 		List<GeneralNodeDatumAuxiliaryFilterMatch> data = stream(r.spliterator(), false)
-				.map(d -> toGeneralNodeDatumAuxiliaryFilterMatch(d, metas.get(d.getStreamId())))
+				.map(d -> toGeneralNodeDatumAuxiliaryFilterMatch(d,
+						nonnull(metas.get(d.getStreamId()), "Stream metadata")))
 				.collect(Collectors.toList());
 		return new BasicFilterResults<>(data, r.getTotalResults(), r.getStartingOffset(),
 				r.getReturnedResultCount());

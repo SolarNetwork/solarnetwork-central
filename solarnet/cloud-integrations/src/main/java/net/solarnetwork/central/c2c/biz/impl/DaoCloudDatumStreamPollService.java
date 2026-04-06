@@ -26,6 +26,8 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.domain.CommonUserEvents.eventForUserRelatedKey;
+import static net.solarnetwork.util.CollectionUtils.getMapLong;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Clock;
@@ -41,6 +43,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.Trigger;
@@ -78,7 +81,7 @@ import net.solarnetwork.util.StringNaturalSortComparator;
  * DAO based implementation of {@link CloudDatumStreamPollService}.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class DaoCloudDatumStreamPollService
 		implements CloudDatumStreamPollService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
@@ -100,6 +103,13 @@ public class DaoCloudDatumStreamPollService
 	 */
 	public static final Duration DEFAULT_FAST_RESCHEDULE_AMOUNT = Duration.ofMinutes(5);
 
+	/**
+	 * The {@code requeueErrorCountMaximum} property default value.
+	 *
+	 * @since 1.9
+	 */
+	public static final int DEFAULT_REQUEUE_ERROR_COUNT_MAXIMUM = 100;
+
 	/** The {@code defaultDatumStreamSettings} default value. */
 	public static final CloudDatumStreamSettings DEFAULT_DATUM_STREAM_SETTINGS = new BasicCloudDatumStreamSettings(
 			true, false);
@@ -118,8 +128,9 @@ public class DaoCloudDatumStreamPollService
 	private Duration fastRescheduleMinLag = DEFAULT_FAST_RESCHEDULE_MIN_LAG;
 	private Duration fastRescheduleAmount = DEFAULT_FAST_RESCHEDULE_AMOUNT;
 	private Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
+	private int requeueErrorCountMaximum = DEFAULT_REQUEUE_ERROR_COUNT_MAXIMUM;
 	private CloudDatumStreamSettings defaultDatumStreamSettings = DEFAULT_DATUM_STREAM_SETTINGS;
-	private DatumProcessor fluxPublisher;
+	private @Nullable DatumProcessor fluxPublisher;
 
 	/**
 	 * Constructor.
@@ -145,7 +156,7 @@ public class DaoCloudDatumStreamPollService
 	 *        function that provides a {@link CloudDatumStreamService} for a
 	 *        given service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoCloudDatumStreamPollService(Clock clock, UserEventAppenderBiz userEventAppenderBiz,
 			SolarNodeOwnershipDao nodeOwnershipDao, CloudDatumStreamPollTaskDao taskDao,
@@ -195,7 +206,7 @@ public class DaoCloudDatumStreamPollService
 	}
 
 	@Override
-	public CloudDatumStreamPollTaskEntity claimQueuedTask() {
+	public @Nullable CloudDatumStreamPollTaskEntity claimQueuedTask() {
 		if ( executorService.isShutdown() ) {
 			return null;
 		}
@@ -210,9 +221,9 @@ public class DaoCloudDatumStreamPollService
 			log.debug("Datum stream poll task execution rejected, resetting state to Queued: {}",
 					e.getMessage());
 			// go back to queued
-			if ( !taskDao.updateTaskState(task.getId(), Queued, task.getState()) ) {
+			if ( !taskDao.updateTaskState(task.id(), Queued, task.getState()) ) {
 				log.warn("Failed to update rejected datum stream poll task {} state from {} to Queued",
-						task.getId().ident(), task.getState());
+						task.id().ident(), task.getState());
 			}
 			throw e;
 		}
@@ -241,33 +252,44 @@ public class DaoCloudDatumStreamPollService
 				try {
 					if ( log.isDebugEnabled() || !(e instanceof RemoteServiceException) ) {
 						// log full stack trace when debug enabled or not a RemoteServiceException
-						log.warn("Error executing datum stream {} poll task", taskInfo.getId().ident(),
-								e);
+						log.warn("Error executing datum stream {} poll task", taskInfo.id().ident(), e);
 					} else {
 						// otherwise just print exception message, to cut down on log clutter
-						log.warn("Error executing datum stream {} poll task: {}",
-								taskInfo.getId().ident(), e.toString());
+						log.warn("Error executing datum stream {} poll task: {}", taskInfo.id().ident(),
+								e.toString());
 					}
+					var prevErrorCount = getMapLong(ERROR_COUNT_DATA_KEY,
+							taskInfo.getServiceProperties());
+					long errorCount = prevErrorCount != null ? prevErrorCount + 1L : 1L;
 					var errMsg = "Error executing poll task.";
-					var errData = Map.of(MESSAGE_DATA_KEY, (Object) t.getMessage());
+					var errData = Map.of(MESSAGE_DATA_KEY, (Object) t.getMessage(), ERROR_COUNT_DATA_KEY,
+							errorCount);
 					var oldState = taskInfo.getState();
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
 					if ( t instanceof RestClientResponseException || t instanceof IOException ) {
-						// reset back to queued to try again if HTTP client or IO error
-						log.info(
-								"Resetting datum stream {} poll task by changing state from {} to {} after error: {}",
-								taskInfo.getId().ident(), oldState, Queued, e.toString());
-						taskInfo.setState(Queued);
-						if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
-							// bump date into future by 1 minute so we do not immediately try to process again
-							taskInfo.setExecuteAt(clock.instant().plus(1, ChronoUnit.MINUTES));
+						if ( errorCount < requeueErrorCountMaximum ) {
+							// reset back to queued to try again if HTTP client or IO error
+							log.info(
+									"Resetting datum stream {} poll task by changing state from {} to {} after error: {}",
+									taskInfo.id().ident(), oldState, Queued, e.toString());
+							taskInfo.setState(Queued);
+							if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
+								// bump date into future by 1 minute so we do not immediately try to process again
+								taskInfo.setExecuteAt(clock.instant().plus(1, ChronoUnit.MINUTES));
+							}
+						} else {
+							log.info(
+									"Stopping datum stream {} poll task by changing state from {} to {} after {} repeated errors, most recently: {}",
+									taskInfo.id().ident(), oldState, Completed, errorCount,
+									e.toString());
+							taskInfo.setState(Completed);
 						}
 					} else {
 						// stop processing job if not what appears to be an API IO exception
 						log.info(
 								"Stopping datum stream {} poll task by changing state from {} to {} after error: {}",
-								taskInfo.getId().ident(), oldState, Completed, e.toString());
+								taskInfo.id().ident(), oldState, Completed, e.toString());
 						taskInfo.setState(Completed);
 					}
 					userEventAppenderBiz.addEvent(taskInfo.getUserId(), eventForUserRelatedKey(
@@ -275,11 +297,11 @@ public class DaoCloudDatumStreamPollService
 					if ( !taskDao.updateTask(taskInfo, oldState) ) {
 						log.warn(
 								"Unable to update datum stream {} poll task info with expected state {} with details: {}",
-								taskInfo.getId().ident(), oldState, taskInfo);
+								taskInfo.id().ident(), oldState, taskInfo);
 					}
 				} catch ( Exception e2 ) {
 					log.warn("Error updating datum stream {} poll task state after error",
-							taskInfo.getId().ident(), e2);
+							taskInfo.id().ident(), e2);
 					// ignore, return original
 				}
 				throw e;
@@ -289,7 +311,7 @@ public class DaoCloudDatumStreamPollService
 		private CloudDatumStreamPollTaskEntity executeTask() throws Exception {
 			final Instant execTime = clock.instant();
 
-			final CloudDatumStreamConfiguration datumStream = datumStreamDao.get(taskInfo.getId());
+			final CloudDatumStreamConfiguration datumStream = datumStreamDao.get(taskInfo.id());
 			if ( datumStream == null ) {
 				// configuration has been deleted... abort
 				return taskInfo;
@@ -298,27 +320,30 @@ public class DaoCloudDatumStreamPollService
 			final CloudDatumStreamSettings datumStreamSettings = datumStreamSettingsDao.resolveSettings(
 					datumStream.getUserId(), datumStream.getConfigId(), defaultDatumStreamSettings);
 
-			final String datumStreamIdent = datumStream.getId().ident();
+			final String datumStreamIdent = datumStream.id().ident();
 
 			if ( !datumStream.isFullyConfigured() ) {
 				var errMsg = "Datum stream not fully configured.";
-				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
-						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg));
+				userEventAppenderBiz.addEvent(datumStream.getUserId(),
+						eventForUserRelatedKey(datumStream.id(), INTEGRATION_POLL_ERROR_TAGS, errMsg));
 				taskInfo.setMessage(errMsg);
 				taskInfo.setState(Completed); // stop processing job
 				taskDao.updateTask(taskInfo, startState);
 				return taskInfo;
 			}
 
+			// get nonnull refs, after call to isFullyConfigured()
+			final Long objectId = nonnull(datumStream.getObjectId(), "Object ID");
+			final ObjectDatumKind kind = nonnull(datumStream.getKind(), "Kind");
+
 			if ( datumStream.getKind() == ObjectDatumKind.Node ) {
-				SolarNodeOwnership ownership = nodeOwnershipDao
-						.ownershipForNodeId(datumStream.getObjectId());
+				SolarNodeOwnership ownership = nodeOwnershipDao.ownershipForNodeId(objectId);
 				if ( ownership == null || !taskInfo.getUserId().equals(ownership.getUserId()) ) {
 					log.warn(
 							"Refusing to execute datum stream {} poll task because task owner {} does not own node {}",
-							datumStreamIdent, taskInfo.getUserId(), datumStream.getObjectId());
+							datumStreamIdent, taskInfo.getUserId(), objectId);
 					var errMsg = "Access denied to configured node.";
-					var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStream.getObjectId());
+					var errData = Map.of(SOURCE_DATA_KEY, (Object) objectId);
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
 					taskInfo.setState(Completed); // stop processing job
@@ -330,7 +355,7 @@ public class DaoCloudDatumStreamPollService
 			}
 
 			// save task state to Executing (TODO maybe we don't need this step?)
-			if ( !taskDao.updateTaskState(taskInfo.getId(), Executing, startState) ) {
+			if ( !taskDao.updateTaskState(taskInfo.id(), Executing, startState) ) {
 				log.warn("Failed to update poll task {} state to Executing @ {} starting @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to update task state from Claimed to Executing.";
@@ -391,14 +416,15 @@ public class DaoCloudDatumStreamPollService
 						polledDatum.size());
 				final DatumProcessor fluxPublisher = getFluxPublisher();
 				for ( var datum : polledDatum ) {
+					final var datumId = datum.datumIdent();
 					// validate that provided datum ID matches that on the configuration
-					if ( !datumStream.getObjectId().equals(datum.getObjectId()) ) {
+					if ( !objectId.equals(datumId.getObjectId()) ) {
 						log.warn(
 								"Datum stream {} configured with object ID {} but produced datum with object ID {}: cancelling poll task.",
 								datumStreamIdent, taskInfo.getUserId(), datumStream.getObjectId());
 						var errMsg = "Access denied to datum with object ID different from datum stream configuration.";
-						var errData = Map.of(SOURCE_DATA_KEY, (Object) datum.getObjectId(), "expected",
-								datumStream.getObjectId());
+						var errData = Map.of(SOURCE_DATA_KEY, (Object) datumId.getObjectId(), "expected",
+								objectId);
 						taskInfo.setMessage(errMsg);
 						taskInfo.putServiceProps(errData);
 						taskInfo.setState(Completed); // stop processing job
@@ -407,16 +433,35 @@ public class DaoCloudDatumStreamPollService
 						taskDao.updateTask(taskInfo, Executing);
 						return taskInfo;
 					}
-					if ( datum instanceof DatumEntity d ) {
+					final ObjectDatumKind datumKind = (datumId.getKind() != null ? datumId.getKind()
+							: kind);
+					if ( !kind.equals(datumKind) ) {
+						log.warn(
+								"Datum stream {} configured with kind {} but produced datum with kind {}: cancelling rake task.",
+								datumStreamIdent, kind, datumKind);
+						var errMsg = "Access denied to datum with kind different from datum stream configuration.";
+						var errData = Map.of(SOURCE_DATA_KEY, (Object) datumKind, "expected", kind);
+						taskInfo.setMessage(errMsg);
+						taskInfo.putServiceProps(errData);
+						taskInfo.setState(Completed); // stop processing job
+						userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForUserRelatedKey(
+								datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
+						taskDao.updateTask(taskInfo, Executing);
+						return taskInfo;
+					}
+					if ( datumId.getSourceId() == null ) {
+						continue;
+					}
+					if ( datumId instanceof DatumEntity d ) {
 						if ( datumStreamSettings.isPublishToSolarIn() ) {
 							datumDao.store(d);
 						}
-					} else if ( datum instanceof GeneralObjectDatum<?> d ) {
+					} else if ( datumId instanceof GeneralObjectDatum<?> d ) {
 						if ( datumStreamSettings.isPublishToSolarIn() ) {
 							datumDao.persist(d);
 						}
 						if ( fluxPublisher != null && datumStreamSettings.isPublishToSolarFlux()
-								&& datum instanceof GeneralNodeDatum nodeDatum ) {
+								&& datumId instanceof GeneralNodeDatum nodeDatum ) {
 							fluxPublisher.processDatum(nodeDatum);
 						}
 					} else {
@@ -424,26 +469,26 @@ public class DaoCloudDatumStreamPollService
 							datumDao.store(datum);
 						}
 						if ( fluxPublisher != null && datumStreamSettings.isPublishToSolarFlux()
-								&& datum.getKind() == ObjectDatumKind.Node ) {
+								&& kind == ObjectDatumKind.Node ) {
 							GeneralObjectDatum<?> gd = DatumUtils.convertGeneralDatum(datum);
 							if ( gd instanceof GeneralNodeDatum nodeDatum ) {
 								fluxPublisher.processDatum(nodeDatum);
 							}
 						}
 					}
-					if ( lastDatumDate == null || lastDatumDate.isBefore(datum.getTimestamp()) ) {
-						lastDatumDate = datum.getTimestamp();
+					if ( lastDatumDate == null || lastDatumDate.isBefore(datumId.getTimestamp()) ) {
+						lastDatumDate = datumId.getTimestamp();
 					}
 				}
 			}
 
 			// success: update task info
 			if ( polledDatum != null && polledDatum.getNextQueryFilter() != null
-					&& polledDatum.getNextQueryFilter().hasStartDate() ) {
+					&& polledDatum.getNextQueryFilter().getStartDate() != null ) {
 				// use the start date provided by the results, so the next iteration picks up from there
 				taskInfo.setStartAt(polledDatum.getNextQueryFilter().getStartDate());
 			} else if ( polledDatum != null && polledDatum.getUsedQueryFilter() != null
-					&& polledDatum.getUsedQueryFilter().hasEndDate() ) {
+					&& polledDatum.getUsedQueryFilter().getEndDate() != null ) {
 				// use the end date provided by the results, so the next iteration picks up from there
 				taskInfo.setStartAt(polledDatum.getUsedQueryFilter().getEndDate());
 			} else if ( lastDatumDate != null ) {
@@ -510,17 +555,18 @@ public class DaoCloudDatumStreamPollService
 					Map<String, Instant> lastDates = new TreeMap<>(
 							StringNaturalSortComparator.CASE_INSENSITIVE_NATURAL_SORT);
 					for ( var datum : polledDatum ) {
-						sourceCounts.compute(datum.getSourceId(), (_, old) -> {
+						final var datumId = datum.datumIdent();
+						sourceCounts.compute(datumId.getSourceId(), (_, old) -> {
 							if ( old == null ) {
 								return 1;
 							}
 							return old + 1;
 						});
-						lastDates.compute(datum.getSourceId(), (_, old) -> {
+						lastDates.compute(datumId.getSourceId(), (_, old) -> {
 							if ( old == null ) {
-								return datum.getTimestamp();
+								return datumId.getTimestamp();
 							}
-							return datum.getTimestamp().isAfter(old) ? datum.getTimestamp() : old;
+							return datumId.getTimestamp().isAfter(old) ? datum.getTimestamp() : old;
 						});
 					}
 					data.put("datumImportCountBySource", sourceCounts);
@@ -534,7 +580,7 @@ public class DaoCloudDatumStreamPollService
 
 	}
 
-	private Trigger triggerForSchedule(CloudDatumStreamConfiguration datumStream) {
+	private @Nullable Trigger triggerForSchedule(CloudDatumStreamConfiguration datumStream) {
 		assert datumStream != null;
 		final String schedule = datumStream.getSchedule();
 		Trigger t = SchedulerUtils.triggerForExpression(schedule, TimeUnit.SECONDS, false);
@@ -553,7 +599,7 @@ public class DaoCloudDatumStreamPollService
 	 * Get the maximum length of time to wait for executing tasks to complete
 	 * when {@link #serviceDidShutdown()} is invoked.
 	 *
-	 * @return the maximum wait time, never {@literal null}
+	 * @return the maximum wait time, never {@code null}
 	 */
 	public final Duration getShutdownMaxWait() {
 		return shutdownMaxWait;
@@ -564,7 +610,7 @@ public class DaoCloudDatumStreamPollService
 	 * when {@link #serviceDidShutdown()} is invoked.
 	 *
 	 * @param shutdownMaxWait
-	 *        the maximum wait time to set; if {@literal null} then
+	 *        the maximum wait time to set; if {@code null} then
 	 *        {@link #DEFAULT_SHUTDOWN_MAX_WAIT} will be used
 	 */
 	public final void setShutdownMaxWait(Duration shutdownMaxWait) {
@@ -574,7 +620,7 @@ public class DaoCloudDatumStreamPollService
 	/**
 	 * Get the default datum stream settings.
 	 *
-	 * @return the settings, never {@literal null}
+	 * @return the settings, never {@code null}
 	 * @since 1.3
 	 */
 	public final CloudDatumStreamSettings getDefaultDatumStreamSettings() {
@@ -599,9 +645,9 @@ public class DaoCloudDatumStreamPollService
 	/**
 	 * Get the SolarFlux publisher.
 	 *
-	 * @return the publisher, or {@literal null}
+	 * @return the publisher, or {@code null}
 	 */
-	public DatumProcessor getFluxPublisher() {
+	public final @Nullable DatumProcessor getFluxPublisher() {
 		return fluxPublisher;
 	}
 
@@ -611,7 +657,7 @@ public class DaoCloudDatumStreamPollService
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
-	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+	public final void setFluxPublisher(@Nullable DatumProcessor fluxPublisher) {
 		this.fluxPublisher = fluxPublisher;
 	}
 
@@ -622,7 +668,7 @@ public class DaoCloudDatumStreamPollService
 	 *         {@link #DEFAULT_FAST_RESCHEDULE_MIN_LAG}
 	 * @since 1.7
 	 */
-	public Duration getFastRescheduleMinLag() {
+	public final Duration getFastRescheduleMinLag() {
 		return fastRescheduleMinLag;
 	}
 
@@ -639,7 +685,7 @@ public class DaoCloudDatumStreamPollService
 	 *        {@link #DEFAULT_FAST_RESCHEDULE_MIN_LAG} will be used
 	 * @since 1.7
 	 */
-	public void setFastRescheduleMinLag(Duration fastRescheduleMinLag) {
+	public final void setFastRescheduleMinLag(Duration fastRescheduleMinLag) {
 		this.fastRescheduleMinLag = (fastRescheduleMinLag != null ? fastRescheduleMinLag
 				: DEFAULT_FAST_RESCHEDULE_MIN_LAG);
 	}
@@ -650,7 +696,7 @@ public class DaoCloudDatumStreamPollService
 	 * @return the duration; defaults to {@link #DEFAULT_FAST_RESCHEDULE_AMOUNT}
 	 * @since 1.7
 	 */
-	public Duration getFastRescheduleAmount() {
+	public final Duration getFastRescheduleAmount() {
 		return fastRescheduleAmount;
 	}
 
@@ -666,9 +712,31 @@ public class DaoCloudDatumStreamPollService
 	 *        {@link #DEFAULT_FAST_RESCHEDULE_AMOUNT} will be used
 	 * @since 1.7
 	 */
-	public void setFastRescheduleAmount(Duration fastRescheduleAmount) {
+	public final void setFastRescheduleAmount(Duration fastRescheduleAmount) {
 		this.fastRescheduleAmount = (fastRescheduleAmount != null ? fastRescheduleAmount
 				: DEFAULT_FAST_RESCHEDULE_AMOUNT);
+	}
+
+	/**
+	 * Set the "requeue" after error count maximum.
+	 *
+	 * @return the maximum count; defaults to
+	 *         {@link #DEFAULT_REQUEUE_ERROR_COUNT_MAXIMUM}
+	 * @since 1.9
+	 */
+	public final int getRequeueErrorCountMaximum() {
+		return requeueErrorCountMaximum;
+	}
+
+	/**
+	 * Set the "requeue" after error count maximum.
+	 *
+	 * @param requeueErrorCountMaximum
+	 *        the maximum count to set
+	 * @since 1.9
+	 */
+	public final void setRequeueErrorCountMaximum(int requeueErrorCountMaximum) {
+		this.requeueErrorCountMaximum = requeueErrorCountMaximum;
 	}
 
 }

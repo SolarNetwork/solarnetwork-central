@@ -23,12 +23,12 @@
 package net.solarnetwork.central.datum.agg;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.springframework.dao.PessimisticLockingFailureException;
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.job.TieredStaleRecordProcessor;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
@@ -42,6 +42,7 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Tiered stale datum processor that processes all tiers of stale SolarFlux
@@ -84,14 +85,13 @@ public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 	 * @param publisher
 	 *        the processor to publish the stale SolarFlux data
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public StaleSolarFluxProcessor(JdbcOperations jdbcOps, DatumEntityDao datumDao,
 			DatumProcessor publisher) {
-		super(jdbcOps, "stale SolarFlux data");
+		super(jdbcOps, "Datum", "StaleSolarFluxProcessor", "stale SolarFlux data");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 		this.publisher = requireNonNullArgument(publisher, "publisher");
-		setGroupId("Datum");
 		setMaximumWaitMs(1800000L);
 		setTierProcessType("*");
 		setJdbcCall(SelectStaleFluxDatum.ANY_ONE_FOR_UPDATE.getSql());
@@ -104,7 +104,7 @@ public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 		}
 		final MutableInt processedCount = new MutableInt(0);
 		try {
-			getJdbcOps().execute((ConnectionCallback<Void>) con -> {
+			getJdbcOps().execute((Connection con) -> {
 				con.setAutoCommit(false);
 				BasicDatumCriteria filter = new BasicDatumCriteria();
 				filter.setMostRecent(true);
@@ -129,9 +129,16 @@ public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 									if ( results.getReturnedResultCount() > 0 ) {
 										Datum datum = results.iterator().next();
 										if ( datum != null ) {
-											GeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(datum,
-													results.metadataForStreamId(datum.getStreamId()));
-											handled = publisher.processDatum(gnd, stale.getKind());
+											ObjectDatumStreamMetadata meta = results
+													.metadataForStreamId(datum.getStreamId());
+											if ( meta != null ) {
+												GeneralNodeDatum gnd = DatumUtils
+														.toGeneralNodeDatum(datum, meta);
+												if ( gnd != null ) {
+													handled = publisher.processDatum(gnd,
+															stale.getKind());
+												}
+											}
 										}
 									} else {
 										log.warn(
@@ -172,7 +179,7 @@ public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 	 *
 	 * @return the publisher
 	 */
-	public DatumProcessor getPublisher() {
+	public final DatumProcessor getPublisher() {
 		return publisher;
 	}
 

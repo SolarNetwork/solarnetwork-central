@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.user.billing.snf.domain.test;
 
-import static java.util.UUID.randomUUID;
+import static java.time.Instant.now;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -30,7 +32,6 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -59,7 +60,8 @@ public class SnfInvoiceTests {
 	@Test
 	public void zone_notPresent() {
 		// GIVEN
-		SnfInvoice invoice = new SnfInvoice(randomUUID().getMostSignificantBits());
+		SnfInvoice invoice = new SnfInvoice(randomLong(), randomLong(), now(), LocalDate.now(),
+				LocalDate.now(), "NZD");
 
 		// WHEN
 		ZoneId zone = invoice.getTimeZone();
@@ -71,9 +73,9 @@ public class SnfInvoiceTests {
 	@Test
 	public void zone_invalidValue() {
 		// GIVEN
-		SnfInvoice invoice = new SnfInvoice(randomUUID().getMostSignificantBits());
-		Address addr = new Address();
-		addr.setTimeZoneId("foo/bar");
+		SnfInvoice invoice = new SnfInvoice(randomLong(), randomLong(), now(), LocalDate.now(),
+				LocalDate.now(), "NZD");
+		Address addr = new Address(randomLong(), randomString(), randomString(), "NZ", "foo/bar");
 		invoice.setAddress(addr);
 
 		// WHEN
@@ -86,9 +88,10 @@ public class SnfInvoiceTests {
 	@Test
 	public void zone_valid() {
 		// GIVEN
-		SnfInvoice invoice = new SnfInvoice(randomUUID().getMostSignificantBits());
-		Address addr = new Address();
-		addr.setTimeZoneId("Pacific/Auckland");
+		SnfInvoice invoice = new SnfInvoice(randomLong(), randomLong(), now(), LocalDate.now(),
+				LocalDate.now(), "NZD");
+		Address addr = new Address(randomLong(), randomString(), randomString(), "NZ",
+				"Pacific/Auckland");
 		invoice.setAddress(addr);
 
 		// WHEN
@@ -101,21 +104,16 @@ public class SnfInvoiceTests {
 	@Test
 	public void sameness_basic() {
 		// GIVEN
-		SnfInvoice inv1 = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
-				Instant.now());
-		inv1.setStartDate(LocalDate.of(2020, 1, 1));
-		inv1.setEndDate(LocalDate.of(2020, 2, 1));
-		inv1.setCurrencyCode("NZD");
+		SnfInvoice inv1 = new SnfInvoice(randomLong(), randomLong(), randomLong(), now(),
+				LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), "NZD");
 
-		Address addr = new Address(randomUUID().getMostSignificantBits(), Instant.now());
+		Address addr = new Address(randomLong(), randomString(), randomString(), "NZ",
+				"Pacific/Auckland");
 		inv1.setAddress(addr);
 
-		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated());
-		inv2.setStartDate(inv1.getStartDate());
-		inv2.setEndDate(inv1.getEndDate());
-		inv2.setCurrencyCode(inv1.getCurrencyCode());
-		inv2.setAddress(new Address(addr.getId(), addr.getCreated()));
+		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated(),
+				inv1.getStartDate(), inv1.getEndDate(), inv1.getCurrencyCode());
+		inv2.setAddress(addr.clone());
 
 		// THEN
 		assertThat("Entities have sameness", inv1.isSameAs(inv2), equalTo(true));
@@ -125,21 +123,16 @@ public class SnfInvoiceTests {
 	@Test
 	public void sameness_basic_diffStartDate() {
 		// GIVEN
-		SnfInvoice inv1 = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
-				Instant.now());
-		inv1.setStartDate(LocalDate.of(2020, 1, 1));
-		inv1.setEndDate(LocalDate.of(2020, 2, 1));
-		inv1.setCurrencyCode("NZD");
+		SnfInvoice inv1 = new SnfInvoice(randomLong(), randomLong(), randomLong(), now(),
+				LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), "NZD");
 
-		Address addr = new Address(randomUUID().getMostSignificantBits(), Instant.now());
+		Address addr = new Address(randomLong(), randomString(), randomString(), "NZ",
+				"Pacific/Auckland");
 		inv1.setAddress(addr);
 
-		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated());
-		inv2.setStartDate(inv1.getStartDate().plusDays(1));
-		inv2.setEndDate(inv1.getEndDate());
-		inv2.setCurrencyCode(inv1.getCurrencyCode());
-		inv2.setAddress(new Address(addr.getId(), addr.getCreated()));
+		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated(),
+				inv1.getStartDate().plusDays(1), inv1.getEndDate(), inv1.getCurrencyCode());
+		inv2.setAddress(addr.clone());
 
 		// THEN
 		assertThat("Entities do not have sameness", inv1.isSameAs(inv2), equalTo(false));
@@ -149,21 +142,16 @@ public class SnfInvoiceTests {
 	@Test
 	public void sameness_basic_diffAddress() {
 		// GIVEN
-		SnfInvoice inv1 = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
-				Instant.now());
-		inv1.setStartDate(LocalDate.of(2020, 1, 1));
-		inv1.setEndDate(LocalDate.of(2020, 2, 1));
-		inv1.setCurrencyCode("NZD");
+		SnfInvoice inv1 = new SnfInvoice(randomLong(), randomLong(), randomLong(), now(),
+				LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), "NZD");
 
-		Address addr = new Address(randomUUID().getMostSignificantBits(), Instant.now());
+		Address addr = new Address(randomLong(), randomString(), randomString(), "NZ",
+				"Pacific/Auckland");
 		inv1.setAddress(addr);
 
-		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated());
-		inv2.setStartDate(inv1.getStartDate());
-		inv2.setEndDate(inv1.getEndDate());
-		inv2.setCurrencyCode(inv1.getCurrencyCode());
-		inv2.setAddress(new Address(randomUUID().getMostSignificantBits(), addr.getCreated()));
+		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated(),
+				inv1.getStartDate(), inv1.getEndDate(), inv1.getCurrencyCode());
+		inv2.setAddress(addr.copyWithId(randomLong()));
 
 		// THEN
 		assertThat("Entities do not have sameness", inv1.isSameAs(inv2), equalTo(false));
@@ -173,14 +161,11 @@ public class SnfInvoiceTests {
 	@Test
 	public void sameness_withItems() {
 		// GIVEN
-		SnfInvoice inv1 = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
-				Instant.now());
-		inv1.setStartDate(LocalDate.of(2020, 1, 1));
-		inv1.setEndDate(LocalDate.of(2020, 2, 1));
-		inv1.setCurrencyCode("NZD");
+		SnfInvoice inv1 = new SnfInvoice(randomLong(), randomLong(), randomLong(), now(),
+				LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), "NZD");
 
-		Address addr = new Address(randomUUID().getMostSignificantBits(), Instant.now());
+		Address addr = new Address(randomLong(), randomString(), randomString(), "NZ",
+				"Pacific/Auckland");
 		inv1.setAddress(addr);
 
 		SnfInvoiceItem item1 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
@@ -189,12 +174,10 @@ public class SnfInvoiceTests {
 				new BigDecimal("2.34"), new BigDecimal("23456"), inv1.getCreated());
 		inv1.setItems(new HashSet<>(Arrays.asList(item1, item2)));
 
-		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated());
-		inv2.setStartDate(inv1.getStartDate());
-		inv2.setEndDate(inv1.getEndDate());
-		inv2.setCurrencyCode(inv1.getCurrencyCode());
+		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated(),
+				inv1.getStartDate(), inv1.getEndDate(), inv1.getCurrencyCode());
 
-		inv2.setAddress(new Address(addr.getId(), addr.getCreated()));
+		inv2.setAddress(addr.clone());
 
 		inv2.setItems(new HashSet<>(Arrays.asList(item1, item2)));
 
@@ -206,9 +189,8 @@ public class SnfInvoiceTests {
 	@Test
 	public void totalCost_noItems() {
 		// GIVEN
-		SnfInvoice inv1 = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
-				Instant.now());
+		SnfInvoice inv1 = new SnfInvoice(randomLong(), randomLong(), randomLong(), now(),
+				LocalDate.now(), LocalDate.now(), "NZD");
 
 		// WHEN
 		BigDecimal totalCost = inv1.getTotalAmount();
@@ -220,9 +202,8 @@ public class SnfInvoiceTests {
 	@Test
 	public void totalCost_withItems() {
 		// GIVEN
-		SnfInvoice inv1 = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
-				Instant.now());
+		SnfInvoice inv1 = new SnfInvoice(randomLong(), randomLong(), randomLong(), now(),
+				LocalDate.now(), LocalDate.now(), "NZD");
 		SnfInvoiceItem item1 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
 				new BigDecimal("12345"), new BigDecimal("1.23"), inv1.getCreated());
 		SnfInvoiceItem item2 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
@@ -241,11 +222,9 @@ public class SnfInvoiceTests {
 		// GIVEN
 		List<SnfInvoice> invoices = new ArrayList<>(5);
 		for ( int i = 0; i < 10; i++ ) {
-			SnfInvoice inv = new SnfInvoice(randomUUID().getMostSignificantBits(),
-					randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
-					Instant.now());
-			inv.setStartDate(LocalDate.of(2020 + ((int) (Math.random() * 10) - 5),
-					((int) (Math.random() * 11 + 1)), 1));
+			SnfInvoice inv = new SnfInvoice(randomLong(), randomLong(), randomLong(), now(), LocalDate
+					.of(2020 + ((int) (Math.random() * 10) - 5), ((int) (Math.random() * 11 + 1)), 1),
+					LocalDate.now(), "NZD");
 			invoices.add(inv);
 		}
 
@@ -268,9 +247,8 @@ public class SnfInvoiceTests {
 		// GIVEN
 		List<SnfInvoice> invoices = new ArrayList<>(5);
 		for ( int i = 0; i < 10; i++ ) {
-			SnfInvoice inv = new SnfInvoice(randomUUID().getMostSignificantBits(), 1L, 2L,
-					Instant.now());
-			inv.setStartDate(LocalDate.of(2020, 1, 1)); // all on same user, account, and date
+			SnfInvoice inv = new SnfInvoice(randomLong(), 1L, 2L, now(), LocalDate.of(2020, 1, 1),
+					LocalDate.now(), "NZD"); // all on same user, account, and date
 			invoices.add(inv);
 		}
 

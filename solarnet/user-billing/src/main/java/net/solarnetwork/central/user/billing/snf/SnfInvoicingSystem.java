@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
@@ -68,8 +69,9 @@ public interface SnfInvoicingSystem {
 	 *
 	 * @param userId
 	 *        the ID of the user to get the account for
-	 * @return the account, or {@literal null} if not available
+	 * @return the account, or {@code null} if not available
 	 */
+	@Nullable
 	Account accountForUser(Long userId);
 
 	/**
@@ -77,9 +79,9 @@ public interface SnfInvoicingSystem {
 	 *
 	 * @param accountId
 	 *        the ID of the account to get the latest invoice for
-	 * @return the latest available invoice, or {@literal null} if none
-	 *         available
+	 * @return the latest available invoice, or {@code null} if none available
 	 */
+	@Nullable
 	SnfInvoice findLatestInvoiceForAccount(UserLongPK accountId);
 
 	/**
@@ -95,9 +97,10 @@ public interface SnfInvoicingSystem {
 	 *        user's account's time zone
 	 * @param options
 	 *        the invoice generation options
-	 * @return the generated invoice, or {@literal null} if no invoice is
-	 *         necessary (i.e. no charges)
+	 * @return the generated invoice, or {@code null} if no invoice is necessary
+	 *         (i.e. no charges)
 	 */
+	@Nullable
 	SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate,
 			InvoiceGenerationOptions options);
 
@@ -116,7 +119,7 @@ public interface SnfInvoicingSystem {
 	 *
 	 * @param invoice
 	 *        the invoice to get the message source for
-	 * @return the message source, never {@literal null}
+	 * @return the message source, never {@code null}
 	 */
 	MessageSource messageSourceForInvoice(SnfInvoice invoice);
 
@@ -125,7 +128,7 @@ public interface SnfInvoicingSystem {
 	 *
 	 * @param date
 	 *        the date to get the message source for
-	 * @return the message source, never {@literal null}
+	 * @return the message source, never {@code null}
 	 * @since 1.1
 	 */
 	MessageSource messageSourceForDate(Instant date);
@@ -146,8 +149,7 @@ public interface SnfInvoicingSystem {
 	 *        the desired output type
 	 * @param locale
 	 *        the output locale
-	 * @return a resource with the result data, or {@literal null} if the
-	 *         invoice is not available
+	 * @return a resource with the result data
 	 * @throws IllegalArgumentException
 	 *         if {@code outputType} is not supported
 	 */

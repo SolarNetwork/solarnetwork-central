@@ -26,6 +26,7 @@ import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToke
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
+import static net.solarnetwork.domain.datum.Aggregation.Hour;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_DATE_HEADER_FORMATTER;
 import static net.solarnetwork.security.AuthorizationUtils.SN_DATE_HEADER;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -348,7 +349,7 @@ public class NodesControllerWebTests extends AbstractJUnit5CentralTransactionalT
 		final String tokenSecret = randomString();
 		insertSecurityToken(jdbcTemplate, tokenId, tokenSecret, userId,
 				SecurityTokenStatus.Active.name(), SecurityTokenType.User.name(),
-				getJSONString(BasicSecurityPolicy.builder().withRefreshAllowed(false).build()));
+				getJSONString(BasicSecurityPolicy.builder().withMinAggregation(Hour).build()));
 
 		// WHEN
 		final Instant now = Instant.now();

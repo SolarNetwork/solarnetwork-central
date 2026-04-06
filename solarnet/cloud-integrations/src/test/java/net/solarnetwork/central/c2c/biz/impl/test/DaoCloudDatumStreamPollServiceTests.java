@@ -30,6 +30,7 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Claimed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
+import static net.solarnetwork.central.domain.CommonUserEvents.ERROR_COUNT_DATA_KEY;
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -49,6 +50,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -87,6 +89,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.codec.jackson.JsonUtils;
@@ -174,7 +177,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 	public void claimTask() {
 		// GIVEN
 		final CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(TEST_USER_ID,
-				randomLong());
+				randomLong(), BasicClaimableJobState.Unknown, now(), now());
 
 		given(taskDao.claimQueuedTask()).willReturn(entity);
 
@@ -223,11 +226,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -267,10 +269,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(hour);
-		task.setStartAt(hour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
 
 		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
 		CloudDatumStreamPollTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
@@ -371,11 +371,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -395,10 +394,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTask(any(), eq(Claimed))).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(hour);
-		task.setStartAt(hour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
 
 		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
 		CloudDatumStreamPollTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
@@ -455,11 +452,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -489,10 +485,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(hour);
-		task.setStartAt(hour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
 
 		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
 		CloudDatumStreamPollTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
@@ -555,11 +549,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -567,10 +560,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTaskState(datumStream.getId(), Queued, Claimed)).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(hour);
-		task.setStartAt(hour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
 
 		// THEN
 		// @formatter:off
@@ -598,11 +589,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -641,10 +631,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(hour);
-		task.setStartAt(hour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
 
 		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
 		CloudDatumStreamPollTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
@@ -726,11 +714,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -760,10 +747,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(hour);
-		task.setStartAt(hour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
 
 		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
 
@@ -784,7 +769,104 @@ public class DaoCloudDatumStreamPollServiceTests {
 			.as("Error message saved")
 			.returns("Error executing poll task.", from(CloudDatumStreamPollTaskEntity::getMessage))
 			.as("Service properties saved with exception message")
-			.returns(Map.of("message", httpClientErrorExceptionMessage), from(CloudDatumStreamPollTaskEntity::getServiceProperties))
+			.returns(Map.of(
+					"message", httpClientErrorExceptionMessage,
+					"errorCount", 1L),
+				from(CloudDatumStreamPollTaskEntity::getServiceProperties))
+			;
+
+		and.thenThrownBy(() -> {
+				result.get(1, TimeUnit.MINUTES);
+			}, "ExecutionException thrown")
+			.isInstanceOf(ExecutionException.class)
+			.cause()
+			.isSameAs(remoteServiceException)
+			;
+
+		// @formatter:on
+	}
+
+	@Test
+	public void executeTask_remoteException_clientHttpError_requeueGiveUp() throws Exception {
+		// GIVEN
+		// submit task
+		var future = new CompletableFuture<CloudDatumStreamPollTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamPollTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
+		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
+		datumStream.setDatumStreamMappingId(randomLong());
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// look up datum stream associated with task
+		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// resolve datum stream settings
+		given(datumStreamSettingsDao.resolveSettings(TEST_USER_ID, datumStream.getConfigId(),
+				DEFAULT_DATUM_STREAM_SETTINGS)).willReturn(DEFAULT_DATUM_STREAM_SETTINGS);
+
+		// verify node ownership
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
+
+		// update task state to "processing"
+		given(taskDao.updateTaskState(datumStream.getId(), Executing, Claimed)).willReturn(true);
+
+		// query for data associated with service configured on datum stream; but throw 404 Not Found
+		final String httpClientErrorExceptionMessage = randomString();
+		final RemoteServiceException remoteServiceException = new RemoteServiceException("Remote error",
+				HttpClientErrorException.create(httpClientErrorExceptionMessage, HttpStatus.NOT_FOUND,
+						"404 Not Found", new HttpHeaders(), new byte[0], null));
+		given(datumStreamService.datum(same(datumStream), any())).willThrow(remoteServiceException);
+
+		// update task details
+		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
+
+		// WHEN
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, hour,
+				hour.minusSeconds(300));
+
+		// make it so we've hit the requeue maximum count
+		Map<String, Object> taskProps = new LinkedHashMap<>(4);
+		taskProps.put(ERROR_COUNT_DATA_KEY, service.getRequeueErrorCountMaximum());
+		task.putServiceProps(taskProps);
+
+		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
+
+		// THEN
+		// @formatter:off
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
+		and.then(taskCaptor.getValue())
+			.as("Task to update is copy of given task")
+			.isNotSameAs(task)
+			.as("Task to update has same ID as given task")
+			.isEqualTo(task)
+			.as("Update task state to Compelted to NOT run again after client HTTP error because of requeue maximum")
+			.returns(Completed, from(CloudDatumStreamPollTaskEntity::getState))
+			.as("Task execute date unchanged")
+			.returns(task.getExecuteAt(), from(CloudDatumStreamPollTaskEntity::getExecuteAt))
+			.as("Task start date unchanged")
+			.returns(task.getStartAt(), from(CloudDatumStreamPollTaskEntity::getStartAt))
+			.as("Error message saved")
+			.returns("Error executing poll task.", from(CloudDatumStreamPollTaskEntity::getMessage))
+			.as("Service properties saved with exception message")
+			.returns(Map.of(
+					"message", httpClientErrorExceptionMessage,
+					"errorCount", 101L),
+				from(CloudDatumStreamPollTaskEntity::getServiceProperties))
 			;
 
 		and.thenThrownBy(() -> {
@@ -828,11 +910,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Instant oldHour = clock.instant().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				randomLong(), now(), randomString(), TEST_DATUM_STREAM_SERVICE_IDENTIFIER,
+				ObjectDatumKind.Node);
 		datumStream.setDatumStreamMappingId(randomLong());
-		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
-		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
 
@@ -863,10 +944,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
 
 		// WHEN
-		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
-		task.setState(Claimed);
-		task.setExecuteAt(oldHour);
-		task.setStartAt(oldHour.minusSeconds(300));
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId(), Claimed, oldHour,
+				oldHour.minusSeconds(300));
 
 		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
 
@@ -887,7 +966,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 			.as("Error message saved")
 			.returns("Error executing poll task.", from(CloudDatumStreamPollTaskEntity::getMessage))
 			.as("Service properties saved with exception message")
-			.returns(Map.of("message", httpClientErrorExceptionMessage), from(CloudDatumStreamPollTaskEntity::getServiceProperties))
+			.returns(Map.of(
+					"message", httpClientErrorExceptionMessage,
+					"errorCount", 1L),
+				from(CloudDatumStreamPollTaskEntity::getServiceProperties))
 			;
 
 		and.thenThrownBy(() -> {

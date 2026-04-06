@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.SequencedMap;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -50,6 +53,7 @@ public interface SourceMappingCriteria {
 	 * @return the mapping of virtual source IDs to the set of real source IDs
 	 *         that should be mapped to them
 	 */
+	@Nullable
 	Map<String, Set<String>> getSourceIdMappings();
 
 	/**
@@ -70,10 +74,10 @@ public interface SourceMappingCriteria {
 	 *
 	 * @param mappings
 	 *        the mappings to decode
-	 * @return the mappings, or {@literal null} if {@code mappings} is empty
+	 * @return the mappings, or {@code null} if {@code mappings} is empty
 	 */
-	static Map<String, Set<String>> mappingsFrom(String[] mappings) {
-		Map<String, Set<String>> result;
+	static @Nullable Map<String, Set<String>> mappingsFrom(String @Nullable [] mappings) {
+		SequencedMap<String, Set<String>> result;
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
@@ -83,7 +87,8 @@ public interface SourceMappingCriteria {
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
 					// special case, when Spring maps single query param into 3 fields split on comma like A:B, C, D
 					try {
-						result.get(result.keySet().iterator().next()).add(map);
+						Set<String> firstValue = nonnull(result.firstEntry(), "First result").getValue();
+						firstValue.add(map);
 					} catch ( NumberFormatException e ) {
 						// ignore
 					}
@@ -94,7 +99,9 @@ public interface SourceMappingCriteria {
 				String vId = map.substring(0, vIdDelimIdx);
 				Set<String> rSourceIds = StringUtils
 						.commaDelimitedStringToSet(map.substring(vIdDelimIdx + 1));
-				result.put(vId, rSourceIds);
+				if ( rSourceIds != null ) {
+					result.put(vId, rSourceIds);
+				}
 			}
 		}
 		return (result == null || result.isEmpty() ? null : result);

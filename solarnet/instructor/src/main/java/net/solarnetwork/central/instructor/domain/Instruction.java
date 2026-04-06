@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonRawValue;
@@ -47,15 +48,15 @@ public class Instruction extends BaseEntity {
 	@Serial
 	private static final long serialVersionUID = -1424063634197303751L;
 
-	private String topic;
-	private Instant instructionDate;
-	private Instant statusDate;
-	private InstructionState state = InstructionState.Unknown;
-	private List<InstructionParameter> parameters;
-	private Map<String, Object> resultParameters;
-	private Instant expirationDate;
+	private @Nullable String topic;
+	private @Nullable Instant instructionDate;
+	private @Nullable Instant statusDate;
+	private @Nullable InstructionState state = InstructionState.Unknown;
+	private @Nullable List<InstructionParameter> parameters;
+	private @Nullable Map<String, Object> resultParameters;
+	private @Nullable Instant expirationDate;
 
-	private String resultParametersJson;
+	private @Nullable String resultParametersJson;
 
 	/**
 	 * Default constructor.
@@ -72,7 +73,7 @@ public class Instruction extends BaseEntity {
 	 * @param instructionDate
 	 *        the instruction date
 	 */
-	public Instruction(String topic, Instant instructionDate) {
+	public Instruction(@Nullable String topic, @Nullable Instant instructionDate) {
 		super();
 		this.topic = topic;
 		this.instructionDate = instructionDate;
@@ -112,7 +113,9 @@ public class Instruction extends BaseEntity {
 	 * Remove all parameters.
 	 */
 	public void clearParameters() {
-		parameters.clear();
+		if ( parameters != null ) {
+			parameters.clear();
+		}
 	}
 
 	/**
@@ -152,7 +155,7 @@ public class Instruction extends BaseEntity {
 	 *
 	 * @return the topic
 	 */
-	public final String getTopic() {
+	public final @Nullable String getTopic() {
 		return topic;
 	}
 
@@ -162,7 +165,7 @@ public class Instruction extends BaseEntity {
 	 * @param topic
 	 *        the topic to set
 	 */
-	public final void setTopic(String topic) {
+	public final void setTopic(@Nullable String topic) {
 		this.topic = topic;
 	}
 
@@ -171,7 +174,7 @@ public class Instruction extends BaseEntity {
 	 *
 	 * @return the date
 	 */
-	public final Instant getInstructionDate() {
+	public final @Nullable Instant getInstructionDate() {
 		return instructionDate;
 	}
 
@@ -181,7 +184,7 @@ public class Instruction extends BaseEntity {
 	 * @param instructionDate
 	 *        the date to set
 	 */
-	public final void setInstructionDate(Instant instructionDate) {
+	public final void setInstructionDate(@Nullable Instant instructionDate) {
 		this.instructionDate = instructionDate;
 	}
 
@@ -190,7 +193,7 @@ public class Instruction extends BaseEntity {
 	 *
 	 * @return the status date
 	 */
-	public final Instant getStatusDate() {
+	public final @Nullable Instant getStatusDate() {
 		return statusDate;
 	}
 
@@ -200,7 +203,7 @@ public class Instruction extends BaseEntity {
 	 * @param statusDate
 	 *        the date to set
 	 */
-	public final void setStatusDate(Instant statusDate) {
+	public final void setStatusDate(@Nullable Instant statusDate) {
 		this.statusDate = statusDate;
 	}
 
@@ -209,7 +212,7 @@ public class Instruction extends BaseEntity {
 	 *
 	 * @return the state
 	 */
-	public final InstructionState getState() {
+	public final @Nullable InstructionState getState() {
 		return state;
 	}
 
@@ -219,7 +222,7 @@ public class Instruction extends BaseEntity {
 	 * @param state
 	 *        the state to set
 	 */
-	public final void setState(InstructionState state) {
+	public final void setState(@Nullable InstructionState state) {
 		this.state = state;
 	}
 
@@ -228,7 +231,7 @@ public class Instruction extends BaseEntity {
 	 *
 	 * @return the parameters
 	 */
-	public final List<InstructionParameter> getParameters() {
+	public final @Nullable List<InstructionParameter> getParameters() {
 		return parameters;
 	}
 
@@ -238,19 +241,19 @@ public class Instruction extends BaseEntity {
 	 * @param parameters
 	 *        the parameters to set
 	 */
-	public final void setParameters(List<InstructionParameter> parameters) {
+	public final void setParameters(@Nullable List<InstructionParameter> parameters) {
 		this.parameters = parameters;
 	}
 
 	/**
 	 * Get the instruction parameters as a single-valued map.
 	 *
-	 * @return the parameters as a map, or {@literal null} if
-	 *         {@link #getParameters()} is {@literal null}
+	 * @return the parameters as a map, or {@code null} if
+	 *         {@link #getParameters()} is {@code null}
 	 * @since 1.3
 	 */
 	@JsonIgnore
-	public Map<String, String> getParams() {
+	public final @Nullable Map<String, String> getParams() {
 		List<InstructionParameter> l = getParameters();
 		if ( l == null ) {
 			return null;
@@ -277,7 +280,7 @@ public class Instruction extends BaseEntity {
 	 * @since 1.3
 	 */
 	@JsonSetter("params")
-	public void setParams(Map<String, String> params) {
+	public final void setParams(@Nullable Map<String, String> params) {
 		List<InstructionParameter> l = null;
 		if ( params != null ) {
 			l = new ArrayList<>(params.size());
@@ -297,7 +300,7 @@ public class Instruction extends BaseEntity {
 	 */
 	@JsonIgnore
 	@SuppressWarnings("unchecked")
-	public Map<String, Object> getResultParameters() {
+	public final @Nullable Map<String, Object> getResultParameters() {
 		Map<String, Object> map = this.resultParameters;
 		if ( map != null ) {
 			return map;
@@ -317,7 +320,7 @@ public class Instruction extends BaseEntity {
 	 *        the parameters to set
 	 */
 	@JsonIgnore
-	public void setResultParameters(Map<String, Object> resultParameters) {
+	public final void setResultParameters(@Nullable Map<String, Object> resultParameters) {
 		this.resultParameters = resultParameters;
 		resultParametersJson = null;
 	}
@@ -325,11 +328,11 @@ public class Instruction extends BaseEntity {
 	/**
 	 * Get the result parameters object as a JSON string.
 	 *
-	 * @return a JSON encoded string, never <em>null</em>
+	 * @return a JSON encoded string, never {@code null}
 	 */
 	@JsonGetter("resultParameters")
 	@JsonRawValue
-	public String getResultParametersJson() {
+	public final @Nullable String getResultParametersJson() {
 		if ( resultParametersJson != null ) {
 			return resultParametersJson;
 		}
@@ -355,7 +358,7 @@ public class Instruction extends BaseEntity {
 	 */
 	@JsonSetter("resultParameters")
 	@JsonRawValue
-	public void setResultParametersJson(String json) {
+	public final void setResultParametersJson(@Nullable String json) {
 		resultParametersJson = json;
 		resultParameters = null;
 	}
@@ -380,7 +383,7 @@ public class Instruction extends BaseEntity {
 	 * 
 	 * @return the expiration date
 	 */
-	public Instant getExpirationDate() {
+	public final @Nullable Instant getExpirationDate() {
 		return expirationDate;
 	}
 
@@ -396,7 +399,7 @@ public class Instruction extends BaseEntity {
 	 * @param expirationDate
 	 *        the expiration date to set
 	 */
-	public void setExpirationDate(Instant expirationDate) {
+	public final void setExpirationDate(@Nullable Instant expirationDate) {
 		this.expirationDate = expirationDate;
 	}
 

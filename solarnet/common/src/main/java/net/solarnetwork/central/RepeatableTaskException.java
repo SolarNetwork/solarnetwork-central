@@ -24,6 +24,7 @@ package net.solarnetwork.central;
 
 import java.io.Serial;
 import java.io.Serializable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An exception when some task that can be repeated safely has failed to signal
@@ -37,7 +38,7 @@ public class RepeatableTaskException extends RuntimeException {
 	@Serial
 	private static final long serialVersionUID = 948738004538481858L;
 
-	private final Serializable id;
+	private final @Nullable Serializable id;
 
 	/**
 	 * Default constructor.
@@ -54,12 +55,12 @@ public class RepeatableTaskException extends RuntimeException {
 	 *        An ID associated with this repeatable task.
 	 * @since 1.1
 	 */
-	public RepeatableTaskException(Serializable id) {
+	public RepeatableTaskException(@Nullable Serializable id) {
 		super();
 		this.id = id;
 	}
 
-	public RepeatableTaskException(String msg, Throwable t) {
+	public RepeatableTaskException(String msg, @Nullable Throwable t) {
 		super(msg, t);
 		this.id = null;
 	}
@@ -75,7 +76,7 @@ public class RepeatableTaskException extends RuntimeException {
 	 *        An ID associated with this repeatable task.
 	 * @since 1.1
 	 */
-	public RepeatableTaskException(String msg, Throwable t, Serializable id) {
+	public RepeatableTaskException(String msg, @Nullable Throwable t, @Nullable Serializable id) {
 		super(msg, t);
 		this.id = id;
 	}
@@ -93,9 +94,9 @@ public class RepeatableTaskException extends RuntimeException {
 	/**
 	 * Get the ID associated with the repeatable task.
 	 *
-	 * @return An ID, or <em>null</em> if none available.
+	 * @return An ID, or {@code null} if none available.
 	 */
-	public Serializable getId() {
+	public @Nullable Serializable getId() {
 		return id;
 	}
 

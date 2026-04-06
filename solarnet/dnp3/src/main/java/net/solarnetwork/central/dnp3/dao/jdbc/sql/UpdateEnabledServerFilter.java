@@ -28,6 +28,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
@@ -43,7 +44,7 @@ public final class UpdateEnabledServerFilter implements PreparedStatementCreator
 	private final String tableName;
 	private final String serverIdColumnName;
 	private final Long userId;
-	private final ServerFilter filter;
+	private final @Nullable ServerFilter filter;
 	private final boolean enabled;
 
 	/**
@@ -60,10 +61,10 @@ public final class UpdateEnabledServerFilter implements PreparedStatementCreator
 	 * @param enabled
 	 *        the desired enabled state
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code filter} is {@literal null}
+	 *         if any argument other than {@code filter} is {@code null}
 	 */
 	public UpdateEnabledServerFilter(String tableName, String serverIdColumnName, Long userId,
-			ServerFilter filter, boolean enabled) {
+			@Nullable ServerFilter filter, boolean enabled) {
 		super();
 		this.tableName = requireNonNullArgument(tableName, "tableName");
 		this.serverIdColumnName = requireNonNullArgument(serverIdColumnName, "serverIdColumnName");
@@ -120,6 +121,9 @@ public final class UpdateEnabledServerFilter implements PreparedStatementCreator
 	}
 
 	private int prepareWhere(Connection con, PreparedStatement stmt, int p) throws SQLException {
+		if ( filter == null ) {
+			return p;
+		}
 		if ( filter.hasServerCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getServerIds());
 		}
@@ -130,7 +134,7 @@ public final class UpdateEnabledServerFilter implements PreparedStatementCreator
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIndexes());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled());
+			stmt.setBoolean(++p, filter.enabled());
 		}
 		return p;
 	}

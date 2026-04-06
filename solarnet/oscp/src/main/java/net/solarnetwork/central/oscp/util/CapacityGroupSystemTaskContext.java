@@ -47,8 +47,7 @@ public record CapacityGroupSystemTaskContext<C extends BaseOscpExternalSystemCon
 
 	@Override
 	public String groupIdentifier() {
-		CapacityGroupConfiguration group = group();
-		return (group != null ? group.getIdentifier() : null);
+		return group.getIdentifier();
 	}
 
 }

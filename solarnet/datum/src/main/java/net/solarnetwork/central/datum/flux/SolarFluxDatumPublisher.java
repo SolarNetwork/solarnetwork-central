@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -122,31 +123,37 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 
 	@Override
 	public boolean processDatumCollection(Iterable<? extends Identity<GeneralNodeDatumPK>> datum,
-			Aggregation aggregation) {
+			@Nullable Aggregation aggregation) {
 		if ( datum == null ) {
 			return true;
 		}
+		final Aggregation agg = (aggregation != null ? aggregation : Aggregation.None);
 		try {
 			final int timeout = getPublishTimeoutSeconds();
 			for ( Identity<GeneralNodeDatumPK> d : datum ) {
-				final SolarNodeOwnership ownership = supportDao
-						.ownershipForNodeId(d.getId().getNodeId());
+				final GeneralNodeDatumPK pk = d.getId();
+				if ( pk == null ) {
+					log.info("Not publishing datum {} to SolarFlux because ID not available.", d);
+					continue;
+				}
+				final SolarNodeOwnership ownership = supportDao.ownershipForNodeId(pk.getNodeId());
 				if ( ownership == null ) {
 					log.info("Not publishing datum {} to SolarFlux because user ID not available.", d);
 					continue;
 				}
 
-				Long nodeId = d.getId().getNodeId();
-				String sourceId = d.getId().getSourceId();
-				if ( nodeId == null || sourceId == null || sourceId.isEmpty() ) {
+				final Long userId = ownership.getUserId();
+				final Long nodeId = ownership.getNodeId();
+				String sourceId = pk.getSourceId();
+				if ( sourceId == null || sourceId.isEmpty() ) {
 					continue;
 				}
 
 				// if datum is for aggregate, check agg publish settings
 				final FluxPublishSettings pubSettings;
-				if ( aggregation != Aggregation.None ) {
-					pubSettings = fluxPublishSettingsDao
-							.nodeSourcePublishConfiguration(ownership.getUserId(), nodeId, sourceId);
+				if ( agg != Aggregation.None ) {
+					pubSettings = fluxPublishSettingsDao.nodeSourcePublishConfiguration(userId, nodeId,
+							sourceId);
 					if ( pubSettings == null || !pubSettings.isPublish() ) {
 						continue;
 					}
@@ -156,8 +163,8 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 				if ( sourceId.startsWith("/") ) {
 					sourceId = sourceId.substring(1);
 				}
-				final String topic = String.format(NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE,
-						ownership.getUserId(), nodeId, aggregation.getKey(), sourceId);
+				final String topic = String.format(NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE, userId, nodeId,
+						agg.getKey(), sourceId);
 
 				Future<?> f = publish(d, topic, (pubSettings != null ? pubSettings.isRetain() : false),
 						getPublishQos());
@@ -168,7 +175,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 						if ( e.getCause() instanceof IllegalArgumentException iae ) {
 							// assume too large, etc
 							log.warn("Problem publishing {} datum to SolarFlux ({}); datum: {}",
-									aggDisplayName(aggregation), iae.getMessage(), d);
+									aggDisplayName(agg), iae.getMessage(), d);
 							continue;
 						} else {
 							throw e;
@@ -176,7 +183,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 					}
 				}
 
-				SolarFluxDatumPublishCountStat stat = publishStat(aggregation);
+				SolarFluxDatumPublishCountStat stat = publishStat(agg);
 				if ( stat != null ) {
 					StatTracker stats = getMqttStats();
 					if ( stats != null ) {
@@ -188,7 +195,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 		} catch ( TimeoutException e ) {
 			// don't generate error for timeout; just assume the problem is transient, e.g.
 			// network connection lost, and will be resolved eventually
-			log.warn("Timeout publishing {} datum to SolarFlux", aggDisplayName(aggregation));
+			log.warn("Timeout publishing {} datum to SolarFlux", aggDisplayName(agg));
 		} catch ( InterruptedException | ExecutionException e ) {
 			Throwable root = e;
 			while ( root.getCause() != null ) {
@@ -198,14 +205,14 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 				final long now = System.currentTimeMillis();
 				final long tdiff = errorLogLimitMs > 0 ? now - lastErrorTime : lastErrorTime;
 				if ( tdiff >= lastErrorTime ) {
-					logPublishError(e, root, aggregation);
+					logPublishError(e, root, agg);
 					lastErrorTime = now;
 				} else {
-					log.debug("Problem publishing {} datum to SolarFlux: {}",
-							aggDisplayName(aggregation), root.getMessage());
+					log.debug("Problem publishing {} datum to SolarFlux: {}", aggDisplayName(agg),
+							root.getMessage());
 				}
 			} else {
-				logPublishError(e, root, aggregation);
+				logPublishError(e, root, agg);
 			}
 		}
 		return false;
@@ -225,7 +232,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 		return aggregation == Aggregation.None ? "Raw" : aggregation.toString();
 	}
 
-	private static SolarFluxDatumPublishCountStat publishStat(Aggregation aggregation) {
+	private static @Nullable SolarFluxDatumPublishCountStat publishStat(Aggregation aggregation) {
 		return switch (aggregation) {
 			case None -> SolarFluxDatumPublishCountStat.RawDatumPublished;
 			case Hour -> SolarFluxDatumPublishCountStat.HourlyDatumPublished;

@@ -24,6 +24,7 @@ package net.solarnetwork.central.web.support;
 
 import java.io.IOException;
 import java.io.InputStream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -92,8 +93,9 @@ public interface ContentCachingService {
 	 *
 	 * @param request
 	 *        the HTTP request to derive a key from
-	 * @return the key, or {@literal null} if the request should not be cached
+	 * @return the key, or {@code null} if the request should not be cached
 	 */
+	@Nullable
 	String keyForRequest(HttpServletRequest request);
 
 	/**
@@ -107,10 +109,11 @@ public interface ContentCachingService {
 	 * @param response
 	 *        the active HTTP response to send the cached data to
 	 * @return the cached content if the response was successfully handled,
-	 *         {@literal null} otherwise (for example a cache miss)
+	 *         {@code null} otherwise (for example a cache miss)
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
+	@Nullable
 	CachedContent sendCachedResponse(String key, HttpServletRequest request,
 			HttpServletResponse response) throws IOException;
 
@@ -127,12 +130,12 @@ public interface ContentCachingService {
 	 * @param headers
 	 *        the resolved HTTP response headers
 	 * @param content
-	 *        the resolved HTTP response content, or {@literal null} if none
+	 *        the resolved HTTP response content, or {@code null} if none
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
 	default void cacheResponse(String key, HttpServletRequest request, int statusCode,
-			HttpHeaders headers, InputStream content) throws IOException {
+			HttpHeaders headers, @Nullable InputStream content) throws IOException {
 		cacheResponse(key, request, statusCode, headers, content, null);
 	}
 
@@ -149,14 +152,14 @@ public interface ContentCachingService {
 	 * @param headers
 	 *        the resolved HTTP response headers
 	 * @param content
-	 *        the resolved HTTP response content, or {@literal null} if none
+	 *        the resolved HTTP response content, or {@code null} if none
 	 * @param compression
 	 *        if {@code content} has been compressed then the compression type,
-	 *        otherwise {@literal null}
+	 *        otherwise {@code null}
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @since 1.1
 	 */
 	void cacheResponse(String key, HttpServletRequest request, int statusCode, HttpHeaders headers,
-			InputStream content, CompressionType compression) throws IOException;
+			@Nullable InputStream content, @Nullable CompressionType compression) throws IOException;
 }

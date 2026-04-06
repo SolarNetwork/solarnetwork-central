@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.random.RandomGenerator;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -133,12 +134,13 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 	 * @param integrationDao
 	 *        the integration DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public EgaugeRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
-			Function<String, Set<String>> sensitiveKeyProvider, InstantSource clock, RandomGenerator rng,
-			ClientAccessTokenDao clientAccessTokenDao, CloudIntegrationConfigurationDao integrationDao) {
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider, InstantSource clock,
+			RandomGenerator rng, ClientAccessTokenDao clientAccessTokenDao,
+			CloudIntegrationConfigurationDao integrationDao) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.rng = requireNonNullArgument(rng, "rng");
@@ -163,23 +165,27 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 					&& e.getCause() instanceof HttpClientErrorException ex
 					&& HttpStatus.UNAUTHORIZED.isSameCodeAs(ex.getStatusCode()) ) {
 				final UserStringStringCompositePK accessTokenId = accessTokenId(datumStream);
-				ClientAccessTokenEntity registration = clientAccessTokenDao.get(accessTokenId);
-				if ( registration != null ) {
-					clientAccessTokenDao.delete(registration);
-					JsonNode realm = ex.getResponseBodyAs(JsonNode.class);
-					return super.httpGet(description, configuration, responseType, (headers) -> {
-						var integration = integrationDao.integrationForDatumStream(datumStream.getId());
-						addEgaugeBearerAuthorization(integration, datumStream, headers, accessTokenId,
-								realm);
-						return setup.apply(headers);
-					}, handler);
+				if ( accessTokenId != null ) {
+					ClientAccessTokenEntity registration = clientAccessTokenDao.get(accessTokenId);
+					if ( registration != null ) {
+						clientAccessTokenDao.delete(registration);
+						JsonNode realm = ex.getResponseBodyAs(JsonNode.class);
+						return super.httpGet(description, configuration, responseType, (headers) -> {
+							var integration = integrationDao.integrationForDatumStream(datumStream.id());
+							if ( integration != null && realm != null ) {
+								addEgaugeBearerAuthorization(integration, datumStream, headers,
+										accessTokenId, realm);
+							}
+							return setup.apply(headers);
+						}, handler);
+					}
 				}
 			}
 			throw e;
 		}
 	}
 
-	private UserStringStringCompositePK accessTokenId(CloudDatumStreamConfiguration config) {
+	private @Nullable UserStringStringCompositePK accessTokenId(CloudDatumStreamConfiguration config) {
 		final String username = nonEmptyString(config.serviceProperty(USERNAME_SETTING, String.class));
 		final String deviceId = nonEmptyString(config.serviceProperty(DEVICE_ID_FILTER, String.class));
 		if ( username == null || deviceId == null ) {
@@ -214,6 +220,9 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 	 */
 	public void addEgaugeBearerAuthorization(CloudDatumStreamConfiguration config, HttpHeaders headers) {
 		final UserStringStringCompositePK accessTokenId = accessTokenId(config);
+		if ( accessTokenId == null ) {
+			return;
+		}
 
 		ClientAccessTokenEntity registration = clientAccessTokenDao.get(accessTokenId);
 		if ( registration != null && !registration.accessTokenExpired(clock) ) {
@@ -222,7 +231,10 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 		}
 
 		final CloudIntegrationConfiguration integration = integrationDao
-				.integrationForDatumStream(config.getId());
+				.integrationForDatumStream(config.id());
+		if ( integration == null ) {
+			return;
+		}
 
 		final String deviceId = nonEmptyString(config.serviceProperty(DEVICE_ID_FILTER, String.class));
 		JsonNode realm;
@@ -238,6 +250,10 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 			} else {
 				throw e;
 			}
+		}
+		if ( realm == null ) {
+			throw new RemoteServiceException(
+					"Realm JSON not available for access token [%s]".formatted(accessTokenId));
 		}
 		addEgaugeBearerAuthorization(integration, config, headers, accessTokenId, realm);
 	}
@@ -285,11 +301,8 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 		final String accessTokenValue = nonEmptyString(
 				tokenRes != null ? tokenRes.path(JWT_PROPERTY).asString() : null);
 		if ( accessTokenValue != null ) {
-			var registration = new ClientAccessTokenEntity(accessTokenId, clock.instant());
-			registration.setAccessTokenIssuedAt(authReqTime);
-			registration.setAccessTokenType("Bearer");
-			registration.setAccessToken(accessTokenValue.getBytes(UTF_8));
-			registration.setAccessTokenExpiresAt(authReqTime.plus(ACCESS_TOKEN_TTL));
+			var registration = new ClientAccessTokenEntity(accessTokenId, clock.instant(), "Bearer",
+					accessTokenValue.getBytes(UTF_8), authReqTime, authReqTime.plus(ACCESS_TOKEN_TTL));
 			clientAccessTokenDao.save(registration);
 			headers.setBearerAuth(accessTokenValue);
 		}

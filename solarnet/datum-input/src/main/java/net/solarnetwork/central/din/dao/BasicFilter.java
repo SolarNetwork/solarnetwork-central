@@ -24,6 +24,7 @@ package net.solarnetwork.central.din.dao;
 
 import java.util.Arrays;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
@@ -36,9 +37,9 @@ import net.solarnetwork.dao.PaginationCriteria;
 public class BasicFilter extends BasicCoreCriteria
 		implements CredentialFilter, TransformFilter, EndpointFilter, EndpointAuthFilter {
 
-	private Long[] credentialIds;
-	private Long[] transformIds;
-	private UUID[] endpointIds;
+	private Long @Nullable [] credentialIds;
+	private Long @Nullable [] transformIds;
+	private UUID @Nullable [] endpointIds;
 
 	@Override
 	public BasicFilter clone() {
@@ -58,12 +59,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param criteria
 	 *        the criteria to copy
 	 */
-	public BasicFilter(PaginationCriteria criteria) {
+	public BasicFilter(@Nullable PaginationCriteria criteria) {
 		super(criteria);
 	}
 
 	@Override
-	public void copyFrom(PaginationCriteria criteria) {
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof CredentialCriteria f ) {
 			setCredentialIds(f.getCredentialIds());
@@ -87,7 +88,7 @@ public class BasicFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -111,7 +112,7 @@ public class BasicFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public Long getCredentialId() {
+	public final @Nullable Long getCredentialId() {
 		return CredentialFilter.super.getCredentialId();
 	}
 
@@ -121,12 +122,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param credentialId
 	 *        the credential ID to set
 	 */
-	public void setCredentialId(Long credentialId) {
+	public final void setCredentialId(@Nullable Long credentialId) {
 		setCredentialIds(credentialId != null ? new Long[] { credentialId } : null);
 	}
 
 	@Override
-	public Long[] getCredentialIds() {
+	public final Long @Nullable [] getCredentialIds() {
 		return credentialIds;
 	}
 
@@ -136,12 +137,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param credentialIds
 	 *        the credential IDs to set
 	 */
-	public void setCredentialIds(Long[] credentialIds) {
+	public final void setCredentialIds(Long @Nullable [] credentialIds) {
 		this.credentialIds = credentialIds;
 	}
 
 	@Override
-	public Long getTransformId() {
+	public final @Nullable Long getTransformId() {
 		return TransformFilter.super.getTransformId();
 	}
 
@@ -151,12 +152,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param transformId
 	 *        the transform ID to set
 	 */
-	public void setTransformId(Long transformId) {
+	public final void setTransformId(@Nullable Long transformId) {
 		setTransformIds(transformId != null ? new Long[] { transformId } : null);
 	}
 
 	@Override
-	public Long[] getTransformIds() {
+	public final Long @Nullable [] getTransformIds() {
 		return transformIds;
 	}
 
@@ -166,12 +167,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param transformIds
 	 *        the transform IDs to set
 	 */
-	public void setTransformIds(Long[] transformIds) {
+	public final void setTransformIds(Long @Nullable [] transformIds) {
 		this.transformIds = transformIds;
 	}
 
 	@Override
-	public UUID getEndpointId() {
+	public final @Nullable UUID getEndpointId() {
 		return EndpointFilter.super.getEndpointId();
 	}
 
@@ -181,12 +182,12 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param endpointId
 	 *        the endpoint ID to set
 	 */
-	public void setEndpointId(UUID endpointId) {
+	public final void setEndpointId(@Nullable UUID endpointId) {
 		setEndpointIds(endpointId != null ? new UUID[] { endpointId } : null);
 	}
 
 	@Override
-	public UUID[] getEndpointIds() {
+	public final UUID @Nullable [] getEndpointIds() {
 		return endpointIds;
 	}
 
@@ -196,7 +197,7 @@ public class BasicFilter extends BasicCoreCriteria
 	 * @param endpointIds
 	 *        the endpoint IDs to set
 	 */
-	public void setEndpointIds(UUID[] endpointIds) {
+	public final void setEndpointIds(UUID @Nullable [] endpointIds) {
 		this.endpointIds = endpointIds;
 	}
 

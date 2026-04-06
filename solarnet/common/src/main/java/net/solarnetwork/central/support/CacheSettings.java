@@ -32,6 +32,7 @@ import org.ehcache.config.units.EntryUnit;
 import org.ehcache.config.units.MemoryUnit;
 import org.ehcache.jsr107.Eh107Configuration;
 import org.ehcache.spi.loaderwriter.CacheLoaderWriter;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A standardized cache settings bean.
@@ -61,7 +62,7 @@ public class CacheSettings {
 	private long heapMaxEntries = DEFAULT_HEAP_MAX_ENTRIES;
 	private long diskMaxSizeMb = DEFAULT_DISK_MAX_SIZE_MB;
 	private boolean diskPersistent = DEFAULT_DISK_PERSISTENT;
-	private CacheLoaderWriter<?, ?> loaderWriter;
+	private @Nullable CacheLoaderWriter<?, ?> loaderWriter;
 
 	/**
 	 * Create a cache, or return an already existing one with the same name.
@@ -121,7 +122,7 @@ public class CacheSettings {
 	 * @return the time to idle, or {@literal 0} for no idle timeout; defaults
 	 *         to {@link #DEFAULT_TIME_TO_IDLE}
 	 */
-	public long getTti() {
+	public final long getTti() {
 		return tti;
 	}
 
@@ -131,7 +132,7 @@ public class CacheSettings {
 	 * @param tti
 	 *        the time to idle, or {@literal 0} for no idle timeout
 	 */
-	public void setTti(long tti) {
+	public final void setTti(long tti) {
 		this.tti = tti;
 	}
 
@@ -141,7 +142,7 @@ public class CacheSettings {
 	 * @return the time to live seconds, or {@literal 0} for no life timeout;
 	 *         defaults to {@link #DEFAULT_TIME_TO_LIVE}
 	 */
-	public long getTtl() {
+	public final long getTtl() {
 		return ttl;
 	}
 
@@ -151,7 +152,7 @@ public class CacheSettings {
 	 * @param ttl
 	 *        the time to live, or {@literal 0} for no life timeout
 	 */
-	public void setTtl(long ttl) {
+	public final void setTtl(long ttl) {
 		this.ttl = ttl;
 	}
 
@@ -161,7 +162,7 @@ public class CacheSettings {
 	 * @return the max heap element count, {@literal 0} for no limit; defaults
 	 *         to {@link #DEFAULT_HEAP_MAX_ENTRIES}
 	 */
-	public long getHeapMaxEntries() {
+	public final long getHeapMaxEntries() {
 		return heapMaxEntries;
 	}
 
@@ -171,7 +172,7 @@ public class CacheSettings {
 	 * @param heapMaxEntries
 	 *        the max heap element count
 	 */
-	public void setHeapMaxEntries(long heapMaxEntries) {
+	public final void setHeapMaxEntries(long heapMaxEntries) {
 		this.heapMaxEntries = heapMaxEntries;
 	}
 
@@ -181,7 +182,7 @@ public class CacheSettings {
 	 * @return the on-disk maximum size; defaults to
 	 *         {@link #DEFAULT_DISK_MAX_SIZE_MB}
 	 */
-	public long getDiskMaxSizeMb() {
+	public final long getDiskMaxSizeMb() {
 		return diskMaxSizeMb;
 	}
 
@@ -191,7 +192,7 @@ public class CacheSettings {
 	 * @param diskMaxSizeMb
 	 *        the on-disk maximum size, in MB
 	 */
-	public void setDiskMaxSizeMb(long diskMaxSizeMb) {
+	public final void setDiskMaxSizeMb(long diskMaxSizeMb) {
 		this.diskMaxSizeMb = diskMaxSizeMb;
 	}
 
@@ -201,7 +202,7 @@ public class CacheSettings {
 	 * @return {@literal true} to persist the cache between reboots; defaults to
 	 *         {@link #DEFAULT_DISK_PERSISTENT}
 	 */
-	public boolean isDiskPersistent() {
+	public final boolean isDiskPersistent() {
 		return diskPersistent;
 	}
 
@@ -211,7 +212,7 @@ public class CacheSettings {
 	 * @param diskPersistent
 	 *        {@literal true} to persist the cache between reboots
 	 */
-	public void setDiskPersistent(boolean diskPersistent) {
+	public final void setDiskPersistent(boolean diskPersistent) {
 		this.diskPersistent = diskPersistent;
 	}
 
@@ -221,7 +222,7 @@ public class CacheSettings {
 	 * @return the instance
 	 * @since 1.1
 	 */
-	public final CacheLoaderWriter<?, ?> getLoaderWriter() {
+	public final @Nullable CacheLoaderWriter<?, ?> getLoaderWriter() {
 		return loaderWriter;
 	}
 
@@ -232,7 +233,7 @@ public class CacheSettings {
 	 *        the instance to set
 	 * @since 1.1
 	 */
-	public final void setLoaderWriter(CacheLoaderWriter<?, ?> loaderWriter) {
+	public final void setLoaderWriter(@Nullable CacheLoaderWriter<?, ?> loaderWriter) {
 		this.loaderWriter = loaderWriter;
 	}
 

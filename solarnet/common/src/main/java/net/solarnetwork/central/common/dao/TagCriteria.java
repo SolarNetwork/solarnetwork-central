@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Criteria API for a "tag" qualifier.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface TagCriteria {
 
@@ -43,23 +45,57 @@ public interface TagCriteria {
 	/**
 	 * Get an array of tags.
 	 * 
-	 * @return array of tags (may be {@literal null})
+	 * @return array of tags (may be {@code null})
 	 */
-	String[] getTags();
+	String @Nullable [] getTags();
 
 	/**
 	 * Get the first tag.
 	 * 
 	 * <p>
 	 * This returns the first available tag from the {@link #getTags()} array,
-	 * or {@literal null} if not available.
+	 * or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the tag, or {@literal null} if not available
+	 * @return the tag, or {@code null} if not available
 	 */
-	default String getTag() {
+	default @Nullable String getTag() {
 		String[] kinds = getTags();
 		return (kinds != null && kinds.length > 0 ? kinds[0] : null);
+	}
+
+	/**
+	 * Get the first tag.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTagCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first tag (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String tag() {
+		return getTag();
+	}
+
+	/**
+	 * Get an array of tags.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTagCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of tags (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] tags() {
+		return getTags();
 	}
 
 }

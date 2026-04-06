@@ -95,7 +95,7 @@ public enum DatumReadingType {
 	 * </p>
 	 *
 	 * @param key
-	 *        the key value; if {@literal null} or empty then
+	 *        the key value; if {@code null} or empty then
 	 *        {@link #NearestDifference} will be returned
 	 * @return the enum
 	 * @throws IllegalArgumentException

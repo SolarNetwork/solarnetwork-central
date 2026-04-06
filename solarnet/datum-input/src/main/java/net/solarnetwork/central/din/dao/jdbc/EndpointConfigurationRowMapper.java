@@ -22,12 +22,14 @@
 
 package net.solarnetwork.central.din.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.din.domain.EndpointConfiguration;
 
 /**
@@ -83,13 +85,16 @@ public class EndpointConfigurationRowMapper implements RowMapper<EndpointConfigu
 	@Override
 	public EndpointConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
-		Long userId = rs.getLong(++p);
-		UUID entityId = CommonJdbcUtils.getUuid(rs, ++p);
-		Timestamp ts = rs.getTimestamp(++p);
-		EndpointConfiguration conf = new EndpointConfiguration(userId, entityId, ts.toInstant());
-		conf.setModified(rs.getTimestamp(++p).toInstant());
-		conf.setEnabled(rs.getBoolean(++p));
-		conf.setName(rs.getString(++p));
+		Long userId = nonnull(rs.getObject(++p, Long.class), "userId");
+		UUID entityId = uuid(rs, ++p);
+		Instant ts = timestampInstant(rs, ++p);
+		Instant mod = timestampInstant(rs, ++p);
+		boolean enabled = rs.getBoolean(++p);
+		String name = nonnull(rs.getString(++p), "name");
+
+		final var conf = new EndpointConfiguration(userId, entityId, ts, name);
+		conf.setModified(mod);
+		conf.setEnabled(enabled);
 		conf.setNodeId(rs.getObject(++p, Long.class));
 		conf.setSourceId(rs.getString(++p));
 		conf.setTransformId(rs.getObject(++p, Long.class));

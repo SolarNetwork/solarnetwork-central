@@ -1,27 +1,28 @@
 /* ==================================================================
  * BaseExternalSystemConfigurationRowMapper.java - 19/08/2022 5:09:53 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.oscp.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -38,11 +39,11 @@ import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Base RowMapper for external system configuration entities.
- * 
+ *
  * <p>
  * The expected column order in the SQL results is:
  * </p>
- * 
+ *
  * <ol>
  * <li>id (BIGINT)</li>
  * <li>created (TIMESTAMP)</li>
@@ -60,11 +61,11 @@ import net.solarnetwork.codec.jackson.JsonUtils;
  * <li>offline_at (TIMESTAMP)</li>
  * <li>sprops (TEXT)</li>
  * </ol>
- * 
+ *
  * @param <C>
  *        the configuration type
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseExternalSystemConfigurationRowMapper<C extends BaseOscpExternalSystemConfiguration<C>>
 		implements RowMapper<C>, ColumnCountProvider {
@@ -75,29 +76,49 @@ public abstract class BaseExternalSystemConfigurationRowMapper<C extends BaseOsc
 	@Override
 	public final C mapRow(ResultSet rs, int rowNum) throws SQLException {
 		Long entityId = rs.getObject(1, Long.class);
-		Timestamp created = rs.getTimestamp(2);
+		Instant ts = timestampInstant(rs, 2);
+		Instant mod = timestampInstant(rs, 3);
 		Long userId = rs.getObject(4, Long.class);
-		C conf = createConfiguration(userId, entityId, created.toInstant());
+		boolean enabled = rs.getBoolean(5);
+		Long fpId = rs.getObject(6, Long.class);
+		RegistrationStatus status = RegistrationStatus.forCode(rs.getInt(7));
+		String name = rs.getString(8);
+
+		C conf = createConfiguration(userId, entityId, ts, mod, enabled, name, fpId, status);
+		conf.setEnabled(enabled);
 		populateConfiguration(rs, rowNum, conf);
 		return conf;
 	}
 
 	/**
 	 * Create a new entity.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param entityId
 	 *        the entity ID
 	 * @param created
 	 *        the creation date
+	 * @param modified
+	 *        the modification date
+	 * @param enabled
+	 *        the enabled state
+	 * @param name
+	 *        the configuration name
+	 * @param flexibilityProviderId
+	 *        the flexibility provider ID
+	 * @param registrationStatus
+	 *        the registration status
 	 * @return the new entity
+	 * @since 1.1
 	 */
-	protected abstract C createConfiguration(Long userId, Long entityId, Instant created);
+	protected abstract C createConfiguration(Long userId, Long entityId, Instant created,
+			Instant modified, boolean enabled, String name, Long flexibilityProviderId,
+			RegistrationStatus registrationStatus);
 
 	/**
 	 * Populate the configuration entity from a row.
-	 * 
+	 *
 	 * @param rs
 	 *        the result set
 	 * @param rowNum
@@ -108,11 +129,6 @@ public abstract class BaseExternalSystemConfigurationRowMapper<C extends BaseOsc
 	 *         if any SQL error occurs
 	 */
 	protected void populateConfiguration(ResultSet rs, int rowNum, C conf) throws SQLException {
-		conf.setModified(rs.getTimestamp(3).toInstant());
-		conf.setEnabled(rs.getBoolean(5));
-		conf.setFlexibilityProviderId(rs.getObject(6, Long.class));
-		conf.setRegistrationStatus(RegistrationStatus.forCode(rs.getInt(7)));
-		conf.setName(rs.getString(8));
 		conf.setBaseUrl(rs.getString(9));
 		conf.setOscpVersion(rs.getString(10));
 

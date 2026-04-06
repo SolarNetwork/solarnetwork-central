@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.NodeMappingFilter;
 import net.solarnetwork.central.domain.SourceMappingFilter;
 
@@ -29,42 +30,44 @@ import net.solarnetwork.central.domain.SourceMappingFilter;
  * Filter API for {@link GeneralNodeDatum}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.7
  * @since 1.35
  */
 public interface GeneralNodeDatumFilter extends CommonFilter, CombiningFilter, DatumRollupFilter,
-		NodeMappingFilter, SourceMappingFilter {
+		NodeMappingFilter, SourceMappingFilter, PropertyNameFilter, StreamAliasFilter {
 
 	/**
 	 * Get the first node ID. This returns the first available node ID from the
-	 * {@link #getNodeIds()} array, or <em>null</em> if not available.
+	 * {@link #getNodeIds()} array, or {@code null} if not available.
 	 *
-	 * @return the node ID, or <em>null</em> if not available
+	 * @return the node ID, or {@code null} if not available
 	 */
+	@Nullable
 	Long getNodeId();
 
 	/**
 	 * Get an array of node IDs.
 	 *
-	 * @return array of node IDs (may be <em>null</em>)
+	 * @return array of node IDs (may be {@code null})
 	 */
-	Long[] getNodeIds();
+	Long @Nullable [] getNodeIds();
 
 	/**
 	 * Get the first user ID. This returns the first available user ID from the
-	 * {@link #getUserIds()} array, or <em>null</em> if not available.
+	 * {@link #getUserIds()} array, or {@code null} if not available.
 	 *
-	 * @return the first user ID, or <em>null</em> if not available
+	 * @return the first user ID, or {@code null} if not available
 	 * @since 1.2
 	 */
+	@Nullable
 	Long getUserId();
 
 	/**
 	 * Get an array of user IDs.
 	 *
-	 * @return array of user IDs (may be <em>null</em>)
+	 * @return array of user IDs (may be {@code null})
 	 * @since 1.2
 	 */
-	Long[] getUserIds();
+	Long @Nullable [] getUserIds();
 
 }

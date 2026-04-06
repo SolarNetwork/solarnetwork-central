@@ -25,6 +25,7 @@ package net.solarnetwork.central.support;
 import java.io.Serial;
 import java.util.Arrays;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.Filter;
@@ -44,9 +45,9 @@ public class FilterSupport extends BaseFilterSupport
 	@Serial
 	private static final long serialVersionUID = -4826724231965486643L;
 
-	private Long[] locationIds;
-	private Long[] nodeIds;
-	private String[] sourceIds;
+	private Long @Nullable [] locationIds;
+	private Long @Nullable [] nodeIds;
+	private String @Nullable [] sourceIds;
 
 	@Override
 	public Map<String, ?> getFilter() {
@@ -102,156 +103,6 @@ public class FilterSupport extends BaseFilterSupport
 	}
 
 	/**
-	 * Set a single node ID.
-	 *
-	 * <p>
-	 * This is a convenience method for requests that use a single node ID at a
-	 * time. The node ID is still stored on the {@code nodeIds} array, just as
-	 * the first value. Calling this method replaces any existing
-	 * {@code nodeIds} value with a new array containing just the ID passed into
-	 * this method.
-	 * </p>
-	 *
-	 * @param nodeId
-	 *        the ID of the node
-	 */
-	@SuppressWarnings("InvalidParam")
-	@JsonSetter
-	public void setNodeId(Long nodeId) {
-		this.nodeIds = new Long[] { nodeId };
-	}
-
-	@JsonIgnore
-	@Override
-	public Long getNodeId() {
-		return (this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0]);
-	}
-
-	@Override
-	public Long[] getNodeIds() {
-		return nodeIds;
-	}
-
-	/**
-	 * Set a list of node IDs to filter on.
-	 *
-	 * @param nodeIds
-	 *        The nodeIds IDs to filter on.
-	 */
-	public void setNodeIds(Long[] nodeIds) {
-		this.nodeIds = nodeIds;
-	}
-
-	/**
-	 * Set a single source ID.
-	 *
-	 * <p>
-	 * This is a convenience method for requests that use a single source ID at
-	 * a time. The source ID is still stored on the {@code sourceIds} array,
-	 * just as the first value. Calling this method replaces any existing
-	 * {@code sourceIds} value with a new array containing just the ID passed
-	 * into this method.
-	 * </p>
-	 *
-	 * @param sourceId
-	 *        the source ID
-	 */
-	@SuppressWarnings("InvalidParam")
-	@JsonSetter
-	public void setSourceId(String sourceId) {
-		this.sourceIds = (sourceId == null ? null : new String[] { sourceId });
-	}
-
-	/**
-	 * Get the first source ID.
-	 *
-	 * <p>
-	 * This returns the first available source ID from the {@code sourceIds}
-	 * array, or {@literal null} if not available.
-	 * </p>
-	 *
-	 * @return the first source ID, or {@literal null}
-	 */
-	@SuppressWarnings("InvalidParam")
-	@JsonIgnore
-	public String getSourceId() {
-		return (this.sourceIds == null || this.sourceIds.length < 1 ? null : this.sourceIds[0]);
-	}
-
-	/**
-	 * Get all source IDs to filter on.
-	 *
-	 * @return The source IDs, or {@literal null}.
-	 */
-	public String[] getSourceIds() {
-		return sourceIds;
-	}
-
-	/**
-	 * Set a list of source IDs to filter on.
-	 *
-	 * @param sourceIds
-	 *        The source IDs to filter on.
-	 */
-	public void setSourceIds(String[] sourceIds) {
-		this.sourceIds = sourceIds;
-	}
-
-	/**
-	 * Set a single location ID.
-	 *
-	 * <p>
-	 * This is a convenience method for requests that use a single location ID
-	 * at a time. The location ID is still stored on the {@code locationIds}
-	 * array, just as the first value. Calling this method replaces any existing
-	 * {@code locationIds} value with a new array containing just the ID passed
-	 * into this method.
-	 * </p>
-	 *
-	 * @param locationId
-	 *        the ID of the location
-	 */
-	@SuppressWarnings("InvalidParam")
-	@JsonSetter
-	public void setLocationId(Long locationId) {
-		this.locationIds = (locationId == null ? null : new Long[] { locationId });
-	}
-
-	/**
-	 * Get the first location ID.
-	 *
-	 * <p>
-	 * This returns the first available location ID from the {@code locationIds}
-	 * array, or {@literal null} if not available.
-	 * </p>
-	 *
-	 * @return the first location ID, or {@literal null}
-	 */
-	@JsonIgnore
-	public Long getLocationId() {
-		return (locationIds != null && locationIds.length > 0 ? locationIds[0] : null);
-	}
-
-	/**
-	 * Get all location IDs to filter on.
-	 *
-	 * @return The location IDs, or {@literal null}.
-	 */
-	public Long[] getLocationIds() {
-		return locationIds;
-	}
-
-	/**
-	 * Set a list of location IDs to filter on.
-	 *
-	 * @param locationIds
-	 *        The location IDs to filter on.
-	 */
-	public void setLocationIds(Long[] locationIds) {
-		this.locationIds = locationIds;
-	}
-
-	/**
 	 * {@inheritDoc}
 	 *
 	 * @since 1.1
@@ -272,7 +123,7 @@ public class FilterSupport extends BaseFilterSupport
 	 * @since 1.1
 	 */
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -281,6 +132,159 @@ public class FilterSupport extends BaseFilterSupport
 		}
 		return Arrays.equals(locationIds, other.locationIds) && Arrays.equals(nodeIds, other.nodeIds)
 				&& Arrays.equals(sourceIds, other.sourceIds);
+	}
+
+	/**
+	 * Set a single node ID.
+	 *
+	 * <p>
+	 * This is a convenience method for requests that use a single node ID at a
+	 * time. The node ID is still stored on the {@code nodeIds} array, just as
+	 * the first value. Calling this method replaces any existing
+	 * {@code nodeIds} value with a new array containing just the ID passed into
+	 * this method.
+	 * </p>
+	 *
+	 * @param nodeId
+	 *        the ID of the node
+	 */
+	@SuppressWarnings("InvalidParam")
+	@JsonSetter
+	public final void setNodeId(@Nullable Long nodeId) {
+		setNodeIds(nodeId != null ? new Long[] { nodeId } : null);
+	}
+
+	@JsonIgnore
+	@Override
+	public final @Nullable Long getNodeId() {
+		final Long[] nodeIds = getNodeIds();
+		return (nodeIds == null || nodeIds.length < 1 ? null : nodeIds[0]);
+	}
+
+	@Override
+	public final Long @Nullable [] getNodeIds() {
+		return nodeIds;
+	}
+
+	/**
+	 * Set a list of node IDs to filter on.
+	 *
+	 * @param nodeIds
+	 *        The nodeIds IDs to filter on.
+	 */
+	public final void setNodeIds(Long @Nullable [] nodeIds) {
+		this.nodeIds = nodeIds;
+	}
+
+	/**
+	 * Set a single source ID.
+	 *
+	 * <p>
+	 * This is a convenience method for requests that use a single source ID at
+	 * a time. The source ID is still stored on the {@code sourceIds} array,
+	 * just as the first value. Calling this method replaces any existing
+	 * {@code sourceIds} value with a new array containing just the ID passed
+	 * into this method.
+	 * </p>
+	 *
+	 * @param sourceId
+	 *        the source ID
+	 */
+	@SuppressWarnings("InvalidParam")
+	@JsonSetter
+	public final void setSourceId(@Nullable String sourceId) {
+		setSourceIds(sourceId == null ? null : new String[] { sourceId });
+	}
+
+	/**
+	 * Get the first source ID.
+	 *
+	 * <p>
+	 * This returns the first available source ID from the {@code sourceIds}
+	 * array, or {@code null} if not available.
+	 * </p>
+	 *
+	 * @return the first source ID, or {@code null}
+	 */
+	@SuppressWarnings("InvalidParam")
+	@JsonIgnore
+	public final @Nullable String getSourceId() {
+		final String[] sourceIds = getSourceIds();
+		return (sourceIds == null || sourceIds.length < 1 ? null : sourceIds[0]);
+	}
+
+	/**
+	 * Get all source IDs to filter on.
+	 *
+	 * @return The source IDs, or {@code null}.
+	 */
+	public final String @Nullable [] getSourceIds() {
+		return sourceIds;
+	}
+
+	/**
+	 * Set a list of source IDs to filter on.
+	 *
+	 * @param sourceIds
+	 *        The source IDs to filter on.
+	 */
+	public final void setSourceIds(String @Nullable [] sourceIds) {
+		this.sourceIds = sourceIds;
+	}
+
+	/**
+	 * Set a single location ID.
+	 *
+	 * <p>
+	 * This is a convenience method for requests that use a single location ID
+	 * at a time. The location ID is still stored on the {@code locationIds}
+	 * array, just as the first value. Calling this method replaces any existing
+	 * {@code locationIds} value with a new array containing just the ID passed
+	 * into this method.
+	 * </p>
+	 *
+	 * @param locationId
+	 *        the ID of the location
+	 */
+	@SuppressWarnings("InvalidParam")
+	@JsonSetter
+	public final void setLocationId(@Nullable Long locationId) {
+		setLocationIds(locationId == null ? null : new Long[] { locationId });
+	}
+
+	/**
+	 * Get the first location ID.
+	 *
+	 * <p>
+	 * This returns the first available location ID from the {@code locationIds}
+	 * array, or {@code null} if not available.
+	 * </p>
+	 *
+	 * @return the first location ID, or {@code null}
+	 */
+	@JsonIgnore
+	public final @Nullable Long getLocationId() {
+		final Long[] locationIds = getLocationIds();
+		return (locationIds != null && locationIds.length > 0 ? locationIds[0] : null);
+	}
+
+	/**
+	 * Get all location IDs to filter on.
+	 *
+	 * @return The location IDs, or {@code null}.
+	 */
+	public final Long @Nullable [] getLocationIds() {
+		return locationIds;
+	}
+
+	/**
+	 * Set a list of location IDs to filter on.
+	 *
+	 * @param locationIds
+	 *        The location IDs to filter on.
+	 */
+	public final void setLocationIds(Long @Nullable [] locationIds) {
+		this.locationIds = locationIds;
 	}
 
 }

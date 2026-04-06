@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.user.pki.dogtag;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigInteger;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Details about a certificate in Dogtag.
@@ -32,22 +34,67 @@ import java.math.BigInteger;
  */
 public class DogtagCertificateData {
 
-	private BigInteger id;
-	private String pkcs7Chain;
+	private @Nullable BigInteger id;
+	private @Nullable String pkcs7Chain;
 
-	public BigInteger getId() {
+	/**
+	 * Constructor.
+	 */
+	public DogtagCertificateData() {
+		super();
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the ID
+	 * @param pkcs7Chain
+	 *        the chain
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public DogtagCertificateData(BigInteger id, String pkcs7Chain) {
+		super();
+		this.id = requireNonNullArgument(id, "id");
+		this.pkcs7Chain = requireNonNullArgument(pkcs7Chain, "pkcs7Chain");
+	}
+
+	/**
+	 * Get the ID.
+	 * 
+	 * @return the ID
+	 */
+	public final @Nullable BigInteger getId() {
 		return id;
 	}
 
-	public void setId(BigInteger id) {
+	/**
+	 * Set the ID.
+	 * 
+	 * @param id
+	 *        the id to set
+	 */
+	public final void setId(@Nullable BigInteger id) {
 		this.id = id;
 	}
 
-	public String getPkcs7Chain() {
+	/**
+	 * Get the PKCS#7 certificate chain.
+	 * 
+	 * @return the chain
+	 */
+	public final @Nullable String getPkcs7Chain() {
 		return pkcs7Chain;
 	}
 
-	public void setPkcs7Chain(String pkcs7Chain) {
+	/**
+	 * Set the PKCS#7 certificate chain.
+	 * 
+	 * @param pkcs7Chain
+	 *        the chain to set
+	 */
+	public void setPkcs7Chain(@Nullable String pkcs7Chain) {
 		this.pkcs7Chain = pkcs7Chain;
 	}
 

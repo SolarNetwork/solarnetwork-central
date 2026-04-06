@@ -22,13 +22,15 @@
 
 package net.solarnetwork.central.common.http;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.util.MultiValueMap;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Extension of {@link RequestEntity} that changes the equality methods to
@@ -48,16 +50,18 @@ public final class CachableRequestEntity extends RequestEntity<Void> {
 	 * @param context
 	 *        the context, such as a user ID
 	 * @param headers
-	 *        the headers
+	 *        the optional headers
 	 * @param method
 	 *        the method
 	 * @param url
 	 *        the URL
+	 * @throws IllegalArgumentException
+	 *         if {@code context} is {@code null}
 	 */
-	public CachableRequestEntity(Object context, MultiValueMap<String, String> headers,
+	public CachableRequestEntity(Object context, @Nullable MultiValueMap<String, String> headers,
 			HttpMethod method, URI url) {
 		this(context, headers != null ? new HttpHeaders(headers) : null, method, url);
-		this.context = ObjectUtils.requireNonNullArgument(context, "context");
+		this.context = requireNonNullArgument(context, "context");
 	}
 
 	/**
@@ -72,18 +76,22 @@ public final class CachableRequestEntity extends RequestEntity<Void> {
 	 * @param url
 	 *        the URL
 	 * @since 1.1
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public CachableRequestEntity(Object context, HttpHeaders headers, HttpMethod method, URI url) {
-		super(headers, method, url);
-		this.context = ObjectUtils.requireNonNullArgument(context, "context");
+	public CachableRequestEntity(Object context, @Nullable HttpHeaders headers, HttpMethod method,
+			URI url) {
+		super(null, headers, requireNonNullArgument(method, "method"),
+				requireNonNullArgument(url, "url"));
+		this.context = requireNonNullArgument(context, "context");
 	}
 
 	@Override
-	public boolean equals(Object other) {
+	public boolean equals(@Nullable Object other) {
 		if ( !super.equals(other) ) {
 			return false;
 		}
-		CachableRequestEntity o = (CachableRequestEntity) other;
+		CachableRequestEntity o = nonnull((CachableRequestEntity) other, "other");
 		return Objects.equals(context, o.context) && Objects.equals(getHeaders(), o.getHeaders());
 	}
 

@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.inin.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
@@ -52,13 +55,13 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	public static final int DEFAULT_MAX_EXECUTION_SECONDS = 10;
 
 	private String name;
-	private Set<Long> nodeIds;
-	private Long requestTransformId;
-	private Long responseTransformId;
+	private @Nullable Set<Long> nodeIds;
+	private @Nullable Long requestTransformId;
+	private @Nullable Long responseTransformId;
 	private int maxExecutionSeconds = DEFAULT_MAX_EXECUTION_SECONDS;
-	private String userMetadataPath;
-	private String requestContentType;
-	private String responseContentType;
+	private @Nullable String userMetadataPath;
+	private @Nullable String requestContentType;
+	private @Nullable String responseContentType;
 
 	/**
 	 * Constructor.
@@ -67,11 +70,14 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public EndpointConfiguration(UserUuidPK id, Instant created) {
+	public EndpointConfiguration(UserUuidPK id, Instant created, String name) {
 		super(id, created);
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	/**
@@ -83,16 +89,18 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *        the entity ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public EndpointConfiguration(Long userId, UUID entityId, Instant created) {
-		this(new UserUuidPK(userId, entityId), created);
+	public EndpointConfiguration(Long userId, UUID entityId, Instant created, String name) {
+		this(new UserUuidPK(userId, entityId), created, name);
 	}
 
 	@Override
 	public EndpointConfiguration copyWithId(UserUuidPK id) {
-		var copy = new EndpointConfiguration(id, getCreated());
+		var copy = new EndpointConfiguration(id, created(), name);
 		copyTo(copy);
 		return copy;
 	}
@@ -111,20 +119,20 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	}
 
 	@Override
-	public boolean isSameAs(EndpointConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable EndpointConfiguration other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.name)
-				&& Objects.equals(this.nodeIds, other.nodeIds)
-				&& Objects.equals(this.requestTransformId, other.requestTransformId)
-				&& Objects.equals(this.responseTransformId, other.responseTransformId)
-				&& this.maxExecutionSeconds == other.maxExecutionSeconds
-				&& Objects.equals(this.userMetadataPath, other.userMetadataPath)
-				&& Objects.equals(requestContentType, other.requestContentType)
-				&& Objects.equals(responseContentType, other.responseContentType)
+		return Objects.equals(this.name, o.name)
+				&& Objects.equals(this.nodeIds, o.nodeIds)
+				&& Objects.equals(this.requestTransformId, o.requestTransformId)
+				&& Objects.equals(this.responseTransformId, o.responseTransformId)
+				&& this.maxExecutionSeconds == o.maxExecutionSeconds
+				&& Objects.equals(this.userMetadataPath, o.userMetadataPath)
+				&& Objects.equals(requestContentType, o.requestContentType)
+				&& Objects.equals(responseContentType, o.responseContentType)
 				;
 		// @formatter:on
 	}
@@ -180,9 +188,8 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @return the endpoint ID
 	 */
-	public UUID getEndpointId() {
-		UserUuidPK id = getId();
-		return (id != null ? id.getUuid() : null);
+	public final UUID getEndpointId() {
+		return id().getUuid();
 	}
 
 	/**
@@ -190,7 +197,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @return the name
 	 */
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -199,9 +206,11 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @param name
 	 *        the name to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	/**
@@ -209,7 +218,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @return the node IDs
 	 */
-	public Set<Long> getNodeIds() {
+	public final @Nullable Set<Long> getNodeIds() {
 		return nodeIds;
 	}
 
@@ -219,7 +228,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @param nodeIds
 	 *        the node IDs to set
 	 */
-	public void setNodeIds(Set<Long> nodeIds) {
+	public final void setNodeIds(@Nullable Set<Long> nodeIds) {
 		this.nodeIds = nodeIds;
 	}
 
@@ -229,7 +238,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @return the ID
 	 */
-	public Long getRequestTransformId() {
+	public final @Nullable Long getRequestTransformId() {
 		return requestTransformId;
 	}
 
@@ -240,7 +249,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @param transformId
 	 *        the ID to set
 	 */
-	public void setRequestTransformId(Long transformId) {
+	public final void setRequestTransformId(@Nullable Long transformId) {
 		this.requestTransformId = transformId;
 	}
 
@@ -250,7 +259,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @return the ID
 	 */
-	public Long getResponseTransformId() {
+	public final @Nullable Long getResponseTransformId() {
 		return responseTransformId;
 	}
 
@@ -261,7 +270,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @param transformId
 	 *        the ID to set
 	 */
-	public void setResponseTransformId(Long transformId) {
+	public final void setResponseTransformId(@Nullable Long transformId) {
 		this.responseTransformId = transformId;
 	}
 
@@ -270,7 +279,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @return the seconds; defaults to {@link #DEFAULT_MAX_EXECUTION_SECONDS}
 	 */
-	public int getMaxExecutionSeconds() {
+	public final int getMaxExecutionSeconds() {
 		return maxExecutionSeconds;
 	}
 
@@ -280,7 +289,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @param maxExecutionSeconds
 	 *        the seconds to set; anything less than 1 will be saved as 1
 	 */
-	public void setMaxExecutionSeconds(int maxExecutionSeconds) {
+	public final void setMaxExecutionSeconds(int maxExecutionSeconds) {
 		this.maxExecutionSeconds = (maxExecutionSeconds > 0 ? maxExecutionSeconds : 1);
 	}
 
@@ -290,7 +299,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @return the userMetadataPath the user metadata path to extract
 	 * @since 1.1
 	 */
-	public String getUserMetadataPath() {
+	public final @Nullable String getUserMetadataPath() {
 		return userMetadataPath;
 	}
 
@@ -302,7 +311,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @see net.solarnetwork.domain.datum.DatumMetadataOperations#metadataAtPath(String)
 	 * @since 1.1
 	 */
-	public void setUserMetadataPath(String userMetadataPath) {
+	public final void setUserMetadataPath(@Nullable String userMetadataPath) {
 		this.userMetadataPath = userMetadataPath;
 	}
 
@@ -312,7 +321,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @return the request content type to assume
 	 * @since 1.2
 	 */
-	public String getRequestContentType() {
+	public final @Nullable String getRequestContentType() {
 		return requestContentType;
 	}
 
@@ -320,11 +329,11 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * Set an implicit request content type.
 	 *
 	 * @param requestContentType
-	 *        the request content to assume, or {@literal null} to; a blank
-	 *        value will be normalized to {@literal null}
+	 *        the request content to assume, or {@code null} to; a blank value
+	 *        will be normalized to {@code null}
 	 * @since 1.2
 	 */
-	public void setRequestContentType(String requestContentType) {
+	public final void setRequestContentType(@Nullable String requestContentType) {
 		if ( requestContentType != null && requestContentType.isBlank() ) {
 			requestContentType = null;
 		}
@@ -337,7 +346,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * @return the response content type to assume
 	 * @since 1.2
 	 */
-	public String getResponseContentType() {
+	public final @Nullable String getResponseContentType() {
 		return responseContentType;
 	}
 
@@ -345,11 +354,11 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * Set an implicit response content type.
 	 *
 	 * @param responseContentType
-	 *        the response content to assume, or {@literal null} to; a blank
-	 *        value will be normalized to {@literal null}
+	 *        the response content to assume, or {@code null} to; a blank value
+	 *        will be normalized to {@code null}
 	 * @since 1.2
 	 */
-	public void setResponseContentType(String responseContentType) {
+	public final void setResponseContentType(@Nullable String responseContentType) {
 		this.responseContentType = responseContentType;
 	}
 

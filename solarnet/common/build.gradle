@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '4.0.1' apply false
+	id 'org.springframework.boot' version '4.0.4' apply false
 }
 
 apply plugin: 'java-library'
@@ -16,7 +16,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '6.0.0'
+version = '7.2.1'
 
 base {
 	archivesName = 'solarnet-common'
@@ -78,6 +78,7 @@ dependencies {
 	implementation "software.amazon.awssdk:ec2:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:secretsmanager:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 	
 	// Swagger support
 	implementation "io.swagger.core.v3:swagger-annotations-jakarta:${swaggerVersion}"

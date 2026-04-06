@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.dao.GenericDao;
 
@@ -42,6 +43,7 @@ public interface UserMetadataDao extends UserMetadataReadOnlyDao, GenericDao<Use
 	 * @return the domain object, or {@code null} if not available
 	 */
 	@Override
+	@Nullable
 	UserMetadataEntity get(Long id);
 
 }

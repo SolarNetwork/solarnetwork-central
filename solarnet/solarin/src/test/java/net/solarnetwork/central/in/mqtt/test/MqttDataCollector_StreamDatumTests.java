@@ -161,10 +161,8 @@ public class MqttDataCollector_StreamDatumTests {
 		// GIVEN
 		final long now = System.currentTimeMillis();
 
-		GeneralNodeDatum general = new GeneralNodeDatum();
-		general.setNodeId(TEST_NODE_ID);
-		general.setSourceId("OS Stats");
-		general.setCreated(Instant.ofEpochMilli(now));
+		GeneralNodeDatum general = new GeneralNodeDatum(TEST_NODE_ID, Instant.ofEpochMilli(now),
+				"OS Stats");
 		general.setSampleJson(
 				"{\"i\":{\"cpu_user\":0, \"cpu_system\":0, \"cpu_idle\":100, \"fs_size_/\":3651829760, \"fs_used_/\":855937024, \"fs_used_percent_/\":24, \"fs_size_/run\":484552704, \"fs_used_/run\":11993088, \"fs_used_percent_/run\":3, \"ram_total\":969105408, \"ram_avail\":615411712, \"ram_used_percent\":36.5, \"sys_load_1min\":0.19, \"sys_load_5min\":0.70, \"sys_load_15min\":0.48, \"net_bytes_in_eth0\":0, \"net_bytes_out_eth0\":0, \"net_packets_in_eth0\":0, \"net_packets_out_eth0\":0},\"a\":{\"sys_up\":679245.22}}");
 

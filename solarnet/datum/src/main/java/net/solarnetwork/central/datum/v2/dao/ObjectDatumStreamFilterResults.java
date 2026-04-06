@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
@@ -46,7 +47,7 @@ public interface ObjectDatumStreamFilterResults<M extends Identity<K>, K extends
 		extends FilterResults<M, K>, ObjectDatumStreamMetadataProvider {
 
 	@Override
-	default ObjectDatumStreamMetadata metadataForObjectSource(Long objectId, String sourceId) {
+	default @Nullable ObjectDatumStreamMetadata metadataForObjectSource(Long objectId, String sourceId) {
 		for ( UUID streamId : metadataStreamIds() ) {
 			ObjectDatumStreamMetadata meta = metadataForStreamId(streamId);
 			if ( meta != null && meta.getObjectId().equals(objectId)

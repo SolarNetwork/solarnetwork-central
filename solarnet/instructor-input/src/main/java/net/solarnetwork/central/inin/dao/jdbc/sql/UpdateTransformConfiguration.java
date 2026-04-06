@@ -63,7 +63,7 @@ public abstract sealed class UpdateTransformConfiguration<C extends TransformCon
 		 * @param entity
 		 *        the entity
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
 		public UpdateRequestTransformConfiguration(UserLongCompositePK id,
 				RequestTransformConfiguration entity) {
@@ -93,7 +93,7 @@ public abstract sealed class UpdateTransformConfiguration<C extends TransformCon
 		 * @param entity
 		 *        the entity
 		 * @throws IllegalArgumentException
-		 *         if any argument is {@literal null}
+		 *         if any argument is {@code null}
 		 */
 		public UpdateResponseTransformConfiguration(UserLongCompositePK id,
 				ResponseTransformConfiguration entity) {
@@ -127,7 +127,7 @@ public abstract sealed class UpdateTransformConfiguration<C extends TransformCon
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpdateTransformConfiguration(UserLongCompositePK id, C entity) {
 		super();

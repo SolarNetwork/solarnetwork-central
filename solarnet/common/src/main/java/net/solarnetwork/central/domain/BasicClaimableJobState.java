@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.domain;
 
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -103,13 +104,13 @@ public enum BasicClaimableJobState implements ClaimableJobState {
 	 *
 	 * @param value
 	 *        the enumeration name or key value, case-insensitive
-	 * @return the enum, or {@literal null} if value is {@literal null} or empty
+	 * @return the enum, or {@code null} if value is {@code null} or empty
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value
 	 * @since 1.1
 	 */
 	@JsonCreator
-	public static BasicClaimableJobState fromValue(String value) {
+	public static @Nullable BasicClaimableJobState fromValue(@Nullable String value) {
 		if ( value == null || value.isEmpty() ) {
 			return null;
 		}

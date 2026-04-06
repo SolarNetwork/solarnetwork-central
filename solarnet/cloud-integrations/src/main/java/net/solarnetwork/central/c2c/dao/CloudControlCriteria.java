@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for cloud control related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudControlCriteria {
 
@@ -35,12 +37,12 @@ public interface CloudControlCriteria {
 	 *
 	 * <p>
 	 * This returns the first available cloud control ID from the
-	 * {@link #getCloudControlIds()} array, or {@literal null} if not available.
+	 * {@link #getCloudControlIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first cloud control ID, or {@literal null} if not available
+	 * @return the first cloud control ID, or {@code null} if not available
 	 */
-	default Long getCloudControlId() {
+	default @Nullable Long getCloudControlId() {
 		final Long[] array = getCloudControlIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -48,9 +50,9 @@ public interface CloudControlCriteria {
 	/**
 	 * Get an array of cloud control IDs.
 	 *
-	 * @return array of cloud control IDs (may be {@literal null})
+	 * @return array of cloud control IDs (may be {@code null})
 	 */
-	Long[] getCloudControlIds();
+	Long @Nullable [] getCloudControlIds();
 
 	/**
 	 * Test if this filter has any cloud control criteria.
@@ -59,6 +61,40 @@ public interface CloudControlCriteria {
 	 */
 	default boolean hasCloudControlCriteria() {
 		return getCloudControlId() != null;
+	}
+
+	/**
+	 * Get the first cloud control ID.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasCloudControlCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return the first cloud control ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long cloudControlId() {
+		return getCloudControlId();
+	}
+
+	/**
+	 * Get an array of cloud control IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasCloudControlCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return array of cloud control IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] cloudControlIds() {
+		return getCloudControlIds();
 	}
 
 }

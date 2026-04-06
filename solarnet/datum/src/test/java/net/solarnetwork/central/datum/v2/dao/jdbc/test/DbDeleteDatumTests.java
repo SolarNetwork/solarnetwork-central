@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAggregateDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertStaleAggregateDatum;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -43,7 +44,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
@@ -91,10 +91,7 @@ public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 		List<GeneralNodeDatum> data = new ArrayList<>(count);
 		long ts = start;
 		for ( int i = 0; i < count; i++ ) {
-			GeneralNodeDatum d = new GeneralNodeDatum();
-			d.setCreated(Instant.ofEpochMilli(ts));
-			d.setNodeId(nodeId);
-			d.setSourceId(sourceId);
+			GeneralNodeDatum d = new GeneralNodeDatum(nodeId, Instant.ofEpochMilli(ts), sourceId);
 			DatumSamples s = new DatumSamples();
 			s.putInstantaneousSampleValue("watts", 125);
 			s.putAccumulatingSampleValue("wattHours", 10);
@@ -129,7 +126,7 @@ public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 				Aggregation.Hour);
 		assertThat("Stale row inserted", staleRows, hasSize(1));
 		assertStaleAggregateDatum("1", staleRows.get(0), new StaleAggregateDatumEntity(streamId,
-				ts1.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
+				ts1.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, now()));
 	}
 
 	@Test
@@ -154,9 +151,9 @@ public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 		List<StaleAggregateDatum> staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Stale rows inserted", staleRows, hasSize(2));
 		assertStaleAggregateDatum("1", staleRows.get(0), new StaleAggregateDatumEntity(streamId,
-				ts1.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
+				ts1.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, now()));
 		assertStaleAggregateDatum("2", staleRows.get(1), new StaleAggregateDatumEntity(streamId,
-				ts1.truncatedTo(ChronoUnit.HOURS).plusHours(1).toInstant(), Aggregation.Hour, null));
+				ts1.truncatedTo(ChronoUnit.HOURS).plusHours(1).toInstant(), Aggregation.Hour, now()));
 	}
 
 	@Test
@@ -181,9 +178,9 @@ public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 		List<StaleAggregateDatum> staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Stale rows inserted", staleRows, hasSize(2));
 		assertStaleAggregateDatum("1", staleRows.get(0), new StaleAggregateDatumEntity(streamId,
-				ts1.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
+				ts1.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, now()));
 		assertStaleAggregateDatum("2", staleRows.get(1), new StaleAggregateDatumEntity(streamId,
-				ts1.truncatedTo(ChronoUnit.HOURS).plusHours(1).toInstant(), Aggregation.Hour, null));
+				ts1.truncatedTo(ChronoUnit.HOURS).plusHours(1).toInstant(), Aggregation.Hour, now()));
 	}
 
 }

@@ -58,7 +58,7 @@ public class InsertCloudDatumStreamRakeTaskEntity implements PreparedStatementCr
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InsertCloudDatumStreamRakeTaskEntity(Long userId, CloudDatumStreamRakeTaskEntity entity) {
 		super();

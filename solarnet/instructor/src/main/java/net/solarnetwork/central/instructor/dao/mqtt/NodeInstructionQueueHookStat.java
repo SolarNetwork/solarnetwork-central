@@ -45,7 +45,7 @@ public enum NodeInstructionQueueHookStat {
 	 *
 	 * @return the description
 	 */
-	public String getDescription() {
+	public final String getDescription() {
 		return description;
 	}
 

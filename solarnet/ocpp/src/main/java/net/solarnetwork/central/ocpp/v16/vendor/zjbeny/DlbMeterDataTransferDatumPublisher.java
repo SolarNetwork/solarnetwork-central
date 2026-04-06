@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.ocpp.v16.vendor.zjbeny;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -40,6 +42,7 @@ import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.domain.AcPhase;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.ocpp.domain.ActionMessage;
+import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.v16.jakarta.cs.DataTransferProcessor;
 import net.solarnetwork.util.NumberUtils;
@@ -124,7 +127,7 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 	 * @param datumDao
 	 *        the datum DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DlbMeterDataTransferDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,
@@ -141,16 +144,18 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 			return false;
 		}
 		DataTransferRequest req = (DataTransferRequest) message.getMessage();
-		return ((VENDOR_ID.equals(req.getVendorId()) || VENDOR_ID_2.equals(req.getVendorId()))
+		return (req != null
+				&& (VENDOR_ID.equals(req.getVendorId()) || VENDOR_ID_2.equals(req.getVendorId()))
 				&& MESSAGE_ID.equals(req.getMessageId()));
 	}
 
 	@Override
 	public void processActionMessage(ActionMessage<DataTransferRequest> message,
 			ActionMessageResultHandler<DataTransferRequest, DataTransferResponse> resultHandler) {
-		DataTransferRequest req = message.getMessage();
-		final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
-		final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(), cp.getId());
+		final ChargePointIdentity clientId = nonnull(message.getClientId(), "Client ID");
+		final DataTransferRequest req = nonnull(message.getMessage(), "Message");
+		final CentralChargePoint cp = pubSupport.chargePoint(clientId);
+		final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(), cp.id());
 
 		DataTransferResponse res = new DataTransferResponse();
 
@@ -165,7 +170,7 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 		resultHandler.handleActionMessageResult(message, res, null);
 	}
 
-	private GeneralNodeDatum datum(DataTransferRequest req, CentralChargePoint cp,
+	private @Nullable GeneralNodeDatum datum(DataTransferRequest req, CentralChargePoint cp,
 			ChargePointSettings cps) {
 		String data = req.getData();
 		if ( data == null || data.isBlank() ) {
@@ -178,6 +183,9 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 		data = data.trim();
 		Map<String, ?> map = (data.startsWith("{") ? JsonUtils.getStringMap(data)
 				: StringUtils.delimitedStringToMap(data, ",", ":"));
+		if ( map == null ) {
+			return null;
+		}
 		for ( Entry<String, ?> e : map.entrySet() ) {
 			final String key = e.getKey();
 			if ( DLB_MODE_KEY.equals(key) ) {
@@ -203,7 +211,7 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 							case Grid -> "grid";
 						};
 						if ( meterKey.isPhased() ) {
-							propName = phased(propName, meterKey.phase());
+							propName = phased(propName, nonnull(meterKey.phase(), "Phase"));
 						}
 						if ( propName != null ) {
 							s.putInstantaneousSampleValue(propName, value);
@@ -217,26 +225,24 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 			return null;
 		}
 
-		GeneralNodeDatum d = new GeneralNodeDatum();
+		final var d = new GeneralNodeDatum(cp.getNodeId(), Instant.now(), pubSupport.sourceId(cps,
+				nonnull(cp.getInfo().getId(), "ChargePoint identity"), null, null));
 		d.setSamples(s);
-		d.setCreated(Instant.now());
-		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		return d;
 	}
 
-	private static Number ampValue(String value) {
+	private static @Nullable Number ampValue(String value) {
 		Matcher m = AMP_VALUE.matcher(value);
 		return (m.matches() ? NumberUtils.narrow(StringUtils.numberValue(m.group(1)), 2) : null);
 	}
 
-	private static Number kwValue(String value) {
+	private static @Nullable Number kwValue(String value) {
 		Matcher m = KW_VALUE.matcher(value);
 		return (m.matches() ? NumberUtils.narrow(StringUtils.numberValue(m.group(1)), 2) : null);
 	}
 
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	private static String phased(String key, String phase) {
+	private static @Nullable String phased(String key, String phase) {
 		AcPhase p;
 		switch (phase) {
 			case "1":
@@ -263,7 +269,7 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
-	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+	public void setFluxPublisher(@Nullable DatumProcessor fluxPublisher) {
 		pubSupport.setFluxPublisher(fluxPublisher);
 	}
 
@@ -283,6 +289,8 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 	 * 
 	 * @param sourceIdTemplate
 	 *        the template to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public void setSourceIdTemplate(String sourceIdTemplate) {
 		pubSupport.setSourceIdTemplate(sourceIdTemplate);
@@ -294,7 +302,7 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 	 * @param sourceIdSuffix
 	 *        the suffix to add
 	 */
-	public void setSourceIdSuffix(String sourceIdSuffix) {
+	public void setSourceIdSuffix(@Nullable String sourceIdSuffix) {
 		pubSupport.setSourceIdSuffix(sourceIdSuffix);
 	}
 

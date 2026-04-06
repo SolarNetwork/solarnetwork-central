@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.time.InstantSource;
@@ -34,9 +35,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
@@ -141,12 +142,13 @@ public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudI
 	 *        read-through semantics that always returns a new lock for missing
 	 *        keys
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument except {@code integrationLocksCache}is
+	 *         {@code null}
 	 */
 	public LocusEnergyCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
-			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
+			@Nullable Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		super(SERVICE_IDENTIFIER, "Locus Energy", datumStreamServices, List.of(), userEventAppenderBiz,
 				encryptor, SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(
@@ -207,8 +209,11 @@ public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudI
 			final String response = restOpsHelper.httpGet("List sites", integration, String.class,
 					_ -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI)).path(
 							LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
-							.buildAndExpand(integration.getServiceProperties()).toUri(),
-					HttpEntity::getBody);
+							.buildAndExpand(integration.getServiceProperties() != null
+									? integration.getServiceProperties()
+									: Map.of())
+							.toUri(),
+					r -> nonnull(r.getBody(), "Response body"));
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( RemoteServiceException e ) {

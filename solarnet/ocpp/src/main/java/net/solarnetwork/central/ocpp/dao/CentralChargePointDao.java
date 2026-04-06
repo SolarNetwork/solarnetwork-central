@@ -23,7 +23,10 @@
 package net.solarnetwork.central.ocpp.dao;
 
 import java.util.Collection;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointFilter;
+import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
 import net.solarnetwork.ocpp.domain.ChargePoint;
 
@@ -37,9 +40,10 @@ import net.solarnetwork.ocpp.domain.ChargePoint;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface CentralChargePointDao extends ChargePointDao {
+public interface CentralChargePointDao
+		extends ChargePointDao, FilterableDao<CentralChargePoint, Long, CentralChargePointFilter> {
 
 	/**
 	 * Get a charge point by its unique identifier.
@@ -48,8 +52,9 @@ public interface CentralChargePointDao extends ChargePointDao {
 	 *        the owner user ID to find
 	 * @param identifier
 	 *        the charge point identifier to look for
-	 * @return the matching charge point, or {@literal null} if not found
+	 * @return the matching charge point, or {@code null} if not found
 	 */
+	@Nullable
 	ChargePoint getForIdentifier(Long userId, String identifier);
 
 	/**
@@ -57,7 +62,7 @@ public interface CentralChargePointDao extends ChargePointDao {
 	 * 
 	 * @param userId
 	 *        the owner ID
-	 * @return the available charge points; never {@literal null}
+	 * @return the available charge points; never {@code null}
 	 */
 	Collection<CentralChargePoint> findAllForOwner(Long userId);
 
@@ -68,7 +73,7 @@ public interface CentralChargePointDao extends ChargePointDao {
 	 *        the owner ID
 	 * @param id
 	 *        the ID to look for
-	 * @return the matching entity; never {@literal null}
+	 * @return the matching entity; never {@code null}
 	 * @throws RuntimeException
 	 *         if the entity cannot be found
 	 */

@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz;
 
 import java.time.Instant;
 import java.util.concurrent.Future;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 
 /**
@@ -42,8 +43,9 @@ public interface CloudDatumStreamPollService {
 	 * changing the state to "claimed".
 	 * </p>
 	 *
-	 * @return a claimed task, or {@literal null} if none could be claimed
+	 * @return a claimed task, or {@code null} if none could be claimed
 	 */
+	@Nullable
 	CloudDatumStreamPollTaskEntity claimQueuedTask();
 
 	/**
@@ -64,6 +66,8 @@ public interface CloudDatumStreamPollService {
 	 * left in an executing state, for example after a server restart.
 	 * </p>
 	 *
+	 * @param olderThan
+	 *        the date tasks must be older than to reset
 	 * @return the number of tasks reset
 	 */
 	int resetAbandondedExecutingTasks(Instant olderThan);

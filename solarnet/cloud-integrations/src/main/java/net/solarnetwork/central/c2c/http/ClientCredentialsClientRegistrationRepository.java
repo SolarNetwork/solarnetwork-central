@@ -33,6 +33,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -65,7 +66,7 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 	private final URI tokenUri;
 	private final ClientAuthenticationMethod clientAuthMethod;
 	private final TextEncryptor textEncryptor;
-	private final Function<String, Set<String>> sensitiveKeysProvider;
+	private final Function<String, @Nullable Set<String>> sensitiveKeysProvider;
 
 	/**
 	 * Constructor.
@@ -77,12 +78,12 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 	 * @param clientAuthMethod
 	 *        the OAuth client authentication method
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ClientCredentialsClientRegistrationRepository(
 			CloudIntegrationConfigurationDao configurationDao, URI tokenUri,
 			ClientAuthenticationMethod clientAuthMethod, TextEncryptor textEncryptor,
-			Function<String, Set<String>> sensitiveKeysProvider) {
+			Function<String, @Nullable Set<String>> sensitiveKeysProvider) {
 		super();
 		this.configurationDao = requireNonNullArgument(configurationDao, "configurationDao");
 		this.tokenUri = requireNonNullArgument(tokenUri, "tokenUri");

@@ -59,7 +59,7 @@ public final class UpsertInputDataEntity implements PreparedStatementCreator, Sq
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertInputDataEntity(InputDataEntity entity) {
 		super();
@@ -76,9 +76,9 @@ public final class UpsertInputDataEntity implements PreparedStatementCreator, Sq
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql(), Statement.NO_GENERATED_KEYS);
 		Timestamp ts = Timestamp.from(entity.getCreated() != null ? entity.getCreated() : Instant.now());
-		stmt.setObject(1, entity.getId().getUserId());
-		stmt.setObject(2, entity.getId().getGroupId());
-		stmt.setObject(3, entity.getId().getEntityId());
+		stmt.setObject(1, entity.getUserId());
+		stmt.setObject(2, entity.pk().getGroupId());
+		stmt.setObject(3, entity.pk().getEntityId());
 		stmt.setTimestamp(4, ts);
 		stmt.setBytes(5, entity.getData());
 		return stmt;

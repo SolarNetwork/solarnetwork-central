@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '4.0.1' apply false
+	id 'org.springframework.boot' version '4.0.4' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Instructor'
-version = '5.0.0'
+version = '6.0.0'
 
 base {
 	archivesName = 'solarnet-instructor'
@@ -39,8 +39,8 @@ dependencies {
 
 	// Testing
 	testImplementation project(':solarnet-common-test')
+    testImplementation "io.moquette:moquette-broker:${moquetteVersion}"
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-    testImplementation 'io.moquette:moquette-broker:0.15'
     testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
    	testImplementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
 }

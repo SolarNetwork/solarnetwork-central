@@ -23,22 +23,25 @@
 package net.solarnetwork.central.oscp.domain;
 
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.LogEventInfo;
+import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
  * Exception dealing with an external system configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ExternalSystemConfigurationException extends RuntimeException {
 
 	@Serial
-	private static final long serialVersionUID = 1509475900790689710L;
+	private static final long serialVersionUID = 6434518762591209261L;
 
 	private final OscpRole role;
-	private final BaseOscpExternalSystemConfiguration<?> config;
+	private final @Nullable BaseOscpExternalSystemConfiguration<?> config;
 	private final LogEventInfo event;
+	private final UserRelatedCompositeKey<?> configId;
 
 	/**
 	 * Constructor.
@@ -58,6 +61,8 @@ public class ExternalSystemConfigurationException extends RuntimeException {
 	}
 
 	/**
+	 * Constructor.
+	 *
 	 * @param role
 	 *        the OSCP role
 	 * @param config
@@ -71,11 +76,35 @@ public class ExternalSystemConfigurationException extends RuntimeException {
 	 */
 	public ExternalSystemConfigurationException(OscpRole role,
 			BaseOscpExternalSystemConfiguration<?> config, LogEventInfo event, String message,
-			Throwable cause) {
+			@Nullable Throwable cause) {
 		super(message, cause);
 		this.role = role;
 		this.config = config;
 		this.event = event;
+		this.configId = config.id();
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param role
+	 *        the OSCP role
+	 * @param configId
+	 *        the external system configuration ID
+	 * @param event
+	 *        the event
+	 * @param message
+	 *        the message
+	 * @param cause
+	 *        the cause
+	 */
+	public ExternalSystemConfigurationException(OscpRole role, UserRelatedCompositeKey<?> configId,
+			LogEventInfo event, String message, @Nullable Throwable cause) {
+		super(message, cause);
+		this.role = role;
+		this.config = null;
+		this.event = event;
+		this.configId = configId;
 	}
 
 	/**
@@ -83,7 +112,7 @@ public class ExternalSystemConfigurationException extends RuntimeException {
 	 *
 	 * @return the role
 	 */
-	public OscpRole getRole() {
+	public final OscpRole getRole() {
 		return role;
 	}
 
@@ -92,7 +121,32 @@ public class ExternalSystemConfigurationException extends RuntimeException {
 	 *
 	 * @return the configuration
 	 */
-	public BaseOscpExternalSystemConfiguration<?> getConfig() {
+	public final @Nullable BaseOscpExternalSystemConfiguration<?> getConfig() {
+		return config;
+	}
+
+	/**
+	 * Test if the external system configuration is available.
+	 *
+	 * @return {@code true} if the configuration is available
+	 * @since 1.1
+	 */
+	public final boolean hasConfig() {
+		return (config != null);
+	}
+
+	/**
+	 * Get the external system configuration.
+	 *
+	 * <p>
+	 * This is a nullability shortcut, to be used after {@link #hasConfig()}
+	 * returns {@code true}.
+	 * </p>
+	 *
+	 * @return the configuration (presumed non-null)
+	 */
+	@SuppressWarnings("NullAway")
+	public final BaseOscpExternalSystemConfiguration<?> config() {
 		return config;
 	}
 
@@ -101,8 +155,18 @@ public class ExternalSystemConfigurationException extends RuntimeException {
 	 *
 	 * @return the event
 	 */
-	public LogEventInfo getEvent() {
+	public final LogEventInfo getEvent() {
 		return event;
+	}
+
+	/**
+	 * Get the configuration ID.
+	 *
+	 * @return the config ID
+	 * @since 1.1
+	 */
+	public final UserRelatedCompositeKey<?> getConfigId() {
+		return configId;
 	}
 
 }

@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.security.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.GrantedAuthority;
@@ -78,8 +80,8 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 
 	public static final String DEFAULT_TOKEN_AUTHORITIES_BY_USERNAME_SQL = "SELECT username, authority FROM solaruser.user_auth_token_role WHERE username = ?";
 
-	private List<GrantedAuthority> staticAuthorities;
 	private final ObjectMapper objectMapper;
+	private @Nullable List<GrantedAuthority> staticAuthorities;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -96,7 +98,7 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 	 * @param objectMapper
 	 *        the mapper to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcUserDetailsService(ObjectMapper objectMapper) {
 		super();
@@ -121,8 +123,7 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	protected List<UserDetails> loadUsersByUsername(String username) {
-		assert getJdbcTemplate() != null;
-		return getJdbcTemplate().query(getUsersByUsernameQuery(), (rs, _) -> {
+		return nonnull(getJdbcTemplate(), "jdbcTemplate").query(getUsersByUsernameQuery(), (rs, _) -> {
 			String username1 = rs.getString(1);
 			String password = rs.getString(2);
 			boolean enabled = rs.getBoolean(3);
@@ -149,8 +150,10 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 								policyJson, e.getMessage());
 					}
 				}
-				return new AuthenticatedToken(new User(username1, password, enabled, true, true, true,
-						AuthorityUtils.NO_AUTHORITIES), tokenType, id, policy);
+				return new AuthenticatedToken(
+						new User(username1, password, enabled, true, true, true,
+								AuthorityUtils.NO_AUTHORITIES),
+						tokenType != null ? tokenType : SecurityTokenType.ReadNodeData, id, policy);
 			}
 			return new AuthenticatedUser(new User(username1, password, enabled, true, true, true,
 					AuthorityUtils.NO_AUTHORITIES), id, name, false);
@@ -175,7 +178,7 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 	 * @param roles
 	 *        the role names to grant
 	 */
-	public void setStaticRoles(List<String> roles) {
+	public void setStaticRoles(@Nullable List<String> roles) {
 		List<GrantedAuthority> auths = new ArrayList<>(roles == null ? 0 : roles.size());
 		if ( roles != null ) {
 			for ( String role : roles ) {

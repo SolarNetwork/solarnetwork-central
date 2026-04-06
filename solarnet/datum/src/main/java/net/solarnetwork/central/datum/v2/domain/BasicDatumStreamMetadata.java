@@ -27,6 +27,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
 
@@ -43,17 +44,17 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	private static final long serialVersionUID = 2292730487865098801L;
 
 	private final UUID streamId;
-	private final String timeZoneId;
-	private final String[] instantaneousProperties;
-	private final String[] accumulatingProperties;
-	private final String[] statusProperties;
+	private final @Nullable String timeZoneId;
+	private final String @Nullable [] instantaneousProperties;
+	private final String @Nullable [] accumulatingProperties;
+	private final String @Nullable [] statusProperties;
 
 	/**
 	 * Constructor.
 	 *
 	 * <p>
-	 * All arguments except {@code streamId} are allowed to be {@literal null}.
-	 * If any array is empty, it will be treated as if it were {@literal null}.
+	 * All arguments except {@code streamId} are allowed to be {@code null}. If
+	 * any array is empty, it will be treated as if it were {@code null}.
 	 * </p>
 	 *
 	 * @param streamId
@@ -67,10 +68,11 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * @param statusProperties
 	 *        the status property names
 	 * @throws IllegalArgumentException
-	 *         if {@code streamId} is {@literal null}
+	 *         if {@code streamId} is {@code null}
 	 */
-	public BasicDatumStreamMetadata(UUID streamId, String timeZoneId, String[] instantaneousProperties,
-			String[] accumulatingProperties, String[] statusProperties) {
+	public BasicDatumStreamMetadata(UUID streamId, @Nullable String timeZoneId,
+			String @Nullable [] instantaneousProperties, String @Nullable [] accumulatingProperties,
+			String @Nullable [] statusProperties) {
 		super();
 		this.streamId = requireNonNullArgument(streamId, "streamId");
 		this.timeZoneId = timeZoneId;
@@ -88,10 +90,9 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * Constructor.
 	 *
 	 * <p>
-	 * All arguments except {@code streamId} are allowed to be {@literal null}.
-	 * The other arguments are {@code Object} to work around MyBatis mapping
-	 * issues. If any array is empty, it will be treated as if it were
-	 * {@literal null}.
+	 * All arguments except {@code streamId} are allowed to be {@code null}. The
+	 * other arguments are {@code Object} to work around MyBatis mapping issues.
+	 * If any array is empty, it will be treated as if it were {@code null}.
 	 * </p>
 	 *
 	 * @param streamId
@@ -105,12 +106,13 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * @param statusProperties
 	 *        the status property names; must be a {@code String[]}
 	 * @throws IllegalArgumentException
-	 *         if {@code streamId} is {@literal null}
+	 *         if {@code streamId} is {@code null}
 	 */
-	public BasicDatumStreamMetadata(UUID streamId, String timeZoneId, Object instantaneousProperties,
-			Object accumulatingProperties, Object statusProperties) {
-		this(streamId, timeZoneId, (String[]) instantaneousProperties, (String[]) accumulatingProperties,
-				(String[]) statusProperties);
+	public BasicDatumStreamMetadata(UUID streamId, @Nullable String timeZoneId,
+			@Nullable Object instantaneousProperties, @Nullable Object accumulatingProperties,
+			@Nullable Object statusProperties) {
+		this(streamId, timeZoneId, (String @Nullable []) instantaneousProperties,
+				(String @Nullable []) accumulatingProperties, (String @Nullable []) statusProperties);
 	}
 
 	@Override
@@ -128,7 +130,7 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -139,12 +141,12 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	}
 
 	@Override
-	public UUID getStreamId() {
+	public final UUID getStreamId() {
 		return streamId;
 	}
 
 	@Override
-	public String getTimeZoneId() {
+	public final @Nullable String getTimeZoneId() {
 		return timeZoneId;
 	}
 
@@ -159,7 +161,7 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	}
 
 	@Override
-	public String[] getPropertyNames() {
+	public String @Nullable [] getPropertyNames() {
 		final int iLen = getInstantaneousLength();
 		final int aLen = getAccumulatingLength();
 		final int sLen = getStatusLength();
@@ -181,7 +183,7 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	}
 
 	@Override
-	public String[] propertyNamesForType(DatumSamplesType type) {
+	public String @Nullable [] propertyNamesForType(DatumSamplesType type) {
 		if ( type == null ) {
 			return null;
 		}

@@ -24,6 +24,10 @@ package net.solarnetwork.central.instructor.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Helper class for instruction parameters.
@@ -36,11 +40,11 @@ public final class InstructionParameter implements Serializable {
 	@Serial
 	private static final long serialVersionUID = 2828143065346415324L;
 
-	private String name;
-	private String value;
+	private @Nullable String name;
+	private @Nullable String value;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
 	 */
 	public InstructionParameter() {
 		super();
@@ -54,34 +58,16 @@ public final class InstructionParameter implements Serializable {
 	 * @param value
 	 *        the value
 	 */
-	public InstructionParameter(String name, String value) {
+	@JsonCreator
+	public InstructionParameter(@JsonProperty("name") String name, @JsonProperty("value") String value) {
 		super();
 		setName(name);
 		setValue(value);
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getValue() {
-		return value;
-	}
-
-	public void setValue(String value) {
-		this.value = value;
-	}
-
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
+		return Objects.hash(name, value);
 	}
 
 	/**
@@ -111,6 +97,22 @@ public final class InstructionParameter implements Serializable {
 		builder.append(value);
 		builder.append("}");
 		return builder.toString();
+	}
+
+	public final @Nullable String getName() {
+		return name;
+	}
+
+	public final void setName(@Nullable String name) {
+		this.name = name;
+	}
+
+	public final @Nullable String getValue() {
+		return value;
+	}
+
+	public final void setValue(@Nullable String value) {
+		this.value = value;
 	}
 
 }

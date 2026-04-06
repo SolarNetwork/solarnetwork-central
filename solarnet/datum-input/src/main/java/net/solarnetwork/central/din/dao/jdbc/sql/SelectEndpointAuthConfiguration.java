@@ -94,13 +94,13 @@ public final class SelectEndpointAuthConfiguration
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		if ( filter.hasUserCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getUserIds(), "dac.user_id", where);
+			idx += whereOptimizedArrayContains(filter.userIds(), "dac.user_id", where);
 		}
 		if ( filter.hasEndpointCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getEndpointIds(), "dac.endpoint_id", where);
+			idx += whereOptimizedArrayContains(filter.endpointIds(), "dac.endpoint_id", where);
 		}
 		if ( filter.hasCredentialCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getCredentialIds(), "dac.cred_id", where);
+			idx += whereOptimizedArrayContains(filter.credentialIds(), "dac.cred_id", where);
 		}
 		if ( filter.hasEnabledCriteria() ) {
 			where.append("\tAND dac.enabled = ?\n");
@@ -129,16 +129,16 @@ public final class SelectEndpointAuthConfiguration
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		if ( filter.hasUserCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.userIds());
 		}
 		if ( filter.hasEndpointCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getEndpointIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.endpointIds());
 		}
 		if ( filter.hasCredentialCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getCredentialIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.credentialIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled());
+			stmt.setBoolean(++p, filter.enabled());
 		}
 		return p;
 	}

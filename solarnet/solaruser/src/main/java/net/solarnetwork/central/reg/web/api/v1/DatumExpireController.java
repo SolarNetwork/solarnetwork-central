@@ -45,12 +45,12 @@ import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.reg.web.domain.DatumExpireFullConfigurations;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz;
-import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
-import net.solarnetwork.central.user.expire.domain.DataConfiguration;
-import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
-import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
-import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
+import net.solarnetwork.central.user.datum.expire.biz.UserDatumDeleteBiz;
+import net.solarnetwork.central.user.datum.expire.biz.UserExpireBiz;
+import net.solarnetwork.central.user.datum.expire.domain.DataConfiguration;
+import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobInfo;
+import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobState;
+import net.solarnetwork.central.user.datum.expire.domain.ExpireUserDataConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
@@ -100,7 +100,7 @@ public class DatumExpireController {
 	public Result<DatumExpireFullConfigurations> viewDataConfigurations() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 
-		List<ExpireUserDataConfiguration> dataConfigs = Collections.emptyList();
+		List<ExpireUserDataConfiguration> dataConfigs = List.of();
 		if ( expireBiz != null ) {
 			dataConfigs = expireBiz.configurationsForUser(userId, ExpireUserDataConfiguration.class);
 		}
@@ -219,7 +219,7 @@ public class DatumExpireController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/datum-delete/ids", method = RequestMethod.POST)
-	public Result<Set<ObjectDatumId>> confirmDataDelete(@RequestBody Set<ObjectDatumId> ids) {
+	public Result<Set<ObjectDatumId>> deleteForIds(@RequestBody Set<ObjectDatumId> ids) {
 		Set<ObjectDatumId> result = null;
 		if ( datumDeleteBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();

@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.SequencedMap;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.util.NumberUtils;
 import tools.jackson.databind.JsonNode;
 
@@ -37,7 +38,8 @@ import tools.jackson.databind.JsonNode;
  * @author matt
  * @version 2.0
  */
-public record SmaMeasurementType<T>(String name, String description, Function<JsonNode, T> parser) {
+public record SmaMeasurementType<T>(String name, String description,
+		Function<JsonNode, @Nullable T> parser) {
 
 	/**
 	 * Create a new string measurement type.
@@ -49,7 +51,7 @@ public record SmaMeasurementType<T>(String name, String description, Function<Js
 	 * @return the measurement type
 	 */
 	public static SmaMeasurementType<String> stringType(String name, String description) {
-		return new SmaMeasurementType<>(name, description, JsonNode::stringValue);
+		return new SmaMeasurementType<>(name, description, json -> json.stringValue());
 	}
 
 	/**

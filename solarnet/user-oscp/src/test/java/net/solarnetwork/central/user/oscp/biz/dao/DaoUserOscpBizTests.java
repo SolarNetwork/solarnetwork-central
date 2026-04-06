@@ -1,31 +1,34 @@
 /* ==================================================================
  * DaoUserOscpBizTests.java - 15/08/2022 10:41:21 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.oscp.biz.dao;
 
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.oscp.domain.ExternalSystemServiceProperties.OAUTH_CLIENT_ID;
 import static net.solarnetwork.central.oscp.domain.ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET;
 import static net.solarnetwork.central.oscp.domain.ExternalSystemServiceProperties.OAUTH_TOKEN_URL;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -36,7 +39,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.net.URI;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -66,7 +68,7 @@ import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationIn
 
 /**
  * Test cases for the {@link DaoUserOscpBiz} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -131,7 +133,8 @@ public class DaoUserOscpBizTests {
 
 		final List<CapacityProviderConfiguration> confs = new ArrayList<>();
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(userId,
-				randomUUID().getMostSignificantBits(), Instant.now());
+				randomUUID().getMostSignificantBits(), now(), randomString(), randomLong(),
+				RegistrationStatus.Registered);
 		conf.putServiceProp(OAUTH_CLIENT_SECRET, "secret!");
 		confs.add(conf);
 		given(capacityProviderDao.findAll(userId, null)).willReturn(confs);
@@ -166,7 +169,8 @@ public class DaoUserOscpBizTests {
 
 		final List<CapacityOptimizerConfiguration> confs = new ArrayList<>();
 		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(userId,
-				randomUUID().getMostSignificantBits(), Instant.now());
+				randomUUID().getMostSignificantBits(), now(), randomString(), randomLong(),
+				RegistrationStatus.Registered);
 		conf.putServiceProp(OAUTH_CLIENT_SECRET, "secret!");
 		confs.add(conf);
 		given(capacityOptimizerDao.findAll(userId, null)).willReturn(confs);
@@ -223,7 +227,8 @@ public class DaoUserOscpBizTests {
 		given(flexibilityProviderDao.idForToken(newToken, false)).willReturn(authId);
 
 		final CapacityProviderConfiguration entity = new CapacityProviderConfiguration(userId,
-				randomUUID().getMostSignificantBits(), Instant.now());
+				randomUUID().getMostSignificantBits(), now(), randomString(), randomLong(),
+				RegistrationStatus.Registered);
 		given(capacityProviderDao.create(eq(userId), any())).willReturn(entity.getId());
 		given(capacityProviderDao.get(entity.getId())).willReturn(entity);
 
@@ -252,7 +257,7 @@ public class DaoUserOscpBizTests {
 		final Long entityId = randomUUID().getMostSignificantBits();
 		final Long fpId = randomUUID().getMostSignificantBits();
 		final CapacityProviderConfiguration entity = new CapacityProviderConfiguration(userId, entityId,
-				Instant.now());
+				now(), randomString(), randomLong(), RegistrationStatus.Registered);
 		entity.setBaseUrl("http://example.com/oscp/cp/2.0");
 		entity.setEnabled(true);
 		entity.setName("Test CP");

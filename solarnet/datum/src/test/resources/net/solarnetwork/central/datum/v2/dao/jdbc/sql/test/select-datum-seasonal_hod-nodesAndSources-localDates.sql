@@ -7,7 +7,7 @@ WITH s AS (
 		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 )
 SELECT datum.stream_id,
-	datum.ts_start AS ts,
+	datum.ts_start,
 	datum.data_i,
 	datum.data_a,
 	datum.data_s,
@@ -16,4 +16,4 @@ SELECT datum.stream_id,
 	datum.read_a
 FROM s
 INNER JOIN solardatm.find_agg_datm_hod_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone) datum ON datum.stream_id = s.stream_id
-ORDER BY datum.stream_id, ts
+ORDER BY stream_id, ts_start

@@ -57,7 +57,7 @@ public class ExternalSystemJwtAuthenticationConverter
 	 * @param dao
 	 *        the DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ExternalSystemJwtAuthenticationConverter(AuthTokenAuthorizationDao dao) {
 		this(dao, new JwtScopeGrantedAuthoritiesConverter(), JwtClaimNames.SUB);
@@ -69,7 +69,7 @@ public class ExternalSystemJwtAuthenticationConverter
 	 * @param dao
 	 *        the DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public ExternalSystemJwtAuthenticationConverter(AuthTokenAuthorizationDao dao,
 			Converter<Jwt, Collection<GrantedAuthority>> jwtGrantedAuthoritiesConverter,

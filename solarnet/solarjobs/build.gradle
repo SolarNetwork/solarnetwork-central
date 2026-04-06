@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
     id 'eclipse'
-	id 'org.springframework.boot' version '4.0.1'
+	id 'org.springframework.boot' version '4.0.4'
 }
 
 apply plugin: 'java'
@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarJobs'
-version = '4.0.1'
+version = '5.2.0'
 
 base {
 	archivesName = 'solarjobs'
@@ -20,11 +20,14 @@ dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-common-web')
 	implementation project(':solarnet-datum')
+	implementation project(':solarnet-datum-export')
+	implementation project(':solarnet-datum-import')
 	implementation project(':solarnet-instructor')
 	implementation project(':solarnet-ocpp')
 	implementation project(':solarnet-user')
 	implementation project(':solarnet-user-billing')
 	implementation project(':solarnet-user-datum')
+	implementation project(':solarnet-user-datum-export')
 	implementation project(':solarnet-user-ocpp')
 
 	// Spring
@@ -38,7 +41,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
-	// Utils
+	// Utilities
 	implementation "com.bucket4j:bucket4j_jdk17-core:${bucket4jVersion}"
 	implementation "com.bucket4j:bucket4j_jdk17-postgresql:${bucket4jVersion}"
     implementation "de.siegmar:fastcsv:${fastCsvVersion}"
@@ -49,6 +52,7 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	implementation "org.tukaani:xz:${xzVersion}"
 	implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 
 	// SolarNetwork
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"

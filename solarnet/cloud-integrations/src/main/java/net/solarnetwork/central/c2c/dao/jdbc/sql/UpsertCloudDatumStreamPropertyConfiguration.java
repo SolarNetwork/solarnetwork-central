@@ -77,7 +77,7 @@ public final class UpsertCloudDatumStreamPropertyConfiguration
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertCloudDatumStreamPropertyConfiguration(Long userId, Long datumStreamMappingId,
 			CloudDatumStreamPropertyConfiguration entity) {

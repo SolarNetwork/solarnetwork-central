@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
@@ -39,19 +40,14 @@ public class NodeSourcePK extends BasicNodeSourcePK
 	private static final long serialVersionUID = 959344239925688873L;
 
 	/**
-	 * Default constructor.
-	 */
-	public NodeSourcePK() {
-		super();
-	}
-
-	/**
 	 * Construct with values.
 	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
 	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public NodeSourcePK(Long nodeId, String sourceId) {
 		super(nodeId, sourceId);
@@ -70,10 +66,10 @@ public class NodeSourcePK extends BasicNodeSourcePK
 	 * <li>sourceId</li>
 	 * </ol>
 	 *
-	 * <em>Null</em> values will be sorted before non-<em>null</em> values.
+	 * <em>Null</em> values will be sorted before non-{@code null} values.
 	 */
 	@Override
-	public int compareTo(NodeSourcePK o) {
+	public int compareTo(@Nullable NodeSourcePK o) {
 		return super.compareTo(o);
 	}
 

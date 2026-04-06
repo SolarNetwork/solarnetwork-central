@@ -22,13 +22,13 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.Collections;
 import java.util.List;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -54,7 +54,7 @@ public final class InsertLocationRequest
 	 *        the request
 	 */
 	public InsertLocationRequest(LocationRequest request) {
-		this(Collections.singletonList(requireNonNullArgument(request, "request")), false);
+		this(List.of(requireNonNullArgument(request, "request")), false);
 	}
 
 	/**
@@ -109,7 +109,7 @@ public final class InsertLocationRequest
 		} else {
 			ps.setNull(2, Types.BIGINT);
 		}
-		ps.setString(3, String.valueOf((char) req.getStatus().getCode()));
+		ps.setString(3, String.valueOf((char) nonnull(req.getStatus(), "request.status").getCode()));
 		ps.setString(4, req.getJsonData());
 	}
 

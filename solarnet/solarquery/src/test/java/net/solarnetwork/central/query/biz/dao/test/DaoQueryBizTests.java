@@ -22,10 +22,14 @@
 
 package net.solarnetwork.central.query.biz.dao.test;
 
+import static java.time.Instant.now;
+import static java.time.ZoneOffset.UTC;
+import static java.time.temporal.ChronoUnit.HOURS;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
+import static java.util.Map.entry;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.domain.ObjectDatumStreamMetadataId.idForMetadata;
@@ -33,9 +37,12 @@ import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -101,6 +108,7 @@ import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.util.DateUtils;
 
 /**
  * Unit test for the {@link DaoQueryBiz} class.
@@ -224,6 +232,123 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 			.returns(filter.getStartDate(), from(DatumStreamCriteria::getStartDate))
 			.as("Query for end date from filter")
 			.returns(filter.getEndDate(), from(DatumStreamCriteria::getEndDate))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findReportableInterval_node_two_startExtend() {
+		// GIVEN
+		final DatumDateInterval range1 = DatumDateInterval.streamInterval(
+				now().truncatedTo(ChronoUnit.HOURS), Instant.now(), UTC, ObjectDatumKind.Node,
+				UUID.randomUUID(), TEST_NODE_ID, TEST_SOURCE_ID);
+
+		// second range that starts before but ends before previous
+		final DatumDateInterval range2 = DatumDateInterval.streamInterval(
+				now().atZone(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS).minusDays(30).toInstant(),
+				now().minusSeconds(30), "UTC", ObjectDatumKind.Node, UUID.randomUUID(), TEST_NODE_ID,
+				TEST_SOURCE_ID);
+
+		final Capture<DatumStreamCriteria> filterCaptor = new Capture<>();
+		expect(datumDao.findAvailableInterval(capture(filterCaptor))).andReturn(List.of(range1, range2));
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+
+		ReportableInterval result = biz.findReportableInterval(filter);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Result available")
+			.isNotNull()
+			.as("Result range is union of input ranges")
+			.isEqualTo(new ReportableInterval(range2.getStart(), range1.getEnd(), UTC))
+			;
+
+		final DatumStreamCriteria c = filterCaptor.getValue();
+		then(c)
+			.as("Query for node type")
+			.returns(ObjectDatumKind.Node, from(DatumStreamCriteria::getObjectKind))
+			.as("Query for node IDs from filter")
+			.returns(filter.getNodeIds(), from(DatumStreamCriteria::getNodeIds))
+			.as("Query for source IDs from filter")
+			.returns(null, from(DatumStreamCriteria::getSourceIds))
+			.as("Query for start date from filter")
+			.returns(null, from(DatumStreamCriteria::getStartDate))
+			.as("Query for end date from filter")
+			.returns(null, from(DatumStreamCriteria::getEndDate))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findReportableInterval_node_two_endExtend() {
+		// GIVEN
+		final DatumDateInterval range1 = DatumDateInterval.streamInterval(
+				now().truncatedTo(HOURS).minusSeconds(60), now(), "UTC", Node, randomUUID(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+
+		// second range that starts before but ends after previous
+		final DatumDateInterval range2 = DatumDateInterval.streamInterval(
+				range1.getStart().plusSeconds(1), range1.getEnd().plusSeconds(1), UTC, Node,
+				randomUUID(), TEST_NODE_ID, TEST_SOURCE_ID);
+
+		expect(datumDao.findAvailableInterval(anyObject())).andReturn(List.of(range1, range2));
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+
+		ReportableInterval result = biz.findReportableInterval(filter);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Result available")
+			.isNotNull()
+			.as("Result range is union of input ranges")
+			.isEqualTo(new ReportableInterval(range1.getStart(), range2.getEnd(), UTC))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void findReportableInterval_node_two_startAndEndExtend() {
+		// GIVEN
+		final DatumDateInterval range1 = DatumDateInterval.streamInterval(
+				now().truncatedTo(HOURS).minusSeconds(60), now(), "UTC", Node, randomUUID(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+
+		// second range that starts before but ends before previous
+		final DatumDateInterval range2 = DatumDateInterval.streamInterval(
+				range1.getStart().minusSeconds(1), range1.getEnd().minusSeconds(1), UTC, Node,
+				randomUUID(), TEST_NODE_ID, TEST_SOURCE_ID);
+
+		// third range that starts after but ends after previous
+		final DatumDateInterval range3 = DatumDateInterval.streamInterval(
+				range1.getStart().plusSeconds(1), range1.getEnd().plusSeconds(1), UTC, Node,
+				randomUUID(), TEST_NODE_ID, TEST_SOURCE_ID);
+
+		expect(datumDao.findAvailableInterval(anyObject())).andReturn(List.of(range1, range2, range3));
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+
+		ReportableInterval result = biz.findReportableInterval(filter);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Result available")
+			.isNotNull()
+			.as("Result range is union of input ranges")
+			.isEqualTo(new ReportableInterval(range2.getStart(), range3.getEnd(), UTC))
 			;
 		// @formatter:on
 	}
@@ -466,6 +591,72 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 				hasEntry("i2", props.getInstantaneous()[1]),
 				hasEntry("a1", props.getAccumulating()[0])
 		));
+		// @formatter:on
+	}
+
+	@Test
+	public void findFilteredGeneralNodeDatum_propertyRestricted() {
+		// GIVEN
+		final ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" },
+				new String[] { "a1" }, null, null);
+		final DatumProperties props = testProps();
+		final DatumEntity d = new DatumEntity(meta.getStreamId(), Instant.now(), Instant.now(), props);
+		final var daoResults = new BasicObjectDatumStreamFilterResults<Datum, DatumPK>(
+				singletonMap(meta.getStreamId(), meta), singleton(d));
+
+		final Capture<DatumCriteria> filterCaptor = new Capture<>();
+		expect(datumDao.findFiltered(capture(filterCaptor))).andReturn(daoResults);
+
+		// WHEN
+		replayAll();
+		final DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(1L);
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+		filter.setPropertyNames(new String[] { "i2", "a1" });
+
+		final long offset = randomLong();
+		final int max = RNG.nextInt(biz.getFilteredResultsLimit());
+
+		final FilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results = biz
+				.findFilteredGeneralNodeDatum(filter, null, offset, max);
+
+		// THEN
+		// @formatter:off
+		then(filterCaptor.getValue())
+			.as("Query kind from filter")
+			.returns(ObjectDatumKind.Node, from(DatumCriteria::getObjectKind))
+			.as("Query node IDs from filter")
+			.returns(filter.getNodeIds(), from(DatumCriteria::getNodeIds))
+			.as("Query start date from filter")
+			.returns(filter.getStartDate(), from(DatumCriteria::getStartDate))
+			.as("Query end date from filter")
+			.returns(filter.getEndDate(), from(DatumCriteria::getEndDate))
+			.as("Query sorts from filter")
+			.returns(null, from(DatumCriteria::getSorts))
+			.as("Query offset from arg")
+			.returns(offset, from(DatumCriteria::getOffset))
+			.as("Query max from arg")
+			.returns(max, from(DatumCriteria::getMax))
+			;
+
+		then(results).as("Result count based on DAO result")
+			.hasSize(1)
+			.element(0)
+			.as("Match node from meta")
+			.returns(new GeneralNodeDatumPK(TEST_NODE_ID, d.getTimestamp(), TEST_SOURCE_ID), from(GeneralNodeDatumFilterMatch::getId))
+			.as("Match local date from datum")
+			.returns(d.getTimestamp().atOffset(ZoneOffset.UTC).toLocalDate(), from(GeneralNodeDatumFilterMatch::getLocalDate))
+			.as("Match local time from datum")
+			.returns(d.getTimestamp().atOffset(ZoneOffset.UTC).toLocalTime(), from(GeneralNodeDatumFilterMatch::getLocalTime))
+			.extracting(GeneralNodeDatumFilterMatch::getSampleData, map(String.class, Object.class))
+			.as("Output datum is restricted to properties given in filter")
+			.containsExactlyInAnyOrderEntriesOf(Map.ofEntries(
+				entry("i2", props.getInstantaneous()[1]),
+				entry("a1", props.getAccumulating()[0])
+			))
+			;
 		// @formatter:on
 	}
 
@@ -784,6 +975,85 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 	}
 
 	@Test
+	public void findFilteredAggregateReading_propertyRestricted() {
+		// GIVEN
+		final ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" },
+				new String[] { "a1" }, null, null);
+		final DatumProperties props = testProps();
+		final DatumPropertiesStatistics stats = testStats();
+		final ReadingDatumEntity d = new ReadingDatumEntity(meta.getStreamId(), Instant.now(),
+				Aggregation.Day, Instant.now(), props, stats);
+		final var daoResults = new BasicObjectDatumStreamFilterResults<Datum, DatumPK>(
+				singletonMap(meta.getStreamId(), meta), singleton(d));
+
+		final Capture<DatumCriteria> filterCaptor = new Capture<>();
+		expect(datumDao.findFiltered(capture(filterCaptor))).andReturn(daoResults);
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setAggregate(Aggregation.Day);
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+		filter.setPropertyNames(new String[] { "i2", "a1" });
+
+		final long offset = randomLong();
+		final int max = RNG.nextInt(biz.getFilteredResultsLimit());
+
+		FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results = biz
+				.findFilteredAggregateReading(filter, DatumReadingType.Difference, Period.ofMonths(1),
+						null, offset, max);
+
+		// THEN
+		// @formatter:off
+		then(filterCaptor.getValue())
+			.as("Query reading type from filter")
+			.returns(DatumReadingType.Difference, from(DatumCriteria::getReadingType))
+			.as("Query kind from filter")
+			.returns(ObjectDatumKind.Node, from(DatumCriteria::getObjectKind))
+			.as("Query node IDs from filter")
+			.returns(filter.getNodeIds(), from(DatumCriteria::getNodeIds))
+			.as("Query start date from filter")
+			.returns(filter.getStartDate(), from(DatumCriteria::getStartDate))
+			.as("Query end date from filter")
+			.returns(filter.getEndDate(), from(DatumCriteria::getEndDate))
+			.as("Query sorts from filter")
+			.returns(null, from(DatumCriteria::getSorts))
+			.as("Query offset from arg")
+			.returns(offset, from(DatumCriteria::getOffset))
+			.as("Query max from arg")
+			.returns(max, from(DatumCriteria::getMax))
+			;
+
+		then(results).as("Result count based on DAO result")
+			.hasSize(1)
+			.element(0)
+			.as("Match node from meta")
+			.returns(new GeneralNodeDatumPK(TEST_NODE_ID, d.getTimestamp(), TEST_SOURCE_ID), from(GeneralNodeDatumFilterMatch::getId))
+			.as("Match local date from datum")
+			.returns(d.getTimestamp().atOffset(UTC).toLocalDate(), from(GeneralNodeDatumFilterMatch::getLocalDate))
+			.as("Match local time from datum")
+			.returns(d.getTimestamp().atOffset(UTC).toLocalTime(), from(GeneralNodeDatumFilterMatch::getLocalTime))
+			.extracting(GeneralNodeDatumFilterMatch::getSampleData, map(String.class, Object.class))
+			.as("Output datum is restricted to properties given in filter")
+			.containsExactlyInAnyOrderEntriesOf(Map.ofEntries(
+				entry("timeZone", meta.getTimeZoneId()),
+				entry("endDate", DateUtils.ISO_DATE_TIME_ALT_UTC.format(d.getEndTimestamp())),
+				entry("localEndDate", DateUtils.ISO_DATE_TIME_ALT_UTC.format(d.getEndTimestamp().atOffset(UTC).toLocalDateTime())),
+				entry("i2", props.getInstantaneous()[1]),
+				entry("i2_min", stats.getInstantaneous()[1][1]),
+				entry("i2_max", stats.getInstantaneous()[1][2]),
+				entry("a1", stats.getAccumulating()[0][0]),
+				entry("a1_start", stats.getAccumulating()[0][1]),
+				entry("a1_end", stats.getAccumulating()[0][2])
+			))
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void findFilteredAggregateReading_maxCapped() {
 		// GIVEN
 		Capture<DatumCriteria> filterCaptor = new Capture<>();
@@ -911,6 +1181,81 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 				hasEntry("a1_start", stats.getAccumulating()[0][1]),
 				hasEntry("a1_end", stats.getAccumulating()[0][2])
 		));
+		// @formatter:on
+	}
+
+	@Test
+	public void findFilteredReading_propertyRestricted() {
+		// GIVEN
+		final ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" },
+				new String[] { "a1" }, null, null);
+		final DatumProperties props = testProps();
+		final DatumPropertiesStatistics stats = testStats();
+		final var d = new ReadingDatumEntity(meta.getStreamId(), Instant.now(), Aggregation.Day,
+				Instant.now(), props, stats);
+		final var daoResults = new BasicObjectDatumStreamFilterResults<ReadingDatum, DatumPK>(
+				singletonMap(meta.getStreamId(), meta), singleton(d));
+
+		Capture<DatumCriteria> filterCaptor = new Capture<>();
+		expect(readingDao.findDatumReadingFiltered(capture(filterCaptor))).andReturn(daoResults);
+
+		// WHEN
+		replayAll();
+		final DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setAggregate(Aggregation.Day);
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+		filter.setPropertyNames(new String[] { "i2", "a1" });
+
+		final FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results = biz
+				.findFilteredReading(filter, DatumReadingType.DifferenceWithin, Period.ofMonths(1));
+
+		// THEN
+		// @formatter:off
+		then(filterCaptor.getValue())
+			.as("Query reading type from filter")
+			.returns(DatumReadingType.DifferenceWithin, from(DatumCriteria::getReadingType))
+			.as("Query kind from filter")
+			.returns(ObjectDatumKind.Node, from(DatumCriteria::getObjectKind))
+			.as("Query node IDs from filter")
+			.returns(filter.getNodeIds(), from(DatumCriteria::getNodeIds))
+			.as("Query start date from filter")
+			.returns(filter.getStartDate(), from(DatumCriteria::getStartDate))
+			.as("Query end date from filter")
+			.returns(filter.getEndDate(), from(DatumCriteria::getEndDate))
+			.as("Query sorts from filter")
+			.returns(null, from(DatumCriteria::getSorts))
+			.as("Query offset defaults to 0")
+			.returns(0L, from(DatumCriteria::getOffset))
+			.as("Query max default provided")
+			.returns(biz.getFilteredResultsLimit(), from(DatumCriteria::getMax))
+			;
+
+		then(results).as("Result count based on DAO result")
+			.hasSize(1)
+			.element(0)
+			.as("Match node from meta")
+			.returns(new GeneralNodeDatumPK(TEST_NODE_ID, d.getTimestamp(), TEST_SOURCE_ID), from(GeneralNodeDatumFilterMatch::getId))
+			.as("Match local date from datum")
+			.returns(d.getTimestamp().atOffset(UTC).toLocalDate(), from(GeneralNodeDatumFilterMatch::getLocalDate))
+			.as("Match local time from datum")
+			.returns(d.getTimestamp().atOffset(UTC).toLocalTime(), from(GeneralNodeDatumFilterMatch::getLocalTime))
+			.extracting(GeneralNodeDatumFilterMatch::getSampleData, map(String.class, Object.class))
+			.as("Output datum is restricted to properties given in filter")
+			.containsExactlyInAnyOrderEntriesOf(Map.ofEntries(
+				entry("timeZone", meta.getTimeZoneId()),
+				entry("endDate", DateUtils.ISO_DATE_TIME_ALT_UTC.format(d.getEndTimestamp())),
+				entry("localEndDate", DateUtils.ISO_DATE_TIME_ALT_UTC.format(d.getEndTimestamp().atOffset(UTC).toLocalDateTime())),
+				entry("i2", props.getInstantaneous()[1]),
+				entry("i2_min", stats.getInstantaneous()[1][1]),
+				entry("i2_max", stats.getInstantaneous()[1][2]),
+				entry("a1", stats.getAccumulating()[0][0]),
+				entry("a1_start", stats.getAccumulating()[0][1]),
+				entry("a1_end", stats.getAccumulating()[0][2])
+			))
+			;
 		// @formatter:on
 	}
 

@@ -26,10 +26,12 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.TransientDataAccessResourceException;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
@@ -48,6 +50,7 @@ import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
@@ -70,7 +73,7 @@ public class DefaultMeasurementDao implements MeasurementDao {
 	 * @param readingDatumDao
 	 *        the DAO to query readings from
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DefaultMeasurementDao(ReadingDatumDao readingDatumDao) {
 		super();
@@ -81,8 +84,12 @@ public class DefaultMeasurementDao implements MeasurementDao {
 	@Override
 	public Collection<Measurement> getMeasurements(AssetConfiguration asset,
 			DateRangeCriteria criteria) {
+		final Instant queryStartDate = requireNonNullArgument(criteria.getStartDate(),
+				"criteria.startDate");
+		final Instant queryEndDate = requireNonNullArgument(criteria.getEndDate(), "criteria.endDate");
+
 		// use CalculatedAtDifference reading for accumulating diffs, and list aggregate for time range
-		final Duration queryDuration = Duration.between(criteria.getStartDate(), criteria.getEndDate());
+		final Duration queryDuration = Duration.between(queryStartDate, queryEndDate);
 		if ( queryDuration.compareTo(MAX_QUERY_DURATION) > 0 ) {
 			throw new IllegalArgumentException(
 					"Date range in query is more than maximum of 1 hour: " + queryDuration);
@@ -91,8 +98,8 @@ public class DefaultMeasurementDao implements MeasurementDao {
 		final BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(asset.getNodeId());
 		filter.setSourceId(asset.getSourceId());
-		filter.setStartDate(criteria.getStartDate());
-		filter.setEndDate(criteria.getEndDate());
+		filter.setStartDate(queryStartDate);
+		filter.setEndDate(queryEndDate);
 
 		final List<Measurement> result = new ArrayList<>(2);
 
@@ -115,7 +122,13 @@ public class DefaultMeasurementDao implements MeasurementDao {
 			} catch ( IOException e ) {
 				throw new TransientDataAccessResourceException("IO error querying datum.", e);
 			}
-			if ( processor.getData().isEmpty() ) {
+
+			final @Nullable ObjectDatumStreamMetadataProvider metadataProvider = processor
+					.getMetadataProvider();
+
+			StreamDatum sd = !processor.getData().isEmpty() ? processor.getData().getFirst() : null;
+
+			if ( metadataProvider == null || sd == null || !(sd instanceof AggregateDatum d) ) {
 				if ( !createZeroValueMeasurementsOnMissingData ) {
 					return List.of();
 				}
@@ -124,14 +137,12 @@ public class DefaultMeasurementDao implements MeasurementDao {
 				for ( @SuppressWarnings("unused")
 				String propName : inst.getPropertyNames() ) {
 					Measurement m = Measurement.instantaneousMeasurement(BigDecimal.ZERO,
-							asset.getPhase(), inst.getUnit(), criteria.getEndDate());
+							asset.getPhase(), inst.getUnit(), queryEndDate);
 					result.add(m);
 				}
 			} else {
-				StreamDatum sd = processor.getData().getFirst();
-				if ( sd instanceof AggregateDatum d ) {
-					ObjectDatumStreamMetadata meta = processor.getMetadataProvider()
-							.metadataForStreamId(d.getStreamId());
+				ObjectDatumStreamMetadata meta = metadataProvider.metadataForStreamId(d.getStreamId());
+				if ( meta != null ) {
 					AssetInstantaneousDatumConfiguration inst = asset.getInstantaneous();
 					DatumProperties props = d.getProperties();
 					DatumPropertiesStatistics stats = d.getStatistics();
@@ -154,7 +165,7 @@ public class DefaultMeasurementDao implements MeasurementDao {
 							v = v.multiply(inst.getMultiplier());
 						}
 						Measurement m = Measurement.instantaneousMeasurement(v, asset.getPhase(),
-								inst.getUnit(), criteria.getEndDate());
+								inst.getUnit(), queryEndDate);
 						result.add(m);
 					}
 				}
@@ -172,38 +183,42 @@ public class DefaultMeasurementDao implements MeasurementDao {
 				throw new TransientDataAccessResourceException("IO error querying datum.", e);
 			}
 
+			final @Nullable ObjectDatumStreamMetadataProvider metadataProvider = processor
+					.getMetadataProvider();
+
 			StreamDatum sd = !processor.getData().isEmpty() ? processor.getData().getFirst() : null;
 
-			if ( sd == null || !(sd instanceof ReadingDatum d)
-					|| d.getTimestamp().equals(d.getEndTimestamp()) ) {
+			if ( metadataProvider == null || sd == null || !(sd instanceof ReadingDatum d)
+					|| d.getEndTimestamp() == null || d.getTimestamp().equals(d.getEndTimestamp()) ) {
 				// generate a "zero" measurement value if no data available, or the reading start/end on same date,
 				// which can happen with reading queries where tolerance falls outside of measurement period
 				AssetEnergyDatumConfiguration energy = asset.getEnergy();
 				var m = Measurement.energyMeasurement(BigDecimal.ZERO, asset.getPhase(),
-						energy.getUnit(), criteria.getEndDate(), energy.getType(), energy.getDirection(),
-						criteria.getStartDate());
+						energy.getUnit(), queryEndDate, energy.getType(), energy.getDirection(),
+						queryStartDate);
 				result.add(m);
 			} else {
-				ObjectDatumStreamMetadata meta = processor.getMetadataProvider()
-						.metadataForStreamId(d.getStreamId());
-				AssetEnergyDatumConfiguration energy = asset.getEnergy();
-				DatumProperties props = d.getProperties();
-				for ( String propName : energy.getPropertyNames() ) {
-					int idx = meta.propertyIndex(DatumSamplesType.Accumulating, propName);
-					if ( idx < 0 ) {
-						continue;
+				ObjectDatumStreamMetadata meta = metadataProvider.metadataForStreamId(d.getStreamId());
+				if ( meta != null ) {
+					AssetEnergyDatumConfiguration energy = asset.getEnergy();
+					DatumProperties props = d.getProperties();
+					for ( String propName : energy.getPropertyNames() ) {
+						int idx = meta.propertyIndex(DatumSamplesType.Accumulating, propName);
+						if ( idx < 0 ) {
+							continue;
+						}
+						BigDecimal v = props.accumulatingValue(idx);
+						if ( v == null ) {
+							continue;
+						}
+						if ( energy.getMultiplier() != null ) {
+							v = v.multiply(energy.getMultiplier());
+						}
+						var m = Measurement.energyMeasurement(v, asset.getPhase(), energy.getUnit(),
+								d.getEndTimestamp(), energy.getType(), energy.getDirection(),
+								d.getTimestamp());
+						result.add(m);
 					}
-					BigDecimal v = props.accumulatingValue(idx);
-					if ( v == null ) {
-						continue;
-					}
-					if ( energy.getMultiplier() != null ) {
-						v = v.multiply(energy.getMultiplier());
-					}
-					var m = Measurement.energyMeasurement(v, asset.getPhase(), energy.getUnit(),
-							d.getEndTimestamp(), energy.getType(), energy.getDirection(),
-							d.getTimestamp());
-					result.add(m);
 				}
 			}
 		}

@@ -23,7 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.test;
 
 import static java.time.Instant.now;
-import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter.filterFor;
 import static net.solarnetwork.central.user.billing.snf.test.SnfMatchers.matchesFilter;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -48,13 +48,11 @@ public class SnfTaxCodeResolverTests extends AbstractSnfBililngSystemTest {
 	@Test
 	public void resolveTaxCodeFilter_countryOnly() {
 		// GIVEN
-		Address addr = new Address();
-		addr.setCountry("NZ");
-		addr.setTimeZoneId("Pacific/Auckland");
-		SnfInvoice invoice = new SnfInvoice(randomUUID().getMostSignificantBits(), userId, now());
+		final LocalDate invoiceStartDate = LocalDate.of(2020, 2, 1);
+		final Address addr = new Address(userId, "Test", "test@localhost", "NZ", "Pacific/Auckland");
+		SnfInvoice invoice = new SnfInvoice(randomLong(), userId, now(), invoiceStartDate,
+				invoiceStartDate.plusMonths(1), "NZD");
 		invoice.setAddress(addr);
-		LocalDate invoiceStartDate = LocalDate.of(2020, 2, 1);
-		invoice.setStartDate(invoiceStartDate);
 
 		// WHEN
 		replayAll();
@@ -69,14 +67,12 @@ public class SnfTaxCodeResolverTests extends AbstractSnfBililngSystemTest {
 	@Test
 	public void resolveTaxCodeFilter_countryAndState() {
 		// GIVEN
-		Address addr = new Address();
-		addr.setCountry("US");
+		final LocalDate invoiceStartDate = LocalDate.of(2020, 2, 1);
+		final Address addr = new Address(userId, "Test", "test@localhost", "US", "Pacific/Auckland");
 		addr.setStateOrProvince("CA");
-		addr.setTimeZoneId("Pacific/Auckland");
-		SnfInvoice invoice = new SnfInvoice(randomUUID().getMostSignificantBits(), userId, now());
+		SnfInvoice invoice = new SnfInvoice(randomLong(), userId, now(), invoiceStartDate,
+				invoiceStartDate.plusMonths(1), "NZD");
 		invoice.setAddress(addr);
-		LocalDate invoiceStartDate = LocalDate.of(2020, 2, 1);
-		invoice.setStartDate(invoiceStartDate);
 
 		// WHEN
 		replayAll();
@@ -102,12 +98,11 @@ public class SnfTaxCodeResolverTests extends AbstractSnfBililngSystemTest {
 						testZone);
 			}
 		});
-		Address addr = new Address();
-		addr.setTimeZoneId("UTC");
-		SnfInvoice invoice = new SnfInvoice(randomUUID().getMostSignificantBits(), userId, now());
+		final LocalDate invoiceStartDate = LocalDate.of(2020, 2, 1);
+		final Address addr = new Address(userId, "Test", "test@localhost", "NZ", "UTC");
+		SnfInvoice invoice = new SnfInvoice(randomLong(), userId, now(), invoiceStartDate,
+				invoiceStartDate.plusMonths(1), "NZD");
 		invoice.setAddress(addr);
-		LocalDate invoiceStartDate = LocalDate.of(2020, 2, 1);
-		invoice.setStartDate(invoiceStartDate);
 
 		// WHEN
 		replayAll();

@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.inin.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.UUID;
@@ -86,12 +88,15 @@ public class EndpointConfigurationRowMapper implements RowMapper<EndpointConfigu
 	public EndpointConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
 		Long userId = rs.getLong(++p);
-		UUID entityId = CommonJdbcUtils.getUuid(rs, ++p);
-		Timestamp ts = rs.getTimestamp(++p);
-		EndpointConfiguration conf = new EndpointConfiguration(userId, entityId, ts.toInstant());
-		conf.setModified(rs.getTimestamp(++p).toInstant());
-		conf.setEnabled(rs.getBoolean(++p));
-		conf.setName(rs.getString(++p));
+		UUID entityId = uuid(rs, ++p);
+		Instant ts = timestampInstant(rs, ++p);
+		Instant mod = timestampInstant(rs, ++p);
+		boolean enabled = rs.getBoolean(++p);
+
+		final EndpointConfiguration conf = new EndpointConfiguration(userId, entityId, ts,
+				rs.getString(++p));
+		conf.setModified(mod);
+		conf.setEnabled(enabled);
 
 		Long[] nodeIds = CommonJdbcUtils.getArray(rs, ++p);
 		if ( nodeIds != null ) {

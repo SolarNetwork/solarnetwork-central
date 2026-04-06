@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
@@ -40,8 +41,8 @@ import net.solarnetwork.central.common.dao.LocationRequestCriteria;
  */
 public final class SelectLocationRequest implements PreparedStatementCreator, SqlProvider {
 
-	private final Long id;
-	private final LocationRequestCriteria filter;
+	private final @Nullable Long id;
+	private final @Nullable LocationRequestCriteria filter;
 
 	/**
 	 * Select for a specific entity.
@@ -75,7 +76,7 @@ public final class SelectLocationRequest implements PreparedStatementCreator, Sq
 	 * @param filter
 	 *        the search criteria
 	 */
-	public SelectLocationRequest(Long id, LocationRequestCriteria filter) {
+	public SelectLocationRequest(@Nullable Long id, @Nullable LocationRequestCriteria filter) {
 		super();
 		this.id = id;
 		this.filter = filter;

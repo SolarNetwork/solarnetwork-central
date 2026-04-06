@@ -42,7 +42,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -115,7 +114,7 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 				.get(capacityGroupDao.create(userId, newCapacityGroupConfiguration(userId,
 						lastProvider.getEntityId(), lastOptimzer.getEntityId(), Instant.now())));
 		AssetConfiguration conf = OscpJdbcTestUtils.newAssetConfiguration(userId,
-				lastGroup.getEntityId(), Instant.now());
+				Instant.now(), lastGroup.getEntityId());
 
 		// WHEN
 		UserLongCompositePK result = dao.create(userId, conf);
@@ -196,7 +195,7 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		energy.setType(EnergyType.Total);
 		energy.setDirection(EnergyDirection.Export);
 
-		conf.setServiceProps(Collections.singletonMap("bim", randomUUID().toString()));
+		conf.setServiceProps(Map.of("bim", randomUUID().toString()));
 
 		UserLongCompositePK result = dao.save(conf);
 		AssetConfiguration updated = dao.get(result);
@@ -259,7 +258,7 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 					flexibilityProviderId = flexibilityProviderIds.get(u);
 				}
 				AssetConfiguration conf = OscpJdbcTestUtils.newAssetConfiguration(userId,
-						userGroups.get(userId).getEntityId(), t);
+						t, userGroups.get(userId).getEntityId());
 				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);
@@ -312,7 +311,7 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 					userId = userIds.get(u);
 				}
 				AssetConfiguration conf = OscpJdbcTestUtils.newAssetConfiguration(userId,
-						userGroups.get(userId).getEntityId(), t);
+						t, userGroups.get(userId).getEntityId());
 				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);

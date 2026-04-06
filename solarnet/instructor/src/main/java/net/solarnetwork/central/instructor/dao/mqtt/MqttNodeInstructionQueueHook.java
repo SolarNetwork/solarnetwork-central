@@ -22,14 +22,17 @@
 
 package net.solarnetwork.central.instructor.dao.mqtt;
 
+import static net.solarnetwork.central.instructor.dao.mqtt.NodeInstructionQueueHookStat.InstructionsPublished;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -83,7 +86,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	 *        the MQTT stats to use; must support the
 	 *        {@link NodeInstructionQueueHookStat} stats
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public MqttNodeInstructionQueueHook(ObjectMapper objectMapper, Executor executor,
 			NodeInstructionDao nodeInstructionDao, StatTracker mqttStats) {
@@ -95,7 +98,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	}
 
 	@Override
-	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
+	public @Nullable NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
 		if ( instruction != null && instruction.getNodeId() != null
 				&& InstructionState.Queued == instruction.getInstruction().getState() ) {
 			// we will change this state to Queuing so batch processing does not pick up
@@ -129,10 +132,9 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 			super();
 			// create copy with ID set
 			this.instructionId = instructionId;
-			this.nodeId = instruction.getNodeId();
+			this.nodeId = nonnull(instruction.getNodeId(), "Node ID");
 			this.topic = String.format(nodeInstructionTopicTemplate, instruction.getNodeId());
-			Map<String, Object> data = Collections.singletonMap("instructions",
-					Collections.singleton(instruction));
+			Map<String, Object> data = Map.of("instructions", Set.of(instruction));
 			this.payload = objectMapper.writeValueAsBytes(data);
 		}
 
@@ -144,7 +146,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 					Future<?> f = conn
 							.publish(new BasicMqttMessage(topic, false, getPublishQos(), payload));
 					f.get(getPublishTimeoutSeconds(), TimeUnit.SECONDS);
-					getMqttStats().increment(NodeInstructionQueueHookStat.InstructionsPublished);
+					nonnull(getMqttStats(), "MQTT stats").increment(InstructionsPublished);
 				} else {
 					throw new RuntimeException("MQTT connection not available");
 				}
@@ -181,8 +183,10 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	 *        the template to use; defaults to
 	 *        {@link #DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE}
 	 */
-	public void setNodeInstructionTopicTemplate(String nodeInstructionTopicTemplate) {
-		this.nodeInstructionTopicTemplate = nodeInstructionTopicTemplate;
+	public final void setNodeInstructionTopicTemplate(String nodeInstructionTopicTemplate) {
+		this.nodeInstructionTopicTemplate = (nodeInstructionTopicTemplate != null
+				? nodeInstructionTopicTemplate
+				: DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE);
 	}
 
 }

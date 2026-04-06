@@ -26,7 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz;
+import net.solarnetwork.central.user.datum.expire.biz.UserDatumDeleteBiz;
 
 /**
  * Controller for the expire page.

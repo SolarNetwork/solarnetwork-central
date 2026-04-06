@@ -235,6 +235,7 @@ public class ReportableIntervalController {
 				f.setNodeIds(criteria.getNodeIds());
 				f.setStartDate(criteria.getStartDate());
 				f.setEndDate(criteria.getEndDate());
+				f.setIncludeStreamAliases(criteria.getIncludeStreamAliases());
 				data = queryBiz.findAvailableSources(f);
 			} else {
 				data = datumMetadataBiz.getGeneralNodeDatumMetadataFilteredSources(criteria.getNodeIds(),

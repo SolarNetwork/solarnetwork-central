@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.dao;
 
 import java.util.Collection;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.ocpp.dao.ChargeSessionDao;
 import net.solarnetwork.ocpp.domain.ChargeSession;
@@ -54,7 +55,7 @@ public interface CentralChargeSessionDao
 	 * @param chargePointId
 	 *        the charge point ID to look for
 	 * @return all available incomplete charge session for the given charge
-	 *         point, never {@literal null}
+	 *         point, never {@code null}
 	 * @since 1.1
 	 */
 	Collection<ChargeSession> getIncompleteChargeSessionsForUserForChargePoint(long userId,
@@ -67,9 +68,10 @@ public interface CentralChargeSessionDao
 	 *        the primary key to retrieve
 	 * @param userId
 	 *        the ID of the owner
-	 * @return the domain object
+	 * @return the domain object, or {@code null} if not available
 	 * @since 1.1
 	 */
+	@Nullable
 	ChargeSession get(UUID id, Long userId);
 
 	/**
@@ -85,7 +87,8 @@ public interface CentralChargeSessionDao
 	 *        the optional end auth ID to use
 	 * @since 1.2
 	 */
-	boolean endSession(Long userId, UUID sessionId, ChargeSessionEndReason reason, String endAuthId);
+	boolean endSession(Long userId, UUID sessionId, ChargeSessionEndReason reason,
+			@Nullable String endAuthId);
 
 	/**
 	 * Get the next available charge session transaction ID.

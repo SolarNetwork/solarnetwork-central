@@ -24,6 +24,7 @@ package net.solarnetwork.central.support;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.common.mqtt.MqttConnection;
@@ -60,7 +61,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
-	protected final AtomicReference<MqttConnection> mqttConnection = new AtomicReference<>();
+	protected final AtomicReference<@Nullable MqttConnection> mqttConnection = new AtomicReference<>();
 
 	private boolean retained;
 	private MqttQos publishQos = DEFAULT_PUBLISH_QOS;
@@ -68,7 +69,14 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	private int publishTimeoutSeconds = DEFAULT_PUBLISH_TIMEOUT_SECONDS;
 	private int subscribeTimeoutSeconds = DEFAULT_SUBSCRIBE_TIMEOUT_SECONDS;
 	private int transientErrorTries = DEFAULT_TRANSIENT_ERROR_TRIES;
-	private StatTracker mqttStats;
+	private @Nullable StatTracker mqttStats;
+
+	/**
+	 * Constructor.
+	 */
+	public BaseMqttConnectionObserver() {
+		super();
+	}
 
 	/**
 	 * Callback when the MQTT connection has been established.
@@ -78,7 +86,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * store the connection in the {@code mqttConnection} reference.
 	 * </p>
 	 * 
-	 * {@inheritDoc}h
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void onMqttServerConnectionEstablished(MqttConnection connection, boolean reconnected) {
@@ -94,11 +102,11 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * clear the connection from the {@code mqttConnection} reference.
 	 * </p>
 	 * 
-	 * {@inheritDoc}h
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void onMqttServerConnectionLost(MqttConnection connection, boolean willReconnect,
-			Throwable cause) {
+			@Nullable Throwable cause) {
 		log.info("MQTT connection lost for {}", this);
 		mqttConnection.compareAndSet(connection, null);
 	}
@@ -141,7 +149,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @return the number of attempts to try operations that support retry;
 	 *         defaults to {@link #DEFAULT_TRANSIENT_ERROR_TRIES}
 	 */
-	public int getTransientErrorTries() {
+	public final int getTransientErrorTries() {
 		return transientErrorTries;
 	}
 
@@ -153,7 +161,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 *        the number of times to attempt operations that support retry; must
 	 *        be greater than {@literal 0}
 	 */
-	public void setTransientErrorTries(int transientErrorTries) {
+	public final void setTransientErrorTries(int transientErrorTries) {
 		if ( transientErrorTries < 1 ) {
 			transientErrorTries = 1;
 		}
@@ -165,7 +173,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * 
 	 * @return the statistics tracker
 	 */
-	public StatTracker getMqttStats() {
+	public final @Nullable StatTracker getMqttStats() {
 		return mqttStats;
 	}
 
@@ -175,7 +183,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @param mqttStats
 	 *        the statistics tracker to set
 	 */
-	public void setMqttStats(StatTracker mqttStats) {
+	public final void setMqttStats(@Nullable StatTracker mqttStats) {
 		this.mqttStats = mqttStats;
 	}
 
@@ -184,7 +192,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * 
 	 * @return the QoS; defaults to {@link #DEFAULT_SUBSCRIBE_QOS}
 	 */
-	public MqttQos getSubscribeQos() {
+	public final MqttQos getSubscribeQos() {
 		return subscribeQos;
 	}
 
@@ -194,9 +202,9 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @param subscribeQos
 	 *        the subscribe QoS to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
-	public void setSubscribeQos(MqttQos subscribeQos) {
+	public final void setSubscribeQos(MqttQos subscribeQos) {
 		this.subscribeQos = requireNonNullArgument(subscribeQos, "subscribeQos");
 	}
 
@@ -208,7 +216,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @throws IllegalArgumentException
 	 *         if the level is not supported
 	 */
-	public void setSubscribeQosLevel(int level) {
+	public final void setSubscribeQosLevel(int level) {
 		setSubscribeQos(MqttQos.valueOf(level));
 	}
 
@@ -218,7 +226,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @return the timeout seconds; defaults to
 	 *         {@link #DEFAULT_SUBSCRIBE_TIMEOUT_SECONDS}
 	 */
-	public int getSubscribeTimeoutSeconds() {
+	public final int getSubscribeTimeoutSeconds() {
 		return subscribeTimeoutSeconds;
 	}
 
@@ -228,7 +236,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @param subscribeTimeoutSeconds
 	 *        the timeout seconds to set
 	 */
-	public void setSubscribeTimeoutSeconds(int subscribeTimeoutSeconds) {
+	public final void setSubscribeTimeoutSeconds(int subscribeTimeoutSeconds) {
 		this.subscribeTimeoutSeconds = subscribeTimeoutSeconds;
 	}
 
@@ -237,7 +245,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * 
 	 * @return the retained; defaults to {@literal false}
 	 */
-	public boolean isRetained() {
+	public final boolean isRetained() {
 		return retained;
 	}
 
@@ -247,7 +255,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @param retained
 	 *        the retained to set
 	 */
-	public void setRetained(boolean retained) {
+	public final void setRetained(boolean retained) {
 		this.retained = retained;
 	}
 
@@ -256,7 +264,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * 
 	 * @return the QoS; defaults to {@link #DEFAULT_PUBLISH_QOS}
 	 */
-	public MqttQos getPublishQos() {
+	public final MqttQos getPublishQos() {
 		return publishQos;
 	}
 
@@ -266,9 +274,9 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @param publishQos
 	 *        the QoS to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
-	public void setPublishQos(MqttQos publishQos) {
+	public final void setPublishQos(MqttQos publishQos) {
 		this.publishQos = requireNonNullArgument(publishQos, "publishQos");
 	}
 
@@ -280,7 +288,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @throws IllegalArgumentException
 	 *         if the level is not supported
 	 */
-	public void setPublishQosLevel(int level) {
+	public final void setPublishQosLevel(int level) {
 		setPublishQos(MqttQos.valueOf(level));
 	}
 
@@ -290,7 +298,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @return the timeout seconds; defaults to
 	 *         {@link #DEFAULT_PUBLISH_TIMEOUT_SECONDS}
 	 */
-	public int getPublishTimeoutSeconds() {
+	public final int getPublishTimeoutSeconds() {
 		return publishTimeoutSeconds;
 	}
 
@@ -300,7 +308,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @param publishTimeoutSeconds
 	 *        the timeout to set
 	 */
-	public void setPublishTimeoutSeconds(int publishTimeoutSeconds) {
+	public final void setPublishTimeoutSeconds(int publishTimeoutSeconds) {
 		this.publishTimeoutSeconds = publishTimeoutSeconds;
 	}
 

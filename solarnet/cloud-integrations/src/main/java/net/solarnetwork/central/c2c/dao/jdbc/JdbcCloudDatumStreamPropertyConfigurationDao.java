@@ -22,12 +22,16 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
-import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType.Reference;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.domain.UserLongIntegerCompositePK.UNASSIGNED_GROUP_ID;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -58,7 +62,7 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudDatumStreamPropertyConfigurationDao(JdbcOperations jdbcOps) {
 		super();
@@ -72,23 +76,22 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 
 	@Override
 	public CloudDatumStreamPropertyConfiguration entityKey(UserLongIntegerCompositePK id) {
-		return new CloudDatumStreamPropertyConfiguration(id, now());
+		return new CloudDatumStreamPropertyConfiguration(id, Instant.EPOCH, Instantaneous, "", Reference,
+				"");
 	}
 
 	@Override
 	public UserLongIntegerCompositePK create(Long userId, Long datumStreamId,
 			CloudDatumStreamPropertyConfiguration entity) {
 		final var sql = new UpsertCloudDatumStreamPropertyConfiguration(userId, datumStreamId, entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0
-				? new UserLongIntegerCompositePK(userId, entity.getDatumStreamMappingId(),
-						entity.getIndex())
-				: null);
+		jdbcOps.update(sql);
+		return new UserLongIntegerCompositePK(userId, entity.getDatumStreamMappingId(),
+				entity.getIndex());
 	}
 
 	@Override
 	public Collection<CloudDatumStreamPropertyConfiguration> findAll(Long userId,
-			Long datumStreamMappingId, List<SortDescriptor> sorts) {
+			Long datumStreamMappingId, @Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		filter.setDatumStreamMappingId(
@@ -101,8 +104,8 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 
 	@Override
 	public FilterResults<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK> findFiltered(
-			CloudDatumStreamPropertyFilter filter, List<SortDescriptor> sorts, Long offset,
-			Integer max) {
+			CloudDatumStreamPropertyFilter filter, @Nullable List<SortDescriptor> sorts,
+			@Nullable Long offset, @Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCloudDatumStreamPropertyConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql,
@@ -115,7 +118,7 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 	}
 
 	@Override
-	public CloudDatumStreamPropertyConfiguration get(UserLongIntegerCompositePK id) {
+	public @Nullable CloudDatumStreamPropertyConfiguration get(UserLongIntegerCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -128,7 +131,8 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 	}
 
 	@Override
-	public Collection<CloudDatumStreamPropertyConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<CloudDatumStreamPropertyConfiguration> getAll(
+			@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -140,18 +144,22 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 
 	@Override
 	public void delete(CloudDatumStreamPropertyConfiguration entity) {
-		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+		var pk = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(), "entity.id");
+		var sql = new DeleteForCompositeKey(pk, TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, CloudDatumStreamPropertyFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable CloudDatumStreamPropertyFilter filter,
+			boolean enabled) {
 		UserLongIntegerCompositePK key = filter != null && filter.hasIndexCriteria()
-				? new UserLongIntegerCompositePK(userId, filter.getDatumStreamMappingId(),
-						filter.getIndex())
-				: UserLongIntegerCompositePK.unassignedEntityIdKey(userId,
-						filter != null ? filter.getDatumStreamMappingId() : null);
+				? new UserLongIntegerCompositePK(userId,
+						requireNonNullArgument(filter.getDatumStreamMappingId(), "mappingId"),
+						filter.index())
+				: filter != null && filter.hasDatumStreamMappingCriteria()
+						? UserLongIntegerCompositePK.unassignedEntityIdKey(userId,
+								filter.datumStreamMappingId())
+						: UserLongIntegerCompositePK.unassignedEntityIdKey(userId, UNASSIGNED_GROUP_ID);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);
 	}

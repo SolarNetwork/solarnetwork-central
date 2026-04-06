@@ -1,31 +1,33 @@
 /* ==================================================================
  * JdbcCapacityGroupSettingsDaoTests.java - 10/10/2022 11:14:41 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allCapacityGroupSettingsData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.newCapacityGroupConfiguration;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.newCapacityGroupSettings;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -64,7 +66,7 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
 
 /**
  * Test cases for the {@link JdbcCapacityGroupSettingsDao} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -167,7 +169,7 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 	@Test
 	public void resolveDatumPublishSettings_user() {
 		// GIVEN
-		UserSettings settings = OscpJdbcTestUtils.newUserSettings(userId, Instant.now());
+		UserSettings settings = OscpJdbcTestUtils.newUserSettings(userId, now(), randomLong());
 		settings.setPublishToSolarFlux(false);
 		userSettingsDao.save(settings);
 
@@ -201,7 +203,7 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 		// GIVEN
 		insert();
 
-		UserSettings settings = OscpJdbcTestUtils.newUserSettings(userId, Instant.now());
+		UserSettings settings = OscpJdbcTestUtils.newUserSettings(userId, now(), randomLong());
 		settings.setPublishToSolarFlux(false);
 		userSettingsDao.save(settings);
 

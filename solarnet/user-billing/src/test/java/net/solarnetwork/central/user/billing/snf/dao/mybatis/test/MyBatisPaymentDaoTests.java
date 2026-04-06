@@ -27,6 +27,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -87,12 +88,10 @@ public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	@Test
 	public void insert() {
-		Payment entity = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now());
-		entity.setAmount(new BigDecimal("12345.67"));
-		entity.setCurrencyCode(account.getCurrencyCode());
-		entity.setExternalKey(randomUUID().toString());
-		entity.setPaymentType(PaymentType.Payment);
-		entity.setReference(randomUUID().toString());
+		Payment entity = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+				PaymentType.Payment, new BigDecimal("12345.67"), account.getCurrencyCode());
+		entity.setExternalKey(randomString());
+		entity.setReference(randomString());
 
 		UserUuidPK pk = dao.save(entity);
 		assertThat("PK preserved", pk, equalTo(entity.getId()));
@@ -117,12 +116,11 @@ public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 		LocalDate date = LocalDate.of(2020, 1, 5);
 		for ( int i = 0; i < 5; i++ ) {
 			Payment entity = new Payment(randomUUID(), account.getUserId(), account.getId().getId(),
-					date.atStartOfDay(address.getTimeZone()).toInstant());
-			entity.setAmount(new BigDecimal(Math.random() * 1000.0).setScale(2, RoundingMode.HALF_UP));
-			entity.setCurrencyCode(account.getCurrencyCode());
-			entity.setExternalKey(randomUUID().toString());
-			entity.setPaymentType(PaymentType.Payment);
-			entity.setReference(randomUUID().toString());
+					date.atStartOfDay(address.getTimeZone()).toInstant(), PaymentType.Payment,
+					new BigDecimal(Math.random() * 1000.0).setScale(2, RoundingMode.HALF_UP),
+					account.getCurrencyCode());
+			entity.setExternalKey(randomString());
+			entity.setReference(randomString());
 			dao.save(entity);
 			entities.add(entity);
 			date = date.plusMonths(1);

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.domain.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.util.Map;
 import java.util.TimeZone;
@@ -50,7 +51,7 @@ public class UserTests {
 	@Test
 	public void locationIdResetLocationDifferentId() {
 		SolarLocation loc = testLocation();
-		User user = new User();
+		User user = new User(randomString());
 		user.setLocation(loc);
 		then(loc).isSameAs(user.getLocation());
 		user.setLocationId(-2L);
@@ -60,7 +61,7 @@ public class UserTests {
 	@Test
 	public void locationIdPreserveLocationSameId() {
 		SolarLocation loc = testLocation();
-		User user = new User();
+		User user = new User(randomString());
 		user.setLocation(loc);
 		user.setLocationId(TEST_LOCATION_ID);
 		then(loc).as("Location preserved").isSameAs(user.getLocation());
@@ -69,7 +70,7 @@ public class UserTests {
 	@Test
 	public void locationIdSetFromLocation() {
 		SolarLocation loc = testLocation();
-		User user = new User();
+		User user = new User(randomString());
 		user.setLocationId(-2L);
 		user.setLocation(loc);
 		then(user.getLocationId()).as("Location ID set").isEqualTo(TEST_LOCATION_ID);
@@ -78,7 +79,7 @@ public class UserTests {
 	@Test
 	public void timeZoneFromLocation() {
 		SolarLocation loc = testLocation();
-		User user = new User();
+		User user = new User(randomString());
 		user.setLocation(loc);
 		then(user.getTimeZone()).as("TimeZone extracted")
 				.isEqualTo(TimeZone.getTimeZone(loc.getTimeZoneId()));
@@ -86,7 +87,7 @@ public class UserTests {
 
 	@Test
 	public void timeZoneFromNullLocation() {
-		User user = new User();
+		User user = new User(randomString());
 		then(user.getTimeZone()).as("No location").isNull();
 	}
 
@@ -94,14 +95,14 @@ public class UserTests {
 	public void timeZoneFromLocationNullTimeZoneId() {
 		SolarLocation loc = testLocation();
 		loc.setTimeZoneId(null);
-		User user = new User();
+		User user = new User(randomString());
 		user.setLocation(loc);
 		then(user.getTimeZone()).as("No time zone ID").isNull();
 	}
 
 	@Test
 	public void putInternalDataInitial() {
-		User u = new User();
+		User u = new User(randomString());
 		Object prev = u.putInternalDataValue("foo", "bar");
 		then(u.getInternalData()).as("Internal data").isEqualTo(Map.of("foo", "bar"));
 		then(prev).as("Previous value").isNull();
@@ -110,7 +111,7 @@ public class UserTests {
 
 	@Test
 	public void putInternalDataReplace() {
-		User u = new User();
+		User u = new User(randomString());
 		u.setInternalDataJson("{\"foo\":\"bim\"}");
 		Object prev = u.putInternalDataValue("foo", "bar");
 		then(u.getInternalData()).as("Internal data").isEqualTo(Map.of("foo", "bar"));
@@ -121,7 +122,7 @@ public class UserTests {
 
 	@Test
 	public void putInternalDataRemove() {
-		User u = new User();
+		User u = new User(randomString());
 		u.setInternalDataJson("{\"foo\":\"bim\"}");
 		Object prev = u.putInternalDataValue("foo", null);
 		then(u.getInternalData()).as("Internal data").isEqualTo(Map.of());

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -29,6 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -58,10 +61,10 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	private String serviceIdentifier;
 
 	/** The service properties as JSON. */
-	private String servicePropsJson;
+	private @Nullable String servicePropsJson;
 
 	/** The service properties. */
-	private transient Map<String, Object> serviceProps;
+	private transient @Nullable Map<String, Object> serviceProps;
 
 	/**
 	 * Constructor.
@@ -70,11 +73,18 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public BaseIdentifiableUserModifiableEntity(K id, Instant created) {
+	public BaseIdentifiableUserModifiableEntity(K id, Instant created, String name,
+			String serviceIdentifier) {
 		super(id, created);
+		this.name = requireNonNullArgument(name, "name");
+		this.serviceIdentifier = requireNonNullArgument(serviceIdentifier, "serviceIdentifier");
 	}
 
 	@Override
@@ -86,22 +96,23 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	}
 
 	@Override
-	public boolean isSameAs(C other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable C other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final C o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.name, other.getName())
-				&& Objects.equals(this.serviceIdentifier, other.getServiceIdentifier())
+		return Objects.equals(this.name, o.getName())
+				&& Objects.equals(this.serviceIdentifier, o.getServiceIdentifier())
 				// compare decoded JSON, as JSON key order not assumed
-				&& Objects.equals(getServiceProperties(), other.getServiceProperties())
+				&& Objects.equals(getServiceProperties(), o.getServiceProperties())
 				;
 		// @formatter:on
 	}
 
 	@Override
-	public void maskSensitiveInformation(Function<String, Set<String>> sensitiveKeyProvider,
+	public void maskSensitiveInformation(
+			@Nullable Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			TextEncryptor encryptor) {
 		Set<String> secureKeys = (sensitiveKeyProvider != null && serviceIdentifier != null
 				? sensitiveKeyProvider.apply(serviceIdentifier)
@@ -112,7 +123,8 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	}
 
 	@Override
-	public void unmaskSensitiveInformation(Function<String, Set<String>> sensitiveKeyProvider,
+	public void unmaskSensitiveInformation(
+			@Nullable Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			TextEncryptor encryptor) {
 		Set<String> secureKeys = (sensitiveKeyProvider != null && serviceIdentifier != null
 				? sensitiveKeyProvider.apply(serviceIdentifier)
@@ -124,7 +136,7 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 
 	@Override
 	public BaseIdentifiableUserModifiableEntity<C, K> digestSensitiveInformation(
-			Function<String, Set<String>> sensitiveKeyProvider) {
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
 		Set<String> secureKeys = (sensitiveKeyProvider != null && serviceIdentifier != null
 				? sensitiveKeyProvider.apply(serviceIdentifier)
 				: null);
@@ -135,7 +147,7 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -144,13 +156,15 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	 *
 	 * @param name
 	 *        the name to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	@Override
-	public String getServiceIdentifier() {
+	public final String getServiceIdentifier() {
 		return serviceIdentifier;
 	}
 
@@ -160,19 +174,21 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	 *
 	 * @param serviceIdentifier
 	 *        the identifier of the service to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setServiceIdentifier(String serviceIdentifier) {
-		this.serviceIdentifier = serviceIdentifier;
+	public final void setServiceIdentifier(String serviceIdentifier) {
+		this.serviceIdentifier = requireNonNullArgument(serviceIdentifier, "serviceIdentifier");
 	}
 
 	/**
 	 * Get the service properties object as a JSON string.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
-	 *         properties available
+	 * @return a JSON encoded string, or {@code null} if no service properties
+	 *         available
 	 */
 	@JsonIgnore
-	public String getServicePropsJson() {
+	public final @Nullable String getServicePropsJson() {
 		return servicePropsJson;
 	}
 
@@ -190,7 +206,7 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setServicePropsJson(String json) {
+	public final void setServicePropsJson(@Nullable String json) {
 		servicePropsJson = json;
 		serviceProps = null;
 	}
@@ -206,7 +222,7 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	 * @return the service properties
 	 */
 	@JsonIgnore
-	public Map<String, Object> getServiceProps() {
+	public final @Nullable Map<String, Object> getServiceProps() {
 		if ( serviceProps == null && servicePropsJson != null ) {
 			serviceProps = JsonUtils.getStringMap(servicePropsJson);
 		}
@@ -225,13 +241,13 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	 *        the service properties to set
 	 */
 	@JsonSetter("serviceProperties")
-	public void setServiceProps(Map<String, Object> serviceProps) {
+	public final void setServiceProps(@Nullable Map<String, Object> serviceProps) {
 		this.serviceProps = serviceProps;
 		servicePropsJson = JsonUtils.getJSONString(serviceProps, null);
 	}
 
 	@Override
-	public Map<String, ?> getServiceProperties() {
+	public final @Nullable Map<String, ?> getServiceProperties() {
 		return getServiceProps();
 	}
 

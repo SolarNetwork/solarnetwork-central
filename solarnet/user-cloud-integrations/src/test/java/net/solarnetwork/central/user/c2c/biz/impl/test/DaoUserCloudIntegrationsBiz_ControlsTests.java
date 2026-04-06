@@ -37,11 +37,11 @@ import static org.mockito.BDDMockito.then;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -195,7 +195,7 @@ public class DaoUserCloudIntegrationsBiz_ControlsTests {
 		biz = new DaoUserCloudIntegrationsBiz(clock, userSettingsDao, integrationDao, datumStreamDao,
 				datumStreamSettingsDao, datumStreamMappingDao, datumStreamPropertyDao, controlDao,
 				datumStreamPollTaskDao, datumStreamRakeTaskDao, clientAccessTokenDao, textEncryptor,
-				Collections.singleton(integrationService));
+				Set.of(integrationService));
 
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 		biz.setValidator(factory.getValidator());
@@ -206,9 +206,8 @@ public class DaoUserCloudIntegrationsBiz_ControlsTests {
 		// GIVEN
 		final Long userId = randomLong();
 		final Map<String, Object> sprops = Map.of("foo", "bar", TEST_SECURE_SETTING, "should be masked");
-		final CloudControlConfiguration conf = new CloudControlConfiguration(userId, randomLong(),
-				now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		final CloudControlConfiguration conf = new CloudControlConfiguration(userId, randomLong(), now(),
+				randomString(), TEST_SERVICE_ID, randomLong(), randomLong(), randomString());
 		conf.setServiceProps(sprops);
 		final var daoResults = new BasicFilterResults<CloudControlConfiguration, UserLongCompositePK>(
 				Arrays.asList(conf));
@@ -256,9 +255,8 @@ public class DaoUserCloudIntegrationsBiz_ControlsTests {
 		// GIVEN
 		final Long userId = randomLong();
 		final Map<String, Object> sprops = Map.of("foo", "bar", TEST_SECURE_SETTING, "should be masked");
-		final CloudControlConfiguration conf = new CloudControlConfiguration(userId, randomLong(),
-				now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		final CloudControlConfiguration conf = new CloudControlConfiguration(userId, randomLong(), now(),
+				randomString(), TEST_SERVICE_ID, randomLong(), randomLong(), randomString());
 		conf.setServiceProps(sprops);
 		final var daoResults = new BasicFilterResults<CloudControlConfiguration, UserLongCompositePK>(
 				Arrays.asList(conf));
@@ -269,7 +267,7 @@ public class DaoUserCloudIntegrationsBiz_ControlsTests {
 		filter.setUserId(randomLong()); // should be replaced
 		filter.setIntegrationId(conf.getIntegrationId());
 		FilterResults<CloudControlConfiguration, UserLongCompositePK> result = biz
-				.listConfigurationsForUser(userId, null, CloudControlConfiguration.class);
+				.listConfigurationsForUser(userId, filter, CloudControlConfiguration.class);
 
 		// THEN
 		then(controlDao).should().findFiltered(filterCaptor.capture(), isNull(), isNull(), isNull());
@@ -298,8 +296,8 @@ public class DaoUserCloudIntegrationsBiz_ControlsTests {
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 
-		CloudControlConfiguration conf = new CloudControlConfiguration(pk, now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		CloudControlConfiguration conf = new CloudControlConfiguration(pk, now(), randomString(),
+				TEST_SERVICE_ID, randomLong(), randomLong(), randomString());
 		conf.setServiceProps(Map.of("foo", "bar", TEST_SECURE_SETTING, "bam"));
 
 		given(controlDao.get(pk)).willReturn(conf);
@@ -338,8 +336,8 @@ public class DaoUserCloudIntegrationsBiz_ControlsTests {
 
 		final Map<String, Object> sprops = Map.of("foo", "bar", TEST_SECURE_SETTING, "should be masked");
 
-		CloudControlConfiguration conf = new CloudControlConfiguration(pk, now());
-		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		CloudControlConfiguration conf = new CloudControlConfiguration(pk, now(), randomString(),
+				TEST_SERVICE_ID, randomLong(), randomLong(), randomString());
 		conf.setServiceProps(sprops);
 
 		// save and retrieve
@@ -431,7 +429,8 @@ public class DaoUserCloudIntegrationsBiz_ControlsTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudControlConfiguration conf = new CloudControlConfiguration(pk, now());
+		CloudControlConfiguration conf = new CloudControlConfiguration(pk, now(), randomString(),
+				TEST_SERVICE_ID, randomLong(), randomLong(), randomString());
 
 		given(controlDao.entityKey(pk)).willReturn(conf);
 

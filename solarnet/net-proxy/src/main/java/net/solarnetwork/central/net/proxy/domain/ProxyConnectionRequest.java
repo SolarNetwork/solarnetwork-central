@@ -24,6 +24,7 @@ package net.solarnetwork.central.net.proxy.domain;
 
 import java.security.cert.X509Certificate;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
  * API for a proxy connection request.
@@ -38,6 +39,7 @@ public interface ProxyConnectionRequest {
 	 *
 	 * @return the principal name
 	 */
+	@Nullable
 	String principal();
 
 	/**

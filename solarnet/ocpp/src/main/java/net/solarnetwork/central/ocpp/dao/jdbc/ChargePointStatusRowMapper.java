@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -55,8 +56,8 @@ public class ChargePointStatusRowMapper implements RowMapper<ChargePointStatus> 
 	@Override
 	public ChargePointStatus mapRow(ResultSet rs, int rowNum) throws SQLException {
 		Instant created = rs.getTimestamp(1).toInstant();
-		long userId = rs.getLong(2);
-		long cpId = rs.getLong(3);
+		Long userId = nonnull(rs.getObject(2, Long.class), "User ID");
+		Long cpId = nonnull(rs.getObject(3, Long.class), "ChargePoint ID");
 		String connectedTo = rs.getString(4);
 		String sessionId = rs.getString(5);
 		Instant connectedDate = rs.getTimestamp(6).toInstant();

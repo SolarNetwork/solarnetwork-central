@@ -1,29 +1,31 @@
 /* ==================================================================
  * JdbcUserSettingsDaoTests.java - 10/10/2022 10:34:48 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allUserSettingsData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.newUserSettings;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -46,7 +48,7 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
 
 /**
  * Test cases for the {@link JdbcUserSettingsDao} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -66,11 +68,10 @@ public class JdbcUserSettingsDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 	@Test
 	public void insert() {
 		// GIVEN
-		UserSettings settings = new UserSettings(userId, Instant.now());
+		UserSettings settings = new UserSettings(userId, now(), randomLong());
 		settings.setModified(settings.getCreated());
 		settings.setPublishToSolarIn(true);
 		settings.setPublishToSolarFlux(true);
-		settings.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		settings.setSourceIdTemplate("foo/bar");
 
 		// WHEN
@@ -158,6 +159,7 @@ public class JdbcUserSettingsDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		Map<Long, UserSettings> userSettings = new LinkedHashMap<>(userCount);
 		final List<UserSettings> confs = new ArrayList<>(count * userCount);
 		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		final Long nodeId = randomLong();
 		for ( int i = 0; i < count; i++ ) {
 			Instant t = start.plusSeconds(i);
 			for ( int u = 0; u < userCount; u++ ) {
@@ -168,7 +170,7 @@ public class JdbcUserSettingsDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 				} else {
 					userId = userIds.get(u);
 				}
-				UserSettings conf = newUserSettings(userId, t);
+				UserSettings conf = newUserSettings(userId, t, nodeId);
 				Long id = dao.save(conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);

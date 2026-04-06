@@ -22,13 +22,15 @@
 
 package net.solarnetwork.central.user.billing.snf.st4.invoice.html.test;
 
-import static java.util.UUID.randomUUID;
+import static java.time.Instant.now;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -57,28 +59,25 @@ import net.solarnetwork.common.tmpl.st4.ST4TemplateRenderer;
  */
 public class HtmlInvoiceTests {
 
-	private static Address createAddress(String country, String timeZoneId) {
-		final Address addr = new Address(randomUUID().getMostSignificantBits(), Instant.now());
-		addr.setCountry(country);
-		addr.setTimeZoneId(timeZoneId);
+	private static Address createAddress(Long userId, String country, String timeZoneId) {
+		final Address addr = new Address(randomLong(), now(), userId, "Test", "test@localhost", country,
+				timeZoneId);
 		return addr;
 	}
 
 	private static Account createAccount(Long userId, String locale, Address address) {
-		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
-				Instant.now());
-		account.setLocale(locale);
-		account.setAddress(address);
+		final Account account = new Account(randomLong(), userId, now(), "NZD", locale);
 		return account;
 	}
 
 	@Test
 	public void render_example() throws IOException {
 		// GIVEN
-		final Account account = createAccount(randomUUID().getMostSignificantBits(), "en_NZ",
-				createAddress("NZ", "Pacific/Auckland"));
-		final SnfInvoice snfInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				account.getUserId(), account.getId().getId(), Instant.now());
+		final Long userId = randomLong();
+		final Account account = createAccount(userId, "en_NZ",
+				createAddress(userId, "NZ", "Pacific/Auckland"));
+		final SnfInvoice snfInvoice = new SnfInvoice(randomLong(), account.getUserId(),
+				account.getId().getId(), Instant.now(), LocalDate.now(), LocalDate.now(), "NZD");
 		final SnfInvoiceItem item1 = SnfInvoiceItem.newItem(snfInvoice, InvoiceItemType.Usage,
 				NodeUsage.DATUM_PROPS_IN_KEY, new BigDecimal("123456789"), new BigDecimal("12345.67"));
 		final SnfInvoiceItem tax1 = SnfInvoiceItem.newItem(snfInvoice, InvoiceItemType.Tax, "GST",

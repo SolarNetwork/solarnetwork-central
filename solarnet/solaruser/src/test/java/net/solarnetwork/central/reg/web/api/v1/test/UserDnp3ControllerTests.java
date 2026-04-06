@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserDnp3ControllerTests.java - 8/08/2023 6:49:46 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,6 +24,9 @@ package net.solarnetwork.central.reg.web.api.v1.test;
 
 import static java.time.Instant.now;
 import static java.util.Arrays.asList;
+import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -43,6 +46,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import net.solarnetwork.central.dnp3.dao.ServerDataPointFilter;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
+import net.solarnetwork.central.dnp3.domain.ControlType;
+import net.solarnetwork.central.dnp3.domain.MeasurementType;
 import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
@@ -55,7 +60,7 @@ import net.solarnetwork.domain.Result;
 
 /**
  * Test cases for the {@link UserDnp3Controller} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -88,11 +93,11 @@ public class UserDnp3ControllerTests {
 	@Test
 	public void getServer() {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
+		final Long serverId = randomLong();
 		becomeUser(userId);
 
-		var conf = new ServerConfiguration(userId, serverId, now());
+		var conf = new ServerConfiguration(userId, serverId, now(), randomString());
 		var searchResults = new BasicFilterResults<>(asList(conf));
 		given(userDnp3Biz.serversForUser(eq(userId), any())).willReturn(searchResults);
 
@@ -104,7 +109,7 @@ public class UserDnp3ControllerTests {
 		then(result.getData()).as("First query result returned").isSameAs(conf);
 
 		verify(userDnp3Biz).serversForUser(eq(userId), filterCaptor.capture());
-		
+
 		then(filterCaptor.getValue())
 			.as("Server ID provided in criteria")
 			.returns(serverId, ServerFilter::getServerId)
@@ -121,12 +126,12 @@ public class UserDnp3ControllerTests {
 	@Test
 	public void getServerAuth() {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
+		final Long serverId = randomLong();
 		final String identifier = UUID.randomUUID().toString();
 		becomeUser(userId);
 
-		var conf = new ServerAuthConfiguration(userId, serverId, identifier, now());
+		var conf = new ServerAuthConfiguration(userId, serverId, identifier, now(), randomString());
 		var searchResults = new BasicFilterResults<>(asList(conf));
 		given(userDnp3Biz.serverAuthsForUser(eq(userId), any())).willReturn(searchResults);
 
@@ -138,7 +143,7 @@ public class UserDnp3ControllerTests {
 		then(result.getData()).as("First query result returned").isSameAs(conf);
 
 		verify(userDnp3Biz).serverAuthsForUser(eq(userId), filterCaptor.capture());
-		
+
 		then(filterCaptor.getValue())
 			.as("Server ID provided in criteria")
 			.returns(serverId, ServerFilter::getServerId)
@@ -155,12 +160,13 @@ public class UserDnp3ControllerTests {
 	@Test
 	public void getServerMeasurement() {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
-		final Integer index = (int) UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
+		final Long serverId = randomLong();
+		final Integer index = randomInt();
 		becomeUser(userId);
 
-		var conf = new ServerMeasurementConfiguration(userId, serverId, index, now());
+		var conf = new ServerMeasurementConfiguration(userId, serverId, index, now(), randomLong(),
+				randomString(), MeasurementType.AnalogInput, randomString());
 		var searchResults = new BasicFilterResults<>(asList(conf));
 		given(userDnp3Biz.serverMeasurementsForUser(eq(userId), any())).willReturn(searchResults);
 
@@ -172,7 +178,7 @@ public class UserDnp3ControllerTests {
 		then(result.getData()).as("First query result returned").isSameAs(conf);
 
 		verify(userDnp3Biz).serverMeasurementsForUser(eq(userId), dataPointFilterCaptor.capture());
-		
+
 		then(dataPointFilterCaptor.getValue())
 			.as("Server ID provided in criteria")
 			.returns(serverId, ServerDataPointFilter::getServerId)
@@ -189,12 +195,13 @@ public class UserDnp3ControllerTests {
 	@Test
 	public void getServerControl() {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
-		final Integer index = (int) UUID.randomUUID().getMostSignificantBits();
+		final Long userId = randomLong();
+		final Long serverId = randomLong();
+		final Integer index = randomInt();
 		becomeUser(userId);
 
-		var conf = new ServerControlConfiguration(userId, serverId, index, now());
+		var conf = new ServerControlConfiguration(userId, serverId, index, now(), randomLong(),
+				randomString(), ControlType.Analog);
 		var searchResults = new BasicFilterResults<>(asList(conf));
 		given(userDnp3Biz.serverControlsForUser(eq(userId), any())).willReturn(searchResults);
 
@@ -206,7 +213,7 @@ public class UserDnp3ControllerTests {
 		then(result.getData()).as("First query result returned").isSameAs(conf);
 
 		verify(userDnp3Biz).serverControlsForUser(eq(userId), dataPointFilterCaptor.capture());
-		
+
 		then(dataPointFilterCaptor.getValue())
 			.as("Server ID provided in criteria")
 			.returns(serverId, ServerDataPointFilter::getServerId)

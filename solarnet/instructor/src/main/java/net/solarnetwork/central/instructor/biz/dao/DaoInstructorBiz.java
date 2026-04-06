@@ -27,11 +27,11 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
@@ -71,7 +71,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 
 	private final NodeInstructionDao nodeInstructionDao;
 	private final List<NodeInstructionQueueHook> queueHooks;
-	private final NodeServiceAuditor nodeServiceAuditor;
+	private final @Nullable NodeServiceAuditor nodeServiceAuditor;
 	private int maxParamValueLength = DEFAULT_MAX_PARAM_VALUE_LENGTH;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -92,10 +92,10 @@ public class DaoInstructorBiz implements InstructorBiz {
 	 * @param nodeInstructionDao
 	 *        the DAO to use
 	 * @param queueHooks
-	 *        the queue hooks to use (may be {@literal null}
+	 *        the queue hooks to use (may be {@code null}
 	 */
 	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao,
-			List<NodeInstructionQueueHook> queueHooks) {
+			@Nullable List<NodeInstructionQueueHook> queueHooks) {
 		this(nodeInstructionDao, queueHooks, null);
 	}
 
@@ -105,22 +105,23 @@ public class DaoInstructorBiz implements InstructorBiz {
 	 * @param nodeInstructionDao
 	 *        the DAO to use
 	 * @param queueHooks
-	 *        the queue hooks to use (may be {@literal null}
+	 *        the queue hooks to use (may be {@code null}
 	 * @param nodeServiceAuditor
-	 *        the node service auditor to use (may be {@literal null})
+	 *        the node service auditor to use (may be {@code null})
 	 * @since 2.2
 	 */
 	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao,
-			List<NodeInstructionQueueHook> queueHooks, NodeServiceAuditor nodeServiceAuditor) {
+			@Nullable List<NodeInstructionQueueHook> queueHooks,
+			@Nullable NodeServiceAuditor nodeServiceAuditor) {
 		super();
 		this.nodeInstructionDao = nodeInstructionDao;
-		this.queueHooks = (queueHooks != null ? queueHooks : Collections.emptyList());
+		this.queueHooks = (queueHooks != null ? queueHooks : List.of());
 		this.nodeServiceAuditor = nodeServiceAuditor;
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public NodeInstruction getInstruction(Long instructionId) {
+	public @Nullable NodeInstruction getInstruction(Long instructionId) {
 		return nodeInstructionDao.get(instructionId);
 	}
 
@@ -133,7 +134,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED)
-	public NodeInstruction queueInstruction(Long nodeId, Instruction instruction) {
+	public @Nullable NodeInstruction queueInstruction(Long nodeId, Instruction instruction) {
 		log.debug("Received node {} instruction {}", nodeId, instruction.getTopic());
 		NodeInstruction nodeInstruction = new NodeInstruction(instruction.getTopic(),
 				instruction.getInstructionDate(), nodeId);
@@ -219,7 +220,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED)
 	public void updateInstructionState(Long instructionId, InstructionState state,
-			Map<String, ?> resultParameters) {
+			@Nullable Map<String, ?> resultParameters) {
 		final NodeInstruction nodeInstruction = nodeInstructionDao.get(instructionId);
 		if ( nodeInstruction == null ) {
 			return;
@@ -245,7 +246,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED)
 	public void updateInstructionsState(Set<Long> instructionIds, InstructionState state,
-			Map<Long, Map<String, ?>> resultParameters) {
+			@Nullable Map<Long, Map<String, ?>> resultParameters) {
 		for ( Long id : instructionIds ) {
 			Map<String, ?> params = (resultParameters != null ? resultParameters.get(id) : null);
 			updateInstructionState(id, state, params);
@@ -266,7 +267,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	 * @return the length; defaults to {@link #DEFAULT_MAX_PARAM_VALUE_LENGTH}
 	 * @since 1.8
 	 */
-	public int getMaxParamValueLength() {
+	public final int getMaxParamValueLength() {
 		return maxParamValueLength;
 	}
 
@@ -279,7 +280,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	 *         if {@code maxParamValueLength} is 0 or less
 	 * @since 1.8
 	 */
-	public void setMaxParamValueLength(int maxParamValueLength) {
+	public final void setMaxParamValueLength(int maxParamValueLength) {
 		if ( maxParamValueLength < 1 ) {
 			throw new IllegalArgumentException("The maxParamValueLength value must be greater than 0.");
 		}

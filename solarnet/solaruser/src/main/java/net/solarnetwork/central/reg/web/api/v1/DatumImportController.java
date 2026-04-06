@@ -274,7 +274,7 @@ public class DatumImportController {
 	 *
 	 * @param states
 	 *        an optional array of states to limit the results to, or
-	 *        {@literal null} to include all states
+	 *        {@code null} to include all states
 	 * @return the statuses
 	 */
 	@ResponseBody
@@ -337,7 +337,7 @@ public class DatumImportController {
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			result = importBiz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Queued,
-					Collections.singleton(DatumImportState.Staged));
+					Set.of(DatumImportState.Staged));
 		}
 		return success(result);
 	}

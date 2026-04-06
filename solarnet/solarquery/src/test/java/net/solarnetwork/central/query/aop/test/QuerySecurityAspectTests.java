@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.aop.test;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.privateOwnershipFor;
@@ -121,7 +122,7 @@ public class QuerySecurityAspectTests {
 	}
 
 	private AuthenticatedNode setAuthenticatedNode(final Long nodeId) {
-		AuthenticatedNode node = new AuthenticatedNode(nodeId, null, false);
+		AuthenticatedNode node = new AuthenticatedNode(nodeId, emptyList(), false);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(node, "foobar", "ROLE_NODE");
 		setUser(auth);
 		return node;
@@ -242,8 +243,8 @@ public class QuerySecurityAspectTests {
 	public void datumFilterPrivateNodeAsUserToken() {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
-		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(nodeId)).build();
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(nodeId))
+				.build();
 		setAuthenticatedUserToken(userId, policy);
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
@@ -261,8 +262,8 @@ public class QuerySecurityAspectTests {
 	public void datumFilterPrivateNodeAsSomeOtherUserToken() {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
-		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(nodeId)).build();
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(nodeId))
+				.build();
 		setAuthenticatedUserToken(-200L, policy);
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
@@ -281,8 +282,8 @@ public class QuerySecurityAspectTests {
 	public void datumFilterPrivateNodeAsReadNodeDataToken() {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
-		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(nodeId)).build();
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(nodeId))
+				.build();
 		setAuthenticatedReadNodeDataToken(userId, policy);
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
@@ -318,8 +319,8 @@ public class QuerySecurityAspectTests {
 	public void datumFilterPrivateNodeAsReadNodeDataTokenSomeOtherUser() {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
-		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(nodeId)).build();
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(nodeId))
+				.build();
 		// note the actor is not the owner of the node
 		setAuthenticatedReadNodeDataToken(-200L, policy);
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
@@ -338,8 +339,7 @@ public class QuerySecurityAspectTests {
 	@Test
 	public void datumFilterPrivateNodeAsReadNodeDataTokenSomeOtherUserNonMatchingNode() {
 		final Long nodeId = -1L;
-		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(-2L)).build();
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(-2L)).build();
 		// note the actor is not the owner of the node, and the token is not granted access to the node ID
 		setAuthenticatedReadNodeDataToken(-200L, policy);
 
@@ -382,7 +382,7 @@ public class QuerySecurityAspectTests {
 		final String[] policySourceIds = new String[] { "One", "Two" };
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
-				.withNodeIds(Collections.singleton(nodeId)).build();
+				.withNodeIds(Set.of(nodeId)).build();
 		setAuthenticatedReadNodeDataToken(userId, policy);
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
@@ -403,7 +403,7 @@ public class QuerySecurityAspectTests {
 		final String[] policySourceIds = new String[] { "/A/**/watts" };
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
-				.withNodeIds(Collections.singleton(nodeId)).build();
+				.withNodeIds(Set.of(nodeId)).build();
 		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
 		final Set<String> availableSourceIds = new LinkedHashSet<String>(
 				Arrays.asList("/A/B/watts", "/A/C/watts", "/B/B/watts", "Foo bar"));
@@ -558,8 +558,8 @@ public class QuerySecurityAspectTests {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
 		final Aggregation policyMinAgg = Aggregation.Day;
-		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNodeIds(Collections.singleton(nodeId)).withMinAggregation(policyMinAgg).build();
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(Set.of(nodeId))
+				.withMinAggregation(policyMinAgg).build();
 		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
 		setAuthenticatedReadNodeDataToken(userId, policy);
 
@@ -607,7 +607,7 @@ public class QuerySecurityAspectTests {
 		final String[] policySourceIds = new String[] { "/A/**/watts" };
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
-				.withNodeIds(Collections.singleton(nodeId)).build();
+				.withNodeIds(Set.of(nodeId)).build();
 		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
 		final QueryBiz queryBiz = EasyMock.createMock(QueryBiz.class);
 		final Signature methodSig = EasyMock.createMock(Signature.class);

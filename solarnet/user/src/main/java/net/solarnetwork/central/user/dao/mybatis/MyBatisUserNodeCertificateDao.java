@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dao.mybatis;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
@@ -47,7 +48,7 @@ public class MyBatisUserNodeCertificateDao extends BaseMyBatisGenericDao<UserNod
 	}
 
 	@Override
-	public UserNodeCertificate getActiveCertificateForNode(Long nodeId) {
+	public @Nullable UserNodeCertificate getActiveCertificateForNode(Long nodeId) {
 		return selectFirst(QUERY_ACTIVE_FOR_NODE, nodeId);
 	}
 }

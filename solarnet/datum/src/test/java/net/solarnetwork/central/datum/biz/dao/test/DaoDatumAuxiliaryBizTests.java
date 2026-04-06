@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.biz.dao.test;
 
+import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static org.easymock.EasyMock.capture;
@@ -110,10 +111,8 @@ public class DaoDatumAuxiliaryBizTests {
 		//return new DatumAuxiliaryEntity(UUID.randomUUID(), Instant.now().truncatedTo(ChronoUnit.HOURS),
 		//		DatumAuxiliaryType.Reset, null, sf, ss, "Note.", meta);
 
-		GeneralNodeDatumAuxiliary genAux = new GeneralNodeDatumAuxiliary();
-		genAux.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		genAux.setNodeId(TEST_NODE_ID);
-		genAux.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatumAuxiliary genAux = new GeneralNodeDatumAuxiliary(new GeneralNodeDatumAuxiliaryPK(
+				TEST_NODE_ID, Instant.now().truncatedTo(ChronoUnit.HOURS), TEST_SOURCE_ID));
 		genAux.setSamplesFinal(sf);
 		genAux.setSamplesStart(ss);
 		genAux.setMeta(meta);
@@ -129,7 +128,7 @@ public class DaoDatumAuxiliaryBizTests {
 
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
 		meta.putInfoValue("bim", "pow");
-		return new DatumAuxiliaryEntity(streamId, date, DatumAuxiliaryType.Reset, null, sf, ss, "Note.",
+		return new DatumAuxiliaryEntity(streamId, date, DatumAuxiliaryType.Reset, now(), sf, ss, "Note.",
 				meta);
 	}
 

@@ -22,54 +22,93 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
+import static java.sql.ResultSet.CLOSE_CURSORS_AT_COMMIT;
+import static java.sql.ResultSet.CONCUR_READ_ONLY;
+import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
-import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
-import static org.assertj.core.api.BDDAssertions.then;
-import static org.easymock.EasyMock.aryEq;
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.sameInstance;
+import static net.solarnetwork.util.ClassUtils.getResourceAsString;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import org.assertj.core.api.HamcrestCondition;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.aliased.test.TestAliasedSqlResources;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 
 /**
  * Test cases for the {@link SelectReadingDifference} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
+@ParameterizedClass
+@ValueSource(booleans = { false, true }) // for aliased or not
+@SuppressWarnings("static-access")
+@ExtendWith(MockitoExtension.class)
 public class SelectReadingDifferenceTests {
 
-	private final Logger log = LoggerFactory.getLogger(getClass());
+	@Parameter
+	private boolean aliased;
+
+	@Mock
+	private Connection con;
+
+	@Mock
+	private PreparedStatement stmt;
+
+	@Mock
+	private Array nodeIdsArray;
+
+	@Mock
+	private Array sourceIdsArray;
+
+	@Mock
+	private Array userIdsArray;
+
+	@Captor
+	private ArgumentCaptor<String> sqlCaptor;
+
+	private void thenSqlEqualsResource(String sql, String resource) {
+		// @formatter:off
+		and.then(sql)
+			.as("Generated SQL")
+			.isEqualToNormalizingWhitespace(getResourceAsString(
+					resource,
+					(aliased ? TestAliasedSqlResources.class : TestSqlResources.class),
+					SQL_COMMENT))
+			;
+		// @formatter:on
+	}
 
 	@Test
 	public void sql_diff_nodes_absoluteDates() {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setStartDate(start.toInstant());
@@ -79,8 +118,7 @@ public class SelectReadingDifferenceTests {
 		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
-		assertThat("SQL matches", sql,
-				equalToTextResource("reading-diff-nodes-dates.sql", TestSqlResources.class));
+		thenSqlEqualsResource(sql, "reading-diff-nodes-dates.sql");
 	}
 
 	@Test
@@ -88,6 +126,7 @@ public class SelectReadingDifferenceTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b/*" });
@@ -98,8 +137,7 @@ public class SelectReadingDifferenceTests {
 		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
-		assertThat("SQL matches", sql,
-				equalToTextResource("reading-diff-nodesAndSources-dates.sql", TestSqlResources.class));
+		thenSqlEqualsResource(sql, "reading-diff-nodesAndSources-dates.sql");
 	}
 
 	@Test
@@ -107,6 +145,7 @@ public class SelectReadingDifferenceTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b/*" });
@@ -118,15 +157,15 @@ public class SelectReadingDifferenceTests {
 		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
-		assertThat("SQL matches", sql, equalToTextResource(
-				"reading-diff-nodesAndSourcesAndUsers-dates.sql", TestSqlResources.class));
+		thenSqlEqualsResource(sql, "reading-diff-nodesAndSourcesAndUsers-dates.sql");
 	}
 
 	@Test
-	public void sql_diff_nodesAndSourcesAndUsers_absoluteDates_orderByNodeSourceTime() {
+	public void sql_diff_nodesAndSourcesAndUsers_absoluteDates_sortNodeSourceTime() {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b/*" });
@@ -139,10 +178,7 @@ public class SelectReadingDifferenceTests {
 		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
-		assertThat("SQL matches", sql,
-				equalToTextResource(
-						"reading-diff-nodesAndSourcesAndUsers-dates-orderByNodeSourceTime.sql",
-						TestSqlResources.class));
+		thenSqlEqualsResource(sql, "reading-diff-nodesAndSourcesAndUsers-dates-sortNodeSourceTime.sql");
 	}
 
 	@Test
@@ -150,6 +186,7 @@ public class SelectReadingDifferenceTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b/*" });
@@ -161,8 +198,7 @@ public class SelectReadingDifferenceTests {
 		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
-		assertThat("SQL matches", sql, equalToTextResource(
-				"reading-diff-nodesAndSourcesAndUsers-localDates.sql", TestSqlResources.class));
+		thenSqlEqualsResource(sql, "reading-diff-nodesAndSourcesAndUsers-localDates.sql");
 	}
 
 	@Test
@@ -170,6 +206,7 @@ public class SelectReadingDifferenceTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.DifferenceWithin);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setStartDate(start.toInstant());
@@ -179,26 +216,7 @@ public class SelectReadingDifferenceTests {
 		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
-		assertThat("SQL matches", sql,
-				equalToTextResource("reading-diffwithin-nodes-dates.sql", TestSqlResources.class));
-	}
-
-	@Test
-	public void sql_diffNear_nodes_absoluteDates() {
-		// GIVEN
-		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setReadingType(DatumReadingType.NearestDifference);
-		filter.setNodeIds(new Long[] { 1L, 2L });
-		filter.setStartDate(start.toInstant());
-		filter.setEndDate(start.plusMonths(1).toInstant());
-
-		// WHEN
-		String sql = new SelectReadingDifference(filter).getSql();
-
-		// THEN
-		assertThat("SQL matches", sql,
-				equalToTextResource("reading-diffnear-nodes-dates.sql", TestSqlResources.class));
+		thenSqlEqualsResource(sql, "reading-diffwithin-nodes-dates.sql");
 	}
 
 	@Test
@@ -206,58 +224,44 @@ public class SelectReadingDifferenceTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.NearestDifference);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b/*" });
-		filter.setUserIds(new Long[] { 1L, 2L });
+		filter.setUserIds(new Long[] { 3L, 4L });
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusMonths(1).toInstant());
 		filter.setTimeTolerance(Period.ofDays(7));
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
 
-		Array sourceIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
-		stmt.setArray(2, sourceIdsArray);
-		sourceIdsArray.free();
-
-		Array userIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).andReturn(userIdsArray);
-		stmt.setArray(3, userIdsArray);
-		userIdsArray.free();
-
-		Capture<Timestamp> startCaptor = new Capture<>();
-		stmt.setTimestamp(eq(4), capture(startCaptor));
-
-		Capture<Timestamp> endCaptor = new Capture<>();
-		stmt.setTimestamp(eq(5), capture(endCaptor));
-
-		Capture<Object> toleranceCaptor = new Capture<>();
-		stmt.setObject(eq(6), capture(toleranceCaptor), eq(Types.OTHER));
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).willReturn(userIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
 		PreparedStatement result = new SelectReadingDifference(filter).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		assertThat("Start timestamp", startCaptor.getValue(),
-				equalTo(Timestamp.from(filter.getStartDate())));
-		assertThat("End timestamp", endCaptor.getValue(), equalTo(Timestamp.from(filter.getEndDate())));
-		assertThat("Tolerance prarameter", toleranceCaptor.getValue(),
-				equalTo(filter.getTimeTolerance()));
-		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(),
+				"reading-diffnear-nodesAndSourcesAndUsers-dates.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+		then(stmt).should().setArray(eq(3), same(userIdsArray));
+		then(userIdsArray).should().free();
+		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(5), eq(Timestamp.from(filter.getEndDate())));
+		then(stmt).should().setObject(eq(6), eq(filter.getTimeTolerance()), eq(Types.OTHER));
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
@@ -265,6 +269,7 @@ public class SelectReadingDifferenceTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.CalculatedAtDifference);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setStartDate(start.toInstant());
@@ -274,8 +279,7 @@ public class SelectReadingDifferenceTests {
 		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
-		assertThat("SQL matches", sql,
-				equalToTextResource("reading-diffat-nodes-dates.sql", TestSqlResources.class));
+		thenSqlEqualsResource(sql, "reading-diffat-nodes-dates.sql");
 	}
 
 	@Test
@@ -283,48 +287,43 @@ public class SelectReadingDifferenceTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.CalculatedAtDifference);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b/*" });
-		filter.setUserIds(new Long[] { 1L, 2L });
+		filter.setUserIds(new Long[] { 3L, 4L });
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusMonths(1).toInstant());
 		filter.setTimeTolerance(Period.ofDays(7));
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
 
-		Array sourceIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
-		stmt.setArray(2, sourceIdsArray);
-		sourceIdsArray.free();
-
-		Array userIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).andReturn(userIdsArray);
-		stmt.setArray(3, userIdsArray);
-		userIdsArray.free();
-
-		stmt.setTimestamp(4, Timestamp.from(filter.getStartDate()));
-		stmt.setTimestamp(5, Timestamp.from(filter.getEndDate()));
-		stmt.setObject(6, filter.getTimeTolerance(), Types.OTHER);
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).willReturn(userIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
 		PreparedStatement result = new SelectReadingDifference(filter).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "reading-diffat-nodesAndSourcesAndUsers-dates.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+		then(stmt).should().setArray(eq(3), same(userIdsArray));
+		then(userIdsArray).should().free();
+		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(5), eq(Timestamp.from(filter.getEndDate())));
+		then(stmt).should().setObject(eq(6), eq(filter.getTimeTolerance()), eq(Types.OTHER));
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
@@ -332,52 +331,41 @@ public class SelectReadingDifferenceTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b/*" });
-		filter.setUserIds(new Long[] { 1L, 2L });
+		filter.setUserIds(new Long[] { 3L, 4L });
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusMonths(1).toInstant());
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
 
-		Array sourceIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
-		stmt.setArray(2, sourceIdsArray);
-		sourceIdsArray.free();
-
-		Array userIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).andReturn(userIdsArray);
-		stmt.setArray(3, userIdsArray);
-		userIdsArray.free();
-
-		Capture<Timestamp> startCaptor = new Capture<>();
-		stmt.setTimestamp(eq(4), capture(startCaptor));
-
-		Capture<Timestamp> endCaptor = new Capture<>();
-		stmt.setTimestamp(eq(5), capture(endCaptor));
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).willReturn(userIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
 		PreparedStatement result = new SelectReadingDifference(filter).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		assertThat("Start timestamp", startCaptor.getValue(),
-				equalTo(Timestamp.from(filter.getStartDate())));
-		assertThat("End timestamp", endCaptor.getValue(), equalTo(Timestamp.from(filter.getEndDate())));
-		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "reading-diff-nodesAndSourcesAndUsers-dates.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+		then(stmt).should().setArray(eq(3), same(userIdsArray));
+		then(userIdsArray).should().free();
+		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(5), eq(Timestamp.from(filter.getEndDate())));
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
@@ -385,68 +373,42 @@ public class SelectReadingDifferenceTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a", "b" });
-		filter.setUserIds(new Long[] { 1L, 2L });
+		filter.setUserIds(new Long[] { 3L, 4L });
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusMonths(1).toInstant());
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
 
-		Array sourceIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
-		stmt.setArray(2, sourceIdsArray);
-		sourceIdsArray.free();
-
-		Array userIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).andReturn(userIdsArray);
-		stmt.setArray(3, userIdsArray);
-		userIdsArray.free();
-
-		Capture<Timestamp> startCaptor = new Capture<>();
-		stmt.setTimestamp(eq(4), capture(startCaptor));
-
-		Capture<Timestamp> endCaptor = new Capture<>();
-		stmt.setTimestamp(eq(5), capture(endCaptor));
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).willReturn(userIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
 		PreparedStatement result = new SelectReadingDifference(filter).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(),
+				"reading-diff-nodesAndSourcesAndUsers-dates-literalSources.sql");
 
-		// @formatter:off
-		then(sqlCaptor.getValue())
-			.as("Generated SQL")
-			.is(new HamcrestCondition<>(equalToTextResource("reading-diff-nodesAndSourcesAndUsers-dates-literalSources.sql", getClass(), SQL_COMMENT)))
-			;
-		then(result)
-			.as("Connection statement returned")
-			.isSameAs(result)
-			;
-		then(startCaptor.getValue())
-			.as("Start timestamp")
-			.isEqualTo(Timestamp.from(filter.getStartDate()))
-			;
-		then(endCaptor.getValue())
-			.as("End timestamp")
-			.isEqualTo(Timestamp.from(filter.getEndDate()))
-			;
-		// @formatter:on
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+		then(stmt).should().setArray(eq(3), same(userIdsArray));
+		then(userIdsArray).should().free();
+		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(5), eq(Timestamp.from(filter.getEndDate())));
 
-		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
@@ -454,47 +416,42 @@ public class SelectReadingDifferenceTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setSourceIds(new String[] { "a/*", "b/*" });
-		filter.setUserIds(new Long[] { 1L, 2L });
+		filter.setUserIds(new Long[] { 3L, 4L });
 		filter.setLocalStartDate(start.toLocalDateTime());
 		filter.setLocalEndDate(start.plusMonths(1).toLocalDateTime());
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).willReturn(nodeIdsArray);
 
-		Array nodeIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
-		stmt.setArray(1, nodeIdsArray);
-		nodeIdsArray.free();
+		given(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).willReturn(sourceIdsArray);
 
-		Array sourceIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
-		stmt.setArray(2, sourceIdsArray);
-		sourceIdsArray.free();
-
-		Array userIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).andReturn(userIdsArray);
-		stmt.setArray(3, userIdsArray);
-		userIdsArray.free();
-
-		stmt.setObject(eq(4), eq(filter.getLocalStartDate()), eq(Types.TIMESTAMP));
-
-		stmt.setObject(eq(5), eq(filter.getLocalEndDate()), eq(Types.TIMESTAMP));
+		given(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).willReturn(userIdsArray);
 
 		// WHEN
-		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
 		PreparedStatement result = new SelectReadingDifference(filter).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(),
+				"reading-diff-nodesAndSourcesAndUsers-localDates.sql");
+
+		then(stmt).should().setArray(eq(1), same(nodeIdsArray));
+		then(nodeIdsArray).should().free();
+		then(stmt).should().setArray(eq(2), same(sourceIdsArray));
+		then(sourceIdsArray).should().free();
+		then(stmt).should().setArray(eq(3), same(userIdsArray));
+		then(userIdsArray).should().free();
+		then(stmt).should().setObject(eq(4), eq(filter.getLocalStartDate()), eq(Types.TIMESTAMP));
+		then(stmt).should().setObject(eq(5), eq(filter.getLocalEndDate()), eq(Types.TIMESTAMP));
+
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
@@ -502,6 +459,7 @@ public class SelectReadingDifferenceTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeId(1L);
 		filter.setSourceId("a/*");
@@ -509,50 +467,24 @@ public class SelectReadingDifferenceTests {
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusMonths(1).toInstant());
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
-
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
-
-		stmt.setObject(1, filter.getNodeId());
-		stmt.setString(2, filter.getSourceId());
-		stmt.setObject(3, filter.getUserId());
-
-		Capture<Timestamp> startCaptor = new Capture<>();
-		stmt.setTimestamp(eq(4), capture(startCaptor));
-
-		Capture<Timestamp> endCaptor = new Capture<>();
-		stmt.setTimestamp(eq(5), capture(endCaptor));
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
 		// WHEN
-		replay(con, stmt);
 		PreparedStatement result = new SelectReadingDifference(filter).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(), "reading-diff-nodeAndSourceAndUser-dates.sql");
 
-		// @formatter:off
-		then(sqlCaptor.getValue())
-			.as("Generated SQL")
-			.is(new HamcrestCondition<>(equalToTextResource("reading-diff-nodeAndSourceAndUser-dates.sql", getClass(), SQL_COMMENT)))
-			;
-		then(result)
-			.as("Connection statement returned")
-			.isSameAs(result)
-			;
-		then(startCaptor.getValue())
-			.as("Start timestamp")
-			.isEqualTo(Timestamp.from(filter.getStartDate()))
-			;
-		then(endCaptor.getValue())
-			.as("End timestamp")
-			.isEqualTo(Timestamp.from(filter.getEndDate()))
-			;
-		// @formatter:on
+		then(stmt).should().setObject(1, filter.getNodeId());
+		then(stmt).should().setString(2, filter.getSourceId());
+		then(stmt).should().setObject(3, filter.getUserId());
+		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(5), eq(Timestamp.from(filter.getEndDate())));
 
-		verify(con, stmt);
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 	@Test
@@ -560,6 +492,7 @@ public class SelectReadingDifferenceTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setIncludeStreamAliases(aliased);
 		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeId(1L);
 		filter.setSourceId("a");
@@ -567,50 +500,25 @@ public class SelectReadingDifferenceTests {
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusMonths(1).toInstant());
 
-		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
-
-		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
-				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
-
-		stmt.setObject(1, filter.getNodeId());
-		stmt.setString(2, filter.getSourceId());
-		stmt.setObject(3, filter.getUserId());
-
-		Capture<Timestamp> startCaptor = new Capture<>();
-		stmt.setTimestamp(eq(4), capture(startCaptor));
-
-		Capture<Timestamp> endCaptor = new Capture<>();
-		stmt.setTimestamp(eq(5), capture(endCaptor));
+		given(con.prepareStatement(any(), eq(TYPE_FORWARD_ONLY), eq(CONCUR_READ_ONLY),
+				eq(CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 
 		// WHEN
-		replay(con, stmt);
 		PreparedStatement result = new SelectReadingDifference(filter).createPreparedStatement(con);
 
 		// THEN
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(TYPE_FORWARD_ONLY),
+				eq(CONCUR_READ_ONLY), eq(CLOSE_CURSORS_AT_COMMIT));
+		thenSqlEqualsResource(sqlCaptor.getValue(),
+				"reading-diff-nodeAndSourceAndUser-dates-literalSource.sql");
 
-		// @formatter:off
-		then(sqlCaptor.getValue())
-			.as("Generated SQL")
-			.is(new HamcrestCondition<>(equalToTextResource("reading-diff-nodeAndSourceAndUser-dates-literalSource.sql", getClass(), SQL_COMMENT)))
-			;
-		then(result)
-			.as("Connection statement returned")
-			.isSameAs(result)
-			;
-		then(startCaptor.getValue())
-			.as("Start timestamp")
-			.isEqualTo(Timestamp.from(filter.getStartDate()))
-			;
-		then(endCaptor.getValue())
-			.as("End timestamp")
-			.isEqualTo(Timestamp.from(filter.getEndDate()))
-			;
-		// @formatter:on
+		then(stmt).should().setObject(1, filter.getNodeId());
+		then(stmt).should().setString(2, filter.getSourceId());
+		then(stmt).should().setObject(3, filter.getUserId());
+		then(stmt).should().setTimestamp(eq(4), eq(Timestamp.from(filter.getStartDate())));
+		then(stmt).should().setTimestamp(eq(5), eq(Timestamp.from(filter.getEndDate())));
 
-		verify(con, stmt);
+		and.then(result).as("Connection statement returned").isSameAs(stmt);
 	}
 
 }

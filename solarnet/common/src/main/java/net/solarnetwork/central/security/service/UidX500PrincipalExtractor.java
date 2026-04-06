@@ -22,13 +22,13 @@
 
 package net.solarnetwork.central.security.service;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.security.cert.X509Certificate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.security.auth.x500.X500Principal;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.web.authentication.preauth.x509.X509PrincipalExtractor;
-import org.springframework.util.Assert;
 
 /**
  * Extract the principal from the {@code UID} DN attribute.
@@ -53,9 +53,9 @@ public final class UidX500PrincipalExtractor implements X509PrincipalExtractor {
 	}
 
 	@Override
-	public Object extractPrincipal(X509Certificate cert) {
-		Assert.notNull(cert, "clientCert cannot be null");
-		X500Principal principal = cert.getSubjectX500Principal();
+	public Object extractPrincipal(final X509Certificate cert) throws BadCredentialsException {
+		final X509Certificate c = requireNonNullArgument(cert, "cert");
+		X500Principal principal = c.getSubjectX500Principal();
 		String subjectDN = principal.getName(X500Principal.RFC2253);
 		Matcher matcher = UID_SUBJECT_DN_PATTERN.matcher(subjectDN);
 		if ( !matcher.find() ) {

@@ -67,11 +67,16 @@ public final class CloudIntegrationConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CloudIntegrationConfiguration(UserLongCompositePK id, Instant created) {
-		super(id, created);
+	public CloudIntegrationConfiguration(UserLongCompositePK id, Instant created, String name,
+			String serviceIdentifier) {
+		super(id, created, name, serviceIdentifier);
 	}
 
 	/**
@@ -83,16 +88,21 @@ public final class CloudIntegrationConfiguration
 	 *        the configuration ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the name
+	 * @param serviceIdentifier
+	 *        the service identifier
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CloudIntegrationConfiguration(Long userId, Long configId, Instant created) {
-		this(new UserLongCompositePK(userId, configId), created);
+	public CloudIntegrationConfiguration(Long userId, Long configId, Instant created, String name,
+			String serviceIdentifier) {
+		this(new UserLongCompositePK(userId, configId), created, name, serviceIdentifier);
 	}
 
 	@Override
 	public CloudIntegrationConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new CloudIntegrationConfiguration(id, getCreated());
+		var copy = new CloudIntegrationConfiguration(id, created(), getName(), getServiceIdentifier());
 		copyTo(copy);
 		return copy;
 	}
@@ -132,9 +142,8 @@ public final class CloudIntegrationConfiguration
 	 *
 	 * @return the configuration ID
 	 */
-	public Long getConfigId() {
-		UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getConfigId() {
+		return id().getEntityId();
 	}
 
 	/**

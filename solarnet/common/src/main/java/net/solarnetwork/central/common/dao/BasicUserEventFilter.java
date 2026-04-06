@@ -25,6 +25,7 @@ package net.solarnetwork.central.common.dao;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.common.dao.UserEventMaintenanceDao.UserEventPurgeFilter;
@@ -40,9 +41,9 @@ import net.solarnetwork.dao.PaginationCriteria;
 public class BasicUserEventFilter extends BasicCoreCriteria
 		implements UserEventFilter, UserEventPurgeFilter {
 
-	private String[] tags;
-	private Instant startDate;
-	private Instant endDate;
+	private String @Nullable [] tags;
+	private @Nullable Instant startDate;
+	private @Nullable Instant endDate;
 
 	/**
 	 * Constructor.
@@ -57,12 +58,12 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 	 * @param criteria
 	 *        the criteria to copy
 	 */
-	public BasicUserEventFilter(PaginationCriteria criteria) {
+	public BasicUserEventFilter(@Nullable PaginationCriteria criteria) {
 		super(criteria);
 	}
 
 	@Override
-	public void copyFrom(PaginationCriteria criteria) {
+	public void copyFrom(@Nullable PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof BasicUserEventFilter c ) {
 			setTags(c.getTags());
@@ -94,7 +95,7 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -117,7 +118,7 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 	}
 
 	@Override
-	public String[] getTags() {
+	public final String @Nullable [] getTags() {
 		return tags;
 	}
 
@@ -127,13 +128,13 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 	 * @param tags
 	 *        the tags to set
 	 */
-	public void setTags(String[] tags) {
+	public final void setTags(String @Nullable [] tags) {
 		this.tags = tags;
 	}
 
 	@Override
 	@JsonIgnore
-	public String getTag() {
+	public final @Nullable String getTag() {
 		return UserEventFilter.super.getTag();
 	}
 
@@ -144,12 +145,12 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 	 *        the tag to set
 	 */
 	@JsonSetter
-	public void setTag(String tag) {
+	public final void setTag(@Nullable String tag) {
 		setTags(tag != null ? new String[] { tag } : null);
 	}
 
 	@Override
-	public Instant getStartDate() {
+	public final @Nullable Instant getStartDate() {
 		return startDate;
 	}
 
@@ -159,12 +160,12 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 	 * @param startDate
 	 *        the start date to set
 	 */
-	public void setStartDate(Instant startDate) {
+	public final void setStartDate(@Nullable Instant startDate) {
 		this.startDate = startDate;
 	}
 
 	@Override
-	public Instant getEndDate() {
+	public final @Nullable Instant getEndDate() {
 		return endDate;
 	}
 
@@ -174,7 +175,7 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 	 * @param endDate
 	 *        the end date to set
 	 */
-	public void setEndDate(Instant endDate) {
+	public final void setEndDate(@Nullable Instant endDate) {
 		this.endDate = endDate;
 	}
 

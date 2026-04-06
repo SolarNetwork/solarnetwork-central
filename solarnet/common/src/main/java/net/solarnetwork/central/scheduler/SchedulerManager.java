@@ -24,6 +24,7 @@ package net.solarnetwork.central.scheduler;
 
 import java.util.Collection;
 import java.util.concurrent.ScheduledFuture;
+import org.jspecify.annotations.Nullable;
 import org.springframework.scheduling.Trigger;
 
 /**
@@ -53,7 +54,7 @@ public interface SchedulerManager {
 	/**
 	 * Get a collection of all available scheduled jobs.
 	 * 
-	 * @return the collection of jobs; never {@literal null}
+	 * @return the collection of jobs; never {@code null}
 	 */
 	Collection<JobInfo> allJobInfos();
 
@@ -93,8 +94,10 @@ public interface SchedulerManager {
 	 *        the job task
 	 * @param trigger
 	 *        the desired trigger
-	 * @return the scheduled future
+	 * @return the scheduled future, or {@code null} if the trigger will never
+	 *         fire
 	 */
+	@Nullable
 	ScheduledFuture<?> scheduleJob(String groupId, String id, Runnable task, Trigger trigger);
 
 	/**

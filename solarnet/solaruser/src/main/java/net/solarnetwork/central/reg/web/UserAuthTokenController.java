@@ -280,7 +280,7 @@ public class UserAuthTokenController extends ControllerSupport {
 			@RequestParam(value = "name", required = false) String name,
 			@RequestParam(value = "description", required = false) String description) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
-		UserAuthToken info = new UserAuthToken();
+		UserAuthToken info = new UserAuthToken(tokenId, user.getUserId());
 		info.setName(name != null && !name.isBlank() ? name : null);
 		info.setDescription(description != null && !description.isBlank() ? description : null);
 		userBiz.updateUserAuthTokenInfo(user.getUserId(), tokenId, info);

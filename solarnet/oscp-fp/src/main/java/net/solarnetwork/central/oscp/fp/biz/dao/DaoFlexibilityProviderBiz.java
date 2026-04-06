@@ -26,6 +26,7 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.datum.domain.GeneralObjectDatumKey.UNASSIGNED_OBJECT_ID;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.oscp.dao.BasicConfigurationFilter.filterForUsers;
 import static net.solarnetwork.central.oscp.domain.DatumPublishEvent.FORECAST_TYPE_PARAM;
@@ -48,8 +49,8 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -62,6 +63,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
@@ -71,6 +73,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.OwnedGeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -152,8 +155,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 * @return the map
 	 */
 	public static Map<String, String> defaultVersionUrlMap() {
-		return Collections.singletonMap(V20,
-				"https://oscp.solarnetwork.net" + FLEXIBILITY_PROVIDER_V20_URL_PATH);
+		return Map.of(V20, "https://oscp.solarnetwork.net" + FLEXIBILITY_PROVIDER_V20_URL_PATH);
 	}
 
 	/**
@@ -178,7 +180,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoFlexibilityProviderBiz(Executor executor, ExternalSystemClient externalSystemClient,
 			UserEventAppenderBiz userEventAppenderBiz, FlexibilityProviderDao flexibilityProviderDao,
@@ -441,7 +443,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			Long userId, BaseOscpExternalSystemConfiguration<?> src,
 			BaseOscpExternalSystemConfiguration<?> dest, CapacityGroupConfiguration group,
 			DatumPublishSettings settings, Supplier<Collection<OwnedGeneralNodeDatum>> datumSupplier,
-			KeyValuePair... sourceIdParameters) {
+			KeyValuePair @Nullable... sourceIdParameters) {
 		if ( !shouldPublishForSettings(settings) || (fluxPublisher == null && datumDao == null) ) {
 			return null;
 		}
@@ -451,20 +453,21 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			// node ownership not known or not owned by context user: ignore
 			return null;
 		}
-		final Collection<OwnedGeneralNodeDatum> datum = datumSupplier.get();
-		if ( datum == null || datum.isEmpty() ) {
+		final Collection<OwnedGeneralNodeDatum> tempDatum = datumSupplier.get();
+		if ( tempDatum == null || tempDatum.isEmpty() ) {
 			return null;
 		}
-		DatumPublishEvent event = new DatumPublishEvent(role, action, src, dest, group, settings, datum,
-				sourceIdParameters);
+		final List<OwnedGeneralNodeDatum> datum = new ArrayList<>();
+		final DatumPublishEvent event = new DatumPublishEvent(role, action, src, dest, group, settings,
+				datum, sourceIdParameters);
 		String sourceId = event.sourceId();
 		if ( sourceIdSuffix != null ) {
 			sourceId += sourceIdSuffix;
 		}
-		for ( OwnedGeneralNodeDatum d : datum ) {
-			d.setNodeId(nodeId);
-			d.setSourceId(sourceId);
+		for ( OwnedGeneralNodeDatum d : tempDatum ) {
+			datum.add(d.copyWithId(new GeneralNodeDatumPK(nodeId, d.getCreated(), sourceId)));
 		}
+
 		if ( datumDao != null && settings.isPublishToSolarIn() ) {
 			for ( OwnedGeneralNodeDatum d : datum ) {
 				datumDao.store(d);
@@ -511,14 +514,14 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		 *        the datum supplier
 		 * @param sourceIdParameters
 		 *        additional source ID template parameters
-		 * @return the published event, or {@literal null} if not published
+		 * @return the published event, or {@code null} if not published
 		 */
 		@SuppressWarnings("EffectivelyPrivate")
 		protected DatumPublishEvent publish(String action, String sourceIdSuffix,
 				BaseOscpExternalSystemConfiguration<?> src, BaseOscpExternalSystemConfiguration<?> dest,
 				CapacityGroupConfiguration group, DatumPublishSettings settings,
 				Supplier<Collection<OwnedGeneralNodeDatum>> datumSupplier,
-				KeyValuePair... sourceIdParameters) {
+				KeyValuePair @Nullable... sourceIdParameters) {
 			return DaoFlexibilityProviderBiz.this.publishDatum(action, sourceIdSuffix, role,
 					configId.getUserId(), src, dest, group, settings, datumSupplier, sourceIdParameters);
 		}
@@ -566,14 +569,14 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		@Override
 		public Collection<OwnedGeneralNodeDatum> get() {
 			// we don't need to set node ID or source ID here, as that will be resolved in the publish() method
-			OwnedGeneralNodeDatum d = new OwnedGeneralNodeDatum(configId.getUserId());
-			d.setCreated(ts);
+			OwnedGeneralNodeDatum d = new OwnedGeneralNodeDatum(
+					new GeneralNodeDatumPK(UNASSIGNED_OBJECT_ID, ts, ""), configId.getUserId());
 
 			DatumSamples s = new DatumSamples();
 			s.putStatusSampleValue("expires", ISO_DATE_TIME_ALT_UTC.format(expires));
 			d.setSamples(s);
 
-			return Collections.singleton(d);
+			return Set.of(d);
 		}
 
 	}
@@ -593,7 +596,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			this.blocks = blocks;
 			withErrorEventTags(CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS_ERROR_TAGS);
 			withSuccessEventTags(CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS);
-			withParameters(Collections.singletonMap(OscpWebUtils.CORRELATION_ID_HEADER,
+			withParameters(Map.of(OscpWebUtils.CORRELATION_ID_HEADER,
 					requireNonNullArgument(forecastIdentifier, "forecastIdentifier")));
 		}
 
@@ -699,8 +702,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 				if ( origParams != null ) {
 					pubParams.putAll(origParams);
 				}
-				Map<String, String> pubHeaders = Collections.singletonMap(
-						ExternalSystemServiceProperties.SOURCE_ID_HEADER,
+				Map<String, String> pubHeaders = Map.of(ExternalSystemServiceProperties.SOURCE_ID_HEADER,
 						evt.sourceId() + "/".concat(forecast.type().getAlias()));
 				pubParams.put(ExternalSystemServiceProperties.EXTRA_HTTP_HEADERS, pubHeaders);
 
@@ -733,8 +735,9 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 						continue;
 					}
 					OwnedGeneralNodeDatum d = data.computeIfAbsent(start, k -> {
-						OwnedGeneralNodeDatum newD = new OwnedGeneralNodeDatum(configId.getUserId());
-						newD.setCreated(k);
+						OwnedGeneralNodeDatum newD = new OwnedGeneralNodeDatum(
+								new GeneralNodeDatumPK(UNASSIGNED_OBJECT_ID, k, ""),
+								configId.getUserId());
 						DatumSamples s = new DatumSamples();
 						newD.setSamples(s);
 						s.putInstantaneousSampleValue("duration", Duration.between(k, end).toSeconds());
@@ -816,12 +819,13 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 						singleton(V20));
 				doWork20(config);
 			} catch ( ExternalSystemConfigurationException confEx ) {
-				if ( confEx.getConfig().getRegistrationStatus() != RegistrationStatus.Pending ) {
+				if ( confEx.hasConfig()
+						&& confEx.config().getRegistrationStatus() != RegistrationStatus.Pending ) {
 					log.info(
 							"Unable to register with {} {} because the registration status is not Pending.",
 							role, configId.ident());
-				} else {
-					confEx.getConfig().setRegistrationStatus(RegistrationStatus.Failed);
+				} else if ( confEx.hasConfig() ) {
+					confEx.config().setRegistrationStatus(RegistrationStatus.Failed);
 					dao.save((C) confEx.getConfig());
 					throw confEx;
 				}
@@ -837,7 +841,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 						"Flexibility Provider URL for version not configured");
 				throw new ExternalSystemConfigurationException(role, conf, event, msg);
 			}
-			List<VersionUrl> versions = Collections.singletonList(new VersionUrl(V20, url));
+			List<VersionUrl> versions = List.of(new VersionUrl(V20, url));
 			Register register = new Register(token, versions);
 			post(REGISTER_URL_PATH, register);
 
@@ -881,7 +885,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 * @param versionUrlMap
 	 *        the URL mapping to set
 	 * @throws IllegalArgumentException
-	 *         if the argument is {@literal null}
+	 *         if the argument is {@code null}
 	 */
 	public void setVersionUrlMap(Map<String, String> versionUrlMap) {
 		this.versionUrlMap = requireNonNullArgument(versionUrlMap, "versionUrlMap");
@@ -1008,7 +1012,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	/**
 	 * Get the SolarFlux publisher.
 	 *
-	 * @return the publisher, or {@literal null}
+	 * @return the publisher, or {@code null}
 	 */
 	public Consumer<DatumPublishEvent> getFluxPublisher() {
 		return fluxPublisher;

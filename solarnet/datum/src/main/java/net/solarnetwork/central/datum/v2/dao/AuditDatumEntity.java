@@ -26,6 +26,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -34,6 +35,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.domain.BasicIdentity;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * Audit datum entity.
@@ -45,22 +47,22 @@ import net.solarnetwork.domain.datum.Aggregation;
 @JsonPropertyOrder({ "ts", "streamId", "aggregation", "datumTotalCount", "datumCount",
 		"datumHourlyCount", "datumDailyCount", "datumMonthlyCount", "datumPropertyPostedCount",
 		"datumPropertyRepostedCount", "datumQueryCount", "fluxDataInCount" })
-@JsonIgnoreProperties("id")
+@JsonIgnoreProperties({ "id", "timestamp" })
 public class AuditDatumEntity extends BasicIdentity<DatumPK>
 		implements AuditDatum, Cloneable, Serializable {
 
 	@Serial
 	private static final long serialVersionUID = 8810831398503917185L;
 
-	private final Aggregation aggregation;
-	private final Long datumCount;
-	private final Long datumHourlyCount;
-	private final Integer datumDailyCount;
-	private final Integer datumMonthlyCount;
-	private final Long datumPropertyCount;
-	private final Long datumPropertyUpdateCount;
-	private final Long datumQueryCount;
-	private final Long fluxDataInCount;
+	private final @Nullable Aggregation aggregation;
+	private final @Nullable Long datumCount;
+	private final @Nullable Long datumHourlyCount;
+	private final @Nullable Integer datumDailyCount;
+	private final @Nullable Integer datumMonthlyCount;
+	private final @Nullable Long datumPropertyCount;
+	private final @Nullable Long datumPropertyUpdateCount;
+	private final @Nullable Long datumQueryCount;
+	private final @Nullable Long fluxDataInCount;
 
 	/**
 	 * Create a datum record counts instance.
@@ -76,37 +78,15 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	 * @param datumMonthlyCount
 	 *        the monthly datum count
 	 * @return the datum record counts
+	 * @throws IllegalArgumentException
+	 *         if {@code timestamp} is {@code null}
 	 */
-	public static DatumRecordCounts datumRecordCounts(Instant timestamp, Long datumCount,
-			Long datumHourlyCount, Integer datumDailyCount, Integer datumMonthlyCount) {
-		return new AuditDatumEntity(null, timestamp, null, datumCount, datumHourlyCount, datumDailyCount,
-				datumMonthlyCount, null, null, null, null);
-	}
-
-	/**
-	 * Create an hourly audit datum.
-	 *
-	 * @param streamId
-	 *        the stream ID
-	 * @param timestamp
-	 *        the time
-	 * @param datumCount
-	 *        the datum count
-	 * @param datumPropertyCount
-	 *        the datum property count
-	 * @param datumQueryCount
-	 *        the datum query count
-	 * @param datumPropertyUpdateCount
-	 *        the datum property update count
-	 * @return the audit datum
-	 * @deprecated use
-	 *             {@link #ioAuditDatum(UUID, Instant, Long, Long, Long, Long, Long)}
-	 */
-	@Deprecated(since = "1.3")
-	public static AuditDatumEntity ioAuditDatum(UUID streamId, Instant timestamp, Long datumCount,
-			Long datumPropertyCount, Long datumQueryCount, Long datumPropertyUpdateCount) {
-		return ioAuditDatum(streamId, timestamp, datumCount, datumPropertyCount, datumQueryCount,
-				datumPropertyUpdateCount, 0L);
+	public static DatumRecordCounts datumRecordCounts(Instant timestamp, @Nullable Long datumCount,
+			@Nullable Long datumHourlyCount, @Nullable Integer datumDailyCount,
+			@Nullable Integer datumMonthlyCount) {
+		return new AuditDatumEntity(StreamDatum.UNASSIGNED_STREAM_ID, timestamp, Aggregation.None,
+				datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount, null, null, null,
+				null);
 	}
 
 	/**
@@ -127,11 +107,13 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	 * @param fluxDataInCount
 	 *        the SolarFlux data input count
 	 * @return the audit datum
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} or {@code timestamp} is {@code null}
 	 * @since 1.3
 	 */
-	public static AuditDatumEntity ioAuditDatum(UUID streamId, Instant timestamp, Long datumCount,
-			Long datumPropertyCount, Long datumQueryCount, Long datumPropertyUpdateCount,
-			Long fluxDataInCount) {
+	public static AuditDatumEntity ioAuditDatum(UUID streamId, Instant timestamp,
+			@Nullable Long datumCount, @Nullable Long datumPropertyCount, @Nullable Long datumQueryCount,
+			@Nullable Long datumPropertyUpdateCount, @Nullable Long fluxDataInCount) {
 		return new AuditDatumEntity(streamId, timestamp, Aggregation.Hour, datumCount, null, null, null,
 				datumPropertyCount, datumQueryCount, datumPropertyUpdateCount, fluxDataInCount);
 	}
@@ -155,45 +137,18 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	 *        the datum query count
 	 * @param datumPropertyUpdateCount
 	 *        the datum property update count
-	 * @return the audit datum
-	 * @deprecated use
-	 *             {@link #dailyAuditDatum(UUID, Instant, Long, Long, Integer, Long, Long, Long, Long)}
-	 */
-	@Deprecated(since = "1.3")
-	public static AuditDatumEntity dailyAuditDatum(UUID streamId, Instant timestamp, Long datumCount,
-			Long datumHourlyCount, Integer datumDailyCount, Long datumPropertyCount,
-			Long datumQueryCount, Long datumPropertyUpdateCount) {
-		return dailyAuditDatum(streamId, timestamp, datumCount, datumHourlyCount, datumDailyCount,
-				datumPropertyCount, datumQueryCount, datumPropertyUpdateCount, 0L);
-	}
-
-	/**
-	 * Create a daily audit datum.
-	 *
-	 * @param streamId
-	 *        the stream ID
-	 * @param timestamp
-	 *        the time
-	 * @param datumCount
-	 *        the datum count
-	 * @param datumHourlyCount
-	 *        the hourly datum count
-	 * @param datumDailyCount
-	 *        the daily datum count
-	 * @param datumPropertyCount
-	 *        the datum property count
-	 * @param datumQueryCount
-	 *        the datum query count
-	 * @param datumPropertyUpdateCount
-	 *        the datum property update count
 	 * @param fluxDataInCount
 	 *        the SolarFlux data input count
 	 * @return the audit datum
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} or {@code timestamp} is {@code null}
 	 * @since 1.3
 	 */
-	public static AuditDatumEntity dailyAuditDatum(UUID streamId, Instant timestamp, Long datumCount,
-			Long datumHourlyCount, Integer datumDailyCount, Long datumPropertyCount,
-			Long datumQueryCount, Long datumPropertyUpdateCount, Long fluxDataInCount) {
+	public static AuditDatumEntity dailyAuditDatum(UUID streamId, Instant timestamp,
+			@Nullable Long datumCount, @Nullable Long datumHourlyCount,
+			@Nullable Integer datumDailyCount, @Nullable Long datumPropertyCount,
+			@Nullable Long datumQueryCount, @Nullable Long datumPropertyUpdateCount,
+			@Nullable Long fluxDataInCount) {
 		return new AuditDatumEntity(streamId, timestamp, Aggregation.Day, datumCount, datumHourlyCount,
 				datumDailyCount, null, datumPropertyCount, datumQueryCount, datumPropertyUpdateCount,
 				fluxDataInCount);
@@ -220,48 +175,18 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	 *        the datum query count
 	 * @param datumPropertyUpdateCount
 	 *        the datum property update count
-	 * @return the audit datum
-	 * @deprecated use
-	 *             {@link #monthlyAuditDatum(UUID, Instant, Long, Long, Integer, Integer, Long, Long, Long, Long)}
-	 */
-	@Deprecated(since = "1.3")
-	public static AuditDatumEntity monthlyAuditDatum(UUID streamId, Instant timestamp, Long datumCount,
-			Long datumHourlyCount, Integer datumDailyCount, Integer datumMonthlyCount,
-			Long datumPropertyCount, Long datumQueryCount, Long datumPropertyUpdateCount) {
-		return monthlyAuditDatum(streamId, timestamp, datumCount, datumHourlyCount, datumDailyCount,
-				datumMonthlyCount, datumPropertyCount, datumQueryCount, datumPropertyUpdateCount, 0L);
-	}
-
-	/**
-	 * Create a monthly audit datum.
-	 *
-	 * @param streamId
-	 *        the stream ID
-	 * @param timestamp
-	 *        the time
-	 * @param datumCount
-	 *        the datum count
-	 * @param datumHourlyCount
-	 *        the hourly datum count
-	 * @param datumDailyCount
-	 *        the daily datum count
-	 * @param datumMonthlyCount
-	 *        the monthly datum count
-	 * @param datumPropertyCount
-	 *        the datum property count
-	 * @param datumQueryCount
-	 *        the datum query count
-	 * @param datumPropertyUpdateCount
-	 *        the datum property update count
 	 * @param fluxDataInCount
 	 *        the SolarFlux data input count
 	 * @return the audit datum
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} or {@code timestamp} is {@code null}
 	 * @since 1.3
 	 */
-	public static AuditDatumEntity monthlyAuditDatum(UUID streamId, Instant timestamp, Long datumCount,
-			Long datumHourlyCount, Integer datumDailyCount, Integer datumMonthlyCount,
-			Long datumPropertyCount, Long datumQueryCount, Long datumPropertyUpdateCount,
-			Long fluxDataInCount) {
+	public static AuditDatumEntity monthlyAuditDatum(UUID streamId, Instant timestamp,
+			@Nullable Long datumCount, @Nullable Long datumHourlyCount,
+			@Nullable Integer datumDailyCount, @Nullable Integer datumMonthlyCount,
+			@Nullable Long datumPropertyCount, @Nullable Long datumQueryCount,
+			@Nullable Long datumPropertyUpdateCount, @Nullable Long fluxDataInCount) {
 		return new AuditDatumEntity(streamId, timestamp, Aggregation.Month, datumCount, datumHourlyCount,
 				datumDailyCount, datumMonthlyCount, datumPropertyCount, datumQueryCount,
 				datumPropertyUpdateCount, fluxDataInCount);
@@ -283,9 +208,12 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	 * @param datumMonthlyCount
 	 *        the monthly datum count
 	 * @return the audit datum
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} or {@code timestamp} is {@code null}
 	 */
 	public static AuditDatumEntity accumulativeAuditDatum(UUID streamId, Instant timestamp,
-			Long datumCount, Long datumHourlyCount, Integer datumDailyCount, Integer datumMonthlyCount) {
+			@Nullable Long datumCount, @Nullable Long datumHourlyCount,
+			@Nullable Integer datumDailyCount, @Nullable Integer datumMonthlyCount) {
 		return new AuditDatumEntity(streamId, timestamp, Aggregation.RunningTotal, datumCount,
 				datumHourlyCount, datumDailyCount, datumMonthlyCount, null, null, null, null);
 	}
@@ -313,45 +241,14 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	 *        the datum query count
 	 * @param datumPropertyUpdateCount
 	 *        the datum property update count
-	 * @deprecated use
-	 *             {@link #AuditDatumEntity(UUID, Instant, Aggregation, Long, Long, Integer, Integer, Long, Long, Long, Long)}
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} or {@code timestamp} is {@code null}
 	 */
-	@Deprecated(since = "1.3")
-	public AuditDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation, Long datumCount,
-			Long datumHourlyCount, Integer datumDailyCount, Integer datumMonthlyCount,
-			Long datumPropertyCount, Long datumQueryCount, Long datumPropertyUpdateCount) {
-		this(streamId, timestamp, aggregation, datumCount, datumHourlyCount, datumDailyCount,
-				datumMonthlyCount, datumPropertyCount, datumQueryCount, datumPropertyUpdateCount, 0L);
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param streamId
-	 *        the stream ID
-	 * @param timestamp
-	 *        the timestamp
-	 * @param aggregation
-	 *        the aggregation
-	 * @param datumCount
-	 *        the datum count
-	 * @param datumHourlyCount
-	 *        the hourly datum count
-	 * @param datumDailyCount
-	 *        the daily datum count
-	 * @param datumMonthlyCount
-	 *        the monthly datum count
-	 * @param datumPropertyCount
-	 *        the datum property count
-	 * @param datumQueryCount
-	 *        the datum query count
-	 * @param datumPropertyUpdateCount
-	 *        the datum property update count
-	 */
-	public AuditDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation, Long datumCount,
-			Long datumHourlyCount, Integer datumDailyCount, Integer datumMonthlyCount,
-			Long datumPropertyCount, Long datumQueryCount, Long datumPropertyUpdateCount,
-			Long fluxDataInCount) {
+	public AuditDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation,
+			@Nullable Long datumCount, @Nullable Long datumHourlyCount,
+			@Nullable Integer datumDailyCount, @Nullable Integer datumMonthlyCount,
+			@Nullable Long datumPropertyCount, @Nullable Long datumQueryCount,
+			@Nullable Long datumPropertyUpdateCount, @Nullable Long fluxDataInCount) {
 		super(new DatumPK(streamId, timestamp));
 		this.aggregation = aggregation;
 		this.datumCount = datumCount;
@@ -426,63 +323,60 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 		return (AuditDatumEntity) super.clone();
 	}
 
-	@Override
-	public UUID getStreamId() {
-		DatumPK id = getId();
-		return (id != null ? id.getStreamId() : null);
-	}
-
-	@JsonProperty("ts")
-	@Override
-	public Instant getTimestamp() {
-		DatumPK id = getId();
-		return (id != null ? id.getTimestamp() : null);
+	/**
+	 * Get the optional timestamp.
+	 *
+	 * @return the timestamp, or {@code null}
+	 */
+	public final @Nullable Instant getTs() {
+		Instant ts = getTimestamp();
+		return (ts == null || Instant.EPOCH.compareTo(ts) == 0 ? null : ts);
 	}
 
 	@Override
-	public Aggregation getAggregation() {
+	public final @Nullable Aggregation getAggregation() {
 		return aggregation;
 	}
 
 	@Override
-	public Long getDatumCount() {
+	public final @Nullable Long getDatumCount() {
 		return datumCount;
 	}
 
 	@Override
-	public Long getDatumHourlyCount() {
+	public final @Nullable Long getDatumHourlyCount() {
 		return datumHourlyCount;
 	}
 
 	@Override
-	public Integer getDatumDailyCount() {
+	public final @Nullable Integer getDatumDailyCount() {
 		return datumDailyCount;
 	}
 
 	@Override
-	public Integer getDatumMonthlyCount() {
+	public final @Nullable Integer getDatumMonthlyCount() {
 		return datumMonthlyCount;
 	}
 
 	@JsonProperty("datumPropertyPostedCount")
 	@Override
-	public Long getDatumPropertyCount() {
+	public final @Nullable Long getDatumPropertyCount() {
 		return datumPropertyCount;
 	}
 
 	@Override
-	public Long getDatumQueryCount() {
+	public final @Nullable Long getDatumQueryCount() {
 		return datumQueryCount;
 	}
 
 	@JsonProperty("datumPropertyRepostedCount")
 	@Override
-	public Long getDatumPropertyUpdateCount() {
+	public final @Nullable Long getDatumPropertyUpdateCount() {
 		return datumPropertyUpdateCount;
 	}
 
 	@Override
-	public final Long getFluxDataInCount() {
+	public final @Nullable Long getFluxDataInCount() {
 		return fluxDataInCount;
 	}
 

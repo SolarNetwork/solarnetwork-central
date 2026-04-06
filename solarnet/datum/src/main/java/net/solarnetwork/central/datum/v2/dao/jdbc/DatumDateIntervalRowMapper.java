@@ -22,14 +22,16 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
+import net.solarnetwork.domain.datum.BasicObjectDatumStreamIdentity;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -50,7 +52,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </ol>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class DatumDateIntervalRowMapper implements RowMapper<DatumDateInterval> {
@@ -60,20 +62,19 @@ public class DatumDateIntervalRowMapper implements RowMapper<DatumDateInterval> 
 
 	@Override
 	public DatumDateInterval mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = getUuid(rs, 1);
-		Timestamp start = rs.getTimestamp(2);
-		Timestamp end = rs.getTimestamp(3);
+		UUID streamId = uuid(rs, 1);
+		Instant start = timestampInstant(rs, 2);
+		Instant end = timestampInstant(rs, 3);
 		Object objId = rs.getObject(4);
-		String sourceId = rs.getString(5);
-		String timeZoneId = rs.getString(6);
+		String sourceId = nonnull(rs.getString(5), "Source ID");
+		String timeZoneId = nonnull(rs.getString(6), "Time Zone ID");
 
 		ObjectDatumKind kind = ObjectDatumKind.forKey(rs.getString(7));
 
-		Long objectId = objId instanceof Number n ? n.longValue() : null;
+		Long objectId = nonnull(objId instanceof Number n ? n.longValue() : null, "Object ID");
 
-		return new DatumDateInterval(start != null ? start.toInstant() : null,
-				end != null ? end.toInstant() : null, timeZoneId,
-				new ObjectDatumId(kind, streamId, objectId, sourceId, null, null));
+		return new DatumDateInterval(start, end, timeZoneId,
+				new BasicObjectDatumStreamIdentity(streamId, kind, objectId, sourceId));
 	}
 
 }

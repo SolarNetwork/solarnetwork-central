@@ -35,6 +35,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.DataSource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusUpdateDao;
@@ -74,7 +75,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	private final BlockingQueue<ChargePointActionStatusUpdate> statuses;
 	private final StatTracker stats;
 
-	private WriterThread writerThread;
+	private @Nullable WriterThread writerThread;
 	private long updateDelay;
 	private long connectionRecoveryDelay;
 	private int bufferRemovalLagAlertThreshold;
@@ -89,7 +90,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * @param dataSource
 	 *        the JDBC data source to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public AsyncJdbcChargePointActionStatusDao(DataSource dataSource) {
 		this(dataSource, new LinkedBlockingQueue<>());
@@ -103,7 +104,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * @param statuses
 	 *        the map to use for tracking status updates
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public AsyncJdbcChargePointActionStatusDao(DataSource dataSource,
 			BlockingQueue<ChargePointActionStatusUpdate> statuses) {
@@ -121,7 +122,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	 * @param stats
 	 *        the statistics counter
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 * @since 1.1
 	 */
 	public AsyncJdbcChargePointActionStatusDao(DataSource dataSource,

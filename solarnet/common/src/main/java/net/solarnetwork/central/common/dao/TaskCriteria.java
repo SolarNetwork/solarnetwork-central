@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for task related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface TaskCriteria {
 
@@ -35,12 +37,12 @@ public interface TaskCriteria {
 	 *
 	 * <p>
 	 * This returns the first available task ID from the {@link #getTaskIds()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first task ID, or {@literal null} if not available
+	 * @return the first task ID, or {@code null} if not available
 	 */
-	default Long getTaskId() {
+	default @Nullable Long getTaskId() {
 		final Long[] array = getTaskIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -48,9 +50,9 @@ public interface TaskCriteria {
 	/**
 	 * Get an array of task IDs.
 	 *
-	 * @return array of task IDs (may be {@literal null})
+	 * @return array of task IDs (may be {@code null})
 	 */
-	Long[] getTaskIds();
+	Long @Nullable [] getTaskIds();
 
 	/**
 	 * Test if this filter has any task criteria.
@@ -59,6 +61,40 @@ public interface TaskCriteria {
 	 */
 	default boolean hasTaskCriteria() {
 		return getTaskId() != null;
+	}
+
+	/**
+	 * Get the first task ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTaskCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first task ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long taskId() {
+		return getTaskId();
+	}
+
+	/**
+	 * Get an array of task IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTaskCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of task IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] taskIds() {
+		return getTaskIds();
 	}
 
 }

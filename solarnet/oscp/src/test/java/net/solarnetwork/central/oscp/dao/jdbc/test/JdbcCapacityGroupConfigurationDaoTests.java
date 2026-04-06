@@ -1,32 +1,34 @@
 /* ==================================================================
  * JdbcCapacityGroupConfigurationDaoTests.java - 12/08/2022 6:33:46 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allCapacityGroupConfigurationData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allCapacityGroupMeasurementData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.newCapacityGroupConfiguration;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.codec.jackson.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -42,7 +44,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +64,7 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
 
 /**
  * Test cases for the {@link JdbcCapacityGroupConfigurationDao} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -103,15 +104,11 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		lastOptimzer = capacityOptimizerDao.get(capacityOptimizerDao.create(userId, OscpJdbcTestUtils
 				.newCapacityOptimizerConf(userId, flexibilityProviderId, Instant.now())));
 		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now());
+				UserLongCompositePK.unassignedEntityIdKey(userId), now(), randomString(), randomString(),
+				lastProvider.getConfigId(), lastOptimzer.getConfigId(), MeasurementPeriod.TwentyMinute,
+				MeasurementPeriod.FiveMinute);
 		conf.setEnabled(true);
-		conf.setName(randomUUID().toString());
-		conf.setIdentifier(randomUUID().toString());
-		conf.setCapacityProviderMeasurementPeriod(MeasurementPeriod.TwentyMinute);
-		conf.setCapacityOptimizerMeasurementPeriod(MeasurementPeriod.FiveMinute);
-		conf.setCapacityProviderId(lastProvider.getEntityId());
-		conf.setCapacityOptimizerId(lastOptimzer.getEntityId());
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomUUID().toString()));
 
 		// WHEN
 		UserLongCompositePK result = dao.create(userId, conf);
@@ -197,7 +194,7 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		conf.setCapacityOptimizerMeasurementPeriod(MeasurementPeriod.TwentyMinute);
 		conf.setCapacityProviderId(lastProvider.getEntityId());
 		conf.setCapacityOptimizerId(lastOptimzer.getEntityId());
-		conf.setServiceProps(Collections.singletonMap("bim", "bam"));
+		conf.setServiceProps(Map.of("bim", "bam"));
 
 		UserLongCompositePK result = dao.save(conf);
 

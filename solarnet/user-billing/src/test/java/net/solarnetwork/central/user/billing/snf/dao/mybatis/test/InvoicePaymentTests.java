@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toMap;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
@@ -94,11 +95,9 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 
 	private SnfInvoice createTestInvoice(Account account, Address address, LocalDate startDate) {
 		SnfInvoice entity = new SnfInvoice(account.getId().getId(), account.getUserId(),
-				Instant.ofEpochMilli(System.currentTimeMillis()));
+				Instant.ofEpochMilli(System.currentTimeMillis()), startDate, startDate.plusMonths(1),
+				account.getCurrencyCode());
 		entity.setAddress(address);
-		entity.setCurrencyCode(account.getCurrencyCode());
-		entity.setStartDate(startDate);
-		entity.setEndDate(startDate.plusMonths(1));
 		return invoiceDao.get(invoiceDao.save(entity));
 	}
 
@@ -106,8 +105,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 			BigDecimal... amounts) {
 		SnfInvoice invoice = createTestInvoice(account, address, startDate);
 		for ( BigDecimal amount : amounts ) {
-			SnfInvoiceItem item = newItem(invoice, Fixed, randomUUID().toString(), BigDecimal.ONE,
-					amount);
+			SnfInvoiceItem item = newItem(invoice, Fixed, randomString(), BigDecimal.ONE, amount);
 			itemDao.save(item);
 		}
 
@@ -133,12 +131,10 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				LocalDate.of(2020, 2, 1));
 
 		// create payment
-		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now());
-		payment.setAmount(invoice.getTotalAmount());
-		payment.setCurrencyCode(account.getCurrencyCode());
-		payment.setExternalKey(randomUUID().toString());
-		payment.setPaymentType(PaymentType.Payment);
-		payment.setReference(randomUUID().toString());
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+				PaymentType.Payment, invoice.getTotalAmount(), account.getCurrencyCode());
+		payment.setExternalKey(randomString());
+		payment.setReference(randomString());
 
 		paymentDao.save(payment);
 		getSqlSessionTemplate().flushStatements();
@@ -164,12 +160,10 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		final BigDecimal dollarShortAmount = invoice.getTotalAmount().add(new BigDecimal("-1.00"));
 
 		// create payment
-		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now());
-		payment.setAmount(dollarShortAmount);
-		payment.setCurrencyCode(account.getCurrencyCode());
-		payment.setExternalKey(randomUUID().toString());
-		payment.setPaymentType(PaymentType.Payment);
-		payment.setReference(randomUUID().toString());
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+				PaymentType.Payment, dollarShortAmount, account.getCurrencyCode());
+		payment.setExternalKey(randomString());
+		payment.setReference(randomString());
 
 		paymentDao.save(payment);
 		getSqlSessionTemplate().flushStatements();
@@ -180,13 +174,10 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
 		// add 2nd payment, $1 to fully pay invoice
-		Payment payment2 = new Payment(randomUUID(), account.getUserId(), account.getId().getId(),
-				now());
-		payment2.setAmount(new BigDecimal("1.00"));
-		payment2.setCurrencyCode(account.getCurrencyCode());
-		payment2.setExternalKey(randomUUID().toString());
-		payment2.setPaymentType(PaymentType.Payment);
-		payment2.setReference(randomUUID().toString());
+		Payment payment2 = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+				PaymentType.Payment, new BigDecimal("1.00"), account.getCurrencyCode());
+		payment2.setExternalKey(randomString());
+		payment2.setReference(randomString());
 
 		paymentDao.save(payment2);
 		getSqlSessionTemplate().flushStatements();
@@ -203,12 +194,10 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				LocalDate.of(2020, 2, 1));
 
 		// create payment
-		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now());
-		payment.setAmount(invoice.getTotalAmount());
-		payment.setCurrencyCode(account.getCurrencyCode());
-		payment.setExternalKey(randomUUID().toString());
-		payment.setPaymentType(PaymentType.Payment);
-		payment.setReference(randomUUID().toString());
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+				PaymentType.Payment, invoice.getTotalAmount(), account.getCurrencyCode());
+		payment.setExternalKey(randomString());
+		payment.setReference(randomString());
 
 		paymentDao.save(payment);
 		getSqlSessionTemplate().flushStatements();
@@ -233,12 +222,10 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				LocalDate.of(2020, 2, 1));
 
 		// create payment
-		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now());
-		payment.setAmount(invoice.getTotalAmount());
-		payment.setCurrencyCode(account.getCurrencyCode());
-		payment.setExternalKey(randomUUID().toString());
-		payment.setPaymentType(PaymentType.Payment);
-		payment.setReference(randomUUID().toString());
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+				PaymentType.Payment, invoice.getTotalAmount(), account.getCurrencyCode());
+		payment.setExternalKey(randomString());
+		payment.setReference(randomString());
 
 		paymentDao.save(payment);
 		getSqlSessionTemplate().flushStatements();
@@ -262,12 +249,11 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				LocalDate.of(2020, 2, 1));
 
 		// create payment with extra dollar
-		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now());
-		payment.setAmount(invoice.getTotalAmount().add(BigDecimal.ONE));
-		payment.setCurrencyCode(account.getCurrencyCode());
-		payment.setExternalKey(randomUUID().toString());
-		payment.setPaymentType(PaymentType.Payment);
-		payment.setReference(randomUUID().toString());
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now(),
+				PaymentType.Payment, invoice.getTotalAmount().add(BigDecimal.ONE),
+				account.getCurrencyCode());
+		payment.setExternalKey(randomString());
+		payment.setReference(randomString());
 
 		paymentDao.save(payment);
 		getSqlSessionTemplate().flushStatements();

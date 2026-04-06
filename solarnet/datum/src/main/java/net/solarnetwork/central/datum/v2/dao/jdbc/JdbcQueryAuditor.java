@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.sql.DataSource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
@@ -116,7 +118,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	private final ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters;
 	private final StatTracker stats;
 
-	private WriterThread writerThread;
+	private @Nullable WriterThread writerThread;
 	private long updateDelay;
 	private long flushDelay;
 	private long connectionRecoveryDelay;
@@ -140,7 +142,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * @param nodeSourceCounters
 	 *        the map to use for tracking counts for node datum
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public JdbcQueryAuditor(DataSource dataSource,
 			ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters) {
@@ -159,7 +161,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * @param nodeSourceCounters
 	 *        the map to use for tracking counts for node datum
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 * @since 2.1
 	 */
 	public JdbcQueryAuditor(Clock clock, DataSource dataSource,
@@ -170,10 +172,10 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 		this.dataSource = requireNonNullArgument(dataSource, "dataSource");
 		this.nodeSourceCounters = requireNonNullArgument(nodeSourceCounters, "nodeSourceCounters");
 		this.stats = requireNonNullArgument(statCounter, "statCounter");
-		setConnectionRecoveryDelay(DEFAULT_CONNECTION_RECOVERY_DELAY);
-		setFlushDelay(DEFAULT_FLUSH_DELAY);
-		setUpdateDelay(DEFAULT_UPDATE_DELAY);
-		setNodeSourceIncrementSql(DEFAULT_NODE_SOURCE_INCREMENT_SQL);
+		this.connectionRecoveryDelay = DEFAULT_CONNECTION_RECOVERY_DELAY;
+		this.flushDelay = DEFAULT_FLUSH_DELAY;
+		this.updateDelay = DEFAULT_UPDATE_DELAY;
+		this.nodeSourceIncrementSql = DEFAULT_NODE_SOURCE_INCREMENT_SQL;
 		setStatLogUpdateCount(DEFAULT_STAT_LOG_UPDATE_COUNT);
 	}
 
@@ -198,7 +200,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 			GeneralNodeDatumFilter filter, FilterResults<T, GeneralNodeDatumPK> results) {
 		final int returnedCount = (results != null ? results.getReturnedResultCount() : 0);
 		// if no results, no count
-		if ( returnedCount < 1 ) {
+		if ( results == null || returnedCount < 1 ) {
 			return;
 		}
 
@@ -220,8 +222,9 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 		// coalesce counts by key first to simplify inserts into counters
 		Map<GeneralNodeDatumPK, Integer> counts = new HashMap<>(returnedCount);
 		for ( FilterMatch<GeneralNodeDatumPK> result : results ) {
-			GeneralNodeDatumPK id = result.getId();
-			GeneralNodeDatumPK pk = nodeDatumKey(auditDate, id.getNodeId(), id.getSourceId());
+			GeneralNodeDatumPK id = nonnull(result.getId(), "ID");
+			GeneralNodeDatumPK pk = nodeDatumKey(auditDate, nonnull(id.getNodeId(), "nodeId"),
+					nonnull(id.getSourceId(), "sourceId"));
 			counts.compute(pk, (_, v) -> v == null ? 1 : v + 1);
 		}
 
@@ -258,15 +261,12 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 		if ( datum == null || datum.getKind() != ObjectDatumKind.Node || datum.getSourceId() == null ) {
 			return;
 		}
-		addNodeSourceCount(nodeDatumKey(clock.instant(), datum.getObjectId(), datum.getSourceId()), 1);
+		addNodeSourceCount(nodeDatumKey(clock.instant(), nonnull(datum.getObjectId(), "objectId"),
+				nonnull(datum.getSourceId(), "sourceId")), 1);
 	}
 
 	private static GeneralNodeDatumPK nodeDatumKey(Instant date, Long nodeId, String sourceId) {
-		GeneralNodeDatumPK pk = new GeneralNodeDatumPK();
-		pk.setCreated(date);
-		pk.setNodeId(nodeId);
-		pk.setSourceId(sourceId);
-		return pk;
+		return new GeneralNodeDatumPK(nodeId, date, sourceId);
 	}
 
 	private void addNodeSourceCount(GeneralNodeDatumPK key, int count) {
@@ -479,7 +479,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * @throws IllegalArgumentException
 	 *         if {@code flushDelay} is &lt; 0
 	 */
-	public void setFlushDelay(long flushDelay) {
+	public final void setFlushDelay(long flushDelay) {
 		if ( flushDelay < 0 ) {
 			throw new IllegalArgumentException("flushDelay must be >= 0");
 		}
@@ -496,7 +496,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * @throws IllegalArgumentException
 	 *         if {@code connectionRecoveryDelay} is &lt; 0
 	 */
-	public void setConnectionRecoveryDelay(long connectionRecoveryDelay) {
+	public final void setConnectionRecoveryDelay(long connectionRecoveryDelay) {
 		if ( connectionRecoveryDelay < 0 ) {
 			throw new IllegalArgumentException("connectionRecoveryDelay must be >= 0");
 		}
@@ -513,7 +513,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * @throws IllegalArgumentException
 	 *         if {@code updateDelay} is &lt; 0
 	 */
-	public void setUpdateDelay(long updateDelay) {
+	public final void setUpdateDelay(long updateDelay) {
 		this.updateDelay = updateDelay;
 	}
 
@@ -536,7 +536,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 *        the SQL statement to use; defaults to
 	 *        {@link #DEFAULT_NODE_SOURCE_INCREMENT_SQL}
 	 */
-	public void setNodeSourceIncrementSql(String sql) {
+	public final void setNodeSourceIncrementSql(String sql) {
 		if ( sql == null ) {
 			throw new IllegalArgumentException("nodeSourceIncrementSql must not be null");
 		}
@@ -561,7 +561,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 *        {@link #DEFAULT_STAT_LOG_UPDATE_COUNT}
 	 * @since 1.1
 	 */
-	public void setStatLogUpdateCount(int statLogUpdateCount) {
+	public final void setStatLogUpdateCount(int statLogUpdateCount) {
 		stats.setLogFrequency(statLogUpdateCount);
 	}
 

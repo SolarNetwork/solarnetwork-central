@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for security token related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface SecurityTokenCriteria {
@@ -36,19 +38,23 @@ public interface SecurityTokenCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available token ID from the {@link #getTokenIds()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first token ID, or {@literal null} if not available
+	 * @return the first token ID, or {@code null} if not available
 	 */
-	String getTokenId();
+	@Nullable
+	default String getTokenId() {
+		var a = getTokenIds();
+		return (a != null && a.length > 0 ? a[0] : null);
+	}
 
 	/**
 	 * Get an array of token IDs.
 	 * 
-	 * @return array of token IDs (may be {@literal null})
+	 * @return array of token IDs (may be {@code null})
 	 */
-	String[] getTokenIds();
+	String @Nullable [] getTokenIds();
 
 	/**
 	 * Test if this filter has any token criteria.
@@ -57,6 +63,40 @@ public interface SecurityTokenCriteria {
 	 */
 	default boolean hasTokenCriteria() {
 		return getTokenId() != null;
+	}
+
+	/**
+	 * Get the first token ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTokenCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first source ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String tokenId() {
+		return getTokenId();
+	}
+
+	/**
+	 * Get an array of token IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasTokenCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of source IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] tokenIds() {
+		return getTokenIds();
 	}
 
 }

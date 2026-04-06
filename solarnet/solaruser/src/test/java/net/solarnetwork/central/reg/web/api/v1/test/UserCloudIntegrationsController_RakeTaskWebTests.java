@@ -120,12 +120,10 @@ public class UserCloudIntegrationsController_RakeTaskWebTests
 
 	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long nodeId) {
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
-				unassignedEntityIdKey(userId), clock.instant());
+				unassignedEntityIdKey(userId), clock.instant(), randomString(), randomString(),
+				ObjectDatumKind.Node);
 		conf.setModified(conf.getCreated());
-		conf.setName(randomString());
-		conf.setServiceIdentifier(randomString());
 		conf.setEnabled(true);
-		conf.setKind(ObjectDatumKind.Node);
 		conf.setObjectId(nodeId);
 		conf.setSchedule("600");
 		conf.setSourceId(randomString());

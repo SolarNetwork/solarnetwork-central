@@ -53,6 +53,7 @@ import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusFilter;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
+import net.solarnetwork.central.ocpp.domain.BasicOcppFilter;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
@@ -83,7 +84,7 @@ import tools.jackson.databind.ObjectMapper;
  * Web service API for OCPP management.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 @Profile(OCPP_V16)
 @GlobalExceptionRestController
@@ -108,7 +109,7 @@ public class UserOcppController {
 	 * @param cborObjectMapper
 	 *        the mapper to use for CBOR
 	 * @param propertySerializerRegistrar
-	 *        the registrar to use (may be {@literal null}
+	 *        the registrar to use (may be {@code null}
 	 */
 	public UserOcppController(UserOcppBiz userOcppBiz,
 			@Qualifier(JsonConfig.JSON_STREAMING_MAPPER) ObjectMapper objectMapper,
@@ -124,7 +125,7 @@ public class UserOcppController {
 	/**
 	 * Get the {@link UserOcppBiz}.
 	 *
-	 * @return the service; never {@literal null}
+	 * @return the service; never {@code null}
 	 * @throws UnsupportedOperationException
 	 *         if the service is not available
 	 */
@@ -145,7 +146,7 @@ public class UserOcppController {
 	 * @param out
 	 *        the entity that was saved and should be returned in the response
 	 * @return a response entity, with {@link HttpStatus#CREATED} if the
-	 *         {@code in} has a {@literal null} primary key or
+	 *         {@code in} has a {@code null} primary key or
 	 *         {@link HttpStatus#OK} otherwise
 	 */
 	private <T extends Entity<?>> ResponseEntity<Result<T>> responseForSave(Object id, T out) {
@@ -215,6 +216,19 @@ public class UserOcppController {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralChargePoint> list = userOcppBiz().chargePointsForUser(userId);
 		return success(list);
+	}
+
+	/**
+	 * Find available charge points for the current user and an optional filter
+	 *
+	 * @return the charge points
+	 * @since 3.1
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/chargers/find")
+	public Result<FilterResults<CentralChargePoint, Long>> availableChargePoints(
+			BasicOcppFilter filter) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return success(userOcppBiz().listChargePointsForUser(userId, filter));
 	}
 
 	/**
@@ -419,13 +433,28 @@ public class UserOcppController {
 	}
 
 	/**
-	 * View a specific credential.
+	 * View a specific connector.
+	 *
+	 * @param chargePointId
+	 *        the charge point ID
+	 * @return the connectors
+	 * @since 3.1
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/connectors/{chargePointId}")
+	public Result<Collection<CentralChargePointConnector>> viewConnectorsForCharger(
+			@PathVariable long chargePointId) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return success(userOcppBiz().chargePointConnectorsForUser(userId, chargePointId));
+	}
+
+	/**
+	 * View a specific connector.
 	 *
 	 * @param chargePointId
 	 *        the charge point ID
 	 * @param connectorId
 	 *        the ID of the connector to view
-	 * @return the system user
+	 * @return the connector
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/connectors/{chargePointId}/{connectorId}")
 	public Result<CentralChargePointConnector> viewConnector(@PathVariable long chargePointId,
@@ -436,7 +465,7 @@ public class UserOcppController {
 	}
 
 	/**
-	 * Delete a specific credential.
+	 * Delete a specific connector.
 	 *
 	 * @param chargePointId
 	 *        the ID of the charge point
@@ -454,7 +483,7 @@ public class UserOcppController {
 	}
 
 	/**
-	 * View a specific credential.
+	 * View a specific connector.
 	 *
 	 * @param chargePointId
 	 *        the charge point ID
@@ -475,7 +504,7 @@ public class UserOcppController {
 	}
 
 	/**
-	 * Delete a specific credential.
+	 * Delete a specific connector.
 	 *
 	 * @param chargePointId
 	 *        the ID of the charge point

@@ -24,9 +24,11 @@ package net.solarnetwork.central.dnp3.domain;
 
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.codec.jackson.JsonUtils.getJSONString;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.dao.Entity;
@@ -127,7 +129,7 @@ public interface Dnp3UserEvents {
 	 * @return the log event
 	 */
 	static LogEventInfo eventWithEntity(Entity<? extends CompositeKey> entity, List<String> baseTags,
-			String message, String... extraTags) {
+			@Nullable String message, String @Nullable... extraTags) {
 		return eventWithEntity(entity, baseTags, message, null, extraTags);
 	}
 
@@ -147,7 +149,8 @@ public interface Dnp3UserEvents {
 	 * @return the log event
 	 */
 	static LogEventInfo eventWithEntity(Entity<? extends CompositeKey> entity, List<String> baseTags,
-			String message, Map<String, ?> extraData, String... extraTags) {
+			@Nullable String message, @Nullable Map<String, ?> extraData,
+			String @Nullable... extraTags) {
 		Map<String, Object> data = eventDataForEntity(entity, extraData);
 		return event(baseTags, message, getJSONString(data, null), extraTags);
 	}
@@ -169,12 +172,12 @@ public interface Dnp3UserEvents {
 	 * @param entity
 	 *        the entity
 	 * @param extraData
-	 *        optional extra data to include, or {@literal null}
+	 *        optional extra data to include, or {@code null}
 	 * @return the data map
 	 */
 	static Map<String, Object> eventDataForEntity(Entity<? extends CompositeKey> entity,
-			Map<String, ?> extraData) {
-		final CompositeKey id = entity.getId();
+			@Nullable Map<String, ?> extraData) {
+		final CompositeKey id = nonnull(entity.getId(), "ID");
 		Map<String, Object> data = new LinkedHashMap<>(
 				id.keyComponentLength() + 2 + (extraData != null ? extraData.size() : 0));
 		if ( extraData != null ) {

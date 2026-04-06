@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Constants for common user items.
@@ -87,7 +89,7 @@ public final class UserBizConstants {
 	 *        the email to test
 	 * @return <em>true</em> if the email is considered an "unconfirmed" email
 	 */
-	public static boolean isUnconfirmedEmail(String email) {
+	public static boolean isUnconfirmedEmail(@Nullable String email) {
 		// validate email starts with unconfirmed key and also contains
 		// another @ character, in case somebody does have an email name
 		// the same as our unconfirmed key
@@ -107,9 +109,10 @@ public final class UserBizConstants {
 	 *         if the email does not appear to be an unconfirmed email.
 	 * @since 1.2
 	 */
-	public static String getOriginalEmail(String unconfirmedEmail) {
+	public static String getOriginalEmail(@Nullable String unconfirmedEmail) {
 		if ( isUnconfirmedEmail(unconfirmedEmail) ) {
-			return unconfirmedEmail.substring(UNCONFIRMED_EMAIL_PREFIX_LENGTH);
+			return nonnull(unconfirmedEmail, "unconfirmedEmail")
+					.substring(UNCONFIRMED_EMAIL_PREFIX_LENGTH);
 		}
 		throw new IllegalArgumentException(
 				"[" + unconfirmedEmail + "] is not a valid unconfirmed email");

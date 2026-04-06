@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
-import static java.time.Instant.now;
+import static java.time.Instant.EPOCH;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.updateWithGeneratedLong;
+import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_ENTITY_ID;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
@@ -36,7 +39,6 @@ import net.solarnetwork.central.c2c.dao.jdbc.sql.InsertCloudDatumStreamMappingCo
 import net.solarnetwork.central.c2c.dao.jdbc.sql.SelectCloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.FilterResults;
@@ -59,7 +61,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDao
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudDatumStreamMappingConfigurationDao(JdbcOperations jdbcOps) {
 		super();
@@ -73,19 +75,19 @@ public class JdbcCloudDatumStreamMappingConfigurationDao
 
 	@Override
 	public CloudDatumStreamMappingConfiguration entityKey(UserLongCompositePK id) {
-		return new CloudDatumStreamMappingConfiguration(id, now());
+		return new CloudDatumStreamMappingConfiguration(id, EPOCH, "", UNASSIGNED_ENTITY_ID);
 	}
 
 	@Override
 	public UserLongCompositePK create(Long userId, CloudDatumStreamMappingConfiguration entity) {
 		final var sql = new InsertCloudDatumStreamMappingConfiguration(userId, entity);
-		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		return (id != null ? new UserLongCompositePK(userId, id) : null);
+		final Long id = updateWithGeneratedLong(jdbcOps, sql, "id");
+		return new UserLongCompositePK(userId, id);
 	}
 
 	@Override
 	public Collection<CloudDatumStreamMappingConfiguration> findAll(Long userId,
-			List<SortDescriptor> sorts) {
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectCloudDatumStreamMappingConfiguration(filter);
@@ -96,7 +98,8 @@ public class JdbcCloudDatumStreamMappingConfigurationDao
 
 	@Override
 	public FilterResults<CloudDatumStreamMappingConfiguration, UserLongCompositePK> findFiltered(
-			CloudDatumStreamMappingFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			CloudDatumStreamMappingFilter filter, @Nullable List<SortDescriptor> sorts,
+			@Nullable Long offset, @Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCloudDatumStreamMappingConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql,
@@ -105,17 +108,17 @@ public class JdbcCloudDatumStreamMappingConfigurationDao
 
 	@Override
 	public UserLongCompositePK save(CloudDatumStreamMappingConfiguration entity) {
-		if ( !entity.getId().entityIdIsAssigned() ) {
-			return create(entity.getId().getUserId(), entity);
+		var pk = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(), "entity.id");
+		if ( !pk.entityIdIsAssigned() ) {
+			return create(pk.getUserId(), entity);
 		}
-		final UpdateCloudDatumStreamMappingConfiguration sql = new UpdateCloudDatumStreamMappingConfiguration(
-				entity.getId(), entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		final var sql = new UpdateCloudDatumStreamMappingConfiguration(pk, entity);
+		jdbcOps.update(sql);
+		return pk;
 	}
 
 	@Override
-	public CloudDatumStreamMappingConfiguration get(UserLongCompositePK id) {
+	public @Nullable CloudDatumStreamMappingConfiguration get(UserLongCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -127,7 +130,8 @@ public class JdbcCloudDatumStreamMappingConfigurationDao
 	}
 
 	@Override
-	public Collection<CloudDatumStreamMappingConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<CloudDatumStreamMappingConfiguration> getAll(
+			@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -137,8 +141,8 @@ public class JdbcCloudDatumStreamMappingConfigurationDao
 
 	@Override
 	public void delete(CloudDatumStreamMappingConfiguration entity) {
-		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+		var pk = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(), "entity.id");
+		var sql = new DeleteForCompositeKey(pk, TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 

@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for indexed related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface IndexCriteria {
 
@@ -35,12 +37,12 @@ public interface IndexCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available value from the {@link #getIndexes()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first index, or {@literal null} if not available
+	 * @return the first index, or {@code null} if not available
 	 */
-	default Integer getIndex() {
+	default @Nullable Integer getIndex() {
 		final Integer[] array = getIndexes();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -48,9 +50,9 @@ public interface IndexCriteria {
 	/**
 	 * Get an array of indexes.
 	 * 
-	 * @return array of indexes (may be {@literal null})
+	 * @return array of indexes (may be {@code null})
 	 */
-	Integer[] getIndexes();
+	Integer @Nullable [] getIndexes();
 
 	/**
 	 * Test if this filter has any index criteria.
@@ -59,6 +61,40 @@ public interface IndexCriteria {
 	 */
 	default boolean hasIndexCriteria() {
 		return getIndex() != null;
+	}
+
+	/**
+	 * Get the first index ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasIndexCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first index ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Integer index() {
+		return getIndex();
+	}
+
+	/**
+	 * Get an array of index IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasIndexCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of index IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Integer[] indexes() {
+		return getIndexes();
 	}
 
 }

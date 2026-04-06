@@ -28,6 +28,7 @@ import static net.solarnetwork.central.datum.v2.support.DatumJsonUtils.getString
 import static net.solarnetwork.central.datum.v2.support.DatumJsonUtils.parseDatum;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -153,7 +154,8 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	public Result<BulkUploadResult> postData(
 			@RequestHeader(value = "Content-Encoding", required = false) String encoding, InputStream in,
 			Model model) throws IOException {
-		AuthenticatedNode authNode = getAuthenticatedNode(true);
+		final AuthenticatedNode authNode = getAuthenticatedNode(true);
+		final Instant now = Instant.now();
 
 		InputStream input = in;
 		if ( encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip") ) {
@@ -173,7 +175,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 					Object o = handleNode(child);
 					if ( o instanceof Datum ) {
 						// convert to legacy form for compatibility between node 1.0/2.0
-						o = DatumUtils.convertGeneralDatum((Datum) o);
+						o = DatumUtils.convertGeneralDatum((Datum) o, now, authNode);
 					}
 					if ( o instanceof StreamDatum ) {
 						parsedStreamDatum.add((StreamDatum) o);

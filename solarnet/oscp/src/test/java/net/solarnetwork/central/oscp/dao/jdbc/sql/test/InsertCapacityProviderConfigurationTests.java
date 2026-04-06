@@ -1,30 +1,32 @@
 /* ==================================================================
  * InsertCapacityProviderConfigurationTests.java - 12/08/2022 3:29:58 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.oscp.dao.jdbc.sql.test;
 
-import static java.util.UUID.randomUUID;
+import static java.time.Instant.now;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,8 +39,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.time.Instant;
-import java.util.Collections;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -55,7 +56,7 @@ import net.solarnetwork.codec.jackson.JsonUtils;
 
 /**
  * Test cases for the {@link InsertCapacityProviderConfiguration} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -79,13 +80,11 @@ public class InsertCapacityProviderConfigurationTests {
 
 	private CapacityProviderConfiguration createCapacityProviderConfiguration(Long userId) {
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now());
-		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
+				UserLongCompositePK.unassignedEntityIdKey(userId), now(), randomString(), randomLong(),
+				RegistrationStatus.Registered);
+		conf.setBaseUrl("http://example.com/" + randomString());
 		conf.setEnabled(true);
-		conf.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
-		conf.setName(randomUUID().toString());
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
+		conf.setServiceProps(Map.of("foo", randomString()));
 		return conf;
 	}
 
@@ -114,11 +113,10 @@ public class InsertCapacityProviderConfigurationTests {
 	@Test
 	public void sql() {
 		// GIVEN
-		CapacityProviderConfiguration conf = createCapacityProviderConfiguration(
-				randomUUID().getMostSignificantBits());
+		CapacityProviderConfiguration conf = createCapacityProviderConfiguration(randomLong());
 
 		// WHEN
-		Long userId = randomUUID().getMostSignificantBits();
+		Long userId = randomLong();
 		String sql = new InsertCapacityProviderConfiguration(userId, conf).getSql();
 
 		// THEN
@@ -130,14 +128,13 @@ public class InsertCapacityProviderConfigurationTests {
 	@Test
 	public void prep() throws SQLException {
 		// GIVEN
-		CapacityProviderConfiguration conf = createCapacityProviderConfiguration(
-				randomUUID().getMostSignificantBits());
+		CapacityProviderConfiguration conf = createCapacityProviderConfiguration(randomLong());
 
 		// GIVEN
 		givenPrepStatement();
 
 		// WHEN
-		Long userId = randomUUID().getMostSignificantBits();
+		Long userId = randomLong();
 		PreparedStatement result = new InsertCapacityProviderConfiguration(userId, conf)
 				.createPreparedStatement(con);
 
@@ -153,13 +150,11 @@ public class InsertCapacityProviderConfigurationTests {
 	@Test
 	public void assigned_sql() {
 		// GIVEN
-		CapacityProviderConfiguration conf = createCapacityProviderConfiguration(
-				randomUUID().getMostSignificantBits())
-						.copyWithId(new UserLongCompositePK(randomUUID().getMostSignificantBits(),
-								randomUUID().getMostSignificantBits()));
+		CapacityProviderConfiguration conf = createCapacityProviderConfiguration(randomLong())
+				.copyWithId(new UserLongCompositePK(randomLong(), randomLong()));
 
 		// WHEN
-		Long userId = randomUUID().getMostSignificantBits();
+		Long userId = randomLong();
 		String sql = new InsertCapacityProviderConfiguration(userId, conf).getSql();
 
 		// THEN
@@ -171,16 +166,14 @@ public class InsertCapacityProviderConfigurationTests {
 	@Test
 	public void assigned_prep() throws SQLException {
 		// GIVEN
-		CapacityProviderConfiguration conf = createCapacityProviderConfiguration(
-				randomUUID().getMostSignificantBits())
-						.copyWithId(new UserLongCompositePK(randomUUID().getMostSignificantBits(),
-								randomUUID().getMostSignificantBits()));
+		CapacityProviderConfiguration conf = createCapacityProviderConfiguration(randomLong())
+				.copyWithId(new UserLongCompositePK(randomLong(), randomLong()));
 
 		// GIVEN
 		givenPrepStatement();
 
 		// WHEN
-		Long userId = randomUUID().getMostSignificantBits();
+		Long userId = randomLong();
 		PreparedStatement result = new InsertCapacityProviderConfiguration(userId, conf)
 				.createPreparedStatement(con);
 

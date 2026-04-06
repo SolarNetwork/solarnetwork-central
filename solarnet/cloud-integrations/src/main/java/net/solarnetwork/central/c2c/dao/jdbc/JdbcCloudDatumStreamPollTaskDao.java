@@ -22,13 +22,16 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc;
 
+import static java.time.Instant.EPOCH;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.domain.BasicClaimableJobState.Unknown;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
@@ -63,7 +66,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudDatumStreamPollTaskDao(JdbcOperations jdbcOps) {
 		this(jdbcOps, DEFAULT_CLAIM_JOB_SQL);
@@ -77,7 +80,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 	 * @param claimTaskSql
 	 *        the claim task SQL
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcCloudDatumStreamPollTaskDao(JdbcOperations jdbcOps, String claimTaskSql) {
 		super();
@@ -92,21 +95,21 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 
 	@Override
 	public CloudDatumStreamPollTaskEntity entityKey(UserLongCompositePK id) {
-		return new CloudDatumStreamPollTaskEntity(id);
+		return new CloudDatumStreamPollTaskEntity(id, Unknown, EPOCH, EPOCH);
 	}
 
 	@Override
 	public UserLongCompositePK create(Long userId, CloudDatumStreamPollTaskEntity entity) {
 		final var sql = new UpsertCloudDatumStreamPollTaskEntity(userId, entity.getDatumStreamId(),
 				entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? new UserLongCompositePK(userId, entity.getDatumStreamId()) : null);
+		jdbcOps.update(sql);
+		return new UserLongCompositePK(userId, entity.getDatumStreamId());
 	}
 
 	@Override
 	public FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> findFiltered(
-			CloudDatumStreamPollTaskFilter filter, List<SortDescriptor> sorts, Long offset,
-			Integer max) {
+			CloudDatumStreamPollTaskFilter filter, @Nullable List<SortDescriptor> sorts,
+			@Nullable Long offset, @Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCloudDatumStreamPollTaskEntity(filter);
 		return executeFilterQuery(jdbcOps, filter, sql,
@@ -114,7 +117,8 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 	}
 
 	@Override
-	public Collection<CloudDatumStreamPollTaskEntity> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<CloudDatumStreamPollTaskEntity> findAll(Long userId,
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectCloudDatumStreamPollTaskEntity(filter);
@@ -129,7 +133,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 	}
 
 	@Override
-	public CloudDatumStreamPollTaskEntity get(UserLongCompositePK id) {
+	public @Nullable CloudDatumStreamPollTaskEntity get(UserLongCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -141,7 +145,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 	}
 
 	@Override
-	public Collection<CloudDatumStreamPollTaskEntity> getAll(List<SortDescriptor> sorts) {
+	public Collection<CloudDatumStreamPollTaskEntity> getAll(@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		var sql = new SelectCloudDatumStreamPollTaskEntity(filter);
 		return jdbcOps.query(sql, CloudDatumStreamPollTaskEntityRowMapper.INSTANCE);
@@ -153,8 +157,9 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 
 	@Override
 	public void delete(CloudDatumStreamPollTaskEntity entity) {
-		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+		UserLongCompositePK pk = requireNonNullArgument(requireNonNullArgument(entity, "entity").getId(),
+				"entity.id");
+		DeleteForCompositeKey sql = new DeleteForCompositeKey(pk, TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 
@@ -165,7 +170,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 	}
 
 	@Override
-	public CloudDatumStreamPollTaskEntity claimQueuedTask() {
+	public @Nullable CloudDatumStreamPollTaskEntity claimQueuedTask() {
 		return jdbcOps.execute(claimTaskSql, (CallableStatement cs) -> {
 			if ( cs.execute() ) {
 				try (var rs = cs.getResultSet()) {
@@ -182,7 +187,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 
 	@Override
 	public boolean updateTaskState(UserLongCompositePK id, BasicClaimableJobState desiredState,
-			BasicClaimableJobState... expectedStates) {
+			BasicClaimableJobState @Nullable... expectedStates) {
 		BasicFilter filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -196,7 +201,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 
 	@Override
 	public boolean updateTask(CloudDatumStreamPollTaskEntity info,
-			BasicClaimableJobState... expectedStates) {
+			BasicClaimableJobState @Nullable... expectedStates) {
 		BasicFilter filter = new BasicFilter();
 		filter.setUserId(info.getUserId());
 		filter.setDatumStreamId(info.getDatumStreamId());

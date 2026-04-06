@@ -22,6 +22,7 @@ The following Spring runtime profiles are available:
 | `no-solarflux` | Disable SolarFlux MQTT integration when `mqtt` profile is active. |
 | `ocpp-charge-session` | Enable OCPP charge session support. See [OcppChargeSessionManagerConfig][OcppChargeSessionManagerConfig]. |
 | `ocpp-v16` | Enables OCPP v1.6 integration. See references to [SolarNetOcppConfiguration][SolarNetOcppConfiguration]. |
+| `sqs-user-event-appender` | Enable the SQS-backed user event queue processor. :warning: By default reading from SQS is disabled, under the assumption that the SolarJobs app will process SQS messages. |
 
 For example, in a production deployment the `SPRING_PROFILES_ACTIVE` environment variable can be
 configured as

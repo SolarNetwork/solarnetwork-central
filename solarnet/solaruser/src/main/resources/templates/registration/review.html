@@ -22,7 +22,7 @@
 				<button type="submit" class="btn btn-default" name="_eventId_prev" data-th-text="#{back.label}">Back</button>
 			</div>
 		</div>
-		<input type="hidden" name="_csrf" value="" data-th-name="${_csrf.parameterName}" data-th-value="${_csrf.token}">
+		<input type="hidden" name="_csrf" value="" data-th-name="${_csrf.parameterName}" data-th-value="${_csrf.token}" data-th-if="${_csrf}">
 	</form>
 </main>
 </body>

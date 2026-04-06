@@ -24,15 +24,23 @@ package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
 import java.time.Instant;
+import net.solarnetwork.central.domain.EntityConstants;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * A general datum key, suitable for node and location datum.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface GeneralObjectDatumKey extends Cloneable, Serializable {
+
+	/**
+	 * An "unassigned" object ID value.
+	 *
+	 * @since 1.1
+	 */
+	Long UNASSIGNED_OBJECT_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	/**
 	 * Get the object kind.
@@ -44,9 +52,24 @@ public interface GeneralObjectDatumKey extends Cloneable, Serializable {
 	/**
 	 * Get a domain-specific ID related to the object kind.
 	 *
-	 * @return the object ID, or {@literal null}
+	 * @return the object ID, or {@code null}
 	 */
 	Long getObjectId();
+
+	/**
+	 * Test if the object ID is assigned.
+	 *
+	 * @return {@literal true} if the object ID value is assigned,
+	 *         {@literal false} if it is considered "not a value"
+	 * @since 1.1
+	 */
+	default boolean objectIdIsAssigned() {
+		try {
+			return EntityConstants.isAssigned(getObjectId());
+		} catch ( IllegalStateException e ) {
+			return false;
+		}
+	}
 
 	/**
 	 * Get the date this datum is associated with, which is often equal to

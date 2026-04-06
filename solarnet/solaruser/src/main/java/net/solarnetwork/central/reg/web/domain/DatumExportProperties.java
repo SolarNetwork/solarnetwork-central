@@ -25,7 +25,7 @@ package net.solarnetwork.central.reg.web.domain;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
-import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
+import net.solarnetwork.central.user.datum.export.domain.UserDatumExportConfiguration;
 
 /**
  * DTO for datum export configuration.
@@ -176,8 +176,8 @@ public final class DatumExportProperties {
 	/**
 	 * Get the schedule type key value.
 	 *
-	 * @return the schedule type; if {@link #getSchedule()} is {@literal null}
-	 *         this will return the key value for {@link ScheduleType#Daily}
+	 * @return the schedule type; if {@link #getSchedule()} is {@code null} this
+	 *         will return the key value for {@link ScheduleType#Daily}
 	 */
 	public char getScheduleKey() {
 		ScheduleType type = getSchedule();

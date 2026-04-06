@@ -28,6 +28,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -52,7 +53,7 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	protected final TextEncryptor encryptor;
 
 	/** The sensitive key provider. */
-	protected final Function<String, Set<String>> sensitiveKeyProvider;
+	protected final Function<String, @Nullable Set<String>> sensitiveKeyProvider;
 
 	/**
 	 * Constructor.
@@ -70,11 +71,11 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 * @param sensitiveKeyProvider
 	 *        the sensitive key provider
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
-			Function<String, Set<String>> sensitiveKeyProvider) {
+			Function<String, @Nullable Set<String>> sensitiveKeyProvider) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags);
 		this.encryptor = requireNonNullArgument(encryptor, "encryptor");
 		this.sensitiveKeyProvider = requireNonNullArgument(sensitiveKeyProvider, "sensitiveKeyProvider");
@@ -105,9 +106,9 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 *        function to parse the HTTP response
 	 * @return the parsed response object
 	 * @throws IllegalArgumentException
-	 *         if {@code integration} is {@literal null}
+	 *         if {@code integration} is {@code null}
 	 */
-	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T httpGet(
+	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T extends @Nullable Object> T httpGet(
 			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
 			Function<ResponseEntity<R>, T> handler) {
 		return http(description, HttpMethod.GET, null, configuration, responseType, setup, handler);
@@ -130,6 +131,8 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 *        a description of the operation, for example "List sites"
 	 * @param method
 	 *        the HTTP method
+	 * @param body
+	 *        the optional request body content
 	 * @param configuration
 	 *        the integration making the request on behalf of
 	 * @param responseType
@@ -141,20 +144,26 @@ public class RestOperationsHelper extends BasicHttpOperations {
 	 *        function to parse the HTTP response
 	 * @return the parsed response object
 	 * @throws IllegalArgumentException
-	 *         if {@code integration} is {@literal null}
+	 *         if {@code integration} is {@code null}
 	 * @since 1.2
 	 */
-	public <B, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
-			String description, HttpMethod method, B body, C configuration, Class<R> responseType,
-			Function<HttpHeaders, URI> setup, Function<ResponseEntity<R>, T> handler) {
+	public <B extends @Nullable Object, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T extends @Nullable Object> T http(
+			String description, HttpMethod method, @Nullable B body, C configuration,
+			Class<R> responseType, Function<HttpHeaders, URI> setup,
+			Function<ResponseEntity<R>, T> handler) {
 		requireNonNullArgument(configuration, "configuration");
 
 		// execute request
 		final ResponseEntity<R> res = exchange(() -> {
 			// resolve URI and headers
 			final var headers = new HttpHeaders();
-			URI uri = setup.apply(headers);
-			return RequestEntity.method(method, uri).headers(headers).body(body);
+			final URI uri = setup.apply(headers);
+			final RequestEntity.BodyBuilder reqBuilder = RequestEntity.method(method, uri)
+					.headers(headers);
+			if ( body == null ) {
+				return reqBuilder.build();
+			}
+			return reqBuilder.body(body);
 		}, responseType, configuration, null, () -> description,
 				BasicHttpOperations::defaultRequestErrorEventMessage);
 		return handler.apply(res);

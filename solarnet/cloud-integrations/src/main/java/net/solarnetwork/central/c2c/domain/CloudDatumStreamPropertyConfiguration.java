@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
@@ -62,8 +65,8 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	private String propertyName;
 	private CloudDatumStreamValueType valueType;
 	private String valueReference;
-	private BigDecimal multiplier;
-	private Integer scale;
+	private @Nullable BigDecimal multiplier;
+	private @Nullable Integer scale;
 
 	/**
 	 * Constructor.
@@ -72,11 +75,25 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param propertyType
+	 *        the property type
+	 * @param propertyName
+	 *        the property name
+	 * @param valueType
+	 *        the value type
+	 * @param valueReference
+	 *        the value reference
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public CloudDatumStreamPropertyConfiguration(UserLongIntegerCompositePK id, Instant created) {
+	public CloudDatumStreamPropertyConfiguration(UserLongIntegerCompositePK id, Instant created,
+			DatumSamplesType propertyType, String propertyName, CloudDatumStreamValueType valueType,
+			String valueReference) {
 		super(id, created);
+		this.propertyType = requireNonNullArgument(propertyType, "propertyType");
+		this.propertyName = requireNonNullArgument(propertyName, "propertyName");
+		this.valueType = requireNonNullArgument(valueType, "valueType");
+		this.valueReference = requireNonNullArgument(valueReference, "valueReference");
 	}
 
 	/**
@@ -88,17 +105,28 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 *        the datum stream mapping ID
 	 * @param created
 	 *        the creation date
+	 * @param propertyType
+	 *        the property type
+	 * @param propertyName
+	 *        the property name
+	 * @param valueType
+	 *        the value type
+	 * @param valueReference
+	 *        the value reference
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CloudDatumStreamPropertyConfiguration(Long userId, Long datumStreamMappingId, Integer index,
-			Instant created) {
-		this(new UserLongIntegerCompositePK(userId, datumStreamMappingId, index), created);
+			Instant created, DatumSamplesType propertyType, String propertyName,
+			CloudDatumStreamValueType valueType, String valueReference) {
+		this(new UserLongIntegerCompositePK(userId, datumStreamMappingId, index), created, propertyType,
+				propertyName, valueType, valueReference);
 	}
 
 	@Override
 	public CloudDatumStreamPropertyConfiguration copyWithId(UserLongIntegerCompositePK id) {
-		var copy = new CloudDatumStreamPropertyConfiguration(id, getCreated());
+		var copy = new CloudDatumStreamPropertyConfiguration(id, created(), propertyType, propertyName,
+				valueType, valueReference);
 		copyTo(copy);
 		return copy;
 	}
@@ -116,18 +144,18 @@ public final class CloudDatumStreamPropertyConfiguration extends
 
 	@SuppressWarnings("ReferenceEquality")
 	@Override
-	public boolean isSameAs(CloudDatumStreamPropertyConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
+	public boolean isSameAs(@Nullable CloudDatumStreamPropertyConfiguration other) {
+		if ( !super.isSameAs(other) ) {
 			return false;
 		}
+		final var o = nonnull(other, "other");
 		// @formatter:off
-		return Objects.equals(this.propertyType, other.propertyType)
-				&& Objects.equals(this.propertyName, other.propertyName)
-				&& Objects.equals(this.valueType, other.valueType)
-				&& Objects.equals(this.valueReference, other.valueReference)
-				&& ObjectUtils.comparativelyEqual(this.multiplier, other.multiplier)
-				&& Objects.equals(this.scale, other.scale)
+		return Objects.equals(this.propertyType, o.propertyType)
+				&& Objects.equals(this.propertyName, o.propertyName)
+				&& Objects.equals(this.valueType, o.valueType)
+				&& Objects.equals(this.valueReference, o.valueReference)
+				&& ObjectUtils.comparativelyEqual(this.multiplier, o.multiplier)
+				&& Objects.equals(this.scale, o.scale)
 				;
 		// @formatter:on
 	}
@@ -146,7 +174,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 *        be transformed
 	 * @return the transformed property value to use
 	 */
-	public Object applyValueTransforms(Object propVal) {
+	public @Nullable Object applyValueTransforms(@Nullable Object propVal) {
 		if ( propVal instanceof Number n ) {
 			if ( multiplier != null ) {
 				n = applyUnitMultiplier(n, multiplier);
@@ -162,7 +190,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 		return propVal;
 	}
 
-	private static Number applyDecimalScale(Number value, int decimalScale) {
+	private static @Nullable Number applyDecimalScale(@Nullable Number value, int decimalScale) {
 		if ( decimalScale < 0 ) {
 			return value;
 		}
@@ -172,18 +200,18 @@ public final class CloudDatumStreamPropertyConfiguration extends
 			return value;
 		}
 		BigDecimal v = NumberUtils.bigDecimalForNumber(value);
-		if ( v.scale() > decimalScale ) {
+		if ( v != null && v.scale() > decimalScale ) {
 			v = v.setScale(decimalScale, RoundingMode.HALF_UP);
 		}
 		return v;
 	}
 
-	private static Number applyUnitMultiplier(Number value, BigDecimal multiplier) {
+	private static @Nullable Number applyUnitMultiplier(@Nullable Number value, BigDecimal multiplier) {
 		if ( BigDecimal.ONE.compareTo(multiplier) == 0 ) {
 			return value;
 		}
 		BigDecimal v = NumberUtils.bigDecimalForNumber(value);
-		return v.multiply(multiplier);
+		return (v != null ? v.multiply(multiplier) : null);
 	}
 
 	@Override
@@ -241,9 +269,8 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 *
 	 * @return the cloud datum stream mapping ID
 	 */
-	public Long getDatumStreamMappingId() {
-		UserLongIntegerCompositePK id = getId();
-		return (id != null ? id.getGroupId() : null);
+	public final Long getDatumStreamMappingId() {
+		return id().getGroupId();
 	}
 
 	/**
@@ -251,9 +278,8 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 *
 	 * @return the index
 	 */
-	public Integer getIndex() {
-		UserLongIntegerCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Integer getIndex() {
+		return id().getEntityId();
 	}
 
 	/**
@@ -261,7 +287,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 *
 	 * @return the property type
 	 */
-	public DatumSamplesType getPropertyType() {
+	public final DatumSamplesType getPropertyType() {
 		return propertyType;
 	}
 
@@ -271,7 +297,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 * @param propertyType
 	 *        the property type to set
 	 */
-	public void setPropertyType(DatumSamplesType propertyType) {
+	public final void setPropertyType(DatumSamplesType propertyType) {
 		this.propertyType = propertyType;
 	}
 
@@ -280,7 +306,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 *
 	 * @return the property name
 	 */
-	public String getPropertyName() {
+	public final String getPropertyName() {
 		return propertyName;
 	}
 
@@ -290,7 +316,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 * @param propertyName
 	 *        the property name to set
 	 */
-	public void setPropertyName(String propertyName) {
+	public final void setPropertyName(String propertyName) {
 		this.propertyName = propertyName;
 	}
 
@@ -299,7 +325,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 *
 	 * @return the value type
 	 */
-	public CloudDatumStreamValueType getValueType() {
+	public final CloudDatumStreamValueType getValueType() {
 		return valueType;
 	}
 
@@ -309,7 +335,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 * @param valueType
 	 *        the value type to set
 	 */
-	public void setValueType(CloudDatumStreamValueType valueType) {
+	public final void setValueType(CloudDatumStreamValueType valueType) {
 		this.valueType = valueType;
 	}
 
@@ -319,7 +345,7 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 * @return a reference to the source data value to populate on the datum
 	 *         stream
 	 */
-	public String getValueReference() {
+	public final String getValueReference() {
 		return valueReference;
 	}
 
@@ -330,17 +356,17 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 *        a reference to the source data value to populate on the datum
 	 *        stream
 	 */
-	public void setValueReference(String valueReference) {
+	public final void setValueReference(String valueReference) {
 		this.valueReference = valueReference;
 	}
 
 	/**
 	 * Get the value multiplier.
 	 *
-	 * @return a number to multiply source data values by, or {@literal null}
-	 *         for no change
+	 * @return a number to multiply source data values by, or {@code null} for
+	 *         no change
 	 */
-	public BigDecimal getMultiplier() {
+	public final @Nullable BigDecimal getMultiplier() {
 		return multiplier;
 	}
 
@@ -348,20 +374,20 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 * Set the value multiplier.
 	 *
 	 * @param multiplier
-	 *        a number to multiply source data values by, or {@literal null} for
-	 *        no change
+	 *        a number to multiply source data values by, or {@code null} for no
+	 *        change
 	 */
-	public void setMultiplier(BigDecimal multiplier) {
+	public final void setMultiplier(@Nullable BigDecimal multiplier) {
 		this.multiplier = multiplier;
 	}
 
 	/**
 	 * Get the value decimal scale.
 	 *
-	 * @return the scale to round the property value to, or {@literal null} or
-	 *         less than 0 for no rounding
+	 * @return the scale to round the property value to, or {@code null} or less
+	 *         than 0 for no rounding
 	 */
-	public Integer getScale() {
+	public final @Nullable Integer getScale() {
 		return scale;
 	}
 
@@ -369,10 +395,10 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 * Set the value decimal scale.
 	 *
 	 * @param scale
-	 *        the scale to round the property value to, or {@literal null} or
-	 *        less than 0 for no rounding
+	 *        the scale to round the property value to, or {@code null} or less
+	 *        than 0 for no rounding
 	 */
-	public void setScale(Integer scale) {
+	public final void setScale(@Nullable Integer scale) {
 		this.scale = scale;
 	}
 

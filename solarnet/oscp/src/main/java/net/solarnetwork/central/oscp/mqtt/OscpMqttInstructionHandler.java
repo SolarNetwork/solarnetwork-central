@@ -39,7 +39,6 @@ import static net.solarnetwork.domain.InstructionStatus.InstructionState.Decline
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Executing;
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Queuing;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +47,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpMethod;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -100,7 +100,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	private final CapacityOptimizerConfigurationDao capacityOptimizerDao;
 	private final CapacityProviderConfigurationDao capacityProviderDao;
 	private final ExternalSystemClient client;
-	private UserEventAppenderBiz userEventAppenderBiz;
+	private @Nullable UserEventAppenderBiz userEventAppenderBiz;
 
 	/**
 	 * Constructor.
@@ -122,7 +122,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	 * @param client
 	 *        the client to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public OscpMqttInstructionHandler(StatTracker stats, Executor taskExecutor,
 			ObjectMapper objectMapper, NodeInstructionDao nodeInstructionDao,
@@ -304,7 +304,8 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 		}
 	}
 
-	private void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, @Nullable String message,
+			@Nullable Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
@@ -315,19 +316,24 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	}
 
 	private void incrementInstructionReceivedStat(String action) {
-		getMqttStats().increment(OscpMqttCountStat.InstructionsReceived);
+		mqttStats().increment(OscpMqttCountStat.InstructionsReceived);
 		OscpMqttCountStat actionStat = OscpMqttCountStat.instructionReceivedStat(action);
 		if ( actionStat != null ) {
-			getMqttStats().increment(actionStat);
+			mqttStats().increment(actionStat);
 		}
 	}
 
-	private void incrementInstructionErrorStat(String action) {
-		getMqttStats().increment(OscpMqttCountStat.InstructionErrors);
+	private void incrementInstructionErrorStat(@Nullable String action) {
+		mqttStats().increment(OscpMqttCountStat.InstructionErrors);
 		OscpMqttCountStat actionStat = OscpMqttCountStat.instructionErrorStat(action);
 		if ( actionStat != null ) {
-			getMqttStats().increment(actionStat);
+			mqttStats().increment(actionStat);
 		}
+	}
+
+	@SuppressWarnings("NullAway")
+	private StatTracker mqttStats() {
+		return getMqttStats(); // required in constructor
 	}
 
 	private class SendOscpInstructionTask implements Runnable, Supplier<String> {
@@ -342,7 +348,8 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 
 		private SendOscpInstructionTask(Long instructionId, Long nodeId,
 				CapacityGroupConfiguration group, CapacityProviderConfiguration provider,
-				Map<String, Object> eventData, String action, Object msg, String correlationId) {
+				Map<String, Object> eventData, String action, Object msg,
+				@Nullable String correlationId) {
 			super();
 			this.instructionId = instructionId;
 			this.nodeId = nodeId;
@@ -351,8 +358,8 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 			this.action = action;
 			this.msg = msg;
 			Map<String, Object> params = (correlationId != null
-					? Collections.singletonMap(OscpWebUtils.CORRELATION_ID_HEADER, correlationId)
-					: Collections.emptyMap());
+					? Map.of(OscpWebUtils.CORRELATION_ID_HEADER, correlationId)
+					: Map.of());
 			this.context = new SystemTaskContext<>(action, OscpRole.CapacityOptimizer, provider,
 					OSCP_INSTRUCTION_ERROR_TAGS, OSCP_INSTRUCTION_TAGS, capacityProviderDao, params);
 		}
@@ -399,7 +406,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	 *
 	 * @return the topic
 	 */
-	public String getMqttTopic() {
+	public final String getMqttTopic() {
 		return mqttTopic;
 	}
 
@@ -407,10 +414,10 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	 * Set the MQTT topic to publish to.
 	 *
 	 * @param mqttTopic
-	 *        the topic; if {@literal null} or blank then
-	 *        {@link #MQTT_TOPIC_V20} will be set instead
+	 *        the topic; if {@code null} or blank then {@link #MQTT_TOPIC_V20}
+	 *        will be set instead
 	 */
-	public void setMqttTopic(String mqttTopic) {
+	public final void setMqttTopic(String mqttTopic) {
 		this.mqttTopic = (mqttTopic == null || mqttTopic.isBlank() ? MQTT_TOPIC_V20 : mqttTopic);
 	}
 
@@ -419,7 +426,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	 *
 	 * @return the service
 	 */
-	public UserEventAppenderBiz getUserEventAppenderBiz() {
+	public final @Nullable UserEventAppenderBiz getUserEventAppenderBiz() {
 		return userEventAppenderBiz;
 	}
 
@@ -429,7 +436,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	 * @param userEventAppenderBiz
 	 *        the service to set
 	 */
-	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
+	public final void setUserEventAppenderBiz(@Nullable UserEventAppenderBiz userEventAppenderBiz) {
 		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 

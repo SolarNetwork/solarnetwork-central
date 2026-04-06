@@ -96,10 +96,10 @@ public final class SelectEndpointConfiguration
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		if ( filter.hasUserCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getUserIds(), "de.user_id", where);
+			idx += whereOptimizedArrayContains(filter.userIds(), "de.user_id", where);
 		}
 		if ( filter.hasEndpointCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getEndpointIds(), "de.id", where);
+			idx += whereOptimizedArrayContains(filter.endpointIds(), "de.id", where);
 		}
 		if ( filter.hasEnabledCriteria() ) {
 			where.append("\tAND de.enabled = ?\n");
@@ -128,13 +128,13 @@ public final class SelectEndpointConfiguration
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		if ( filter.hasUserCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.userIds());
 		}
 		if ( filter.hasEndpointCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getEndpointIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.endpointIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled());
+			stmt.setBoolean(++p, filter.enabled());
 		}
 		return p;
 	}

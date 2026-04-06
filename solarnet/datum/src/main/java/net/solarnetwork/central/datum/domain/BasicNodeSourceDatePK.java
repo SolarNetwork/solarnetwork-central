@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Basic primary key composed of a node ID and source ID and date.
@@ -40,14 +43,7 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	@Serial
 	private static final long serialVersionUID = 4113556533271163661L;
 
-	private Instant created;
-
-	/**
-	 * Default constructor.
-	 */
-	public BasicNodeSourceDatePK() {
-		super();
-	}
+	private final Instant created;
 
 	/**
 	 * Constructor.
@@ -58,12 +54,12 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	 *        the source ID
 	 * @param created
 	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public BasicNodeSourceDatePK(Long nodeId, String sourceId, Instant created) {
-		super();
-		setNodeId(nodeId);
-		setSourceId(sourceId);
-		setCreated(created);
+		super(nodeId, sourceId);
+		this.created = requireNonNullArgument(created, "created");
 	}
 
 	@Override
@@ -80,15 +76,12 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
 		if ( !super.equals(obj) || !(obj instanceof BasicNodeSourceDatePK other) ) {
 			return false;
-		}
-		if ( created == null ) {
-			return other.created == null;
 		}
 		return created.equals(other.created);
 	}
@@ -97,9 +90,7 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	protected void populateIdValue(StringBuilder buf) {
 		super.populateIdValue(buf);
 		buf.append(";c=");
-		if ( created != null ) {
-			buf.append(created);
-		}
+		buf.append(created);
 	}
 
 	/**
@@ -115,7 +106,7 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	 * <li>created</li>
 	 * </ol>
 	 *
-	 * {@literal null} values will be sorted before non-{@literal null} values.
+	 * {@code null} values will be sorted before non-{@code null} values.
 	 *
 	 * @param o
 	 *        the object to compare to
@@ -123,16 +114,12 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	 *         less than, equal to, or l to, or greater than the specified
 	 *         object.
 	 */
-	public int compareTo(BasicNodeSourceDatePK o) {
+	public int compareTo(@Nullable BasicNodeSourceDatePK o) {
 		int comparison = super.compareTo(o);
 		if ( comparison != 0 ) {
 			return comparison;
 		}
-		if ( o.created == null ) {
-			return 1;
-		} else if ( created == null ) {
-			return -1;
-		}
+		o = ObjectUtils.nonnull(o, "other");
 		return created.compareTo(o.created);
 	}
 
@@ -150,13 +137,11 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		super.populateStringValue(buf);
-		if ( created != null ) {
-			if ( !buf.isEmpty() ) {
-				buf.append(", ");
-			}
-			buf.append("created=");
-			buf.append(created);
+		if ( !buf.isEmpty() ) {
+			buf.append(", ");
 		}
+		buf.append("created=");
+		buf.append(created);
 	}
 
 	/**
@@ -164,18 +149,8 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	 *
 	 * @return the creation time
 	 */
-	public Instant getCreated() {
+	public final Instant getCreated() {
 		return created;
-	}
-
-	/**
-	 * Set the creation time stamp.
-	 *
-	 * @param created
-	 *        the time
-	 */
-	public void setCreated(Instant created) {
-		this.created = created;
 	}
 
 }

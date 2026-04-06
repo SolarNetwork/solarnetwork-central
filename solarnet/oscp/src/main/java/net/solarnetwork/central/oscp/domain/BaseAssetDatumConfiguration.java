@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.oscp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.util.ObjectUtils;
 
 /**
@@ -33,12 +36,33 @@ import net.solarnetwork.util.ObjectUtils;
  * @author matt
  * @version 1.2
  */
-public abstract class BaseAssetDatumConfiguration {
+public abstract sealed class BaseAssetDatumConfiguration implements Cloneable
+		permits AssetEnergyDatumConfiguration, AssetInstantaneousDatumConfiguration {
 
 	private String[] propertyNames;
 	private MeasurementUnit unit;
-	private BigDecimal multiplier;
+	private @Nullable BigDecimal multiplier;
 	private StatisticType statisticType;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param propertyNames
+	 *        the property names
+	 * @param unit
+	 *        the unit
+	 * @param statisticType
+	 *        the statistics type
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	protected BaseAssetDatumConfiguration(String[] propertyNames, MeasurementUnit unit,
+			StatisticType statisticType) {
+		super();
+		this.propertyNames = requireNonEmptyArgument(propertyNames, "propertyNames");
+		this.unit = requireNonNullArgument(unit, "unit");
+		this.statisticType = requireNonNullArgument(statisticType, "statisticType");
+	}
 
 	/**
 	 * Copy the properties of this instance into another.
@@ -69,13 +93,25 @@ public abstract class BaseAssetDatumConfiguration {
 	 *         other's
 	 */
 	@SuppressWarnings("ReferenceEquality")
-	public boolean isSameAs(BaseAssetDatumConfiguration other) {
+	public boolean isSameAs(@Nullable BaseAssetDatumConfiguration other) {
+		if ( other == null ) {
+			return false;
+		}
 		// @formatter:off
-		return (Arrays.equals(this.propertyNames, other.propertyNames)
-				&& Objects.equals(this.unit, other.unit)
-				&& ObjectUtils.comparativelyEqual(this.multiplier, other.multiplier)
-				&& Objects.equals(this.statisticType, other.statisticType));
+		return (Arrays.equals(propertyNames, other.propertyNames)
+				&& Objects.equals(unit, other.unit)
+				&& ObjectUtils.comparativelyEqual(multiplier, other.multiplier)
+				&& Objects.equals(statisticType, other.statisticType));
 		// @formatter:on
+	}
+
+	@Override
+	protected BaseAssetDatumConfiguration clone() {
+		try {
+			return (BaseAssetDatumConfiguration) super.clone();
+		} catch ( CloneNotSupportedException e ) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 	/**
@@ -83,7 +119,7 @@ public abstract class BaseAssetDatumConfiguration {
 	 *
 	 * @return the property names.
 	 */
-	public String[] getPropertyNames() {
+	public final String[] getPropertyNames() {
 		return propertyNames;
 	}
 
@@ -92,9 +128,11 @@ public abstract class BaseAssetDatumConfiguration {
 	 *
 	 * @param propertyNames
 	 *        the property names to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null} or empty
 	 */
-	public void setPropertyNames(String[] propertyNames) {
-		this.propertyNames = propertyNames;
+	public final void setPropertyNames(String[] propertyNames) {
+		this.propertyNames = requireNonEmptyArgument(propertyNames, "propertyNames");
 	}
 
 	/**
@@ -102,7 +140,7 @@ public abstract class BaseAssetDatumConfiguration {
 	 *
 	 * @return the unit
 	 */
-	public MeasurementUnit getUnit() {
+	public final MeasurementUnit getUnit() {
 		return unit;
 	}
 
@@ -111,18 +149,20 @@ public abstract class BaseAssetDatumConfiguration {
 	 *
 	 * @param unit
 	 *        the unit to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setUnit(MeasurementUnit unit) {
-		this.unit = unit;
+	public final void setUnit(MeasurementUnit unit) {
+		this.unit = requireNonNullArgument(unit, "unit");
 	}
 
 	/**
 	 * Get the datum stream property value multiplier.
 	 *
 	 * @return the multiplier to convert property values into {@code unit}, or
-	 *         {@literal null} for no conversion
+	 *         {@code null} for no conversion
 	 */
-	public BigDecimal getMultiplier() {
+	public final @Nullable BigDecimal getMultiplier() {
 		return multiplier;
 	}
 
@@ -131,9 +171,9 @@ public abstract class BaseAssetDatumConfiguration {
 	 *
 	 * @param multiplier
 	 *        the multiplier to convert property values into
-	 *        {@code instantaneousUnit}, or {@literal null} for no conversion
+	 *        {@code instantaneousUnit}, or {@code null} for no conversion
 	 */
-	public void setMultiplier(BigDecimal multiplier) {
+	public final void setMultiplier(@Nullable BigDecimal multiplier) {
 		this.multiplier = multiplier;
 	}
 
@@ -142,7 +182,7 @@ public abstract class BaseAssetDatumConfiguration {
 	 *
 	 * @return the statistic type
 	 */
-	public StatisticType getStatisticType() {
+	public final StatisticType getStatisticType() {
 		return statisticType;
 	}
 
@@ -151,9 +191,11 @@ public abstract class BaseAssetDatumConfiguration {
 	 *
 	 * @param statisticType
 	 *        the statistic type to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setStatisticType(StatisticType statisticType) {
-		this.statisticType = statisticType;
+	public final void setStatisticType(StatisticType statisticType) {
+		this.statisticType = requireNonNullArgument(statisticType, "statisticType");
 	}
 
 }

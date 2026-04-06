@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import java.time.Instant;
 import java.util.UUID;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -40,6 +42,15 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 
 	/**
+	 * Get the primary key.
+	 *
+	 * @return the key
+	 */
+	@Override
+	@NonNull
+	DatumAuxiliaryPK getId();
+
+	/**
 	 * Get the unique ID of the stream this datum is a part of.
 	 *
 	 * <p>
@@ -48,7 +59,9 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 	 *
 	 * @return the stream ID
 	 */
-	UUID getStreamId();
+	default UUID getStreamId() {
+		return getId().getStreamId();
+	}
 
 	/**
 	 * Get the associated timestamp of this datum.
@@ -64,14 +77,22 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 	 *
 	 * @return the timestamp for this datum
 	 */
-	Instant getTimestamp();
+	default Instant getTimestamp() {
+		return getId().getTimestamp();
+	}
 
 	/**
 	 * Get the type of auxiliary datum this instance represents.
 	 *
+	 * <p>
+	 * This is a shortcut for {@code getId().getKind()}.
+	 * </p>
+	 *
 	 * @return the type
 	 */
-	DatumAuxiliaryType getType();
+	default DatumAuxiliaryType getType() {
+		return getId().getKind();
+	}
 
 	/**
 	 * Get a set of datum properties that represent a "final" values to assume
@@ -79,6 +100,7 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 	 *
 	 * @return the final sample values
 	 */
+	@Nullable
 	DatumSamples getSamplesFinal();
 
 	/**
@@ -87,6 +109,7 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 	 *
 	 * @return the start sample values
 	 */
+	@Nullable
 	DatumSamples getSamplesStart();
 
 	/**
@@ -94,6 +117,7 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 	 *
 	 * @return the notes
 	 */
+	@Nullable
 	String getNotes();
 
 	/**
@@ -101,6 +125,7 @@ public interface DatumAuxiliary extends Identity<DatumAuxiliaryPK> {
 	 *
 	 * @return the metadata
 	 */
+	@Nullable
 	GeneralDatumMetadata getMetadata();
 
 }

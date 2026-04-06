@@ -1,34 +1,35 @@
 /* ==================================================================
  * ExternalSystemSupportDao.java - 21/08/2022 4:00:36 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.oscp.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
  * DAO API for supporting external system processes.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -36,14 +37,15 @@ public interface ExternalSystemSupportDao {
 
 	/**
 	 * Get an external system configuration.
-	 * 
+	 *
 	 * @param role
 	 *        the role of the configuration to get
 	 * @param id
 	 *        the ID of the configuration to get
-	 * @return the configuration, or {@literal null} if one does not exist for
-	 *         the given values
+	 * @return the configuration, or {@code null} if one does not exist for the
+	 *         given values
 	 */
+	@Nullable
 	ExternalSystemConfiguration externalSystemConfiguration(OscpRole role, UserLongCompositePK id);
 
 }

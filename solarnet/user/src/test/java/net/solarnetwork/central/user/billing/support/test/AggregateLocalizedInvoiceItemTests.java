@@ -57,9 +57,10 @@ public class AggregateLocalizedInvoiceItemTests {
 	public void addReturnsSame() {
 		// given
 		InvoiceItem item = createMock(InvoiceItem.class);
-		replay(item);
+		expect(item.getDescription()).andReturn("Item").anyTimes();
 
 		// when
+		replay(item);
 		AggregateLocalizedInvoiceItem agg = new AggregateLocalizedInvoiceItem(Locale.US);
 
 		// then
@@ -71,11 +72,12 @@ public class AggregateLocalizedInvoiceItemTests {
 	public void singleAmount() {
 		// given
 		InvoiceItem item = EasyMock.createMock(InvoiceItem.class);
+		expect(item.getDescription()).andReturn("Item").anyTimes();
 		expect(item.getCurrencyCode()).andReturn("USD").anyTimes();
 		expect(item.getAmount()).andReturn(AMOUNT_1).anyTimes();
-		replay(item);
 
 		// when
+		replay(item);
 		AggregateLocalizedInvoiceItem agg = new AggregateLocalizedInvoiceItem(Locale.US);
 		agg.addItem(item);
 
@@ -89,15 +91,16 @@ public class AggregateLocalizedInvoiceItemTests {
 	public void aggregateAmount() {
 		// given
 		InvoiceItem item1 = EasyMock.createMock(InvoiceItem.class);
+		expect(item1.getDescription()).andReturn("Item 1").anyTimes();
 		expect(item1.getCurrencyCode()).andReturn("USD").anyTimes();
 		expect(item1.getAmount()).andReturn(AMOUNT_1).anyTimes();
 
 		InvoiceItem item2 = EasyMock.createMock(InvoiceItem.class);
+		expect(item2.getDescription()).andReturn("Item 2").anyTimes();
 		expect(item2.getAmount()).andReturn(AMOUNT_2).anyTimes();
 
-		replay(item1, item2);
-
 		// when
+		replay(item1, item2);
 		AggregateLocalizedInvoiceItem agg = new AggregateLocalizedInvoiceItem(Locale.US);
 		agg.addItem(item1).addItem(item2);
 

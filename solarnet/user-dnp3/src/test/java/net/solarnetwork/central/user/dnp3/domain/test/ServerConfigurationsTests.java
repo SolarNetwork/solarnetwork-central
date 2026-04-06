@@ -25,9 +25,12 @@ package net.solarnetwork.central.user.dnp3.domain.test;
 import static java.time.Instant.now;
 import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.dnp3.domain.ControlType;
+import net.solarnetwork.central.dnp3.domain.MeasurementType;
 import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurations;
@@ -55,7 +58,8 @@ public class ServerConfigurationsTests {
 	@Test
 	public void empty_withMeasurement_nullControl() {
 		ServerConfigurations c = new ServerConfigurations(List
-				.of(new ServerMeasurementConfiguration(randomLong(), randomLong(), randomInt(), now())),
+				.of(new ServerMeasurementConfiguration(randomLong(), randomLong(), randomInt(), now(),
+						randomLong(), randomString(), MeasurementType.AnalogInput, randomString())),
 				null);
 		then(c.isEmpty()).as("Non-empty measurements is not empty").isFalse();
 	}
@@ -63,7 +67,8 @@ public class ServerConfigurationsTests {
 	@Test
 	public void empty_nullMeasurement_withControl() {
 		ServerConfigurations c = new ServerConfigurations(null,
-				List.of(new ServerControlConfiguration(randomLong(), randomLong(), randomInt(), now())));
+				List.of(new ServerControlConfiguration(randomLong(), randomLong(), randomInt(), now(),
+						randomLong(), randomString(), ControlType.Analog)));
 		then(c.isEmpty()).as("Non-empty controls is not empty").isFalse();
 	}
 
@@ -71,8 +76,10 @@ public class ServerConfigurationsTests {
 	public void empty_withMeasurement_withControl() {
 		ServerConfigurations c = new ServerConfigurations(
 				List.of(new ServerMeasurementConfiguration(randomLong(), randomLong(), randomInt(),
-						now())),
-				List.of(new ServerControlConfiguration(randomLong(), randomLong(), randomInt(), now())));
+						now(), randomLong(), randomString(), MeasurementType.AnalogInput,
+						randomString())),
+				List.of(new ServerControlConfiguration(randomLong(), randomLong(), randomInt(), now(),
+						randomLong(), randomString(), ControlType.Analog)));
 		then(c.isEmpty()).as("Non-empty measurements and controls is not empty").isFalse();
 	}
 

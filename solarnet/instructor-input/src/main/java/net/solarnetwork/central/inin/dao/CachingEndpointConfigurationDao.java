@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.CachingGenericDao;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.inin.domain.EndpointConfiguration;
@@ -53,7 +54,7 @@ public class CachingEndpointConfigurationDao
 	 * @param executor
 	 *        task executor
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CachingEndpointConfigurationDao(EndpointConfigurationDao delegate,
 			Cache<UserUuidPK, EndpointConfiguration> cache, Executor executor) {
@@ -62,7 +63,7 @@ public class CachingEndpointConfigurationDao
 
 	@Override
 	public FilterResults<EndpointConfiguration, UserUuidPK> findFiltered(EndpointFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		return delegate.findFiltered(filter, sorts, offset, max);
 	}
 
@@ -72,7 +73,8 @@ public class CachingEndpointConfigurationDao
 	}
 
 	@Override
-	public Collection<EndpointConfiguration> findAll(Long keyComponent1, List<SortDescriptor> sorts) {
+	public Collection<EndpointConfiguration> findAll(Long keyComponent1,
+			@Nullable List<SortDescriptor> sorts) {
 		return delegate.findAll(keyComponent1, sorts);
 	}
 
@@ -81,7 +83,7 @@ public class CachingEndpointConfigurationDao
 	}
 
 	@Override
-	public EndpointConfiguration getForEndpointId(UUID endpointId) {
+	public @Nullable EndpointConfiguration getForEndpointId(UUID endpointId) {
 		UserUuidPK id = endpointOnlyKey(endpointId);
 		EndpointConfiguration result = cache.get(id);
 		if ( result == null ) {
@@ -105,14 +107,14 @@ public class CachingEndpointConfigurationDao
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, EndpointFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable EndpointFilter filter, boolean enabled) {
 		int result = delegate.updateEnabledStatus(userId, filter, enabled);
 		evictKeysMatching((id) -> {
 			if ( !userId.equals(id.getUserId()) ) {
 				return false;
 			}
 			if ( filter != null && filter.hasEndpointCriteria() ) {
-				for ( UUID endpointId : filter.getEndpointIds() ) {
+				for ( UUID endpointId : filter.endpointIds() ) {
 					if ( endpointId.equals(id.getUuid()) ) {
 						return true;
 					}

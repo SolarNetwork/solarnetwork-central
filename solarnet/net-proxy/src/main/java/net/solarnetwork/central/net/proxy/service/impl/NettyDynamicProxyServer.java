@@ -50,6 +50,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509KeyManager;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.netty.bootstrap.ServerBootstrap;
@@ -102,7 +103,7 @@ public class NettyDynamicProxyServer
 	private final String[] keyStoreAliases = new String[] { DEFAULT_KEYSTORE_ALIAS };
 
 	private String[] tlsProtocols = DEFAULT_TLS_PROTOCOLS;
-	private KeyStore keyStore;
+	private @Nullable KeyStore keyStore;
 	private boolean wireLogging = false;
 
 	/**
@@ -137,7 +138,7 @@ public class NettyDynamicProxyServer
 	 * @param bindAddress
 	 *        the server bind address
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public NettyDynamicProxyServer(SocketAddress bindAddress) {
 		this(new SocketAddress[] { requireNonNullArgument(bindAddress, "bindAddress") });
@@ -149,7 +150,7 @@ public class NettyDynamicProxyServer
 	 * @param bindAddresses
 	 *        the server bind addresses
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public NettyDynamicProxyServer(SocketAddress[] bindAddresses) {
 		super();
@@ -233,9 +234,9 @@ public class NettyDynamicProxyServer
 
 	private class ProxyChannelInitializer extends ChannelInitializer<SocketChannel> {
 
-		private final SslContext sslContext;
+		private final @Nullable SslContext sslContext;
 
-		private ProxyChannelInitializer(SslContext sslContext) {
+		private ProxyChannelInitializer(@Nullable SslContext sslContext) {
 			this.sslContext = sslContext;
 		}
 
@@ -272,7 +273,11 @@ public class NettyDynamicProxyServer
 	}
 
 	@Override
-	public X509Certificate[] getCertificateChain(String alias) {
+	public X509Certificate @Nullable [] getCertificateChain(String alias) {
+		final KeyStore keyStore = getKeyStore();
+		if ( keyStore == null ) {
+			return null;
+		}
 		try {
 			Certificate[] certs = keyStore.getCertificateChain(alias);
 			if ( certs == null ) {
@@ -294,7 +299,11 @@ public class NettyDynamicProxyServer
 	}
 
 	@Override
-	public PrivateKey getPrivateKey(String alias) {
+	public @Nullable PrivateKey getPrivateKey(String alias) {
+		final KeyStore keyStore = getKeyStore();
+		if ( keyStore == null ) {
+			return null;
+		}
 		try {
 			Key key = keyStore.getKey(alias, new char[0]);
 			return (PrivateKey) key;
@@ -345,8 +354,8 @@ public class NettyDynamicProxyServer
 		}
 
 		@Override
-		public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
-				throws CertificateException {
+		public void checkClientTrusted(X509Certificate[] chain, String authType,
+				@Nullable SSLEngine engine) throws CertificateException {
 			requireNonEmptyArgument(chain, "chain");
 			log.debug("Validating client trust using {}: {}", authType, canonicalSubjectDn(chain[0]));
 			chain[0].checkValidity();
@@ -401,7 +410,7 @@ public class NettyDynamicProxyServer
 	 *
 	 * @return {@literal true} if wire-level logging should be enabled
 	 */
-	public boolean isWireLogging() {
+	public final boolean isWireLogging() {
 		return wireLogging;
 	}
 
@@ -411,7 +420,7 @@ public class NettyDynamicProxyServer
 	 * @param wireLogging
 	 *        {@literal true} if wire-level logging should be enabled
 	 */
-	public void setWireLogging(boolean wireLogging) {
+	public final void setWireLogging(boolean wireLogging) {
 		this.wireLogging = wireLogging;
 	}
 
@@ -420,7 +429,7 @@ public class NettyDynamicProxyServer
 	 *
 	 * @return the protocols to support
 	 */
-	public String[] getTlsProtocols() {
+	public final String[] getTlsProtocols() {
 		return tlsProtocols;
 	}
 
@@ -428,10 +437,10 @@ public class NettyDynamicProxyServer
 	 * Set the supported TLS protocols.
 	 *
 	 * @param tlsProtocols
-	 *        the protocols to support; if {@literal null} then the default
+	 *        the protocols to support; if {@code null} then the default
 	 *        protocols will be set
 	 */
-	public void setTlsProtocols(String[] tlsProtocols) {
+	public final void setTlsProtocols(String[] tlsProtocols) {
 		this.tlsProtocols = (tlsProtocols != null && tlsProtocols.length > 0 ? tlsProtocols
 				: DEFAULT_TLS_PROTOCOLS);
 	}
@@ -441,7 +450,7 @@ public class NettyDynamicProxyServer
 	 *
 	 * @return the key store
 	 */
-	public KeyStore getKeyStore() {
+	public final @Nullable KeyStore getKeyStore() {
 		return keyStore;
 	}
 
@@ -451,7 +460,7 @@ public class NettyDynamicProxyServer
 	 * @param keyStore
 	 *        the key store to set
 	 */
-	public void setKeyStore(KeyStore keyStore) {
+	public final void setKeyStore(@Nullable KeyStore keyStore) {
 		this.keyStore = keyStore;
 	}
 
@@ -468,7 +477,7 @@ public class NettyDynamicProxyServer
 	 * Set the SSL key store alias for the server certificate.
 	 *
 	 * @param keyStoreAlias
-	 *        the key store alias to set; if {@literal null} then
+	 *        the key store alias to set; if {@code null} then
 	 *        {@link #DEFAULT_KEYSTORE_ALIAS} will be used instead
 	 */
 	public final void setKeyStoreAlias(String keyStoreAlias) {

@@ -45,6 +45,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDat
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.pathReferenceValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
@@ -72,9 +73,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -258,13 +259,13 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	 * A cache of SolarEdge site IDs to associated time zones. This is used
 	 * because the timestamps returned from the API are all in site-local time.
 	 */
-	private Cache<Long, ZoneId> siteTimeZoneCache;
+	private @Nullable Cache<Long, ZoneId> siteTimeZoneCache;
 
 	/**
 	 * A cache of SolarEdge site IDs to associated inventory information. This
 	 * is used to resolve the available device identifiers for a given site.
 	 */
-	private Cache<Long, CloudDataValue[]> siteInventoryCache;
+	private @Nullable Cache<Long, CloudDataValue[]> siteInventoryCache;
 
 	/**
 	 * Constructor.
@@ -288,7 +289,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public SolarEdgeV1CloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
@@ -335,7 +336,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
-			Map<String, ?> filters) {
+			@Nullable Map<String, ?> filters) {
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
@@ -343,9 +344,13 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null
 				&& filters.get(DEVICE_TYPE_FILTER) != null
 				&& filters.get(COMPONENT_ID_FILTER) != null ) {
-			result = components(filters);
+			result = components(filters.get(SITE_ID_FILTER).toString(),
+					SolarEdgeDeviceType.fromValue(filters.get(DEVICE_TYPE_FILTER).toString()),
+					filters.get(COMPONENT_ID_FILTER).toString());
+
 		} else if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
-			result = siteInventory(integration, filters);
+			result = siteInventory(integration, Long.valueOf(filters.get(SITE_ID_FILTER).toString()),
+					filters);
 		} else {
 			// list available sites
 			result = sites(integration);
@@ -355,28 +360,29 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	private List<CloudDataValue> sites(CloudIntegrationConfiguration integration) {
+		var sprops = integration.getServiceProperties();
 		return restOpsHelper.httpGet("List sites", integration, JsonNode.class,
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL)
-						.buildAndExpand(integration.getServiceProperties()).toUri(),
+						.buildAndExpand(sprops != null ? sprops : Map.of()).toUri(),
 				res -> parseSites(res.getBody()));
 	}
 
-	private List<CloudDataValue> siteInventory(CloudIntegrationConfiguration integration,
+	private List<CloudDataValue> siteInventory(CloudIntegrationConfiguration integration, Long siteId,
 			Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List site inventory", integration, JsonNode.class,
 				_ -> fromUri(resolveBaseUrl(integration, BASE_URI)).path(SITE_INVENTORY_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
-				res -> parseSiteInventory(integration, res.getBody(), filters));
+				res -> parseSiteInventory(integration, siteId, res.getBody()));
 	}
 
 	private List<CloudDataValue> equipmentChangeLog(CloudIntegrationConfiguration integration,
-			Map<String, ?> filters, SolarEdgeDeviceType deviceType, String replacedByRef) {
+			Long siteId, Map<String, ?> filters, SolarEdgeDeviceType deviceType, String replacedByRef) {
 		try {
 			return restOpsHelper.httpGet("List equipment change log", integration, JsonNode.class,
 					(_) -> fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(EQUIPMENT_CHANGELOG_URL_TEMPLATE).buildAndExpand(filters).toUri(),
-					res -> parseEquipmentChangeLog(res.getBody(), filters, deviceType, replacedByRef));
+					res -> parseEquipmentChangeLog(res.getBody(), siteId, deviceType, replacedByRef));
 		} catch ( RemoteServiceException e ) {
 			if ( e.getCause() instanceof HttpClientErrorException hce
 					&& hce.getStatusCode().is4xxClientError() ) {
@@ -387,23 +393,20 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		}
 	}
 
-	private List<CloudDataValue> components(Map<String, ?> filters) {
-		final String siteId = filters.get(SITE_ID_FILTER).toString();
-		final SolarEdgeDeviceType deviceType = SolarEdgeDeviceType
-				.fromValue(filters.get(DEVICE_TYPE_FILTER).toString());
-		final String componentId = filters.get(COMPONENT_ID_FILTER).toString();
+	private List<CloudDataValue> components(String siteId, SolarEdgeDeviceType deviceType,
+			String componentId) {
 		return switch (deviceType) {
 			case Inverter -> inverterDataValues(siteId, deviceType, componentId);
 			case Meter -> meterDataValues(siteId, deviceType, componentId);
 			case Battery -> batteryDataValues(siteId, deviceType, componentId);
-			default -> Collections.emptyList();
+			default -> List.of();
 		};
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<CloudDataValue> parseSites(JsonNode json) {
+	private static List<CloudDataValue> parseSites(@Nullable JsonNode json) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -477,11 +480,10 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 	@SuppressWarnings("MixedMutabilityReturnType")
 	private List<CloudDataValue> parseSiteInventory(final CloudIntegrationConfiguration integration,
-			final JsonNode json, final Map<String, ?> filters) {
+			final Long siteId, final @Nullable JsonNode json) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
-		final String siteId = filters.get(SITE_ID_FILTER).toString();
 		/*- EXAMPLE JSON:
 		{
 		  "Inventory": {
@@ -502,6 +504,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		  }
 		}
 		*/
+		final String siteIdent = siteId.toString();
 		final var result = new ArrayList<CloudDataValue>(4);
 		final JsonNode inventoryNode = json.path("Inventory");
 
@@ -558,18 +561,18 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 						meta.put(DEVICE_FIRMWARE_VERSION_METADATA, buf.toString());
 					}
 
-					final var dataValue = intermediateDataValue(List.of(siteId, Inverter.getKey(), id),
-							name, meta);
+					final var dataValue = intermediateDataValue(
+							List.of(siteIdent, Inverter.getKey(), id), name, meta);
 					inverterValues.add(dataValue);
 
 					// look for replaced equipment in changelog
-					inverterValues.addAll(equipmentChangeLog(integration,
+					inverterValues.addAll(equipmentChangeLog(integration, siteId,
 							Map.of(SITE_ID_FILTER, siteId, COMPONENT_ID_FILTER, id), Inverter,
 							pathReferenceValue(dataValue.getIdentifiers())));
 				}
 			}
-			result.add(intermediateDataValue(List.of(siteId, Inverter.getKey()), Inverter.getGroupKey(),
-					null, inverterValues));
+			result.add(intermediateDataValue(List.of(siteIdent, Inverter.getKey()),
+					Inverter.getGroupKey(), null, inverterValues));
 		}
 
 		// meters
@@ -604,20 +607,20 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				populateNonEmptyValue(meterNode, "firmwareVersion", DEVICE_FIRMWARE_VERSION_METADATA,
 						meta);
 
-				final var dataValue = intermediateDataValue(List.of(siteId, Meter.getKey(), id), name,
+				final var dataValue = intermediateDataValue(List.of(siteIdent, Meter.getKey(), id), name,
 						meta);
 				meterValues.add(dataValue);
 
 				// look for replaced equipment in changelog
 				if ( meta.containsKey(DEVICE_SERIAL_NUMBER_METADATA) ) {
-					meterValues.addAll(equipmentChangeLog(integration,
+					meterValues.addAll(equipmentChangeLog(integration, siteId,
 							Map.of(SITE_ID_FILTER, siteId, COMPONENT_ID_FILTER,
 									meta.get(DEVICE_SERIAL_NUMBER_METADATA)),
 							Meter, pathReferenceValue(dataValue.getIdentifiers())));
 				}
 			}
-			result.add(intermediateDataValue(List.of(siteId, Meter.getKey()), Meter.getGroupKey(), null,
-					meterValues));
+			result.add(intermediateDataValue(List.of(siteIdent, Meter.getKey()), Meter.getGroupKey(),
+					null, meterValues));
 		}
 
 		// batteries
@@ -652,17 +655,17 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 						meta);
 				populateNonEmptyValue(batteryNode, "nameplateCapacity", "capacity", meta);
 
-				final var dataValue = intermediateDataValue(List.of(siteId, Battery.getKey(), id), name,
-						meta);
+				final var dataValue = intermediateDataValue(List.of(siteIdent, Battery.getKey(), id),
+						name, meta);
 				batteryValues.add(dataValue);
 
 				// look for replaced equipment in changelog
-				batteryValues.addAll(equipmentChangeLog(integration,
+				batteryValues.addAll(equipmentChangeLog(integration, siteId,
 						Map.of(SITE_ID_FILTER, siteId, COMPONENT_ID_FILTER, id), Battery,
 						pathReferenceValue(dataValue.getIdentifiers())));
 
 			}
-			result.add(intermediateDataValue(List.of(siteId, Battery.getKey()), Battery.getGroupKey(),
+			result.add(intermediateDataValue(List.of(siteIdent, Battery.getKey()), Battery.getGroupKey(),
 					null, batteryValues));
 		}
 
@@ -671,12 +674,11 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<CloudDataValue> parseEquipmentChangeLog(JsonNode json, Map<String, ?> filters,
+	private static List<CloudDataValue> parseEquipmentChangeLog(@Nullable JsonNode json, Long siteId,
 			SolarEdgeDeviceType deviceType, String replacedByRef) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
-		final String siteId = filters.get(SITE_ID_FILTER).toString();
 		/*- EXAMPLE JSON:
 		{
 		  "ChangeLog": {
@@ -699,7 +701,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			if ( id.isEmpty() ) {
 				continue;
 			}
-			result.add(intermediateDataValue(List.of(siteId, deviceType.getKey(), id), id,
+			result.add(intermediateDataValue(List.of(siteId.toString(), deviceType.getKey(), id), id,
 					Map.of(REPLACED_BY_METADATA, replacedByRef, DEVICE_SERIAL_NUMBER_METADATA, id)));
 		}
 
@@ -752,7 +754,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		  }
 		 */
 		// @formatter:off
-		return Arrays.asList(
+		return List.of(
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "W"), "Total active power"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "DCV"), "DC voltage"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "GndRes"), "Ground fault resistance"),
@@ -805,7 +807,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		// power extracted from /site/{siteId}/powerDetails
 		// lifetime energy extracted from /site/{siteId}/meters
 		// @formatter:off
-		return Arrays.asList(
+		return List.of(
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "W"), "Power"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "TotWh"), "Lifetime energy")
 				);
@@ -829,7 +831,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		  }
 		 */
 		// @formatter:off
-		return Arrays.asList(
+		return List.of(
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "W"), "Power"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "State"), "Battery state"),
 				dataValue(List.of(siteId, deviceType.getKey(), componentId, "TotWhExp"), "Lifetime energy discharged"),
@@ -856,7 +858,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 		final var result = datum(datumStream, filter);
 		if ( result == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		return result.getResults();
 	}
@@ -882,7 +884,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 			final SolarEdgeResolution resolution = resolveResolution(ds, filter.getParameters());
 
-			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+			final Map<String, String> sourceIdMap = ds.servicePropertyStringMap(SOURCE_ID_MAP_SETTING);
 
 			final List<GeneralDatum> resultDatum = new ArrayList<>(16);
 			final Map<Long, SiteQueryPlan> queryPlans = resolveSiteQueryPlans(integration, ds,
@@ -949,7 +951,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 									.queryParam("timeUnit", resolution.getKey())
 									.buildAndExpand(queryPlan.siteId)
 									.toUri(),
-							HttpEntity::getBody);
+									r -> nonnull(r.getBody(), "Response body"));
 					JsonNode meterEnergy = restOpsHelper.httpGet("List meter energy data", integration,
 							JsonNode.class,
 							_ -> fromUri(resolveBaseUrl(integration, BASE_URI))
@@ -959,7 +961,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 									.queryParam("timeUnit", resolution.getKey())
 									.buildAndExpand(queryPlan.siteId)
 									.toUri(),
-							HttpEntity::getBody);
+									r -> nonnull(r.getBody(), "Response body"));
 					// @formatter:on
 					Collection<GeneralDatum> datum = parseMeterDatum(meterPower, meterEnergy, queryPlan,
 							ds, sourceIdMap, timestampFmt, resolution);
@@ -990,9 +992,10 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			Map<ObjectDatumStreamMetadataId, Instant> greatestTimestampPerStream = new HashMap<>(4);
 			List<Datum> finalResult = new ArrayList<>(r.size());
 			for ( GeneralDatum d : r ) {
-				ObjectDatumStreamMetadataId streamPk = new ObjectDatumStreamMetadataId(d.getKind(),
-						d.getObjectId(), d.getSourceId());
-				Instant ts = d.getTimestamp();
+				var datumId = d.datumIdent();
+				ObjectDatumStreamMetadataId streamPk = new ObjectDatumStreamMetadataId(datumId.getKind(),
+						datumId.getObjectId(), datumId.getSourceId());
+				Instant ts = datumId.getTimestamp();
 				greatestTimestampPerStream.compute(streamPk,
 						(_, v) -> v == null || ts.compareTo(v) > 0 ? ts : v);
 				finalResult.add(d);
@@ -1024,9 +1027,9 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<GeneralDatum> parseInverterDatum(JsonNode json, SiteQueryPlan queryPlan,
-			String inverterId, CloudDatumStreamConfiguration datumStream,
-			Map<String, String> sourceIdMap, DateTimeFormatter timestampFmt) {
+	private static List<GeneralDatum> parseInverterDatum(@Nullable JsonNode json,
+			SiteQueryPlan queryPlan, String inverterId, CloudDatumStreamConfiguration datumStream,
+			@Nullable Map<String, String> sourceIdMap, DateTimeFormatter timestampFmt) {
 		/*- EXAMPLE JSON:
 		{
 		  "data": {
@@ -1055,11 +1058,14 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		        }
 		      },
 		 */
+		if ( json == null ) {
+			return List.of();
+		}
 		final Map<String, List<ValueRef>> componentRefs = queryPlan.inverterRefs;
 		final String sourceId = resolveSourceId(datumStream, queryPlan, SolarEdgeDeviceType.Inverter,
 				inverterId, sourceIdMap);
 		if ( sourceId == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		List<GeneralDatum> result = new ArrayList<>(8);
 		for ( JsonNode telem : json.findValue("telemetries") ) {
@@ -1069,7 +1075,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			}
 			Instant ts = timestampFmt.parse(dateVal, Instant::from);
 			GeneralDatum d = new GeneralDatum(
-					new DatumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts),
+					DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts),
 					new DatumSamples());
 			for ( String componentId : new String[] { WILDCARD_IDENTIFIER, inverterId } ) {
 				if ( !componentRefs.containsKey(componentId) ) {
@@ -1145,7 +1151,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 	private static Collection<GeneralDatum> parseMeterDatum(JsonNode powerJson, JsonNode energyJson,
 			SiteQueryPlan queryPlan, CloudDatumStreamConfiguration datumStream,
-			Map<String, String> sourceIdMap, DateTimeFormatter timestampFmt,
+			@Nullable Map<String, String> sourceIdMap, DateTimeFormatter timestampFmt,
 			SolarEdgeResolution resolution) {
 		/*- EXAMPLE JSON (Power):
 		{
@@ -1201,7 +1207,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 					}
 					// force align date
 					Instant ts = resolution.truncateDate(timestampFmt.parse(dateVal, Instant::from));
-					DatumId datumId = new DatumId(datumStream.getKind(), datumStream.getObjectId(),
+					DatumId datumId = DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(),
 							sourceId, ts);
 					GeneralDatum d = result.computeIfAbsent(datumId,
 							_ -> new GeneralDatum(datumId, new DatumSamples()));
@@ -1236,11 +1242,11 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	@SuppressWarnings("MixedMutabilityReturnType")
-	private static List<GeneralDatum> parseBatteryDatum(JsonNode json, SiteQueryPlan queryPlan,
-			CloudDatumStreamConfiguration datumStream, Map<String, String> sourceIdMap,
+	private static List<GeneralDatum> parseBatteryDatum(@Nullable JsonNode json, SiteQueryPlan queryPlan,
+			CloudDatumStreamConfiguration datumStream, @Nullable Map<String, String> sourceIdMap,
 			DateTimeFormatter timestampFmt) {
 		if ( json == null ) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		/*- EXAMPLE JSON:
 		{
@@ -1284,7 +1290,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				}
 				Instant ts = timestampFmt.parse(dateVal, Instant::from);
 				GeneralDatum d = new GeneralDatum(
-						new DatumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts),
+						DatumId.datumId(datumStream.getKind(), datumStream.getObjectId(), sourceId, ts),
 						new DatumSamples());
 				for ( String componentId : new String[] { WILDCARD_IDENTIFIER, batteryId } ) {
 					if ( !componentRefs.containsKey(componentId) ) {
@@ -1325,7 +1331,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	private static boolean useIndexBasedSourceIds(CloudDatumStreamConfiguration datumStream,
-			Map<String, String> sourceIdMap) {
+			@Nullable Map<String, String> sourceIdMap) {
 		if ( sourceIdMap != null ) {
 			return false;
 		}
@@ -1333,9 +1339,9 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		return (ibSourceId != null && ibSourceId);
 	}
 
-	private static String resolveSourceId(CloudDatumStreamConfiguration datumStream,
+	private static @Nullable String resolveSourceId(CloudDatumStreamConfiguration datumStream,
 			SiteQueryPlan sitePlan, SolarEdgeDeviceType deviceType, String componentId,
-			Map<String, String> sourceIdMap) {
+			@Nullable Map<String, String> sourceIdMap) {
 		if ( sourceIdMap != null ) {
 			String key = "/%s/%s/%s".formatted(sitePlan.siteId, deviceType.getKey(), componentId);
 			return sourceIdMap.get(key);
@@ -1358,8 +1364,8 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		return "%s/%s/%s".formatted(datumStream.getSourceId(), devType, compId);
 	}
 
-	private SolarEdgeResolution resolveResolution(CloudDatumStreamConfiguration datumStream,
-			Map<String, ?> parameters) {
+	private SolarEdgeResolution resolveResolution(@Nullable CloudDatumStreamConfiguration datumStream,
+			@Nullable Map<String, ?> parameters) {
 		SolarEdgeResolution result = null;
 		try {
 			String settingVal = null;
@@ -1459,7 +1465,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		return result;
 	}
 
-	private CloudDataValue[] resolveSiteInventory(CloudIntegrationConfiguration integration,
+	private CloudDataValue @Nullable [] resolveSiteInventory(CloudIntegrationConfiguration integration,
 			Long siteId) {
 		assert integration != null && siteId != null;
 		final var cache = getSiteInventoryCache();
@@ -1469,7 +1475,8 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			return result;
 		}
 
-		List<CloudDataValue> response = siteInventory(integration, Map.of(SITE_ID_FILTER, siteId));
+		List<CloudDataValue> response = siteInventory(integration, siteId,
+				Map.of(SITE_ID_FILTER, siteId));
 		if ( response != null ) {
 			result = response.toArray(CloudDataValue[]::new);
 			if ( cache != null ) {
@@ -1519,7 +1526,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		private final ZoneId zone;
 
 		/** The set of inverter IDs required. */
-		private Set<String> inverterIds;
+		private @Nullable Set<String> inverterIds;
 
 		/** Flag to indicate if meter data is required. */
 		private boolean includeMeters;
@@ -1533,9 +1540,9 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 		private Map<String, List<ValueRef>> batteryRefs = new LinkedHashMap<>(8);
 
-		private CloudDataValue[] inventory;
+		private CloudDataValue @Nullable [] inventory;
 
-		private Map<SolarEdgeDeviceType, Map<String, Integer>> componentIndexMap;
+		private @Nullable Map<SolarEdgeDeviceType, Map<String, Integer>> componentIndexMap;
 
 		private SiteQueryPlan(Long siteId, ZoneId zone) {
 			super();
@@ -1573,7 +1580,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			}
 		}
 
-		private Integer componentIndex(SolarEdgeDeviceType deviceType, String componentId) {
+		private @Nullable Integer componentIndex(SolarEdgeDeviceType deviceType, String componentId) {
 			if ( inventory == null ) {
 				return null;
 			}
@@ -1589,7 +1596,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	private Map<Long, SiteQueryPlan> resolveSiteQueryPlans(CloudIntegrationConfiguration integration,
-			CloudDatumStreamConfiguration datumStream, Map<String, String> sourceIdMap,
+			CloudDatumStreamConfiguration datumStream, @Nullable Map<String, String> sourceIdMap,
 			List<CloudDatumStreamPropertyConfiguration> propConfigs) {
 		final var result = new LinkedHashMap<Long, SiteQueryPlan>(2);
 		final boolean useIndexBasedSourceIds = useIndexBasedSourceIds(datumStream, sourceIdMap);
@@ -1695,7 +1702,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	 *
 	 * @return the cache
 	 */
-	public final Cache<Long, ZoneId> getSiteTimeZoneCache() {
+	public final @Nullable Cache<Long, ZoneId> getSiteTimeZoneCache() {
 		return siteTimeZoneCache;
 	}
 
@@ -1710,7 +1717,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	 * @param siteTimeZoneCache
 	 *        the cache to set
 	 */
-	public final void setSiteTimeZoneCache(Cache<Long, ZoneId> siteTimeZoneCache) {
+	public final void setSiteTimeZoneCache(@Nullable Cache<Long, ZoneId> siteTimeZoneCache) {
 		this.siteTimeZoneCache = siteTimeZoneCache;
 	}
 
@@ -1719,7 +1726,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	 *
 	 * @return the cache
 	 */
-	public final Cache<Long, CloudDataValue[]> getSiteInventoryCache() {
+	public final @Nullable Cache<Long, CloudDataValue[]> getSiteInventoryCache() {
 		return siteInventoryCache;
 	}
 
@@ -1734,7 +1741,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	 * @param siteInventoryCache
 	 *        the cache to set
 	 */
-	public final void setSiteInventoryCache(Cache<Long, CloudDataValue[]> siteInventoryCache) {
+	public final void setSiteInventoryCache(@Nullable Cache<Long, CloudDataValue[]> siteInventoryCache) {
 		this.siteInventoryCache = siteInventoryCache;
 	}
 

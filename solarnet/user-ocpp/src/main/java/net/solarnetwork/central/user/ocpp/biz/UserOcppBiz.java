@@ -26,12 +26,15 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusFilter;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
 import net.solarnetwork.central.ocpp.dao.ChargeSessionFilter;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointFilter;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
@@ -48,7 +51,7 @@ import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
  * Service API for SolarUser OCPP support.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface UserOcppBiz {
 
@@ -95,7 +98,7 @@ public interface UserOcppBiz {
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get OCPP system users for
-	 * @return all available system users; never {@literal null}
+	 * @return all available system users; never {@code null}
 	 */
 	Collection<CentralSystemUser> systemUsersForUser(Long userId);
 
@@ -139,7 +142,7 @@ public interface UserOcppBiz {
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get OCPP authorizations for
-	 * @return all available authorizations; never {@literal null}
+	 * @return all available authorizations; never {@code null}
 	 */
 	Collection<CentralAuthorization> authorizationsForUser(Long userId);
 
@@ -158,9 +161,25 @@ public interface UserOcppBiz {
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get charge points for
-	 * @return all available charge points; never {@literal null}
+	 * @return all available charge points; never {@code null}
 	 */
-	Collection<CentralChargePoint> chargePointsForUser(Long userId);
+	default Collection<CentralChargePoint> chargePointsForUser(Long userId) {
+		FilterResults<CentralChargePoint, Long> result = listChargePointsForUser(userId, null);
+		return (result != null ? StreamSupport.stream(result.spliterator(), false).toList() : List.of());
+	}
+
+	/**
+	 * Get a list of all available charge points for a given user.
+	 *
+	 * @param userId
+	 *        the user ID to get entities for
+	 * @param filter
+	 *        an optional filter
+	 * @return the available entities, never {@code null}
+	 * @since 1.4
+	 */
+	FilterResults<CentralChargePoint, Long> listChargePointsForUser(Long userId,
+			@Nullable CentralChargePointFilter filter);
 
 	/**
 	 * Create a new charge point registration, or update an existing
@@ -228,9 +247,23 @@ public interface UserOcppBiz {
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get OCPP connectors for
-	 * @return all available connectors; never {@literal null}
+	 * @return all available connectors; never {@code null}
 	 */
 	Collection<CentralChargePointConnector> chargePointConnectorsForUser(Long userId);
+
+	/**
+	 * Get the available OCPP connectors for a given charger and user.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get OCPP connectors for
+	 * @param chargePointId
+	 *        the charge point ID to list connectors for
+	 * @return all available connectors for the given charger; never
+	 *         {@code null}
+	 * @since 1.4
+	 */
+	Collection<CentralChargePointConnector> chargePointConnectorsForUser(Long userId,
+			long chargePointId);
 
 	/**
 	 * Create a new OCPP connector, or update an existing connector.
@@ -272,7 +305,7 @@ public interface UserOcppBiz {
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get settings entities for
-	 * @return all available settings entities; never {@literal null}
+	 * @return all available settings entities; never {@code null}
 	 */
 	Collection<ChargePointSettings> chargePointSettingsForUser(Long userId);
 
@@ -305,8 +338,9 @@ public interface UserOcppBiz {
 	 * @since 1.1
 	 */
 	void findFilteredChargePointStatus(ChargePointStatusFilter filter,
-			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
-			Long offset, Integer max) throws IOException;
+			FilteredResultsProcessor<ChargePointStatus> processor,
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset, @Nullable Integer max)
+			throws IOException;
 
 	/**
 	 * API for querying for a filtered set of charger point action statuses,
@@ -328,15 +362,17 @@ public interface UserOcppBiz {
 	 */
 	void findFilteredChargePointActionStatus(ChargePointActionStatusFilter filter,
 			FilteredResultsProcessor<ChargePointActionStatus> processor,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
+			@Nullable List<SortDescriptor> sortDescriptors, @Nullable Long offset, @Nullable Integer max)
+			throws IOException;
 
 	/**
 	 * Get the available settings entities for a given user.
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get settings entity for
-	 * @return the settings entity, or {@literal null} if not available
+	 * @return the settings entity, or {@code null} if not available
 	 */
+	@Nullable
 	UserSettings settingsForUser(Long userId);
 
 	/**
@@ -366,8 +402,9 @@ public interface UserOcppBiz {
 	 *        the SolarUser user ID to get charge session for
 	 * @param sessionId
 	 *        the charge session ID to get
-	 * @return the session entity, or {@literal null} if not available
+	 * @return the session entity, or {@code null} if not available
 	 */
+	@Nullable
 	ChargeSession chargeSessionForUser(Long userId, UUID sessionId);
 
 	/**
@@ -377,7 +414,7 @@ public interface UserOcppBiz {
 	 *        the SolarUser user ID to delete the charge point settings for
 	 * @param chargePointId
 	 *        the charge point ID to get the sessions for
-	 * @return all matching incomplete sessions; never {@literal null}
+	 * @return all matching incomplete sessions; never {@code null}
 	 */
 	Collection<ChargeSession> incompleteChargeSessionsForChargePoint(Long userId, Long chargePointId);
 
@@ -405,6 +442,6 @@ public interface UserOcppBiz {
 	 *         the session was already ended or does not exist
 	 */
 	boolean endChargeSession(Long userId, UUID sessionId, ChargeSessionEndReason reason,
-			String endAuthId);
+			@Nullable String endAuthId);
 
 }

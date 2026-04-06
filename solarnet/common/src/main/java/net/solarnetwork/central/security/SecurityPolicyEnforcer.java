@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -37,6 +38,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ClassUtils;
@@ -56,18 +58,18 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  */
 public class SecurityPolicyEnforcer implements InvocationHandler {
 
-	private final Object delegate;
-	private final SecurityPolicy policy;
-	private final Object principal;
-	private final PathMatcher pathMatcher;
-	private final SecurityPolicyMetadataType metadataType;
-	private final Consumer<Long> nodeIdValidator;
-	private final Function<UUID[], Map<UUID, ObjectDatumStreamMetadataId>> streamIdProvider;
+	private final @Nullable Object delegate;
+	private final @Nullable SecurityPolicy policy;
+	private final @Nullable Object principal;
+	private final @Nullable PathMatcher pathMatcher;
+	private final @Nullable SecurityPolicyMetadataType metadataType;
+	private final @Nullable Consumer<Long> nodeIdValidator;
+	private final @Nullable Function<UUID[], Map<UUID, ObjectDatumStreamMetadataId>> streamIdProvider;
 
-	private Long[] cachedNodeIds;
-	private String[] cachedSourceIds;
-	private UUID[] cachedStreamIds;
-	private GeneralDatumMetadata cachedMetadata;
+	private Long @Nullable [] cachedNodeIds;
+	private String @Nullable [] cachedSourceIds;
+	private UUID @Nullable [] cachedStreamIds;
+	private @Nullable GeneralDatumMetadata cachedMetadata;
 	private boolean filtered;
 
 	private static final Logger LOG = LoggerFactory.getLogger(SecurityPolicyEnforcer.class);
@@ -82,7 +84,8 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 * @param delegate
 	 *        The domain object to enforce the policy on.
 	 */
-	public SecurityPolicyEnforcer(SecurityPolicy policy, Object principal, Object delegate) {
+	public SecurityPolicyEnforcer(@Nullable SecurityPolicy policy, @Nullable Object principal,
+			@Nullable Object delegate) {
 		this(policy, principal, delegate, null);
 	}
 
@@ -99,8 +102,8 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 *        The path matcher to use.
 	 * @since 1.1
 	 */
-	public SecurityPolicyEnforcer(SecurityPolicy policy, Object principal, Object delegate,
-			PathMatcher pathMatcher) {
+	public SecurityPolicyEnforcer(@Nullable SecurityPolicy policy, @Nullable Object principal,
+			@Nullable Object delegate, @Nullable PathMatcher pathMatcher) {
 		this(policy, principal, delegate, pathMatcher, null);
 	}
 
@@ -120,8 +123,9 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 *        {@code null}.
 	 * @since 1.2
 	 */
-	public SecurityPolicyEnforcer(SecurityPolicy policy, Object principal, Object delegate,
-			PathMatcher pathMatcher, SecurityPolicyMetadataType metadataType) {
+	public SecurityPolicyEnforcer(@Nullable SecurityPolicy policy, @Nullable Object principal,
+			@Nullable Object delegate, @Nullable PathMatcher pathMatcher,
+			@Nullable SecurityPolicyMetadataType metadataType) {
 		this(policy, principal, delegate, pathMatcher, metadataType, null, null);
 	}
 
@@ -145,10 +149,10 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 *        and optional stream ID provider
 	 * @since 3.1
 	 */
-	public SecurityPolicyEnforcer(SecurityPolicy policy, Object principal, Object delegate,
-			PathMatcher pathMatcher, SecurityPolicyMetadataType metadataType,
-			Consumer<Long> nodeIdValidator,
-			Function<UUID[], Map<UUID, ObjectDatumStreamMetadataId>> streamIdProvider) {
+	public SecurityPolicyEnforcer(@Nullable SecurityPolicy policy, @Nullable Object principal,
+			@Nullable Object delegate, @Nullable PathMatcher pathMatcher,
+			@Nullable SecurityPolicyMetadataType metadataType, @Nullable Consumer<Long> nodeIdValidator,
+			@Nullable Function<UUID[], Map<UUID, ObjectDatumStreamMetadataId>> streamIdProvider) {
 		super();
 		this.delegate = delegate;
 		this.policy = policy;
@@ -173,13 +177,19 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 * @param enforcer
 	 *        The policy enforcer.
 	 * @return A new wrapped object.
+	 * @throws IllegalArgumentException
+	 *         if {@code enforcer.delegate} is {@code null}
 	 */
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	public static <T> T createSecurityPolicyProxy(SecurityPolicyEnforcer enforcer) {
-		Class<?>[] interfaces = ClassUtils.getAllInterfaces(enforcer.getDelegate());
-		return (T) Proxy.newProxyInstance(enforcer.getDelegate().getClass().getClassLoader(), interfaces,
-				enforcer);
+		final Object delegate = requireNonNullArgument(
+				requireNonNullArgument(enforcer, "enforcer").getDelegate(), "delegate");
+		Class<?>[] interfaces = ClassUtils.getAllInterfaces(delegate);
+		return (T) Proxy.newProxyInstance(delegate.getClass().getClassLoader(), interfaces, enforcer);
 	}
+
+	private static final String[] GETTERS_TO_VERIFY = new String[] { "getNodeIds", "getSourceIds",
+			"getStreamIds", "getAggregation", "getMetadata" };
 
 	/**
 	 * Verify the security policy on all supported properties immediately.
@@ -192,9 +202,11 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 *         if any policy fails
 	 */
 	public boolean verify() {
-		String[] getters = new String[] { "getNodeIds", "getSourceIds", "getStreamIds", "getAggregation",
-				"getMetadata" };
-		for ( String methodName : getters ) {
+		final Object delegate = getDelegate();
+		if ( delegate == null ) {
+			return true;
+		}
+		for ( String methodName : GETTERS_TO_VERIFY ) {
 			try {
 				Method m = delegate.getClass().getMethod(methodName);
 				invoke(null, m, null);
@@ -208,7 +220,8 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	}
 
 	@Override
-	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+	public @Nullable Object invoke(@Nullable Object proxy, Method method, Object @Nullable [] args)
+			throws Throwable {
 		final String methodName = method.getName();
 		final Object delegateResult = method.invoke(delegate, args);
 		if ( "getNodeIds".equals(methodName) || "getNodeId".equals(methodName) ) {
@@ -266,11 +279,11 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 * @throws AuthorizationException
 	 *         if no node IDs are allowed
 	 */
-	public Long[] verifyNodeIds(Long[] nodeIds) {
+	public Long @Nullable [] verifyNodeIds(Long @Nullable [] nodeIds) {
 		return verifyNodeIds(nodeIds, true);
 	}
 
-	private Long[] verifyNodeIds(Long[] nodeIds, boolean cacheResults) {
+	private Long @Nullable [] verifyNodeIds(Long @Nullable [] nodeIds, boolean cacheResults) {
 		if ( cacheResults && cachedNodeIds != null ) {
 			return (cachedNodeIds.length == 0 ? null : cachedNodeIds);
 		}
@@ -336,7 +349,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 * @throws AuthorizationException
 	 *         if no stream IDs are allowed
 	 */
-	public UUID[] verifyStreamIds(UUID[] streamIds) {
+	public UUID @Nullable [] verifyStreamIds(UUID @Nullable [] streamIds) {
 		if ( streamIdProvider == null ) {
 			return streamIds;
 		}
@@ -399,18 +412,22 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	}
 
 	private boolean matchesPattern(Set<String> patterns, String value) {
-		for ( String pattern : patterns ) {
-			if ( pathMatcher.match(pattern, value) ) {
-				return true;
+		if ( pathMatcher != null ) {
+			for ( String pattern : patterns ) {
+				if ( pathMatcher.match(pattern, value) ) {
+					return true;
+				}
 			}
 		}
 		return false;
 	}
 
 	private boolean matchesPatternStart(Set<String> patterns, String value) {
-		for ( String pattern : patterns ) {
-			if ( pathMatcher.matchStart(pattern, value) ) {
-				return true;
+		if ( pathMatcher != null ) {
+			for ( String pattern : patterns ) {
+				if ( pathMatcher.matchStart(pattern, value) ) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -425,11 +442,12 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 * @throws AuthorizationException
 	 *         if no source IDs are allowed
 	 */
-	public String[] verifySourceIds(String[] sourceIds) {
+	public String @Nullable [] verifySourceIds(String @Nullable [] sourceIds) {
 		return verifySourceIds(sourceIds, false);
 	}
 
-	private String[] verifySourceIds(String[] sourceIds, final boolean cacheResults) {
+	private String @Nullable [] verifySourceIds(String @Nullable [] sourceIds,
+			final boolean cacheResults) {
 		Set<String> policySourceIds = (policy != null ? policy.getSourceIds() : null);
 
 		// verify source IDs
@@ -492,10 +510,12 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 
 			// resolve source ID patterns against policy
 			if ( sourceIdPatterns != null ) {
-				// if a source ID pattern exactly matches a policy source ID pattern, allow
+				// if a source ID pattern exactly matches a policy source ID pattern, 
+				// or matches the start of policy pattern, allow
 				if ( policySourceIdPatterns != null ) {
 					for ( String sourceIdPattern : sourceIdPatterns ) {
-						if ( policySourceIdPatterns.contains(sourceIdPattern) ) {
+						if ( policySourceIdPatterns.contains(sourceIdPattern)
+								|| matchesPatternStart(policySourceIdPatterns, sourceIdPattern) ) {
 							sourceIdsSet.add(sourceIdPattern);
 							continue;
 						}
@@ -505,10 +525,13 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 						removedSourceIds.add(sourceIdPattern);
 					}
 				}
-				// if a source ID pattern matches a policy source ID, fill in that policy ID
+				// if a source ID pattern matches a policy source ID and does not match
+				// an existing resolved source ID, fill in that policy ID
 				for ( String policySourceId : policySourceIds ) {
-					if ( matchesPattern(sourceIdPatterns, policySourceId) ) {
+					if ( matchesPattern(sourceIdPatterns, policySourceId)
+							&& !matchesPatternStart(sourceIdsSet, policySourceId) ) {
 						sourceIdsSet.add(policySourceId);
+
 					}
 				}
 			}
@@ -537,7 +560,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		return sourceIds;
 	}
 
-	private Aggregation verifyAggregation(Aggregation agg) {
+	private @Nullable Aggregation verifyAggregation(@Nullable Aggregation agg) {
 		final Aggregation min = (policy != null ? policy.getMinAggregation() : null);
 		if ( min != null ) {
 			if ( agg == null || agg.compareLevel(min) < 0 ) {
@@ -564,11 +587,11 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 * @throws AuthorizationException
 	 *         if no metadata access is allowed
 	 */
-	public GeneralDatumMetadata verifyMetadata(GeneralDatumMetadata metadata) {
+	public @Nullable GeneralDatumMetadata verifyMetadata(@Nullable GeneralDatumMetadata metadata) {
 		return verifyMetadata(metadata, false);
 	}
 
-	private GeneralDatumMetadata verifyMetadata(final GeneralDatumMetadata meta,
+	private @Nullable GeneralDatumMetadata verifyMetadata(final @Nullable GeneralDatumMetadata meta,
 			final boolean cacheResults) {
 		final Set<String> policyMetadataPaths = switch (metadataType) {
 			case Node -> (policy != null ? policy.getNodeMetadataPaths() : null);
@@ -622,8 +645,8 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		return result;
 	}
 
-	private Map<String, Object> enforceMetadataPaths(Set<String> policyPaths, Map<String, Object> meta,
-			String path) {
+	private @Nullable Map<String, Object> enforceMetadataPaths(Set<String> policyPaths,
+			@Nullable Map<String, Object> meta, String path) {
 		if ( meta == null ) {
 			return null;
 		}
@@ -662,7 +685,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		return result;
 	}
 
-	public Object getDelegate() {
+	public @Nullable Object getDelegate() {
 		return delegate;
 	}
 

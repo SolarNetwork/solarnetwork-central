@@ -45,6 +45,7 @@ import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bouncycastle.asn1.ASN1Sequence;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Reads RSA key pairs using BC provider classes but without the need to specify
@@ -206,7 +207,7 @@ public final class RsaKeyHelper {
 
 	private static final Pattern SSH_PUB_KEY = Pattern.compile("ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*) (.*)");
 
-	private static RSAPublicKey extractPublicKey(String key) {
+	private static @Nullable RSAPublicKey extractPublicKey(String key) {
 		if ( key.length() > MAX_INPUT_DATA_LENGTH ) {
 			throw new IllegalArgumentException(
 					"Key data too long; maximum of %d is supported.".formatted(MAX_INPUT_DATA_LENGTH));

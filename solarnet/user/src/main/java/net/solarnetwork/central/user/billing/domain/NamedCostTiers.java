@@ -48,7 +48,7 @@ public interface NamedCostTiers {
 	 * collection of tiers.
 	 * </p>
 	 *
-	 * @return the date, or {@literal null}
+	 * @return the date
 	 */
 	LocalDate getDate();
 

@@ -28,7 +28,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.is;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -300,6 +299,74 @@ public class SecurityPolicyEnforcerTests {
 	}
 
 	@Test
+	public void verifySourceIdsWithPatternPrefix() {
+		// GIVEN
+		final var policySourceIds = new String[] { "/A/B/C/1", "/A/B/C/**", "/D/E/F/**" };
+		final var policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds))).build();
+		final SecurityPolicyEnforcer enforcer = patternEnforcer(policy);
+
+		// WHEN
+		final var exactPathPattern = new String[] { "/A/B/C/**" };
+		final var moreSpecificPathPattern = new String[] { "/A/B/C/D/**" };
+		final var moreSpecificPathPatternSegment = new String[] { "/A/B/C/*" };
+		final var moreSpecificPathPatternCharacter = new String[] { "/A/B/C/?" };
+		final var moreSpecificPathId = new String[] { "/A/B/C/D/1" };
+		final var moreSpecificPathIdWithPattern = new String[] { "/A/B/C/D/1", "/A/B/C/E/**" };
+		final var moreSpecificPathIdWithOverlappingPattern = new String[] { "/A/B/C/1", "/A/B/C/**" };
+
+		final var lessSpecificPathPatternMatchingSpecificId = new String[] { "/A/B/**" };
+		final var lessSpecificPathPattern = new String[] { "/D/E/**" };
+
+		// THEN
+		// @formatter:off
+		then(enforcer.verifySourceIds(exactPathPattern))
+			.as("Policy pattern prefix allows exact path pattern")
+			.isEqualTo(exactPathPattern)
+			;
+
+		then(enforcer.verifySourceIds(moreSpecificPathPattern))
+			.as("Policy pattern prefix allows more specific path pattern")
+			.isEqualTo(moreSpecificPathPattern)
+			;
+
+		then(enforcer.verifySourceIds(moreSpecificPathPatternSegment))
+			.as("Policy pattern prefix allows more specific path pattern (segment only)")
+			.isEqualTo(moreSpecificPathPatternSegment)
+			;
+
+		then(enforcer.verifySourceIds(moreSpecificPathPatternCharacter))
+			.as("Policy pattern prefix allows more specific path pattern (character only)")
+			.isEqualTo(moreSpecificPathPatternCharacter)
+			;
+	
+		then(enforcer.verifySourceIds(moreSpecificPathId))
+			.as("Policy pattern prefix allows more specific path ID")
+			.isEqualTo(moreSpecificPathId)
+			;
+		
+		then(enforcer.verifySourceIds(moreSpecificPathIdWithPattern))
+			.as("Policy pattern prefix allows more specific path ID and pattern")
+			.isEqualTo(moreSpecificPathIdWithPattern)
+			;
+		
+		then(enforcer.verifySourceIds(moreSpecificPathIdWithOverlappingPattern))
+			.as("Policy pattern prefix allows more specific path ID and overlapping pattern")
+			.isEqualTo(moreSpecificPathIdWithOverlappingPattern)
+			;
+		
+		then(enforcer.verifySourceIds(lessSpecificPathPatternMatchingSpecificId))
+			.as("Policy ID matching less specific path pattern mapped to policy ID")
+			.isEqualTo(new String[] { "/A/B/C/1" })
+			;
+		
+		thenExceptionOfType(AuthorizationException.class)
+			.isThrownBy(() -> enforcer.verifySourceIds(lessSpecificPathPattern))
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void fillInPolicyNodeId() {
 		Long[] policyNodeIds = new Long[] { TEST_NODE_ID };
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
@@ -562,7 +629,7 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
 				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
 
-		Map<String, Object> nestedMap = Collections.singletonMap("bar", (Object) "yes");
+		Map<String, Object> nestedMap = Map.of("bar", (Object) "yes");
 
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
 		meta.putInfoValue("a", "1", nestedMap);

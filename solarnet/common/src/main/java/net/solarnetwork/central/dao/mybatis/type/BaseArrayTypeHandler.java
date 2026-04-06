@@ -28,9 +28,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Base {@link org.apache.ibatis.type.TypeHandler} for SQL arrays.
@@ -53,19 +53,15 @@ public abstract class BaseArrayTypeHandler extends BaseTypeHandler<Object[]> {
 	}
 
 	@Override
-	public void setNonNullParameter(PreparedStatement ps, int i, Object[] parameter, JdbcType jdbcType)
-			throws SQLException {
-		if ( parameter == null ) {
-			ps.setNull(i, Types.ARRAY);
-		} else {
-			Connection conn = ps.getConnection();
-			Array loc = conn.createArrayOf(elementJdbcType, parameter);
-			ps.setArray(i, loc);
-			loc.free();
-		}
+	public void setNonNullParameter(PreparedStatement ps, int i, Object[] parameter,
+			@Nullable JdbcType jdbcType) throws SQLException {
+		Connection conn = ps.getConnection();
+		Array loc = conn.createArrayOf(elementJdbcType, parameter);
+		ps.setArray(i, loc);
+		loc.free();
 	}
 
-	private Object[] extractArray(Array array) throws SQLException {
+	private Object @Nullable [] extractArray(Array array) throws SQLException {
 		if ( array == null ) {
 			return null;
 		}
@@ -75,17 +71,18 @@ public abstract class BaseArrayTypeHandler extends BaseTypeHandler<Object[]> {
 	}
 
 	@Override
-	public Object[] getNullableResult(ResultSet rs, String columnName) throws SQLException {
+	public Object @Nullable [] getNullableResult(ResultSet rs, String columnName) throws SQLException {
 		return extractArray(rs.getArray(columnName));
 	}
 
 	@Override
-	public Object[] getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+	public Object @Nullable [] getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
 		return extractArray(rs.getArray(columnIndex));
 	}
 
 	@Override
-	public Object[] getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
+	public Object @Nullable [] getNullableResult(CallableStatement cs, int columnIndex)
+			throws SQLException {
 		return extractArray(cs.getArray(columnIndex));
 	}
 

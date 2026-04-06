@@ -29,12 +29,12 @@ import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -63,7 +63,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	public static final Set<String> DEFAULT_JAVA_BEAN_IGNORE_PROPERTIES;
 
 	static {
-		DEFAULT_JAVA_BEAN_IGNORE_PROPERTIES = Collections.singleton("class");
+		DEFAULT_JAVA_BEAN_IGNORE_PROPERTIES = Set.of("class");
 	}
 
 	/**
@@ -73,12 +73,12 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	public static final Set<Class<?>> DEFAULT_JAVA_BEAN_STRING_VALUES;
 
 	static {
-		DEFAULT_JAVA_BEAN_STRING_VALUES = Collections.singleton(Class.class);
+		DEFAULT_JAVA_BEAN_STRING_VALUES = Set.of(Class.class);
 	}
 
-	private final PropertySerializerRegistrar propertySerializerRegistrar;
-	private final Set<String> javaBeanIgnoreProperties;
-	private final Set<Class<?>> javaBeanTreatAsStringValues;
+	private final @Nullable PropertySerializerRegistrar propertySerializerRegistrar;
+	private final @Nullable Set<String> javaBeanIgnoreProperties;
+	private final @Nullable Set<Class<?>> javaBeanTreatAsStringValues;
 	private final boolean includeHeader;
 
 	/** The MimeType. */
@@ -154,7 +154,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	 *        a registrar to serialize properties with
 	 */
 	public CsvFilteredResultsProcessor(Writer out, MimeType mimeType, boolean includeHeader,
-			PropertySerializerRegistrar propertySerializerRegistrar) {
+			@Nullable PropertySerializerRegistrar propertySerializerRegistrar) {
 		this(out, mimeType, includeHeader, propertySerializerRegistrar,
 				DEFAULT_JAVA_BEAN_IGNORE_PROPERTIES, DEFAULT_JAVA_BEAN_STRING_VALUES);
 	}
@@ -169,18 +169,19 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	 * @param includeHeader
 	 *        {@literal true} to include a header rowNum in the output
 	 * @param propertySerializerRegistrar
-	 *        a registrar to serialize properties with
+	 *        an optional registrar to serialize properties with
 	 * @param javaBeanIgnoreProperties
-	 *        a set of JavaBean property names to ignore
+	 *        an optional set of JavaBean property names to ignore
 	 * @param javaBeanTreatAsStringValues
-	 *        a set of JavaBean property names to treat as strings
+	 *        an optional set of JavaBean property names to treat as strings
 	 */
 	public CsvFilteredResultsProcessor(Writer out, MimeType mimeType, boolean includeHeader,
-			PropertySerializerRegistrar propertySerializerRegistrar,
-			Set<String> javaBeanIgnoreProperties, Set<Class<?>> javaBeanTreatAsStringValues) {
+			@Nullable PropertySerializerRegistrar propertySerializerRegistrar,
+			@Nullable Set<String> javaBeanIgnoreProperties,
+			@Nullable Set<Class<?>> javaBeanTreatAsStringValues) {
 		super();
 		this.writer = CsvWriter.builder().build(requireNonNullArgument(out, "out"));
-		this.mimeType = mimeType;
+		this.mimeType = requireNonNullArgument(mimeType, "mimeType");
 		this.includeHeader = includeHeader;
 		this.propertySerializerRegistrar = propertySerializerRegistrar;
 		this.javaBeanIgnoreProperties = requireNonNullArgument(javaBeanIgnoreProperties,
@@ -201,7 +202,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	}
 
 	@Override
-	public MimeType getMimeType() {
+	public final MimeType getMimeType() {
 		return mimeType;
 	}
 
@@ -223,6 +224,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 			writer.writeRecord(columnOrder.keySet().toArray(String[]::new));
 		}
 
+		@Nullable
 		String[] row = new String[columnCount];
 		int i = 0;
 		for ( String key : columnOrder.keySet() ) {
@@ -239,7 +241,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 		});
 	}
 
-	private Map<String, String> extractProperties(Object item) {
+	private @Nullable Map<String, String> extractProperties(Object item) {
 		if ( propertySerializerRegistrar != null ) {
 			// try whole-bean serialization first
 			item = propertySerializerRegistrar.serializeProperty("rowNum", item.getClass(), item, item);
@@ -290,7 +292,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 		Map<String, String> result = new HashMap<>(descriptors.length);
 		for ( PropertyDescriptor desc : descriptors ) {
 			String key = desc.getName();
-			if ( javaBeanIgnoreProperties.contains(key) ) {
+			if ( javaBeanIgnoreProperties != null && javaBeanIgnoreProperties.contains(key) ) {
 				continue;
 			}
 			if ( wrapper.isReadableProperty(key) && !shouldIgnoreProperty(item, key, desc) ) {
@@ -350,7 +352,8 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 		return result;
 	}
 
-	private String getRowPropertyValue(Object row, String name, Object val, BeanWrapper wrapper) {
+	private @Nullable String getRowPropertyValue(Object row, String name, @Nullable Object val,
+			@Nullable BeanWrapper wrapper) {
 		if ( val != null ) {
 			if ( getPropertySerializerRegistrar() != null ) {
 				val = getPropertySerializerRegistrar().serializeProperty(name, val.getClass(), row, val);
@@ -362,7 +365,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 					val = editor.getAsText();
 				}
 			}
-			if ( val instanceof Enum<?> || (javaBeanTreatAsStringValues != null
+			if ( val instanceof Enum<?> || (val != null && javaBeanTreatAsStringValues != null
 					&& javaBeanTreatAsStringValues.contains(val.getClass())) ) {
 				val = val.toString();
 			}
@@ -375,7 +378,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	 *
 	 * @return the registrar
 	 */
-	public PropertySerializerRegistrar getPropertySerializerRegistrar() {
+	public final @Nullable PropertySerializerRegistrar getPropertySerializerRegistrar() {
 		return propertySerializerRegistrar;
 	}
 
@@ -384,7 +387,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	 *
 	 * @return the properties
 	 */
-	public Set<String> getJavaBeanIgnoreProperties() {
+	public final @Nullable Set<String> getJavaBeanIgnoreProperties() {
 		return javaBeanIgnoreProperties;
 	}
 
@@ -393,7 +396,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	 *
 	 * @return the class set
 	 */
-	public Set<Class<?>> getJavaBeanTreatAsStringValues() {
+	public final @Nullable Set<Class<?>> getJavaBeanTreatAsStringValues() {
 		return javaBeanTreatAsStringValues;
 	}
 
@@ -403,7 +406,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	 * @return {@literal true} to include a header rowNum in the output;
 	 *         defaults to {@literal true}
 	 */
-	public boolean isIncludeHeader() {
+	public final boolean isIncludeHeader() {
 		return includeHeader;
 	}
 

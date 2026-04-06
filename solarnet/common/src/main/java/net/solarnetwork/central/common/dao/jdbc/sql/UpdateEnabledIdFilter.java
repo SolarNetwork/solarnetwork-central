@@ -55,7 +55,7 @@ public final class UpdateEnabledIdFilter implements PreparedStatementCreator, Sq
 	 * @param enabled
 	 *        the desired enabled state
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code filter} is {@literal null}
+	 *         if any argument other than {@code filter} is {@code null}
 	 */
 	public UpdateEnabledIdFilter(String tableName, String[] idColumnNames, CompositeKey filter,
 			boolean enabled) {
@@ -75,7 +75,7 @@ public final class UpdateEnabledIdFilter implements PreparedStatementCreator, Sq
 	 *        if {@code true} then omit updating a {@code modified} column to
 	 *        the current timestamp
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code filter} is {@literal null}
+	 *         if any argument other than {@code filter} is {@code null}
 	 * @since 1.2
 	 */
 	public UpdateEnabledIdFilter(String tableName, String[] idColumnNames, CompositeKey filter,

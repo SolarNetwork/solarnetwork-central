@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for cloud datum stream related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudDatumStreamMappingCriteria {
 
@@ -35,14 +37,14 @@ public interface CloudDatumStreamMappingCriteria {
 	 *
 	 * <p>
 	 * This returns the first available datum stream mapping ID from the
-	 * {@link #getDatumStreamMappingIds()} array, or {@literal null} if not
+	 * {@link #getDatumStreamMappingIds()} array, or {@code null} if not
 	 * available.
 	 * </p>
 	 *
-	 * @return the first datum stream mapping ID, or {@literal null} if not
+	 * @return the first datum stream mapping ID, or {@code null} if not
 	 *         available
 	 */
-	default Long getDatumStreamMappingId() {
+	default @Nullable Long getDatumStreamMappingId() {
 		final Long[] array = getDatumStreamMappingIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -50,9 +52,9 @@ public interface CloudDatumStreamMappingCriteria {
 	/**
 	 * Get an array of datum stream mapping IDs.
 	 *
-	 * @return array of datum stream mapping IDs (may be {@literal null})
+	 * @return array of datum stream mapping IDs (may be {@code null})
 	 */
-	Long[] getDatumStreamMappingIds();
+	Long @Nullable [] getDatumStreamMappingIds();
 
 	/**
 	 * Test if this filter has any datum stream mapping criteria.
@@ -61,6 +63,40 @@ public interface CloudDatumStreamMappingCriteria {
 	 */
 	default boolean hasDatumStreamMappingCriteria() {
 		return getDatumStreamMappingId() != null;
+	}
+
+	/**
+	 * Get the first cloud datum stream mapping ID.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasDatumStreamMappingCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return the first cloud datum stream mapping ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long datumStreamMappingId() {
+		return getDatumStreamMappingId();
+	}
+
+	/**
+	 * Get an array of cloud datum stream mapping IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasDatumStreamMappingCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return array of cloud datum stream mapping IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] datumStreamMappingIds() {
+		return getDatumStreamMappingIds();
 	}
 
 }

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * API for objects related to an {@link CloudDatumStreamMappingConfiguration}
  * entity by way of a configuration ID.
@@ -37,6 +39,7 @@ public interface CloudDatumStreamMappingIdRelated {
 	 *
 	 * @return the datum stream mapping ID
 	 */
+	@Nullable
 	Long getDatumStreamMappingId();
 
 	/**

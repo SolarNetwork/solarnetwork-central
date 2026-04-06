@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.user.billing.snf.pdf.test;
 
-import static java.util.UUID.randomUUID;
+import static java.time.Instant.now;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import java.io.BufferedOutputStream;
@@ -34,8 +36,8 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -73,16 +75,12 @@ public class HtmlToPdfInvoiceTests {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private static Address createAddress(String country, String timeZoneId) {
-		final Address addr = new Address(randomUUID().getMostSignificantBits(), Instant.now());
-		addr.setCountry(country);
-		addr.setTimeZoneId(timeZoneId);
+		Address addr = new Address(randomLong(), randomString(), randomString(), country, timeZoneId);
 		return addr;
 	}
 
 	private static Account createAccount(Long userId, String locale, Address address) {
-		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
-				Instant.now());
-		account.setLocale(locale);
+		final Account account = new Account(randomLong(), userId, now(), "NZD", locale);
 		account.setAddress(address);
 		return account;
 	}
@@ -96,10 +94,10 @@ public class HtmlToPdfInvoiceTests {
 	@Test
 	public void render_example() throws IOException {
 		// GIVEN
-		final Account account = createAccount(randomUUID().getMostSignificantBits(), "en_NZ",
+		final Account account = createAccount(randomLong(), "en_NZ",
 				createAddress("NZ", "Pacific/Auckland"));
-		final SnfInvoice snfInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
-				account.getUserId(), account.getId().getId(), Instant.now());
+		final SnfInvoice snfInvoice = new SnfInvoice(randomLong(), account.getUserId(),
+				account.getId().getId(), Instant.now(), LocalDate.now(), LocalDate.now(), "NZD");
 		final SnfInvoiceItem item1 = SnfInvoiceItem.newItem(snfInvoice, InvoiceItemType.Usage,
 				NodeUsage.DATUM_PROPS_IN_KEY, new BigDecimal("123456789"), new BigDecimal("12345.67"));
 		final SnfInvoiceItem tax1 = SnfInvoiceItem.newItem(snfInvoice, InvoiceItemType.Tax, "GST",
@@ -142,8 +140,7 @@ public class HtmlToPdfInvoiceTests {
 		Path tmpFile = Files.createTempFile("HtmlToPdfInvoiceTests-SVG-", ".pdf");
 		try (BufferedOutputStream out = new BufferedOutputStream(
 				new FileOutputStream(tmpFile.toFile()))) {
-			t.render(Locale.ENGLISH, HtmlToPdfTemplateRenderer.PDF_MIME_TYPE, Collections.emptyMap(),
-					out);
+			t.render(Locale.ENGLISH, HtmlToPdfTemplateRenderer.PDF_MIME_TYPE, Map.of(), out);
 		}
 
 		// THEN
@@ -169,7 +166,7 @@ public class HtmlToPdfInvoiceTests {
 
 			@Override
 			public List<MimeType> supportedMimeTypes() {
-				return Collections.singletonList(MimeTypeUtils.TEXT_HTML);
+				return List.of(MimeTypeUtils.TEXT_HTML);
 			}
 
 			@Override
@@ -190,8 +187,7 @@ public class HtmlToPdfInvoiceTests {
 		Path tmpFile = Files.createTempFile("HtmlToPdfInvoiceTests-SVG-", ".pdf");
 		try (BufferedOutputStream out = new BufferedOutputStream(
 				new FileOutputStream(tmpFile.toFile()))) {
-			t.render(Locale.ENGLISH, HtmlToPdfTemplateRenderer.PDF_MIME_TYPE, Collections.emptyMap(),
-					out);
+			t.render(Locale.ENGLISH, HtmlToPdfTemplateRenderer.PDF_MIME_TYPE, Map.of(), out);
 		}
 
 		// THEN

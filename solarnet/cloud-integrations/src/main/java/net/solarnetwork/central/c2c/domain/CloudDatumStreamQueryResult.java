@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.domain;
 
 import java.util.SequencedCollection;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.Datum;
 
 /**
@@ -73,18 +74,18 @@ public interface CloudDatumStreamQueryResult extends Iterable<Datum> {
 	 * different date range due to query constraints.
 	 * </p>
 	 *
-	 * @return a query filter, or {@literal null}
+	 * @return a query filter, or {@code null}
 	 */
-	default CloudDatumStreamQueryFilter getUsedQueryFilter() {
+	default @Nullable CloudDatumStreamQueryFilter getUsedQueryFilter() {
 		return null;
 	}
 
 	/**
 	 * Get a query filter configured to return the next set of results, if any.
 	 *
-	 * @return a query filter, or {@literal null}
+	 * @return a query filter, or {@code null}
 	 */
-	default CloudDatumStreamQueryFilter getNextQueryFilter() {
+	default @Nullable CloudDatumStreamQueryFilter getNextQueryFilter() {
 		return null;
 	}
 

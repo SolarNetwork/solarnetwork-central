@@ -22,7 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -59,8 +60,8 @@ public class AuditDatumIoEntityRowMapper implements RowMapper<AuditDatum> {
 
 	@Override
 	public AuditDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = getUuid(rs, 1);
-		Instant ts = rs.getTimestamp(2).toInstant();
+		UUID streamId = uuid(rs, 1);
+		Instant ts = timestampInstant(rs, 2);
 		return AuditDatumEntity.ioAuditDatum(streamId, ts, rs.getLong(7), rs.getLong(3), rs.getLong(5),
 				rs.getLong(4), rs.getLong(6));
 	}

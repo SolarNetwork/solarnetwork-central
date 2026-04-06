@@ -109,13 +109,11 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	 */
 	@Test
 	public void storeNewUserNode() {
-		UserNode newUserNode = new UserNode();
+		UserNode newUserNode = new UserNode(this.user, this.node);
 		newUserNode.setNode(this.node);
 		newUserNode.setCreated(Instant.now());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
-		newUserNode.setNode(this.node);
-		newUserNode.setUser(this.user);
 		Long id = userNodeDao.save(newUserNode);
 		then(id).isNotNull();
 		this.userNodeId = id;
@@ -210,12 +208,10 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		Thread.sleep(100); // to give users different create dates
 
 		setupTestNode(TEST_ID_2);
-		UserNode newUserNode = new UserNode();
+		UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(TEST_ID_2));
 		newUserNode.setCreated(Instant.now());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
-		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
-		newUserNode.setUser(this.user);
 		Long userNode2 = userNodeDao.save(newUserNode);
 		then(userNode2).isNotNull();
 
@@ -252,12 +248,10 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 		// create 2nd node for user
 		setupTestNode(TEST_ID_2);
-		UserNode newUserNode = new UserNode();
+		UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(TEST_ID_2));
 		newUserNode.setCreated(Instant.now());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
-		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
-		newUserNode.setUser(this.user);
 		Long userNode2 = userNodeDao.save(newUserNode);
 		then(userNode2).isNotNull();
 
@@ -281,12 +275,10 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 		// create 2nd node for user
 		setupTestNode(TEST_ID_2);
-		UserNode newUserNode = new UserNode();
+		UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(TEST_ID_2));
 		newUserNode.setCreated(Instant.now());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
-		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
-		newUserNode.setUser(this.user);
 		Long userNode2 = userNodeDao.save(newUserNode);
 		then(userNode2).isNotNull();
 
@@ -466,12 +458,10 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 		// create 2nd node for user
 		setupTestNode(TEST_ID_2);
-		UserNode newUserNode = new UserNode();
+		UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(TEST_ID_2));
 		newUserNode.setCreated(Instant.now());
 		newUserNode.setDescription(TEST_DESC);
 		newUserNode.setName(TEST_NAME);
-		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
-		newUserNode.setUser(this.user);
 		Long userNode2 = userNodeDao.save(newUserNode);
 		assertThat("UserNode created", userNode2, notNullValue());
 
@@ -503,13 +493,9 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private UserAuthToken tokenForUser(SecurityTokenType type) {
 		final String tokenId = randomTokenId();
-		UserAuthToken authToken = new UserAuthToken();
+		UserAuthToken authToken = new UserAuthToken(tokenId, this.user.getId(), type);
 		authToken.setCreated(Instant.now());
-		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret("password");
-		authToken.setAuthToken(tokenId);
-		authToken.setStatus(SecurityTokenStatus.Active);
-		authToken.setType(type);
 		return authToken;
 	}
 
@@ -554,12 +540,10 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = TEST_ID_2 - i;
 			setupTestNode(nodeId);
-			UserNode newUserNode = new UserNode();
+			UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(nodeId));
 			newUserNode.setCreated(Instant.now());
 			newUserNode.setDescription(TEST_DESC);
 			newUserNode.setName(TEST_NAME);
-			newUserNode.setNode(solarNodeDao.get(nodeId));
-			newUserNode.setUser(this.user);
 			userNodeDao.save(newUserNode);
 			expectedNodeIds.add(nodeId);
 		}
@@ -576,12 +560,10 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = TEST_ID_2 - i;
 			setupTestNode(nodeId);
-			UserNode newUserNode = new UserNode();
+			UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(nodeId));
 			newUserNode.setCreated(Instant.now());
 			newUserNode.setDescription(TEST_DESC);
 			newUserNode.setName(TEST_NAME);
-			newUserNode.setNode(solarNodeDao.get(nodeId));
-			newUserNode.setUser(this.user);
 			userNodeDao.save(newUserNode);
 		}
 
@@ -599,12 +581,10 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = TEST_ID_2 - i;
 			setupTestNode(nodeId);
-			UserNode newUserNode = new UserNode();
+			UserNode newUserNode = new UserNode(this.user, solarNodeDao.get(nodeId));
 			newUserNode.setCreated(Instant.now());
 			newUserNode.setDescription(TEST_DESC);
 			newUserNode.setName(TEST_NAME);
-			newUserNode.setNode(solarNodeDao.get(nodeId));
-			newUserNode.setUser(this.user);
 			userNodeDao.save(newUserNode);
 		}
 

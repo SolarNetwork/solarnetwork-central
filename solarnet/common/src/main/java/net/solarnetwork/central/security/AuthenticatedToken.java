@@ -24,6 +24,7 @@ package net.solarnetwork.central.security;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import net.solarnetwork.domain.SecurityPolicy;
@@ -41,7 +42,7 @@ public class AuthenticatedToken extends User implements SecurityToken {
 
 	private final SecurityTokenType tokenType;
 	private final Long userId;
-	private final SecurityPolicy policy;
+	private final @Nullable SecurityPolicy policy;
 
 	/**
 	 * Construct with values.
@@ -55,10 +56,10 @@ public class AuthenticatedToken extends User implements SecurityToken {
 	 * @param policy
 	 *        optional policy associated with the token
 	 * @throws IllegalArgumentException
-	 *         if any argument other than {@code policy} is {@literal null}
+	 *         if any argument other than {@code policy} is {@code null}
 	 */
 	public AuthenticatedToken(UserDetails user, SecurityTokenType tokenType, Long userId,
-			SecurityPolicy policy) {
+			@Nullable SecurityPolicy policy) {
 		super(requireNonNullArgument(user, "user").getUsername(), user.getPassword(), user.isEnabled(),
 				user.isAccountNonExpired(), user.isCredentialsNonExpired(), user.isAccountNonLocked(),
 				user.getAuthorities());
@@ -104,7 +105,7 @@ public class AuthenticatedToken extends User implements SecurityToken {
 	}
 
 	@Override
-	public SecurityPolicy getPolicy() {
+	public @Nullable SecurityPolicy getPolicy() {
 		return policy;
 	}
 

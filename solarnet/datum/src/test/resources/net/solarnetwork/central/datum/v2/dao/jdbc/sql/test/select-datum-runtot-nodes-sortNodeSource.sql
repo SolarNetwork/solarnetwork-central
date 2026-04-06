@@ -19,7 +19,14 @@ WITH s AS (
 	FROM r, solardatm.find_agg_datm_running_total(r.stream_id, ?, r.ts_max) datum
 	GROUP BY datum.stream_id
 )
-SELECT datum.*
-FROM datum
-INNER JOIN s ON s.stream_id = datum.stream_id
+SELECT datum.stream_id
+	, datum.ts
+	, datum.data_i
+	, datum.data_a
+	, datum.data_s
+	, datum.data_t
+	, datum.stat_i
+	, datum.read_a
+FROM s
+INNER JOIN datum ON datum.stream_id = s.stream_id
 ORDER BY node_id, source_id

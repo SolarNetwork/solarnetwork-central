@@ -36,6 +36,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -97,22 +98,22 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	protected final UserLongCompositePK configId;
 	protected final ExternalSystemConfigurationDao<C> dao;
 	protected final ExternalSystemClient client;
-	protected final UserEventAppenderBiz userEventAppenderBiz;
-	protected final Executor executor;
-	protected final TaskScheduler taskScheduler;
-	protected final TransactionTemplate txTemplate;
+	protected final @Nullable UserEventAppenderBiz userEventAppenderBiz;
+	protected final @Nullable Executor executor;
+	protected final @Nullable TaskScheduler taskScheduler;
+	protected final @Nullable TransactionTemplate txTemplate;
 
-	private List<String> errorTags;
-	private List<String> successTags;
+	private @Nullable List<String> errorTags;
+	private @Nullable List<String> successTags;
 	private long conditionTimeout = DEFAULT_CONDITION_TIMEOUT;
 	private long startDelay = DEFAULT_START_DELAY;
 	private long startDelayRandomness = DEFAULT_START_DELAY_RANDOMNESS;
 	private long retryDelay = DEFAULT_RETRY_DELAY;
 	private int remainingTries = DEFAULT_TRIES;
 	private int tries = 0;
-	private C configuration;
-	private Map<String, ?> parameters;
-	private SystemTaskContext<C> context;
+	private @Nullable C configuration;
+	private @Nullable Map<String, ?> parameters;
+	private @Nullable SystemTaskContext<C> context;
 
 	/**
 	 * Constructor.
@@ -141,8 +142,9 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 */
 	public DeferredSystemTask(String name, Future<?> condition, OscpRole role,
 			UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao,
-			ExternalSystemClient systemBiz, UserEventAppenderBiz userEventAppenderBiz, Executor executor,
-			TaskScheduler taskScheduler, TransactionTemplate txTemplate) {
+			ExternalSystemClient systemBiz, @Nullable UserEventAppenderBiz userEventAppenderBiz,
+			@Nullable Executor executor, @Nullable TaskScheduler taskScheduler,
+			@Nullable TransactionTemplate txTemplate) {
 		super();
 		this.name = requireNonNullArgument(name, "name");
 		this.condition = requireNonNullArgument(condition, "condition");
@@ -297,7 +299,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		} catch ( ExternalSystemConfigurationException e ) {
 			log.warn(e.getMessage());
 			if ( userEventAppenderBiz != null ) {
-				userEventAppenderBiz.addEvent(e.getConfig().getUserId(), e.getEvent());
+				userEventAppenderBiz.addEvent(e.getConfigId().getUserId(), e.getEvent());
 			}
 		} catch ( Exception e ) {
 			if ( --remainingTries > 0 && executor != null ) {
@@ -362,8 +364,11 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		if ( config == null ) {
 			var msg = "[%s] task with %s %s failed because the configuration does not exist; perhaps it was deleted."
 					.formatted(name, role, configId.ident());
-			LogEventInfo event = eventForConfiguration(config, errorTags, "Configuration not found");
-			throw new ExternalSystemConfigurationException(role, config, event, msg);
+			LogEventInfo event = eventForConfiguration(configId, errorTags, "Configuration not found");
+			if ( userEventAppenderBiz != null ) {
+				userEventAppenderBiz.addEvent(configId.getUserId(), event);
+			}
+			throw new ExternalSystemConfigurationException(role, configId, event, msg, null);
 		}
 		this.configuration = config;
 		return config;
@@ -413,9 +418,12 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 			var msg = "[%s] task with %s %s failed because the registration status is not %s."
 					.formatted(name, role, configId.ident(), statusList);
 			log.info(msg);
-			userEventAppenderBiz.addEvent(config.getUserId(),
-					eventForConfiguration(config, errorTags, "Status not %s".formatted(statusList)));
-			return null;
+			LogEventInfo event = eventForConfiguration(config, errorTags,
+					"Status not %s".formatted(statusList));
+			if ( userEventAppenderBiz != null ) {
+				userEventAppenderBiz.addEvent(config.getUserId(), event);
+			}
+			throw new ExternalSystemConfigurationException(role, config, event, msg);
 		}
 		if ( supportedOscpVersions != null && !supportedOscpVersions.isEmpty() ) {
 			context().verifySystemOscpVersion(supportedOscpVersions);

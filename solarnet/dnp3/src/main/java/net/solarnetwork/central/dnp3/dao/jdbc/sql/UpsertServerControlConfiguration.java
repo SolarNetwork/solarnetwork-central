@@ -81,7 +81,7 @@ public final class UpsertServerControlConfiguration implements PreparedStatement
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UpsertServerControlConfiguration(Long userId, Long serverId,
 			ServerControlConfiguration entity) {

@@ -35,6 +35,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -62,11 +63,8 @@ public class GeneralNodeDatumAuxiliaryTests {
 	}
 
 	private GeneralNodeDatumAuxiliary getTestInstance() {
-		GeneralNodeDatumAuxiliary datum = new GeneralNodeDatumAuxiliary();
-		datum.setCreated(TEST_TIMESTAMP);
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
-		datum.setType(DatumAuxiliaryType.Reset);
+		GeneralNodeDatumAuxiliary datum = new GeneralNodeDatumAuxiliary(new GeneralNodeDatumAuxiliaryPK(
+				TEST_NODE_ID, TEST_TIMESTAMP, TEST_SOURCE_ID, DatumAuxiliaryType.Reset));
 
 		DatumSamples samples = new DatumSamples();
 		samples.putInstantaneousSampleValue("watts", 231);

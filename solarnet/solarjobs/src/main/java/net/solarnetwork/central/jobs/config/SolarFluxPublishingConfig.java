@@ -112,7 +112,6 @@ public class SolarFluxPublishingConfig {
 	public ManagedJob staleSolarFluxProcessor(SolarFluxDatumPublisher publisher) {
 		StaleSolarFluxProcessor processor = new StaleSolarFluxProcessor(jdbcOperations, datumDao,
 				publisher);
-		processor.setId("StaleSolarFluxProcessor");
 		processor.setParallelTaskExecutor(taskExecutor);
 		return processor;
 	}

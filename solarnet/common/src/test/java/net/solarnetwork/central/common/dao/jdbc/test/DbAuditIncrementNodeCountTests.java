@@ -31,8 +31,8 @@ import static org.hamcrest.Matchers.hasSize;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.AuditNodeServiceEntity;
 import net.solarnetwork.central.dao.StaleAuditNodeServiceEntity;
@@ -92,9 +92,8 @@ public class DbAuditIncrementNodeCountTests extends AbstractJUnit5JdbcDaoTestSup
 		final Instant ts = Instant.now();
 		final int count = 123;
 
-		CommonDbTestUtils.insertAuditNodeServiceValues(jdbcTemplate,
-				Collections.singleton(AuditNodeServiceEntity.hourlyAuditNodeService(TEST_NODE_ID,
-						service, ts.truncatedTo(ChronoUnit.HOURS), 321L)));
+		CommonDbTestUtils.insertAuditNodeServiceValues(jdbcTemplate, Set.of(AuditNodeServiceEntity
+				.hourlyAuditNodeService(TEST_NODE_ID, service, ts.truncatedTo(ChronoUnit.HOURS), 321L)));
 
 		// WHEN
 		AuditNodeServiceValue d = incrementAndGet(TEST_NODE_ID, service, ts, count);

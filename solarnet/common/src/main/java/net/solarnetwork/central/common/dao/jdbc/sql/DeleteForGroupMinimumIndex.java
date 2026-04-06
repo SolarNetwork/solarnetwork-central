@@ -54,7 +54,7 @@ public final class DeleteForGroupMinimumIndex implements PreparedStatementCreato
 	 * @param columnNames
 	 *        the column names that correspond to key indexes
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DeleteForGroupMinimumIndex(CompositeKey pk, String tableName, String[] columnNames) {
 		super();

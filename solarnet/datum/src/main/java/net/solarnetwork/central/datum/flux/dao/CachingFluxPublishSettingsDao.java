@@ -46,7 +46,7 @@ public class CachingFluxPublishSettingsDao implements FluxPublishSettingsDao {
 	 * @param cache
 	 *        the cache
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public CachingFluxPublishSettingsDao(FluxPublishSettingsDao delegate,
 			Cache<UserLongStringCompositePK, FluxPublishSettings> cache) {

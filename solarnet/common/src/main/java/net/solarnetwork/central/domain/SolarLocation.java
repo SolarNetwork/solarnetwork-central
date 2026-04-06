@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.BaseEntity;
@@ -46,17 +47,17 @@ public class SolarLocation extends BaseEntity
 	@Serial
 	private static final long serialVersionUID = -3752573628286835489L;
 
-	private String name;
-	private String country;
-	private String region;
-	private String stateOrProvince;
-	private String locality;
-	private String postalCode;
-	private String street;
-	private BigDecimal latitude;
-	private BigDecimal longitude;
-	private BigDecimal elevation;
-	private String timeZoneId;
+	private @Nullable String name;
+	private @Nullable String country;
+	private @Nullable String region;
+	private @Nullable String stateOrProvince;
+	private @Nullable String locality;
+	private @Nullable String postalCode;
+	private @Nullable String street;
+	private @Nullable BigDecimal latitude;
+	private @Nullable BigDecimal longitude;
+	private @Nullable BigDecimal elevation;
+	private @Nullable String timeZoneId;
 
 	/**
 	 * Default constructor.
@@ -240,74 +241,74 @@ public class SolarLocation extends BaseEntity
 	}
 
 	@Override
-	public String getName() {
+	public final @Nullable String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public final void setName(@Nullable String name) {
 		this.name = name;
 	}
 
 	@Override
-	public String getCountry() {
+	public final @Nullable String getCountry() {
 		return country;
 	}
 
-	public void setCountry(String country) {
+	public final void setCountry(@Nullable String country) {
 		this.country = country;
 	}
 
 	@Override
-	public String getRegion() {
+	public final @Nullable String getRegion() {
 		return region;
 	}
 
-	public void setRegion(String region) {
+	public final void setRegion(@Nullable String region) {
 		this.region = region;
 	}
 
 	@Override
-	public String getStateOrProvince() {
+	public final @Nullable String getStateOrProvince() {
 		return stateOrProvince;
 	}
 
-	public void setStateOrProvince(String stateOrProvince) {
+	public final void setStateOrProvince(@Nullable String stateOrProvince) {
 		this.stateOrProvince = stateOrProvince;
 	}
 
 	@Override
-	public String getLocality() {
+	public final @Nullable String getLocality() {
 		return locality;
 	}
 
-	public void setLocality(String locality) {
+	public final void setLocality(@Nullable String locality) {
 		this.locality = locality;
 	}
 
 	@Override
-	public String getPostalCode() {
+	public final @Nullable String getPostalCode() {
 		return postalCode;
 	}
 
-	public void setPostalCode(String postalCode) {
+	public final void setPostalCode(@Nullable String postalCode) {
 		this.postalCode = postalCode;
 	}
 
 	@Override
-	public String getStreet() {
+	public final @Nullable String getStreet() {
 		return street;
 	}
 
-	public void setStreet(String street) {
+	public final void setStreet(@Nullable String street) {
 		this.street = street;
 	}
 
 	@Override
-	public BigDecimal getLatitude() {
+	public final @Nullable BigDecimal getLatitude() {
 		return latitude;
 	}
 
-	public void setLatitude(BigDecimal latitude) {
+	public final void setLatitude(@Nullable BigDecimal latitude) {
 		this.latitude = latitude;
 	}
 
@@ -324,16 +325,16 @@ public class SolarLocation extends BaseEntity
 	 *        the latitude to set
 	 * @since 2.1
 	 */
-	public void setLat(BigDecimal latitude) {
+	public final void setLat(@Nullable BigDecimal latitude) {
 		setLatitude(latitude);
 	}
 
 	@Override
-	public BigDecimal getLongitude() {
+	public final @Nullable BigDecimal getLongitude() {
 		return longitude;
 	}
 
-	public void setLongitude(BigDecimal longitude) {
+	public final void setLongitude(@Nullable BigDecimal longitude) {
 		this.longitude = longitude;
 	}
 
@@ -350,16 +351,16 @@ public class SolarLocation extends BaseEntity
 	 *        the longitude to set
 	 * @since 2.1
 	 */
-	public void setLon(BigDecimal longitude) {
+	public final void setLon(@Nullable BigDecimal longitude) {
 		setLongitude(longitude);
 	}
 
 	@Override
-	public String getTimeZoneId() {
+	public final @Nullable String getTimeZoneId() {
 		return timeZoneId;
 	}
 
-	public void setTimeZoneId(String timeZoneId) {
+	public final void setTimeZoneId(@Nullable String timeZoneId) {
 		this.timeZoneId = timeZoneId;
 	}
 
@@ -376,16 +377,16 @@ public class SolarLocation extends BaseEntity
 	 *        the zone ID to set
 	 * @since 2.1
 	 */
-	public void setZone(String timeZoneId) {
+	public final void setZone(@Nullable String timeZoneId) {
 		setTimeZoneId(timeZoneId);
 	}
 
 	@Override
-	public BigDecimal getElevation() {
+	public final @Nullable BigDecimal getElevation() {
 		return elevation;
 	}
 
-	public void setElevation(BigDecimal elevation) {
+	public final void setElevation(@Nullable BigDecimal elevation) {
 		this.elevation = elevation;
 	}
 
@@ -402,7 +403,7 @@ public class SolarLocation extends BaseEntity
 	 *        the elevation to set
 	 * @since 2.1
 	 */
-	public void setEl(BigDecimal elevation) {
+	public final void setEl(@Nullable BigDecimal elevation) {
 		setElevation(elevation);
 	}
 

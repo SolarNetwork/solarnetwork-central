@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.io.InputStreamSource;
@@ -98,7 +99,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	private Map<String, String> csvImportExampleResources;
 
 	private final MessageSource csvImportMessageSource;
-	private Validator validator;
+	private @Nullable Validator validator;
 
 	/**
 	 * Constructor.
@@ -116,7 +117,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	 * @param resourceLoader
 	 *        the resource loader to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserDnp3Biz(TrustedIssuerCertificateDao trustedCertDao, ServerConfigurationDao serverDao,
 			ServerAuthConfigurationDao serverAuthDao,
@@ -168,7 +169,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<TrustedIssuerCertificate, UserStringCompositePK> trustedIssuerCertificatesForUser(
-			Long userId, CertificateFilter filter) {
+			Long userId, @Nullable CertificateFilter filter) {
 		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
 		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
 		return trustedCertDao.findFiltered(userFilter);
@@ -181,7 +182,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		ServerConfiguration conf = requireNonNullArgument(input, "input").toEntity(unassignedId);
 
 		UserLongCompositePK pk = serverDao.create(userId, conf);
-		return serverDao.get(pk);
+		return requireNonNullObject(serverDao.get(pk), pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -191,19 +192,19 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 				.toEntity(new UserLongCompositePK(userId, serverId));
 
 		UserLongCompositePK pk = requireNonNullObject(serverDao.save(conf), serverId);
-		return serverDao.get(pk);
+		return requireNonNullObject(serverDao.get(pk), pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteServer(Long userId, Long serverId) {
-		serverDao.delete(new ServerConfiguration(userId, serverId, Instant.EPOCH));
+		serverDao.delete(new ServerConfiguration(userId, serverId, Instant.EPOCH, ""));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<ServerConfiguration, UserLongCompositePK> serversForUser(Long userId,
-			ServerFilter filter) {
+			@Nullable ServerFilter filter) {
 		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
 		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
 		return serverDao.findFiltered(userFilter);
@@ -217,19 +218,20 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 				.toEntity(new UserLongStringCompositePK(userId, serverId, identity));
 
 		UserLongStringCompositePK pk = requireNonNullObject(serverAuthDao.save(conf), serverId);
-		return serverAuthDao.get(pk);
+		return requireNonNullObject(serverAuthDao.get(pk), pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteServerAuth(Long userId, Long serverId, String identifier) {
-		serverAuthDao.delete(new ServerAuthConfiguration(userId, serverId, identifier, Instant.EPOCH));
+		var key = serverAuthDao.entityKey(new UserLongStringCompositePK(userId, serverId, identifier));
+		serverAuthDao.delete(key);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<ServerAuthConfiguration, UserLongStringCompositePK> serverAuthsForUser(
-			Long userId, ServerFilter filter) {
+			Long userId, @Nullable ServerFilter filter) {
 		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
 		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
 		return serverAuthDao.findFiltered(userFilter);
@@ -243,20 +245,21 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 				.toEntity(new UserLongIntegerCompositePK(userId, serverId, index));
 
 		UserLongIntegerCompositePK pk = requireNonNullObject(serverMeasurementDao.save(conf), serverId);
-		return serverMeasurementDao.get(pk);
+		return requireNonNullObject(serverMeasurementDao.get(pk), pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteServerMeasurement(Long userId, Long serverId, Integer index) {
-		serverMeasurementDao
-				.delete(new ServerMeasurementConfiguration(userId, serverId, index, Instant.EPOCH));
+		final var key = serverMeasurementDao
+				.entityKey(new UserLongIntegerCompositePK(userId, serverId, index));
+		serverMeasurementDao.delete(key);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<ServerMeasurementConfiguration, UserLongIntegerCompositePK> serverMeasurementsForUser(
-			Long userId, ServerDataPointFilter filter) {
+			Long userId, @Nullable ServerDataPointFilter filter) {
 		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
 		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
 		return serverMeasurementDao.findFiltered(userFilter);
@@ -270,19 +273,20 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 				.toEntity(new UserLongIntegerCompositePK(userId, serverId, index));
 
 		UserLongIntegerCompositePK pk = requireNonNullObject(serverControlDao.save(conf), serverId);
-		return serverControlDao.get(pk);
+		return requireNonNullObject(serverControlDao.get(pk), pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteServerControl(Long userId, Long serverId, Integer index) {
-		serverControlDao.delete(new ServerControlConfiguration(userId, serverId, index, Instant.EPOCH));
+		var key = serverControlDao.entityKey(new UserLongIntegerCompositePK(userId, serverId, index));
+		serverControlDao.delete(key);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<ServerControlConfiguration, UserLongIntegerCompositePK> serverControlsForUser(
-			Long userId, ServerDataPointFilter filter) {
+			Long userId, @Nullable ServerDataPointFilter filter) {
 		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
 		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
 		return serverControlDao.findFiltered(userFilter);
@@ -290,33 +294,34 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
-	public void updateTrustedIssuerCertificateEnabledStatus(Long userId, CertificateFilter filter,
-			boolean enabled) {
+	public void updateTrustedIssuerCertificateEnabledStatus(Long userId,
+			@Nullable CertificateFilter filter, boolean enabled) {
 		trustedCertDao.updateEnabledStatus(userId, filter, enabled);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
-	public void updateServerEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
+	public void updateServerEnabledStatus(Long userId, @Nullable ServerFilter filter, boolean enabled) {
 		serverDao.updateEnabledStatus(userId, filter, enabled);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
-	public void updateServerAuthEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
+	public void updateServerAuthEnabledStatus(Long userId, @Nullable ServerFilter filter,
+			boolean enabled) {
 		serverAuthDao.updateEnabledStatus(userId, filter, enabled);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
-	public void updateServerMeasurementEnabledStatus(Long userId, ServerDataPointFilter filter,
+	public void updateServerMeasurementEnabledStatus(Long userId, @Nullable ServerDataPointFilter filter,
 			boolean enabled) {
 		serverMeasurementDao.updateEnabledStatus(userId, filter, enabled);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
-	public void updateServerControlEnabledStatus(Long userId, ServerDataPointFilter filter,
+	public void updateServerControlEnabledStatus(Long userId, @Nullable ServerDataPointFilter filter,
 			boolean enabled) {
 		serverControlDao.updateEnabledStatus(userId, filter, enabled);
 	}
@@ -349,6 +354,10 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 						csv.getInputStream())) {
 			result = new ServerConfigurationsCsvParser(csvImportMessageSource,
 					locale != null ? locale : Locale.getDefault()).parse(in);
+		}
+
+		if ( result == null ) {
+			return new ServerConfigurations(List.of(), List.of());
 		}
 
 		if ( validator != null ) {
@@ -391,7 +400,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public void exportServerConfigurationsCsv(Long userId, ServerDataPointFilter filter,
+	public void exportServerConfigurationsCsv(Long userId, @Nullable ServerDataPointFilter filter,
 			OutputStream out, Locale locale) throws IOException {
 		try (CsvWriter csv = CsvWriter.builder().build(out)) {
 			var measurements = serverMeasurementsForUser(userId, filter);
@@ -407,7 +416,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	 *
 	 * @return the validator
 	 */
-	public Validator getValidator() {
+	public final @Nullable Validator getValidator() {
 		return validator;
 	}
 
@@ -417,7 +426,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	 * @param validator
 	 *        the validator to set
 	 */
-	public void setValidator(Validator validator) {
+	public final void setValidator(@Nullable Validator validator) {
 		this.validator = validator;
 	}
 
@@ -427,7 +436,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	 *
 	 * @return the resources
 	 */
-	public Map<String, String> getCsvImportExampleResources() {
+	public final Map<String, String> getCsvImportExampleResources() {
 		return csvImportExampleResources;
 	}
 
@@ -443,9 +452,9 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	 * @param csvImportExampleResources
 	 *        the resource mapping to set
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
-	public void setCsvImportExampleResources(Map<String, String> csvImportExampleResources) {
+	public final void setCsvImportExampleResources(Map<String, String> csvImportExampleResources) {
 		this.csvImportExampleResources = requireNonNullArgument(csvImportExampleResources,
 				"csvImportExampleResources");
 	}

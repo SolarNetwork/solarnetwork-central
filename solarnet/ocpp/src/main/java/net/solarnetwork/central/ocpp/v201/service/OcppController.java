@@ -24,13 +24,14 @@ package net.solarnetwork.central.ocpp.v201.service;
 
 import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive;
 import static org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization;
 import java.io.Serial;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.support.TransactionSynchronization;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -82,7 +83,7 @@ public class OcppController extends BaseOcppController {
 	 * @param objectMapper
 	 *        the object mapper to use
 	 * @throws IllegalArgumentException
-	 *         if any parameter is {@literal null}
+	 *         if any parameter is {@code null}
 	 */
 	public OcppController(Executor executor, ChargePointRouter chargePointRouter,
 			UserNodeDao userNodeDao, NodeInstructionDao instructionDao,
@@ -109,8 +110,8 @@ public class OcppController extends BaseOcppController {
 		CentralChargePoint cp = chargePointForParameters(userNode, params);
 		if ( cp == null ) {
 			instruction.getInstruction().setState(InstructionState.Declined);
-			instruction.getInstruction().setResultParameters(
-					Collections.singletonMap("error", "ChargePoint not specified or not available."));
+			instruction.getInstruction()
+					.setResultParameters(Map.of("error", "ChargePoint not specified or not available."));
 			return instruction;
 		}
 		Action action;
@@ -118,8 +119,8 @@ public class OcppController extends BaseOcppController {
 			action = Action.valueOf(params.remove(OcppInstructionUtils.OCPP_ACTION_PARAM));
 		} catch ( IllegalArgumentException | NullPointerException e ) {
 			instruction.getInstruction().setState(InstructionState.Declined);
-			instruction.getInstruction().setResultParameters(
-					Collections.singletonMap("error", "OCPP action parameter missing."));
+			instruction.getInstruction()
+					.setResultParameters(Map.of("error", "OCPP action parameter missing."));
 			return instruction;
 		}
 		return OcppInstructionUtils.decodeJsonOcppInstructionMessage(objectMapper, action, params,
@@ -149,12 +150,15 @@ public class OcppController extends BaseOcppController {
 		final Long userId = (instr.chargePointIdentity.getUserIdentifier() instanceof Long
 				? (Long) instr.chargePointIdentity.getUserIdentifier()
 				: null);
+		final Long nodeId = nonnull(instr.getNodeId(), "Node ID");
+		final InstructionState instrState = nonnull(instr.getInstruction().getState(),
+				"Instruction state");
 
 		final ActionMessageProcessor<JsonNode, Void> handler = getInstructionHandler();
 		if ( handler != null ) {
 			log.trace("Passing OCPPv16 instruction {} to processor {}", instructionId, handler);
 			BasicActionMessage<JsonNode> cpMsg = new BasicActionMessage<>(instr.chargePointIdentity,
-					instr.getId().toString(), instr.action, instr.jsonPayload);
+					instr.id().toString(), instr.action, instr.jsonPayload);
 			ActionMessageResultHandler<JsonNode, Void> processor = (_, _, err) -> {
 				if ( err != null ) {
 					Throwable root = err;
@@ -163,8 +167,8 @@ public class OcppController extends BaseOcppController {
 					}
 					Map<String, Object> data = singletonMap(ERROR_DATA_KEY, format(
 							"Error handling OCPP action %s: %s", instr.action, root.getMessage()));
-					instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
-							instr.getInstruction().getState(), InstructionState.Declined, data);
+					instructionDao.compareAndUpdateInstructionState(instructionId, nodeId, instrState,
+							InstructionState.Declined, data);
 					if ( userId != null ) {
 						generateUserEvent(userId, CHARGE_POINT_INSTRUCTION_ERROR_TAGS, "Failed to send",
 								data);
@@ -205,8 +209,8 @@ public class OcppController extends BaseOcppController {
 						instr.chargePointIdentity, root.getMessage());
 				Map<String, Object> data = singletonMap("error",
 						"Error handling OCPP action: " + root.getMessage());
-				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
-						instr.getInstruction().getState(), InstructionState.Declined, data);
+				instructionDao.compareAndUpdateInstructionState(instructionId, nodeId, instrState,
+						InstructionState.Declined, data);
 				if ( userId != null ) {
 					generateUserEvent(userId, CHARGE_POINT_INSTRUCTION_ERROR_TAGS, "Failed to send",
 							data);
@@ -217,8 +221,8 @@ public class OcppController extends BaseOcppController {
 					resultParameters = JsonUtils.getStringMapFromTree(objectMapper.valueToTree(res));
 				}
 				log.info("Sent OCPPv16 {} to charge point {}", instr.action, instr.chargePointIdentity);
-				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
-						instr.getInstruction().getState(), InstructionState.Completed, resultParameters);
+				instructionDao.compareAndUpdateInstructionState(instructionId, nodeId, instrState,
+						InstructionState.Completed, resultParameters);
 				if ( userId != null ) {
 					Map<String, Object> data = new HashMap<>(4);
 					data.put(ACTION_DATA_KEY, instr.action);
@@ -238,12 +242,12 @@ public class OcppController extends BaseOcppController {
 
 		private final ChargePointIdentity chargePointIdentity;
 		private final Action action;
-		private final ObjectNode jsonPayload;
-		private final Object payload;
+		private final @Nullable ObjectNode jsonPayload;
+		private final @Nullable Object payload;
 
 		private OcppNodeInstruction(NodeInstruction instruction, InstructionState state,
-				ChargePointIdentity chargePointIdentity, Action action, ObjectNode jsonPayload,
-				Object payload) {
+				ChargePointIdentity chargePointIdentity, Action action, @Nullable ObjectNode jsonPayload,
+				@Nullable Object payload) {
 			super(instruction);
 			getInstruction().setState(state);
 			this.chargePointIdentity = chargePointIdentity;

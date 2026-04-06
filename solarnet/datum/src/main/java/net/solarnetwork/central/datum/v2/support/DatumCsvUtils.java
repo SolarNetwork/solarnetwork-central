@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import de.siegmar.fastcsv.reader.CsvReader;
 import de.siegmar.fastcsv.reader.CsvRecord;
 import de.siegmar.fastcsv.reader.CsvRecordHandler;
@@ -95,7 +96,7 @@ public final class DatumCsvUtils {
 	 *        the kind to treat the results as
 	 * @param zone
 	 *        a time zone to use, if the data does not include one
-	 * @return the list of metadata, never {@literal null}
+	 * @return the list of metadata, never {@code null}
 	 * @throws IOException
 	 *         if any parsing error occurs
 	 */
@@ -145,7 +146,7 @@ public final class DatumCsvUtils {
 		return result;
 	}
 
-	private static String[] parseArrayValue(String value) {
+	private static String @Nullable [] parseArrayValue(@Nullable String value) {
 		if ( value == null || value.isEmpty() ) {
 			return null;
 		}
@@ -158,7 +159,11 @@ public final class DatumCsvUtils {
 		return commaDelimitedListToStringArray(value);
 	}
 
-	private static String[][] parse2dArrayValue(String value) {
+	@SuppressWarnings("NullAway")
+	private static String @Nullable [] @Nullable [] parse2dArrayValue(@Nullable String value) {
+		if ( value == null ) {
+			return null;
+		}
 		if ( value.startsWith("{") ) {
 			value = value.substring(1);
 		}
@@ -166,21 +171,23 @@ public final class DatumCsvUtils {
 			value = value.substring(0, value.length() - 1);
 		}
 		String[] components = value.split("}\\s*,\\s*\\{", 0);
-		String[][] result = new String[components.length][];
+		var result = new String[components.length][];
 		for ( int i = 0; i < components.length; i++ ) {
 			result[i] = parseArrayValue(components[i]);
 		}
 		return result;
 	}
 
-	private static BigDecimal[][] parase2dDecimalArray(String[][] strings) {
+	@SuppressWarnings("NullAway")
+	private static BigDecimal @Nullable [] @Nullable [] parase2dDecimalArray(
+			String[] @Nullable [] strings) {
 		if ( strings == null ) {
 			return null;
 		}
 		if ( strings.length == 0 ) {
 			return new BigDecimal[0][];
 		}
-		BigDecimal[][] result = new BigDecimal[strings.length][];
+		var result = new BigDecimal[strings.length][];
 		for ( int i = 0; i < strings.length; i++ ) {
 			result[i] = decimalArray(strings[i]);
 		}
@@ -206,10 +213,11 @@ public final class DatumCsvUtils {
 	 *        the input to parse as CSV
 	 * @param aggregation
 	 *        the aggregate type
-	 * @return the list of aggregate datum, never {@literal null}
+	 * @return the list of aggregate datum, never {@code null}
 	 * @throws IOException
 	 *         if any parsing error occurs
 	 */
+	@SuppressWarnings("NullAway")
 	public static List<AggregateDatum> parseAggregateDatum(Reader in, Aggregation aggregation)
 			throws IOException {
 		List<AggregateDatum> result = new ArrayList<>();
@@ -231,8 +239,8 @@ public final class DatumCsvUtils {
 				DatumProperties props = DatumProperties.propertiesOf(decimalArray(iCol),
 						decimalArray(aCol), sCol, tCol);
 
-				String[][] statsCol = parse2dArrayValue(row.getField(6));
-				String[][] readingStatsCol = parse2dArrayValue(row.getField(7));
+				var statsCol = parse2dArrayValue(row.getField(6));
+				var readingStatsCol = parse2dArrayValue(row.getField(7));
 
 				DatumPropertiesStatistics stats = DatumPropertiesStatistics.statisticsOf(
 						parase2dDecimalArray(statsCol), parase2dDecimalArray(readingStatsCol));
@@ -256,13 +264,13 @@ public final class DatumCsvUtils {
 	 * @param metaProvider
 	 *        the metadata provider
 	 * @param formatter
-	 *        the formatter; if {@literal null} then a standard ISO 8601
-	 *        timestamp will be assumed
-	 * @return the iterator, never {@literal null}
+	 *        the formatter; if {@code null} then a standard ISO 8601 timestamp
+	 *        will be assumed
+	 * @return the iterator, never {@code null}
 	 * @since 2.0
 	 */
 	public static CloseableIterator<Datum> datumResourceIterator(Class<?> clazz, String resource,
-			ObjectDatumStreamMetadataProvider metaProvider, DateTimeFormatter formatter) {
+			ObjectDatumStreamMetadataProvider metaProvider, @Nullable DateTimeFormatter formatter) {
 		try {
 			InputStream is = clazz.getResourceAsStream(resource);
 			if ( is == null ) {
@@ -302,6 +310,9 @@ public final class DatumCsvUtils {
 	 *        the CSV resource to load
 	 * @param metaProvider
 	 *        the metadata provider
+	 * @param formatter
+	 *        the formatter; if {@code null} then a standard ISO 8601 timestamp
+	 *        will be assumed
 	 * @return the list
 	 * @throws RuntimeException
 	 *         if any parsing error occurs

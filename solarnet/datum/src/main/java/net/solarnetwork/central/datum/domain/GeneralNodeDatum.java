@@ -22,18 +22,22 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.SerializeIgnore;
 import net.solarnetwork.domain.datum.DatumSamples;
 
@@ -50,93 +54,78 @@ import net.solarnetwork.domain.datum.DatumSamples;
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId" })
 public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable,
-		GeneralObjectDatum<GeneralNodeDatumPK> {
+		GeneralObjectDatum<GeneralNodeDatumPK>, CopyingIdentity<GeneralNodeDatum, GeneralNodeDatumPK> {
 
 	@Serial
 	private static final long serialVersionUID = -3840727299179538235L;
 
-	private GeneralNodeDatumPK id = new GeneralNodeDatumPK();
-	private DatumSamples samples;
-	private Instant posted;
-	private String sampleJson;
+	private final GeneralNodeDatumPK id;
+	private @Nullable DatumSamples samples;
+	private @Nullable Instant posted;
+	private @Nullable String sampleJson;
 
 	/**
-	 * Convenience getter for {@link GeneralNodeDatumPK#getNodeId()}.
+	 * Constructor.
 	 *
-	 * @return the nodeId
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public Long getNodeId() {
-		return (id == null ? null : id.getNodeId());
+	public GeneralNodeDatum(GeneralNodeDatumPK id) {
+		super();
+		this.id = requireNonNullArgument(id, "id");
 	}
 
 	/**
-	 * Convenience setter for {@link GeneralNodeDatumPK#setNodeId(Long)}.
+	 * Constructor.
 	 *
 	 * @param nodeId
-	 *        the nodeId to set
-	 */
-	public void setNodeId(Long nodeId) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumPK();
-		}
-		id.setNodeId(nodeId);
-	}
-
-	/**
-	 * Convenience getter for {@link GeneralNodeDatumPK#getSourceId()}.
-	 *
-	 * @return the sourceId
-	 */
-	public String getSourceId() {
-		return (id == null ? null : id.getSourceId());
-	}
-
-	/**
-	 * Convenience setter for {@link GeneralNodeDatumPK#setSourceId(String)}.
-	 *
-	 * @param sourceId
-	 *        the sourceId to set
-	 */
-	public void setSourceId(String sourceId) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumPK();
-		}
-		id.setSourceId(sourceId);
-	}
-
-	/**
-	 * Convenience setter for {@link GeneralNodeDatumPK#setCreated(Instant)}.
-	 *
+	 *        the node ID
 	 * @param created
-	 *        the created to set
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setCreated(Instant created) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumPK();
-		}
-		id.setCreated(created);
+	@JsonCreator
+	public GeneralNodeDatum(@JsonProperty("nodeId") Long nodeId,
+			@JsonProperty("created") Instant created, @JsonProperty("sourceId") String sourceId) {
+		this(new GeneralNodeDatumPK(nodeId, created, sourceId));
 	}
 
 	@Override
-	public Instant getCreated() {
-		return (id == null ? null : id.getCreated());
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("GeneralNodeDatum{id=");
+		builder.append(id);
+		builder.append(", samples=");
+		builder.append(samples == null ? "null" : samples.getSampleData());
+		builder.append("}");
+		return builder.toString();
 	}
 
 	@Override
-	@JsonIgnore
-	@SerializeIgnore
-	public GeneralNodeDatumPK getId() {
-		return id;
+	public GeneralNodeDatum copyWithId(GeneralNodeDatumPK id) {
+		GeneralNodeDatum other = new GeneralNodeDatum(id);
+		copyTo(other);
+		return other;
+	}
+
+	@Override
+	public void copyTo(GeneralNodeDatum other) {
+		other.posted = posted;
+		other.sampleJson = sampleJson;
+		other.samples = (samples != null ? new DatumSamples(samples) : new DatumSamples());
 	}
 
 	/**
 	 * Convenience method for {@link DatumSamples#getSampleData()}.
 	 *
-	 * @return the sample data, or <em>null</em> if none available
+	 * @return the sample data, or {@code null} if none available
 	 */
 	@JsonUnwrapped
 	@JsonAnyGetter
-	public Map<String, ?> getSampleData() {
+	public @Nullable Map<String, ?> getSampleData() {
 		DatumSamples s = getSamples();
 		return (s == null ? null : s.getSampleData());
 	}
@@ -161,7 +150,7 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 
 	@SuppressWarnings("EqualsGetClass")
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -169,24 +158,51 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 			return false;
 		}
 		GeneralNodeDatum other = (GeneralNodeDatum) obj;
-		if ( id == null ) {
-			return other.id == null;
-		}
 		return id.equals(other.id);
+	}
+
+	/**
+	 * Convenience getter for {@link GeneralNodeDatumPK#getNodeId()}.
+	 *
+	 * @return the nodeId
+	 */
+	public final Long getNodeId() {
+		return id.getNodeId();
+	}
+
+	/**
+	 * Convenience getter for {@link GeneralNodeDatumPK#getSourceId()}.
+	 *
+	 * @return the sourceId
+	 */
+	public final String getSourceId() {
+		return id.getSourceId();
+	}
+
+	@Override
+	public final Instant getCreated() {
+		return id.getCreated();
+	}
+
+	@Override
+	@JsonIgnore
+	@SerializeIgnore
+	public final GeneralNodeDatumPK getId() {
+		return id;
 	}
 
 	/**
 	 * Get the {@link DatumSamples} object as a JSON string.
 	 *
 	 * <p>
-	 * This method will ignore <em>null</em> values.
+	 * This method will ignore {@code null} values.
 	 * </p>
 	 *
-	 * @return a JSON encoded string, never <em>null</em>
+	 * @return a JSON encoded string, never {@code null}
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public String getSampleJson() {
+	public final @Nullable String getSampleJson() {
 		if ( sampleJson == null ) {
 			sampleJson = DatumUtils.getJSONString(samples, "{}");
 		}
@@ -207,27 +223,30 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setSampleJson(String json) {
+	public final void setSampleJson(@Nullable String json) {
 		sampleJson = json;
 		samples = null;
 	}
 
 	@SerializeIgnore
 	@JsonIgnore
-	public Instant getPosted() {
+	public final @Nullable Instant getPosted() {
 		return posted;
 	}
 
-	public void setPosted(Instant posted) {
+	public final void setPosted(@Nullable Instant posted) {
 		this.posted = posted;
 	}
 
 	@Override
 	@SerializeIgnore
 	@JsonIgnore
-	public DatumSamples getSamples() {
+	public final DatumSamples getSamples() {
 		if ( samples == null && sampleJson != null ) {
 			samples = DatumUtils.getObjectFromJSON(sampleJson, DatumSamples.class);
+		}
+		if ( samples == null ) {
+			samples = new DatumSamples();
 		}
 		return samples;
 	}
@@ -245,20 +264,9 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setSamples(DatumSamples samples) {
+	public final void setSamples(@Nullable DatumSamples samples) {
 		this.samples = samples;
 		sampleJson = null;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("GeneralNodeDatum{id=");
-		builder.append(id);
-		builder.append(", samples=");
-		builder.append(samples == null ? "null" : samples.getSampleData());
-		builder.append("}");
-		return builder.toString();
 	}
 
 }

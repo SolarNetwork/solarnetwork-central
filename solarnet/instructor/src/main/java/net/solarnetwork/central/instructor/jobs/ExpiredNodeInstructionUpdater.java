@@ -72,8 +72,7 @@ public class ExpiredNodeInstructionUpdater extends JobSupport {
 	 */
 	public ExpiredNodeInstructionUpdater(InstantSource clock, NodeInstructionDao dao,
 			InstructionState resultState, Map<String, Object> resultParameters) {
-		super();
-		setGroupId("Instruction");
+		super("Instruction", "ExpiredNodeInstructionUpdater");
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.dao = requireNonNullArgument(dao, "dao");
 		this.resultState = requireNonNullArgument(resultState, "resultState");

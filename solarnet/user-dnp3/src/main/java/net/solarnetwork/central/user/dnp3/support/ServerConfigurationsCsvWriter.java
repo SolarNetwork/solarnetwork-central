@@ -23,10 +23,12 @@
 package net.solarnetwork.central.user.dnp3.support;
 
 import static java.util.Arrays.fill;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import de.siegmar.fastcsv.writer.CsvWriter;
 import net.solarnetwork.central.dnp3.domain.BaseServerDatumStreamConfiguration;
@@ -79,7 +81,7 @@ public class ServerConfigurationsCsvWriter {
 	 * @param locale
 	 *        the locale for messages
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
@@ -101,10 +103,10 @@ public class ServerConfigurationsCsvWriter {
 	 *         if any IO error occurs
 	 */
 	public void generateCsv(ServerConfigurations configurations) throws IOException {
-		String[] row = new String[rowLen];
+		var row = new @Nullable String[rowLen];
 		for ( ServerConfigurationsCsvColumn col : ServerConfigurationsCsvColumn.values() ) {
-			row[col.getCode()] = messageSource.getMessage("dnp3.config.import.csv.col." + col.name(),
-					null, col.getName(), locale);
+			row[col.getCode()] = nonnull(messageSource.getMessage(
+					"dnp3.config.import.csv.col." + col.name(), null, col.getName(), locale), "Message");
 		}
 		writer.writeRecord(row);
 		if ( configurations == null || configurations.isEmpty() ) {
@@ -126,7 +128,7 @@ public class ServerConfigurationsCsvWriter {
 		}
 	}
 
-	private void populateRow(BaseServerDatumStreamConfiguration<?, ?> config, String[] row) {
+	private void populateRow(BaseServerDatumStreamConfiguration<?, ?> config, @Nullable String[] row) {
 		row[ServerConfigurationsCsvColumn.NODE_ID
 				.getCode()] = (config.getNodeId() != null ? config.getNodeId().toString() : null);
 		row[ServerConfigurationsCsvColumn.SOURCE_ID.getCode()] = config.getSourceId();
@@ -138,7 +140,7 @@ public class ServerConfigurationsCsvWriter {
 		row[ServerConfigurationsCsvColumn.DECIMAL_SCALE.getCode()] = numberValue(config.getScale());
 	}
 
-	private String typeValue(Enum<? extends CodedValue> type) {
+	private @Nullable String typeValue(@Nullable Enum<? extends CodedValue> type) {
 		if ( type == null ) {
 			return null;
 		}
@@ -148,11 +150,11 @@ public class ServerConfigurationsCsvWriter {
 		return type.name();
 	}
 
-	private String decimalValue(BigDecimal n) {
+	private @Nullable String decimalValue(@Nullable BigDecimal n) {
 		return (n != null ? n.toPlainString() : null);
 	}
 
-	private String numberValue(Number n) {
+	private @Nullable String numberValue(@Nullable Number n) {
 		return (n != null ? n.toString() : null);
 	}
 

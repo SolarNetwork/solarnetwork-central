@@ -25,6 +25,7 @@ package net.solarnetwork.central.dao;
 import java.io.Serializable;
 import java.util.Set;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.dao.Entity;
@@ -51,7 +52,8 @@ public interface UserRelatedEntity<K extends Comparable<K> & Serializable>
 	 *        the encryptor to use
 	 * @since 1.2
 	 */
-	default void maskSensitiveInformation(Function<String, Set<String>> sensitiveKeyProvider,
+	default void maskSensitiveInformation(
+			@Nullable Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			TextEncryptor encryptor) {
 		// nothing
 	}
@@ -66,7 +68,8 @@ public interface UserRelatedEntity<K extends Comparable<K> & Serializable>
 	 *        the encryptor to use
 	 * @since 1.2
 	 */
-	default void unmaskSensitiveInformation(Function<String, Set<String>> sensitiveKeyProvider,
+	default void unmaskSensitiveInformation(
+			@Nullable Function<String, @Nullable Set<String>> sensitiveKeyProvider,
 			TextEncryptor encryptor) {
 		// nothing
 	}

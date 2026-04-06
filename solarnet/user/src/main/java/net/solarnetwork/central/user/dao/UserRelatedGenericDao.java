@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.dao;
 
 import java.io.Serializable;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.dao.GenericDao;
 
@@ -50,8 +51,9 @@ public interface UserRelatedGenericDao<T extends UserRelatedEntity<K>, K extends
 	 *        the primary key to retrieve
 	 * @param userId
 	 *        the ID of the owner
-	 * @return the domain object
+	 * @return the domain object, or {@code null} if not found
 	 */
+	@Nullable
 	T get(K id, Long userId);
 
 }

@@ -23,8 +23,12 @@
 package net.solarnetwork.central.security.jdbc;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.Instant.now;
+import static java.time.temporal.ChronoUnit.HOURS;
+import static java.util.Objects.requireNonNullElse;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdFromSystemIdentifier;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
 import java.sql.Connection;
@@ -35,6 +39,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataRetrievalFailureException;
@@ -195,8 +200,8 @@ public class JdbcOAuth2AuthorizedClientService
 
 	@Override
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
-	public <T extends OAuth2AuthorizedClient> T loadAuthorizedClient(String clientRegistrationId,
-			String principalName) {
+	public <T extends OAuth2AuthorizedClient> @Nullable T loadAuthorizedClient(
+			String clientRegistrationId, String principalName) {
 		final Long userId = userIdFromSystemIdentifier(clientRegistrationId);
 		if ( userId == null ) {
 			return null;
@@ -238,11 +243,11 @@ public class JdbcOAuth2AuthorizedClientService
 		}
 		final var sql = new UpsertAuthorizedClient(entity);
 		jdbcOperations.update(sql);
-		return entity.getId();
+		return nonnull(entity.getId(), "id");
 	}
 
 	@Override
-	public ClientAccessTokenEntity get(UserStringStringCompositePK id) {
+	public @Nullable ClientAccessTokenEntity get(UserStringStringCompositePK id) {
 		final var sql = new SelectAuthorizedClient(id.getUserId(), id.getGroupId(), id.getEntityId());
 		List<ClientAccessTokenEntity> result = this.jdbcOperations.query(sql,
 				this.clientAccessTokenRowMapper);
@@ -250,7 +255,7 @@ public class JdbcOAuth2AuthorizedClientService
 	}
 
 	@Override
-	public List<ClientAccessTokenEntity> getAll(List<SortDescriptor> sortDescriptors) {
+	public List<ClientAccessTokenEntity> getAll(@Nullable List<SortDescriptor> sortDescriptors) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -302,13 +307,15 @@ public class JdbcOAuth2AuthorizedClientService
 		if ( refreshToken != null ) {
 			refreshTokenValue = encryptor.encrypt(refreshToken.getTokenValue().getBytes(UTF_8));
 		}
+		var now = now();
+		var issuedAt = requireNonNullElse(accessToken.getIssuedAt(), now);
+		// TODO: this fallback expire of 1 hour: should probably make this configurable at least
+		var expiresAt = requireNonNullElse(accessToken.getExpiresAt(), issuedAt.plus(1, HOURS));
 		var entity = new ClientAccessTokenEntity(
-				userIdFromSystemIdentifier(clientRegistration.getRegistrationId()),
-				clientRegistration.getRegistrationId(), principal.getName(), Instant.now());
-		entity.setAccessTokenType(accessToken.getTokenType().getValue());
-		entity.setAccessToken(accessToken.getTokenValue().getBytes(UTF_8));
-		entity.setAccessTokenIssuedAt(accessToken.getIssuedAt());
-		entity.setAccessTokenExpiresAt(accessToken.getExpiresAt());
+				nonnull(userIdFromSystemIdentifier(clientRegistration.getRegistrationId()), "userId"),
+				clientRegistration.getRegistrationId(), principal.getName(), now,
+				accessToken.getTokenType().getValue(), accessToken.getTokenValue().getBytes(UTF_8),
+				issuedAt, expiresAt);
 		entity.setAccessTokenScopes(accessToken.getScopes());
 		entity.setRefreshToken(refreshTokenValue);
 		if ( refreshToken != null ) {
@@ -451,14 +458,11 @@ public class JdbcOAuth2AuthorizedClientService
 			Long userId = rs.getObject(1, Long.class);
 			String clientRegistrationId = rs.getString(2);
 			String principalName = rs.getString(3);
-			Instant created = getTimestampInstant(rs, 11);
+			Instant created = nonnull(getTimestampInstant(rs, 11), "created");
 			var result = new ClientAccessTokenEntity(userId, clientRegistrationId, principalName,
-					created);
-
-			result.setAccessTokenType(rs.getString(4));
-			result.setAccessToken(rs.getBytes(5));
-			result.setAccessTokenIssuedAt(getTimestampInstant(rs, 6));
-			result.setAccessTokenExpiresAt(getTimestampInstant(rs, 7));
+					created, rs.getString(4), rs.getBytes(5),
+					nonnull(getTimestampInstant(rs, 6), "issuedAt"),
+					nonnull(getTimestampInstant(rs, 7), "expiresAt"));
 			result.setAccessTokenScopes(StringUtils.commaDelimitedListToSet(rs.getString(8)));
 			byte[] refreshTokenValue = rs.getBytes(9);
 			if ( refreshTokenValue != null ) {

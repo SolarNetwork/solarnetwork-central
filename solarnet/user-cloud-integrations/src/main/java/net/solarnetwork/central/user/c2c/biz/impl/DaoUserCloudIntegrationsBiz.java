@@ -50,6 +50,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -146,7 +147,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private final Map<String, CloudControlService> controlServices;
 	private final Map<String, Set<String>> serviceSecureKeys;
 
-	private Validator validator;
+	private @Nullable Validator validator;
 	private CloudDatumStreamSettings defaultDatumStreamSettings = DEFAULT_DATUM_STREAM_SETTINGS;
 
 	/**
@@ -179,7 +180,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 * @param integrationServices
 	 *        the integration services
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserCloudIntegrationsBiz(InstantSource clock, UserSettingsEntityDao userSettingsDao,
 			CloudIntegrationConfigurationDao integrationDao,
@@ -241,30 +242,30 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	}
 
 	@Override
-	public CloudIntegrationService integrationService(String identifier) {
+	public @Nullable CloudIntegrationService integrationService(String identifier) {
 		return integrationServices.get(requireNonNullArgument(identifier, "identifier"));
 	}
 
 	@Override
-	public CloudDatumStreamService datumStreamService(String identifier) {
+	public @Nullable CloudDatumStreamService datumStreamService(String identifier) {
 		return datumStreamServices.get(requireNonNullArgument(identifier, "identifier"));
 	}
 
 	@Override
-	public CloudControlService controlService(String identifier) {
+	public @Nullable CloudControlService controlService(String identifier) {
 		return controlServices.get(requireNonNullArgument(identifier, "identifier"));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public UserSettingsEntity settingsForUser(Long userId) {
+	public @Nullable UserSettingsEntity settingsForUser(Long userId) {
 		return userSettingsDao.get(requireNonNullArgument(userId, "userId"));
 	}
 
 	@Override
 	public UserSettingsEntity saveSettings(Long userId, UserSettingsEntityInput input) {
 		UserSettingsEntity entity = requireNonNullArgument(input, "input").toEntity(userId, now());
-		return userSettingsDao.get(userSettingsDao.save(entity));
+		return requireNonNullObject(userSettingsDao.get(userSettingsDao.save(entity)), entity.getId());
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -283,7 +284,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> FilterResults<C, K> listConfigurationsForUser(
-			Long userId, CloudIntegrationsFilter filter, Class<C> configurationClass) {
+			Long userId, @Nullable CloudIntegrationsFilter filter, Class<C> configurationClass) {
 		requireNonNullArgument(userId, "userId");
 		requireNonNullArgument(configurationClass, "configurationClass");
 		BasicFilter f = new BasicFilter(filter);
@@ -304,7 +305,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 		GenericDao<C, K> dao = genericDao(configurationClass);
 
-		return digestSensitiveInformation(requireNonNullObject(dao.get(id), id));
+		return requireNonNullObject(digestSensitiveInformation(dao.get(id)), id);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -336,16 +337,20 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		@SuppressWarnings("unchecked")
 		GenericDao<C, K> dao = genericDao((Class<C>) config.getClass());
 		K updatedId = requireNonNullObject(dao.save(config), id);
-		C result = requireNonNullObject(dao.get(updatedId), updatedId);
+		C result = dao.get(updatedId);
 
-		if ( oauthTokenProperties != null ) {
-			saveOAuthTokens((UserIdentifiableSystem) result, oauthTokenProperties);
+		if ( result instanceof UserIdentifiableSystem uis ) {
+			saveOAuthTokens(uis, oauthTokenProperties);
 		}
 
-		return digestSensitiveInformation(result);
+		return requireNonNullObject(digestSensitiveInformation(result), updatedId);
 	}
 
-	private void saveOAuthTokens(UserIdentifiableSystem config, Map<String, ?> oauthTokenProperties) {
+	private void saveOAuthTokens(@Nullable UserIdentifiableSystem config,
+			@Nullable Map<String, ?> oauthTokenProperties) {
+		if ( config == null ) {
+			return;
+		}
 		final String clientId = getMapString(OAUTH_CLIENT_ID_SETTING, oauthTokenProperties);
 		final String accessTokenValue = getMapString(OAUTH_ACCESS_TOKEN_SETTING, oauthTokenProperties);
 		final String refreshTokenValue = getMapString(OAUTH_REFRESH_TOKEN_SETTING, oauthTokenProperties);
@@ -399,11 +404,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 		var tokenId = new UserStringStringCompositePK(config.getUserId(), config.systemIdentifier(),
 				clientId);
-		var registration = new ClientAccessTokenEntity(tokenId, clock.instant());
-		registration.setAccessTokenType("Bearer");
-		registration.setAccessToken(accessTokenValue.getBytes(UTF_8));
-		registration.setAccessTokenIssuedAt(accessTokenIssuedAt);
-		registration.setAccessTokenExpiresAt(accessTokenExpiresAt);
+		var registration = new ClientAccessTokenEntity(tokenId, clock.instant(), "Bearer",
+				accessTokenValue.getBytes(UTF_8), accessTokenIssuedAt, accessTokenExpiresAt);
 		registration.setRefreshToken(refreshTokenValue.getBytes(UTF_8));
 		registration.setRefreshTokenIssuedAt(refreshTokenIssuedAt);
 		clientAccessTokenDao.save(registration);
@@ -425,15 +427,18 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 					"Configuration class %s is not supported".formatted(configurationClass.getName()));
 		}
 
-		CloudIntegrationConfiguration config = integrationDao.get((UserLongCompositePK) id);
+		CloudIntegrationConfiguration config = requireNonNullObject(
+				integrationDao.get((UserLongCompositePK) id), id);
 
 		// handle OAuth raw token values
 		Map<String, Object> oauthTokenProperties = null;
 		if ( serviceProperties.get(OAUTH_ACCESS_TOKEN_SETTING) != null
 				&& serviceProperties.get(OAUTH_REFRESH_TOKEN_SETTING) != null ) {
 			oauthTokenProperties = new LinkedHashMap<>(serviceProperties);
-			oauthTokenProperties.put(OAUTH_CLIENT_ID_SETTING,
-					config.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class));
+			if ( config.hasServiceProperty(OAUTH_CLIENT_ID_SETTING, String.class) ) {
+				oauthTokenProperties.put(OAUTH_CLIENT_ID_SETTING,
+						config.serviceProp(OAUTH_CLIENT_ID_SETTING, String.class));
+			}
 		}
 
 		if ( config.getServiceProps() == null ) {
@@ -448,24 +453,24 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		config.maskSensitiveInformation(serviceSecureKeys::get, textEncryptor);
 
 		Map<String, Object> propsToMerge = new LinkedHashMap<>(serviceProperties.size());
-		for ( Entry<String, Object> e : config.getServiceProps().entrySet() ) {
-			String key = e.getKey();
-			if ( !serviceProperties.containsKey(key) ) {
-				continue;
+		if ( config.getServiceProps() != null ) {
+			for ( Entry<String, Object> e : config.getServiceProps().entrySet() ) {
+				String key = e.getKey();
+				if ( !serviceProperties.containsKey(key) ) {
+					continue;
+				}
+				propsToMerge.put(key, e.getValue());
 			}
-			propsToMerge.put(key, e.getValue());
 		}
 
-		integrationDao.mergeServiceProperties(config.getId(), propsToMerge);
+		integrationDao.mergeServiceProperties(config.id(), propsToMerge);
 
 		@SuppressWarnings("unchecked")
-		C result = (C) integrationDao.get(config.getId());
+		C result = (C) integrationDao.get(config.id());
 
-		if ( oauthTokenProperties != null ) {
-			saveOAuthTokens((UserIdentifiableSystem) result, oauthTokenProperties);
-		}
+		saveOAuthTokens((UserIdentifiableSystem) result, oauthTokenProperties);
 
-		return digestSensitiveInformation(result);
+		return requireNonNullObject(digestSensitiveInformation(result), config.id());
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -542,17 +547,17 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 	@Override
 	public Iterable<CloudDataValue> listDatumStreamDataValues(UserLongCompositePK integrationId,
-			String datumStreamServiceIdentifier, Map<String, ?> filters) {
+			String datumStreamServiceIdentifier, @Nullable Map<String, ?> filters) {
 		var integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
-		var service = requireNonNullObject(resolveDatumStreamService(integration.getServiceIdentifier(),
-				datumStreamServiceIdentifier), "datumStreamService");
-		return service.dataValues(integration.getId(), filters);
+		var service = resolveDatumStreamService(integration.getServiceIdentifier(),
+				datumStreamServiceIdentifier);
+		return service.dataValues(integration.id(), filters);
 	}
 
 	private CloudDatumStreamService resolveDatumStreamService(String integrationServiceIdentifier,
-			String datumStreamServiceIdentifier) {
+			@Nullable String datumStreamServiceIdentifier) {
 		CloudDatumStreamService result = null;
 		if ( datumStreamServiceIdentifier != null ) {
 			result = datumStreamServices.get(datumStreamServiceIdentifier);
@@ -563,7 +568,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				if ( integrationService != null ) {
 					boolean found = false;
 					for ( CloudDatumStreamService service : integrationService.datumStreamServices() ) {
-						if ( service.getId().equals(datumStreamServiceIdentifier) ) {
+						if ( datumStreamServiceIdentifier.equals(service.getId()) ) {
 							found = true;
 							break;
 						}
@@ -588,23 +593,24 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				}
 			}
 		}
-		return result;
+		return requireNonNullObject(result,
+				datumStreamServiceIdentifier != null ? datumStreamServiceIdentifier
+						: integrationServiceIdentifier);
 	}
 
 	@Override
 	public Iterable<CloudDataValue> listControlDataValues(UserLongCompositePK integrationId,
-			String controlServiceIdentifier, Map<String, ?> filters) {
+			String controlServiceIdentifier, @Nullable Map<String, ?> filters) {
 		var integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
-		var service = requireNonNullObject(
-				resolveControlService(integration.getServiceIdentifier(), controlServiceIdentifier),
-				"controlService");
-		return service.dataValues(integration.getId(), filters);
+		var service = resolveControlService(integration.getServiceIdentifier(),
+				controlServiceIdentifier);
+		return service.dataValues(integration.id(), filters);
 	}
 
 	private CloudControlService resolveControlService(String integrationServiceIdentifier,
-			String controlServiceIdentifier) {
+			@Nullable String controlServiceIdentifier) {
 		CloudControlService result = null;
 		if ( controlServiceIdentifier != null ) {
 			result = controlServices.get(controlServiceIdentifier);
@@ -615,7 +621,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				if ( integrationService != null ) {
 					boolean found = false;
 					for ( CloudDatumStreamService service : integrationService.datumStreamServices() ) {
-						if ( service.getId().equals(controlServiceIdentifier) ) {
+						if ( controlServiceIdentifier.equals(service.getId()) ) {
 							found = true;
 							break;
 						}
@@ -640,7 +646,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				}
 			}
 		}
-		return result;
+		return requireNonNullObject(result, controlServiceIdentifier != null ? controlServiceIdentifier
+				: integrationServiceIdentifier);
 	}
 
 	@Override
@@ -651,7 +658,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		final CloudIntegrationService service = requireNonNullObject(
 				integrationServices.get(conf.getServiceIdentifier()), conf.getServiceIdentifier());
 
-		return service.validate(conf, Locale.getDefault());
+		return service.validate(conf, locale != null ? locale : Locale.getDefault());
 	}
 
 	@Override
@@ -666,7 +673,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> listDatumStreamPollTasksForUser(
-			Long userId, CloudDatumStreamPollTaskFilter filter) {
+			Long userId, @Nullable CloudDatumStreamPollTaskFilter filter) {
 		requireNonNullArgument(userId, "userId");
 		BasicFilter f = new BasicFilter(filter);
 		f.setUserId(userId);
@@ -675,8 +682,9 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
-	public CloudDatumStreamPollTaskEntity updateDatumStreamPollTaskState(UserLongCompositePK id,
-			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates) {
+	public @Nullable CloudDatumStreamPollTaskEntity updateDatumStreamPollTaskState(
+			UserLongCompositePK id, BasicClaimableJobState desiredState,
+			BasicClaimableJobState @Nullable... expectedStates) {
 		requireNonNullArgument(id, "id");
 		requireNonNullArgument(desiredState, "desiredState");
 		if ( !id.allKeyComponentsAreAssigned() ) {
@@ -694,7 +702,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CloudDatumStreamPollTaskEntity saveDatumStreamPollTask(UserLongCompositePK id,
-			CloudDatumStreamPollTaskEntityInput input, BasicClaimableJobState... expectedStates) {
+			CloudDatumStreamPollTaskEntityInput input,
+			BasicClaimableJobState @Nullable... expectedStates) {
 		requireNonNullArgument(id, "id");
 		requireNonNullArgument(input, "input");
 		if ( !id.allKeyComponentsAreAssigned() ) {
@@ -710,7 +719,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		} else {
 			datumStreamPollTaskDao.updateTask(entity, expectedStates);
 		}
-		return datumStreamPollTaskDao.get(id);
+		return requireNonNullObject(datumStreamPollTaskDao.get(id), id);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -737,7 +746,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<CloudDatumStreamRakeTaskEntity, UserLongCompositePK> listDatumStreamRakeTasksForUser(
-			Long userId, CloudDatumStreamRakeTaskFilter filter) {
+			Long userId, @Nullable CloudDatumStreamRakeTaskFilter filter) {
 		requireNonNullArgument(userId, "userId");
 		BasicFilter f = new BasicFilter(filter);
 		f.setUserId(userId);
@@ -746,8 +755,9 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
-	public CloudDatumStreamRakeTaskEntity updateDatumStreamRakeTaskState(UserLongCompositePK id,
-			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates) {
+	public @Nullable CloudDatumStreamRakeTaskEntity updateDatumStreamRakeTaskState(
+			UserLongCompositePK id, BasicClaimableJobState desiredState,
+			BasicClaimableJobState @Nullable... expectedStates) {
 		requireNonNullArgument(id, "id");
 		requireNonNullArgument(desiredState, "desiredState");
 		if ( !id.allKeyComponentsAreAssigned() ) {
@@ -764,7 +774,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CloudDatumStreamRakeTaskEntity saveDatumStreamRakeTask(UserLongCompositePK id,
-			CloudDatumStreamRakeTaskEntityInput input, BasicClaimableJobState... expectedStates) {
+			CloudDatumStreamRakeTaskEntityInput input,
+			BasicClaimableJobState @Nullable... expectedStates) {
 		requireNonNullArgument(id, "id");
 		requireNonNullArgument(input, "input");
 
@@ -781,7 +792,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			}
 			datumStreamRakeTaskDao.updateTask(entity, expectedStates);
 		}
-		return datumStreamRakeTaskDao.get(pk);
+		return requireNonNullObject(datumStreamRakeTaskDao.get(pk), pk);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -824,11 +835,11 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		return result;
 	}
 
-	private void validateInput(final Object input) {
+	private void validateInput(final @Nullable Object input) {
 		validateInput(input, getValidator());
 	}
 
-	private static void validateInput(final Object input, final Validator v) {
+	private static void validateInput(final @Nullable Object input, final @Nullable Validator v) {
 		if ( input == null || v == null ) {
 			return;
 		}
@@ -908,9 +919,9 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		throw new UnsupportedOperationException("Configuration type %s not supported.".formatted(clazz));
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C digestSensitiveInformation(
-			C entity) {
+	@SuppressWarnings({ "unchecked", "rawtypes", "NullAway" })
+	private <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> @Nullable C digestSensitiveInformation(
+			@Nullable C entity) {
 		if ( entity == null ) {
 			return null;
 		}
@@ -922,7 +933,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 	private <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> FilterResults<C, K> digestSensitiveInformation(
 			FilterResults<C, K> results) {
-		if ( results == null || results.getReturnedResultCount() < 1 ) {
+		if ( results.getReturnedResultCount() < 1 ) {
 			return results;
 		}
 		for ( C entity : results ) {
@@ -936,7 +947,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 *
 	 * @return the validator
 	 */
-	public Validator getValidator() {
+	public @Nullable Validator getValidator() {
 		return validator;
 	}
 
@@ -946,14 +957,14 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 * @param validator
 	 *        the validator to set
 	 */
-	public void setValidator(Validator validator) {
+	public void setValidator(@Nullable Validator validator) {
 		this.validator = validator;
 	}
 
 	/**
 	 * Get the default datum stream settings.
 	 *
-	 * @return the settings, never {@literal null}
+	 * @return the settings, never {@code null}
 	 * @since 1.4
 	 */
 	public final CloudDatumStreamSettings getDefaultDatumStreamSettings() {

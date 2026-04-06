@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -113,7 +112,7 @@ public class NodeInstructionController {
 	 * @param cborObjectMapper
 	 *        the mapper to use for CBOR
 	 * @param propertySerializerRegistrar
-	 *        the registrar to use (may be {@literal null}
+	 *        the registrar to use (may be {@code null}
 	 */
 	public NodeInstructionController(TaskExecutor taskExecutor, InstructorBiz instructorBiz,
 			NodeInstructionDao nodeInstructionDao,
@@ -277,9 +276,8 @@ public class NodeInstructionController {
 	@ResponseBody
 	public Result<NodeInstruction> queueInstruction(@RequestParam("nodeId") Long nodeId,
 			Instruction input) {
-		var nodeInstrInput = new NodeInstruction();
+		var nodeInstrInput = new NodeInstruction(input);
 		nodeInstrInput.setNodeId(nodeId);
-		nodeInstrInput.setInstruction(input);
 		validateInstruction(nodeInstrInput);
 		NodeInstruction instr = instructorBiz.queueInstruction(nodeId, input);
 		return success(instr);
@@ -656,8 +654,7 @@ public class NodeInstructionController {
 		if ( instruction == null ) {
 			return null;
 		}
-		List<NodeInstruction> results = waitForResults(Collections.singletonList(instruction),
-				maxWaitMs);
+		List<NodeInstruction> results = waitForResults(List.of(instruction), maxWaitMs);
 		if ( results != null && !results.isEmpty() ) {
 			return results.getFirst();
 		}
@@ -754,7 +751,7 @@ public class NodeInstructionController {
 	 *
 	 * @param executionResultDelay
 	 *        the execution delay to set; defaults to
-	 *        {@link #DEFAULT_EXECUTION_RESULT_DELAY} if {@literal null} or not
+	 *        {@link #DEFAULT_EXECUTION_RESULT_DELAY} if {@code null} or not
 	 *        positive
 	 */
 	public void setExecutionResultDelay(Duration executionResultDelay) {

@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -58,11 +60,14 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 	 *        the owner user ID
 	 * @param nodeId
 	 *        the owner node ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public CentralChargePoint(Long userId, Long nodeId) {
 		super();
-		this.userId = userId;
-		this.nodeId = nodeId;
+		this.userId = requireNonNullArgument(userId, "userId");
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
+		;
 	}
 
 	/**
@@ -74,11 +79,14 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 	 *        the owner user ID
 	 * @param nodeId
 	 *        the owner node ID
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} or {@code nodeId} is {@code null}
 	 */
 	public CentralChargePoint(Long id, Long userId, Long nodeId) {
 		super(id);
-		this.userId = userId;
-		this.nodeId = nodeId;
+		this.userId = requireNonNullArgument(userId, "userId");
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
+		;
 	}
 
 	/**
@@ -92,15 +100,18 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 	 *        the owner node ID
 	 * @param created
 	 *        the created date
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} or {@code nodeId} is {@code null}
 	 */
 	@JsonCreator
-	public CentralChargePoint(@JsonProperty("id") Long id,
+	public CentralChargePoint(@JsonProperty("id") @Nullable Long id,
 			@JsonProperty(value = "userId", required = true) Long userId,
 			@JsonProperty(value = "nodeId", required = true) Long nodeId,
-			@JsonProperty("created") Instant created) {
+			@JsonProperty("created") @Nullable Instant created) {
 		super(id, created);
-		this.userId = userId;
-		this.nodeId = nodeId;
+		this.userId = requireNonNullArgument(userId, "userId");
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
+		;
 	}
 
 	/**
@@ -116,11 +127,15 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 	 *        the created date
 	 * @param info
 	 *        the info
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} or {@code nodeId} or {@code info} is
+	 *         {@code null}
 	 */
-	public CentralChargePoint(Long id, Long userId, Long nodeId, Instant created, ChargePointInfo info) {
+	public CentralChargePoint(@Nullable Long id, Long userId, Long nodeId, @Nullable Instant created,
+			ChargePointInfo info) {
 		super(id, created, info);
-		this.userId = userId;
-		this.nodeId = nodeId;
+		this.userId = requireNonNullArgument(userId, "userId");
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
 	}
 
 	/**
@@ -138,12 +153,15 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 	 *        the vendor
 	 * @param chargePointModel
 	 *        the model
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} or {@code nodeId} is {@code null}
 	 */
-	public CentralChargePoint(Long userId, Long nodeId, Instant created, String identifier,
-			String chargePointVendor, String chargePointModel) {
+	public CentralChargePoint(Long userId, Long nodeId, @Nullable Instant created,
+			@Nullable String identifier, @Nullable String chargePointVendor,
+			@Nullable String chargePointModel) {
 		super(created, identifier, chargePointVendor, chargePointModel);
-		this.userId = userId;
-		this.nodeId = nodeId;
+		this.userId = requireNonNullArgument(userId, "userId");
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
 	}
 
 	/**
@@ -152,15 +170,10 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 	 * @param other
 	 *        the object to copy
 	 */
-	public CentralChargePoint(ChargePoint other) {
+	public CentralChargePoint(CentralChargePoint other) {
 		super(other);
-		if ( other instanceof CentralChargePoint ccp ) {
-			this.userId = ccp.userId;
-			this.nodeId = ccp.nodeId;
-		} else {
-			this.userId = null;
-			this.nodeId = null;
-		}
+		this.userId = other.userId;
+		this.nodeId = other.nodeId;
 	}
 
 	/**
@@ -173,11 +186,11 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 	 */
 	@Override
 	public ChargePointIdentity chargePointIdentity() {
-		return new ChargePointIdentity(getInfo().getId(), userId);
+		return new ChargePointIdentity(requireNonNullArgument(getInfo().getId(), "info.id"), userId);
 	}
 
 	@Override
-	public boolean isSameAs(ChargePoint other) {
+	public boolean isSameAs(@Nullable ChargePoint other) {
 		if ( !(other instanceof CentralChargePoint ccp) ) {
 			return false;
 		}
@@ -220,7 +233,7 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 	 * @return the owner user ID
 	 */
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 
@@ -230,7 +243,7 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 	 * @return the node ID
 	 */
 	@Override
-	public Long getNodeId() {
+	public final Long getNodeId() {
 		return nodeId;
 	}
 

@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.util.Objects;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Basic implementation of a Long, UUID, Integer composite key.
@@ -33,7 +34,7 @@ import java.util.UUID;
  * @author matt
  * @version 1.1
  */
-public class UserUuidIntegerCompositePK extends BasePK implements
+public final class UserUuidIntegerCompositePK extends BasePK implements
 		UserRelatedCompositeKey<UserUuidIntegerCompositePK>, CompositeKey3<Long, UUID, Integer> {
 
 	@Serial
@@ -43,19 +44,19 @@ public class UserUuidIntegerCompositePK extends BasePK implements
 	 * A special "not a value" instance to be used for generated user ID values
 	 * yet to be generated.
 	 */
-	public static final Long UNASSIGNED_USER_ID = Long.MIN_VALUE;
+	public static final Long UNASSIGNED_USER_ID = EntityConstants.UNASSIGNED_LONG_ID;
 
 	/**
 	 * A special "not a value" instance to be used for generated group ID values
 	 * yet to be generated.
 	 */
-	public static final UUID UNASSIGNED_GROUP_ID = new UUID(0L, 0L);
+	public static final UUID UNASSIGNED_GROUP_ID = EntityConstants.UNASSIGNED_UUID_ID;
 
 	/**
 	 * A special "not a value" instance to be used for generated entity ID
 	 * values yet to be generated.
 	 */
-	public static final Integer UNASSIGNED_ENTITY_ID = Integer.MIN_VALUE;
+	public static final Integer UNASSIGNED_ENTITY_ID = EntityConstants.UNASSIGNED_INTEGER_ID;
 
 	/**
 	 * Create a new instance using the "unassigned" entity ID value.
@@ -84,7 +85,7 @@ public class UserUuidIntegerCompositePK extends BasePK implements
 	 * @param entityId
 	 *        the entity ID
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public UserUuidIntegerCompositePK(Long userId, UUID groupId, Integer entityId) {
 		super();
@@ -94,7 +95,7 @@ public class UserUuidIntegerCompositePK extends BasePK implements
 	}
 
 	@Override
-	public int compareTo(UserUuidIntegerCompositePK o) {
+	public int compareTo(@Nullable UserUuidIntegerCompositePK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -137,7 +138,7 @@ public class UserUuidIntegerCompositePK extends BasePK implements
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -181,13 +182,12 @@ public class UserUuidIntegerCompositePK extends BasePK implements
 		return entityId;
 	}
 
-	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
 		return switch (index) {
-			case 0 -> userId != UNASSIGNED_USER_ID;
-			case 1 -> groupId != UNASSIGNED_GROUP_ID;
-			case 2 -> entityId != UNASSIGNED_ENTITY_ID;
+			case 0 -> EntityConstants.isAssigned(userId);
+			case 1 -> EntityConstants.isAssigned(groupId);
+			case 2 -> EntityConstants.isAssigned(entityId);
 			default -> CompositeKey3.super.keyComponentIsAssigned(index);
 		};
 	}
@@ -214,7 +214,7 @@ public class UserUuidIntegerCompositePK extends BasePK implements
 
 	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
-	public <T> T keyComponentValue(int index, Object val) {
+	public <T> T keyComponentValue(int index, @Nullable Object val) {
 		try {
 			if ( index == 0 ) {
 				return switch (val) {
@@ -245,7 +245,7 @@ public class UserUuidIntegerCompositePK extends BasePK implements
 	}
 
 	@Override
-	public UserUuidIntegerCompositePK createKey(CompositeKey template, Object... components) {
+	public UserUuidIntegerCompositePK createKey(@Nullable CompositeKey template, Object... components) {
 		Object v1 = (components != null && components.length > 0 ? components[0]
 				: template != null ? template.keyComponent(0) : null);
 		Object v2 = (components != null && components.length > 1 ? components[1]

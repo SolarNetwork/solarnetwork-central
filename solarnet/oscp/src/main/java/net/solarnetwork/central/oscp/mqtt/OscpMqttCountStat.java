@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.oscp.mqtt;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * OSCP MQTT statistic types.
  *
@@ -84,10 +86,10 @@ public enum OscpMqttCountStat {
 	 *
 	 * @param action
 	 *        the action
-	 * @return the statistic, or {@literal null} if {@code action} is
-	 *         {@literal null} or unsupported
+	 * @return the statistic, or {@code null} if {@code action} is {@code null}
+	 *         or unsupported
 	 */
-	public static OscpMqttCountStat instructionReceivedStat(String action) {
+	public static @Nullable OscpMqttCountStat instructionReceivedStat(@Nullable String action) {
 		if ( action == null ) {
 			return null;
 		}
@@ -106,10 +108,10 @@ public enum OscpMqttCountStat {
 	 *
 	 * @param action
 	 *        the action
-	 * @return the error statistic, or {@literal null} if {@code action} is
-	 *         {@literal null} or unsupported
+	 * @return the error statistic, or {@code null} if {@code action} is
+	 *         {@code null} or unsupported
 	 */
-	public static OscpMqttCountStat instructionErrorStat(String action) {
+	public static @Nullable OscpMqttCountStat instructionErrorStat(@Nullable String action) {
 		if ( action == null ) {
 			return null;
 		}

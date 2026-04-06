@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for cloud datum stream related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudDatumStreamCriteria {
 
@@ -35,12 +37,12 @@ public interface CloudDatumStreamCriteria {
 	 *
 	 * <p>
 	 * This returns the first available datum stream ID from the
-	 * {@link #getDatumStreamIds()} array, or {@literal null} if not available.
+	 * {@link #getDatumStreamIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first datum stream ID, or {@literal null} if not available
+	 * @return the first datum stream ID, or {@code null} if not available
 	 */
-	default Long getDatumStreamId() {
+	default @Nullable Long getDatumStreamId() {
 		final Long[] array = getDatumStreamIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -48,9 +50,9 @@ public interface CloudDatumStreamCriteria {
 	/**
 	 * Get an array of datum stream IDs.
 	 *
-	 * @return array of datum stream IDs (may be {@literal null})
+	 * @return array of datum stream IDs (may be {@code null})
 	 */
-	Long[] getDatumStreamIds();
+	Long @Nullable [] getDatumStreamIds();
 
 	/**
 	 * Test if this filter has any datum stream criteria.
@@ -59,6 +61,40 @@ public interface CloudDatumStreamCriteria {
 	 */
 	default boolean hasDatumStreamCriteria() {
 		return getDatumStreamId() != null;
+	}
+
+	/**
+	 * Get the first cloud datum stream ID.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasDatumStreamCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return the first cloud datum stream ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long datumStreamId() {
+		return getDatumStreamId();
+	}
+
+	/**
+	 * Get an array of cloud datum stream IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasDatumStreamCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of cloud datum stream IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] datumStreamIds() {
+		return getDatumStreamIds();
 	}
 
 }

@@ -47,7 +47,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -243,7 +242,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		NodeInstruction datum = dao.get(lastDatum.getId());
 		datum.getInstruction().setState(InstructionState.Completed);
 		datum.getInstruction().setStatusDate(Instant.now());
-		datum.getInstruction().setResultParameters(Collections.singletonMap("foo", (Object) "bar"));
+		datum.getInstruction().setResultParameters(Map.of("foo", (Object) "bar"));
 		Long newId = dao.save(datum);
 		then(newId).as("ID preserved").isEqualTo(datum.getId());
 		NodeInstruction datum2 = dao.get(datum.getId());
@@ -721,7 +720,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		storeNew();
 
 		// when
-		Map<String, Object> resultParams = Collections.singletonMap("foo", (Object) "bar");
+		Map<String, Object> resultParams = Map.of("foo", (Object) "bar");
 		boolean updated = dao.updateNodeInstructionState(lastDatum.getId(), lastDatum.getNodeId(),
 				InstructionState.Completed, resultParams);
 
@@ -745,7 +744,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		} catch ( InterruptedException e ) {
 			// ignore
 		}
-		Map<String, Object> resultParams = Collections.singletonMap("foo", (Object) "bar");
+		Map<String, Object> resultParams = Map.of("foo", (Object) "bar");
 		boolean updated = dao.compareAndUpdateInstructionState(lastDatum.getId(), lastDatum.getNodeId(),
 				InstructionState.Queued, InstructionState.Completed, resultParams);
 
@@ -775,7 +774,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		storeNew();
 
 		// WHEN
-		Map<String, Object> resultParams = Collections.singletonMap("foo", (Object) "bar");
+		Map<String, Object> resultParams = Map.of("foo", (Object) "bar");
 		boolean updated = dao.compareAndUpdateInstructionState(lastDatum.getId(), lastDatum.getNodeId(),
 				InstructionState.Executing, InstructionState.Completed, resultParams);
 

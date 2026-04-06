@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.dao;
 import java.time.Instant;
 import java.util.List;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
@@ -87,8 +88,9 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 	 *
 	 * @param id
 	 *        the primary key to retrieve
-	 * @return the domain object, or {@literal null} if not available
+	 * @return the domain object, or {@code null} if not available
 	 */
+	@Nullable
 	C getForUpdate(UserLongCompositePK id);
 
 	/**
@@ -114,8 +116,9 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 	 *        the expected value
 	 * @param ts
 	 *        the timestamp to set of {@code expected} matches the current value
+	 * @return {@code true} if the update occurred
 	 */
-	boolean compareAndSetHeartbeat(UserLongCompositePK id, Instant expected, Instant ts);
+	boolean compareAndSetHeartbeat(UserLongCompositePK id, @Nullable Instant expected, Instant ts);
 
 	/**
 	 * Compare and update the heartbeat date.
@@ -127,8 +130,10 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 	 *        the expected value
 	 * @param ts
 	 *        the timestamp to set of {@code expected} matches the current value
+	 * @return {@code true} if the update occurred
 	 */
-	boolean compareAndSetMeasurement(UserLongCompositePK groupId, Instant expected, Instant ts);
+	boolean compareAndSetMeasurement(UserLongCompositePK groupId, @Nullable Instant expected,
+			Instant ts);
 
 	/**
 	 * Update the offline date.
@@ -136,7 +141,7 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 	 * @param id
 	 *        the primary key to save the settings for
 	 * @param ts
-	 *        the
+	 *        the timestamp
 	 */
 	void updateOfflineDate(UserLongCompositePK id, Instant ts);
 
@@ -147,11 +152,12 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 	 *        a function that will be passed a task context for an external
 	 *        system that needs to have a heartbeat sent, and returns a new
 	 *        heartbeat date if a heartbeat was successfully sent, or
-	 *        {@literal null} otherwise
+	 *        {@code null} otherwise
 	 * @return {@literal true} if the heartbeat date was updated with the value
 	 *         returned from {@code handler}
 	 */
-	boolean processExternalSystemWithExpiredHeartbeat(Function<TaskContext<C>, Instant> handler);
+	boolean processExternalSystemWithExpiredHeartbeat(
+			Function<TaskContext<C>, @Nullable Instant> handler);
 
 	/**
 	 * Lay claim to an external system who needs to have a measurement sent.
@@ -160,11 +166,11 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 	 *        a function that will be passed a task context for an external
 	 *        system that needs to have a measurement sent, and returns a new
 	 *        heartbeat date if a heartbeat was successfully sent, or
-	 *        {@literal null} otherwise
+	 *        {@code null} otherwise
 	 * @return {@literal true} if the heartbeat date was updated with the value
 	 *         returned from {@code handler}
 	 */
 	boolean processExternalSystemWithExpiredMeasurement(
-			Function<CapacityGroupTaskContext<C>, Instant> handler);
+			Function<CapacityGroupTaskContext<C>, @Nullable Instant> handler);
 
 }

@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.event.BasicAppEvent;
 import tools.jackson.databind.annotation.JsonDeserialize;
 
@@ -52,16 +55,16 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 	 * @param topic
 	 *        the event topic
 	 * @param eventProperties
-	 *        the event properties, or {@literal null}
+	 *        the event properties, or {@code null}
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
 	 *        the source ID
 	 * @throws IllegalArgumentException
 	 *         if {@code topic} or {@code nodeId} or {@code sourceId} are
-	 *         {@literal null} or empty
+	 *         {@code null} or empty
 	 */
-	public BasicDatumAppEvent(String topic, Map<String, ?> eventProperties, Long nodeId,
+	public BasicDatumAppEvent(String topic, @Nullable Map<String, ?> eventProperties, Long nodeId,
 			String sourceId) {
 		this(topic, Instant.now(), eventProperties, nodeId, sourceId);
 	}
@@ -72,31 +75,27 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 	 * @param topic
 	 *        the event topic
 	 * @param created
-	 *        the event creation date, or {@literal null} to use the current
-	 *        time
+	 *        the event creation date, or {@code null} to use the current time
 	 * @param eventProperties
-	 *        the event properties, or {@literal null}
+	 *        the event properties, or {@code null}
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
 	 *        the source ID
 	 * @throws IllegalArgumentException
 	 *         if {@code topic} or {@code nodeId} or {@code sourceId} are
-	 *         {@literal null} or empty
+	 *         {@code null} or empty
 	 */
-	public BasicDatumAppEvent(String topic, Instant created, Map<String, ?> eventProperties, Long nodeId,
-			String sourceId) {
+	public BasicDatumAppEvent(String topic, @Nullable Instant created,
+			@Nullable Map<String, ?> eventProperties, Long nodeId, String sourceId) {
 		super(topic, created, eventProperties);
 		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
-		if ( sourceId == null || sourceId.isEmpty() ) {
-			throw new IllegalArgumentException("The sourceId parameter must not be null.");
-		}
-		this.sourceId = sourceId;
+		this.sourceId = requireNonEmptyArgument(sourceId, "sourceId");
 	}
 
 	private BasicDatumAppEvent(Builder builder) {
-		this(builder.getTopic(), builder.getCreated(), builder.getEventProperties(), builder.nodeId,
-				builder.sourceId);
+		this(nonnull(builder.getTopic(), "topic"), builder.getCreated(), builder.getEventProperties(),
+				nonnull(builder.nodeId, "nodeId"), nonnull(builder.sourceId, "sourceId"));
 	}
 
 	@Override
@@ -118,7 +117,7 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
@@ -176,8 +175,8 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 	 */
 	public static class Builder extends BasicAppEvent.Builder {
 
-		private Long nodeId;
-		private String sourceId;
+		private @Nullable Long nodeId;
+		private @Nullable String sourceId;
 
 		private Builder() {
 			super();

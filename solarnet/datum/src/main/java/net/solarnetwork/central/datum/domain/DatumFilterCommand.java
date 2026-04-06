@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
@@ -33,7 +34,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.SequencedMap;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -53,7 +56,7 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  *
  * @author matt
- * @version 2.8
+ * @version 2.10
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
 		"partialAggregation", "partialAggregationKey", "readingType", "combiningType",
@@ -72,32 +75,33 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	private static final long serialVersionUID = -2340410285910280329L;
 
 	private final SolarLocation location;
-	private Instant startDate;
-	private Instant endDate;
-	private LocalDateTime localStartDate;
-	private LocalDateTime localEndDate;
-	private boolean mostRecent = false;
-	private String type; // e.g. Power, Consumption, etc.
-	private List<MutableSortDescriptor> sorts;
-	private Long offset;
-	private Integer max;
-	private String dataPath; // bean path expression to a data value, e.g. "i.watts"
+	private @Nullable Instant startDate;
+	private @Nullable Instant endDate;
+	private @Nullable LocalDateTime localStartDate;
+	private @Nullable LocalDateTime localEndDate;
+	private boolean mostRecent;
+	private @Nullable String type; // e.g. Power, Consumption, etc.
+	private @Nullable List<MutableSortDescriptor> sorts;
+	private @Nullable Long offset;
+	private @Nullable Integer max;
+	private @Nullable String dataPath; // bean path expression to a data value, e.g. "i.watts"
 
-	private DatumReadingType readingType;
-	private Aggregation aggregation;
-	private Aggregation partialAggregation;
+	private @Nullable DatumReadingType readingType;
+	private @Nullable Aggregation aggregation;
+	private @Nullable Aggregation partialAggregation;
 	private boolean withoutTotalResultsCount;
+	private @Nullable Boolean includeStreamAliases;
 
-	private CombiningType combiningType;
-	private Map<Long, Set<Long>> nodeIdMappings;
-	private Map<String, Set<String>> sourceIdMappings;
+	private @Nullable CombiningType combiningType;
+	private @Nullable Map<Long, Set<Long>> nodeIdMappings;
+	private @Nullable Map<String, Set<String>> sourceIdMappings;
 
-	private DatumRollupType[] datumRollupTypes;
+	private DatumRollupType @Nullable [] datumRollupTypes;
 
-	private String[] propertyNames;
-	private String[] instantaneousPropertyNames;
-	private String[] accumulatingPropertyNames;
-	private String[] statusPropertyNames;
+	private String @Nullable [] propertyNames;
+	private String @Nullable [] instantaneousPropertyNames;
+	private String @Nullable [] accumulatingPropertyNames;
+	private String @Nullable [] statusPropertyNames;
 
 	/**
 	 * Default constructor.
@@ -129,7 +133,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the filter to copy
 	 * @since 1.9
 	 */
-	public DatumFilterCommand(AggregateGeneralNodeDatumFilter other) {
+	public DatumFilterCommand(@Nullable AggregateGeneralNodeDatumFilter other) {
 		this((GeneralNodeDatumFilter) other);
 	}
 
@@ -140,7 +144,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the filter to copy
 	 * @since 1.10
 	 */
-	public DatumFilterCommand(GeneralNodeDatumFilter other) {
+	public DatumFilterCommand(@Nullable GeneralNodeDatumFilter other) {
 		this(other, new SolarLocation());
 		if ( other == null ) {
 			return;
@@ -161,7 +165,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the location to use
 	 * @since 1.9
 	 */
-	public DatumFilterCommand(CommonFilter other, Location loc) {
+	public DatumFilterCommand(@Nullable CommonFilter other, Location loc) {
 		super();
 		if ( loc instanceof SolarLocation l ) {
 			location = l;
@@ -194,6 +198,9 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 			setInstantaneousPropertyNames(f.getInstantaneousPropertyNames());
 			setAccumulatingPropertyNames(f.getAccumulatingPropertyNames());
 			setStatusPropertyNames(f.getStatusPropertyNames());
+		}
+		if ( other instanceof StreamAliasFilter f ) {
+			setIncludeStreamAliases(f.getIncludeStreamAliases());
 		}
 	}
 
@@ -280,6 +287,11 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		builder.append("withoutTotalResultsCount=");
 		builder.append(withoutTotalResultsCount);
 		builder.append(", ");
+		if ( includeStreamAliases != null ) {
+			builder.append("includeStreamAliases=");
+			builder.append(includeStreamAliases);
+			builder.append(", ");
+		}
 		if ( combiningType != null ) {
 			builder.append("combiningType=");
 			builder.append(combiningType);
@@ -378,7 +390,64 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( statusPropertyNames != null ) {
 			filter.put("statusPropertyNames", statusPropertyNames);
 		}
+		if ( includeStreamAliases != null ) {
+			filter.put("includeStreamAliases", includeStreamAliases);
+		}
 		return filter;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @since 1.8
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Arrays.hashCode(datumRollupTypes);
+		result = prime * result + Objects.hash(aggregation, readingType, combiningType, dataPath,
+				endDate, localEndDate, localStartDate, location, max, nodeIdMappings, offset, sorts,
+				sourceIdMappings, startDate, type, includeStreamAliases);
+		result = prime * result + Boolean.hashCode(mostRecent);
+		result = prime * result + Boolean.hashCode(withoutTotalResultsCount);
+		result = prime * result + Arrays.hashCode(propertyNames);
+		result = prime * result + Arrays.hashCode(instantaneousPropertyNames);
+		result = prime * result + Arrays.hashCode(accumulatingPropertyNames);
+		result = prime * result + Arrays.hashCode(statusPropertyNames);
+		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @since 1.8
+	 */
+	@Override
+	public boolean equals(@Nullable Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !super.equals(obj) || !(obj instanceof DatumFilterCommand other) ) {
+			return false;
+		}
+		return aggregation == other.aggregation && combiningType == other.combiningType
+				&& readingType == other.readingType && Objects.equals(dataPath, other.dataPath)
+				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)
+				&& Objects.equals(endDate, other.endDate)
+				&& Objects.equals(localEndDate, other.localEndDate)
+				&& Objects.equals(localStartDate, other.localStartDate)
+				&& Objects.equals(location, other.location) && Objects.equals(max, other.max)
+				&& mostRecent == other.mostRecent && Objects.equals(nodeIdMappings, other.nodeIdMappings)
+				&& Objects.equals(offset, other.offset) && Objects.equals(sorts, other.sorts)
+				&& Objects.equals(sourceIdMappings, other.sourceIdMappings)
+				&& Objects.equals(startDate, other.startDate) && Objects.equals(type, other.type)
+				&& withoutTotalResultsCount == other.withoutTotalResultsCount
+				&& Objects.equals(includeStreamAliases, other.includeStreamAliases)
+				&& Arrays.equals(propertyNames, other.propertyNames)
+				&& Arrays.equals(instantaneousPropertyNames, other.instantaneousPropertyNames)
+				&& Arrays.equals(accumulatingPropertyNames, other.accumulatingPropertyNames)
+				&& Arrays.equals(statusPropertyNames, other.statusPropertyNames);
 	}
 
 	@JsonIgnore
@@ -386,85 +455,117 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		return !location.getFilter().isEmpty();
 	}
 
+	/**
+	 * Get the first available location ID, falling back to {@code location.id}
+	 * if no other is configured.
+	 *
+	 * @return the first available location ID
+	 * @since 3.0
+	 */
+	@JsonIgnore
+	public @Nullable Long locationId() {
+		final Long[] ids = locationIds();
+		return (ids != null && ids.length > 0 ? ids[0] : null);
+	}
+
+	/**
+	 * Get the location IDs, falling back to {@code location.id} if no other is
+	 * configured.
+	 *
+	 * @return the location IDs
+	 * @since 3.0
+	 */
+	@JsonIgnore
+	public Long @Nullable [] locationIds() {
+		final Long[] locationIds = super.getLocationIds();
+		if ( locationIds != null ) {
+			return locationIds;
+		}
+		if ( location != null && location.getId() != null ) {
+			return new Long[] { location.getId() };
+		}
+		return null;
+	}
+
 	@Override
-	public Location getLocation() {
+	public final Location getLocation() {
 		return location;
 	}
 
 	@Override
-	public Instant getStartDate() {
+	public final @Nullable Instant getStartDate() {
 		return startDate;
 	}
 
-	public void setStartDate(Instant startDate) {
+	public final void setStartDate(@Nullable Instant startDate) {
 		this.startDate = startDate;
 	}
 
 	@Override
-	public Instant getEndDate() {
+	public final @Nullable Instant getEndDate() {
 		return endDate;
 	}
 
-	public void setEndDate(Instant endDate) {
+	public final void setEndDate(@Nullable Instant endDate) {
 		this.endDate = endDate;
 	}
 
 	@Override
-	public LocalDateTime getLocalStartDate() {
+	public final @Nullable LocalDateTime getLocalStartDate() {
 		return localStartDate;
 	}
 
-	public void setLocalStartDate(LocalDateTime localStartDate) {
+	public final void setLocalStartDate(@Nullable LocalDateTime localStartDate) {
 		this.localStartDate = localStartDate;
 	}
 
 	@Override
-	public LocalDateTime getLocalEndDate() {
+	public final @Nullable LocalDateTime getLocalEndDate() {
 		return localEndDate;
 	}
 
-	public void setLocalEndDate(LocalDateTime localEndDate) {
+	public final void setLocalEndDate(@Nullable LocalDateTime localEndDate) {
 		this.localEndDate = localEndDate;
 	}
 
 	@Override
-	public String getType() {
+	public final @Nullable String getType() {
 		return type;
 	}
 
-	public void setType(String datumType) {
+	public final void setType(@Nullable String datumType) {
 		this.type = datumType;
 	}
 
-	public List<MutableSortDescriptor> getSorts() {
+	public final @Nullable List<MutableSortDescriptor> getSorts() {
 		return sorts;
 	}
 
-	public void setSorts(List<MutableSortDescriptor> sorts) {
+	public final void setSorts(@Nullable List<MutableSortDescriptor> sorts) {
 		this.sorts = sorts;
 	}
 
 	@JsonIgnore
-	public List<SortDescriptor> getSortDescriptors() {
+	public final List<SortDescriptor> getSortDescriptors() {
 		if ( sorts == null ) {
 			return new ArrayList<>(2);
 		}
 		return new ArrayList<>(sorts);
 	}
 
-	public Long getOffset() {
+	public final @Nullable Long getOffset() {
 		return offset;
 	}
 
-	public void setOffset(Long offset) {
+	public final void setOffset(@Nullable Long offset) {
 		this.offset = offset;
 	}
 
-	public Integer getMax() {
+	public final @Nullable Integer getMax() {
 		return max;
 	}
 
-	public void setMax(Integer max) {
+	public final void setMax(@Nullable Integer max) {
 		this.max = max;
 		if ( this.offset == null ) {
 			this.offset = 0L;
@@ -472,11 +573,11 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	}
 
 	@Override
-	public Aggregation getAggregation() {
+	public final @Nullable Aggregation getAggregation() {
 		return aggregation;
 	}
 
-	public void setAggregation(Aggregation aggregation) {
+	public final void setAggregation(@Nullable Aggregation aggregation) {
 		this.aggregation = aggregation;
 	}
 
@@ -487,17 +588,17 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @param aggregate
 	 *        the aggregation to set
 	 */
-	public void setAggregate(Aggregation aggregate) {
+	public final void setAggregate(@Nullable Aggregation aggregate) {
 		setAggregation(aggregate);
 	}
 
 	/**
 	 * Get the aggregation key.
 	 *
-	 * @return the aggregation key, never {@literal null}
+	 * @return the aggregation key, never {@code null}
 	 * @since 1.9
 	 */
-	public String getAggregationKey() {
+	public final String getAggregationKey() {
 		Aggregation agg = getAggregation();
 		return (agg != null ? agg : Aggregation.None).getKey();
 	}
@@ -514,7 +615,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the key to set
 	 * @since 1.9
 	 */
-	public void setAggregationKey(String key) {
+	public final void setAggregationKey(@Nullable String key) {
 		Aggregation agg;
 		try {
 			agg = Aggregation.forKey(key);
@@ -531,7 +632,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 1.15
 	 */
 	@Override
-	public Aggregation getPartialAggregation() {
+	public final @Nullable Aggregation getPartialAggregation() {
 		return partialAggregation;
 	}
 
@@ -542,17 +643,17 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the aggregation to set
 	 * @since 1.15
 	 */
-	public void setPartialAggregation(Aggregation partialAggregation) {
+	public final void setPartialAggregation(@Nullable Aggregation partialAggregation) {
 		this.partialAggregation = partialAggregation;
 	}
 
 	/**
 	 * Get the aggregation key.
 	 *
-	 * @return the aggregation key, never {@literal null}
+	 * @return the aggregation key, never {@code null}
 	 * @since 1.15
 	 */
-	public String getPartialAggregationKey() {
+	public final String getPartialAggregationKey() {
 		Aggregation agg = getPartialAggregation();
 		return (agg != null ? agg : Aggregation.None).getKey();
 	}
@@ -569,7 +670,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the key to set
 	 * @since 1.15
 	 */
-	public void setPartialAggregationKey(String key) {
+	public final void setPartialAggregationKey(@Nullable String key) {
 		Aggregation agg;
 		try {
 			agg = Aggregation.forKey(key);
@@ -580,26 +681,26 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	}
 
 	@Override
-	public boolean isMostRecent() {
+	public final boolean isMostRecent() {
 		return mostRecent;
 	}
 
-	public void setMostRecent(boolean mostRecent) {
+	public final void setMostRecent(boolean mostRecent) {
 		this.mostRecent = mostRecent;
 	}
 
 	@Override
-	public String getDataPath() {
+	public final @Nullable String getDataPath() {
 		return dataPath;
 	}
 
-	public void setDataPath(String dataPath) {
+	public final void setDataPath(@Nullable String dataPath) {
 		this.dataPath = dataPath;
 	}
 
 	@JsonIgnore
 	@Override
-	public String[] getDataPathElements() {
+	public final String @Nullable [] getDataPathElements() {
 		String path = this.dataPath;
 		if ( path == null ) {
 			return null;
@@ -607,39 +708,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		return path.split("\\.");
 	}
 
-	@JsonSetter
 	@Override
-	public void setLocationId(Long id) {
-		location.setId(id);
-	}
-
-	@JsonIgnore
-	@Override
-	public Long getLocationId() {
-		if ( location.getId() != null ) {
-			return location.getId();
-		}
-		final Long[] locationIds = getLocationIds();
-		if ( locationIds != null && locationIds.length > 0 ) {
-			return locationIds[0];
-		}
-		return null;
-	}
-
-	@Override
-	public Long[] getLocationIds() {
-		final Long[] locationIds = super.getLocationIds();
-		if ( locationIds != null ) {
-			return locationIds;
-		}
-		if ( location != null && location.getId() != null ) {
-			return new Long[] { location.getId() };
-		}
-		return null;
-	}
-
-	@Override
-	public boolean isWithoutTotalResultsCount() {
+	public final boolean isWithoutTotalResultsCount() {
 		return withoutTotalResultsCount;
 	}
 
@@ -650,7 +720,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the value to set
 	 * @since 1.9
 	 */
-	public void setWithoutTotalResultsCount(boolean withoutTotalResultsCount) {
+	public final void setWithoutTotalResultsCount(boolean withoutTotalResultsCount) {
 		this.withoutTotalResultsCount = withoutTotalResultsCount;
 	}
 
@@ -660,7 +730,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 1.10
 	 */
 	@Override
-	public CombiningType getCombiningType() {
+	public final @Nullable CombiningType getCombiningType() {
 		return combiningType;
 	}
 
@@ -671,17 +741,17 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the type
 	 * @since 1.10
 	 */
-	public void setCombiningType(CombiningType combiningType) {
+	public final void setCombiningType(@Nullable CombiningType combiningType) {
 		this.combiningType = combiningType;
 	}
 
 	/**
 	 * Get the combining type key.
 	 *
-	 * @return the combining type key, or {@literal null} if not defined
+	 * @return the combining type key, or {@code null} if not defined
 	 * @since 1.10
 	 */
-	public String getCombiningTypeKey() {
+	public final @Nullable String getCombiningTypeKey() {
 		CombiningType type = getCombiningType();
 		return (type != null ? type.getKey() : null);
 	}
@@ -691,14 +761,14 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *
 	 * <p>
 	 * If {@literal key} is not a supported {@link CombiningType} key value,
-	 * then {@literal null} will be used.
+	 * then {@code null} will be used.
 	 * </p>
 	 *
 	 * @param key
 	 *        the key to set
 	 * @since 1.10
 	 */
-	public void setCombiningTypeKey(String key) {
+	public final void setCombiningTypeKey(@Nullable String key) {
 		CombiningType type;
 		try {
 			type = CombiningType.forKey(key);
@@ -714,7 +784,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 1.10
 	 */
 	@Override
-	public Map<Long, Set<Long>> getNodeIdMappings() {
+	public final @Nullable Map<Long, Set<Long>> getNodeIdMappings() {
 		return nodeIdMappings;
 	}
 
@@ -725,7 +795,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the mappings to set
 	 * @since 1.10
 	 */
-	public void setNodeIdMappings(Map<Long, Set<Long>> nodeIdMappings) {
+	public final void setNodeIdMappings(@Nullable Map<Long, Set<Long>> nodeIdMappings) {
 		this.nodeIdMappings = nodeIdMappings;
 	}
 
@@ -747,8 +817,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the mappings to set
 	 * @since 1.10
 	 */
-	public void setNodeIdMaps(String[] mappings) {
-		Map<Long, Set<Long>> result;
+	public final void setNodeIdMaps(String @Nullable [] mappings) {
+		SequencedMap<Long, Set<Long>> result;
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
@@ -758,7 +828,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
 					// special case, when Spring maps single query param into 3 fields split on comma like 1:2, 3, 4
 					try {
-						result.get(result.keySet().iterator().next()).add(Long.valueOf(map));
+						Set<Long> firstValue = nonnull(result.firstEntry(), "First result").getValue();
+						firstValue.add(Long.valueOf(map));
 					} catch ( NumberFormatException e ) {
 						// ignore
 					}
@@ -770,17 +841,19 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 					Long vId = Long.valueOf(map.substring(0, vIdDelimIdx));
 					Set<String> rIds = StringUtils
 							.commaDelimitedStringToSet(map.substring(vIdDelimIdx + 1));
-					Set<Long> rNodeIds = new LinkedHashSet<>(rIds.size());
-					for ( String rId : rIds ) {
-						rNodeIds.add(Long.valueOf(rId));
+					if ( rIds != null ) {
+						Set<Long> rNodeIds = new LinkedHashSet<>(rIds.size());
+						for ( String rId : rIds ) {
+							rNodeIds.add(Long.valueOf(rId));
+						}
+						result.put(vId, rNodeIds);
 					}
-					result.put(vId, rNodeIds);
 				} catch ( NumberFormatException e ) {
 					// ignore and continue
 				}
 			}
 		}
-		setNodeIdMappings(result.isEmpty() ? null : result);
+		setNodeIdMappings(result == null || result.isEmpty() ? null : result);
 	}
 
 	/**
@@ -789,7 +862,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 1.10
 	 */
 	@Override
-	public Map<String, Set<String>> getSourceIdMappings() {
+	public final @Nullable Map<String, Set<String>> getSourceIdMappings() {
 		return sourceIdMappings;
 	}
 
@@ -800,7 +873,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the mappings to set
 	 * @since 1.10
 	 */
-	public void setSourceIdMappings(Map<String, Set<String>> sourceIdMappings) {
+	public final void setSourceIdMappings(@Nullable Map<String, Set<String>> sourceIdMappings) {
 		this.sourceIdMappings = sourceIdMappings;
 	}
 
@@ -824,8 +897,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the mappings to set
 	 * @since 1.10
 	 */
-	public void setSourceIdMaps(String[] mappings) {
-		Map<String, Set<String>> result;
+	public final void setSourceIdMaps(String @Nullable [] mappings) {
+		SequencedMap<String, Set<String>> result;
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
@@ -835,7 +908,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
 					// special case, when Spring maps single query param into 3 fields split on comma like A:B, C, D
 					try {
-						result.get(result.keySet().iterator().next()).add(map);
+						Set<String> firstValue = nonnull(result.firstEntry(), "First result").getValue();
+						firstValue.add(map);
 					} catch ( NumberFormatException e ) {
 						// ignore
 					}
@@ -849,18 +923,18 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 				result.put(vId, rSourceIds);
 			}
 		}
-		setSourceIdMappings(result.isEmpty() ? null : result);
+		setSourceIdMappings(result == null || result.isEmpty() ? null : result);
 	}
 
 	@JsonIgnore
 	@Override
-	public DatumRollupType getDatumRollupType() {
+	public final @Nullable DatumRollupType getDatumRollupType() {
 		return datumRollupTypes != null && datumRollupTypes.length > 0 ? datumRollupTypes[0] : null;
 	}
 
 	@JsonIgnore
 	@Override
-	public DatumRollupType[] getDatumRollupTypes() {
+	public final DatumRollupType @Nullable [] getDatumRollupTypes() {
 		return datumRollupTypes;
 	}
 
@@ -872,19 +946,18 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 1.11
 	 */
 	@JsonIgnore
-	public void setDatumRollupTypes(DatumRollupType[] datumRollupTypes) {
+	public final void setDatumRollupTypes(DatumRollupType @Nullable [] datumRollupTypes) {
 		this.datumRollupTypes = datumRollupTypes;
 	}
 
 	/**
 	 * Get the datum rollups as key values.
 	 *
-	 * @return the datum rollup type key values, or {@literal null} if not
-	 *         defined
+	 * @return the datum rollup type key values, or {@code null} if not defined
 	 * @since 1.11
 	 */
 	@JsonProperty("rollupTypeKeys")
-	public String[] getDatumRollupTypeKeys() {
+	public final String @Nullable [] getDatumRollupTypeKeys() {
 		DatumRollupType[] types = getDatumRollupTypes();
 		String[] keys = null;
 		if ( types != null && types.length > 0 ) {
@@ -905,7 +978,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 2.7
 	 */
 	@JsonIgnore
-	public DatumRollupType getRollupType() {
+	public final @Nullable DatumRollupType getRollupType() {
 		final DatumRollupType[] types = getDatumRollupTypes();
 		return (types != null && types.length > 0 ? types[0] : null);
 	}
@@ -920,7 +993,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 */
 	@JsonSetter
 	@SuppressWarnings("InvalidParam")
-	public void setRollupType(DatumRollupType datumRollupType) {
+	public final void setRollupType(@Nullable DatumRollupType datumRollupType) {
 		setDatumRollupTypes(datumRollupType == null ? null : new DatumRollupType[] { datumRollupType });
 	}
 
@@ -935,7 +1008,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @see #getDatumRollupTypes()
 	 * @since 2.8
 	 */
-	public DatumRollupType[] getRollupTypes() {
+	public final DatumRollupType @Nullable [] getRollupTypes() {
 		return getDatumRollupTypes();
 	}
 
@@ -951,12 +1024,12 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @see #setDatumRollupTypes(DatumRollupType[])
 	 * @since 2.8
 	 */
-	public void setRollupTypes(DatumRollupType[] types) {
+	public final void setRollupTypes(DatumRollupType @Nullable [] types) {
 		setDatumRollupTypes(types);
 	}
 
 	@Override
-	public DatumReadingType getReadingType() {
+	public final @Nullable DatumReadingType getReadingType() {
 		return readingType;
 	}
 
@@ -967,64 +1040,13 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the type to set
 	 * @since 2.3
 	 */
-	public void setReadingType(DatumReadingType readingType) {
+	public final void setReadingType(@Nullable DatumReadingType readingType) {
 		this.readingType = readingType;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @since 1.8
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + Arrays.hashCode(datumRollupTypes);
-		result = prime * result + Objects.hash(aggregation, readingType, combiningType, dataPath,
-				endDate, localEndDate, localStartDate, location, max, mostRecent, nodeIdMappings, offset,
-				sorts, sourceIdMappings, startDate, type, withoutTotalResultsCount);
-		result = prime * result + Arrays.hashCode(propertyNames);
-		result = prime * result + Arrays.hashCode(instantaneousPropertyNames);
-		result = prime * result + Arrays.hashCode(accumulatingPropertyNames);
-		result = prime * result + Arrays.hashCode(statusPropertyNames);
-		return result;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @since 1.8
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if ( this == obj ) {
-			return true;
-		}
-		if ( !super.equals(obj) || !(obj instanceof DatumFilterCommand other) ) {
-			return false;
-		}
-		return aggregation == other.aggregation && combiningType == other.combiningType
-				&& readingType == other.readingType && Objects.equals(dataPath, other.dataPath)
-				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)
-				&& Objects.equals(endDate, other.endDate)
-				&& Objects.equals(localEndDate, other.localEndDate)
-				&& Objects.equals(localStartDate, other.localStartDate)
-				&& Objects.equals(location, other.location) && Objects.equals(max, other.max)
-				&& mostRecent == other.mostRecent && Objects.equals(nodeIdMappings, other.nodeIdMappings)
-				&& Objects.equals(offset, other.offset) && Objects.equals(sorts, other.sorts)
-				&& Objects.equals(sourceIdMappings, other.sourceIdMappings)
-				&& Objects.equals(startDate, other.startDate) && Objects.equals(type, other.type)
-				&& withoutTotalResultsCount == other.withoutTotalResultsCount
-				&& Arrays.equals(propertyNames, other.propertyNames)
-				&& Arrays.equals(instantaneousPropertyNames, other.instantaneousPropertyNames)
-				&& Arrays.equals(accumulatingPropertyNames, other.accumulatingPropertyNames)
-				&& Arrays.equals(statusPropertyNames, other.statusPropertyNames);
 	}
 
 	@JsonIgnore
 	@Override
-	public String getPropertyName() {
+	public final @Nullable String getPropertyName() {
 		return GeneralLocationDatumMetadataFilter.super.getPropertyName();
 	}
 
@@ -1044,12 +1066,12 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 2.4
 	 */
 	@JsonSetter
-	public void setPropertyName(String name) {
+	public final void setPropertyName(@Nullable String name) {
 		setPropertyNames(name == null ? null : new String[] { name });
 	}
 
 	@Override
-	public String[] getPropertyNames() {
+	public final String @Nullable [] getPropertyNames() {
 		return propertyNames;
 	}
 
@@ -1060,13 +1082,13 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the names to set
 	 * @since 2.4
 	 */
-	public void setPropertyNames(String[] propertyNames) {
+	public final void setPropertyNames(String @Nullable [] propertyNames) {
 		this.propertyNames = propertyNames;
 	}
 
 	@JsonIgnore
 	@Override
-	public String getInstantaneousPropertyName() {
+	public final @Nullable String getInstantaneousPropertyName() {
 		return GeneralLocationDatumMetadataFilter.super.getInstantaneousPropertyName();
 	}
 
@@ -1086,12 +1108,12 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 2.4
 	 */
 	@JsonSetter
-	public void setInstantaneousPropertyName(String name) {
+	public final void setInstantaneousPropertyName(@Nullable String name) {
 		setInstantaneousPropertyNames(name == null ? null : new String[] { name });
 	}
 
 	@Override
-	public String[] getInstantaneousPropertyNames() {
+	public final String @Nullable [] getInstantaneousPropertyNames() {
 		return instantaneousPropertyNames;
 	}
 
@@ -1102,13 +1124,13 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the names to set
 	 * @since 2.4
 	 */
-	public void setInstantaneousPropertyNames(String[] instantaneousPropertyNames) {
+	public final void setInstantaneousPropertyNames(String @Nullable [] instantaneousPropertyNames) {
 		this.instantaneousPropertyNames = instantaneousPropertyNames;
 	}
 
 	@JsonIgnore
 	@Override
-	public String getAccumulatingPropertyName() {
+	public final @Nullable String getAccumulatingPropertyName() {
 		return GeneralLocationDatumMetadataFilter.super.getAccumulatingPropertyName();
 	}
 
@@ -1128,12 +1150,12 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 2.4
 	 */
 	@JsonSetter
-	public void setAccumulatingPropertyName(String name) {
+	public final void setAccumulatingPropertyName(@Nullable String name) {
 		setAccumulatingPropertyNames(name == null ? null : new String[] { name });
 	}
 
 	@Override
-	public String[] getAccumulatingPropertyNames() {
+	public final String @Nullable [] getAccumulatingPropertyNames() {
 		return accumulatingPropertyNames;
 	}
 
@@ -1144,13 +1166,13 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the names to set
 	 * @since 2.4
 	 */
-	public void setAccumulatingPropertyNames(String[] accumulatingPropertyNames) {
+	public final void setAccumulatingPropertyNames(String @Nullable [] accumulatingPropertyNames) {
 		this.accumulatingPropertyNames = accumulatingPropertyNames;
 	}
 
 	@JsonIgnore
 	@Override
-	public String getStatusPropertyName() {
+	public final @Nullable String getStatusPropertyName() {
 		return GeneralLocationDatumMetadataFilter.super.getStatusPropertyName();
 	}
 
@@ -1170,12 +1192,12 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 2.4
 	 */
 	@JsonSetter
-	public void setStatusPropertyName(String name) {
+	public final void setStatusPropertyName(@Nullable String name) {
 		setStatusPropertyNames(name == null ? null : new String[] { name });
 	}
 
 	@Override
-	public String[] getStatusPropertyNames() {
+	public final String @Nullable [] getStatusPropertyNames() {
 		return statusPropertyNames;
 	}
 
@@ -1186,8 +1208,24 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 *        the names to set
 	 * @since 2.4
 	 */
-	public void setStatusPropertyNames(String[] statusPropertyNames) {
+	public final void setStatusPropertyNames(String @Nullable [] statusPropertyNames) {
 		this.statusPropertyNames = statusPropertyNames;
+	}
+
+	@Override
+	public final @Nullable Boolean getIncludeStreamAliases() {
+		return includeStreamAliases;
+	}
+
+	/**
+	 * Set the include stream aliases mode.
+	 *
+	 * @param includeStreamAliases
+	 *        the includeStreamAliases to set
+	 * @since 2.10
+	 */
+	public final void setIncludeStreamAliases(@Nullable Boolean includeStreamAliases) {
+		this.includeStreamAliases = includeStreamAliases;
 	}
 
 }

@@ -58,11 +58,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.central.reg.test.WithMockSecurityUser;
 import net.solarnetwork.central.reg.web.api.v1.NodeInstructionController;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
+import net.solarnetwork.central.test.security.WithMockSecurityUser;
 import net.solarnetwork.domain.BasicSecurityPolicy;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 import tools.jackson.databind.ObjectMapper;
@@ -621,7 +621,6 @@ public class NodeInstructionControllerWebTests extends AbstractJUnit5CentralTran
 
 		final Long otherNodeId = setupTestUserNode(TEST_USER_ID);
 
-		// WHEN
 		final Instant now = Instant.now();
 		final String reqJson = """
 				{"nodeId":%d,"params":{"a":"one"}}
@@ -663,6 +662,44 @@ public class NodeInstructionControllerWebTests extends AbstractJUnit5CentralTran
 			.node("data")
 			.as("No data on forbidden response")
 			.isAbsent()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	@WithMockSecurityUser
+	public void add_SolarSSH() throws Exception {
+		// GIVEN
+		final String reqBody = """
+				parameters[0].name=host&parameters[0].value=ssh.solarnetwork.net&parameters[1].name=user&parameters[1].value=1442d538-ee1a-4057-a158-e5638b9ecb26&parameters[2].name=port&parameters[2].value=8022&parameters[3].name=rport&parameters[3].value=43342&nodeId=%d&topic=StartRemoteSsh
+				"""
+				.formatted(nodeId);
+
+		// WHEN
+		// @formatter:off
+		final String result = mvc.perform(
+			post("/api/v1/sec/instr/add")
+				.accept(MediaType.APPLICATION_JSON)
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+				.content(reqBody)
+				.accept(MediaType.APPLICATION_JSON)
+				.with(csrf())
+			)
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andReturn()
+			.getResponse()
+			.getContentAsString()
+			;
+
+		then(result)
+			.asInstanceOf(JSON)
+			.isObject()
+			.as("Success result")
+			.containsEntry("success", true)
+			.node("data")
+			.as("Data is instruction")
+			.isObject()
 			;
 		// @formatter:on
 	}

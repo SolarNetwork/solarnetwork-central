@@ -22,15 +22,17 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.dao.Entity;
-import net.solarnetwork.domain.SerializeIgnore;
+import net.solarnetwork.domain.CopyingIdentity;
+import net.solarnetwork.domain.Unique;
 
 /**
  * Counts of datum records for a date range.
@@ -41,33 +43,27 @@ import net.solarnetwork.domain.SerializeIgnore;
  * </p>
  *
  * @author matt
- * @version 3.0
+ * @version 4.0
  */
 @JsonPropertyOrder({ "ts", "nodeId", "sourceId", "processed", "datumTotalCount", "datumCount",
 		"datumHourlyCount", "datumDailyCount", "datumMonthlyCount", "datumPropertyPostedCount",
 		"datumPostedCount", "datumQueryCount" })
-public final class AuditDatumRecordCounts
-		implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable {
+@JsonIgnoreProperties({ "id" })
+public final class AuditDatumRecordCounts implements Unique<ObjectRecordId>, Cloneable, Serializable,
+		CopyingIdentity<AuditDatumRecordCounts, ObjectRecordId> {
 
 	@Serial
 	private static final long serialVersionUID = -1393664537620448888L;
 
-	private GeneralNodeDatumPK id = new GeneralNodeDatumPK();
-	private Instant processed;
-	private Long datumCount;
-	private Long datumHourlyCount;
-	private Integer datumDailyCount;
-	private Integer datumMonthlyCount;
-	private Long datumPropertyPostedCount;
-	private Long datumPostedCount;
-	private Long datumQueryCount;
-
-	/**
-	 * Default constructor.
-	 */
-	public AuditDatumRecordCounts() {
-		super();
-	}
+	private final ObjectRecordId id;
+	private @Nullable Instant processed;
+	private final @Nullable Long datumCount;
+	private final @Nullable Long datumHourlyCount;
+	private final @Nullable Integer datumDailyCount;
+	private final @Nullable Integer datumMonthlyCount;
+	private @Nullable Long datumPropertyPostedCount;
+	private @Nullable Long datumPostedCount;
+	private @Nullable Long datumQueryCount;
 
 	/**
 	 * Construct with values.
@@ -81,8 +77,8 @@ public final class AuditDatumRecordCounts
 	 * @param datumMonthlyCount
 	 *        the monthly count
 	 */
-	public AuditDatumRecordCounts(Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
-			Integer datumMonthlyCount) {
+	public AuditDatumRecordCounts(@Nullable Long datumCount, @Nullable Long datumHourlyCount,
+			@Nullable Integer datumDailyCount, @Nullable Integer datumMonthlyCount) {
 		this(null, null, datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount);
 	}
 
@@ -102,19 +98,56 @@ public final class AuditDatumRecordCounts
 	 * @param datumMonthlyCount
 	 *        the monthly count
 	 */
-	public AuditDatumRecordCounts(Long nodeId, String sourceId, Long datumCount, Long datumHourlyCount,
-			Integer datumDailyCount, Integer datumMonthlyCount) {
+	public AuditDatumRecordCounts(@Nullable Long nodeId, @Nullable String sourceId,
+			@Nullable Long datumCount, @Nullable Long datumHourlyCount,
+			@Nullable Integer datumDailyCount, @Nullable Integer datumMonthlyCount) {
 		super();
-		if ( nodeId != null ) {
-			setNodeId(nodeId);
-		}
-		if ( sourceId != null ) {
-			setSourceId(sourceId);
-		}
+		this.id = new ObjectRecordId(nodeId, sourceId, null);
 		this.datumCount = datumCount;
 		this.datumHourlyCount = datumHourlyCount;
 		this.datumDailyCount = datumDailyCount;
 		this.datumMonthlyCount = datumMonthlyCount;
+	}
+
+	/**
+	 * Construct with values.
+	 *
+	 * @param id
+	 *        the ID
+	 * @param datumCount
+	 *        the datum count
+	 * @param datumHourlyCount
+	 *        the hourly count
+	 * @param datumDailyCount
+	 *        the daily count
+	 * @param datumMonthlyCount
+	 *        the monthly count
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@code null}
+	 * @since 4.0
+	 */
+	public AuditDatumRecordCounts(ObjectRecordId id, @Nullable Long datumCount,
+			@Nullable Long datumHourlyCount, @Nullable Integer datumDailyCount,
+			@Nullable Integer datumMonthlyCount) {
+		super();
+		this.id = requireNonNullArgument(id, "id");
+		this.datumCount = datumCount;
+		this.datumHourlyCount = datumHourlyCount;
+		this.datumDailyCount = datumDailyCount;
+		this.datumMonthlyCount = datumMonthlyCount;
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @since 4.0
+	 */
+	public AuditDatumRecordCounts(ObjectRecordId id) {
+		this(id, null, null, null, null);
 	}
 
 	@Override
@@ -140,10 +173,7 @@ public final class AuditDatumRecordCounts
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		return result;
+		return Objects.hash(id);
 	}
 
 	@Override
@@ -157,82 +187,59 @@ public final class AuditDatumRecordCounts
 		return Objects.equals(id, other.id);
 	}
 
-	/**
-	 * Convenience getter for {@link GeneralNodeDatumPK#getNodeId()}.
-	 *
-	 * @return the nodeId
-	 */
-	public Long getNodeId() {
-		return (id == null ? null : id.getNodeId());
-	}
-
-	/**
-	 * Convenience setter for {@link GeneralNodeDatumPK#setNodeId(Long)}.
-	 *
-	 * @param nodeId
-	 *        the nodeId to set
-	 */
-	public void setNodeId(Long nodeId) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumPK();
-		}
-		id.setNodeId(nodeId);
-	}
-
-	/**
-	 * Convenience getter for {@link GeneralNodeDatumPK#getSourceId()}.
-	 *
-	 * @return the sourceId
-	 */
-	public String getSourceId() {
-		return (id == null ? null : id.getSourceId());
-	}
-
-	/**
-	 * Convenience setter for {@link GeneralNodeDatumPK#setSourceId(String)}.
-	 *
-	 * @param sourceId
-	 *        the sourceId to set
-	 */
-	public void setSourceId(String sourceId) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumPK();
-		}
-		id.setSourceId(sourceId);
-	}
-
-	/**
-	 * Convenience setter for {@link GeneralNodeDatumPK#setCreated(Instant)}.
-	 *
-	 * @param created
-	 *        the created to set
-	 */
-	@JsonProperty("ts")
-	public void setCreated(Instant created) {
-		if ( id == null ) {
-			id = new GeneralNodeDatumPK();
-		}
-		id.setCreated(created);
+	@Override
+	public AuditDatumRecordCounts copyWithId(ObjectRecordId id) {
+		AuditDatumRecordCounts copy = new AuditDatumRecordCounts(id, datumCount, datumHourlyCount,
+				datumDailyCount, datumMonthlyCount);
+		copyTo(copy);
+		return copy;
 	}
 
 	@Override
-	@JsonProperty("ts")
-	public Instant getCreated() {
-		return (id == null ? null : id.getCreated());
+	public void copyTo(AuditDatumRecordCounts other) {
+		other.datumPostedCount = datumPostedCount;
+		other.datumPropertyPostedCount = datumPropertyPostedCount;
+		other.datumQueryCount = datumQueryCount;
 	}
 
 	@Override
-	@JsonIgnore
-	@SerializeIgnore
-	public GeneralNodeDatumPK getId() {
+	public @Nullable ObjectRecordId getId() {
 		return id;
 	}
 
-	public Instant getProcessed() {
+	/**
+	 * Get the node ID.
+	 *
+	 * @return the nodeId
+	 */
+	public final @Nullable Long getNodeId() {
+		return id.getObjectId();
+	}
+
+	/**
+	 * Get the source ID.
+	 *
+	 * @return the sourceId
+	 */
+	public final @Nullable String getSourceId() {
+		return id.getSourceId();
+	}
+
+	/**
+	 * Get the creation date.
+	 *
+	 * @return the creation date
+	 */
+	@JsonProperty("ts")
+	public final @Nullable Instant getCreated() {
+		return id.getTimestamp();
+	}
+
+	public final @Nullable Instant getProcessed() {
 		return processed;
 	}
 
-	public void setProcessed(Instant processed) {
+	public final void setProcessed(@Nullable Instant processed) {
 		this.processed = processed;
 	}
 
@@ -241,7 +248,7 @@ public final class AuditDatumRecordCounts
 	 *
 	 * @return the sum total of the datum count properties
 	 */
-	public long getDatumTotalCount() {
+	public final long getDatumTotalCount() {
 		long t = 0;
 		if ( datumCount != null ) {
 			t += datumCount;
@@ -258,60 +265,44 @@ public final class AuditDatumRecordCounts
 		return t;
 	}
 
-	public Long getDatumPropertyPostedCount() {
+	public final @Nullable Long getDatumPropertyPostedCount() {
 		return datumPropertyPostedCount;
 	}
 
-	public void setDatumPropertyPostedCount(Long datumPropertyPostedCount) {
+	public final void setDatumPropertyPostedCount(@Nullable Long datumPropertyPostedCount) {
 		this.datumPropertyPostedCount = datumPropertyPostedCount;
 	}
 
-	public Long getDatumPostedCount() {
+	public final @Nullable Long getDatumPostedCount() {
 		return datumPostedCount;
 	}
 
-	public void setDatumPostedCount(Long datumPostedCount) {
+	public final void setDatumPostedCount(@Nullable Long datumPostedCount) {
 		this.datumPostedCount = datumPostedCount;
 	}
 
-	public Long getDatumQueryCount() {
+	public final @Nullable Long getDatumQueryCount() {
 		return datumQueryCount;
 	}
 
-	public void setDatumQueryCount(Long datumQueryCount) {
+	public final void setDatumQueryCount(@Nullable Long datumQueryCount) {
 		this.datumQueryCount = datumQueryCount;
 	}
 
-	public Long getDatumCount() {
+	public final @Nullable Long getDatumCount() {
 		return datumCount;
 	}
 
-	public void setDatumCount(Long datumCount) {
-		this.datumCount = datumCount;
-	}
-
-	public Long getDatumHourlyCount() {
+	public final @Nullable Long getDatumHourlyCount() {
 		return datumHourlyCount;
 	}
 
-	public void setDatumHourlyCount(Long datumHourlyCount) {
-		this.datumHourlyCount = datumHourlyCount;
-	}
-
-	public Integer getDatumDailyCount() {
+	public final @Nullable Integer getDatumDailyCount() {
 		return datumDailyCount;
 	}
 
-	public void setDatumDailyCount(Integer datumDailyCount) {
-		this.datumDailyCount = datumDailyCount;
-	}
-
-	public Integer getDatumMonthlyCount() {
+	public final @Nullable Integer getDatumMonthlyCount() {
 		return datumMonthlyCount;
-	}
-
-	public void setDatumMonthlyCount(Integer datumMonthlyCount) {
-		this.datumMonthlyCount = datumMonthlyCount;
 	}
 
 }

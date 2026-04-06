@@ -1,28 +1,29 @@
 /* ==================================================================
  * ObjectDatumStreamMetadataRowMapper.java - 6/11/2020 3:38:49 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.uuid;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -36,11 +37,11 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 /**
  * Map object datum stream metadata rows into {@link ObjectDatumStreamMetadata}
  * instances.
- * 
+ *
  * <p>
  * The expected column order in the SQL results is:
  * </p>
- * 
+ *
  * <ol>
  * <li>stream_id</li>
  * <li>obj_id</li>
@@ -75,20 +76,22 @@ public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatum
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param kind
 	 *        the type of metadata to parse; if {@link MetadataKind#Dynamic}
 	 *        then an extra {@literal kind} row must be provided by the query
 	 *        results
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public ObjectDatumStreamMetadataRowMapper(MetadataKind kind) {
 		super();
-		this.kind = kind;
+		this.kind = requireNonNullArgument(kind, "kind");
 	}
 
 	@Override
 	public ObjectDatumStreamMetadata mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = getUuid(rs, 1);
+		UUID streamId = uuid(rs, 1);
 		Long objId = rs.getLong(2);
 		String sourceId = rs.getString(3);
 

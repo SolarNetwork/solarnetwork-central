@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import com.networknt.schema.Error;
 import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaLocation;
@@ -69,7 +70,7 @@ public final class OscpInstructionUtils {
 	 * A function that converts an OSCP action name to an equivalent JSON schema
 	 * name.
 	 */
-	public static final Function<String, String> OSCP_ACTION_TO_JSON_SCHEMA_NAME = (s) -> {
+	public static final Function<String, @Nullable String> OSCP_ACTION_TO_JSON_SCHEMA_NAME = (s) -> {
 		if ( s == null ) {
 			return null;
 		}
@@ -96,14 +97,15 @@ public final class OscpInstructionUtils {
 	 * @param params
 	 *        the instruction parameters
 	 * @param registry
-	 *        the registry
+	 *        the registry to validate the JSON with, or {@code null} for no
+	 *        validation
 	 * @return the result
 	 * @throws IllegalArgumentException
 	 *         if the instruction parameters do not describe a supported OSCP
 	 *         message
 	 */
 	public static Object decodeJsonOscp20InstructionMessage(final Map<String, ?> params,
-			final SchemaRegistry registry) {
+			final @Nullable SchemaRegistry registry) {
 		final String action = requireNonNullArgument(params.get(OSCP_ACTION_PARAM), "action").toString();
 		final Class<?> actionClass = switch (action) {
 			case "AdjustGroupCapacityForecast" -> oscp.v20.AdjustGroupCapacityForecast.class;

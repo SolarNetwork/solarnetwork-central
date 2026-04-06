@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.timestampInstant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.RowMapper;
@@ -91,7 +92,7 @@ public class UserNodeInstructionTaskEntityRowMapper implements RowMapper<UserNod
 		conf.setTopic(rs.getString(++p));
 		conf.setSchedule(rs.getString(++p));
 		conf.setState(BasicClaimableJobState.fromValue(rs.getString(++p)));
-		conf.setExecuteAt(getTimestampInstant(rs, ++p));
+		conf.setExecuteAt(timestampInstant(rs, ++p));
 		conf.setServicePropsJson(rs.getString(++p));
 		conf.setLastExecuteAt(getTimestampInstant(rs, ++p));
 		conf.setMessage(rs.getString(++p));

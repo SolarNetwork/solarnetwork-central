@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
 import net.solarnetwork.domain.Location;
 
@@ -49,8 +51,8 @@ public final class LocationRequestSqlUtils {
 	 * @return the number of SQL parameters generated
 	 * @see CommonSqlUtils#WHERE_COMPONENT_PREFIX_LENGTH
 	 */
-	public static int appendLocationRequestCriteria(Long id, LocationRequestCriteria filter,
-			StringBuilder where) {
+	public static int appendLocationRequestCriteria(@Nullable Long id,
+			@Nullable LocationRequestCriteria filter, StringBuilder where) {
 		int p = 0;
 		if ( id != null ) {
 			where.append("\tAND id = ?");
@@ -70,7 +72,7 @@ public final class LocationRequestSqlUtils {
 				p++;
 			}
 			if ( filter.hasLocationCriteria() ) {
-				Location loc = filter.getLocation();
+				Location loc = nonnull(filter.getLocation(), "filter.location");
 				if ( loc.getName() != null ) {
 					where.append("\tAND fts_default @@ solarcommon.plainto_prefix_tsquery(?)");
 					p++;
@@ -97,8 +99,9 @@ public final class LocationRequestSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareLocationRequestCriteria(Long id, LocationRequestCriteria filter,
-			Connection con, PreparedStatement stmt, int p) throws SQLException {
+	public static int prepareLocationRequestCriteria(@Nullable Long id,
+			@Nullable LocationRequestCriteria filter, Connection con, PreparedStatement stmt, int p)
+			throws SQLException {
 		if ( id != null ) {
 			stmt.setObject(++p, id);
 		}
@@ -114,14 +117,14 @@ public final class LocationRequestSqlUtils {
 				array.free();
 			}
 			if ( filter.hasRequestStatusCriteria() ) {
-				String[] statuses = filter.getRequestStatuses().stream()
-						.map(e -> String.valueOf((char) e.getCode())).toArray(String[]::new);
+				String[] statuses = nonnull(filter.getRequestStatuses(), "filter.requestStatusCriteria")
+						.stream().map(e -> String.valueOf((char) e.getCode())).toArray(String[]::new);
 				Array array = con.createArrayOf("TEXT", statuses);
 				stmt.setArray(++p, array);
 				array.free();
 			}
 			if ( filter.hasLocationCriteria() ) {
-				Location loc = filter.getLocation();
+				Location loc = nonnull(filter.getLocation(), "filter.location");
 				if ( loc.getName() != null ) {
 					stmt.setString(++p, loc.getName());
 				}

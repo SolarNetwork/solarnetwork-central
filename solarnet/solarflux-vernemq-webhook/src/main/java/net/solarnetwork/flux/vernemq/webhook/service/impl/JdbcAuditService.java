@@ -19,7 +19,6 @@ package net.solarnetwork.flux.vernemq.webhook.service.impl;
 
 import static java.lang.System.currentTimeMillis;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,12 +37,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.sql.DataSource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import net.solarnetwork.central.support.DelayQueueSet;
 import net.solarnetwork.flux.vernemq.webhook.domain.Actor;
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;
@@ -152,7 +148,7 @@ public class JdbcAuditService implements AuditService {
 	 * @param dataSource
 	 *        the JDBC DataSource
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcAuditService(DataSource dataSource) {
 		this(dataSource, new ConcurrentHashMap<>(1000, 0.8f, 4),
@@ -171,7 +167,7 @@ public class JdbcAuditService implements AuditService {
 	 *        counts should be aggregated to, e.g.
 	 *        {@code Clock.tick(Clock.systemUTC(), Duration.ofHours(1))}
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcAuditService(DataSource dataSource, ConcurrentMap<DelayedKey, AtomicInteger> counters,
 			Clock clock) {
@@ -239,7 +235,7 @@ public class JdbcAuditService implements AuditService {
 		/** The object ID (user ID or node ID). */
 		private final Long objectId;
 
-		/** The source ID, or {@literal null}. */
+		/** The source ID, or {@code null}. */
 		private final String sourceId;
 
 		/** The count timestamp (e.g. an hour-truncated date). */
@@ -652,7 +648,7 @@ public class JdbcAuditService implements AuditService {
 	 * @param deliverTopicRegex
 	 *        the regular expression to use
 	 * @throws IllegalArgumentException
-	 *         if {@code deliverTopicRegex} is {@literal null}
+	 *         if {@code deliverTopicRegex} is {@code null}
 	 * @since 1.2
 	 */
 	public void setDeliverTopicRegex(Pattern deliverTopicRegex) {

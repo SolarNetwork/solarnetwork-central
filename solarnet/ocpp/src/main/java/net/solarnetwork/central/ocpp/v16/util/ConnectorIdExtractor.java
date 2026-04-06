@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.v16.util;
 
 import static net.solarnetwork.ocpp.domain.ChargePointConnectorKey.keyFor;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import ocpp.v16.jakarta.cs.MeterValuesRequest;
 import ocpp.v16.jakarta.cs.StartTransactionRequest;
@@ -35,16 +36,15 @@ import ocpp.v16.jakarta.cs.StatusNotificationRequest;
  * @author matt
  * @version 1.2
  */
-public class ConnectorIdExtractor implements Function<Object, ChargePointConnectorKey> {
+public class ConnectorIdExtractor implements Function<Object, @Nullable ChargePointConnectorKey> {
 
 	@Override
-	public ChargePointConnectorKey apply(Object o) {
+	public @Nullable ChargePointConnectorKey apply(Object o) {
 		return switch (o) {
-			case null -> null;
 			case MeterValuesRequest r -> keyFor(0, r.getConnectorId());
 			case StartTransactionRequest r -> keyFor(0, r.getConnectorId());
 			case StatusNotificationRequest r -> keyFor(0, r.getConnectorId());
-			default -> null;
+			case null, default -> null;
 		};
 	}
 

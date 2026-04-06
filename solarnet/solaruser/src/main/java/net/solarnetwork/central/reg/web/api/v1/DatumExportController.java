@@ -31,7 +31,6 @@ import static net.solarnetwork.service.IdentifiableConfiguration.maskConfigurati
 import static net.solarnetwork.service.LocalizedServiceInfoProvider.localizedServiceSettings;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -67,12 +66,12 @@ import net.solarnetwork.central.reg.web.domain.UserDatumExportConfigurationInput
 import net.solarnetwork.central.reg.web.domain.UserDestinationConfigurationInput;
 import net.solarnetwork.central.reg.web.domain.UserOutputConfigurationInput;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.export.biz.UserExportBiz;
-import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
-import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
-import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
-import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
-import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
+import net.solarnetwork.central.user.datum.export.biz.UserExportBiz;
+import net.solarnetwork.central.user.datum.export.domain.UserAdhocDatumExportTaskInfo;
+import net.solarnetwork.central.user.datum.export.domain.UserDataConfiguration;
+import net.solarnetwork.central.user.datum.export.domain.UserDatumExportConfiguration;
+import net.solarnetwork.central.user.datum.export.domain.UserDestinationConfiguration;
+import net.solarnetwork.central.user.datum.export.domain.UserOutputConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
@@ -171,9 +170,9 @@ public class DatumExportController {
 	public Result<DatumExportFullConfigurations> fullConfiguration() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		List<DatumExportProperties> configs = null;
-		List<UserDataConfiguration> dataConfigs = Collections.emptyList();
-		List<UserDestinationConfiguration> destConfigs = Collections.emptyList();
-		List<UserOutputConfiguration> outputConfigs = Collections.emptyList();
+		List<UserDataConfiguration> dataConfigs = List.of();
+		List<UserDestinationConfiguration> destConfigs = List.of();
+		List<UserOutputConfiguration> outputConfigs = List.of();
 		if ( exportBiz != null ) {
 			configs = exportBiz.datumExportsForUser(userId).stream().map(DatumExportProperties::new)
 					.collect(Collectors.toList());
@@ -383,6 +382,7 @@ public class DatumExportController {
 	public Result<UserAdhocDatumExportTaskInfo> submitAdhocExportJobRequest(
 			@RequestBody UserDatumExportConfigurationInput input) {
 		if ( exportBiz != null ) {
+			input.setSchedule(ScheduleType.Adhoc);
 			UserDatumExportConfiguration config = input.toEntity(new UserLongCompositePK(
 					getCurrentActorUserId(),
 					input.getId() != null ? input.getId() : UserLongCompositePK.UNASSIGNED_ENTITY_ID));
@@ -411,6 +411,7 @@ public class DatumExportController {
 	public Result<UserAdhocDatumExportTaskInfo> submitAdhocExportReferenceJobRequest(
 			@RequestBody UserDatumExportConfigurationInput input) {
 		if ( exportBiz != null ) {
+			input.setSchedule(ScheduleType.Adhoc);
 			UserDatumExportConfiguration config = input.toEntity(new UserLongCompositePK(
 					getCurrentActorUserId(),
 					input.getId() != null ? input.getId() : UserLongCompositePK.UNASSIGNED_ENTITY_ID));
@@ -437,10 +438,10 @@ public class DatumExportController {
 	 *
 	 * @param stateKeys
 	 *        an optional list of {@link DatumExportState} keys (or names) to
-	 *        filter the results by, or {@literal null} for any state
+	 *        filter the results by, or {@code null} for any state
 	 * @param success
 	 *        an optional "success" flag to filter the results by, or
-	 *        {@literal null} for any success value (including {@literal null})
+	 *        {@code null} for any success value (including {@code null})
 	 * @return the results
 	 * @since 1.1
 	 */

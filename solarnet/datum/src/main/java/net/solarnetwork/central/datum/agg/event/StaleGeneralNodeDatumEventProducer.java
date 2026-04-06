@@ -57,7 +57,7 @@ public class StaleGeneralNodeDatumEventProducer extends BaseSettingsSpecifierLoc
 
 	@Override
 	public List<SettingSpecifier> getSettingSpecifiers() {
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Override

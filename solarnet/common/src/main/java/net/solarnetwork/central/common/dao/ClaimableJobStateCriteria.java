@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.ClaimableJobState;
 
 /**
@@ -37,13 +38,12 @@ public interface ClaimableJobStateCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available state from the
-	 * {@link #getClaimableJobStates()} set, or {@literal null} if not
-	 * available.
+	 * {@link #getClaimableJobStates()} set, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first state, or {@literal null} if not available
+	 * @return the first state, or {@code null} if not available
 	 */
-	default ClaimableJobState getClaimableJobState() {
+	default @Nullable ClaimableJobState getClaimableJobState() {
 		ClaimableJobState[] states = getClaimableJobStates();
 		return (states != null && states.length > 0 ? states[0] : null);
 	}
@@ -51,9 +51,9 @@ public interface ClaimableJobStateCriteria {
 	/**
 	 * Get a set of claimable job states.
 	 * 
-	 * @return array of states (may be {@literal null})
+	 * @return array of states (may be {@code null})
 	 */
-	ClaimableJobState[] getClaimableJobStates();
+	ClaimableJobState @Nullable [] getClaimableJobStates();
 
 	/**
 	 * Test if this filter has any claimable job state criteria.
@@ -69,17 +69,71 @@ public interface ClaimableJobStateCriteria {
 	 * 
 	 * @return the claimable job states, as key values
 	 */
-	default String[] claimableJobStateKeys() {
+	default String @Nullable [] getClaimableJobStateKeys() {
 		ClaimableJobState[] states = getClaimableJobStates();
-		final int len = (states != null ? states.length : 0);
+		if ( states == null ) {
+			return null;
+		}
+		final int len = states.length;
 		if ( len < 1 ) {
 			return null;
 		}
-		String[] result = new String[states.length];
+		String[] result = new String[len];
 		for ( int i = 0; i < len; i++ ) {
 			result[i] = states[i].keyValue();
 		}
 		return result;
+	}
+
+	/**
+	 * Get the first claimable job state.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasClaimableJobStateCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 * 
+	 * @return the first claimableJobState ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default ClaimableJobState claimableJobState() {
+		return getClaimableJobState();
+	}
+
+	/**
+	 * Get an array of claimable job states.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasClaimableJobStateCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return array of claimableJobState IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default ClaimableJobState[] claimableJobStates() {
+		return getClaimableJobStates();
+	}
+
+	/**
+	 * Get the set of claimable job state keys.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasClaimableJobStateCriteria()} returns {@code true}, to avoid
+	 * nullness warnings.
+	 * </p>
+	 *
+	 * @return the claimable job states, as key values (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] claimableJobStateKeys() {
+		return getClaimableJobStateKeys();
 	}
 
 }

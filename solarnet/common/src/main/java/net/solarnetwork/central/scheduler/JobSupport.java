@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.scheduler;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -47,7 +49,7 @@ import org.springframework.core.task.AsyncTaskExecutor;
  * </p>
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public abstract class JobSupport implements ManagedJob {
 
@@ -69,15 +71,32 @@ public abstract class JobSupport implements ManagedJob {
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
+	private final String groupId;
+	private final String id;
+
 	private long maximumWaitMs = DEFAULT_MAX_WAIT;
-	private String id;
-	private String groupId;
 	private String schedule = DEFAULT_CRON;
-	private AsyncTaskExecutor parallelTaskExecutor = null;
+	private @Nullable AsyncTaskExecutor parallelTaskExecutor;
 	private int maximumIterations = DEFAULT_MAX_ITERATIONS;
 	private int parallelism = 1;
 	private long jitter = DEFAULT_JITTER;
-	private Duration warnThresholdTime;
+	private @Nullable Duration warnThresholdTime;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param groupId
+	 *        the group ID
+	 * @param id
+	 *        the job ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public JobSupport(String groupId, String id) {
+		super();
+		this.groupId = requireNonNullArgument(groupId, "groupId");
+		this.id = requireNonNullArgument(id, "id");
+	}
 
 	private AsyncTaskExecutor taskExecutorForParallelTasks() {
 		AsyncTaskExecutor s = getParallelTaskExecutor();
@@ -240,18 +259,8 @@ public abstract class JobSupport implements ManagedJob {
 	 * @return the job ID
 	 */
 	@Override
-	public String getId() {
+	public final String getId() {
 		return id;
-	}
-
-	/**
-	 * Set the unique ID of the job to schedule.
-	 *
-	 * @param jobId
-	 *        the job ID
-	 */
-	public void setId(String jobId) {
-		this.id = jobId;
 	}
 
 	/**
@@ -260,7 +269,7 @@ public abstract class JobSupport implements ManagedJob {
 	 *
 	 * @return the maximum wait, in milliseconds; defaults to <b>15 minutes</b>
 	 */
-	public long getMaximumWaitMs() {
+	public final long getMaximumWaitMs() {
 		return maximumWaitMs;
 	}
 
@@ -271,7 +280,7 @@ public abstract class JobSupport implements ManagedJob {
 	 * @param maximumWaitMs
 	 *        the maximum wait
 	 */
-	public void setMaximumWaitMs(long maximumWaitMs) {
+	public final void setMaximumWaitMs(long maximumWaitMs) {
 		this.maximumWaitMs = maximumWaitMs;
 	}
 
@@ -282,7 +291,7 @@ public abstract class JobSupport implements ManagedJob {
 	 *         per minute)
 	 */
 	@Override
-	public String getSchedule() {
+	public final String getSchedule() {
 		return schedule;
 	}
 
@@ -290,10 +299,11 @@ public abstract class JobSupport implements ManagedJob {
 	 * Set the job cron expression to use for scheduling this job.
 	 *
 	 * @param schedule
-	 *        the cron expression
+	 *        the cron expression; if {@code null} then {@link #DEFAULT_CRON}
+	 *        will be used
 	 */
-	public void setSchedule(String schedule) {
-		this.schedule = schedule;
+	public final void setSchedule(String schedule) {
+		this.schedule = (schedule != null ? schedule : DEFAULT_CRON);
 	}
 
 	/**
@@ -302,18 +312,8 @@ public abstract class JobSupport implements ManagedJob {
 	 * @return the job group
 	 */
 	@Override
-	public String getGroupId() {
+	public final String getGroupId() {
 		return groupId;
-	}
-
-	/**
-	 * Set the job group ID to use.
-	 *
-	 * @param groupId
-	 *        the job group
-	 */
-	public void setGroupId(String groupId) {
-		this.groupId = groupId;
 	}
 
 	/**
@@ -321,7 +321,7 @@ public abstract class JobSupport implements ManagedJob {
 	 *
 	 * @return the service
 	 */
-	public AsyncTaskExecutor getParallelTaskExecutor() {
+	public final @Nullable AsyncTaskExecutor getParallelTaskExecutor() {
 		return parallelTaskExecutor;
 	}
 
@@ -331,7 +331,7 @@ public abstract class JobSupport implements ManagedJob {
 	 * @param parallelTaskExecutorService
 	 *        the service to set
 	 */
-	public void setParallelTaskExecutor(AsyncTaskExecutor parallelTaskExecutorService) {
+	public final void setParallelTaskExecutor(@Nullable AsyncTaskExecutor parallelTaskExecutorService) {
 		this.parallelTaskExecutor = parallelTaskExecutorService;
 	}
 
@@ -341,7 +341,7 @@ public abstract class JobSupport implements ManagedJob {
 	 * @return the maximum iterations; defaults to {@literal 1}
 	 * @since 1.7
 	 */
-	public int getMaximumIterations() {
+	public final int getMaximumIterations() {
 		return maximumIterations;
 	}
 
@@ -352,7 +352,7 @@ public abstract class JobSupport implements ManagedJob {
 	 *        the maximum iterations
 	 * @since 1.7
 	 */
-	public void setMaximumIterations(int maximumIterations) {
+	public final void setMaximumIterations(int maximumIterations) {
 		this.maximumIterations = maximumIterations;
 	}
 
@@ -363,7 +363,7 @@ public abstract class JobSupport implements ManagedJob {
 	 * @return the parallelism; defaults to {@literal 1}
 	 * @since 1.7
 	 */
-	public int getParallelism() {
+	public final int getParallelism() {
 		return parallelism;
 	}
 
@@ -375,7 +375,7 @@ public abstract class JobSupport implements ManagedJob {
 	 *        the parallelism to set; will be forced to {@literal 1} if &lt; 1
 	 * @since 1.7
 	 */
-	public void setParallelism(int parallelism) {
+	public final void setParallelism(int parallelism) {
 		if ( parallelism < 1 ) {
 			parallelism = 1;
 		}
@@ -389,7 +389,7 @@ public abstract class JobSupport implements ManagedJob {
 	 *
 	 * @return the jitter, in milliseconds; defaults to {@link #DEFAULT_JITTER}
 	 */
-	public long getJitter() {
+	public final long getJitter() {
 		return jitter;
 	}
 
@@ -408,7 +408,7 @@ public abstract class JobSupport implements ManagedJob {
 	 * @param jitter
 	 *        the jitter to set, in milliseconds
 	 */
-	public void setJitter(long jitter) {
+	public final void setJitter(long jitter) {
 		if ( jitter < 0 ) {
 			jitter = 0;
 		}
@@ -422,7 +422,7 @@ public abstract class JobSupport implements ManagedJob {
 	 *         this will generate a warning log
 	 * @since 2.1
 	 */
-	public Duration getWarnThresholdTime() {
+	public final @Nullable Duration getWarnThresholdTime() {
 		return warnThresholdTime;
 	}
 
@@ -434,7 +434,7 @@ public abstract class JobSupport implements ManagedJob {
 	 *        will generate a warning log
 	 * @since 2.1
 	 */
-	public void setWarnThresholdTime(Duration warnThresholdTime) {
+	public final void setWarnThresholdTime(@Nullable Duration warnThresholdTime) {
 		this.warnThresholdTime = warnThresholdTime;
 	}
 

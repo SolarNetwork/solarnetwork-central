@@ -64,7 +64,7 @@ public final class InsertCloudDatumStreamConfiguration implements PreparedStatem
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public InsertCloudDatumStreamConfiguration(Long userId, CloudDatumStreamConfiguration entity) {
 		super();

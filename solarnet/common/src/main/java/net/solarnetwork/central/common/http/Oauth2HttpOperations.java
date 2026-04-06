@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +51,7 @@ public class Oauth2HttpOperations implements HttpOperations {
 	private final HttpOperations delegate;
 	private final OAuth2AuthorizedClientManager oauthClientManager;
 	private final OAuth2ClientIdentity identity;
-	private final OptionalService<Cache<UserLongCompositePK, Lock>> locksCache;
+	private final @Nullable OptionalService<Cache<UserLongCompositePK, Lock>> locksCache;
 
 	/**
 	 * Constructor.
@@ -70,19 +71,19 @@ public class Oauth2HttpOperations implements HttpOperations {
 	 */
 	public Oauth2HttpOperations(HttpOperations delegate,
 			OAuth2AuthorizedClientManager oauthClientManager,
-			OptionalService<Cache<UserLongCompositePK, Lock>> locksCache,
+			@Nullable OptionalService<Cache<UserLongCompositePK, Lock>> locksCache,
 			OAuth2ClientIdentity identity) {
 		super();
 		this.delegate = requireNonNullArgument(delegate, "delegate");
 		this.oauthClientManager = requireNonNullArgument(oauthClientManager, "oauthClientManager");
-		this.locksCache = requireNonNullArgument(locksCache, "locksCache");
+		this.locksCache = locksCache;
 		this.identity = requireNonNullArgument(identity, "identity");
 	}
 
 	@Override
-	public <I, O> ResponseEntity<O> http(final HttpMethod method, final URI uri,
-			final HttpHeaders headers, final I body, final Class<O> responseType, final Object context,
-			final Map<String, ?> runtimeData) {
+	public <I extends @Nullable Object, O> ResponseEntity<O> http(HttpMethod method, URI uri,
+			@Nullable HttpHeaders headers, @Nullable I body, Class<O> responseType,
+			@Nullable Object context, @Nullable Map<String, ?> runtimeData) {
 		final Cache<UserLongCompositePK, Lock> lockCache = service(locksCache);
 
 		// @formatter:off
@@ -109,9 +110,9 @@ public class Oauth2HttpOperations implements HttpOperations {
 	}
 
 	@Override
-	public <O> Result<O> httpGet(final String uri, final Map<String, ?> parameters,
-			final Map<String, ?> headers, final Class<O> responseType, final Object context,
-			final Map<String, ?> runtimeData) {
+	public <O> Result<O> httpGet(String uri, @Nullable Map<String, ?> parameters,
+			@Nullable Map<String, ?> headers, Class<O> responseType, @Nullable Object context,
+			@Nullable Map<String, ?> runtimeData) {
 		final Cache<UserLongCompositePK, Lock> lockCache = service(locksCache);
 
 		// @formatter:off

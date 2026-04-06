@@ -26,9 +26,10 @@ import static net.solarnetwork.central.oscp.dao.BasicLockingFilter.ONE_FOR_UPDAT
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
@@ -86,7 +87,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * @param clazz
 	 *        the configuration class
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseJdbcExternalSystemConfigurationDao(JdbcOperations jdbcOps, OscpRole role,
 			Class<C> clazz) {
@@ -108,7 +109,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 *        the configuration ID
 	 * @return the filter
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	protected BasicConfigurationFilter filterForGet(UserLongCompositePK configId) {
 		BasicConfigurationFilter filter = new BasicConfigurationFilter();
@@ -122,9 +123,6 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	public final UserLongCompositePK create(Long userId, C entity) {
 		final var sql = createSql(userId, entity);
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		if ( id == null ) {
-			return null;
-		}
 		UserLongCompositePK pk = new UserLongCompositePK(userId, id);
 		// make sure heartbeat row created at same time
 		jdbcOps.update(new InsertHeartbeatDate(role, pk, null));
@@ -143,7 +141,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	protected abstract PreparedStatementCreator createSql(Long userId, C entity);
 
 	@Override
-	public Collection<C> getAll(List<SortDescriptor> sorts) {
+	public Collection<C> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -172,13 +170,15 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	}
 
 	@Override
-	public boolean compareAndSetHeartbeat(UserLongCompositePK id, Instant expected, Instant ts) {
+	public boolean compareAndSetHeartbeat(UserLongCompositePK id, @Nullable Instant expected,
+			Instant ts) {
 		int count = jdbcOps.update(new UpdateHeartbeatDate(role, id, expected, ts));
 		return (count > 0);
 	}
 
 	@Override
-	public boolean compareAndSetMeasurement(UserLongCompositePK groupId, Instant expected, Instant ts) {
+	public boolean compareAndSetMeasurement(UserLongCompositePK groupId, @Nullable Instant expected,
+			Instant ts) {
 		int count = jdbcOps.update(new UpdateCapacityGroupMeasurementDate(role, groupId, expected, ts));
 		return (count > 0);
 	}
@@ -191,7 +191,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	/**
 	 * Get the {@link RowMapper} to use for mapping full entity result objects.
 	 *
-	 * @return the mapper, never {@literal null}
+	 * @return the mapper, never {@code null}
 	 */
 	protected abstract RowMapper<C> rowMapperForEntity();
 
@@ -199,7 +199,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * Get the success event tags to use within
 	 * {@link #processExternalSystemWithExpiredHeartbeat(Function)}.
 	 *
-	 * @return the tags, never {@literal null}
+	 * @return the tags, never {@code null}
 	 */
 	protected abstract List<String> expiredHeartbeatEventSuccessTags();
 
@@ -207,7 +207,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * Get the error event tags to use within
 	 * {@link #processExternalSystemWithExpiredHeartbeat(Function)}.
 	 *
-	 * @return the tags, never {@literal null}
+	 * @return the tags, never {@code null}
 	 */
 	protected abstract List<String> expiredHeartbeatEventErrorTags();
 
@@ -215,7 +215,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * Get the success event tags to use within
 	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
 	 *
-	 * @return the tags, never {@literal null}
+	 * @return the tags, never {@code null}
 	 */
 	protected abstract List<String> expiredMeasurementEventSuccessTags();
 
@@ -223,22 +223,23 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 * Get the error event tags to use within
 	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
 	 *
-	 * @return the tags, never {@literal null}
+	 * @return the tags, never {@code null}
 	 */
 	protected abstract List<String> expiredMeasurementEventErrorTags();
 
 	@Override
-	public boolean processExternalSystemWithExpiredHeartbeat(Function<TaskContext<C>, Instant> handler) {
+	public boolean processExternalSystemWithExpiredHeartbeat(
+			Function<TaskContext<C>, @Nullable Instant> handler) {
 		PreparedStatementCreator sql = new SelectExternalSystemForHeartbeat(role, ONE_FOR_UPDATE_SKIP);
 		List<C> rows = jdbcOps.query(sql, rowMapperForEntity());
 		if ( !rows.isEmpty() ) {
 			C row = rows.getFirst();
 			SystemTaskContext<C> context = new SystemTaskContext<>("Heartbeat", role, row,
 					expiredHeartbeatEventErrorTags(), expiredHeartbeatEventSuccessTags(), this,
-					Collections.emptyMap());
+					Map.of());
 			Instant ts = handler.apply(context);
 			if ( ts != null ) {
-				compareAndSetHeartbeat(row.getId(), row.getHeartbeatDate(), ts);
+				compareAndSetHeartbeat(row.id(), row.getHeartbeatDate(), ts);
 			}
 			return (ts != null);
 		}
@@ -247,7 +248,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 
 	@Override
 	public boolean processExternalSystemWithExpiredMeasurement(
-			Function<CapacityGroupTaskContext<C>, Instant> handler) {
+			Function<CapacityGroupTaskContext<C>, @Nullable Instant> handler) {
 		PreparedStatementCreator sql = new SelectExternalSystemForMeasurement(role, ONE_FOR_UPDATE_SKIP);
 		RowMapper<C> entityMapper = rowMapperForEntity();
 		if ( !(entityMapper instanceof ColumnCountProvider ccp) ) {
@@ -276,10 +277,10 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 			CapacityGroupSystemTaskContext<C> context = new CapacityGroupSystemTaskContext<>(
 					"Measurement", role, row.conf(), row.group(), taskDate,
 					expiredMeasurementEventErrorTags(), expiredMeasurementEventSuccessTags(), this,
-					Collections.emptyMap());
+					Map.of());
 			Instant ts = handler.apply(context);
 			if ( ts != null ) {
-				compareAndSetMeasurement(row.group().getId(), measurementDate, ts);
+				compareAndSetMeasurement(row.group().id(), measurementDate, ts);
 			}
 			return (ts != null);
 		}

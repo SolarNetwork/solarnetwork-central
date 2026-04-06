@@ -24,6 +24,7 @@ package net.solarnetwork.central.common.dao.jdbc.sql;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -85,7 +86,7 @@ public final class SelectSolarNodeMetadata implements PreparedStatementCreator, 
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		if ( filter.hasNodeCriteria() && filter.getNodeIds().length == 1 ) {
+		if ( filter.hasNodeCriteria() && nonnull(filter.getNodeIds(), "nodeIds").length == 1 ) {
 			// at most one result, skip order
 			return;
 		}

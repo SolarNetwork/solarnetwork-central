@@ -25,6 +25,7 @@ package net.solarnetwork.central.dnp3.app.server.test;
 import static java.time.Instant.now;
 import static java.util.Arrays.asList;
 import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -165,7 +166,7 @@ public class Dnp3ProxyConfigurationProviderTests {
 
 		// check auth
 		final ServerAuthConfiguration auth = new ServerAuthConfiguration(userId, serverId,
-				clientSubjectDn, now());
+				clientSubjectDn, now(), randomString());
 		auth.setEnabled(true);
 		given(serverAuthDao.findForIdentifier(clientSubjectDn)).willReturn(auth);
 
@@ -177,21 +178,14 @@ public class Dnp3ProxyConfigurationProviderTests {
 		final Long nodeId = UUID.randomUUID().getMostSignificantBits();
 
 		final ServerMeasurementConfiguration meas = new ServerMeasurementConfiguration(userId, serverId,
-				0, now());
-		meas.setNodeId(nodeId);
-		meas.setSourceId("meter/1");
-		meas.setProperty("watts");
-		meas.setType(MeasurementType.AnalogInput);
+				0, now(), nodeId, "meter/1", MeasurementType.AnalogInput, "watts");
 		meas.setEnabled(true);
 		given(serverMeasurementDao.findFiltered(any()))
 				.willReturn(new BasicFilterResults<>(asList(meas)));
 
 		// load controls
 		final ServerControlConfiguration ctrl = new ServerControlConfiguration(userId, serverId, 0,
-				now());
-		ctrl.setNodeId(nodeId);
-		ctrl.setSourceId("switch/1");
-		ctrl.setType(ControlType.Binary);
+				now(), nodeId, "switch/1", ControlType.Binary);
 		ctrl.setEnabled(true);
 		given(serverControlDao.findFiltered(any())).willReturn(new BasicFilterResults<>(asList(ctrl)));
 

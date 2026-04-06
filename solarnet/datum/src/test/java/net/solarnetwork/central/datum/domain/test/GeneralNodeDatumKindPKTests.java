@@ -81,7 +81,7 @@ public class GeneralNodeDatumKindPKTests {
 		GeneralNodeDatumKindPK pk1 = new GeneralNodeDatumKindPK(TEST_NODE_ID, TEST_TIMESTAMP,
 				TEST_SOURCE_ID, TEST_KIND);
 		GeneralNodeDatumKindPK pk2 = new GeneralNodeDatumKindPK(TEST_NODE_ID, TEST_TIMESTAMP,
-				TEST_SOURCE_ID, null);
+				TEST_SOURCE_ID, TEST_KIND + "2");
 		assertThat("Keys not equal", pk1, not(equalTo(pk2)));
 	}
 

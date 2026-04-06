@@ -36,6 +36,8 @@ import static org.hamcrest.Matchers.sameInstance;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -106,8 +108,7 @@ public class DaoDatumMetadataBizTests {
 		meta.addTag("bam");
 
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(Collections.emptyList());
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(List.of());
 
 		NodeSourcePK pk = new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID);
 		metaDao.replaceJsonMeta(pk, JsonUtils.getJSONString(meta, null));
@@ -132,8 +133,7 @@ public class DaoDatumMetadataBizTests {
 		meta.addTag("bam");
 
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(Collections.emptyList());
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(List.of());
 
 		NodeSourcePK pk = new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID);
 		metaDao.replaceJsonMeta(pk, JsonUtils.getJSONString(meta, null));
@@ -192,8 +192,7 @@ public class DaoDatumMetadataBizTests {
 		ObjectDatumStreamMetadata streamMeta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
 				"UTC", ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, null, null, null,
 				JsonUtils.getJSONString(meta, null));
-		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(Collections.singleton(streamMeta));
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(Set.of(streamMeta));
 
 		NodeSourcePK pk = new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID);
 		GeneralDatumMetadata merged = new GeneralDatumMetadata(meta);
@@ -230,8 +229,7 @@ public class DaoDatumMetadataBizTests {
 		ObjectDatumStreamMetadata streamMeta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
 				"UTC", ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, null, null, null,
 				JsonUtils.getJSONString(meta, null));
-		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(Collections.singleton(streamMeta));
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(Set.of(streamMeta));
 
 		NodeSourcePK pk = new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID);
 		GeneralDatumMetadata merged = new GeneralDatumMetadata(meta);
@@ -272,8 +270,7 @@ public class DaoDatumMetadataBizTests {
 		meta.addTag("bam");
 
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(Collections.emptyList());
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(List.of());
 
 		LocationSourcePK pk = new LocationSourcePK(TEST_LOCATION_ID, TEST_SOURCE_ID);
 		metaDao.replaceJsonMeta(pk, JsonUtils.getJSONString(meta, null));
@@ -298,8 +295,7 @@ public class DaoDatumMetadataBizTests {
 		meta.addTag("bam");
 
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(Collections.emptyList());
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(List.of());
 
 		LocationSourcePK pk = new LocationSourcePK(TEST_LOCATION_ID, TEST_SOURCE_ID);
 		metaDao.replaceJsonMeta(pk, JsonUtils.getJSONString(meta, null));
@@ -358,8 +354,7 @@ public class DaoDatumMetadataBizTests {
 		ObjectDatumStreamMetadata streamMeta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
 				"UTC", ObjectDatumKind.Location, TEST_LOCATION_ID, TEST_SOURCE_ID, null, null, null,
 				JsonUtils.getJSONString(meta, null));
-		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(Collections.singleton(streamMeta));
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(Set.of(streamMeta));
 
 		LocationSourcePK pk = new LocationSourcePK(TEST_LOCATION_ID, TEST_SOURCE_ID);
 		GeneralDatumMetadata merged = new GeneralDatumMetadata(meta);
@@ -396,8 +391,7 @@ public class DaoDatumMetadataBizTests {
 		ObjectDatumStreamMetadata streamMeta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
 				"UTC", ObjectDatumKind.Location, TEST_LOCATION_ID, TEST_SOURCE_ID, null, null, null,
 				JsonUtils.getJSONString(meta, null));
-		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(Collections.singleton(streamMeta));
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(Set.of(streamMeta));
 
 		LocationSourcePK pk = new LocationSourcePK(TEST_LOCATION_ID, TEST_SOURCE_ID);
 		GeneralDatumMetadata merged = new GeneralDatumMetadata(meta);

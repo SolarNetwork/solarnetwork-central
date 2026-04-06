@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.time.Instant;
 import net.solarnetwork.domain.Unique;
 import net.solarnetwork.domain.datum.Aggregation;
@@ -46,8 +47,7 @@ public interface StaleAuditUserServiceValue extends Unique<AggregateDatumId>, Us
 	 */
 	@Override
 	default Long getUserId() {
-		AggregateDatumId id = getId();
-		return id != null ? id.getObjectId() : null;
+		return nonnull(getId(), "id").getObjectId();
 	}
 
 	/**
@@ -60,8 +60,7 @@ public interface StaleAuditUserServiceValue extends Unique<AggregateDatumId>, Us
 	 * @return the service
 	 */
 	default String getService() {
-		AggregateDatumId id = getId();
-		return id != null ? id.getSourceId() : null;
+		return nonnull(getId(), "id").getSourceId();
 	}
 
 	/**
@@ -79,8 +78,7 @@ public interface StaleAuditUserServiceValue extends Unique<AggregateDatumId>, Us
 	 * @return the timestamp for this datum
 	 */
 	default Instant getTimestamp() {
-		AggregateDatumId id = getId();
-		return id != null ? id.getTimestamp() : null;
+		return nonnull(getId(), "id").getTimestamp();
 	}
 
 	/**
@@ -93,8 +91,7 @@ public interface StaleAuditUserServiceValue extends Unique<AggregateDatumId>, Us
 	 * @return the aggregation
 	 */
 	default Aggregation getAggregation() {
-		AggregateDatumId id = getId();
-		return id != null ? id.getAggregation() : null;
+		return nonnull(getId(), "id").getAggregation();
 	}
 
 }

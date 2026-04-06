@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
@@ -92,10 +93,8 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 		List<GeneralNodeDatum> data = new ArrayList<>(4);
 		long wh = (long) (Math.random() * 1000000000.0);
 		for ( int i = 0; i < count; i++ ) {
-			GeneralNodeDatum d = new GeneralNodeDatum();
-			d.setNodeId(nodeId);
-			d.setCreated(start.plusMinutes(i).toInstant());
-			d.setSourceId(sourceId);
+			GeneralNodeDatum d = new GeneralNodeDatum(nodeId, start.plusMinutes(i).toInstant(),
+					sourceId);
 
 			DatumSamples s = new DatumSamples();
 			int watts = (int) (Math.random() * 50000);
@@ -151,9 +150,9 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 			assertThat("Two stale hours recorded", staleHours, hasSize(2));
 			assertStaleAggregateDatum("Stale previous hour", staleHours.get(0),
 					new StaleAggregateDatumEntity(loaded.get(0).getStreamId(),
-							start.minusHours(1).toInstant(), Hour, null));
+							start.minusHours(1).toInstant(), Hour, now()));
 			assertStaleAggregateDatum("Stale hour", staleHours.get(1), new StaleAggregateDatumEntity(
-					loaded.get(0).getStreamId(), start.toInstant(), Hour, null));
+					loaded.get(0).getStreamId(), start.toInstant(), Hour, now()));
 
 			List<AuditDatum> audits = DatumDbUtils.listAuditDatum(jdbcTemplate, Aggregation.None);
 			ZonedDateTime thisHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
@@ -204,9 +203,9 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 			assertThat("Two stale hours recorded (hour + prev hour)", staleHours, hasSize(2));
 			assertStaleAggregateDatum("Stale previous hour", staleHours.get(0),
 					new StaleAggregateDatumEntity(loaded.get(0).getStreamId(),
-							start.minusHours(1).toInstant(), Hour, null));
+							start.minusHours(1).toInstant(), Hour, now()));
 			assertStaleAggregateDatum("Stale hour", staleHours.get(1), new StaleAggregateDatumEntity(
-					loaded.get(0).getStreamId(), start.toInstant(), Hour, null));
+					loaded.get(0).getStreamId(), start.toInstant(), Hour, now()));
 
 			List<AuditDatum> audits = DatumDbUtils.listAuditDatum(jdbcTemplate, Aggregation.None);
 			assertThat("One audit hour", audits, hasSize(1));
@@ -273,9 +272,9 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 				}
 				assertStaleAggregateDatum("Stale previous hour " + i, staleHours.get(i * 2),
 						new StaleAggregateDatumEntity(streamId, date.minusHours(1).toInstant(), Hour,
-								null));
+								now()));
 				assertStaleAggregateDatum("Stale hour " + i, staleHours.get(i * 2 + 1),
-						new StaleAggregateDatumEntity(streamId, date.toInstant(), Hour, null));
+						new StaleAggregateDatumEntity(streamId, date.toInstant(), Hour, now()));
 
 				streamId = audits.get(i).getStreamId();
 				nodeId = streamToNodeIds.get(streamId);

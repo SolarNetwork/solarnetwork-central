@@ -26,7 +26,6 @@ import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -104,7 +103,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 	/** The Solcast supported resolutions. */
 	public static final Set<Duration> SUPPORTED_RESOLUTIONS;
 	static {
-		SUPPORTED_RESOLUTIONS = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
+		SUPPORTED_RESOLUTIONS = Collections.unmodifiableSet(new LinkedHashSet<>(List.of(
 		// @formatter:off
 				Duration.ofMinutes(5),
 				Duration.ofMinutes(10),
@@ -172,7 +171,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 	 * @param clock
 	 *        the clock to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseSolcastCloudDatumStreamService(String serviceIdentifier, String displayName,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
@@ -201,7 +200,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 	 *
 	 * @param datumStream
 	 *        the datum stream to resolve the resolution setting from
-	 * @return the resolution, never {@literal null}
+	 * @return the resolution, never {@code null}
 	 */
 	public static Duration resolveResolution(CloudDatumStreamConfiguration datumStream) {
 		String resoValue = nonEmptyString(datumStream.serviceProperty(RESOLUTION_SETTING, String.class));

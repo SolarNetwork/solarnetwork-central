@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for cloud integration related data.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudIntegrationCriteria {
 
@@ -35,12 +37,12 @@ public interface CloudIntegrationCriteria {
 	 *
 	 * <p>
 	 * This returns the first available integration ID from the
-	 * {@link #getIntegrationIds()} array, or {@literal null} if not available.
+	 * {@link #getIntegrationIds()} array, or {@code null} if not available.
 	 * </p>
 	 *
-	 * @return the first integration ID, or {@literal null} if not available
+	 * @return the first integration ID, or {@code null} if not available
 	 */
-	default Long getIntegrationId() {
+	default @Nullable Long getIntegrationId() {
 		final Long[] array = getIntegrationIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -48,9 +50,9 @@ public interface CloudIntegrationCriteria {
 	/**
 	 * Get an array of integration IDs.
 	 *
-	 * @return array of integration IDs (may be {@literal null})
+	 * @return array of integration IDs (may be {@code null})
 	 */
-	Long[] getIntegrationIds();
+	Long @Nullable [] getIntegrationIds();
 
 	/**
 	 * Test if this filter has any integration criteria.
@@ -59,6 +61,40 @@ public interface CloudIntegrationCriteria {
 	 */
 	default boolean hasIntegrationCriteria() {
 		return getIntegrationId() != null;
+	}
+
+	/**
+	 * Get the first cloud integration ID.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasIntegrationCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return the first cloud integration ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long integrationId() {
+		return getIntegrationId();
+	}
+
+	/**
+	 * Get an array of cloud integration IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasIntegrationCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of cloud integration IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default Long[] integrationIds() {
+		return getIntegrationIds();
 	}
 
 }

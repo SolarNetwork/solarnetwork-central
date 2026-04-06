@@ -35,6 +35,7 @@ import java.time.Instant;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +82,7 @@ import tools.jackson.dataformat.cbor.CBORMapper;
  * Controller for querying datum stream related data.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1DatumStreamController")
 @RequestMapping({ "/api/v1/pub/datum/stream", "/api/v1/sec/datum/stream" })
@@ -143,25 +144,26 @@ public class DatumStreamController {
 	}
 
 	private StreamDatumFilteredResultsProcessor processorForType(final List<MediaType> acceptTypes,
-			final String acceptEncoding, final HttpServletResponse response) throws IOException {
+			final String acceptEncoding, final Set<String> allowedPropertyNames,
+			final HttpServletResponse response) throws IOException {
 		StreamDatumFilteredResultsProcessor processor = null;
 		for ( MediaType acceptType : acceptTypes ) {
 			if ( MediaType.APPLICATION_CBOR.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
 						cborObjectMapper.createGenerator(responseOutputStream(response, acceptEncoding)),
 						cborObjectMapper._serializationContext(), // FIXME use "allowed" method
-						MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE));
+						MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE), allowedPropertyNames);
 				break;
 			} else if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
 						objectMapper.createGenerator(responseOutputStream(response, acceptEncoding)),
 						objectMapper._serializationContext(), // FIXME use "allowed" method
-						MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE));
+						MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE), allowedPropertyNames);
 				break;
 			} else if ( CsvStreamDatumFilteredResultsProcessor.TEXT_CSV_MIME_TYPE
 					.isCompatibleWith(acceptType) ) {
 				processor = new CsvStreamDatumFilteredResultsProcessor(
-						responseWriter(response, acceptEncoding));
+						responseWriter(response, acceptEncoding), allowedPropertyNames);
 				break;
 			}
 		}
@@ -224,7 +226,7 @@ public class DatumStreamController {
 		populateMostRecentImplicitStartDate(criteria);
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes,
-				acceptEncoding, response)) {
+				acceptEncoding, criteria.allowedPropertyNames(), response)) {
 			queryBiz.findFilteredStreamDatum(criteria, processor, criteria.getSortDescriptors(),
 					criteria.getOffset(), criteria.getMax());
 		}
@@ -286,7 +288,7 @@ public class DatumStreamController {
 		}
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes,
-				acceptEncoding, response)) {
+				acceptEncoding, criteria.allowedPropertyNames(), response)) {
 			queryBiz.findFilteredStreamReadings(criteria, readingType, tolerance, processor,
 					criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 		}

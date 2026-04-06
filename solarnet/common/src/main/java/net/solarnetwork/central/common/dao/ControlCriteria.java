@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.common.dao;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Search criteria for control related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface ControlCriteria {
 
@@ -35,12 +37,12 @@ public interface ControlCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available control ID from the
-	 * {@link #getControlIds()} array, or {@literal null} if not available.
+	 * {@link #getControlIds()} array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the first control ID, or {@literal null} if not available
+	 * @return the first control ID, or {@code null} if not available
 	 */
-	default String getControlId() {
+	default @Nullable String getControlId() {
 		final String[] array = getControlIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
@@ -48,9 +50,9 @@ public interface ControlCriteria {
 	/**
 	 * Get an array of control IDs.
 	 * 
-	 * @return array of control IDs (may be {@literal null})
+	 * @return array of control IDs (may be {@code null})
 	 */
-	String[] getControlIds();
+	String @Nullable [] getControlIds();
 
 	/**
 	 * Test if this filter has any control criteria.
@@ -60,6 +62,40 @@ public interface ControlCriteria {
 	 */
 	default boolean hasControlCriteria() {
 		return getControlId() != null;
+	}
+
+	/**
+	 * Get the first control ID.
+	 * 
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasControlCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 * 
+	 * @return the first control ID (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String controlId() {
+		return getControlId();
+	}
+
+	/**
+	 * Get an array of control IDs.
+	 *
+	 * <p>
+	 * This method is designed to be used after a call to
+	 * {@link #hasControlCriteria()} returns {@code true}, to avoid nullness
+	 * warnings.
+	 * </p>
+	 *
+	 * @return array of control IDs (presumed non-null)
+	 * @since 1.1
+	 */
+	@SuppressWarnings("NullAway")
+	default String[] controlIds() {
+		return getControlIds();
 	}
 
 }

@@ -27,6 +27,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.HttpClientErrorException;
@@ -75,7 +76,7 @@ public abstract class BaseRestOperationsCloudIntegrationService extends BaseClou
 	 * @param restOpsHelper
 	 *        the REST operations helper
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public BaseRestOperationsCloudIntegrationService(String serviceIdentifier, String displayName,
 			Collection<CloudDatumStreamService> datumStreamServices,
@@ -88,8 +89,7 @@ public abstract class BaseRestOperationsCloudIntegrationService extends BaseClou
 	}
 
 	@Override
-	public void setUserServiceAuditor(UserServiceAuditor userServiceAuditor) {
-		super.setUserServiceAuditor(userServiceAuditor);
+	public void didSetUserServiceAuditor(@Nullable UserServiceAuditor userServiceAuditor) {
 		restOpsHelper.setUserServiceAuditor(userServiceAuditor);
 	}
 
@@ -106,7 +106,7 @@ public abstract class BaseRestOperationsCloudIntegrationService extends BaseClou
 	 * @return the result
 	 * @since 1.2
 	 */
-	public static <T> Result<T> validationResult(RemoteServiceException e, T body) {
+	public static <T> Result<T> validationResult(RemoteServiceException e, @Nullable T body) {
 		if ( e.getCause() instanceof HttpClientErrorException h ) {
 			if ( h.getStatusCode().isSameCodeAs(HttpStatus.TOO_MANY_REQUESTS) ) {
 				return new Result<>(true, "BCI.0002",

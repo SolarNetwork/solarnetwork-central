@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -91,9 +92,9 @@ public final class CommonDbUtils {
 	 * @param metas
 	 *        the metadata to insert
 	 */
-	public static void insertObjectDatumStreamMetadata(Logger log, JdbcOperations jdbcTemplate,
+	public static void insertObjectDatumStreamMetadata(@Nullable Logger log, JdbcOperations jdbcTemplate,
 			Iterable<? extends ObjectDatumStreamMetadata> metas) {
-		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+		jdbcTemplate.execute((ConnectionCallback<@Nullable Void>) con -> {
 			insertObjectDatumStreamMetadata(log, con, metas);
 			return null;
 		});
@@ -111,7 +112,7 @@ public final class CommonDbUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static void insertObjectDatumStreamMetadata(Logger log, Connection con,
+	public static void insertObjectDatumStreamMetadata(@Nullable Logger log, Connection con,
 			Iterable<? extends ObjectDatumStreamMetadata> metas) throws SQLException {
 		try (PreparedStatement nodeMetaStmt = con
 				.prepareStatement(insertDatumMetaSql(ObjectDatumKind.Node));

@@ -23,7 +23,9 @@
 package net.solarnetwork.central.datum.v2.support.test;
 
 import static net.solarnetwork.domain.BasicLocation.locationOf;
+import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.emptyStatistics;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenIllegalArgumentException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -323,7 +325,8 @@ public class DatumUtilsTests {
 		// GIVEN
 		DatumProperties props = newProps();
 		ReadingDatumEntity datum = new ReadingDatumEntity(UUID.randomUUID(),
-				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, null, props, null);
+				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, null, props,
+				emptyStatistics());
 		ObjectDatumStreamMetadata meta = newNodeMeta();
 
 		// WHEN
@@ -634,6 +637,19 @@ public class DatumUtilsTests {
 	}
 
 	@Test
+	public void criteriaFromFilter_streamDatumFilterCommand_includeStreamAliases() {
+		// GIVEN
+		StreamDatumFilterCommand f = new StreamDatumFilterCommand();
+		f.setIncludeStreamAliases(true);
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		then(c.getIncludeStreamAliases()).as("Include flag copied").isEqualTo(true);
+	}
+
+	@Test
 	public void criteriaFromFilter_streamDatumFilterCommand_mostRecent_proxy() {
 		// GIVEN
 		StreamDatumFilterCommand f = new StreamDatumFilterCommand();
@@ -733,6 +749,27 @@ public class DatumUtilsTests {
 		// THEN
 		assertThat("Virtual ID created", id,
 				equalTo(UUID.fromString("175f1f02-53c5-5984-b5ba-003a90b4ccd0")));
+	}
+
+	@Test
+	public void virtualStreamId_null() {
+		UUID id = DatumUtils.virtualStreamId(0L, "");
+
+		assertThat("Virtual ID created", id,
+				equalTo(UUID.fromString("56018153-e1ca-5212-85b6-20b141a3bbf2")));
+	}
+
+	@Test
+	public void criteriaFromFilter_datumFilterCommand_includeStreamAliases() {
+		// GIVEN
+		DatumFilterCommand f = new DatumFilterCommand();
+		f.setIncludeStreamAliases(true);
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		then(c.getIncludeStreamAliases()).as("Include flag copied").isEqualTo(true);
 	}
 
 }

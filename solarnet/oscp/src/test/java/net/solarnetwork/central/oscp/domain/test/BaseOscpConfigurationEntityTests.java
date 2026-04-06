@@ -1,28 +1,29 @@
 /* ==================================================================
  * BaseOscpConfigurationEntityTests.java - 10/02/2023 3:20:42 pm
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.oscp.domain.test;
 
-import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasEntry;
@@ -39,7 +40,7 @@ import net.solarnetwork.central.oscp.domain.BaseOscpConfigurationEntity;
 
 /**
  * Test cases for the {@link BaseOscpConfigurationEntity} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -51,7 +52,7 @@ public class BaseOscpConfigurationEntityTests {
 		private static final long serialVersionUID = 3624026527561008030L;
 
 		private TestBaseOscpConfigurationEntity(Long userId, Long entityId, Instant created) {
-			super(userId, entityId, created);
+			super(userId, entityId, created, randomString());
 		}
 
 		@Override
@@ -62,8 +63,7 @@ public class BaseOscpConfigurationEntityTests {
 	}
 
 	private static TestBaseOscpConfigurationEntity entity() {
-		return new TestBaseOscpConfigurationEntity(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), Instant.now());
+		return new TestBaseOscpConfigurationEntity(randomLong(), randomLong(), Instant.now());
 	}
 
 	@Test

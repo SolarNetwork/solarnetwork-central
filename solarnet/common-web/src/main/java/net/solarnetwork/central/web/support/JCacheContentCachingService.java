@@ -32,7 +32,6 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.HexFormat;
@@ -54,6 +53,7 @@ import javax.cache.event.CacheEntryListener;
 import javax.cache.event.CacheEntryListenerException;
 import javax.cache.event.CacheEntryRemovedListener;
 import javax.cache.event.CacheEntryUpdatedListener;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -104,7 +104,7 @@ public class JCacheContentCachingService
 	 * @param cache
 	 *        the cache to use
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JCacheContentCachingService(Cache<String, CachedContent> cache) {
 		super();
@@ -273,7 +273,7 @@ public class JCacheContentCachingService
 			buf.append(acceptHeader.nextElement());
 		}
 		String value = buf.toString();
-		return (!value.isEmpty() ? MediaType.parseMediaTypes(value) : Collections.emptyList());
+		return (!value.isEmpty() ? MediaType.parseMediaTypes(value) : List.of());
 	}
 
 	private void addNormalizedAccept(HttpServletRequest request, MessageDigest digest) {
@@ -322,7 +322,7 @@ public class JCacheContentCachingService
 	 * </ol>
 	 */
 	@Override
-	public String keyForRequest(HttpServletRequest request) {
+	public @Nullable String keyForRequest(HttpServletRequest request) {
 		MessageDigest digest = org.apache.commons.codec.digest.DigestUtils.getMd5Digest();
 		addAuthorization(request, digest);
 		digest.update(request.getMethod().getBytes(UTF_8));
@@ -333,7 +333,7 @@ public class JCacheContentCachingService
 	}
 
 	@Override
-	public CachedContent sendCachedResponse(String key, HttpServletRequest request,
+	public @Nullable CachedContent sendCachedResponse(String key, HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
 		CachedContent content = cache.get(key);
 		if ( content == null ) {
@@ -388,9 +388,11 @@ public class JCacheContentCachingService
 				} catch ( ZipException e ) {
 					// should not be here! log some info to help troubleshoot
 					String base64Content = "";
-					try {
-						var byos = new ByteArrayOutputStream(content.getContentLength());
-						FileCopyUtils.copy(content.getContent(), byos);
+					try (InputStream in2 = content.getContent();
+							var byos = new ByteArrayOutputStream(content.getContentLength())) {
+						if ( in2 != null ) {
+							FileCopyUtils.copy(in2, byos);
+						}
 						base64Content = Base64.getEncoder().encodeToString(byos.toByteArray());
 					} catch ( Exception e2 ) {
 						// ignore exception and continue
@@ -418,8 +420,8 @@ public class JCacheContentCachingService
 
 	@Override
 	public void cacheResponse(String key, HttpServletRequest request, int statusCode,
-			HttpHeaders headers, InputStream content, CompressionType compressionType)
-			throws IOException {
+			HttpHeaders headers, @Nullable InputStream content,
+			@Nullable CompressionType compressionType) throws IOException {
 		byte[] data = FileCopyUtils.copyToByteArray(content);
 
 		String contentEncoding = headers.getFirst(HttpHeaders.CONTENT_ENCODING);
@@ -453,9 +455,9 @@ public class JCacheContentCachingService
 	 * Get metadata for the cache content.
 	 *
 	 * <p>
-	 * This method returns {@literal null}, so extending classes can override.
-	 * Note that the returned object must implement {@link Serializable}, along
-	 * with all values in the map.
+	 * This method returns {@code null}, so extending classes can override. Note
+	 * that the returned object must implement {@link Serializable}, along with
+	 * all values in the map.
 	 * </p>
 	 *
 	 * @param key
@@ -466,9 +468,9 @@ public class JCacheContentCachingService
 	 *        the HTTP status code
 	 * @param headers
 	 *        the HTTP headers
-	 * @return the metadata, or {@literal null} if none
+	 * @return the metadata, or {@code null} if none
 	 */
-	protected Map<String, ?> getCacheContentMetadata(String key, HttpServletRequest request,
+	protected @Nullable Map<String, ?> getCacheContentMetadata(String key, HttpServletRequest request,
 			int statusCode, HttpHeaders headers) {
 		return null;
 	}
@@ -479,7 +481,7 @@ public class JCacheContentCachingService
 	 * @param compressibleMediaTypes
 	 *        compressible media types
 	 */
-	public void setCompressibleMediaTypes(Set<MediaType> compressibleMediaTypes) {
+	public final void setCompressibleMediaTypes(Set<MediaType> compressibleMediaTypes) {
 		this.compressibleMediaTypes = requireNonNullArgument(compressibleMediaTypes,
 				"compressibleMediaTypes");
 	}
@@ -490,7 +492,7 @@ public class JCacheContentCachingService
 	 * @param compressMinimumLength
 	 *        the minimum length, in bytes
 	 */
-	public void setCompressMinimumLength(int compressMinimumLength) {
+	public final void setCompressMinimumLength(int compressMinimumLength) {
 		this.compressMinimumLength = compressMinimumLength;
 	}
 
@@ -507,7 +509,7 @@ public class JCacheContentCachingService
 	 *        the access count the access count; defaults to
 	 *        {@link #DEFAULT_STAT_LOG_ACCESS_COUNT}
 	 */
-	public void setStatLogAccessCount(int statLogAccessCount) {
+	public final void setStatLogAccessCount(int statLogAccessCount) {
 		this.stats.setLogFrequency(statLogAccessCount);
 	}
 

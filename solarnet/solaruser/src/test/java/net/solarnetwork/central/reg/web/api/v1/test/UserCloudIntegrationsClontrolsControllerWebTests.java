@@ -117,10 +117,8 @@ public class UserCloudIntegrationsClontrolsControllerWebTests
 	public static CloudIntegrationConfiguration newCloudIntegrationConfiguration(Long userId,
 			String name, String serviceId, Map<String, Object> serviceProps) {
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
-				unassignedEntityIdKey(userId), clock.instant());
+				unassignedEntityIdKey(userId), clock.instant(), name, serviceId);
 		conf.setModified(conf.getCreated());
-		conf.setName(name);
-		conf.setServiceIdentifier(serviceId);
 		conf.setServiceProps(serviceProps);
 		conf.setEnabled(true);
 		return conf;
@@ -128,10 +126,8 @@ public class UserCloudIntegrationsClontrolsControllerWebTests
 
 	private CloudIntegrationConfiguration createIntegration(Long userId, Map<String, Object> props) {
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
-				unassignedEntityIdKey(userId), clock.instant());
+				unassignedEntityIdKey(userId), clock.instant(), randomString(), randomString());
 		conf.setModified(conf.getCreated());
-		conf.setName(randomString());
-		conf.setServiceIdentifier(randomString());
 		conf.setEnabled(true);
 
 		return integrationDao.get(integrationDao.save(conf));

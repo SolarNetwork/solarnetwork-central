@@ -54,7 +54,7 @@ public final class SelectDatumAvailableTimeRange implements PreparedStatementCre
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectDatumAvailableTimeRange(ObjectStreamCriteria filter) {
 		super();

@@ -1,7 +1,7 @@
 plugins {
 	id 'java-library'
 	id 'eclipse'
-	id 'org.springframework.boot' version '4.0.1' apply false
+	id 'org.springframework.boot' version '4.0.4' apply false
 }
 
 apply plugin: 'java-library'
@@ -16,7 +16,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Datum'
-version = '5.1.0'
+version = '6.1.1'
 
 base {
 	archivesName = 'solarnet-datum'
@@ -52,15 +52,15 @@ dependencies {
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
+    testImplementation "io.moquette:moquette-broker:${moquetteVersion}"
 	testImplementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
 	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-	testImplementation 'io.moquette:moquette-broker:0.15'
 	testImplementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"
 	testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	testImplementation 'org.eclipse.jetty:jetty-server'
 	testImplementation "org.tukaani:xz:${xzVersion}"
 	testImplementation 'org.mockftpserver:MockFtpServer:3.1.0'
-	implementation "software.amazon.awssdk:apache-client:${awsSdk2Version}"
+	testImplementation "software.amazon.awssdk:apache-client:${awsSdk2Version}"
 }
 
 jar.manifest {
@@ -73,7 +73,7 @@ publishing {
 			from components.java
 			pom {
 				name = project.description
-				description = 'Shared library for all SolarNet projects.'
+				description = 'Core datum library for all SolarNet projects.'
 				url = 'https://github.com/SolarNetwork/solarnetwork-central'
 				licenses {
 					license {

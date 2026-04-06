@@ -30,13 +30,13 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import java.security.Principal;
 import java.util.concurrent.CompletableFuture;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.oscp.fp.biz.FlexibilityProviderBiz;
@@ -64,7 +64,7 @@ public class HandshakeController {
 	 * @param flexibilityProviderBiz
 	 *        the flexibility provider service
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public HandshakeController(FlexibilityProviderBiz flexibilityProviderBiz) {
 		super();

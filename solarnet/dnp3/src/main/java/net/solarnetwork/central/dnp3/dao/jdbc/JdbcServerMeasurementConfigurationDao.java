@@ -27,6 +27,7 @@ import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.execu
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForGroupMinimumIndex;
@@ -57,7 +58,7 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcServerMeasurementConfigurationDao(JdbcOperations jdbcOps) {
 		super();
@@ -73,13 +74,13 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 	public UserLongIntegerCompositePK create(Long userId, Long serverId,
 			ServerMeasurementConfiguration entity) {
 		final var sql = new UpsertServerMeasurementConfiguration(userId, serverId, entity);
-		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		jdbcOps.update(sql);
+		return entity.id();
 	}
 
 	@Override
 	public Collection<ServerMeasurementConfiguration> findAll(Long userId, Long serverId,
-			List<SortDescriptor> sorts) {
+			@Nullable List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		filter.setServerId(serverId);
@@ -95,7 +96,7 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 	}
 
 	@Override
-	public ServerMeasurementConfiguration get(UserLongIntegerCompositePK id) {
+	public @Nullable ServerMeasurementConfiguration get(UserLongIntegerCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -108,7 +109,7 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 	}
 
 	@Override
-	public Collection<ServerMeasurementConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<ServerMeasurementConfiguration> getAll(@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -119,14 +120,15 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 
 	@Override
 	public void delete(ServerMeasurementConfiguration entity) {
-		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").id(), TABLE_NAME,
+				PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 
 	@Override
 	public FilterResults<ServerMeasurementConfiguration, UserLongIntegerCompositePK> findFiltered(
-			ServerDataPointFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
+			ServerDataPointFilter filter, @Nullable List<SortDescriptor> sorts, @Nullable Long offset,
+			@Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectServerMeasurementConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql,
@@ -134,7 +136,8 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, ServerDataPointFilter filter, boolean enabled) {
+	public int updateEnabledStatus(Long userId, @Nullable ServerDataPointFilter filter,
+			boolean enabled) {
 		var sql = new UpdateEnabledServerDataPointFilter(TABLE_NAME, SERVER_ID_COLUMN_NAME, userId,
 				filter, enabled);
 		return jdbcOps.update(sql);

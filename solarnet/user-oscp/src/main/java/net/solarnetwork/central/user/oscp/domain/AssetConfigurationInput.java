@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.oscp.domain;
 
 import static java.time.Instant.now;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -41,45 +42,49 @@ import net.solarnetwork.central.oscp.domain.Phase;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("MultipleNullnessAnnotations")
 public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetConfiguration> {
 
 	@NotNull
-	private Long capacityGroupId;
+	private @Nullable Long capacityGroupId;
 
 	@NotNull
 	@NotBlank
-	private String identifier;
+	private @Nullable String identifier;
 
 	@NotNull
-	private OscpRole audience;
+	private @Nullable OscpRole audience;
 
 	@NotNull
-	private Long nodeId;
+	private @Nullable Long nodeId;
 
 	@NotNull
 	@NotBlank
 	@Size(max = 64)
-	private String sourceId;
+	private @Nullable String sourceId;
 
 	@NotNull
-	private AssetCategory category;
+	private @Nullable AssetCategory category;
 
 	@NotNull
-	private Phase phase;
+	private @Nullable Phase phase;
 
 	@Valid
-	private AssetInstantaneousDatumConfigurationInput instantaneous;
+	private @Nullable AssetInstantaneousDatumConfigurationInput instantaneous;
 
 	@Valid
-	private AssetEnergyDatumConfigurationInput energy;
+	private @Nullable AssetEnergyDatumConfigurationInput energy;
 
+	@SuppressWarnings("NullAway")
 	@Override
 	public AssetConfiguration toEntity(UserLongCompositePK id) {
-		AssetConfiguration conf = new AssetConfiguration(requireNonNullArgument(id, "id"), now());
+		AssetConfiguration conf = new AssetConfiguration(requireNonNullArgument(id, "id"), now(),
+				getName(), capacityGroupId, identifier, audience, nodeId, sourceId, category);
 		populateConfiguration(conf);
 		return conf;
 	}
 
+	@SuppressWarnings("NullAway")
 	@Override
 	protected void populateConfiguration(AssetConfiguration conf) {
 		super.populateConfiguration(conf);
@@ -104,7 +109,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 * @return the ID of the {@link CapacityGroupConfiguration} associated with
 	 *         this entity
 	 */
-	public Long getCapacityGroupId() {
+	public final @Nullable Long getCapacityGroupId() {
 		return capacityGroupId;
 	}
 
@@ -114,7 +119,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 * @param capacityGroupId
 	 *        the ID of the capacity group to set
 	 */
-	public void setCapacityGroupId(Long capacityGroupId) {
+	public final void setCapacityGroupId(@Nullable Long capacityGroupId) {
 		this.capacityGroupId = capacityGroupId;
 	}
 
@@ -123,7 +128,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 *
 	 * @return the identifier
 	 */
-	public String getIdentifier() {
+	public final @Nullable String getIdentifier() {
 		return identifier;
 	}
 
@@ -133,7 +138,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 * @param identifier
 	 *        the identifier to set
 	 */
-	public void setIdentifier(String identifier) {
+	public final void setIdentifier(@Nullable String identifier) {
 		this.identifier = identifier;
 	}
 
@@ -142,7 +147,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 *
 	 * @return the audience
 	 */
-	public OscpRole getAudience() {
+	public final @Nullable OscpRole getAudience() {
 		return audience;
 	}
 
@@ -152,10 +157,10 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 * @param audience
 	 *        the audience to set
 	 * @throws IllegalArgumentException
-	 *         if {@code audience} is {@literal null} or not supported
+	 *         if {@code audience} is {@code null} or not supported
 	 */
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
-	public void setAudience(OscpRole audience) {
+	public final void setAudience(@Nullable OscpRole audience) {
 		switch (requireNonNullArgument(audience, "audience")) {
 			case CapacityProvider:
 			case CapacityOptimizer:
@@ -172,7 +177,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 *
 	 * @return the nodeId the node ID
 	 */
-	public Long getNodeId() {
+	public final @Nullable Long getNodeId() {
 		return nodeId;
 	}
 
@@ -182,7 +187,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(@Nullable Long nodeId) {
 		this.nodeId = nodeId;
 	}
 
@@ -191,7 +196,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 *
 	 * @return the source ID
 	 */
-	public String getSourceId() {
+	public final @Nullable String getSourceId() {
 		return sourceId;
 	}
 
@@ -201,7 +206,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 * @param sourceId
 	 *        the source ID to set
 	 */
-	public void setSourceId(String sourceId) {
+	public final void setSourceId(@Nullable String sourceId) {
 		this.sourceId = sourceId;
 	}
 
@@ -210,7 +215,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 *
 	 * @return the category
 	 */
-	public AssetCategory getCategory() {
+	public final @Nullable AssetCategory getCategory() {
 		return category;
 	}
 
@@ -220,7 +225,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 * @param category
 	 *        the category to set
 	 */
-	public void setCategory(AssetCategory category) {
+	public final void setCategory(@Nullable AssetCategory category) {
 		this.category = category;
 	}
 
@@ -229,7 +234,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 *
 	 * @return the phase
 	 */
-	public Phase getPhase() {
+	public final @Nullable Phase getPhase() {
 		return phase;
 	}
 
@@ -239,7 +244,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 * @param phase
 	 *        the phase to set
 	 */
-	public void setPhase(Phase phase) {
+	public final void setPhase(@Nullable Phase phase) {
 		this.phase = phase;
 	}
 
@@ -248,7 +253,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 *
 	 * @return the configuration
 	 */
-	public AssetInstantaneousDatumConfigurationInput getInstantaneous() {
+	public final @Nullable AssetInstantaneousDatumConfigurationInput getInstantaneous() {
 		return instantaneous;
 	}
 
@@ -258,7 +263,8 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 * @param instantaneous
 	 *        the configuration to set
 	 */
-	public void setInstantaneous(AssetInstantaneousDatumConfigurationInput instantaneous) {
+	public final void setInstantaneous(
+			@Nullable AssetInstantaneousDatumConfigurationInput instantaneous) {
 		this.instantaneous = instantaneous;
 	}
 
@@ -267,7 +273,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 *
 	 * @return the configuration
 	 */
-	public AssetEnergyDatumConfigurationInput getEnergy() {
+	public final @Nullable AssetEnergyDatumConfigurationInput getEnergy() {
 		return energy;
 	}
 
@@ -277,7 +283,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 * @param energy
 	 *        the configuration to set
 	 */
-	public void setEnergy(AssetEnergyDatumConfigurationInput energy) {
+	public final void setEnergy(@Nullable AssetEnergyDatumConfigurationInput energy) {
 		this.energy = energy;
 	}
 

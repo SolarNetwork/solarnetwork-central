@@ -65,7 +65,7 @@ public final class SelectStaleFluxDatum implements PreparedStatementCreator, Sql
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectStaleFluxDatum(DatumStreamCriteria filter) {
 		this(filter, false);
@@ -79,7 +79,7 @@ public final class SelectStaleFluxDatum implements PreparedStatementCreator, Sql
 	 * @param forUpdate
 	 *        {@literal true} to acquire an exclusive lock on the results
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@code null}
 	 */
 	public SelectStaleFluxDatum(DatumStreamCriteria filter, boolean forUpdate) {
 		super();

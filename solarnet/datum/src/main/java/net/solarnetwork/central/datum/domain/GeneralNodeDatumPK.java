@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.domain;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -40,13 +41,6 @@ public class GeneralNodeDatumPK extends BasicNodeSourceDatePK
 	private static final long serialVersionUID = 2663897681819661032L;
 
 	/**
-	 * Default constructor.
-	 */
-	public GeneralNodeDatumPK() {
-		super();
-	}
-
-	/**
 	 * Constructor.
 	 *
 	 * @param nodeId
@@ -55,6 +49,8 @@ public class GeneralNodeDatumPK extends BasicNodeSourceDatePK
 	 *        the creation date
 	 * @param sourceId
 	 *        the source ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 * @since 1.3
 	 */
 	public GeneralNodeDatumPK(Long nodeId, Instant created, String sourceId) {
@@ -79,25 +75,25 @@ public class GeneralNodeDatumPK extends BasicNodeSourceDatePK
 	 * <li>created</li>
 	 * </ol>
 	 *
-	 * {@literal null} values will be sorted before non-{@literal null} values.
+	 * {@code null} values will be sorted before non-{@code null} values.
 	 */
 	@Override
-	public int compareTo(GeneralNodeDatumPK o) {
+	public int compareTo(@Nullable GeneralNodeDatumPK o) {
 		return super.compareTo(o);
 	}
 
 	@Override
-	public ObjectDatumKind getKind() {
+	public final ObjectDatumKind getKind() {
 		return ObjectDatumKind.Node;
 	}
 
 	@Override
-	public Long getObjectId() {
+	public final Long getObjectId() {
 		return getNodeId();
 	}
 
 	@Override
-	public Instant getTimestamp() {
+	public final Instant getTimestamp() {
 		return getCreated();
 	}
 

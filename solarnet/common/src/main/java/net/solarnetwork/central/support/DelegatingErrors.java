@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
@@ -49,10 +51,12 @@ public class DelegatingErrors implements Errors {
 	 * 
 	 * @param errors
 	 *        the errors to delegate to
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public DelegatingErrors(Errors errors) {
 		super();
-		this.errors = errors;
+		this.errors = requireNonNullArgument(errors, "errors");
 	}
 
 	@Override
@@ -91,22 +95,24 @@ public class DelegatingErrors implements Errors {
 	}
 
 	@Override
-	public void reject(String errorCode, Object[] errorArgs, String defaultMessage) {
+	public void reject(String errorCode, Object @Nullable [] errorArgs,
+			@Nullable String defaultMessage) {
 		errors.reject(errorCode, errorArgs, defaultMessage);
 	}
 
 	@Override
-	public void rejectValue(String field, String errorCode) {
+	public void rejectValue(@Nullable String field, String errorCode) {
 		errors.rejectValue(field, errorCode);
 	}
 
 	@Override
-	public void rejectValue(String field, String errorCode, String defaultMessage) {
+	public void rejectValue(@Nullable String field, String errorCode, String defaultMessage) {
 		errors.rejectValue(field, errorCode, defaultMessage);
 	}
 
 	@Override
-	public void rejectValue(String field, String errorCode, Object[] errorArgs, String defaultMessage) {
+	public void rejectValue(@Nullable String field, String errorCode, Object @Nullable [] errorArgs,
+			@Nullable String defaultMessage) {
 		errors.rejectValue(field, errorCode, errorArgs, defaultMessage);
 	}
 
@@ -146,7 +152,7 @@ public class DelegatingErrors implements Errors {
 	}
 
 	@Override
-	public ObjectError getGlobalError() {
+	public @Nullable ObjectError getGlobalError() {
 		return errors.getGlobalError();
 	}
 
@@ -166,7 +172,7 @@ public class DelegatingErrors implements Errors {
 	}
 
 	@Override
-	public FieldError getFieldError() {
+	public @Nullable FieldError getFieldError() {
 		return errors.getFieldError();
 	}
 
@@ -186,17 +192,17 @@ public class DelegatingErrors implements Errors {
 	}
 
 	@Override
-	public FieldError getFieldError(String field) {
+	public @Nullable FieldError getFieldError(String field) {
 		return errors.getFieldError(field);
 	}
 
 	@Override
-	public Object getFieldValue(String field) {
+	public @Nullable Object getFieldValue(String field) {
 		return errors.getFieldValue(field);
 	}
 
 	@Override
-	public Class<?> getFieldType(String field) {
+	public @Nullable Class<?> getFieldType(String field) {
 		return errors.getFieldType(field);
 	}
 

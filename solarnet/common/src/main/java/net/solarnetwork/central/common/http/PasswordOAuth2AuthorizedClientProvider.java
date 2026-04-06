@@ -19,6 +19,7 @@ package net.solarnetwork.central.common.http;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.oauth2.client.ClientAuthorizationException;
 import org.springframework.security.oauth2.client.OAuth2AuthorizationContext;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
@@ -100,7 +101,7 @@ public class PasswordOAuth2AuthorizedClientProvider implements OAuth2AuthorizedC
 	 *         authorization (or re-authorization) is not supported
 	 */
 	@Override
-	public OAuth2AuthorizedClient authorize(OAuth2AuthorizationContext context) {
+	public @Nullable OAuth2AuthorizedClient authorize(OAuth2AuthorizationContext context) {
 		Assert.notNull(context, "context cannot be null");
 		ClientRegistration clientRegistration = context.getClientRegistration();
 		OAuth2AuthorizedClient authorizedClient = context.getAuthorizedClient();
@@ -143,7 +144,8 @@ public class PasswordOAuth2AuthorizedClientProvider implements OAuth2AuthorizedC
 	}
 
 	private boolean hasTokenExpired(OAuth2Token token) {
-		return this.clock.instant().isAfter(token.getExpiresAt().minus(this.clockSkew));
+		final var expiresAt = token.getExpiresAt();
+		return expiresAt == null || clock.instant().isAfter(expiresAt.minus(this.clockSkew));
 	}
 
 	/**

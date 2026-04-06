@@ -25,11 +25,12 @@ package net.solarnetwork.central.common.dao.jdbc;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.UserEventDao;
@@ -48,7 +49,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link UserEventDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 
@@ -60,7 +61,7 @@ public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument is {@code null}
 	 */
 	public JdbcUserEventDao(JdbcOperations jdbcOps) {
 		super();
@@ -68,14 +69,15 @@ public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 	}
 
 	@Override
-	public void add(UserEvent event) {
+	public UserUuidPK persist(UserEvent event) {
 		final InsertUserEvent sql = new InsertUserEvent(event);
 		jdbcOps.update(sql);
+		return event.id();
 	}
 
 	@Override
 	public FilterResults<UserEvent, UserUuidPK> findFiltered(UserEventFilter filter,
-			List<SortDescriptor> sorts, Long offset, Integer max) {
+			@Nullable List<SortDescriptor> sorts, @Nullable Long offset, @Nullable Integer max) {
 		SelectUserEvent sql = new SelectUserEvent(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, UserEventRowMapper.INSTANCE);
 	}
@@ -93,9 +95,9 @@ public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 		requireNonNullArgument(processor, "processor");
 		final PreparedStatementCreator sql = new SelectUserEvent(filter);
 		final RowMapper<UserEvent> mapper = UserEventRowMapper.INSTANCE;
-		processor.start(null, null, null, Collections.emptyMap()); // TODO: support count total results/offset/max
+		processor.start(null, null, null, Map.of()); // TODO: support count total results/offset/max
 		try {
-			jdbcOps.execute(sql, (PreparedStatementCallback<Void>) ps -> {
+			jdbcOps.execute(sql, (PreparedStatement ps) -> {
 				try (ResultSet rs = ps.executeQuery()) {
 					int row = 0;
 					while ( rs.next() ) {
