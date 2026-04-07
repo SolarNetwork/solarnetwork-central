@@ -75,7 +75,13 @@ public final class ExceptionUtils {
 				if ( !buf.isEmpty() ) {
 					buf.append(" ");
 				}
-				buf.append(msgSrc.getMessage(error, locale));
+				// use default message without localization if available, to work around
+				// https://github.com/spring-projects/spring-framework/issues/36609
+				if ( error.getDefaultMessage() != null && !error.getDefaultMessage().isEmpty() ) {
+					buf.append(error.getDefaultMessage());
+				} else {
+					buf.append(msgSrc.getMessage(error, locale));
+				}
 			}
 			msg = buf.toString();
 		}
