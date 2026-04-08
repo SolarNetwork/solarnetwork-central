@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.datum.event.biz;
 
 import java.util.List;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserLongIdentifiableConfigurationEntity;
 import net.solarnetwork.central.datum.biz.DatumAppEventProducer;
 import net.solarnetwork.central.domain.CompositeKey2;
@@ -76,7 +77,7 @@ public interface UserEventHookBiz {
 	 *        the primary key of the configuration to get
 	 * @return the configuration, or {@code null} if not available
 	 */
-	<T extends UserLongIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
+	<T extends UserLongIdentifiableConfigurationEntity<?>> @Nullable T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id);
 
 	/**

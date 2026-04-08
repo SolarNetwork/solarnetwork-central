@@ -22,12 +22,14 @@
 
 package net.solarnetwork.central.user.datum.event.biz.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.transaction.annotation.Propagation;
@@ -58,9 +60,9 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 
 	private final UserNodeEventHookConfigurationDao nodeEventHookConfigurationDao;
 
-	private List<UserNodeEventHookService> nodeEventHookServices;
-	private List<DatumAppEventProducer> datumEventProducers;
-	private MessageSource messageSource;
+	private @Nullable List<UserNodeEventHookService> nodeEventHookServices;
+	private @Nullable List<DatumAppEventProducer> datumEventProducers;
+	private @Nullable MessageSource messageSource;
 
 	/**
 	 * Constructor.
@@ -72,11 +74,8 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	 */
 	public DaoUserEventHookBiz(UserNodeEventHookConfigurationDao nodeEventHookConfigurationDao) {
 		super();
-		if ( nodeEventHookConfigurationDao == null ) {
-			throw new IllegalArgumentException(
-					"The nodeEventHookConfigurationDao argument must not be null.");
-		}
-		this.nodeEventHookConfigurationDao = nodeEventHookConfigurationDao;
+		this.nodeEventHookConfigurationDao = requireNonNullArgument(nodeEventHookConfigurationDao,
+				"nodeEventHookConfigurationDao");
 	}
 
 	@Override
@@ -164,7 +163,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 		return List.of();
 	}
 
-	private List<SettingSpecifier> settingsForService(String identifier,
+	private List<SettingSpecifier> settingsForService(@Nullable String identifier,
 			Iterable<? extends SettingSpecifierProvider> providers) {
 		if ( identifier != null && providers != null ) {
 			for ( SettingSpecifierProvider provider : providers ) {
@@ -178,7 +177,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 
 	@SuppressWarnings("unchecked")
 	private <T extends UserLongIdentifiableConfigurationEntity<?>> T mergeServiceProperties(T entity) {
-		if ( entity == null || !entity.hasId() || entity.getId().keyComponent2() == null ) {
+		if ( entity == null || !entity.hasId() || entity.id().keyComponent2() == null ) {
 			return entity;
 		}
 		Map<String, ?> serviceProps = entity.getServiceProperties();
@@ -186,7 +185,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 			return entity;
 		}
 		UserRelatedIdentifiableConfigurationEntity<?> existing = configurationForUser(entity.getUserId(),
-				entity.getClass(), entity.getId().keyComponent2());
+				entity.getClass(), entity.id().keyComponent2());
 		if ( existing == null ) {
 			return entity;
 		}
@@ -251,7 +250,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	 * @return the service collection
 	 * @since 1.1
 	 */
-	public List<UserNodeEventHookService> getNodeEventHookServices() {
+	public final @Nullable List<UserNodeEventHookService> getNodeEventHookServices() {
 		return nodeEventHookServices;
 	}
 
@@ -262,7 +261,8 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	 *        the service collection to set
 	 * @since 1.1
 	 */
-	public void setNodeEventHookServices(List<UserNodeEventHookService> nodeEventHookServices) {
+	public final void setNodeEventHookServices(
+			@Nullable List<UserNodeEventHookService> nodeEventHookServices) {
 		this.nodeEventHookServices = nodeEventHookServices;
 	}
 
@@ -272,7 +272,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	 * @return the collection
 	 * @since 1.1
 	 */
-	public List<DatumAppEventProducer> getDatumEventProducers() {
+	public final @Nullable List<DatumAppEventProducer> getDatumEventProducers() {
 		return datumEventProducers;
 	}
 
@@ -283,7 +283,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	 *        the collection to set
 	 * @since 1.1
 	 */
-	public void setDatumEventProducers(List<DatumAppEventProducer> datumEventProducers) {
+	public final void setDatumEventProducers(@Nullable List<DatumAppEventProducer> datumEventProducers) {
 		this.datumEventProducers = datumEventProducers;
 	}
 
@@ -293,7 +293,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	 * @return the message source
 	 * @since 1.1
 	 */
-	public MessageSource getMessageSource() {
+	public final @Nullable MessageSource getMessageSource() {
 		return messageSource;
 	}
 
@@ -304,7 +304,8 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	 *        the message source
 	 * @since 1.1
 	 */
-	public void setMessageSource(MessageSource messageSource) {
+	public final void setMessageSource(@Nullable MessageSource messageSource) {
 		this.messageSource = messageSource;
 	}
+
 }
