@@ -21,7 +21,7 @@
  */
 
 /**
- * SolarNetwork user event domain.
+ * SolarNetwork user datum event domain.
  */
 
 @NullMarked
