@@ -20,13 +20,13 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.datum.event.dao.jobs.test;
+package net.solarnetwork.central.user.datum.event.jobs.test;
 
 import static java.time.Instant.now;
 import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
-import static net.solarnetwork.central.user.datum.event.dao.jobs.UserNodeEventTaskProcessorJob.DEFAULT_TOPIC;
+import static net.solarnetwork.central.user.datum.event.jobs.UserNodeEventTaskProcessorJob.DEFAULT_TOPIC;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -59,11 +59,11 @@ import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.support.JCacheFactoryBean;
 import net.solarnetwork.central.user.datum.event.biz.UserNodeEventHookService;
 import net.solarnetwork.central.user.datum.event.dao.UserNodeEventTaskDao;
-import net.solarnetwork.central.user.datum.event.dao.jobs.UserNodeEventTaskProcessorJob;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEvent;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEventTask;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEventTaskState;
+import net.solarnetwork.central.user.datum.event.jobs.UserNodeEventTaskProcessorJob;
 
 /**
  * Test cases for the {@link UserNodeEventTaskProcessorJob} class.
@@ -121,7 +121,7 @@ public class UserNodeEventTaskProcessorJobTests {
 	public static CacheManager createCacheManager() {
 		try {
 			File path = Files
-					.createTempDirectory("net.solarnetwork.central.user.datum.event.dao.jobs.test")
+					.createTempDirectory("net.solarnetwork.central.user.datum.event.jobs.test")
 					.toFile();
 			path.deleteOnExit();
 			EhcacheCachingProvider cachingProvider = (EhcacheCachingProvider) Caching

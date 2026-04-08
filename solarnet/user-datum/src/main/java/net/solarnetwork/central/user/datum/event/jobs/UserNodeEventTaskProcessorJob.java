@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.datum.event.dao.jobs;
+package net.solarnetwork.central.user.datum.event.jobs;
 
 import static java.lang.String.format;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -32,6 +32,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.RepeatableTaskException;
@@ -63,7 +64,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 	/** The default {@code maximumClaimCount} property value. */
 	public static final int DEFAULT_MAX_CLAIM_COUNT = 1000;
 
-	private final TransactionTemplate transactionTemplate;
+	private final @Nullable TransactionTemplate transactionTemplate;
 	private final UserNodeEventTaskDao taskDao;
 	private final List<UserNodeEventHookService> hookServices;
 	private String topic = DEFAULT_TOPIC;
@@ -90,7 +91,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 		this.hookServices = requireNonNullArgument(hookServices, "hookServices");
 	}
 
-	private UserNodeEventHookService resolveService(String serviceId) {
+	private @Nullable UserNodeEventHookService resolveService(@Nullable String serviceId) {
 		UserNodeEventHookService result = null;
 		if ( serviceId != null ) {
 			for ( UserNodeEventHookService service : hookServices ) {
@@ -158,7 +159,11 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 		boolean retry = false;
 		try {
 			final UserNodeEventHookConfiguration config = event.getConfig();
-			final String serviceId = (config != null ? config.getServiceIdentifier() : null);
+			if ( config == null ) {
+				throw new UnsupportedOperationException(
+						format("Event %s configuration is not available", event.getId()));
+			}
+			final String serviceId = config.getServiceIdentifier();
 			final UserNodeEventHookService service = resolveService(serviceId);
 			if ( service == null ) {
 				throw new UnsupportedOperationException(
