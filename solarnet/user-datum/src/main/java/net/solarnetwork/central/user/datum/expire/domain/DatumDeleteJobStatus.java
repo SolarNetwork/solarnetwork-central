@@ -135,6 +135,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 *
 	 * @return a message
 	 */
+	@Nullable
 	String getMessage();
 
 	/**

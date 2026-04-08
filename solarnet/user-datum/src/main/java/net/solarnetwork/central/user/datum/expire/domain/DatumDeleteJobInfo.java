@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.datum.expire.domain;
 
+import static net.solarnetwork.central.domain.EntityConstants.UNASSIGNED_UUID_ID;
 import static net.solarnetwork.util.ObjectUtils.nonnull;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
@@ -112,9 +113,9 @@ public class DatumDeleteJobInfo
 		}
 	}
 
-	public final @Nullable String getJobId() {
-		UserUuidPK id = getId();
-		return (id != null && id.getId() != null ? id.getId().toString() : null);
+	public final String getJobId() {
+		var id = id().getId();
+		return (id != null ? id : UNASSIGNED_UUID_ID).toString();
 	}
 
 	public final void setJobStateKey(char key) {

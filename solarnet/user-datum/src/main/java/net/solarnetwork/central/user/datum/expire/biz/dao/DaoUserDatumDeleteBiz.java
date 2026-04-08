@@ -22,8 +22,11 @@
 
 package net.solarnetwork.central.user.datum.expire.biz.dao;
 
+import static java.time.Instant.now;
 import static java.util.Arrays.stream;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.criteriaFromFilter;
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -46,6 +49,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -100,13 +104,13 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	private final ConcurrentMap<UserUuidPK, DatumDeleteTask> taskMap = new ConcurrentHashMap<>(16, 0.9f,
 			1);
 
-	private TaskScheduler scheduler;
+	private @Nullable TaskScheduler scheduler;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
-	private AppEventPublisher eventPublisher;
-	private Duration deleteBatchDuration = DEFAULT_DELETE_BATCH_DURATION;
+	private @Nullable AppEventPublisher eventPublisher;
+	private @Nullable Duration deleteBatchDuration = DEFAULT_DELETE_BATCH_DURATION;
 	private int deleteDatumByIdMaxCount = DEFAULT_DELETE_DATUM_BY_ID_MAX_COUNT;
 
-	private ScheduledFuture<?> taskPurgerTask = null;
+	private @Nullable ScheduledFuture<?> taskPurgerTask = null;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -121,14 +125,16 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 *        the datum DAO to use
 	 * @param jobInfoDao
 	 *        the job DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserDatumDeleteBiz(AsyncTaskExecutor executor, UserNodeDao userNodeDao,
 			DatumMaintenanceDao datumDao, UserDatumDeleteJobInfoDao jobInfoDao) {
 		super();
-		this.executor = executor;
-		this.userNodeDao = userNodeDao;
-		this.datumDao = datumDao;
-		this.jobInfoDao = jobInfoDao;
+		this.executor = requireNonNullArgument(executor, "executor");
+		this.userNodeDao = requireNonNullArgument(userNodeDao, "userNodeDao");
+		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.jobInfoDao = requireNonNullArgument(jobInfoDao, "jobInfoDao");
 	}
 
 	/**
@@ -194,12 +200,18 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	public DatumRecordCounts countDatumRecords(GeneralNodeDatumFilter filter) {
 		filter = prepareFilter(filter);
 		if ( filter.getNodeId() == null ) {
-			DatumRecordCounts counts = new DatumRecordCounts();
-			counts.setDate(Instant.now());
+			var counts = new DatumRecordCounts();
+			counts.setDate(now());
 			return counts;
 		}
-		BasicDatumCriteria c = criteriaFromFilter(filter);
-		return DatumUtils.toRecordCounts(datumDao.countDatumRecords(c));
+		BasicDatumCriteria c = nonnull(criteriaFromFilter(filter), "Criteria");
+		var result = DatumUtils.toRecordCounts(datumDao.countDatumRecords(c));
+		if ( result != null ) {
+			return result;
+		}
+		result = new DatumRecordCounts();
+		result.setDate(now());
+		return result;
 	}
 
 	@Override
@@ -210,14 +222,14 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public DatumDeleteJobInfo datumDeleteJobForUser(Long userId, String jobId) {
+	public @Nullable DatumDeleteJobInfo datumDeleteJobForUser(Long userId, String jobId) {
 		return jobInfoDao.get(new UserUuidPK(userId, UUID.fromString(jobId)));
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Collection<DatumDeleteJobInfo> datumDeleteJobsForUser(Long userId,
-			Set<DatumDeleteJobState> states) {
+			@Nullable Set<DatumDeleteJobState> states) {
 		return jobInfoDao.findForUser(userId, states);
 	}
 
@@ -284,7 +296,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		DatumDeleteTask task = new DatumDeleteTask(info);
 		CompletableFuture<DatumDeleteJobInfo> future = new CompletableFuture<>();
 		task.setDelegate(future);
-		DatumDeleteTask already = taskMap.putIfAbsent(info.getId(), task);
+		DatumDeleteTask already = taskMap.putIfAbsent(info.id(), task);
 		if ( already != null && !already.isExecuting() ) {
 			// refresh info in task
 			already.setInfo(info);
@@ -306,8 +318,9 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	private class DatumDeleteTask implements Callable<DatumDeleteJobInfo>, DatumDeleteJobStatus {
 
 		private DatumDeleteJobInfo info;
-		private Future<DatumDeleteJobInfo> delegate;
-		private ExecutorService progressExecutor;
+		private GeneralNodeDatumFilter filter;
+		private @Nullable Future<DatumDeleteJobInfo> delegate;
+		private @Nullable ExecutorService progressExecutor;
 
 		/**
 		 * Construct from a task info.
@@ -319,10 +332,14 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		 *
 		 * @param info
 		 *        the info
+		 * @throws IllegalArgumentException
+		 *         if any argument is {@code null}, or
+		 *         {@code info.getConfiguration()} is {@code null}
 		 */
 		private DatumDeleteTask(DatumDeleteJobInfo info) {
 			super();
-			setInfo(info);
+			this.info = requireNonNullArgument(info, "info");
+			this.filter = requireNonNullArgument(info.getConfiguration(), "info.configuration");
 		}
 
 		private void setDelegate(Future<DatumDeleteJobInfo> delegate) {
@@ -330,7 +347,8 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		}
 
 		private void setInfo(DatumDeleteJobInfo info) {
-			this.info = info;
+			this.info = requireNonNullArgument(info, "info");
+			this.filter = requireNonNullArgument(info.getConfiguration(), "info.configuration");
 		}
 
 		private boolean isExecuting() {
@@ -341,7 +359,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		public DatumDeleteJobInfo call() throws Exception {
 			// update status to indicate we've started
 			info.setPercentComplete(0);
-			info.setStarted(Instant.now());
+			info.setStarted(now());
 			updateTaskStatus(DatumDeleteJobState.Executing);
 
 			try {
@@ -362,25 +380,24 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 				} else {
 					msg.append(root.getMessage());
 				}
-				updateTaskStatus(DatumDeleteJobState.Completed, Boolean.FALSE, msg.toString(),
-						Instant.now());
+				updateTaskStatus(DatumDeleteJobState.Completed, Boolean.FALSE, msg.toString(), now());
 			} finally {
 				if ( info.getJobState() != DatumDeleteJobState.Completed ) {
 					updateTaskStatus(DatumDeleteJobState.Completed);
 				}
 			}
-			return jobInfoDao.get(info.getId());
+			return nonnull(jobInfoDao.get(info.id()), "Entity");
 		}
 
 		private void updateTaskStatus(DatumDeleteJobState state) {
 			updateTaskStatus(state, null, null, null);
 		}
 
-		private void updateTaskStatus(DatumDeleteJobState state, Boolean success, String message,
-				Instant completionDate) {
+		private void updateTaskStatus(DatumDeleteJobState state, @Nullable Boolean success,
+				@Nullable String message, @Nullable Instant completionDate) {
 			log.info(
 					"Datum delete job {} for user {} transitioned to state {} with success {}; deleted {} datum",
-					info.getId().getId(), info.getUserId(), state, success, getResultCount());
+					info.id().id(), info.getUserId(), state, success, getResultCount());
 			info.setJobState(state);
 			if ( success != null ) {
 				info.setJobSuccess(success);
@@ -402,25 +419,25 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 			if ( progressExecutor == null ) {
 				progressExecutor = Executors.newSingleThreadExecutor();
 			}
-			var _ = progressExecutor
-					.submit(new ProgressUpdater(info.getId(), amountComplete, resultCount));
+			var _ = progressExecutor.submit(new ProgressUpdater(info.id(), amountComplete, resultCount));
 			postJobStatusChangedEvent(this, info);
 		}
 
 		private void doDelete() throws IOException {
 			final String id = info.getJobId();
-			final GeneralNodeDatumFilter f = info.getConfiguration();
-			final String nodeIds = (f.getNodeIds() != null
-					? stream(f.getNodeIds()).map(Object::toString).collect(Collectors.joining(","))
+			final String nodeIds = (filter.getNodeIds() != null
+					? stream(filter.getNodeIds()).map(Object::toString).collect(Collectors.joining(","))
 					: "*");
-			final String sourceIds = (f.getSourceIds() != null ? String.join(",", f.getSourceIds())
+			final String sourceIds = (filter.getSourceIds() != null
+					? String.join(",", filter.getSourceIds())
 					: "*");
 			log.info("Executing user {} datum delete request {}: nodes = {}; sources = {}; {} - {}",
-					f.getUserId(), id, nodeIds, sourceIds, f.getLocalStartDate(), f.getLocalEndDate());
+					info.getUserId(), id, nodeIds, sourceIds, filter.getLocalStartDate(),
+					filter.getLocalEndDate());
 			final long start = System.currentTimeMillis();
 			long result = 0;
-			final LocalDateTime startDate = f.getLocalStartDate();
-			final LocalDateTime endDate = f.getLocalEndDate();
+			final LocalDateTime startDate = filter.getLocalStartDate();
+			final LocalDateTime endDate = filter.getLocalEndDate();
 			final Duration timeBatchDuration = getDeleteBatchDuration();
 			if ( startDate != null && endDate != null && endDate.isAfter(startDate)
 					&& timeBatchDuration != null
@@ -429,7 +446,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 				final long intervalTime = ChronoUnit.MILLIS.between(startDate.toInstant(ZoneOffset.UTC),
 						endDate.toInstant(ZoneOffset.UTC));
 				LocalDateTime currStartDate = startDate;
-				DatumFilterCommand batchFilter = new DatumFilterCommand(f);
+				DatumFilterCommand batchFilter = new DatumFilterCommand(filter);
 				long offsetTime = 0;
 				while ( currStartDate.isBefore(endDate) ) {
 					LocalDateTime currEndDate = currStartDate.plus(timeBatchDuration);
@@ -439,29 +456,30 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 					batchFilter.setLocalStartDate(currStartDate);
 					batchFilter.setLocalEndDate(currEndDate);
 					final long batchStart = System.currentTimeMillis();
-					final long batchResult = datumDao.deleteFiltered(criteriaFromFilter(batchFilter));
+					final long batchResult = datumDao
+							.deleteFiltered(nonnull(criteriaFromFilter(batchFilter), "Criteria"));
 					log.info(
 							"Deleted {} datum in {}s for user {} request {}: nodes = {}; sources = {}; {} - {}",
 							batchResult, (int) ((System.currentTimeMillis() - batchStart) / 1000.0),
-							f.getUserId(), id, nodeIds, sourceIds, currStartDate, currEndDate);
+							filter.getUserId(), id, nodeIds, sourceIds, currStartDate, currEndDate);
 					result += batchResult;
 					offsetTime += timeBatchDuration.toMillis();
 					currStartDate = currStartDate.plus(timeBatchDuration);
 					updateTaskProgress(Math.min((double) offsetTime / intervalTime, 1.0), result);
 				}
 			} else {
-				result = datumDao.deleteFiltered(criteriaFromFilter(f));
+				result = datumDao.deleteFiltered(nonnull(criteriaFromFilter(filter), "Criteria"));
 				info.setPercentComplete(1.0);
 			}
 			info.setResultCount(result);
 			log.info("Deleted {} datum in {}s for user {} request {}: nodes = {}; sources = {}; {} - {}",
-					result, (int) ((System.currentTimeMillis() - start) / 1000.0), f.getUserId(), id,
-					nodeIds, sourceIds, f.getLocalStartDate(), f.getLocalEndDate());
+					result, (int) ((System.currentTimeMillis() - start) / 1000.0), filter.getUserId(),
+					id, nodeIds, sourceIds, filter.getLocalStartDate(), filter.getLocalEndDate());
 		}
 
 		@Override
 		public GeneralNodeDatumFilter getConfiguration() {
-			return info.getConfiguration();
+			return filter;
 		}
 
 		@Override
@@ -476,7 +494,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 		@Override
 		public DatumDeleteJobState getJobState() {
-			return info.getJobState();
+			return (info.getJobState() != null ? info.getJobState() : DatumDeleteJobState.Unknown);
 		}
 
 		@Override
@@ -504,28 +522,39 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 		@Override
 		public boolean cancel(boolean mayInterruptIfRunning) {
-			return delegate.cancel(mayInterruptIfRunning);
+			final var delegate = this.delegate;
+			return (delegate != null ? delegate.cancel(mayInterruptIfRunning) : false);
 		}
 
 		@Override
 		public boolean isCancelled() {
-			return delegate.isCancelled();
+			final var delegate = this.delegate;
+			return (delegate != null ? delegate.isCancelled() : false);
 		}
 
 		@Override
 		public boolean isDone() {
-			return delegate.isDone();
+			final var delegate = this.delegate;
+			return (delegate != null ? delegate.isDone() : false);
 		}
 
 		@Override
 		public DatumDeleteJobInfo get() throws InterruptedException, ExecutionException {
-			return delegate.get();
+			final var delegate = this.delegate;
+			if ( delegate != null ) {
+				return delegate.get();
+			}
+			return info;
 		}
 
 		@Override
 		public DatumDeleteJobInfo get(long timeout, TimeUnit unit)
 				throws InterruptedException, ExecutionException, TimeoutException {
-			return delegate.get(timeout, unit);
+			final var delegate = this.delegate;
+			if ( delegate != null ) {
+				return delegate.get(timeout, unit);
+			}
+			return info;
 		}
 
 		@Override
@@ -534,7 +563,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		}
 
 		@Override
-		public String getMessage() {
+		public @Nullable String getMessage() {
 			return info.getMessage();
 		}
 
@@ -545,10 +574,9 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 		@Override
 		public String toString() {
-			return "DatumDeleteTask{userId=" + getUserId() + ",jobId=" + getJobId() + ",config="
-					+ (info != null ? info.getConfiguration() : null) + ",jobState=" + getJobState()
-					+ ",percentComplete=" + getPercentComplete() + ",completionDate="
-					+ getCompletionDate() + "}";
+			return "DatumDeleteTask{userId=" + getUserId() + ",jobId=" + getJobId() + ",config=" + filter
+					+ ",jobState=" + getJobState() + ",percentComplete=" + getPercentComplete()
+					+ ",completionDate=" + getCompletionDate() + "}";
 		}
 
 	}
@@ -589,7 +617,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 *
 	 * @return the service
 	 */
-	public AppEventPublisher getEventPublisher() {
+	public @Nullable AppEventPublisher getEventPublisher() {
 		return eventPublisher;
 	}
 
@@ -599,7 +627,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 * @param eventPublisher
 	 *        the event publisher service
 	 */
-	public void setEventPublisher(AppEventPublisher eventPublisher) {
+	public void setEventPublisher(@Nullable AppEventPublisher eventPublisher) {
 		this.eventPublisher = eventPublisher;
 	}
 
@@ -609,7 +637,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 * @param scheduler
 	 *        the scheduler to use
 	 */
-	public void setScheduler(TaskScheduler scheduler) {
+	public void setScheduler(@Nullable TaskScheduler scheduler) {
 		this.scheduler = scheduler;
 	}
 
@@ -619,7 +647,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 * @return the duration, or {@code null} to not perform time-based delete
 	 *         batching; defaults to {@link #DEFAULT_DELETE_BATCH_DURATION}
 	 */
-	public Duration getDeleteBatchDuration() {
+	public @Nullable Duration getDeleteBatchDuration() {
 		return deleteBatchDuration;
 	}
 
@@ -630,7 +658,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 *        the duration to set, or {@code null} to not perform time-based
 	 *        delete batching
 	 */
-	public void setDeleteBatchDuration(Duration deleteBatchDuration) {
+	public void setDeleteBatchDuration(@Nullable Duration deleteBatchDuration) {
 		this.deleteBatchDuration = deleteBatchDuration;
 	}
 
