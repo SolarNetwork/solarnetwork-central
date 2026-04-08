@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -94,17 +95,17 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	 */
 	public MyBatisUserDatumDeleteJobInfoDao() {
 		super(DatumDeleteJobInfo.class, UserUuidPK.class);
-		setQueryForUser(QUERY_FOR_USER);
-		setQueryForClaimQueuedJob(QUERY_FOR_CLAIMING_JOB);
-		setUpdateDeleteCompletedJobs(UPDATE_PURGE_COMPLETED);
-		setUpdateJobState(UPDATE_JOB_STATE);
-		setUpdateJobConfiguration(UPDATE_JOB_CONFIG);
-		setUpdateJobProgress(UPDATE_JOB_PROGRESS);
-		setUpdateDeleteForUser(UPDATE_DELETE_FOR_USER);
+		this.queryForUser = QUERY_FOR_USER;
+		this.queryForClaimQueuedJob = QUERY_FOR_CLAIMING_JOB;
+		this.updateDeleteCompletedJobs = UPDATE_PURGE_COMPLETED;
+		this.updateJobState = UPDATE_JOB_STATE;
+		this.updateJobConfiguration = UPDATE_JOB_CONFIG;
+		this.updateJobProgress = UPDATE_JOB_PROGRESS;
+		this.updateDeleteForUser = UPDATE_DELETE_FOR_USER;
 	}
 
 	@Override
-	public DatumDeleteJobInfo claimQueuedJob() {
+	public @Nullable DatumDeleteJobInfo claimQueuedJob() {
 		return selectFirst(queryForClaimQueuedJob, null);
 	}
 
@@ -119,7 +120,7 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 
 	@Override
 	public boolean updateJobState(UserUuidPK id, DatumDeleteJobState desiredState,
-			Set<DatumDeleteJobState> expectedStates) {
+			@Nullable Set<DatumDeleteJobState> expectedStates) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", id);
 		params.put("desiredState", desiredState.getKey());
@@ -147,17 +148,19 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	}
 
 	@Override
-	public boolean updateJobProgress(UserUuidPK id, double percentComplete, Long loadedCount) {
+	public boolean updateJobProgress(UserUuidPK id, double percentComplete, @Nullable Long loadedCount) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", id);
 		params.put("progress", percentComplete);
-		params.put("loadedCount", loadedCount);
+		if ( loadedCount != null ) {
+			params.put("loadedCount", loadedCount);
+		}
 		int count = getSqlSession().update(updateJobProgress, params);
 		return (count > 0);
 	}
 
 	@Override
-	public List<DatumDeleteJobInfo> findForUser(Long userId, Set<DatumDeleteJobState> states) {
+	public List<DatumDeleteJobInfo> findForUser(Long userId, @Nullable Set<DatumDeleteJobState> states) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("userId", userId);
 		if ( states != null && !states.isEmpty() ) {
@@ -168,7 +171,8 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	}
 
 	@Override
-	public int deleteForUser(Long userId, Set<UUID> jobIds, Set<DatumDeleteJobState> states) {
+	public int deleteForUser(Long userId, @Nullable Set<UUID> jobIds,
+			@Nullable Set<DatumDeleteJobState> states) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("userId", userId);
 		if ( jobIds != null && !jobIds.isEmpty() ) {
@@ -189,7 +193,8 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	 *        the query name; defaults to {@link #QUERY_FOR_CLAIMING_JOB}
 	 */
 	public void setQueryForClaimQueuedJob(String queryForClaimQueuedJob) {
-		this.queryForClaimQueuedJob = queryForClaimQueuedJob;
+		this.queryForClaimQueuedJob = (queryForClaimQueuedJob != null ? queryForClaimQueuedJob
+				: QUERY_FOR_CLAIMING_JOB);
 	}
 
 	/**
@@ -200,7 +205,8 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	 *        the statement name; defaults to {@link #UPDATE_PURGE_COMPLETED}
 	 */
 	public void setUpdateDeleteCompletedJobs(String updateDeleteCompletedJobs) {
-		this.updateDeleteCompletedJobs = updateDeleteCompletedJobs;
+		this.updateDeleteCompletedJobs = (updateDeleteCompletedJobs != null ? updateDeleteCompletedJobs
+				: UPDATE_PURGE_COMPLETED);
 	}
 
 	/**
@@ -212,7 +218,7 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	 *        the statement name; defaults to {@link #UPDATE_JOB_STATE}
 	 */
 	public void setUpdateJobState(String updateJobState) {
-		this.updateJobState = updateJobState;
+		this.updateJobState = (updateJobState != null ? updateJobState : UPDATE_JOB_STATE);
 	}
 
 	/**
@@ -223,7 +229,7 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	 *        the statement name; defaults to {@link #QUERY_FOR_USER}
 	 */
 	public void setQueryForUser(String queryForUser) {
-		this.queryForUser = queryForUser;
+		this.queryForUser = (queryForUser != null ? queryForUser : QUERY_FOR_USER);
 	}
 
 	/**
@@ -235,7 +241,8 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	 *        the statement name; defaults to {@link #UPDATE_JOB_CONFIG}
 	 */
 	public void setUpdateJobConfiguration(String updateJobConfiguration) {
-		this.updateJobConfiguration = updateJobConfiguration;
+		this.updateJobConfiguration = (updateJobConfiguration != null ? updateJobConfiguration
+				: UPDATE_JOB_CONFIG);
 	}
 
 	/**
@@ -246,7 +253,7 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	 *        the statement name; defaults to {@link #UPDATE_JOB_PROGRESS}
 	 */
 	public void setUpdateJobProgress(String updateJobProgress) {
-		this.updateJobProgress = updateJobProgress;
+		this.updateJobProgress = (updateJobProgress != null ? updateJobProgress : UPDATE_JOB_PROGRESS);
 	}
 
 	/**
@@ -257,6 +264,7 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	 *        the statement name; defaults to {@link #UPDATE_DELETE_FOR_USER}
 	 */
 	public void setUpdateDeleteForUser(String updateDeleteForUser) {
-		this.updateDeleteForUser = updateDeleteForUser;
+		this.updateDeleteForUser = (updateDeleteForUser != null ? updateDeleteForUser
+				: UPDATE_DELETE_FOR_USER);
 	}
 }
