@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.datum.event.aop;
 
-import static net.solarnetwork.util.ObjectUtils.nullable;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
@@ -75,7 +74,7 @@ public class UserEventSecurityAspect extends AuthorizationSupport {
 	@Before(value = "saveConfiguration(config) || deleteConfiguration(config) || actionForConfiguration(config)",
 			argNames = "config")
 	public void saveConfigurationCheck(UserIdRelated config) {
-		final Long userId = nullable(config != null ? config::getUserId : null);
+		final Long userId = config != null ? config.getUserId() : null;
 		requireUserWriteAccess(userId);
 	}
 
