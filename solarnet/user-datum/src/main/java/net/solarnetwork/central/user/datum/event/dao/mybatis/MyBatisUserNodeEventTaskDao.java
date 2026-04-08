@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.datum.event.dao.mybatis;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisDao;
 import net.solarnetwork.central.user.datum.event.dao.UserNodeEventTaskDao;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEvent;
@@ -40,7 +41,7 @@ import net.solarnetwork.central.user.datum.event.domain.UserNodeEventTaskState;
 public class MyBatisUserNodeEventTaskDao extends BaseMyBatisDao implements UserNodeEventTaskDao {
 
 	@Override
-	public UserNodeEvent claimQueuedTask(String topic) {
+	public @Nullable UserNodeEvent claimQueuedTask(String topic) {
 		return selectFirst("claim-queued-user-node-event-task", topic);
 	}
 

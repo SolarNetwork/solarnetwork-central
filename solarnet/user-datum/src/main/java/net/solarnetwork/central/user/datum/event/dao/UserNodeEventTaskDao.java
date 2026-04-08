@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.datum.event.dao;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEvent;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEventTask;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEventTaskState;
@@ -49,6 +50,7 @@ public interface UserNodeEventTaskDao {
 	 * @return the claimed task and configuration, or {@code null} if no task is
 	 *         available
 	 */
+	@Nullable
 	UserNodeEvent claimQueuedTask(String topic);
 
 	/**
