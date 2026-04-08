@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.datum.flux.biz;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.datum.flux.dao.UserFluxAggregatePublishConfigurationFilter;
 import net.solarnetwork.central.user.datum.flux.domain.UserFluxAggregatePublishConfiguration;
@@ -111,6 +112,7 @@ public interface UserFluxBiz {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
+	@Nullable
 	UserFluxAggregatePublishConfiguration aggregatePublishConfigurationForUser(Long userId,
 			Long configurationId);
 

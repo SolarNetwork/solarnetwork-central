@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.datum.flux.biz.impl;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Clock;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -134,8 +135,8 @@ public class DaoUserFluxBiz implements UserFluxBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public UserFluxAggregatePublishConfiguration aggregatePublishConfigurationForUser(Long userId,
-			Long configurationId) {
+	public @Nullable UserFluxAggregatePublishConfiguration aggregatePublishConfigurationForUser(
+			Long userId, Long configurationId) {
 		return aggPublishConfDao.get(new UserLongCompositePK(requireNonNullArgument(userId, "userId"),
 				requireNonNullArgument(configurationId, "configurationId")));
 	}
