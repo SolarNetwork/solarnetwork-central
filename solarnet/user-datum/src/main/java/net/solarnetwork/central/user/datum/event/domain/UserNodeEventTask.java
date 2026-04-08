@@ -82,7 +82,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 * @return the message data, never {@code null}
 	 * @since 1.1
 	 */
-	public Map<String, Object> asMessageData(String topic) {
+	public Map<String, Object> asMessageData(@Nullable String topic) {
 		Map<String, Object> msg = new LinkedHashMap<>(8);
 		if ( topic != null ) {
 			msg.put("topic", topic);

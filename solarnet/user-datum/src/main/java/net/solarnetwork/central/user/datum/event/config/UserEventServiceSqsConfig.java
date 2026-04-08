@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.datum.event.config;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,8 +37,8 @@ import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.central.user.datum.event.biz.UserNodeEventHookService;
 import net.solarnetwork.central.user.datum.event.dest.sqs.SqsDestination;
 import net.solarnetwork.central.user.datum.event.dest.sqs.SqsDestinationProperties;
-import net.solarnetwork.central.user.datum.event.dest.sqs.SqsStats;
 import net.solarnetwork.central.user.datum.event.dest.sqs.SqsUserNodeEventHookService;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * SQS user node event hook configuration.
@@ -81,7 +82,8 @@ public class UserEventServiceSqsConfig {
 	@Bean
 	public UserNodeEventHookService sqsUserNodeEventHookService(
 			@Qualifier(SQS_DESTINATION_CACHE) Cache<String, SqsDestination> sqsDestinationCache) {
-		SqsStats stats = new SqsStats("SqsNodeEventHook", statFrequency);
+		var stats = new StatTracker("SqsNodeEventHook", null,
+				LoggerFactory.getLogger(SqsUserNodeEventHookService.class), statFrequency);
 		SqsUserNodeEventHookService service = new SqsUserNodeEventHookService(stats);
 		service.setDestinationCache(sqsDestinationCache);
 

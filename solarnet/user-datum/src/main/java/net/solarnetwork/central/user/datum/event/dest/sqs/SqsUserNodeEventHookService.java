@@ -22,9 +22,6 @@
 
 package net.solarnetwork.central.user.datum.event.dest.sqs;
 
-import static net.solarnetwork.central.user.datum.event.dest.sqs.SqsStats.BasicCount.NodeEventsPublishFailed;
-import static net.solarnetwork.central.user.datum.event.dest.sqs.SqsStats.BasicCount.NodeEventsPublished;
-import static net.solarnetwork.central.user.datum.event.dest.sqs.SqsStats.BasicCount.NodeEventsReceived;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -33,6 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.cache.Cache;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.user.datum.event.biz.UserNodeEventHookService;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEventHookConfiguration;
@@ -40,6 +39,7 @@ import net.solarnetwork.central.user.datum.event.domain.UserNodeEventTask;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import net.solarnetwork.util.StatTracker;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -52,13 +52,13 @@ import software.amazon.awssdk.services.sqs.model.QueueDoesNotExistException;
  * SQS implementation of {@link UserNodeEventHookService}.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class SqsUserNodeEventHookService extends BaseSettingsSpecifierLocalizedServiceInfoProvider
 		implements UserNodeEventHookService {
 
-	private final SqsStats sqsStats;
-	private Cache<String, SqsDestination> destinationCache;
+	private final StatTracker sqsStats;
+	private @Nullable Cache<String, SqsDestination> destinationCache;
 
 	private final ConcurrentMap<String, SqsDestination> cacheLock = new ConcurrentHashMap<>(30, 0.9f, 4);
 
@@ -66,7 +66,8 @@ public class SqsUserNodeEventHookService extends BaseSettingsSpecifierLocalizedS
 	 * Constructor.
 	 */
 	public SqsUserNodeEventHookService() {
-		this(new SqsStats("SqsUserNodeEventHook", 200));
+		this(new StatTracker("SqsUserNodeEventHook", null,
+				LoggerFactory.getLogger(SqsUserNodeEventHookService.class), 200));
 	}
 
 	/**
@@ -77,7 +78,7 @@ public class SqsUserNodeEventHookService extends BaseSettingsSpecifierLocalizedS
 	 * @throws IllegalArgumentException
 	 *         if {@code stats} is {@code null}
 	 */
-	public SqsUserNodeEventHookService(SqsStats stats) {
+	public SqsUserNodeEventHookService(StatTracker stats) {
 		super("net.solarnetwork.central.user.datum.event.dest.sqs.SqsUserNodeEventHookService");
 		if ( stats == null ) {
 			throw new IllegalArgumentException("The stats argument must not be null.");
@@ -106,7 +107,7 @@ public class SqsUserNodeEventHookService extends BaseSettingsSpecifierLocalizedS
 		log.debug("Got user node event task {} for user {} hook {} with props {}", event.getId(),
 				event.getUserId(), event.getHookId(), event.getTaskProperties());
 
-		sqsStats.incrementAndGet(NodeEventsReceived);
+		sqsStats.increment(SqsStats.NodeEventsReceived);
 		try {
 			SqsDestinationProperties props = SqsDestinationProperties
 					.ofServiceProperties(config.getServiceProperties());
@@ -118,11 +119,11 @@ public class SqsUserNodeEventHookService extends BaseSettingsSpecifierLocalizedS
 			Map<String, Object> msg = event.asMessageData(config.getTopic());
 			dest.sendJsonMessage(msg);
 
-			sqsStats.incrementAndGet(NodeEventsPublished);
+			sqsStats.increment(SqsStats.NodeEventsPublished);
 
 			return true;
 		} catch ( RuntimeException e ) {
-			sqsStats.incrementAndGet(NodeEventsPublishFailed);
+			sqsStats.increment(SqsStats.NodeEventsPublishFailed);
 			throw e;
 		}
 	}
@@ -192,7 +193,7 @@ public class SqsUserNodeEventHookService extends BaseSettingsSpecifierLocalizedS
 	 *
 	 * @return the cache, or {@code null}
 	 */
-	public Cache<String, SqsDestination> getDestinationCache() {
+	public final @Nullable Cache<String, SqsDestination> getDestinationCache() {
 		return destinationCache;
 	}
 
@@ -202,7 +203,7 @@ public class SqsUserNodeEventHookService extends BaseSettingsSpecifierLocalizedS
 	 * @param destinationCache
 	 *        the cache to set
 	 */
-	public void setDestinationCache(Cache<String, SqsDestination> destinationCache) {
+	public final void setDestinationCache(@Nullable Cache<String, SqsDestination> destinationCache) {
 		this.destinationCache = destinationCache;
 	}
 

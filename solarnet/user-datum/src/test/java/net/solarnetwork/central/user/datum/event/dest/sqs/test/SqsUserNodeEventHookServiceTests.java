@@ -42,14 +42,15 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.user.datum.event.dest.sqs.SqsDestinationProperties;
-import net.solarnetwork.central.user.datum.event.dest.sqs.SqsStats;
 import net.solarnetwork.central.user.datum.event.dest.sqs.SqsUserNodeEventHookService;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEventTask;
 import net.solarnetwork.codec.jackson.JsonUtils;
 import net.solarnetwork.settings.KeyedSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.util.StatTracker;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -115,7 +116,8 @@ public class SqsUserNodeEventHookServiceTests {
 	@Test
 	public void settingSpecifiers() {
 		// given
-		SqsUserNodeEventHookService service = new SqsUserNodeEventHookService(new SqsStats("Test", 1));
+		SqsUserNodeEventHookService service = new SqsUserNodeEventHookService(
+				new StatTracker("Test", null, LoggerFactory.getLogger(getClass()), 1));
 
 		//when
 		List<SettingSpecifier> specs = service.getSettingSpecifiers();
@@ -206,7 +208,8 @@ public class SqsUserNodeEventHookServiceTests {
 	@Test
 	public void publishEvent() {
 		// GIVEN
-		SqsUserNodeEventHookService service = new SqsUserNodeEventHookService(new SqsStats("Test", 1));
+		SqsUserNodeEventHookService service = new SqsUserNodeEventHookService(
+				new StatTracker("Test", null, LoggerFactory.getLogger(getClass()), 1));
 
 		UserNodeEventHookConfiguration config = new UserNodeEventHookConfiguration(1L, 2L, now(), "",
 				"");
