@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.user.datum.flux.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.UserRelatedEntity;
@@ -46,7 +48,7 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 	@Serial
 	private static final long serialVersionUID = -543871871370406533L;
 
-	private Instant modified;
+	private @Nullable Instant modified;
 	private boolean publish;
 	private boolean retain;
 
@@ -61,12 +63,12 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 	 *         if any argument is {@code null}
 	 */
 	public UserFluxDefaultAggregatePublishConfiguration(Long id, Instant created) {
-		super(id, created);
+		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
 	}
 
 	@Override
 	public Long getUserId() {
-		return getId();
+		return id();
 	}
 
 	@Override
@@ -75,7 +77,7 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 	}
 
 	@Override
-	public boolean differsFrom(UserFluxDefaultAggregatePublishConfiguration other) {
+	public boolean differsFrom(@Nullable UserFluxDefaultAggregatePublishConfiguration other) {
 		return !isSameAs(other);
 	}
 
@@ -92,8 +94,8 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
-	public boolean isSameAs(UserFluxDefaultAggregatePublishConfiguration other) {
-		return (this.publish == other.publish && this.retain == other.retain);
+	public boolean isSameAs(@Nullable UserFluxDefaultAggregatePublishConfiguration other) {
+		return (other != null && publish == other.publish && retain == other.retain);
 	}
 
 	/**
@@ -101,7 +103,7 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 	 *
 	 * @return the modified date
 	 */
-	public Instant getModified() {
+	public @Nullable Instant getModified() {
 		return modified;
 	}
 
@@ -111,7 +113,7 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 	 * @param modified
 	 *        the modified date to set
 	 */
-	public void setModified(Instant modified) {
+	public void setModified(@Nullable Instant modified) {
 		this.modified = modified;
 	}
 

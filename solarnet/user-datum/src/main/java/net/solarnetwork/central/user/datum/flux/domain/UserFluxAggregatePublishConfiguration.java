@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.nonnull;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Arrays;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
@@ -47,8 +48,8 @@ public class UserFluxAggregatePublishConfiguration
 	@Serial
 	private static final long serialVersionUID = -2910899403927385582L;
 
-	private Long[] nodeIds;
-	private String[] sourceIds;
+	private Long @Nullable [] nodeIds;
+	private String @Nullable [] sourceIds;
 	private boolean publish;
 	private boolean retain;
 
@@ -85,7 +86,7 @@ public class UserFluxAggregatePublishConfiguration
 
 	@Override
 	public UserFluxAggregatePublishConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new UserFluxAggregatePublishConfiguration(id, getCreated());
+		var copy = new UserFluxAggregatePublishConfiguration(id, created());
 		copyTo(copy);
 		return copy;
 	}
@@ -100,7 +101,7 @@ public class UserFluxAggregatePublishConfiguration
 	}
 
 	@Override
-	public boolean isSameAs(UserFluxAggregatePublishConfiguration other) {
+	public boolean isSameAs(@Nullable UserFluxAggregatePublishConfiguration other) {
 		if ( !super.isSameAs(other) ) {
 			return false;
 		}
@@ -120,9 +121,8 @@ public class UserFluxAggregatePublishConfiguration
 	 * @return the configuration ID
 	 */
 	@JsonGetter("id")
-	public Long getConfigurationId() {
-		final UserLongCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
+	public final Long getConfigurationId() {
+		return id().getEntityId();
 	}
 
 	/**
@@ -130,7 +130,7 @@ public class UserFluxAggregatePublishConfiguration
 	 *
 	 * @return the node IDs, or {@code null} for any node
 	 */
-	public Long[] getNodeIds() {
+	public final Long @Nullable [] getNodeIds() {
 		return nodeIds;
 	}
 
@@ -140,7 +140,7 @@ public class UserFluxAggregatePublishConfiguration
 	 * @param nodeIds
 	 *        the node IDs to set
 	 */
-	public void setNodeIds(Long[] nodeIds) {
+	public final void setNodeIds(Long @Nullable [] nodeIds) {
 		this.nodeIds = nodeIds;
 	}
 
@@ -153,7 +153,7 @@ public class UserFluxAggregatePublishConfiguration
 	 *
 	 * @return the source IDs
 	 */
-	public String[] getSourceIds() {
+	public final String @Nullable [] getSourceIds() {
 		return sourceIds;
 	}
 
@@ -163,12 +163,12 @@ public class UserFluxAggregatePublishConfiguration
 	 * @param sourceIds
 	 *        the source IDs or source ID Ant-style patterns to set
 	 */
-	public void setSourceIds(String[] sourceIds) {
+	public final void setSourceIds(String @Nullable [] sourceIds) {
 		this.sourceIds = sourceIds;
 	}
 
 	@Override
-	public boolean isPublish() {
+	public final boolean isPublish() {
 		return publish;
 	}
 
@@ -178,12 +178,12 @@ public class UserFluxAggregatePublishConfiguration
 	 * @param publish
 	 *        {@code true} to publish messages for matching datum streams
 	 */
-	public void setPublish(boolean publish) {
+	public final void setPublish(boolean publish) {
 		this.publish = publish;
 	}
 
 	@Override
-	public boolean isRetain() {
+	public final boolean isRetain() {
 		return retain;
 	}
 
@@ -193,7 +193,7 @@ public class UserFluxAggregatePublishConfiguration
 	 * @param retain
 	 *        {@code true} to set the retain flag on published messages
 	 */
-	public void setRetain(boolean retain) {
+	public final void setRetain(boolean retain) {
 		this.retain = retain;
 	}
 

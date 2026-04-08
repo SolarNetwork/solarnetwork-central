@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.util.StringUtils;
 
@@ -39,9 +40,9 @@ import net.solarnetwork.util.StringUtils;
  */
 public class UserFluxAggregatePublishConfigurationInput {
 
-	private Long[] nodeIds;
+	private Long @Nullable [] nodeIds;
 
-	private String[] sourceIds;
+	private String @Nullable [] sourceIds;
 
 	private boolean publish;
 
@@ -100,7 +101,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 * 
 	 * @return the node IDs, or {@code null} for any node
 	 */
-	public Long[] getNodeIds() {
+	public final Long @Nullable [] getNodeIds() {
 		return nodeIds;
 	}
 
@@ -110,7 +111,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 * @param nodeIds
 	 *        the node IDs to set
 	 */
-	public void setNodeIds(Long[] nodeIds) {
+	public final void setNodeIds(Long @Nullable [] nodeIds) {
 		this.nodeIds = nodeIds;
 	}
 
@@ -123,7 +124,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 * 
 	 * @return the source IDs
 	 */
-	public String[] getSourceIds() {
+	public final String @Nullable [] getSourceIds() {
 		return sourceIds;
 	}
 
@@ -133,7 +134,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 * @param sourceIds
 	 *        the source IDs or source ID Ant-style patterns to set
 	 */
-	public void setSourceIds(String[] sourceIds) {
+	public final void setSourceIds(String @Nullable [] sourceIds) {
 		this.sourceIds = sourceIds;
 	}
 
@@ -142,7 +143,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 * 
 	 * @return {@code true} to publish messages for matching datum streams
 	 */
-	public boolean isPublish() {
+	public final boolean isPublish() {
 		return publish;
 	}
 
@@ -152,7 +153,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 * @param publish
 	 *        {@code true} to publish messages for matching datum streams
 	 */
-	public void setPublish(boolean publish) {
+	public final void setPublish(boolean publish) {
 		this.publish = publish;
 	}
 
@@ -161,7 +162,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 * 
 	 * @return {@code true} to set the retain flag on published messages
 	 */
-	public boolean isRetain() {
+	public final boolean isRetain() {
 		return retain;
 	}
 
@@ -171,7 +172,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 * @param retain
 	 *        {@code true} to set the retain flag on published messages
 	 */
-	public void setRetain(boolean retain) {
+	public final void setRetain(boolean retain) {
 		this.retain = retain;
 	}
 
@@ -180,7 +181,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 *
 	 * @return the delimited string
 	 */
-	public String getNodeIdsValue() {
+	public final @Nullable String getNodeIdsValue() {
 		return StringUtils.commaDelimitedStringFromCollection(
 				nodeIds != null ? Arrays.asList(nodeIds) : List.of());
 	}
@@ -191,7 +192,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 * @param value
 	 *        the comma-delimited string of node IDs to set
 	 */
-	public void setNodeIdsValue(String value) {
+	public final void setNodeIdsValue(@Nullable String value) {
 		Set<String> vals = StringUtils.commaDelimitedStringToSet(value);
 		Set<Long> nums = null;
 		if ( vals != null ) {
@@ -215,7 +216,7 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 *
 	 * @return the delimited string
 	 */
-	public String getSourceIdsValue() {
+	public final @Nullable String getSourceIdsValue() {
 		return StringUtils.commaDelimitedStringFromCollection(
 				sourceIds != null ? Arrays.asList(sourceIds) : List.of());
 	}
@@ -226,8 +227,9 @@ public class UserFluxAggregatePublishConfigurationInput {
 	 * @param value
 	 *        the comma-delimited string of source IDs to set
 	 */
-	public void setSourceIdsValue(String value) {
+	public final void setSourceIdsValue(@Nullable String value) {
 		Set<String> vals = StringUtils.commaDelimitedStringToSet(value);
 		setSourceIds(vals != null ? vals.toArray(String[]::new) : null);
 	}
+
 }
