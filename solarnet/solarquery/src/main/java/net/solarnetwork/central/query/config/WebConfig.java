@@ -86,7 +86,7 @@ import tools.jackson.dataformat.cbor.CBORMapper;
  * Web layer configuration.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -114,7 +114,7 @@ public class WebConfig implements WebMvcConfigurer {
 	@Qualifier(SOURCE_ID_PATH_MATCHER)
 	public PathMatcher sourceIdPathMatcher() {
 		AntPathMatcher matcher = new AntPathMatcher();
-		matcher.setCachePatterns(true);
+		matcher.setCachePatterns(false);
 		matcher.setCaseSensitive(false);
 		return matcher;
 	}
