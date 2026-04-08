@@ -24,14 +24,17 @@ package net.solarnetwork.central.user.datum.event.domain.test;
 
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.datum.event.domain.UserNodeEventTask;
@@ -48,7 +51,8 @@ public class UserNodeEventTaskTests {
 	@Test
 	public void asMessageData_nulls() {
 		// GIVEN
-		UserNodeEventTask task = new UserNodeEventTask();
+		UserNodeEventTask task = new UserNodeEventTask(UUID.randomUUID(), Instant.now(), randomLong(),
+				randomLong());
 
 		// WHEN
 		final String topic = "test.topic";
@@ -58,18 +62,16 @@ public class UserNodeEventTaskTests {
 		assertThat("Message created", msg.keySet(), hasSize(5));
 		assertThat("Topic", msg, hasEntry("topic", topic));
 		assertThat("User ID", msg, hasEntry("userId", null));
-		assertThat("Hook ID", msg, hasEntry("hookId", null));
-		assertThat("Node ID", msg, hasEntry("nodeId", null));
+		assertThat("Hook ID", msg, hasEntry("hookId", task.getHookId()));
+		assertThat("Node ID", msg, hasEntry("nodeId", task.getNodeId()));
 		assertThat("Source ID", msg, hasEntry("sourceId", null));
 	}
 
 	@Test
 	public void asMessageData_basic() {
 		// GIVEN
-		UserNodeEventTask task = new UserNodeEventTask(randomUUID(), now());
+		UserNodeEventTask task = new UserNodeEventTask(randomUUID(), now(), -3L, -2L);
 		task.setUserId(-1L);
-		task.setHookId(-2L);
-		task.setNodeId(-3L);
 		task.setSourceId("test.source");
 
 		// WHEN
@@ -88,11 +90,9 @@ public class UserNodeEventTaskTests {
 	@Test
 	public void asMessageData_withTaskProperties() {
 		// GIVEN
-		UserNodeEventTask task = new UserNodeEventTask(randomUUID(), now());
+		UserNodeEventTask task = new UserNodeEventTask(randomUUID(), now(), -3L, -2L);
 		task.setUserId(-1L);
-		task.setHookId(-2L);
-		task.setNodeId(-3L);
-		task.setSourceId("test.sourceI");
+		task.setSourceId("test.sourceId");
 
 		Map<String, Object> taskProps = new LinkedHashMap<>(2);
 		taskProps.put("foo", "bar");
@@ -117,10 +117,8 @@ public class UserNodeEventTaskTests {
 	@Test
 	public void asMessageData_asJson() {
 		// GIVEN
-		UserNodeEventTask task = new UserNodeEventTask(randomUUID(), now());
+		UserNodeEventTask task = new UserNodeEventTask(randomUUID(), now(), -3L, -2L);
 		task.setUserId(-1L);
-		task.setHookId(-2L);
-		task.setNodeId(-3L);
 		task.setSourceId("test.source");
 
 		Map<String, Object> taskProps = new LinkedHashMap<>(2);

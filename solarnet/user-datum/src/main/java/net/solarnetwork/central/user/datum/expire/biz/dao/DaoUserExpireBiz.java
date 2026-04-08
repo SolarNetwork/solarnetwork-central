@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.user.datum.expire.biz.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,17 +50,19 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 
 	private final ExpireUserDataConfigurationDao dataConfigDao;
 
-	private MessageSource messageSource;
+	private @Nullable MessageSource messageSource;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param dataConfigDao
 	 *        the data configuration DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public DaoUserExpireBiz(ExpireUserDataConfigurationDao dataConfigDao) {
 		super();
-		this.dataConfigDao = dataConfigDao;
+		this.dataConfigDao = requireNonNullArgument(dataConfigDao, "dataConfigDao");
 	}
 
 	@Override
@@ -90,8 +94,8 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	@SuppressWarnings("unchecked")
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <T extends UserRelatedIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
-			Class<T> configurationClass, Long id) {
+	public <T extends UserRelatedIdentifiableConfigurationEntity<?>> @Nullable T configurationForUser(
+			Long userId, Class<T> configurationClass, Long id) {
 		if ( ExpireUserDataConfiguration.class.isAssignableFrom(configurationClass) ) {
 			return (T) dataConfigDao.get(id, userId);
 		}
@@ -134,7 +138,7 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	 * @param messageSource
 	 *        the message source
 	 */
-	public void setMessageSource(MessageSource messageSource) {
+	public void setMessageSource(@Nullable MessageSource messageSource) {
 		this.messageSource = messageSource;
 	}
 

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.datum.expire.domain;
 
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.service.IdentifiableConfiguration;
 
@@ -51,6 +52,7 @@ public interface DataConfiguration extends IdentifiableConfiguration {
 	 * 
 	 * @return the datum filter
 	 */
+	@Nullable
 	AggregateGeneralNodeDatumFilter getDatumFilter();
 
 	/**

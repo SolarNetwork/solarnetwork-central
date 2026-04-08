@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.datum.expire.biz;
 
 import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobState;
 import net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobStatus;
@@ -52,6 +53,7 @@ public interface UserDatumDeleteJobBiz {
 	 *        the ID of the delete job to perform
 	 * @return the job status, or {@code null} if the job is not available
 	 */
+	@Nullable
 	DatumDeleteJobStatus performDatumDelete(UserUuidPK id);
 
 	/**

@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.datum.flux.dao.jdbc;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForId;
 import net.solarnetwork.central.user.datum.flux.dao.UserFluxDefaultAggregatePublishConfigurationDao;
@@ -66,20 +67,21 @@ public class JdbcUserFluxDefaultAggregatePublishConfigurationDao
 	@Override
 	public Long save(UserFluxDefaultAggregatePublishConfiguration entity) {
 		var sql = new UpsertUserFluxDefaultAggregatePublishConfiguration(
-				requireNonNullArgument(entity, "entity").getId(), entity);
+				requireNonNullArgument(entity, "entity").id(), entity);
 		jdbcOps.update(sql);
-		return entity.getId();
+		return entity.id();
 	}
 
 	@Override
-	public UserFluxDefaultAggregatePublishConfiguration get(Long id) {
+	public @Nullable UserFluxDefaultAggregatePublishConfiguration get(Long id) {
 		var sql = new SelectUserFluxDefaultAggregatePublishConfiguration(id);
 		var results = jdbcOps.query(sql, UserFluxDefaultAggregatePublishConfigurationRowMapper.INSTANCE);
 		return (!results.isEmpty() ? results.getFirst() : null);
 	}
 
 	@Override
-	public Collection<UserFluxDefaultAggregatePublishConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<UserFluxDefaultAggregatePublishConfiguration> getAll(
+			@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 

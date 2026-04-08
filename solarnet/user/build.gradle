@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '4.0.4' apply false
+	id 'org.springframework.boot' version '4.0.5' apply false
 }
 
 apply plugin: 'java-library'
@@ -16,7 +16,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: User'
-version = '6.1.0'
+version = '6.1.1'
 
 base {
 	archivesName = 'solarnet-user'

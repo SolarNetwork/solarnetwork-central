@@ -57,8 +57,10 @@
 	</sql>
 	
 	<resultMap id="DatumDeleteJobInfoFullResult" type="net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobInfo">
-		<id property="uuid" column="datum_delete_job_id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
-		<id property="userId" column="datum_delete_job_user_id"/>
+		<constructor>
+			<idArg column="datum_delete_job_user_id" javaType="Long"/>
+			<idArg column="datum_delete_job_id" javaType="java.util.UUID" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+		</constructor>
 		<result property="created" column="datum_delete_job_created"/>
 		<result property="modified" column="datum_delete_job_modified"/>
 		<result property="jobStateKey" column="datum_delete_job_state"/>
@@ -72,8 +74,10 @@
 	</resultMap>
 
 	<resultMap id="DatumDeleteJobInfoDirectResult" type="net.solarnetwork.central.user.datum.expire.domain.DatumDeleteJobInfo">
-		<id property="uuid" column="id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
-		<id property="userId" column="user_id"/>
+		<constructor>
+			<idArg column="userId" javaType="Long"/>
+			<idArg column="uuid" javaType="java.util.UUID" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+		</constructor>
 		<result property="created" column="created"/>
 		<result property="modified" column="modified"/>
 		<result property="jobStateKey" column="state"/>

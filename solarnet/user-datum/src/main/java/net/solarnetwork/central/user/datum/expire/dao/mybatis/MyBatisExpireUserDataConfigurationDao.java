@@ -67,12 +67,14 @@ public class MyBatisExpireUserDataConfigurationDao
 
 	@Override
 	public DatumRecordCounts countExpiredDataForConfiguration(ExpireUserDataConfiguration config) {
-		return selectFirst(QUERY_COUNTS_FOR_CONFIG, config);
+		DatumRecordCounts result = selectFirst(QUERY_COUNTS_FOR_CONFIG, config);
+		return (result != null ? result : new DatumRecordCounts());
 	}
 
 	@Override
 	public long deleteExpiredDataForConfiguration(ExpireUserDataConfiguration config) {
-		return selectLong(QUERY_DELETE_FOR_CONFIG, config);
+		Long result = selectLong(QUERY_DELETE_FOR_CONFIG, config);
+		return (result != null ? result : 0L);
 	}
 
 }

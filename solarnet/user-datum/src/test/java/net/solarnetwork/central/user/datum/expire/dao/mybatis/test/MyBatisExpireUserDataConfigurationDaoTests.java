@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.user.datum.expire.dao.mybatis.test;
 
+import static java.time.Instant.now;
 import static java.time.temporal.TemporalAdjusters.firstDayOfMonth;
 import static java.util.Collections.singleton;
+import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static net.solarnetwork.central.domain.EntityConstants.UNASSIGNED_LONG_ID;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -106,7 +109,7 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 
 		setupUserNode(TEST_NODE_ID, this.user.getId());
 
-		streamMeta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ, ObjectDatumKind.Node,
+		streamMeta = new BasicObjectDatumStreamMetadata(randomUUID(), TEST_TZ, ObjectDatumKind.Node,
 				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "watts" }, null, null);
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(streamMeta));
 	}
@@ -118,11 +121,8 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 
 	@Test
 	public void storeNew() {
-		ExpireUserDataConfiguration conf = new ExpireUserDataConfiguration();
-		conf.setCreated(Instant.now());
-		conf.setUserId(this.user.getId());
-		conf.setName(TEST_NAME);
-		conf.setServiceIdentifier(TEST_SERVICE_IDENT);
+		var conf = new ExpireUserDataConfiguration(UNASSIGNED_LONG_ID, user.id(), now(), TEST_NAME,
+				TEST_SERVICE_IDENT);
 
 		Map<String, Object> sprops = new HashMap<String, Object>(4);
 		sprops.put("string", "foo");
@@ -256,11 +256,8 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 
 		User user2 = createNewUser("2nd.user@localhost");
 
-		ExpireUserDataConfiguration conf2 = new ExpireUserDataConfiguration();
-		conf2.setCreated(Instant.now());
-		conf2.setUserId(user2.getId());
-		conf2.setName(TEST_NAME);
-		conf2.setServiceIdentifier(TEST_SERVICE_IDENT);
+		ExpireUserDataConfiguration conf2 = new ExpireUserDataConfiguration(UNASSIGNED_LONG_ID,
+				user2.getId(), now(), TEST_NAME, TEST_SERVICE_IDENT);
 		conf2.setExpireDays(TEST_EXPIRE_DAYS);
 
 		conf2 = confDao.get(confDao.save(conf2), user2.getId());

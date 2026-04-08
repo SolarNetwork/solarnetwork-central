@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.datum.expire.biz;
 
 import java.util.List;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserRelatedIdentifiableConfigurationEntity;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.datum.expire.domain.ExpireUserDataConfiguration;
@@ -59,8 +60,8 @@ public interface UserExpireBiz {
 	 *        the primary key of the configuration to get
 	 * @return the configuration, or {@code null} if not available
 	 */
-	<T extends UserRelatedIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
-			Class<T> configurationClass, Long id);
+	<T extends UserRelatedIdentifiableConfigurationEntity<?>> @Nullable T configurationForUser(
+			Long userId, Class<T> configurationClass, Long id);
 
 	/**
 	 * Save a configuration for a user.

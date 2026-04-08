@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.datum.expire.biz.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentMap;
@@ -58,12 +59,14 @@ public class DatumDeleteTaskPurger implements Runnable {
 	 *        in milliseconds
 	 * @param taskMap
 	 *        the map of tasks to maintain and purge expired tasks from
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public DatumDeleteTaskPurger(long completedTaskMinimumCacheTime,
 			ConcurrentMap<UserUuidPK, DatumDeleteJobStatus> taskMap) {
 		super();
 		this.completedTaskMinimumCacheTime = completedTaskMinimumCacheTime;
-		this.taskMapRef = new WeakReference<>(taskMap);
+		this.taskMapRef = new WeakReference<>(requireNonNullArgument(taskMap, "taskMap"));
 	}
 
 	@Override

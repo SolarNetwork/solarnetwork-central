@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.datum.alert.jobs;
 
 import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -38,6 +39,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -155,20 +157,23 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	 *        The {@link MailService} to use.
 	 * @param messageSource
 	 *        The {@link MessageSource} to use.
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
 	public EmailNodeStaleDataAlertProcessor(SolarNodeDao solarNodeDao, UserDao userDao,
 			UserNodeDao userNodeDao, UserAlertDao userAlertDao,
 			UserAlertSituationDao userAlertSituationDao, DatumEntityDao datumDao,
 			MailService mailService, MessageSource messageSource) {
 		super();
-		this.solarNodeDao = solarNodeDao;
-		this.userDao = userDao;
-		this.userNodeDao = userNodeDao;
-		this.userAlertDao = userAlertDao;
-		this.userAlertSituationDao = userAlertSituationDao;
-		this.datumDao = datumDao;
-		this.mailService = mailService;
-		this.messageSource = messageSource;
+		this.solarNodeDao = requireNonNullArgument(solarNodeDao, "solarNodeDao");
+		this.userDao = requireNonNullArgument(userDao, "userDao");
+		this.userNodeDao = requireNonNullArgument(userNodeDao, "userNodeDao");
+		this.userAlertDao = requireNonNullArgument(userAlertDao, "userAlertDao");
+		this.userAlertSituationDao = requireNonNullArgument(userAlertSituationDao,
+				"userAlertSituationDao");
+		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.mailService = requireNonNullArgument(mailService, "mailService");
+		this.messageSource = requireNonNullArgument(messageSource, "messageSource");
 	}
 
 	/**
@@ -182,7 +187,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	}
 
 	@Override
-	public Long processAlerts(Long lastProcessedAlertId, Instant validDate) {
+	public @Nullable Long processAlerts(@Nullable Long lastProcessedAlertId, Instant validDate) {
 		if ( validDate == null ) {
 			validDate = Instant.now();
 		}
@@ -232,10 +237,10 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 				// get UserAlertSituation for this alert
 				UserAlertSituation sit = userAlertSituationDao
-						.getActiveAlertSituationForAlert(alert.getId());
+						.getActiveAlertSituationForAlert(alert.id());
 				if ( stale != null ) {
 					long notifyOffset = 0;
-					if ( sit == null ) {
+					if ( sit == null || sit.getNotified() == null ) {
 						sit = new UserAlertSituation();
 						sit.setCreated(now);
 						sit.setAlert(alert);
@@ -245,17 +250,17 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					} else if ( sit.getNotified().equals(sit.getCreated()) ) {
 						notifyOffset = (initialAlertReminderDelayMinutes * 60L * 1000L);
 					} else {
-						notifyOffset = ((sit.getNotified().toEpochMilli()
-								- sit.getCreated().toEpochMilli()) * alertReminderFrequencyMultiplier);
+						notifyOffset = ((sit.getNotified().toEpochMilli() - sit.created().toEpochMilli())
+								* alertReminderFrequencyMultiplier);
 					}
 
 					// taper off the alerts so the become less frequent over time
-					if ( !sit.getNotified().plusMillis(notifyOffset).isAfter(now) ) {
+					if ( !sit.notified().plusMillis(notifyOffset).isAfter(now) ) {
 						sendAlertMail(alert, "user.alert.NodeStaleData.mail.subject",
 								mailTemplateResource, stale);
 						sit.setNotified(now);
 					}
-					if ( sit.getNotified().equals(now) || sit.getInfo() == null
+					if ( sit.notified().equals(now) || sit.getInfo() == null
 							|| !staleInfo.equals(sit.getInfo()) ) {
 						sit.setInfo(staleInfo);
 						userAlertSituationDao.save(sit);
@@ -270,8 +275,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					} else {
 						newValidTo = validDate.plusSeconds(age.intValue());
 					}
-					log.debug("Marking alert {} valid to {}", alert.getId(), newValidTo);
-					userAlertDao.updateValidTo(alert.getId(), newValidTo);
+					log.debug("Marking alert {} valid to {}", alert.id(), newValidTo);
+					userAlertDao.updateValidTo(alert.id(), newValidTo);
 					alert.setValidTo(newValidTo);
 					if ( sit != null && withinTimePeriods ) {
 						// make Resolved
@@ -306,7 +311,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return lastAlertId;
 	}
 
-	private List<DateInterval> parseAlertTimeWindows(final Instant nowDateTime,
+	private @Nullable List<DateInterval> parseAlertTimeWindows(final Instant nowDateTime,
 			final DateTimeFormatter timeFormatter, final UserAlert alert, final Long nodeId) {
 		Map<String, Object> alertOptions = alert.getOptions();
 		if ( alertOptions == null ) {
@@ -464,8 +469,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return (results == null ? List.of() : results);
 	}
 
-	private boolean withinIntervals(final Instant now, List<DateInterval> intervals) {
-		if ( intervals == null ) {
+	private boolean withinIntervals(final Instant now, @Nullable List<DateInterval> intervals) {
+		if ( intervals == null || intervals.isEmpty() ) {
 			return true;
 		}
 		for ( DateInterval i : intervals ) {
@@ -476,7 +481,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return true;
 	}
 
-	private Instant startOfNextTimePeriod(final Instant now, List<DateInterval> intervals) {
+	private Instant startOfNextTimePeriod(final Instant now, @Nullable List<DateInterval> intervals) {
 		if ( intervals == null || intervals.isEmpty() ) {
 			return Instant.now();
 		}
@@ -501,8 +506,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return nonnull(earliest, "earliest").getStart().plus(1, ChronoUnit.DAYS);
 	}
 
-	private NodeDatumStreamPK getFirstStaleDatum(final UserAlert alert, final Instant now,
-			final Number age, PathMatcher sourceIdMatcher, final List<String> sourceIdPatterns,
+	private @Nullable NodeDatumStreamPK getFirstStaleDatum(final UserAlert alert, final Instant now,
+			final Number age, PathMatcher sourceIdMatcher, final @Nullable List<String> sourceIdPatterns,
 			final DateTimeFormatter timeFormatter, final List<DateInterval> outputIntervals) {
 		NodeDatumStreamPK stale = null;
 		List<NodeDatumStreamPK> latestNodeData = getLatestNodeData(alert);
@@ -550,7 +555,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return stale;
 	}
 
-	private static boolean sourceIdMatches(PathMatcher matcher, List<String> sourceIdPatterns,
+	private static boolean sourceIdMatches(PathMatcher matcher, @Nullable List<String> sourceIdPatterns,
 			String sourceId) {
 		if ( sourceIdPatterns == null ) {
 			return true;
@@ -567,8 +572,9 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return false;
 	}
 
-	private NodeDatumStreamPK getFirstNonStaleDatum(final UserAlert alert, final Instant now,
-			final Number age, final PathMatcher sourceIdMatcher, final List<String> sourceIdPatterns) {
+	private @Nullable NodeDatumStreamPK getFirstNonStaleDatum(final UserAlert alert, final Instant now,
+			final Number age, final PathMatcher sourceIdMatcher,
+			final @Nullable List<String> sourceIdPatterns) {
 		NodeDatumStreamPK nonStale = null;
 		List<NodeDatumStreamPK> latestNodeData = getLatestNodeData(alert);
 		for ( NodeDatumStreamPK datum : latestNodeData ) {
@@ -582,7 +588,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	}
 
 	private void sendAlertMail(UserAlert alert, String subjectKey, String resourcePath,
-			NodeDatumStreamPK datum) {
+			@Nullable NodeDatumStreamPK datum) {
 		if ( alert.getStatus() == UserAlertStatus.Suppressed ) {
 			// no emails for this alert
 			log.debug("Alert email suppressed: {}; datum {}; subject {}", alert, datum, subjectKey);
@@ -642,24 +648,49 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return mailTemplateResource;
 	}
 
+	/**
+	 * Set the mail template resource.
+	 * 
+	 * @param mailTemplateResource
+	 *        the resource path to set; if {@code null} then
+	 *        {@link #DEFAULT_MAIL_TEMPLATE_RESOURCE} will be used
+	 */
 	public void setMailTemplateResource(String mailTemplateResource) {
-		this.mailTemplateResource = mailTemplateResource;
+		this.mailTemplateResource = (mailTemplateResource != null ? mailTemplateResource
+				: DEFAULT_MAIL_TEMPLATE_RESOURCE);
 	}
 
 	public DateTimeFormatter getTimestampFormat() {
 		return timestampFormat;
 	}
 
+	/**
+	 * Set the timestamp formatter.
+	 * 
+	 * @param timestampFormat
+	 *        the formatter to use; if {@code null} then
+	 *        {@link DateUtils#DISPLAY_DATE_LONG_TIME_SHORT} will be used
+	 */
 	public void setTimestampFormat(DateTimeFormatter timestampFormat) {
-		this.timestampFormat = timestampFormat;
+		this.timestampFormat = (timestampFormat != null ? timestampFormat
+				: DateUtils.DISPLAY_DATE_LONG_TIME_SHORT);
 	}
 
 	public String getMailTemplateResolvedResource() {
 		return mailTemplateResolvedResource;
 	}
 
+	/**
+	 * Set the mail template resolved resource.
+	 * 
+	 * @param mailTemplateResolvedResource
+	 *        the resource path to set; if {@code null} then
+	 *        {@link #DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE} will be used
+	 */
 	public void setMailTemplateResolvedResource(String mailTemplateResolvedResource) {
-		this.mailTemplateResolvedResource = mailTemplateResolvedResource;
+		this.mailTemplateResolvedResource = (mailTemplateResolvedResource != null
+				? mailTemplateResolvedResource
+				: DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE);
 	}
 
 	public int getInitialAlertReminderDelayMinutes() {

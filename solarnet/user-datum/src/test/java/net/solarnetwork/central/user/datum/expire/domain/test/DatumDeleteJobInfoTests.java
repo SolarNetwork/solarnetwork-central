@@ -43,8 +43,7 @@ public class DatumDeleteJobInfoTests {
 	@Test
 	public void toJson() {
 		// GIVEN
-		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
-		info.setId(new UserUuidPK(randomLong(), randomUUID()));
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo(new UserUuidPK(randomLong(), randomUUID()));
 
 		// WHEN
 		String json = JsonUtils.getJSONString(info);

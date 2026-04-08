@@ -70,7 +70,7 @@ public class DatumDeleteProcessorJob extends JobSupport {
 				break;
 			}
 			try {
-				DatumDeleteJobStatus status = datumDeleteJobBiz.performDatumDelete(info.getId());
+				DatumDeleteJobStatus status = datumDeleteJobBiz.performDatumDelete(info.id());
 				log.info("Submitted datum delete task {}", status);
 			} catch ( RuntimeException e ) {
 				log.error("Error submitting datum delete task {}", info, e);

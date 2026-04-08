@@ -214,8 +214,7 @@ public class DaoUserDatumDeleteBizTests {
 		filter.setUserId(1L);
 		filter.setNodeId(2L);
 
-		DatumDeleteJobInfo jobInfo = new DatumDeleteJobInfo();
-		jobInfo.setId(id);
+		DatumDeleteJobInfo jobInfo = new DatumDeleteJobInfo(id);
 		jobInfo.setConfiguration(filter);
 
 		expect(jobInfoDao.get(id)).andReturn(jobInfo).anyTimes();
@@ -265,8 +264,7 @@ public class DaoUserDatumDeleteBizTests {
 		filter.setLocalStartDate(LocalDateTime.of(2020, 1, 1, 0, 0));
 		filter.setLocalEndDate(LocalDateTime.of(2020, 2, 1, 0, 0));
 
-		DatumDeleteJobInfo jobInfo = new DatumDeleteJobInfo();
-		jobInfo.setId(id);
+		DatumDeleteJobInfo jobInfo = new DatumDeleteJobInfo(id);
 		jobInfo.setConfiguration(filter);
 
 		expect(jobInfoDao.get(id)).andReturn(jobInfo).anyTimes();

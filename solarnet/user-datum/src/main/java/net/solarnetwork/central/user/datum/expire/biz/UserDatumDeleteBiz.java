@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.datum.expire.biz;
 
 import java.util.Collection;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
@@ -103,6 +104,7 @@ public interface UserDatumDeleteBiz {
 	 *        the ID of the job to get
 	 * @return the job status, or {@code null} if not available
 	 */
+	@Nullable
 	DatumDeleteJobInfo datumDeleteJobForUser(Long userId, String jobId);
 
 	/**
@@ -115,7 +117,8 @@ public interface UserDatumDeleteBiz {
 	 *        all states
 	 * @return the job statuses, never {@code null}
 	 */
-	Collection<DatumDeleteJobInfo> datumDeleteJobsForUser(Long userId, Set<DatumDeleteJobState> states);
+	Collection<DatumDeleteJobInfo> datumDeleteJobsForUser(Long userId,
+			@Nullable Set<DatumDeleteJobState> states);
 
 	/**
 	 * Delete datum records matching a set of IDs, and return the IDs of those

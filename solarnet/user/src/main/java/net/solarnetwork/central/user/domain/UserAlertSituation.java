@@ -37,7 +37,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A triggered alert condition.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class UserAlertSituation extends BaseEntity {
 
@@ -72,6 +72,17 @@ public class UserAlertSituation extends BaseEntity {
 		builder.append(notified);
 		builder.append("}");
 		return builder.toString();
+	}
+
+	/**
+	 * Get the notified date, presumed to be non-null.
+	 * 
+	 * @return the notified date
+	 * @since 2.1
+	 */
+	@SuppressWarnings("NullAway")
+	public final Instant notified() {
+		return notified;
 	}
 
 	public final @Nullable UserAlert getAlert() {

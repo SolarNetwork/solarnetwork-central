@@ -38,6 +38,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.validation.Errors;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.domain.CompositeKey;
+import net.solarnetwork.central.domain.EntityConstants;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.Identity;
@@ -271,7 +272,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<K>, K extends Compa
 	public K save(T datum) {
 		final K id = datum.getId();
 		if ( (id instanceof CompositeKey ck && ck.allKeyComponentsAreAssigned())
-				|| (!(id instanceof CompositeKey) && datum.getId() != null) ) {
+				|| (!(id instanceof CompositeKey) && datum.getId() != null
+						&& datum.getId() != EntityConstants.UNASSIGNED_LONG_ID) ) {
 			return handleUpdate(datum);
 		}
 		preprocessInsert(datum);

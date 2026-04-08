@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.user.datum.event.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -47,12 +49,12 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	@Serial
 	private static final long serialVersionUID = 3878313156603958081L;
 
-	private Long[] nodeIds;
-	private String[] sourceIds;
-	private String topic;
 	private String name;
 	private String serviceIdentifier;
-	private Map<String, Object> serviceProps;
+	private Long @Nullable [] nodeIds;
+	private String @Nullable [] sourceIds;
+	private @Nullable String topic;
+	private @Nullable Map<String, Object> serviceProps;
 
 	/**
 	 * Constructor.
@@ -61,9 +63,18 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param serviceIdentifier
+	 *        the service identifier
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public UserNodeEventHookConfiguration(UserLongPK id, Instant created) {
-		super(id, created);
+	public UserNodeEventHookConfiguration(UserLongPK id, Instant created, String name,
+			String serviceIdentifier) {
+		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
+		this.name = requireNonNullArgument(name, "name");
+		this.serviceIdentifier = requireNonNullArgument(serviceIdentifier, "serviceIdentifier");
 	}
 
 	/**
@@ -73,9 +84,16 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 *        the user ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param serviceIdentifier
+	 *        the service identifier
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public UserNodeEventHookConfiguration(Long userId, Instant created) {
-		this(null, userId, created);
+	public UserNodeEventHookConfiguration(Long userId, Instant created, String name,
+			String serviceIdentifier) {
+		this(null, userId, created, name, serviceIdentifier);
 	}
 
 	/**
@@ -87,9 +105,17 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 *        the user ID
 	 * @param created
 	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param serviceIdentifier
+	 *        the service identifier
+	 * @throws IllegalArgumentException
+	 *         if any argument except {@code id} is {@code null}
 	 */
-	public UserNodeEventHookConfiguration(Long id, Long userId, Instant created) {
-		this(new UserLongPK(userId, id), created);
+	public UserNodeEventHookConfiguration(@Nullable Long id, Long userId, Instant created, String name,
+			String serviceIdentifier) {
+		this(new UserLongPK(requireNonNullArgument(userId, "userId"), id), created, name,
+				serviceIdentifier);
 	}
 
 	/**
@@ -101,25 +127,22 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 */
 	public UserNodeEventHookConfiguration withUserId(Long userId) {
 		UserNodeEventHookConfiguration copy = new UserNodeEventHookConfiguration(getConfigurationId(),
-				userId, getCreated());
-		copy.setName(name);
+				userId, created(), name, serviceIdentifier);
 		copy.setNodeIds(nodeIds);
-		copy.setServiceIdentifier(serviceIdentifier);
 		copy.setServiceProps(serviceProps);
 		copy.setTopic(topic);
 		return copy;
 	}
 
 	@Override
-	public boolean hasId() {
+	public final boolean hasId() {
 		UserLongPK id = getId();
 		return (id != null && id.getId() != null && id.getUserId() != null);
 	}
 
 	@Override
-	public Long getUserId() {
-		final UserLongPK id = getId();
-		return id != null ? id.getUserId() : null;
+	public final Long getUserId() {
+		return id().getUserId();
 	}
 
 	/**
@@ -129,9 +152,8 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 * @since 1.1
 	 */
 	@JsonGetter("id")
-	public Long getConfigurationId() {
-		final UserLongPK id = getId();
-		return (id != null ? id.getId() : null);
+	public final @Nullable Long getConfigurationId() {
+		return id().getId();
 	}
 
 	/**
@@ -139,7 +161,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 *
 	 * @return the node IDs, or {@code null} for any node
 	 */
-	public Long[] getNodeIds() {
+	public final Long @Nullable [] getNodeIds() {
 		return nodeIds;
 	}
 
@@ -149,7 +171,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 * @param nodeIds
 	 *        the node IDs to set
 	 */
-	public void setNodeIds(Long[] nodeIds) {
+	public final void setNodeIds(Long @Nullable [] nodeIds) {
 		this.nodeIds = nodeIds;
 	}
 
@@ -162,7 +184,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 *
 	 * @return the source IDs
 	 */
-	public String[] getSourceIds() {
+	public final String @Nullable [] getSourceIds() {
 		return sourceIds;
 	}
 
@@ -172,7 +194,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 * @param sourceIds
 	 *        the source IDs or source ID Ant-style patterns to set
 	 */
-	public void setSourceIds(String[] sourceIds) {
+	public final void setSourceIds(String @Nullable [] sourceIds) {
 		this.sourceIds = sourceIds;
 	}
 
@@ -181,7 +203,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 *
 	 * @return the topic
 	 */
-	public String getTopic() {
+	public final @Nullable String getTopic() {
 		return topic;
 	}
 
@@ -191,12 +213,12 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 * @param topic
 	 *        the topic to set
 	 */
-	public void setTopic(String topic) {
+	public final void setTopic(@Nullable String topic) {
 		this.topic = topic;
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
@@ -205,13 +227,15 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 *
 	 * @param name
 	 *        the name to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	@Override
-	public String getServiceIdentifier() {
+	public final String getServiceIdentifier() {
 		return serviceIdentifier;
 	}
 
@@ -221,24 +245,26 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 *
 	 * @param serviceIdentifier
 	 *        the identifier of the service to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public void setServiceIdentifier(String serviceIdentifier) {
-		this.serviceIdentifier = serviceIdentifier;
+	public final void setServiceIdentifier(String serviceIdentifier) {
+		this.serviceIdentifier = requireNonNullArgument(serviceIdentifier, "serviceIdentifier");
 	}
 
 	@Override
 	@JsonIgnore
-	public Map<String, ?> getServiceProperties() {
+	public final @Nullable Map<String, ?> getServiceProperties() {
 		return getServiceProps();
 	}
 
 	@JsonGetter("serviceProperties")
-	public Map<String, Object> getServiceProps() {
+	public final @Nullable Map<String, Object> getServiceProps() {
 		return serviceProps;
 	}
 
 	@JsonSetter("serviceProperties")
-	public void setServiceProps(Map<String, Object> serviceProps) {
+	public final void setServiceProps(@Nullable Map<String, Object> serviceProps) {
 		this.serviceProps = serviceProps;
 	}
 

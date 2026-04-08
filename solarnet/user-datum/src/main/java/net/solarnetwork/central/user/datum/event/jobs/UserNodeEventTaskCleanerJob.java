@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.datum.event.dao.jobs;
+package net.solarnetwork.central.user.datum.event.jobs;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

@@ -27,6 +27,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
@@ -82,7 +83,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDao
 
 	@Override
 	public Collection<UserFluxAggregatePublishConfiguration> findAll(Long keyComponent1,
-			List<SortDescriptor> sorts) {
+			@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -93,14 +94,14 @@ public class JdbcUserFluxAggregatePublishConfigurationDao
 
 	@Override
 	public UserLongCompositePK save(UserFluxAggregatePublishConfiguration entity) {
-		if ( !ObjectUtils.requireNonNullArgument(entity, "entity").getId().userIdIsAssigned() ) {
+		if ( !ObjectUtils.requireNonNullArgument(entity, "entity").id().userIdIsAssigned() ) {
 			throw new IllegalArgumentException("The user ID must be assigned.");
 		}
 		return create(entity.getUserId(), entity);
 	}
 
 	@Override
-	public UserFluxAggregatePublishConfiguration get(UserLongCompositePK id) {
+	public @Nullable UserFluxAggregatePublishConfiguration get(UserLongCompositePK id) {
 		var sql = new SelectUserFluxAggregatePublishConfiguration(id);
 		List<UserFluxAggregatePublishConfiguration> results = jdbcOps.query(sql,
 				UserFluxAggregatePublishConfigurationRowMapper.INSTANCE);
@@ -108,7 +109,8 @@ public class JdbcUserFluxAggregatePublishConfigurationDao
 	}
 
 	@Override
-	public Collection<UserFluxAggregatePublishConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<UserFluxAggregatePublishConfiguration> getAll(
+			@Nullable List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -117,7 +119,7 @@ public class JdbcUserFluxAggregatePublishConfigurationDao
 
 	@Override
 	public void delete(UserFluxAggregatePublishConfiguration entity) {
-		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").getId(), TABLE_NAME,
+		var sql = new DeleteForCompositeKey(requireNonNullArgument(entity, "entity").id(), TABLE_NAME,
 				PRIMARY_KEY_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
@@ -134,8 +136,8 @@ public class JdbcUserFluxAggregatePublishConfigurationDao
 
 	@Override
 	public FilterResults<UserFluxAggregatePublishConfiguration, UserLongCompositePK> findFiltered(
-			UserFluxAggregatePublishConfigurationFilter filter, List<SortDescriptor> sorts, Long offset,
-			Integer max) {
+			UserFluxAggregatePublishConfigurationFilter filter, @Nullable List<SortDescriptor> sorts,
+			@Nullable Long offset, @Nullable Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectUserFluxAggregatePublishConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql,

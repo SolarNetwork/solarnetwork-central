@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.datum.event.dest.sqs;
 
 import java.util.Map;
+import de.siegmar.fastcsv.util.Nullable;
 import net.solarnetwork.central.support.SqsProperties;
 import net.solarnetwork.util.ClassUtils;
 
@@ -46,7 +47,8 @@ public class SqsDestinationProperties extends SqsProperties {
 	 *        the service properties
 	 * @return the new instance, never {@code null}
 	 */
-	public static SqsDestinationProperties ofServiceProperties(Map<String, ?> serviceProperties) {
+	public static SqsDestinationProperties ofServiceProperties(
+			@Nullable Map<String, ?> serviceProperties) {
 		SqsDestinationProperties props = new SqsDestinationProperties();
 		ClassUtils.setBeanProperties(props, serviceProperties, true);
 		return props;

@@ -79,7 +79,7 @@ public final class SqsDestination {
 	 *
 	 * @return the client, never {@code null}
 	 */
-	public SqsClient getClient() {
+	public final SqsClient getClient() {
 		return client;
 	}
 
@@ -88,7 +88,7 @@ public final class SqsDestination {
 	 *
 	 * @return the queueUrl the queue URL
 	 */
-	public String getQueueUrl() {
+	public final String getQueueUrl() {
 		return queueUrl;
 	}
 
