@@ -76,7 +76,7 @@ public final class UpsertUserFluxAggregatePublishConfiguration
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.entity = requireNonNullArgument(entity, "entity");
-		this.update = entity.getId().entityIdIsAssigned();
+		this.update = entity.id().entityIdIsAssigned();
 	}
 
 	@Override

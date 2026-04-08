@@ -30,6 +30,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
@@ -51,8 +52,8 @@ public final class SelectUserFluxAggregatePublishConfiguration
 	/** The {@code fetchSize} property default value. */
 	public static final int DEFAULT_FETCH_SIZE = 1000;
 
-	private final UserLongCompositePK key;
-	private final UserFluxAggregatePublishConfigurationFilter filter;
+	private final @Nullable UserLongCompositePK key;
+	private final @Nullable UserFluxAggregatePublishConfigurationFilter filter;
 	private final int fetchSize;
 
 	/**
@@ -129,7 +130,7 @@ public final class SelectUserFluxAggregatePublishConfiguration
 					\tAND id = ?
 					""");
 			idx += 2;
-		} else {
+		} else if ( filter != null ) {
 			if ( filter.hasUserCriteria() ) {
 				idx += whereOptimizedArrayContains(filter.getUserIds(), "user_id", where);
 			}
@@ -165,7 +166,7 @@ public final class SelectUserFluxAggregatePublishConfiguration
 		if ( key != null ) {
 			stmt.setObject(++p, key.getUserId());
 			stmt.setObject(++p, key.getEntityId());
-		} else {
+		} else if ( filter != null ) {
 			if ( filter.hasUserCriteria() ) {
 				p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 			}
