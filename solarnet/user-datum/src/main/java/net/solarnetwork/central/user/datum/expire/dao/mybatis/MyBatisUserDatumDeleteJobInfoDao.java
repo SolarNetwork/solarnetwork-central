@@ -134,7 +134,7 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 
 	@Override
 	public boolean updateJobConfiguration(UserUuidPK id, GeneralNodeDatumFilter configuration) {
-		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
+		var info = new DatumDeleteJobInfo(id);
 		info.setConfiguration(new DatumFilterCommand(configuration));
 
 		Map<String, Object> params = new HashMap<>(3);

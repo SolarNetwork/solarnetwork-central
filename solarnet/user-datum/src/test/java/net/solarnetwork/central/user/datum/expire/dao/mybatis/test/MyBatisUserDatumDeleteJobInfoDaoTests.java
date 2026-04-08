@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.datum.expire.dao.mybatis.test;
 
 import static java.util.Collections.singleton;
+import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -79,8 +80,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 
 	@Test
 	public void storeNew() {
-		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo(new UserUuidPK(user.getId(), randomUUID()));
 		info.setConfiguration(createNewConfig());
 
 		UserUuidPK id = dao.save(info);
@@ -157,8 +157,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 	@Test
 	public void purgeCompleted() {
 		getByPrimaryKey();
-		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo(new UserUuidPK(user.getId(), randomUUID()));
 		info.setConfiguration(new DatumFilterCommand());
 		info.setJobState(DatumDeleteJobState.Completed);
 		info.setCompleted(Instant.now().truncatedTo(ChronoUnit.HOURS));
@@ -229,8 +228,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		storeNew();
 
 		// add another job
-		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo(new UserUuidPK(user.getId(), randomUUID()));
 		info.setConfiguration(new DatumFilterCommand());
 		info.setJobState(DatumDeleteJobState.Queued);
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));
@@ -320,8 +318,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		User user2 = createNewUser("user2@localhost");
 
 		// add another job that should _not_ be found
-		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
-		info.setId(new UserUuidPK(user2.getId(), UUID.randomUUID()));
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo(new UserUuidPK(user2.getId(), randomUUID()));
 		info.setConfiguration(new DatumFilterCommand());
 		info.setJobState(DatumDeleteJobState.Queued);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
@@ -338,8 +335,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		storeNew();
 
 		// add another job that _should_ be found
-		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo(new UserUuidPK(user.getId(), randomUUID()));
 		info.setConfiguration(new DatumFilterCommand());
 		info.setJobState(DatumDeleteJobState.Queued);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
@@ -356,8 +352,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		storeNew();
 
 		// add another job
-		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo(new UserUuidPK(user.getId(), randomUUID()));
 		info.setConfiguration(new DatumFilterCommand());
 		info.setJobState(DatumDeleteJobState.Queued);
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));

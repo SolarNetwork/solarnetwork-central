@@ -22,10 +22,13 @@
 
 package net.solarnetwork.central.user.datum.expire.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -38,7 +41,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * Base class for expire configuration entities.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class BaseExpireConfigurationEntity extends BaseEntity
 		implements UserRelatedIdentifiableConfigurationEntity<Long>, Serializable {
@@ -49,35 +52,60 @@ public class BaseExpireConfigurationEntity extends BaseEntity
 	private Long userId;
 	private String name;
 	private String serviceIdentifier;
-	private String servicePropsJson;
+	private @Nullable String servicePropsJson;
 
-	private Map<String, Object> serviceProps;
+	private @Nullable Map<String, Object> serviceProps;
+
+	/**
+	 * Constructor.
+	 * @param id
+	 *        the primary key
+	 * @param userId
+	 *        the user ID
+	 * @param created
+	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param serviceIdentifier
+	 *        the service identifier
+	 * 
+	 * @since 2.2
+	 */
+	public BaseExpireConfigurationEntity(Long id, Long userId, Instant created, String name,
+			String serviceIdentifier) {
+		super();
+		setId(id);
+		setCreated(created);
+		this.userId = requireNonNullArgument(userId, "userId");
+		this.name = requireNonNullArgument(name, "name");
+		this.serviceIdentifier = requireNonNullArgument(serviceIdentifier, "serviceIdentifier");
+	}
 
 	@Override
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 
-	public void setUserId(Long userId) {
+	public final void setUserId(Long userId) {
 		this.userId = userId;
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public final void setName(String name) {
+		this.name = requireNonNullArgument(name, "name");
 	}
 
 	@Override
-	public String getServiceIdentifier() {
+	public final String getServiceIdentifier() {
 		return serviceIdentifier;
 	}
 
-	public void setServiceIdentifier(String serviceIdentifier) {
-		this.serviceIdentifier = serviceIdentifier;
+	public final void setServiceIdentifier(String serviceIdentifier) {
+		this.serviceIdentifier = requireNonNullArgument(serviceIdentifier, "serviceIdentifier");
 	}
 
 	/**
@@ -88,7 +116,7 @@ public class BaseExpireConfigurationEntity extends BaseEntity
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public String getServicePropsJson() {
+	public final @Nullable String getServicePropsJson() {
 		if ( servicePropsJson == null ) {
 			servicePropsJson = JsonUtils.getJSONString(serviceProps, null);
 		}
@@ -109,13 +137,13 @@ public class BaseExpireConfigurationEntity extends BaseEntity
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setServicePropsJson(String json) {
+	public final void setServicePropsJson(@Nullable String json) {
 		servicePropsJson = json;
 		serviceProps = null;
 	}
 
 	@JsonIgnore
-	public Map<String, Object> getServiceProps() {
+	public final @Nullable Map<String, Object> getServiceProps() {
 		if ( serviceProps == null && servicePropsJson != null ) {
 			serviceProps = JsonUtils.getStringMap(servicePropsJson);
 		}
@@ -134,13 +162,13 @@ public class BaseExpireConfigurationEntity extends BaseEntity
 	 *        the service properties to set
 	 */
 	@JsonSetter("serviceProperties")
-	public void setServiceProps(Map<String, Object> serviceProps) {
+	public final void setServiceProps(@Nullable Map<String, Object> serviceProps) {
 		this.serviceProps = serviceProps;
 		servicePropsJson = null;
 	}
 
 	@Override
-	public Map<String, ?> getServiceProperties() {
+	public final @Nullable Map<String, ?> getServiceProperties() {
 		return getServiceProps();
 	}
 

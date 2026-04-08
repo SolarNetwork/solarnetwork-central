@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.user.datum.expire.aop.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.easymock.EasyMock.expect;
+import java.time.Instant;
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +36,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
+import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.test.CentralTestConstants;
@@ -106,8 +109,8 @@ public class UserExpireSecurityAspectTests implements CentralTestConstants {
 	@Test
 	public void saveConfigNoAuth() {
 		replayAll();
-		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
-		config.setUserId(TEST_USER_ID);
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration(randomLong(), TEST_USER_ID,
+				Instant.EPOCH, "", "");
 		thenExceptionOfType(AuthorizationException.class)
 				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 	}
@@ -116,17 +119,19 @@ public class UserExpireSecurityAspectTests implements CentralTestConstants {
 	public void saveConfigWrongUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration(randomLong(), -2L,
+				Instant.EPOCH, "", "");
 		config.setUserId(-2L);
 		thenExceptionOfType(AuthorizationException.class)
 				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 	}
 
 	@Test
-	public void saveConfigMissingUser() {
+	public void saveConfigUnassignedUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration(randomLong(),
+				UserIdRelated.UNASSIGNED_USER_ID, Instant.EPOCH, "", "");
 		thenExceptionOfType(AuthorizationException.class)
 				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 	}
@@ -135,8 +140,8 @@ public class UserExpireSecurityAspectTests implements CentralTestConstants {
 	public void saveConfigAllowed() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
-		config.setUserId(TEST_USER_ID);
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration(randomLong(), TEST_USER_ID,
+				Instant.EPOCH, "", "");
 		aspect.saveConfigurationCheck(config);
 	}
 

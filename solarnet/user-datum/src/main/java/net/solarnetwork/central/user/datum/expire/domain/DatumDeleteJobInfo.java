@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.datum.expire.domain;
 
+import static net.solarnetwork.util.ObjectUtils.nonnull;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serial;
 import java.time.Instant;
 import java.util.UUID;
@@ -54,13 +56,39 @@ public class DatumDeleteJobInfo
 
 	private @Nullable String configJson;
 
-	@Override
-	public @Nullable Long getUserId() {
-		UserUuidPK pk = getId();
-		return (pk != null ? pk.getUserId() : null);
+	/**
+	 * Constructor.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param id
+	 *        the entity ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public DatumDeleteJobInfo(Long userId, UUID id) {
+		this(new UserUuidPK(userId, id));
 	}
 
-	public void setUserId(@Nullable Long userId) {
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	public DatumDeleteJobInfo(UserUuidPK id) {
+		super();
+		setId(requireNonNullArgument(id, "id"));
+	}
+
+	@Override
+	public final Long getUserId() {
+		return nonnull(id().getUserId(), "User ID");
+	}
+
+	public final void setUserId(Long userId) {
 		UserUuidPK pk = getId();
 		if ( pk == null ) {
 			setId(new UserUuidPK(userId, null));
@@ -70,13 +98,12 @@ public class DatumDeleteJobInfo
 	}
 
 	@JsonGetter("id")
-	public @Nullable UUID getUuid() {
-		UserUuidPK pk = getId();
-		return (pk != null ? pk.getId() : null);
+	public final @Nullable UUID getUuid() {
+		return id().getId();
 	}
 
 	@JsonSetter("id")
-	public void setUuid(@Nullable UUID id) {
+	public final void setUuid(@Nullable UUID id) {
 		UserUuidPK pk = getId();
 		if ( pk == null ) {
 			setId(new UserUuidPK(null, id));
@@ -85,12 +112,12 @@ public class DatumDeleteJobInfo
 		}
 	}
 
-	public @Nullable String getJobId() {
+	public final @Nullable String getJobId() {
 		UserUuidPK id = getId();
 		return (id != null && id.getId() != null ? id.getId().toString() : null);
 	}
 
-	public void setJobStateKey(char key) {
+	public final void setJobStateKey(char key) {
 		DatumDeleteJobState state;
 		try {
 			state = DatumDeleteJobState.forKey(key);
@@ -101,7 +128,7 @@ public class DatumDeleteJobInfo
 	}
 
 	@Override
-	public @Nullable GeneralNodeDatumFilter didGetConfiguration(
+	public final @Nullable GeneralNodeDatumFilter didGetConfiguration(
 			@Nullable GeneralNodeDatumFilter config) {
 		if ( config == null && configJson != null ) {
 			config = JsonUtils.getObjectFromJSON(configJson, DatumFilterCommand.class);
@@ -111,48 +138,48 @@ public class DatumDeleteJobInfo
 	}
 
 	@Override
-	public void didSetConfiguration(GeneralNodeDatumFilter config) {
+	public final void didSetConfiguration(@Nullable GeneralNodeDatumFilter config) {
 		this.configJson = null;
 	}
 
 	@JsonIgnore
-	public @Nullable String getConfigJson() {
+	public final @Nullable String getConfigJson() {
 		if ( configJson == null ) {
 			configJson = JsonUtils.getJSONString(configuration(), null);
 		}
 		return configJson;
 	}
 
-	public void setConfigJson(@Nullable String configJson) {
+	public final void setConfigJson(@Nullable String configJson) {
 		replaceConfiguration(null);
 		this.configJson = configJson;
 	}
 
-	public long getResultCount() {
+	public final long getResultCount() {
 		Long result = getResult();
 		return (result != null ? result : 0L);
 	}
 
-	public void setResultCount(long deletedCount) {
+	public final void setResultCount(long deletedCount) {
 		setResult(deletedCount);
 	}
 
-	public long getSubmitDate() {
+	public final long getSubmitDate() {
 		Instant dt = super.getCreated();
 		return (dt != null ? dt.toEpochMilli() : 0);
 	}
 
-	public long getModifiedDate() {
+	public final long getModifiedDate() {
 		Instant dt = super.getModified();
 		return (dt != null ? dt.toEpochMilli() : 0);
 	}
 
-	public long getStartedDate() {
+	public final long getStartedDate() {
 		Instant dt = super.getStarted();
 		return (dt != null ? dt.toEpochMilli() : 0);
 	}
 
-	public long getCompletionDate() {
+	public final long getCompletionDate() {
 		Instant dt = super.getCompleted();
 		return (dt != null ? dt.toEpochMilli() : 0);
 	}

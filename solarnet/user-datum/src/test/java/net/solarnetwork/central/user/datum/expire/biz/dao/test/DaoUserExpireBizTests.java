@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.user.datum.expire.biz.dao.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -72,7 +74,8 @@ public class DaoUserExpireBizTests {
 	@Test
 	public void findConfigurationsForUser() {
 		// given
-		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration(randomLong(), TEST_USER_ID,
+				Instant.EPOCH, "", "");
 		List<ExpireUserDataConfiguration> configs = Arrays.asList(config);
 		expect(dataConfigurationDao.findConfigurationsForUser(TEST_USER_ID)).andReturn(configs);
 
@@ -89,7 +92,8 @@ public class DaoUserExpireBizTests {
 	public void getConfiguration() {
 		// given
 		Long configId = UUID.randomUUID().getMostSignificantBits();
-		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration(randomLong(), TEST_USER_ID,
+				Instant.EPOCH, "", "");
 		expect(dataConfigurationDao.get(configId, TEST_USER_ID)).andReturn(config);
 
 		// when
@@ -111,7 +115,8 @@ public class DaoUserExpireBizTests {
 
 		// when
 		replayAll();
-		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration(randomLong(), TEST_USER_ID,
+				Instant.EPOCH, "", "");
 		DatumRecordCounts result = biz.countExpiredDataForConfiguration(config);
 
 		// then

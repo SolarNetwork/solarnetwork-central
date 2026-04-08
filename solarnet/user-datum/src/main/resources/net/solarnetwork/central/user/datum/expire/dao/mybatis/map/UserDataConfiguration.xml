@@ -55,11 +55,13 @@
 	</sql>
 
 	<resultMap id="ExpireUserDataConfigurationFullResult" type="net.solarnetwork.central.user.datum.expire.domain.ExpireUserDataConfiguration">
-		<id property="id" column="user_expire_data_conf_id"/>
-		<result property="created" column="user_expire_data_conf_created"/>
-		<result property="userId" column="user_expire_data_conf_user_id"/>
-		<result property="name" column="user_expire_data_conf_cname"/>
-		<result property="serviceIdentifier" column="user_expire_data_conf_sident"/>
+		<constructor>
+			<idArg column="user_expire_data_conf_id" javaType="Long"/>
+			<arg column="user_expire_data_conf_user_id" javaType="Long"/>
+			<arg column="user_expire_data_conf_created" javaType="java.time.Instant"/>
+			<arg column="user_expire_data_conf_cname" javaType="String"/>
+			<arg column="user_expire_data_conf_sident" javaType="String"/>
+		</constructor>
 		<result property="servicePropsJson" column="user_expire_data_conf_sprops"/>
 		<result property="expireDays" column="user_expire_data_conf_expire_days"/>
 		<result property="active" column="user_expire_data_conf_enabled"/>

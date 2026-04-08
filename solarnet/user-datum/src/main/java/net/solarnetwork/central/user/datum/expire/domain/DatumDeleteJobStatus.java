@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import org.jspecify.annotations.Nullable;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.event.AppEvent;
 import net.solarnetwork.event.BasicAppEvent;
@@ -217,7 +218,8 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 *        the delete result
 	 * @return the event, never {@code null}
 	 */
-	static AppEvent createJobStatusChangedEvent(DatumDeleteJobStatus status, DatumDeleteJobInfo result) {
+	static AppEvent createJobStatusChangedEvent(@Nullable DatumDeleteJobStatus status,
+			@Nullable DatumDeleteJobInfo result) {
 		Map<String, Object> props = new HashMap<>(4);
 		if ( status != null ) {
 			props.put(EVENT_PROP_JOB_ID, status.getJobId());

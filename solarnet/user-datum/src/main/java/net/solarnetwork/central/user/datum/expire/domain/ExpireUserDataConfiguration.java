@@ -24,6 +24,8 @@ package net.solarnetwork.central.user.datum.expire.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.Instant;
+import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -35,7 +37,7 @@ import net.solarnetwork.codec.jackson.JsonUtils;
  * User related entity for {@link DataConfiguration}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProps", "active",
 		"expireDays", "datumFilter" })
@@ -50,29 +52,50 @@ public class ExpireUserDataConfiguration extends BaseExpireConfigurationEntity
 
 	private boolean active = false;
 	private int expireDays = DEFAULT_EXPIRE_DAYS;
-	private DatumFilterCommand filter;
-	private String filterJson;
+	private @Nullable DatumFilterCommand filter;
+	private @Nullable String filterJson;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the primary key
+	 * @param userId
+	 *        the user ID
+	 * @param created
+	 *        the creation date
+	 * @param name
+	 *        the configuration name
+	 * @param serviceIdentifier
+	 *        the service identifier
+	 * 
+	 * @since 1.2
+	 */
+	public ExpireUserDataConfiguration(Long id, Long userId, Instant created, String name,
+			String serviceIdentifier) {
+		super(id, userId, created, name, serviceIdentifier);
+	}
 
 	@Override
-	public AggregateGeneralNodeDatumFilter getDatumFilter() {
+	public final @Nullable AggregateGeneralNodeDatumFilter getDatumFilter() {
 		return getFilter();
 	}
 
 	@JsonIgnore
-	public String getFilterJson() {
+	public final @Nullable String getFilterJson() {
 		if ( filterJson == null ) {
 			filterJson = JsonUtils.getJSONString(filter, null);
 		}
 		return filterJson;
 	}
 
-	public void setFilterJson(String filterJson) {
+	public final void setFilterJson(@Nullable String filterJson) {
 		this.filterJson = filterJson;
 		filter = null;
 	}
 
 	@JsonIgnore
-	public DatumFilterCommand getFilter() {
+	public final @Nullable DatumFilterCommand getFilter() {
 		if ( filter == null && filterJson != null ) {
 			filter = JsonUtils.getObjectFromJSON(filterJson, DatumFilterCommand.class);
 		}
@@ -80,26 +103,26 @@ public class ExpireUserDataConfiguration extends BaseExpireConfigurationEntity
 	}
 
 	@JsonSetter("datumFilter")
-	public void setFilter(DatumFilterCommand filter) {
+	public final void setFilter(@Nullable DatumFilterCommand filter) {
 		this.filter = filter;
 		filterJson = null;
 	}
 
 	@Override
-	public int getExpireDays() {
+	public final int getExpireDays() {
 		return expireDays;
 	}
 
-	public void setExpireDays(int expireDays) {
+	public final void setExpireDays(int expireDays) {
 		this.expireDays = expireDays;
 	}
 
 	@Override
-	public boolean isActive() {
+	public final boolean isActive() {
 		return active;
 	}
 
-	public void setActive(boolean enabled) {
+	public final void setActive(boolean enabled) {
 		this.active = enabled;
 	}
 

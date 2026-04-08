@@ -229,8 +229,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		UUID jobId = UUID.randomUUID();
 		UserUuidPK id = new UserUuidPK(request.getUserId(), jobId);
 
-		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
-		info.setId(id);
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo(id);
 		info.setConfiguration(f);
 		info.setJobState(DatumDeleteJobState.Queued);
 
