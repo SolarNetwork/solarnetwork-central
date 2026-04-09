@@ -176,7 +176,7 @@ public class WebSecurityConfig {
 	public static class DatumApiWebSecurityConfig {
 
 		@Value("${app.security.endpoint-id-url-pattern:}")
-		private String endpointIdUrlPattern;
+		private String endpointIdUrlPattern = "";
 
 		@Autowired
 		private JdbcOperations jdbcOperations;
@@ -250,7 +250,7 @@ public class WebSecurityConfig {
 	public static class InstructionApiWebSecurityConfig {
 
 		@Value("${app.security.endpoint-id-url-pattern:}")
-		private String endpointIdUrlPattern;
+		private String endpointIdUrlPattern = "";
 
 		@Autowired
 		private JdbcOperations jdbcOperations;
